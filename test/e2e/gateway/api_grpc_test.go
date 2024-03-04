@@ -353,7 +353,11 @@ func TestGrpcGetEvaluationsWithPreviousEvaluation31daysAgo(t *testing.T) {
 	uuid := newUUID(t)
 	userID := newUserID(t, uuid)
 	prevEvalAt := time.Now().Add(-31 * 24 * time.Hour).Unix()
-	response := grpcGetEvaluationsByEvaluatedAt(t, "", userID, "userEvaluationsID", prevEvalAt, false)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	featureID := newFeatureID(t, uuid)
+	createFeatureWithTag(t, tag, featureID)
+	updateFeatueFlagCache(t)
+	response := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, "userEvaluationsID", prevEvalAt, false)
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
 	}
@@ -370,7 +374,11 @@ func TestGrpcGetEvaluationsWithEvaluatedAtIsZero(t *testing.T) {
 	userID := newUserID(t, uuid)
 	var prevEvalAt int64 = 0
 	userEvaluationsID := ""
-	response := grpcGetEvaluationsByEvaluatedAt(t, "", userID, userEvaluationsID, prevEvalAt, false)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	featureID := newFeatureID(t, uuid)
+	createFeatureWithTag(t, tag, featureID)
+	updateFeatueFlagCache(t)
+	response := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, userEvaluationsID, prevEvalAt, false)
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
 	}
@@ -387,7 +395,11 @@ func TestGrpcGetEvaluationsWithEmptyUserEvaluationsID(t *testing.T) {
 	userID := newUserID(t, uuid)
 	prevEvalAt := time.Now().Add(-1 * time.Second).Unix()
 	userEvaluationsID := ""
-	response := grpcGetEvaluationsByEvaluatedAt(t, "", userID, userEvaluationsID, prevEvalAt, false)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	featureID := newFeatureID(t, uuid)
+	createFeatureWithTag(t, tag, featureID)
+	updateFeatueFlagCache(t)
+	response := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, userEvaluationsID, prevEvalAt, false)
 	if response.Evaluations == nil {
 		t.Fatal("Evaluations field is nil")
 	}
