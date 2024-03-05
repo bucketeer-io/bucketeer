@@ -116,13 +116,9 @@ var (
 		codes.InvalidArgument,
 		"autoops: interval is unknown for a progressive rollout",
 	)
-	statusProgressiveRolloutAutoOpsHasDatetime = gstatus.New(
+	statusProgressiveRolloutWaitingOrRunningExperimentExists = gstatus.New(
 		codes.FailedPrecondition,
-		"autoops: can not create a progressive rollout when a schedule is set in the auto ops",
-	)
-	statusProgressiveRolloutAutoOpsHasWebhook = gstatus.New(
-		codes.FailedPrecondition,
-		"autoops: can not create a progressive rollout when a webhook is set",
+		"autoops: cannot create a progressive rollout when there is a scheduled or running experiment",
 	)
 	statusProgressiveRolloutInvalidVariationSize = gstatus.New(
 		codes.FailedPrecondition,

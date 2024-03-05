@@ -16,14 +16,11 @@ package api
 
 import (
 	"context"
-	"errors"
 	"strconv"
 	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
-
-	"github.com/golang/protobuf/ptypes"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
@@ -35,21 +32,12 @@ import (
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+	exprpto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
 const (
-	fiveMinutes     = 5 * time.Minute
-	listRequestSize = 500
-)
-
-var (
-	errProgressiveRolloutAutoOpsHasWebhook = errors.New(
-		"autoops: can not create a progressive rollout when the webhook is set in the auto ops",
-	)
-	errProgressiveRolloutAutoOpsHasDatetime = errors.New(
-		"autoops: can not create a progressive rollout when the schedule is set in the auto ops",
-	)
+	fiveMinutes = 5 * time.Minute
 )
 
 func (s *AutoOpsService) CreateProgressiveRollout(
@@ -84,11 +72,6 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		// We validate auto ops rules here since it's not possible to mock `ListAutoOpsRules`.
-		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
-		if err := s.validateTargetAutoOpsRules(ctx, req, localizer, autoOpsRuleStorage); err != nil {
-			return err
-		}
 		progressiveRollout, err := domain.NewProgressiveRollout(
 			req.Command.FeatureId,
 			req.Command.ProgressiveRolloutManualScheduleClause,
@@ -115,24 +98,6 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 			dt, err := statusProgressiveRolloutAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusProgressiveRolloutInternal.Err()
-			}
-			return nil, dt.Err()
-		case errProgressiveRolloutAutoOpsHasWebhook:
-			dt, err := statusProgressiveRolloutAutoOpsHasWebhook.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AutoOpsHasWebhook),
-			})
-			if err != nil {
-				return nil, statusProgressiveRolloutInternal.Err()
-			}
-			return nil, dt.Err()
-		case errProgressiveRolloutAutoOpsHasDatetime:
-			dt, err := statusProgressiveRolloutAutoOpsHasDatetime.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AutoOpsHasDatetime),
 			})
 			if err != nil {
 				return nil, statusProgressiveRolloutInternal.Err()
@@ -881,36 +846,6 @@ func (s *AutoOpsService) validateCommand(
 	return nil
 }
 
-func (s *AutoOpsService) listAutoOpsRulesByFeatureID(
-	ctx context.Context,
-	req *autoopsproto.CreateProgressiveRolloutRequest,
-	localizer locale.Localizer,
-	storage v2as.AutoOpsRuleStorage,
-) ([]*autoopsproto.AutoOpsRule, error) {
-	allRules := []*autoopsproto.AutoOpsRule{}
-	cursor := ""
-	for {
-		rules, c, err := s.listAutoOpsRules(
-			ctx,
-			listRequestSize,
-			cursor,
-			[]string{req.Command.FeatureId},
-			req.EnvironmentNamespace,
-			localizer,
-			storage,
-		)
-		if err != nil {
-			return nil, err
-		}
-		allRules = append(allRules, rules...)
-		size := len(rules)
-		if size == 0 || size < listRequestSize {
-			return allRules, nil
-		}
-		cursor = c
-	}
-}
-
 func (s *AutoOpsService) getFeature(
 	ctx context.Context,
 	req *autoopsproto.CreateProgressiveRolloutRequest,
@@ -926,35 +861,6 @@ func (s *AutoOpsService) getFeature(
 	return resp.Feature, nil
 }
 
-func (s *AutoOpsService) validateTargetAutoOpsRules(
-	ctx context.Context,
-	req *autoopsproto.CreateProgressiveRolloutRequest,
-	localizer locale.Localizer,
-	storage v2as.AutoOpsRuleStorage,
-) error {
-	rules, err := s.listAutoOpsRulesByFeatureID(
-		ctx,
-		req,
-		localizer,
-		storage,
-	)
-	if err != nil {
-		return err
-	}
-	for _, r := range rules {
-		if r.TriggeredAt > 0 {
-			continue
-		}
-		for _, c := range r.Clauses {
-			// Return an error when Clause is DatetimeClause or WebhookClause.
-			if ptypes.Is(c.Clause, domain.DatetimeClause) {
-				return errProgressiveRolloutAutoOpsHasDatetime
-			}
-		}
-	}
-	return nil
-}
-
 func (s *AutoOpsService) validateTargetFeature(
 	ctx context.Context,
 	f *featureproto.Feature,
@@ -964,6 +870,45 @@ func (s *AutoOpsService) validateTargetFeature(
 		dt, err := statusProgressiveRolloutInvalidVariationSize.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.AutoOpsInvalidVariationSize),
+		})
+		if err != nil {
+			return statusProgressiveRolloutInternal.Err()
+		}
+		return dt.Err()
+	}
+	if err := s.checkIfHasExperiment(ctx, f.Id, localizer); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *AutoOpsService) checkIfHasExperiment(
+	ctx context.Context,
+	featureID string,
+	localizer locale.Localizer,
+) error {
+	// Check if the feature has scheduled or running experiment
+	resp, err := s.experimentClient.ListExperiments(ctx, &exprpto.ListExperimentsRequest{
+		FeatureId: featureID,
+		Statuses: []exprpto.Experiment_Status{
+			exprpto.Experiment_WAITING,
+			exprpto.Experiment_RUNNING,
+		},
+	})
+	if err != nil {
+		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusProgressiveRolloutInternal.Err()
+		}
+		return dt.Err()
+	}
+	if len(resp.Experiments) > 0 {
+		dt, err := statusProgressiveRolloutWaitingOrRunningExperimentExists.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.AutoOpsWaitingOrRunningExperimentExists),
 		})
 		if err != nil {
 			return statusProgressiveRolloutInternal.Err()

@@ -27,11 +27,13 @@ import (
 	gstatus "google.golang.org/grpc/status"
 
 	v2as "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2"
+	experimentclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
@@ -173,6 +175,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -197,6 +203,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -223,6 +233,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -248,6 +262,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -275,6 +293,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -300,6 +322,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -327,6 +353,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -354,6 +384,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -388,6 +422,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -423,6 +461,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -453,6 +495,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -481,6 +527,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -511,6 +561,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -539,6 +593,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -569,6 +627,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -597,6 +659,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, errors.New("error"))
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
@@ -628,6 +694,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -662,6 +732,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -681,7 +755,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 			expectedErr: createError(statusProgressiveRolloutAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
 		{
-			desc: "err: AutoOpsHasDatetime",
+			desc: "err: while listing experiments",
 			setup: func(aos *AutoOpsService) {
 				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(),
@@ -696,10 +770,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
-				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(errProgressiveRolloutAutoOpsHasDatetime)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					nil,
+					errors.New("internal error"),
+				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -712,10 +786,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutAutoOpsHasDatetime, localizer.MustLocalize(locale.AutoOpsHasDatetime)),
+			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
-			desc: "err: AutoOpsHasWebhook",
+			desc: "err: AutoOpsWaitingOrRunningExperimentExists",
 			setup: func(aos *AutoOpsService) {
 				aos.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(
 					gomock.Any(), gomock.Any(),
@@ -730,10 +804,16 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
-				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(errProgressiveRolloutAutoOpsHasWebhook)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{
+						Experiments: []*experimentproto.Experiment{
+							{
+								Id: "experiment-id",
+							},
+						},
+					},
+					nil,
+				)
 			},
 			req: &autoopsproto.CreateProgressiveRolloutRequest{
 				Command: &autoopsproto.CreateProgressiveRolloutCommand{
@@ -746,7 +826,7 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusProgressiveRolloutAutoOpsHasWebhook, localizer.MustLocalize(locale.AutoOpsHasWebhook)),
+			expectedErr: createError(statusProgressiveRolloutWaitingOrRunningExperimentExists, localizer.MustLocalize(locale.AutoOpsWaitingOrRunningExperimentExists)),
 		},
 		{
 			desc: "success",
@@ -764,6 +844,10 @@ func TestCreateProgressiveRolloutMySQL(t *testing.T) {
 					},
 					Enabled: true,
 				}}, nil)
+				aos.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&experimentproto.ListExperimentsResponse{Experiments: []*experimentproto.Experiment{}},
+					nil,
+				)
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				aos.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
