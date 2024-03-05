@@ -19,7 +19,6 @@ import (
 	"testing"
 	"time"
 
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,6 +26,8 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
+
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"

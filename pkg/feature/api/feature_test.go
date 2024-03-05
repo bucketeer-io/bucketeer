@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,6 +27,8 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
+
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 
 	acmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
