@@ -1492,11 +1492,9 @@ func TestListEnabledFeaturesMySQL(t *testing.T) {
 			desc:    "errPermissionDenied",
 			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			context: createContextWithTokenRoleUnassigned(),
-			setup: func(s *FeatureService) {
-
-			},
+			setup:   func(s *FeatureService) {},
 			getExpectedErr: func(localizer locale.Localizer) error {
-				return nil
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
 			},
 		},
 	}
