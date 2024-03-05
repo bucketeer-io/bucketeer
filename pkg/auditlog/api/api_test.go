@@ -76,7 +76,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 	}{
 		{
 			desc:     "err: ErrInvalidCursor",
-			service:  newAuditLogService(t, mockController),
+			service:  newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
 			context:  createContextWithToken(t, true),
 			setup:    nil,
 			input:    &proto.ListAuditLogsRequest{Cursor: "XXX", EnvironmentNamespace: "ns0"},
@@ -87,7 +87,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 		},
 		{
 			desc:    "err: ErrInternal",
-			service: newAuditLogService(t, mockController),
+			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
 			context: createContextWithToken(t, true),
 			setup: func(s *auditlogService) {
 				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
@@ -101,8 +101,19 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			},
 		},
 		{
+			desc:     "errPermissionDenied",
+			service:  newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			context:  createContextWithToken(t, false),
+			setup:    func(s *auditlogService) {},
+			input:    &proto.ListAuditLogsRequest{PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0"},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			},
+		},
+		{
 			desc:    "success",
-			service: newAuditLogService(t, mockController),
+			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
 			context: createContextWithToken(t, true),
 			setup: func(s *auditlogService) {
 				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
@@ -117,7 +128,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success with Viewer Account",
-			service: newAuditLogServiceForViewer(t, mockController),
+			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
 				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
@@ -209,7 +220,7 @@ func TestListAdminAuditLogsMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newAuditLogService(t, mockController)
+			s := newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR)
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -245,7 +256,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 	}{
 		{
 			desc:     "err: ErrInvalidCursor",
-			service:  newAuditLogService(t, mockController),
+			service:  newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
 			context:  createContextWithToken(t, false),
 			setup:    nil,
 			input:    &proto.ListFeatureHistoryRequest{Cursor: "XXX", EnvironmentNamespace: "ns0"},
@@ -256,7 +267,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 		},
 		{
 			desc:    "err: ErrInternal",
-			service: newAuditLogService(t, mockController),
+			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
 			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
 				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
@@ -270,8 +281,21 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 			},
 		},
 		{
+			desc:    "errPermissionDenied",
+			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			context: createContextWithTokenRoleUnassigned(t),
+			setup:   func(s *auditlogService) {},
+			input: &proto.ListFeatureHistoryRequest{
+				FeatureId: "fid-1", PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0",
+			},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(localizer, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied))
+			},
+		},
+		{
 			desc:    "success",
-			service: newAuditLogService(t, mockController),
+			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
 			context: createContextWithToken(t, false),
 			setup: func(s *auditlogService) {
 				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
@@ -288,7 +312,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success with viewer account",
-			service: newAuditLogServiceForViewer(t, mockController),
+			service: newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			context: createContextWithTokenRoleUnassigned(t),
 			setup: func(s *auditlogService) {
 				s.mysqlStorage.(*v2alsmock.MockAuditLogStorage).EXPECT().ListAuditLogs(
@@ -323,7 +347,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 	}
 }
 
-func newAuditLogService(t *testing.T, mockController *gomock.Controller) *auditlogService {
+func newAuditLogServiceWithGetAccountByEnvironmentMock(t *testing.T, mockController *gomock.Controller, ro accountproto.AccountV2_Role_Organization, re accountproto.AccountV2_Role_Environment) *auditlogService {
 	t.Helper()
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
@@ -331,37 +355,11 @@ func newAuditLogService(t *testing.T, mockController *gomock.Controller) *auditl
 	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
 		Account: &accountproto.AccountV2{
 			Email:            "email",
-			OrganizationRole: accountproto.AccountV2_Role_Organization_OWNER,
+			OrganizationRole: ro,
 			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 				{
 					EnvironmentId: "ns0",
-					Role:          accountproto.AccountV2_Role_Environment_EDITOR,
-				},
-			},
-		},
-	}
-	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
-	return &auditlogService{
-		accountClient:     accountClientMock,
-		mysqlStorage:      v2alsmock.NewMockAuditLogStorage(mockController),
-		mysqlAdminStorage: v2alsmock.NewMockAdminAuditLogStorage(mockController),
-		logger:            logger.Named("api"),
-	}
-}
-
-func newAuditLogServiceForViewer(t *testing.T, mockController *gomock.Controller) *auditlogService {
-	t.Helper()
-	logger, err := log.NewLogger()
-	require.NoError(t, err)
-	accountClientMock := accountclientmock.NewMockClient(mockController)
-	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					EnvironmentId: "ns0",
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+					Role:          re,
 				},
 			},
 		},

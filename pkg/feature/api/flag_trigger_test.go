@@ -20,6 +20,7 @@ import (
 	"errors"
 	"testing"
 
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -209,7 +210,7 @@ func TestGetFlagTrigger(t *testing.T) {
 				createContextWithTokenRoleUnassigned(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
-			service: createFeatureServiceForViewer(mockController),
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *FeatureService) {
 				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -233,6 +234,19 @@ func TestGetFlagTrigger(t *testing.T) {
 			input: &proto.GetFlagTriggerRequest{Id: baseId, EnvironmentNamespace: baseEnvironmentNamespace},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
+			},
+		},
+		{
+			desc: "errPermissionDenied",
+			context: metadata.NewIncomingContext(
+				createContextWithTokenRoleUnassigned(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			setup:   func(s *FeatureService) {},
+			input:   &proto.GetFlagTriggerRequest{Id: baseId, EnvironmentNamespace: baseEnvironmentNamespace},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
 			},
 		},
 	}
@@ -841,7 +855,7 @@ func TestListFlagTriggers(t *testing.T) {
 		},
 		{
 			desc:    "Success with Viewer Account",
-			service: createFeatureServiceForViewer(mockController),
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			context: metadata.NewIncomingContext(
 				createContextWithTokenRoleUnassigned(),
 				metadata.MD{"accept-language": []string{"ja"}},
@@ -864,6 +878,19 @@ func TestListFlagTriggers(t *testing.T) {
 			expected: &proto.ListFlagTriggersResponse{FlagTriggers: []*proto.ListFlagTriggersResponse_FlagTriggerWithUrl{}, Cursor: "0"},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
+			},
+		},
+		{
+			desc: "errPermissionDenied",
+			context: metadata.NewIncomingContext(
+				createContextWithTokenRoleUnassigned(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			setup:   func(s *FeatureService) {},
+			input:   &proto.ListFlagTriggersRequest{FeatureId: "1", PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0"},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
 			},
 		},
 	}

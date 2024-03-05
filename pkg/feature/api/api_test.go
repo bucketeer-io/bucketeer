@@ -164,18 +164,18 @@ func createFeatureServiceNew(c *gomock.Controller) *FeatureService {
 	}
 }
 
-func createFeatureServiceForViewer(c *gomock.Controller) *FeatureService {
+func createFeatureServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, ro accountproto.AccountV2_Role_Organization, re accountproto.AccountV2_Role_Environment) *FeatureService {
 	segmentUsersPublisher := publishermock.NewMockPublisher(c)
 	domainPublisher := publishermock.NewMockPublisher(c)
 	a := accountclientmock.NewMockClient(c)
 	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
 		Account: &accountproto.AccountV2{
 			Email:            "email",
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			OrganizationRole: ro,
 			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 				{
 					EnvironmentId: "ns0",
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+					Role:          re,
 				},
 			},
 		},

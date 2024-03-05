@@ -445,7 +445,6 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc           string
-		service        *AccountService
 		context        context.Context
 		setup          func(*AccountService)
 		req            *accountproto.GetAPIKeyRequest
@@ -453,7 +452,6 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 	}{
 		{
 			desc:    "errMissingAPIKeyID",
-			service: createAccountService(t, mockController, nil),
 			context: createContextWithDefaultToken(t, true),
 			req:     &accountproto.GetAPIKeyRequest{Id: ""},
 			getExpectedErr: func(localizer locale.Localizer) error {
@@ -462,7 +460,6 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 		},
 		{
 			desc:    "errNotFound",
-			service: createAccountService(t, mockController, nil),
 			context: createContextWithDefaultToken(t, true),
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAPIKey(
@@ -476,7 +473,6 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success",
-			service: createAccountService(t, mockController, nil),
 			context: createContextWithDefaultToken(t, true),
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAPIKey(
@@ -494,7 +490,6 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success with viewer account",
-			service: createAccountService(t, mockController, nil),
 			context: createContextWithDefaultToken(t, false),
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
@@ -524,11 +519,39 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 				return nil
 			},
 		},
+		{
+			desc:    "errPermissionDenied",
+			context: createContextWithDefaultToken(t, false),
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "email",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "ns0",
+								Role:          accountproto.AccountV2_Role_Environment_UNASSIGNED,
+							},
+						},
+					},
+				}, nil).AnyTimes()
+			},
+			req: &accountproto.GetAPIKeyRequest{Id: "id", EnvironmentNamespace: "ns0"},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(localizer, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied))
+			},
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			ctx := p.context
-			service := p.service
+			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+				"accept-language": []string{"ja"},
+			})
+
+			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -558,7 +581,6 @@ func TestListAPIKeysMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc           string
-		service        *AccountService
 		context        context.Context
 		setup          func(*AccountService)
 		input          *accountproto.ListAPIKeysRequest
@@ -567,7 +589,6 @@ func TestListAPIKeysMySQL(t *testing.T) {
 	}{
 		{
 			desc:     "errInvalidCursor",
-			service:  createAccountService(t, mockController, nil),
 			context:  createContextWithDefaultToken(t, true),
 			input:    &accountproto.ListAPIKeysRequest{Cursor: "XXX"},
 			expected: nil,
@@ -577,7 +598,6 @@ func TestListAPIKeysMySQL(t *testing.T) {
 		},
 		{
 			desc:    "errInternal",
-			service: createAccountService(t, mockController, nil),
 			context: createContextWithDefaultToken(t, true),
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAPIKeys(
@@ -591,8 +611,32 @@ func TestListAPIKeysMySQL(t *testing.T) {
 			},
 		},
 		{
+			desc:    "errPermissionDenied",
+			context: createContextWithDefaultToken(t, false),
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "email",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "ns0",
+								Role:          accountproto.AccountV2_Role_Environment_UNASSIGNED,
+							},
+						},
+					},
+				}, nil).AnyTimes()
+			},
+			input:    &accountproto.ListAPIKeysRequest{EnvironmentNamespace: "ns0"},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(localizer, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied))
+			},
+		},
+		{
 			desc:    "success",
-			service: createAccountService(t, mockController, nil),
 			context: createContextWithDefaultToken(t, true),
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().ListAPIKeys(
@@ -607,7 +651,6 @@ func TestListAPIKeysMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success with viewer account",
-			service: createAccountService(t, mockController, nil),
 			context: createContextWithDefaultToken(t, false),
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
@@ -644,7 +687,7 @@ func TestListAPIKeysMySQL(t *testing.T) {
 			})
 			localizer := locale.NewLocalizer(ctx)
 
-			service := p.service
+			service := createAccountService(t, mockController, nil)
 			if p.setup != nil {
 				p.setup(service)
 			}

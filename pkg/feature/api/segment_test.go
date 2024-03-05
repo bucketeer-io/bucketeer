@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -361,7 +362,7 @@ func TestGetSegmentMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success with Viewer account",
-			service: createFeatureServiceForViewer(mockController),
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			context: metadata.NewIncomingContext(
 				createContextWithTokenRoleUnassigned(),
 				metadata.MD{"accept-language": []string{"ja"}},
@@ -384,6 +385,20 @@ func TestGetSegmentMySQL(t *testing.T) {
 			environmentNamespace: "ns0",
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
+			},
+		},
+		{
+			desc:    "errPermissionDenied",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			context: metadata.NewIncomingContext(
+				createContextWithTokenRoleUnassigned(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			setup:                func(s *FeatureService) {},
+			id:                   "id",
+			environmentNamespace: "ns0",
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
 			},
 		},
 	}
@@ -419,7 +434,7 @@ func TestListSegmentsMySQL(t *testing.T) {
 	}{
 		{
 			desc:    "error: exceeded max page size per request",
-			service: createFeatureServiceForViewer(mockController),
+			service: createFeatureService(mockController),
 			context: metadata.NewIncomingContext(
 				createContextWithTokenRoleUnassigned(),
 				metadata.MD{"accept-language": []string{"ja"}},
@@ -460,9 +475,9 @@ func TestListSegmentsMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success with Viewer account",
-			service: createFeatureServiceForViewer(mockController),
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			context: metadata.NewIncomingContext(
-				createContextWithToken(),
+				createContextWithTokenRoleUnassigned(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
 			setup: func(s *FeatureService) {
@@ -483,6 +498,20 @@ func TestListSegmentsMySQL(t *testing.T) {
 			environmentNamespace: "ns0",
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
+			},
+		},
+		{
+			desc:    "errPermissionDenied",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			context: metadata.NewIncomingContext(
+				createContextWithTokenRoleUnassigned(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			setup:                func(s *FeatureService) {},
+			pageSize:             int64(maxPageSizePerRequest),
+			environmentNamespace: "ns0",
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
 			},
 		},
 	}

@@ -571,6 +571,13 @@ func TestGetAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
+			desc:        "errPermissionDenied",
+			service:     createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			setup:       func(s *AutoOpsService) {},
+			req:         &autoopsproto.GetAutoOpsRuleRequest{Id: "aid1", EnvironmentNamespace: "ns0"},
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
 			desc:    "success",
 			service: createAutoOpsService(mockController, nil),
 			setup: func(s *AutoOpsService) {
@@ -585,7 +592,7 @@ func TestGetAutoOpsRuleMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success with view account",
-			service: createServiceForViewer(mockController),
+			service: createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *AutoOpsService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -614,10 +621,23 @@ func TestListAutoOpsRulesMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	ctx := createContextWithTokenRoleUnassigned(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
 		desc        string
 		service     *AutoOpsService
-		context     context.Context
 		setup       func(*AutoOpsService)
 		req         *autoopsproto.ListAutoOpsRulesRequest
 		expectedErr error
@@ -625,7 +645,6 @@ func TestListAutoOpsRulesMySQL(t *testing.T) {
 		{
 			desc:    "success",
 			service: createAutoOpsService(mockController, nil),
-			context: createContextWithTokenRoleUnassigned(t),
 			setup: func(s *AutoOpsService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -639,9 +658,15 @@ func TestListAutoOpsRulesMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:    "success with view ",
-			service: createServiceForViewer(mockController),
-			context: createContextWithTokenRoleUnassigned(t),
+			desc:        "errPermissionDenied",
+			service:     createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			setup:       func(s *AutoOpsService) {},
+			req:         &autoopsproto.ListAutoOpsRulesRequest{EnvironmentNamespace: "ns0", Cursor: ""},
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc:    "success with viewer",
+			service: createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *AutoOpsService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -656,12 +681,14 @@ func TestListAutoOpsRulesMySQL(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		service := p.service
-		if p.setup != nil {
-			p.setup(service)
-		}
-		_, err := service.ListAutoOpsRules(p.context, p.req)
-		assert.Equal(t, p.expectedErr, err)
+		t.Run(p.desc, func(t *testing.T) {
+			service := p.service
+			if p.setup != nil {
+				p.setup(service)
+			}
+			_, err := service.ListAutoOpsRules(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
 	}
 }
 
@@ -669,11 +696,23 @@ func TestListOpsCountsMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+	ctx := createContextWithTokenRoleUnassigned(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
 
 	patterns := []struct {
 		desc        string
 		service     *AutoOpsService
-		context     context.Context
 		setup       func(*AutoOpsService)
 		req         *autoopsproto.ListOpsCountsRequest
 		expectedErr error
@@ -681,7 +720,6 @@ func TestListOpsCountsMySQL(t *testing.T) {
 		{
 			desc:    "success",
 			service: createAutoOpsService(mockController, nil),
-			context: createContextWithTokenRoleUnassigned(t),
 			setup: func(s *AutoOpsService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -695,9 +733,15 @@ func TestListOpsCountsMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			desc:        "errPermissionDenied",
+			service:     createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			setup:       func(s *AutoOpsService) {},
+			req:         &autoopsproto.ListOpsCountsRequest{EnvironmentNamespace: "ns0", Cursor: ""},
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
 			desc:    "success with view ",
-			service: createServiceForViewer(mockController),
-			context: createContextWithTokenRoleUnassigned(t),
+			service: createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *AutoOpsService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -712,12 +756,14 @@ func TestListOpsCountsMySQL(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		service := p.service
-		if p.setup != nil {
-			p.setup(service)
-		}
-		_, err := service.ListOpsCounts(p.context, p.req)
-		assert.Equal(t, p.expectedErr, err)
+		t.Run(p.desc, func(t *testing.T) {
+			service := p.service
+			if p.setup != nil {
+				p.setup(service)
+			}
+			_, err := service.ListOpsCounts(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
 	}
 }
 
@@ -896,6 +942,38 @@ func createAutoOpsService(c *gomock.Controller, db storage.Client) *AutoOpsServi
 	)
 }
 
+func createServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, ro accountproto.AccountV2_Role_Organization, re accountproto.AccountV2_Role_Environment) *AutoOpsService {
+	mysqlClientMock := mysqlmock.NewMockClient(c)
+	featureClientMock := featureclientmock.NewMockClient(c)
+	accountClientMock := accountclientmock.NewMockClient(c)
+	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
+		Account: &accountproto.AccountV2{
+			Email:            "email",
+			OrganizationRole: ro,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "ns0",
+					Role:          re,
+				},
+			},
+		},
+	}
+	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
+	experimentClientMock := experimentclientmock.NewMockClient(c)
+	authClientMock := authclientmock.NewMockClient(c)
+	p := publishermock.NewMockPublisher(c)
+	logger := zap.NewNop()
+	return NewAutoOpsService(
+		mysqlClientMock,
+		featureClientMock,
+		experimentClientMock,
+		accountClientMock,
+		authClientMock,
+		p,
+		WithLogger(logger),
+	)
+}
+
 func createContextWithTokenRoleUnassigned(t *testing.T) context.Context {
 	t.Helper()
 	token := &token.IDToken{
@@ -923,28 +1001,4 @@ func createContextWithTokenRoleOwner(t *testing.T) context.Context {
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)
-}
-
-func createServiceForViewer(c *gomock.Controller) *AutoOpsService {
-	a := accountclientmock.NewMockClient(c)
-	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
-		Account: &accountproto.AccountV2{
-			Email:            "email",
-			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-				{
-					EnvironmentId: "ns0",
-					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-				},
-			},
-		},
-	}
-	a.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
-	return &AutoOpsService{
-		mysqlClient:      mysqlmock.NewMockClient(c),
-		featureClient:    featureclientmock.NewMockClient(c),
-		experimentClient: experimentclientmock.NewMockClient(c),
-		accountClient:    a,
-		authClient:       authclientmock.NewMockClient(c),
-	}
 }

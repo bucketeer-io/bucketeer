@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -89,7 +90,7 @@ func TestGetFeatureMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success with Viewer Account",
-			service: createFeatureServiceForViewer(mockController),
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			context: createContextWithTokenRoleUnassigned(),
 			setup: func(s *FeatureService) {
 				row := mysqlmock.NewMockRow(mockController)
@@ -108,6 +109,16 @@ func TestGetFeatureMySQL(t *testing.T) {
 			input: "fid",
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
+			},
+		},
+		{
+			desc:    "errPermissionDenied",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			context: createContextWithTokenRoleUnassigned(),
+			setup:   func(s *FeatureService) {},
+			input:   "fid",
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
 			},
 		},
 	}
@@ -189,7 +200,7 @@ func TestGetFeaturesMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success with Viewer Account",
-			service: createFeatureServiceForViewer(mockController),
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			context: createContextWithTokenRoleUnassigned(),
 			setup: func(s *FeatureService) {
 				rows := mysqlmock.NewMockRows(mockController)
@@ -208,6 +219,16 @@ func TestGetFeaturesMySQL(t *testing.T) {
 			input: []string{"fid"},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
+			},
+		},
+		{
+			desc:    "errPermissionDenied",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			context: createContextWithTokenRoleUnassigned(),
+			setup:   func(s *FeatureService) {},
+			input:   []string{"fid"},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
 			},
 		},
 	}
@@ -310,7 +331,7 @@ func TestListFeaturesMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success with Viewer Account",
-			service: createFeatureServiceForViewer(mockController),
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			context: createContextWithTokenRoleUnassigned(),
 			setup: func(s *FeatureService) {
 				rows := mysqlmock.NewMockRows(mockController)
@@ -330,6 +351,18 @@ func TestListFeaturesMySQL(t *testing.T) {
 			hasExperiment:        false,
 			environmentNamespace: "ns0",
 			getExpectedErr:       func(localizer locale.Localizer) error { return nil },
+		},
+		{
+			desc:                 "errPermissionDenied",
+			service:              createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			context:              createContextWithTokenRoleUnassigned(),
+			setup:                func(s *FeatureService) {},
+			orderBy:              featureproto.ListFeaturesRequest_DEFAULT,
+			hasExperiment:        false,
+			environmentNamespace: "ns0",
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			},
 		},
 	}
 	for _, p := range patterns {
@@ -1096,7 +1129,7 @@ func TestEvaluateFeatures(t *testing.T) {
 		{
 			desc:    "success with viewer account",
 			context: createContextWithTokenRoleUnassigned(),
-			service: createFeatureServiceForViewer(mockController),
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, errors.New("error"))
@@ -1121,6 +1154,17 @@ func TestEvaluateFeatures(t *testing.T) {
 			},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
+			},
+		},
+		{
+			desc:     "errPermissionDenied",
+			context:  createContextWithTokenRoleUnassigned(),
+			service:  createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			setup:    func(s *FeatureService) {},
+			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0", Tag: "android"},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
 			},
 		},
 	}
@@ -1424,7 +1468,7 @@ func TestListEnabledFeaturesMySQL(t *testing.T) {
 		},
 		{
 			desc:    "success with Viewer Account",
-			service: createFeatureServiceForViewer(mockController),
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
 			context: createContextWithTokenRoleUnassigned(),
 			setup: func(s *FeatureService) {
 				row := mysqlmock.NewMockRow(mockController)
@@ -1439,6 +1483,17 @@ func TestListEnabledFeaturesMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
+			},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "errPermissionDenied",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			context: createContextWithTokenRoleUnassigned(),
+			setup: func(s *FeatureService) {
+
 			},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
