@@ -2196,11 +2196,12 @@ func getExperimentResult(t *testing.T, c ecclient.Client, experimentID string) (
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() != codes.Unavailable {
-			return nil, err
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal {
+			fmt.Printf("Failed to get experiment result. Experiment ID: %s. Error code: %d. Retrying in 5 seconds.\n", experimentID, st.Code())
+			time.Sleep(5 * time.Second)
+			continue
 		}
-		fmt.Printf("Failed to get experiment result. Experiment ID: %s. Error code: %d. Retrying in 5 seconds.\n", experimentID, st.Code())
-		time.Sleep(5 * time.Second)
+		return nil, err
 	}
 	if err != nil {
 		return nil, err
@@ -2232,11 +2233,12 @@ func getExperimentEvaluationCount(
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() != codes.Unavailable {
-			return nil, err
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal {
+			fmt.Printf("Failed to get experiment evaluation count. Error code: %d. Retrying in 5 seconds.\n", st.Code())
+			time.Sleep(5 * time.Second)
+			continue
 		}
-		fmt.Printf("Failed to get experiment evaluation count. Error code: %d. Retrying in 5 seconds.\n", st.Code())
-		time.Sleep(5 * time.Second)
+		return nil, err
 	}
 	if err != nil {
 		return nil, err
@@ -2269,11 +2271,12 @@ func getExperimentGoalCount(
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() == codes.Internal {
-			return nil, err
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal {
+			fmt.Printf("Failed to get experiment goal count. Error code: %d. Retrying in 5 seconds.\n", st.Code())
+			time.Sleep(5 * time.Second)
+			continue
 		}
-		fmt.Printf("Failed to get experiment goal count. Error code: %d. Retrying in 5 seconds.\n", st.Code())
-		time.Sleep(5 * time.Second)
+		return nil, err
 	}
 	if err != nil {
 		return nil, err
@@ -2333,11 +2336,12 @@ func getEvaluationTimeseriesCount(
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() != codes.Unavailable {
-			return nil, err
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal {
+			fmt.Printf("Failed to get evaluation timeseries count. ID: %s. Error code: %d. Retrying in 5 seconds.\n", featureID, st.Code())
+			time.Sleep(5 * time.Second)
+			continue
 		}
-		fmt.Printf("Failed to get evaluation timeseries count. ID: %s. Error code: %d. Retrying in 5 seconds.\n", featureID, st.Code())
-		time.Sleep(5 * time.Second)
+		return nil, err
 	}
 	if err != nil {
 		return nil, err
