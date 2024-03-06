@@ -97,6 +97,8 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setup       func(*eventCounterService)
+		orgRole     *accountproto.AccountV2_Role_Organization
+		envRole     *accountproto.AccountV2_Role_Environment
 		input       *ecproto.GetExperimentEvaluationCountRequest
 		expected    *ecproto.GetExperimentEvaluationCountResponse
 		expectedErr error
@@ -139,7 +141,24 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
 		},
 		{
-			desc: "success: one variation",
+			desc:    "error: ErrPermissionDenied",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			input: &ecproto.GetExperimentEvaluationCountRequest{
+				EnvironmentNamespace: ns,
+				StartAt:              correctStartAtUnix,
+				EndAt:                correctEndAtUnix,
+				FeatureId:            fID,
+				FeatureVersion:       fVersion,
+				VariationIds:         []string{vID1},
+			},
+			expected:    nil,
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalizeWithTemplate(locale.PermissionDenied)),
+		},
+		{
+			desc:    "success: one variation",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *eventCounterService) {
 				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryEvaluationCount(ctx, ns, correctStartAt, correctEndAt, fID, fVersion).Return(
 					[]*v2ecs.EvaluationEventCount{
@@ -220,7 +239,7 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController)
+			gs := newEventCounterService(t, mockController, nil, p.orgRole, p.envRole)
 			if p.setup != nil {
 				p.setup(gs)
 			}
@@ -282,7 +301,7 @@ func TestListExperiments(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newEventCounterService(t, mockController)
+			s := newEventCounterService(t, mockController, nil, nil, nil)
 			p.setup(s)
 			actual, err := s.listExperiments(context.Background(), p.inputFeatureID, p.inputFeatureVersion, p.environmentNamespace)
 			assert.Equal(t, p.expected, actual)
@@ -312,6 +331,8 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc        string
+		orgRole     *accountproto.AccountV2_Role_Organization
+		envRole     *accountproto.AccountV2_Role_Environment
 		setup       func(*eventCounterService)
 		input       *ecproto.GetExperimentResultRequest
 		expectedErr error
@@ -335,7 +356,19 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
-			desc: "success: get the result from storage",
+			desc:    "error: ErrPermissionDenied",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			input: &ecproto.GetExperimentResultRequest{
+				ExperimentId:         "eid",
+				EnvironmentNamespace: "ns0",
+			},
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalizeWithTemplate(locale.PermissionDenied)),
+		},
+		{
+			desc:    "success: get the result from storage",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *eventCounterService) {
 				s.mysqlExperimentResultStorage.(*v2ecsmock.MockExperimentResultStorage).EXPECT().GetExperimentResult(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -349,15 +382,17 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		gs := newEventCounterService(t, mockController)
-		if p.setup != nil {
-			p.setup(gs)
-		}
-		actual, err := gs.GetExperimentResult(ctx, p.input)
-		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
-		if err == nil {
-			assert.NotNil(t, actual)
-		}
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newEventCounterService(t, mockController, nil, p.orgRole, p.envRole)
+			if p.setup != nil {
+				p.setup(gs)
+			}
+			actual, err := gs.GetExperimentResult(ctx, p.input)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+			if err == nil {
+				assert.NotNil(t, actual)
+			}
+		})
 	}
 }
 
@@ -382,6 +417,8 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc        string
+		orgRole     *accountproto.AccountV2_Role_Organization
+		envRole     *accountproto.AccountV2_Role_Environment
 		setup       func(*eventCounterService)
 		input       *ecproto.ListExperimentResultsRequest
 		expected    *ecproto.ListExperimentResultsResponse
@@ -422,7 +459,21 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
-			desc: "success: no results",
+			desc:    "error: ErrPermissionDenied",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			input: &ecproto.ListExperimentResultsRequest{
+				FeatureId:            "fid",
+				FeatureVersion:       &wrappers.Int32Value{Value: int32(1)},
+				EnvironmentNamespace: "ns0",
+			},
+			expected:    nil,
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc:    "success: no results",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *eventCounterService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(
 					gomock.Any(), gomock.Any(),
@@ -501,7 +552,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newEventCounterService(t, mockController)
+			s := newEventCounterService(t, mockController, nil, p.orgRole, p.envRole)
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -542,6 +593,8 @@ func TestGetExperimentGoalCount(t *testing.T) {
 	}
 	patterns := []struct {
 		desc        string
+		orgRole     *accountproto.AccountV2_Role_Organization
+		envRole     *accountproto.AccountV2_Role_Environment
 		setup       func(*eventCounterService)
 		input       *ecproto.GetExperimentGoalCountRequest
 		expected    *ecproto.GetExperimentGoalCountResponse
@@ -599,7 +652,21 @@ func TestGetExperimentGoalCount(t *testing.T) {
 			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
 		},
 		{
-			desc: "success: one variation",
+			desc:    "error: ErrPermissionDenied",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			input: &ecproto.GetExperimentGoalCountRequest{
+				EnvironmentNamespace: ns,
+				FeatureId:            fID,
+				StartAt:              correctStartAtUnix,
+				EndAt:                correctEndAtUnix,
+			},
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc:    "success: one variation",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *eventCounterService) {
 				s.eventStorage.(*v2ecsmock.MockEventStorage).EXPECT().QueryGoalCount(ctx, ns, correctStartAt, correctEndAt, gID, fID, fVersion).Return(
 					[]*v2ecs.GoalEventCount{
@@ -699,7 +766,7 @@ func TestGetExperimentGoalCount(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newEventCounterService(t, mockController)
+			s := newEventCounterService(t, mockController, nil, p.orgRole, p.envRole)
 			if p.setup != nil {
 				p.setup(s)
 			}
@@ -733,6 +800,8 @@ func TestGetMAUCount(t *testing.T) {
 	}
 	patterns := []struct {
 		desc        string
+		orgRole     *accountproto.AccountV2_Role_Organization
+		envRole     *accountproto.AccountV2_Role_Environment
 		setup       func(*eventCounterService)
 		input       *ecproto.GetMAUCountRequest
 		expected    *ecproto.GetMAUCountResponse
@@ -759,7 +828,17 @@ func TestGetMAUCount(t *testing.T) {
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
-			desc: "success",
+			desc:        "error: ErrPermissionDenied",
+			orgRole:     toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole:     toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			input:       input,
+			expected:    nil,
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc:    "success",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *eventCounterService) {
 				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCount(
 					ctx, input.EnvironmentNamespace, input.YearMonth,
@@ -775,7 +854,7 @@ func TestGetMAUCount(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController)
+			gs := newEventCounterService(t, mockController, nil, p.orgRole, p.envRole)
 			if p.setup != nil {
 				p.setup(gs)
 			}
@@ -810,6 +889,8 @@ func TestSummarizeMAUCounts(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setup       func(*eventCounterService)
+		orgRole     *accountproto.AccountV2_Role_Organization
+		envRole     *accountproto.AccountV2_Role_Environment
 		input       *ecproto.SummarizeMAUCountsRequest
 		expected    *ecproto.SummarizeMAUCountsResponse
 		expectedErr error
@@ -871,7 +952,7 @@ func TestSummarizeMAUCounts(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController)
+			gs := newEventCounterService(t, mockController, nil, p.orgRole, p.envRole)
 			if p.setup != nil {
 				p.setup(gs)
 			}
@@ -1027,7 +1108,7 @@ func TestGetTotalEventCounts(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController)
+			gs := newEventCounterService(t, mockController, nil, nil, nil)
 			actual := gs.getTotalEventCounts(p.input)
 			assert.Equal(t, p.expected, actual)
 		})
@@ -1075,7 +1156,7 @@ func TestGetTimestamps(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController)
+			gs := newEventCounterService(t, mockController, nil, nil, nil)
 			timestamps, timestampUnit, err := gs.getTimestamps(p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Len(t, timestamps, p.expectedLen)
@@ -1146,6 +1227,8 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 
 	patterns := []struct {
 		desc        string
+		orgRole     *accountproto.AccountV2_Role_Organization
+		envRole     *accountproto.AccountV2_Role_Environment
 		setup       func(context.Context, *eventCounterService)
 		input       *ecproto.GetEvaluationTimeseriesCountRequest
 		expected    *ecproto.GetEvaluationTimeseriesCountResponse
@@ -1293,7 +1376,21 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
-			desc: "success",
+			desc:    "error: ErrPermissionDenied",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			input: &ecproto.GetEvaluationTimeseriesCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				FeatureId:            fID,
+				TimeRange:            ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
+			},
+			expected:    nil,
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc:    "success",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_EDITOR),
 			setup: func(ctx context.Context, s *eventCounterService) {
 				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
 					EnvironmentNamespace: environmentNamespace,
@@ -1362,7 +1459,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newEventCounterService(t, mockController)
+			s := newEventCounterService(t, mockController, nil, p.orgRole, p.envRole)
 			if p.setup != nil {
 				p.setup(ctx, s)
 			}
@@ -1414,6 +1511,9 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setup       func(*eventCounterService)
+		envId       *string
+		orgRole     *accountproto.AccountV2_Role_Organization
+		envRole     *accountproto.AccountV2_Role_Environment
 		input       *ecproto.GetOpsEvaluationUserCountRequest
 		expected    *ecproto.GetOpsEvaluationUserCountResponse
 		expectedErr error
@@ -1474,7 +1574,22 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 			expectedErr: createError(statusVariationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
 		},
 		{
-			desc: "success",
+			desc:    "error: ErrPermissionDenied",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			input: &ecproto.GetOpsEvaluationUserCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				OpsRuleId:            opsRuleID,
+				ClauseId:             clauseID,
+				FeatureId:            fID,
+				FeatureVersion:       int32(fVersion),
+			},
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc:    "success",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *eventCounterService) {
 				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
 					GetUserCount(cacheKey).Return(int64(1234), nil)
@@ -1495,7 +1610,8 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "success: without environment_namespace",
+			desc:  "success: without environment_namespace",
+			envId: toPtr(""),
 			setup: func(s *eventCounterService) {
 				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
 					GetUserCount(cacheKeyWithoutNS).Return(int64(9876), nil)
@@ -1517,7 +1633,7 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController)
+			gs := newEventCounterService(t, mockController, p.envId, p.orgRole, p.envRole)
 			if p.setup != nil {
 				p.setup(gs)
 			}
@@ -1556,6 +1672,9 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		setup       func(*eventCounterService)
+		envId       *string
+		orgRole     *accountproto.AccountV2_Role_Organization
+		envRole     *accountproto.AccountV2_Role_Environment
 		input       *ecproto.GetOpsGoalUserCountRequest
 		expected    *ecproto.GetOpsGoalUserCountResponse
 		expectedErr error
@@ -1616,7 +1735,22 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			expectedErr: createError(statusVariationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
 		},
 		{
-			desc: "success",
+			desc:    "error: ErrPermissionDenied",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			input: &ecproto.GetOpsGoalUserCountRequest{
+				EnvironmentNamespace: environmentNamespace,
+				OpsRuleId:            opsRuleID,
+				ClauseId:             clauseID,
+				FeatureId:            fID,
+				FeatureVersion:       int32(fVersion),
+			},
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc:    "success",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *eventCounterService) {
 				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
 					GetUserCount(cacheKey).Return(int64(1234), nil)
@@ -1637,7 +1771,8 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "success: without environment_namespace",
+			desc:  "success: without environment_namespace",
+			envId: toPtr(""),
 			setup: func(s *eventCounterService) {
 				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
 					GetUserCount(cacheKeyWithoutNS).Return(int64(9876), nil)
@@ -1659,7 +1794,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController)
+			gs := newEventCounterService(t, mockController, p.envId, p.orgRole, p.envRole)
 			if p.setup != nil {
 				p.setup(gs)
 			}
@@ -1735,7 +1870,26 @@ func getDate(t time.Time) int64 {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, jpLocation).Unix()
 }
 
-func newEventCounterService(t *testing.T, mockController *gomock.Controller) *eventCounterService {
+func newEventCounterService(t *testing.T, mockController *gomock.Controller, SpecifiedEnvironmentId *string, SpecifiedOrgRole *accountproto.AccountV2_Role_Organization, SpecifiedEnvRole *accountproto.AccountV2_Role_Environment) *eventCounterService {
+	var or accountproto.AccountV2_Role_Organization
+	var er accountproto.AccountV2_Role_Environment
+	var envId string
+	if SpecifiedOrgRole != nil {
+		or = *SpecifiedOrgRole
+	} else {
+		or = accountproto.AccountV2_Role_Organization_ADMIN
+	}
+	if SpecifiedEnvRole != nil {
+		er = *SpecifiedEnvRole
+	} else {
+		er = accountproto.AccountV2_Role_Environment_EDITOR
+	}
+	if SpecifiedEnvironmentId != nil {
+		envId = *SpecifiedEnvironmentId
+	} else {
+		envId = "ns0"
+	}
+
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
 	metrics := metrics.NewMetrics(
@@ -1747,15 +1901,11 @@ func newEventCounterService(t *testing.T, mockController *gomock.Controller) *ev
 	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
 		Account: &accountproto.AccountV2{
 			Email:            "email",
-			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			OrganizationRole: or,
 			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 				{
-					EnvironmentId: "ns0",
-					Role:          accountproto.AccountV2_Role_Environment_EDITOR,
-				},
-				{
-					EnvironmentId: "",
-					Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+					EnvironmentId: envId,
+					Role:          er,
 				},
 			},
 		},
@@ -1884,7 +2034,7 @@ func TestGetUserCounts(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController)
+			gs := newEventCounterService(t, mockController, nil, nil, nil)
 			if p.setup != nil {
 				p.setup(gs)
 			}
@@ -1934,9 +2084,14 @@ func TestCheckAdminRole(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			gs := newEventCounterService(t, mockController)
+			gs := newEventCounterService(t, mockController, nil, nil, nil)
 			_, actualErr := gs.checkSystemAdminRole(p.inputCtx, localizer)
 			assert.Equal(t, actualErr, p.expectedErr)
 		})
 	}
+}
+
+// convert to pointer
+func toPtr[T any](value T) *T {
+	return &value
 }
