@@ -164,6 +164,39 @@ func createFeatureServiceNew(c *gomock.Controller) *FeatureService {
 	}
 }
 
+func createFeatureServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, ro accountproto.AccountV2_Role_Organization, re accountproto.AccountV2_Role_Environment) *FeatureService {
+	segmentUsersPublisher := publishermock.NewMockPublisher(c)
+	domainPublisher := publishermock.NewMockPublisher(c)
+	a := accountclientmock.NewMockClient(c)
+	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
+		Account: &accountproto.AccountV2{
+			Email:            "email",
+			OrganizationRole: ro,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: "ns0",
+					Role:          re,
+				},
+			},
+		},
+	}
+	a.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
+	return &FeatureService{
+		flagTriggerStorage:    mock.NewMockFlagTriggerStorage(c),
+		featureStorage:        mock.NewMockFeatureStorage(c),
+		mysqlClient:           mysqlmock.NewMockClient(c),
+		accountClient:         a,
+		autoOpsClient:         aoclientmock.NewMockClient(c),
+		experimentClient:      experimentclientmock.NewMockClient(c),
+		featuresCache:         cachev3mock.NewMockFeaturesCache(c),
+		segmentUsersPublisher: segmentUsersPublisher,
+		domainPublisher:       domainPublisher,
+		triggerURL:            "http://localhost",
+		opts:                  &defaultOptions,
+		logger:                defaultOptions.logger,
+	}
+}
+
 func createFeatureVariations() []*featureproto.Variation {
 	return []*featureproto.Variation{
 		{

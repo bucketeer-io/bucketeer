@@ -27,6 +27,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
@@ -289,34 +291,36 @@ func TestGetSegmentMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	testcases := []struct {
+		desc                 string
 		setup                func(*FeatureService)
+		service              *FeatureService
+		context              context.Context
 		id                   string
 		environmentNamespace string
-		expected             error
+		getExpectedErr       func(localizer locale.Localizer) error
 	}{
 		{
+			desc:    "error: missing id",
+			service: createFeatureService(mockController),
+			context: metadata.NewIncomingContext(
+				createContextWithToken(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
 			setup:                nil,
 			id:                   "",
 			environmentNamespace: "ns0",
-			expected:             createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"), localizer)
+			},
 		},
 		{
+			desc:    "error: segment not found",
+			service: createFeatureService(mockController),
+			context: metadata.NewIncomingContext(
+				createContextWithToken(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
 			setup: func(s *FeatureService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -326,9 +330,17 @@ func TestGetSegmentMySQL(t *testing.T) {
 			},
 			id:                   "id",
 			environmentNamespace: "ns0",
-			expected:             createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusNotFound, localizer.MustLocalize(locale.NotFoundError), localizer)
+			},
 		},
 		{
+			desc:    "success",
+			service: createFeatureService(mockController),
+			context: metadata.NewIncomingContext(
+				createContextWithToken(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
 			setup: func(s *FeatureService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil).Times(2)
@@ -345,18 +357,65 @@ func TestGetSegmentMySQL(t *testing.T) {
 			},
 			id:                   "id",
 			environmentNamespace: "ns0",
-			expected:             nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "success with Viewer account",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
+			context: metadata.NewIncomingContext(
+				createContextWithTokenRoleUnassigned(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			setup: func(s *FeatureService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil).Times(2)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row).Times(2)
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+			},
+			id:                   "id",
+			environmentNamespace: "ns0",
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "errPermissionDenied",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			context: metadata.NewIncomingContext(
+				createContextWithTokenRoleUnassigned(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			setup:                func(s *FeatureService) {},
+			id:                   "id",
+			environmentNamespace: "ns0",
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			},
 		},
 	}
 	for _, tc := range testcases {
-		service := createFeatureService(mockController)
-		if tc.setup != nil {
-			tc.setup(service)
-		}
-		ctx = setToken(ctx)
-		req := &featureproto.GetSegmentRequest{Id: tc.id, EnvironmentNamespace: tc.environmentNamespace}
-		_, err := service.GetSegment(ctx, req)
-		assert.Equal(t, tc.expected, err)
+		t.Run(tc.desc, func(t *testing.T) {
+			service := tc.service
+			if tc.setup != nil {
+				tc.setup(service)
+			}
+			ctx := tc.context
+			localizer := locale.NewLocalizer(ctx)
+
+			req := &featureproto.GetSegmentRequest{Id: tc.id, EnvironmentNamespace: tc.environmentNamespace}
+			_, err := service.GetSegment(ctx, req)
+			assert.Equal(t, tc.getExpectedErr(localizer), err)
+		})
 	}
 }
 
@@ -365,34 +424,36 @@ func TestListSegmentsMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	testcases := []struct {
+		desc                 string
+		service              *FeatureService
+		context              context.Context
 		setup                func(*FeatureService)
 		pageSize             int64
 		environmentNamespace string
-		expected             error
+		getExpectedErr       func(localizer locale.Localizer) error
 	}{
 		{
+			desc:    "error: exceeded max page size per request",
+			service: createFeatureService(mockController),
+			context: metadata.NewIncomingContext(
+				createContextWithTokenRoleUnassigned(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
 			setup:                nil,
 			pageSize:             int64(maxPageSizePerRequest + 1),
 			environmentNamespace: "ns0",
-			expected:             createError(statusExceededMaxPageSizePerRequest, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "page_size")),
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusExceededMaxPageSizePerRequest, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "page_size"), localizer)
+			},
 		},
 		{
+			desc:    "success",
+			service: createFeatureService(mockController),
+			context: metadata.NewIncomingContext(
+				createContextWithTokenRoleUnassigned(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
 			setup: func(s *FeatureService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil).Times(2)
@@ -409,18 +470,65 @@ func TestListSegmentsMySQL(t *testing.T) {
 			},
 			pageSize:             int64(maxPageSizePerRequest),
 			environmentNamespace: "ns0",
-			expected:             nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "success with Viewer account",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
+			context: metadata.NewIncomingContext(
+				createContextWithTokenRoleUnassigned(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			setup: func(s *FeatureService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil).Times(2)
+				rows.EXPECT().Next().Return(false).Times(2)
+				rows.EXPECT().Err().Return(nil).Times(2)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil).Times(2)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil).Times(2)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row).Times(2)
+			},
+			pageSize:             int64(maxPageSizePerRequest),
+			environmentNamespace: "ns0",
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "errPermissionDenied",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			context: metadata.NewIncomingContext(
+				createContextWithTokenRoleUnassigned(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			setup:                func(s *FeatureService) {},
+			pageSize:             int64(maxPageSizePerRequest),
+			environmentNamespace: "ns0",
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			},
 		},
 	}
 	for _, tc := range testcases {
-		service := createFeatureService(mockController)
-		if tc.setup != nil {
-			tc.setup(service)
-		}
-		ctx = setToken(ctx)
-		req := &featureproto.ListSegmentsRequest{PageSize: tc.pageSize, EnvironmentNamespace: tc.environmentNamespace}
-		_, err := service.ListSegments(ctx, req)
-		assert.Equal(t, tc.expected, err)
+		t.Run(tc.desc, func(t *testing.T) {
+			service := tc.service
+			if tc.setup != nil {
+				tc.setup(service)
+			}
+			ctx := tc.context
+			localizer := locale.NewLocalizer(ctx)
+
+			req := &featureproto.ListSegmentsRequest{PageSize: tc.pageSize, EnvironmentNamespace: tc.environmentNamespace}
+			_, err := service.ListSegments(ctx, req)
+			assert.Equal(t, tc.getExpectedErr(localizer), err)
+		})
 	}
 }
 

@@ -28,6 +28,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+
 	acmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
 	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
@@ -46,33 +48,28 @@ func TestGetFeatureMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := createContextWithToken()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
-		desc     string
-		setup    func(*FeatureService)
-		input    string
-		expected error
+		desc           string
+		service        *FeatureService
+		context        context.Context
+		setup          func(*FeatureService)
+		input          string
+		getExpectedErr func(localizer locale.Localizer) error
 	}{
 		{
-			desc:     "error: id is empty",
-			input:    "",
-			expected: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			desc:    "error: id is empty",
+			service: createFeatureServiceNew(mockController),
+			context: createContextWithToken(),
+			input:   "",
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"), localizer)
+			},
 		},
 		{
-			desc: "success",
+			desc:    "success",
+			service: createFeatureServiceNew(mockController),
+			context: createContextWithToken(),
 			setup: func(s *FeatureService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -87,22 +84,63 @@ func TestGetFeatureMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			input:    "fid",
-			expected: nil,
+			input: "fid",
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "success with Viewer Account",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
+			context: createContextWithTokenRoleUnassigned(),
+			setup: func(s *FeatureService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+			},
+			input: "fid",
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "errPermissionDenied",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			context: createContextWithTokenRoleUnassigned(),
+			setup:   func(s *FeatureService) {},
+			input:   "fid",
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			fs := createFeatureServiceNew(mockController)
+			fs := p.service
 			if p.setup != nil {
 				p.setup(fs)
 			}
+			ctx := p.context
+			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+				"accept-language": []string{"ja"},
+			})
 			req := &featureproto.GetFeatureRequest{
 				EnvironmentNamespace: "ns0",
 				Id:                   p.input,
 			}
+			localizer := locale.NewLocalizer(ctx)
+
 			_, err := fs.GetFeature(ctx, req)
-			assert.Equal(t, p.expected, err)
+			assert.Equal(t, p.getExpectedErr(localizer), err)
 		})
 	}
 }
@@ -111,38 +149,37 @@ func TestGetFeaturesMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	ctx := createContextWithToken()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
 
 	patterns := []struct {
-		desc     string
-		setup    func(*FeatureService)
-		input    []string
-		expected error
+		desc           string
+		service        *FeatureService
+		context        context.Context
+		setup          func(*FeatureService)
+		input          []string
+		getExpectedErr func(localizer locale.Localizer) error
 	}{
 		{
-			desc:     "error: id is nil",
-			input:    nil,
-			expected: createError(statusMissingIDs, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ids")),
+			desc:    "error: id is nil",
+			service: createFeatureServiceNew(mockController),
+			context: createContextWithToken(),
+			input:   nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusMissingIDs, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ids"), localizer)
+			},
 		},
 		{
-			desc:     "error: contains empty id",
-			input:    []string{"id", ""},
-			expected: createError(statusMissingIDs, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ids")),
+			desc:    "error: contains empty id",
+			service: createFeatureServiceNew(mockController),
+			context: createContextWithToken(),
+			input:   []string{"id", ""},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusMissingIDs, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ids"), localizer)
+			},
 		},
 		{
-			desc: "success",
+			desc:    "success",
+			service: createFeatureServiceNew(mockController),
+			context: createContextWithToken(),
 			setup: func(s *FeatureService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -157,13 +194,48 @@ func TestGetFeaturesMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			input:    []string{"fid"},
-			expected: nil,
+			input: []string{"fid"},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "success with Viewer Account",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
+			context: createContextWithTokenRoleUnassigned(),
+			setup: func(s *FeatureService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			input: []string{"fid"},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "errPermissionDenied",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			context: createContextWithTokenRoleUnassigned(),
+			setup:   func(s *FeatureService) {},
+			input:   []string{"fid"},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			fs := createFeatureServiceNew(mockController)
+			fs := p.service
 			if p.setup != nil {
 				p.setup(fs)
 			}
@@ -171,8 +243,14 @@ func TestGetFeaturesMySQL(t *testing.T) {
 				EnvironmentNamespace: "ns0",
 				Ids:                  p.input,
 			}
+			ctx := p.context
+			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+				"accept-language": []string{"ja"},
+			})
+			localizer := locale.NewLocalizer(ctx)
+
 			_, err := fs.GetFeatures(ctx, req)
-			assert.Equal(t, p.expected, err)
+			assert.Equal(t, p.getExpectedErr(localizer), err)
 		})
 	}
 }
@@ -182,35 +260,32 @@ func TestListFeaturesMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
+		desc                 string
+		service              *FeatureService
+		context              context.Context
 		setup                func(*FeatureService)
 		orderBy              featureproto.ListFeaturesRequest_OrderBy
 		hasExperiment        bool
 		environmentNamespace string
-		expected             error
+		getExpectedErr       func(localizer locale.Localizer) error
 	}{
 		{
+			desc:                 "error: invalid order by",
+			service:              createFeatureService(mockController),
+			context:              createContextWithToken(),
 			setup:                nil,
 			orderBy:              featureproto.ListFeaturesRequest_OrderBy(999),
 			hasExperiment:        false,
 			environmentNamespace: "ns0",
-			expected:             createError(statusInvalidOrderBy, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by")),
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusInvalidOrderBy, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"), localizer)
+			},
 		},
 		{
+			desc:    "success do not has Experiment",
+			service: createFeatureService(mockController),
+			context: createContextWithToken(),
 			setup: func(s *FeatureService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -228,9 +303,12 @@ func TestListFeaturesMySQL(t *testing.T) {
 			orderBy:              featureproto.ListFeaturesRequest_DEFAULT,
 			hasExperiment:        false,
 			environmentNamespace: "ns0",
-			expected:             nil,
+			getExpectedErr:       func(localizer locale.Localizer) error { return nil },
 		},
 		{
+			desc:    "success has Experiment",
+			service: createFeatureService(mockController),
+			context: createContextWithToken(),
 			setup: func(s *FeatureService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -248,20 +326,66 @@ func TestListFeaturesMySQL(t *testing.T) {
 			orderBy:              featureproto.ListFeaturesRequest_DEFAULT,
 			hasExperiment:        true,
 			environmentNamespace: "ns0",
-			expected:             nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "success with Viewer Account",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
+			context: createContextWithTokenRoleUnassigned(),
+			setup: func(s *FeatureService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			orderBy:              featureproto.ListFeaturesRequest_DEFAULT,
+			hasExperiment:        false,
+			environmentNamespace: "ns0",
+			getExpectedErr:       func(localizer locale.Localizer) error { return nil },
+		},
+		{
+			desc:                 "errPermissionDenied",
+			service:              createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			context:              createContextWithTokenRoleUnassigned(),
+			setup:                func(s *FeatureService) {},
+			orderBy:              featureproto.ListFeaturesRequest_DEFAULT,
+			hasExperiment:        false,
+			environmentNamespace: "ns0",
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			},
 		},
 	}
 	for _, p := range patterns {
-		service := createFeatureService(mockController)
-		if p.setup != nil {
-			p.setup(service)
-		}
-		req := &featureproto.ListFeaturesRequest{
-			OrderBy:              p.orderBy,
-			EnvironmentNamespace: "ns0",
-		}
-		_, err := service.ListFeatures(ctx, req)
-		assert.Equal(t, p.expected, err)
+		t.Run(p.desc, func(t *testing.T) {
+			service := p.service
+			if p.setup != nil {
+				p.setup(service)
+			}
+			req := &featureproto.ListFeaturesRequest{
+				OrderBy:              p.orderBy,
+				EnvironmentNamespace: "ns0",
+				HasExperiment:        &wrappers.BoolValue{Value: p.hasExperiment},
+			}
+			ctx := p.context
+			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+				"accept-language": []string{"ja"},
+			})
+			localizer := locale.NewLocalizer(ctx)
+
+			_, err := service.ListFeatures(ctx, req)
+			assert.Equal(t, p.getExpectedErr(localizer), err)
+		})
 	}
 }
 
@@ -539,43 +663,41 @@ func TestEvaluateFeatures(t *testing.T) {
 	vID3 := newUUID(t)
 	vID4 := newUUID(t)
 
-	ctx := createContextWithToken()
-	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-		"accept-language": []string{"ja"},
-	})
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
-		desc        string
-		setup       func(*FeatureService)
-		input       *featureproto.EvaluateFeaturesRequest
-		expected    *featureproto.EvaluateFeaturesResponse
-		expectedErr error
+		desc           string
+		service        *FeatureService
+		context        context.Context
+		setup          func(*FeatureService)
+		input          *featureproto.EvaluateFeaturesRequest
+		expected       *featureproto.EvaluateFeaturesResponse
+		getExpectedErr func(localizer locale.Localizer) error
 	}{
 		{
-			desc:        "fail: ErrMissingUser",
-			setup:       nil,
-			input:       &featureproto.EvaluateFeaturesRequest{},
-			expected:    nil,
-			expectedErr: createError(statusMissingUser, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user")),
+			desc:     "fail: ErrMissingUser",
+			context:  createContextWithToken(),
+			service:  createFeatureService(mockController),
+			setup:    nil,
+			input:    &featureproto.EvaluateFeaturesRequest{},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusMissingUser, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user"), localizer)
+			},
 		},
 		{
-			desc:        "fail: ErrMissingUserID",
-			setup:       nil,
-			input:       &featureproto.EvaluateFeaturesRequest{User: &userproto.User{}},
-			expected:    nil,
-			expectedErr: createError(statusMissingUserID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_id")),
+			desc:     "fail: ErrMissingUserID",
+			context:  createContextWithToken(),
+			service:  createFeatureService(mockController),
+			setup:    nil,
+			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{}},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusMissingUserID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_id"), localizer)
+			},
 		},
 		{
-			desc: "fail: return errInternal when getting features",
+			desc:    "fail: return errInternal when getting features",
+			context: createContextWithToken(),
+			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, errors.New("error"))
@@ -583,12 +705,16 @@ func TestEvaluateFeatures(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			input:       &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0", Tag: "android"},
-			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0", Tag: "android"},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusInternal, localizer.MustLocalize(locale.InternalServerError), localizer)
+			},
 		},
 		{
-			desc: "success: get from cache",
+			desc:    "success: get from cache",
+			context: createContextWithToken(),
+			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					&featureproto.Features{
@@ -710,10 +836,14 @@ func TestEvaluateFeatures(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
 		},
 		{
-			desc: "success: get from cache and filter by tag: return empty",
+			desc:    "success: get from cache and filter by tag: return empty",
+			context: createContextWithToken(),
+			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					&featureproto.Features{
@@ -826,10 +956,14 @@ func TestEvaluateFeatures(t *testing.T) {
 					Evaluations: []*featureproto.Evaluation{},
 				},
 			},
-			expectedErr: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
 		},
 		{
-			desc: "success: get features from storage",
+			desc:    "success: get features from storage",
+			context: createContextWithToken(),
+			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					nil, errors.New("error"))
@@ -852,10 +986,14 @@ func TestEvaluateFeatures(t *testing.T) {
 					Evaluations: []*featureproto.Evaluation{},
 				},
 			},
-			expectedErr: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
 		},
 		{
-			desc: "fail: return errInternal when getting segment users",
+			desc:    "fail: return errInternal when getting segment users",
+			context: createContextWithToken(),
+			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					&featureproto.Features{
@@ -907,12 +1045,16 @@ func TestEvaluateFeatures(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			input:       &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0", Tag: "android"},
-			expected:    nil,
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0", Tag: "android"},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusInternal, localizer.MustLocalize(locale.InternalServerError), localizer)
+			},
 		},
 		{
-			desc: "success: get users from storage",
+			desc:    "success: get users from storage",
+			context: createContextWithToken(),
+			service: createFeatureService(mockController),
 			setup: func(s *FeatureService) {
 				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
 					&featureproto.Features{
@@ -981,26 +1123,77 @@ func TestEvaluateFeatures(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "success with viewer account",
+			context: createContextWithTokenRoleUnassigned(),
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
+			setup: func(s *FeatureService) {
+				s.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(gomock.Any()).Return(
+					nil, errors.New("error"))
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0", Tag: "android"},
+			expected: &featureproto.EvaluateFeaturesResponse{
+				UserEvaluations: &featureproto.UserEvaluations{
+					Evaluations: []*featureproto.Evaluation{},
+				},
+			},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:     "errPermissionDenied",
+			context:  createContextWithTokenRoleUnassigned(),
+			service:  createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			setup:    func(s *FeatureService) {},
+			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0", Tag: "android"},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			},
 		},
 	}
 	for _, p := range patterns {
-		service := createFeatureService(mockController)
-		if p.setup != nil {
-			p.setup(service)
-		}
-		resp, err := service.EvaluateFeatures(ctx, p.input)
-		if err == nil {
-			if len(resp.UserEvaluations.Evaluations) == 1 {
-				assert.Equal(t, p.expected.UserEvaluations.Evaluations[0].VariationId, resp.UserEvaluations.Evaluations[0].VariationId, p.desc)
-				assert.Equal(t, p.expected.UserEvaluations.Evaluations[0].Reason, resp.UserEvaluations.Evaluations[0].Reason, p.desc)
-			} else {
-				assert.Equal(t, p.expected.UserEvaluations.Evaluations, resp.UserEvaluations.Evaluations, p.desc)
+		t.Run(p.desc, func(t *testing.T) {
+			ctx := p.context
+			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+				"accept-language": []string{"ja"},
+			})
+			localizer := locale.NewLocalizer(ctx)
+
+			service := p.service
+			if p.setup != nil {
+				p.setup(service)
 			}
-		} else {
-			assert.Equal(t, p.expected, resp, p.desc)
-		}
-		assert.Equal(t, p.expectedErr, err, p.desc)
+			resp, err := service.EvaluateFeatures(ctx, p.input)
+			if err == nil {
+				if len(resp.UserEvaluations.Evaluations) == 1 {
+					assert.Equal(t, p.expected.UserEvaluations.Evaluations[0].VariationId, resp.UserEvaluations.Evaluations[0].VariationId, p.desc)
+					assert.Equal(t, p.expected.UserEvaluations.Evaluations[0].Reason, resp.UserEvaluations.Evaluations[0].Reason, p.desc)
+				} else {
+					assert.Equal(t, p.expected.UserEvaluations.Evaluations, resp.UserEvaluations.Evaluations, p.desc)
+				}
+			} else {
+				assert.Equal(t, p.expected, resp, p.desc)
+			}
+			assert.Equal(t, p.getExpectedErr(localizer), err, p.desc)
+		})
 	}
 }
 
@@ -1237,6 +1430,93 @@ func TestEvaluateSingleFeature(t *testing.T) {
 		assert.Equal(t, p.input.FeatureId, p.expected.UserEvaluations.Evaluations[0].FeatureId, p.desc)
 		assert.Equal(t, p.expected.UserEvaluations.Evaluations[0].VariationId, resp.UserEvaluations.Evaluations[0].VariationId, p.desc)
 		assert.Equal(t, p.expected.UserEvaluations.Evaluations[0].Reason, resp.UserEvaluations.Evaluations[0].Reason, p.desc)
+	}
+}
+
+func TestListEnabledFeaturesMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc           string
+		service        *FeatureService
+		context        context.Context
+		setup          func(*FeatureService)
+		getExpectedErr func(localizer locale.Localizer) error
+	}{
+		{
+			desc:    "success",
+			service: createFeatureServiceNew(mockController),
+			context: createContextWithToken(),
+			setup: func(s *FeatureService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "success with Viewer Account",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
+			context: createContextWithTokenRoleUnassigned(),
+			setup: func(s *FeatureService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+			},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "errPermissionDenied",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			context: createContextWithTokenRoleUnassigned(),
+			setup:   func(s *FeatureService) {},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			fs := p.service
+			if p.setup != nil {
+				p.setup(fs)
+			}
+			ctx := p.context
+			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+				"accept-language": []string{"ja"},
+			})
+			req := &featureproto.ListEnabledFeaturesRequest{
+				EnvironmentNamespace: "ns0",
+			}
+			localizer := locale.NewLocalizer(ctx)
+
+			_, err := fs.ListEnabledFeatures(ctx, req)
+			assert.Equal(t, p.getExpectedErr(localizer), err)
+		})
 	}
 }
 

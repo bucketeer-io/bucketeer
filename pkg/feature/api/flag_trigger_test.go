@@ -27,6 +27,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2/mock"
@@ -130,79 +132,136 @@ func TestGetFlagTrigger(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := metadata.NewIncomingContext(
-		createContextWithToken(),
-		metadata.MD{"accept-language": []string{"ja"}},
-	)
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
-	baseFlagTrigger := &proto.FlagTrigger{
-		Id:                   "1",
-		FeatureId:            "featureId",
-		EnvironmentNamespace: "namespace",
-		Type:                 proto.FlagTrigger_Type_WEBHOOK,
-		Action:               proto.FlagTrigger_Action_ON,
-		Description:          "base",
-		TriggerCount:         100,
-		LastTriggeredAt:      500,
-		Token:                "test-token",
-		Disabled:             false,
-		CreatedAt:            200,
-		UpdatedAt:            300,
-	}
+	baseId := "1"
+	baseEnvironmentNamespace := "ns0"
 
 	patterns := []struct {
-		desc        string
-		setup       func(service *FeatureService)
-		input       *proto.GetFlagTriggerRequest
-		expectedErr error
+		desc           string
+		service        *FeatureService
+		context        context.Context
+		setup          func(service *FeatureService)
+		input          *proto.GetFlagTriggerRequest
+		getExpectedErr func(localizer locale.Localizer) error
 	}{
 		{
-			desc:        "Error Validate",
-			setup:       nil,
-			input:       &proto.GetFlagTriggerRequest{},
-			expectedErr: createError(statusMissingTriggerID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate)),
+			desc: "Error Validate",
+			context: metadata.NewIncomingContext(
+				createContextWithToken(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			service: createFeatureServiceNew(mockController),
+			setup:   nil,
+			input:   &proto.GetFlagTriggerRequest{},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusMissingTriggerID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate), localizer)
+			},
 		},
 		{
 			desc: "Error Not Found",
+			context: metadata.NewIncomingContext(
+				createContextWithToken(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			service: createFeatureServiceNew(mockController),
 			setup: func(s *FeatureService) {
 				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, v2fs.ErrFlagTriggerNotFound)
 			},
-			input:       &proto.GetFlagTriggerRequest{Id: "1", EnvironmentNamespace: "namespace"},
-			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			input: &proto.GetFlagTriggerRequest{Id: "1", EnvironmentNamespace: "namespace"},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusNotFound, localizer.MustLocalize(locale.NotFoundError), localizer)
+			},
 		},
-
 		{
 			desc: "Success",
+			context: metadata.NewIncomingContext(
+				createContextWithToken(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			service: createFeatureServiceNew(mockController),
 			setup: func(s *FeatureService) {
 				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.FlagTrigger{
-					FlagTrigger: baseFlagTrigger,
+					FlagTrigger: &proto.FlagTrigger{
+						Id:                   baseId,
+						FeatureId:            "featureId",
+						EnvironmentNamespace: baseEnvironmentNamespace,
+						Type:                 proto.FlagTrigger_Type_WEBHOOK,
+						Action:               proto.FlagTrigger_Action_ON,
+						Description:          "base",
+						TriggerCount:         100,
+						LastTriggeredAt:      500,
+						Token:                "test-token",
+						Disabled:             false,
+						CreatedAt:            200,
+						UpdatedAt:            300,
+					},
 				}, nil)
 			},
-			input:       &proto.GetFlagTriggerRequest{Id: baseFlagTrigger.Id, EnvironmentNamespace: baseFlagTrigger.EnvironmentNamespace},
-			expectedErr: nil,
+			input: &proto.GetFlagTriggerRequest{Id: baseId, EnvironmentNamespace: baseEnvironmentNamespace},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc: "Success with Viewer Account",
+			context: metadata.NewIncomingContext(
+				createContextWithTokenRoleUnassigned(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
+			setup: func(s *FeatureService) {
+				s.flagTriggerStorage.(*mock.MockFlagTriggerStorage).EXPECT().GetFlagTrigger(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.FlagTrigger{
+					FlagTrigger: &proto.FlagTrigger{
+						Id:                   "1",
+						FeatureId:            "featureId",
+						EnvironmentNamespace: "ns0",
+						Type:                 proto.FlagTrigger_Type_WEBHOOK,
+						Action:               proto.FlagTrigger_Action_ON,
+						Description:          "base",
+						TriggerCount:         100,
+						LastTriggeredAt:      500,
+						Token:                "test-token",
+						Disabled:             false,
+						CreatedAt:            200,
+						UpdatedAt:            300,
+					},
+				}, nil)
+			},
+			input: &proto.GetFlagTriggerRequest{Id: baseId, EnvironmentNamespace: baseEnvironmentNamespace},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc: "errPermissionDenied",
+			context: metadata.NewIncomingContext(
+				createContextWithTokenRoleUnassigned(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			setup:   func(s *FeatureService) {},
+			input:   &proto.GetFlagTriggerRequest{Id: baseId, EnvironmentNamespace: baseEnvironmentNamespace},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := createFeatureServiceNew(mockController)
+			s := p.service
 			if p.setup != nil {
 				p.setup(s)
 			}
+			ctx := p.context
+			localizer := locale.NewLocalizer(ctx)
+
 			resp, err := s.GetFlagTrigger(ctx, p.input)
-			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.getExpectedErr(localizer), err)
 			if err == nil {
 				assert.NotNil(t, resp)
 			}
@@ -731,43 +790,50 @@ func TestListFlagTriggers(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := metadata.NewIncomingContext(
-		createContextWithToken(),
-		metadata.MD{"accept-language": []string{"ja"}},
-	)
-	localizer := locale.NewLocalizer(ctx)
-	createError := func(status *gstatus.Status, msg string) error {
-		st, err := status.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: msg,
-		})
-		require.NoError(t, err)
-		return st.Err()
-	}
-
 	patterns := []struct {
-		desc        string
-		setup       func(service *FeatureService)
-		input       *proto.ListFlagTriggersRequest
-		expected    *proto.ListFlagTriggersResponse
-		expectedErr error
+		desc           string
+		service        *FeatureService
+		context        context.Context
+		setup          func(service *FeatureService)
+		input          *proto.ListFlagTriggersRequest
+		expected       *proto.ListFlagTriggersResponse
+		getExpectedErr func(localizer locale.Localizer) error
 	}{
 		{
-			desc:        "Error Validate",
-			setup:       nil,
-			input:       &proto.ListFlagTriggersRequest{},
-			expected:    nil,
-			expectedErr: createError(statusMissingTriggerFeatureID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate)),
+			desc:    "Error Validate",
+			service: createFeatureServiceNew(mockController),
+			context: metadata.NewIncomingContext(
+				createContextWithToken(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			setup:    nil,
+			input:    &proto.ListFlagTriggersRequest{},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusMissingTriggerFeatureID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate), localizer)
+			},
 		},
 		{
-			desc:        "Error Invalid Argument",
-			setup:       nil,
-			input:       &proto.ListFlagTriggersRequest{FeatureId: "1", Cursor: "XXX"},
-			expected:    nil,
-			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
+			desc:    "Error Invalid Argument",
+			service: createFeatureServiceNew(mockController),
+			context: metadata.NewIncomingContext(
+				createContextWithToken(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			setup:    nil,
+			input:    &proto.ListFlagTriggersRequest{FeatureId: "1", Cursor: "XXX"},
+			expected: nil,
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"), localizer)
+			},
 		},
 		{
-			desc: "Success",
+			desc:    "Success",
+			service: createFeatureServiceNew(mockController),
+			context: metadata.NewIncomingContext(
+				createContextWithToken(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
 			setup: func(s *FeatureService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Next().Return(false)
@@ -782,19 +848,64 @@ func TestListFlagTriggers(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			input:       &proto.ListFlagTriggersRequest{FeatureId: "1", PageSize: 2, Cursor: ""},
-			expected:    &proto.ListFlagTriggersResponse{FlagTriggers: []*proto.ListFlagTriggersResponse_FlagTriggerWithUrl{}, Cursor: "0"},
-			expectedErr: nil,
+			input:    &proto.ListFlagTriggersRequest{FeatureId: "1", PageSize: 2, Cursor: ""},
+			expected: &proto.ListFlagTriggersResponse{FlagTriggers: []*proto.ListFlagTriggersResponse_FlagTriggerWithUrl{}, Cursor: "0"},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc:    "Success with Viewer Account",
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_MEMBER, accountproto.AccountV2_Role_Environment_VIEWER),
+			context: metadata.NewIncomingContext(
+				createContextWithTokenRoleUnassigned(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			setup: func(s *FeatureService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Close().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			input:    &proto.ListFlagTriggersRequest{FeatureId: "1", PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0"},
+			expected: &proto.ListFlagTriggersResponse{FlagTriggers: []*proto.ListFlagTriggersResponse_FlagTriggerWithUrl{}, Cursor: "0"},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return nil
+			},
+		},
+		{
+			desc: "errPermissionDenied",
+			context: metadata.NewIncomingContext(
+				createContextWithTokenRoleUnassigned(),
+				metadata.MD{"accept-language": []string{"ja"}},
+			),
+			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			setup:   func(s *FeatureService) {},
+			input:   &proto.ListFlagTriggersRequest{FeatureId: "1", PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0"},
+			getExpectedErr: func(localizer locale.Localizer) error {
+				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
+			},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := createFeatureServiceNew(mockController)
+			s := p.service
 			if p.setup != nil {
 				p.setup(s)
 			}
+			ctx := p.context
+			localizer := locale.NewLocalizer(ctx)
+
 			actual, err := s.ListFlagTriggers(ctx, p.input)
-			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.getExpectedErr(localizer), err)
 			assert.Equal(t, p.expected, actual)
 		})
 	}
