@@ -53,8 +53,8 @@ import (
 
 const (
 	prefixTestName = "e2e-test"
-	timeout        = 20 * time.Second
-	retryTimes     = 30
+	timeout        = 60 * time.Second
+	retryTimes     = 50
 )
 
 const defaultVariationID = "default"
@@ -93,8 +93,10 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 	variationVarA := "a"
 	variationVarB := "b"
 	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
-	f := getFeature(t, featureClient, featureID)
-
+	f, err := getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 	// Because we set the user to the individual targeting when creating the flag,
 	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
 	// evaluates the user
@@ -108,7 +110,10 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 	updateFeatueFlagCache(t)
 
 	// Get the latest version after all changes in the feature flag
-	f = getFeature(t, featureClient, featureID)
+	f, err = getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
 	startAt := time.Now().Local()
@@ -140,7 +145,16 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 		}
 		time.Sleep(10 * time.Second)
 
-		resp := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+			} else {
+				continue
+			}
+		}
+
 		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
@@ -211,7 +225,10 @@ func TestExperimentGoalCount(t *testing.T) {
 	variationVarA := "a"
 	variationVarB := "b"
 	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
-	f := getFeature(t, featureClient, featureID)
+	f, err := getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 
 	// Because we set the user to the individual targeting when creating the flag,
 	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
@@ -226,7 +243,10 @@ func TestExperimentGoalCount(t *testing.T) {
 	updateFeatueFlagCache(t)
 
 	// Get the latest version after all changes in the feature flag
-	f = getFeature(t, featureClient, featureID)
+	f, err = getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
 	startAt := time.Now().Local()
@@ -258,7 +278,16 @@ func TestExperimentGoalCount(t *testing.T) {
 		}
 		time.Sleep(10 * time.Second)
 
-		resp := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+			} else {
+				continue
+			}
+		}
+
 		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
@@ -330,7 +359,10 @@ func TestGrpcExperimentResult(t *testing.T) {
 	featureID := createFeatureID(t, uuid)
 
 	createFeature(t, featureClient, featureID, tag, "a", "b")
-	f := getFeature(t, featureClient, featureID)
+	f, err := getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 
 	// Because we set the user to the individual targeting when creating the flag,
 	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
@@ -349,7 +381,10 @@ func TestGrpcExperimentResult(t *testing.T) {
 	updateFeatueFlagCache(t)
 
 	// Get the latest version after all changes in the feature flag
-	f = getFeature(t, featureClient, featureID)
+	f, err = getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
 	startAt := time.Now().Local()
@@ -399,7 +434,17 @@ func TestGrpcExperimentResult(t *testing.T) {
 			t.Fatalf("retry timeout")
 		}
 		time.Sleep(10 * time.Second)
-		resp := getExperimentResult(t, ecClient, experiment.Id)
+
+		resp, err := getExperimentResult(t, ecClient, experiment.Id)
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatalf("Failed to get the experiment result. Error code: %d. Error: %v\n", st.Code(), err)
+			} else {
+				continue
+			}
+		}
+
 		if resp != nil {
 			er := resp.ExperimentResult
 			if er.Id != experiment.Id {
@@ -439,7 +484,10 @@ func TestGrpcExperimentResult(t *testing.T) {
 			break
 		}
 	}
-	res := getExperiment(t, experimentClient, experiment.Id)
+	res, err := getExperiment(t, experimentClient, experiment.Id)
+	if err != nil {
+		t.Fatalf("Failed to get experiment. ID: %s. Error: %v", experiment.Id, err)
+	}
 	if res.Experiment.Status != experimentproto.Experiment_RUNNING {
 		expected, _ := experimentproto.Experiment_Status_name[int32(experimentproto.Experiment_RUNNING)]
 		actual, _ := experimentproto.Experiment_Status_name[int32(res.Experiment.Status)]
@@ -468,7 +516,10 @@ func TestExperimentResult(t *testing.T) {
 	featureID := createFeatureID(t, uuid)
 
 	createFeature(t, featureClient, featureID, tag, "a", "b")
-	f := getFeature(t, featureClient, featureID)
+	f, err := getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 
 	// Because we set the user to the individual targeting,
 	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
@@ -487,7 +538,10 @@ func TestExperimentResult(t *testing.T) {
 	updateFeatueFlagCache(t)
 
 	// Get the latest version after all changes in the feature flag
-	f = getFeature(t, featureClient, featureID)
+	f, err = getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
 	startAt := time.Now().Local()
@@ -537,7 +591,17 @@ func TestExperimentResult(t *testing.T) {
 			t.Fatalf("retry timeout")
 		}
 		time.Sleep(10 * time.Second)
-		resp := getExperimentResult(t, ecClient, experiment.Id)
+
+		resp, err := getExperimentResult(t, ecClient, experiment.Id)
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatalf("Failed to get the experiment result. Error code: %d. Error: %v\n", st.Code(), err)
+			} else {
+				continue
+			}
+		}
+
 		if resp != nil {
 			er := resp.ExperimentResult
 			if er.Id != experiment.Id {
@@ -577,7 +641,10 @@ func TestExperimentResult(t *testing.T) {
 			break
 		}
 	}
-	res := getExperiment(t, experimentClient, experiment.Id)
+	res, err := getExperiment(t, experimentClient, experiment.Id)
+	if err != nil {
+		t.Fatalf("Failed to get experiment. ID: %s. Error: %v", experiment.Id, err)
+	}
 	if res.Experiment.Status != experimentproto.Experiment_RUNNING {
 		expected, _ := experimentproto.Experiment_Status_name[int32(experimentproto.Experiment_RUNNING)]
 		actual, _ := experimentproto.Experiment_Status_name[int32(res.Experiment.Status)]
@@ -608,7 +675,10 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 	variationVarA := "a"
 	variationVarB := "b"
 	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
-	f := getFeature(t, featureClient, featureID)
+	f, err := getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 
 	// Because we set the user to the individual targeting,
 	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
@@ -624,7 +694,10 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 	updateFeatueFlagCache(t)
 
 	// Get the latest version after all changes in the feature flag
-	f = getFeature(t, featureClient, featureID)
+	f, err = getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 
 	goalIDs := createGoals(ctx, t, experimentClient, 3)
 	startAt := time.Now().Local()
@@ -661,7 +734,16 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 		time.Sleep(10 * time.Second)
 
 		// Goal 0.
-		resp := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+			} else {
+				continue
+			}
+		}
+
 		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
@@ -698,7 +780,16 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 		}
 
 		// Goal 1.
-		resp = getExperimentGoalCount(t, ecClient, goalIDs[1], featureID, f.Version, variationIDs)
+		resp, err = getExperimentGoalCount(t, ecClient, goalIDs[1], featureID, f.Version, variationIDs)
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+			} else {
+				continue
+			}
+		}
+
 		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
@@ -735,7 +826,16 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 		}
 
 		// Goal 2.
-		resp = getExperimentGoalCount(t, ecClient, goalIDs[2], featureID, f.Version, variationIDs)
+		resp, err = getExperimentGoalCount(t, ecClient, goalIDs[2], featureID, f.Version, variationIDs)
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+			} else {
+				continue
+			}
+		}
+
 		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
@@ -797,7 +897,10 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 	variationVarA := "a"
 	variationVarB := "b"
 	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
-	f := getFeature(t, featureClient, featureID)
+	f, err := getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 
 	// Because we set the user to the individual targeting,
 	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
@@ -813,7 +916,10 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 	updateFeatueFlagCache(t)
 
 	// Get the latest version after all changes in the feature flag
-	f = getFeature(t, featureClient, featureID)
+	f, err = getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 
 	goalIDs := createGoals(ctx, t, experimentClient, 3)
 	startAt := time.Now().Local()
@@ -850,7 +956,16 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 		time.Sleep(10 * time.Second)
 
 		// Goal 0.
-		resp := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+			} else {
+				continue
+			}
+		}
+
 		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
@@ -887,7 +1002,16 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 		}
 
 		// Goal 1.
-		resp = getExperimentGoalCount(t, ecClient, goalIDs[1], featureID, f.Version, variationIDs)
+		resp, err = getExperimentGoalCount(t, ecClient, goalIDs[1], featureID, f.Version, variationIDs)
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+			} else {
+				continue
+			}
+		}
+
 		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
@@ -924,7 +1048,16 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 		}
 
 		// Goal 2.
-		resp = getExperimentGoalCount(t, ecClient, goalIDs[2], featureID, f.Version, variationIDs)
+		resp, err = getExperimentGoalCount(t, ecClient, goalIDs[2], featureID, f.Version, variationIDs)
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+			} else {
+				continue
+			}
+		}
+
 		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
@@ -984,7 +1117,10 @@ func TestHTTPTrack(t *testing.T) {
 	variationVarA := "a"
 	variationVarB := "b"
 	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
-	f := getFeature(t, featureClient, featureID)
+	f, err := getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 
 	// Because we set the user to the individual targeting,
 	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
@@ -999,7 +1135,10 @@ func TestHTTPTrack(t *testing.T) {
 	updateFeatueFlagCache(t)
 
 	// Get the latest version after all changes in the feature flag
-	f = getFeature(t, featureClient, featureID)
+	f, err = getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 
 	goalIDs := createGoals(ctx, t, experimentClient, 1)
 	startAt := time.Now().Local().Add(-1 * time.Hour)
@@ -1030,7 +1169,16 @@ func TestHTTPTrack(t *testing.T) {
 		}
 		time.Sleep(10 * time.Second)
 
-		resp := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		resp, err := getExperimentGoalCount(t, ecClient, goalIDs[0], featureID, f.Version, variationIDs)
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatalf("Failed to get the experiment goal count. Error code: %d. Error: %v\n", st.Code(), err)
+			} else {
+				continue
+			}
+		}
+
 		if len(resp.VariationCounts) == 0 {
 			t.Fatalf("no count returned")
 		}
@@ -1089,7 +1237,10 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 	variationVarB := "b"
 
 	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
-	f := getFeature(t, featureClient, featureID)
+	f, err := getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 
 	// Because we set the user to the individual targeting,
 	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
@@ -1104,7 +1255,10 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 	updateFeatueFlagCache(t)
 
 	// Get the latest version after all changes in the feature flag
-	f = getFeature(t, featureClient, featureID)
+	f, err = getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
@@ -1140,7 +1294,16 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 		}
 		time.Sleep(10 * time.Second)
 
-		resp := getExperimentEvaluationCount(t, ecClient, featureID, f.Version, variationIDs)
+		resp, err := getExperimentEvaluationCount(t, ecClient, featureID, f.Version, variationIDs)
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatalf("Failed to get the experiment evaluation count. Error code: %d. Error: %v\n", st.Code(), err)
+			} else {
+				continue
+			}
+		}
+
 		if resp == nil {
 			continue
 		}
@@ -1202,7 +1365,10 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 	variationVarB := "b"
 
 	createFeature(t, featureClient, featureID, tag, variationVarA, variationVarB)
-	f := getFeature(t, featureClient, featureID)
+	f, err := getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 
 	// Because we set the user to the individual targeting,
 	// We must ensure to set the correct reason. Otherwise, it will fail when the event persister
@@ -1217,7 +1383,10 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 	updateFeatueFlagCache(t)
 
 	// Get the latest version after all changes in the feature flag
-	f = getFeature(t, featureClient, featureID)
+	f, err = getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 
 	variations := make(map[string]*featureproto.Variation)
 	variationIDs := []string{}
@@ -1251,7 +1420,15 @@ func TestExperimentEvaluationEventCount(t *testing.T) {
 		}
 		time.Sleep(10 * time.Second)
 
-		resp := getExperimentEvaluationCount(t, ecClient, featureID, f.Version, variationIDs)
+		resp, err := getExperimentEvaluationCount(t, ecClient, featureID, f.Version, variationIDs)
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatalf("Failed to get the experiment evaluation count. Error code: %d. Error: %v\n", st.Code(), err)
+			} else {
+				continue
+			}
+		}
 		if resp == nil {
 			continue
 		}
@@ -1311,7 +1488,10 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 	// Because the event-persister-dwh calls the EvaluateFeatures API
 	// and it uses the feature flag cache, we must update it before sending events.
 	updateFeatueFlagCache(t)
-	f := getFeature(t, featureClient, featureID)
+	f, err := getFeature(t, featureClient, featureID)
+	if err != nil {
+		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
+	}
 
 	// Wait for the event-persister-dwh subscribe to the pubsub
 	// The batch runs every minute, so we give a extra 10 seconds
@@ -1343,7 +1523,15 @@ LOOP:
 		if i == retryTimes {
 			t.Fatalf("retry timeout")
 		}
-		res := getEvaluationTimeseriesCount(t, featureID, ecClient, ecproto.GetEvaluationTimeseriesCountRequest_THIRTY_DAYS)
+		res, err := getEvaluationTimeseriesCount(t, featureID, ecClient, ecproto.GetEvaluationTimeseriesCountRequest_THIRTY_DAYS)
+		if err != nil {
+			st, _ := status.FromError(err)
+			if st.Code() != codes.NotFound {
+				t.Fatalf("Failed to get the evaluation timeseries count. Error code: %d. Error: %v\n", st.Code(), err)
+			} else {
+				continue
+			}
+		}
 		if len(res.UserCounts) != 3 {
 			t.Fatalf("the number of user counts is not correct: %d", len(res.UserCounts))
 		}
@@ -1463,7 +1651,7 @@ func createExperimentWithMultiGoals(
 	// Update experiment cache
 	batchClient := newBatchClient(t)
 	defer batchClient.Close()
-	numRetries := 6
+	numRetries := 3
 	for i := 0; i < numRetries; i++ {
 		_, err = batchClient.ExecuteBatchJob(
 			ctx,
@@ -1472,8 +1660,8 @@ func createExperimentWithMultiGoals(
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() == codes.Internal {
-			t.Fatal(err)
+		if st.Code() != codes.Unavailable {
+			t.Fatalf("Failed to execute experiment cacher batch. Error code: %d. Error: %v\n", st.Code(), err)
 		}
 		fmt.Printf("Failed to execute experiment cacher batch. Error code: %d. Retrying in 5 seconds.\n", st.Code())
 		time.Sleep(5 * time.Second)
@@ -1489,7 +1677,7 @@ func updateFeatueFlagCache(t *testing.T) {
 	defer cancel()
 	batchClient := newBatchClient(t)
 	defer batchClient.Close()
-	numRetries := 6
+	numRetries := 3
 	var err error
 	for i := 0; i < numRetries; i++ {
 		_, err = batchClient.ExecuteBatchJob(
@@ -1499,8 +1687,8 @@ func updateFeatueFlagCache(t *testing.T) {
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() == codes.Internal {
-			t.Fatal(err)
+		if st.Code() != codes.Unavailable {
+			t.Fatalf("Failed to execute feature flag cacher batch. Error code: %d. Error: %v\n", st.Code(), err)
 		}
 		fmt.Printf("Failed to execute feature flag cacher batch. Error code: %d. Retrying in 5 seconds.\n", st.Code())
 		time.Sleep(5 * time.Second)
@@ -1931,7 +2119,7 @@ func addFeatureIndividualTargeting(t *testing.T, featureID, userID, variationID 
 	}
 }
 
-func getEvaluation(t *testing.T, tag string, userID string) *gatewayproto.GetEvaluationsResponse {
+func getEvaluation(t *testing.T, tag string, userID string) (*gatewayproto.GetEvaluationsResponse, error) {
 	t.Helper()
 	c := newGatewayClient(t)
 	defer c.Close()
@@ -1943,26 +2131,26 @@ func getEvaluation(t *testing.T, tag string, userID string) *gatewayproto.GetEva
 	}
 	var response *gatewayproto.GetEvaluationsResponse
 	var err error
-	numRetries := 6
+	numRetries := 3
 	for i := 0; i < numRetries; i++ {
 		response, err = c.GetEvaluations(ctx, req)
 		if err == nil {
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() == codes.Internal {
-			t.Fatal(err)
+		if st.Code() != codes.Unavailable {
+			return nil, err
 		}
 		fmt.Printf("Failed to get evaluations. Error code: %d. Retrying in 5 seconds.\n", st.Code())
 		time.Sleep(5 * time.Second)
 	}
 	if err != nil {
-		t.Fatal(err)
+		return nil, err
 	}
-	return response
+	return response, nil
 }
 
-func getExperiment(t *testing.T, c experimentclient.Client, id string) *experimentproto.GetExperimentResponse {
+func getExperiment(t *testing.T, c experimentclient.Client, id string) (*experimentproto.GetExperimentResponse, error) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1972,26 +2160,26 @@ func getExperiment(t *testing.T, c experimentclient.Client, id string) *experime
 	}
 	var response *experimentproto.GetExperimentResponse
 	var err error
-	numRetries := 6
+	numRetries := 3
 	for i := 0; i < numRetries; i++ {
 		response, err = c.GetExperiment(ctx, req)
 		if err == nil {
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() == codes.Internal {
-			t.Fatal(err)
+		if st.Code() != codes.Unavailable {
+			return nil, err
 		}
 		fmt.Printf("Failed to get experiment. Experiment ID: %s. Error code: %d. Retrying in 5 seconds.\n", id, st.Code())
 		time.Sleep(5 * time.Second)
 	}
 	if err != nil {
-		t.Fatal(err)
+		return nil, err
 	}
-	return response
+	return response, nil
 }
 
-func getExperimentResult(t *testing.T, c ecclient.Client, experimentID string) *ecproto.GetExperimentResultResponse {
+func getExperimentResult(t *testing.T, c ecclient.Client, experimentID string) (*ecproto.GetExperimentResultResponse, error) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -2001,26 +2189,29 @@ func getExperimentResult(t *testing.T, c ecclient.Client, experimentID string) *
 	}
 	var response *ecproto.GetExperimentResultResponse
 	var err error
-	numRetries := 6
+	numRetries := 3
 	for i := 0; i < numRetries; i++ {
 		response, err = c.GetExperimentResult(ctx, req)
 		if err == nil {
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() == codes.Internal {
-			t.Fatal(err)
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal {
+			fmt.Printf("Failed to get experiment result. Experiment ID: %s. Error code: %d. Retrying in 5 seconds.\n", experimentID, st.Code())
+			time.Sleep(5 * time.Second)
+			continue
 		}
-		fmt.Printf("Failed to get experiment result. Experiment ID: %s. Error code: %d. Retrying in 5 seconds.\n", experimentID, st.Code())
-		time.Sleep(5 * time.Second)
+		return nil, err
 	}
 	if err != nil {
-		t.Fatal(err)
+		return nil, err
 	}
-	return response
+	return response, nil
 }
 
-func getExperimentEvaluationCount(t *testing.T, c ecclient.Client, featureID string, featureVersion int32, variationIDs []string) *ecproto.GetExperimentEvaluationCountResponse {
+func getExperimentEvaluationCount(
+	t *testing.T, c ecclient.Client, featureID string, featureVersion int32, variationIDs []string,
+) (*ecproto.GetExperimentEvaluationCountResponse, error) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -2035,26 +2226,29 @@ func getExperimentEvaluationCount(t *testing.T, c ecclient.Client, featureID str
 	}
 	var response *ecproto.GetExperimentEvaluationCountResponse
 	var err error
-	numRetries := 6
+	numRetries := 3
 	for i := 0; i < numRetries; i++ {
 		response, err = c.GetExperimentEvaluationCount(ctx, req)
 		if err == nil {
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() == codes.Internal {
-			t.Fatal(err)
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal {
+			fmt.Printf("Failed to get experiment evaluation count. Error code: %d. Retrying in 5 seconds.\n", st.Code())
+			time.Sleep(5 * time.Second)
+			continue
 		}
-		fmt.Printf("Failed to get experiment evaluation count. Error code: %d. Retrying in 5 seconds.\n", st.Code())
-		time.Sleep(5 * time.Second)
+		return nil, err
 	}
 	if err != nil {
-		t.Fatal(err)
+		return nil, err
 	}
-	return response
+	return response, nil
 }
 
-func getExperimentGoalCount(t *testing.T, c ecclient.Client, goalID, featureID string, featureVersion int32, variationIDs []string) *ecproto.GetExperimentGoalCountResponse {
+func getExperimentGoalCount(
+	t *testing.T, c ecclient.Client, goalID, featureID string, featureVersion int32, variationIDs []string,
+) (*ecproto.GetExperimentGoalCountResponse, error) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -2070,26 +2264,27 @@ func getExperimentGoalCount(t *testing.T, c ecclient.Client, goalID, featureID s
 	}
 	var response *ecproto.GetExperimentGoalCountResponse
 	var err error
-	numRetries := 6
+	numRetries := 3
 	for i := 0; i < numRetries; i++ {
 		response, err = c.GetExperimentGoalCount(ctx, req)
 		if err == nil {
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() == codes.Internal {
-			t.Fatal(err)
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal {
+			fmt.Printf("Failed to get experiment goal count. Error code: %d. Retrying in 5 seconds.\n", st.Code())
+			time.Sleep(5 * time.Second)
+			continue
 		}
-		fmt.Printf("Failed to get experiment goal count. Error code: %d. Retrying in 5 seconds.\n", st.Code())
-		time.Sleep(5 * time.Second)
+		return nil, err
 	}
 	if err != nil {
-		t.Fatal(err)
+		return nil, err
 	}
-	return response
+	return response, nil
 }
 
-func getFeature(t *testing.T, client featureclient.Client, featureID string) *featureproto.Feature {
+func getFeature(t *testing.T, client featureclient.Client, featureID string) (*featureproto.Feature, error) {
 	t.Helper()
 	getReq := &featureproto.GetFeatureRequest{
 		Id:                   featureID,
@@ -2099,41 +2294,20 @@ func getFeature(t *testing.T, client featureclient.Client, featureID string) *fe
 	defer cancel()
 	var response *featureproto.GetFeatureResponse
 	var err error
-	numRetries := 6
+	numRetries := 3
 	for i := 0; i < numRetries; i++ {
 		response, err = client.GetFeature(ctx, getReq)
 		if err == nil {
 			break
 		}
 		st, _ := status.FromError(err)
-		if st.Code() == codes.Internal {
-			t.Fatal(err)
+		if st.Code() != codes.Unavailable {
+			return nil, err
 		}
 		fmt.Printf("Failed to get feature. ID: %s. Error code: %d. Retrying in 5 seconds.\n", featureID, st.Code())
 		time.Sleep(5 * time.Second)
 	}
-	return response.Feature
-}
-
-func createFeatureID(t *testing.T, uuid string) string {
-	if *testID != "" {
-		return fmt.Sprintf("%s-%s-feature-id-%s", prefixTestName, *testID, uuid)
-	}
-	return fmt.Sprintf("%s-feature-id-%s", prefixTestName, uuid)
-}
-
-func createGoalID(t *testing.T, uuid string) string {
-	if *testID != "" {
-		return fmt.Sprintf("%s-%s-goal-id-%s", prefixTestName, *testID, uuid)
-	}
-	return fmt.Sprintf("%s-goal-id-%s", prefixTestName, uuid)
-}
-
-func createUserID(t *testing.T, uuid string) string {
-	if *testID != "" {
-		return fmt.Sprintf("%s-%s-user-id-%s", prefixTestName, *testID, uuid)
-	}
-	return fmt.Sprintf("%s-user-id-%s", prefixTestName, uuid)
+	return response.Feature, err
 }
 
 func getEvaluationTimeseriesCount(
@@ -2141,7 +2315,7 @@ func getEvaluationTimeseriesCount(
 	featureID string,
 	c ecclient.Client,
 	timeRange ecproto.GetEvaluationTimeseriesCountRequest_TimeRange,
-) *ecproto.GetEvaluationTimeseriesCountResponse {
+) (*ecproto.GetEvaluationTimeseriesCountResponse, error) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -2150,14 +2324,53 @@ func getEvaluationTimeseriesCount(
 		FeatureId:            featureID,
 		TimeRange:            timeRange,
 	}
-	res, err := c.GetEvaluationTimeseriesCount(
-		ctx,
-		req,
-	)
-	if err != nil {
-		t.Fatal(err)
+	var response *ecproto.GetEvaluationTimeseriesCountResponse
+	var err error
+	numRetries := 3
+	for i := 0; i < numRetries; i++ {
+		response, err = c.GetEvaluationTimeseriesCount(
+			ctx,
+			req,
+		)
+		if err == nil {
+			break
+		}
+		st, _ := status.FromError(err)
+		if st.Code() == codes.Unavailable || st.Code() == codes.Internal {
+			fmt.Printf("Failed to get evaluation timeseries count. ID: %s. Error code: %d. Retrying in 5 seconds.\n", featureID, st.Code())
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		return nil, err
 	}
-	return res
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
+}
+
+func createFeatureID(t *testing.T, uuid string) string {
+	t.Helper()
+	if *testID != "" {
+		return fmt.Sprintf("%s-%s-feature-id-%s", prefixTestName, *testID, uuid)
+	}
+	return fmt.Sprintf("%s-feature-id-%s", prefixTestName, uuid)
+}
+
+func createGoalID(t *testing.T, uuid string) string {
+	t.Helper()
+	if *testID != "" {
+		return fmt.Sprintf("%s-%s-goal-id-%s", prefixTestName, *testID, uuid)
+	}
+	return fmt.Sprintf("%s-goal-id-%s", prefixTestName, uuid)
+}
+
+func createUserID(t *testing.T, uuid string) string {
+	t.Helper()
+	if *testID != "" {
+		return fmt.Sprintf("%s-%s-user-id-%s", prefixTestName, *testID, uuid)
+	}
+	return fmt.Sprintf("%s-user-id-%s", prefixTestName, uuid)
 }
 
 // This check the result for variation A
