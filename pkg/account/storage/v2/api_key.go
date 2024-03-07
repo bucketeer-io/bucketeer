@@ -12,10 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
+
 package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 
@@ -30,23 +33,17 @@ var (
 	ErrAPIKeyUnexpectedAffectedRows = errors.New("apiKey: api key unexpected affected rows")
 )
 
+var (
+	//go:embed sql/api_key_v2/insert_api_key_v2.sql
+	insertAPIKeyV2SQLQuery string
+	//go:embed sql/api_key_v2/update_api_key_v2.sql
+	updateAPIKeyV2SQLQuery string
+)
+
 func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error {
-	query := `
-		INSERT INTO api_key (
-			id,
-			name,
-			role,
-			disabled,
-			created_at,
-			updated_at,
-			environment_namespace
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?
-		)
-	`
 	_, err := s.qe(ctx).ExecContext(
 		ctx,
-		query,
+		insertAPIKeyV2SQLQuery,
 		k.Id,
 		k.Name,
 		int32(k.Role),
@@ -65,22 +62,9 @@ func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, env
 }
 
 func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error {
-	query := `
-		UPDATE 
-			api_key
-		SET
-			name = ?,
-			role = ?,
-			disabled = ?,
-			created_at = ?,
-			updated_at = ?
-		WHERE
-			id = ? AND
-			environment_namespace = ?
-	`
 	result, err := s.qe(ctx).ExecContext(
 		ctx,
-		query,
+		updateAPIKeyV2SQLQuery,
 		k.Name,
 		int32(k.Role),
 		k.Disabled,
