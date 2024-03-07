@@ -69,11 +69,13 @@ func TestCreateAPIKey(t *testing.T) {
 			desc: "Success",
 			setup: func(s *accountStorage) {
 				s.client.(*mock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(),
+					gomock.Regex("^INSERT INTO api_key[\\s\\S]\\s*?id,\\s*?name,\\s*?role,\\s*?disabled,\\s*?created_at,\\s*?updated_at,\\s*?environment_namespace[\\s\\S]*?(\\?[\\s\\S]*?){7}"),
+					"aid-0", "name", int32(0), false, int64(2), int64(3), "ns0",
 				).Return(nil, nil)
 			},
 			input: &domain.APIKey{
-				APIKey: &proto.APIKey{Id: "aid-0"},
+				APIKey: &proto.APIKey{Id: "aid-0", Name: "name", Role: 0, Disabled: false, CreatedAt: 2, UpdatedAt: 3},
 			},
 			environmentNamespace: "ns0",
 			expectedErr:          nil,
@@ -136,11 +138,13 @@ func TestUpdateAPIKey(t *testing.T) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
 				s.client.(*mock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(),
+					gomock.Regex("^UPDATE api_key SET[\\s\\S]*?name\\s*=\\s*\\?[\\s\\S]*?role\\s*=\\s*\\?[\\s\\S]*?disabled\\s*=\\s*\\?[\\s\\S]*?created_at\\s*=\\s*\\?[\\s\\S]*?updated_at\\s*=\\s*\\?[\\s\\S]*?WHERE[\\s\\S]*?id\\s*=\\s*\\?[\\s\\S]*?environment_namespace\\s*=\\s*\\?[\\s\\S]*?"),
+					"name", int32(0), false, int64(2), int64(3), "aid-0", "ns0",
 				).Return(result, nil)
 			},
 			input: &domain.APIKey{
-				APIKey: &proto.APIKey{Id: "aid-0"},
+				APIKey: &proto.APIKey{Id: "aid-0", Name: "name", Role: 0, Disabled: false, CreatedAt: 2, UpdatedAt: 3},
 			},
 			environmentNamespace: "ns0",
 			expectedErr:          nil,
