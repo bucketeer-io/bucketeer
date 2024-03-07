@@ -1870,22 +1870,22 @@ func getDate(t time.Time) int64 {
 	return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, jpLocation).Unix()
 }
 
-func newEventCounterService(t *testing.T, mockController *gomock.Controller, SpecifiedEnvironmentId *string, SpecifiedOrgRole *accountproto.AccountV2_Role_Organization, SpecifiedEnvRole *accountproto.AccountV2_Role_Environment) *eventCounterService {
+func newEventCounterService(t *testing.T, mockController *gomock.Controller, specifiedEnvironmentId *string, specifiedOrgRole *accountproto.AccountV2_Role_Organization, specifiedEnvRole *accountproto.AccountV2_Role_Environment) *eventCounterService {
 	var or accountproto.AccountV2_Role_Organization
 	var er accountproto.AccountV2_Role_Environment
 	var envId string
-	if SpecifiedOrgRole != nil {
-		or = *SpecifiedOrgRole
+	if specifiedOrgRole != nil {
+		or = *specifiedOrgRole
 	} else {
 		or = accountproto.AccountV2_Role_Organization_ADMIN
 	}
-	if SpecifiedEnvRole != nil {
-		er = *SpecifiedEnvRole
+	if specifiedEnvRole != nil {
+		er = *specifiedEnvRole
 	} else {
 		er = accountproto.AccountV2_Role_Environment_EDITOR
 	}
-	if SpecifiedEnvironmentId != nil {
-		envId = *SpecifiedEnvironmentId
+	if specifiedEnvironmentId != nil {
+		envId = *specifiedEnvironmentId
 	} else {
 		envId = "ns0"
 	}
