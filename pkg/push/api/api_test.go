@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -35,8 +36,6 @@ import (
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	v2ps "github.com/bucketeer-io/bucketeer/pkg/push/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/pkg/storage"
-	storagetesting "github.com/bucketeer-io/bucketeer/pkg/storage/testing"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
@@ -69,7 +68,7 @@ func TestCreatePushMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithToken(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -189,7 +188,7 @@ func TestCreatePushMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := newPushServiceWithMock(t, mockController, nil)
+			service := newPushServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -204,7 +203,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithToken(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -375,7 +374,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := newPushServiceWithMock(t, mockController, nil)
+			service := newPushServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -390,7 +389,7 @@ func TestDeletePushMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithToken(t, true)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -455,7 +454,7 @@ func TestDeletePushMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := newPushServiceWithMock(t, mockController, nil)
+			service := newPushServiceWithMock(t, mockController)
 			if p.setup != nil {
 				p.setup(service)
 			}
@@ -470,7 +469,7 @@ func TestListPushesMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	ctx := createContextWithToken(t)
+	ctx := createContextWithToken(t, false)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
@@ -486,6 +485,8 @@ func TestListPushesMySQL(t *testing.T) {
 
 	patterns := []struct {
 		desc        string
+		orgRole     *accountproto.AccountV2_Role_Organization
+		envRole     *accountproto.AccountV2_Role_Environment
 		setup       func(*PushService)
 		input       *pushproto.ListPushesRequest
 		expected    *pushproto.ListPushesResponse
@@ -493,8 +494,10 @@ func TestListPushesMySQL(t *testing.T) {
 	}{
 		{
 			desc:        "err: ErrInvalidCursor",
+			orgRole:     toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole:     toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup:       nil,
-			input:       &pushproto.ListPushesRequest{Cursor: "XXX"},
+			input:       &pushproto.ListPushesRequest{Cursor: "XXX", EnvironmentNamespace: "ns0"},
 			expected:    nil,
 			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
 		},
@@ -505,12 +508,22 @@ func TestListPushesMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			input:       &pushproto.ListPushesRequest{},
+			input:       &pushproto.ListPushesRequest{EnvironmentNamespace: "ns0"},
 			expected:    nil,
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
-			desc: "success",
+			desc:        "err: ErrPermissionDenied",
+			orgRole:     toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole:     toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			input:       &pushproto.ListPushesRequest{EnvironmentNamespace: "ns0"},
+			expected:    nil,
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc:    "success",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *PushService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -525,17 +538,18 @@ func TestListPushesMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			input:       &pushproto.ListPushesRequest{PageSize: 2, Cursor: ""},
+			input:       &pushproto.ListPushesRequest{PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0"},
 			expected:    &pushproto.ListPushesResponse{Pushes: []*pushproto.Push{}, Cursor: "0"},
 			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newPushServiceWithMock(t, mockController, storagetesting.NewInMemoryStorage())
+			s := newPushService(mockController, nil, p.orgRole, p.envRole)
 			if p.setup != nil {
 				p.setup(s)
 			}
+
 			actual, err := s.ListPushes(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)
@@ -543,7 +557,7 @@ func TestListPushesMySQL(t *testing.T) {
 	}
 }
 
-func newPushServiceWithMock(t *testing.T, c *gomock.Controller, s storage.Client) *PushService {
+func newPushServiceWithMock(t *testing.T, c *gomock.Controller) *PushService {
 	t.Helper()
 	return &PushService{
 		mysqlClient:      mysqlmock.NewMockClient(c),
@@ -555,7 +569,54 @@ func newPushServiceWithMock(t *testing.T, c *gomock.Controller, s storage.Client
 	}
 }
 
-func createContextWithToken(t *testing.T) context.Context {
+func newPushService(c *gomock.Controller, specifiedEnvironmentId *string, specifiedOrgRole *accountproto.AccountV2_Role_Organization, specifiedEnvRole *accountproto.AccountV2_Role_Environment) *PushService {
+	var or accountproto.AccountV2_Role_Organization
+	var er accountproto.AccountV2_Role_Environment
+	var envId string
+	if specifiedOrgRole != nil {
+		or = *specifiedOrgRole
+	} else {
+		or = accountproto.AccountV2_Role_Organization_ADMIN
+	}
+	if specifiedEnvRole != nil {
+		er = *specifiedEnvRole
+	} else {
+		er = accountproto.AccountV2_Role_Environment_EDITOR
+	}
+	if specifiedEnvironmentId != nil {
+		envId = *specifiedEnvironmentId
+	} else {
+		envId = "ns0"
+	}
+
+	accountClientMock := accountclientmock.NewMockClient(c)
+	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
+		Account: &accountproto.AccountV2{
+			Email:            "email",
+			OrganizationRole: or,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: envId,
+					Role:          er,
+				},
+			},
+		},
+	}
+	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
+	mysqlClient := mysqlmock.NewMockClient(c)
+	p := publishermock.NewMockPublisher(c)
+	p.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	return &PushService{
+		mysqlClient:      mysqlClient,
+		featureClient:    featureclientmock.NewMockClient(c),
+		experimentClient: experimentclientmock.NewMockClient(c),
+		accountClient:    accountClientMock,
+		publisher:        publishermock.NewMockPublisher(c),
+		logger:           zap.NewNop(),
+	}
+}
+
+func createContextWithToken(t *testing.T, isSystemAdmin bool) context.Context {
 	t.Helper()
 	token := &token.IDToken{
 		Issuer:        "issuer",
@@ -564,8 +625,13 @@ func createContextWithToken(t *testing.T) context.Context {
 		Expiry:        time.Now().AddDate(100, 0, 0),
 		IssuedAt:      time.Now(),
 		Email:         "email",
-		IsSystemAdmin: true,
+		IsSystemAdmin: isSystemAdmin,
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)
+}
+
+// convert to pointer
+func toPtr[T any](value T) *T {
+	return &value
 }
