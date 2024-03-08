@@ -28,7 +28,6 @@ import (
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
-	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
@@ -54,7 +53,26 @@ func TestNewExperimentService(t *testing.T) {
 	assert.IsType(t, &experimentService{}, s)
 }
 
-func createExperimentService(c *gomock.Controller, s storage.Client) *experimentService {
+func createExperimentService(c *gomock.Controller, specifiedEnvironmentId *string, specifiedOrgRole *accountproto.AccountV2_Role_Organization, specifiedEnvRole *accountproto.AccountV2_Role_Environment) *experimentService {
+	var or accountproto.AccountV2_Role_Organization
+	var er accountproto.AccountV2_Role_Environment
+	var envId string
+	if specifiedOrgRole != nil {
+		or = *specifiedOrgRole
+	} else {
+		or = accountproto.AccountV2_Role_Organization_ADMIN
+	}
+	if specifiedEnvRole != nil {
+		er = *specifiedEnvRole
+	} else {
+		er = accountproto.AccountV2_Role_Environment_EDITOR
+	}
+	if specifiedEnvironmentId != nil {
+		envId = *specifiedEnvironmentId
+	} else {
+		envId = "ns0"
+	}
+
 	featureClientMock := featureclientmock.NewMockClient(c)
 	fr := &featureproto.GetFeatureResponse{
 		Feature: &featureproto.Feature{
@@ -76,11 +94,11 @@ func createExperimentService(c *gomock.Controller, s storage.Client) *experiment
 	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
 		Account: &accountproto.AccountV2{
 			Email:            "email",
-			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			OrganizationRole: or,
 			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 				{
-					EnvironmentId: "ns0",
-					Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+					EnvironmentId: envId,
+					Role:          er,
 				},
 			},
 		},
@@ -124,4 +142,9 @@ func createContextWithTokenRoleUnassigned() context.Context {
 	}
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)
+}
+
+// convert to pointer
+func toPtr[T any](value T) *T {
+	return &value
 }

@@ -18,6 +18,7 @@ import (
 	"context"
 	"testing"
 
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -27,7 +28,6 @@ import (
 
 	v2es "github.com/bucketeer-io/bucketeer/pkg/experiment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	storeclient "github.com/bucketeer-io/bucketeer/pkg/storage/testing"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
@@ -53,18 +53,23 @@ func TestGetGoalMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
+		desc                 string
 		setup                func(*experimentService)
+		orgRole              *accountproto.AccountV2_Role_Organization
+		envRole              *accountproto.AccountV2_Role_Environment
 		id                   string
 		environmentNamespace string
 		expectedErr          error
 	}{
 		{
+			desc:                 "error: ErrRequiredFieldTemplate",
 			setup:                nil,
 			id:                   "",
 			environmentNamespace: "ns0",
 			expectedErr:          createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
 		},
 		{
+			desc: "error: ErrNotFound",
 			setup: func(s *experimentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
@@ -77,6 +82,17 @@ func TestGetGoalMySQL(t *testing.T) {
 			expectedErr:          createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
+			desc:                 "error: ErrPermissionDenied",
+			orgRole:              toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole:              toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			id:                   "id-1",
+			environmentNamespace: "ns0",
+			expectedErr:          createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc:    "success",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *experimentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -90,13 +106,15 @@ func TestGetGoalMySQL(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		service := createExperimentService(mockController, nil)
-		if p.setup != nil {
-			p.setup(service)
-		}
-		req := &experimentproto.GetGoalRequest{Id: p.id, EnvironmentNamespace: p.environmentNamespace}
-		_, err := service.GetGoal(ctx, req)
-		assert.Equal(t, p.expectedErr, err)
+		t.Run(p.desc, func(t *testing.T) {
+			service := createExperimentService(mockController, nil, p.orgRole, p.envRole)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			req := &experimentproto.GetGoalRequest{Id: p.id, EnvironmentNamespace: p.environmentNamespace}
+			_, err := service.GetGoal(ctx, req)
+			assert.Equal(t, p.expectedErr, err)
+		})
 	}
 }
 
@@ -105,12 +123,39 @@ func TestListGoalMySQL(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	ctx := createContextWithTokenRoleUnassigned()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
+		desc        string
+		orgRole     *accountproto.AccountV2_Role_Organization
+		envRole     *accountproto.AccountV2_Role_Environment
 		setup       func(*experimentService)
 		req         *experimentproto.ListGoalsRequest
 		expectedErr error
 	}{
 		{
+			desc:        "error: ErrPermissionDenied",
+			orgRole:     toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole:     toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			req:         &experimentproto.ListGoalsRequest{EnvironmentNamespace: "ns0"},
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc:    "success",
+			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *experimentService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -130,12 +175,14 @@ func TestListGoalMySQL(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		service := createExperimentService(mockController, nil)
-		if p.setup != nil {
-			p.setup(service)
-		}
-		_, err := service.ListGoals(createContextWithTokenRoleUnassigned(), p.req)
-		assert.Equal(t, p.expectedErr, err)
+		t.Run(p.desc, func(t *testing.T) {
+			service := createExperimentService(mockController, nil, p.orgRole, p.envRole)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			_, err := service.ListGoals(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
 	}
 }
 
@@ -222,7 +269,7 @@ func TestCreateGoalMySQL(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		service := createExperimentService(mockController, nil)
+		service := createExperimentService(mockController, nil, nil, nil)
 		if p.setup != nil {
 			p.setup(service)
 		}
@@ -299,7 +346,7 @@ func TestUpdateGoalMySQL(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		service := createExperimentService(mockController, nil)
+		service := createExperimentService(mockController, nil, nil, nil)
 		if p.setup != nil {
 			p.setup(service)
 		}
@@ -376,7 +423,7 @@ func TestArchiveGoalMySQL(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		service := createExperimentService(mockController, nil)
+		service := createExperimentService(mockController, nil, nil, nil)
 		if p.setup != nil {
 			p.setup(service)
 		}
@@ -453,7 +500,7 @@ func TestDeleteGoalMySQL(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		service := createExperimentService(mockController, nil)
+		service := createExperimentService(mockController, nil, nil, nil)
 		if p.setup != nil {
 			p.setup(service)
 		}
@@ -467,8 +514,7 @@ func TestGoalPermissionDenied(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	ctx := createContextWithTokenRoleUnassigned()
-	s := storeclient.NewInMemoryStorage()
-	service := createExperimentService(mockController, s)
+	service := createExperimentService(mockController, nil, nil, nil)
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
 	})
