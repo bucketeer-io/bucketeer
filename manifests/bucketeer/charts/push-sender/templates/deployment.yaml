@@ -54,6 +54,8 @@ spec:
               value: "{{ .Values.env.domainTopic }}"
             - name: BUCKETEER_PUSH_DOMAIN_SUBSCRIPTION
               value: "{{ .Values.env.domainSubscription }}"
+            - name: BUCKETEER_PUSH_BATCH_SERVICE
+              value: "{{ .Values.env.batchService }}"
             - name: BUCKETEER_PUSH_PUSH_SERVICE
               value: "{{ .Values.env.pushService }}"
             - name: BUCKETEER_PUSH_FEATURE_SERVICE
@@ -68,14 +70,6 @@ spec:
               value: "{{ .Values.env.pullerMaxOutstandingMessages }}"
             - name: BUCKETEER_PUSH_PULLER_MAX_OUTSTANDING_BYTES
               value: "{{ .Values.env.pullerMaxOutstandingBytes }}"
-            - name: BUCKETEER_PUSH_REDIS_SERVER_NAME
-              value: "{{ .Values.env.redis.serverName }}"
-            - name: BUCKETEER_PUSH_REDIS_ADDR
-              value: "{{ .Values.env.redis.addr }}"
-            - name: BUCKETEER_PUSH_REDIS_POOL_MAX_IDLE
-              value: "{{ .Values.env.redis.poolMaxIdle }}"
-            - name: BUCKETEER_PUSH_REDIS_POOL_MAX_ACTIVE
-              value: "{{ .Values.env.redis.poolMaxActive }}"
             - name: BUCKETEER_PUSH_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
             - name: BUCKETEER_PUSH_PORT

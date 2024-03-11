@@ -39,6 +39,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	btproto "github.com/bucketeer-io/bucketeer/proto/batch"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -650,6 +651,7 @@ func (s *FeatureService) CreateFeature(
 		}
 		return nil, dt.Err()
 	}
+	s.updateFeatureFlagCache(ctx)
 	return &featureproto.CreateFeatureResponse{}, nil
 }
 
@@ -816,6 +818,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 		}
 		return nil, dt.Err()
 	}
+	s.updateFeatureFlagCache(ctx)
 	return &featureproto.UpdateFeatureDetailsResponse{}, nil
 }
 
@@ -1237,6 +1240,7 @@ func (s *FeatureService) updateFeature(
 		}
 		return dt.Err()
 	}
+	s.updateFeatureFlagCache(ctx)
 	return nil
 }
 
@@ -1453,6 +1457,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 		}
 		return nil, dt.Err()
 	}
+	s.updateFeatureFlagCache(ctx)
 	return &featureproto.UpdateFeatureVariationsResponse{}, nil
 }
 
@@ -1646,6 +1651,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 		}
 		return nil, dt.Err()
 	}
+	s.updateFeatureFlagCache(ctx)
 	return &featureproto.UpdateFeatureTargetingResponse{}, nil
 }
 
@@ -2224,5 +2230,18 @@ func (s *FeatureService) CloneFeature(
 		}
 		return nil, dt.Err()
 	}
+	s.updateFeatureFlagCache(ctx)
 	return &featureproto.CloneFeatureResponse{}, nil
+}
+
+// Even if the update request fails, the cronjob will keep trying
+// to update the cache every minute, so we don't need to retry.
+func (s *FeatureService) updateFeatureFlagCache(ctx context.Context) {
+	req := &btproto.BatchJobRequest{
+		Job: btproto.BatchJob_FeatureFlagCacher,
+	}
+	_, err := s.batchClient.ExecuteBatchJob(ctx, req)
+	if err != nil {
+		s.logger.Error("Failed to update feature flag cache", zap.Error(err))
+	}
 }
