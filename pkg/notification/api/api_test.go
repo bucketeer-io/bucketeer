@@ -20,11 +20,12 @@ import (
 	"testing"
 	"time"
 
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
+
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
