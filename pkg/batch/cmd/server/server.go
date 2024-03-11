@@ -33,7 +33,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/rediscounter"
-	"github.com/bucketeer-io/bucketeer/pkg/batch/migration"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
@@ -524,10 +523,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			// We must use the same instance for caching.
 			cachev3.NewRedisCache(persistentRedisClient),
 			jobs.WithLogger(logger),
-		),
-		migration.NewMySQLSchemaMigration(
-			*s.mysqlUser, *s.mysqlPass, *s.mysqlHost, *s.mysqlDBName, *s.mysqlPort,
-			logger,
 		),
 		logger,
 	)

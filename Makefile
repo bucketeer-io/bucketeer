@@ -51,7 +51,6 @@ local-deps:
 	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2; \
 	go install github.com/nilslice/protolock/...@v0.15.0;
 	go install github.com/mikefarah/yq/v4@v4.28.2;
-	go install -tags 'mysql' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
 .PHONY: lint
 lint:
@@ -257,26 +256,33 @@ e2e:
 update-copyright:
 	./hack/update-copyright/update-copyright.sh
 
+
 ###################
 # Database Migration
 ###################
-create-mysql-migration:
-	migrate create -dir pkg/batch/migration/mysql -digits 8 -seq -ext sql $(NAME)
+.PHONY: install-atlas
+install-atlas:
+	curl -sSf https://atlasgo.sh | sh
 
-migrate-up:
-	ENDPOINT="$(WEB_GATEWAY_HOST)/bucketeer.batch.BatchService/Migrate" \
-	TOKEN=`cat $(SERVICE_TOKEN_PATH)` \
-	RES=`curl -X POST -m 3600 --cacert tools/dev/cert/tls.crt -d '{"direction":"UP", "steps": 1}' -H "authorization: bearer $$TOKEN" -H "Content-Type: application/json" -s -i $$ENDPOINT` \
-	; echo "result:\n$$RES"
+.PHONY: create-migration
+create-migration:
+	# Example: make create-migration NAME=create_table_users USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
+	atlas migrate diff ${NAME} \
+  		--dir file://migration/mysql \
+  		--to mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
+  		--dev-url docker://mysql/8
 
-migrate-down:
-	ENDPOINT="$(WEB_GATEWAY_HOST)/bucketeer.batch.BatchService/Migrate" \
-	TOKEN=`cat $(SERVICE_TOKEN_PATH)` \
-	RES=`curl -X POST -m 3600 --cacert tools/dev/cert/tls.crt -d '{"direction":"DOWN", "steps": 1}' -H "authorization: bearer $$TOKEN" -H "Content-Type: application/json" -s -i $$ENDPOINT` \
-	; echo "result:\n$$RES"
+.PHONY: atlas-set-version
+atlas-set-version:
+	# Example: make atlas-set-version VERSION=20240311022556 USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
+	atlas migrate set ${VERSION} \
+		--dir file://migration/mysql \
+		--url mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB}
 
-migrate-version:
-	ENDPOINT="$(WEB_GATEWAY_HOST)/bucketeer.batch.BatchService/CurrentMigrationVersion" \
-	TOKEN=`cat $(SERVICE_TOKEN_PATH)` \
-	RES=`curl -X POST -m 3600 --cacert tools/dev/cert/tls.crt -d '{}' -H "authorization: bearer $$TOKEN" -H "Content-Type: application/json" -s -i $$ENDPOINT` \
-	; echo "result:\n$$RES"
+.PHONY: apply-migration
+check-apply-migration:
+	# Example: make check-apply-migration USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
+	atlas migrate apply \
+  		--dir file://migration/mysql \
+  		--url mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
+		--dry-run
