@@ -889,7 +889,6 @@ func newBatchService(t *testing.T,
 			autoOpsRulesMockClient,
 			redisMockClient,
 		),
-		nil,
 		logger,
 	)
 	return service
