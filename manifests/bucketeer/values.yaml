@@ -2,3 +2,9 @@ global:
   image:
     tag: v0.4.5 # x-release-please-version
     imagePullSecrets:
+
+migration:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-migration
+    tag:
+  dbUrl:
