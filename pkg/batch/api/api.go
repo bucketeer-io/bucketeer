@@ -28,8 +28,7 @@ import (
 )
 
 var (
-	errUnknownJob            = status.Error(codes.InvalidArgument, "batch: unknown job")
-	migrationPermissionDined = status.Error(codes.PermissionDenied, "batch: database migration require system admin role")
+	errUnknownJob = status.Error(codes.InvalidArgument, "batch: unknown job")
 )
 
 type batchService struct {
