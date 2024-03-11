@@ -541,10 +541,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			cachev3.NewRedisCache(persistentRedisClient),
 			jobs.WithLogger(logger),
 		),
-		migration.NewMySQLSchemaMigration(
-			*s.mysqlUser, *s.mysqlPass, *s.mysqlHost, *s.mysqlDBName, *s.mysqlPort,
-			logger,
-		),
 		logger,
 	)
 
