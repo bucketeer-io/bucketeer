@@ -50,6 +50,10 @@ tls:
     cert:
     key:
 
+serviceToken:
+  secret:
+  token:
+
 envoy:
   image:
     repository: ghcr.io/bucketeer-io/bucketeer-envoy
