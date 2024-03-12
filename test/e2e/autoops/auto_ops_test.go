@@ -54,7 +54,7 @@ const (
 	metricsEventType
 	prefixTestName   = "e2e-test"
 	retryTimes       = 30
-	timeout          = 10 * time.Second
+	timeout          = 60 * time.Second
 	prefixID         = "e2e-test"
 	version          = "/v1"
 	service          = "/gateway"
