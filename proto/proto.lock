@@ -3158,6 +3158,11 @@
                 "id": 4,
                 "name": "project_id",
                 "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "settings",
+                "type": "EnvironmentV2.Settings"
               }
             ]
           },
@@ -3329,6 +3334,16 @@
             ]
           },
           {
+            "name": "ChangeSettingsCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "require_comment",
+                "type": "google.protobuf.BoolValue"
+              }
+            ]
+          },
+          {
             "name": "EnableOrganizationCommand"
           },
           {
@@ -3342,6 +3357,14 @@
           },
           {
             "name": "ConvertTrialOrganizationCommand"
+          }
+        ],
+        "imports": [
+          {
+            "path": "google/protobuf/wrappers.proto"
+          },
+          {
+            "path": "proto/environment/environment.proto"
           }
         ],
         "package": {
@@ -3406,6 +3429,23 @@
                 "id": 9,
                 "name": "organization_id",
                 "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "settings",
+                "type": "Settings"
+              }
+            ],
+            "messages": [
+              {
+                "name": "Settings",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "require_comment",
+                    "type": "bool"
+                  }
+                ]
               }
             ]
           }
@@ -3812,6 +3852,11 @@
                 "id": 3,
                 "name": "change_description_command",
                 "type": "ChangeDescriptionEnvironmentV2Command"
+              },
+              {
+                "id": 4,
+                "name": "change_settings_command",
+                "type": "ChangeSettingsCommand"
               }
             ]
           },

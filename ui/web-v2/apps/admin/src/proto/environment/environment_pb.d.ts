@@ -31,6 +31,11 @@ export class EnvironmentV2 extends jspb.Message {
   getOrganizationId(): string;
   setOrganizationId(value: string): void;
 
+  hasSettings(): boolean;
+  clearSettings(): void;
+  getSettings(): EnvironmentV2.Settings | undefined;
+  setSettings(value?: EnvironmentV2.Settings): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EnvironmentV2.AsObject;
   static toObject(includeInstance: boolean, msg: EnvironmentV2): EnvironmentV2.AsObject;
@@ -52,6 +57,27 @@ export namespace EnvironmentV2 {
     createdAt: number,
     updatedAt: number,
     organizationId: string,
+    settings?: EnvironmentV2.Settings.AsObject,
+  }
+
+  export class Settings extends jspb.Message {
+    getRequireComment(): boolean;
+    setRequireComment(value: boolean): void;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): Settings.AsObject;
+    static toObject(includeInstance: boolean, msg: Settings): Settings.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: Settings, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): Settings;
+    static deserializeBinaryFromReader(message: Settings, reader: jspb.BinaryReader): Settings;
+  }
+
+  export namespace Settings {
+    export type AsObject = {
+      requireComment: boolean,
+    }
   }
 }
 
