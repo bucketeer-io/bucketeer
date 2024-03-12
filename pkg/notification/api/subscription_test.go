@@ -25,6 +25,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	v2ss "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
@@ -563,18 +565,33 @@ func TestGetSubscriptionMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc        string
-		setup       func(*NotificationService)
-		input       *proto.GetSubscriptionRequest
-		expectedErr error
+		desc          string
+		orgRole       *accountproto.AccountV2_Role_Organization
+		envRole       *accountproto.AccountV2_Role_Environment
+		isSystemAdmin bool
+		setup         func(*NotificationService)
+		input         *proto.GetSubscriptionRequest
+		expectedErr   error
 	}{
 		{
-			desc:        "err: ErrIDRequired",
-			input:       &proto.GetSubscriptionRequest{},
-			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			desc:          "err: ErrIDRequired",
+			isSystemAdmin: true,
+			input:         &proto.GetSubscriptionRequest{},
+			expectedErr:   createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			desc: "success",
+			desc:          "err: ErrPermissionDenied",
+			isSystemAdmin: false,
+			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole:       toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			input:         &proto.GetSubscriptionRequest{},
+			expectedErr:   createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc:          "success",
+			isSystemAdmin: false,
+			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *NotificationService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -582,17 +599,17 @@ func TestGetSubscriptionMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			input:       &proto.GetSubscriptionRequest{Id: "key-0"},
+			input:       &proto.GetSubscriptionRequest{Id: "key-0", EnvironmentNamespace: "ns0"},
 			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			service := newNotificationServiceWithMock(t, mockController)
+			service := newNotificationService(mockController, nil, p.orgRole, p.envRole)
 			if p.setup != nil {
 				p.setup(service)
 			}
-			ctx = setToken(t, ctx, true)
+			ctx = setToken(t, ctx, p.isSystemAdmin)
 			actual, err := service.GetSubscription(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			if err == nil {
@@ -610,15 +627,50 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
-		desc        string
-		setup       func(*NotificationService)
-		input       *proto.ListSubscriptionsRequest
-		expected    *proto.ListSubscriptionsResponse
-		expectedErr error
+		desc          string
+		orgRole       *accountproto.AccountV2_Role_Organization
+		envRole       *accountproto.AccountV2_Role_Environment
+		isSystemAdmin bool
+		setup         func(*NotificationService)
+		input         *proto.ListSubscriptionsRequest
+		expected      *proto.ListSubscriptionsResponse
+		expectedErr   error
 	}{
 		{
-			desc: "success",
+			desc:          "err: ErrPermissionDenied",
+			isSystemAdmin: false,
+			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole:       toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			input: &proto.ListSubscriptionsRequest{
+				PageSize: 2,
+				Cursor:   "",
+				SourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+					proto.Subscription_DOMAIN_EVENT_SUBSCRIPTION,
+				},
+				EnvironmentNamespace: "ns0",
+			},
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc:          "success",
+			isSystemAdmin: false,
+			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *NotificationService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -640,6 +692,7 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
 					proto.Subscription_DOMAIN_EVENT_SUBSCRIPTION,
 				},
+				EnvironmentNamespace: "ns0",
 			},
 			expected:    &proto.ListSubscriptionsResponse{Subscriptions: []*proto.Subscription{}, Cursor: "0"},
 			expectedErr: nil,
@@ -647,11 +700,11 @@ func TestListSubscriptionsMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newNotificationServiceWithMock(t, mockController)
+			s := newNotificationService(mockController, nil, p.orgRole, p.envRole)
 			if p.setup != nil {
 				p.setup(s)
 			}
-			ctx = setToken(t, ctx, true)
+			ctx = setToken(t, ctx, p.isSystemAdmin)
 			actual, err := s.ListSubscriptions(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)
@@ -667,15 +720,50 @@ func TestListEnabledSubscriptionsMySQL(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
 	patterns := []struct {
-		desc        string
-		setup       func(*NotificationService)
-		input       *proto.ListEnabledSubscriptionsRequest
-		expected    *proto.ListEnabledSubscriptionsResponse
-		expectedErr error
+		desc          string
+		orgRole       *accountproto.AccountV2_Role_Organization
+		envRole       *accountproto.AccountV2_Role_Environment
+		isSystemAdmin bool
+		setup         func(*NotificationService)
+		input         *proto.ListEnabledSubscriptionsRequest
+		expected      *proto.ListEnabledSubscriptionsResponse
+		expectedErr   error
 	}{
 		{
-			desc: "success",
+			desc:          "err: ErrPermissionDenied",
+			isSystemAdmin: false,
+			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole:       toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			input: &proto.ListEnabledSubscriptionsRequest{
+				PageSize: 2,
+				Cursor:   "1",
+				SourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+					proto.Subscription_DOMAIN_EVENT_SUBSCRIPTION,
+				},
+				EnvironmentNamespace: "ns0",
+			},
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
+			desc:          "success",
+			isSystemAdmin: false,
+			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole:       toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *NotificationService) {
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -697,6 +785,7 @@ func TestListEnabledSubscriptionsMySQL(t *testing.T) {
 					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
 					proto.Subscription_DOMAIN_EVENT_SUBSCRIPTION,
 				},
+				EnvironmentNamespace: "ns0",
 			},
 			expected:    &proto.ListEnabledSubscriptionsResponse{Subscriptions: []*proto.Subscription{}, Cursor: "1"},
 			expectedErr: nil,
@@ -704,11 +793,11 @@ func TestListEnabledSubscriptionsMySQL(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := newNotificationServiceWithMock(t, mockController)
+			s := newNotificationService(mockController, nil, p.orgRole, p.envRole)
 			if p.setup != nil {
 				p.setup(s)
 			}
-			ctx = setToken(t, ctx, true)
+			ctx = setToken(t, ctx, p.isSystemAdmin)
 			actual, err := s.ListEnabledSubscriptions(ctx, p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, actual)

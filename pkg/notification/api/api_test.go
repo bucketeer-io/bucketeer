@@ -25,6 +25,8 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
+
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
@@ -61,6 +63,51 @@ func newNotificationServiceWithMock(
 	return &NotificationService{
 		mysqlClient:          mysqlmock.NewMockClient(c),
 		accountClient:        accountclientmock.NewMockClient(c),
+		domainEventPublisher: publishermock.NewMockPublisher(c),
+		logger:               zap.NewNop(),
+	}
+}
+
+func newNotificationService(c *gomock.Controller, specifiedEnvironmentId *string, specifiedOrgRole *accountproto.AccountV2_Role_Organization, specifiedEnvRole *accountproto.AccountV2_Role_Environment) *NotificationService {
+	var or accountproto.AccountV2_Role_Organization
+	var er accountproto.AccountV2_Role_Environment
+	var envId string
+	if specifiedOrgRole != nil {
+		or = *specifiedOrgRole
+	} else {
+		or = accountproto.AccountV2_Role_Organization_ADMIN
+	}
+	if specifiedEnvRole != nil {
+		er = *specifiedEnvRole
+	} else {
+		er = accountproto.AccountV2_Role_Environment_EDITOR
+	}
+	if specifiedEnvironmentId != nil {
+		envId = *specifiedEnvironmentId
+	} else {
+		envId = "ns0"
+	}
+
+	accountClientMock := accountclientmock.NewMockClient(c)
+	ar := &accountproto.GetAccountV2ByEnvironmentIDResponse{
+		Account: &accountproto.AccountV2{
+			Email:            "email",
+			OrganizationRole: or,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					EnvironmentId: envId,
+					Role:          er,
+				},
+			},
+		},
+	}
+	accountClientMock.EXPECT().GetAccountV2ByEnvironmentID(gomock.Any(), gomock.Any()).Return(ar, nil).AnyTimes()
+	mysqlClient := mysqlmock.NewMockClient(c)
+	p := publishermock.NewMockPublisher(c)
+	p.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	return &NotificationService{
+		mysqlClient:          mysqlClient,
+		accountClient:        accountClientMock,
 		domainEventPublisher: publishermock.NewMockPublisher(c),
 		logger:               zap.NewNop(),
 	}
@@ -126,4 +173,9 @@ func putSubscription(t *testing.T, s storage.Client, kind, namespace string, dis
 	require.NoError(t, err)
 	err = s.Put(context.Background(), key, subscription.Subscription)
 	require.NoError(t, err)
+}
+
+// convert to pointer
+func toPtr[T any](value T) *T {
+	return &value
 }
