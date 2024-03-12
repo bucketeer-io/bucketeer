@@ -18,6 +18,10 @@ package bucketeer.environment;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/environment";
 
 message EnvironmentV2 {
+  message Settings {
+    bool require_comment = 1;
+  }
+
   string id = 1;
   string name = 2;
   string url_code = 3;
@@ -27,4 +31,5 @@ message EnvironmentV2 {
   int64 created_at = 7;
   int64 updated_at = 8;
   string organization_id = 9;
+  Settings settings = 10;
 }

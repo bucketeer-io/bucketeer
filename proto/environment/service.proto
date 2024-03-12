@@ -73,6 +73,7 @@ message UpdateEnvironmentV2Request {
   string id = 1;
   RenameEnvironmentV2Command rename_command = 2;
   ChangeDescriptionEnvironmentV2Command change_description_command = 3;
+  ChangeSettingsCommand change_settings_command = 4;
 }
 
 message UpdateEnvironmentV2Response {}
