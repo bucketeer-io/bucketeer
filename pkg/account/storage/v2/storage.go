@@ -40,7 +40,7 @@ type AccountStorage interface {
 	) ([]*proto.AccountV2, int, int64, error)
 	GetSystemAdminAccountV2(ctx context.Context, email string) (*domain.AccountV2, error)
 	CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error
-	UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error
+	UpdateAPIKey(ctx context.Context, k *domain.APIKey, whereParts []mysql.WherePart) error
 	GetAPIKey(ctx context.Context, id, environmentNamespace string) (*domain.APIKey, error)
 	ListAPIKeys(
 		ctx context.Context,

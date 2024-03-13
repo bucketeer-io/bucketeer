@@ -38,6 +38,12 @@ var (
 	insertAPIKeyV2SQLQuery string
 	//go:embed sql/api_key_v2/update_api_key_v2.sql
 	updateAPIKeyV2SQLQuery string
+	//go:embed sql/api_key_v2/select_api_key_v2.sql
+	selectAPIKeyV2SQLQuery string
+	//go:embed sql/api_key_v2/select_api_key_v2_count.sql
+	selectAPIKeyV2CountSQLQuery string
+	//go:embed sql/api_key_v2/select_api_key_v2_by_id.sql
+	selectAPIKeyV2ByIDSQLQuery string
 )
 
 func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error {
@@ -61,17 +67,23 @@ func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, env
 	return nil
 }
 
-func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error {
+func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, whereParts []mysql.WherePart) error {
+	setParts := []mysql.SetPart{
+		mysql.NewFilter("name", "=", k.Name),
+		mysql.NewFilter("role", "=", int32(k.Role)),
+		mysql.NewFilter("disabled", "=", k.Disabled),
+		mysql.NewFilter("created_at", "=", k.CreatedAt),
+		mysql.NewFilter("updated_at", "=", k.UpdatedAt),
+	}
+	setSQL, setArgs := mysql.ConstructSetSQLString(setParts)
+	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
+	query := fmt.Sprintf(updateAPIKeyV2SQLQuery, setSQL, whereSQL)
+
 	result, err := s.qe(ctx).ExecContext(
 		ctx,
-		updateAPIKeyV2SQLQuery,
-		k.Name,
-		int32(k.Role),
-		k.Disabled,
-		k.CreatedAt,
-		k.UpdatedAt,
-		k.Id,
-		environmentNamespace,
+		query,
+		setArgs,
+		whereArgs,
 	)
 	if err != nil {
 		return err
@@ -89,23 +101,9 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentNamespace string) (*domain.APIKey, error) {
 	apiKey := proto.APIKey{}
 	var role int32
-	query := `
-		SELECT
-			id,
-			name,
-			role,
-			disabled,
-			created_at,
-			updated_at
-		FROM
-			api_key
-		WHERE
-			id = ? AND
-			environment_namespace = ?
-	`
 	err := s.qe(ctx).QueryRowContext(
 		ctx,
-		query,
+		selectAPIKeyV2ByIDSQLQuery,
 		id,
 		environmentNamespace,
 	).Scan(
@@ -135,19 +133,7 @@ func (s *accountStorage) ListAPIKeys(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			name,
-			role,
-			disabled,
-			created_at,
-			updated_at
-		FROM
-			api_key
-		%s %s %s
-		`, whereSQL, orderBySQL, limitOffsetSQL,
-	)
+	query := fmt.Sprintf(selectAPIKeyV2SQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe(ctx).QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
@@ -176,14 +162,7 @@ func (s *accountStorage) ListAPIKeys(
 	}
 	nextOffset := offset + len(apiKeys)
 	var totalCount int64
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(1)
-		FROM
-			api_key
-		%s %s
-		`, whereSQL, orderBySQL,
-	)
+	countQuery := fmt.Sprintf(selectAPIKeyV2CountSQLQuery, whereSQL, orderBySQL)
 	err = s.qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

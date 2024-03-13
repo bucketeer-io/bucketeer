@@ -72,7 +72,7 @@ func TestCreateAPIKey(t *testing.T) {
 					gomock.Any(),
 					gomock.Regex("^INSERT INTO api_key[\\s\\S]\\s*?id,\\s*?name,\\s*?role,\\s*?disabled,\\s*?created_at,\\s*?updated_at,\\s*?environment_namespace[\\s\\S]*?(\\?[\\s\\S]*?){7}"),
 					"aid-0", "name", int32(0), false, int64(2), int64(3), "ns0",
-				).Return(nil, nil)
+				).Return(nil, nil).Times(1)
 			},
 			input: &domain.APIKey{
 				APIKey: &proto.APIKey{Id: "aid-0", Name: "name", Role: 0, Disabled: false, CreatedAt: 2, UpdatedAt: 3},
@@ -97,9 +97,19 @@ func TestUpdateAPIKey(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
+	id := "aid-0"
+	environmentNamespace := "ns0"
+	name := "name"
+	role := proto.APIKey_Role(0)
+	disabled := false
+	createdAt := int64(2)
+	updatedAt := int64(3)
+
 	patterns := []struct {
 		desc                 string
 		setup                func(*accountStorage)
+		whereParts           []mysql.WherePart
 		input                *domain.APIKey
 		environmentNamespace string
 		expectedErr          error
@@ -114,9 +124,9 @@ func TestUpdateAPIKey(t *testing.T) {
 				).Return(result, nil)
 			},
 			input: &domain.APIKey{
-				APIKey: &proto.APIKey{Id: "aid-0"},
+				APIKey: &proto.APIKey{Id: id},
 			},
-			environmentNamespace: "ns0",
+			environmentNamespace: environmentNamespace,
 			expectedErr:          ErrAPIKeyUnexpectedAffectedRows,
 		},
 		{
@@ -127,26 +137,30 @@ func TestUpdateAPIKey(t *testing.T) {
 				).Return(nil, errors.New("error"))
 			},
 			input: &domain.APIKey{
-				APIKey: &proto.APIKey{Id: "aid-0"},
+				APIKey: &proto.APIKey{Id: id},
 			},
-			environmentNamespace: "ns0",
+			environmentNamespace: environmentNamespace,
 			expectedErr:          errors.New("error"),
 		},
 		{
 			desc: "Success",
 			setup: func(s *accountStorage) {
 				result := mock.NewMockResult(mockController)
-				result.EXPECT().RowsAffected().Return(int64(1), nil)
+				result.EXPECT().RowsAffected().Return(int64(1), nil).Times(1)
 				s.client.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(),
-					gomock.Regex("^UPDATE api_key SET[\\s\\S]*?name\\s*=\\s*\\?[\\s\\S]*?role\\s*=\\s*\\?[\\s\\S]*?disabled\\s*=\\s*\\?[\\s\\S]*?created_at\\s*=\\s*\\?[\\s\\S]*?updated_at\\s*=\\s*\\?[\\s\\S]*?WHERE[\\s\\S]*?id\\s*=\\s*\\?[\\s\\S]*?environment_namespace\\s*=\\s*\\?[\\s\\S]*?"),
-					"name", int32(0), false, int64(2), int64(3), "aid-0", "ns0",
-				).Return(result, nil)
+					"UPDATE api_key SET name = ?, role = ?, disabled = ?, created_at = ?, updated_at = ? WHERE id = ? AND environment_namespace = ?",
+					[]interface{}{name, int32(role), disabled, createdAt, updatedAt}, []interface{}{id, environmentNamespace},
+				).Return(result, nil).Times(1)
 			},
 			input: &domain.APIKey{
-				APIKey: &proto.APIKey{Id: "aid-0", Name: "name", Role: 0, Disabled: false, CreatedAt: 2, UpdatedAt: 3},
+				APIKey: &proto.APIKey{Id: id, Name: name, Role: role, Disabled: disabled, CreatedAt: createdAt, UpdatedAt: updatedAt},
 			},
-			environmentNamespace: "ns0",
+			whereParts: []mysql.WherePart{
+				mysql.NewFilter("id", "=", id),
+				mysql.NewFilter("environment_namespace", "=", environmentNamespace),
+			},
+			environmentNamespace: environmentNamespace,
 			expectedErr:          nil,
 		},
 	}
@@ -156,7 +170,7 @@ func TestUpdateAPIKey(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			err := storage.UpdateAPIKey(context.Background(), p.input, p.environmentNamespace)
+			err := storage.UpdateAPIKey(context.Background(), p.input, p.whereParts)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -204,10 +218,12 @@ func TestGetAPIKey(t *testing.T) {
 			desc: "Success",
 			setup: func(s *accountStorage) {
 				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				row.EXPECT().Scan(gomock.Any()).Return(nil).Times(1)
 				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+					gomock.Any(),
+					gomock.Any(),
+					"id-0", "ns0",
+				).Return(row).Times(1)
 			},
 			id:                   "id-0",
 			environmentNamespace: "ns0",
@@ -225,6 +241,10 @@ func TestGetAPIKey(t *testing.T) {
 		})
 	}
 }
+
+var (
+// nextCount = 0
+)
 
 func TestListAPIKeys(t *testing.T) {
 	t.Parallel()
@@ -259,18 +279,29 @@ func TestListAPIKeys(t *testing.T) {
 		{
 			desc: "Success",
 			setup: func(s *accountStorage) {
+				var nextCallCount = 0
 				rows := mock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Close().Return(nil).Times(1)
+				rows.EXPECT().Next().DoAndReturn(func() bool {
+					if nextCallCount < 2 {
+						nextCallCount++
+						return true
+					} else {
+						return false
+					}
+				}).Times(3)
+				rows.EXPECT().Scan(gomock.Any()).Return(nil).Times(2)
 				rows.EXPECT().Err().Return(nil)
 				s.client.(*mock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
+					gomock.Any(),
+					gomock.Regex("SELECT[\\s\\S]\\s*?id,\\s*?name,\\s*?role,\\s*?disabled,\\s*?created_at,\\s*?updated_at\\s*?FROM\\s*?api_key[\\s\\S]*?$"),
+					5,
+				).Return(rows, nil).Times(1)
 				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				row.EXPECT().Scan(gomock.Any()).Return(nil).Times(1)
 				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+				).Return(row).Times(1)
 			},
 			whereParts: []mysql.WherePart{
 				mysql.NewFilter("num", ">=", 5),
@@ -278,10 +309,13 @@ func TestListAPIKeys(t *testing.T) {
 			orders: []*mysql.Order{
 				mysql.NewOrder("id", mysql.OrderDirectionAsc),
 			},
-			limit:          10,
-			offset:         5,
-			expected:       []*proto.APIKey{},
-			expectedCursor: 5,
+			limit:  10,
+			offset: 5,
+			expected: []*proto.APIKey{
+				{Id: "", Name: "", Role: 0, Disabled: false, CreatedAt: 0, UpdatedAt: 0},
+				{Id: "", Name: "", Role: 0, Disabled: false, CreatedAt: 0, UpdatedAt: 0},
+			},
+			expectedCursor: 7,
 			expectedErr:    nil,
 		},
 	}
