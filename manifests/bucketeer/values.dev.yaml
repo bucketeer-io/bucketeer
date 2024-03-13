@@ -1,6 +1,6 @@
 global:
   image:
-    tag: v0.3.0 # x-release-please-version
+    tag: test
     imagePullSecrets:
 
 backend:
@@ -57,10 +57,8 @@ backend:
     redirectUrls: https://google.com
     issuer: https://accounts.google.com
   webhook:
-    baseURL: http://localhost:9000
+    baseURL: https://web-gateway.bucketeer.org
     kmsResourceName: vault
-
-
 
 api-gateway:
   env:
@@ -95,8 +93,6 @@ api-gateway:
   ingress:
     host: api-gateway.bucketeer.org
 
-
-
 web-gateway:
   env:
     gcpEnabled: false
@@ -110,3 +106,504 @@ web-gateway:
       secret: bucketeer-service-cert
   ingress:
     host: web-gateway.bucketeer.org
+
+auditlog-persister:
+  env:
+    gcpEnabled: false
+    profile: false
+    pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+    project: bucketeer-test
+    mysqlUser: bucketeer
+    mysqlPass: bucketeer
+    mysqlHost: localenv-mysql.default.svc.cluster.local
+    mysqlPort: 3306
+    mysqlDbName: bucketeer
+    topic: domain
+    subscription: auditlog-persister
+    maxMps: "1000"
+    numWorkers: 2
+    flushSize: 100
+    flushInterval: 2s
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+
+  tls:
+    service:
+      secret: bucketeer-service-cert
+
+batch-server:
+  env:
+    project: bucketeer-test
+    profile: false
+    gcpEnabled: false
+    mysqlUser: bucketeer
+    mysqlPass: bucketeer
+    mysqlHost: localenv-mysql-headless.default.svc.cluster.local
+    mysqlPort: 3306
+    mysqlDbName: bucketeer
+    pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+    notificationService: localhost:9001
+    environmentService: localhost:9001
+    autoOpsService: localhost:9001
+    experimentService: localhost:9001
+    eventCounterService: localhost:9001
+    featureService: localhost:9001
+    webURL: http://localhost:3000
+    logLevel: debug
+    port: 9090
+    metricsPort: 9002
+    timezone: UTC
+    refreshInterval: 10m
+    domainTopic: domain
+    domainSubscription: domain-subscription
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    runningDurationPerBatch: 15s
+    # redis settings
+    persistentRedis:
+      serverName: batch-peristent-redis
+      addr: localenv-redis-headless.default.svc.cluster.local:6379
+      poolMaxIdle: 25
+      poolMaxActive: 25
+    nonPersistentRedis:
+      serverName: batch-non-peristent-redis
+      addr: localenv-redis-headless.default.svc.cluster.local:6379
+      poolMaxIdle: 25
+      poolMaxActive: 25
+
+  tls:
+    service:
+      secret: bucketeer-service-cert
+
+  serviceToken:
+    token:
+
+  cronjob:
+    successfulJobsHistoryLimit: 1
+    failedJobsHistoryLimit: 1
+    webGatewayAddress: https://web-gateway.default.svc.cluster.local:9000
+    jobs:
+      - name: experiment-status-updater
+        jobId: ExperimentStatusUpdater
+        schedule: "* * * * *"
+      - name: experiment-running-watcher
+        jobId: ExperimentRunningWatcher
+        schedule: "0 1 * * *"
+      - name: feature-stale-watcher
+        jobId: FeatureStaleWatcher
+        schedule: "0 1 * * MON"
+      - name: mau-count-watcher
+        jobId: MauCountWatcher
+        schedule: "0 1 1 * *"
+      - name: ops-datetime-watcher
+        jobId: DatetimeWatcher
+        schedule: "* * * * *"
+      - name: ops-event-count-watcher
+        jobId: EventCountWatcher
+        schedule: "* * * * *"
+      - name: ops-progressive-rollout-watcher
+        jobId: ProgressiveRolloutWatcher
+        schedule: "* * * * *"
+      - name: domain-event-informer
+        jobId: DomainEventInformer
+        schedule: "* * * * *"
+      - name: redis-counter-deleter
+        jobId: RedisCounterDeleter
+        schedule: "0 0 * * *"
+      - name: experiment-calculator
+        jobId: ExperimentCalculator
+        schedule: "* * * * *"
+      - name: mau-summarizer
+        jobId: MauSummarizer
+        schedule: "30 0 * * *"
+      - name: mau-partition-deleter
+        jobId: MauPartitionDeleter
+        schedule: "0 2 1 * *"
+      - name: mau-partition-creator
+        jobId: MauPartitionCreator
+        schedule: "0 2 2 * *"
+
+event-persister-evaluation-events-dwh:
+  env:
+    project: bucketeer-test
+    profile: false
+    gcpEnabled: false
+    bigqueryEmulatorHost: localenv-bq.default.svc.cluster.local:9060
+    pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+    logLevel: debug
+    port: 9090
+    metricsPort: 9002
+    timezone: UTC
+    # egress services
+    experimentService: localhost:9001
+    featureService: localhost:9001
+    # option
+    maxMps: "1000"
+    numWorkers: 1
+    flushSize: 100
+    flushInterval: 2s
+    flushTimeout: 30s
+    # pubsub
+    topic: evaluation
+    subscription: evaluation-dwh-sub
+    pullerNumGoroutines: 1
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    # bigquery
+    bigQueryDataSet: bucketeer
+    redis:
+      serverName: event-persister
+      addr: localenv-redis-headless.default.svc.cluster.local:6379
+      poolMaxIdle: 25
+      poolMaxActive: 25
+    mysqlUser: bucketeer
+    mysqlPass: bucketeer
+    mysqlHost: localenv-mysql-headless.default.svc.cluster.local
+    mysqlPort: 3306
+    mysqlDbName: bucketeer
+
+  tls:
+    service:
+      secret: bucketeer-service-cert
+      cert:
+      key:
+
+event-persister-evaluation-events-evaluation-count:
+  env:
+    project: bucketeer-test
+    topic: evaluation
+    subscription: evaluation-count-sub
+    profile: false
+    gcpEnabled: false
+    pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+    logLevel: debug
+    port: 9090
+    metricsPort: 9002
+    maxMps: "1000"
+    numWorkers: 5
+    numWriters: 2
+    flushSize: 100
+    flushInterval: 2s
+    redis:
+      serverName: event-persister
+      addr: localenv-redis-headless.default.svc.cluster.local:6379
+      poolMaxIdle: 25
+      poolMaxActive: 25
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    mysqlUser: bucketeer
+    mysqlPass: bucketeer
+    mysqlHost: localenv-mysql-headless.default.svc.cluster.local
+    mysqlPort: 3306
+    mysqlDBName: bucketeer
+
+  tls:
+    service:
+      secret: bucketeer-service-cert
+
+
+event-persister-evaluation-events-ops:
+  env:
+    logLevel: debug
+    profile: false
+    gcpEnabled: false
+    pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+    # egress services
+    featureService: localhost:9001
+    autoOpsService: localhost:9001
+    # rpc
+    port: 9090
+    metricsPort: 9002
+    # pubsub
+    project: bucketeer-test
+    topic: evaluation
+    subscription: evaluation-ops-sub
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    # redis
+    redis:
+      serverName: event-persister
+      addr: localenv-redis-headless.default.svc.cluster.local:6379
+      poolMaxIdle: 25
+      poolMaxActive: 25
+    # batch options
+    maxMps: "1000"
+    numWorkers: 5
+    flushSize: 100
+    flushInterval: 2s
+    flushTimeout: 30s
+    mysqlUser: bucketeer
+    mysqlPass: bucketeer
+    mysqlHost: localenv-mysql-headless.default.svc.cluster.local
+    mysqlPort: 3306
+    mysqlDbName: bucketeer
+
+  tls:
+    service:
+      secret: bucketeer-service-cert
+
+event-persister-goal-events-dwh:
+  env:
+    project: bucketeer-test
+    profile: false
+    gcpEnabled: false
+    bigqueryEmulatorHost: localenv-bq.default.svc.cluster.local:9060
+    pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+    logLevel: debug
+    port: 9090
+    metricsPort: 9002
+    timezone: UTC
+    # egress services
+    experimentService: localhost:9001
+    featureService: localhost:9001
+    # option
+    maxMps: "1000"
+    numWorkers: 1
+    flushSize: 100
+    flushInterval: 2s
+    flushTimeout: 30s
+    # pubsub
+    topic: goal
+    subscription: goal-dwh-sub
+    pullerNumGoroutines: 1
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    # bigquery
+    bigQueryDataSet: bucketeer
+    redis:
+      serverName: event-persister
+      addr: localenv-redis-headless.default.svc.cluster.local:6379
+      poolMaxIdle: 25
+      poolMaxActive: 25
+    mysqlUser: bucketeer
+    mysqlPass: bucketeer
+    mysqlHost: localenv-mysql-headless.default.svc.cluster.local
+    mysqlPort: 3306
+    mysqlDbName: bucketeer
+
+  tls:
+    service:
+      secret: bucketeer-service-cert
+      cert:
+      key:
+
+event-persister-goal-events-ops:
+  env:
+    logLevel: debug
+    profile: false
+    gcpEnabled: false
+    pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+    # egress services
+    featureService: localhost:9001
+    autoOpsService: localhost:9001
+    # rpc
+    port: 9090
+    metricsPort: 9002
+    # pubsub
+    project: bucketeer-test
+    topic: goal
+    subscription: goal-sub
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    # redis
+    redis:
+      serverName: event-persister
+      addr: localenv-redis-headless.default.svc.cluster.local:6379
+      poolMaxIdle: 25
+      poolMaxActive: 25
+    # batch options
+    maxMps: "1000"
+    numWorkers: 5
+    flushSize: 100
+    flushInterval: 2s
+    flushTimeout: 30s
+    mysqlUser: bucketeer
+    mysqlPass: bucketeer
+    mysqlHost: localenv-mysql-headless.default.svc.cluster.local
+    mysqlPort: 3306
+    mysqlDbName: bucketeer
+
+  tls:
+    service:
+      secret: bucketeer-service-cert
+
+experiment-calculator:
+  env:
+    gcpEnabled: false
+    profile: false
+    project: bucketeer-test
+    stanHost: localhost
+    stanPort: 8080
+    mysqlUser: bucketeer
+    mysqlPass: bucketeer
+    mysqlHost: localenv-mysql-headless.default.svc.cluster.local
+    mysqlPort: 3306
+    mysqlDbName: bucketeer
+    environmentService: localhost:9001
+    experimentService: localhost:9001
+    eventCounterService: localhost:9001
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+    traceSamplingProbability: 0.001
+    timezone: UTC
+
+  tls:
+    service:
+      secret: bucketeer-service-cert
+      cert:
+      key:
+
+feature-segment-persister:
+  env:
+    gcpEnabled: false
+    profile: false
+    pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+    project: bucketeer-test
+    mysqlUser: bucketeer
+    mysqlPass: bucketeer
+    mysqlHost: localenv-mysql.default.svc.cluster.local
+    mysqlPort: 3306
+    mysqlDbName: bucketeer
+    bulkSegmentUsersReceivedEventTopic: bulk-segment-users-received
+    bulkSegmentUsersReceivedEventSubscription: bulk-segment-users-received-sub
+    domainEventTopic: domain
+    maxMps: "100"
+    numWorkers: 2
+    flushSize: 2
+    flushInterval: 10s
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    redis:
+      serverName: feature-segment-persister
+      poolMaxIdle: 25
+      poolMaxActive: 25
+      addr: localenv-redis-headless.default.svc.cluster.local:6379
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+  tls:
+    service:
+      secret: bucketeer-service-cert
+
+metrics-event-persister:
+  env:
+    gcpEnabled: false
+    profile: false
+    pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+    project: bucketeer-test
+    topic: metrics
+    subscription: metrics-sub
+    maxMps: "1500"
+    numWorkers: 2
+    flushSize: 100
+    flushInterval: 2s
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+  tls:
+    service:
+      secret: bucketeer-service-cert
+
+push-sender:
+  env:
+    gcpEnabled: false
+    profile: false
+    pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+    project: bucketeer-test
+    domainTopic: domain
+    domainSubscription: push-sender-domain-sub
+    pushService: localhost:9001
+    featureService: localhost:9001
+    maxMps: "1000"
+    numWorkers: 2
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    redis:
+      serverName: bucketeer-redis
+      poolMaxIdle: 25
+      poolMaxActive: 25
+      addr: localenv-redis-headless.default.svc.cluster.local:6379
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+
+  tls:
+    service:
+      secret: bucketeer-service-cert
+      cert:
+      key:
+
+user-persister:
+  env:
+    gcpEnabled: false
+    profile: false
+    pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+    project: bucketeer-test
+    mysqlUser: bucketeer
+    mysqlPass: bucketeer
+    mysqlHost: localenv-mysql.default.svc.cluster.local
+    mysqlPort: 3306
+    mysqlDbName: bucketeer
+    topic: user
+    subscription: user-sub
+    maxMps: "1000"
+    numWorkers: 2
+    flushSize: 100
+    flushInterval: 2s
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    logLevel: info
+    port: 9090
+    metricsPort: 9002
+
+  tls:
+    service:
+      secret: bucketeer-service-cert
+      cert:
+      key:
+
+web:
+  tls:
+    secret: bucketeer-service-cert
+
+dex:
+  tls:
+    secret: bucketeer-service-cert
+    cert:
+    key:
+
+  config:
+    issuer: http://localhost:8000/dex
+    client:
+      id: bucketeer
+      name: Bucketeer
+      secret: secret
+      redirectURIs:
+        - http://localhost:8000/auth/callback
+    google:
+      enabled: false
+      clientID: dummy
+      clientSecret: dummy
+      redirectURIs:
+    enablePasswordDB: true
+    staticPasswords:
+      - email: "demo@bucketeer.io"
+        # bcrypt hash of the string "demo": $(echo demo | htpasswd -BinC 10 demo@bucketeer.io | cut -d: -f2)
+        hash: "$2y$10$VRsM9euKVuQ6.9IVXg7DsuiinDV9UtK4I2PXl5tK3yj5583YeMA3u"
+        username: "demo"
+        userID: "demo@bucketeer.io"
