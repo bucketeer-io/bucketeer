@@ -27,10 +27,6 @@ type WherePart interface {
 	SQLString() (sql string, args []interface{})
 }
 
-type SetPart interface {
-	SQLString() (sql string, args []interface{})
-}
-
 type Filter struct {
 	Column   string
 	Operator string
@@ -239,24 +235,6 @@ func ConstructWhereSQLString(wps []WherePart) (sql string, args []interface{}) {
 		wpSQL, wpArgs := wp.SQLString()
 		sb.WriteString(wpSQL)
 		args = append(args, wpArgs...)
-	}
-	sql = sb.String()
-	return
-}
-
-func ConstructSetSQLString(sps []SetPart) (sql string, args []interface{}) {
-	if len(sps) == 0 {
-		return "", nil
-	}
-	var sb strings.Builder
-	sb.WriteString("SET ")
-	for i, sp := range sps {
-		if i != 0 {
-			sb.WriteString(", ")
-		}
-		spSQL, spArgs := sp.SQLString()
-		sb.WriteString(spSQL)
-		args = append(args, spArgs...)
 	}
 	sql = sb.String()
 	return

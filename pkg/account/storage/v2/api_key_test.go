@@ -17,6 +17,7 @@ package v2
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -109,7 +110,6 @@ func TestUpdateAPIKey(t *testing.T) {
 	patterns := []struct {
 		desc                 string
 		setup                func(*accountStorage)
-		whereParts           []mysql.WherePart
 		input                *domain.APIKey
 		environmentNamespace string
 		expectedErr          error
@@ -149,16 +149,11 @@ func TestUpdateAPIKey(t *testing.T) {
 				result.EXPECT().RowsAffected().Return(int64(1), nil).Times(1)
 				s.client.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(),
-					"UPDATE api_key SET name = ?, role = ?, disabled = ?, created_at = ?, updated_at = ? WHERE id = ? AND environment_namespace = ?",
-					[]interface{}{name, int32(role), disabled, createdAt, updatedAt}, []interface{}{id, environmentNamespace},
+					fmt.Sprintf(updateAPIKeyV2SQLQuery, name, role, disabled, createdAt, updatedAt, id, environmentNamespace),
 				).Return(result, nil).Times(1)
 			},
 			input: &domain.APIKey{
 				APIKey: &proto.APIKey{Id: id, Name: name, Role: role, Disabled: disabled, CreatedAt: createdAt, UpdatedAt: updatedAt},
-			},
-			whereParts: []mysql.WherePart{
-				mysql.NewFilter("id", "=", id),
-				mysql.NewFilter("environment_namespace", "=", environmentNamespace),
 			},
 			environmentNamespace: environmentNamespace,
 			expectedErr:          nil,
@@ -170,7 +165,7 @@ func TestUpdateAPIKey(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			err := storage.UpdateAPIKey(context.Background(), p.input, p.whereParts)
+			err := storage.UpdateAPIKey(context.Background(), p.input, p.environmentNamespace)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

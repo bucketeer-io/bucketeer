@@ -286,11 +286,7 @@ func (s *AccountService) updateAPIKeyMySQL(
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
 		}
-		whereParts := []mysql.WherePart{
-			mysql.NewFilter("id", "=", id),
-			mysql.NewFilter("environment_namespace", "=", environmentNamespace),
-		}
-		return s.accountStorage.UpdateAPIKey(ctx, apiKey, whereParts)
+		return s.accountStorage.UpdateAPIKey(ctx, apiKey, environmentNamespace)
 	})
 }
 

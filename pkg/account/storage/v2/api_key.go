@@ -67,24 +67,10 @@ func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, env
 	return nil
 }
 
-func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, whereParts []mysql.WherePart) error {
-	setParts := []mysql.SetPart{
-		mysql.NewFilter("name", "=", k.Name),
-		mysql.NewFilter("role", "=", int32(k.Role)),
-		mysql.NewFilter("disabled", "=", k.Disabled),
-		mysql.NewFilter("created_at", "=", k.CreatedAt),
-		mysql.NewFilter("updated_at", "=", k.UpdatedAt),
-	}
-	setSQL, setArgs := mysql.ConstructSetSQLString(setParts)
-	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	query := fmt.Sprintf(updateAPIKeyV2SQLQuery, setSQL, whereSQL)
+func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error {
+	query := fmt.Sprintf(updateAPIKeyV2SQLQuery, k.Name, int32(k.Role), k.Disabled, k.CreatedAt, k.UpdatedAt, k.Id, environmentNamespace)
 
-	result, err := s.qe(ctx).ExecContext(
-		ctx,
-		query,
-		setArgs,
-		whereArgs,
-	)
+	result, err := s.qe(ctx).ExecContext(ctx, query)
 	if err != nil {
 		return err
 	}
