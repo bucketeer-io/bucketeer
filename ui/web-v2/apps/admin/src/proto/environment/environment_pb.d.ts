@@ -31,6 +31,9 @@ export class EnvironmentV2 extends jspb.Message {
   getOrganizationId(): string;
   setOrganizationId(value: string): void;
 
+  getRequireComment(): boolean;
+  setRequireComment(value: boolean): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EnvironmentV2.AsObject;
   static toObject(includeInstance: boolean, msg: EnvironmentV2): EnvironmentV2.AsObject;
@@ -52,6 +55,7 @@ export namespace EnvironmentV2 {
     createdAt: number,
     updatedAt: number,
     organizationId: string,
+    requireComment: boolean,
   }
 }
 

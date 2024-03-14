@@ -2,6 +2,7 @@
 // file: proto/environment/command.proto
 
 import * as jspb from "google-protobuf";
+import * as google_protobuf_wrappers_pb from "google-protobuf/google/protobuf/wrappers_pb";
 
 export class CreateEnvironmentV2Command extends jspb.Message {
   getName(): string;
@@ -15,6 +16,9 @@ export class CreateEnvironmentV2Command extends jspb.Message {
 
   getProjectId(): string;
   setProjectId(value: string): void;
+
+  getRequireComment(): boolean;
+  setRequireComment(value: boolean): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateEnvironmentV2Command.AsObject;
@@ -32,6 +36,7 @@ export namespace CreateEnvironmentV2Command {
     urlCode: string,
     description: string,
     projectId: string,
+    requireComment: boolean,
   }
 }
 
@@ -332,6 +337,26 @@ export class ChangeDescriptionOrganizationCommand extends jspb.Message {
 export namespace ChangeDescriptionOrganizationCommand {
   export type AsObject = {
     description: string,
+  }
+}
+
+export class ChangeRequireCommentCommand extends jspb.Message {
+  getRequireComment(): boolean;
+  setRequireComment(value: boolean): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ChangeRequireCommentCommand.AsObject;
+  static toObject(includeInstance: boolean, msg: ChangeRequireCommentCommand): ChangeRequireCommentCommand.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: ChangeRequireCommentCommand, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ChangeRequireCommentCommand;
+  static deserializeBinaryFromReader(message: ChangeRequireCommentCommand, reader: jspb.BinaryReader): ChangeRequireCommentCommand;
+}
+
+export namespace ChangeRequireCommentCommand {
+  export type AsObject = {
+    requireComment: boolean,
   }
 }
 

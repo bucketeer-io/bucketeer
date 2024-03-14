@@ -17,11 +17,14 @@ syntax = "proto3";
 package bucketeer.environment;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/environment";
 
+import "google/protobuf/wrappers.proto";
+
 message CreateEnvironmentV2Command {
   string name = 1;
   string url_code = 2;
   string description = 3;  // optional
   string project_id = 4;
+  bool require_comment = 5;
 }
 
 message RenameEnvironmentV2Command {
@@ -79,6 +82,10 @@ message ChangeNameOrganizationCommand {
 
 message ChangeDescriptionOrganizationCommand {
   string description = 1;
+}
+
+message ChangeRequireCommentCommand {
+  bool require_comment = 1;
 }
 
 message EnableOrganizationCommand {}

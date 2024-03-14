@@ -2267,7 +2267,8 @@ proto.bucketeer.environment.UpdateEnvironmentV2Request.toObject = function(inclu
   var f, obj = {
     id: jspb.Message.getFieldWithDefault(msg, 1, ""),
     renameCommand: (f = msg.getRenameCommand()) && proto_environment_command_pb.RenameEnvironmentV2Command.toObject(includeInstance, f),
-    changeDescriptionCommand: (f = msg.getChangeDescriptionCommand()) && proto_environment_command_pb.ChangeDescriptionEnvironmentV2Command.toObject(includeInstance, f)
+    changeDescriptionCommand: (f = msg.getChangeDescriptionCommand()) && proto_environment_command_pb.ChangeDescriptionEnvironmentV2Command.toObject(includeInstance, f),
+    changeRequireCommentCommand: (f = msg.getChangeRequireCommentCommand()) && proto_environment_command_pb.ChangeRequireCommentCommand.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -2317,6 +2318,11 @@ proto.bucketeer.environment.UpdateEnvironmentV2Request.deserializeBinaryFromRead
       var value = new proto_environment_command_pb.ChangeDescriptionEnvironmentV2Command;
       reader.readMessage(value,proto_environment_command_pb.ChangeDescriptionEnvironmentV2Command.deserializeBinaryFromReader);
       msg.setChangeDescriptionCommand(value);
+      break;
+    case 4:
+      var value = new proto_environment_command_pb.ChangeRequireCommentCommand;
+      reader.readMessage(value,proto_environment_command_pb.ChangeRequireCommentCommand.deserializeBinaryFromReader);
+      msg.setChangeRequireCommentCommand(value);
       break;
     default:
       reader.skipField();
@@ -2368,6 +2374,14 @@ proto.bucketeer.environment.UpdateEnvironmentV2Request.serializeBinaryToWriter =
       3,
       f,
       proto_environment_command_pb.ChangeDescriptionEnvironmentV2Command.serializeBinaryToWriter
+    );
+  }
+  f = message.getChangeRequireCommentCommand();
+  if (f != null) {
+    writer.writeMessage(
+      4,
+      f,
+      proto_environment_command_pb.ChangeRequireCommentCommand.serializeBinaryToWriter
     );
   }
 };
@@ -2462,6 +2476,43 @@ proto.bucketeer.environment.UpdateEnvironmentV2Request.prototype.clearChangeDesc
  */
 proto.bucketeer.environment.UpdateEnvironmentV2Request.prototype.hasChangeDescriptionCommand = function() {
   return jspb.Message.getField(this, 3) != null;
+};
+
+
+/**
+ * optional ChangeRequireCommentCommand change_require_comment_command = 4;
+ * @return {?proto.bucketeer.environment.ChangeRequireCommentCommand}
+ */
+proto.bucketeer.environment.UpdateEnvironmentV2Request.prototype.getChangeRequireCommentCommand = function() {
+  return /** @type{?proto.bucketeer.environment.ChangeRequireCommentCommand} */ (
+    jspb.Message.getWrapperField(this, proto_environment_command_pb.ChangeRequireCommentCommand, 4));
+};
+
+
+/**
+ * @param {?proto.bucketeer.environment.ChangeRequireCommentCommand|undefined} value
+ * @return {!proto.bucketeer.environment.UpdateEnvironmentV2Request} returns this
+*/
+proto.bucketeer.environment.UpdateEnvironmentV2Request.prototype.setChangeRequireCommentCommand = function(value) {
+  return jspb.Message.setWrapperField(this, 4, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.environment.UpdateEnvironmentV2Request} returns this
+ */
+proto.bucketeer.environment.UpdateEnvironmentV2Request.prototype.clearChangeRequireCommentCommand = function() {
+  return this.setChangeRequireCommentCommand(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.environment.UpdateEnvironmentV2Request.prototype.hasChangeRequireCommentCommand = function() {
+  return jspb.Message.getField(this, 4) != null;
 };
 
 

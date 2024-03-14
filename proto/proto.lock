@@ -3158,6 +3158,11 @@
                 "id": 4,
                 "name": "project_id",
                 "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "require_comment",
+                "type": "bool"
               }
             ]
           },
@@ -3329,6 +3334,16 @@
             ]
           },
           {
+            "name": "ChangeRequireCommentCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "require_comment",
+                "type": "bool"
+              }
+            ]
+          },
+          {
             "name": "EnableOrganizationCommand"
           },
           {
@@ -3342,6 +3357,11 @@
           },
           {
             "name": "ConvertTrialOrganizationCommand"
+          }
+        ],
+        "imports": [
+          {
+            "path": "google/protobuf/wrappers.proto"
           }
         ],
         "package": {
@@ -3406,6 +3426,11 @@
                 "id": 9,
                 "name": "organization_id",
                 "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "require_comment",
+                "type": "bool"
               }
             ]
           }
@@ -3812,6 +3837,11 @@
                 "id": 3,
                 "name": "change_description_command",
                 "type": "ChangeDescriptionEnvironmentV2Command"
+              },
+              {
+                "id": 4,
+                "name": "change_require_comment_command",
+                "type": "ChangeRequireCommentCommand"
               }
             ]
           },

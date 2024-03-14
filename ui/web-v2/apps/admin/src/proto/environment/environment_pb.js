@@ -83,7 +83,8 @@ proto.bucketeer.environment.EnvironmentV2.toObject = function(includeInstance, m
     archived: jspb.Message.getBooleanFieldWithDefault(msg, 6, false),
     createdAt: jspb.Message.getFieldWithDefault(msg, 7, 0),
     updatedAt: jspb.Message.getFieldWithDefault(msg, 8, 0),
-    organizationId: jspb.Message.getFieldWithDefault(msg, 9, "")
+    organizationId: jspb.Message.getFieldWithDefault(msg, 9, ""),
+    requireComment: jspb.Message.getBooleanFieldWithDefault(msg, 10, false)
   };
 
   if (includeInstance) {
@@ -155,6 +156,10 @@ proto.bucketeer.environment.EnvironmentV2.deserializeBinaryFromReader = function
     case 9:
       var value = /** @type {string} */ (reader.readString());
       msg.setOrganizationId(value);
+      break;
+    case 10:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setRequireComment(value);
       break;
     default:
       reader.skipField();
@@ -245,6 +250,13 @@ proto.bucketeer.environment.EnvironmentV2.serializeBinaryToWriter = function(mes
   if (f.length > 0) {
     writer.writeString(
       9,
+      f
+    );
+  }
+  f = message.getRequireComment();
+  if (f) {
+    writer.writeBool(
+      10,
       f
     );
   }
@@ -410,6 +422,24 @@ proto.bucketeer.environment.EnvironmentV2.prototype.getOrganizationId = function
  */
 proto.bucketeer.environment.EnvironmentV2.prototype.setOrganizationId = function(value) {
   return jspb.Message.setProto3StringField(this, 9, value);
+};
+
+
+/**
+ * optional bool require_comment = 10;
+ * @return {boolean}
+ */
+proto.bucketeer.environment.EnvironmentV2.prototype.getRequireComment = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 10, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.bucketeer.environment.EnvironmentV2} returns this
+ */
+proto.bucketeer.environment.EnvironmentV2.prototype.setRequireComment = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 10, value);
 };
 
 
