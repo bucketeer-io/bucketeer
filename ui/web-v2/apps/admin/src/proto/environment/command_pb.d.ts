@@ -3,7 +3,6 @@
 
 import * as jspb from "google-protobuf";
 import * as google_protobuf_wrappers_pb from "google-protobuf/google/protobuf/wrappers_pb";
-import * as proto_environment_environment_pb from "../../proto/environment/environment_pb";
 
 export class CreateEnvironmentV2Command extends jspb.Message {
   getName(): string;
@@ -18,10 +17,8 @@ export class CreateEnvironmentV2Command extends jspb.Message {
   getProjectId(): string;
   setProjectId(value: string): void;
 
-  hasSettings(): boolean;
-  clearSettings(): void;
-  getSettings(): proto_environment_environment_pb.EnvironmentV2.Settings | undefined;
-  setSettings(value?: proto_environment_environment_pb.EnvironmentV2.Settings): void;
+  getRequireComment(): boolean;
+  setRequireComment(value: boolean): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateEnvironmentV2Command.AsObject;
@@ -39,7 +36,7 @@ export namespace CreateEnvironmentV2Command {
     urlCode: string,
     description: string,
     projectId: string,
-    settings?: proto_environment_environment_pb.EnvironmentV2.Settings.AsObject,
+    requireComment: boolean,
   }
 }
 
@@ -343,25 +340,23 @@ export namespace ChangeDescriptionOrganizationCommand {
   }
 }
 
-export class ChangeSettingsCommand extends jspb.Message {
-  hasRequireComment(): boolean;
-  clearRequireComment(): void;
-  getRequireComment(): google_protobuf_wrappers_pb.BoolValue | undefined;
-  setRequireComment(value?: google_protobuf_wrappers_pb.BoolValue): void;
+export class ChangeRequireCommentCommand extends jspb.Message {
+  getRequireComment(): boolean;
+  setRequireComment(value: boolean): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ChangeSettingsCommand.AsObject;
-  static toObject(includeInstance: boolean, msg: ChangeSettingsCommand): ChangeSettingsCommand.AsObject;
+  toObject(includeInstance?: boolean): ChangeRequireCommentCommand.AsObject;
+  static toObject(includeInstance: boolean, msg: ChangeRequireCommentCommand): ChangeRequireCommentCommand.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: ChangeSettingsCommand, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): ChangeSettingsCommand;
-  static deserializeBinaryFromReader(message: ChangeSettingsCommand, reader: jspb.BinaryReader): ChangeSettingsCommand;
+  static serializeBinaryToWriter(message: ChangeRequireCommentCommand, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): ChangeRequireCommentCommand;
+  static deserializeBinaryFromReader(message: ChangeRequireCommentCommand, reader: jspb.BinaryReader): ChangeRequireCommentCommand;
 }
 
-export namespace ChangeSettingsCommand {
+export namespace ChangeRequireCommentCommand {
   export type AsObject = {
-    requireComment?: google_protobuf_wrappers_pb.BoolValue.AsObject,
+    requireComment: boolean,
   }
 }
 

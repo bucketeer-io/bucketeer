@@ -3161,8 +3161,8 @@
               },
               {
                 "id": 5,
-                "name": "settings",
-                "type": "EnvironmentV2.Settings"
+                "name": "require_comment",
+                "type": "bool"
               }
             ]
           },
@@ -3334,12 +3334,12 @@
             ]
           },
           {
-            "name": "ChangeSettingsCommand",
+            "name": "ChangeRequireCommentCommand",
             "fields": [
               {
                 "id": 1,
                 "name": "require_comment",
-                "type": "google.protobuf.BoolValue"
+                "type": "bool"
               }
             ]
           },
@@ -3362,9 +3362,6 @@
         "imports": [
           {
             "path": "google/protobuf/wrappers.proto"
-          },
-          {
-            "path": "proto/environment/environment.proto"
           }
         ],
         "package": {
@@ -3432,20 +3429,8 @@
               },
               {
                 "id": 10,
-                "name": "settings",
-                "type": "Settings"
-              }
-            ],
-            "messages": [
-              {
-                "name": "Settings",
-                "fields": [
-                  {
-                    "id": 1,
-                    "name": "require_comment",
-                    "type": "bool"
-                  }
-                ]
+                "name": "require_comment",
+                "type": "bool"
               }
             ]
           }
@@ -3855,8 +3840,8 @@
               },
               {
                 "id": 4,
-                "name": "change_settings_command",
-                "type": "ChangeSettingsCommand"
+                "name": "change_require_comment_command",
+                "type": "ChangeRequireCommentCommand"
               }
             ]
           },

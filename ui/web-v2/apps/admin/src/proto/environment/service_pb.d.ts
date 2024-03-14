@@ -206,10 +206,10 @@ export class UpdateEnvironmentV2Request extends jspb.Message {
   getChangeDescriptionCommand(): proto_environment_command_pb.ChangeDescriptionEnvironmentV2Command | undefined;
   setChangeDescriptionCommand(value?: proto_environment_command_pb.ChangeDescriptionEnvironmentV2Command): void;
 
-  hasChangeSettingsCommand(): boolean;
-  clearChangeSettingsCommand(): void;
-  getChangeSettingsCommand(): proto_environment_command_pb.ChangeSettingsCommand | undefined;
-  setChangeSettingsCommand(value?: proto_environment_command_pb.ChangeSettingsCommand): void;
+  hasChangeRequireCommentCommand(): boolean;
+  clearChangeRequireCommentCommand(): void;
+  getChangeRequireCommentCommand(): proto_environment_command_pb.ChangeRequireCommentCommand | undefined;
+  setChangeRequireCommentCommand(value?: proto_environment_command_pb.ChangeRequireCommentCommand): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateEnvironmentV2Request.AsObject;
@@ -226,7 +226,7 @@ export namespace UpdateEnvironmentV2Request {
     id: string,
     renameCommand?: proto_environment_command_pb.RenameEnvironmentV2Command.AsObject,
     changeDescriptionCommand?: proto_environment_command_pb.ChangeDescriptionEnvironmentV2Command.AsObject,
-    changeSettingsCommand?: proto_environment_command_pb.ChangeSettingsCommand.AsObject,
+    changeRequireCommentCommand?: proto_environment_command_pb.ChangeRequireCommentCommand.AsObject,
   }
 }
 
