@@ -17,7 +17,6 @@ package v2
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -149,7 +148,8 @@ func TestUpdateAPIKey(t *testing.T) {
 				result.EXPECT().RowsAffected().Return(int64(1), nil).Times(1)
 				s.client.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(),
-					fmt.Sprintf(updateAPIKeyV2SQLQuery, name, role, disabled, createdAt, updatedAt, id, environmentNamespace),
+					gomock.Regex("^UPDATE api_key SET\\s*?name=\\?,\\s*?role=\\?,\\s*?disabled=\\?,\\s*?created_at=\\?,\\s*?updated_at=\\?\\s*?WHERE\\s*?id=\\?\\s*?AND\\s*?environment_namespace=\\?\\s*?$"),
+					name, int32(role), disabled, createdAt, updatedAt, id, environmentNamespace,
 				).Return(result, nil).Times(1)
 			},
 			input: &domain.APIKey{
@@ -245,6 +245,13 @@ func TestListAPIKeys(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
+	getSize := 2
+	offset := 5
+	limit := 10
+	createdAt := 50
+	updatedAt := 77
+
 	patterns := []struct {
 		desc           string
 		setup          func(*accountStorage)
@@ -252,7 +259,7 @@ func TestListAPIKeys(t *testing.T) {
 		orders         []*mysql.Order
 		limit          int
 		offset         int
-		expected       []*proto.APIKey
+		expectedCount  int
 		expectedCursor int
 		expectedErr    error
 	}{
@@ -267,7 +274,7 @@ func TestListAPIKeys(t *testing.T) {
 			orders:         nil,
 			limit:          0,
 			offset:         0,
-			expected:       nil,
+			expectedCount:  0,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
 		},
@@ -278,39 +285,78 @@ func TestListAPIKeys(t *testing.T) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil).Times(1)
 				rows.EXPECT().Next().DoAndReturn(func() bool {
-					if nextCallCount < 2 {
-						nextCallCount++
+					nextCallCount++
+					if nextCallCount <= getSize {
 						return true
 					} else {
 						return false
 					}
-				}).Times(3)
-				rows.EXPECT().Scan(gomock.Any()).Return(nil).Times(2)
+				}).Times(getSize + 1)
+				rows.EXPECT().Scan(gomock.Any()).Return(nil).Times(getSize)
 				rows.EXPECT().Err().Return(nil)
 				s.client.(*mock.MockClient).EXPECT().QueryContext(
 					gomock.Any(),
-					gomock.Regex("SELECT[\\s\\S]\\s*?id,\\s*?name,\\s*?role,\\s*?disabled,\\s*?created_at,\\s*?updated_at\\s*?FROM\\s*?api_key[\\s\\S]*?$"),
-					5,
+					gomock.Regex("^SELECT\\s*?id,\\s*?name,\\s*?role,\\s*?disabled,\\s*?created_at,\\s*?updated_at\\s*?FROM\\s*?api_key\\s*?WHERE create_at >= \\? AND update_at < \\? ORDER BY id ASC, name DESC LIMIT 10 OFFSET 5\\s*?$"),
+					createdAt, updatedAt,
 				).Return(rows, nil).Times(1)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil).Times(1)
 				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(),
+					gomock.Regex("^SELECT\\s*?COUNT\\(1\\)\\s*?FROM\\s*?api_key\\s*?WHERE create_at >= \\? AND update_at < \\? ORDER BY id ASC, name DESC\\s*?$"),
+					createdAt, updatedAt,
 				).Return(row).Times(1)
 			},
 			whereParts: []mysql.WherePart{
-				mysql.NewFilter("num", ">=", 5),
+				mysql.NewFilter("create_at", ">=", createdAt),
+				mysql.NewFilter("update_at", "<", updatedAt),
 			},
 			orders: []*mysql.Order{
 				mysql.NewOrder("id", mysql.OrderDirectionAsc),
+				mysql.NewOrder("name", mysql.OrderDirectionDesc),
 			},
-			limit:  10,
-			offset: 5,
-			expected: []*proto.APIKey{
-				{Id: "", Name: "", Role: 0, Disabled: false, CreatedAt: 0, UpdatedAt: 0},
-				{Id: "", Name: "", Role: 0, Disabled: false, CreatedAt: 0, UpdatedAt: 0},
+			limit:          limit,
+			offset:         offset,
+			expectedCount:  getSize,
+			expectedCursor: offset + getSize,
+			expectedErr:    nil,
+		},
+		{
+			desc: "Success:No wereParts and no orderParts and no limit and no offset",
+			setup: func(s *accountStorage) {
+				var nextCallCount = 0
+				rows := mock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil).Times(1)
+				rows.EXPECT().Next().DoAndReturn(func() bool {
+					nextCallCount++
+					if nextCallCount <= getSize {
+						return true
+					} else {
+						return false
+					}
+				}).Times(getSize + 1)
+				rows.EXPECT().Scan(gomock.Any()).Return(nil).Times(getSize)
+				rows.EXPECT().Err().Return(nil)
+				s.client.(*mock.MockClient).EXPECT().QueryContext(
+					gomock.Any(),
+					gomock.Regex("^SELECT\\s*?id,\\s*?name,\\s*?role,\\s*?disabled,\\s*?created_at,\\s*?updated_at\\s*?FROM\\s*?api_key\\s*?$"),
+					[]interface{}{},
+				).Return(rows, nil).Times(1)
+
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil).Times(1)
+				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(),
+					gomock.Regex("^SELECT\\s*?COUNT\\(1\\)\\s*?FROM\\s*?api_key\\s*?$"),
+					[]interface{}{},
+				).Return(row).Times(1)
 			},
-			expectedCursor: 7,
+			whereParts:     []mysql.WherePart{},
+			orders:         []*mysql.Order{},
+			limit:          0,
+			offset:         0,
+			expectedCount:  getSize,
+			expectedCursor: getSize,
 			expectedErr:    nil,
 		},
 	}
@@ -327,7 +373,10 @@ func TestListAPIKeys(t *testing.T) {
 				p.limit,
 				p.offset,
 			)
-			assert.Equal(t, p.expected, apiKeys)
+			assert.Equal(t, p.expectedCount, len(apiKeys))
+			if len(apiKeys) > 0 {
+				assert.IsType(t, apiKeys, []*proto.APIKey{})
+			}
 			assert.Equal(t, p.expectedCursor, cursor)
 			assert.Equal(t, p.expectedErr, err)
 		})
