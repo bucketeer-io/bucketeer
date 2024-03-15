@@ -25,7 +25,7 @@ will have the following methods:
 - **NewMultiPubSub**: The constructor for the multi pub-sub.
 - **Start**: The method to start the multi pub-sub.
 - **Stop**: The method to stop the multi pub-sub.
-- **AddTopic**: The method to add a new topic to the multi pub-sub.
+- **AddSubscriber**: The method to add a new subscriber to the multi pub-sub.
 
 #### Configuration
 
@@ -66,8 +66,42 @@ will start the subscriber for each configuration.
 package subscriber
 
 type Subscriber struct {
+	name          string
 	configuration Configuration
 	processor     Processor
+}
+
+```
+
+The Subscriber struct have a `Run` function to start the subscriber. The `Run` function will pull the messages from the
+PubSub and call the processor function to process the messages.
+
+```go
+package subscriber
+
+func (s Subscriber) Run(ctx context.Context) {
+	puller := createPuller(ctx, s.configuration)
+	group := errgroup.Group{}
+	group.Go(func() error {
+		puller.Pull(ctx, func(ctx context.Context, msg *puller.Message) {
+			s.processor(msg)
+		})
+		return nil
+	})
+	group.Go(func() error {
+		for {
+			select {
+			case msg, ok := <-puller.MessageCh():
+				if !ok {
+					logger.error("receive msg error")
+					return nil
+				}
+				s.processor(msg)
+			case <-ctx.Done():
+				return nil
+			}
+		}
+	})
 }
 
 ```
@@ -80,8 +114,11 @@ this:
 ```go
 package subscriber
 
+import "go.uber.org/zap"
+
 type MultiPubSub struct {
 	subscribers []Subscriber
+	logger      zap.Logger
 }
 
 ```
@@ -92,7 +129,18 @@ topic, like this:
 ```go
 package subscriber
 
-func StartMultiPubSub(multiPubSub *MultiPubSub) {
+func NewMultiPubSub(logger zap.logger) *MultiPubSub {
+	return *MultiPubSub{
+		subscribers: make([]Subscriber),
+		logger:      logger,
+	}
+}
+
+func (m MultiPubSub) AddSubscriber(subscriber Subscriber) {
+	m.subscribers = append(m.subscribers, subscriber)
+}
+
+func (m MultiPubSub) Start(multiPubSub *MultiPubSub) {
 	for _, subscriber := range multiPubSub.subscribers {
 		go subscriber.Start()
 	}
