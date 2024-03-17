@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"time"
 
+	_ "github.com/go-sql-driver/mysql"
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
@@ -29,6 +30,7 @@ import (
 const dsnParams = "collation=utf8mb4_bin"
 
 type options struct {
+	connMaxLifetime time.Duration
 	connMaxIdleTime time.Duration
 	maxOpenConns    int
 	maxIdleConns    int
@@ -38,14 +40,21 @@ type options struct {
 
 func defaultOptions() *options {
 	return &options{
-		connMaxIdleTime: 300 * time.Second,
+		connMaxLifetime: 10 * time.Minute,
+		connMaxIdleTime: 5 * time.Minute,
 		maxOpenConns:    10,
-		maxIdleConns:    5,
+		maxIdleConns:    10,
 		logger:          zap.NewNop(),
 	}
 }
 
 type Option func(*options)
+
+func WithConnMaxLifetime(it time.Duration) Option {
+	return func(opts *options) {
+		opts.connMaxLifetime = it
+	}
+}
 
 func WithConnMaxIdleTime(it time.Duration) Option {
 	return func(opts *options) {
@@ -128,6 +137,7 @@ func NewClient(
 		logger.Error("Failed to open db", zap.Error(err))
 		return nil, err
 	}
+	db.SetConnMaxLifetime(dopts.connMaxLifetime)
 	db.SetConnMaxIdleTime(dopts.connMaxIdleTime)
 	db.SetMaxOpenConns(dopts.maxOpenConns)
 	db.SetMaxIdleConns(dopts.maxIdleConns)
