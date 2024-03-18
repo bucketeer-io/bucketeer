@@ -68,9 +68,17 @@ func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, env
 }
 
 func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error {
-	query := fmt.Sprintf(updateAPIKeyV2SQLQuery, k.Name, int32(k.Role), k.Disabled, k.CreatedAt, k.UpdatedAt, k.Id, environmentNamespace)
-
-	result, err := s.qe(ctx).ExecContext(ctx, query)
+	result, err := s.qe(ctx).ExecContext(
+		ctx,
+		updateAPIKeyV2SQLQuery,
+		k.Name,
+		int32(k.Role),
+		k.Disabled,
+		k.CreatedAt,
+		k.UpdatedAt,
+		k.Id,
+		environmentNamespace,
+	)
 	if err != nil {
 		return err
 	}

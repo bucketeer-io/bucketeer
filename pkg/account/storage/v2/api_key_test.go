@@ -70,7 +70,7 @@ func TestCreateAPIKey(t *testing.T) {
 			setup: func(s *accountStorage) {
 				s.client.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(),
-					gomock.Regex("^INSERT INTO api_key\\s*?\\(\\s*?id,\\s*?name,\\s*?role,\\s*?disabled,\\s*?created_at,\\s*?updated_at,\\s*?environment_namespace\\s*?\\)\\s*?VALUES\\s*?\\(\\s*?(\\?,\\s*?){6}\\s*?\\?\\s*?\\)\\s*?$"),
+					gomock.Regex("^INSERT INTO api_key\\s*\\(\\s*id,\\s*name,\\s*role,\\s*disabled,\\s*created_at,\\s*updated_at,\\s*environment_namespace\\s*\\)\\s*VALUES\\s*\\(\\s*(\\?,\\s*){6}\\s*\\?\\s*\\)\\s*$"),
 					"aid-0", "name", int32(0), false, int64(2), int64(3), "ns0",
 				).Return(nil, nil).Times(1)
 			},
@@ -117,10 +117,10 @@ func TestUpdateAPIKey(t *testing.T) {
 			desc: "ErrAPIKeyUnexpectedAffectedRows",
 			setup: func(s *accountStorage) {
 				result := mock.NewMockResult(mockController)
-				result.EXPECT().RowsAffected().Return(int64(0), nil)
+				result.EXPECT().RowsAffected().Return(int64(0), nil).Times(1)
 				s.client.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(result, nil)
+				).Return(result, nil).Times(1)
 			},
 			input: &domain.APIKey{
 				APIKey: &proto.APIKey{Id: id},
@@ -133,7 +133,7 @@ func TestUpdateAPIKey(t *testing.T) {
 			setup: func(s *accountStorage) {
 				s.client.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
+				).Return(nil, errors.New("error")).Times(1)
 			},
 			input: &domain.APIKey{
 				APIKey: &proto.APIKey{Id: id},
@@ -148,7 +148,7 @@ func TestUpdateAPIKey(t *testing.T) {
 				result.EXPECT().RowsAffected().Return(int64(1), nil).Times(1)
 				s.client.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(),
-					gomock.Regex("^UPDATE api_key SET\\s*?name=\\?,\\s*?role=\\?,\\s*?disabled=\\?,\\s*?created_at=\\?,\\s*?updated_at=\\?\\s*?WHERE\\s*?id=\\?\\s*?AND\\s*?environment_namespace=\\?\\s*?$"),
+					gomock.Regex("^UPDATE api_key\\s+SET\\s+name\\s*=\\s*\\?,\\s*role\\s*=\\s*\\?,\\s*disabled\\s*=\\s*\\?,\\s*created_at\\s*=\\s*\\?,\\s*updated_at\\s*=\\s*\\?\\s+WHERE\\s+id\\s*=\\s*\\?\\s+AND\\s+environment_namespace\\s*=\\s*\\?\\s*$"),
 					name, int32(role), disabled, createdAt, updatedAt, id, environmentNamespace,
 				).Return(result, nil).Times(1)
 			},
@@ -296,14 +296,14 @@ func TestListAPIKeys(t *testing.T) {
 				rows.EXPECT().Err().Return(nil)
 				s.client.(*mock.MockClient).EXPECT().QueryContext(
 					gomock.Any(),
-					gomock.Regex("^SELECT\\s*?id,\\s*?name,\\s*?role,\\s*?disabled,\\s*?created_at,\\s*?updated_at\\s*?FROM\\s*?api_key\\s*?WHERE create_at >= \\? AND update_at < \\? ORDER BY id ASC, name DESC LIMIT 10 OFFSET 5\\s*?$"),
+					gomock.Regex("^SELECT\\s+id,\\s*name,\\s*role,\\s*disabled,\\s*created_at,\\s*updated_at\\s+FROM\\s+api_key\\s+WHERE create_at >= \\? AND update_at < \\? ORDER BY id ASC, name DESC LIMIT 10 OFFSET 5\\s*$"),
 					createdAt, updatedAt,
 				).Return(rows, nil).Times(1)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil).Times(1)
 				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(),
-					gomock.Regex("^SELECT\\s*?COUNT\\(1\\)\\s*?FROM\\s*?api_key\\s*?WHERE create_at >= \\? AND update_at < \\? ORDER BY id ASC, name DESC\\s*?$"),
+					gomock.Regex("^SELECT\\s+COUNT\\(1\\)\\s+FROM\\s+api_key\\s+WHERE create_at >= \\? AND update_at < \\? ORDER BY id ASC, name DESC\\s*$"),
 					createdAt, updatedAt,
 				).Return(row).Times(1)
 			},

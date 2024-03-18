@@ -1,11 +1,9 @@
-UPDATE
-    api_key
-SET
-    name = %s,
-    role = %d,
-    disabled = %t,
-    created_at = %d,
-    updated_at = %d
+UPDATE api_key SET
+    name = ?,
+    role = ?,
+    disabled = ?,
+    created_at = ?,
+    updated_at = ?
 WHERE
-    id = %s AND
-    environment_namespace = %s
+    id = ? AND
+    environment_namespace = ?
