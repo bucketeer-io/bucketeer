@@ -1,8 +1,9 @@
-INSERT INTO api_key(
+INSERT INTO api_key (
     id,
     name,
-    role, disabled,
+    role,
+    disabled,
     created_at,
     updated_at,
-    environment_namespace)
-VALUES (?, ?, ?, ?, ?, ?, ?)
+    environment_namespace
+) VALUES (?, ?, ?, ?, ?, ?, ?)

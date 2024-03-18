@@ -70,7 +70,7 @@ func TestCreateAPIKey(t *testing.T) {
 			setup: func(s *accountStorage) {
 				s.client.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(),
-					gomock.Regex("^INSERT INTO api_key[\\s\\S]\\s*?id,\\s*?name,\\s*?role,\\s*?disabled,\\s*?created_at,\\s*?updated_at,\\s*?environment_namespace[\\s\\S]*?(\\?[\\s\\S]*?){7}"),
+					gomock.Regex("^INSERT INTO api_key\\s*?\\(\\s*?id,\\s*?name,\\s*?role,\\s*?disabled,\\s*?created_at,\\s*?updated_at,\\s*?environment_namespace\\s*?\\)\\s*?VALUES\\s*?\\(\\s*?(\\?,\\s*?){6}\\s*?\\?\\s*?\\)\\s*?$"),
 					"aid-0", "name", int32(0), false, int64(2), int64(3), "ns0",
 				).Return(nil, nil).Times(1)
 			},
