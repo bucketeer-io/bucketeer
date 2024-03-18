@@ -216,7 +216,7 @@ func TestGetAPIKey(t *testing.T) {
 				row.EXPECT().Scan(gomock.Any()).Return(nil).Times(1)
 				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(),
-					gomock.Any(),
+					gomock.Regex("^SELECT\\s+id,\\s*name,\\s*role,\\s*disabled,\\s*created_at,\\s*updated_at\\s+FROM\\s+api_key\\s+WHERE\\s+id\\s*=\\s*\\?\\s+AND\\s+environment_namespace\\s*=\\s*\\?\\s*$"),
 					"id-0", "ns0",
 				).Return(row).Times(1)
 			},
