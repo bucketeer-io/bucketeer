@@ -74,7 +74,6 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 		k.Name,
 		int32(k.Role),
 		k.Disabled,
-		k.CreatedAt,
 		k.UpdatedAt,
 		k.Id,
 		environmentNamespace,

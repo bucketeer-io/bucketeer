@@ -148,9 +148,9 @@ func TestUpdateAPIKey(t *testing.T) {
 				result.EXPECT().RowsAffected().Return(int64(1), nil).Times(1)
 				s.client.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(),
-					gomock.Regex("^UPDATE api_key\\s+SET\\s+name\\s*=\\s*\\?,\\s*role\\s*=\\s*\\?,\\s*disabled\\s*=\\s*\\?,\\s*created_at\\s*=\\s*\\?,\\s*updated_at\\s*=\\s*\\?\\s+WHERE\\s+id\\s*=\\s*\\?\\s+AND\\s+environment_namespace\\s*=\\s*\\?\\s*$"),
-					name, int32(role), disabled, createdAt, updatedAt, id, environmentNamespace,
-				).Return(result, nil).Times(1)
+					gomock.Regex("^UPDATE api_key\\s+SET\\s+name\\s*=\\s*\\?,\\s*role\\s*=\\s*\\?,\\s*disabled\\s*=\\s*\\?,\\s*updated_at\\s*=\\s*\\?\\s+WHERE\\s+id\\s*=\\s*\\?\\s+AND\\s+environment_namespace\\s*=\\s*\\?\\s*$"),
+					name, int32(role), disabled, updatedAt, id, environmentNamespace,
+				).Return(result, nil)
 			},
 			input: &domain.APIKey{
 				APIKey: &proto.APIKey{Id: id, Name: name, Role: role, Disabled: disabled, CreatedAt: createdAt, UpdatedAt: updatedAt},
