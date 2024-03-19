@@ -3359,11 +3359,6 @@
             "name": "ConvertTrialOrganizationCommand"
           }
         ],
-        "imports": [
-          {
-            "path": "google/protobuf/wrappers.proto"
-          }
-        ],
         "package": {
           "name": "bucketeer.environment"
         },
