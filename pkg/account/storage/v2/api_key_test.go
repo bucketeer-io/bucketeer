@@ -237,10 +237,6 @@ func TestGetAPIKey(t *testing.T) {
 	}
 }
 
-var (
-// nextCount = 0
-)
-
 func TestListAPIKeys(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
