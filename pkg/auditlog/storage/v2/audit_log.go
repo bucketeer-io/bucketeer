@@ -17,6 +17,7 @@ package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 	"strings"
@@ -29,6 +30,12 @@ import (
 
 var (
 	ErrAuditLogAlreadyExists = errors.New("auditlog: auditlog already exists")
+	//go:embed sql/auditlog/insert_audit_log_v2.sql
+	insertAuditLogV2SQL string
+	//go:embed sql/auditlog/select_audit_log_v2.sql
+	selectAuditLogV2SQL string
+	//go:embed sql/auditlog/select_audit_log_v2_count.sql
+	selectAuditLogV2CountSQL string
 )
 
 type AuditLogStorage interface {
@@ -54,23 +61,12 @@ func (s *auditLogStorage) CreateAuditLogs(ctx context.Context, auditLogs []*doma
 		return nil
 	}
 	var query strings.Builder
-	query.WriteString(`
-		INSERT INTO audit_log (
-			id,
-			timestamp,
-			entity_type,
-			entity_id,
-			type,
-			event,
-			editor,
-			options,
-			environment_namespace
-		) VALUES
-	`)
 	args := []interface{}{}
 	for i, al := range auditLogs {
 		if i != 0 {
 			query.WriteString(",")
+		} else {
+			query.WriteString(insertAuditLogV2SQL)
 		}
 		query.WriteString(" (?, ?, ?, ?, ?, ?, ?, ?, ?)")
 		args = append(
@@ -105,22 +101,21 @@ func (s *auditLogStorage) ListAuditLogs(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			timestamp,
-			entity_type,
-			entity_id,
-			type,
-			event,
-			editor,
-			options
-		FROM
-			audit_log
-		%s %s %s
-		`, whereSQL, orderBySQL, limitOffsetSQL,
-	)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	var query strings.Builder
+	query.WriteString(selectAuditLogV2SQL)
+	if len(whereArgs) != 0 {
+		query.WriteString(" ")
+		query.WriteString(whereSQL)
+	}
+	if len(orderBySQL) != 0 {
+		query.WriteString(" ")
+		query.WriteString(orderBySQL)
+	}
+	if len(limitOffsetSQL) != 0 {
+		query.WriteString(" ")
+		query.WriteString(limitOffsetSQL)
+	}
+	rows, err := s.qe.QueryContext(ctx, query.String(), whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -152,15 +147,17 @@ func (s *auditLogStorage) ListAuditLogs(
 	}
 	nextOffset := offset + len(auditLogs)
 	var totalCount int64
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(1)
-		FROM
-			audit_log
-		%s %s
-		`, whereSQL, orderBySQL,
-	)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	var countQuery strings.Builder
+	countQuery.WriteString(selectAuditLogV2CountSQL)
+	if len(whereArgs) != 0 {
+		countQuery.WriteString(" ")
+		countQuery.WriteString(whereSQL)
+	}
+	if len(orderBySQL) != 0 {
+		countQuery.WriteString(" ")
+		countQuery.WriteString(orderBySQL)
+	}
+	err = s.qe.QueryRowContext(ctx, countQuery.String(), whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
