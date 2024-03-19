@@ -21,8 +21,6 @@ var global =
     (function () { return this; }).call(null) ||
     Function('return this')();
 
-var google_protobuf_wrappers_pb = require('google-protobuf/google/protobuf/wrappers_pb.js');
-goog.object.extend(proto, google_protobuf_wrappers_pb);
 goog.exportSymbol('proto.bucketeer.environment.ArchiveEnvironmentV2Command', null, global);
 goog.exportSymbol('proto.bucketeer.environment.ArchiveOrganizationCommand', null, global);
 goog.exportSymbol('proto.bucketeer.environment.ChangeDescriptionEnvironmentV2Command', null, global);

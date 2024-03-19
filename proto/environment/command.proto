@@ -17,8 +17,6 @@ syntax = "proto3";
 package bucketeer.environment;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/environment";
 
-import "google/protobuf/wrappers.proto";
-
 message CreateEnvironmentV2Command {
   string name = 1;
   string url_code = 2;
