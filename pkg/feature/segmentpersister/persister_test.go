@@ -24,8 +24,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 
-	cachemock "github.com/bucketeer-io/bucketeer/pkg/cache/mock"
-	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
+	btclientmock "github.com/bucketeer-io/bucketeer/pkg/batch/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	metricsmock "github.com/bucketeer-io/bucketeer/pkg/metrics/mock"
@@ -46,14 +45,14 @@ func TestNewPersister(t *testing.T) {
 	puller := pullermock.NewMockPuller(mockController)
 	publisher := publishermock.NewMockPublisher(mockController)
 	mysqlClient := mysqlmock.NewMockClient(mockController)
-	redis := cachemock.NewMockMultiGetCache(mockController)
+	batchClient := btclientmock.NewMockClient(mockController)
 	registerer := metricsmock.NewMockRegisterer(mockController)
 	registerer.EXPECT().MustRegister(gomock.Any()).Return()
 	p := NewPersister(
 		puller,
 		publisher,
+		batchClient,
 		mysqlClient,
-		redis,
 		WithMaxMPS(100),
 		WithNumWorkers(1),
 		WithFlushSize(1),
@@ -121,6 +120,7 @@ func TestHandleEventMySQL(t *testing.T) {
 				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil).Times(2)
+				p.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
 			},
 			event: &serviceevent.BulkSegmentUsersReceivedEvent{
 				SegmentId:            "sid",
@@ -151,13 +151,13 @@ func newPersister(t *testing.T, mockController *gomock.Controller) *Persister {
 	ctx, cancel := context.WithCancel(context.Background())
 	logger := zap.NewNop()
 	return &Persister{
-		puller:            pullermock.NewMockRateLimitedPuller(mockController),
-		domainPublisher:   publishermock.NewMockPublisher(mockController),
-		mysqlClient:       mysqlmock.NewMockClient(mockController),
-		segmentUsersCache: cachev3mock.NewMockSegmentUsersCache(mockController),
-		logger:            logger.Named("persister"),
-		ctx:               ctx,
-		cancel:            cancel,
-		doneCh:            make(chan struct{}),
+		puller:          pullermock.NewMockRateLimitedPuller(mockController),
+		domainPublisher: publishermock.NewMockPublisher(mockController),
+		batchClient:     btclientmock.NewMockClient(mockController),
+		mysqlClient:     mysqlmock.NewMockClient(mockController),
+		logger:          logger.Named("persister"),
+		ctx:             ctx,
+		cancel:          cancel,
+		doneCh:          make(chan struct{}),
 	}
 }

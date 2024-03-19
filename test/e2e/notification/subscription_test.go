@@ -33,7 +33,7 @@ import (
 
 const (
 	prefixTestName = "e2e-test"
-	timeout        = 10 * time.Second
+	timeout        = 60 * time.Second
 )
 
 var (

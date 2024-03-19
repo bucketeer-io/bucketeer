@@ -120,6 +120,8 @@ spec:
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_BACKEND_AUTH_SERVICE
               value: "{{ .Values.env.authService }}"
+            - name: BUCKETEER_BACKEND_BATCH_SERVICE
+              value: "{{ .Values.env.batchService }}"
             - name: BUCKETEER_BACKEND_ENVIRONMENT_SERVICE
               value: "{{ .Values.env.environmentService }}"
             - name: BUCKETEER_BACKEND_EXPERIMENT_SERVICE

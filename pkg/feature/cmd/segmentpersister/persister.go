@@ -21,18 +21,21 @@ import (
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
+	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	fsp "github.com/bucketeer-io/bucketeer/pkg/feature/segmentpersister"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
-	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
+	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 )
 
-const command = "segment-persister"
+const (
+	command           = "segment-persister"
+	clientDialTimeout = 30 * time.Second
+)
 
 type Persister interface {
 	Run(context.Context, metrics.Metrics, *zap.Logger) error
@@ -42,6 +45,7 @@ type persister struct {
 	*kingpin.CmdClause
 	port                                      *int
 	project                                   *string
+	batchService                              *string
 	mysqlUser                                 *string
 	mysqlPass                                 *string
 	mysqlHost                                 *string
@@ -57,20 +61,21 @@ type persister struct {
 	pullerNumGoroutines                       *int
 	pullerMaxOutstandingMessages              *int
 	pullerMaxOutstandingBytes                 *int
-	redisServerName                           *string
-	redisAddr                                 *string
-	redisPoolMaxIdle                          *int
-	redisPoolMaxActive                        *int
 	certPath                                  *string
 	keyPath                                   *string
+	serviceTokenPath                          *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 	cmd := p.Command(command, "Start segment persister")
 	persister := &persister{
-		CmdClause:        cmd,
-		port:             cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
-		project:          cmd.Flag("project", "Google Cloud project name.").String(),
+		CmdClause: cmd,
+		port:      cmd.Flag("port", "Port to bind to.").Default("9090").Int(),
+		project:   cmd.Flag("project", "Google Cloud project name.").String(),
+		batchService: cmd.Flag(
+			"batch-service",
+			"bucketeer-batch-service address.",
+		).Default("localhost:9001").String(),
 		mysqlUser:        cmd.Flag("mysql-user", "MySQL user.").Required().String(),
 		mysqlPass:        cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
 		mysqlHost:        cmd.Flag("mysql-host", "MySQL host.").Required().String(),
@@ -98,18 +103,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"Maximum number of unprocessed messages.",
 		).Int(),
 		pullerMaxOutstandingBytes: cmd.Flag("puller-max-outstanding-bytes", "Maximum size of unprocessed messages.").Int(),
-		redisServerName:           cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
-		redisAddr:                 cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
-		redisPoolMaxIdle: cmd.Flag(
-			"redis-pool-max-idle",
-			"Maximum number of idle connections in the pool.",
-		).Default("5").Int(),
-		redisPoolMaxActive: cmd.Flag(
-			"redis-pool-max-active",
-			"Maximum number of connections allocated by the pool at a given time.",
-		).Default("10").Int(),
-		certPath: cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
-		keyPath:  cmd.Flag("key", "Path to TLS key.").Required().String(),
+		certPath:                  cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
+		keyPath:                   cmd.Flag("key", "Path to TLS key.").Required().String(),
+		serviceTokenPath:          cmd.Flag("service-token", "Path to service token.").Required().String(),
 	}
 	r.RegisterCommand(persister)
 	return persister
@@ -124,19 +120,24 @@ func (p *persister) Run(ctx context.Context, metrics metrics.Metrics, logger *za
 	}
 	defer mysqlClient.Close()
 
-	redisV3Client, err := redisv3.NewClient(
-		*p.redisAddr,
-		redisv3.WithPoolSize(*p.redisPoolMaxActive),
-		redisv3.WithMinIdleConns(*p.redisPoolMaxIdle),
-		redisv3.WithServerName(*p.redisServerName),
-		redisv3.WithMetrics(registerer),
-		redisv3.WithLogger(logger),
+	// credential for grpc
+	creds, err := client.NewPerRPCCredentials(*p.serviceTokenPath)
+	if err != nil {
+		return err
+	}
+
+	// batchClient
+	batchClient, err := btclient.NewClient(*p.batchService, *p.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(clientDialTimeout),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
 	)
 	if err != nil {
 		return err
 	}
-	defer redisV3Client.Close()
-	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
+	defer batchClient.Close()
 
 	pubsubClient, err := p.createPubsubClient(ctx, logger)
 	if err != nil {
@@ -162,8 +163,8 @@ func (p *persister) Run(ctx context.Context, metrics metrics.Metrics, logger *za
 	persister := fsp.NewPersister(
 		segmentUsersPuller,
 		domainPublisher,
+		batchClient,
 		mysqlClient,
-		redisV3Cache,
 		fsp.WithMaxMPS(*p.maxMPS),
 		fsp.WithNumWorkers(*p.numWorkers),
 		fsp.WithFlushSize(*p.flushSize),
@@ -178,7 +179,6 @@ func (p *persister) Run(ctx context.Context, metrics metrics.Metrics, logger *za
 		health.WithTimeout(time.Second),
 		health.WithCheck("metrics", metrics.Check),
 		health.WithCheck("segment-persister", persister.Check),
-		health.WithCheck("redis", redisV3Client.Check),
 	)
 	go healthChecker.Run(ctx)
 

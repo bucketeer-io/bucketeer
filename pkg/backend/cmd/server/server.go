@@ -31,6 +31,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/auth/oidc"
 	autoopsapi "github.com/bucketeer-io/bucketeer/pkg/autoops/api"
 	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
+	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
@@ -119,6 +120,7 @@ type server struct {
 	// Service
 	accountService     *string
 	authService        *string
+	batchService       *string
 	environmentService *string
 	experimentService  *string
 	featureService     *string
@@ -242,6 +244,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		authService: cmd.Flag(
 			"auth-service",
 			"bucketeer-auth-service address.",
+		).Default("localhost:9001").String(),
+		batchService: cmd.Flag(
+			"batch-service",
+			"bucketeer-batch-service address.",
 		).Default("localhost:9001").String(),
 		environmentService: cmd.Flag(
 			"environment-service",
@@ -403,6 +409,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	// authClient
 	authClient, err := authclient.NewClient(*s.authService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(clientDialTimeout),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	// batchClient
+	batchClient, err := btclient.NewClient(*s.batchService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
 		client.WithDialTimeout(clientDialTimeout),
 		client.WithBlock(),
@@ -578,6 +595,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		accountClient,
 		experimentClient,
 		autoOpsClient,
+		batchClient,
 		nonPersistentRedisV3Cache,
 		segmentUsersPublisher,
 		domainTopicPublisher,
@@ -672,6 +690,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go segmentUsersPublisher.Stop()
 		go accountClient.Close()
 		go authClient.Close()
+		go batchClient.Close()
 		go environmentClient.Close()
 		go experimentClient.Close()
 		go featureClient.Close()
@@ -772,6 +791,7 @@ func (s *server) createFeatureService(
 	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
 	autoOpsClient autoopsclient.Client,
+	batchClient btclient.Client,
 	nonPersistentRedisV3Cache cache.MultiGetDeleteCountCache,
 	segmentUsersPublisher publisher.Publisher,
 	domainTopicPublisher publisher.Publisher,
@@ -783,6 +803,7 @@ func (s *server) createFeatureService(
 		accountClient,
 		experimentClient,
 		autoOpsClient,
+		batchClient,
 		nonPersistentRedisV3Cache,
 		segmentUsersPublisher,
 		domainTopicPublisher,

@@ -35,6 +35,9 @@ spec:
         - name: service-cert-secret
           secret:
             secretName: {{ template "service-cert-secret" . }}
+        - name: service-token-secret
+          secret:
+            secretName: {{ template "service-token-secret" . }}
       {{- if .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "feature-segment-persister.fullname" . }}
       {{- end }}
@@ -90,6 +93,8 @@ spec:
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_FEATURE_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
+            - name: BUCKETEER_FEATURE_SERVICE_TOKEN
+              value: /usr/local/service-token/token
             - name: BUCKETEER_FEATURE_CERT
               value: /usr/local/certs/service/tls.crt
             - name: BUCKETEER_FEATURE_KEY
@@ -97,6 +102,9 @@ spec:
           volumeMounts:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service
+              readOnly: true
+            - name: service-token-secret
+              mountPath: /usr/local/service-token
               readOnly: true
           ports:
             - name: service

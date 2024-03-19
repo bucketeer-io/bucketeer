@@ -83,7 +83,7 @@ func TestGrpcExperimentGoalCount(t *testing.T) {
 	defer ecClient.Close()
 	uuid := newUUID(t)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
@@ -215,7 +215,7 @@ func TestExperimentGoalCount(t *testing.T) {
 	defer ecClient.Close()
 	uuid := newUUID(t)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
@@ -348,7 +348,7 @@ func TestGrpcExperimentResult(t *testing.T) {
 	defer ecClient.Close()
 	uuid := newUUID(t)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
@@ -505,7 +505,7 @@ func TestExperimentResult(t *testing.T) {
 	defer ecClient.Close()
 	uuid := newUUID(t)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
@@ -662,7 +662,7 @@ func TestGrpcMultiGoalsEventCounter(t *testing.T) {
 	defer ecClient.Close()
 	uuid := newUUID(t)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
@@ -884,7 +884,7 @@ func TestMultiGoalsEventCounter(t *testing.T) {
 	defer ecClient.Close()
 	uuid := newUUID(t)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
@@ -1106,7 +1106,7 @@ func TestHTTPTrack(t *testing.T) {
 	defer ecClient.Close()
 	uuid := newUUID(t)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
@@ -1220,7 +1220,7 @@ func TestHTTPTrack(t *testing.T) {
 
 func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()
@@ -1348,7 +1348,7 @@ func TestGrpcExperimentEvaluationEventCount(t *testing.T) {
 
 func TestExperimentEvaluationEventCount(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	featureClient := newFeatureClient(t)
 	defer featureClient.Close()

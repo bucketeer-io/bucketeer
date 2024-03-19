@@ -22,7 +22,7 @@ import (
 	"go.uber.org/zap"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
-	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
+	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
@@ -31,7 +31,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
 	tf "github.com/bucketeer-io/bucketeer/pkg/push/sender"
-	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 )
@@ -44,6 +43,7 @@ type server struct {
 	project                      *string
 	domainTopic                  *string
 	domainSubscription           *string
+	batchService                 *string
 	pushService                  *string
 	featureService               *string
 	maxMPS                       *int
@@ -54,10 +54,6 @@ type server struct {
 	pullerNumGoroutines          *int
 	pullerMaxOutstandingMessages *int
 	pullerMaxOutstandingBytes    *int
-	redisServerName              *string
-	redisAddr                    *string
-	redisPoolMaxIdle             *int
-	redisPoolMaxActive           *int
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -74,6 +70,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"domain-subscription",
 			"Google PubSub subscription name of incoming domain event.",
 		).String(),
+		batchService: cmd.Flag(
+			"batch-service",
+			"bucketeer-batch-service address.",
+		).Default("push:9090").String(),
 		pushService: cmd.Flag(
 			"push-service",
 			"bucketeer-push-service address.",
@@ -99,16 +99,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"Maximum number of unprocessed messages.",
 		).Int(),
 		pullerMaxOutstandingBytes: cmd.Flag("puller-max-outstanding-bytes", "Maximum size of unprocessed messages.").Int(),
-		redisServerName:           cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
-		redisAddr:                 cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
-		redisPoolMaxIdle: cmd.Flag(
-			"redis-pool-max-idle",
-			"Maximum number of idle connections in the pool.",
-		).Default("5").Int(),
-		redisPoolMaxActive: cmd.Flag(
-			"redis-pool-max-active",
-			"Maximum number of connections allocated by the pool at a given time.",
-		).Default("10").Int(),
 	}
 	r.RegisterCommand(s)
 	return s
@@ -138,6 +128,13 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		client.WithMetrics(registerer),
 		client.WithLogger(logger),
 	}
+
+	batchClient, err := btclient.NewClient(*s.batchService, *s.certPath, clientOptions...)
+	if err != nil {
+		return err
+	}
+	defer batchClient.Close()
+
 	pushClient, err := pushclient.NewClient(*s.pushService, *s.certPath, clientOptions...)
 	if err != nil {
 		return err
@@ -150,25 +147,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer featureClient.Close()
 
-	redisV3Client, err := redisv3.NewClient(
-		*s.redisAddr,
-		redisv3.WithPoolSize(*s.redisPoolMaxActive),
-		redisv3.WithMinIdleConns(*s.redisPoolMaxIdle),
-		redisv3.WithServerName(*s.redisServerName),
-		redisv3.WithMetrics(registerer),
-		redisv3.WithLogger(logger),
-	)
-	if err != nil {
-		return err
-	}
-	defer redisV3Client.Close()
-	redisV3Cache := cachev3.NewRedisCache(redisV3Client)
-
 	t := tf.NewSender(
 		domainPuller,
 		pushClient,
 		featureClient,
-		redisV3Cache,
+		batchClient,
 		tf.WithMaxMPS(*s.maxMPS),
 		tf.WithNumWorkers(*s.numWorkers),
 		tf.WithMetrics(registerer),
@@ -181,7 +164,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		health.WithTimeout(time.Second),
 		health.WithCheck("metrics", metrics.Check),
 		health.WithCheck("sender", t.Check),
-		health.WithCheck("redis", redisV3Client.Check),
 	)
 	go healthChecker.Run(ctx)
 

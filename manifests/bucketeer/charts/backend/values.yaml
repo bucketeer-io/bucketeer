@@ -29,6 +29,7 @@ env:
   bulkSegmentUsersReceivedTopic:
   accountService: localhost:9001
   authService: localhost:9001
+  batchService: localhost:9001
   environmentService: localhost:9001
   experimentService: localhost:9001
   featureService: localhost:9001

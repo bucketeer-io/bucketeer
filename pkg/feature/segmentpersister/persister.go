@@ -24,8 +24,7 @@ import (
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/cache"
-	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
+	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
@@ -37,6 +36,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	btproto "github.com/bucketeer-io/bucketeer/proto/batch"
 	domainproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	serviceevent "github.com/bucketeer-io/bucketeer/proto/event/service"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -99,23 +99,23 @@ func WithLogger(logger *zap.Logger) Option {
 }
 
 type Persister struct {
-	puller            puller.RateLimitedPuller
-	domainPublisher   publisher.Publisher
-	mysqlClient       mysql.Client
-	segmentUsersCache cachev3.SegmentUsersCache
-	group             errgroup.Group
-	opts              *options
-	logger            *zap.Logger
-	ctx               context.Context
-	cancel            func()
-	doneCh            chan struct{}
+	puller          puller.RateLimitedPuller
+	domainPublisher publisher.Publisher
+	batchClient     btclient.Client
+	mysqlClient     mysql.Client
+	group           errgroup.Group
+	opts            *options
+	logger          *zap.Logger
+	ctx             context.Context
+	cancel          func()
+	doneCh          chan struct{}
 }
 
 func NewPersister(
 	p puller.Puller,
 	domainPublisher publisher.Publisher,
+	batchClient btclient.Client,
 	mysqlClient mysql.Client,
-	v3Cache cache.MultiGetCache,
 	opts ...Option,
 ) *Persister {
 	dopts := &options{
@@ -133,15 +133,15 @@ func NewPersister(
 		registerMetrics(dopts.metrics)
 	}
 	return &Persister{
-		puller:            puller.NewRateLimitedPuller(p, dopts.maxMPS),
-		domainPublisher:   domainPublisher,
-		mysqlClient:       mysqlClient,
-		segmentUsersCache: cachev3.NewSegmentUsersCache(v3Cache),
-		opts:              dopts,
-		logger:            dopts.logger.Named("segment-persister"),
-		ctx:               ctx,
-		cancel:            cancel,
-		doneCh:            make(chan struct{}),
+		puller:          puller.NewRateLimitedPuller(p, dopts.maxMPS),
+		domainPublisher: domainPublisher,
+		batchClient:     batchClient,
+		mysqlClient:     mysqlClient,
+		opts:            dopts,
+		logger:          dopts.logger.Named("segment-persister"),
+		ctx:             ctx,
+		cancel:          cancel,
+		doneCh:          make(chan struct{}),
 	}
 }
 
@@ -393,11 +393,12 @@ func (p *Persister) persistSegmentUsers(
 		if err := segmentUserStorage.UpsertSegmentUsers(ctx, allSegmentUsers, environmentNamespace); err != nil {
 			return err
 		}
-		return p.updateCache(segmentID, environmentNamespace, allSegmentUsers)
+		return nil
 	})
 	if err != nil {
 		return 0, nil
 	}
+	p.updateSegmentUserCache(ctx)
 	return cnt, nil
 }
 
@@ -434,23 +435,14 @@ func (p *Persister) updateSegmentStatus(
 	})
 }
 
-func (p *Persister) updateCache(segmentID, environmentNamespace string, users []*featureproto.SegmentUser) error {
-	segmentUsers := &featureproto.SegmentUsers{
-		SegmentId: segmentID,
-		Users:     users,
+// Even if the update request fails, the cronjob will keep trying
+// to update the cache every minute, so we don't need to retry.
+func (p *Persister) updateSegmentUserCache(ctx context.Context) {
+	req := &btproto.BatchJobRequest{
+		Job: btproto.BatchJob_SegmentUserCacher,
 	}
-	if err := p.segmentUsersCache.Put(segmentUsers, environmentNamespace); err != nil {
-		p.logger.Error(
-			"Failed to cache segment users",
-			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
-		)
-		return err
+	_, err := p.batchClient.ExecuteBatchJob(ctx, req)
+	if err != nil {
+		p.logger.Error("Failed to update segment user cache", zap.Error(err))
 	}
-	p.logger.Info("Segment users successfully cached",
-		zap.String("environmentNamespace", environmentNamespace),
-		zap.String("segmentId", segmentID),
-		zap.Int("size", len(users)),
-	)
-	return nil
 }

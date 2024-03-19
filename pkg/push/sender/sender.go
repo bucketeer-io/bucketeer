@@ -25,17 +25,16 @@ import (
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/cache"
-	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
+	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
 	pushdomain "github.com/bucketeer-io/bucketeer/pkg/push/domain"
+	btproto "github.com/bucketeer-io/bucketeer/proto/batch"
 	domaineventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
@@ -96,7 +95,7 @@ type sender struct {
 	puller        puller.RateLimitedPuller
 	pushClient    pushclient.Client
 	featureClient featureclient.Client
-	featuresCache cachev3.FeaturesCache
+	batchClient   btclient.Client
 	group         errgroup.Group
 	opts          *options
 	logger        *zap.Logger
@@ -109,7 +108,7 @@ func NewSender(
 	p puller.Puller,
 	pushClient pushclient.Client,
 	featureClient featureclient.Client,
-	v3Cache cache.MultiGetCache,
+	batchClient btclient.Client,
 	opts ...Option) Sender {
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -124,7 +123,7 @@ func NewSender(
 		puller:        puller.NewRateLimitedPuller(p, options.maxMPS),
 		pushClient:    pushClient,
 		featureClient: featureClient,
-		featuresCache: cachev3.NewFeaturesCache(v3Cache),
+		batchClient:   batchClient,
 		opts:          &options,
 		logger:        options.logger.Named("sender"),
 		ctx:           ctx,
@@ -239,28 +238,28 @@ func (s *sender) send(featureID, environmentNamespace string) error {
 		)
 		return nil
 	}
+	// Before sending the push notification we must update the cache
+	// so the api-gateway can evaluate the user correctly.
+	if err := s.updateFeatureFlagCache(ctx); err != nil {
+		s.logger.Error("Failed to update feature flag cache", zap.Error(err))
+		return err
+	}
+	if err := s.updateSegmentUserCache(ctx); err != nil {
+		s.logger.Error("Failed to update segment user cache", zap.Error(err))
+		return err
+	}
 	var lastErr error
 	for _, p := range pushes {
 		d := pushdomain.Push{Push: p}
-		for _, t := range resp.Feature.Tags {
-			if !d.ExistTag(t) {
+		for _, tag := range resp.Feature.Tags {
+			if !d.ExistTag(tag) {
 				continue
 			}
-			if !s.isFeaturesCacheLatest(ctx, environmentNamespace, t, resp.Feature.Id, resp.Feature.Version) {
-				if err = s.updateFeatures(ctx, environmentNamespace, t); err != nil {
-					s.logger.Error("Failed to update features", zap.Error(err),
-						zap.String("featureId", featureID),
-						zap.String("tag", t),
-						zap.String("pushId", d.Push.Id),
-						zap.String("environmentNamespace", environmentNamespace),
-					)
-				}
-			}
-			topic := topicPrefix + t
+			topic := topicPrefix + tag
 			if err = s.pushFCM(ctx, d.FcmApiKey, topic); err != nil {
 				s.logger.Error("Failed to push notification", zap.Error(err),
 					zap.String("featureId", featureID),
-					zap.String("tag", t),
+					zap.String("tag", tag),
 					zap.String("topic", topic),
 					zap.String("pushId", d.Push.Id),
 					zap.String("environmentNamespace", environmentNamespace),
@@ -270,7 +269,7 @@ func (s *sender) send(featureID, environmentNamespace string) error {
 			}
 			s.logger.Info("Succeeded to push notification",
 				zap.String("featureId", featureID),
-				zap.String("tag", t),
+				zap.String("tag", tag),
 				zap.String("topic", topic),
 				zap.String("pushId", d.Push.Id),
 				zap.String("environmentNamespace", environmentNamespace),
@@ -349,96 +348,26 @@ func (s *sender) extractFeatureID(event *domaineventproto.Event) (string, bool) 
 	return event.EntityId, true
 }
 
-func (s *sender) isFeaturesCacheLatest(
-	ctx context.Context,
-	environmentNamespace,
-	tag, featureID string,
-	featureVersion int32,
-) bool {
-	features, err := s.featuresCache.Get(environmentNamespace)
+// The batch API updates the feature flag cache in all the environments
+func (s *sender) updateFeatureFlagCache(ctx context.Context) error {
+	req := &btproto.BatchJobRequest{
+		Job: btproto.BatchJob_FeatureFlagCacher,
+	}
+	_, err := s.batchClient.ExecuteBatchJob(ctx, req)
 	if err != nil {
-		s.logger.Info(
-			"Failed to get Features",
-			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
-			zap.String("tag", tag),
-			zap.String("featureId", featureID),
-			zap.Int32("featureVersion", featureVersion),
-		)
-		return false
-	}
-	return s.isFeaturesLatest(features, featureID, featureVersion)
-}
-
-func (s *sender) updateFeatures(ctx context.Context, environmentNamespace, tag string) error {
-	fs, err := s.listFeatures(ctx, environmentNamespace)
-	if err != nil {
-		s.logger.Error(
-			"Failed to retrieve features from storage",
-			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
-			zap.String("tag", tag),
-		)
-		return err
-	}
-	features := &featureproto.Features{
-		Features: fs,
-	}
-	// We manage all the caching via batch, but this case is an exception
-	// because we must update the cache before sending the push notification.
-	// Otherwise, when the api-gateway gets the request from the client, the cache might still be old
-	// because there is an interval of one minute between the cache update job.
-	if err := s.featuresCache.Put(features, environmentNamespace); err != nil {
-		s.logger.Error(
-			"Failed to cache features",
-			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
-		)
 		return err
 	}
 	return nil
 }
 
-func (s *sender) isFeaturesLatest(
-	features *featureproto.Features,
-	featureID string,
-	featureVersion int32,
-) bool {
-	for _, f := range features.Features {
-		if f.Id == featureID {
-			return f.Version >= featureVersion
-		}
+// The batch API updates the segment user cache in all the environments
+func (s *sender) updateSegmentUserCache(ctx context.Context) error {
+	req := &btproto.BatchJobRequest{
+		Job: btproto.BatchJob_SegmentUserCacher,
 	}
-	return false
-}
-
-func (s *sender) listFeatures(ctx context.Context, environmentNamespace string) ([]*featureproto.Feature, error) {
-	features := []*featureproto.Feature{}
-	cursor := ""
-	for {
-		resp, err := s.featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
-			PageSize:             listRequestSize,
-			Cursor:               cursor,
-			EnvironmentNamespace: environmentNamespace,
-		})
-		if err != nil {
-			return nil, err
-		}
-		for _, f := range resp.Features {
-			ff := featuredomain.Feature{Feature: f}
-			if ff.IsDisabledAndOffVariationEmpty() {
-				continue
-			}
-			// To keep the cache size small, we exclude feature flags archived more than thirty days ago.
-			if ff.IsArchivedBeforeLastThirtyDays() {
-				continue
-			}
-			features = append(features, f)
-		}
-		featureSize := len(resp.Features)
-		if featureSize == 0 || featureSize < listRequestSize {
-			return features, nil
-		}
-		cursor = resp.Cursor
+	_, err := s.batchClient.ExecuteBatchJob(ctx, req)
+	if err != nil {
+		return err
 	}
+	return nil
 }

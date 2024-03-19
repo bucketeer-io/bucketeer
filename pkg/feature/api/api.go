@@ -29,6 +29,7 @@ import (
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
+	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
@@ -61,6 +62,7 @@ type FeatureService struct {
 	experimentClient      experimentclient.Client
 	featuresCache         cachev3.FeaturesCache
 	autoOpsClient         autoopsclient.Client
+	batchClient           btclient.Client
 	segmentUsersCache     cachev3.SegmentUsersCache
 	segmentUsersPublisher publisher.Publisher
 	domainPublisher       publisher.Publisher
@@ -75,6 +77,7 @@ func NewFeatureService(
 	accountClient accountclient.Client,
 	experimentClient experimentclient.Client,
 	autoOpsClient autoopsclient.Client,
+	batchClient btclient.Client,
 	v3Cache cache.MultiGetCache,
 	segmentUsersPublisher publisher.Publisher,
 	domainPublisher publisher.Publisher,
@@ -94,6 +97,7 @@ func NewFeatureService(
 		accountClient:         accountClient,
 		experimentClient:      experimentClient,
 		autoOpsClient:         autoOpsClient,
+		batchClient:           batchClient,
 		featuresCache:         cachev3.NewFeaturesCache(v3Cache),
 		segmentUsersCache:     cachev3.NewSegmentUsersCache(v3Cache),
 		segmentUsersPublisher: segmentUsersPublisher,

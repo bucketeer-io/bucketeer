@@ -10,6 +10,7 @@ env:
   project:
   domainTopic:
   domainSubscription:
+  batchService: localhost:9001
   pushService: localhost:9001
   featureService: localhost:9001
   maxMps: "1000"
@@ -17,11 +18,6 @@ env:
   pullerNumGoroutines: 5
   pullerMaxOutstandingMessages: "1000"
   pullerMaxOutstandingBytes: "1000000000"
-  redis:
-    serverName:
-    poolMaxIdle: 25
-    poolMaxActive: 25
-    addr:
   logLevel: info
   port: 9090
   metricsPort: 9002
