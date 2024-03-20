@@ -17,6 +17,7 @@ package subscriber
 
 import (
 	"context"
+
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
@@ -90,6 +91,12 @@ func NewSubscriber(
 }
 
 func (s Subscriber) Run(ctx context.Context) {
+	s.logger.Info("Subscriber starting",
+		zap.String("name", s.name),
+		zap.String("project", s.configuration.Project),
+		zap.String("subscription", s.configuration.Subscription),
+		zap.String("topic", s.configuration.Topic),
+	)
 	rateLimiterPuller := s.createPuller(ctx, s.configuration)
 	group := errgroup.Group{}
 	group.Go(func() error {
@@ -112,6 +119,14 @@ func (s Subscriber) Run(ctx context.Context) {
 			}
 		}
 	})
+	err := group.Wait()
+	if err != nil {
+		s.logger.Error("Subscriber stopped with error",
+			zap.String("name", s.name),
+			zap.Error(err))
+	}
+	s.logger.Info("Subscriber stopped",
+		zap.String("name", s.name))
 }
 
 func (s Subscriber) Stop() {

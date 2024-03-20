@@ -17,6 +17,7 @@ package subscriber
 
 import (
 	"context"
+
 	"go.uber.org/zap"
 )
 

@@ -16,8 +16,9 @@
 package processor
 
 import (
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 )
 
 const (
