@@ -46,9 +46,9 @@ env:
     poolMaxIdle: 25
     poolMaxActive: 25
 
-affinity: {}
+affinity: { }
 
-nodeSelector: {}
+nodeSelector: { }
 
 pdb:
   enabled:
@@ -64,7 +64,7 @@ envoy:
   config:
   port: 9000
   adminPort: 8001
-  resources: {}
+  resources: { }
 
 tls:
   service:
@@ -91,10 +91,10 @@ health:
     periodSeconds: 3
     failureThreshold: 2
 
-resources: {}
+resources: { }
 
 serviceAccount:
-  annotations: {}
+  annotations: { }
 
 cronjob:
   successfulJobsHistoryLimit: 1
@@ -121,9 +121,6 @@ cronjob:
       schedule: "* * * * *"
     - name: ops-progressive-rollout-watcher
       jobId: ProgressiveRolloutWatcher
-      schedule: "* * * * *"
-    - name: domain-event-informer
-      jobId: DomainEventInformer
       schedule: "* * * * *"
     - name: redis-counter-deleter
       jobId: RedisCounterDeleter
@@ -155,3 +152,13 @@ cronjob:
     - name: auto-ops-rules-cacher
       jobId: AutoOpsRulesCacher
       schedule: "* * * * *"
+
+subscribers:
+  domainEventInformer:
+    project: bucketeer
+    topic: domain-event
+    subscription: domain-event-informer
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: "1000"
+    pullerMaxOutstandingBytes: "1000000000"
+    maxMps: 50
