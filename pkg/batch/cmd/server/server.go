@@ -16,6 +16,8 @@ package server
 
 import (
 	"context"
+	"encoding/json"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber/processor"
 	"os"
 	"time"
 
@@ -33,6 +35,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/rediscounter"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
@@ -85,6 +88,7 @@ type server struct {
 	notificationService         *string
 	experimentCalculatorService *string
 	// PubSub config
+	subscriberConfig             *string
 	domainSubscription           *string
 	domainTopic                  *string
 	pullerNumGoroutines          *int
@@ -156,6 +160,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"experiment-calculator-service",
 			"bucketeer-experiment-calculator-service address.",
 		).Default("experiment-calculator:9090").String(),
+		subscriberConfig: cmd.Flag(
+			"subscriber-config",
+			"Path to subscribers config.",
+		).Required().String(),
 		domainTopic: cmd.Flag(
 			"domain-topic",
 			"Google PubSub topic name of incoming domain events.").Required().String(),
@@ -526,6 +534,15 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go server.Run()
 
+	processors := s.registerProcessorMap(
+		ctx,
+		environmentClient,
+		notificationSender,
+		registerer,
+		logger,
+	)
+	s.startMultiPubSub(ctx, processors, registerer, logger)
+
 	defer func() {
 		server.Stop(serverShutDownTimeout)
 		accountClient.Close()
@@ -558,6 +575,50 @@ func (s *server) createMySQLClient(
 		mysql.WithLogger(logger),
 		mysql.WithMetrics(registerer),
 	)
+}
+
+func (s *server) startMultiPubSub(
+	ctx context.Context,
+	processors *processor.Processors,
+	registerer metrics.Registerer,
+	logger *zap.Logger,
+) {
+	bytes, err := os.ReadFile(*s.subscriberConfig)
+	if err != nil {
+		return
+	}
+	var configMap map[string]subscriber.Configuration
+	if err := json.Unmarshal(bytes, &configMap); err != nil {
+		return
+	}
+	multiSubscriber := subscriber.NewMultiSubscriber(
+		subscriber.WithLogger(logger),
+	)
+	for name, config := range configMap {
+		p, err := processors.GetProcessorByName(name)
+		if err != nil {
+			return
+		}
+		multiSubscriber.AddSubscriber(subscriber.NewSubscriber(
+			name, config, p,
+			subscriber.WithLogger(logger),
+		))
+	}
+	multiSubscriber.Start(ctx)
+}
+
+func (s *server) registerProcessorMap(
+	ctx context.Context,
+	environmentClient environmentclient.Client,
+	sender notificationsender.Sender,
+	registerer metrics.Registerer,
+	logger *zap.Logger) *processor.Processors {
+	processors := processor.NewProcessors(registerer)
+
+	processors.RegisterProcessor(processor.DomainEventInformerName, processor.NewDomainEventInformer(
+		environmentClient, sender, logger))
+
+	return processors
 }
 
 func (s *server) insertTelepresenceMountRoot(path string) string {

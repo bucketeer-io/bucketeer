@@ -38,7 +38,10 @@ spec:
             secretName: {{ template "service-cert-secret" . }}
         - name: service-token-secret
           secret:
-            secretName: {{ template "service-token-secret" . }} 
+            secretName: {{ template "service-token-secret" . }}
+        - name: subscriber-config
+          configMap:
+            name: {{ template "batch-server.fullname" . }}-subscribers-config
       {{- if .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "batch-server.fullname" . }}
       {{- end }}
@@ -112,6 +115,8 @@ spec:
               value: /usr/local/service-token/token
             - name: BUCKETEER_BATCH_CERT
               value: /usr/local/certs/service/tls.crt
+            - name : BUCKETEER_BATCH_SUBSCRIBER_CONFIG
+              value: /usr/local/conf/subscribers.json
             - name: BUCKETEER_BATCH_KEY
               value: /usr/local/certs/service/tls.key
             - name: BUCKETEER_BATCH_TIMEZONE
@@ -139,6 +144,9 @@ spec:
               readOnly: true
             - name: service-token-secret
               mountPath: /usr/local/service-token
+              readOnly: true
+            - name: subscriber-config
+              mountPath: /usr/local/conf
               readOnly: true
           ports:
             - name: service
