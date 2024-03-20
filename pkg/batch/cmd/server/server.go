@@ -17,7 +17,6 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber/processor"
 	"os"
 	"time"
 
@@ -36,6 +35,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/rediscounter"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber"
+	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber/processor"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
