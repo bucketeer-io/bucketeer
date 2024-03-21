@@ -1,3 +1,4 @@
+import { classNames } from '@/utils/css';
 import { Dialog } from '@headlessui/react';
 import { FC, memo } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -19,7 +20,9 @@ export const EnvironmentUpdateForm: FC<EnvironmentUpdateFormProps> = memo(
       register,
       getValues,
       formState: { errors, isDirty, dirtyFields, isSubmitted, isValid },
+      control,
     } = methods;
+
     return (
       <div className="w-[500px]">
         <form className="flex flex-col">
@@ -142,6 +145,19 @@ export const EnvironmentUpdateForm: FC<EnvironmentUpdateFormProps> = memo(
                         <span role="alert">{errors.description.message}</span>
                       )}
                     </p>
+                  </div>
+                </div>
+                <div>
+                  <p className="font-semibold">Environment Settings</p>
+                  <div className="mt-3 flex space-x-2 items-center">
+                    <input
+                      {...register('requireComment')}
+                      type="checkbox"
+                      className="input-checkbox"
+                    />
+                    <label className={classNames('input-label')}>
+                      Require comments for flag changes
+                    </label>
                   </div>
                 </div>
               </div>

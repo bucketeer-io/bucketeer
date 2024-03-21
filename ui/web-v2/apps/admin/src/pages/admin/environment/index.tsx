@@ -151,10 +151,12 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
   const addMethod = useForm({
     resolver: yupResolver(addFormSchema),
     defaultValues: {
+      id: '',
       name: '',
       urlCode: '',
       projectId: '',
       description: '',
+      requireComment: false,
     },
     mode: 'onChange',
   });
@@ -169,6 +171,7 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
         urlCode: e.urlCode,
         projectId: e.projectId,
         description: e.description,
+        requireComment: e.requireComment,
       });
       history.push({
         pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_ENVIRONMENTS}/${e.id}`,
@@ -180,6 +183,14 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
 
   const updateMethod = useForm({
     resolver: yupResolver(updateFormSchema),
+    defaultValues: {
+      id: '',
+      name: '',
+      urlCode: '',
+      projectId: '',
+      description: '',
+      requireComment: false,
+    },
     mode: 'onChange',
   });
   const {
@@ -206,6 +217,7 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
           urlCode: data.urlCode,
           projectId: data.projectId,
           description: data.description,
+          requireComment: data.requireComment,
         })
       ).then(() => {
         resetAdd();
@@ -221,17 +233,23 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
     async (data) => {
       let name: string;
       let description: string;
+      let requireComment: boolean;
+
       if (dirtyFields.name) {
         name = data.name;
       }
       if (dirtyFields.description) {
         description = data.description;
       }
+      if (dirtyFields.requireComment) {
+        requireComment = data.requireComment;
+      }
       dispatch(
         updateEnvironment({
           id: data.id,
           name: name,
           description: description,
+          requireComment: requireComment,
         })
       ).then(() => {
         dispatch(
@@ -259,6 +277,7 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
           urlCode: payload.urlCode,
           projectId: payload.projectId,
           description: payload.description,
+          requireComment: payload.requireComment,
         });
       });
     }

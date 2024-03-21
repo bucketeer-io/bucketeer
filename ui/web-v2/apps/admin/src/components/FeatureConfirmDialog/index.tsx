@@ -219,7 +219,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
     ) {
       return false;
     }
-    return !isDirty || !isValid || isSubmitting;
+    return !isValid || isSubmitting;
   };
 
   return (

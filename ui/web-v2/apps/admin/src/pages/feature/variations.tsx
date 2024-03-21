@@ -63,7 +63,9 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
       comment: '',
     };
     const methods = useForm({
-      resolver: yupResolver(variationsFormSchema),
+      resolver: yupResolver(
+        variationsFormSchema(currentEnvironment.requireComment)
+      ),
       defaultValues: defaultValues,
       mode: 'onChange',
     });

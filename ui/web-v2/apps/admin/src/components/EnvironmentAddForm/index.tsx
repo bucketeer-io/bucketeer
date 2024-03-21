@@ -1,3 +1,4 @@
+import { classNames } from '@/utils/css';
 import { Dialog } from '@headlessui/react';
 import { FC, memo, useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
@@ -157,6 +158,19 @@ export const EnvironmentAddForm: FC<EnvironmentAddFormProps> = memo(
                         <span role="alert">{errors.description.message}</span>
                       )}
                     </p>
+                  </div>
+                </div>
+                <div>
+                  <p className="font-semibold">Environment Settings</p>
+                  <div className="mt-3 flex space-x-2 items-center">
+                    <input
+                      {...register('requireComment')}
+                      type="checkbox"
+                      className="input-checkbox"
+                    />
+                    <label className={classNames('input-label')}>
+                      Require comments for flag changes
+                    </label>
                   </div>
                 </div>
               </div>

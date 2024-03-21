@@ -48,7 +48,9 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
       state.features.getFeatureError,
     ]);
     const methods = useForm({
-      resolver: yupResolver(settingsFormSchema),
+      resolver: yupResolver(
+        settingsFormSchema(currentEnvironment.requireComment)
+      ),
       defaultValues: {
         name: feature.name,
         description: feature.description,

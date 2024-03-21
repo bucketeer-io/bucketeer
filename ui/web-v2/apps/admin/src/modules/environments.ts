@@ -9,7 +9,8 @@ import * as grpc from '../grpc/environment';
 import {
   ChangeDescriptionEnvironmentV2Command,
   CreateEnvironmentV2Command,
-  RenameEnvironmentV2Command
+  RenameEnvironmentV2Command,
+  ChangeRequireCommentCommand,
 } from '../proto/environment/command_pb';
 import { EnvironmentV2 } from '../proto/environment/environment_pb';
 import {
@@ -94,6 +95,7 @@ export interface CreateEnvironmentParams {
   urlCode: string;
   projectId: string;
   description: string;
+  requireComment: boolean;
 }
 
 export const createEnvironment = createAsyncThunk<
@@ -107,6 +109,7 @@ export const createEnvironment = createAsyncThunk<
   command.setUrlCode(params.urlCode);
   command.setDescription(params.description);
   command.setProjectId(params.projectId);
+  command.setRequireComment(params.requireComment);
   request.setCommand(command);
   await setupAuthToken();
   await grpc.createEnvironment(request);
@@ -114,8 +117,9 @@ export const createEnvironment = createAsyncThunk<
 
 export interface UpdateEnvironmentParams {
   id: string;
-  name?: string
+  name?: string;
   description?: string;
+  requireComment?: boolean;
 }
 
 export const updateEnvironment = createAsyncThunk<
@@ -134,6 +138,11 @@ export const updateEnvironment = createAsyncThunk<
     const changeDescCommand = new ChangeDescriptionEnvironmentV2Command();
     changeDescCommand.setDescription(params.description);
     request.setChangeDescriptionCommand(changeDescCommand);
+  }
+  if (params.requireComment !== undefined) {
+    const changeRequireCommand = new ChangeRequireCommentCommand();
+    changeRequireCommand.setRequireComment(params.requireComment);
+    request.setChangeRequireCommentCommand(changeRequireCommand);
   }
   await setupAuthToken();
   await grpc.updateEnvironment(request);
