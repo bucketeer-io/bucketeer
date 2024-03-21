@@ -225,6 +225,7 @@ func (s *EnvironmentService) CreateEnvironmentV2(
 		req.Command.Description,
 		req.Command.ProjectId,
 		orgID,
+		req.Command.RequireComment,
 		s.logger,
 	)
 	if err != nil {
@@ -469,6 +470,9 @@ func getUpdateEnvironmentV2Commands(req *environmentproto.UpdateEnvironmentV2Req
 	}
 	if req.ChangeDescriptionCommand != nil {
 		commands = append(commands, req.ChangeDescriptionCommand)
+	}
+	if req.ChangeRequireCommentCommand != nil {
+		commands = append(commands, req.ChangeRequireCommentCommand)
 	}
 	return commands
 }

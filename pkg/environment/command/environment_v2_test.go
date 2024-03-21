@@ -40,6 +40,7 @@ func TestHandleCreateEnvironmentV2Command(t *testing.T) {
 		"env-desc",
 		"project-id",
 		"organization-id",
+		false,
 		zap.NewNop(),
 	)
 	assert.NoError(t, err)
@@ -66,6 +67,7 @@ func TestHandleRenameEnvironmentV2Command(t *testing.T) {
 		"env-desc",
 		"project-id",
 		"organization-id",
+		false,
 		zap.NewNop(),
 	)
 	h := newEnvironmentV2CommandHandler(t, pub, env)
@@ -88,6 +90,7 @@ func TestHandleChangeDescriptionEnvironmentV2Command(t *testing.T) {
 		"env-desc",
 		"project-id",
 		"organization-id",
+		false,
 		zap.NewNop(),
 	)
 	h := newEnvironmentV2CommandHandler(t, pub, env)
@@ -97,6 +100,28 @@ func TestHandleChangeDescriptionEnvironmentV2Command(t *testing.T) {
 	err = h.Handle(context.Background(), cmd)
 	assert.NoError(t, err)
 	assert.Equal(t, newDesc, env.Description)
+}
+
+func TestHandleChangeRequireCommentEnvironmentV2Command(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	pub := publishermock.NewMockPublisher(mockController)
+	env, err := domain.NewEnvironmentV2(
+		"env-name",
+		"env-url-code",
+		"env-desc",
+		"project-id",
+		"organization-id",
+		false,
+		zap.NewNop(),
+	)
+	h := newEnvironmentV2CommandHandler(t, pub, env)
+	pub.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+	cmd := &environmentproto.ChangeRequireCommentCommand{RequireComment: true}
+	err = h.Handle(context.Background(), cmd)
+	assert.NoError(t, err)
+	assert.True(t, env.RequireComment)
 }
 
 func TestHandleArchiveAndUnarchiveEnvironmentV2Command(t *testing.T) {
@@ -110,6 +135,7 @@ func TestHandleArchiveAndUnarchiveEnvironmentV2Command(t *testing.T) {
 		"env-desc",
 		"project-id",
 		"organization-id",
+		false,
 		zap.NewNop(),
 	)
 	h := newEnvironmentV2CommandHandler(t, pub, env)

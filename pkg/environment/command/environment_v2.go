@@ -53,6 +53,8 @@ func (h *environmentV2CommandHandler) Handle(ctx context.Context, cmd Command) e
 		return h.rename(ctx, c)
 	case *proto.ChangeDescriptionEnvironmentV2Command:
 		return h.changeDescription(ctx, c)
+	case *proto.ChangeRequireCommentCommand:
+		return h.changeRequireComment(ctx, c)
 	case *proto.ArchiveEnvironmentV2Command:
 		return h.archive(ctx, c)
 	case *proto.UnarchiveEnvironmentV2Command:
@@ -64,14 +66,15 @@ func (h *environmentV2CommandHandler) Handle(ctx context.Context, cmd Command) e
 
 func (h *environmentV2CommandHandler) create(ctx context.Context, _ *proto.CreateEnvironmentV2Command) error {
 	return h.send(ctx, eventproto.Event_ENVIRONMENT_V2_CREATED, &eventproto.EnvironmentV2CreatedEvent{
-		Id:          h.environment.Id,
-		Name:        h.environment.Name,
-		UrlCode:     h.environment.UrlCode,
-		Description: h.environment.Description,
-		ProjectId:   h.environment.ProjectId,
-		Archived:    h.environment.Archived,
-		CreatedAt:   h.environment.CreatedAt,
-		UpdatedAt:   h.environment.UpdatedAt,
+		Id:             h.environment.Id,
+		Name:           h.environment.Name,
+		UrlCode:        h.environment.UrlCode,
+		Description:    h.environment.Description,
+		ProjectId:      h.environment.ProjectId,
+		Archived:       h.environment.Archived,
+		RequireComment: h.environment.RequireComment,
+		CreatedAt:      h.environment.CreatedAt,
+		UpdatedAt:      h.environment.UpdatedAt,
 	})
 }
 
@@ -102,6 +105,22 @@ func (h *environmentV2CommandHandler) changeDescription(
 			ProjectId:      h.environment.ProjectId,
 			OldDescription: oldDescription,
 			NewDescription: cmd.Description,
+		})
+}
+
+func (h *environmentV2CommandHandler) changeRequireComment(
+	ctx context.Context,
+	cmd *proto.ChangeRequireCommentCommand,
+) error {
+	h.environment.ChangeRequireComment(cmd.RequireComment)
+	return h.send(
+		ctx,
+		eventproto.Event_ENVIRONMENT_V2_REQUIRE_COMMENT_CHANGED,
+		&eventproto.EnvironmentV2RequireCommentChangedEvent{
+			Id:             h.environment.Id,
+			Name:           h.environment.Name,
+			ProjectId:      h.environment.ProjectId,
+			RequireComment: cmd.RequireComment,
 		})
 }
 

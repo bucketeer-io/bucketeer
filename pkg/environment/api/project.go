@@ -607,7 +607,7 @@ func (s *EnvironmentService) createTrialEnvironmentsAndAccounts(
 			ProjectId:   project.Id,
 			Description: "",
 		}
-		envV2, err := domain.NewEnvironmentV2(name, envURLCode, "", project.Id, project.OrganizationId, s.logger)
+		envV2, err := domain.NewEnvironmentV2(name, envURLCode, "", project.Id, project.OrganizationId, false, s.logger)
 		if err != nil {
 			return err
 		}

@@ -763,6 +763,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.Environment),
 			),
 		}
+	case proto.Event_ENVIRONMENT_V2_REQUIRE_COMMENT_CHANGED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.EnvironmentRequireCommentUpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Environment),
+			),
+		}
 	case proto.Event_ENVIRONMENT_V2_ARCHIVED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),
