@@ -104,15 +104,12 @@ func (s *auditLogStorage) ListAuditLogs(
 	var query strings.Builder
 	query.WriteString(selectAuditLogV2SQL)
 	if len(whereArgs) != 0 {
-		query.WriteString(" ")
 		query.WriteString(whereSQL)
 	}
 	if len(orderBySQL) != 0 {
-		query.WriteString(" ")
 		query.WriteString(orderBySQL)
 	}
 	if len(limitOffsetSQL) != 0 {
-		query.WriteString(" ")
 		query.WriteString(limitOffsetSQL)
 	}
 	rows, err := s.qe.QueryContext(ctx, query.String(), whereArgs...)
@@ -150,11 +147,9 @@ func (s *auditLogStorage) ListAuditLogs(
 	var countQuery strings.Builder
 	countQuery.WriteString(selectAuditLogV2CountSQL)
 	if len(whereArgs) != 0 {
-		countQuery.WriteString(" ")
 		countQuery.WriteString(whereSQL)
 	}
 	if len(orderBySQL) != 0 {
-		countQuery.WriteString(" ")
 		countQuery.WriteString(orderBySQL)
 	}
 	err = s.qe.QueryRowContext(ctx, countQuery.String(), whereArgs...).Scan(&totalCount)
