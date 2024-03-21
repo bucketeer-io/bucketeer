@@ -67,6 +67,7 @@ type Subscriber struct {
 	name          string
 	configuration Configuration
 	processor     Processor
+	cancel        context.CancelFunc
 	opts          options
 	logger        *zap.Logger
 }
@@ -97,6 +98,8 @@ func (s Subscriber) Run(ctx context.Context) {
 		zap.String("subscription", s.configuration.Subscription),
 		zap.String("topic", s.configuration.Topic),
 	)
+	ctx, cancel := context.WithCancel(ctx)
+	s.cancel = cancel
 	rateLimiterPuller := s.createPuller(ctx, s.configuration)
 	group := errgroup.Group{}
 	group.Go(func() error {
@@ -130,7 +133,9 @@ func (s Subscriber) Run(ctx context.Context) {
 }
 
 func (s Subscriber) Stop() {
-
+	if s.cancel != nil {
+		s.cancel()
+	}
 }
 
 func (s Subscriber) createPuller(
