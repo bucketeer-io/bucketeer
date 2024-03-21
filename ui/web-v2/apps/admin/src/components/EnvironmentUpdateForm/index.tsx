@@ -148,7 +148,9 @@ export const EnvironmentUpdateForm: FC<EnvironmentUpdateFormProps> = memo(
                   </div>
                 </div>
                 <div>
-                  <p className="font-semibold">Environment Settings</p>
+                  <p className="font-semibold">
+                    {f(messages.adminEnvironment.environmentSettings)}
+                  </p>
                   <div className="mt-3 flex space-x-2 items-center">
                     <input
                       {...register('requireComment')}
@@ -156,7 +158,9 @@ export const EnvironmentUpdateForm: FC<EnvironmentUpdateFormProps> = memo(
                       className="input-checkbox"
                     />
                     <label className={classNames('input-label')}>
-                      Require comments for flag changes
+                      {f(
+                        messages.adminEnvironment.requireCommentsForFlagChanges
+                      )}
                     </label>
                   </div>
                 </div>

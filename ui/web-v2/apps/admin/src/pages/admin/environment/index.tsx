@@ -1,3 +1,4 @@
+import { fetchMe, useCurrentEnvironment } from '@/modules/me';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -82,6 +83,7 @@ const createSort = (sortOption?: EnvironmentSortOption): Sort => {
 
 export const AdminEnvironmentIndexPage: FC = memo(() => {
   const dispatch = useDispatch<AppDispatch>();
+  const currentEnvironment = useCurrentEnvironment();
   const { formatMessage: f } = useIntl();
   const searchOptions = useSearchParams();
   searchOptions.sort = searchOptions.sort ? searchOptions.sort : '-createdAt';
@@ -156,7 +158,7 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
       urlCode: '',
       projectId: '',
       description: '',
-      requireComment: false,
+      requireComment: true,
     },
     mode: 'onChange',
   });
@@ -255,6 +257,11 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
         dispatch(
           getEnvironment({
             id: data.id,
+          })
+        );
+        dispatch(
+          fetchMe({
+            organizationId: currentEnvironment.organizationId,
           })
         );
         handleClose();

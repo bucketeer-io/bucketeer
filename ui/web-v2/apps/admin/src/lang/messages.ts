@@ -240,6 +240,14 @@ export const messages = {
         }),
       },
     },
+    environmentSettings: defineMessage({
+      id: 'adminEnvironment.environmentSettings',
+      defaultMessage: 'Environment settings',
+    }),
+    requireCommentsForFlagChanges: defineMessage({
+      id: 'adminEnvironment.requireCommentsForFlagChanges',
+      defaultMessage: 'Require comments for flag changes',
+    }),
   },
   autoOps: {
     rule: defineMessage({
@@ -2033,7 +2041,11 @@ export const messages = {
     },
     optional: defineMessage({
       id: 'input.optional',
-      defaultMessage: '(optional)',
+      defaultMessage: '(Optional)',
+    }),
+    required: defineMessage({
+      id: 'input.required',
+      defaultMessage: '(Required)',
     }),
     name: defineMessage({
       id: 'input.name',
