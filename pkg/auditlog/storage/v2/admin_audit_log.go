@@ -17,8 +17,8 @@ package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/bucketeer-io/bucketeer/pkg/auditlog/domain"
@@ -29,6 +29,13 @@ import (
 
 var (
 	ErrAdminAuditLogAlreadyExists = errors.New("auditlog: admin auditlog already exists")
+
+	//go:embed sql/adminauditlog/insert_admin_audit_log_v2.sql
+	insertAdminAuditLogV2SQL string
+	//go:embed sql/adminauditlog/select_admin_audit_log_v2.sql
+	selectAdminAuditLogV2SQL string
+	//go:embed sql/adminauditlog/select_admin_audit_log_v2_count.sql
+	selectAdminAuditLogV2CountSQL string
 )
 
 type AdminAuditLogStorage interface {
@@ -54,22 +61,12 @@ func (s *adminAuditLogStorage) CreateAdminAuditLogs(ctx context.Context, auditLo
 		return nil
 	}
 	var query strings.Builder
-	query.WriteString(`
-		INSERT INTO admin_audit_log (
-			id,
-			timestamp,
-			entity_type,
-			entity_id,
-			type,
-			event,
-			editor,
-			options
-		) VALUES
-	`)
 	args := []interface{}{}
 	for i, al := range auditLogs {
 		if i != 0 {
 			query.WriteString(",")
+		} else {
+			query.WriteString(insertAdminAuditLogV2SQL)
 		}
 		query.WriteString(" (?, ?, ?, ?, ?, ?, ?, ?)")
 		args = append(
@@ -103,22 +100,18 @@ func (s *adminAuditLogStorage) ListAdminAuditLogs(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			timestamp,
-			entity_type,
-			entity_id,
-			type,
-			event,
-			editor,
-			options
-		FROM
-			admin_audit_log
-		%s %s %s
-		`, whereSQL, orderBySQL, limitOffsetSQL,
-	)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	var query strings.Builder
+	query.WriteString(selectAdminAuditLogV2SQL)
+	if len(whereSQL) != 0 {
+		query.WriteString(whereSQL)
+	}
+	if len(orderBySQL) != 0 {
+		query.WriteString(orderBySQL)
+	}
+	if len(limitOffsetSQL) != 0 {
+		query.WriteString(limitOffsetSQL)
+	}
+	rows, err := s.qe.QueryContext(ctx, query.String(), whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -150,15 +143,15 @@ func (s *adminAuditLogStorage) ListAdminAuditLogs(
 	}
 	nextOffset := offset + len(auditLogs)
 	var totalCount int64
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(1)
-		FROM
-			admin_audit_log
-		%s %s
-		`, whereSQL, orderBySQL,
-	)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	var countQuery strings.Builder
+	countQuery.WriteString(selectAdminAuditLogV2CountSQL)
+	if len(whereSQL) != 0 {
+		countQuery.WriteString(whereSQL)
+	}
+	if len(orderBySQL) != 0 {
+		countQuery.WriteString(orderBySQL)
+	}
+	err = s.qe.QueryRowContext(ctx, countQuery.String(), whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
