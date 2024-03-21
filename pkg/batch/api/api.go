@@ -44,7 +44,6 @@ type batchService struct {
 	mauSummarizer             jobs.Job
 	mauPartitionDeleter       jobs.Job
 	mauPartitionCreator       jobs.Job
-	domainEventInformer       jobs.Job
 	featureFlagCacher         jobs.Job
 	segmentUserCacher         jobs.Job
 	apiKeyCacher              jobs.Job
@@ -59,8 +58,7 @@ func NewBatchService(
 	eventCountWatcher, progressiveRolloutWatcher,
 	redisCounterDeleter, experimentCalculator,
 	mauSummarizer, mauPartitionDeleter, mauPartitionCreator,
-	domainEventInformer, featureFlagCacher,
-	segmentUserCacher, apiKeyCacher,
+	featureFlagCacher, segmentUserCacher, apiKeyCacher,
 	experimentCacher, autoOpsRulesCacher jobs.Job,
 	logger *zap.Logger,
 ) *batchService {
@@ -77,7 +75,6 @@ func NewBatchService(
 		mauSummarizer:             mauSummarizer,
 		mauPartitionDeleter:       mauPartitionDeleter,
 		mauPartitionCreator:       mauPartitionCreator,
-		domainEventInformer:       domainEventInformer,
 		featureFlagCacher:         featureFlagCacher,
 		segmentUserCacher:         segmentUserCacher,
 		apiKeyCacher:              apiKeyCacher,
@@ -103,8 +100,6 @@ func (s *batchService) ExecuteBatchJob(
 		err = s.datetimeWatcher.Run(ctx)
 	case batch.BatchJob_EventCountWatcher:
 		err = s.countWatcher.Run(ctx)
-	case batch.BatchJob_DomainEventInformer:
-		err = s.domainEventInformer.Run(ctx)
 	case batch.BatchJob_RedisCounterDeleter:
 		err = s.redisCounterDeleter.Run(ctx)
 	case batch.BatchJob_ProgressiveRolloutWatcher:

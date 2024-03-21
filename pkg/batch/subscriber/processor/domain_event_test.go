@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package notification
+package processor
 
 import (
 	"testing"
@@ -140,9 +140,9 @@ func TestConvSourceType(t *testing.T) {
 	}
 }
 
-func newDomainEventInformer(t *testing.T, c *gomock.Controller) *domainEventInformer {
+func newDomainEventInformer(t *testing.T, c *gomock.Controller) *DomainEventInformer {
 	t.Helper()
-	return &domainEventInformer{
+	return &DomainEventInformer{
 		logger: zap.NewNop(),
 	}
 }

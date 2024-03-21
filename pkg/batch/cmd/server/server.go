@@ -88,14 +88,7 @@ type server struct {
 	notificationService         *string
 	experimentCalculatorService *string
 	// PubSub config
-	subscriberConfig             *string
-	domainSubscription           *string
-	domainTopic                  *string
-	pullerNumGoroutines          *int
-	pullerMaxOutstandingMessages *int
-	pullerMaxOutstandingBytes    *int
-	runningDurationPerBatch      *time.Duration
-	maxMPS                       *int
+	subscriberConfig *string
 	// Persistent Redis
 	persistentRedisServerName    *string
 	persistentRedisAddr          *string
@@ -164,32 +157,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"subscriber-config",
 			"Path to subscribers config.",
 		).Required().String(),
-		domainTopic: cmd.Flag(
-			"domain-topic",
-			"Google PubSub topic name of incoming domain events.").Required().String(),
-		domainSubscription: cmd.Flag(
-			"domain-subscription",
-			"Google PubSub subscription name of incoming domain event.",
-		).Required().String(),
-		pullerNumGoroutines: cmd.Flag(
-			"puller-num-goroutines",
-			"Number of goroutines will be spawned to pull messages.",
-		).Required().Int(),
-		pullerMaxOutstandingMessages: cmd.Flag(
-			"puller-max-outstanding-messages",
-			"Maximum number of unprocessed messages.",
-		).Required().Int(),
-		pullerMaxOutstandingBytes: cmd.Flag(
-			"puller-max-outstanding-bytes",
-			"Maximum size of unprocessed messages.").Int(),
-		runningDurationPerBatch: cmd.Flag(
-			"running-duration-per-batch",
-			"Duration of running domain event informer per batch.",
-		).Required().Duration(),
-		maxMPS: cmd.Flag(
-			"max-mps",
-			"Maximum number of messages per second.",
-		).Required().Int(),
 		persistentRedisServerName: cmd.Flag(
 			"persistent-redis-server-name",
 			"Name of the persistent redis.",
@@ -467,20 +434,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithTimeout(60*time.Minute),
 			jobs.WithLogger(logger),
 		),
-		notification.NewDomainEventInformer(
-			environmentClient,
-			notificationSender,
-			*s.maxMPS,
-			*s.runningDurationPerBatch,
-			*s.project,
-			*s.domainSubscription,
-			*s.domainTopic,
-			*s.pullerNumGoroutines,
-			*s.pullerMaxOutstandingMessages,
-			*s.pullerMaxOutstandingBytes,
-			notification.WithLogger(logger),
-			notification.WithMetrics(registerer),
-		),
 		cacher.NewFeatureFlagCacher(
 			environmentClient,
 			featureClient,
@@ -585,10 +538,16 @@ func (s *server) startMultiPubSub(
 ) {
 	bytes, err := os.ReadFile(*s.subscriberConfig)
 	if err != nil {
+		logger.Fatal("subscriber: failed to read subscriber config",
+			zap.Error(err),
+		)
 		return
 	}
 	var configMap map[string]subscriber.Configuration
 	if err := json.Unmarshal(bytes, &configMap); err != nil {
+		logger.Fatal("subscriber: failed to unmarshal subscriber config",
+			zap.Error(err),
+		)
 		return
 	}
 	multiSubscriber := subscriber.NewMultiSubscriber(
@@ -597,6 +556,10 @@ func (s *server) startMultiPubSub(
 	for name, config := range configMap {
 		p, err := processors.GetProcessorByName(name)
 		if err != nil {
+			logger.Fatal("subscriber: processor not found",
+				zap.String("name", name),
+				zap.Error(err),
+			)
 			return
 		}
 		multiSubscriber.AddSubscriber(subscriber.NewSubscriber(
