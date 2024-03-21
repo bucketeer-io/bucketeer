@@ -154,6 +154,7 @@ message Event {
     ENVIRONMENT_V2_DESCRIPTION_CHANGED = 606;
     ENVIRONMENT_V2_ARCHIVED = 607;
     ENVIRONMENT_V2_UNARCHIVED = 608;
+    ENVIRONMENT_V2_REQUIRE_COMMENT_CHANGED = 609;
     ADMIN_ACCOUNT_CREATED = 700 [deprecated = true];
     ADMIN_ACCOUNT_ENABLED = 702 [deprecated = true];
     ADMIN_ACCOUNT_DISABLED = 703 [deprecated = true];
@@ -736,6 +737,7 @@ message EnvironmentV2CreatedEvent {
   bool archived = 6;
   int64 created_at = 7;
   int64 updated_at = 8;
+  bool require_comment = 9;
 }
 
 message EnvironmentV2RenamedEvent {
@@ -751,6 +753,13 @@ message EnvironmentV2DescriptionChangedEvent {
   string project_id = 3;
   string old_description = 4;
   string new_description = 5;
+}
+
+message EnvironmentV2RequireCommentChangedEvent {
+  string id = 1;
+  string name = 2;
+  string project_id = 3;
+  bool require_comment = 4;
 }
 
 message EnvironmentV2ArchivedEvent {

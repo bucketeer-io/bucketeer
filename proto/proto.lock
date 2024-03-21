@@ -5691,6 +5691,10 @@
                 "integer": 608
               },
               {
+                "name": "ENVIRONMENT_V2_REQUIRE_COMMENT_CHANGED",
+                "integer": 609
+              },
+              {
                 "name": "ADMIN_ACCOUNT_CREATED",
                 "integer": 700,
                 "options": [
@@ -7692,6 +7696,11 @@
                 "id": 8,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 9,
+                "name": "require_comment",
+                "type": "bool"
               }
             ]
           },
@@ -7747,6 +7756,31 @@
                 "id": 5,
                 "name": "new_description",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "EnvironmentV2RequireCommentChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "project_id",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "require_comment",
+                "type": "bool"
               }
             ]
           },
