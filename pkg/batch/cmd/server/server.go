@@ -494,10 +494,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		registerer,
 		logger,
 	)
-	s.startMultiPubSub(ctx, processors, registerer, logger)
+	multiPubSub := s.startMultiPubSub(ctx, processors, logger)
 
 	defer func() {
 		server.Stop(serverShutDownTimeout)
+		multiPubSub.Stop()
 		accountClient.Close()
 		notificationClient.Close()
 		experimentClient.Close()
@@ -533,22 +534,21 @@ func (s *server) createMySQLClient(
 func (s *server) startMultiPubSub(
 	ctx context.Context,
 	processors *processor.Processors,
-	registerer metrics.Registerer,
 	logger *zap.Logger,
-) {
+) *subscriber.MultiSubscriber {
 	bytes, err := os.ReadFile(*s.subscriberConfig)
 	if err != nil {
 		logger.Fatal("subscriber: failed to read subscriber config",
 			zap.Error(err),
 		)
-		return
+		return nil
 	}
 	var configMap map[string]subscriber.Configuration
 	if err := json.Unmarshal(bytes, &configMap); err != nil {
 		logger.Fatal("subscriber: failed to unmarshal subscriber config",
 			zap.Error(err),
 		)
-		return
+		return nil
 	}
 	multiSubscriber := subscriber.NewMultiSubscriber(
 		subscriber.WithLogger(logger),
@@ -560,7 +560,7 @@ func (s *server) startMultiPubSub(
 				zap.String("name", name),
 				zap.Error(err),
 			)
-			return
+			return nil
 		}
 		multiSubscriber.AddSubscriber(subscriber.NewSubscriber(
 			name, config, p,
@@ -568,6 +568,7 @@ func (s *server) startMultiPubSub(
 		))
 	}
 	multiSubscriber.Start(ctx)
+	return multiSubscriber
 }
 
 func (s *server) registerProcessorMap(
@@ -578,8 +579,10 @@ func (s *server) registerProcessorMap(
 	logger *zap.Logger) *processor.Processors {
 	processors := processor.NewProcessors(registerer)
 
-	processors.RegisterProcessor(processor.DomainEventInformerName, processor.NewDomainEventInformer(
-		environmentClient, sender, logger))
+	processors.RegisterProcessor(
+		processor.DomainEventInformerName,
+		processor.NewDomainEventInformer(environmentClient, sender, logger),
+	)
 
 	return processors
 }
