@@ -108,6 +108,7 @@ const (
 	// environment
 	ProjectDisabled = "ProjectDisabled"
 	// feature
+	CommentRequiredForUpdating               = "CommentRequiredForUpdating"
 	SegmentInUse                             = "SegmentInUse"
 	SegmentUsersAlreadyUploading             = "SegmentUsersAlreadyUploading"
 	SegmentStatusNotSucceeded                = "SegmentStatusNotSucceeded"

@@ -28,19 +28,20 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-
 	acmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
 	btclientmock "github.com/bucketeer-io/bucketeer/pkg/batch/client/mock"
 	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
+	envclientmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	aoproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	envproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
@@ -1756,6 +1757,12 @@ func TestEnableFeatureMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(v2fs.ErrFeatureNotFound)
+				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(gomock.Any(), gomock.Any()).Return(
+					&envproto.GetEnvironmentV2Response{
+						Environment: &envproto.EnvironmentV2{},
+					},
+					nil,
+				)
 			},
 			req: &featureproto.EnableFeatureRequest{
 				Id:                   "id-0",
@@ -1772,10 +1779,24 @@ func TestEnableFeatureMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
+				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(
+					gomock.Any(),
+					&envproto.GetEnvironmentV2Request{
+						Id: "ns0",
+					},
+				).Return(
+					&envproto.GetEnvironmentV2Response{
+						Environment: &envproto.EnvironmentV2{
+							RequireComment: true,
+						},
+					},
+					nil,
+				)
 			},
 			req: &featureproto.EnableFeatureRequest{
 				Id:                   "id-1",
 				Command:              &featureproto.EnableFeatureCommand{},
+				Comment:              "test comment",
 				EnvironmentNamespace: "ns0",
 			},
 			expectedErr: nil,
@@ -1842,6 +1863,12 @@ func TestDisableFeatureMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(v2fs.ErrFeatureNotFound)
+				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(gomock.Any(), gomock.Any()).Return(
+					&envproto.GetEnvironmentV2Response{
+						Environment: &envproto.EnvironmentV2{},
+					},
+					nil,
+				)
 			},
 			req: &featureproto.DisableFeatureRequest{
 				Id:                   "id-0",
@@ -1858,10 +1885,24 @@ func TestDisableFeatureMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
+				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(
+					gomock.Any(),
+					&envproto.GetEnvironmentV2Request{
+						Id: "ns0",
+					},
+				).Return(
+					&envproto.GetEnvironmentV2Response{
+						Environment: &envproto.EnvironmentV2{
+							RequireComment: true,
+						},
+					},
+					nil,
+				)
 			},
 			req: &featureproto.DisableFeatureRequest{
 				Id:                   "id-1",
 				Command:              &featureproto.DisableFeatureCommand{},
+				Comment:              "test comment",
 				EnvironmentNamespace: "ns0",
 			},
 			expectedErr: nil,
@@ -2063,6 +2104,12 @@ func TestUnarchiveFeatureMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(v2fs.ErrFeatureNotFound)
+				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(gomock.Any(), gomock.Any()).Return(
+					&envproto.GetEnvironmentV2Response{
+						Environment: &envproto.EnvironmentV2{},
+					},
+					nil,
+				)
 			},
 			req: &featureproto.UnarchiveFeatureRequest{
 				Id:                   "id-0",
@@ -2079,10 +2126,24 @@ func TestUnarchiveFeatureMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
+				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(
+					gomock.Any(),
+					&envproto.GetEnvironmentV2Request{
+						Id: "ns0",
+					},
+				).Return(
+					&envproto.GetEnvironmentV2Response{
+						Environment: &envproto.EnvironmentV2{
+							RequireComment: true,
+						},
+					},
+					nil,
+				)
 			},
 			req: &featureproto.UnarchiveFeatureRequest{
 				Id:                   "id-1",
 				Command:              &featureproto.UnarchiveFeatureCommand{},
+				Comment:              "test comment",
 				EnvironmentNamespace: "ns0",
 			},
 			expectedErr: nil,
@@ -2149,6 +2210,12 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(v2fs.ErrFeatureNotFound)
+				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(gomock.Any(), gomock.Any()).Return(
+					&envproto.GetEnvironmentV2Response{
+						Environment: &envproto.EnvironmentV2{},
+					},
+					nil,
+				)
 			},
 			req: &featureproto.DeleteFeatureRequest{
 				Id:                   "id-0",
@@ -2165,10 +2232,24 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
+				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(
+					gomock.Any(),
+					&envproto.GetEnvironmentV2Request{
+						Id: "ns0",
+					},
+				).Return(
+					&envproto.GetEnvironmentV2Response{
+						Environment: &envproto.EnvironmentV2{
+							RequireComment: true,
+						},
+					},
+					nil,
+				)
 			},
 			req: &featureproto.DeleteFeatureRequest{
 				Id:                   "id-1",
 				Command:              &featureproto.DeleteFeatureCommand{},
+				Comment:              "test comment",
 				EnvironmentNamespace: "ns0",
 			},
 			expectedErr: nil,
@@ -4285,6 +4366,87 @@ func makeFeature(id string) *domain.Feature {
 				},
 			},
 		},
+	}
+}
+
+func TestValidateEnvironmentSettings(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc     string
+		setup    func(*FeatureService)
+		env      string
+		comment  string
+		expected error
+	}{
+		{
+			desc: "error: comment is required",
+			setup: func(s *FeatureService) {
+				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(
+					gomock.Any(),
+					&envproto.GetEnvironmentV2Request{
+						Id: "env-id",
+					},
+				).Return(
+					&envproto.GetEnvironmentV2Response{
+						Environment: &envproto.EnvironmentV2{
+							RequireComment: true,
+						},
+					},
+					nil,
+				)
+			},
+			env:      "env-id",
+			comment:  "",
+			expected: createError(statusCommentRequiredForUpdating, localizer.MustLocalizeWithTemplate(locale.CommentRequiredForUpdating, "command")),
+		},
+		{
+			desc: "success",
+			setup: func(s *FeatureService) {
+				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(
+					gomock.Any(),
+					&envproto.GetEnvironmentV2Request{
+						Id: "env-id",
+					},
+				).Return(
+					&envproto.GetEnvironmentV2Response{
+						Environment: &envproto.EnvironmentV2{
+							RequireComment: true,
+						},
+					},
+					nil,
+				)
+			},
+			env:      "env-id",
+			comment:  "test comment",
+			expected: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := createFeatureService(mockController)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			err := service.validateEnvironmentSettings(ctx, p.env, p.comment, localizer)
+			assert.Equal(t, p.expected, err)
+		})
 	}
 }
 

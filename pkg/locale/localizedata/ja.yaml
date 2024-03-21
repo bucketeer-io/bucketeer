@@ -74,6 +74,7 @@ AlreadyExistsError: "同じデータが既に存在しています"
 AlreadyDeletedError: "データがすでに削除済みです"
 
 # Feature Flag errors
+CommentRequiredForUpdating: "この環境で更新するにはコメントが必要です"
 DifferentVariationsSize: "フィーチャーフラグのバリエーションとロールアウトのバリエーションの数が異なります"
 InvalidVariationWeight: "ウェイトは0から{{ .Field_1 }}の間である必要があります"
 NothingToChange: "変更点がありません"
