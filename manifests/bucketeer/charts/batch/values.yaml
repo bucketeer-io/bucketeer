@@ -27,13 +27,6 @@ env:
   metricsPort: 9002
   timezone: UTC
   refreshInterval: 10m
-  domainTopic:
-  domainSubscription:
-  pullerNumGoroutines: 5
-  pullerMaxOutstandingMessages: "1000"
-  pullerMaxOutstandingBytes: "1000000000"
-  runningDurationPerBatch: 15s
-  maxMps: 50
   # redis settings
   persistentRedis:
     serverName:
@@ -155,10 +148,10 @@ cronjob:
 
 subscribers:
   domainEventInformer:
-    project: bucketeer
-    topic: domain-event
-    subscription: domain-event-informer
+    project:
+    topic:
+    subscription:
     pullerNumGoroutines: 5
-    pullerMaxOutstandingMessages: "1000"
-    pullerMaxOutstandingBytes: "1000000000"
+    pullerMaxOutstandingMessages: 1000
+    pullerMaxOutstandingBytes: 1000000000
     maxMps: 50
