@@ -12,10 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
+
 package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 
@@ -30,23 +33,23 @@ var (
 	ErrAPIKeyUnexpectedAffectedRows = errors.New("apiKey: api key unexpected affected rows")
 )
 
+var (
+	//go:embed sql/api_key_v2/insert_api_key_v2.sql
+	insertAPIKeyV2SQLQuery string
+	//go:embed sql/api_key_v2/update_api_key_v2.sql
+	updateAPIKeyV2SQLQuery string
+	//go:embed sql/api_key_v2/select_api_key_v2.sql
+	selectAPIKeyV2SQLQuery string
+	//go:embed sql/api_key_v2/select_api_key_v2_count.sql
+	selectAPIKeyV2CountSQLQuery string
+	//go:embed sql/api_key_v2/select_api_key_v2_by_id.sql
+	selectAPIKeyV2ByIDSQLQuery string
+)
+
 func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error {
-	query := `
-		INSERT INTO api_key (
-			id,
-			name,
-			role,
-			disabled,
-			created_at,
-			updated_at,
-			environment_namespace
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?
-		)
-	`
 	_, err := s.qe(ctx).ExecContext(
 		ctx,
-		query,
+		insertAPIKeyV2SQLQuery,
 		k.Id,
 		k.Name,
 		int32(k.Role),
@@ -65,26 +68,12 @@ func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, env
 }
 
 func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error {
-	query := `
-		UPDATE 
-			api_key
-		SET
-			name = ?,
-			role = ?,
-			disabled = ?,
-			created_at = ?,
-			updated_at = ?
-		WHERE
-			id = ? AND
-			environment_namespace = ?
-	`
 	result, err := s.qe(ctx).ExecContext(
 		ctx,
-		query,
+		updateAPIKeyV2SQLQuery,
 		k.Name,
 		int32(k.Role),
 		k.Disabled,
-		k.CreatedAt,
 		k.UpdatedAt,
 		k.Id,
 		environmentNamespace,
@@ -105,23 +94,9 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentNamespace string) (*domain.APIKey, error) {
 	apiKey := proto.APIKey{}
 	var role int32
-	query := `
-		SELECT
-			id,
-			name,
-			role,
-			disabled,
-			created_at,
-			updated_at
-		FROM
-			api_key
-		WHERE
-			id = ? AND
-			environment_namespace = ?
-	`
 	err := s.qe(ctx).QueryRowContext(
 		ctx,
-		query,
+		selectAPIKeyV2ByIDSQLQuery,
 		id,
 		environmentNamespace,
 	).Scan(
@@ -151,19 +126,7 @@ func (s *accountStorage) ListAPIKeys(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			name,
-			role,
-			disabled,
-			created_at,
-			updated_at
-		FROM
-			api_key
-		%s %s %s
-		`, whereSQL, orderBySQL, limitOffsetSQL,
-	)
+	query := fmt.Sprintf(selectAPIKeyV2SQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe(ctx).QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
@@ -192,14 +155,7 @@ func (s *accountStorage) ListAPIKeys(
 	}
 	nextOffset := offset + len(apiKeys)
 	var totalCount int64
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(1)
-		FROM
-			api_key
-		%s %s
-		`, whereSQL, orderBySQL,
-	)
+	countQuery := fmt.Sprintf(selectAPIKeyV2CountSQLQuery, whereSQL, orderBySQL)
 	err = s.qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
