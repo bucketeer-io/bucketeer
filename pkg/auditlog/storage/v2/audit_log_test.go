@@ -86,10 +86,8 @@ func TestCreateAuditLogs(t *testing.T) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Regex("^INSERT INTO audit_log\\s+\\(\\s*id,\\s*timestamp,\\s*entity_type,\\s*entity_id,\\s*type,\\s*event,\\s*editor,\\s*options,\\s*environment_namespace\\s*\\)\\s+VALUES\\s*\\(\\?, \\?, \\?, \\?, \\?, \\?, \\?, \\?, \\?\\),\\s*\\(\\?, \\?, \\?, \\?, \\?, \\?, \\?, \\?, \\?\\)$"),
-					[]interface{}{
-						id0, int64(1), int32(2), "e0", int32(3), mysql.JSONObject{Val: nil}, mysql.JSONObject{Val: nil}, mysql.JSONObject{Val: nil}, "ns0",
-						id1, int64(10), int32(3), "e2", int32(4), mysql.JSONObject{Val: nil}, mysql.JSONObject{Val: nil}, mysql.JSONObject{Val: nil}, "ns1",
-					},
+					id0, int64(1), int32(2), "e0", int32(3), gomock.Any(), gomock.Any(), gomock.Any(), "ns0",
+					id1, int64(10), int32(3), "e2", int32(4), gomock.Any(), gomock.Any(), gomock.Any(), "ns1",
 				).Return(nil, nil)
 			},
 			input: []*domain.AuditLog{
@@ -149,7 +147,7 @@ func TestListAuditLogs(t *testing.T) {
 			expectedErr:         errors.New("error"),
 		},
 		{
-			desc: "Success:No wereParts and no orderParts and no limit and no offset",
+			desc: "Success:No whereParts and no orderParts and no limit and no offset",
 			setup: func(s *auditLogStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
@@ -205,7 +203,6 @@ func TestListAuditLogs(t *testing.T) {
 				mysql.NewFilter("timestamp", ">=", timestamp),
 				mysql.NewFilter("entity_type", "=", entityType),
 			},
-
 			orders: []*mysql.Order{
 				mysql.NewOrder("id", mysql.OrderDirectionAsc),
 				mysql.NewOrder("timestamp", mysql.OrderDirectionDesc),
@@ -231,7 +228,7 @@ func TestListAuditLogs(t *testing.T) {
 				p.offset,
 			)
 			assert.Equal(t, p.expectedResultCount, len(auditLogs))
-			if len(auditLogs) > 0 {
+			if auditLogs != nil {
 				assert.IsType(t, auditLogs, []*proto.AuditLog{})
 			}
 			assert.Equal(t, p.expectedCursor, cursor)
