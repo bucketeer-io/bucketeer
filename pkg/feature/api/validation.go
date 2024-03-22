@@ -24,6 +24,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
+	envproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
@@ -1467,6 +1468,40 @@ func (s *FeatureService) validateFeatureStatus(
 			return statusInternal.Err()
 		}
 		return dt.Err()
+	}
+	return nil
+}
+
+func (s *FeatureService) validateEnvironmentSettings(
+	ctx context.Context,
+	environmentNamespace, updateComment string,
+	localizer locale.Localizer,
+) error {
+	req := &envproto.GetEnvironmentV2Request{
+		Id: environmentNamespace,
+	}
+	resp, err := s.environmentClient.GetEnvironmentV2(ctx, req)
+	if err != nil {
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if resp.Environment.RequireComment {
+		if updateComment == "" {
+			dt, err := statusCommentRequiredForUpdating.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.CommentRequiredForUpdating),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
 	}
 	return nil
 }

@@ -679,6 +679,9 @@ func (s *FeatureService) UpdateFeatureDetails(
 	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentNamespace, localizer); err != nil {
 		return nil, err
 	}
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
+		return nil, err
+	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
@@ -925,6 +928,9 @@ func (s *FeatureService) EnableFeature(
 	if err != nil {
 		return nil, err
 	}
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
+		return nil, err
+	}
 	if err := s.updateFeature(
 		ctx,
 		req.Command,
@@ -962,6 +968,9 @@ func (s *FeatureService) DisableFeature(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
 		req.EnvironmentNamespace, localizer)
 	if err != nil {
+		return nil, err
+	}
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateFeature(
@@ -1024,6 +1033,9 @@ func (s *FeatureService) ArchiveFeature(
 	if err != nil {
 		return nil, err
 	}
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
+		return nil, err
+	}
 	if err := s.updateFeature(
 		ctx,
 		req.Command,
@@ -1061,6 +1073,9 @@ func (s *FeatureService) UnarchiveFeature(
 	if err != nil {
 		return nil, err
 	}
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
+		return nil, err
+	}
 	if err := s.updateFeature(
 		ctx,
 		req.Command,
@@ -1096,6 +1111,9 @@ func (s *FeatureService) DeleteFeature(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
 		req.EnvironmentNamespace, localizer)
 	if err != nil {
+		return nil, err
+	}
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateFeature(
@@ -1311,6 +1329,9 @@ func (s *FeatureService) UpdateFeatureVariations(
 	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentNamespace, localizer); err != nil {
 		return nil, err
 	}
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
+		return nil, err
+	}
 	commands := make([]command.Command, 0, len(req.Commands))
 	for _, c := range req.Commands {
 		cmd, err := command.UnmarshalCommand(c)
@@ -1481,6 +1502,9 @@ func (s *FeatureService) UpdateFeatureTargeting(
 		return nil, err
 	}
 	if err := validateUpdateFeatureTargetingRequest(req, localizer); err != nil {
+		return nil, err
+	}
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
 		return nil, err
 	}
 	commands := make([]command.Command, 0, len(req.Commands))

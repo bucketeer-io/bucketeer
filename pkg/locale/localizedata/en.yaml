@@ -74,6 +74,7 @@ AlreadyExistsError: "The same data already exists"
 AlreadyDeletedError: "Data has already been deleted"
 
 # Feature Flag errors
+CommentRequiredForUpdating: "Comments are required to update in this environment"
 DifferentVariationsSize: "The number of variations in the feature is different from the number of variations in the rollout"
 InvalidVariationWeight: "Weight must be between 0 and {{ .Field_1 }}"
 NothingToChange: "There are no changes"

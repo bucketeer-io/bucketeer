@@ -30,6 +30,7 @@ import (
 	autoopsclientmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	btclientmock "github.com/bucketeer-io/bucketeer/pkg/batch/client/mock"
 	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
+	envclientmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
 	experimentclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
@@ -121,6 +122,7 @@ func createFeatureService(c *gomock.Controller) *FeatureService {
 	e.EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(&experimentproto.ListExperimentsResponse{}, nil).AnyTimes()
 	at := autoopsclientmock.NewMockClient(c)
 	bt := btclientmock.NewMockClient(c)
+	env := envclientmock.NewMockClient(c)
 	at.EXPECT().ListProgressiveRollouts(gomock.Any(), gomock.Any()).Return(&autoopsproto.ListProgressiveRolloutsResponse{}, nil).AnyTimes()
 	return &FeatureService{
 		mock.NewMockFlagTriggerStorage(c),
@@ -131,6 +133,7 @@ func createFeatureService(c *gomock.Controller) *FeatureService {
 		cachev3mock.NewMockFeaturesCache(c),
 		at,
 		bt,
+		env,
 		cachev3mock.NewMockSegmentUsersCache(c),
 		p,
 		p,
