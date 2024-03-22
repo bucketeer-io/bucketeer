@@ -19,12 +19,13 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
+
 	"github.com/bucketeer-io/bucketeer/pkg/auditlog/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	proto "github.com/bucketeer-io/bucketeer/proto/auditlog"
-	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 )
 
 func TestNewSubscriptionStorage(t *testing.T) {
