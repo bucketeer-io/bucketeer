@@ -45,8 +45,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
-	migratemysqlapi "github.com/bucketeer-io/bucketeer/pkg/migration/mysql/api"
-	"github.com/bucketeer-io/bucketeer/pkg/migration/mysql/migrate"
 	notificationapi "github.com/bucketeer-io/bucketeer/pkg/notification/api"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
@@ -614,26 +612,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go featureServer.Run()
-	// migrateMySQLService
-	migrateClientFactory, err := migrate.NewClientFactory(
-		*s.githubUser, *s.githubAccessTokenPath, *s.githubMigrationSourcePath,
-		*s.mysqlMigrationUser, *s.mysqlMigrationPass, *s.mysqlHost, *s.mysqlPort, *s.mysqlDBName,
-	)
-	if err != nil {
-		return err
-	}
-	migrateMySQLService := migratemysqlapi.NewMySQLService(
-		migrateClientFactory,
-		migratemysqlapi.WithLogger(logger),
-	)
-	migrateMySQLServer := rpc.NewServer(migrateMySQLService, *s.certPath, *s.keyPath,
-		"migrate-mysql-server",
-		rpc.WithPort(*s.migrateMySQLServicePort),
-		rpc.WithVerifier(verifier),
-		rpc.WithMetrics(registerer),
-		rpc.WithLogger(logger),
-	)
-	go migrateMySQLServer.Run()
 	// notificationService
 	notificationService := notificationapi.NewNotificationService(
 		mysqlClient,
@@ -680,7 +658,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go experimentServer.Stop(serverShutDownTimeout)
 		go eventCounterServer.Stop(serverShutDownTimeout)
 		go featureServer.Stop(serverShutDownTimeout)
-		go migrateMySQLServer.Stop(serverShutDownTimeout)
 		go notificationServer.Stop(serverShutDownTimeout)
 		go pushServer.Stop(serverShutDownTimeout)
 		go mysqlClient.Close()

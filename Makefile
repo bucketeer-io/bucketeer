@@ -50,7 +50,7 @@ local-deps:
 	go install go.uber.org/mock/mockgen@v0.1.0; \
 	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2; \
 	go install github.com/nilslice/protolock/...@v0.15.0;
-	go install github.com/mikefarah/yq/v4@v4.28.2
+	go install github.com/mikefarah/yq/v4@v4.28.2;
 
 .PHONY: lint
 lint:
@@ -255,3 +255,34 @@ e2e:
 .PHONY: update-copyright
 update-copyright:
 	./hack/update-copyright/update-copyright.sh
+
+
+###################
+# Database Migration
+###################
+.PHONY: install-atlas
+install-atlas:
+	curl -sSf https://atlasgo.sh | sh
+
+.PHONY: create-migration
+create-migration:
+	# Example: make create-migration NAME=create_table_users USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
+	atlas migrate diff ${NAME} \
+  		--dir file://migration/mysql \
+  		--to mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
+  		--dev-url docker://mysql/8
+
+.PHONY: atlas-set-version
+atlas-set-version:
+	# Example: make atlas-set-version VERSION=20240311022556 USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
+	atlas migrate set ${VERSION} \
+		--dir file://migration/mysql \
+		--url mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB}
+
+.PHONY: apply-migration
+check-apply-migration:
+	# Example: make check-apply-migration USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
+	atlas migrate apply \
+  		--dir file://migration/mysql \
+  		--url mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
+		--dry-run

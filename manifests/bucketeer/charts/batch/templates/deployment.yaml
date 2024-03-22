@@ -38,7 +38,7 @@ spec:
             secretName: {{ template "service-cert-secret" . }}
         - name: service-token-secret
           secret:
-            secretName: {{ template "service-token-secret" . }} 
+            secretName: {{ template "service-token-secret" . }}
       {{- if .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "batch-server.fullname" . }}
       {{- end }}
