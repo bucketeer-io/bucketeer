@@ -29,6 +29,7 @@ func TestNewEnvironmentV2(t *testing.T) {
 		"desc",
 		"project-id",
 		"organization-id",
+		false,
 		zap.NewNop(),
 	)
 	assert.NoError(t, err)
@@ -48,6 +49,7 @@ func TestRenameEnvironmentV2(t *testing.T) {
 		"desc",
 		"project-id",
 		"organization-id",
+		false,
 		zap.NewNop(),
 	)
 	assert.NoError(t, err)
@@ -64,12 +66,29 @@ func TestChangeDescriptionEnvironmentV2(t *testing.T) {
 		"desc",
 		"project-id",
 		"organization-id",
+		false,
 		zap.NewNop(),
 	)
 	assert.NoError(t, err)
 	newDesc := "new desc"
 	env.ChangeDescription(newDesc)
 	assert.Equal(t, newDesc, env.Description)
+}
+
+func TestChangeRequireCommentEnvironmentV2(t *testing.T) {
+	t.Parallel()
+	env, err := NewEnvironmentV2(
+		"name",
+		"code",
+		"desc",
+		"project-id",
+		"organization-id",
+		false,
+		zap.NewNop(),
+	)
+	assert.NoError(t, err)
+	env.ChangeRequireComment(true)
+	assert.Equal(t, true, env.RequireComment)
 }
 
 func TestSetArchivedEnvironmentV2(t *testing.T) {
@@ -80,6 +99,7 @@ func TestSetArchivedEnvironmentV2(t *testing.T) {
 		"desc",
 		"project-id",
 		"organization-id",
+		false,
 		zap.NewNop(),
 	)
 	assert.NoError(t, err)

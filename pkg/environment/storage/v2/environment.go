@@ -61,10 +61,11 @@ func (s *environmentStorage) CreateEnvironmentV2(ctx context.Context, e *domain.
 			project_id,
 			organization_id,
 			archived,
+			require_comment,
 			created_at,
 			updated_at
 		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?, ?
+			?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 		)
 	`
 	_, err := s.qe.ExecContext(
@@ -77,6 +78,7 @@ func (s *environmentStorage) CreateEnvironmentV2(ctx context.Context, e *domain.
 		e.ProjectId,
 		e.OrganizationId,
 		e.Archived,
+		e.RequireComment,
 		e.CreatedAt,
 		e.UpdatedAt,
 	)
@@ -97,6 +99,7 @@ func (s *environmentStorage) UpdateEnvironmentV2(ctx context.Context, e *domain.
 			name = ?,
 			description = ?,
 			archived = ?,
+			require_comment = ?,
 			created_at = ?,
 			updated_at = ?
 		WHERE
@@ -108,6 +111,7 @@ func (s *environmentStorage) UpdateEnvironmentV2(ctx context.Context, e *domain.
 		e.Name,
 		e.Description,
 		e.Archived,
+		e.RequireComment,
 		e.CreatedAt,
 		e.UpdatedAt,
 		e.Id,
@@ -136,6 +140,7 @@ func (s *environmentStorage) GetEnvironmentV2(ctx context.Context, id string) (*
 			project_id,
 			organization_id,
 			archived,
+			require_comment,
 			created_at,
 			updated_at
 		FROM
@@ -155,6 +160,7 @@ func (s *environmentStorage) GetEnvironmentV2(ctx context.Context, id string) (*
 		&e.ProjectId,
 		&e.OrganizationId,
 		&e.Archived,
+		&e.RequireComment,
 		&e.CreatedAt,
 		&e.UpdatedAt,
 	)
@@ -184,6 +190,7 @@ func (s *environmentStorage) ListEnvironmentsV2(ctx context.Context,
 			project_id,
 			organization_id,
 			archived,
+			require_comment,
 			created_at,
 			updated_at
 		FROM
@@ -207,6 +214,7 @@ func (s *environmentStorage) ListEnvironmentsV2(ctx context.Context,
 			&e.ProjectId,
 			&e.OrganizationId,
 			&e.Archived,
+			&e.RequireComment,
 			&e.CreatedAt,
 			&e.UpdatedAt,
 		)

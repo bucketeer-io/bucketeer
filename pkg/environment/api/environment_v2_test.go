@@ -212,15 +212,27 @@ func TestCreateEnvironmentV2(t *testing.T) {
 		return st.Err()
 	}
 
-	envExpected, err := domain.NewEnvironmentV2(
+	envExpectedTrue, err := domain.NewEnvironmentV2(
 		"Env Name-dev01",
 		"url-code-01",
 		"description",
 		"project-id01",
 		"organization-id01",
+		true,
 		nil,
 	)
-	envExpected.Archived = false
+
+	envExpectedFalse, err := domain.NewEnvironmentV2(
+		"Env Name-dev01",
+		"url-code-01",
+		"description",
+		"project-id01",
+		"organization-id01",
+		false,
+		nil,
+	)
+
+	envExpectedTrue.Archived = false
 	require.NoError(t, err)
 
 	patterns := []struct {
@@ -376,7 +388,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
-			desc: "success",
+			desc: "success: require comment is true",
 			setup: func(s *EnvironmentService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
@@ -390,13 +402,38 @@ func TestCreateEnvironmentV2(t *testing.T) {
 			},
 			req: &proto.CreateEnvironmentV2Request{
 				Command: &proto.CreateEnvironmentV2Command{
-					Name:        envExpected.Name,
-					UrlCode:     envExpected.UrlCode,
-					Description: envExpected.Description,
-					ProjectId:   envExpected.ProjectId,
+					Name:           envExpectedTrue.Name,
+					UrlCode:        envExpectedTrue.UrlCode,
+					Description:    envExpectedTrue.Description,
+					ProjectId:      envExpectedTrue.ProjectId,
+					RequireComment: true,
 				},
 			},
-			expected: envExpected.EnvironmentV2,
+			expected: envExpectedTrue.EnvironmentV2,
+		},
+		{
+			desc: "success: require comment is false",
+			setup: func(s *EnvironmentService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &proto.CreateEnvironmentV2Request{
+				Command: &proto.CreateEnvironmentV2Command{
+					Name:           envExpectedFalse.Name,
+					UrlCode:        envExpectedFalse.UrlCode,
+					Description:    envExpectedFalse.Description,
+					ProjectId:      envExpectedFalse.ProjectId,
+					RequireComment: false,
+				},
+			},
+			expected: envExpectedFalse.EnvironmentV2,
 		},
 	}
 	for _, p := range patterns {
@@ -413,6 +450,7 @@ func TestCreateEnvironmentV2(t *testing.T) {
 				assert.Equal(t, p.expected.Description, resp.Environment.Description)
 				assert.Equal(t, p.expected.ProjectId, resp.Environment.ProjectId)
 				assert.Equal(t, p.expected.Archived, resp.Environment.Archived)
+				assert.Equal(t, p.expected.RequireComment, resp.Environment.RequireComment)
 				assert.True(t, resp.Environment.CreatedAt > 0)
 				assert.True(t, resp.Environment.UpdatedAt > 0)
 			}
@@ -520,9 +558,10 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 				).Return(nil)
 			},
 			req: &proto.UpdateEnvironmentV2Request{
-				Id:                       "id01",
-				RenameCommand:            &proto.RenameEnvironmentV2Command{Name: "name-1"},
-				ChangeDescriptionCommand: &proto.ChangeDescriptionEnvironmentV2Command{Description: "desc-1"},
+				Id:                          "id01",
+				RenameCommand:               &proto.RenameEnvironmentV2Command{Name: "name-1"},
+				ChangeDescriptionCommand:    &proto.ChangeDescriptionEnvironmentV2Command{Description: "desc-1"},
+				ChangeRequireCommentCommand: &proto.ChangeRequireCommentCommand{RequireComment: true},
 			},
 			expectedErr: nil,
 		},

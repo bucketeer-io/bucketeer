@@ -33,6 +33,7 @@ func NewEnvironmentV2(
 	description,
 	projectID,
 	organizationID string,
+	requireComment bool,
 	logger *zap.Logger,
 ) (*EnvironmentV2, error) {
 	uid, err := uuid.NewUUID()
@@ -49,6 +50,7 @@ func NewEnvironmentV2(
 		ProjectId:      projectID,
 		OrganizationId: organizationID,
 		Archived:       false,
+		RequireComment: requireComment,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}}, nil
@@ -61,6 +63,11 @@ func (e *EnvironmentV2) Rename(name string) {
 
 func (e *EnvironmentV2) ChangeDescription(description string) {
 	e.EnvironmentV2.Description = description
+	e.EnvironmentV2.UpdatedAt = time.Now().Unix()
+}
+
+func (e *EnvironmentV2) ChangeRequireComment(state bool) {
+	e.EnvironmentV2.RequireComment = state
 	e.EnvironmentV2.UpdatedAt = time.Now().Unix()
 }
 

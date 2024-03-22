@@ -200,6 +200,7 @@ export namespace Event {
     ENVIRONMENT_V2_DESCRIPTION_CHANGED: 606;
     ENVIRONMENT_V2_ARCHIVED: 607;
     ENVIRONMENT_V2_UNARCHIVED: 608;
+    ENVIRONMENT_V2_REQUIRE_COMMENT_CHANGED: 609;
     ADMIN_ACCOUNT_CREATED: 700;
     ADMIN_ACCOUNT_ENABLED: 702;
     ADMIN_ACCOUNT_DISABLED: 703;
@@ -2677,6 +2678,9 @@ export class EnvironmentV2CreatedEvent extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getRequireComment(): boolean;
+  setRequireComment(value: boolean): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EnvironmentV2CreatedEvent.AsObject;
   static toObject(includeInstance: boolean, msg: EnvironmentV2CreatedEvent): EnvironmentV2CreatedEvent.AsObject;
@@ -2697,6 +2701,7 @@ export namespace EnvironmentV2CreatedEvent {
     archived: boolean,
     createdAt: number,
     updatedAt: number,
+    requireComment: boolean,
   }
 }
 
@@ -2765,6 +2770,38 @@ export namespace EnvironmentV2DescriptionChangedEvent {
     projectId: string,
     oldDescription: string,
     newDescription: string,
+  }
+}
+
+export class EnvironmentV2RequireCommentChangedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getProjectId(): string;
+  setProjectId(value: string): void;
+
+  getRequireComment(): boolean;
+  setRequireComment(value: boolean): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnvironmentV2RequireCommentChangedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: EnvironmentV2RequireCommentChangedEvent): EnvironmentV2RequireCommentChangedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: EnvironmentV2RequireCommentChangedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): EnvironmentV2RequireCommentChangedEvent;
+  static deserializeBinaryFromReader(message: EnvironmentV2RequireCommentChangedEvent, reader: jspb.BinaryReader): EnvironmentV2RequireCommentChangedEvent;
+}
+
+export namespace EnvironmentV2RequireCommentChangedEvent {
+  export type AsObject = {
+    id: string,
+    name: string,
+    projectId: string,
+    requireComment: boolean,
   }
 }
 
