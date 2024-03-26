@@ -95,7 +95,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   const {
     register,
     control,
-    formState: { errors, isSubmitting, isDirty, isValid },
+    formState: { errors, isSubmitting, isValid },
   } = methods;
 
   const features = useSelector<AppState, Feature.AsObject[]>(

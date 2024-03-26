@@ -262,6 +262,26 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
       }
     }, [feature]);
 
+    const dirtyFieldsKeys = (obj) => {
+      // Array containing the allowed keys
+      const allowedKeys = ['enabled', 'comment', 'resetSampling'];
+
+      // Check if any key in the object is not allowed
+      for (const key in obj) {
+        if (!allowedKeys.includes(key)) {
+          return false; // Return false if any key is not allowed
+        }
+      }
+
+      // Return true if all keys are allowed
+      return true;
+    };
+
+    // Check if only switch is enabled/disabled or other fields are also changed
+    // If only switch is enabled/disabled, then show Enable/Disable now and Schedule radio options in Confirm dialog
+    // If other fields are also changed, then hide Enable/Disable now and Schedule radio options in Confirm dialog
+    const isSwitchEnabledConfirm = dirtyFieldsKeys(dirtyFields);
+
     return (
       <FormProvider {...methods}>
         <FeatureTargetingForm
@@ -277,7 +297,7 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
             description={f(messages.feature.confirm.description)}
             displayResetSampling={true}
             featureId={featureId}
-            isSwitchEnabledConfirm
+            isSwitchEnabledConfirm={isSwitchEnabledConfirm}
             isEnabled={dirtyFields.enabled && getDefaultValues(feature).enabled}
           />
         )}
