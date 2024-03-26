@@ -227,7 +227,7 @@ func ConstructWhereSQLString(wps []WherePart) (sql string, args []interface{}) {
 		return "", nil
 	}
 	var sb strings.Builder
-	sb.WriteString(" WHERE ")
+	sb.WriteString("WHERE ")
 	for i, wp := range wps {
 		if i != 0 {
 			sb.WriteString(" AND ")
@@ -276,7 +276,7 @@ func ConstructOrderBySQLString(orders []*Order) string {
 		return ""
 	}
 	var sb strings.Builder
-	sb.WriteString(" ORDER BY ")
+	sb.WriteString("ORDER BY ")
 	for i, o := range orders {
 		if i != 0 {
 			sb.WriteString(", ")
@@ -302,10 +302,10 @@ func ConstructLimitOffsetSQLString(limit, offset int) string {
 		return ""
 	}
 	if limit == QueryNoLimit && offset != QueryNoOffset {
-		return fmt.Sprintf(" LIMIT %d OFFSET %d", queryLimitAllRows, offset)
+		return fmt.Sprintf("LIMIT %d OFFSET %d", queryLimitAllRows, offset)
 	}
 	if limit != QueryNoLimit && offset == QueryNoOffset {
-		return fmt.Sprintf(" LIMIT %d", limit)
+		return fmt.Sprintf("LIMIT %d", limit)
 	}
-	return fmt.Sprintf(" LIMIT %d OFFSET %d", limit, offset)
+	return fmt.Sprintf("LIMIT %d OFFSET %d", limit, offset)
 }

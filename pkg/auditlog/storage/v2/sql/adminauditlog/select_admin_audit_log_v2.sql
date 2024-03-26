@@ -9,3 +9,4 @@ SELECT
     options
 FROM
     admin_audit_log
+    %s %s %s

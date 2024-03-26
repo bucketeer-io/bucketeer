@@ -19,6 +19,7 @@ import (
 	"context"
 	_ "embed"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/bucketeer-io/bucketeer/pkg/auditlog/domain"
@@ -100,18 +101,8 @@ func (s *adminAuditLogStorage) ListAdminAuditLogs(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	var query strings.Builder
-	query.WriteString(selectAdminAuditLogV2SQL)
-	if len(whereSQL) != 0 {
-		query.WriteString(whereSQL)
-	}
-	if len(orderBySQL) != 0 {
-		query.WriteString(orderBySQL)
-	}
-	if len(limitOffsetSQL) != 0 {
-		query.WriteString(limitOffsetSQL)
-	}
-	rows, err := s.qe.QueryContext(ctx, query.String(), whereArgs...)
+	query := fmt.Sprintf(selectAdminAuditLogV2SQL, whereSQL, orderBySQL, limitOffsetSQL)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -143,15 +134,8 @@ func (s *adminAuditLogStorage) ListAdminAuditLogs(
 	}
 	nextOffset := offset + len(auditLogs)
 	var totalCount int64
-	var countQuery strings.Builder
-	countQuery.WriteString(selectAdminAuditLogV2CountSQL)
-	if len(whereSQL) != 0 {
-		countQuery.WriteString(whereSQL)
-	}
-	if len(orderBySQL) != 0 {
-		countQuery.WriteString(orderBySQL)
-	}
-	err = s.qe.QueryRowContext(ctx, countQuery.String(), whereArgs...).Scan(&totalCount)
+	countQuery := fmt.Sprintf(selectAdminAuditLogV2CountSQL, whereSQL, orderBySQL)
+	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
