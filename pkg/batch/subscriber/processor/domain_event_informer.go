@@ -25,6 +25,7 @@ import (
 	gstatus "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/sender"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
@@ -40,7 +41,7 @@ var (
 	ErrUnknownSourceType = errors.New("batch-server: domain-event-informer unknown source type")
 )
 
-type DomainEventInformer struct {
+type domainEventInformer struct {
 	environmentClient environmentclient.Client
 	sender            sender.Sender
 	logger            *zap.Logger
@@ -50,15 +51,15 @@ func NewDomainEventInformer(
 	environmentClient environmentclient.Client,
 	sender sender.Sender,
 	logger *zap.Logger,
-) *DomainEventInformer {
-	return &DomainEventInformer{
+) subscriber.Processor {
+	return &domainEventInformer{
 		environmentClient: environmentClient,
 		sender:            sender,
 		logger:            logger,
 	}
 }
 
-func (d DomainEventInformer) Process(msg *puller.Message) {
+func (d domainEventInformer) Process(msg *puller.Message) {
 	if id := msg.Attributes["id"]; id == "" {
 		msg.Ack()
 		handledCounter.WithLabelValues(codes.MissingID.String(), codes.BadMessage.String()).Inc()
@@ -113,7 +114,7 @@ func (d DomainEventInformer) Process(msg *puller.Message) {
 	msg.Ack()
 }
 
-func (d DomainEventInformer) createNotificationEvent(
+func (d domainEventInformer) createNotificationEvent(
 	event *domaineventproto.Event,
 	environmentName, environmentURLCode string,
 	isAdminEvent bool,
@@ -147,7 +148,7 @@ func (d DomainEventInformer) createNotificationEvent(
 	return ne, nil
 }
 
-func (d DomainEventInformer) getEnvironment(
+func (d domainEventInformer) getEnvironment(
 	ctx context.Context,
 	environmentId string,
 ) (*environmentproto.EnvironmentV2, error) {
@@ -165,7 +166,7 @@ func (d DomainEventInformer) getEnvironment(
 	return resp.Environment, nil
 }
 
-func (d DomainEventInformer) unmarshalMessage(msg *puller.Message) (*domaineventproto.Event, error) {
+func (d domainEventInformer) unmarshalMessage(msg *puller.Message) (*domaineventproto.Event, error) {
 	event := &domaineventproto.Event{}
 	err := proto.Unmarshal(msg.Data, event)
 	if err != nil {
@@ -175,7 +176,7 @@ func (d DomainEventInformer) unmarshalMessage(msg *puller.Message) (*domainevent
 	return event, nil
 }
 
-func (d DomainEventInformer) convSourceType(
+func (d domainEventInformer) convSourceType(
 	entityType domaineventproto.Event_EntityType,
 ) (notificationproto.Subscription_SourceType, error) {
 	switch entityType {
