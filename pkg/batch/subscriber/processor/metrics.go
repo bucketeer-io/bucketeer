@@ -11,8 +11,9 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
-package notification
+package processor
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
@@ -25,26 +26,17 @@ const (
 )
 
 var (
-	receivedCounter = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: "bucketeer",
-			Subsystem: "batch_server",
-			Name:      "domain_event_informer_received_event_total",
-			Help:      "Total number of received domain events",
-		}, []string{"type"})
-
 	handledCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
 			Subsystem: "batch_server",
-			Name:      "domain_event_informer_handle_event_total",
+			Name:      "multi_pubsub_handle_event_total",
 			Help:      "Total number of handled messages",
 		}, []string{"type", "code"})
 )
 
 func registerMetrics(r metrics.Registerer) {
 	r.MustRegister(
-		receivedCounter,
 		handledCounter,
 	)
 }
