@@ -147,6 +147,8 @@ cronjob:
       schedule: "* * * * *"
 
 subscribers:
+  # This is the processor's name. It must match the same name defined in the
+  # pkg/batch/subscriber/processor/processors.go
   domainEventInformer:
     project:
     topic:

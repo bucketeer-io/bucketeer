@@ -493,7 +493,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		registerer,
 		logger,
 	)
-	multiPubSub := s.startMultiPubSub(ctx, processors, logger)
+	multiPubSub, err := s.startMultiPubSub(ctx, processors, logger)
+	if err != nil {
+		return err
+	}
 
 	defer func() {
 		server.Stop(serverShutDownTimeout)
@@ -534,20 +537,20 @@ func (s *server) startMultiPubSub(
 	ctx context.Context,
 	processors *processor.Processors,
 	logger *zap.Logger,
-) *subscriber.MultiSubscriber {
+) (*subscriber.MultiSubscriber, error) {
 	bytes, err := os.ReadFile(*s.subscriberConfig)
 	if err != nil {
-		logger.Fatal("subscriber: failed to read subscriber config",
+		logger.Error("subscriber: failed to read subscriber config",
 			zap.Error(err),
 		)
-		return nil
+		return nil, err
 	}
 	var configMap map[string]subscriber.Configuration
 	if err := json.Unmarshal(bytes, &configMap); err != nil {
-		logger.Fatal("subscriber: failed to unmarshal subscriber config",
+		logger.Error("subscriber: failed to unmarshal subscriber config",
 			zap.Error(err),
 		)
-		return nil
+		return nil, err
 	}
 	multiSubscriber := subscriber.NewMultiSubscriber(
 		subscriber.WithLogger(logger),
@@ -555,11 +558,11 @@ func (s *server) startMultiPubSub(
 	for name, config := range configMap {
 		p, err := processors.GetProcessorByName(name)
 		if err != nil {
-			logger.Fatal("subscriber: processor not found",
+			logger.Error("subscriber: processor not found",
 				zap.String("name", name),
 				zap.Error(err),
 			)
-			return nil
+			return nil, err
 		}
 		multiSubscriber.AddSubscriber(subscriber.NewSubscriber(
 			name, config, p,
@@ -567,7 +570,7 @@ func (s *server) startMultiPubSub(
 		))
 	}
 	multiSubscriber.Start(ctx)
-	return multiSubscriber
+	return multiSubscriber, nil
 }
 
 func (s *server) registerProcessorMap(
