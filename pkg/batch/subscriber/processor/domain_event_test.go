@@ -140,9 +140,9 @@ func TestConvSourceType(t *testing.T) {
 	}
 }
 
-func newDomainEventInformer(t *testing.T, c *gomock.Controller) *DomainEventInformer {
+func newDomainEventInformer(t *testing.T, c *gomock.Controller) *domainEventInformer {
 	t.Helper()
-	return &DomainEventInformer{
+	return &domainEventInformer{
 		logger: zap.NewNop(),
 	}
 }
