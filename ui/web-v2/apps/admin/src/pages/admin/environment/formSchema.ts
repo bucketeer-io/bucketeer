@@ -18,7 +18,10 @@ const nameSchema = yup.string().max(ENVIRONMENT_NAME_MAX_LENGTH).required();
 const urlCodeSchema = yup
   .string()
   .required()
-  .matches(urlCodeRegex, intl.formatMessage(messages.input.error.invalidUrlCode))
+  .matches(
+    urlCodeRegex,
+    intl.formatMessage(messages.input.error.invalidUrlCode)
+  )
   .test(
     'maxLength',
     intl.formatMessage(messages.input.error.maxLength, {

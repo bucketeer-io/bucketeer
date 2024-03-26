@@ -155,7 +155,9 @@ export const FeatureIndexPage: FC = memo(() => {
   date.setDate(date.getDate() + 1);
 
   const switchEnabledMethod = useForm({
-    resolver: yupResolver(switchEnabledFormSchema),
+    resolver: yupResolver(
+      switchEnabledFormSchema(currentEnvironment.requireComment)
+    ),
     defaultValues: {
       featureId: '',
       comment: '',
@@ -170,7 +172,7 @@ export const FeatureIndexPage: FC = memo(() => {
     reset: switchEnabledReset,
   } = switchEnabledMethod;
   const archiveMethod = useForm({
-    resolver: yupResolver(archiveFormSchema),
+    resolver: yupResolver(archiveFormSchema(currentEnvironment.requireComment)),
     defaultValues: {
       feature: null,
       featureId: '',

@@ -115,6 +115,14 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   );
 
   useEffect(() => {
+    if (currentEnvironment.requireComment) {
+      document.getElementById('comment').focus();
+    } else {
+      document.getElementById('comment').blur();
+    }
+  }, []);
+
+  useEffect(() => {
     if (isSwitchEnabledConfirm && isEnabled) {
       dispatch(
         listProgressiveRollout({
@@ -219,7 +227,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
     ) {
       return false;
     }
-    return !isDirty || !isValid || isSubmitting;
+    return !isValid || isSubmitting;
   };
 
   return (
@@ -287,19 +295,28 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
       )}
       {selectedSwitchEnabledType !== SwitchEnabledType.SCHEDULE && (
         <div className="mt-5">
-          <label
-            htmlFor="about"
-            className="block text-sm font-medium text-gray-700"
-          >
-            {f(messages.feature.updateComment)}
-          </label>
+          <div className="flex items-center space-x-1">
+            <label
+              htmlFor="updateComment"
+              className="block text-sm font-medium text-gray-700"
+            >
+              {f(messages.feature.updateComment)}
+            </label>
+            <label
+              htmlFor="required/optional"
+              className="block text-sm text-gray-500"
+            >
+              {currentEnvironment.requireComment
+                ? f(messages.input.required)
+                : f(messages.input.optional)}
+            </label>
+          </div>
           <div className="mt-1">
             <textarea
               {...register('comment', {
-                required: true,
                 maxLength: FEATURE_UPDATE_COMMENT_MAX_LENGTH,
               })}
-              id="description"
+              id="comment"
               rows={3}
               className="input-text w-full"
               disabled={flagList.length > 0}

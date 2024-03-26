@@ -160,7 +160,9 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
     };
 
     const methods = useForm({
-      resolver: yupResolver(targetingFormSchema),
+      resolver: yupResolver(
+        targetingFormSchema(currentEnvironment.requireComment)
+      ),
       defaultValues: getDefaultValues(feature),
       mode: 'onChange',
     });

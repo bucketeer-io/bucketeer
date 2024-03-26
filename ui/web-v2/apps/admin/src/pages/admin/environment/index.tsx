@@ -1,3 +1,4 @@
+import { fetchMe, useCurrentEnvironment } from '@/modules/me';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -82,6 +83,7 @@ const createSort = (sortOption?: EnvironmentSortOption): Sort => {
 
 export const AdminEnvironmentIndexPage: FC = memo(() => {
   const dispatch = useDispatch<AppDispatch>();
+  const currentEnvironment = useCurrentEnvironment();
   const { formatMessage: f } = useIntl();
   const searchOptions = useSearchParams();
   searchOptions.sort = searchOptions.sort ? searchOptions.sort : '-createdAt';
@@ -151,10 +153,12 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
   const addMethod = useForm({
     resolver: yupResolver(addFormSchema),
     defaultValues: {
+      id: '',
       name: '',
       urlCode: '',
       projectId: '',
       description: '',
+      requireComment: true,
     },
     mode: 'onChange',
   });
@@ -169,6 +173,7 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
         urlCode: e.urlCode,
         projectId: e.projectId,
         description: e.description,
+        requireComment: e.requireComment,
       });
       history.push({
         pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_ENVIRONMENTS}/${e.id}`,
@@ -180,6 +185,14 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
 
   const updateMethod = useForm({
     resolver: yupResolver(updateFormSchema),
+    defaultValues: {
+      id: '',
+      name: '',
+      urlCode: '',
+      projectId: '',
+      description: '',
+      requireComment: false,
+    },
     mode: 'onChange',
   });
   const {
@@ -206,6 +219,7 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
           urlCode: data.urlCode,
           projectId: data.projectId,
           description: data.description,
+          requireComment: data.requireComment,
         })
       ).then(() => {
         resetAdd();
@@ -221,22 +235,33 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
     async (data) => {
       let name: string;
       let description: string;
+      let requireComment: boolean;
+
       if (dirtyFields.name) {
         name = data.name;
       }
       if (dirtyFields.description) {
         description = data.description;
       }
+      if (dirtyFields.requireComment) {
+        requireComment = data.requireComment;
+      }
       dispatch(
         updateEnvironment({
           id: data.id,
           name: name,
           description: description,
+          requireComment: requireComment,
         })
       ).then(() => {
         dispatch(
           getEnvironment({
             id: data.id,
+          })
+        );
+        dispatch(
+          fetchMe({
+            organizationId: currentEnvironment.organizationId,
           })
         );
         handleClose();
@@ -259,6 +284,7 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
           urlCode: payload.urlCode,
           projectId: payload.projectId,
           description: payload.description,
+          requireComment: payload.requireComment,
         });
       });
     }

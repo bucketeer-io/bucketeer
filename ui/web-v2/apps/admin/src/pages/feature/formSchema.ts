@@ -271,16 +271,19 @@ export const operationFormSchema = yup.object().shape({
 
 const tagsSchema = yup.array().min(FEATURE_TAG_MIN_SIZE).of(yup.string());
 
-export const switchEnabledFormSchema = yup.object().shape({
-  featureId: idSchema,
-  enabled: yup.boolean().required(),
-  comment: commentSchema,
-});
+export const switchEnabledFormSchema = (requireComment: boolean) => {
+  return yup.object().shape({
+    featureId: idSchema,
+    enabled: yup.boolean().required(),
+    comment: requireComment ? commentSchema : yup.string(),
+  });
+};
 
-export const archiveFormSchema = yup.object().shape({
-  featureId: idSchema,
-  comment: commentSchema,
-});
+export const archiveFormSchema = (requireComment: boolean) =>
+  yup.object().shape({
+    featureId: idSchema,
+    comment: requireComment ? commentSchema : yup.string(),
+  });
 
 export const cloneSchema = yup.object().shape({
   // Since some old environments have empty id, so we don't require it
@@ -310,19 +313,21 @@ export const addFormSchema = yup.object().shape({
   offVariation: offVariationSchema,
 });
 
-export const variationsFormSchema = yup.object().shape({
-  onVariation: onVariationSchema,
-  variations: variationsSchema,
-  resetSampling: yup.bool(),
-  comment: commentSchema,
-});
+export const variationsFormSchema = (requireComment: boolean) =>
+  yup.object().shape({
+    onVariation: onVariationSchema,
+    variations: variationsSchema,
+    resetSampling: yup.bool(),
+    comment: requireComment ? commentSchema : yup.string(),
+  });
 
-export const settingsFormSchema = yup.object().shape({
-  name: nameSchema,
-  description: descriptionSchema,
-  tags: tagsSchema,
-  comment: commentSchema,
-});
+export const settingsFormSchema = (requireComment: boolean) =>
+  yup.object().shape({
+    name: nameSchema,
+    description: descriptionSchema,
+    tags: tagsSchema,
+    comment: requireComment ? commentSchema : yup.string(),
+  });
 
 export const strategySchema = yup.object().shape({
   option: yup.object().shape({
@@ -355,55 +360,56 @@ export const strategySchema = yup.object().shape({
     ),
 });
 
-export const targetingFormSchema = yup.object().shape({
-  prerequisites: yup.array().of(
-    yup.object().shape({
-      featureId: yup.string().required(),
-      variationId: yup.string().required(),
-    })
-  ),
-  enabled: yup.bool(),
-  targets: yup.array().of(
-    yup.object().shape({
-      variationId: yup.string().required(),
-      users: yup.array().of(yup.string()),
-    })
-  ),
-  rules: yup.array().of(
-    yup.object().shape({
-      id: yup.string(),
-      clauses: yup.array().of(
-        yup.object().shape({
-          id: yup.string(),
-          type: yup.string(),
-          attribute: yup
-            .string()
-            .test(
-              'required',
-              intl.formatMessage(messages.input.error.required),
-              (value, context) => {
-                if (context.parent.type === 'segment') {
-                  return true;
+export const targetingFormSchema = (requireComment: boolean) =>
+  yup.object().shape({
+    prerequisites: yup.array().of(
+      yup.object().shape({
+        featureId: yup.string().required(),
+        variationId: yup.string().required(),
+      })
+    ),
+    enabled: yup.bool(),
+    targets: yup.array().of(
+      yup.object().shape({
+        variationId: yup.string().required(),
+        users: yup.array().of(yup.string()),
+      })
+    ),
+    rules: yup.array().of(
+      yup.object().shape({
+        id: yup.string(),
+        clauses: yup.array().of(
+          yup.object().shape({
+            id: yup.string(),
+            type: yup.string(),
+            attribute: yup
+              .string()
+              .test(
+                'required',
+                intl.formatMessage(messages.input.error.required),
+                (value, context) => {
+                  if (context.parent.type === 'segment') {
+                    return true;
+                  }
+                  return !!value;
                 }
-                return !!value;
-              }
-            ),
-          operator: yup.string(),
-          values: yup.array().of(yup.string()).min(1),
-        })
-      ),
-      strategy: strategySchema,
-    })
-  ),
-  defaultStrategy: strategySchema,
-  offVariation: yup.object().shape({
-    id: yup.string(),
-    value: yup.string(),
-    label: yup.string(),
-  }),
-  resetSampling: yup.bool(),
-  comment: yup.string().required(),
-});
+              ),
+            operator: yup.string(),
+            values: yup.array().of(yup.string()).min(1),
+          })
+        ),
+        strategy: strategySchema,
+      })
+    ),
+    defaultStrategy: strategySchema,
+    offVariation: yup.object().shape({
+      id: yup.string(),
+      value: yup.string(),
+      label: yup.string(),
+    }),
+    resetSampling: yup.bool(),
+    comment: requireComment ? yup.string().required() : yup.string(),
+  });
 
 export const triggerFormSchema = yup.object().shape({
   triggerType: yup.string().nullable().required(),
