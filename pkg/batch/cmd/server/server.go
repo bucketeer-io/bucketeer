@@ -488,7 +488,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	go server.Run()
 
 	processors := s.registerProcessorMap(
-		ctx,
 		environmentClient,
 		notificationSender,
 		registerer,
@@ -572,7 +571,6 @@ func (s *server) startMultiPubSub(
 }
 
 func (s *server) registerProcessorMap(
-	ctx context.Context,
 	environmentClient environmentclient.Client,
 	sender notificationsender.Sender,
 	registerer metrics.Registerer,
