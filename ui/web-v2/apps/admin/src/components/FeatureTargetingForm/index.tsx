@@ -73,7 +73,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
     const methods = useFormContext();
     const {
       control,
-      formState: { errors, isDirty },
+      formState: { errors, isDirty, dirtyFields },
       watch,
     } = methods;
     const history = useHistory();
@@ -141,12 +141,12 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
         !checkPrerequisites ||
         !checkRules ||
         Object.values(errors).some(Boolean) ||
-        !isDirty
+        Object.keys(dirtyFields).length === 0
       ) {
         return true;
       }
       return false;
-    }, [rules, isDirty, errors, prerequisites]);
+    }, [rules, dirtyFields, errors, prerequisites]);
 
     const handleOnPaste = (e, t, field) => {
       // Stop data actually being pasted into div
