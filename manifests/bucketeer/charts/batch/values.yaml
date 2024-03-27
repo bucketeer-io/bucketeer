@@ -21,6 +21,7 @@ env:
   eventCounterService: localhost:9001
   featureService: localhost:9001
   experimentCalculatorService: localhost:9001
+  batchService: localhost:9001
   webURL:
   logLevel: info
   port: 9090
@@ -157,3 +158,21 @@ subscribers:
     pullerMaxOutstandingMessages: 1000
     pullerMaxOutstandingBytes: 1000000000
     maxMps: 50
+    workerNum: 5
+  segmentPersister:
+    project:
+    topic:
+    subscription:
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: 1000
+    pullerMaxOutstandingBytes: 1000000000
+    maxMps: 50
+    workerNum: 5
+
+# This configuration is used for add custom params to Processors
+processors:
+  # This is the processor's name. It must match the same name defined in the
+  # pkg/batch/subscriber/processor/processors.go
+  segmentPersister:
+    flushSize: 100
+    flushInterval: 10

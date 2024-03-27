@@ -59,7 +59,23 @@ func NewDomainEventInformer(
 	}
 }
 
-func (d domainEventInformer) Process(msg *puller.Message) {
+func (d domainEventInformer) Process(ctx context.Context, msgChan <-chan *puller.Message) error {
+	for {
+		select {
+		case msg, ok := <-msgChan:
+			if !ok {
+				d.logger.Error("domainEventInformer: message channel closed")
+				return nil
+			}
+			d.handleMessage(msg)
+		case <-ctx.Done():
+			d.logger.Info("Subscriber context done, stopped processing messages")
+			return nil
+		}
+	}
+}
+
+func (d domainEventInformer) handleMessage(msg *puller.Message) {
 	if id := msg.Attributes["id"]; id == "" {
 		msg.Ack()
 		handledCounter.WithLabelValues(codes.MissingID.String(), codes.BadMessage.String()).Inc()
