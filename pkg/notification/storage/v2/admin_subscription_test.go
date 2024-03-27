@@ -40,6 +40,11 @@ func TestCreateAdminSubscription(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
+	id := "id-0"
+	sourceTypes := []proto.Subscription_SourceType{5}
+	recipient := &proto.Recipient{Type: 0, SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "slack"}}
+	name := "name-0"
 	patterns := []struct {
 		desc        string
 		setup       func(*adminSubscriptionStorage)
@@ -67,7 +72,7 @@ func TestCreateAdminSubscription(t *testing.T) {
 
 			},
 			input: &domain.Subscription{
-				Subscription: &proto.Subscription{Id: "id-0"},
+				Subscription: &proto.Subscription{Id: id},
 			},
 			expectedErr: errors.New("error"),
 		},
@@ -75,11 +80,13 @@ func TestCreateAdminSubscription(t *testing.T) {
 			desc: "Success",
 			setup: func(s *adminSubscriptionStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(),
+					gomock.Regex("^INSERT INTO admin_subscription\\s*\\(\\s*id,\\s*created_at,\\s*updated_at,\\s*disabled,\\s*source_types,\\s*recipient,\\s*name\\s*\\)\\s+VALUES\\s+\\(\\s+(\\?,\\s*){6}\\s*\\?\\s*\\)\\s*$"),
+					id, int64(1), int64(2), false, mysql.JSONObject{Val: sourceTypes}, mysql.JSONObject{Val: recipient}, name,
 				).Return(nil, nil)
 			},
 			input: &domain.Subscription{
-				Subscription: &proto.Subscription{Id: "id-0"},
+				Subscription: &proto.Subscription{Id: id, CreatedAt: 1, UpdatedAt: 2, Disabled: false, SourceTypes: sourceTypes, Recipient: recipient, Name: name},
 			},
 			expectedErr: nil,
 		},
@@ -100,6 +107,11 @@ func TestUpdateAdminSubscription(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
+	id := "id-0"
+	sourceTypes := []proto.Subscription_SourceType{5}
+	recipient := &proto.Recipient{Type: 0, SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "slack"}}
+	name := "name-0"
 	patterns := []struct {
 		desc        string
 		setup       func(*adminSubscriptionStorage)
@@ -116,7 +128,7 @@ func TestUpdateAdminSubscription(t *testing.T) {
 				).Return(result, nil)
 			},
 			input: &domain.Subscription{
-				Subscription: &proto.Subscription{Id: "id-0"},
+				Subscription: &proto.Subscription{Id: id},
 			},
 			expectedErr: ErrAdminSubscriptionUnexpectedAffectedRows,
 		},
@@ -129,7 +141,7 @@ func TestUpdateAdminSubscription(t *testing.T) {
 
 			},
 			input: &domain.Subscription{
-				Subscription: &proto.Subscription{Id: "id-0"},
+				Subscription: &proto.Subscription{Id: id},
 			},
 			expectedErr: errors.New("error"),
 		},
@@ -139,11 +151,13 @@ func TestUpdateAdminSubscription(t *testing.T) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(),
+					gomock.Regex("^UPDATE\\s+admin_subscription\\s+SET\\s+updated_at\\s*=\\s*\\?,\\s*disabled\\s*=\\s*\\?,\\s*source_types\\s*=\\s*\\?,\\s*recipient\\s*=\\s*\\?,\\s*name\\s*=\\s*\\?\\s+WHERE\\s+id\\s*=\\s*\\?\\s*$"),
+					int64(2), false, mysql.JSONObject{Val: sourceTypes}, mysql.JSONObject{Val: recipient}, name, id,
 				).Return(result, nil)
 			},
 			input: &domain.Subscription{
-				Subscription: &proto.Subscription{Id: "id-0"},
+				Subscription: &proto.Subscription{Id: id, CreatedAt: 1, UpdatedAt: 2, Disabled: false, SourceTypes: sourceTypes, Recipient: recipient, Name: name},
 			},
 			expectedErr: nil,
 		},
@@ -199,7 +213,9 @@ func TestDeleteAdminSubscription(t *testing.T) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(),
+					gomock.Regex("^DELETE\\s+FROM\\s+admin_subscription\\s+WHERE\\s+id\\s*=\\s*\\?*$"),
+					"id-0",
 				).Return(result, nil)
 			},
 			id:          "id-0",
@@ -259,7 +275,9 @@ func TestGetAdminSubscription(t *testing.T) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(),
+					gomock.Regex("^SELECT\\s+id,\\s*created_at,\\s*updated_at,\\s*disabled,\\s*source_types,\\s*recipient,\\s*name\\s+FROM\\s+admin_subscription\\s+WHERE\\s+id\\s*=\\s*\\?\\s*$"),
+					[]interface{}{"id-0"},
 				).Return(row)
 			},
 			id:          "id-0",
@@ -272,8 +290,13 @@ func TestGetAdminSubscription(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			_, err := storage.GetAdminSubscription(context.Background(), p.id)
+			result, err := storage.GetAdminSubscription(context.Background(), p.id)
+
+			if result != nil {
+				assert.IsType(t, &domain.Subscription{}, result)
+			}
 			assert.Equal(t, p.expectedErr, err)
+
 		})
 	}
 }
@@ -282,6 +305,10 @@ func TestListAdminSubscriptions(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
+	getSize := 2
+	offset := 5
+	limit := 10
 	patterns := []struct {
 		desc           string
 		setup          func(*adminSubscriptionStorage)
@@ -289,7 +316,7 @@ func TestListAdminSubscriptions(t *testing.T) {
 		orders         []*mysql.Order
 		limit          int
 		offset         int
-		expected       []*proto.Subscription
+		expectedCount  int
 		expectedCursor int
 		expectedErr    error
 	}{
@@ -304,36 +331,75 @@ func TestListAdminSubscriptions(t *testing.T) {
 			orders:         nil,
 			limit:          0,
 			offset:         0,
-			expected:       nil,
+			expectedCount:  0,
 			expectedCursor: 0,
 			expectedErr:    errors.New("error"),
 		},
 		{
 			desc: "Success",
 			setup: func(s *adminSubscriptionStorage) {
+				var nextCallCount = 0
+				rows := mock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().DoAndReturn(func() bool {
+					nextCallCount++
+					return nextCallCount <= getSize
+				}).Times(getSize + 1)
+				rows.EXPECT().Err().Return(nil)
+				rows.EXPECT().Scan(gomock.Any()).Return(nil).Times(getSize)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(),
+					gomock.Regex("^SELECT\\s+id,\\s*created_at,\\s*updated_at,\\s*disabled,\\s*source_types,\\s*recipient,\\s*name\\s+FROM\\s+admin_subscription\\s+WHERE num >= \\? AND disabled = \\?\\s+ORDER BY id ASC, create_at DESC\\s+LIMIT 10 OFFSET 5\\s*$"),
+					5, false,
+				).Return(rows, nil)
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(),
+					gomock.Regex("^^SELECT\\s*?COUNT\\(1\\)\\s*?FROM\\s+admin_subscription\\s+WHERE num >= \\? AND disabled = \\?\\s+ORDER BY id ASC, create_at DESC\\s*$"),
+					5, false,
+				).Return(row)
+			},
+			whereParts: []mysql.WherePart{
+				mysql.NewFilter("num", ">=", 5),
+				mysql.NewFilter("disabled", "=", false),
+			},
+			orders: []*mysql.Order{
+				mysql.NewOrder("id", mysql.OrderDirectionAsc),
+				mysql.NewOrder("create_at", mysql.OrderDirectionDesc),
+			},
+			limit:          limit,
+			offset:         offset,
+			expectedCount:  getSize,
+			expectedCursor: offset + getSize,
+			expectedErr:    nil,
+		},
+		{
+			desc: "Success:No wereParts and no orderParts and no limit and no offset",
+			setup: func(s *adminSubscriptionStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(),
+					gomock.Regex("^SELECT\\s+id,\\s*created_at,\\s*updated_at,\\s*disabled,\\s*source_types,\\s*recipient,\\s*name\\s+FROM\\s+admin_subscription\\s*$"),
+					[]interface{}{},
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(),
+					gomock.Regex("^SELECT\\s+COUNT\\(1\\)\\s*?FROM\\s+admin_subscription\\s*$"),
+					[]interface{}{},
 				).Return(row)
 			},
-			whereParts: []mysql.WherePart{
-				mysql.NewFilter("num", ">=", 5),
-			},
-			orders: []*mysql.Order{
-				mysql.NewOrder("id", mysql.OrderDirectionAsc),
-			},
-			limit:          10,
-			offset:         5,
-			expected:       []*proto.Subscription{},
-			expectedCursor: 5,
+			whereParts:     nil,
+			orders:         nil,
+			limit:          0,
+			offset:         0,
+			expectedCount:  0,
+			expectedCursor: 0,
 			expectedErr:    nil,
 		},
 	}
@@ -350,7 +416,10 @@ func TestListAdminSubscriptions(t *testing.T) {
 				p.limit,
 				p.offset,
 			)
-			assert.Equal(t, p.expected, subscriptions)
+			assert.Equal(t, p.expectedCount, len(subscriptions))
+			if len(subscriptions) > 0 {
+				assert.IsType(t, []*proto.Subscription{}, subscriptions)
+			}
 			assert.Equal(t, p.expectedCursor, cursor)
 			assert.Equal(t, p.expectedErr, err)
 		})
