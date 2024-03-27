@@ -48,6 +48,7 @@ const (
 )
 
 var (
+	errInvalidConfig           = errors.New("segment: invalid config")
 	errSegmentInUse            = errors.New("segment: segment is in use")
 	errExceededMaxUserIDLength = fmt.Errorf("segment: max user id length allowed is %d", maxUserIDLength)
 )
@@ -68,13 +69,23 @@ type segmentPersister struct {
 }
 
 func NewSegmentPersister(
-	config string,
+	config interface{},
 	batchClient btclient.Client,
 	mysqlClient mysql.Client,
 	logger *zap.Logger,
 ) (subscriber.Processor, error) {
+	segmentPersisterJsonConfig, ok := config.(map[string]interface{})
+	if !ok {
+		logger.Error("SegmentPersister: invalid config")
+		return nil, errInvalidConfig
+	}
+	configBytes, err := json.Marshal(segmentPersisterJsonConfig)
+	if err != nil {
+		logger.Error("SegmentPersister: failed to marshal config", zap.Error(err))
+		return nil, err
+	}
 	var segmentPersisterConfig segmentPersisterConfig
-	err := json.Unmarshal([]byte(config), &segmentPersisterConfig)
+	err = json.Unmarshal(configBytes, &segmentPersisterConfig)
 	if err != nil {
 		logger.Error("SegmentPersister: failed to unmarshal config", zap.Error(err))
 		return nil, err
