@@ -620,7 +620,7 @@ func (s *server) registerProcessorMap(
 		)
 		return nil, err
 	}
-	var configMap map[string]string
+	var configMap map[string]interface{}
 	if err := json.Unmarshal(bytes, &configMap); err != nil {
 		logger.Error("subscriber: failed to unmarshal processors config",
 			zap.Error(err),
