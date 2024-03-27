@@ -23,6 +23,7 @@ import (
 
 const (
 	typeDomainEvent = "DomainEvent"
+	typeSegment     = "Segment"
 )
 
 var (
