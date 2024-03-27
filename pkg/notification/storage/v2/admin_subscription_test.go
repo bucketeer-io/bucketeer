@@ -277,7 +277,7 @@ func TestGetAdminSubscription(t *testing.T) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(),
 					gomock.Regex("^SELECT\\s+id,\\s*created_at,\\s*updated_at,\\s*disabled,\\s*source_types,\\s*recipient,\\s*name\\s+FROM\\s+admin_subscription\\s+WHERE\\s+id\\s*=\\s*\\?\\s*$"),
-					[]interface{}{"id-0"},
+					"id-0",
 				).Return(row)
 			},
 			id:          "id-0",
@@ -309,6 +309,8 @@ func TestListAdminSubscriptions(t *testing.T) {
 	getSize := 2
 	offset := 5
 	limit := 10
+	updatedAt := 8
+	disable := false
 	patterns := []struct {
 		desc           string
 		setup          func(*adminSubscriptionStorage)
@@ -349,20 +351,20 @@ func TestListAdminSubscriptions(t *testing.T) {
 				rows.EXPECT().Scan(gomock.Any()).Return(nil).Times(getSize)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(),
-					gomock.Regex("^SELECT\\s+id,\\s*created_at,\\s*updated_at,\\s*disabled,\\s*source_types,\\s*recipient,\\s*name\\s+FROM\\s+admin_subscription\\s+WHERE num >= \\? AND disabled = \\?\\s+ORDER BY id ASC, create_at DESC\\s+LIMIT 10 OFFSET 5\\s*$"),
-					5, false,
+					gomock.Regex("^SELECT\\s+id,\\s*created_at,\\s*updated_at,\\s*disabled,\\s*source_types,\\s*recipient,\\s*name\\s+FROM\\s+admin_subscription\\s+WHERE updated_at >= \\? AND disabled = \\?\\s+ORDER BY id ASC, create_at DESC\\s+LIMIT 10 OFFSET 5\\s*$"),
+					updatedAt, disable,
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(),
-					gomock.Regex("^^SELECT\\s*?COUNT\\(1\\)\\s*?FROM\\s+admin_subscription\\s+WHERE num >= \\? AND disabled = \\?\\s+ORDER BY id ASC, create_at DESC\\s*$"),
-					5, false,
+					gomock.Regex("^SELECT\\s*COUNT\\(1\\)\\s*FROM\\s+admin_subscription\\s+WHERE updated_at >= \\? AND disabled = \\?\\s+ORDER BY id ASC, create_at DESC\\s*$"),
+					updatedAt, disable,
 				).Return(row)
 			},
 			whereParts: []mysql.WherePart{
-				mysql.NewFilter("num", ">=", 5),
-				mysql.NewFilter("disabled", "=", false),
+				mysql.NewFilter("updated_at", ">=", updatedAt),
+				mysql.NewFilter("disabled", "=", disable),
 			},
 			orders: []*mysql.Order{
 				mysql.NewOrder("id", mysql.OrderDirectionAsc),

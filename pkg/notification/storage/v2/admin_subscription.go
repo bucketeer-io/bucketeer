@@ -31,17 +31,17 @@ var (
 	ErrAdminSubscriptionNotFound               = errors.New("subscription: admin subscription not found")
 	ErrAdminSubscriptionUnexpectedAffectedRows = errors.New("subscription: admin subscription unexpected affected rows")
 
-	//go:embed sql/adminsubscription/insert_admin_subscription_v2.sql
+	//go:embed sql/admin_subscription/insert_admin_subscription_v2.sql
 	insertAdminSubscriptionV2SQLQuery string
-	//go:embed sql/adminsubscription/update_admin_subscription_v2.sql
+	//go:embed sql/admin_subscription/update_admin_subscription_v2.sql
 	updateAdminSubscriptionV2SQLQuery string
-	//go:embed sql/adminsubscription/delete_admin_subscription_v2.sql
+	//go:embed sql/admin_subscription/delete_admin_subscription_v2.sql
 	deleteAdminSubscriptionV2SQLQuery string
-	//go:embed sql/adminsubscription/select_admin_subscription_v2.sql
+	//go:embed sql/admin_subscription/select_admin_subscription_v2_any.sql
 	selectAdminSubscriptionV2SQLQuery string
-	//go:embed sql/adminsubscription/select_admin_subscription_v2_id.sql
+	//go:embed sql/admin_subscription/select_admin_subscription_v2.sql
 	selectAdminSubscriptionV2IDSQLQuery string
-	//go:embed sql/adminsubscription/select_admin_subscription_v2_count.sql
+	//go:embed sql/admin_subscription/select_admin_subscription_v2_count.sql
 	selectAdminSubscriptionV2CountSQLQuery string
 )
 
