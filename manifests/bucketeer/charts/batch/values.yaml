@@ -174,5 +174,7 @@ processors:
   # This is the processor's name. It must match the same name defined in the
   # pkg/batch/subscriber/processor/processors.go
   segmentPersister:
+    domainEventProject:
+    domainEventTopic:
     flushSize: 100
     flushInterval: 10
