@@ -53,22 +53,22 @@ var (
 	errExceededMaxUserIDLength = fmt.Errorf("segment: max user id length allowed is %d", maxUserIDLength)
 )
 
-type segmentPersisterConfig struct {
+type segmentUserPersisterConfig struct {
 	DomainEventProject string `json:"domainEventProject"`
 	DomainEventTopic   string `json:"domainEventTopic"`
 	FlushSize          int    `json:"flushSize"`
 	FlushInterval      int    `json:"flushInterval"`
 }
 
-type segmentPersister struct {
-	segmentPersisterConfig segmentPersisterConfig
-	domainPublisher        publisher.Publisher
-	batchClient            btclient.Client
-	mysqlClient            mysql.Client
-	logger                 *zap.Logger
+type segmentUserPersister struct {
+	segmentUserPersisterConfig segmentUserPersisterConfig
+	domainPublisher            publisher.Publisher
+	batchClient                btclient.Client
+	mysqlClient                mysql.Client
+	logger                     *zap.Logger
 }
 
-func NewSegmentPersister(
+func NewSegmentUserPersister(
 	config interface{},
 	batchClient btclient.Client,
 	mysqlClient mysql.Client,
@@ -84,7 +84,7 @@ func NewSegmentPersister(
 		logger.Error("SegmentPersister: failed to marshal config", zap.Error(err))
 		return nil, err
 	}
-	var segmentPersisterConfig segmentPersisterConfig
+	var segmentPersisterConfig segmentUserPersisterConfig
 	err = json.Unmarshal(configBytes, &segmentPersisterConfig)
 	if err != nil {
 		logger.Error("SegmentPersister: failed to unmarshal config", zap.Error(err))
@@ -107,18 +107,18 @@ func NewSegmentPersister(
 		logger.Error("SegmentPersister: failed to create domain publisher", zap.Error(err))
 		return nil, err
 	}
-	return &segmentPersister{
-		segmentPersisterConfig: segmentPersisterConfig,
-		domainPublisher:        domainPublisher,
-		batchClient:            batchClient,
-		mysqlClient:            mysqlClient,
-		logger:                 logger,
+	return &segmentUserPersister{
+		segmentUserPersisterConfig: segmentPersisterConfig,
+		domainPublisher:            domainPublisher,
+		batchClient:                batchClient,
+		mysqlClient:                mysqlClient,
+		logger:                     logger,
 	}, nil
 }
 
-func (p *segmentPersister) Process(ctx context.Context, msgChan <-chan *puller.Message) error {
-	chunk := make(map[string]*puller.Message, p.segmentPersisterConfig.FlushSize)
-	ticker := time.NewTicker(time.Duration(p.segmentPersisterConfig.FlushInterval) * time.Second)
+func (p *segmentUserPersister) Process(ctx context.Context, msgChan <-chan *puller.Message) error {
+	chunk := make(map[string]*puller.Message, p.segmentUserPersisterConfig.FlushSize)
+	ticker := time.NewTicker(time.Duration(p.segmentUserPersisterConfig.FlushInterval) * time.Second)
 	defer ticker.Stop()
 	for {
 		select {
@@ -137,14 +137,14 @@ func (p *segmentPersister) Process(ctx context.Context, msgChan <-chan *puller.M
 				handledCounter.WithLabelValues(codes.DuplicateID.String()).Inc()
 			}
 			chunk[id] = msg
-			if len(chunk) >= p.segmentPersisterConfig.FlushSize {
+			if len(chunk) >= p.segmentUserPersisterConfig.FlushSize {
 				p.handleChunk(ctx, chunk)
-				chunk = make(map[string]*puller.Message, p.segmentPersisterConfig.FlushSize)
+				chunk = make(map[string]*puller.Message, p.segmentUserPersisterConfig.FlushSize)
 			}
 		case <-ticker.C:
 			if len(chunk) > 0 {
 				p.handleChunk(ctx, chunk)
-				chunk = make(map[string]*puller.Message, p.segmentPersisterConfig.FlushSize)
+				chunk = make(map[string]*puller.Message, p.segmentUserPersisterConfig.FlushSize)
 			}
 		case <-ctx.Done():
 			return nil
@@ -152,7 +152,7 @@ func (p *segmentPersister) Process(ctx context.Context, msgChan <-chan *puller.M
 	}
 }
 
-func (p *segmentPersister) handleChunk(ctx context.Context, chunk map[string]*puller.Message) {
+func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string]*puller.Message) {
 	for _, msg := range chunk {
 		p.logger.Debug("handling a message", zap.String("msgID", msg.ID))
 		event, err := p.unmarshalMessage(msg)
@@ -251,7 +251,7 @@ func (p *segmentPersister) handleChunk(ctx context.Context, chunk map[string]*pu
 	}
 }
 
-func (p *segmentPersister) unmarshalMessage(msg *puller.Message) (*serviceevent.BulkSegmentUsersReceivedEvent, error) {
+func (p *segmentUserPersister) unmarshalMessage(msg *puller.Message) (*serviceevent.BulkSegmentUsersReceivedEvent, error) {
 	event := &serviceevent.BulkSegmentUsersReceivedEvent{}
 	err := proto.Unmarshal(msg.Data, event)
 	if err != nil {
@@ -269,7 +269,7 @@ func validateSegmentUserState(state featureproto.SegmentUser_State) bool {
 	}
 }
 
-func (p *segmentPersister) handleEvent(ctx context.Context, event *serviceevent.BulkSegmentUsersReceivedEvent) error {
+func (p *segmentUserPersister) handleEvent(ctx context.Context, event *serviceevent.BulkSegmentUsersReceivedEvent) error {
 	segmentStorage := v2fs.NewSegmentStorage(p.mysqlClient)
 	segment, _, err := segmentStorage.GetSegment(ctx, event.SegmentId, event.EnvironmentNamespace)
 	if err != nil {
@@ -293,7 +293,7 @@ func (p *segmentPersister) handleEvent(ctx context.Context, event *serviceevent.
 	)
 }
 
-func (p *segmentPersister) persistSegmentUsers(
+func (p *segmentUserPersister) persistSegmentUsers(
 	ctx context.Context,
 	environmentNamespace string,
 	segmentID string,
@@ -344,7 +344,7 @@ func (p *segmentPersister) persistSegmentUsers(
 	return cnt, nil
 }
 
-func (p *segmentPersister) updateSegmentStatus(
+func (p *segmentUserPersister) updateSegmentStatus(
 	ctx context.Context,
 	editor *domainproto.Editor,
 	environmentNamespace string,
@@ -379,7 +379,7 @@ func (p *segmentPersister) updateSegmentStatus(
 
 // Even if the update request fails, the cronjob will keep trying
 // to update the cache every minute, so we don't need to retry.
-func (p *segmentPersister) updateSegmentUserCache(ctx context.Context) {
+func (p *segmentUserPersister) updateSegmentUserCache(ctx context.Context) {
 	req := &btproto.BatchJobRequest{
 		Job: btproto.BatchJob_SegmentUserCacher,
 	}

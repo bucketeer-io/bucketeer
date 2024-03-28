@@ -634,8 +634,8 @@ func (s *server) registerProcessorMap(
 		processor.NewDomainEventInformer(environmentClient, sender, logger),
 	)
 
-	segmentPersister, err := processor.NewSegmentPersister(
-		configMap[processor.SegmentPersisterName],
+	segmentPersister, err := processor.NewSegmentUserPersister(
+		configMap[processor.SegmentUserPersisterName],
 		batchClient,
 		mysqlClient,
 		logger,
@@ -644,7 +644,7 @@ func (s *server) registerProcessorMap(
 		return nil, err
 	}
 	processors.RegisterProcessor(
-		processor.SegmentPersisterName,
+		processor.SegmentUserPersisterName,
 		segmentPersister,
 	)
 

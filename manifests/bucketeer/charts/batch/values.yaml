@@ -158,8 +158,8 @@ subscribers:
     pullerMaxOutstandingMessages: 1000
     pullerMaxOutstandingBytes: 1000000000
     maxMps: 50
-    workerNum: 5
-  segmentPersister:
+    workerNum: 1
+  segmentUserPersister:
     project:
     topic:
     subscription:
@@ -167,13 +167,13 @@ subscribers:
     pullerMaxOutstandingMessages: 1000
     pullerMaxOutstandingBytes: 1000000000
     maxMps: 50
-    workerNum: 5
+    workerNum: 1
 
 # This configuration is used for add custom params to Processors
 processors:
   # This is the processor's name. It must match the same name defined in the
   # pkg/batch/subscriber/processor/processors.go
-  segmentPersister:
+  segmentUserPersister:
     domainEventProject:
     domainEventTopic:
     flushSize: 100
