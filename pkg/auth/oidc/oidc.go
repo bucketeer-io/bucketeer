@@ -21,6 +21,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 
 	oidc "github.com/coreos/go-oidc"
@@ -110,7 +111,8 @@ func NewOIDC(
 		Timeout: dopts.httpTimeout,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
-				RootCAs: certPool,
+				RootCAs:            certPool,
+				InsecureSkipVerify: os.Getenv("BUCKETEER_TEST_ENABLED") == "true",
 			},
 		},
 	}

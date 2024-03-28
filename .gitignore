@@ -8,3 +8,4 @@ node_modules
 telepresence.log
 venv
 *.swp
+tools/dev/cert/*

@@ -1,0 +1,12 @@
+env:
+  gcpEnabled: false
+tls:
+  bucketeerJP:
+    secrets:
+      - hosts:
+          - web-gateway.bucketeer.org
+        secretName: bucketeer-service-cert
+  service:
+    secret: bucketeer-service-cert
+ingress:
+  host: web-gateway.bucketeer.org

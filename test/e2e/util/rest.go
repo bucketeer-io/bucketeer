@@ -16,6 +16,7 @@ package util
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -157,7 +158,11 @@ func SendHTTPRequest(t *testing.T, url string, body interface{}, apiKeyPath stri
 	}
 	req.Header.Add(authorizationKey, string(data))
 	req.Header.Add("Content-Type", "application/json")
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // ignore expired SSL certificates
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		t.Fatal(err)

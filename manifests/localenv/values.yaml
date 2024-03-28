@@ -1,0 +1,43 @@
+version: 0.1.0
+
+vault:
+  server:
+    dev:
+      enabled: true
+      devRootToken: "root"
+
+redis:
+  architecture: "standalone"
+  auth: 
+    enabled: false
+
+nginx:
+  controller:
+    service:
+      loadBalancerIP: "192.168.49.2"
+      externalIPs:
+      - 127.0.0.1
+      - 192.168.49.2
+
+mysql:
+  image:
+    tag: "5.7"
+  initdbScriptsConfigMap: mysql-initdb
+  #diagnosticMode:
+  #  enabled: true
+  volumePermissions:
+    enabled: true
+  auth:
+    database: "bucketeer"
+    username: "bucketeer"
+    password: "bucketeer"
+
+bq:
+  project: bucketeer-test
+  service:
+    type: NodePort
+    httpNodePort: 31000
+    
+pubsub: 
+  image: 
+    tag: "449.0.0"

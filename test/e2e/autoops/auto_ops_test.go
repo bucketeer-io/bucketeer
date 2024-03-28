@@ -17,6 +17,7 @@ package autoops
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -475,11 +476,18 @@ func TestDatetimeBatch(t *testing.T) {
 
 func sendHttpWebhook(t *testing.T, url, payload string) {
 	t.Helper()
-	resp, err := http.Post(url, "application/json", bytes.NewBuffer([]byte(payload)))
+	// Create a custom HTTP client with insecure skip verify
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+
+	resp, err := client.Post(url, "application/json", bytes.NewBuffer([]byte(payload)))
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("Send HTTP webhook request failed: %d, %s", resp.StatusCode, url)
 	}

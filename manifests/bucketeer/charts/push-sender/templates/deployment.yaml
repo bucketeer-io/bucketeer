@@ -48,6 +48,12 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["sender"]
           env:
+            - name: BUCKETEER_PUSH_PROFILE
+              value: "{{.Values.env.profile}}"
+            - name: BUCKETEER_PUSH_GCP_TRACE_ENABLED
+              value: "{{.Values.env.gcpEnabled}}"
+            - name: PUBSUB_EMULATOR_HOST
+              value: "{{.Values.env.pubsubEmulatorHost}}"
             - name: BUCKETEER_PUSH_PROJECT
               value: "{{ .Values.env.project }}"
             - name: BUCKETEER_PUSH_DOMAIN_TOPIC

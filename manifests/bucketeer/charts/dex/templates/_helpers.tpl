@@ -30,3 +30,11 @@ Create chart name and version as used by the chart label.
 {{- define "dex.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
+
+{{- define "cert-secret" -}}
+{{- if .Values.tls.secret }}
+{{- printf "%s" .Values.tls.secret -}}
+{{- else -}}
+{{ template "dex.fullname" . }}-cert
+{{- end -}}
+{{- end -}}

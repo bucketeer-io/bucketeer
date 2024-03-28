@@ -70,6 +70,10 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["server"]
           env:
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_PROFILE
+              value: "{{.Values.env.profile}}"
+            - name: BUCKETEER_EXPERIMENT_CALCULATOR_GCP_TRACE_ENABLED
+              value: "{{.Values.env.gcpEnabled}}"
             - name: BUCKETEER_EXPERIMENT_CALCULATOR_PROJECT
               value: "{{ .Values.env.project }}"
             - name: BUCKETEER_EXPERIMENT_CALCULATOR_STAN_HOST

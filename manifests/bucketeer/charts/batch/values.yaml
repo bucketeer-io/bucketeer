@@ -8,11 +8,14 @@ namespace: default
 
 env:
   project:
+  profile:
+  gcpEnabled:
   mysqlUser:
   mysqlPass:
   mysqlHost:
   mysqlPort:
-  mysqlDBName:
+  mysqlDbName:
+  pubsubEmulatorHost:
   accountService: localhost:9001
   notificationService: localhost:9001
   environmentService: localhost:9001

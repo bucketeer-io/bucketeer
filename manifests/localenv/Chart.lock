@@ -1,0 +1,18 @@
+dependencies:
+- name: pubsub
+  repository: file://./dependencies/pubsub
+  version: 0.1.0
+- name: bq
+  repository: file://./dependencies/bq
+  version: 0.1.0
+- name: redis
+  repository: https://charts.bitnami.com/bitnami
+  version: 17.7.5
+- name: mysql
+  repository: oci://registry-1.docker.io/bitnamicharts
+  version: 9.11.0
+- name: vault
+  repository: https://helm.releases.hashicorp.com
+  version: 0.23.0
+digest: sha256:5e332f5ad6f1b29eac80d38bac95ac4e7a547badccfd60121c234976e0f25ea6
+generated: "2023-08-26T16:45:18.931910966Z"

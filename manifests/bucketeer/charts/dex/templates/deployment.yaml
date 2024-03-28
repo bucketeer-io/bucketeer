@@ -143,7 +143,7 @@ spec:
             secretName: {{ template "dex.fullname" . }}
         - name: cert
           secret:
-            secretName: {{ template "dex.fullname" . }}-cert
+            secretName: {{ template "cert-secret" . }}
         - name: envoy-config
           configMap:
             name: {{ template "dex.fullname" . }}-envoy-config

@@ -45,6 +45,14 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["server"]
           env:
+            - name: BIGQUERY_EMULATOR_HOST
+              value: "{{.Values.env.bigqueryEmulatorHost}}"
+            - name: PUBSUB_EMULATOR_HOST
+              value: "{{.Values.env.pubsubEmulatorHost}}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_GCP_TRACE_ENABLED
+              value: "{{.Values.env.gcpEnabled}}"
+            - name: BUCKETEER_EVENT_PERSISTER_DWH_PROFILE
+              value: "{{.Values.env.profile}}"
             - name: BUCKETEER_EVENT_PERSISTER_DWH_SERVICE_NAME
               value: "{{ template "event-persister-evaluation-events-dwh.fullname" . }}"
             - name: BUCKETEER_EVENT_PERSISTER_DWH_MYSQL_USER
