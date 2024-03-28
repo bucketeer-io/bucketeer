@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.4.1](https://github.com/bucketeer-io/bucketeer/compare/v0.4.0...v0.4.1) (2024-03-28)
+
+
+### Build System
+
+* **deps:** bump the dependencies group with 15 updates ([#864](https://github.com/bucketeer-io/bucketeer/issues/864)) ([6f3dc15](https://github.com/bucketeer-io/bucketeer/commit/6f3dc15a070e06a8d46a245d236cae684ead31eb))
+
+
+### Miscellaneous
+
+* add environment settings proto ([#875](https://github.com/bucketeer-io/bucketeer/issues/875)) ([b4df666](https://github.com/bucketeer-io/bucketeer/commit/b4df66670d6b5229edfe6937889fd9a8a53eeb7e))
+* remove unnecessary Stop() ([#867](https://github.com/bucketeer-io/bucketeer/issues/867)) ([ecce354](https://github.com/bucketeer-io/bucketeer/commit/ecce35428b83dac2941ce815fcd7181f5d03c6b8))
+* remove unused import ([#878](https://github.com/bucketeer-io/bucketeer/issues/878)) ([2a4a89a](https://github.com/bucketeer-io/bucketeer/commit/2a4a89ab9d934bdc43d6c89116fe49560f112502))
+* update flag cache when a flag changes ([#874](https://github.com/bucketeer-io/bucketeer/issues/874)) ([3795a5f](https://github.com/bucketeer-io/bucketeer/commit/3795a5f19d3e04a3241772c74f17a6b1818ad09a))
+* use go-sql-driver in the mysql client ([#876](https://github.com/bucketeer-io/bucketeer/issues/876)) ([1112bc3](https://github.com/bucketeer-io/bucketeer/commit/1112bc30f26f37794858e39354af45e96eb45909))
+* validate environment settings when updating flags ([#881](https://github.com/bucketeer-io/bucketeer/issues/881)) ([4d97774](https://github.com/bucketeer-io/bucketeer/commit/4d977740c1eab7b7051d87eca9464d9942876c77))
+
+
+### Features
+
+* add `require_comment` option to environment settings  ([#883](https://github.com/bucketeer-io/bucketeer/issues/883)) ([5c10ae3](https://github.com/bucketeer-io/bucketeer/commit/5c10ae3a8966a34bf58f2d1d1d8a74d05248f49d))
+* multi subscriber arch in batch service ([#880](https://github.com/bucketeer-io/bucketeer/issues/880)) ([2961aa0](https://github.com/bucketeer-io/bucketeer/commit/2961aa0c88f1f412db6777ad1f52cc747c960ffe))
+* **ui:** add require_comment option to environment settings ([#882](https://github.com/bucketeer-io/bucketeer/issues/882)) ([4c3a60e](https://github.com/bucketeer-io/bucketeer/commit/4c3a60e583c4f5bee7db6418eb0dc883043111e7))
+
+
+### Bug Fixes
+
+* cannot create a rollout when the flag has a scheduled operation ([#859](https://github.com/bucketeer-io/bucketeer/issues/859)) ([4a23a14](https://github.com/bucketeer-io/bucketeer/commit/4a23a14ac6758edfdf798585209d69ce01aa9449))
+* Confirm dialog on targeting page shouldn't display Enabled/Disabled and scheduling options unless only the flag switch is altered. ([#894](https://github.com/bucketeer-io/bucketeer/issues/894)) ([2b8d5fd](https://github.com/bucketeer-io/bucketeer/commit/2b8d5fd191c877c6e901aeb2d28506868a321e5a))
+* pubsub subscription check stops working when an error occurs ([#852](https://github.com/bucketeer-io/bucketeer/issues/852)) ([2525fca](https://github.com/bucketeer-io/bucketeer/commit/2525fca807034ca87e56d8471a9a706a37e36671))
+* **ui:** experiment creation page shouldn't list archived items ([#851](https://github.com/bucketeer-io/bucketeer/issues/851)) ([4c735a8](https://github.com/bucketeer-io/bucketeer/commit/4c735a8439fccb58504a4f7ffca272807beca6e8))
+* **ui:** invalid documentation links for pushes and notifications pages ([#856](https://github.com/bucketeer-io/bucketeer/issues/856)) ([1cdda52](https://github.com/bucketeer-io/bucketeer/commit/1cdda529502e6b643f25ba0942aea62885be64e8))
+* **ui:** kill switch operation's start status is incorrect ([#853](https://github.com/bucketeer-io/bucketeer/issues/853)) ([8aee89e](https://github.com/bucketeer-io/bucketeer/commit/8aee89ecd4dca4f65369a316b52b56a8b767588b))
+
 ## [0.4.0](https://github.com/bucketeer-io/bucketeer/compare/v0.3.0...v0.4.0) (2024-02-02)
 
 
