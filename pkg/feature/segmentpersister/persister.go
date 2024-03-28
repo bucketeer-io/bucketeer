@@ -338,6 +338,24 @@ func (p *Persister) handleEvent(ctx context.Context, event *serviceevent.BulkSeg
 	}
 	cnt, err := p.persistSegmentUsers(ctx, event.EnvironmentNamespace, event.SegmentId, event.Data, event.State)
 	if err != nil {
+		if err := p.updateSegmentStatus(
+			ctx,
+			event.Editor,
+			event.EnvironmentNamespace,
+			event.SegmentId,
+			cnt,
+			event.State,
+			featureproto.Segment_FAILED,
+		); err != nil {
+			p.logger.Error(
+				"failed to update to segment status to failed",
+				zap.Error(err),
+				zap.String("segmentId", event.SegmentId),
+				zap.Int64("userCount", cnt),
+				zap.String("environmentNamespace", event.EnvironmentNamespace),
+			)
+			return err
+		}
 		return err
 	}
 	return p.updateSegmentStatus(
@@ -396,7 +414,7 @@ func (p *Persister) persistSegmentUsers(
 		return nil
 	})
 	if err != nil {
-		return 0, nil
+		return 0, err
 	}
 	p.updateSegmentUserCache(ctx)
 	return cnt, nil

@@ -19,6 +19,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -27,6 +28,10 @@ import (
 
 var (
 	ErrSegmentUserNotFound = errors.New("segmentUser: not found")
+)
+
+const (
+	batchSize = 1000
 )
 
 type SegmentUserStorage interface {
@@ -53,26 +58,47 @@ func (s *segmentUserStorage) UpsertSegmentUsers(
 	users []*proto.SegmentUser,
 	environmentNamespace string,
 ) error {
-	for _, u := range users {
-		query := `
-			INSERT INTO segment_user (
-				id,
-				segment_id,
-				user_id,
-				state,
-				deleted,
-				environment_namespace
-			) VALUES (
-				?, ?, ?, ?, ?, ?
-			) ON DUPLICATE KEY UPDATE
-				segment_id = VALUES(segment_id),
-				user_id = VALUES(user_id),
-				state = VALUES(state),
-				deleted = VALUES(deleted)
-		`
-		_, err := s.qe.ExecContext(
+	// Upsert the users in batches
+	for i := 0; i < len(users); i += batchSize {
+		j := i + batchSize
+		if j > len(users) {
+			j = len(users)
+		}
+		if err := s.upsertSegmentUsers(
 			ctx,
-			query,
+			users[i:j],
+			environmentNamespace,
+		); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *segmentUserStorage) upsertSegmentUsers(
+	ctx context.Context,
+	users []*proto.SegmentUser,
+	environmentNamespace string,
+) error {
+	var query strings.Builder
+	query.WriteString(`
+		INSERT INTO segment_user (
+			id,
+			segment_id,
+			user_id,
+			state,
+			deleted,
+			environment_namespace
+		) VALUES
+	`)
+	args := []interface{}{}
+	for i, u := range users {
+		if i != 0 {
+			query.WriteString(",")
+		}
+		query.WriteString(" (?, ?, ?, ?, ?, ?)")
+		args = append(
+			args,
 			u.Id,
 			u.SegmentId,
 			u.UserId,
@@ -80,9 +106,21 @@ func (s *segmentUserStorage) UpsertSegmentUsers(
 			u.Deleted,
 			environmentNamespace,
 		)
-		if err != nil {
-			return err
-		}
+	}
+	query.WriteString(`
+		ON DUPLICATE KEY UPDATE
+		segment_id = VALUES(segment_id),
+		user_id = VALUES(user_id),
+		state = VALUES(state),
+		deleted = VALUES(deleted)
+	`)
+	_, err := s.qe.ExecContext(
+		ctx,
+		query.String(),
+		args...,
+	)
+	if err != nil {
+		return err
 	}
 	return nil
 }
