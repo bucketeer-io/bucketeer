@@ -17,6 +17,7 @@ package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 
@@ -29,6 +30,19 @@ var (
 	ErrAdminSubscriptionAlreadyExists          = errors.New("subscription: admin subscription already exists")
 	ErrAdminSubscriptionNotFound               = errors.New("subscription: admin subscription not found")
 	ErrAdminSubscriptionUnexpectedAffectedRows = errors.New("subscription: admin subscription unexpected affected rows")
+
+	//go:embed sql/admin_subscription/insert_admin_subscription_v2.sql
+	insertAdminSubscriptionV2SQLQuery string
+	//go:embed sql/admin_subscription/update_admin_subscription_v2.sql
+	updateAdminSubscriptionV2SQLQuery string
+	//go:embed sql/admin_subscription/delete_admin_subscription_v2.sql
+	deleteAdminSubscriptionV2SQLQuery string
+	//go:embed sql/admin_subscription/select_admin_subscription_v2_any.sql
+	selectAdminSubscriptionV2AnySQLQuery string
+	//go:embed sql/admin_subscription/select_admin_subscription_v2.sql
+	selectAdminSubscriptionV2SQLQuery string
+	//go:embed sql/admin_subscription/select_admin_subscription_v2_count.sql
+	selectAdminSubscriptionV2CountSQLQuery string
 )
 
 type AdminSubscriptionStorage interface {
@@ -53,22 +67,9 @@ func NewAdminSubscriptionStorage(qe mysql.QueryExecer) AdminSubscriptionStorage 
 }
 
 func (s *adminSubscriptionStorage) CreateAdminSubscription(ctx context.Context, e *domain.Subscription) error {
-	query := `
-		INSERT INTO admin_subscription (
-			id,
-			created_at,
-			updated_at,
-			disabled,
-			source_types,
-			recipient,
-			name
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?
-		)
-	`
 	_, err := s.qe.ExecContext(
 		ctx,
-		query,
+		insertAdminSubscriptionV2SQLQuery,
 		e.Id,
 		e.CreatedAt,
 		e.UpdatedAt,
@@ -87,23 +88,9 @@ func (s *adminSubscriptionStorage) CreateAdminSubscription(ctx context.Context, 
 }
 
 func (s *adminSubscriptionStorage) UpdateAdminSubscription(ctx context.Context, e *domain.Subscription) error {
-	query := `
-		UPDATE 
-			admin_subscription
-		SET
-			created_at = ?,
-			updated_at = ?,
-			disabled = ?,
-			source_types = ?,
-			recipient = ?,
-			name = ?
-		WHERE
-			id = ?
-	`
 	result, err := s.qe.ExecContext(
 		ctx,
-		query,
-		e.CreatedAt,
+		updateAdminSubscriptionV2SQLQuery,
 		e.UpdatedAt,
 		e.Disabled,
 		mysql.JSONObject{Val: e.SourceTypes},
@@ -125,15 +112,9 @@ func (s *adminSubscriptionStorage) UpdateAdminSubscription(ctx context.Context, 
 }
 
 func (s *adminSubscriptionStorage) DeleteAdminSubscription(ctx context.Context, id string) error {
-	query := `
-		DELETE FROM 
-			admin_subscription
-		WHERE
-			id = ?
-	`
 	result, err := s.qe.ExecContext(
 		ctx,
-		query,
+		deleteAdminSubscriptionV2SQLQuery,
 		id,
 	)
 	if err != nil {
@@ -151,23 +132,9 @@ func (s *adminSubscriptionStorage) DeleteAdminSubscription(ctx context.Context, 
 
 func (s *adminSubscriptionStorage) GetAdminSubscription(ctx context.Context, id string) (*domain.Subscription, error) {
 	subscription := proto.Subscription{}
-	query := `
-		SELECT
-			id,
-			created_at,
-			updated_at,
-			disabled,
-			source_types,
-			recipient,
-			name
-		FROM
-			admin_subscription
-		WHERE
-			id = ?
-	`
 	err := s.qe.QueryRowContext(
 		ctx,
-		query,
+		selectAdminSubscriptionV2SQLQuery,
 		id,
 	).Scan(
 		&subscription.Id,
@@ -196,21 +163,9 @@ func (s *adminSubscriptionStorage) ListAdminSubscriptions(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			created_at,
-			updated_at,
-			disabled,
-			source_types,
-			recipient,
-			name
-		FROM
-			admin_subscription
-		%s %s %s
-		`, whereSQL, orderBySQL, limitOffsetSQL,
-	)
+	query := fmt.Sprintf(selectAdminSubscriptionV2AnySQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -237,14 +192,8 @@ func (s *adminSubscriptionStorage) ListAdminSubscriptions(
 	}
 	nextOffset := offset + len(subscriptions)
 	var totalCount int64
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(1)
-		FROM
-		admin_subscription
-		%s %s
-		`, whereSQL, orderBySQL,
-	)
+	countQuery := fmt.Sprintf(selectAdminSubscriptionV2CountSQLQuery, whereSQL, orderBySQL)
+
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

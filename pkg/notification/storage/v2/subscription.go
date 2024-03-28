@@ -17,6 +17,7 @@ package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 
@@ -29,6 +30,19 @@ var (
 	ErrSubscriptionAlreadyExists          = errors.New("subscription: subscription already exists")
 	ErrSubscriptionNotFound               = errors.New("subscription: subscription not found")
 	ErrSubscriptionUnexpectedAffectedRows = errors.New("subscription: subscription unexpected affected rows")
+
+	//go:embed sql/subscription/insert_subscription_v2.sql
+	insertSubscriptionV2SQLQuery string
+	//go:embed sql/subscription/update_subscription_v2.sql
+	updateSubscriptionV2SQLQuery string
+	//go:embed sql/subscription/delete_subscription_v2.sql
+	deleteSubscriptionV2SQLQuery string
+	//go:embed sql/subscription/select_subscription_v2.sql
+	selectSubscriptionV2SQLQuery string
+	//go:embed sql/subscription/select_subscription_v2_any.sql
+	selectSubscriptionV2AnySQLQuery string
+	//go:embed sql/subscription/select_subscription_v2_count.sql
+	selectSubscriptionV2CountSQLQuery string
 )
 
 type SubscriptionStorage interface {
@@ -57,23 +71,9 @@ func (s *subscriptionStorage) CreateSubscription(
 	e *domain.Subscription,
 	environmentNamespace string,
 ) error {
-	query := `
-		INSERT INTO subscription (
-			id,
-			created_at,
-			updated_at,
-			disabled,
-			source_types,
-			recipient,
-			name,
-			environment_namespace
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?
-		)
-	`
 	_, err := s.qe.ExecContext(
 		ctx,
-		query,
+		insertSubscriptionV2SQLQuery,
 		e.Id,
 		e.CreatedAt,
 		e.UpdatedAt,
@@ -97,24 +97,9 @@ func (s *subscriptionStorage) UpdateSubscription(
 	e *domain.Subscription,
 	environmentNamespace string,
 ) error {
-	query := `
-		UPDATE 
-			subscription
-		SET
-			created_at = ?,
-			updated_at = ?,
-			disabled = ?,
-			source_types = ?,
-			recipient = ?,
-			name = ?
-		WHERE
-			id = ? AND
-			environment_namespace = ?
-	`
 	result, err := s.qe.ExecContext(
 		ctx,
-		query,
-		e.CreatedAt,
+		updateSubscriptionV2SQLQuery,
 		e.UpdatedAt,
 		e.Disabled,
 		mysql.JSONObject{Val: e.SourceTypes},
@@ -140,16 +125,9 @@ func (s *subscriptionStorage) DeleteSubscription(
 	ctx context.Context,
 	id, environmentNamespace string,
 ) error {
-	query := `
-		DELETE FROM 
-			subscription
-		WHERE
-			id = ? AND
-			environment_namespace = ?
-	`
 	result, err := s.qe.ExecContext(
 		ctx,
-		query,
+		deleteSubscriptionV2SQLQuery,
 		id,
 		environmentNamespace,
 	)
@@ -171,24 +149,9 @@ func (s *subscriptionStorage) GetSubscription(
 	id, environmentNamespace string,
 ) (*domain.Subscription, error) {
 	subscription := proto.Subscription{}
-	query := `
-		SELECT
-			id,
-			created_at,
-			updated_at,
-			disabled,
-			source_types,
-			recipient,
-			name
-		FROM
-			subscription
-		WHERE
-			id = ? AND
-			environment_namespace = ?
-	`
 	err := s.qe.QueryRowContext(
 		ctx,
-		query,
+		selectSubscriptionV2SQLQuery,
 		id,
 		environmentNamespace,
 	).Scan(
@@ -218,20 +181,7 @@ func (s *subscriptionStorage) ListSubscriptions(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			created_at,
-			updated_at,
-			disabled,
-			source_types,
-			recipient,
-			name
-		FROM
-			subscription
-		%s %s %s
-		`, whereSQL, orderBySQL, limitOffsetSQL,
-	)
+	query := fmt.Sprintf(selectSubscriptionV2AnySQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
@@ -259,14 +209,7 @@ func (s *subscriptionStorage) ListSubscriptions(
 	}
 	nextOffset := offset + len(subscriptions)
 	var totalCount int64
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(1)
-		FROM
-			subscription
-		%s %s
-		`, whereSQL, orderBySQL,
-	)
+	countQuery := fmt.Sprintf(selectSubscriptionV2CountSQLQuery, whereSQL, orderBySQL)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
