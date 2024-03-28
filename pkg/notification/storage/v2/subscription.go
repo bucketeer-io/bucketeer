@@ -38,7 +38,7 @@ var (
 	//go:embed sql/subscription/delete_subscription_v2.sql
 	deleteSubscriptionV2SQLQuery string
 	//go:embed sql/subscription/select_subscription_v2.sql
-	selectSubscriptionV2IDSQLQuery string
+	selectSubscriptionV2SQLQuery string
 	//go:embed sql/subscription/select_subscription_v2_any.sql
 	selectSubscriptionV2AnySQLQuery string
 	//go:embed sql/subscription/select_subscription_v2_count.sql
@@ -151,7 +151,7 @@ func (s *subscriptionStorage) GetSubscription(
 	subscription := proto.Subscription{}
 	err := s.qe.QueryRowContext(
 		ctx,
-		selectSubscriptionV2IDSQLQuery,
+		selectSubscriptionV2SQLQuery,
 		id,
 		environmentNamespace,
 	).Scan(
