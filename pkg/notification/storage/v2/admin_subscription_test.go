@@ -214,7 +214,7 @@ func TestDeleteAdminSubscription(t *testing.T) {
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(),
-					gomock.Regex("^DELETE\\s+FROM\\s+admin_subscription\\s+WHERE\\s+id\\s*=\\s*\\?*$"),
+					gomock.Regex("^DELETE\\s+FROM\\s+admin_subscription\\s+WHERE\\s+id\\s*=\\s*\\?\\s*$"),
 					"id-0",
 				).Return(result, nil)
 			},

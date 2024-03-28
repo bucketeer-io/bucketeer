@@ -38,9 +38,9 @@ var (
 	//go:embed sql/admin_subscription/delete_admin_subscription_v2.sql
 	deleteAdminSubscriptionV2SQLQuery string
 	//go:embed sql/admin_subscription/select_admin_subscription_v2_any.sql
-	selectAdminSubscriptionV2SQLQuery string
+	selectAdminSubscriptionV2AnySQLQuery string
 	//go:embed sql/admin_subscription/select_admin_subscription_v2.sql
-	selectAdminSubscriptionV2IDSQLQuery string
+	selectAdminSubscriptionV2SQLQuery string
 	//go:embed sql/admin_subscription/select_admin_subscription_v2_count.sql
 	selectAdminSubscriptionV2CountSQLQuery string
 )
@@ -134,7 +134,7 @@ func (s *adminSubscriptionStorage) GetAdminSubscription(ctx context.Context, id 
 	subscription := proto.Subscription{}
 	err := s.qe.QueryRowContext(
 		ctx,
-		selectAdminSubscriptionV2IDSQLQuery,
+		selectAdminSubscriptionV2SQLQuery,
 		id,
 	).Scan(
 		&subscription.Id,
@@ -163,7 +163,7 @@ func (s *adminSubscriptionStorage) ListAdminSubscriptions(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(selectAdminSubscriptionV2SQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
+	query := fmt.Sprintf(selectAdminSubscriptionV2AnySQLQuery, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 
 	if err != nil {
