@@ -40,6 +40,9 @@ func TestCreateAuditLogs(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
+	id0 := "id-0"
+	id1 := "id-1"
 	patterns := []struct {
 		desc        string
 		setup       func(*auditLogStorage)
@@ -54,8 +57,8 @@ func TestCreateAuditLogs(t *testing.T) {
 				).Return(nil, mysql.ErrDuplicateEntry)
 			},
 			input: []*domain.AuditLog{
-				{AuditLog: &proto.AuditLog{Id: "id-0"}},
-				{AuditLog: &proto.AuditLog{Id: "id-1"}},
+				{AuditLog: &proto.AuditLog{Id: id0}},
+				{AuditLog: &proto.AuditLog{Id: id1}},
 			},
 			expectedErr: ErrAuditLogAlreadyExists,
 		},
@@ -67,8 +70,8 @@ func TestCreateAuditLogs(t *testing.T) {
 				).Return(nil, errors.New("error"))
 			},
 			input: []*domain.AuditLog{
-				{AuditLog: &proto.AuditLog{Id: "id-0"}},
-				{AuditLog: &proto.AuditLog{Id: "id-1"}},
+				{AuditLog: &proto.AuditLog{Id: id0}},
+				{AuditLog: &proto.AuditLog{Id: id1}},
 			},
 			expectedErr: errors.New("error"),
 		},
@@ -82,12 +85,15 @@ func TestCreateAuditLogs(t *testing.T) {
 			desc: "Success",
 			setup: func(s *auditLogStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(),
+					gomock.Regex("^INSERT INTO audit_log\\s+\\(\\s*id,\\s*timestamp,\\s*entity_type,\\s*entity_id,\\s*type,\\s*event,\\s*editor,\\s*options,\\s*environment_namespace\\s*\\)\\s+VALUES\\s*\\(\\?, \\?, \\?, \\?, \\?, \\?, \\?, \\?, \\?\\),\\s*\\(\\?, \\?, \\?, \\?, \\?, \\?, \\?, \\?, \\?\\)$"),
+					id0, int64(1), int32(2), "e0", int32(3), gomock.Any(), gomock.Any(), gomock.Any(), "ns0",
+					id1, int64(10), int32(3), "e2", int32(4), gomock.Any(), gomock.Any(), gomock.Any(), "ns1",
 				).Return(nil, nil)
 			},
 			input: []*domain.AuditLog{
-				{AuditLog: &proto.AuditLog{Id: "id-0"}},
-				{AuditLog: &proto.AuditLog{Id: "id-1"}},
+				{AuditLog: &proto.AuditLog{Id: id0, Timestamp: 1, EntityType: 2, EntityId: "e0", Type: 3}, EnvironmentNamespace: "ns0"},
+				{AuditLog: &proto.AuditLog{Id: id1, Timestamp: 10, EntityType: 3, EntityId: "e2", Type: 4}, EnvironmentNamespace: "ns1"},
 			},
 			expectedErr: nil,
 		},
@@ -108,16 +114,23 @@ func TestListAuditLogs(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
+
+	getSize := 2
+	offset := 5
+	limit := 10
+	timestamp := 4
+	entityType := 2
+
 	patterns := []struct {
-		desc           string
-		setup          func(*auditLogStorage)
-		whereParts     []mysql.WherePart
-		orders         []*mysql.Order
-		limit          int
-		offset         int
-		expected       []*proto.AuditLog
-		expectedCursor int
-		expectedErr    error
+		desc                string
+		setup               func(*auditLogStorage)
+		whereParts          []mysql.WherePart
+		orders              []*mysql.Order
+		limit               int
+		offset              int
+		expectedResultCount int
+		expectedCursor      int
+		expectedErr         error
 	}{
 		{
 			desc: "Error",
@@ -126,39 +139,80 @@ func TestListAuditLogs(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			whereParts:     nil,
-			orders:         nil,
-			limit:          0,
-			offset:         0,
-			expected:       nil,
-			expectedCursor: 0,
-			expectedErr:    errors.New("error"),
+			whereParts:          nil,
+			orders:              nil,
+			limit:               0,
+			offset:              0,
+			expectedResultCount: 0,
+			expectedCursor:      0,
+			expectedErr:         errors.New("error"),
 		},
 		{
-			desc: "Success",
+			desc: "Success:No whereParts and no orderParts and no limit and no offset",
 			setup: func(s *auditLogStorage) {
 				rows := mock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(),
+					gomock.Regex("^SELECT\\s+id,\\s*timestamp,\\s*entity_type,\\s*entity_id,\\s*type,\\s*event,\\s*editor,\\s*options\\s+FROM\\s+audit_log\\s*$"),
+					[]interface{}{},
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(),
+					gomock.Regex("^SELECT\\s+COUNT\\(1\\)\\s+FROM\\s+audit_log\\s*$"),
+					[]interface{}{},
 				).Return(row)
 			},
-			whereParts: nil,
+			whereParts:          nil,
+			orders:              nil,
+			limit:               0,
+			offset:              0,
+			expectedResultCount: 0,
+			expectedCursor:      0,
+			expectedErr:         nil,
+		},
+		{
+			desc: "Success",
+			setup: func(s *auditLogStorage) {
+				var nextCallCount = 0
+				rows := mock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().DoAndReturn(func() bool {
+					nextCallCount++
+					return nextCallCount <= getSize
+				}).Times(getSize + 1)
+				rows.EXPECT().Scan(gomock.Any()).Return(nil).Times(getSize)
+				rows.EXPECT().Err().Return(nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(),
+					gomock.Regex("^SELECT\\s+id,\\s*timestamp,\\s*entity_type,\\s*entity_id,\\s*type,\\s*event,\\s*editor,\\s*options\\s+FROM\\s+audit_log\\s+WHERE timestamp >= \\? AND entity_type = \\? ORDER BY id ASC, timestamp DESC LIMIT 10 OFFSET 5\\s*$"),
+					timestamp, entityType,
+				).Return(rows, nil)
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+					gomock.Any(),
+					gomock.Regex("^SELECT\\s+COUNT\\(1\\)\\s+FROM\\s+audit_log\\s+WHERE timestamp >= \\? AND entity_type = \\? ORDER BY id ASC, timestamp DESC\\s*$"),
+					timestamp, entityType,
+				).Return(row)
+			},
+			whereParts: []mysql.WherePart{
+				mysql.NewFilter("timestamp", ">=", timestamp),
+				mysql.NewFilter("entity_type", "=", entityType),
+			},
 			orders: []*mysql.Order{
+				mysql.NewOrder("id", mysql.OrderDirectionAsc),
 				mysql.NewOrder("timestamp", mysql.OrderDirectionDesc),
 			},
-			limit:          10,
-			offset:         5,
-			expected:       []*proto.AuditLog{},
-			expectedCursor: 5,
-			expectedErr:    nil,
+			limit:               limit,
+			offset:              offset,
+			expectedResultCount: getSize,
+			expectedCursor:      offset + getSize,
+			expectedErr:         nil,
 		},
 	}
 	for _, p := range patterns {
@@ -174,7 +228,10 @@ func TestListAuditLogs(t *testing.T) {
 				p.limit,
 				p.offset,
 			)
-			assert.Equal(t, p.expected, auditLogs)
+			assert.Equal(t, p.expectedResultCount, len(auditLogs))
+			if auditLogs != nil {
+				assert.IsType(t, auditLogs, []*proto.AuditLog{})
+			}
 			assert.Equal(t, p.expectedCursor, cursor)
 			assert.Equal(t, p.expectedErr, err)
 		})

@@ -292,14 +292,14 @@ func TestListAPIKeys(t *testing.T) {
 				rows.EXPECT().Err().Return(nil)
 				s.client.(*mock.MockClient).EXPECT().QueryContext(
 					gomock.Any(),
-					gomock.Regex("^SELECT\\s+id,\\s*name,\\s*role,\\s*disabled,\\s*created_at,\\s*updated_at\\s+FROM\\s+api_key\\s+WHERE create_at >= \\? AND update_at < \\? ORDER BY id ASC, name DESC LIMIT 10 OFFSET 5\\s*$"),
+					gomock.Regex("^SELECT\\s+id,\\s*name,\\s*role,\\s*disabled,\\s*created_at,\\s*updated_at\\s+FROM\\s+api_key\\s+WHERE create_at >= \\? AND update_at < \\?\\s+ORDER BY id ASC, name DESC\\s+LIMIT 10 OFFSET 5\\s*$"),
 					createdAt, updatedAt,
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(),
-					gomock.Regex("^SELECT\\s+COUNT\\(1\\)\\s+FROM\\s+api_key\\s+WHERE create_at >= \\? AND update_at < \\? ORDER BY id ASC, name DESC\\s*$"),
+					gomock.Regex("^SELECT\\s+COUNT\\(1\\)\\s+FROM\\s+api_key\\s+WHERE create_at >= \\? AND update_at < \\?\\s+ORDER BY id ASC, name DESC\\s*$"),
 					createdAt, updatedAt,
 				).Return(row)
 			},
