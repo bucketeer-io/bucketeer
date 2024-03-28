@@ -251,7 +251,8 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 	}
 }
 
-func (p *segmentUserPersister) unmarshalMessage(msg *puller.Message) (*serviceevent.BulkSegmentUsersReceivedEvent, error) {
+func (p *segmentUserPersister) unmarshalMessage(msg *puller.Message,
+) (*serviceevent.BulkSegmentUsersReceivedEvent, error) {
 	event := &serviceevent.BulkSegmentUsersReceivedEvent{}
 	err := proto.Unmarshal(msg.Data, event)
 	if err != nil {
@@ -269,7 +270,8 @@ func validateSegmentUserState(state featureproto.SegmentUser_State) bool {
 	}
 }
 
-func (p *segmentUserPersister) handleEvent(ctx context.Context, event *serviceevent.BulkSegmentUsersReceivedEvent) error {
+func (p *segmentUserPersister) handleEvent(
+	ctx context.Context, event *serviceevent.BulkSegmentUsersReceivedEvent) error {
 	segmentStorage := v2fs.NewSegmentStorage(p.mysqlClient)
 	segment, _, err := segmentStorage.GetSegment(ctx, event.SegmentId, event.EnvironmentNamespace)
 	if err != nil {
