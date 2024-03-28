@@ -310,6 +310,18 @@ data:
                                   - name: content-type
                                     string_match:
                                       exact: application/grpc
+                                prefix: /bucketeer.batch.BatchService
+                              route:
+                                cluster: batch
+                                timeout: 30s
+                                retry_policy:
+                                  num_retries: 3
+                                  retry_on: 5xx
+                            - match:
+                                headers:
+                                  - name: content-type
+                                    string_match:
+                                      exact: application/grpc
                                 prefix: /bucketeer.feature.FeatureService
                               route:
                                 cluster: backend

@@ -50,7 +50,7 @@ func WithLogger(logger *zap.Logger) Option {
 }
 
 type Processor interface {
-	Process(msg *puller.Message)
+	Process(ctx context.Context, msgChan <-chan *puller.Message) error
 }
 
 type Configuration struct {
@@ -61,6 +61,7 @@ type Configuration struct {
 	PullerMaxOutstandingMessages int    `json:"pullerMaxOutstandingMessages"`
 	PullerMaxOutstandingBytes    int    `json:"pullerMaxOutstandingBytes"`
 	MaxMPS                       int    `json:"maxMPS"`
+	WorkerNum                    int    `json:"workerNum"`
 }
 
 type Subscriber struct {
@@ -105,23 +106,11 @@ func (s Subscriber) Run(ctx context.Context) {
 	group.Go(func() error {
 		return rateLimiterPuller.Run(ctx)
 	})
-	group.Go(func() error {
-		for {
-			select {
-			case msg, ok := <-rateLimiterPuller.MessageCh():
-				if !ok {
-					s.logger.Error("Subscriber message channel closed",
-						zap.String("name", s.name))
-					return nil
-				}
-				s.processor.Process(msg)
-			case <-ctx.Done():
-				s.logger.Info("Subscriber context done, stopped processing messages",
-					zap.String("name", s.name))
-				return nil
-			}
-		}
-	})
+	for i := 0; i < s.configuration.WorkerNum; i++ {
+		group.Go(func() error {
+			return s.processor.Process(ctx, rateLimiterPuller.MessageCh())
+		})
+	}
 	err := group.Wait()
 	if err != nil {
 		s.logger.Error("Subscriber stopped with error",

@@ -11,3 +11,6 @@ metadata:
 data:
   subscribers.json: |-
     {{ toJson .Values.subscribers }}
+
+  processors.json: |-
+    {{ toJson .Values.processors }}
