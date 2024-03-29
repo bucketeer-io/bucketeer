@@ -26,6 +26,7 @@ import (
 	acclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/api"
+	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	cacher "github.com/bucketeer-io/bucketeer/pkg/batch/jobs/cacher"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/calculator"
@@ -57,9 +58,11 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 )
 
-const command = "server"
-
-var serverShutDownTimeout = 10 * time.Second
+const (
+	command               = "server"
+	clientDialTimeout     = 30 * time.Second
+	serverShutDownTimeout = 10 * time.Second
+)
 
 type server struct {
 	*kingpin.CmdClause
@@ -87,8 +90,10 @@ type server struct {
 	featureService              *string
 	notificationService         *string
 	experimentCalculatorService *string
+	batchService                *string
 	// PubSub config
 	subscriberConfig *string
+	processorsConfig *string
 	// Persistent Redis
 	persistentRedisServerName    *string
 	persistentRedisAddr          *string
@@ -153,9 +158,17 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"experiment-calculator-service",
 			"bucketeer-experiment-calculator-service address.",
 		).Default("experiment-calculator:9090").String(),
+		batchService: cmd.Flag(
+			"batch-service",
+			"bucketeer-batch-service address.",
+		).Default("localhost:9001").String(),
 		subscriberConfig: cmd.Flag(
 			"subscriber-config",
 			"Path to subscribers config.",
+		).Required().String(),
+		processorsConfig: cmd.Flag(
+			"processors-config",
+			"Path to processors config.",
 		).Required().String(),
 		persistentRedisServerName: cmd.Flag(
 			"persistent-redis-server-name",
@@ -349,6 +362,19 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer nonPersistentRedisClient.Close()
 
+	// batchClient
+	batchClient, err := btclient.NewClient(*s.batchService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(clientDialTimeout),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer batchClient.Close()
+
 	service := api.NewBatchService(
 		experiment.NewExperimentStatusUpdater(
 			environmentClient,
@@ -487,12 +513,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	)
 	go server.Run()
 
-	processors := s.registerProcessorMap(
+	processors, err := s.registerProcessorMap(
 		environmentClient,
+		mysqlClient,
+		batchClient,
 		notificationSender,
 		registerer,
 		logger,
 	)
+	if err != nil {
+		return err
+	}
+
 	multiPubSub, err := s.startMultiPubSub(ctx, processors, logger)
 	if err != nil {
 		return err
@@ -575,9 +607,26 @@ func (s *server) startMultiPubSub(
 
 func (s *server) registerProcessorMap(
 	environmentClient environmentclient.Client,
+	mysqlClient mysql.Client,
+	batchClient btclient.Client,
 	sender notificationsender.Sender,
 	registerer metrics.Registerer,
-	logger *zap.Logger) *processor.Processors {
+	logger *zap.Logger,
+) (*processor.Processors, error) {
+	bytes, err := os.ReadFile(*s.processorsConfig)
+	if err != nil {
+		logger.Error("subscriber: failed to read processors config",
+			zap.Error(err),
+		)
+		return nil, err
+	}
+	var configMap map[string]interface{}
+	if err := json.Unmarshal(bytes, &configMap); err != nil {
+		logger.Error("subscriber: failed to unmarshal processors config",
+			zap.Error(err),
+		)
+		return nil, err
+	}
 	processors := processor.NewProcessors(registerer)
 
 	processors.RegisterProcessor(
@@ -585,7 +634,21 @@ func (s *server) registerProcessorMap(
 		processor.NewDomainEventInformer(environmentClient, sender, logger),
 	)
 
-	return processors
+	segmentPersister, err := processor.NewSegmentUserPersister(
+		configMap[processor.SegmentUserPersisterName],
+		batchClient,
+		mysqlClient,
+		logger,
+	)
+	if err != nil {
+		return nil, err
+	}
+	processors.RegisterProcessor(
+		processor.SegmentUserPersisterName,
+		segmentPersister,
+	)
+
+	return processors, nil
 }
 
 func (s *server) insertTelepresenceMountRoot(path string) string {

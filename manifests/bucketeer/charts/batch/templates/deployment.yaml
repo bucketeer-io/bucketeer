@@ -69,6 +69,8 @@ spec:
               value: "{{ .Values.env.featureService }}"
             - name: BUCKETEER_BATCH_EXPERIMENT_CALCULATOR_SERVICE
               value: "{{ .Values.env.experimentCalculatorService }}"
+            - name: BUCKETEER_BATCH_BATCH_SERVICE
+              value: "{{ .Values.env.batchService }}"
             - name: BUCKETEER_OPS_EVENT_SCHEDULE_COUNT_WATCHER
               value: "{{ .Values.env.scheduleCountWatcher }}"
             - name: BUCKETEER_OPS_EVENT_SCHEDULE_DATETIME_WATCHER
@@ -103,6 +105,8 @@ spec:
               value: /usr/local/certs/service/tls.crt
             - name : BUCKETEER_BATCH_SUBSCRIBER_CONFIG
               value: /usr/local/conf/subscribers.json
+            - name: BUCKETEER_BATCH_PROCESSORS_CONFIG
+              value: /usr/local/conf/processors.json
             - name: BUCKETEER_BATCH_KEY
               value: /usr/local/certs/service/tls.key
             - name: BUCKETEER_BATCH_TIMEZONE
