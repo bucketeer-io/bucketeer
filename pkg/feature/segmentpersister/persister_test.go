@@ -16,6 +16,7 @@ package segmentpersister
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -99,6 +100,10 @@ func TestHandleEventMySQL(t *testing.T) {
 				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
 			},
 			event: &serviceevent.BulkSegmentUsersReceivedEvent{
 				SegmentId:            "sid",
@@ -107,6 +112,36 @@ func TestHandleEventMySQL(t *testing.T) {
 				State:                featureproto.SegmentUser_INCLUDED,
 			},
 			expectedErr: errExceededMaxUserIDLength,
+		},
+		{
+			desc: "err: internal error while upserting",
+			setup: func(p *Persister) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				// Upsert user
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(errors.New("err: internal error while upserting"))
+				// Update segment status
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			event: &serviceevent.BulkSegmentUsersReceivedEvent{
+				SegmentId:            "sid",
+				EnvironmentNamespace: "ns0",
+				Data:                 []byte("user1\nuser2\r\nuser2\n"),
+				State:                featureproto.SegmentUser_INCLUDED,
+				Editor: &eventproto.Editor{
+					Email: "email",
+				},
+			},
+			expectedErr: errors.New("err: internal error while upserting"),
 		},
 		{
 			desc: "success",
