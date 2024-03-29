@@ -76,18 +76,18 @@ func NewSegmentUserPersister(
 ) (subscriber.Processor, error) {
 	segmentPersisterJsonConfig, ok := config.(map[string]interface{})
 	if !ok {
-		logger.Error("SegmentPersister: invalid config")
+		logger.Error("SegmentUserPersister: invalid config")
 		return nil, errInvalidConfig
 	}
 	configBytes, err := json.Marshal(segmentPersisterJsonConfig)
 	if err != nil {
-		logger.Error("SegmentPersister: failed to marshal config", zap.Error(err))
+		logger.Error("SegmentUserPersister: failed to marshal config", zap.Error(err))
 		return nil, err
 	}
 	var segmentPersisterConfig segmentUserPersisterConfig
 	err = json.Unmarshal(configBytes, &segmentPersisterConfig)
 	if err != nil {
-		logger.Error("SegmentPersister: failed to unmarshal config", zap.Error(err))
+		logger.Error("SegmentUserPersister: failed to unmarshal config", zap.Error(err))
 		return nil, err
 	}
 	// create domain publisher
@@ -99,12 +99,12 @@ func NewSegmentUserPersister(
 		pubsub.WithLogger(logger),
 	)
 	if err != nil {
-		logger.Error("SegmentPersister: failed to create pubsub client", zap.Error(err))
+		logger.Error("SegmentUserPersister: failed to create pubsub client", zap.Error(err))
 		return nil, err
 	}
 	domainPublisher, err := client.CreatePublisher(segmentPersisterConfig.DomainEventTopic)
 	if err != nil {
-		logger.Error("SegmentPersister: failed to create domain publisher", zap.Error(err))
+		logger.Error("SegmentUserPersister: failed to create domain publisher", zap.Error(err))
 		return nil, err
 	}
 	return &segmentUserPersister{
@@ -282,6 +282,24 @@ func (p *segmentUserPersister) handleEvent(
 	}
 	cnt, err := p.persistSegmentUsers(ctx, event.EnvironmentNamespace, event.SegmentId, event.Data, event.State)
 	if err != nil {
+		if err := p.updateSegmentStatus(
+			ctx,
+			event.Editor,
+			event.EnvironmentNamespace,
+			event.SegmentId,
+			cnt,
+			event.State,
+			featureproto.Segment_FAILED,
+		); err != nil {
+			p.logger.Error(
+				"failed to update to segment status to failed",
+				zap.Error(err),
+				zap.String("segmentId", event.SegmentId),
+				zap.Int64("userCount", cnt),
+				zap.String("environmentNamespace", event.EnvironmentNamespace),
+			)
+			return err
+		}
 		return err
 	}
 	return p.updateSegmentStatus(
@@ -340,7 +358,7 @@ func (p *segmentUserPersister) persistSegmentUsers(
 		return nil
 	})
 	if err != nil {
-		return 0, nil
+		return 0, err
 	}
 	p.updateSegmentUserCache(ctx)
 	return cnt, nil
