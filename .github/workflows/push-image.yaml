@@ -78,7 +78,7 @@ jobs:
       - name: Add executable permission to go binary files
         run: chmod +x bin/*
       - name: Set up docker
-        uses: docker/setup-buildx-action@885d1462b80bc1c1c7f0b00334ad271f09369c55 # v2.10.0
+        uses: docker/setup-buildx-action@2b51285047da1547ffb1b2203d8be4c0af6b1f20 # v3.2.0
         with:
           install: true
       - name: Create Dockerfile of go applications
@@ -127,7 +127,7 @@ jobs:
           done
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@5a50e581162a13f4baa8916d01180d2acbc04363 # v2.1.0
+        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
         with:
           token_format: "access_token"
           workload_identity_provider: ${{ secrets.GAR_WORKLOAD_IDENTITY_PROVIDER }}
@@ -196,7 +196,7 @@ jobs:
           RELEASE_CHANNEL: prod
         run: make build
       - name: Set up docker
-        uses: docker/setup-buildx-action@885d1462b80bc1c1c7f0b00334ad271f09369c55 # v2.10.0
+        uses: docker/setup-buildx-action@2b51285047da1547ffb1b2203d8be4c0af6b1f20 # v3.2.0
         with:
           install: true
       - name: Build web application images
@@ -213,7 +213,7 @@ jobs:
           docker push ${{ env.GHCR_REGISTRY }}/bucketeer-web-v2:${{ needs.setup.outputs.IMAGE_TAG }}
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@5a50e581162a13f4baa8916d01180d2acbc04363 # v2.1.0
+        uses: google-github-actions/auth@55bd3a7c6e2ae7cf1877fd1ccb9d54c0503c457c # v2.1.2
         with:
           token_format: "access_token"
           workload_identity_provider: ${{ secrets.GAR_WORKLOAD_IDENTITY_PROVIDER }}
@@ -235,7 +235,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Workflow Dispatch
-        uses: benc-uk/workflow-dispatch@798e70c97009500150087d30d9f11c5444830385 # v1.2.2
+        uses: benc-uk/workflow-dispatch@25b02cc069be46d637e8fe2f1e8484008e9e9609 # v1.2.3
         with:
           repo: ${{ secrets.CONFIG_REPO }}
           token: ${{ secrets.REPO_ACCESS_PAT }}
