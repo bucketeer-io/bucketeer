@@ -540,18 +540,32 @@ func TestGetEvaluationsContextCanceled(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		cancel      bool
+		body        io.Reader
 		expected    *getEvaluationsResponse
 		expectedErr error
 	}{
 		{
-			desc:        "error: context canceled",
-			cancel:      true,
+			desc:        "error: internal",
+			cancel:      false,
+			expectedErr: errInternal,
+		},
+		{
+			desc:   "error: context canceled",
+			cancel: true,
+			body: renderBody(
+				t,
+				registerEventsRequest{},
+			),
 			expected:    nil,
 			expectedErr: errContextCanceled,
 		},
 		{
-			desc:        "error: missing API key",
-			cancel:      false,
+			desc:   "error: missing API key",
+			cancel: false,
+			body: renderBody(
+				t,
+				registerEventsRequest{},
+			),
 			expected:    nil,
 			expectedErr: errMissingAPIKey,
 		},
@@ -561,7 +575,7 @@ func TestGetEvaluationsContextCanceled(t *testing.T) {
 		req := httptest.NewRequest(
 			"POST",
 			dummyURL,
-			nil,
+			p.body,
 		)
 		ctx, cancel := context.WithCancel(req.Context())
 		if p.cancel {
@@ -2042,16 +2056,30 @@ func TestRegisterEventsContextCanceled(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		cancel      bool
+		body        io.Reader
 		expectedErr error
 	}{
 		{
-			desc:        "error: context canceled",
-			cancel:      true,
+			desc:        "error: body is required",
+			cancel:      false,
+			expectedErr: errBodyRequired,
+		},
+		{
+			desc:   "error: context canceled",
+			cancel: true,
+			body: renderBody(
+				t,
+				registerEventsRequest{},
+			),
 			expectedErr: errContextCanceled,
 		},
 		{
-			desc:        "error: missing API key",
-			cancel:      false,
+			desc:   "error: missing API key",
+			cancel: false,
+			body: renderBody(
+				t,
+				registerEventsRequest{},
+			),
 			expectedErr: errMissingAPIKey,
 		},
 	}
@@ -2060,7 +2088,7 @@ func TestRegisterEventsContextCanceled(t *testing.T) {
 		req := httptest.NewRequest(
 			"POST",
 			dummyURL,
-			nil,
+			p.body,
 		)
 		ctx, cancel := context.WithCancel(req.Context())
 		if p.cancel {
@@ -2127,18 +2155,8 @@ func TestRegisterEvents(t *testing.T) {
 			expectedErr: errInvalidHttpMethod,
 		},
 		{
-			desc: "error: body is nil",
-			setup: func(gs *gatewayService) {
-				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
-					&accountproto.EnvironmentAPIKey{
-						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
-						ApiKey: &accountproto.APIKey{
-							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
-							Disabled: false,
-						},
-					}, nil)
-			},
+			desc:  "error: body is nil",
+			setup: nil,
 			input: httptest.NewRequest(
 				"POST",
 				dummyURL,
