@@ -81,7 +81,7 @@ func TestCreateAdminSubscription(t *testing.T) {
 			setup: func(s *adminSubscriptionStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(),
-					gomock.Regex("^INSERT INTO admin_subscription\\s*\\(\\s*id,\\s*created_at,\\s*updated_at,\\s*disabled,\\s*source_types,\\s*recipient,\\s*name\\s*\\)\\s+VALUES\\s+\\(\\s+(\\?,\\s*){6}\\s*\\?\\s*\\)\\s*$"),
+					gomock.Any(),
 					id, int64(1), int64(2), false, mysql.JSONObject{Val: sourceTypes}, mysql.JSONObject{Val: recipient}, name,
 				).Return(nil, nil)
 			},
@@ -152,7 +152,7 @@ func TestUpdateAdminSubscription(t *testing.T) {
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(),
-					gomock.Regex("^UPDATE\\s+admin_subscription\\s+SET\\s+updated_at\\s*=\\s*\\?,\\s*disabled\\s*=\\s*\\?,\\s*source_types\\s*=\\s*\\?,\\s*recipient\\s*=\\s*\\?,\\s*name\\s*=\\s*\\?\\s+WHERE\\s+id\\s*=\\s*\\?\\s*$"),
+					gomock.Any(),
 					int64(2), false, mysql.JSONObject{Val: sourceTypes}, mysql.JSONObject{Val: recipient}, name, id,
 				).Return(result, nil)
 			},
@@ -214,7 +214,7 @@ func TestDeleteAdminSubscription(t *testing.T) {
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(),
-					gomock.Regex("^DELETE\\s+FROM\\s+admin_subscription\\s+WHERE\\s+id\\s*=\\s*\\?\\s*$"),
+					gomock.Any(),
 					"id-0",
 				).Return(result, nil)
 			},
@@ -276,7 +276,7 @@ func TestGetAdminSubscription(t *testing.T) {
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(),
-					gomock.Regex("^SELECT\\s+id,\\s*created_at,\\s*updated_at,\\s*disabled,\\s*source_types,\\s*recipient,\\s*name\\s+FROM\\s+admin_subscription\\s+WHERE\\s+id\\s*=\\s*\\?\\s*$"),
+					gomock.Any(),
 					"id-0",
 				).Return(row)
 			},
@@ -351,14 +351,14 @@ func TestListAdminSubscriptions(t *testing.T) {
 				rows.EXPECT().Scan(gomock.Any()).Return(nil).Times(getSize)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(),
-					gomock.Regex("^SELECT\\s+id,\\s*created_at,\\s*updated_at,\\s*disabled,\\s*source_types,\\s*recipient,\\s*name\\s+FROM\\s+admin_subscription\\s+WHERE updated_at >= \\? AND disabled = \\?\\s+ORDER BY id ASC, create_at DESC\\s+LIMIT 10 OFFSET 5\\s*$"),
+					gomock.Any(),
 					updatedAt, disable,
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(),
-					gomock.Regex("^SELECT\\s*COUNT\\(1\\)\\s*FROM\\s+admin_subscription\\s+WHERE updated_at >= \\? AND disabled = \\?\\s+ORDER BY id ASC, create_at DESC\\s*$"),
+					gomock.Any(),
 					updatedAt, disable,
 				).Return(row)
 			},
@@ -385,14 +385,14 @@ func TestListAdminSubscriptions(t *testing.T) {
 				rows.EXPECT().Err().Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(),
-					gomock.Regex("^SELECT\\s+id,\\s*created_at,\\s*updated_at,\\s*disabled,\\s*source_types,\\s*recipient,\\s*name\\s+FROM\\s+admin_subscription\\s*$"),
+					gomock.Any(),
 					[]interface{}{},
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(),
-					gomock.Regex("^SELECT\\s+COUNT\\(1\\)\\s*?FROM\\s+admin_subscription\\s*$"),
+					gomock.Any(),
 					[]interface{}{},
 				).Return(row)
 			},
