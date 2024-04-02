@@ -187,21 +187,30 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 	defer span.End()
 	if err := s.validateTrackRequest(req); err != nil {
 		eventCounter.WithLabelValues(callerGatewayService, typeTrack, codeInvalidURLParams)
-		s.logger.Warn(
-			"Invalid track url parameters",
+		s.logger.Error("Failed to validate Track request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
+				zap.String("apiKey", req.Apikey),
+				zap.String("tag", req.Tag),
+				zap.Any("userId", req.Userid),
+				zap.String("goalId", req.Goalid),
+				zap.Int64("timestamp", req.Timestamp),
+				zap.Float64("value", req.Value),
 			)...,
 		)
 		return nil, err
 	}
 	envAPIKey, err := s.checkTrackRequest(ctx, req.Apikey)
 	if err != nil {
-		s.logger.Error(
-			"Failed to get environment api key",
+		s.logger.Error("Failed to check Track request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("apiKey", req.Apikey),
+				zap.String("tag", req.Tag),
+				zap.Any("userId", req.Userid),
+				zap.String("goalId", req.Goalid),
+				zap.Int64("timestamp", req.Timestamp),
+				zap.Float64("value", req.Value),
 			)...,
 		)
 		return nil, err
@@ -292,11 +301,31 @@ func (s *grpcGatewayService) GetEvaluations(
 	defer span.End()
 	envAPIKey, err := s.checkRequest(ctx)
 	if err != nil {
+		s.logger.Error("Failed to check GetEvaluations request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("tag", req.Tag),
+				zap.Any("user", req.User),
+				zap.Any("sourceId", req.SourceId),
+				zap.String("sdkVersion", req.SdkVersion),
+			)...,
+		)
 		return nil, err
 	}
 	projectID := envAPIKey.ProjectId
 	environmentId := envAPIKey.Environment.Id
 	if err := s.validateGetEvaluationsRequest(req); err != nil {
+		s.logger.Error("Failed to validate GetEvaluations request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("projectId", projectID),
+				zap.String("environmentId", environmentId),
+				zap.String("tag", req.Tag),
+				zap.Any("user", req.User),
+				zap.Any("sourceId", req.SourceId),
+				zap.String("sdkVersion", req.SdkVersion),
+			)...,
+		)
 		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationBadRequest).Inc()
 		return nil, err
 	}
@@ -447,9 +476,30 @@ func (s *grpcGatewayService) GetEvaluation(
 	defer span.End()
 	envAPIKey, err := s.checkRequest(ctx)
 	if err != nil {
+		s.logger.Error("Failed to check GetEvaluation request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("tag", req.Tag),
+				zap.Any("user", req.User),
+				zap.String("featureId", req.FeatureId),
+				zap.Any("sourceId", req.SourceId),
+				zap.String("sdkVersion", req.SdkVersion),
+			)...,
+		)
 		return nil, err
 	}
 	if err := s.validateGetEvaluationRequest(req); err != nil {
+		s.logger.Error("Failed to validate GetEvaluation request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("projectId", envAPIKey.ProjectId),
+				zap.String("environmentId", envAPIKey.Environment.Id),
+				zap.String("tag", req.Tag),
+				zap.Any("user", req.User),
+				zap.Any("sourceId", req.SourceId),
+				zap.String("sdkVersion", req.SdkVersion),
+			)...,
+		)
 		return nil, err
 	}
 	s.publishUser(ctx, envAPIKey.Environment.Id, req.Tag, req.User, req.SourceId)
@@ -505,6 +555,17 @@ func (s *grpcGatewayService) GetEvaluation(
 	}
 	eval, err := s.findEvaluation(evaluations.Evaluations, req.FeatureId)
 	if err != nil {
+		s.logger.Error("Failed to find evaluation",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("projectId", envAPIKey.ProjectId),
+				zap.String("environmentId", envAPIKey.Environment.Id),
+				zap.String("tag", req.Tag),
+				zap.Any("user", req.User),
+				zap.Any("sourceId", req.SourceId),
+				zap.String("sdkVersion", req.SdkVersion),
+			)...,
+		)
 		return nil, err
 	}
 	return &gwproto.GetEvaluationResponse{
@@ -799,9 +860,22 @@ func (s *grpcGatewayService) RegisterEvents(
 	defer span.End()
 	envAPIKey, err := s.checkRequest(ctx)
 	if err != nil {
+		s.logger.Error("Failed to check RegisterEvents request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.Any("events", req.Events),
+				zap.String("sdkVersion", req.SdkVersion),
+			)...,
+		)
 		return nil, err
 	}
 	if len(req.Events) == 0 {
+		s.logger.Error("Failed to validate RegisterEvents request. Missing events.",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("sdkVersion", req.SdkVersion),
+			)...,
+		)
 		return nil, ErrMissingEvents
 	}
 	errs := make(map[string]*gwproto.RegisterEventsResponse_Error)
