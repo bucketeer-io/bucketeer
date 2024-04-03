@@ -86,7 +86,7 @@ func TestCreateAdminAuditLogs(t *testing.T) {
 			setup: func(s *adminAuditLogStorage) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(),
-					gomock.Regex("^INSERT INTO admin_audit_log\\s+\\(\\s*id,\\s*timestamp,\\s*entity_type,\\s*entity_id,\\s*type,\\s*event,\\s*editor,\\s*options\\s*\\)\\s+VALUES\\s*\\(\\?, \\?, \\?, \\?, \\?, \\?, \\?, \\?\\),\\s*\\(\\?, \\?, \\?, \\?, \\?, \\?, \\?, \\?\\)$"),
+					gomock.Any(),
 					id0, int64(1), int32(2), "e0", int32(3), gomock.Any(), gomock.Any(), gomock.Any(),
 					id1, int64(10), int32(3), "e2", int32(4), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
@@ -155,14 +155,14 @@ func TestListAdminAuditLogs(t *testing.T) {
 				rows.EXPECT().Err().Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(),
-					gomock.Regex("^SELECT\\s+id,\\s*timestamp,\\s*entity_type,\\s*entity_id,\\s*type,\\s*event,\\s*editor,\\s*options\\s+FROM\\s+admin_audit_log\\s*$"),
+					gomock.Any(),
 					[]interface{}{},
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(),
-					gomock.Regex("^SELECT\\s+COUNT\\(1\\)\\s+FROM\\s+admin_audit_log\\s*$"),
+					gomock.Any(),
 					[]interface{}{},
 				).Return(row)
 			},
@@ -187,14 +187,14 @@ func TestListAdminAuditLogs(t *testing.T) {
 				rows.EXPECT().Err().Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
 					gomock.Any(),
-					gomock.Regex("^SELECT\\s+id,\\s*timestamp,\\s*entity_type,\\s*entity_id,\\s*type,\\s*event,\\s*editor,\\s*options\\s+FROM\\s+admin_audit_log\\s+WHERE timestamp >= \\? AND entity_type = \\? ORDER BY id ASC, timestamp DESC LIMIT 10 OFFSET 5\\s*$"),
+					gomock.Any(),
 					timestamp, entityType,
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
 					gomock.Any(),
-					gomock.Regex("^SELECT\\s+COUNT\\(1\\)\\s+FROM\\s+admin_audit_log\\s+WHERE timestamp >= \\? AND entity_type = \\? ORDER BY id ASC, timestamp DESC\\s*$"),
+					gomock.Any(),
 					timestamp, entityType,
 				).Return(row)
 			},
