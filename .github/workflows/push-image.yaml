@@ -7,6 +7,10 @@ on:
         description: "Skip e2e tests"
         type: boolean
         default: false
+      skip_sdk_e2e:
+        description: "Skip e2e tests of SDK"
+        type: boolean
+        default: false
       skip_prd_pr:
         description: "Skip Production PR"
         type: boolean
@@ -241,7 +245,7 @@ jobs:
           token: ${{ secrets.REPO_ACCESS_PAT }}
           workflow: dev-deploy.yaml
           ref: master
-          inputs: '{"ref": "${{ needs.setup.outputs.REF }}", "image_tag": "${{ needs.setup.outputs.IMAGE_TAG }}", "committer": "${{ github.event.head_commit.author.name }}", "commit_message": "${{ needs.setup.outputs.COMMIT_MESSAGE }}", "commit_url": "${{ github.event.head_commit.url }}", "skip_e2e": "${{ github.event.inputs.skip_e2e }}", "skip_prd_pr": "${{ github.event.inputs.skip_prd_pr }}"}'
+          inputs: '{"ref": "${{ needs.setup.outputs.REF }}", "image_tag": "${{ needs.setup.outputs.IMAGE_TAG }}", "committer": "${{ github.event.head_commit.author.name }}", "commit_message": "${{ needs.setup.outputs.COMMIT_MESSAGE }}", "commit_url": "${{ github.event.head_commit.url }}", "skip_e2e": "${{ github.event.inputs.skip_e2e }}", "skip_sdk_e2e": "${{ github.event.inputs.skip_sdk_e2e }}", "skip_prd_pr": "${{ github.event.inputs.skip_prd_pr }}"}'
 
   notify-success-to-slack:
     needs: [setup, dispatch]
