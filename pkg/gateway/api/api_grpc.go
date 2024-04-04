@@ -1034,9 +1034,21 @@ func (s *grpcGatewayService) checkTrackRequest(
 	}
 	envAPIKey, err := s.getEnvironmentAPIKey(ctx, apiKey)
 	if err != nil {
+		s.logger.Error("Failed to get environment API key",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("apiKey", apiKey),
+			)...,
+		)
 		return nil, err
 	}
 	if err := checkEnvironmentAPIKey(envAPIKey, accountproto.APIKey_SDK); err != nil {
+		s.logger.Error("Failed to check environment API key",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.Any("envAPIKey", envAPIKey),
+			)...,
+		)
 		return nil, err
 	}
 	return envAPIKey, nil
@@ -1052,13 +1064,30 @@ func (s *grpcGatewayService) checkRequest(ctx context.Context) (*accountproto.En
 	}
 	id, err := s.extractAPIKeyID(ctx)
 	if err != nil {
+		s.logger.Error("Failed to extract API key ID",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
 		return nil, err
 	}
 	envAPIKey, err := s.getEnvironmentAPIKey(ctx, id)
 	if err != nil {
+		s.logger.Error("Failed to get environment API key",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("apiKey", id),
+			)...,
+		)
 		return nil, err
 	}
 	if err := checkEnvironmentAPIKey(envAPIKey, accountproto.APIKey_SDK); err != nil {
+		s.logger.Error("Failed to check environment API key",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.Any("envAPIKey", envAPIKey),
+			)...,
+		)
 		return nil, err
 	}
 	return envAPIKey, nil
