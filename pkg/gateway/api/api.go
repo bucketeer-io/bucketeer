@@ -397,10 +397,6 @@ func (s *gatewayService) checkGetEvaluationsRequest(
 	if req.Method != http.MethodPost {
 		return nil, getEvaluationsRequest{}, errInvalidHttpMethod
 	}
-	envAPIKey, err := s.checkRequest(req.Context(), req)
-	if err != nil {
-		return nil, getEvaluationsRequest{}, err
-	}
 	var body getEvaluationsRequest
 	if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
 		s.logger.Error(
@@ -411,7 +407,23 @@ func (s *gatewayService) checkGetEvaluationsRequest(
 		)
 		return nil, getEvaluationsRequest{}, errInternal
 	}
+	envAPIKey, err := s.checkRequest(req.Context(), req)
+	if err != nil {
+		s.logger.Error("Failed to check GetEvaluations request",
+			zap.Error(err),
+			zap.String("tag", body.Tag),
+			zap.Any("user", body.User),
+			zap.Any("sourceId", body.SourceID),
+		)
+		return nil, getEvaluationsRequest{}, err
+	}
 	if err := s.validateGetEvaluationsRequest(&body); err != nil {
+		s.logger.Error("Failed to validate GetEvaluations request",
+			zap.Error(err),
+			zap.String("tag", body.Tag),
+			zap.Any("user", body.User),
+			zap.Any("sourceId", body.SourceID),
+		)
 		return nil, getEvaluationsRequest{}, err
 	}
 	return envAPIKey, body, nil
@@ -423,10 +435,6 @@ func (s *gatewayService) checkGetEvaluationRequest(
 	if req.Method != http.MethodPost {
 		return nil, getEvaluationRequest{}, errInvalidHttpMethod
 	}
-	envAPIKey, err := s.checkRequest(req.Context(), req)
-	if err != nil {
-		return nil, getEvaluationRequest{}, err
-	}
 	var body getEvaluationRequest
 	if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
 		s.logger.Error(
@@ -437,7 +445,25 @@ func (s *gatewayService) checkGetEvaluationRequest(
 		)
 		return nil, getEvaluationRequest{}, errInternal
 	}
+	envAPIKey, err := s.checkRequest(req.Context(), req)
+	if err != nil {
+		s.logger.Error("Failed to check GetEvaluation request",
+			zap.Error(err),
+			zap.String("tag", body.Tag),
+			zap.Any("user", body.User),
+			zap.Any("sourceId", body.SourceId),
+			zap.String("featureId", body.FeatureID),
+		)
+		return nil, getEvaluationRequest{}, err
+	}
 	if err := s.validateGetEvaluationRequest(&body); err != nil {
+		s.logger.Error("Failed to validate GetEvaluation request",
+			zap.Error(err),
+			zap.String("tag", body.Tag),
+			zap.Any("user", body.User),
+			zap.Any("sourceId", body.SourceId),
+			zap.String("featureId", body.FeatureID),
+		)
 		return nil, getEvaluationRequest{}, err
 	}
 	return envAPIKey, body, nil
@@ -1194,10 +1220,6 @@ func (s *gatewayService) checkRegisterEvents(
 	if req.Method != http.MethodPost {
 		return nil, registerEventsRequest{}, errInvalidHttpMethod
 	}
-	envAPIKey, err := s.checkRequest(req.Context(), req)
-	if err != nil {
-		return nil, registerEventsRequest{}, err
-	}
 	var body registerEventsRequest
 	if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
 		if err == io.EOF {
@@ -1211,7 +1233,19 @@ func (s *gatewayService) checkRegisterEvents(
 		)
 		return nil, registerEventsRequest{}, errInternal
 	}
+	envAPIKey, err := s.checkRequest(req.Context(), req)
+	if err != nil {
+		s.logger.Error("Failed to check RegisterEvents request",
+			zap.Error(err),
+			zap.Any("events", body.Events),
+		)
+		return nil, registerEventsRequest{}, err
+	}
 	if len(body.Events) == 0 {
+		s.logger.Error("Failed to validate RegisterEvents request. Missing events.",
+			zap.Error(err),
+			zap.Any("events", body.Events),
+		)
 		return nil, registerEventsRequest{}, errMissingEvents
 	}
 	return envAPIKey, body, nil
