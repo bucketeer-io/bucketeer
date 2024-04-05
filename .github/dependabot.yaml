@@ -6,6 +6,8 @@ updates:
       interval: "monthly"
       time: "10:00"
       timezone: "Asia/Tokyo"
+    ignore:
+      - dependency-name: "google-github-actions/release-please-action"
     commit-message:
       prefix: "build"
       include: "scope"
