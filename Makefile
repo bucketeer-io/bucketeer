@@ -53,6 +53,7 @@ local-deps:
 	go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.20.0; \
 	go install github.com/nilslice/protolock/...@v0.15.0; \
 	go install github.com/mikefarah/yq/v4@v4.28.2
+	curl -sSf https://atlasgo.sh | sh
 
 .PHONY: lint
 lint:
@@ -262,17 +263,13 @@ update-copyright:
 ###################
 # Database Migration
 ###################
-.PHONY: install-atlas
-install-atlas:
-	curl -sSf https://atlasgo.sh | sh
-
 .PHONY: create-migration
 create-migration:
 	# Example: make create-migration NAME=create_table_users USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
 	atlas migrate diff ${NAME} \
-  		--dir file://migration/mysql \
-  		--to mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
-  		--dev-url docker://mysql/8
+		--dir file://migration/mysql \
+		--to mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
+		--dev-url docker://mysql/8
 
 .PHONY: atlas-set-version
 atlas-set-version:
@@ -285,8 +282,8 @@ atlas-set-version:
 check-apply-migration:
 	# Example: make check-apply-migration USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
 	atlas migrate apply \
-  		--dir file://migration/mysql \
-  		--url mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
+		--dir file://migration/mysql \
+		--url mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
 		--dry-run
 
 #############################
