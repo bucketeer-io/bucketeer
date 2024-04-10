@@ -28,16 +28,3 @@ updates:
       dependencies:
         patterns:
           - "*"
-  - package-ecosystem: "npm"
-    directory: "/ui/web-v2"
-    schedule:
-      interval: "monthly"
-      time: "10:00"
-      timezone: "Asia/Tokyo"
-    commit-message:
-      prefix: "build"
-      include: "scope"
-    groups:
-      dependencies:
-        patterns:
-          - "*"
