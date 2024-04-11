@@ -64,6 +64,7 @@ message GetEvaluationResponse {
 message RegisterEventsRequest {
   repeated bucketeer.event.client.Event events = 1;
   string sdk_version = 2;
+  bucketeer.event.client.SourceId source_id = 3;
 }
 
 message RegisterEventsResponse {
