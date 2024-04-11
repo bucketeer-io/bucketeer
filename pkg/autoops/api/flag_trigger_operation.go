@@ -20,29 +20,27 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
+	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
-	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
-
-type Command interface{}
 
 func executeAutoOpsRuleOperation(
 	ctx context.Context,
+	ftStorage ftstorage.FeatureStorage,
 	environmentNamespace string,
-	autoOpsRule *domain.AutoOpsRule,
+	autoOpsRuleType autoopsproto.OpsType,
 	feature *ftdomain.Feature,
 	logger *zap.Logger,
 	localizer locale.Localizer,
 ) error {
-	switch autoOpsRule.OpsType {
+	switch autoOpsRuleType {
 	case autoopsproto.OpsType_ENABLE_FEATURE:
-		return enableFeature(ctx, environmentNamespace, autoOpsRule, feature, logger)
+		return enableFeature(ctx, ftStorage, environmentNamespace, feature, logger)
 	case autoopsproto.OpsType_DISABLE_FEATURE:
-		return disableFeature(ctx, environmentNamespace, autoOpsRule, feature, logger)
+		return disableFeature(ctx, ftStorage, environmentNamespace, feature, logger)
 	}
 	dt, err := statusUnknownOpsType.WithDetails(&errdetails.LocalizedMessage{
 		Locale:  localizer.GetLocale(),
@@ -54,36 +52,40 @@ func executeAutoOpsRuleOperation(
 	return dt.Err()
 }
 
+// If the flag is already enabled, we only print an error log.
+// Otherwise, the Operation state won't change to TRIGGERED, keeping in an infinite loop
+// trying to enable the flag.
 func enableFeature(
 	ctx context.Context,
+	ftStorage ftstorage.FeatureStorage,
 	environmentNamespace string,
-	autoOpsRule *domain.AutoOpsRule,
 	feature *ftdomain.Feature,
 	logger *zap.Logger,
 ) error {
-	req := &featureproto.EnableFeatureRequest{
-		Id:                   autoOpsRule.FeatureId,
-		Command:              &featureproto.EnableFeatureCommand{},
-		EnvironmentNamespace: environmentNamespace,
-	}
 	if err := feature.Enable(); err != nil {
 		logger.Error(
 			"Failed to enable feature flag",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("featureId", req.Id),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("featureId", feature.Id),
+				zap.String("environmentNamespace", environmentNamespace),
 			)...,
 		)
+		return nil
+	}
+	if err := ftStorage.UpdateFeature(ctx, feature, environmentNamespace); err != nil {
 		return err
 	}
 	return nil
 }
 
+// If the flag is already disabled, we only print an error log.
+// Otherwise, the Operation state won't change to TRIGGERED, keeping in an infinite loop
+// trying to disable the flag.
 func disableFeature(
 	ctx context.Context,
+	ftStorage ftstorage.FeatureStorage,
 	environmentNamespace string,
-	autoOpsRule *domain.AutoOpsRule,
 	feature *ftdomain.Feature,
 	logger *zap.Logger,
 ) error {
@@ -96,6 +98,9 @@ func disableFeature(
 				zap.String("environmentNamespace", environmentNamespace),
 			)...,
 		)
+		return nil
+	}
+	if err := ftStorage.UpdateFeature(ctx, feature, environmentNamespace); err != nil {
 		return err
 	}
 	return nil

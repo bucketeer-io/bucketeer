@@ -1003,17 +1003,15 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		}
 		if err := executeAutoOpsRuleOperation(
 			ctx,
+			ftStorage,
 			req.EnvironmentNamespace,
-			autoOpsRule,
+			autoOpsRule.OpsType,
 			feature,
 			s.logger,
 			localizer,
 		); err != nil {
-			return err
-		}
-		if err := ftStorage.UpdateFeature(ctx, feature, req.EnvironmentNamespace); err != nil {
 			s.logger.Error(
-				"Failed to update feature flag",
+				"Failed to execute auto ops rule operation",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentNamespace", req.EnvironmentNamespace),
