@@ -9,6 +9,10 @@ namespace: default
 
 env:
   project:
+  profile: true
+  gcpEnabled: true
+  bigqueryEmulatorHost: 
+  pubsubEmulatorHost: 
   logLevel: info
   port: 9090
   metricsPort: 9002
@@ -91,3 +95,7 @@ service:
   type: ClusterIP
   clusterIP: None
   externalPort: 9000
+
+
+serviceAccount:
+  annotations: {}

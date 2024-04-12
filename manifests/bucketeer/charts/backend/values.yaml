@@ -7,6 +7,14 @@ fullnameOverride: "backend"
 namespace: default
 
 env:
+  cloudService:
+  profile: true
+  bucketeerTestEnabled:
+  gcpEnabled: true
+  bigqueryEmulatorHost:
+  mysqlMigrationUser:
+  mysqlMigrationPass:
+  pubsubEmulatorHost:
   project:
   mysqlUser:
   mysqlPass:

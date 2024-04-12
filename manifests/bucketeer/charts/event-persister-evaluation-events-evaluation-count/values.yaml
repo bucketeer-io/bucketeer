@@ -9,6 +9,9 @@ namespace: default
 
 env:
   project:
+  profile: true
+  gcpEnabled: true
+  pubsubEmulatorHost: 
   topic:
   subscription:
   logLevel: info

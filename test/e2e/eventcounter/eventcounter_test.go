@@ -16,6 +16,7 @@ package eventcounter
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -1838,7 +1839,11 @@ func sendHTTPTrack(t *testing.T, userID, goalID, tag string, value float64) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	client := &http.Client{}
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // ignore expired SSL certificates
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		t.Fatal(err)

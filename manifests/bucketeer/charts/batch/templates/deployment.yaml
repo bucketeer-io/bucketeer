@@ -53,6 +53,12 @@ spec:
           env:
             - name: BUCKETEER_BATCH_PROJECT
               value: "{{ .Values.env.project }}"
+            - name: BUCKETEER_BATCH_PROFILE
+              value: "{{.Values.env.profile}}"
+            - name: BUCKETEER_BATCH_GCP_TRACE_ENABLED
+              value: "{{.Values.env.gcpEnabled}}"
+            - name: PUBSUB_EMULATOR_HOST
+              value: "{{.Values.env.pubsubEmulatorHost}}"
             - name: BUCKETEER_BATCH_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_BATCH_NOTIFICATION_SERVICE

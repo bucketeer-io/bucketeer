@@ -44,6 +44,12 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["persister"]
           env:
+            - name: BUCKETEER_AUDIT_LOG_PROFILE
+              value: "{{.Values.env.profile}}"
+            - name: BUCKETEER_AUDIT_LOG_GCP_TRACE_ENABLED
+              value: "{{.Values.env.gcpEnabled}}"
+            - name: PUBSUB_EMULATOR_HOST
+              value: "{{.Values.env.pubsubEmulatorHost}}"
             - name: BUCKETEER_AUDIT_LOG_PROJECT
               value: "{{ .Values.env.project }}"
             - name: BUCKETEER_AUDIT_LOG_MYSQL_USER

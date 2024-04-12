@@ -255,3 +255,120 @@ e2e:
 .PHONY: update-copyright
 update-copyright:
 	./hack/update-copyright/update-copyright.sh
+
+
+#############################
+# dev container
+#############################
+
+# start minikube
+start-minikube: 
+	if [ $$(minikube status | grep -c "minikube start") -eq 1 ]; then \
+		make -C tools/dev setup-minikube; \
+	elif [ $$(minikube status | grep -c "Stopped") -gt 1 ]; then \
+		make -C tools/dev start-minikube; \
+	fi
+	sleep 5
+	make -C ./ modify-hosts
+	make -C ./ setup-bigquery-vault
+
+# modify hosts file to access api-gateway and web-gateway
+modify-hosts:
+	$(eval MINIKUBE_IP := $(shell minikube ip))
+	echo "$(MINIKUBE_IP)   web-gateway.bucketeer.org" | sudo tee -a /etc/hosts
+	echo "$(MINIKUBE_IP)   api-gateway.bucketeer.org" | sudo tee -a /etc/hosts
+
+# enable vault transit secret engine
+enable-vault-transit:
+	kubectl exec localenv-vault-0 -- vault secrets enable transit
+
+# create bigquery-emulator tables
+create-bigquery-emulator-tables:
+	go run ./hack/create-big-query-table create \
+		--bigquery-emulator=http://$$(minikube ip):31000 \
+		--no-gcp-trace-enabled \
+		--no-profile
+
+setup-bigquery-vault:
+	while [ "$$(kubectl get pods | grep localenv-bq | awk '{print $$3}')" != "Running" ] || [ "$$(kubectl get pods | grep localenv-vault-0 | awk '{print $$3}')" != "Running" ]; \
+	do \
+		sleep 5; \
+	done; \
+	make create-bigquery-emulator-tables
+	make enable-vault-transit
+
+# generate tls certificate
+generate-tls-certificate:
+	make -C tools/dev generate-tls-certificate
+
+# generate oauth key
+generate-oauth:
+	make -C tools/dev generate-oauth
+
+# create service cert secret in minikube
+service-cert-secret:
+	make -C tools/dev service-cert-secret
+
+# create oauth key secret in minikube
+oauth-key-secret:
+	make -C tools/dev oauth-key-secret
+
+# create github token secret in minikube
+generate-github-token:
+	make -C tools/dev generate-github-token
+
+
+# build go application docker image
+# please set the TAG env, eg: TAG=test make build-docker-images
+build-docker-images:
+	for APP in `ls bin`; do \
+		./tools/build/show-dockerfile.sh bin $$APP > Dockerfile-app-$$APP; \
+		IMAGE=`./tools/build/show-image-name.sh $$APP`; \
+		docker build -f Dockerfile-app-$$APP -t ghcr.io/bucketeer-io/bucketeer-$$IMAGE:${TAG} .; \
+		rm Dockerfile-app-$$APP; \
+	done
+
+
+# copy go application docker image to minikube
+# please keep the same TAG env as used in build-docker-images, eg: TAG=test make minikube-load-images
+minikube-load-images:
+	for APP in `ls bin`; do \
+		IMAGE=`./tools/build/show-image-name.sh $$APP`; \
+		docker save  ghcr.io/bucketeer-io/bucketeer-$$IMAGE:${TAG} -o $$IMAGE.tar; \
+		docker cp $$IMAGE.tar minikube:/home/docker; \
+		rm $$IMAGE.tar; \
+		minikube ssh "docker load -i /home/docker/$$IMAGE.tar"; \
+		minikube ssh "rm /home/docker/$$IMAGE.tar"; \
+	done
+
+SERVICES := api-gateway auditlog-persister backend batch event-persister-evaluation-events-dwh event-persister-evaluation-events-evaluation-count event-persister-evaluation-events-ops event-persister-goal-events-dwh event-persister-goal-events-ops experiment-calculator metrics-event-persister push-sender user-persister web-gateway web dex
+
+# Deploy Bucketeer to minikube
+deploy-service-to-minikube:
+	helm install ${SERVICE} manifests/bucketeer/charts/${SERVICE}/ --values manifests/bucketeer/charts/${SERVICE}/values.dev.yaml \
+	--set serviceToken.token=$$(cat tools/dev/cert/service-token)
+
+# Delete all the services from Minikube
+delete-all-services-from-minikube:
+	$(foreach var,$(SERVICES),helm uninstall $(var);)
+
+# Deploy All the services to minikube
+deploy-all-services-to-minikube:
+	$(foreach var,$(SERVICES),SERVICE=$(var) make deploy-service-to-minikube;)
+
+# bucketeer deploy
+deploy-bucketeer:
+	make -C ./ generate-tls-certificate
+	make -C ./ generate-oauth
+	make -C ./ service-cert-secret
+	make -C ./ oauth-key-secret
+	GITHUB_TOKEN=$(GITHUB_TOKEN) make -C ./ generate-github-token
+	ISSUER=$(ISSUER) \
+	EMAIL=$(EMAIL) \
+	OAUTH_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/oauth-private.pem \
+	SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
+	make generate-service-token
+	make -C ./ build-go
+	TAG=$(TAG) make -C ./ build-docker-images
+	TAG=$(TAG) make -C ./ minikube-load-images
+	make -C ./ deploy-all-services-to-minikube

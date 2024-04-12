@@ -1,0 +1,36 @@
+global:
+  image:
+    tag: test
+    imagePullSecrets:
+
+env:
+  gcpEnabled: false
+  profile: false
+  pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+  project: bucketeer-test
+  goalTopic: goal
+  evaluationTopic: evaluation
+  userTopic: user
+  metricsTopic: metrics
+  publishNumGoroutines: 200
+  publishTimeout: 1m
+  redis:
+    serverName: api-gateway
+    poolMaxIdle: 25
+    poolMaxActive: 25
+    addr: localenv-redis-headless.default.svc.cluster.local:6379
+tls:
+  bucketeerJP:
+    secrets:
+      - hosts:
+          - api-gateway.bucketeer.org
+        secretName: bucketeer-service-cert
+  service:
+    secret: bucketeer-service-cert
+    cert:
+    key:
+serviceToken:
+  secret:
+  token: 
+ingress:
+  host: api-gateway.bucketeer.org

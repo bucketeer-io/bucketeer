@@ -7,6 +7,9 @@ fullnameOverride: "user-persister"
 namespace: default
 
 env:
+  gcpEnabled: true
+  profile: true
+  pubsubEmulatorHost:
   project:
   mysqlUser:
   mysqlPass:

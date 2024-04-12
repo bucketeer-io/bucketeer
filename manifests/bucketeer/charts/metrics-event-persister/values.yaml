@@ -7,6 +7,9 @@ fullnameOverride: "metrics-event-persister"
 namespace: default
 
 env:
+  gcpEnabled: true
+  profile: true
+  pubsubEmulatorHost:
   project:
   topic:
   subscription:

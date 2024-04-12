@@ -49,6 +49,12 @@ spec:
           env:
             - name: BUCKETEER_EVENT_PERSISTER_PROJECT
               value: "{{ .Values.env.project }}"
+            - name: PUBSUB_EMULATOR_HOST
+              value: "{{.Values.env.pubsubEmulatorHost}}"
+            - name: BUCKETEER_EVENT_PERSISTER_GCP_TRACE_ENABLED
+              value: "{{.Values.env.gcpEnabled}}"
+            - name: BUCKETEER_EVENT_PERSISTER_PROFILE
+              value: "{{.Values.env.profile}}"
             - name: BUCKETEER_EVENT_PERSISTER_EXPERIMENT_SERVICE
               value: "{{ .Values.env.experimentService }}"
             - name: BUCKETEER_EVENT_PERSISTER_FEATURE_SERVICE
