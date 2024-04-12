@@ -9,8 +9,8 @@ namespace: default
 
 env:
   project:
-  profile: 
-  gcpEnabled: 
+  profile: true
+  gcpEnabled: true
   bigqueryEmulatorHost: 
   pubsubEmulatorHost: 
   logLevel: info

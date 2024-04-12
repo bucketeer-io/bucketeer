@@ -1,7 +1,7 @@
 fullnameOverride: "web-gateway"
 namespace: default
 env:
-  gcpEnabled:
+  gcpEnabled: true
 tls:
   bucketeerJP:
     secrets:

@@ -9,8 +9,8 @@ namespace: default
 
 env:
   logLevel: info
-  profile: 
-  gcpEnabled: 
+  profile: true
+  gcpEnabled: true
   pubsubEmulatorHost:
   # egress services
   featureService: localhost:9001

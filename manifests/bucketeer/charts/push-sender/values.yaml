@@ -7,8 +7,8 @@ fullnameOverride: "push-sender"
 namespace: default
 
 env:
-  gcpEnabled:
-  profile:
+  gcpEnabled: true
+  profile: true
   pubsubEmulatorHost:
   project:
   domainTopic:

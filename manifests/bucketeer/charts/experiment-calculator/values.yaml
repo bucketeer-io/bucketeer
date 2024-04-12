@@ -9,8 +9,8 @@ fullnameOverride: "experiment-calculator"
 namespace: default
 
 env:
-  gcpEnabled: 
-  profile: 
+  gcpEnabled: true
+  profile: true
   project:
   stanHost: localhost
   stanPort: 8080

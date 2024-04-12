@@ -8,9 +8,9 @@ namespace: default
 
 env:
   cloudService:
-  profile:
+  profile: true
   bucketeerTestEnabled:
-  gcpEnabled:
+  gcpEnabled: true
   bigqueryEmulatorHost:
   mysqlMigrationUser:
   mysqlMigrationPass:

@@ -7,8 +7,8 @@ fullnameOverride: "auditlog-persister"
 namespace: default
 
 env:
-  gcpEnabled:
-  profile:
+  gcpEnabled: true
+  profile: true
   pubsubEmulatorHost:
   project:
   mysqlUser:

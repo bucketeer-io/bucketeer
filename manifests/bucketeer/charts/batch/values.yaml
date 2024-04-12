@@ -8,8 +8,8 @@ namespace: default
 
 env:
   project:
-  profile:
-  gcpEnabled:
+  profile: true
+  gcpEnabled: true
   mysqlUser:
   mysqlPass:
   mysqlHost:

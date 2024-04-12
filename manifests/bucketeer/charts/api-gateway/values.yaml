@@ -5,8 +5,8 @@ fullnameOverride: "api-gateway"
 namespace: default
 env:
   project:
-  gcpEnabled:
-  profile:
+  gcpEnabled: true
+  profile: true
   pubsubEmulatorHost:
   goalTopic:
   evaluationTopic:
