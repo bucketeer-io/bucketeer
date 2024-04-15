@@ -14986,6 +14986,11 @@
                 "id": 2,
                 "name": "sdk_version",
                 "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "source_id",
+                "type": "bucketeer.event.client.SourceId"
               }
             ]
           },

@@ -864,6 +864,7 @@ func (s *grpcGatewayService) RegisterEvents(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.Any("events", req.Events),
+				zap.Any("sourceId", req.SourceId),
 				zap.String("sdkVersion", req.SdkVersion),
 			)...,
 		)
@@ -873,6 +874,7 @@ func (s *grpcGatewayService) RegisterEvents(
 		s.logger.Error("Failed to validate RegisterEvents request. Missing events.",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
+				zap.Any("sourceId", req.SourceId),
 				zap.String("sdkVersion", req.SdkVersion),
 			)...,
 		)
