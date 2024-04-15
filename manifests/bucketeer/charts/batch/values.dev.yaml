@@ -76,9 +76,6 @@ cronjob:
     - name: ops-progressive-rollout-watcher
       jobId: ProgressiveRolloutWatcher
       schedule: "* * * * *"
-    - name: domain-event-informer
-      jobId: DomainEventInformer
-      schedule: "* * * * *"
     - name: redis-counter-deleter
       jobId: RedisCounterDeleter
       schedule: "0 0 * * *"
