@@ -134,7 +134,7 @@ require (
 )
 
 replace (
-	github.com/bucketeer-io/bucketeer/proto v0.0.0 => ./proto // TODO: remove this line when the proto module is merged
+	github.com/bucketeer-io/bucketeer/proto v0.0.0 => ./proto
 	google.golang.org/grpc v1.36.0 => google.golang.org/grpc v1.29.1
 	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20191003035328-700b1226c0bd
 )
