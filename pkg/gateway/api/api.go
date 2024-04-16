@@ -31,6 +31,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
 
+	evaluation "github.com/bucketeer-io/bucketeer/evaluation"
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
@@ -262,7 +263,7 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		)
 		return
 	}
-	ueid := featuredomain.UserEvaluationsID(reqBody.User.Id, reqBody.User.Data, features)
+	ueid := evaluation.UserEvaluationsID(reqBody.User.Id, reqBody.User.Data, features)
 	if reqBody.UserEvaluationsID == ueid {
 		rest.ReturnSuccessResponse(
 			w,
@@ -665,10 +666,10 @@ func (s *gatewayService) evaluateFeatures(
 	features []*featureproto.Feature,
 	environmentId, tag string,
 ) (*featureproto.UserEvaluations, error) {
+	evaluator := evaluation.NewEvaluator()
 	mapIDs := make(map[string]struct{})
 	for _, f := range features {
-		feature := &featuredomain.Feature{Feature: f}
-		for _, id := range feature.ListSegmentIDs() {
+		for _, id := range evaluator.ListSegmentIDs(f) {
 			mapIDs[id] = struct{}{}
 		}
 	}
@@ -683,7 +684,7 @@ func (s *gatewayService) evaluateFeatures(
 		)
 		return nil, err
 	}
-	userEvaluations, err := featuredomain.EvaluateFeatures(features, user, mapSegmentUsers, tag)
+	userEvaluations, err := evaluator.EvaluateFeatures(features, user, mapSegmentUsers, tag)
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate",
@@ -991,8 +992,7 @@ pkg/gateway/api/api.go:829:47: cannot use ev
 (variable of type *"github.com/bucketeer-io/bucketeer/proto/event/client".GoalEvent)
 as protoreflect.ProtoMessage value in argument to protojson.Unmarshal:
 missing method ProtoReflect (typecheck)
-                        if err := protojson.Unmarshal(event.Event, ev); err != nil {
-                                                                   ^
+`if err := protojson.Unmarshal(event.Event, ev); err != nil {`
 */
 //nolint:typecheck
 func (s *gatewayService) getGoalEvent(ctx context.Context, event event) (*eventproto.GoalEvent, string, error) {
@@ -1020,8 +1020,7 @@ pkg/gateway/api/api.go:829:47: cannot use ev
 (variable of type *"github.com/bucketeer-io/bucketeer/proto/event/client".GoalEvent)
 as protoreflect.ProtoMessage value in argument to protojson.Unmarshal:
 missing method ProtoReflect (typecheck)
-                        if err := protojson.Unmarshal(event.Event, ev); err != nil {
-                                                                   ^
+`if err := protojson.Unmarshal(event.Event, ev); err != nil {`
 */
 //nolint:typecheck
 func (s *gatewayService) getEvaluationEvent(
@@ -1052,8 +1051,7 @@ pkg/gateway/api/api.go:829:47: cannot use ev
 (variable of type *"github.com/bucketeer-io/bucketeer/proto/event/client".GoalEvent)
 as protoreflect.ProtoMessage value in argument to protojson.Unmarshal:
 missing method ProtoReflect (typecheck)
-                        if err := protojson.Unmarshal(event.Event, ev); err != nil {
-                                                                   ^
+`if err := protojson.Unmarshal(event.Event, ev); err != nil {`
 */
 //nolint:typecheck
 func (s *gatewayService) getMetricsEvent(

@@ -27,6 +27,7 @@ import (
 	gmetadata "google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
+	evaluation "github.com/bucketeer-io/bucketeer/evaluation"
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
@@ -353,7 +354,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			UserEvaluationsId: "no_evaluations",
 		}, nil
 	}
-	ueid := featuredomain.UserEvaluationsID(req.User.Id, req.User.Data, filteredByTag)
+	ueid := evaluation.UserEvaluationsID(req.User.Id, req.User.Data, filteredByTag)
 	if req.UserEvaluationsId == ueid {
 		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationNone).Inc()
 		s.logger.Debug(
@@ -384,6 +385,7 @@ func (s *grpcGatewayService) GetEvaluations(
 		)
 		return nil, err
 	}
+	evaluator := evaluation.NewEvaluator()
 	var evaluations *featureproto.UserEvaluations
 	// FIXME Remove s.getEvaluations once all SDKs use UserEvaluationCondition.
 	// New SDKs always use UserEvaluationCondition.
@@ -393,7 +395,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationBadRequest).Inc()
 			return nil, ErrTagRequired
 		}
-		evaluations, err = featuredomain.EvaluateFeatures(
+		evaluations, err = evaluator.EvaluateFeatures(
 			activeFeatures,
 			req.User,
 			segmentUsersMap,
@@ -413,7 +415,7 @@ func (s *grpcGatewayService) GetEvaluations(
 		}
 		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationOld).Inc()
 	} else {
-		evaluations, err = featuredomain.EvaluateFeaturesByEvaluatedAt(
+		evaluations, err = evaluator.EvaluateFeaturesByEvaluatedAt(
 			features,
 			req.User,
 			segmentUsersMap,
@@ -530,7 +532,8 @@ func (s *grpcGatewayService) GetEvaluation(
 		)
 		return nil, err
 	}
-	evaluations, err := featuredomain.EvaluateFeatures(features, req.User, segmentUsersMap, req.Tag)
+	evaluator := evaluation.NewEvaluator()
+	evaluations, err := evaluator.EvaluateFeatures(features, req.User, segmentUsersMap, req.Tag)
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate",
@@ -581,7 +584,8 @@ func (s *grpcGatewayService) getTargetFeatures(fs []*featureproto.Feature, id st
 	if len(feature.Prerequisites) == 0 {
 		return []*featureproto.Feature{feature}, nil
 	}
-	return featuredomain.GetPrerequisiteDownwards([]*featureproto.Feature{feature}, fs)
+	evaluator := evaluation.NewEvaluator()
+	return evaluator.GetPrerequisiteDownwards([]*featureproto.Feature{feature}, fs)
 }
 
 func (*grpcGatewayService) findFeature(fs []*featureproto.Feature, id string) (*featureproto.Feature, error) {
@@ -757,10 +761,10 @@ func (s *grpcGatewayService) getSegmentUsersMap(
 	features []*featureproto.Feature,
 	environmentId string,
 ) (map[string][]*featureproto.SegmentUser, error) {
+	evaluator := evaluation.NewEvaluator()
 	mapIDs := make(map[string]struct{})
 	for _, f := range features {
-		feature := &featuredomain.Feature{Feature: f}
-		for _, id := range feature.ListSegmentIDs() {
+		for _, id := range evaluator.ListSegmentIDs(f) {
 			mapIDs[id] = struct{}{}
 		}
 	}

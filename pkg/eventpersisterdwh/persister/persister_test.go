@@ -27,10 +27,10 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 
+	"github.com/bucketeer-io/bucketeer/evaluation"
 	cachemock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
 	ecmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	ftmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
-	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
 	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"
@@ -311,7 +311,7 @@ func TestConvToEvaluationEvent(t *testing.T) {
 	t1 := time.Now()
 	environmentNamespace := "ns"
 	evaluation := &featureproto.Evaluation{
-		Id: featuredomain.EvaluationID(
+		Id: evaluation.EvaluationID(
 			"fid",
 			1,
 			"uid",

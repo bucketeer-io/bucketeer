@@ -21,6 +21,7 @@ import (
 	"testing"
 	"time"
 
+	evaluation "github.com/bucketeer-io/bucketeer/evaluation"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 
 	"github.com/golang/protobuf/proto"
@@ -36,7 +37,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
-	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
@@ -1090,8 +1090,8 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 	androidFeatures := features
 	userID := "user-id-0"
 	userMetadata := map[string]string{"b": "value-b", "c": "value-c", "a": "value-a", "d": "value-d"}
-	ueidFromAndroidFeatures := featuredomain.UserEvaluationsID(userID, nil, androidFeatures)
-	ueidWithDataFromAndroidFeatures := featuredomain.UserEvaluationsID(userID, userMetadata, androidFeatures)
+	ueidFromAndroidFeatures := evaluation.UserEvaluationsID(userID, nil, androidFeatures)
+	ueidWithDataFromAndroidFeatures := evaluation.UserEvaluationsID(userID, userMetadata, androidFeatures)
 
 	patterns := []struct {
 		desc                      string
@@ -1609,7 +1609,7 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 				Evaluations: &featureproto.UserEvaluations{
 					Evaluations: []*featureproto.Evaluation{
 						{
-							Id:             featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+							Id:             evaluation.EvaluationID("feature-id-1", int32(2), "user-id-1"),
 							UserId:         "user-id-1",
 							FeatureId:      "feature-id-1",
 							FeatureVersion: int32(2),
@@ -1705,7 +1705,7 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 				Evaluations: &featureproto.UserEvaluations{
 					Evaluations: []*featureproto.Evaluation{
 						{
-							Id:             featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+							Id:             evaluation.EvaluationID("feature-id-1", int32(2), "user-id-1"),
 							UserId:         "user-id-1",
 							FeatureId:      "feature-id-1",
 							FeatureVersion: int32(2),
@@ -1776,7 +1776,7 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 				Evaluations: &featureproto.UserEvaluations{
 					Evaluations: []*featureproto.Evaluation{
 						{
-							Id:             featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+							Id:             evaluation.EvaluationID("feature-id-1", int32(2), "user-id-1"),
 							UserId:         "user-id-1",
 							FeatureId:      "feature-id-1",
 							FeatureVersion: int32(2),
@@ -1871,7 +1871,7 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 				Evaluations: &featureproto.UserEvaluations{
 					Evaluations: []*featureproto.Evaluation{
 						{
-							Id:             featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+							Id:             evaluation.EvaluationID("feature-id-1", int32(2), "user-id-1"),
 							UserId:         "user-id-1",
 							FeatureId:      "feature-id-1",
 							FeatureVersion: int32(2),
@@ -1908,7 +1908,7 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 			} else {
 				assert.Equal(t, len(actual.Evaluations.Evaluations), 1, p.desc)
 				assert.Equal(t, p.expected.State, actual.State, p.desc)
-				assert.Equal(t, p.expected.Evaluations.Evaluations[0].Id, featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"), p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].Id, evaluation.EvaluationID("feature-id-1", int32(2), "user-id-1"), p.desc)
 				assert.Equal(t, p.expected.Evaluations.Evaluations[0].UserId, "user-id-1", p.desc)
 				assert.Equal(t, p.expected.Evaluations.Evaluations[0].FeatureId, "feature-id-1", p.desc)
 				assert.Equal(t, p.expected.Evaluations.Evaluations[0].FeatureVersion, int32(2), p.desc)
@@ -2022,7 +2022,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 				Evaluations: &featureproto.UserEvaluations{
 					Evaluations: []*featureproto.Evaluation{
 						{
-							Id:             featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+							Id:             evaluation.EvaluationID("feature-id-1", int32(2), "user-id-1"),
 							UserId:         "user-id-1",
 							FeatureId:      "feature-id-1",
 							FeatureVersion: int32(2),
@@ -2129,7 +2129,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 				Evaluations: &featureproto.UserEvaluations{
 					Evaluations: []*featureproto.Evaluation{
 						{
-							Id:             featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+							Id:             evaluation.EvaluationID("feature-id-1", int32(2), "user-id-1"),
 							UserId:         "user-id-1",
 							FeatureId:      "feature-id-1",
 							FeatureVersion: int32(2),
@@ -2234,7 +2234,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 				Evaluations: &featureproto.UserEvaluations{
 					Evaluations: []*featureproto.Evaluation{
 						{
-							Id:             featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+							Id:             evaluation.EvaluationID("feature-id-1", int32(2), "user-id-1"),
 							UserId:         "user-id-1",
 							FeatureId:      "feature-id-1",
 							FeatureVersion: int32(2),
@@ -2339,7 +2339,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 				Evaluations: &featureproto.UserEvaluations{
 					Evaluations: []*featureproto.Evaluation{
 						{
-							Id:             featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"),
+							Id:             evaluation.EvaluationID("feature-id-1", int32(2), "user-id-1"),
 							UserId:         "user-id-1",
 							FeatureId:      "feature-id-1",
 							FeatureVersion: int32(2),
@@ -2378,7 +2378,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 			} else {
 				assert.Equal(t, len(actual.Evaluations.Evaluations), 1, p.desc)
 				assert.Equal(t, p.expected.State, actual.State, p.desc)
-				assert.Equal(t, p.expected.Evaluations.Evaluations[0].Id, featuredomain.EvaluationID("feature-id-1", int32(2), "user-id-1"), p.desc)
+				assert.Equal(t, p.expected.Evaluations.Evaluations[0].Id, evaluation.EvaluationID("feature-id-1", int32(2), "user-id-1"), p.desc)
 				assert.Equal(t, p.expected.Evaluations.Evaluations[0].UserId, "user-id-1", p.desc)
 				assert.Equal(t, p.expected.Evaluations.Evaluations[0].FeatureId, "feature-id-1", p.desc)
 				assert.Equal(t, p.expected.Evaluations.Evaluations[0].FeatureVersion, int32(2), p.desc)
@@ -2635,7 +2635,7 @@ func TestGrpcGetEvaluation(t *testing.T) {
 			},
 			input: &gwproto.GetEvaluationRequest{Tag: "test", User: &userproto.User{Id: "user-id-2"}, FeatureId: "feature-id-2"},
 			expected: &featureproto.Evaluation{
-				Id:             featuredomain.EvaluationID("feature-id-2", int32(2), "user-id-2"),
+				Id:             evaluation.EvaluationID("feature-id-2", int32(2), "user-id-2"),
 				UserId:         "user-id-2",
 				FeatureId:      "feature-id-2",
 				FeatureVersion: int32(2),

@@ -53,13 +53,6 @@ var (
 	defaultOptions = options{
 		logger: zap.NewNop(),
 	}
-	evaluation = &featureproto.Evaluation{
-		FeatureId:      "feature-id",
-		FeatureVersion: 1,
-		UserId:         "user-id",
-		VariationId:    "variation-id",
-		VariationValue: "variation-value",
-	}
 )
 
 type dummyWebhookCryptoUtil struct{}

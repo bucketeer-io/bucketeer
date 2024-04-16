@@ -26,6 +26,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	evaluation "github.com/bucketeer-io/bucketeer/evaluation"
 	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	v2ao "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2"
 	experimentdomain "github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
@@ -1741,10 +1742,10 @@ func (s *FeatureService) evaluateFeatures(
 	tag string,
 	localizer locale.Localizer,
 ) (*featureproto.UserEvaluations, error) {
+	evaluator := evaluation.NewEvaluator()
 	mapIDs := make(map[string]struct{})
 	for _, f := range features {
-		feature := &domain.Feature{Feature: f}
-		for _, id := range feature.ListSegmentIDs() {
+		for _, id := range evaluator.ListSegmentIDs(f) {
 			mapIDs[id] = struct{}{}
 		}
 	}
@@ -1761,7 +1762,7 @@ func (s *FeatureService) evaluateFeatures(
 		)
 		return nil, err
 	}
-	userEvaluations, err := domain.EvaluateFeatures(features, user, mapSegmentUsers, tag)
+	userEvaluations, err := evaluator.EvaluateFeatures(features, user, mapSegmentUsers, tag)
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate",
