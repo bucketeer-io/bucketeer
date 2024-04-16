@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package domain
+package evaluation
 
 import (
 	"strconv"
@@ -98,7 +98,7 @@ func (c *clauseEvaluator) endsWith(targetValue string, values []string) bool {
 }
 
 func (c *clauseEvaluator) greater(targetValue string, values []string) bool {
-	floatTarget, floatValues, err := parseFloat(targetValue, values)
+	floatTarget, floatValues, err := c.parseFloat(targetValue, values)
 	if err == nil {
 		for _, value := range floatValues {
 			if floatTarget > value {
@@ -107,7 +107,7 @@ func (c *clauseEvaluator) greater(targetValue string, values []string) bool {
 		}
 		return false
 	}
-	semverTarget, semverValues, err := parseSemver(targetValue, values)
+	semverTarget, semverValues, err := c.parseSemver(targetValue, values)
 	if err == nil {
 		for _, value := range semverValues {
 			if semverTarget.GT(value) {
@@ -125,7 +125,7 @@ func (c *clauseEvaluator) greater(targetValue string, values []string) bool {
 }
 
 func (c *clauseEvaluator) greaterOrEqual(targetValue string, values []string) bool {
-	floatTarget, floatValues, err := parseFloat(targetValue, values)
+	floatTarget, floatValues, err := c.parseFloat(targetValue, values)
 	if err == nil {
 		for _, value := range floatValues {
 			if floatTarget >= value {
@@ -134,7 +134,7 @@ func (c *clauseEvaluator) greaterOrEqual(targetValue string, values []string) bo
 		}
 		return false
 	}
-	semverTarget, semverValues, err := parseSemver(targetValue, values)
+	semverTarget, semverValues, err := c.parseSemver(targetValue, values)
 	if err == nil {
 		for _, value := range semverValues {
 			if semverTarget.GTE(value) {
@@ -152,7 +152,7 @@ func (c *clauseEvaluator) greaterOrEqual(targetValue string, values []string) bo
 }
 
 func (c *clauseEvaluator) less(targetValue string, values []string) bool {
-	floatTarget, floatValues, err := parseFloat(targetValue, values)
+	floatTarget, floatValues, err := c.parseFloat(targetValue, values)
 	if err == nil {
 		for _, value := range floatValues {
 			if floatTarget < value {
@@ -161,7 +161,7 @@ func (c *clauseEvaluator) less(targetValue string, values []string) bool {
 		}
 		return false
 	}
-	semverTarget, semverValues, err := parseSemver(targetValue, values)
+	semverTarget, semverValues, err := c.parseSemver(targetValue, values)
 	if err == nil {
 		for _, value := range semverValues {
 			if semverTarget.LT(value) {
@@ -179,7 +179,7 @@ func (c *clauseEvaluator) less(targetValue string, values []string) bool {
 }
 
 func (c *clauseEvaluator) lessOrEqual(targetValue string, values []string) bool {
-	floatTarget, floatValues, err := parseFloat(targetValue, values)
+	floatTarget, floatValues, err := c.parseFloat(targetValue, values)
 	if err == nil {
 		for _, value := range floatValues {
 			if floatTarget <= value {
@@ -188,7 +188,7 @@ func (c *clauseEvaluator) lessOrEqual(targetValue string, values []string) bool 
 		}
 		return false
 	}
-	semverTarget, semverValues, err := parseSemver(targetValue, values)
+	semverTarget, semverValues, err := c.parseSemver(targetValue, values)
 	if err == nil {
 		for _, value := range semverValues {
 			if semverTarget.LTE(value) {
@@ -206,7 +206,7 @@ func (c *clauseEvaluator) lessOrEqual(targetValue string, values []string) bool 
 }
 
 func (c *clauseEvaluator) before(targetValue string, values []string) bool {
-	intTarget, intValues, err := parseInt(targetValue, values)
+	intTarget, intValues, err := c.parseInt(targetValue, values)
 	if err == nil {
 		for _, value := range intValues {
 			if intTarget < value {
@@ -218,7 +218,7 @@ func (c *clauseEvaluator) before(targetValue string, values []string) bool {
 }
 
 func (c *clauseEvaluator) after(targetValue string, values []string) bool {
-	intTarget, intValues, err := parseInt(targetValue, values)
+	intTarget, intValues, err := c.parseInt(targetValue, values)
 	if err == nil {
 		for _, value := range intValues {
 			if intTarget > value {
@@ -229,7 +229,7 @@ func (c *clauseEvaluator) after(targetValue string, values []string) bool {
 	return false
 }
 
-func parseInt(targetValue string, values []string) (int64, []int64, error) {
+func (c *clauseEvaluator) parseInt(targetValue string, values []string) (int64, []int64, error) {
 	intTarget, err := strconv.ParseInt(targetValue, 10, 64)
 	if err != nil {
 		return -1, nil, err
@@ -244,7 +244,7 @@ func parseInt(targetValue string, values []string) (int64, []int64, error) {
 	return intTarget, intValues, nil
 }
 
-func parseFloat(targetValue string, values []string) (float64, []float64, error) {
+func (c *clauseEvaluator) parseFloat(targetValue string, values []string) (float64, []float64, error) {
 	floatTarget, err := strconv.ParseFloat(targetValue, 64)
 	if err != nil {
 		return -1, nil, err
@@ -260,7 +260,7 @@ func parseFloat(targetValue string, values []string) (float64, []float64, error)
 	return floatTarget, floatValues, nil
 }
 
-func parseSemver(targetValue string, values []string) (semver.Version, []semver.Version, error) {
+func (c *clauseEvaluator) parseSemver(targetValue string, values []string) (semver.Version, []semver.Version, error) {
 	versionTarget, err := semver.Parse(targetValue)
 	if err != nil {
 		return semver.Version{}, nil, err
@@ -271,9 +271,6 @@ func parseSemver(targetValue string, values []string) (semver.Version, []semver.
 		if err == nil {
 			versionValues = append(versionValues, v)
 		}
-	}
-	if err != nil {
-		return semver.Version{}, nil, err
 	}
 	return versionTarget, versionValues, nil
 }

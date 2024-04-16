@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package domain
+package evaluation
 
 import (
 	"crypto/md5"
@@ -45,7 +45,7 @@ func (e *strategyEvaluator) Evaluate(
 		}
 		return findVariation(variationID, variations)
 	}
-	return nil, errUnsupportedStrategy
+	return nil, ErrUnsupportedStrategy
 }
 
 func (e *strategyEvaluator) rollout(
@@ -63,7 +63,7 @@ func (e *strategyEvaluator) rollout(
 			return strategy.Variations[i].Variation, nil
 		}
 	}
-	return "", errVariationNotFound
+	return "", ErrVariationNotFound
 }
 
 func (e *strategyEvaluator) bucket(userID string, featureID string, samplingSeed string) (float64, error) {

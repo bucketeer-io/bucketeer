@@ -22,18 +22,15 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
 
 const (
 	SecondsToStale         = 90 * 24 * 60 * 60 // 90 days
 	secondsToReEvaluateAll = 30 * 24 * 60 * 60 // 30 days
-	secondsForAdjustment   = 10                // 10 seconds
 )
 
 var (
 	errClauseNotFound                = errors.New("feature: clause not found")
-	errDefaultStrategyNotFound       = errors.New("feature: default strategy not found")
 	errClauseAlreadyExists           = errors.New("feature: clause already exists")
 	errRuleMustHaveAtLeastOneClause  = errors.New("feature: rule must have at least one clause")
 	errClauseMustHaveAtLeastOneValue = errors.New("feature: clause must have at least one value")
@@ -46,9 +43,6 @@ var (
 	errVariationTypeUnmatched        = errors.New("feature: variation value and type are unmatched")
 	errTagsMustHaveAtLeastOneTag     = errors.New("feature: tags must have at least one tag set")
 	errUnsupportedStrategy           = errors.New("feature: unsupported strategy")
-	errFeatureNotFound               = errors.New("feature: feature not found")
-	errPrerequisiteVariationNotFound = errors.New("feature: prerequisite variation not found")
-	ErrCycleExists                   = errors.New("feature: cycle exists in features")
 	errPrerequisiteNotFound          = errors.New("feature: prerequisite not found")
 	ErrAlreadyEnabled                = errors.New("feature: already enabled")
 	ErrAlreadyDisabled               = errors.New("feature: already disabled")
@@ -61,8 +55,6 @@ var (
 
 type Feature struct {
 	*feature.Feature
-	ruleEvaluator
-	strategyEvaluator
 }
 
 func NewFeature(
@@ -107,68 +99,6 @@ func NewFeature(
 		return nil, err
 	}
 	return f, nil
-}
-
-func (f *Feature) assignUser(
-	user *userproto.User,
-	segmentUsers []*feature.SegmentUser,
-	flagVariations map[string]string,
-) (*feature.Reason, *feature.Variation, error) {
-	for _, pf := range f.Prerequisites {
-		variation, ok := flagVariations[pf.FeatureId]
-		if !ok {
-			return nil, nil, errPrerequisiteVariationNotFound
-		}
-		if pf.VariationId != variation {
-			if f.OffVariation != "" {
-				variation, err := findVariation(f.OffVariation, f.Variations)
-				return &feature.Reason{Type: feature.Reason_PREREQUISITE}, variation, err
-			}
-		}
-	}
-	// It doesn't assign the user in case of the feature is disabled and OffVariation is not set
-	if !f.Enabled && f.OffVariation != "" {
-		variation, err := findVariation(f.OffVariation, f.Variations)
-		return &feature.Reason{Type: feature.Reason_OFF_VARIATION}, variation, err
-	}
-	// evaluate from top to bottom, return if one rule matches
-	// evaluate targeting rules
-	for i := range f.Targets {
-		if contains(user.Id, f.Targets[i].Users) {
-			variation, err := findVariation(f.Targets[i].Variation, f.Variations)
-			return &feature.Reason{Type: feature.Reason_TARGET}, variation, err
-		}
-	}
-	// evaluate ruleset
-	rule := f.ruleEvaluator.Evaluate(f.Rules, user, segmentUsers)
-	if rule != nil {
-		variation, err := f.strategyEvaluator.Evaluate(
-			rule.Strategy,
-			user.Id,
-			f.Variations,
-			f.Feature.Id,
-			f.Feature.SamplingSeed,
-		)
-		return &feature.Reason{
-			Type:   feature.Reason_RULE,
-			RuleId: rule.Id,
-		}, variation, err
-	}
-	// use default strategy
-	if f.DefaultStrategy == nil {
-		return nil, nil, errDefaultStrategyNotFound
-	}
-	variation, err := f.strategyEvaluator.Evaluate(
-		f.DefaultStrategy,
-		user.Id,
-		f.Variations,
-		f.Feature.Id,
-		f.Feature.SamplingSeed,
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-	return &feature.Reason{Type: feature.Reason_DEFAULT}, variation, nil
 }
 
 func findVariation(v string, vs []*feature.Variation) (*feature.Variation, error) {

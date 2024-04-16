@@ -25,6 +25,7 @@ import (
 	"testing"
 	"time"
 
+	evaluation "github.com/bucketeer-io/bucketeer/evaluation"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 
 	"github.com/stretchr/testify/assert"
@@ -38,7 +39,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
-	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
@@ -916,8 +916,8 @@ func TestGetEvaluationsUserEvaluationsID(t *testing.T) {
 	multiFeatures = append(multiFeatures, features3...)
 	userID := "user-id-0"
 	userMetadata := map[string]string{"b": "value-b", "c": "value-c", "a": "value-a", "d": "value-d"}
-	ueid := featuredomain.UserEvaluationsID(userID, nil, features)
-	ueidWithData := featuredomain.UserEvaluationsID(userID, userMetadata, features)
+	ueid := evaluation.UserEvaluationsID(userID, nil, features)
+	ueidWithData := evaluation.UserEvaluationsID(userID, userMetadata, features)
 
 	patterns := []struct {
 		desc                      string
@@ -994,12 +994,12 @@ func TestGetEvaluationsUserEvaluationsID(t *testing.T) {
 							Id:   userID,
 							Data: userMetadata,
 						},
-						UserEvaluationsID: featuredomain.UserEvaluationsID(userID, userMetadata, multiFeatures),
+						UserEvaluationsID: evaluation.UserEvaluationsID(userID, userMetadata, multiFeatures),
 					},
 				),
 			),
 			expected: &getEvaluationsResponse{
-				UserEvaluationsID: featuredomain.UserEvaluationsID(userID, userMetadata, multiFeatures),
+				UserEvaluationsID: evaluation.UserEvaluationsID(userID, userMetadata, multiFeatures),
 				Evaluations:       &featureproto.UserEvaluations{},
 			},
 			expectedErr:               nil,

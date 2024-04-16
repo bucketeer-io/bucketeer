@@ -12,6 +12,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.11
 	github.com/aws/aws-sdk-go-v2/service/kms v1.30.1
 	github.com/blang/semver v3.5.1+incompatible
+	github.com/bucketeer-io/bucketeer/evaluation v0.0.0
 	github.com/bucketeer-io/bucketeer/proto v0.0.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/go-gota/gota v0.12.0
@@ -134,6 +135,7 @@ require (
 )
 
 replace (
+	github.com/bucketeer-io/bucketeer/evaluation v0.0.0 => ./evaluation
 	github.com/bucketeer-io/bucketeer/proto v0.0.0 => ./proto
 	google.golang.org/grpc v1.36.0 => google.golang.org/grpc v1.29.1
 	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20191003035328-700b1226c0bd

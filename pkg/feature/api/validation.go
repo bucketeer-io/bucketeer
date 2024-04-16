@@ -20,8 +20,8 @@ import (
 
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
+	"github.com/bucketeer-io/bucketeer/evaluation"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
-	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	envproto "github.com/bucketeer-io/bucketeer/proto/environment"
@@ -1385,11 +1385,12 @@ func validateAddPrerequisite(
 	if err := validateVariationID(fs, p, localizer); err != nil {
 		return err
 	}
+	evaluator := evaluation.NewEvaluator()
 	prevPrerequisites := tarF.Prerequisites
 	tarF.Prerequisites = append(tarF.Prerequisites, p)
-	_, err := domain.TopologicalSort(fs)
+	_, err := evaluator.TopologicalSort(fs)
 	if err != nil {
-		if err == domain.ErrCycleExists {
+		if err == evaluation.ErrCycleExists {
 			dt, err := statusCycleExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "prerequisite"),

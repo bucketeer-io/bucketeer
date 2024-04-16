@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package domain
+package evaluation
 
 import (
 	"fmt"
@@ -21,21 +21,21 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/proto/feature"
+	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
 type UserEvaluations struct {
-	*feature.UserEvaluations
+	*ftproto.UserEvaluations
 }
 
 func NewUserEvaluations(
 	id string,
-	evaluations []*feature.Evaluation,
+	evaluations []*ftproto.Evaluation,
 	archivedFeaturesIds []string,
 	forceUpdate bool,
 ) *UserEvaluations {
 	now := time.Now().Unix()
-	return &UserEvaluations{&feature.UserEvaluations{
+	return &UserEvaluations{&ftproto.UserEvaluations{
 		Id:                 id,
 		Evaluations:        evaluations,
 		CreatedAt:          now,
@@ -44,7 +44,7 @@ func NewUserEvaluations(
 	}}
 }
 
-func UserEvaluationsID(userID string, userMetadata map[string]string, features []*feature.Feature) string {
+func UserEvaluationsID(userID string, userMetadata map[string]string, features []*ftproto.Feature) string {
 	sort.SliceStable(features, func(i, j int) bool {
 		return features[i].Id < features[j].Id
 	})
