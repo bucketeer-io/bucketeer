@@ -12,6 +12,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.11
 	github.com/aws/aws-sdk-go-v2/service/kms v1.30.1
 	github.com/blang/semver v3.5.1+incompatible
+	github.com/bucketeer-io/bucketeer/proto v0.0.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/go-gota/gota v0.12.0
 	github.com/go-redis/redis v6.15.9+incompatible
@@ -40,8 +41,7 @@ require (
 	gonum.org/v1/gonum v0.15.0
 	google.golang.org/api v0.172.0
 	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de
-	google.golang.org/genproto/googleapis/api v0.0.0-20240314234333-6e1732d8331c
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240401170217-c3f982113cda
 	google.golang.org/grpc v1.63.2
 	google.golang.org/protobuf v1.33.0
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
@@ -129,10 +129,12 @@ require (
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/tools v0.15.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240412170617-26222e5d3d56 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 replace (
+	github.com/bucketeer-io/bucketeer/proto v0.0.0 => ./proto
 	google.golang.org/grpc v1.36.0 => google.golang.org/grpc v1.29.1
 	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20191003035328-700b1226c0bd
 )
