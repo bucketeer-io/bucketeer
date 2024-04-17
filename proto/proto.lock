@@ -278,11 +278,15 @@
             "name": "APIKey.Role",
             "enum_fields": [
               {
-                "name": "SDK"
+                "name": "UNKNOWN"
               },
               {
-                "name": "SERVICE",
+                "name": "SDK_CLIENT",
                 "integer": 1
+              },
+              {
+                "name": "SDK_SERVER",
+                "integer": 2
               }
             ]
           }

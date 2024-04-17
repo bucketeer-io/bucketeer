@@ -567,7 +567,7 @@ func (s *gatewayService) checkRequest(
 	if err != nil {
 		return nil, err
 	}
-	if err := s.checkEnvironmentAPIKey(envAPIKey, accountproto.APIKey_SDK); err != nil {
+	if err := s.checkEnvironmentAPIKey(envAPIKey, accountproto.APIKey_SDK_CLIENT); err != nil {
 		return nil, err
 	}
 	return envAPIKey, nil
@@ -577,7 +577,9 @@ func (*gatewayService) checkEnvironmentAPIKey(
 	environmentAPIKey *accountproto.EnvironmentAPIKey,
 	role accountproto.APIKey_Role,
 ) error {
-	if environmentAPIKey.ApiKey.Role != role {
+	// TODO: Fix the condition after migration
+	// The role must be UNKNOWN or SDK_CLIENT until the migration is done
+	if environmentAPIKey.ApiKey.Role == accountproto.APIKey_SDK_SERVER {
 		return errBadRole
 	}
 	if environmentAPIKey.EnvironmentDisabled {

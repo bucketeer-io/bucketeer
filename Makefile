@@ -211,6 +211,7 @@ generate-service-token:
 		--no-profile \
 		--no-gcp-trace-enabled
 
+# FIXME: Change role to SDK_CLIENT after migration
 .PHONY: create-api-key
 create-api-key:
 	go run ./hack/create-api-key create \
@@ -218,7 +219,7 @@ create-api-key:
 		--web-gateway=${WEB_GATEWAY_URL}:443 \
 		--service-token=${SERVICE_TOKEN_PATH} \
 		--name=$$(date +%s) \
-		--role=SDK \
+		--role=UNKNOWN \
 		--output=${API_KEY_PATH} \
 		--environment-namespace=${ENVIRONMENT_NAMESPACE} \
 		--no-profile \

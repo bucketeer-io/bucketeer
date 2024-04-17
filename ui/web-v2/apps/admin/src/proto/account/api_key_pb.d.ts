@@ -44,8 +44,9 @@ export namespace APIKey {
   }
 
   export interface RoleMap {
-    SDK: 0;
-    SERVICE: 1;
+    UNKNOWN: 0;
+    SDK_CLIENT: 1;
+    SDK_SERVER: 2;
   }
 
   export const Role: RoleMap;

@@ -4583,7 +4583,7 @@ func (x *APIKeyCreatedEvent) GetRole() account.APIKey_Role {
 	if x != nil {
 		return x.Role
 	}
-	return account.APIKey_SDK
+	return account.APIKey_UNKNOWN
 }
 
 func (x *APIKeyCreatedEvent) GetDisabled() bool {

@@ -53,7 +53,7 @@ func TestAPIKeyHandle(t *testing.T) {
 		{
 			desc: "CreateAPIKeyCommand: success",
 			setup: func(h *apiKeyCommandHandler) {
-				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK)
+				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK_CLIENT)
 				require.NoError(t, err)
 				h.apiKey = a
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
@@ -64,7 +64,7 @@ func TestAPIKeyHandle(t *testing.T) {
 		{
 			desc: "ChangeAPIKeyNameCommand: success",
 			setup: func(h *apiKeyCommandHandler) {
-				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK)
+				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK_CLIENT)
 				require.NoError(t, err)
 				h.apiKey = a
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
@@ -75,7 +75,7 @@ func TestAPIKeyHandle(t *testing.T) {
 		{
 			desc: "EnableAPIKeyCommand: success",
 			setup: func(h *apiKeyCommandHandler) {
-				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK)
+				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK_CLIENT)
 				require.NoError(t, err)
 				h.apiKey = a
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
@@ -86,7 +86,7 @@ func TestAPIKeyHandle(t *testing.T) {
 		{
 			desc: "DisableAPIKeyCommand: success",
 			setup: func(h *apiKeyCommandHandler) {
-				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK)
+				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK_CLIENT)
 				require.NoError(t, err)
 				h.apiKey = a
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)

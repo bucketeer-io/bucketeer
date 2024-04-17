@@ -271,6 +271,8 @@ export const APIKeyIndexPage: FC = memo(() => {
         createAPIKey({
           environmentNamespace: currentEnvironment.id,
           name: data.name,
+          // TODO: Implement the `role` radio button in the create page
+          role: 1, // SDK_CLIENT
         })
       ).then(() => {
         setOpen(false);

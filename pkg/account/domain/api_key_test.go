@@ -24,10 +24,10 @@ import (
 )
 
 func TestNewAPIKey(t *testing.T) {
-	a, err := NewAPIKey("name", proto.APIKey_SDK)
+	a, err := NewAPIKey("name", proto.APIKey_SDK_CLIENT)
 	assert.NoError(t, err)
 	assert.Equal(t, "name", a.Name)
-	assert.Equal(t, proto.APIKey_SDK, a.Role)
+	assert.Equal(t, proto.APIKey_SDK_CLIENT, a.Role)
 }
 
 func TestGenerateKey(t *testing.T) {
@@ -37,14 +37,14 @@ func TestGenerateKey(t *testing.T) {
 }
 
 func TestRename(t *testing.T) {
-	a, err := NewAPIKey("name", proto.APIKey_SDK)
+	a, err := NewAPIKey("name", proto.APIKey_SDK_CLIENT)
 	assert.NoError(t, err)
 	a.Rename("test")
 	assert.Equal(t, "test", a.Name)
 }
 
 func TestAPIKeyEnable(t *testing.T) {
-	a, err := NewAPIKey("name", proto.APIKey_SDK)
+	a, err := NewAPIKey("name", proto.APIKey_SDK_CLIENT)
 	assert.NoError(t, err)
 	a.Disabled = true
 	a.Enable()
@@ -52,7 +52,7 @@ func TestAPIKeyEnable(t *testing.T) {
 }
 
 func TestAPIKeyDisable(t *testing.T) {
-	a, err := NewAPIKey("name", proto.APIKey_SDK)
+	a, err := NewAPIKey("name", proto.APIKey_SDK_CLIENT)
 	assert.NoError(t, err)
 	a.Disable()
 	assert.Equal(t, true, a.Disabled)

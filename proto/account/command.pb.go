@@ -524,7 +524,7 @@ func (x *CreateAPIKeyCommand) GetRole() APIKey_Role {
 	if x != nil {
 		return x.Role
 	}
-	return APIKey_SDK
+	return APIKey_UNKNOWN
 }
 
 type ChangeAPIKeyNameCommand struct {

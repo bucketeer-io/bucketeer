@@ -49,8 +49,9 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		serviceTokenPath:  cmd.Flag("service-token", "Path to service token file.").Required().String(),
 		webGatewayAddress: cmd.Flag("web-gateway", "Address of web-gateway.").Required().String(),
 		name:              cmd.Flag("name", "The name of key.").Required().String(),
-		role:              cmd.Flag("role", "The role of key.").Default("SDK").Enum("SDK", "SERVICE"),
-		output:            cmd.Flag("output", "Path of file to write api key.").Required().String(),
+		role: cmd.Flag(
+			"role", "The role of key.").Default("SDK_CLIENT").Enum("UNKNOWN", "SDK_CLIENT", "SDK_SERVER"),
+		output: cmd.Flag("output", "Path of file to write api key.").Required().String(),
 		environmentNamespace: cmd.Flag(
 			"environment-namespace",
 			"The environment namespace to store api key",
