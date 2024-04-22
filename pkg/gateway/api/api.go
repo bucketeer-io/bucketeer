@@ -577,9 +577,7 @@ func (*gatewayService) checkEnvironmentAPIKey(
 	environmentAPIKey *accountproto.EnvironmentAPIKey,
 	role accountproto.APIKey_Role,
 ) error {
-	// TODO: Fix the condition after migration
-	// The role must be UNKNOWN or SDK_CLIENT until the migration is done
-	if environmentAPIKey.ApiKey.Role == accountproto.APIKey_SDK_SERVER {
+	if environmentAPIKey.ApiKey.Role != role {
 		return errBadRole
 	}
 	if environmentAPIKey.EnvironmentDisabled {
