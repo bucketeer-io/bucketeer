@@ -88,7 +88,7 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 			req: &accountproto.CreateAPIKeyRequest{
 				Command: &accountproto.CreateAPIKeyCommand{
 					Name: "name",
-					Role: accountproto.APIKey_SDK,
+					Role: accountproto.APIKey_SDK_CLIENT,
 				},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
@@ -104,7 +104,7 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 			req: &accountproto.CreateAPIKeyRequest{
 				Command: &accountproto.CreateAPIKeyCommand{
 					Name: "name",
-					Role: accountproto.APIKey_SDK,
+					Role: accountproto.APIKey_SDK_CLIENT,
 				},
 			},
 			expectedErr: nil,

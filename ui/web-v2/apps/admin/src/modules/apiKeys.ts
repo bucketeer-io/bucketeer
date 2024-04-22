@@ -128,6 +128,7 @@ export const disableAPIKey = createAsyncThunk<
 export interface CreateAPIKeyParams {
   environmentNamespace: string;
   name: string;
+  role: APIKey.RoleMap[keyof APIKey.RoleMap];
 }
 
 export const createAPIKey = createAsyncThunk<
@@ -138,6 +139,7 @@ export const createAPIKey = createAsyncThunk<
   const request = new CreateAPIKeyRequest();
   const cmd = new CreateAPIKeyCommand();
   cmd.setName(params.name);
+  cmd.setRole(params.role);
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setCommand(cmd);
   await setupAuthToken();

@@ -244,8 +244,9 @@ proto.bucketeer.account.APIKey.serializeBinaryToWriter = function(message, write
  * @enum {number}
  */
 proto.bucketeer.account.APIKey.Role = {
-  SDK: 0,
-  SERVICE: 1
+  UNKNOWN: 0,
+  SDK_CLIENT: 1,
+  SDK_SERVER: 2
 };
 
 /**

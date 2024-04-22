@@ -1048,7 +1048,7 @@ func (s *grpcGatewayService) checkTrackRequest(
 		)
 		return nil, err
 	}
-	if err := checkEnvironmentAPIKey(envAPIKey, accountproto.APIKey_SDK); err != nil {
+	if err := checkEnvironmentAPIKey(envAPIKey, accountproto.APIKey_SDK_CLIENT); err != nil {
 		s.logger.Error("Failed to check environment API key",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -1087,7 +1087,7 @@ func (s *grpcGatewayService) checkRequest(ctx context.Context) (*accountproto.En
 		)
 		return nil, err
 	}
-	if err := checkEnvironmentAPIKey(envAPIKey, accountproto.APIKey_SDK); err != nil {
+	if err := checkEnvironmentAPIKey(envAPIKey, accountproto.APIKey_SDK_CLIENT); err != nil {
 		s.logger.Error("Failed to check environment API key",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -1218,7 +1218,9 @@ func getEnvironmentAPIKeyFromCache(
 }
 
 func checkEnvironmentAPIKey(environmentAPIKey *accountproto.EnvironmentAPIKey, role accountproto.APIKey_Role) error {
-	if environmentAPIKey.ApiKey.Role != role {
+	// TODO: Fix the condition after migration
+	// The role must be UNKNOWN or SDK_CLIENT until the migration is done
+	if environmentAPIKey.ApiKey.Role == accountproto.APIKey_SDK_SERVER {
 		return ErrBadRole
 	}
 	if environmentAPIKey.EnvironmentDisabled {

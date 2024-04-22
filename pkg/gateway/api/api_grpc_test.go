@@ -286,11 +286,11 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 				Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 				ApiKey: &accountproto.APIKey{
 					Id:       "id-0",
-					Role:     accountproto.APIKey_SERVICE,
+					Role:     accountproto.APIKey_SDK_SERVER,
 					Disabled: false,
 				},
 			},
-			inputRole: accountproto.APIKey_SDK,
+			inputRole: accountproto.APIKey_SDK_CLIENT,
 			expected:  ErrBadRole,
 		},
 		{
@@ -299,12 +299,12 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 				Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 				ApiKey: &accountproto.APIKey{
 					Id:       "id-0",
-					Role:     accountproto.APIKey_SDK,
+					Role:     accountproto.APIKey_SDK_CLIENT,
 					Disabled: false,
 				},
 				EnvironmentDisabled: true,
 			},
-			inputRole: accountproto.APIKey_SDK,
+			inputRole: accountproto.APIKey_SDK_CLIENT,
 			expected:  ErrDisabledAPIKey,
 		},
 		{
@@ -313,12 +313,12 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 				Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 				ApiKey: &accountproto.APIKey{
 					Id:       "id-0",
-					Role:     accountproto.APIKey_SDK,
+					Role:     accountproto.APIKey_SDK_CLIENT,
 					Disabled: true,
 				},
 				EnvironmentDisabled: false,
 			},
-			inputRole: accountproto.APIKey_SDK,
+			inputRole: accountproto.APIKey_SDK_CLIENT,
 			expected:  ErrDisabledAPIKey,
 		},
 		{
@@ -327,11 +327,11 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 				Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 				ApiKey: &accountproto.APIKey{
 					Id:       "id-0",
-					Role:     accountproto.APIKey_SDK,
+					Role:     accountproto.APIKey_SDK_CLIENT,
 					Disabled: false,
 				},
 			},
-			inputRole: accountproto.APIKey_SDK,
+			inputRole: accountproto.APIKey_SDK_CLIENT,
 			expected:  nil,
 		},
 	}
@@ -719,7 +719,7 @@ func TestGrpcTrack(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -806,7 +806,7 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -833,7 +833,7 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -850,7 +850,7 @@ func TestGrpcGetEvaluationsValidation(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -904,7 +904,7 @@ func TestGrpcGetEvaluationsZeroFeature(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -1109,7 +1109,7 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -1141,7 +1141,7 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -1175,7 +1175,7 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -1208,7 +1208,7 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -1239,7 +1239,7 @@ func TestGrpcGetEvaluationsUserEvaluationsID(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -1302,7 +1302,7 @@ func TestGrpcGetEvaluationsNoSegmentList(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -1458,7 +1458,7 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -1528,7 +1528,7 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -1639,7 +1639,7 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -1735,7 +1735,7 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -1806,7 +1806,7 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -1947,7 +1947,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -2054,7 +2054,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -2161,7 +2161,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -2266,7 +2266,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -2416,7 +2416,7 @@ func TestGrpcGetEvaluation(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -2483,7 +2483,7 @@ func TestGrpcGetEvaluation(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -2575,7 +2575,7 @@ func TestGrpcGetEvaluation(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -2755,7 +2755,7 @@ func TestGrcpRegisterEvents(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -2771,7 +2771,7 @@ func TestGrcpRegisterEvents(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -2793,7 +2793,7 @@ func TestGrcpRegisterEvents(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
@@ -2831,7 +2831,7 @@ func TestGrcpRegisterEvents(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
 							Id:       "id-0",
-							Role:     accountproto.APIKey_SDK,
+							Role:     accountproto.APIKey_SDK_CLIENT,
 							Disabled: false,
 						},
 					}, nil)
