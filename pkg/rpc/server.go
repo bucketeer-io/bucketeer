@@ -141,18 +141,16 @@ func (s *Server) setupRPC() {
 	if err != nil {
 		s.logger.Fatal("Failed to read credentials: %v", zap.Error(err))
 	}
-	interceptor := chainUnaryServerInterceptors(
+	interceptors := []grpc.UnaryServerInterceptor{
 		LogUnaryServerInterceptor(s.logger),
 		MetricsUnaryServerInterceptor(),
-	)
+	}
 	if s.verifier != nil {
-		interceptor = chainUnaryServerInterceptors(
-			interceptor,
-			AuthUnaryServerInterceptor(s.verifier))
+		interceptors = append(interceptors, AuthUnaryServerInterceptor(s.verifier))
 	}
 	s.rpcServer = grpc.NewServer(
 		grpc.Creds(creds),
-		grpc.UnaryInterceptor(interceptor),
+		grpc.ChainUnaryInterceptor(interceptors...),
 		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
 	)
 	for _, service := range s.services {
