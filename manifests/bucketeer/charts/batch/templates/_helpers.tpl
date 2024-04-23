@@ -39,6 +39,14 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 {{- end -}}
 
+{{- define "oauth-key-secret" -}}
+{{- if .Values.oauth.key.secret }}
+{{- printf "%s" .Values.oauth.key.secret -}}
+{{- else -}}
+{{ template "backend.fullname" . }}-oauth-key
+{{- end -}}
+{{- end -}}
+
 {{- define "service-token-secret" -}}
 {{- if .Values.serviceToken.secret }}
 {{- printf "%s" .Values.serviceToken.secret -}}

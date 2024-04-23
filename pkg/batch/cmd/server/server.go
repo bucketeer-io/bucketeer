@@ -56,6 +56,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/pkg/token"
 )
 
 const (
@@ -67,14 +68,17 @@ const (
 type server struct {
 	*kingpin.CmdClause
 	// Common
-	port             *int
-	project          *string
-	certPath         *string
-	keyPath          *string
-	serviceTokenPath *string
-	timezone         *string
-	refreshInterval  *time.Duration
-	webURL           *string
+	port               *int
+	project            *string
+	certPath           *string
+	keyPath            *string
+	serviceTokenPath   *string
+	timezone           *string
+	refreshInterval    *time.Duration
+	webURL             *string
+	oauthPublicKeyPath *string
+	oauthClientID      *string
+	oauthIssuer        *string
 	// MySQL
 	mysqlUser   *string
 	mysqlPass   *string
@@ -120,7 +124,16 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"refresh-interval",
 			"Interval between refreshing target objects.",
 		).Default("1m").Duration(),
-		webURL:      cmd.Flag("web-url", "Web console URL.").Required().String(),
+		webURL: cmd.Flag("web-url", "Web console URL.").Required().String(),
+		oauthPublicKeyPath: cmd.Flag(
+			"oauth-public-key",
+			"Path to public key used to verify oauth token.",
+		).Required().String(),
+		oauthClientID: cmd.Flag(
+			"oauth-client-id",
+			"The oauth clientID registered at dex.",
+		).Required().String(),
+		oauthIssuer: cmd.Flag("oauth-issuer", "The url of dex issuer.").Required().String(),
 		mysqlUser:   cmd.Flag("mysql-user", "MySQL user.").Required().String(),
 		mysqlPass:   cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
 		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
@@ -213,6 +226,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	*s.certPath = s.insertTelepresenceMountRoot(*s.certPath)
 
 	registerer := metrics.DefaultRegisterer()
+
+	verifier, err := token.NewVerifier(*s.oauthPublicKeyPath, *s.oauthIssuer, *s.oauthClientID)
+	if err != nil {
+		return err
+	}
 
 	mysqlClient, err := s.createMySQLClient(ctx, registerer, logger)
 	if err != nil {
@@ -505,6 +523,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	server := rpc.NewServer(service, *s.certPath, *s.keyPath,
 		"batch-server",
+		rpc.WithVerifier(verifier),
 		rpc.WithPort(*s.port),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),

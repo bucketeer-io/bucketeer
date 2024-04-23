@@ -39,6 +39,9 @@ spec:
         - name: service-token-secret
           secret:
             secretName: {{ template "service-token-secret" . }}
+        - name: oauth-key-secret
+          secret:
+            secretName: {{ template "oauth-key-secret" . }}
         - name: subscriber-config
           configMap:
             name: {{ template "batch-server.fullname" . }}-subscribers-config
@@ -115,6 +118,12 @@ spec:
               value: /usr/local/conf/processors.json
             - name: BUCKETEER_BATCH_KEY
               value: /usr/local/certs/service/tls.key
+            - name: BUCKETEER_BATCH_OAUTH_PUBLIC_KEY
+              value: /usr/local/oauth-key/public.pem
+            - name: BUCKETEER_BATCH_OAUTH_ISSUER
+              value: "{{ .Values.oauth.issuer }}"
+            - name: BUCKETEER_BATCH_OAUTH_CLIENT_ID
+              value: "{{ .Values.oauth.clientId }}"
             - name: BUCKETEER_BATCH_TIMEZONE
               value: "{{ .Values.env.timezone }}"
             - name: BUCKETEER_BATCH_PERSISTENT_REDIS_SERVER_NAME
@@ -143,6 +152,9 @@ spec:
               readOnly: true
             - name: subscriber-config
               mountPath: /usr/local/conf
+              readOnly: true
+            - name: oauth-key-secret
+              mountPath: /usr/local/oauth-key
               readOnly: true
           ports:
             - name: service

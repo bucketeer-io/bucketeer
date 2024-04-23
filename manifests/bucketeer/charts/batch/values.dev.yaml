@@ -50,6 +50,13 @@ tls:
 serviceToken:
   token:
 
+oauth:
+  key:
+    secret: bucketeer-oauth-key
+    public:
+  issuer: https://accounts.google.com
+  clientId: bucketeer
+
 cronjob:
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 1
