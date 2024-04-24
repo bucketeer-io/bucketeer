@@ -12526,6 +12526,11 @@
                 "name": "features",
                 "type": "Feature",
                 "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "id",
+                "type": "string"
               }
             ]
           },
@@ -13051,6 +13056,11 @@
                 "name": "users",
                 "type": "SegmentUser",
                 "is_repeated": true
+              },
+              {
+                "id": 3,
+                "name": "updated_at",
+                "type": "int64"
               }
             ]
           }

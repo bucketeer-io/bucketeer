@@ -142,6 +142,9 @@ export class Features extends jspb.Message {
   setFeaturesList(value: Array<Feature>): void;
   addFeatures(value?: Feature, index?: number): Feature;
 
+  getId(): string;
+  setId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Features.AsObject;
   static toObject(includeInstance: boolean, msg: Features): Features.AsObject;
@@ -155,6 +158,7 @@ export class Features extends jspb.Message {
 export namespace Features {
   export type AsObject = {
     featuresList: Array<Feature.AsObject>,
+    id: string,
   }
 }
 

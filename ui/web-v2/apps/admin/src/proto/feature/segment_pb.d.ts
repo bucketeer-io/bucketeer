@@ -138,6 +138,9 @@ export class SegmentUsers extends jspb.Message {
   setUsersList(value: Array<SegmentUser>): void;
   addUsers(value?: SegmentUser, index?: number): SegmentUser;
 
+  getUpdatedAt(): number;
+  setUpdatedAt(value: number): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): SegmentUsers.AsObject;
   static toObject(includeInstance: boolean, msg: SegmentUsers): SegmentUsers.AsObject;
@@ -152,6 +155,7 @@ export namespace SegmentUsers {
   export type AsObject = {
     segmentId: string,
     usersList: Array<SegmentUser.AsObject>,
+    updatedAt: number,
   }
 }
 
