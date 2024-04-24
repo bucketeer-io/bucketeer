@@ -85,6 +85,7 @@ func (c *segmentUserCacher) Run(ctx context.Context) error {
 			su := &ftproto.SegmentUsers{
 				SegmentId: seg.Id,
 				Users:     users,
+				UpdatedAt: seg.UpdatedAt,
 			}
 			// Update the cache by segment ID
 			if err := c.cache.Put(su, env.Id); err != nil {

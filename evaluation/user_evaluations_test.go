@@ -19,6 +19,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	proto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
@@ -91,5 +92,47 @@ func TestSortMapKeys(t *testing.T) {
 	for _, p := range patterns {
 		keys := sortMapKeys(p.input)
 		assert.Equal(t, p.expected, keys, p.desc)
+	}
+}
+
+func TestGenerateFeaturesID(t *testing.T) {
+	patterns := []struct {
+		desc     string
+		input    []*ftproto.Feature
+		expected string
+	}{
+		{
+			desc:     "nil",
+			input:    nil,
+			expected: "14695981039346656037",
+		},
+		{
+			desc: "success: single",
+			input: []*ftproto.Feature{
+				{
+					Id:      "id-1",
+					Version: 1,
+				},
+			},
+			expected: "5476413260388599211",
+		},
+		{
+			desc: "success: multiple",
+			input: []*ftproto.Feature{
+				{
+					Id:      "id-1",
+					Version: 1,
+				},
+				{
+					Id:      "id-2",
+					Version: 2,
+				},
+			},
+			expected: "17283374094628184689",
+		},
+	}
+	for _, p := range patterns {
+		id := GenerateFeaturesID(p.input)
+		assert.Equal(t, p.expected, id, p.desc)
 	}
 }
