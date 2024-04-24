@@ -216,6 +216,7 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 		)
 		return nil, err
 	}
+	requestTotal.WithLabelValues(envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.Environment.Id, methodTrack, "").Inc()
 	goalEvent := &eventproto.GoalEvent{
 		GoalId:    req.Goalid,
 		UserId:    req.Userid,

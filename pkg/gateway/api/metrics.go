@@ -28,6 +28,7 @@ const (
 	methodGetEvaluations = "GetEvaluations"
 	methodGetEvaluation  = "GetEvaluation"
 	methodRegisterEvents = "RegisterEvent"
+	methodTrack          = "Track"
 
 	typeFeatures      = "Features"
 	typeSegmentUsers  = "SegmentUsers"
