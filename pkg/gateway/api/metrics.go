@@ -94,7 +94,7 @@ var (
 			Subsystem: "gateway",
 			Name:      "api_request_total",
 			Help:      "Total number of request",
-		}, []string{"organization_id", "project_id", "environment_id", "method"})
+		}, []string{"organization_id", "project_id", "environment_id", "method", "source_id"})
 	// TODO: Remove after deleting api-gateway REST server
 	restCacheCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
