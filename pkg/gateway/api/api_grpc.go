@@ -315,6 +315,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	}
 	projectID := envAPIKey.ProjectId
 	environmentId := envAPIKey.Environment.Id
+	requestTotal.WithLabelValues(envAPIKey.Environment.OrganizationId, projectID, environmentId, methodGetEvaluations).Inc()
 	if err := s.validateGetEvaluationsRequest(req); err != nil {
 		s.logger.Error("Failed to validate GetEvaluations request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -490,6 +491,7 @@ func (s *grpcGatewayService) GetEvaluation(
 		)
 		return nil, err
 	}
+	requestTotal.WithLabelValues(envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.Environment.Id, methodGetEvaluation).Inc()
 	if err := s.validateGetEvaluationRequest(req); err != nil {
 		s.logger.Error("Failed to validate GetEvaluation request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -874,6 +876,7 @@ func (s *grpcGatewayService) RegisterEvents(
 		)
 		return nil, err
 	}
+	requestTotal.WithLabelValues(envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.Environment.Id, methodRegisterEvents).Inc()
 	if len(req.Events) == 0 {
 		s.logger.Error("Failed to validate RegisterEvents request. Missing events.",
 			log.FieldsFromImcomingContext(ctx).AddFields(

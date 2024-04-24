@@ -25,6 +25,10 @@ import (
 const (
 	callerGatewayService = "GatewayService"
 
+	methodGetEvaluations = "GetEvaluations"
+	methodGetEvaluation  = "GetEvaluation"
+	methodRegisterEvents = "RegisterEvent"
+
 	typeFeatures      = "Features"
 	typeSegmentUsers  = "SegmentUsers"
 	typeAPIKey        = "APIKey"
@@ -84,6 +88,13 @@ var (
 			Name:      "api_evaluations_total",
 			Help:      "Total number of evaluations",
 		}, []string{"project_id", "environment_namespace", "tag", "evaluation_type"})
+	requestTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "api_request_total",
+			Help:      "Total number of request",
+		}, []string{"organization_id", "project_id", "environment_id", "method"})
 	// TODO: Remove after deleting api-gateway REST server
 	restCacheCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -165,6 +176,7 @@ func registerMetrics(r metrics.Registerer) {
 			cacheCounter,
 			eventCounter,
 			evaluationsCounter,
+			requestTotal,
 			sdkGetEvaluationsLatencyHistogram,
 			sdkGetEvaluationsSizeHistogram,
 			sdkTimeoutErrorCounter,
