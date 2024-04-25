@@ -945,7 +945,8 @@ proto.bucketeer.feature.SegmentUsers.toObject = function(includeInstance, msg) {
   var f, obj = {
     segmentId: jspb.Message.getFieldWithDefault(msg, 1, ""),
     usersList: jspb.Message.toObjectList(msg.getUsersList(),
-    proto.bucketeer.feature.SegmentUser.toObject, includeInstance)
+    proto.bucketeer.feature.SegmentUser.toObject, includeInstance),
+    updatedAt: jspb.Message.getFieldWithDefault(msg, 3, 0)
   };
 
   if (includeInstance) {
@@ -991,6 +992,10 @@ proto.bucketeer.feature.SegmentUsers.deserializeBinaryFromReader = function(msg,
       reader.readMessage(value,proto.bucketeer.feature.SegmentUser.deserializeBinaryFromReader);
       msg.addUsers(value);
       break;
+    case 3:
+      var value = /** @type {number} */ (reader.readInt64());
+      msg.setUpdatedAt(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1033,6 +1038,13 @@ proto.bucketeer.feature.SegmentUsers.serializeBinaryToWriter = function(message,
       2,
       f,
       proto.bucketeer.feature.SegmentUser.serializeBinaryToWriter
+    );
+  }
+  f = message.getUpdatedAt();
+  if (f !== 0) {
+    writer.writeInt64(
+      3,
+      f
     );
   }
 };
@@ -1091,6 +1103,24 @@ proto.bucketeer.feature.SegmentUsers.prototype.addUsers = function(opt_value, op
  */
 proto.bucketeer.feature.SegmentUsers.prototype.clearUsersList = function() {
   return this.setUsersList([]);
+};
+
+
+/**
+ * optional int64 updated_at = 3;
+ * @return {number}
+ */
+proto.bucketeer.feature.SegmentUsers.prototype.getUpdatedAt = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.feature.SegmentUsers} returns this
+ */
+proto.bucketeer.feature.SegmentUsers.prototype.setUpdatedAt = function(value) {
+  return jspb.Message.setProto3IntField(this, 3, value);
 };
 
 

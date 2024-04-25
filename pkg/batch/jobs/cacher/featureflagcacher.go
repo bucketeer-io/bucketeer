@@ -20,6 +20,7 @@ import (
 
 	"go.uber.org/zap"
 
+	evaluation "github.com/bucketeer-io/bucketeer/evaluation"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
@@ -71,7 +72,11 @@ func (c *featureFlagCacher) Run(ctx context.Context) error {
 			c.logger.Error("Failed to list features", zap.String("environmentId", env.Id))
 			return err
 		}
-		if err := c.cache.Put(&ftproto.Features{Features: features}, env.Id); err != nil {
+		fts := &ftproto.Features{
+			Id:       evaluation.GenerateFeaturesID(features),
+			Features: features,
+		}
+		if err := c.cache.Put(fts, env.Id); err != nil {
 			c.logger.Error("Failed to cache features", zap.String("environmentId", env.Id))
 			continue
 		}

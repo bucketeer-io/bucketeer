@@ -57,4 +57,5 @@ message SegmentUser {
 message SegmentUsers {
   string segment_id = 1;
   repeated SegmentUser users = 2;
+  int64 updated_at = 3;
 }

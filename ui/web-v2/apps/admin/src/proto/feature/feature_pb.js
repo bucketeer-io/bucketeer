@@ -1070,7 +1070,8 @@ proto.bucketeer.feature.Features.prototype.toObject = function(opt_includeInstan
 proto.bucketeer.feature.Features.toObject = function(includeInstance, msg) {
   var f, obj = {
     featuresList: jspb.Message.toObjectList(msg.getFeaturesList(),
-    proto.bucketeer.feature.Feature.toObject, includeInstance)
+    proto.bucketeer.feature.Feature.toObject, includeInstance),
+    id: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
   if (includeInstance) {
@@ -1112,6 +1113,10 @@ proto.bucketeer.feature.Features.deserializeBinaryFromReader = function(msg, rea
       reader.readMessage(value,proto.bucketeer.feature.Feature.deserializeBinaryFromReader);
       msg.addFeatures(value);
       break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setId(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1147,6 +1152,13 @@ proto.bucketeer.feature.Features.serializeBinaryToWriter = function(message, wri
       1,
       f,
       proto.bucketeer.feature.Feature.serializeBinaryToWriter
+    );
+  }
+  f = message.getId();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
     );
   }
 };
@@ -1187,6 +1199,24 @@ proto.bucketeer.feature.Features.prototype.addFeatures = function(opt_value, opt
  */
 proto.bucketeer.feature.Features.prototype.clearFeaturesList = function() {
   return this.setFeaturesList([]);
+};
+
+
+/**
+ * optional string id = 2;
+ * @return {string}
+ */
+proto.bucketeer.feature.Features.prototype.getId = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.Features} returns this
+ */
+proto.bucketeer.feature.Features.prototype.setId = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 

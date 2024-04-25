@@ -57,6 +57,7 @@ message Feature {
 
 message Features {
   repeated Feature features = 1;
+  string id = 2;
 }
 
 message Tag {

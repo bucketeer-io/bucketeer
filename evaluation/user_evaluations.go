@@ -69,3 +69,14 @@ func sortMapKeys(data map[string]string) []string {
 	sort.Strings(keys)
 	return keys
 }
+
+func GenerateFeaturesID(features []*ftproto.Feature) string {
+	sort.SliceStable(features, func(i, j int) bool {
+		return features[i].Id < features[j].Id
+	})
+	h := fnv.New64a()
+	for _, feature := range features {
+		fmt.Fprintf(h, "%s:%d", feature.Id, feature.Version)
+	}
+	return strconv.FormatUint(h.Sum64(), 10)
+}
