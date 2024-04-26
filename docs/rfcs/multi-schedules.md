@@ -27,13 +27,13 @@ It is possible to delete uncompleted schedules.
 ### Stop
 It is possible to stop a schedule that has already started.
 * Validation
-  * Schedules that have already been completed cannot be stoped.
+  * Schedules that have already been completed cannot be stopped.
 
 ## Implementation
 
-### Strage
+### Storage
 
-* Change "auto_ops_rule" table definition.
+* Change `auto_ops_rule` table definition.
 
 ```sql
       CREATE TABLE `auto_ops_rule` (
@@ -58,11 +58,11 @@ It is possible to stop a schedule that has already started.
 Table explanation:\
 `ops_type`: Currently it held `Enable` or `Disable`, but it has been changed to a column that manages the type of `AutoOperation` such as `Schedule` and `Event Rate`. Change the original information to be managed by `ActionType` in each `clauses`.\
 `status`: Added management of schedule progress (waiting, running, completed, stopped).\
-`triggered_at`: Delete as progress can be managed with “status”.\
+`triggered_at`: Delete as progress can be managed with `status`.\
 `stopped_by`: Added to manage schedule stop reasons.\
-`stopped_at`: Added to manage stopped date and time.\
+`stopped_at`: Added to manage stopped date and time.
 
-Migrations explanation:\
+Migrations explanation:
 1. Add "ActionType" to `clauses` Json data based on `op_type`.
 2. Change `ops_type` to `Schedule` or `Event Rate` based on the Json data of `clauses`.
 3. Update `status` based on `triggered_at` and `stopped_at`.\
