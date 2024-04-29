@@ -11,11 +11,7 @@ import {
 } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
 
-import imgBlockRight from '../assets/img-block_left.png';
-import imgBlockLeft from '../assets/img-block_left.png';
-import logo from '../assets/logo.png';
 import { NotFound } from '../components/NotFound';
-import { Select } from '../components/Select';
 import { SideMenu } from '../components/SideMenu';
 import { Toasts } from '../components/Toasts';
 import { GOOGLE_TAG_MANAGER_ID } from '../config';
@@ -33,10 +29,11 @@ import {
   PAGE_PATH_NEW,
   PAGE_PATH_ROOT,
   PAGE_PATH_ACCOUNTS,
-  PAGE_PATH_SETTINGS
+  PAGE_PATH_SETTINGS,
+  PAGE_PATH_AUTH_LOGIN
 } from '../constants/routing';
 import { AppState } from '../modules';
-import { hasToken, setupAuthToken } from '../modules/auth';
+import { hasToken } from '../modules/auth';
 import {
   fetchMe,
   setCurrentEnvironment,
@@ -48,7 +45,7 @@ import { fetchMyOrganizations } from '../modules/myOrganization';
 import { Organization } from '../proto/environment/organization_pb';
 import {
   getOrganizationId,
-  settOrganizationId
+  setOrganizationId
 } from '../storage/organizationId';
 import { AppDispatch } from '../store';
 
@@ -57,6 +54,9 @@ import { AdminIndexPage } from './admin';
 import { APIKeyIndexPage } from './apiKey';
 import { AuditLogIndexPage } from './auditLog';
 import { AuthCallbackPage } from './auth';
+import Login from './auth/login';
+import Password from './auth/password';
+import SelectOrganization from './auth/selectOrganization';
 import { ExperimentIndexPage } from './experiment';
 import { FeatureIndexPage } from './feature';
 import { FeatureDetailPage } from './feature/detail';
@@ -84,6 +84,7 @@ export const App: FC = memo(() => {
         path={PAGE_PATH_AUTH_CALLBACK}
         component={AuthCallbackPage}
       />
+      <Route exact path={PAGE_PATH_AUTH_LOGIN} component={Password} />
       <Route path={PAGE_PATH_ROOT} component={Root} />
     </Switch>
   );
@@ -100,37 +101,44 @@ export const Root: FC = memo(() => {
   const history = useHistory();
 
   const token = hasToken();
+
+  const [isInitialLoading, setIsInitialLoading] = useState(token);
+
   const handleChangePageKey = useCallback(() => {
     setPageKey(uuid());
   }, [setPageKey]);
 
   useEffect(() => {
-    if (!token) {
-      dispatch(setupAuthToken());
-      return;
-    }
+    if (token) {
+      const organizationId = getOrganizationId();
 
-    const organizationId = getOrganizationId();
-    if (organizationId) {
-      dispatch(fetchMe({ organizationId }));
-    } else {
-      dispatch(fetchMyOrganizations());
+      if (organizationId) {
+        dispatch(fetchMe({ organizationId })).then(() =>
+          setIsInitialLoading(false)
+        );
+      } else {
+        dispatch(fetchMyOrganizations()).then(() => setIsInitialLoading(false));
+      }
     }
   }, [token]);
 
   useEffect(() => {
     if (myOrganization.length === 1) {
-      settOrganizationId(myOrganization[0].id);
+      setOrganizationId(myOrganization[0].id);
       dispatch(fetchMe({ organizationId: myOrganization[0].id }));
     }
   }, [myOrganization]);
 
   const handleSubmit = () => {
-    settOrganizationId(selectedOrganization.value);
+    setOrganizationId(selectedOrganization.value);
     dispatch(fetchMe({ organizationId: selectedOrganization.value })).then(() =>
       history.push(PAGE_PATH_ROOT)
     );
   };
+
+  if (isInitialLoading) {
+    return <div className="spinner mt-4 mx-auto" />;
+  }
 
   if (me.isLogin) {
     return (
@@ -156,65 +164,18 @@ export const Root: FC = memo(() => {
   }
   if (token && myOrganization.length > 1) {
     return (
-      <div className="flex flex-col items-center justify-center h-full bg-[#ece6fb]">
-        <img
-          src={imgBlockLeft}
-          alt="img block left"
-          className="absolute left-[-10%] top-[-50%] z-0 w-[1000px] h-[1000px]"
-        />
-        <img
-          src={imgBlockRight}
-          alt="img block right"
-          className="absolute right-[-10%] bottom-[-50%] z-0 w-[1000px] h-[1000px]"
-        />
-        <div className="p-6 w-full z-10 flex justify-center">
-          <div className="flex flex-col lg:flex-row rounded-[14px] shadow-lg w-full lg:w-[900px] h-[400px]">
-            <div className="flex-1 flex items-center justify-center bg-primary rounded-l-2xl">
-              <img src={logo} alt="bucketeer logo" />
-            </div>
-            <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-r-2xl">
-              <div>
-                <h2 className="font-medium">Select your Organization</h2>
-                <div className="flex space-x-2 mt-2">
-                  <div className="w-56">
-                    <Select
-                      placeholder="Select your organization"
-                      options={myOrganization.map((org) => ({
-                        label: org.name,
-                        value: org.id
-                      }))}
-                      onChange={(o) => setSelectedOrganization(o)}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    className="btn-submit"
-                    disabled={!selectedOrganization}
-                    onClick={handleSubmit}
-                  >
-                    Submit
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="mt-4">
-          <p className="text-primary font">
-            ©2023 The Bucketeer Authors All Rights Reserved.{' '}
-            <a
-              href="https://github.com/bucketeer-io/bucketeer/blob/master/LICENSE"
-              target="_blank"
-              className="underline"
-            >
-              Privacy Policy
-            </a>
-          </p>
-        </div>
-      </div>
+      <SelectOrganization
+        options={myOrganization.map((org) => ({
+          label: org.name,
+          value: org.id
+        }))}
+        onChange={(o) => setSelectedOrganization(o)}
+        onSubmit={handleSubmit}
+        isSubmitBtnDisabled={!selectedOrganization}
+      />
     );
   }
-  return null;
+  return <Login />;
 });
 
 export const AdminRoot: FC = memo(() => {

@@ -7,7 +7,13 @@ import {
   GetAuthCodeURLRequest,
   GetAuthCodeURLResponse,
   RefreshTokenRequest,
-  RefreshTokenResponse
+  RefreshTokenResponse,
+  GetAuthenticationURLRequest,
+  GetAuthenticationURLResponse,
+  ExchangeBucketeerTokenRequest,
+  ExchangeBucketeerTokenResponse,
+  RefreshBucketeerTokenRequest,
+  RefreshBucketeerTokenResponse
 } from '../proto/auth/service_pb';
 import {
   AuthServiceClient,
@@ -62,6 +68,33 @@ export function getAuthCodeURL(
   );
 }
 
+export interface GetAuthenticationResult {
+  request: GetAuthenticationURLRequest;
+  response: GetAuthenticationURLResponse;
+}
+
+export function getAuthenticationURL(
+  request: GetAuthenticationURLRequest
+): Promise<GetAuthenticationResult> {
+  return new Promise(
+    (resolve: (result: GetAuthenticationResult) => void, reject): void => {
+      client.getAuthenticationURL(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new AuthServiceError(extractErrorMessage(error), request, error)
+            );
+          } else {
+            resolve({ request, response });
+          }
+        }
+      );
+    }
+  );
+}
+
 export interface ExchangeTokenResult {
   request: ExchangeTokenRequest;
   response: ExchangeTokenResponse;
@@ -85,6 +118,33 @@ export function exchangeToken(
   );
 }
 
+export interface ExchangeBucketeerTokenResult {
+  request: ExchangeBucketeerTokenRequest;
+  response: ExchangeBucketeerTokenResponse;
+}
+
+export function exchangeBucketeerToken(
+  request: ExchangeBucketeerTokenRequest
+): Promise<ExchangeBucketeerTokenResult> {
+  return new Promise(
+    (resolve: (result: ExchangeBucketeerTokenResult) => void, reject): void => {
+      client.exchangeBucketeerToken(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new AuthServiceError(extractErrorMessage(error), request, error)
+            );
+          } else {
+            resolve({ request, response });
+          }
+        }
+      );
+    }
+  );
+}
+
 export interface RefreshTokenResult {
   request: RefreshTokenRequest;
   response: RefreshTokenResponse;
@@ -104,6 +164,33 @@ export function refreshToken(
           resolve({ request, response });
         }
       });
+    }
+  );
+}
+
+export interface RefreshBucketeerTokenResult {
+  request: RefreshBucketeerTokenRequest;
+  response: RefreshBucketeerTokenResponse;
+}
+
+export function refreshBucketeerToken(
+  request: RefreshBucketeerTokenRequest
+): Promise<RefreshBucketeerTokenResult> {
+  return new Promise(
+    (resolve: (result: RefreshBucketeerTokenResult) => void, reject): void => {
+      client.refreshBucketeerToken(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new AuthServiceError(extractErrorMessage(error), request, error)
+            );
+          } else {
+            resolve({ request, response });
+          }
+        }
+      );
     }
   );
 }

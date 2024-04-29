@@ -24,7 +24,7 @@ const successResponse = (response: grpc.UnaryOutput<jspb.Message>): boolean => {
 export const getMetaData = (): MetaData => {
   const token = getToken();
   return {
-    authorization: `bearer ${token ? token.idToken : ''}`,
+    authorization: `bearer ${token ? token.accessToken : ''}`,
     'accept-language': getSelectedLanguage()
   };
 };
@@ -32,7 +32,7 @@ export const getMetaData = (): MetaData => {
 export const getMetaDataForClient = (): BrowserHeaders => {
   const token = getToken();
   return new BrowserHeaders({
-    authorization: `bearer ${token ? token.idToken : ''}`,
+    authorization: `bearer ${token ? token.accessToken : ''}`,
     'accept-language': getSelectedLanguage()
   });
 };
