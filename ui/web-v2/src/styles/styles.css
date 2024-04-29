@@ -94,3 +94,7 @@ h1 {
 .tab-item.active {
   @apply border-primary text-primary;
 }
+
+.spinner {
+  @apply w-6 h-6 border-4 border-t-primary rounded-full animate-spin;
+}

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useHistory } from 'react-router-dom';
 
 import { AppState } from '../../modules';
-import { exchangeTokenFromUrl, hasToken } from '../../modules/auth';
+import { exchangeBucketeerTokenFromUrl, hasToken } from '../../modules/auth';
 import { AppDispatch } from '../../store';
 
 export const AuthCallbackPage: FC = memo(() => {
@@ -14,7 +14,7 @@ export const AuthCallbackPage: FC = memo(() => {
 
   useEffect(() => {
     const query = location.search;
-    dispatch(exchangeTokenFromUrl(query));
+    dispatch(exchangeBucketeerTokenFromUrl(query));
   }, [dispatch]);
 
   useEffect(() => {
@@ -23,9 +23,5 @@ export const AuthCallbackPage: FC = memo(() => {
     }
   }, [loading]);
 
-  return (
-    <div className="flex justify-center items-center p-3">
-      <div className="w-6 h-6 border-4 border-t-primary rounded-full animate-spin" />
-    </div>
-  );
+  return <div className="spinner mx-auto mt-4" />;
 });
