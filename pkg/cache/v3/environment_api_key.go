@@ -26,9 +26,8 @@ import (
 )
 
 const (
-	environmentAPIKeyKind             = "environment_apikey"
-	environmentAPIKeyTTL              = 1 * time.Minute
-	EnvironmentAPIKeyEvictionInterval = 10 * time.Second
+	environmentAPIKeyKind = "environment_apikey"
+	environmentAPIKeyTTL  = time.Duration(0)
 )
 
 type EnvironmentAPIKeyCache interface {

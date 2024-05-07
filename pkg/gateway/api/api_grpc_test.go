@@ -91,7 +91,7 @@ func TestWithLogger(t *testing.T) {
 
 func TestNewGrpcGatewayService(t *testing.T) {
 	t.Parallel()
-	g := NewGrpcGatewayService(nil, nil, nil, nil, nil, nil, nil)
+	g := NewGrpcGatewayService(nil, nil, nil, nil, nil, nil)
 	assert.IsType(t, &grpcGatewayService{}, g)
 }
 
@@ -209,7 +209,6 @@ func TestGrpcGetEnvironmentAPIKey(t *testing.T) {
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey:      &accountproto.APIKey{Id: "id-0"},
 					}}, nil)
-				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Put(gomock.Any()).Return(nil)
 			},
 			ctx: metadata.NewIncomingContext(context.TODO(), metadata.MD{
 				"authorization": []string{"test-key"},

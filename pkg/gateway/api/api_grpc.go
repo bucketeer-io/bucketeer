@@ -151,7 +151,6 @@ func NewGrpcGatewayService(
 	ep publisher.Publisher,
 	up publisher.Publisher,
 	redisV3Cache cache.MultiGetCache,
-	inMemoryCache cache.Cache,
 	opts ...Option,
 ) rpc.Service {
 	options := defaultOptions
@@ -169,7 +168,7 @@ func NewGrpcGatewayService(
 		userPublisher:          up,
 		featuresCache:          cachev3.NewFeaturesCache(redisV3Cache),
 		segmentUsersCache:      cachev3.NewSegmentUsersCache(redisV3Cache),
-		environmentAPIKeyCache: cachev3.NewEnvironmentAPIKeyCache(inMemoryCache),
+		environmentAPIKeyCache: cachev3.NewEnvironmentAPIKeyCache(redisV3Cache),
 		opts:                   &options,
 		logger:                 options.logger.Named("api_grpc"),
 	}
@@ -1140,13 +1139,6 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 			if err != nil {
 				return nil, err
 			}
-			// Put cache
-			putEnvironmentAPIKeyCache(
-				ctx,
-				envAPIKey,
-				s.environmentAPIKeyCache,
-				s.logger,
-			)
 			return envAPIKey, nil
 		},
 	)
@@ -1195,23 +1187,6 @@ func getEnvironmentAPIKey(
 		return nil, ErrInternal
 	}
 	return resp.EnvironmentApiKey, nil
-}
-
-func putEnvironmentAPIKeyCache(
-	ctx context.Context,
-	envAPIKey *accountproto.EnvironmentAPIKey,
-	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache,
-	logger *zap.Logger,
-) {
-	if err := environmentAPIKeyCache.Put(envAPIKey); err != nil {
-		logger.Error(
-			"Failed to cache environment APIKey",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentNamespace", envAPIKey.Environment.Id),
-			)...,
-		)
-	}
 }
 
 func getEnvironmentAPIKeyFromCache(

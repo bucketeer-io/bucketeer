@@ -71,7 +71,6 @@ func NewGatewayService(
 	up publisher.Publisher,
 	mp publisher.Publisher,
 	redisV3Cache cache.MultiGetCache,
-	inMemoryCache cache.Cache,
 	opts ...Option,
 ) *gatewayService {
 	options := defaultOptions
@@ -90,7 +89,7 @@ func NewGatewayService(
 		metricsPublisher:       mp,
 		featuresCache:          cachev3.NewFeaturesCache(redisV3Cache),
 		segmentUsersCache:      cachev3.NewSegmentUsersCache(redisV3Cache),
-		environmentAPIKeyCache: cachev3.NewEnvironmentAPIKeyCache(inMemoryCache),
+		environmentAPIKeyCache: cachev3.NewEnvironmentAPIKeyCache(redisV3Cache),
 		opts:                   &options,
 		logger:                 options.logger.Named("api"),
 	}
