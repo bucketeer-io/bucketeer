@@ -49,3 +49,17 @@ func (mr *MockMAUStorageMockRecorder) UpsertMAU(ctx, event, environmentNamespace
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertMAU", reflect.TypeOf((*MockMAUStorage)(nil).UpsertMAU), ctx, event, environmentNamespace)
 }
+
+// UpsertMAUs mocks base method.
+func (m *MockMAUStorage) UpsertMAUs(ctx context.Context, events []*service.UserEvent, environmentNamespace string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertMAUs", ctx, events, environmentNamespace)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpsertMAUs indicates an expected call of UpsertMAUs.
+func (mr *MockMAUStorageMockRecorder) UpsertMAUs(ctx, events, environmentNamespace interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertMAUs", reflect.TypeOf((*MockMAUStorage)(nil).UpsertMAUs), ctx, events, environmentNamespace)
+}

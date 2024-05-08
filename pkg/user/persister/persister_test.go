@@ -17,16 +17,21 @@ package persister
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/pkg/log"
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
+	ecproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/service"
 )
 
@@ -149,4 +154,120 @@ func newPersisterWithMock(
 		opts:        defaultOptions,
 		logger:      logger,
 	}
+}
+
+func TestHandleChunk(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	now := time.Now()
+	uuid, err := uuid.NewUUID()
+	require.NoError(t, err)
+	aMap := generatePullerMessages(t, 2, "env-1")
+	bMap := generatePullerMessages(t, 3, "env-2")
+
+	patterns := []struct {
+		desc, environmentNamespace string
+		setup                      func(*persister)
+		input                      map[string]*puller.Message
+		expected                   error
+	}{
+		{
+			desc:                 "upsert mau error",
+			environmentNamespace: "env1",
+			setup: func(p *persister) {
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil).Times(2)
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(errors.New("internal")).Times(2)
+			},
+			input:    mergeMap(t, aMap, bMap),
+			expected: errors.New("internal"),
+		},
+		{
+			desc:                 "upsert success",
+			environmentNamespace: "env1",
+			setup: func(p *persister) {
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil).Times(2)
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil).Times(2)
+			},
+			input:    mergeMap(t, aMap, bMap),
+			expected: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			pst := newPersisterWithMock(t, mockController, now, uuid)
+			if p.setup != nil {
+				p.setup(pst)
+			}
+			pst.handleChunk(p.input)
+		})
+	}
+}
+
+func generatePullerMessages(
+	t *testing.T,
+	size int,
+	environmentNamespace string,
+) map[string]*puller.Message {
+	t.Helper()
+	messages := make(map[string]*puller.Message)
+	for i := 0; i < size; i++ {
+		userEvent := generateUserEvent(t, environmentNamespace)
+		msg := generatePullerMessage(t, userEvent)
+		messages[msg.ID] = msg
+	}
+	return messages
+}
+
+func generatePullerMessage(t *testing.T, userEvent *eventproto.UserEvent) *puller.Message {
+	t.Helper()
+	ue, err := ptypes.MarshalAny(userEvent)
+	if err != nil {
+		t.Fatalf("Failed to marshal any user event: %v", err)
+	}
+	id, err := uuid.NewUUID()
+	if err != nil {
+		t.Fatalf("Failed to generate UUID: %v", err)
+	}
+	ev := &ecproto.Event{
+		Id:                   id.String(),
+		Event:                ue,
+		EnvironmentNamespace: userEvent.EnvironmentNamespace,
+	}
+	data, err := proto.Marshal(ev)
+	if err != nil {
+		t.Fatalf("Failed to marshal message: %v", err)
+	}
+	msg := &puller.Message{
+		ID:   fmt.Sprintf("message-id-%s", id.String()),
+		Data: data,
+		Nack: func() {},
+		Ack:  func() {},
+	}
+	return msg
+}
+
+func generateUserEvent(t *testing.T, environmentNamespace string) *eventproto.UserEvent {
+	t.Helper()
+	id, err := uuid.NewUUID()
+	if err != nil {
+		t.Fatalf("Failed to generate UUID: %v", err)
+	}
+	return &eventproto.UserEvent{
+		EnvironmentNamespace: environmentNamespace,
+		UserId:               fmt.Sprintf("user-id-%s", id),
+		LastSeen:             time.Now().Unix(),
+	}
+}
+
+func mergeMap(t *testing.T, a, b map[string]*puller.Message) map[string]*puller.Message {
+	t.Helper()
+	for k, v := range b {
+		a[k] = v
+	}
+	return a
 }
