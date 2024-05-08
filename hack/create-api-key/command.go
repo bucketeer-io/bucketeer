@@ -17,7 +17,7 @@ package main
 import (
 	"context"
 	"errors"
-	"io/ioutil"
+	"os"
 	"time"
 
 	"go.uber.org/zap"
@@ -83,7 +83,7 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 		logger.Error("Failed to create api key", zap.Error(err))
 		return err
 	}
-	if err := ioutil.WriteFile(*c.output, []byte(resp.ApiKey.Id), 0644); err != nil {
+	if err := os.WriteFile(*c.output, []byte(resp.ApiKey.Id), 0644); err != nil {
 		logger.Error("Failed to write key to file", zap.Error(err), zap.String("output", *c.output))
 		return err
 	}

@@ -218,7 +218,7 @@ create-api-key:
 		--web-gateway=${WEB_GATEWAY_URL}:443 \
 		--service-token=${SERVICE_TOKEN_PATH} \
 		--name=$$(date +%s) \
-		--role=SDK_CLIENT \
+		--role=${API_KEY_ROLE} \
 		--output=${API_KEY_PATH} \
 		--environment-namespace=${ENVIRONMENT_NAMESPACE} \
 		--no-profile \
@@ -245,6 +245,7 @@ e2e:
 		-web-gateway-port=443 \
 		-web-gateway-cert=${WEB_GATEWAY_CERT_PATH} \
 		-api-key=${API_KEY_PATH} \
+		-api-key-server=${API_KEY_SERVER_PATH} \
 		-gateway-addr=${GATEWAY_URL} \
 		-gateway-port=443 \
 		-gateway-cert=${GATEWAY_CERT_PATH} \
