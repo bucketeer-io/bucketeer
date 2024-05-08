@@ -18,14 +18,20 @@ package v2
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	esproto "github.com/bucketeer-io/bucketeer/proto/event/service"
 )
 
+const (
+	batchSize = 1000
+)
+
 type MAUStorage interface {
 	UpsertMAU(ctx context.Context, event *esproto.UserEvent, environmentNamespace string) error
+	UpsertMAUs(ctx context.Context, events []*esproto.UserEvent, environmentNamespace string) error
 }
 
 // mysqlMAUStorage is the temporal implementation.
@@ -66,6 +72,80 @@ func (s *mysqlMAUStorage) UpsertMAU(ctx context.Context, event *esproto.UserEven
 		event.LastSeen,
 		event.LastSeen,
 		environmentNamespace,
+	)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *mysqlMAUStorage) UpsertMAUs(
+	ctx context.Context,
+	events []*esproto.UserEvent,
+	environmentNamespace string,
+) error {
+	// Upsert the events in batches
+	for i := 0; i < len(events); i += batchSize {
+		j := i + batchSize
+		if j > len(events) {
+			j = len(events)
+		}
+		if err := s.upsertMAUs(
+			ctx,
+			events[i:j],
+			environmentNamespace,
+		); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *mysqlMAUStorage) upsertMAUs(
+	ctx context.Context,
+	users []*esproto.UserEvent,
+	environmentNamespace string,
+) error {
+	var query strings.Builder
+	query.WriteString(`
+		INSERT INTO mau (
+			user_id,
+			yearmonth,
+			source_id,
+			event_count,
+			created_at,
+			updated_at,
+			environment_namespace
+		) VALUES
+	`)
+	args := []interface{}{}
+	for i, event := range users {
+		if i != 0 {
+			query.WriteString(",")
+		}
+		t := time.Unix(event.LastSeen, 0)
+		yearMonth := fmt.Sprintf("%d%02d", t.Year(), t.Month())
+		query.WriteString(" (?, ?, ?, ?, ?, ?, ?)")
+		args = append(
+			args,
+			event.UserId,
+			yearMonth,
+			event.SourceId,
+			1,
+			event.LastSeen,
+			event.LastSeen,
+			environmentNamespace,
+		)
+	}
+	query.WriteString(`
+		ON DUPLICATE KEY UPDATE
+		event_count = event_count + 1,
+		updated_at = VALUES(updated_at)
+	`)
+	_, err := s.qe.ExecContext(
+		ctx,
+		query.String(),
+		args...,
 	)
 	if err != nil {
 		return err

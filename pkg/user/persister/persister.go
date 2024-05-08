@@ -213,42 +213,58 @@ func (p *persister) runWorker() error {
 }
 
 func (p *persister) handleChunk(chunk map[string]*puller.Message) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	defer cancel()
+	events := make(map[string][]*eventproto.UserEvent)
+	messages := make(map[string][]*puller.Message)
 	for _, msg := range chunk {
-		event, err := p.unmarshalMessage(msg)
-		if err != nil {
-			handledCounter.WithLabelValues(codes.BadMessage.String()).Inc()
+		// Extract the user event
+		event := p.extractUserEvent(msg)
+		if event == nil {
 			continue
 		}
-		if !p.validateEvent(event) {
-			handledCounter.WithLabelValues(codes.BadMessage.String()).Inc()
-			continue
+		// Append events per environment
+		listEvents, ok := events[event.EnvironmentNamespace]
+		if ok {
+			events[event.EnvironmentNamespace] = append(listEvents, event)
+		} else {
+			events[event.EnvironmentNamespace] = []*eventproto.UserEvent{event}
 		}
-		ok, repeatable := p.upsert(event)
-		if !ok {
-			if repeatable {
-				msg.Nack()
-				handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
+		// Append PubSub messages per environment
+		listMessages, ok := messages[event.EnvironmentNamespace]
+		if ok {
+			messages[event.EnvironmentNamespace] = append(listMessages, msg)
+		} else {
+			messages[event.EnvironmentNamespace] = []*puller.Message{msg}
+		}
+	}
+	// Upsert events
+	if len(events) > 0 {
+		for environmentNamespace, events := range events {
+			// Upsert events per environment
+			err := p.upsertMAUs(ctx, events, environmentNamespace)
+			if err != nil {
+				p.nackMessages(messages[environmentNamespace])
 			} else {
-				msg.Ack()
-				handledCounter.WithLabelValues(codes.NonRepeatableError.String()).Inc()
+				p.ackMessages(messages[environmentNamespace])
 			}
-			continue
 		}
-		msg.Ack()
-		handledCounter.WithLabelValues(codes.OK.String()).Inc()
 	}
 }
 
-func (p *persister) validateEvent(event *eventproto.UserEvent) bool {
-	if event.UserId == "" {
-		p.logger.Warn("Message contains an empty User Id", zap.Any("event", event))
-		return false
+func (p *persister) extractUserEvent(message *puller.Message) *eventproto.UserEvent {
+	event, err := p.unmarshalMessage(message)
+	if err != nil {
+		message.Nack()
+		handledCounter.WithLabelValues(codes.BadMessage.String()).Inc()
+		return nil
 	}
-	if event.LastSeen == 0 {
-		p.logger.Warn("Message's LastSeen is zero", zap.Any("event", event))
-		return false
+	if !p.validateEvent(event) {
+		message.Nack()
+		handledCounter.WithLabelValues(codes.BadMessage.String()).Inc()
+		return nil
 	}
-	return true
+	return event
 }
 
 func (p *persister) unmarshalMessage(msg *puller.Message) (*eventproto.UserEvent, error) {
@@ -265,21 +281,53 @@ func (p *persister) unmarshalMessage(msg *puller.Message) (*eventproto.UserEvent
 	return &userEvent, err
 }
 
-func (p *persister) upsert(event *eventproto.UserEvent) (ok, repeatable bool) {
-	if err := p.upsertMAU(event); err != nil {
-		p.logger.Error(
-			"Failed to store the mau",
-			zap.Error(err),
-			zap.String("environmentNamespace", event.EnvironmentNamespace),
-			zap.String("userId", event.UserId),
-			zap.String("tag", event.Tag),
-		)
-		return false, true
+func (p *persister) validateEvent(event *eventproto.UserEvent) bool {
+	if event.UserId == "" {
+		p.logger.Warn("Message contains an empty User Id", zap.Any("event", event))
+		return false
 	}
-	return true, false
+	if event.LastSeen == 0 {
+		p.logger.Warn("Message's LastSeen is zero", zap.Any("event", event))
+		return false
+	}
+	return true
 }
 
-func (p *persister) upsertMAU(event *eventproto.UserEvent) error {
-	s := ustorage.NewMysqlMAUStorage(p.mysqlClient)
-	return s.UpsertMAU(p.ctx, event, event.EnvironmentNamespace)
+func (p *persister) nackMessages(messages []*puller.Message) {
+	for _, msg := range messages {
+		msg.Nack()
+		handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
+	}
+}
+
+func (p *persister) ackMessages(messages []*puller.Message) {
+	for _, msg := range messages {
+		msg.Ack()
+		handledCounter.WithLabelValues(codes.OK.String()).Inc()
+	}
+}
+
+func (p *persister) upsertMAUs(
+	ctx context.Context,
+	events []*eventproto.UserEvent,
+	environmentNamespace string,
+) error {
+	tx, err := p.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		p.logger.Error("Failed to begin transaction", zap.Error(err))
+		return err
+	}
+	err = p.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		s := ustorage.NewMysqlMAUStorage(p.mysqlClient)
+		return s.UpsertMAUs(ctx, events, environmentNamespace)
+	})
+	if err != nil {
+		p.logger.Error("Failed to upsert user events",
+			zap.Error(err),
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.Int("size", len(events)),
+		)
+		return err
+	}
+	return nil
 }
