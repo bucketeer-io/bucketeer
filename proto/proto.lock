@@ -14865,6 +14865,47 @@
             ]
           },
           {
+            "name": "GetFeatureFlagsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "tag",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "features_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "source_id",
+                "type": "bucketeer.event.client.SourceId"
+              },
+              {
+                "id": 4,
+                "name": "sdk_version",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetFeatureFlagsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "features_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "features",
+                "type": "bucketeer.feature.Feature",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
             "name": "GetEvaluationsRequest",
             "fields": [
               {
@@ -15142,6 +15183,26 @@
                 ]
               },
               {
+                "name": "GetFeatureFlags",
+                "in_type": "GetFeatureFlagsRequest",
+                "out_type": "GetFeatureFlagsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/get_feature_flags"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
                 "name": "RegisterEvents",
                 "in_type": "RegisterEventsRequest",
                 "out_type": "RegisterEventsResponse",
@@ -15189,6 +15250,9 @@
           },
           {
             "path": "proto/feature/evaluation.proto"
+          },
+          {
+            "path": "proto/feature/feature.proto"
           },
           {
             "path": "proto/event/client/event.proto"
