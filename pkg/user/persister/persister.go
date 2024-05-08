@@ -319,17 +319,14 @@ func (p *persister) upsertMAUs(
 	}
 	err = p.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		s := ustorage.NewMysqlMAUStorage(p.mysqlClient)
-		if err := s.UpsertMAUs(ctx, events, environmentNamespace); err != nil {
-			p.logger.Error("Failed to upsert user events",
-				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
-				zap.Int("size", len(events)),
-			)
-			return err
-		}
-		return nil
+		return s.UpsertMAUs(ctx, events, environmentNamespace)
 	})
 	if err != nil {
+		p.logger.Error("Failed to upsert user events",
+			zap.Error(err),
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.Int("size", len(events)),
+		)
 		return err
 	}
 	return nil
