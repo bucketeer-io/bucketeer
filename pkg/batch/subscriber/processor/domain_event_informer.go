@@ -78,7 +78,7 @@ func (d domainEventInformer) Process(ctx context.Context, msgChan <-chan *puller
 func (d domainEventInformer) handleMessage(msg *puller.Message) {
 	if id := msg.Attributes["id"]; id == "" {
 		msg.Ack()
-		handledCounter.WithLabelValues(codes.MissingID.String(), codes.BadMessage.String()).Inc()
+		handledCounter.WithLabelValues(typeDomainEvent, codes.BadMessage.String()).Inc()
 		return
 	}
 	domainEvent, err := d.unmarshalMessage(msg)

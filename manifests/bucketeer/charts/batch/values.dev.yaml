@@ -121,6 +121,15 @@ subscribers:
     pullerMaxOutstandingBytes: 1000000000
     maxMps: 50
     workerNum: 1
+  userEventPersister:
+    project: bucketeer-test
+    topic: user
+    subscription: user-sub
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: 1000
+    pullerMaxOutstandingBytes: 1000000000
+    maxMps: 50
+    workerNum: 1
 
 # This configuration is used for add custom params to Processors
 processors:
@@ -129,5 +138,8 @@ processors:
   segmentUserPersister:
     domainEventProject: bucketeer-test
     domainEventTopic: domain
+    flushSize: 100
+    flushInterval: 10
+  userEventPersister:
     flushSize: 100
     flushInterval: 10
