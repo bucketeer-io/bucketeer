@@ -41,13 +41,12 @@ It is possible to stop a schedule that has already started.
         `feature_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
         `ops_type` int NOT NULL,
         `clauses` json NOT NULL,
-        `status` int NOT NULL,
-  #      `triggered_at` bigint NOT NULL,
+        `status` int NOT NULL,                       # <-- add
+#       `triggered_at` bigint NOT NULL,                <-- delete
         `created_at` bigint NOT NULL,
         `updated_at` bigint NOT NULL,
-        `deleted` tinyint(1) NOT NULL DEFAULT '0',
-        `stopped_by` int NOT NULL,
-        `stopped_at` bigint NOT NULL,
+#       `deleted` tinyint(1) NOT NULL DEFAULT '0',     <-- delete
+        `stopped_at` bigint NOT NULL,                # <-- add
         `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
         PRIMARY KEY (`id`,`environment_namespace`),
         KEY `foreign_auto_ops_rule_feature_id_environment_namespace` (`feature_id`,`environment_namespace`),
@@ -57,17 +56,17 @@ It is possible to stop a schedule that has already started.
 
 Table explanation:\
 `ops_type`: Currently it held `Enable` or `Disable`, but it has been changed to a column that manages the type of `AutoOperation` such as `Schedule` and `Event Rate`. Change the original information to be managed by `ActionType` in each `clauses`.\
-`status`: Added management of schedule progress (waiting, running, completed, stopped).\
+`status`: Added management of schedule progress (waiting, running, completed, stopped, deleted).\
 `triggered_at`: Delete as progress can be managed with `status`.\
-`stopped_by`: Added to manage schedule stop reasons.\
+`deleted`: Deleted to manage by `status`.\
 `stopped_at`: Added to manage stopped date and time.
 
 Migrations explanation:
-1. Add "ActionType" to `clauses` Json data based on `op_type`.
+1. Add "ActionType" to `clauses` Json data based on `ops_type`.
 2. Change `ops_type` to `Schedule` or `Event Rate` based on the Json data of `clauses`.
-3. Update `status` based on `triggered_at` and `stopped_at`.\
-   `stopped` if `stopped_at` is not empty, `completed` if `triggered_at` is not empty, and `waiting` otherwise.  
-4. Delete `triggered_at`.
+3. Update `status` based on `triggered_at` and `deleted`.\
+   `completed` if `triggered_at` is not empty, `deleted` if `deleted` is On, and `waiting` otherwise.
+4. Delete `triggered_at` and `triggered_at`.
 
 ## Release Steps
 1. Run the migration and modify any existing code related to it so that the functionality works correctly.
