@@ -57,13 +57,13 @@ const (
 	codeRepeatableError         = "RepeatableError"
 	codeInvalidURLParams        = "InvalidURLParams"
 
-	evaluationAll           = "All"
-	evaluationDiff          = "Diff"
-	evaluationNone          = "None"
-	evaluationNoFeatures    = "NoFeatures"
-	evaluationOld           = "Old"
-	evaluationInternalError = "InternalError"
-	evaluationBadRequest    = "BadRequest"
+	codeAll           = "All"
+	codeDiff          = "Diff"
+	codeNone          = "None"
+	codeNoFeatures    = "NoFeatures"
+	codeOld           = "Old"
+	codeInternalError = "InternalError"
+	codeBadRequest    = "BadRequest"
 )
 
 var (
@@ -89,6 +89,13 @@ var (
 			Name:      "api_evaluations_total",
 			Help:      "Total number of evaluations",
 		}, []string{"project_id", "environment_namespace", "tag", "evaluation_type"})
+	getFeatureFlagsCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "api_get_feature_flags_total",
+			Help:      "Total number of get feature flags",
+		}, []string{"project_id", "environment_namespace", "tag", "response_type"})
 	requestTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -177,6 +184,7 @@ func registerMetrics(r metrics.Registerer) {
 			cacheCounter,
 			eventCounter,
 			evaluationsCounter,
+			getFeatureFlagsCounter,
 			requestTotal,
 			sdkGetEvaluationsLatencyHistogram,
 			sdkGetEvaluationsSizeHistogram,

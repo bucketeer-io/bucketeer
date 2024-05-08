@@ -302,7 +302,7 @@ func (s *grpcGatewayService) GetEvaluations(
 ) (*gwproto.GetEvaluationsResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluations")
 	defer span.End()
-	envAPIKey, err := s.checkRequest(ctx)
+	envAPIKey, err := s.checkRequest(ctx, accountproto.APIKey_SDK_CLIENT)
 	if err != nil {
 		s.logger.Error("Failed to check GetEvaluations request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -332,7 +332,7 @@ func (s *grpcGatewayService) GetEvaluations(
 				zap.String("sdkVersion", req.SdkVersion),
 			)...,
 		)
-		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationBadRequest).Inc()
+		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeBadRequest).Inc()
 		return nil, err
 	}
 	s.publishUser(ctx, environmentId, req.Tag, req.User, req.SourceId)
@@ -344,7 +344,7 @@ func (s *grpcGatewayService) GetEvaluations(
 		},
 	)
 	if err != nil {
-		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationInternalError).Inc()
+		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeInternalError).Inc()
 		return nil, err
 	}
 	spanGetFeatures.End()
@@ -352,7 +352,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	activeFeatures := s.filterOutArchivedFeatures(features)
 	filteredByTag := s.filterByTag(activeFeatures, req.Tag)
 	if len(features) == 0 {
-		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationNoFeatures).Inc()
+		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeNoFeatures).Inc()
 		return &gwproto.GetEvaluationsResponse{
 			State:             featureproto.UserEvaluations_FULL,
 			Evaluations:       s.emptyUserEvaluations(),
@@ -361,7 +361,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	}
 	ueid := evaluation.UserEvaluationsID(req.User.Id, req.User.Data, filteredByTag)
 	if req.UserEvaluationsId == ueid {
-		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationNone).Inc()
+		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeNone).Inc()
 		s.logger.Debug(
 			"Features length when UEID is the same",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -380,7 +380,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	}
 	segmentUsersMap, err := s.getSegmentUsersMap(ctx, req.User, features, environmentId)
 	if err != nil {
-		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationInternalError).Inc()
+		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeInternalError).Inc()
 		s.logger.Error(
 			"Failed to get segment users map",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -397,7 +397,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	if req.UserEvaluationCondition == nil {
 		// Old evaluation requires tag to be set.
 		if req.Tag == "" {
-			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationBadRequest).Inc()
+			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeBadRequest).Inc()
 			return nil, ErrTagRequired
 		}
 		evaluations, err = evaluator.EvaluateFeatures(
@@ -407,7 +407,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.Tag,
 		)
 		if err != nil {
-			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationInternalError).Inc()
+			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeInternalError).Inc()
 			s.logger.Error(
 				"Failed to evaluate",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -418,7 +418,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			)
 			return nil, ErrInternal
 		}
-		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationOld).Inc()
+		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeOld).Inc()
 	} else {
 		evaluations, err = evaluator.EvaluateFeaturesByEvaluatedAt(
 			features,
@@ -430,7 +430,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.Tag,
 		)
 		if err != nil {
-			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationInternalError).Inc()
+			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeInternalError).Inc()
 			s.logger.Error(
 				"Failed to evaluate",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -442,9 +442,9 @@ func (s *grpcGatewayService) GetEvaluations(
 			return nil, ErrInternal
 		}
 		if evaluations.ForceUpdate {
-			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationAll).Inc()
+			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeAll).Inc()
 		} else {
-			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, evaluationDiff).Inc()
+			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeDiff).Inc()
 		}
 	}
 	s.logger.Debug(
@@ -481,7 +481,7 @@ func (s *grpcGatewayService) GetEvaluation(
 ) (*gwproto.GetEvaluationResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluation")
 	defer span.End()
-	envAPIKey, err := s.checkRequest(ctx)
+	envAPIKey, err := s.checkRequest(ctx, accountproto.APIKey_SDK_CLIENT)
 	if err != nil {
 		s.logger.Error("Failed to check GetEvaluation request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -581,6 +581,91 @@ func (s *grpcGatewayService) GetEvaluation(
 	}
 	return &gwproto.GetEvaluationResponse{
 		Evaluation: eval,
+	}, nil
+}
+
+func (s *grpcGatewayService) GetFeatureFlags(
+	ctx context.Context,
+	req *gwproto.GetFeatureFlagsRequest,
+) (*gwproto.GetFeatureFlagsResponse, error) {
+	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetFeatureFlags")
+	defer span.End()
+	envAPIKey, err := s.checkRequest(ctx, accountproto.APIKey_SDK_SERVER)
+	if err != nil {
+		s.logger.Error("Failed to check GetFeatureFlags request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("tag", req.Tag),
+				zap.String("featuresId", req.FeaturesId),
+				zap.Any("sourceId", req.SourceId),
+				zap.String("sdkVersion", req.SdkVersion),
+			)...,
+		)
+		return nil, err
+	}
+	projectID := envAPIKey.ProjectId
+	environmentId := envAPIKey.Environment.Id
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, projectID,
+		environmentId, methodGetEvaluations, req.SourceId.String()).Inc()
+
+	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetFeatureFlags.GetFeatures")
+	f, err, _ := s.flightgroup.Do(
+		environmentId,
+		func() (interface{}, error) {
+			return s.getFeatures(ctx, environmentId)
+		},
+	)
+	if err != nil {
+		getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeInternalError).Inc()
+		return nil, err
+	}
+	spanGetFeatures.End()
+	features := f.([]*featureproto.Feature)
+	activeFeatures := s.filterOutArchivedFeatures(features)
+	var targetFeatures []*featureproto.Feature
+	if req.Tag == "" {
+		targetFeatures = activeFeatures
+	} else {
+		targetFeatures = s.filterByTag(activeFeatures, req.Tag)
+	}
+	if len(targetFeatures) == 0 {
+		getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeNoFeatures).Inc()
+		return &gwproto.GetFeatureFlagsResponse{
+			FeaturesId: "",
+			Features:   []*featureproto.Feature{},
+		}, nil
+	}
+	ffID := evaluation.GenerateFeaturesID(targetFeatures)
+	if req.FeaturesId == ffID {
+		getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeNone).Inc()
+		s.logger.Debug(
+			"Feature Flags ID is the same",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("environmentID", environmentId),
+				zap.String("tag", req.Tag),
+				zap.Int("featuresLength", len(targetFeatures)),
+				zap.Int("targetFeaturesLength", len(targetFeatures)),
+			)...,
+		)
+		s.logger.Debug(
+			"Feature Flags ID is different",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("environmentID", environmentId),
+				zap.String("tag", req.Tag),
+				zap.Int("featuresLength", len(targetFeatures)),
+				zap.Int("targetFeaturesLength", len(targetFeatures)),
+			)...,
+		)
+		return &gwproto.GetFeatureFlagsResponse{
+			FeaturesId: ffID,
+			Features:   []*featureproto.Feature{},
+		}, nil
+	}
+	getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeAll).Inc()
+	return &gwproto.GetFeatureFlagsResponse{
+		FeaturesId: ffID,
+		Features:   targetFeatures,
 	}, nil
 }
 
@@ -870,7 +955,7 @@ func (s *grpcGatewayService) RegisterEvents(
 ) (*gwproto.RegisterEventsResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.RegisterEvents")
 	defer span.End()
-	envAPIKey, err := s.checkRequest(ctx)
+	envAPIKey, err := s.checkRequest(ctx, accountproto.APIKey_SDK_CLIENT)
 	if err != nil {
 		s.logger.Error("Failed to check RegisterEvents request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -1071,7 +1156,10 @@ func (s *grpcGatewayService) checkTrackRequest(
 	return envAPIKey, nil
 }
 
-func (s *grpcGatewayService) checkRequest(ctx context.Context) (*accountproto.EnvironmentAPIKey, error) {
+func (s *grpcGatewayService) checkRequest(
+	ctx context.Context,
+	role accountproto.APIKey_Role,
+) (*accountproto.EnvironmentAPIKey, error) {
 	if isContextCanceled(ctx) {
 		s.logger.Warn(
 			"Request was canceled",
@@ -1098,7 +1186,7 @@ func (s *grpcGatewayService) checkRequest(ctx context.Context) (*accountproto.En
 		)
 		return nil, err
 	}
-	if err := checkEnvironmentAPIKey(envAPIKey, accountproto.APIKey_SDK_CLIENT); err != nil {
+	if err := checkEnvironmentAPIKey(envAPIKey, role); err != nil {
 		s.logger.Error("Failed to check environment API key",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
