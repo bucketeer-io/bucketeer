@@ -94,7 +94,7 @@ func TestGetEvaluationsFeatureFlagDisabled(t *testing.T) {
 
 func TestGetEvaluationsFullState(t *testing.T) {
 	t.Parallel()
-	c := newGatewayClient(t)
+	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
 	uuid := newUUID(t)
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
@@ -117,7 +117,7 @@ func TestGetEvaluationsFullState(t *testing.T) {
 
 func TestGetEvaluation(t *testing.T) {
 	t.Parallel()
-	c := newGatewayClient(t)
+	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
 	uuid := newUUID(t)
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)

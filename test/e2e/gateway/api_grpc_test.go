@@ -52,7 +52,8 @@ var (
 	webGatewayAddr       = flag.String("web-gateway-addr", "", "Web gateway endpoint address")
 	webGatewayPort       = flag.Int("web-gateway-port", 443, "Web gateway endpoint port")
 	webGatewayCert       = flag.String("web-gateway-cert", "", "Web gateway crt file")
-	apiKeyPath           = flag.String("api-key", "", "Api key path for web gateway")
+	apiKeyPath           = flag.String("api-key", "", "Client SDK API key for api-gateway")
+	apiKeyServerPath     = flag.String("api-key-server", "", "Server SDK API key for api-gateway")
 	gatewayAddr          = flag.String("gateway-addr", "", "Gateway endpoint address")
 	gatewayPort          = flag.Int("gateway-port", 443, "Gateway endpoint port")
 	gatewayCert          = flag.String("gateway-cert", "", "Gateway crt file")
@@ -184,7 +185,7 @@ func TestGrpcGetEvaluationsFeatureFlagDisabled(t *testing.T) {
 
 func TestGrpcGetEvaluationsFullState(t *testing.T) {
 	t.Parallel()
-	c := newGatewayClient(t)
+	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
 	uuid := newUUID(t)
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
@@ -208,7 +209,7 @@ func TestGrpcGetEvaluationsFullState(t *testing.T) {
 
 func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 	t.Parallel()
-	c := newGatewayClient(t)
+	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
 	uuid := newUUID(t)
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
@@ -256,7 +257,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 
 func TestGrpcGetEvaluationsByEvaluatedAtIncludingArchivedFeature(t *testing.T) {
 	t.Parallel()
-	c := newGatewayClient(t)
+	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
 	fc := newFeatureClient(t)
 	defer fc.Close()
@@ -314,7 +315,7 @@ func TestGrpcGetEvaluationsByEvaluatedAtIncludingArchivedFeature(t *testing.T) {
 
 func TestGrpcGetEvaluationsByUserAttributesUpdated(t *testing.T) {
 	t.Parallel()
-	c := newGatewayClient(t)
+	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
 	uuid := newUUID(t)
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
@@ -348,7 +349,7 @@ func TestGrpcGetEvaluationsByUserAttributesUpdated(t *testing.T) {
 
 func TestGrpcGetEvaluationsWithPreviousEvaluation31daysAgo(t *testing.T) {
 	t.Parallel()
-	c := newGatewayClient(t)
+	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
 	uuid := newUUID(t)
 	userID := newUserID(t, uuid)
@@ -368,7 +369,7 @@ func TestGrpcGetEvaluationsWithPreviousEvaluation31daysAgo(t *testing.T) {
 
 func TestGrpcGetEvaluationsWithEvaluatedAtIsZero(t *testing.T) {
 	t.Parallel()
-	c := newGatewayClient(t)
+	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
 	uuid := newUUID(t)
 	userID := newUserID(t, uuid)
@@ -389,7 +390,7 @@ func TestGrpcGetEvaluationsWithEvaluatedAtIsZero(t *testing.T) {
 
 func TestGrpcGetEvaluationsWithEmptyUserEvaluationsID(t *testing.T) {
 	t.Parallel()
-	c := newGatewayClient(t)
+	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
 	uuid := newUUID(t)
 	userID := newUserID(t, uuid)
@@ -410,7 +411,7 @@ func TestGrpcGetEvaluationsWithEmptyUserEvaluationsID(t *testing.T) {
 
 func TestGrpcGetEvaluationsWithoutTag(t *testing.T) {
 	t.Parallel()
-	c := newGatewayClient(t)
+	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
 	uuid := newUUID(t)
 	userID := newUserID(t, uuid)
@@ -443,7 +444,7 @@ func TestGrpcGetEvaluationsWithoutTag(t *testing.T) {
 
 func TestGrpcGetEvaluation(t *testing.T) {
 	t.Parallel()
-	c := newGatewayClient(t)
+	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
 	uuid := newUUID(t)
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
@@ -464,7 +465,7 @@ func TestGrpcGetEvaluation(t *testing.T) {
 
 func TestGrpcRegisterEvents(t *testing.T) {
 	t.Parallel()
-	c := newGatewayClient(t)
+	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -607,7 +608,7 @@ func TestGrpcRegisterEvents(t *testing.T) {
 
 func TestRegisterEventsForMetricsEvent(t *testing.T) {
 	t.Parallel()
-	c := newGatewayClient(t)
+	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -718,9 +719,9 @@ func TestRegisterEventsForMetricsEvent(t *testing.T) {
 	}
 }
 
-func newGatewayClient(t *testing.T) gatewayclient.Client {
+func newGatewayClient(t *testing.T, apiKeyPath string) gatewayclient.Client {
 	t.Helper()
-	creds, err := gatewayclient.NewPerRPCCredentials(*apiKeyPath)
+	creds, err := gatewayclient.NewPerRPCCredentials(apiKeyPath)
 	if err != nil {
 		t.Fatal("Failed to create RPC credentials:", err)
 	}
@@ -861,7 +862,11 @@ func newCreateFeatureCommand(featureID string) *featureproto.CreateFeatureComman
 	}
 }
 
-func createFeature(t *testing.T, client featureclient.Client, cmd *featureproto.CreateFeatureCommand) {
+func createFeature(
+	t *testing.T,
+	client featureclient.Client,
+	cmd *featureproto.CreateFeatureCommand,
+) *featureproto.CreateFeatureCommand {
 	t.Helper()
 	createReq := &featureproto.CreateFeatureRequest{
 		Command:              cmd,
@@ -872,6 +877,7 @@ func createFeature(t *testing.T, client featureclient.Client, cmd *featureproto.
 	if _, err := client.CreateFeature(ctx, createReq); err != nil {
 		t.Fatal(err)
 	}
+	return cmd
 }
 
 func getFeature(t *testing.T, featureID string, client featureclient.Client) *featureproto.Feature {
@@ -942,7 +948,7 @@ func archiveFeature(t *testing.T, featureID string, client featureclient.Client)
 
 func grpcGetEvaluations(t *testing.T, tag, userID string) *gatewayproto.GetEvaluationsResponse {
 	t.Helper()
-	c := newGatewayClient(t)
+	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -964,7 +970,7 @@ func grpcGetEvaluationsByEvaluatedAt(
 	userAttributesUpdated bool,
 ) *gatewayproto.GetEvaluationsResponse {
 	t.Helper()
-	c := newGatewayClient(t)
+	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -986,7 +992,7 @@ func grpcGetEvaluationsByEvaluatedAt(
 
 func grpcGetEvaluation(t *testing.T, tag, featureID, userID string) *gatewayproto.GetEvaluationResponse {
 	t.Helper()
-	c := newGatewayClient(t)
+	c := newGatewayClient(t, *apiKeyPath)
 	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
