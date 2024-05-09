@@ -36,7 +36,7 @@ var (
 			Help:      "Total number of received messages",
 		}, []string{"type"})
 
-	persiterHandledCounter = prometheus.NewCounterVec(
+	persisterHandledCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
 			Subsystem: "batch_server",
@@ -48,6 +48,6 @@ var (
 func registerMetrics(r metrics.Registerer) {
 	r.MustRegister(
 		persisterReceivedCounter,
-		persiterHandledCounter,
+		persisterHandledCounter,
 	)
 }
