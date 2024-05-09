@@ -72,6 +72,7 @@ func NewUserEventPersister(
 		mysqlClient:              mysqlClient,
 		timeNow:                  time.Now,
 		newUUID:                  uuid.NewUUID,
+		logger:                   logger,
 	}, nil
 }
 
