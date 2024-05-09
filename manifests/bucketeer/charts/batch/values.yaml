@@ -43,15 +43,21 @@ env:
     poolMaxIdle: 25
     poolMaxActive: 25
 
-affinity: { }
+affinity: {}
 
-nodeSelector: { }
+nodeSelector: {}
 
 pdb:
   enabled:
   maxUnavailable: 50%
 
-replicaCount: 1
+hpa:
+  enabled:
+  minReplicas:
+  maxReplicas:
+  metrics:
+    cpu:
+      targetAverageUtilization:
 
 envoy:
   image:
@@ -61,7 +67,7 @@ envoy:
   config:
   port: 9000
   adminPort: 8001
-  resources: { }
+  resources: {}
 
 tls:
   service:
@@ -95,10 +101,10 @@ health:
     periodSeconds: 3
     failureThreshold: 2
 
-resources: { }
+resources: {}
 
 serviceAccount:
-  annotations: { }
+  annotations: {}
 
 cronjob:
   successfulJobsHistoryLimit: 1
