@@ -785,6 +785,308 @@ func TestGrpcGetEvaluationsContextCanceled(t *testing.T) {
 	}
 }
 
+func TestGrpcGetFeatureFlagsContextCanceled(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	patterns := []struct {
+		desc        string
+		cancel      bool
+		expected    *gwproto.GetFeatureFlagsResponse
+		expectedErr error
+	}{
+		{
+			desc:        "error: context canceled",
+			cancel:      true,
+			expected:    nil,
+			expectedErr: ErrContextCanceled,
+		},
+		{
+			desc:        "error: missing API key",
+			cancel:      false,
+			expected:    nil,
+			expectedErr: ErrMissingAPIKey,
+		},
+	}
+	for _, p := range patterns {
+		gs := newGrpcGatewayServiceWithMock(t, mockController)
+		ctx, cancel := context.WithCancel(context.Background())
+		if p.cancel {
+			cancel()
+		} else {
+			defer cancel()
+		}
+		actual, err := gs.GetFeatureFlags(ctx, &gwproto.GetFeatureFlagsRequest{})
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+	}
+}
+
+func TestGrpcGetFeatureFlags(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	apiKey := "api-key-id"
+	envNamespace := "ns0"
+	tag := "tag"
+	singleFeature := []*featureproto.Feature{
+		{
+			Id:      "feature-id-1",
+			Version: 1,
+			Tags:    []string{tag},
+		},
+	}
+	multiFeatures := []*featureproto.Feature{
+		{
+			Id:      "feature-id-1",
+			Version: 1,
+			Tags:    []string{tag},
+		},
+		{
+			Id:      "feature-id-2",
+			Version: 1,
+			Tags:    []string{},
+		},
+	}
+	patterns := []struct {
+		desc        string
+		setup       func(*grpcGatewayService)
+		input       *gwproto.GetFeatureFlagsRequest
+		expected    *gwproto.GetFeatureFlagsResponse
+		expectedErr error
+	}{
+		{
+			desc: "err: environment api key not found",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					nil, errors.New("internal error"))
+				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetAPIKeyBySearchingAllEnvironments(gomock.Any(), gomock.Any()).Return(
+					nil, status.Errorf(codes.NotFound, "test"))
+			},
+			input:       &gwproto.GetFeatureFlagsRequest{Tag: "test", FeaturesId: ""},
+			expected:    nil,
+			expectedErr: ErrInvalidAPIKey,
+		},
+		{
+			desc: "err: bad role",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envNamespace},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_CLIENT,
+							Disabled: false,
+						},
+					}, nil)
+			},
+			input:       &gwproto.GetFeatureFlagsRequest{Tag: "test", FeaturesId: ""},
+			expected:    nil,
+			expectedErr: ErrBadRole,
+		},
+		{
+			desc: "err: internal error while getting feature flags",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envNamespace},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envNamespace).Return(
+					nil, errors.New("internal error"))
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(
+					nil, ErrInternal)
+			},
+			input:       &gwproto.GetFeatureFlagsRequest{Tag: "test", FeaturesId: ""},
+			expected:    nil,
+			expectedErr: ErrInternal,
+		},
+		{
+			desc: "zero feature",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envNamespace},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envNamespace).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{},
+					}, nil)
+			},
+			input: &gwproto.GetFeatureFlagsRequest{Tag: "test", FeaturesId: ""},
+			expected: &gwproto.GetFeatureFlagsResponse{
+				FeaturesId: "",
+				Features:   []*featureproto.Feature{},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: with no tag and no feature flags ID",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envNamespace},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envNamespace).Return(
+					&featureproto.Features{
+						Features: multiFeatures,
+					}, nil)
+			},
+			input: &gwproto.GetFeatureFlagsRequest{Tag: "", FeaturesId: ""},
+			expected: &gwproto.GetFeatureFlagsResponse{
+				FeaturesId: "12174583190774721812",
+				Features:   multiFeatures,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: with no tag and with same feature flags ID",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envNamespace},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envNamespace).Return(
+					&featureproto.Features{
+						Features: multiFeatures,
+					}, nil)
+			},
+			input: &gwproto.GetFeatureFlagsRequest{Tag: "", FeaturesId: "12174583190774721812"},
+			expected: &gwproto.GetFeatureFlagsResponse{
+				FeaturesId: "12174583190774721812",
+				Features:   []*featureproto.Feature{},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: with no tag and with different feature flags ID",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envNamespace},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envNamespace).Return(
+					&featureproto.Features{
+						Features: multiFeatures,
+					}, nil)
+			},
+			input: &gwproto.GetFeatureFlagsRequest{Tag: "", FeaturesId: "random-id"},
+			expected: &gwproto.GetFeatureFlagsResponse{
+				FeaturesId: "12174583190774721812",
+				Features:   multiFeatures,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: with tag and no feature flags ID",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envNamespace},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envNamespace).Return(
+					&featureproto.Features{
+						Features: singleFeature,
+					}, nil)
+			},
+			input: &gwproto.GetFeatureFlagsRequest{Tag: tag, FeaturesId: ""},
+			expected: &gwproto.GetFeatureFlagsResponse{
+				FeaturesId: "13164487566000689278",
+				Features:   singleFeature,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: with tag and same feature flags ID",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envNamespace},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envNamespace).Return(
+					&featureproto.Features{
+						Features: singleFeature,
+					}, nil)
+			},
+			input: &gwproto.GetFeatureFlagsRequest{Tag: tag, FeaturesId: "13164487566000689278"},
+			expected: &gwproto.GetFeatureFlagsResponse{
+				FeaturesId: "13164487566000689278",
+				Features:   []*featureproto.Feature{},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: with tag and with different feature flags ID",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envNamespace},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envNamespace).Return(
+					&featureproto.Features{
+						Features: singleFeature,
+					}, nil)
+			},
+			input: &gwproto.GetFeatureFlagsRequest{Tag: tag, FeaturesId: "random-id"},
+			expected: &gwproto.GetFeatureFlagsResponse{
+				FeaturesId: "13164487566000689278",
+				Features:   singleFeature,
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		gs := newGrpcGatewayServiceWithMock(t, mockController)
+		p.setup(gs)
+		ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
+			"authorization": []string{apiKey},
+		})
+		actual, err := gs.GetFeatureFlags(ctx, p.input)
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+	}
+}
+
 func TestGrpcGetEvaluationsValidation(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
