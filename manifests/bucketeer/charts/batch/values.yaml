@@ -182,11 +182,11 @@ subscribers:
     project:
     topic:
     subscription:
-    pullerNumGoroutines: 5
-    pullerMaxOutstandingMessages: 1000
-    pullerMaxOutstandingBytes: 1000000000
-    maxMps: 50
-    workerNum: 1
+    pullerNumGoroutines: 10
+    pullerMaxOutstandingMessages: 10000
+    pullerMaxOutstandingBytes: 100000000
+    maxMps: 1000
+    workerNum: 5
 
 # This configuration is used for add custom params to Processors
 processors:
@@ -198,5 +198,5 @@ processors:
     flushSize: 100
     flushInterval: 10
   userEventPersister:
-    flushSize: 100
-    flushInterval: 10
+    flushSize: 200
+    flushInterval: 5
