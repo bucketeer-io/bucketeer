@@ -94,6 +94,50 @@ func TestAPIKey(t *testing.T) {
 	assert.Equal(t, st.Code(), codes.PermissionDenied)
 }
 
+func TestGrpcGetFeatureFlags(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+	uuid := newUUID(t)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	// Feature 1
+	featureID1 := newFeatureID(t, uuid)
+	cmd1 := createFeatureWithTag(t, tag, featureID1)
+
+	// Feature 2
+	uuid = newUUID(t)
+	featureID2 := newFeatureID(t, uuid)
+	cmd2 := createFeature(t, client, newCreateFeatureCommand(featureID2))
+
+	// Feature 3
+	uuid = newUUID(t)
+	featureID3 := newFeatureID(t, uuid)
+	cmd3 := createFeatureWithTag(t, tag, featureID3)
+
+	// Find feature with no tag and no features ID
+	response := grpcGetFeatureFlags(t, "", "")
+	assert.True(t, len(response.Features) >= 3)
+	assert.True(t, findFeatureByID(t, cmd1.Id, response.Features))
+	assert.True(t, findFeatureByID(t, cmd2.Id, response.Features))
+	assert.True(t, findFeatureByID(t, cmd3.Id, response.Features))
+
+	// Find feature by tag with tag and no features ID
+	response = grpcGetFeatureFlags(t, tag, "")
+	assert.Equal(t, 2, len(response.Features))
+	assert.True(t, findFeatureByID(t, cmd1.Id, response.Features))
+	assert.True(t, findFeatureByID(t, cmd3.Id, response.Features))
+}
+
+func findFeatureByID(t *testing.T, id string, features []*featureproto.Feature) bool {
+	t.Helper()
+	for _, f := range features {
+		if id == f.Id {
+			return true
+		}
+	}
+	return false
+}
+
 func TestGrpcGetEvaluationsFeatureFlagEnabled(t *testing.T) {
 	t.Parallel()
 	client := newFeatureClient(t)
@@ -719,9 +763,9 @@ func TestRegisterEventsForMetricsEvent(t *testing.T) {
 	}
 }
 
-func newGatewayClient(t *testing.T, apiKeyPath string) gatewayclient.Client {
+func newGatewayClient(t *testing.T, apiKey string) gatewayclient.Client {
 	t.Helper()
-	creds, err := gatewayclient.NewPerRPCCredentials(apiKeyPath)
+	creds, err := gatewayclient.NewPerRPCCredentials(apiKey)
 	if err != nil {
 		t.Fatal("Failed to create RPC credentials:", err)
 	}
@@ -957,6 +1001,23 @@ func grpcGetEvaluations(t *testing.T, tag, userID string) *gatewayproto.GetEvalu
 		User: &userproto.User{Id: userID},
 	}
 	response, err := c.GetEvaluations(ctx, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return response
+}
+
+func grpcGetFeatureFlags(t *testing.T, tag, featuresID string) *gatewayproto.GetFeatureFlagsResponse {
+	t.Helper()
+	c := newGatewayClient(t, *apiKeyServerPath)
+	defer c.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	req := &gatewayproto.GetFeatureFlagsRequest{
+		Tag:        tag,
+		FeaturesId: featuresID,
+	}
+	response, err := c.GetFeatureFlags(ctx, req)
 	if err != nil {
 		t.Fatal(err)
 	}

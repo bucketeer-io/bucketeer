@@ -648,20 +648,20 @@ func (s *grpcGatewayService) GetFeatureFlags(
 				zap.Int("targetFeaturesLength", len(targetFeatures)),
 			)...,
 		)
-		s.logger.Debug(
-			"Feature Flags ID is different",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("environmentID", environmentId),
-				zap.String("tag", req.Tag),
-				zap.Int("featuresLength", len(targetFeatures)),
-				zap.Int("targetFeaturesLength", len(targetFeatures)),
-			)...,
-		)
 		return &gwproto.GetFeatureFlagsResponse{
 			FeaturesId: ffID,
 			Features:   []*featureproto.Feature{},
 		}, nil
 	}
+	s.logger.Debug(
+		"Feature Flags ID is different",
+		log.FieldsFromImcomingContext(ctx).AddFields(
+			zap.String("environmentID", environmentId),
+			zap.String("tag", req.Tag),
+			zap.Int("featuresLength", len(targetFeatures)),
+			zap.Int("targetFeaturesLength", len(targetFeatures)),
+		)...,
+	)
 	getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeAll).Inc()
 	return &gwproto.GetFeatureFlagsResponse{
 		FeaturesId: ffID,
