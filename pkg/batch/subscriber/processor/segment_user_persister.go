@@ -129,12 +129,12 @@ func (p *segmentUserPersister) Process(ctx context.Context, msgChan <-chan *pull
 			id := msg.Attributes["id"]
 			if id == "" {
 				msg.Ack()
-				handledCounter.WithLabelValues(codes.MissingID.String()).Inc()
+				handledCounter.WithLabelValues(typeSegment, codes.MissingID.String()).Inc()
 				continue
 			}
 			if _, ok := chunk[id]; ok {
 				p.logger.Warn("message with duplicate id", zap.String("id", id))
-				handledCounter.WithLabelValues(codes.DuplicateID.String()).Inc()
+				handledCounter.WithLabelValues(typeSegment, codes.DuplicateID.String()).Inc()
 			}
 			chunk[id] = msg
 			if len(chunk) >= p.segmentUserPersisterConfig.FlushSize {

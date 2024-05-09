@@ -1,18 +1,18 @@
-// Copyright 2024 The Bucketeer Authors.
+//  Copyright 2024 The Bucketeer Authors.
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
 
-package persister
+package processor
 
 import (
 	"context"
@@ -21,11 +21,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
@@ -68,7 +68,7 @@ func TestValidateEvent(t *testing.T) {
 		},
 	}
 	logger, _ := log.NewLogger()
-	pst := persister{logger: logger}
+	pst := userEventPersister{logger: logger}
 	for _, p := range patterns {
 		actual := pst.validateEvent(p.input)
 		assert.Equal(t, p.expected, actual)
@@ -86,14 +86,14 @@ func TestUpsert(t *testing.T) {
 	defer cancel()
 	patterns := []struct {
 		desc, environmentNamespace string
-		setup                      func(*persister)
+		setup                      func(persister *userEventPersister)
 		input                      []*eventproto.UserEvent
 		expected                   error
 	}{
 		{
 			desc:                 "upsert mau error",
 			environmentNamespace: "env1",
-			setup: func(p *persister) {
+			setup: func(p *userEventPersister) {
 				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -111,7 +111,7 @@ func TestUpsert(t *testing.T) {
 		{
 			desc:                 "upsert success",
 			environmentNamespace: "env1",
-			setup: func(p *persister) {
+			setup: func(p *userEventPersister) {
 				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -144,14 +144,13 @@ func newPersisterWithMock(
 	mockController *gomock.Controller,
 	now time.Time,
 	id *uuid.UUID,
-) *persister {
+) *userEventPersister {
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
-	return &persister{
+	return &userEventPersister{
 		mysqlClient: mysqlmock.NewMockClient(mockController),
 		timeNow:     func() time.Time { return now },
 		newUUID:     func() (*uuid.UUID, error) { return id, nil },
-		opts:        defaultOptions,
 		logger:      logger,
 	}
 }
@@ -168,14 +167,14 @@ func TestHandleChunk(t *testing.T) {
 
 	patterns := []struct {
 		desc, environmentNamespace string
-		setup                      func(*persister)
+		setup                      func(persister *userEventPersister)
 		input                      map[string]*puller.Message
 		expected                   error
 	}{
 		{
 			desc:                 "upsert mau error",
 			environmentNamespace: "env1",
-			setup: func(p *persister) {
+			setup: func(p *userEventPersister) {
 				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil).Times(2)
 				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -187,7 +186,7 @@ func TestHandleChunk(t *testing.T) {
 		{
 			desc:                 "upsert success",
 			environmentNamespace: "env1",
-			setup: func(p *persister) {
+			setup: func(p *userEventPersister) {
 				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil).Times(2)
 				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),

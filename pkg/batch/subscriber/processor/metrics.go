@@ -24,6 +24,7 @@ import (
 const (
 	typeDomainEvent = "DomainEvent"
 	typeSegment     = "Segment"
+	typeUserEvent   = "UserEvent"
 )
 
 var (

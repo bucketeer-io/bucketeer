@@ -667,6 +667,19 @@ func (s *server) registerProcessorMap(
 		segmentPersister,
 	)
 
+	userEventPersister, err := processor.NewUserEventPersister(
+		configMap[processor.UserEventPersisterName],
+		mysqlClient,
+		logger,
+	)
+	if err != nil {
+		return nil, err
+	}
+	processors.RegisterProcessor(
+		processor.UserEventPersisterName,
+		userEventPersister,
+	)
+
 	return processors, nil
 }
 
