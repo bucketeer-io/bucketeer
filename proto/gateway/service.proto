@@ -32,13 +32,13 @@ message PingResponse {
 
 message GetFeatureFlagsRequest {
   string tag = 1;
-  string features_id = 2;
+  string feature_flags_id = 2;
   bucketeer.event.client.SourceId source_id = 3;
   string sdk_version = 4;
 }
 
 message GetFeatureFlagsResponse {
-  string features_id = 1;
+  string feature_flags_id = 1;
   repeated bucketeer.feature.Feature features = 2;
 }
 

@@ -14874,7 +14874,7 @@
               },
               {
                 "id": 2,
-                "name": "features_id",
+                "name": "feature_flags_id",
                 "type": "string"
               },
               {
@@ -14894,7 +14894,7 @@
             "fields": [
               {
                 "id": 1,
-                "name": "features_id",
+                "name": "feature_flags_id",
                 "type": "string"
               },
               {

@@ -864,7 +864,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetAPIKeyBySearchingAllEnvironments(gomock.Any(), gomock.Any()).Return(
 					nil, status.Errorf(codes.NotFound, "test"))
 			},
-			input:       &gwproto.GetFeatureFlagsRequest{Tag: "test", FeaturesId: ""},
+			input:       &gwproto.GetFeatureFlagsRequest{Tag: "test", FeatureFlagsId: ""},
 			expected:    nil,
 			expectedErr: ErrInvalidAPIKey,
 		},
@@ -881,7 +881,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 						},
 					}, nil)
 			},
-			input:       &gwproto.GetFeatureFlagsRequest{Tag: "test", FeaturesId: ""},
+			input:       &gwproto.GetFeatureFlagsRequest{Tag: "test", FeatureFlagsId: ""},
 			expected:    nil,
 			expectedErr: ErrBadRole,
 		},
@@ -902,7 +902,7 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(
 					nil, ErrInternal)
 			},
-			input:       &gwproto.GetFeatureFlagsRequest{Tag: "test", FeaturesId: ""},
+			input:       &gwproto.GetFeatureFlagsRequest{Tag: "test", FeatureFlagsId: ""},
 			expected:    nil,
 			expectedErr: ErrInternal,
 		},
@@ -923,10 +923,10 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 						Features: []*featureproto.Feature{},
 					}, nil)
 			},
-			input: &gwproto.GetFeatureFlagsRequest{Tag: "test", FeaturesId: ""},
+			input: &gwproto.GetFeatureFlagsRequest{Tag: "test", FeatureFlagsId: ""},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeaturesId: "",
-				Features:   []*featureproto.Feature{},
+				FeatureFlagsId: "",
+				Features:       []*featureproto.Feature{},
 			},
 			expectedErr: nil,
 		},
@@ -947,10 +947,10 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 						Features: multiFeatures,
 					}, nil)
 			},
-			input: &gwproto.GetFeatureFlagsRequest{Tag: "", FeaturesId: ""},
+			input: &gwproto.GetFeatureFlagsRequest{Tag: "", FeatureFlagsId: ""},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeaturesId: "12174583190774721812",
-				Features:   multiFeatures,
+				FeatureFlagsId: "12174583190774721812",
+				Features:       multiFeatures,
 			},
 			expectedErr: nil,
 		},
@@ -971,10 +971,10 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 						Features: multiFeatures,
 					}, nil)
 			},
-			input: &gwproto.GetFeatureFlagsRequest{Tag: "", FeaturesId: "12174583190774721812"},
+			input: &gwproto.GetFeatureFlagsRequest{Tag: "", FeatureFlagsId: "12174583190774721812"},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeaturesId: "12174583190774721812",
-				Features:   []*featureproto.Feature{},
+				FeatureFlagsId: "12174583190774721812",
+				Features:       []*featureproto.Feature{},
 			},
 			expectedErr: nil,
 		},
@@ -995,10 +995,10 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 						Features: multiFeatures,
 					}, nil)
 			},
-			input: &gwproto.GetFeatureFlagsRequest{Tag: "", FeaturesId: "random-id"},
+			input: &gwproto.GetFeatureFlagsRequest{Tag: "", FeatureFlagsId: "random-id"},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeaturesId: "12174583190774721812",
-				Features:   multiFeatures,
+				FeatureFlagsId: "12174583190774721812",
+				Features:       multiFeatures,
 			},
 			expectedErr: nil,
 		},
@@ -1019,10 +1019,10 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 						Features: singleFeature,
 					}, nil)
 			},
-			input: &gwproto.GetFeatureFlagsRequest{Tag: tag, FeaturesId: ""},
+			input: &gwproto.GetFeatureFlagsRequest{Tag: tag, FeatureFlagsId: ""},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeaturesId: "13164487566000689278",
-				Features:   singleFeature,
+				FeatureFlagsId: "13164487566000689278",
+				Features:       singleFeature,
 			},
 			expectedErr: nil,
 		},
@@ -1043,10 +1043,10 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 						Features: singleFeature,
 					}, nil)
 			},
-			input: &gwproto.GetFeatureFlagsRequest{Tag: tag, FeaturesId: "13164487566000689278"},
+			input: &gwproto.GetFeatureFlagsRequest{Tag: tag, FeatureFlagsId: "13164487566000689278"},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeaturesId: "13164487566000689278",
-				Features:   []*featureproto.Feature{},
+				FeatureFlagsId: "13164487566000689278",
+				Features:       []*featureproto.Feature{},
 			},
 			expectedErr: nil,
 		},
@@ -1067,10 +1067,10 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 						Features: singleFeature,
 					}, nil)
 			},
-			input: &gwproto.GetFeatureFlagsRequest{Tag: tag, FeaturesId: "random-id"},
+			input: &gwproto.GetFeatureFlagsRequest{Tag: tag, FeatureFlagsId: "random-id"},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeaturesId: "13164487566000689278",
-				Features:   singleFeature,
+				FeatureFlagsId: "13164487566000689278",
+				Features:       singleFeature,
 			},
 			expectedErr: nil,
 		},
