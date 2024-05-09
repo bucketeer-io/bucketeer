@@ -633,7 +633,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 		getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeNoFeatures).Inc()
 		return &gwproto.GetFeatureFlagsResponse{
 			FeatureFlagsId: "",
-			Features:   []*featureproto.Feature{},
+			Features:       []*featureproto.Feature{},
 		}, nil
 	}
 	ffID := evaluation.GenerateFeaturesID(targetFeatures)
@@ -650,7 +650,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 		)
 		return &gwproto.GetFeatureFlagsResponse{
 			FeatureFlagsId: ffID,
-			Features:   []*featureproto.Feature{},
+			Features:       []*featureproto.Feature{},
 		}, nil
 	}
 	s.logger.Debug(
@@ -665,7 +665,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeAll).Inc()
 	return &gwproto.GetFeatureFlagsResponse{
 		FeatureFlagsId: ffID,
-		Features:   targetFeatures,
+		Features:       targetFeatures,
 	}, nil
 }
 
