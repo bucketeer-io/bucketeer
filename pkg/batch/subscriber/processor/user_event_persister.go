@@ -86,16 +86,17 @@ func (p *userEventPersister) Process(ctx context.Context, msgChan <-chan *puller
 			if !ok {
 				return nil
 			}
+			persisterReceivedCounter.WithLabelValues(typeUserEvent).Inc()
 			id := msg.Attributes["id"]
 			if id == "" {
 				msg.Ack()
-				handledCounter.WithLabelValues(typeUserEvent, codes.MissingID.String()).Inc()
+				persiterHandledCounter.WithLabelValues(typeUserEvent, codes.MissingID.String()).Inc()
 				continue
 			}
 			if pre, ok := chunk[id]; ok {
 				pre.Ack()
 				p.logger.Warn("Message with duplicate id", zap.String("id", id))
-				handledCounter.WithLabelValues(typeUserEvent, codes.DuplicateID.String()).Inc()
+				persiterHandledCounter.WithLabelValues(typeUserEvent, codes.DuplicateID.String()).Inc()
 			}
 			chunk[id] = msg
 			if len(chunk) >= p.userEventPersisterConfig.FlushSize {
@@ -166,12 +167,12 @@ func (p *userEventPersister) extractUserEvent(message *puller.Message) *eventpro
 	event, err := p.unmarshalMessage(message)
 	if err != nil {
 		message.Nack()
-		handledCounter.WithLabelValues(typeUserEvent, codes.BadMessage.String()).Inc()
+		persiterHandledCounter.WithLabelValues(typeUserEvent, codes.BadMessage.String()).Inc()
 		return nil
 	}
 	if !p.validateEvent(event) {
 		message.Nack()
-		handledCounter.WithLabelValues(typeUserEvent, codes.BadMessage.String()).Inc()
+		persiterHandledCounter.WithLabelValues(typeUserEvent, codes.BadMessage.String()).Inc()
 		return nil
 	}
 	return event
@@ -206,14 +207,14 @@ func (p *userEventPersister) validateEvent(event *eventproto.UserEvent) bool {
 func (p *userEventPersister) nackMessages(messages []*puller.Message) {
 	for _, msg := range messages {
 		msg.Nack()
-		handledCounter.WithLabelValues(typeUserEvent, codes.RepeatableError.String()).Inc()
+		persiterHandledCounter.WithLabelValues(typeUserEvent, codes.RepeatableError.String()).Inc()
 	}
 }
 
 func (p *userEventPersister) ackMessages(messages []*puller.Message) {
 	for _, msg := range messages {
 		msg.Ack()
-		handledCounter.WithLabelValues(typeUserEvent, codes.OK.String()).Inc()
+		persiterHandledCounter.WithLabelValues(typeUserEvent, codes.OK.String()).Inc()
 	}
 }
 
