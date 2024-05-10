@@ -80,11 +80,12 @@ type server struct {
 	oauthClientID      *string
 	oauthIssuer        *string
 	// MySQL
-	mysqlUser   *string
-	mysqlPass   *string
-	mysqlHost   *string
-	mysqlPort   *int
-	mysqlDBName *string
+	mysqlUser        *string
+	mysqlPass        *string
+	mysqlHost        *string
+	mysqlPort        *int
+	mysqlDBName      *string
+	mysqlDBOpenConns *int
 	// gRPC service
 	accountService              *string
 	environmentService          *string
@@ -133,12 +134,13 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"oauth-client-id",
 			"The oauth clientID registered at dex.",
 		).Required().String(),
-		oauthIssuer: cmd.Flag("oauth-issuer", "The url of dex issuer.").Required().String(),
-		mysqlUser:   cmd.Flag("mysql-user", "MySQL user.").Required().String(),
-		mysqlPass:   cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
-		mysqlHost:   cmd.Flag("mysql-host", "MySQL host.").Required().String(),
-		mysqlPort:   cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
-		mysqlDBName: cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		oauthIssuer:      cmd.Flag("oauth-issuer", "The url of dex issuer.").Required().String(),
+		mysqlUser:        cmd.Flag("mysql-user", "MySQL user.").Required().String(),
+		mysqlPass:        cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
+		mysqlHost:        cmd.Flag("mysql-host", "MySQL host.").Required().String(),
+		mysqlPort:        cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
+		mysqlDBName:      cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
+		mysqlDBOpenConns: cmd.Flag("mysql-open-conns", "MySQL open connections.").Required().Int(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -581,6 +583,7 @@ func (s *server) createMySQLClient(
 		*s.mysqlDBName,
 		mysql.WithLogger(logger),
 		mysql.WithMetrics(registerer),
+		mysql.WithMaxOpenConns(*s.mysqlDBOpenConns),
 	)
 }
 

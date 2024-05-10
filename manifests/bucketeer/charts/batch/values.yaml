@@ -15,6 +15,7 @@ env:
   mysqlHost:
   mysqlPort:
   mysqlDbName:
+  mysqlDBOpenConns: 50
   pubsubEmulatorHost:
   accountService: localhost:9001
   notificationService: localhost:9001
