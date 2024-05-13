@@ -47,7 +47,9 @@ import (
 )
 
 const (
-	listRequestSize = 500
+	listRequestSize         = 500
+	secondsToReturnAllFlags = 30 * 24 * 60 * 60 // 30 days
+	secondsForAdjustment    = 10                // 10 seconds
 )
 
 var (
@@ -621,22 +623,28 @@ func (s *grpcGatewayService) GetFeatureFlags(
 		return nil, err
 	}
 	spanGetFeatures.End()
+	// Filter flags by tag if needed
 	features := f.([]*featureproto.Feature)
-	activeFeatures := s.filterOutArchivedFeatures(features)
 	var targetFeatures []*featureproto.Feature
 	if req.Tag == "" {
-		targetFeatures = activeFeatures
+		targetFeatures = features
 	} else {
-		targetFeatures = s.filterByTag(activeFeatures, req.Tag)
+		targetFeatures = s.filterByTag(features, req.Tag)
 	}
+	now := time.Now()
 	if len(targetFeatures) == 0 {
 		getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeNoFeatures).Inc()
 		return &gwproto.GetFeatureFlagsResponse{
-			FeatureFlagsId: "",
-			Features:       []*featureproto.Feature{},
+			FeatureFlagsId:         "",
+			Features:               []*featureproto.Feature{},
+			ArchivedFeatureFlagIds: make([]string, 0),
+			RequestedAt:            now.Unix(),
 		}, nil
 	}
-	ffID := evaluation.GenerateFeaturesID(targetFeatures)
+	// We don't include archived flags when generating the Feature Flag IDs
+	filteredArchivedFlags := s.filterOutArchivedFeatures(targetFeatures)
+	ffID := evaluation.GenerateFeaturesID(filteredArchivedFlags)
+	// Return an empty response because nothing changed
 	if req.FeatureFlagsId == ffID {
 		getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeNone).Inc()
 		s.logger.Debug(
@@ -649,8 +657,10 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			)...,
 		)
 		return &gwproto.GetFeatureFlagsResponse{
-			FeatureFlagsId: ffID,
-			Features:       []*featureproto.Feature{},
+			FeatureFlagsId:         ffID,
+			Features:               []*featureproto.Feature{},
+			ArchivedFeatureFlagIds: make([]string, 0),
+			RequestedAt:            now.Unix(),
 		}, nil
 	}
 	s.logger.Debug(
@@ -662,11 +672,45 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			zap.Int("targetFeaturesLength", len(targetFeatures)),
 		)...,
 	)
-	getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeAll).Inc()
+	// Return all the flags except archived flags
+	if req.FeatureFlagsId == "" || req.RequestedAt < now.Unix()-secondsToReturnAllFlags {
+		getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeAll).Inc()
+		return &gwproto.GetFeatureFlagsResponse{
+			FeatureFlagsId:         ffID,
+			Features:               filteredArchivedFlags,
+			ArchivedFeatureFlagIds: make([]string, 0),
+			RequestedAt:            now.Unix(),
+			ForceUpdate:            true,
+		}, nil
+	}
+	// Check and return only the updated feature flags
+	adjustedRequestedAt := req.RequestedAt - secondsForAdjustment
+	updatedFeatures := make([]*featureproto.Feature, 0, len(targetFeatures))
+	archivedIDs := make([]string, 0)
+	for _, feature := range targetFeatures {
+		// Check for archived flags
+		if s.isArchivedBeforeLastThirtyDays(feature) {
+			archivedIDs = append(archivedIDs, feature.Id)
+			continue
+		}
+		// Check for updated flags
+		if feature.UpdatedAt > adjustedRequestedAt {
+			updatedFeatures = append(updatedFeatures, feature)
+		}
+	}
+	getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeDiff).Inc()
 	return &gwproto.GetFeatureFlagsResponse{
-		FeatureFlagsId: ffID,
-		Features:       targetFeatures,
+		FeatureFlagsId:         ffID,
+		Features:               updatedFeatures,
+		RequestedAt:            now.Unix(),
+		ForceUpdate:            false,
+		ArchivedFeatureFlagIds: archivedIDs,
 	}, nil
+}
+
+// To keep response size small, the feature flags archived more than 30 days are excluded
+func (s *grpcGatewayService) isArchivedBeforeLastThirtyDays(feature *featureproto.Feature) bool {
+	return feature.Archived && feature.UpdatedAt > time.Now().Unix()-secondsToReturnAllFlags
 }
 
 func (s *grpcGatewayService) getTargetFeatures(fs []*featureproto.Feature, id string) ([]*featureproto.Feature, error) {
