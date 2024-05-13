@@ -242,7 +242,10 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 	return vID, nil
 }
 
-func (p *evaluationCountEventPersister) incrementEvaluationCount(event proto.Message, environmentNamespace string) error {
+func (p *evaluationCountEventPersister) incrementEvaluationCount(
+	event proto.Message,
+	environmentNamespace string,
+) error {
 	if e, ok := event.(*eventproto.EvaluationEvent); ok {
 		vID, err := getVariationID(e.Reason, e.VariationId)
 		if err != nil {
