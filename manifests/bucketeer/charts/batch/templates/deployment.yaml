@@ -98,7 +98,7 @@ spec:
             - name: BUCKETEER_BATCH_MYSQL_DB_NAME
               value: "{{ .Values.env.mysqlDbName }}"
             - name: BUCKETEER_BATCH_MYSQL_DB_OPEN_CONNS
-              value: "{{ .Values.env.mysqlDBOpenConns }}"
+              value: "{{ .Values.env.mysqlDbOpenConns }}"
             - name: BUCKETEER_BATCH_WEB_URL
               value: "{{ .Values.env.webURL }}"
             - name: BUCKETEER_BATCH_LOG_LEVEL

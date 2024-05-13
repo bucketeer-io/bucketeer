@@ -150,15 +150,13 @@ func (p *userEventPersister) handleChunk(chunk map[string]*puller.Message) {
 		}
 	}
 	// Upsert events
-	if len(events) > 0 {
-		for environmentNamespace, events := range events {
-			// Upsert events per environment
-			err := p.upsertMAUs(ctx, events, environmentNamespace)
-			if err != nil {
-				p.nackMessages(messages[environmentNamespace])
-			} else {
-				p.ackMessages(messages[environmentNamespace])
-			}
+	for environmentNamespace, events := range events {
+		// Upsert events per environment
+		err := p.upsertMAUs(ctx, events, environmentNamespace)
+		if err != nil {
+			p.nackMessages(messages[environmentNamespace])
+		} else {
+			p.ackMessages(messages[environmentNamespace])
 		}
 	}
 }
@@ -223,16 +221,8 @@ func (p *userEventPersister) upsertMAUs(
 	events []*eventproto.UserEvent,
 	environmentNamespace string,
 ) error {
-	tx, err := p.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		p.logger.Error("Failed to begin transaction", zap.Error(err))
-		return err
-	}
-	err = p.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		s := ustorage.NewMysqlMAUStorage(p.mysqlClient)
-		return s.UpsertMAUs(ctx, events, environmentNamespace)
-	})
-	if err != nil {
+	s := ustorage.NewMysqlMAUStorage(p.mysqlClient)
+	if err := s.UpsertMAUs(ctx, events, environmentNamespace); err != nil {
 		p.logger.Error("Failed to upsert user events",
 			zap.Error(err),
 			zap.String("environmentNamespace", environmentNamespace),

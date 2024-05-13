@@ -94,10 +94,9 @@ func TestUpsert(t *testing.T) {
 			desc:                 "upsert mau error",
 			environmentNamespace: "env1",
 			setup: func(p *userEventPersister) {
-				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(errors.New("internal"))
+				).Return(nil, errors.New("internal"))
 			},
 			input: []*eventproto.UserEvent{
 				{
@@ -112,10 +111,9 @@ func TestUpsert(t *testing.T) {
 			desc:                 "upsert success",
 			environmentNamespace: "env1",
 			setup: func(p *userEventPersister) {
-				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).Return(nil, nil)
 			},
 			input: []*eventproto.UserEvent{
 				{
@@ -175,10 +173,9 @@ func TestHandleChunk(t *testing.T) {
 			desc:                 "upsert mau error",
 			environmentNamespace: "env1",
 			setup: func(p *userEventPersister) {
-				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil).Times(2)
-				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(errors.New("internal")).Times(2)
+				).Return(nil, errors.New("internal")).Times(2)
 			},
 			input:    mergeMap(t, aMap, bMap),
 			expected: errors.New("internal"),
@@ -187,10 +184,9 @@ func TestHandleChunk(t *testing.T) {
 			desc:                 "upsert success",
 			environmentNamespace: "env1",
 			setup: func(p *userEventPersister) {
-				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil).Times(2)
-				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil).Times(2)
+				).Return(nil, nil).Times(2)
 			},
 			input:    mergeMap(t, aMap, bMap),
 			expected: nil,
