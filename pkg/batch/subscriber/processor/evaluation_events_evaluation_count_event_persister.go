@@ -106,6 +106,7 @@ func NewEvaluationCountEventPersister(
 		logger:                              logger,
 	}
 	// write flag last used info cache periodically
+	//nolint:errcheck
 	go e.writeFlagLastUsedInfoCache(ctx)
 	return e, nil
 }
