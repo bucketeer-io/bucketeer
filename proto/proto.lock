@@ -14879,11 +14879,16 @@
               },
               {
                 "id": 3,
+                "name": "requested_at",
+                "type": "int64"
+              },
+              {
+                "id": 4,
                 "name": "source_id",
                 "type": "bucketeer.event.client.SourceId"
               },
               {
-                "id": 4,
+                "id": 5,
                 "name": "sdk_version",
                 "type": "string"
               }
@@ -14902,6 +14907,22 @@
                 "name": "features",
                 "type": "bucketeer.feature.Feature",
                 "is_repeated": true
+              },
+              {
+                "id": 3,
+                "name": "archived_feature_flag_ids",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "requested_at",
+                "type": "int64"
+              },
+              {
+                "id": 5,
+                "name": "force_update",
+                "type": "bool"
               }
             ]
           },
