@@ -22,9 +22,10 @@ import (
 )
 
 const (
-	typeDomainEvent = "DomainEvent"
-	typeSegmentUser = "SegmentUser"
-	typeUserEvent   = "UserEvent"
+	typeDomainEvent     = "DomainEvent"
+	typeSegmentUser     = "SegmentUser"
+	typeUserEvent       = "UserEvent"
+	typeEvaluationCount = "EvaluationCount"
 )
 
 var (
