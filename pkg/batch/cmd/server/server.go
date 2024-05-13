@@ -140,7 +140,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		mysqlHost:        cmd.Flag("mysql-host", "MySQL host.").Required().String(),
 		mysqlPort:        cmd.Flag("mysql-port", "MySQL port.").Required().Int(),
 		mysqlDBName:      cmd.Flag("mysql-db-name", "MySQL database name.").Required().String(),
-		mysqlDBOpenConns: cmd.Flag("mysql-open-conns", "MySQL open connections.").Required().Int(),
+		mysqlDBOpenConns: cmd.Flag("mysql-db-open-conns", "MySQL open connections.").Required().Int(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
