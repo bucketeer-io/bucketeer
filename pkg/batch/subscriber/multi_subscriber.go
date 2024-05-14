@@ -22,7 +22,7 @@ import (
 )
 
 type MultiSubscriber struct {
-	subscribers []*Subscriber
+	subscribers []Subscriber
 	opts        options
 	logger      *zap.Logger
 }
@@ -33,13 +33,13 @@ func NewMultiSubscriber(opts ...Option) *MultiSubscriber {
 		o(&options)
 	}
 	return &MultiSubscriber{
-		subscribers: make([]*Subscriber, 0, 10),
+		subscribers: make([]Subscriber, 0, 10),
 		opts:        options,
 		logger:      options.logger.Named("multi_subscriber"),
 	}
 }
 
-func (m *MultiSubscriber) AddSubscriber(subscriber *Subscriber) {
+func (m *MultiSubscriber) AddSubscriber(subscriber Subscriber) {
 	m.subscribers = append(m.subscribers, subscriber)
 }
 

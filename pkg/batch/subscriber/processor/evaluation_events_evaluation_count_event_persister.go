@@ -17,7 +17,6 @@ package processor
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -42,16 +41,6 @@ const (
 	userCountKey       = "uc"
 	defaultVariationID = "default"
 	userDataAppVersion = "app_version"
-)
-
-var (
-	ErrUnexpectedMessageType = errors.New("eventpersister: unexpected message type")
-	ErrAutoOpsRulesNotFound  = errors.New("eventpersister: auto ops rules not found")
-	ErrExperimentNotFound    = errors.New("eventpersister: experiment not found")
-	ErrNoAutoOpsRules        = errors.New("eventpersister: no auto ops rules")
-	ErrNoExperiments         = errors.New("eventpersister: no experiments")
-	ErrNothingToLink         = errors.New("eventpersister: nothing to link")
-	ErrReasonNil             = errors.New("eventpersister: reason is nil")
 )
 
 type lastUsedInfoCache map[string]*ftdomain.FeatureLastUsedInfo
@@ -84,7 +73,7 @@ func NewEvaluationCountEventPersister(
 	evaluationCountEventPersisterJsonConfig, ok := config.(map[string]interface{})
 	if !ok {
 		logger.Error("EvaluationCountEventPersister: invalid config")
-		return nil, errEvaluationCountInvalidConfig
+		return nil, ErrEvaluationCountInvalidConfig
 	}
 	configBytes, err := json.Marshal(evaluationCountEventPersisterJsonConfig)
 	if err != nil {

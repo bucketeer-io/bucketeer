@@ -53,7 +53,17 @@ type Processor interface {
 	Process(ctx context.Context, msgChan <-chan *puller.Message) error
 }
 
-type Configuration struct {
+type ServerlessProcessor interface {
+	Processor
+	Switch(ctx context.Context) (bool, error)
+}
+
+type Subscriber interface {
+	Run(ctx context.Context)
+	Stop()
+}
+
+type NormalConfiguration struct {
 	Project                      string `json:"project"`
 	Subscription                 string `json:"subscription"`
 	Topic                        string `json:"topic"`
@@ -64,26 +74,26 @@ type Configuration struct {
 	WorkerNum                    int    `json:"workerNum"`
 }
 
-type Subscriber struct {
+type NormalSubscriber struct {
 	name          string
-	configuration Configuration
+	configuration NormalConfiguration
 	processor     Processor
 	cancel        context.CancelFunc
 	opts          options
 	logger        *zap.Logger
 }
 
-func NewSubscriber(
+func NewNormalSubscriber(
 	name string,
-	configuration Configuration,
+	configuration NormalConfiguration,
 	processor Processor,
 	opts ...Option,
-) *Subscriber {
+) Subscriber {
 	options := defaultOptions
 	for _, o := range opts {
 		o(&options)
 	}
-	return &Subscriber{
+	return &NormalSubscriber{
 		name:          name,
 		configuration: configuration,
 		processor:     processor,
@@ -92,8 +102,8 @@ func NewSubscriber(
 	}
 }
 
-func (s Subscriber) Run(ctx context.Context) {
-	s.logger.Info("Subscriber starting",
+func (s NormalSubscriber) Run(ctx context.Context) {
+	s.logger.Info("Normal Subscriber starting",
 		zap.String("name", s.name),
 		zap.String("project", s.configuration.Project),
 		zap.String("subscription", s.configuration.Subscription),
@@ -101,7 +111,7 @@ func (s Subscriber) Run(ctx context.Context) {
 	)
 	ctx, cancel := context.WithCancel(ctx)
 	s.cancel = cancel
-	rateLimiterPuller := s.createPuller(ctx, s.configuration)
+	rateLimiterPuller := s.createPuller(ctx)
 	group := errgroup.Group{}
 	group.Go(func() error {
 		return rateLimiterPuller.Run(ctx)
@@ -113,27 +123,26 @@ func (s Subscriber) Run(ctx context.Context) {
 	}
 	err := group.Wait()
 	if err != nil {
-		s.logger.Error("Subscriber stopped with error",
+		s.logger.Error("NormalSubscriber stopped with error",
 			zap.String("name", s.name),
 			zap.Error(err))
 	}
-	s.logger.Info("Subscriber stopped",
+	s.logger.Info("NormalSubscriber stopped",
 		zap.String("name", s.name))
 }
 
-func (s Subscriber) Stop() {
+func (s NormalSubscriber) Stop() {
 	if s.cancel != nil {
 		s.cancel()
 	}
 }
 
-func (s Subscriber) createPuller(
+func (s NormalSubscriber) createPuller(
 	ctx context.Context,
-	configuration Configuration,
 ) puller.RateLimitedPuller {
 	pubsubClient, err := pubsub.NewClient(
 		ctx,
-		configuration.Project,
+		s.configuration.Project,
 		pubsub.WithMetrics(s.opts.metrics),
 		pubsub.WithLogger(s.logger),
 	)
@@ -142,15 +151,15 @@ func (s Subscriber) createPuller(
 		return nil
 	}
 	pubsubPuller, err := pubsubClient.CreatePuller(
-		configuration.Subscription,
-		configuration.Topic,
-		pubsub.WithNumGoroutines(configuration.PullerNumGoroutines),
-		pubsub.WithMaxOutstandingMessages(configuration.PullerMaxOutstandingMessages),
-		pubsub.WithMaxOutstandingBytes(configuration.PullerMaxOutstandingBytes),
+		s.configuration.Subscription,
+		s.configuration.Topic,
+		pubsub.WithNumGoroutines(s.configuration.PullerNumGoroutines),
+		pubsub.WithMaxOutstandingMessages(s.configuration.PullerMaxOutstandingMessages),
+		pubsub.WithMaxOutstandingBytes(s.configuration.PullerMaxOutstandingBytes),
 	)
 	if err != nil {
 		s.logger.Error("Failed to create pubsub puller", zap.Error(err))
 		return nil
 	}
-	return puller.NewRateLimitedPuller(pubsubPuller, configuration.MaxMPS)
+	return puller.NewRateLimitedPuller(pubsubPuller, s.configuration.MaxMPS)
 }

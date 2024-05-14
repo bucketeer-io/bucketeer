@@ -601,8 +601,15 @@ func (s *server) startMultiPubSub(
 		)
 		return nil, err
 	}
-	var configMap map[string]subscriber.Configuration
-	if err := json.Unmarshal(bytes, &configMap); err != nil {
+	type SubscriberConfiguration struct {
+		Normal     map[string]subscriber.NormalConfiguration     `json:"normal"`
+		Serverless map[string]subscriber.ServerlessConfiguration `json:"serverless"`
+	}
+	subscriberConfig := SubscriberConfiguration{
+		Normal:     make(map[string]subscriber.NormalConfiguration),
+		Serverless: make(map[string]subscriber.ServerlessConfiguration),
+	}
+	if err := json.Unmarshal(bytes, &subscriberConfig); err != nil {
 		logger.Error("subscriber: failed to unmarshal subscriber config",
 			zap.Error(err),
 		)
@@ -611,17 +618,35 @@ func (s *server) startMultiPubSub(
 	multiSubscriber := subscriber.NewMultiSubscriber(
 		subscriber.WithLogger(logger),
 	)
-	for name, config := range configMap {
-		p, err := processors.GetProcessorByName(name)
+	// normal subscribers
+	for name, config := range subscriberConfig.Normal {
+		p, err := processors.GetProcessorByName(processor.TypeNormal, name)
 		if err != nil {
 			logger.Error("subscriber: processor not found",
+				zap.String("type", processor.TypeNormal),
 				zap.String("name", name),
 				zap.Error(err),
 			)
 			return nil, err
 		}
-		multiSubscriber.AddSubscriber(subscriber.NewSubscriber(
+		multiSubscriber.AddSubscriber(subscriber.NewNormalSubscriber(
 			name, config, p,
+			subscriber.WithLogger(logger),
+		))
+	}
+	// serverless subscribers
+	for name, config := range subscriberConfig.Serverless {
+		p, err := processors.GetProcessorByName(processor.TypeServerless, name)
+		if err != nil {
+			logger.Error("subscriber: processor not found",
+				zap.String("type", processor.TypeServerless),
+				zap.String("name", name),
+				zap.Error(err),
+			)
+			return nil, err
+		}
+		multiSubscriber.AddSubscriber(subscriber.NewServerlessSubscriber(
+			name, config, p.(subscriber.ServerlessProcessor),
 			subscriber.WithLogger(logger),
 		))
 	}
@@ -646,8 +671,15 @@ func (s *server) registerProcessorMap(
 		)
 		return nil, err
 	}
-	var configMap map[string]interface{}
-	if err := json.Unmarshal(bytes, &configMap); err != nil {
+	type ProcessorConfiguration struct {
+		Normal     map[string]interface{} `json:"normal"`
+		Serverless map[string]interface{} `json:"serverless"`
+	}
+	processorConfiguration := ProcessorConfiguration{
+		Normal:     make(map[string]interface{}),
+		Serverless: make(map[string]interface{}),
+	}
+	if err := json.Unmarshal(bytes, &processorConfiguration); err != nil {
 		logger.Error("subscriber: failed to unmarshal processors config",
 			zap.Error(err),
 		)
@@ -656,12 +688,13 @@ func (s *server) registerProcessorMap(
 	processors := processor.NewProcessors(registerer)
 
 	processors.RegisterProcessor(
+		processor.TypeNormal,
 		processor.DomainEventInformerName,
 		processor.NewDomainEventInformer(environmentClient, sender, logger),
 	)
 
 	segmentPersister, err := processor.NewSegmentUserPersister(
-		configMap[processor.SegmentUserPersisterName],
+		processorConfiguration.Normal[processor.SegmentUserPersisterName],
 		batchClient,
 		mysqlClient,
 		logger,
@@ -670,12 +703,13 @@ func (s *server) registerProcessorMap(
 		return nil, err
 	}
 	processors.RegisterProcessor(
+		processor.TypeNormal,
 		processor.SegmentUserPersisterName,
 		segmentPersister,
 	)
 
 	userEventPersister, err := processor.NewUserEventPersister(
-		configMap[processor.UserEventPersisterName],
+		processorConfiguration.Normal[processor.UserEventPersisterName],
 		mysqlClient,
 		logger,
 	)
@@ -683,13 +717,14 @@ func (s *server) registerProcessorMap(
 		return nil, err
 	}
 	processors.RegisterProcessor(
+		processor.TypeNormal,
 		processor.UserEventPersisterName,
 		userEventPersister,
 	)
 
 	evaluationCountEventPersister, err := processor.NewEvaluationCountEventPersister(
 		ctx,
-		configMap[processor.EvaluationCountEventPersisterName],
+		processorConfiguration.Normal[processor.EvaluationCountEventPersisterName],
 		mysqlClient,
 		cachev3.NewRedisCache(persistentRedisClient),
 		logger,
@@ -698,6 +733,7 @@ func (s *server) registerProcessorMap(
 		return nil, err
 	}
 	processors.RegisterProcessor(
+		processor.TypeNormal,
 		processor.EvaluationCountEventPersisterName,
 		evaluationCountEventPersister,
 	)

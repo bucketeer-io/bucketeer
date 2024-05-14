@@ -54,7 +54,7 @@ func NewUserEventPersister(
 	userEventPerisiterJsonConfig, ok := config.(map[string]interface{})
 	if !ok {
 		logger.Error("UserEventPersister: invalid config")
-		return nil, errUserEventInvalidConfig
+		return nil, ErrUserEventInvalidConfig
 	}
 	configBytes, err := json.Marshal(userEventPerisiterJsonConfig)
 	if err != nil {

@@ -70,7 +70,7 @@ func NewSegmentUserPersister(
 	segmentPersisterJsonConfig, ok := config.(map[string]interface{})
 	if !ok {
 		logger.Error("SegmentUserPersister: invalid config")
-		return nil, errSegmentInvalidConfig
+		return nil, ErrSegmentInvalidConfig
 	}
 	configBytes, err := json.Marshal(segmentPersisterJsonConfig)
 	if err != nil {
@@ -191,7 +191,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 					zap.String("environmentNamespace", event.EnvironmentNamespace),
 				)
 				subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.NonRepeatableError.String()).Inc()
-			case errors.Is(err, errSegmentInUse):
+			case errors.Is(err, ErrSegmentInUse):
 				msg.Ack()
 				p.logger.Warn(
 					"segment is in use",
@@ -199,7 +199,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 					zap.String("environmentNamespace", event.EnvironmentNamespace),
 				)
 				subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.NonRepeatableError.String()).Inc()
-			case errors.Is(err, errSegmentExceededMaxUserIDLength):
+			case errors.Is(err, ErrSegmentExceededMaxUserIDLength):
 				msg.Ack()
 				p.logger.Warn(
 					"exceeded max user id length",
@@ -272,7 +272,7 @@ func (p *segmentUserPersister) handleEvent(
 		return err
 	}
 	if segment.IsInUseStatus {
-		return errSegmentInUse
+		return ErrSegmentInUse
 	}
 	cnt, err := p.persistSegmentUsers(ctx, event.EnvironmentNamespace, event.SegmentId, event.Data, event.State)
 	if err != nil {
@@ -328,7 +328,7 @@ func (p *segmentUserPersister) persistSegmentUsers(
 			continue
 		}
 		if len(id) > maxUserIDLength {
-			return 0, errSegmentExceededMaxUserIDLength
+			return 0, ErrSegmentExceededMaxUserIDLength
 		}
 		uniqueSegmentUserIDs[id] = struct{}{}
 	}

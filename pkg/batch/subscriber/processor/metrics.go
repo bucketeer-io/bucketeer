@@ -22,10 +22,14 @@ import (
 )
 
 const (
-	subscriberDomainEvent     = "DomainEvent"
-	subscriberEvaluationCount = "EvaluationCount"
-	subscriberSegmentUser     = "SegmentUser"
-	subscriberUserEvent       = "UserEvent"
+	subscriberDomainEvent        = "DomainEvent"
+	subscriberEvaluationCount    = "EvaluationCount"
+	subscriberEvaluationEventDWH = "EvaluationEventDWH"
+	subscriberEvaluationEventOPS = "EvaluationEventOPS"
+	subscriberGoalEventDWH       = "GoalEventDWH"
+	subscriberGoalEventOPS       = "GoalEventOPS"
+	subscriberSegmentUser        = "SegmentUser"
+	subscriberUserEvent          = "UserEvent"
 )
 
 var (

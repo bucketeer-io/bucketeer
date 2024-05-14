@@ -1,0 +1,259 @@
+//  Copyright 2024 The Bucketeer Authors.
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
+package subscriber
+
+import (
+	"context"
+	"strings"
+	"time"
+
+	"go.uber.org/zap"
+
+	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
+)
+
+const (
+	pubsubErrNotFound = "NotFound"
+)
+
+type ServerlessConfiguration struct {
+	NormalConfiguration
+	CheckInterval int `json:"check_interval"`
+}
+
+type ServerlessSubscriber struct {
+	name                string
+	configuration       ServerlessConfiguration
+	rateLimitedPuller   puller.RateLimitedPuller
+	processor           ServerlessProcessor
+	ctx                 context.Context
+	cancel              context.CancelFunc
+	runningPullerCtx    context.Context
+	runningPullerCancel func()
+	client              *pubsub.Client
+	isRunning           bool
+	group               errgroup.Group
+	opts                options
+	logger              *zap.Logger
+}
+
+func NewServerlessSubscriber(
+	name string,
+	configuration ServerlessConfiguration,
+	processor ServerlessProcessor,
+	opts ...Option,
+) *ServerlessSubscriber {
+
+	return &ServerlessSubscriber{
+		name:          name,
+		configuration: ServerlessConfiguration{},
+		processor:     processor,
+		cancel:        nil,
+		opts:          options{},
+		logger:        nil,
+	}
+}
+
+func (s *ServerlessSubscriber) Run(ctx context.Context) {
+	s.logger.Info("Serverless Subscriber starting",
+		zap.String("name", s.name),
+		zap.String("project", s.configuration.Project),
+		zap.String("subscription", s.configuration.Subscription),
+		zap.String("topic", s.configuration.Topic),
+	)
+	s.ctx, s.cancel = context.WithCancel(ctx)
+	err := s.createPubSubClient(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create pubsub client",
+			zap.Error(err),
+			zap.String("name", s.name),
+		)
+		return
+	}
+	ticker := time.NewTicker(time.Duration(s.configuration.CheckInterval))
+	defer ticker.Stop()
+	subscription := make(chan struct{})
+	go s.subscribe(subscription)
+	for {
+		select {
+		case <-ticker.C:
+			start, err := s.processor.Switch(ctx)
+			if err != nil {
+				s.logger.Error("Failed to check experiments existence", zap.Error(err))
+				continue
+			}
+			if start {
+				s.logger.Debug(
+					"ServerlessSubscriber start pulling messages",
+					zap.String("name", s.name),
+				)
+				if !s.IsRunning() {
+					err = s.createPuller()
+					if err != nil {
+						s.logger.Error("Failed to create new puller",
+							zap.String("name", s.name),
+							zap.Error(err),
+						)
+						continue
+					}
+					s.group = errgroup.Group{}
+					subscription <- struct{}{}
+					s.logger.Debug(
+						"Puller is not running, start pulling messages",
+						zap.String("name", s.name),
+					)
+				}
+			} else {
+				s.logger.Debug(
+					"ServerlessSubscriber stop pulling messages",
+					zap.String("name", s.name),
+				)
+				if s.IsRunning() {
+					s.logger.Debug("Puller is running, stop pulling messages",
+						zap.String("name", s.name),
+					)
+					s.unsubscribe()
+				}
+				// delete subscription if it exists
+				exists, err := s.client.SubscriptionExists(s.configuration.Subscription)
+				if err != nil {
+					s.logger.Error("Failed to check subscription existence",
+						zap.String("name", s.name),
+						zap.Error(err),
+					)
+					continue
+				}
+				if exists {
+					s.logger.Debug("Subscription exists, delete it now",
+						zap.String("name", s.name),
+						zap.String("subscription", s.configuration.Subscription),
+					)
+					err = s.client.DeleteSubscription(s.configuration.Subscription)
+					if err != nil {
+						s.logger.Error("Failed to delete subscription",
+							zap.String("name", s.name),
+							zap.Error(err),
+						)
+						continue
+					} else {
+						s.logger.Debug("Subscription deleted successfully",
+							zap.String("name", s.name),
+							zap.String("subscription", s.configuration.Subscription),
+						)
+					}
+				} else {
+					s.logger.Debug("Subscription does not exist",
+						zap.String("name", s.name),
+						zap.String("subscription", s.configuration.Subscription),
+					)
+				}
+			}
+		case <-ctx.Done():
+			s.logger.Debug("Context is done")
+			if s.IsRunning() {
+				s.logger.Debug("Puller is running, stop pulling messages")
+				s.unsubscribe()
+			}
+		}
+	}
+}
+
+func (s *ServerlessSubscriber) subscribe(subscription chan struct{}) {
+	for {
+		select {
+		case <-subscription:
+			s.isRunning = true
+			ctx, cancel := context.WithCancel(context.Background())
+			s.runningPullerCtx = ctx
+			s.runningPullerCancel = cancel
+			s.group.Go(func() error {
+				err := s.rateLimitedPuller.Run(ctx)
+				if err != nil {
+					if strings.Contains(err.Error(), pubsubErrNotFound) {
+						s.logger.Debug("Failed to pull messages. Subscription does not exist",
+							zap.String("name", s.name),
+							zap.String("subscription", s.configuration.Subscription))
+						s.unsubscribe()
+						return nil
+					}
+					s.logger.Error("Failed to pull messages", zap.Error(err))
+					return err
+				}
+				return nil
+			})
+			for i := 0; i < s.configuration.WorkerNum; i++ {
+				s.group.Go(s.batch)
+			}
+			err := s.group.Wait()
+			if err != nil {
+				s.logger.Error("Failed while running pull messages", zap.Error(err))
+			}
+			s.logger.Debug("Puller stopped subscribing")
+			s.isRunning = false
+		case <-s.ctx.Done():
+			return
+		}
+	}
+}
+
+func (s *ServerlessSubscriber) batch() error {
+	return s.processor.Process(s.runningPullerCtx, s.rateLimitedPuller.MessageCh())
+}
+
+func (s *ServerlessSubscriber) unsubscribe() {
+	s.runningPullerCancel()
+}
+
+func (s *ServerlessSubscriber) IsRunning() bool {
+	return s.isRunning
+}
+
+func (s *ServerlessSubscriber) createPubSubClient(ctx context.Context) error {
+	pubsubClient, err := pubsub.NewClient(
+		ctx,
+		s.configuration.Project,
+		pubsub.WithMetrics(s.opts.metrics),
+		pubsub.WithLogger(s.logger),
+	)
+	if err != nil {
+		s.logger.Error("Failed to create pubsub client", zap.Error(err))
+		return err
+	}
+	s.client = pubsubClient
+	return nil
+}
+
+func (s *ServerlessSubscriber) createPuller() error {
+	pubsubPuller, err := s.client.CreatePuller(
+		s.configuration.Subscription,
+		s.configuration.Topic,
+		pubsub.WithNumGoroutines(s.configuration.PullerNumGoroutines),
+		pubsub.WithMaxOutstandingMessages(s.configuration.PullerMaxOutstandingMessages),
+		pubsub.WithMaxOutstandingBytes(s.configuration.PullerMaxOutstandingBytes),
+	)
+	if err != nil {
+		s.logger.Error("Failed to create pubsub puller", zap.Error(err))
+		return err
+	}
+	s.rateLimitedPuller = puller.NewRateLimitedPuller(pubsubPuller, s.configuration.MaxMPS)
+	return nil
+}
+
+func (s *ServerlessSubscriber) Stop() {
+	s.cancel()
+}
