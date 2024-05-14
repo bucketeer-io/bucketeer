@@ -114,16 +114,176 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 	featureID3 := newFeatureID(t, uuid)
 	cmd3 := createFeatureWithTag(t, tag, featureID3)
 
+	time.Sleep(15 * time.Second) // It must be higher than the `secondsForAdjustment`
+
 	// Find feature with no tag and no features ID
-	response := grpcGetFeatureFlags(t, "", "")
+	response := grpcGetFeatureFlags(t, "", "", 0)
+	assert.NotEmpty(t, response.FeatureFlagsId)
 	assert.True(t, len(response.Features) >= 3)
+	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
+	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.True(t, response.ForceUpdate)
 	assert.True(t, findFeatureByID(t, cmd1.Id, response.Features))
 	assert.True(t, findFeatureByID(t, cmd2.Id, response.Features))
 	assert.True(t, findFeatureByID(t, cmd3.Id, response.Features))
 
-	// Find feature by tag with tag and no features ID
-	response = grpcGetFeatureFlags(t, tag, "")
+	// Find feature with tag and no features ID
+	response = grpcGetFeatureFlags(t, tag, "", 0)
+	assert.NotEmpty(t, response.FeatureFlagsId)
 	assert.Equal(t, 2, len(response.Features))
+	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
+	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.True(t, response.ForceUpdate)
+	assert.True(t, findFeatureByID(t, cmd1.Id, response.Features))
+	assert.True(t, findFeatureByID(t, cmd3.Id, response.Features))
+
+	// Find feature with tag, with the same features ID, and requested at
+	ffid := response.FeatureFlagsId
+	response = grpcGetFeatureFlags(t, tag, response.FeatureFlagsId, response.RequestedAt)
+	assert.Equal(t, ffid, response.FeatureFlagsId)
+	assert.Equal(t, 0, len(response.Features))
+	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
+	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.False(t, response.ForceUpdate)
+
+	// Find feature with tag, with the different features ID, and requested at
+	response = grpcGetFeatureFlags(t, tag, "random-id", response.RequestedAt)
+	assert.Equal(t, ffid, response.FeatureFlagsId)
+	assert.Equal(t, 0, len(response.Features))
+	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
+	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.False(t, response.ForceUpdate)
+}
+
+func TestGrpcGetFeatureFlagsWithArchivedIDs(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+	uuid := newUUID(t)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	// Feature 1
+	featureID1 := newFeatureID(t, uuid)
+	cmd1 := createFeatureWithTag(t, tag, featureID1)
+
+	// Feature 2
+	uuid = newUUID(t)
+	featureID2 := newFeatureID(t, uuid)
+	createFeature(t, client, newCreateFeatureCommand(featureID2))
+
+	// Feature 3
+	uuid = newUUID(t)
+	featureID3 := newFeatureID(t, uuid)
+	cmd3 := createFeatureWithTag(t, tag, featureID3)
+
+	time.Sleep(15 * time.Second) // It must be higher than the `secondsForAdjustment`
+
+	// Find feature by tag with tag and no features ID
+	requestFFID := ""
+	response := grpcGetFeatureFlags(t, tag, requestFFID, 0)
+	assert.NotEmpty(t, response.FeatureFlagsId)
+	assert.Equal(t, 2, len(response.Features))
+	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
+	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.True(t, response.ForceUpdate)
+	assert.True(t, findFeatureByID(t, cmd1.Id, response.Features))
+	assert.True(t, findFeatureByID(t, cmd3.Id, response.Features))
+
+	// Archive feature
+	archiveFeature(t, cmd1.Id, client)
+
+	// Update feature flag cache
+	updateFeatueFlagCache(t)
+
+	// Find the archived flag
+	requestFFID = response.FeatureFlagsId
+	response = grpcGetFeatureFlags(t, tag, requestFFID, response.RequestedAt)
+	assert.True(t, requestFFID != response.FeatureFlagsId)
+	assert.Equal(t, 0, len(response.Features))
+	assert.Equal(t, 1, len(response.ArchivedFeatureFlagIds))
+	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.False(t, response.ForceUpdate)
+	assert.Equal(t, cmd1.Id, response.ArchivedFeatureFlagIds[0])
+}
+
+func TestGrpcGetFeatureFlagsWithRequestedAt(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+	uuid := newUUID(t)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	// Feature 1
+	featureID1 := newFeatureID(t, uuid)
+	cmd1 := createFeatureWithTag(t, tag, featureID1)
+
+	// Feature 2
+	uuid = newUUID(t)
+	featureID2 := newFeatureID(t, uuid)
+	createFeature(t, client, newCreateFeatureCommand(featureID2))
+
+	// Feature 3
+	uuid = newUUID(t)
+	featureID3 := newFeatureID(t, uuid)
+	cmd3 := createFeatureWithTag(t, tag, featureID3)
+
+	time.Sleep(15 * time.Second) // It must be higher than the `secondsForAdjustment`
+
+	// Find feature by tag with tag and no features ID
+	requestFFID := ""
+	response := grpcGetFeatureFlags(t, tag, requestFFID, 0)
+	assert.NotEmpty(t, response.FeatureFlagsId)
+	assert.Equal(t, 2, len(response.Features))
+	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
+	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.True(t, response.ForceUpdate)
+	assert.True(t, findFeatureByID(t, cmd1.Id, response.Features))
+	assert.True(t, findFeatureByID(t, cmd3.Id, response.Features))
+
+	// Create another Flag
+	// Feature 4
+	uuid = newUUID(t)
+	featureID4 := newFeatureID(t, uuid)
+	cmd4 := createFeatureWithTag(t, tag, featureID4)
+
+	// Find the flag 4
+	requestFFID = response.FeatureFlagsId
+	response = grpcGetFeatureFlags(t, tag, requestFFID, response.RequestedAt)
+	assert.True(t, requestFFID != response.FeatureFlagsId)
+	assert.Equal(t, 1, len(response.Features))
+	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
+	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.False(t, response.ForceUpdate)
+	assert.True(t, findFeatureByID(t, cmd4.Id, response.Features))
+}
+
+func TestGrpcGetFeatureFlagsWithRequestedAt31daysAgo(t *testing.T) {
+	t.Parallel()
+	client := newFeatureClient(t)
+	defer client.Close()
+	uuid := newUUID(t)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, uuid)
+	// Feature 1
+	featureID1 := newFeatureID(t, uuid)
+	cmd1 := createFeatureWithTag(t, tag, featureID1)
+
+	// Feature 2
+	uuid = newUUID(t)
+	featureID2 := newFeatureID(t, uuid)
+	createFeature(t, client, newCreateFeatureCommand(featureID2))
+
+	// Feature 3
+	uuid = newUUID(t)
+	featureID3 := newFeatureID(t, uuid)
+	cmd3 := createFeatureWithTag(t, tag, featureID3)
+
+	// Find feature by tag with tag with random id, and old requested at
+	requestFFID := "random-id"
+	requestedAt := time.Now().Add(-31 * 24 * time.Hour).Unix()
+	response := grpcGetFeatureFlags(t, tag, requestFFID, requestedAt)
+	assert.True(t, requestFFID != response.FeatureFlagsId)
+	assert.Equal(t, 2, len(response.Features))
+	assert.Equal(t, 0, len(response.ArchivedFeatureFlagIds))
+	assert.True(t, response.RequestedAt >= time.Now().Add(-30*time.Second).Unix())
+	assert.True(t, response.ForceUpdate)
 	assert.True(t, findFeatureByID(t, cmd1.Id, response.Features))
 	assert.True(t, findFeatureByID(t, cmd3.Id, response.Features))
 }
@@ -1007,15 +1167,18 @@ func grpcGetEvaluations(t *testing.T, tag, userID string) *gatewayproto.GetEvalu
 	return response
 }
 
-func grpcGetFeatureFlags(t *testing.T, tag, featuresID string) *gatewayproto.GetFeatureFlagsResponse {
+func grpcGetFeatureFlags(t *testing.T, tag, featuresID string, requestedAt int64) *gatewayproto.GetFeatureFlagsResponse {
 	t.Helper()
 	c := newGatewayClient(t, *apiKeyServerPath)
 	defer c.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	req := &gatewayproto.GetFeatureFlagsRequest{
-		Tag:        tag,
-		FeaturesId: featuresID,
+		Tag:            tag,
+		FeatureFlagsId: featuresID,
+		RequestedAt:    requestedAt,
+		SourceId:       eventproto.SourceId_GO_SERVER,
+		SdkVersion:     "v0.0.1-e2e-test",
 	}
 	response, err := c.GetFeatureFlags(ctx, req)
 	if err != nil {

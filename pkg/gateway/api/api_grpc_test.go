@@ -827,26 +827,50 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
+	timeNow := time.Now()
 	apiKey := "api-key-id"
 	envNamespace := "ns0"
 	tag := "tag"
 	singleFeature := []*featureproto.Feature{
 		{
-			Id:      "feature-id-1",
-			Version: 1,
-			Tags:    []string{tag},
+			Id:        "feature-id-1",
+			Version:   1,
+			Tags:      []string{tag},
+			UpdatedAt: timeNow.Add(-20 * time.Minute).Unix(),
 		},
 	}
 	multiFeatures := []*featureproto.Feature{
 		{
-			Id:      "feature-id-1",
-			Version: 1,
-			Tags:    []string{tag},
+			Id:        "feature-id-1",
+			Version:   1,
+			Tags:      []string{tag},
+			UpdatedAt: timeNow.Add(-20 * time.Minute).Unix(),
 		},
 		{
-			Id:      "feature-id-2",
-			Version: 1,
-			Tags:    []string{},
+			Id:        "feature-id-2",
+			Version:   1,
+			Tags:      []string{},
+			UpdatedAt: timeNow.Add(-20 * time.Minute).Unix(),
+		},
+		{
+			Id:        "feature-id-3",
+			Version:   1,
+			Tags:      []string{},
+			UpdatedAt: timeNow.Add(-20 * time.Minute).Unix(),
+		},
+		{
+			Id:        "feature-id-4",
+			Version:   1,
+			Tags:      []string{tag},
+			UpdatedAt: timeNow.Add(-secondsToReturnAllFlags * time.Second).Unix(),
+			Archived:  true,
+		},
+		{
+			Id:        "feature-id-5",
+			Version:   1,
+			Tags:      []string{tag},
+			UpdatedAt: timeNow.Add(-10 * time.Minute).Unix(),
+			Archived:  true,
 		},
 	}
 	patterns := []struct {
@@ -886,6 +910,49 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 			expectedErr: ErrBadRole,
 		},
 		{
+			desc: "err: source id is required",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envNamespace},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+			},
+			input: &gwproto.GetFeatureFlagsRequest{
+				Tag:            "test",
+				FeatureFlagsId: "",
+				SourceId:       eventproto.SourceId_UNKNOWN,
+			},
+			expected:    nil,
+			expectedErr: ErrSourceIDRequired,
+		},
+		{
+			desc: "err: sdk version is required",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envNamespace},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+			},
+			input: &gwproto.GetFeatureFlagsRequest{
+				Tag:            "test",
+				FeatureFlagsId: "",
+				SourceId:       eventproto.SourceId_GO_SERVER,
+				SdkVersion:     "",
+			},
+			expected:    nil,
+			expectedErr: ErrSDKVersionRequired,
+		},
+		{
 			desc: "err: internal error while getting feature flags",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
@@ -902,7 +969,12 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(
 					nil, ErrInternal)
 			},
-			input:       &gwproto.GetFeatureFlagsRequest{Tag: "test", FeatureFlagsId: ""},
+			input: &gwproto.GetFeatureFlagsRequest{
+				Tag:            "test",
+				FeatureFlagsId: "",
+				SourceId:       eventproto.SourceId_GO_SERVER,
+				SdkVersion:     "v0.0.1",
+			},
 			expected:    nil,
 			expectedErr: ErrInternal,
 		},
@@ -923,10 +995,18 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 						Features: []*featureproto.Feature{},
 					}, nil)
 			},
-			input: &gwproto.GetFeatureFlagsRequest{Tag: "test", FeatureFlagsId: ""},
-			expected: &gwproto.GetFeatureFlagsResponse{
+			input: &gwproto.GetFeatureFlagsRequest{
+				Tag:            "test",
 				FeatureFlagsId: "",
-				Features:       []*featureproto.Feature{},
+				SourceId:       eventproto.SourceId_GO_SERVER,
+				SdkVersion:     "v0.0.1",
+			},
+			expected: &gwproto.GetFeatureFlagsResponse{
+				FeatureFlagsId:         "",
+				Features:               []*featureproto.Feature{},
+				ArchivedFeatureFlagIds: make([]string, 0),
+				RequestedAt:            timeNow.Unix(),
+				ForceUpdate:            false,
 			},
 			expectedErr: nil,
 		},
@@ -947,10 +1027,22 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 						Features: multiFeatures,
 					}, nil)
 			},
-			input: &gwproto.GetFeatureFlagsRequest{Tag: "", FeatureFlagsId: ""},
+			input: &gwproto.GetFeatureFlagsRequest{
+				Tag:            "",
+				FeatureFlagsId: "",
+				SourceId:       eventproto.SourceId_GO_SERVER,
+				SdkVersion:     "v0.0.1",
+			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId: "12174583190774721812",
-				Features:       multiFeatures,
+				FeatureFlagsId: "12580091098247002273",
+				Features: []*featureproto.Feature{
+					multiFeatures[0],
+					multiFeatures[1],
+					multiFeatures[2],
+				},
+				ArchivedFeatureFlagIds: make([]string, 0),
+				RequestedAt:            timeNow.Unix(),
+				ForceUpdate:            true,
 			},
 			expectedErr: nil,
 		},
@@ -971,15 +1063,23 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 						Features: multiFeatures,
 					}, nil)
 			},
-			input: &gwproto.GetFeatureFlagsRequest{Tag: "", FeatureFlagsId: "12174583190774721812"},
+			input: &gwproto.GetFeatureFlagsRequest{
+				Tag:            "",
+				FeatureFlagsId: "12580091098247002273",
+				SourceId:       eventproto.SourceId_GO_SERVER,
+				SdkVersion:     "v0.0.1",
+			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId: "12174583190774721812",
-				Features:       []*featureproto.Feature{},
+				FeatureFlagsId:         "12580091098247002273",
+				Features:               []*featureproto.Feature{},
+				ArchivedFeatureFlagIds: make([]string, 0),
+				RequestedAt:            timeNow.Unix(),
+				ForceUpdate:            false,
 			},
 			expectedErr: nil,
 		},
 		{
-			desc: "success: with no tag and with different feature flags ID",
+			desc: "success: with no tag and with different feature flags ID, and with old requested at",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -995,10 +1095,23 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 						Features: multiFeatures,
 					}, nil)
 			},
-			input: &gwproto.GetFeatureFlagsRequest{Tag: "", FeatureFlagsId: "random-id"},
+			input: &gwproto.GetFeatureFlagsRequest{
+				Tag:            "",
+				FeatureFlagsId: "random-id",
+				RequestedAt:    timeNow.Add(-20 * time.Minute).Unix(),
+				SourceId:       eventproto.SourceId_GO_SERVER,
+				SdkVersion:     "v0.0.1",
+			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId: "12174583190774721812",
-				Features:       multiFeatures,
+				FeatureFlagsId: "12580091098247002273",
+				Features: []*featureproto.Feature{
+					multiFeatures[0],
+					multiFeatures[1],
+					multiFeatures[2],
+				},
+				ArchivedFeatureFlagIds: []string{multiFeatures[4].Id},
+				RequestedAt:            timeNow.Unix(),
+				ForceUpdate:            false,
 			},
 			expectedErr: nil,
 		},
@@ -1016,13 +1129,21 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 					}, nil)
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envNamespace).Return(
 					&featureproto.Features{
-						Features: singleFeature,
+						Features: multiFeatures,
 					}, nil)
 			},
-			input: &gwproto.GetFeatureFlagsRequest{Tag: tag, FeatureFlagsId: ""},
+			input: &gwproto.GetFeatureFlagsRequest{
+				Tag:            tag,
+				FeatureFlagsId: "",
+				SourceId:       eventproto.SourceId_GO_SERVER,
+				SdkVersion:     "v0.0.1",
+			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId: "13164487566000689278",
-				Features:       singleFeature,
+				FeatureFlagsId:         "13164487566000689278",
+				Features:               singleFeature,
+				RequestedAt:            timeNow.Unix(),
+				ArchivedFeatureFlagIds: make([]string, 0),
+				ForceUpdate:            true,
 			},
 			expectedErr: nil,
 		},
@@ -1043,15 +1164,23 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 						Features: singleFeature,
 					}, nil)
 			},
-			input: &gwproto.GetFeatureFlagsRequest{Tag: tag, FeatureFlagsId: "13164487566000689278"},
-			expected: &gwproto.GetFeatureFlagsResponse{
+			input: &gwproto.GetFeatureFlagsRequest{
+				Tag:            tag,
 				FeatureFlagsId: "13164487566000689278",
-				Features:       []*featureproto.Feature{},
+				SourceId:       eventproto.SourceId_GO_SERVER,
+				SdkVersion:     "v0.0.1",
+			},
+			expected: &gwproto.GetFeatureFlagsResponse{
+				FeatureFlagsId:         "13164487566000689278",
+				Features:               []*featureproto.Feature{},
+				ArchivedFeatureFlagIds: make([]string, 0),
+				RequestedAt:            timeNow.Unix(),
+				ForceUpdate:            false,
 			},
 			expectedErr: nil,
 		},
 		{
-			desc: "success: with tag and with different feature flags ID",
+			desc: "success: with tag and with different feature flags ID, and with no requested at",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -1064,26 +1193,69 @@ func TestGrpcGetFeatureFlags(t *testing.T) {
 					}, nil)
 				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envNamespace).Return(
 					&featureproto.Features{
-						Features: singleFeature,
+						Features: multiFeatures,
 					}, nil)
 			},
-			input: &gwproto.GetFeatureFlagsRequest{Tag: tag, FeatureFlagsId: "random-id"},
+			input: &gwproto.GetFeatureFlagsRequest{
+				Tag:            tag,
+				FeatureFlagsId: "random-id",
+				SourceId:       eventproto.SourceId_GO_SERVER,
+				SdkVersion:     "v0.0.1",
+			},
 			expected: &gwproto.GetFeatureFlagsResponse{
-				FeatureFlagsId: "13164487566000689278",
-				Features:       singleFeature,
+				FeatureFlagsId:         "13164487566000689278",
+				Features:               singleFeature,
+				ArchivedFeatureFlagIds: make([]string, 0),
+				RequestedAt:            timeNow.Unix(),
+				ForceUpdate:            true,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: with tag and with different feature flags ID, and with old requested at",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envNamespace},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envNamespace).Return(
+					&featureproto.Features{
+						Features: multiFeatures,
+					}, nil)
+			},
+			input: &gwproto.GetFeatureFlagsRequest{
+				Tag:            tag,
+				FeatureFlagsId: "random-id",
+				RequestedAt:    timeNow.Add(-10 * time.Minute).Unix(),
+				SourceId:       eventproto.SourceId_GO_SERVER,
+				SdkVersion:     "v0.0.1",
+			},
+			expected: &gwproto.GetFeatureFlagsResponse{
+				FeatureFlagsId:         "13164487566000689278",
+				Features:               make([]*featureproto.Feature, 0),
+				ArchivedFeatureFlagIds: []string{multiFeatures[4].Id},
+				RequestedAt:            timeNow.Unix(),
+				ForceUpdate:            false,
 			},
 			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
-		gs := newGrpcGatewayServiceWithMock(t, mockController)
-		p.setup(gs)
-		ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
-			"authorization": []string{apiKey},
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newGrpcGatewayServiceWithMock(t, mockController)
+			p.setup(gs)
+			ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
+				"authorization": []string{apiKey},
+			})
+			actual, err := gs.GetFeatureFlags(ctx, p.input)
+			assert.Equal(t, p.expected, actual, "%s", p.desc)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
-		actual, err := gs.GetFeatureFlags(ctx, p.input)
-		assert.Equal(t, p.expected, actual, "%s", p.desc)
-		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
 }
 

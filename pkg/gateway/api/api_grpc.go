@@ -53,6 +53,8 @@ const (
 )
 
 var (
+	ErrSDKVersionRequired = status.Error(codes.InvalidArgument, "gateway: sdk version is required")
+	ErrSourceIDRequired   = status.Error(codes.InvalidArgument, "gateway: source id is required")
 	ErrUserRequired       = status.Error(codes.InvalidArgument, "gateway: user is required")
 	ErrUserIDRequired     = status.Error(codes.InvalidArgument, "gateway: user id is required")
 	ErrGoalIDRequired     = status.Error(codes.InvalidArgument, "gateway: goal id is required")
@@ -611,6 +613,20 @@ func (s *grpcGatewayService) GetFeatureFlags(
 		envAPIKey.Environment.OrganizationId, projectID,
 		environmentId, methodGetEvaluations, req.SourceId.String()).Inc()
 
+	if err := s.validateGetFeatureFlagsRequest(req); err != nil {
+		s.logger.Error("Failed to validate GetFeatureFlags request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("projectId", projectID),
+				zap.String("environmentId", environmentId),
+				zap.String("apiKey", envAPIKey.ApiKey.Id),
+				zap.Any("sourceId", req.SourceId),
+				zap.String("sdkVersion", req.SdkVersion),
+			)...,
+		)
+		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeBadRequest).Inc()
+		return nil, err
+	}
 	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetFeatureFlags.GetFeatures")
 	f, err, _ := s.flightgroup.Do(
 		environmentId,
@@ -702,13 +718,23 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	return &gwproto.GetFeatureFlagsResponse{
 		FeatureFlagsId:         ffID,
 		Features:               updatedFeatures,
+		ArchivedFeatureFlagIds: archivedIDs,
 		RequestedAt:            now.Unix(),
 		ForceUpdate:            false,
-		ArchivedFeatureFlagIds: archivedIDs,
 	}, nil
 }
 
-// To keep response size small, the feature flags archived more than 30 days are excluded
+func (s *grpcGatewayService) validateGetFeatureFlagsRequest(req *gwproto.GetFeatureFlagsRequest) error {
+	if req.SourceId == eventproto.SourceId_UNKNOWN {
+		return ErrSourceIDRequired
+	}
+	if req.SdkVersion == "" {
+		return ErrSDKVersionRequired
+	}
+	return nil
+}
+
+// To keep the response size small, the feature flags archived more than 30 days are excluded
 func (s *grpcGatewayService) isArchivedBeforeLastThirtyDays(feature *featureproto.Feature) bool {
 	return feature.Archived && feature.UpdatedAt > time.Now().Unix()-secondsToReturnAllFlags
 }
