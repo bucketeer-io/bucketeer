@@ -24,9 +24,9 @@ import (
 
 const (
 	DomainEventInformerName           = "domainEventInformer"
+	EvaluationCountEventPersisterName = "evaluationCountEventPersister"
 	SegmentUserPersisterName          = "segmentUserPersister"
 	UserEventPersisterName            = "userEventPersister"
-	EvaluationCountEventPersisterName = "evaluationCountEventPersister"
 )
 
 var (

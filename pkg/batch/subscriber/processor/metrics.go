@@ -23,9 +23,9 @@ import (
 
 const (
 	typeDomainEvent     = "DomainEvent"
+	typeEvaluationCount = "EvaluationCount"
 	typeSegmentUser     = "SegmentUser"
 	typeUserEvent       = "UserEvent"
-	typeEvaluationCount = "EvaluationCount"
 )
 
 var (
