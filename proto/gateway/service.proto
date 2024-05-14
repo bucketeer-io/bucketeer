@@ -21,12 +21,29 @@ import "google/api/annotations.proto";
 
 import "proto/user/user.proto";
 import "proto/feature/evaluation.proto";
+import "proto/feature/feature.proto";
 import "proto/event/client/event.proto";
 
 message PingRequest {}
 
 message PingResponse {
   int64 time = 1;
+}
+
+message GetFeatureFlagsRequest {
+  string tag = 1;
+  string feature_flags_id = 2;
+  int64 requested_at = 3;
+  bucketeer.event.client.SourceId source_id = 4;
+  string sdk_version = 5;
+}
+
+message GetFeatureFlagsResponse {
+  string feature_flags_id = 1;
+  repeated bucketeer.feature.Feature features = 2;
+  repeated string archived_feature_flag_ids = 3;
+  int64 requested_at = 4;
+  bool force_update = 5;
 }
 
 message GetEvaluationsRequest {
@@ -102,6 +119,13 @@ service Gateway {
   rpc GetEvaluation(GetEvaluationRequest) returns (GetEvaluationResponse) {
     option (google.api.http) = {
       post: "/get_evaluation"
+      body: "*"
+    };
+  }
+  rpc GetFeatureFlags(GetFeatureFlagsRequest)
+      returns (GetFeatureFlagsResponse) {
+    option (google.api.http) = {
+      post: "/get_feature_flags"
       body: "*"
     };
   }
