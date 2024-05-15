@@ -130,18 +130,18 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 				p.logger.Error("Failed to pull message")
 				return nil
 			}
-			persisterReceivedCounter.WithLabelValues(typeEvaluationCount).Inc()
+			subscriberReceivedCounter.WithLabelValues(subscriberEvaluationCount).Inc()
 			id := msg.Attributes["id"]
 			if id == "" {
 				msg.Ack()
 				// TODO: better log format for msg data
-				persisterHandledCounter.WithLabelValues(typeEvaluationCount, codes.MissingID.String()).Inc()
+				subscriberHandledCounter.WithLabelValues(subscriberEvaluationCount, codes.MissingID.String()).Inc()
 				continue
 			}
 			if previous, ok := batch[id]; ok {
 				previous.Ack()
 				p.logger.Warn("Message with duplicate id", zap.String("id", id))
-				persisterHandledCounter.WithLabelValues(typeEvaluationCount, codes.DuplicateID.String()).Inc()
+				subscriberHandledCounter.WithLabelValues(subscriberEvaluationCount, codes.DuplicateID.String()).Inc()
 			}
 			batch[id] = msg
 			if len(batch) < p.evaluationCountEventPersisterConfig.FlushSize {
@@ -193,15 +193,15 @@ func (p *evaluationCountEventPersister) checkMessages(messages map[string]*pulle
 		if repeatable, ok := fails[id]; ok {
 			if repeatable {
 				m.Nack()
-				persisterHandledCounter.WithLabelValues(typeEvaluationCount, codes.RepeatableError.String()).Inc()
+				subscriberHandledCounter.WithLabelValues(subscriberEvaluationCount, codes.RepeatableError.String()).Inc()
 			} else {
 				m.Ack()
-				persisterHandledCounter.WithLabelValues(typeEvaluationCount, codes.NonRepeatableError.String()).Inc()
+				subscriberHandledCounter.WithLabelValues(subscriberEvaluationCount, codes.NonRepeatableError.String()).Inc()
 			}
 			continue
 		}
 		m.Ack()
-		persisterHandledCounter.WithLabelValues(typeEvaluationCount, codes.OK.String()).Inc()
+		subscriberHandledCounter.WithLabelValues(subscriberEvaluationCount, codes.OK.String()).Inc()
 	}
 }
 
@@ -210,7 +210,7 @@ func (p *evaluationCountEventPersister) extractEvents(messages map[string]*pulle
 	handleBadMessage := func(m *puller.Message, err error) {
 		m.Ack()
 		p.logger.Error("Bad proto message", zap.Error(err), zap.Any("msg", m))
-		persisterHandledCounter.WithLabelValues(typeEvaluationCount, codes.BadMessage.String()).Inc()
+		subscriberHandledCounter.WithLabelValues(subscriberEvaluationCount, codes.BadMessage.String()).Inc()
 	}
 	for _, m := range messages {
 		event := &eventproto.Event{}

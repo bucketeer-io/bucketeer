@@ -86,17 +86,17 @@ func (p *userEventPersister) Process(ctx context.Context, msgChan <-chan *puller
 			if !ok {
 				return nil
 			}
-			persisterReceivedCounter.WithLabelValues(typeUserEvent).Inc()
+			subscriberReceivedCounter.WithLabelValues(subscriberUserEvent).Inc()
 			id := msg.Attributes["id"]
 			if id == "" {
 				msg.Ack()
-				persisterHandledCounter.WithLabelValues(typeUserEvent, codes.MissingID.String()).Inc()
+				subscriberHandledCounter.WithLabelValues(subscriberUserEvent, codes.MissingID.String()).Inc()
 				continue
 			}
 			if pre, ok := chunk[id]; ok {
 				pre.Ack()
 				p.logger.Warn("Message with duplicate id", zap.String("id", id))
-				persisterHandledCounter.WithLabelValues(typeUserEvent, codes.DuplicateID.String()).Inc()
+				subscriberHandledCounter.WithLabelValues(subscriberUserEvent, codes.DuplicateID.String()).Inc()
 			}
 			chunk[id] = msg
 			if len(chunk) >= p.userEventPersisterConfig.FlushSize {
@@ -165,12 +165,12 @@ func (p *userEventPersister) extractUserEvent(message *puller.Message) *eventpro
 	event, err := p.unmarshalMessage(message)
 	if err != nil {
 		message.Nack()
-		persisterHandledCounter.WithLabelValues(typeUserEvent, codes.BadMessage.String()).Inc()
+		subscriberHandledCounter.WithLabelValues(subscriberUserEvent, codes.BadMessage.String()).Inc()
 		return nil
 	}
 	if !p.validateEvent(event) {
 		message.Nack()
-		persisterHandledCounter.WithLabelValues(typeUserEvent, codes.BadMessage.String()).Inc()
+		subscriberHandledCounter.WithLabelValues(subscriberUserEvent, codes.BadMessage.String()).Inc()
 		return nil
 	}
 	return event
@@ -205,14 +205,14 @@ func (p *userEventPersister) validateEvent(event *eventproto.UserEvent) bool {
 func (p *userEventPersister) nackMessages(messages []*puller.Message) {
 	for _, msg := range messages {
 		msg.Nack()
-		persisterHandledCounter.WithLabelValues(typeUserEvent, codes.RepeatableError.String()).Inc()
+		subscriberHandledCounter.WithLabelValues(subscriberUserEvent, codes.RepeatableError.String()).Inc()
 	}
 }
 
 func (p *userEventPersister) ackMessages(messages []*puller.Message) {
 	for _, msg := range messages {
 		msg.Ack()
-		persisterHandledCounter.WithLabelValues(typeUserEvent, codes.OK.String()).Inc()
+		subscriberHandledCounter.WithLabelValues(subscriberUserEvent, codes.OK.String()).Inc()
 	}
 }
 

@@ -78,12 +78,12 @@ func (d domainEventInformer) Process(ctx context.Context, msgChan <-chan *puller
 func (d domainEventInformer) handleMessage(msg *puller.Message) {
 	if id := msg.Attributes["id"]; id == "" {
 		msg.Ack()
-		persisterHandledCounter.WithLabelValues(typeDomainEvent, codes.BadMessage.String()).Inc()
+		subscriberHandledCounter.WithLabelValues(subscriberDomainEvent, codes.BadMessage.String()).Inc()
 		return
 	}
 	domainEvent, err := d.unmarshalMessage(msg)
 	if err != nil {
-		persisterHandledCounter.WithLabelValues(typeDomainEvent, codes.BadMessage.String()).Inc()
+		subscriberHandledCounter.WithLabelValues(subscriberDomainEvent, codes.BadMessage.String()).Inc()
 		msg.Ack()
 		return
 	}
@@ -98,11 +98,11 @@ func (d domainEventInformer) handleMessage(msg *puller.Message) {
 		environment, err := d.getEnvironment(ctx, domainEvent.EnvironmentNamespace)
 		if err != nil {
 			if code := gstatus.Code(err); code == gcodes.NotFound {
-				persisterHandledCounter.WithLabelValues(typeDomainEvent, codes.BadMessage.String()).Inc()
+				subscriberHandledCounter.WithLabelValues(subscriberDomainEvent, codes.BadMessage.String()).Inc()
 				msg.Ack()
 				return
 			}
-			persisterHandledCounter.WithLabelValues(typeDomainEvent, codes.RepeatableError.String()).Inc()
+			subscriberHandledCounter.WithLabelValues(subscriberDomainEvent, codes.RepeatableError.String()).Inc()
 			msg.Nack()
 			return
 		}
@@ -116,17 +116,17 @@ func (d domainEventInformer) handleMessage(msg *puller.Message) {
 		domainEvent.IsAdminEvent,
 	)
 	if err != nil {
-		persisterHandledCounter.WithLabelValues(typeDomainEvent, codes.BadMessage.String()).Inc()
+		subscriberHandledCounter.WithLabelValues(subscriberDomainEvent, codes.BadMessage.String()).Inc()
 		msg.Ack()
 		return
 	}
 	if err := d.sender.Send(ctx, ne); err != nil {
-		persisterHandledCounter.WithLabelValues(typeDomainEvent, codes.NonRepeatableError.String()).Inc()
+		subscriberHandledCounter.WithLabelValues(subscriberDomainEvent, codes.NonRepeatableError.String()).Inc()
 		msg.Ack()
 		d.logger.Error("Failed to send notification event", zap.Error(err))
 		return
 	}
-	persisterHandledCounter.WithLabelValues(typeDomainEvent, codes.OK.String()).Inc()
+	subscriberHandledCounter.WithLabelValues(subscriberDomainEvent, codes.OK.String()).Inc()
 	msg.Ack()
 }
 
