@@ -62,12 +62,19 @@ Table explanation:\
 `stopped_at`: Added to manage stopped date and time.
 
 Migrations explanation:
-1. Add "ActionType" to `clauses` Json data based on `ops_type`.
-2. Change `ops_type` to `Schedule` or `Event Rate` based on the Json data of `clauses`.
-3. Update `status` based on `triggered_at` and `deleted`.\
-   `completed` if `triggered_at` is not empty, `deleted` if `deleted` is On, and `waiting` otherwise.
-4. Delete `triggered_at` and `triggered_at`.
+1. Back up `auto_ops_rule` table.
+2. Based on the information in the `auto_ops_rule` table, execute a query that satisfies the update contents below and update the information in the `auto_ops_rule` table.
+   - Add "ActionType" to `clauses` Json data based on `ops_type`.
+   - Change `ops_type` to `Schedule` or `Event Rate` based on the Json data of `clauses`.
+   - Update `status` based on `triggered_at` and `deleted`.`completed` if `triggered_at` is not empty, `deleted` if `deleted` is On, and `waiting` otherwise.
+   - Delete `triggered_at` and `triggered_at`.
+3. Run E2E test and verify success.
+4. Delete backup of `auto_ops_rule` table.
 
 ## Release Steps
-1. Run the migration and modify any existing code related to it so that the functionality works correctly.
-2. Add support related to Multi Schedule to the code.
+1. Verify operation in the development environment using supported branch.
+   - Deploy the corresponding branch to Dev.
+   - Run DB migration.
+   - Run E2E test and verify success.
+2. Run DB migration for production environment.
+3. Deploy to production environment.
