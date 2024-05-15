@@ -119,16 +119,16 @@ func (p *segmentUserPersister) Process(ctx context.Context, msgChan <-chan *pull
 			if !ok {
 				return nil
 			}
-			persisterReceivedCounter.WithLabelValues(typeSegmentUser).Inc()
+			subscriberReceivedCounter.WithLabelValues(subscriberSegmentUser).Inc()
 			id := msg.Attributes["id"]
 			if id == "" {
 				msg.Ack()
-				persisterHandledCounter.WithLabelValues(typeSegmentUser, codes.MissingID.String()).Inc()
+				subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.MissingID.String()).Inc()
 				continue
 			}
 			if _, ok := chunk[id]; ok {
 				p.logger.Warn("message with duplicate id", zap.String("id", id))
-				persisterHandledCounter.WithLabelValues(typeSegmentUser, codes.DuplicateID.String()).Inc()
+				subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.DuplicateID.String()).Inc()
 			}
 			chunk[id] = msg
 			if len(chunk) >= p.segmentUserPersisterConfig.FlushSize {
@@ -153,7 +153,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 		if err != nil {
 			msg.Ack()
 			p.logger.Error("failed to unmarshal message", zap.Error(err), zap.String("msgID", msg.ID))
-			persisterHandledCounter.WithLabelValues(typeSegmentUser, codes.BadMessage.String()).Inc()
+			subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.BadMessage.String()).Inc()
 			continue
 		}
 		if !validateSegmentUserState(event.State) {
@@ -163,7 +163,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 				zap.String("environmentNamespace", event.EnvironmentNamespace),
 				zap.Int32("state", int32(event.State)),
 			)
-			persisterHandledCounter.WithLabelValues(typeSegmentUser, codes.BadMessage.String()).Inc()
+			subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.BadMessage.String()).Inc()
 			if err := p.updateSegmentStatus(
 				ctx,
 				event.Editor,
@@ -190,7 +190,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 					zap.Error(err),
 					zap.String("environmentNamespace", event.EnvironmentNamespace),
 				)
-				persisterHandledCounter.WithLabelValues(typeSegmentUser, codes.NonRepeatableError.String()).Inc()
+				subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.NonRepeatableError.String()).Inc()
 			case errors.Is(err, errSegmentInUse):
 				msg.Ack()
 				p.logger.Warn(
@@ -198,7 +198,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 					zap.Error(err),
 					zap.String("environmentNamespace", event.EnvironmentNamespace),
 				)
-				persisterHandledCounter.WithLabelValues(typeSegmentUser, codes.NonRepeatableError.String()).Inc()
+				subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.NonRepeatableError.String()).Inc()
 			case errors.Is(err, errSegmentExceededMaxUserIDLength):
 				msg.Ack()
 				p.logger.Warn(
@@ -206,7 +206,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 					zap.Error(err),
 					zap.String("environmentNamespace", event.EnvironmentNamespace),
 				)
-				persisterHandledCounter.WithLabelValues(typeSegmentUser, codes.NonRepeatableError.String()).Inc()
+				subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.NonRepeatableError.String()).Inc()
 				if err := p.updateSegmentStatus(
 					ctx,
 					event.Editor,
@@ -230,7 +230,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 					zap.Error(err),
 					zap.String("environmentNamespace", event.EnvironmentNamespace),
 				)
-				persisterHandledCounter.WithLabelValues(typeSegmentUser, codes.RepeatableError.String()).Inc()
+				subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.RepeatableError.String()).Inc()
 			}
 			continue
 		}
@@ -241,7 +241,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 			zap.String("environmentNamespace", event.EnvironmentNamespace),
 			zap.String("segmentId", event.SegmentId),
 		)
-		persisterHandledCounter.WithLabelValues(typeSegmentUser, codes.OK.String()).Inc()
+		subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.OK.String()).Inc()
 	}
 }
 
