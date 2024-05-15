@@ -22,9 +22,10 @@ import (
 )
 
 const (
-	typeDomainEvent = "DomainEvent"
-	typeSegmentUser = "SegmentUser"
-	typeUserEvent   = "UserEvent"
+	typeDomainEvent     = "DomainEvent"
+	typeEvaluationCount = "EvaluationCount"
+	typeSegmentUser     = "SegmentUser"
+	typeUserEvent       = "UserEvent"
 )
 
 var (
@@ -36,7 +37,7 @@ var (
 			Help:      "Total number of received messages",
 		}, []string{"type"})
 
-	persiterHandledCounter = prometheus.NewCounterVec(
+	persisterHandledCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
 			Subsystem: "batch_server",
@@ -48,6 +49,6 @@ var (
 func registerMetrics(r metrics.Registerer) {
 	r.MustRegister(
 		persisterReceivedCounter,
-		persiterHandledCounter,
+		persisterHandledCounter,
 	)
 }

@@ -535,8 +535,10 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	go server.Run()
 
 	processors, err := s.registerProcessorMap(
+		ctx,
 		environmentClient,
 		mysqlClient,
+		persistentRedisClient,
 		batchClient,
 		notificationSender,
 		registerer,
@@ -628,8 +630,10 @@ func (s *server) startMultiPubSub(
 }
 
 func (s *server) registerProcessorMap(
+	ctx context.Context,
 	environmentClient environmentclient.Client,
 	mysqlClient mysql.Client,
+	persistentRedisClient redisv3.Client,
 	batchClient btclient.Client,
 	sender notificationsender.Sender,
 	registerer metrics.Registerer,
@@ -681,6 +685,21 @@ func (s *server) registerProcessorMap(
 	processors.RegisterProcessor(
 		processor.UserEventPersisterName,
 		userEventPersister,
+	)
+
+	evaluationCountEventPersister, err := processor.NewEvaluationCountEventPersister(
+		ctx,
+		configMap[processor.EvaluationCountEventPersisterName],
+		mysqlClient,
+		cachev3.NewRedisCache(persistentRedisClient),
+		logger,
+	)
+	if err != nil {
+		return nil, err
+	}
+	processors.RegisterProcessor(
+		processor.EvaluationCountEventPersisterName,
+		evaluationCountEventPersister,
 	)
 
 	return processors, nil

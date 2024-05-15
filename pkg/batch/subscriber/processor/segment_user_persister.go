@@ -19,7 +19,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -47,12 +46,6 @@ const (
 	maxUserIDLength = 100
 )
 
-var (
-	errInvalidConfig           = errors.New("segment: invalid config")
-	errSegmentInUse            = errors.New("segment: segment is in use")
-	errExceededMaxUserIDLength = fmt.Errorf("segment: max user id length allowed is %d", maxUserIDLength)
-)
-
 type segmentUserPersisterConfig struct {
 	DomainEventProject string `json:"domainEventProject"`
 	DomainEventTopic   string `json:"domainEventTopic"`
@@ -77,7 +70,7 @@ func NewSegmentUserPersister(
 	segmentPersisterJsonConfig, ok := config.(map[string]interface{})
 	if !ok {
 		logger.Error("SegmentUserPersister: invalid config")
-		return nil, errInvalidConfig
+		return nil, errSegmentInvalidConfig
 	}
 	configBytes, err := json.Marshal(segmentPersisterJsonConfig)
 	if err != nil {
@@ -130,12 +123,12 @@ func (p *segmentUserPersister) Process(ctx context.Context, msgChan <-chan *pull
 			id := msg.Attributes["id"]
 			if id == "" {
 				msg.Ack()
-				persiterHandledCounter.WithLabelValues(typeSegmentUser, codes.MissingID.String()).Inc()
+				persisterHandledCounter.WithLabelValues(typeSegmentUser, codes.MissingID.String()).Inc()
 				continue
 			}
 			if _, ok := chunk[id]; ok {
 				p.logger.Warn("message with duplicate id", zap.String("id", id))
-				persiterHandledCounter.WithLabelValues(typeSegmentUser, codes.DuplicateID.String()).Inc()
+				persisterHandledCounter.WithLabelValues(typeSegmentUser, codes.DuplicateID.String()).Inc()
 			}
 			chunk[id] = msg
 			if len(chunk) >= p.segmentUserPersisterConfig.FlushSize {
@@ -160,7 +153,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 		if err != nil {
 			msg.Ack()
 			p.logger.Error("failed to unmarshal message", zap.Error(err), zap.String("msgID", msg.ID))
-			persiterHandledCounter.WithLabelValues(typeSegmentUser, codes.BadMessage.String()).Inc()
+			persisterHandledCounter.WithLabelValues(typeSegmentUser, codes.BadMessage.String()).Inc()
 			continue
 		}
 		if !validateSegmentUserState(event.State) {
@@ -170,7 +163,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 				zap.String("environmentNamespace", event.EnvironmentNamespace),
 				zap.Int32("state", int32(event.State)),
 			)
-			persiterHandledCounter.WithLabelValues(typeSegmentUser, codes.BadMessage.String()).Inc()
+			persisterHandledCounter.WithLabelValues(typeSegmentUser, codes.BadMessage.String()).Inc()
 			if err := p.updateSegmentStatus(
 				ctx,
 				event.Editor,
@@ -197,7 +190,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 					zap.Error(err),
 					zap.String("environmentNamespace", event.EnvironmentNamespace),
 				)
-				persiterHandledCounter.WithLabelValues(typeSegmentUser, codes.NonRepeatableError.String()).Inc()
+				persisterHandledCounter.WithLabelValues(typeSegmentUser, codes.NonRepeatableError.String()).Inc()
 			case errors.Is(err, errSegmentInUse):
 				msg.Ack()
 				p.logger.Warn(
@@ -205,15 +198,15 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 					zap.Error(err),
 					zap.String("environmentNamespace", event.EnvironmentNamespace),
 				)
-				persiterHandledCounter.WithLabelValues(typeSegmentUser, codes.NonRepeatableError.String()).Inc()
-			case errors.Is(err, errExceededMaxUserIDLength):
+				persisterHandledCounter.WithLabelValues(typeSegmentUser, codes.NonRepeatableError.String()).Inc()
+			case errors.Is(err, errSegmentExceededMaxUserIDLength):
 				msg.Ack()
 				p.logger.Warn(
 					"exceeded max user id length",
 					zap.Error(err),
 					zap.String("environmentNamespace", event.EnvironmentNamespace),
 				)
-				persiterHandledCounter.WithLabelValues(typeSegmentUser, codes.NonRepeatableError.String()).Inc()
+				persisterHandledCounter.WithLabelValues(typeSegmentUser, codes.NonRepeatableError.String()).Inc()
 				if err := p.updateSegmentStatus(
 					ctx,
 					event.Editor,
@@ -237,7 +230,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 					zap.Error(err),
 					zap.String("environmentNamespace", event.EnvironmentNamespace),
 				)
-				persiterHandledCounter.WithLabelValues(typeSegmentUser, codes.RepeatableError.String()).Inc()
+				persisterHandledCounter.WithLabelValues(typeSegmentUser, codes.RepeatableError.String()).Inc()
 			}
 			continue
 		}
@@ -248,7 +241,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 			zap.String("environmentNamespace", event.EnvironmentNamespace),
 			zap.String("segmentId", event.SegmentId),
 		)
-		persiterHandledCounter.WithLabelValues(typeSegmentUser, codes.OK.String()).Inc()
+		persisterHandledCounter.WithLabelValues(typeSegmentUser, codes.OK.String()).Inc()
 	}
 }
 
@@ -335,7 +328,7 @@ func (p *segmentUserPersister) persistSegmentUsers(
 			continue
 		}
 		if len(id) > maxUserIDLength {
-			return 0, errExceededMaxUserIDLength
+			return 0, errSegmentExceededMaxUserIDLength
 		}
 		uniqueSegmentUserIDs[id] = struct{}{}
 	}

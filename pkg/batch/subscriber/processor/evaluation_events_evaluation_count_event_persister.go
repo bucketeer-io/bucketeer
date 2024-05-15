@@ -1,36 +1,35 @@
-// Copyright 2024 The Bucketeer Authors.
+//  Copyright 2024 The Bucketeer Authors.
 //
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
 
-package persister
+package processor
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/proto" // nolint:staticcheck
+	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
 
+	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
-	"github.com/bucketeer-io/bucketeer/pkg/errgroup"
 	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/health"
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -38,8 +37,12 @@ import (
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
-type lastUsedInfoCache map[string]*ftdomain.FeatureLastUsedInfo
-type environmentLastUsedInfoCache map[string]lastUsedInfoCache
+const (
+	eventCountKey      = "ec"
+	userCountKey       = "uc"
+	defaultVariationID = "default"
+	userDataAppVersion = "app_version"
+)
 
 var (
 	ErrUnexpectedMessageType = errors.New("eventpersister: unexpected message type")
@@ -51,153 +54,67 @@ var (
 	ErrReasonNil             = errors.New("eventpersister: reason is nil")
 )
 
-const (
-	eventCountKey      = "ec"
-	userCountKey       = "uc"
-	defaultVariationID = "default"
-	userDataAppVersion = "app_version"
-)
-
+type lastUsedInfoCache map[string]*ftdomain.FeatureLastUsedInfo
+type environmentLastUsedInfoCache map[string]lastUsedInfoCache
 type eventMap map[string]*eventproto.EvaluationEvent
 type environmentEventMap map[string]eventMap
 
-type options struct {
-	maxMPS             int
-	numWorkers         int
-	flushSize          int
-	flushInterval      time.Duration
-	writeCacheInterval time.Duration
-	metrics            metrics.Registerer
-	logger             *zap.Logger
+type EvaluationCountEventPersisterConfig struct {
+	FlushSize          int `json:"flushSize"`
+	FlushInterval      int `json:"flushInterval"`
+	WriteCacheInterval int `json:"writeCacheInterval"`
 }
 
-type Option func(*options)
-
-func WithMaxMPS(mps int) Option {
-	return func(opts *options) {
-		opts.maxMPS = mps
-	}
+type evaluationCountEventPersister struct {
+	evaluationCountEventPersisterConfig EvaluationCountEventPersisterConfig
+	mysqlClient                         mysql.Client
+	envLastUsedCache                    environmentLastUsedInfoCache
+	evaluationCountCacher               cache.MultiGetDeleteCountCache
+	mutex                               sync.Mutex
+	logger                              *zap.Logger
 }
 
-func WithNumWorkers(n int) Option {
-	return func(opts *options) {
-		opts.numWorkers = n
-	}
-}
-
-func WithFlushSize(s int) Option {
-	return func(opts *options) {
-		opts.flushSize = s
-	}
-}
-
-func WithFlushInterval(i time.Duration) Option {
-	return func(opts *options) {
-		opts.flushInterval = i
-	}
-}
-
-func WithWriteCacheInterval(i time.Duration) Option {
-	return func(opts *options) {
-		opts.writeCacheInterval = i
-	}
-}
-
-func WithMetrics(r metrics.Registerer) Option {
-	return func(opts *options) {
-		opts.metrics = r
-	}
-}
-
-func WithLogger(l *zap.Logger) Option {
-	return func(opts *options) {
-		opts.logger = l
-	}
-}
-
-type Persister struct {
-	puller                puller.RateLimitedPuller
-	mysqlClient           mysql.Client
-	group                 errgroup.Group
-	opts                  *options
-	logger                *zap.Logger
-	ctx                   context.Context
-	cancel                func()
-	doneCh                chan struct{}
-	envLastUsedCache      environmentLastUsedInfoCache
-	evaluationCountCacher cache.MultiGetDeleteCountCache
-	mutex                 sync.Mutex
-}
-
-func NewPersister(
-	p puller.Puller,
+func NewEvaluationCountEventPersister(
+	ctx context.Context,
+	config interface{},
 	mysqlClient mysql.Client,
-	v3Cache cache.MultiGetDeleteCountCache,
-	opts ...Option,
-) *Persister {
-	dopts := &options{
-		maxMPS:             1000,
-		numWorkers:         1,
-		flushSize:          50,
-		flushInterval:      5 * time.Second,
-		writeCacheInterval: 1 * time.Minute,
-		logger:             zap.NewNop(),
+	evaluationCountCacher cache.MultiGetDeleteCountCache,
+	logger *zap.Logger,
+) (subscriber.Processor, error) {
+	evaluationCountEventPersisterJsonConfig, ok := config.(map[string]interface{})
+	if !ok {
+		logger.Error("EvaluationCountEventPersister: invalid config")
+		return nil, errEvaluationCountInvalidConfig
 	}
-	for _, opt := range opts {
-		opt(dopts)
+	configBytes, err := json.Marshal(evaluationCountEventPersisterJsonConfig)
+	if err != nil {
+		logger.Error("EvaluationCountEventPersisterJsonConfig: failed to marshal config", zap.Error(err))
+		return nil, err
 	}
-	if dopts.metrics != nil {
-		registerMetrics(dopts.metrics)
+	var evaluationCountEventPersisterConfig EvaluationCountEventPersisterConfig
+	err = json.Unmarshal(configBytes, &evaluationCountEventPersisterConfig)
+	if err != nil {
+		logger.Error("EvaluationCountEventPersister: failed to unmarshal config", zap.Error(err))
+		return nil, err
 	}
-	ctx, cancel := context.WithCancel(context.Background())
-	return &Persister{
-		puller:                puller.NewRateLimitedPuller(p, dopts.maxMPS),
-		opts:                  dopts,
-		logger:                dopts.logger.Named("persister"),
-		ctx:                   ctx,
-		cancel:                cancel,
-		doneCh:                make(chan struct{}),
-		evaluationCountCacher: v3Cache,
-		envLastUsedCache:      environmentLastUsedInfoCache{},
-		mysqlClient:           mysqlClient,
+	e := &evaluationCountEventPersister{
+		evaluationCountEventPersisterConfig: evaluationCountEventPersisterConfig,
+		mysqlClient:                         mysqlClient,
+		envLastUsedCache:                    make(environmentLastUsedInfoCache),
+		evaluationCountCacher:               evaluationCountCacher,
+		mutex:                               sync.Mutex{},
+		logger:                              logger,
 	}
+	// write flag last used info cache periodically
+	//nolint:errcheck
+	go e.writeFlagLastUsedInfoCache(ctx)
+	return e, nil
 }
 
-func (p *Persister) Run() error {
-	defer close(p.doneCh)
-	p.group.Go(func() error {
-		return p.puller.Run(p.ctx)
-	})
-	for i := 0; i < p.opts.numWorkers; i++ {
-		p.group.Go(p.batch)
-	}
-	p.group.Go(p.writeFlagLastUsedInfoCache)
-	return p.group.Wait()
-}
-
-func (p *Persister) Stop() {
-	p.cancel()
-	<-p.doneCh
-}
-
-func (p *Persister) Check(ctx context.Context) health.Status {
-	select {
-	case <-p.ctx.Done():
-		p.logger.Error("Unhealthy due to context Done is closed", zap.Error(p.ctx.Err()))
-		return health.Unhealthy
-	default:
-		if p.group.FinishedCount() > 0 {
-			p.logger.Error("Unhealthy", zap.Int32("FinishedCount", p.group.FinishedCount()))
-			return health.Unhealthy
-		}
-		return health.Healthy
-	}
-}
-
-func (p *Persister) batch() error {
+func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-chan *puller.Message) error {
 	batch := make(map[string]*puller.Message)
-	timer := time.NewTimer(p.opts.flushInterval)
-	defer timer.Stop()
+	ticker := time.NewTicker(time.Duration(p.evaluationCountEventPersisterConfig.FlushInterval) * time.Second)
+	defer ticker.Stop()
 	updateEvaluationCounter := func(envEvents environmentEventMap) {
 		// Increment the evaluation event count in the Redis
 		fails := p.incrementEnvEvents(envEvents)
@@ -205,43 +122,42 @@ func (p *Persister) batch() error {
 		p.checkMessages(batch, fails)
 		// Reset the maps and the timer
 		batch = make(map[string]*puller.Message)
-		timer.Reset(p.opts.flushInterval)
 	}
 	for {
 		select {
-		case msg, ok := <-p.puller.MessageCh():
+		case msg, ok := <-msgChan:
 			if !ok {
 				p.logger.Error("Failed to pull message")
 				return nil
 			}
-			receivedCounter.Inc()
+			persisterReceivedCounter.WithLabelValues(typeEvaluationCount).Inc()
 			id := msg.Attributes["id"]
 			if id == "" {
 				msg.Ack()
 				// TODO: better log format for msg data
-				handledCounter.WithLabelValues(codes.MissingID.String()).Inc()
+				persisterHandledCounter.WithLabelValues(typeEvaluationCount, codes.MissingID.String()).Inc()
 				continue
 			}
 			if previous, ok := batch[id]; ok {
 				previous.Ack()
 				p.logger.Warn("Message with duplicate id", zap.String("id", id))
-				handledCounter.WithLabelValues(codes.DuplicateID.String()).Inc()
+				persisterHandledCounter.WithLabelValues(typeEvaluationCount, codes.DuplicateID.String()).Inc()
 			}
 			batch[id] = msg
-			if len(batch) < p.opts.flushSize {
+			if len(batch) < p.evaluationCountEventPersisterConfig.FlushSize {
 				continue
 			}
 			envEvents := p.extractEvents(batch)
 			// Update the feature flag last-used cache
 			p.cacheLastUsedInfoPerEnv(envEvents)
 			updateEvaluationCounter(envEvents)
-		case <-timer.C:
+		case <-ticker.C:
 			p.logger.Debug("Update evaluation count timer triggered")
 			envEvents := p.extractEvents(batch)
 			// Update the feature flag last-used cache
 			p.cacheLastUsedInfoPerEnv(envEvents)
 			updateEvaluationCounter(envEvents)
-		case <-p.ctx.Done():
+		case <-ctx.Done():
 			// Nack the messages to be redelivered
 			for _, msg := range batch {
 				msg.Nack()
@@ -253,7 +169,7 @@ func (p *Persister) batch() error {
 	}
 }
 
-func (p *Persister) incrementEnvEvents(envEvents environmentEventMap) map[string]bool {
+func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environmentEventMap) map[string]bool {
 	fails := make(map[string]bool, len(envEvents))
 	for environmentNamespace, events := range envEvents {
 		for id, event := range events {
@@ -272,29 +188,29 @@ func (p *Persister) incrementEnvEvents(envEvents environmentEventMap) map[string
 	return fails
 }
 
-func (p *Persister) checkMessages(messages map[string]*puller.Message, fails map[string]bool) {
+func (p *evaluationCountEventPersister) checkMessages(messages map[string]*puller.Message, fails map[string]bool) {
 	for id, m := range messages {
 		if repeatable, ok := fails[id]; ok {
 			if repeatable {
 				m.Nack()
-				handledCounter.WithLabelValues(codes.RepeatableError.String()).Inc()
+				persisterHandledCounter.WithLabelValues(typeEvaluationCount, codes.RepeatableError.String()).Inc()
 			} else {
 				m.Ack()
-				handledCounter.WithLabelValues(codes.NonRepeatableError.String()).Inc()
+				persisterHandledCounter.WithLabelValues(typeEvaluationCount, codes.NonRepeatableError.String()).Inc()
 			}
 			continue
 		}
 		m.Ack()
-		handledCounter.WithLabelValues(codes.OK.String()).Inc()
+		persisterHandledCounter.WithLabelValues(typeEvaluationCount, codes.OK.String()).Inc()
 	}
 }
 
-func (p *Persister) extractEvents(messages map[string]*puller.Message) environmentEventMap {
+func (p *evaluationCountEventPersister) extractEvents(messages map[string]*puller.Message) environmentEventMap {
 	envEvents := environmentEventMap{}
 	handleBadMessage := func(m *puller.Message, err error) {
 		m.Ack()
 		p.logger.Error("Bad proto message", zap.Error(err), zap.Any("msg", m))
-		handledCounter.WithLabelValues(codes.BadMessage.String()).Inc()
+		persisterHandledCounter.WithLabelValues(typeEvaluationCount, codes.BadMessage.String()).Inc()
 	}
 	for _, m := range messages {
 		event := &eventproto.Event{}
@@ -326,7 +242,10 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 	return vID, nil
 }
 
-func (p *Persister) incrementEvaluationCount(event proto.Message, environmentNamespace string) error {
+func (p *evaluationCountEventPersister) incrementEvaluationCount(
+	event proto.Message,
+	environmentNamespace string,
+) error {
 	if e, ok := event.(*eventproto.EvaluationEvent); ok {
 		vID, err := getVariationID(e.Reason, e.VariationId)
 		if err != nil {
@@ -346,7 +265,7 @@ func (p *Persister) incrementEvaluationCount(event proto.Message, environmentNam
 	return nil
 }
 
-func (p *Persister) newEvaluationCountkeyV2(
+func (p *evaluationCountEventPersister) newEvaluationCountkeyV2(
 	kind, featureID, variationID, environmentNamespace string,
 	timestamp int64,
 ) string {
@@ -359,7 +278,7 @@ func (p *Persister) newEvaluationCountkeyV2(
 	)
 }
 
-func (p *Persister) countEvent(key string) error {
+func (p *evaluationCountEventPersister) countEvent(key string) error {
 	_, err := p.evaluationCountCacher.Increment(key)
 	if err != nil {
 		return err
@@ -367,7 +286,7 @@ func (p *Persister) countEvent(key string) error {
 	return nil
 }
 
-func (p *Persister) countUser(key, userID string) error {
+func (p *evaluationCountEventPersister) countUser(key, userID string) error {
 	_, err := p.evaluationCountCacher.PFAdd(key, userID)
 	if err != nil {
 		return err
@@ -375,7 +294,7 @@ func (p *Persister) countUser(key, userID string) error {
 	return nil
 }
 
-func (p *Persister) cacheLastUsedInfoPerEnv(envEvents environmentEventMap) {
+func (p *evaluationCountEventPersister) cacheLastUsedInfoPerEnv(envEvents environmentEventMap) {
 	for environmentNamespace, events := range envEvents {
 		for _, event := range events {
 			p.cacheEnvLastUsedInfo(event, environmentNamespace)
@@ -388,7 +307,7 @@ func (p *Persister) cacheLastUsedInfoPerEnv(envEvents environmentEventMap) {
 	}
 }
 
-func (p *Persister) cacheEnvLastUsedInfo(
+func (p *evaluationCountEventPersister) cacheEnvLastUsedInfo(
 	event *eventproto.EvaluationEvent,
 	environmentNamespace string,
 ) {
@@ -434,21 +353,20 @@ func (p *Persister) cacheEnvLastUsedInfo(
 }
 
 // Write the feature flag last-used cache in the MySQL and reset the cache
-func (p *Persister) writeFlagLastUsedInfoCache() error {
-	timer := time.NewTimer(p.opts.writeCacheInterval)
+func (p *evaluationCountEventPersister) writeFlagLastUsedInfoCache(ctx context.Context) error {
+	ticker := time.NewTicker(time.Duration(p.evaluationCountEventPersisterConfig.WriteCacheInterval) * time.Second)
 	for {
 		select {
-		case <-p.ctx.Done():
+		case <-ctx.Done():
 			return nil
-		case <-timer.C:
+		case <-ticker.C:
 			p.logger.Debug("Write cache timer triggered")
 			p.writeEnvLastUsedInfo()
-			timer.Reset(p.opts.writeCacheInterval)
 		}
 	}
 }
 
-func (p *Persister) writeEnvLastUsedInfo() {
+func (p *evaluationCountEventPersister) writeEnvLastUsedInfo() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -471,7 +389,7 @@ func (p *Persister) writeEnvLastUsedInfo() {
 	p.envLastUsedCache = make(environmentLastUsedInfoCache)
 }
 
-func (p *Persister) upsertMultiFeatureLastUsedInfo(
+func (p *evaluationCountEventPersister) upsertMultiFeatureLastUsedInfo(
 	ctx context.Context,
 	featureLastUsedInfos []*ftdomain.FeatureLastUsedInfo,
 	environmentNamespace string,
@@ -521,7 +439,7 @@ func (p *Persister) upsertMultiFeatureLastUsedInfo(
 	return nil
 }
 
-func (p *Persister) upsertFeatureLastUsedInfo(
+func (p *evaluationCountEventPersister) upsertFeatureLastUsedInfo(
 	ctx context.Context,
 	featureLastUsedInfo *ftdomain.FeatureLastUsedInfo,
 	environmentNamespace string,
