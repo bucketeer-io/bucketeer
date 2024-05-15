@@ -67,6 +67,7 @@ func (d domainEventInformer) Process(ctx context.Context, msgChan <-chan *puller
 				d.logger.Error("domainEventInformer: message channel closed")
 				return nil
 			}
+			subscriberReceivedCounter.WithLabelValues(subscriberDomainEvent).Inc()
 			d.handleMessage(msg)
 		case <-ctx.Done():
 			d.logger.Info("Subscriber context done, stopped processing messages")
