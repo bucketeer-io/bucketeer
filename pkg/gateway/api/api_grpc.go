@@ -382,7 +382,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			UserEvaluationsId: ueid,
 		}, nil
 	}
-	segmentUsersMap, err := s.getSegmentUsersMap(ctx, req.User, features, environmentId)
+	segmentUsersMap, err := s.getSegmentUsersMap(ctx, features, environmentId)
 	if err != nil {
 		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeInternalError).Inc()
 		s.logger.Error(
@@ -533,7 +533,7 @@ func (s *grpcGatewayService) GetEvaluation(
 	if err != nil {
 		return nil, err
 	}
-	segmentUsersMap, err := s.getSegmentUsersMap(ctx, req.User, features, envAPIKey.Environment.Id)
+	segmentUsersMap, err := s.getSegmentUsersMap(ctx, features, envAPIKey.Environment.Id)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get segment users map",
@@ -624,7 +624,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 				zap.String("sdkVersion", req.SdkVersion),
 			)...,
 		)
-		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeBadRequest).Inc()
+		getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeBadRequest).Inc()
 		return nil, err
 	}
 	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetFeatureFlags.GetFeatures")
@@ -737,6 +737,182 @@ func (s *grpcGatewayService) validateGetFeatureFlagsRequest(req *gwproto.GetFeat
 // To keep the response size small, the feature flags archived more than 30 days are excluded
 func (s *grpcGatewayService) isArchivedBeforeLastThirtyDays(feature *featureproto.Feature) bool {
 	return feature.Archived && feature.UpdatedAt > time.Now().Unix()-secondsToReturnAllFlags
+}
+
+func (s *grpcGatewayService) GetSegmentUsers(
+	ctx context.Context,
+	req *gwproto.GetSegmentUsersRequest,
+) (*gwproto.GetSegmentUsersResponse, error) {
+	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetSegmentUsers")
+	defer span.End()
+	envAPIKey, err := s.checkRequest(ctx, accountproto.APIKey_SDK_SERVER)
+	if err != nil {
+		s.logger.Error("Failed to check GetSegmentUsers request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.Strings("segmentIds", req.SegmentIds),
+				zap.Any("sourceId", req.SourceId),
+				zap.String("sdkVersion", req.SdkVersion),
+			)...,
+		)
+		return nil, err
+	}
+	projectID := envAPIKey.ProjectId
+	environmentId := envAPIKey.Environment.Id
+	requestTotal.WithLabelValues(
+		envAPIKey.Environment.OrganizationId, projectID,
+		environmentId, methodGetEvaluations, req.SourceId.String()).Inc()
+
+	if err := s.validateGetSegmentUsersRequest(req); err != nil {
+		s.logger.Error("Failed to validate GetSegmentUsers request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("projectId", projectID),
+				zap.String("environmentId", environmentId),
+				zap.String("apiKey", envAPIKey.ApiKey.Id),
+				zap.Strings("segmentIds", req.SegmentIds),
+				zap.Any("sourceId", req.SourceId),
+				zap.String("sdkVersion", req.SdkVersion),
+			)...,
+		)
+		getSegmentUsersCounter.WithLabelValues(
+			projectID, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeBadRequest).Inc()
+		return nil, err
+	}
+
+	// Get the feature flags from the cache
+	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetSegmentUsers.GetFeatures")
+	f, err, _ := s.flightgroup.Do(
+		environmentId,
+		func() (interface{}, error) {
+			return s.getFeatures(ctx, environmentId)
+		},
+	)
+	if err != nil {
+		getSegmentUsersCounter.WithLabelValues(
+			projectID, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeInternalError).Inc()
+		return nil, err
+	}
+	spanGetFeatures.End()
+
+	targetFeatures := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
+
+	// Return an empty response when there is no feature flags
+	if len(targetFeatures) == 0 {
+		getSegmentUsersCounter.WithLabelValues(
+			projectID, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeNoFeatures).Inc()
+		return &gwproto.GetSegmentUsersResponse{
+			SegmentUsers:      []*featureproto.SegmentUsers{},
+			DeletedSegmentIds: make([]string, 0),
+			RequestedAt:       time.Now().Unix(),
+			ForceUpdate:       true,
+		}, nil
+	}
+
+	// Get the segment IDs in used
+	targetSegmentIDs := make([]string, 0)
+	for _, feature := range targetFeatures {
+		f := &featuredomain.Feature{Feature: feature}
+		ids := f.ListSegmentIDs()
+		if len(ids) > 0 {
+			targetSegmentIDs = append(targetSegmentIDs, ids...)
+		}
+	}
+
+	// Return an empty response when there is no segments
+	if len(targetSegmentIDs) == 0 {
+		getSegmentUsersCounter.WithLabelValues(
+			projectID, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeNoSegments).Inc()
+		return &gwproto.GetSegmentUsersResponse{
+			SegmentUsers:      []*featureproto.SegmentUsers{},
+			DeletedSegmentIds: make([]string, 0),
+			RequestedAt:       time.Now().Unix(),
+			ForceUpdate:       true,
+		}, nil
+	}
+
+	// Get the segment users
+	targetSegmentUsers := make([]*featureproto.SegmentUsers, 0, len(targetSegmentIDs))
+	for _, sID := range targetSegmentIDs {
+		ctx, spanGetSegmentUsers := trace.StartSpan(
+			ctx,
+			"bucketeerGRPCGatewayService.GetSegmentUsers.GetSegmentUsersBySegmentID",
+		)
+		s, err, _ := s.flightgroup.Do(s.segmentFlightID(environmentId, sID), func() (interface{}, error) {
+			return s.getSegmentUsersBySegmentID(ctx, sID, environmentId)
+		})
+		if err != nil {
+			getSegmentUsersCounter.WithLabelValues(
+				projectID, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeInternalError).Inc()
+			return nil, err
+		}
+		spanGetSegmentUsers.End()
+		segmentUsers := s.(*featureproto.SegmentUsers)
+		targetSegmentUsers = append(targetSegmentUsers, segmentUsers)
+	}
+
+	// Return all the flags if the last request is older than 30 days
+	if req.RequestedAt < time.Now().Unix()-secondsToReturnAllFlags {
+		getSegmentUsersCounter.WithLabelValues(
+			projectID, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeAll).Inc()
+		return &gwproto.GetSegmentUsersResponse{
+			SegmentUsers:      targetSegmentUsers,
+			DeletedSegmentIds: make([]string, 0),
+			RequestedAt:       time.Now().Unix(),
+			ForceUpdate:       true,
+		}, nil
+	}
+
+	// Find deleted segments
+	deletedSegmentIDs := make([]string, 0)
+	for _, id := range req.SegmentIds {
+		if !s.contains(targetSegmentIDs, id) {
+			deletedSegmentIDs = append(deletedSegmentIDs, id)
+		}
+	}
+
+	// Filter the updated segments
+	updatedSegments := make([]*featureproto.SegmentUsers, 0, len(targetSegmentUsers))
+	adjustedRequestedAt := req.RequestedAt - secondsForAdjustment
+	for _, su := range targetSegmentUsers {
+		if su.UpdatedAt < adjustedRequestedAt {
+			updatedSegments = append(updatedSegments, su)
+		}
+	}
+
+	// Check if there is a difference when compared to the last request
+	if len(updatedSegments) == 0 && len(deletedSegmentIDs) == 0 {
+		getSegmentUsersCounter.WithLabelValues(
+			projectID, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeNone).Inc()
+	} else {
+		getSegmentUsersCounter.WithLabelValues(
+			projectID, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeDiff).Inc()
+	}
+	return &gwproto.GetSegmentUsersResponse{
+		SegmentUsers:      updatedSegments,
+		DeletedSegmentIds: deletedSegmentIDs,
+		RequestedAt:       time.Now().Unix(),
+		ForceUpdate:       false,
+	}, nil
+}
+
+func (s *grpcGatewayService) validateGetSegmentUsersRequest(req *gwproto.GetSegmentUsersRequest) error {
+	if req.SourceId == eventproto.SourceId_UNKNOWN {
+		return ErrSourceIDRequired
+	}
+	if req.SdkVersion == "" {
+		return ErrSDKVersionRequired
+	}
+	return nil
+}
+
+func (s *grpcGatewayService) contains(elems []string, elem string) bool {
+	for _, v := range elems {
+		if v == elem {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *grpcGatewayService) getTargetFeatures(fs []*featureproto.Feature, id string) ([]*featureproto.Feature, error) {
@@ -920,7 +1096,6 @@ func (s *grpcGatewayService) getFeaturesFromCache(
 
 func (s *grpcGatewayService) getSegmentUsersMap(
 	ctx context.Context,
-	user *userproto.User,
 	features []*featureproto.Feature,
 	environmentId string,
 ) (map[string][]*featureproto.SegmentUser, error) {
@@ -931,7 +1106,7 @@ func (s *grpcGatewayService) getSegmentUsersMap(
 			mapIDs[id] = struct{}{}
 		}
 	}
-	segmentUsersMap, err := s.listSegmentUsers(ctx, user.Id, mapIDs, environmentId)
+	segmentUsersMap, err := s.listSegmentUsers(ctx, mapIDs, environmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list segments",
@@ -947,7 +1122,6 @@ func (s *grpcGatewayService) getSegmentUsersMap(
 
 func (s *grpcGatewayService) listSegmentUsers(
 	ctx context.Context,
-	userID string,
 	mapSegmentIDs map[string]struct{},
 	environmentId string,
 ) (map[string][]*featureproto.SegmentUser, error) {
@@ -957,13 +1131,13 @@ func (s *grpcGatewayService) listSegmentUsers(
 	users := make(map[string][]*featureproto.SegmentUser)
 	for segmentID := range mapSegmentIDs {
 		s, err, _ := s.flightgroup.Do(s.segmentFlightID(environmentId, segmentID), func() (interface{}, error) {
-			return s.getSegmentUsers(ctx, segmentID, environmentId)
+			return s.getSegmentUsersBySegmentID(ctx, segmentID, environmentId)
 		})
 		if err != nil {
 			return nil, err
 		}
-		segmentUsers := s.([]*featureproto.SegmentUser)
-		users[segmentID] = segmentUsers
+		segmentUsers := s.(*featureproto.SegmentUsers)
+		users[segmentID] = segmentUsers.Users
 	}
 	return users, nil
 }
@@ -972,10 +1146,10 @@ func (s *grpcGatewayService) segmentFlightID(environmentId, segmentID string) st
 	return environmentId + ":" + segmentID
 }
 
-func (s *grpcGatewayService) getSegmentUsers(
+func (s *grpcGatewayService) getSegmentUsersBySegmentID(
 	ctx context.Context,
 	segmentID, environmentId string,
-) ([]*featureproto.SegmentUser, error) {
+) (*featureproto.SegmentUsers, error) {
 	segmentUsers, err := s.getSegmentUsersFromCache(segmentID, environmentId)
 	if err == nil {
 		return segmentUsers, nil
@@ -995,7 +1169,7 @@ func (s *grpcGatewayService) getSegmentUsers(
 	res, err := s.featureClient.ListSegmentUsers(ctx, req)
 	if err != nil {
 		s.logger.Error(
-			"Failed to retrieve segment users from storage",
+			"Failed to retrieve segment users from database",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentID", environmentId),
@@ -1004,16 +1178,36 @@ func (s *grpcGatewayService) getSegmentUsers(
 		)
 		return nil, ErrInternal
 	}
-	return res.Users, nil
+	reqGet := &featureproto.GetSegmentRequest{
+		Id:                   segmentID,
+		EnvironmentNamespace: environmentId,
+	}
+	respGet, err := s.featureClient.GetSegment(ctx, reqGet)
+	if err != nil {
+		s.logger.Error(
+			"Failed to retrieve segment from database",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentID", environmentId),
+				zap.String("segmentId", segmentID),
+			)...,
+		)
+		return nil, ErrInternal
+	}
+	return &featureproto.SegmentUsers{
+		SegmentId: segmentID,
+		Users:     res.Users,
+		UpdatedAt: respGet.Segment.UpdatedAt,
+	}, nil
 }
 
 func (s *grpcGatewayService) getSegmentUsersFromCache(
 	segmentID, environmentId string,
-) ([]*featureproto.SegmentUser, error) {
-	segment, err := s.segmentUsersCache.Get(segmentID, environmentId)
+) (*featureproto.SegmentUsers, error) {
+	segmentUsers, err := s.segmentUsersCache.Get(segmentID, environmentId)
 	if err == nil {
 		cacheCounter.WithLabelValues(callerGatewayService, typeSegmentUsers, cacheLayerExternal, codeHit).Inc()
-		return segment.Users, nil
+		return segmentUsers, nil
 	}
 	cacheCounter.WithLabelValues(callerGatewayService, typeSegmentUsers, cacheLayerExternal, codeMiss).Inc()
 	return nil, err
