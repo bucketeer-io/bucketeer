@@ -795,18 +795,12 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	}
 	spanGetFeatures.End()
 
-	targetFeatures := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
-
 	// Return an empty response when there is no feature flags
+	targetFeatures := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
 	if len(targetFeatures) == 0 {
 		getSegmentUsersCounter.WithLabelValues(
 			projectID, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeNoFeatures).Inc()
-		return &gwproto.GetSegmentUsersResponse{
-			SegmentUsers:      []*featureproto.SegmentUsers{},
-			DeletedSegmentIds: make([]string, 0),
-			RequestedAt:       time.Now().Unix(),
-			ForceUpdate:       true,
-		}, nil
+		return s.emptyGetSegmentUsersResponse()
 	}
 
 	// Get the segment IDs in used
@@ -823,12 +817,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	if len(targetSegmentIDs) == 0 {
 		getSegmentUsersCounter.WithLabelValues(
 			projectID, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeNoSegments).Inc()
-		return &gwproto.GetSegmentUsersResponse{
-			SegmentUsers:      []*featureproto.SegmentUsers{},
-			DeletedSegmentIds: make([]string, 0),
-			RequestedAt:       time.Now().Unix(),
-			ForceUpdate:       true,
-		}, nil
+		return s.emptyGetSegmentUsersResponse()
 	}
 
 	// Get the segment users
@@ -904,6 +893,15 @@ func (s *grpcGatewayService) validateGetSegmentUsersRequest(req *gwproto.GetSegm
 		return ErrSDKVersionRequired
 	}
 	return nil
+}
+
+func (s *grpcGatewayService) emptyGetSegmentUsersResponse() (*gwproto.GetSegmentUsersResponse, error) {
+	return &gwproto.GetSegmentUsersResponse{
+		SegmentUsers:      []*featureproto.SegmentUsers{},
+		DeletedSegmentIds: make([]string, 0),
+		RequestedAt:       time.Now().Unix(),
+		ForceUpdate:       true,
+	}, nil
 }
 
 func (s *grpcGatewayService) contains(elems []string, elem string) bool {
