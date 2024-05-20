@@ -14927,6 +14927,59 @@
             ]
           },
           {
+            "name": "GetSegmentUsersRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "segment_ids",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "requested_at",
+                "type": "int64"
+              },
+              {
+                "id": 3,
+                "name": "source_id",
+                "type": "bucketeer.event.client.SourceId"
+              },
+              {
+                "id": 4,
+                "name": "sdk_version",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetSegmentUsersResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "segment_users",
+                "type": "bucketeer.feature.SegmentUsers",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "deleted_segment_ids",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 3,
+                "name": "requested_at",
+                "type": "int64"
+              },
+              {
+                "id": 4,
+                "name": "force_update",
+                "type": "bool"
+              }
+            ]
+          },
+          {
             "name": "GetEvaluationsRequest",
             "fields": [
               {
@@ -15224,6 +15277,26 @@
                 ]
               },
               {
+                "name": "GetSegmentUsers",
+                "in_type": "GetSegmentUsersRequest",
+                "out_type": "GetSegmentUsersResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/get_segment_users"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
                 "name": "RegisterEvents",
                 "in_type": "RegisterEventsRequest",
                 "out_type": "RegisterEventsResponse",
@@ -15274,6 +15347,9 @@
           },
           {
             "path": "proto/feature/feature.proto"
+          },
+          {
+            "path": "proto/feature/segment.proto"
           },
           {
             "path": "proto/event/client/event.proto"
