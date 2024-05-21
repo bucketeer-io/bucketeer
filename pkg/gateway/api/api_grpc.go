@@ -864,7 +864,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	updatedSegments := make([]*featureproto.SegmentUsers, 0, len(targetSegmentUsers))
 	adjustedRequestedAt := req.RequestedAt - secondsForAdjustment
 	for _, su := range targetSegmentUsers {
-		if su.UpdatedAt < adjustedRequestedAt {
+		if su.UpdatedAt > adjustedRequestedAt {
 			updatedSegments = append(updatedSegments, su)
 		}
 	}
