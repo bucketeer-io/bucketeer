@@ -253,16 +253,16 @@ func TestRunCountWatcher(t *testing.T) {
 					&autoopsproto.ListAutoOpsRulesResponse{
 						AutoOpsRules: []*autoopsproto.AutoOpsRule{
 							{
-								Id:          "id-0",
-								FeatureId:   "fid-0",
-								Clauses:     []*autoopsproto.Clause{{Clause: c1}},
-								TriggeredAt: 0,
+								Id:            "id-0",
+								FeatureId:     "fid-0",
+								Clauses:       []*autoopsproto.Clause{{Clause: c1}},
+								AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
 							},
 							{
-								Id:          "id-1",
-								FeatureId:   "fid-1",
-								Clauses:     []*autoopsproto.Clause{{Clause: c1}},
-								TriggeredAt: 1,
+								Id:            "id-1",
+								FeatureId:     "fid-1",
+								Clauses:       []*autoopsproto.Clause{{Clause: c1}},
+								AutoOpsStatus: autoopsproto.AutoOpsStatus_COMPLETED,
 							},
 						},
 					},
@@ -297,7 +297,7 @@ func TestRunCountWatcher(t *testing.T) {
 				)
 
 				w.autoOpsExecutor.(*executormock.MockAutoOpsExecutor).
-					EXPECT().Execute(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+					EXPECT().Execute(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
 			expectedErr: nil,
 		},
@@ -448,6 +448,7 @@ func newOpsEventRateClauses(t *testing.T) (*autoopsproto.OpsEventRateClause, *au
 		MinCount:        int64(10),
 		ThreadsholdRate: float64(0.5),
 		Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+		ActionType:      autoopsproto.ActionType_DISABLE,
 	}
 	oerc2 := &autoopsproto.OpsEventRateClause{
 		VariationId:     "vid1",
@@ -455,6 +456,7 @@ func newOpsEventRateClauses(t *testing.T) (*autoopsproto.OpsEventRateClause, *au
 		MinCount:        int64(10),
 		ThreadsholdRate: float64(0.5),
 		Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+		ActionType:      autoopsproto.ActionType_DISABLE,
 	}
 	return oerc1, oerc2
 }

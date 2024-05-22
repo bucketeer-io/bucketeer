@@ -76,17 +76,21 @@ func (w *datetimeWatcher) Run(ctx context.Context) (lastErr error) {
 		}
 		for _, a := range autoOpsRules {
 			aor := &autoopsdomain.AutoOpsRule{AutoOpsRule: a}
-			if aor.AlreadyTriggered() {
+			if !aor.HasExecuteClause() {
 				continue
 			}
-			asmt, err := w.assessAutoOpsRule(ctx, env.Id, aor)
+			executeClause, hasNextAutoOps, err := w.getExecuteDateTimeClause(ctx, env.Id, aor)
 			if err != nil {
 				lastErr = err
 			}
-			if !asmt {
+			if executeClause == nil {
 				continue
 			}
-			if err = w.autoOpsExecutor.Execute(ctx, env.Id, a.Id); err != nil {
+			status := autoopsproto.AutoOpsStatus_RUNNING
+			if !hasNextAutoOps {
+				status = autoopsproto.AutoOpsStatus_COMPLETED
+			}
+			if err = w.autoOpsExecutor.Execute(ctx, env.Id, a.Id, executeClause, status); err != nil {
 				lastErr = err
 			}
 		}
@@ -119,11 +123,11 @@ func (w *datetimeWatcher) listAutoOpsRules(
 	return resp.AutoOpsRules, nil
 }
 
-func (w *datetimeWatcher) assessAutoOpsRule(
+func (w *datetimeWatcher) getExecuteDateTimeClause(
 	ctx context.Context,
 	environmentNamespace string,
 	a *autoopsdomain.AutoOpsRule,
-) (bool, error) {
+) (*autoopsproto.Clause, bool, error) {
 	datetimeClauses, err := a.ExtractDatetimeClauses()
 	if err != nil {
 		w.logger.Error("Failed to extract datetime clauses", zap.Error(err),
@@ -131,21 +135,47 @@ func (w *datetimeWatcher) assessAutoOpsRule(
 			zap.String("featureId", a.FeatureId),
 			zap.String("autoOpsRuleId", a.Id),
 		)
-		return false, err
+		return nil, false, err
 	}
 	nowTimestamp := time.Now().Unix()
+	var latestExecuteClause *autoopsproto.Clause
+	var latestDatetime = int64(0)
+	var waitingOpsCount = 0
 	for _, c := range datetimeClauses {
-		if asmt := w.assessRule(c, nowTimestamp); asmt {
-			w.logger.Info("Clause satisfies condition",
+		datetimeClause, err := a.UnmarshalDatetimeClause(c)
+		if err != nil {
+			w.logger.Error("Failed to unmarshal datetime clauses", zap.Error(err),
 				zap.String("environmentNamespace", environmentNamespace),
 				zap.String("featureId", a.FeatureId),
-				zap.String("autoOpsRuleId", a.Id),
-				zap.Any("datetimeClause", c),
+				zap.String("clauseId", c.Id),
 			)
-			return true, nil
+			return nil, false, err
+		}
+
+		if w.assessRule(datetimeClause, nowTimestamp) {
+			waitingOpsCount++
+			if datetimeClause.Time >= latestDatetime {
+				latestDatetime = datetimeClause.Time
+				latestExecuteClause = c
+			}
 		}
 	}
-	return false, nil
+
+	if latestExecuteClause != nil {
+		w.logger.Info("Clause satisfies condition",
+			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("featureId", a.FeatureId),
+			zap.String("autoOpsRuleId", a.Id),
+			zap.Any("datetimeClauseId", latestExecuteClause.Id),
+		)
+		hasNextAutoOps := false
+		if waitingOpsCount > 0 {
+			hasNextAutoOps = true
+		}
+		return latestExecuteClause, hasNextAutoOps, nil
+	} else {
+		return nil, false, nil
+	}
 }
 
 func (w *datetimeWatcher) assessRule(datetimeClause *autoopsproto.DatetimeClause, nowTimestamp int64) bool {

@@ -128,8 +128,11 @@ func TestRunDatetimeWatcher(t *testing.T) {
 					},
 					nil,
 				)
-				dc := &autoopsproto.DatetimeClause{Time: time.Now().Unix()}
-				c, err := anypb.New(dc)
+				dc := &autoopsproto.DatetimeClause{Time: time.Now().Unix(), ActionType: autoopsproto.ActionType_ENABLE}
+				c1, err := anypb.New(dc)
+				executeClause := &autoopsproto.Clause{Clause: c1}
+				dc2 := &autoopsproto.DatetimeClause{Time: time.Now().Unix() + 1, ActionType: autoopsproto.ActionType_ENABLE}
+				c2, err := anypb.New(dc2)
 				require.NoError(t, err)
 				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListAutoOpsRules(
 					gomock.Any(),
@@ -141,23 +144,25 @@ func TestRunDatetimeWatcher(t *testing.T) {
 					&autoopsproto.ListAutoOpsRulesResponse{
 						AutoOpsRules: []*autoopsproto.AutoOpsRule{
 							{
-								Id:          "id-0",
-								FeatureId:   "fid-0",
-								Clauses:     []*autoopsproto.Clause{{Clause: c}},
-								TriggeredAt: 0,
+								Id:            "id-0",
+								FeatureId:     "fid-0",
+								Clauses:       []*autoopsproto.Clause{executeClause},
+								OpsType:       autoopsproto.OpsType_SCHEDULE,
+								AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
 							},
 							{
-								Id:          "id-1",
-								FeatureId:   "fid-1",
-								Clauses:     []*autoopsproto.Clause{{Clause: c}},
-								TriggeredAt: 1,
+								Id:            "id-1",
+								FeatureId:     "fid-1",
+								Clauses:       []*autoopsproto.Clause{{Clause: c2}},
+								OpsType:       autoopsproto.OpsType_SCHEDULE,
+								AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
 							},
 						},
 					},
 					nil,
 				)
 				w.autoOpsExecutor.(*executormock.MockAutoOpsExecutor).
-					EXPECT().Execute(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+					EXPECT().Execute(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Eq(executeClause), gomock.Eq(autoopsproto.AutoOpsStatus_RUNNING)).Return(nil)
 			},
 			expectedErr: nil,
 		},
