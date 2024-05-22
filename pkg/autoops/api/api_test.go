@@ -243,6 +243,20 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: createError(statusDatetimeClauseInvalidTime, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time")),
 		},
 		{
+			desc: "err: ErrDatetimeClauseInvalidTimeNotAsc",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				Command: &autoopsproto.CreateAutoOpsRuleCommand{
+					FeatureId: "fid",
+					OpsType:   autoopsproto.OpsType_SCHEDULE,
+					DatetimeClauses: []*autoopsproto.DatetimeClause{
+						{Time: time.Now().AddDate(0, 0, 5).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
+						{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
+					},
+				},
+			},
+			expectedErr: createError(statusDatetimeClauseInvalidTimeNotAsc, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time")),
+		},
+		{
 			desc: "err: internal error",
 			setup: func(s *AutoOpsService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().GetGoal(

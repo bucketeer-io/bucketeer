@@ -375,17 +375,29 @@ func (s *AutoOpsService) validateDatetimeClauses(
 	clauses []*autoopsproto.DatetimeClause,
 	localizer locale.Localizer,
 ) error {
+	beforeExecuteTime := int64(0)
 	for _, c := range clauses {
-		if err := s.validateDatetimeClause(c, localizer); err != nil {
+		if err := s.validateDatetimeClause(c, localizer, beforeExecuteTime); err != nil {
 			return err
 		}
+		beforeExecuteTime = c.Time
 	}
 	return nil
 }
 
-func (s *AutoOpsService) validateDatetimeClause(clause *autoopsproto.DatetimeClause, localizer locale.Localizer) error {
+func (s *AutoOpsService) validateDatetimeClause(clause *autoopsproto.DatetimeClause, localizer locale.Localizer, beforeExecuteTime int64) error {
 	if clause.Time <= time.Now().Unix() {
 		dt, err := statusDatetimeClauseInvalidTime.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if clause.Time <= beforeExecuteTime {
+		dt, err := statusDatetimeClauseInvalidTimeNotAsc.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
 		})
@@ -822,7 +834,7 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
 			}
 			return dt.Err()
 		}
-		if err := s.validateDatetimeClause(c.DatetimeClause, localizer); err != nil {
+		if err := s.validateDatetimeClause(c.DatetimeClause, localizer, 0); err != nil {
 			return err
 		}
 	}
@@ -847,7 +859,7 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
 			}
 			return dt.Err()
 		}
-		if err := s.validateDatetimeClause(c.DatetimeClause, localizer); err != nil {
+		if err := s.validateDatetimeClause(c.DatetimeClause, localizer, 0); err != nil {
 			return err
 		}
 	}
