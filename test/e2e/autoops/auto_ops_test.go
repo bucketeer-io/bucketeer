@@ -126,8 +126,8 @@ func TestCreateAndListAutoOpsRule(t *testing.T) {
 	if actual.FeatureId != featureID {
 		t.Fatalf("different feature ID, expected: %v, actual: %v", featureID, actual.FeatureId)
 	}
-	if actual.OpsType != autoopsproto.OpsType_DISABLE_FEATURE {
-		t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.OpsType_DISABLE_FEATURE, actual.OpsType)
+	if actual.AutoOpsStatus != autoopsproto.AutoOpsStatus_WAITING {
+		t.Fatalf("different auto ops status, expected: %v, actual: %v", autoopsproto.AutoOpsStatus_WAITING, actual.AutoOpsStatus)
 	}
 	oerc := unmarshalOpsEventRateClause(t, actual.Clauses[0])
 	if oerc.VariationId != feature.Variations[0].Id {
@@ -144,6 +144,9 @@ func TestCreateAndListAutoOpsRule(t *testing.T) {
 	}
 	if oerc.Operator != autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL {
 		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
+	}
+	if oerc.ActionType != autoopsproto.ActionType_DISABLE {
+		t.Fatalf("different action type, expected: %v, actual: %v", autoopsproto.ActionType_DISABLE, oerc.ActionType)
 	}
 }
 
@@ -175,9 +178,6 @@ func TestGetAutoOpsRule(t *testing.T) {
 	if actual.FeatureId != featureID {
 		t.Fatalf("different feature ID, expected: %v, actual: %v", featureID, actual.FeatureId)
 	}
-	if actual.OpsType != autoopsproto.OpsType_DISABLE_FEATURE {
-		t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.OpsType_DISABLE_FEATURE, actual.OpsType)
-	}
 	oerc := unmarshalOpsEventRateClause(t, actual.Clauses[0])
 	if oerc.VariationId != feature.Variations[0].Id {
 		t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, oerc.VariationId)
@@ -193,6 +193,9 @@ func TestGetAutoOpsRule(t *testing.T) {
 	}
 	if oerc.Operator != autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL {
 		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
+	}
+	if oerc.ActionType != autoopsproto.ActionType_DISABLE {
+		t.Fatalf("different action type, expected: %v, actual: %v", autoopsproto.ActionType_DISABLE, oerc.ActionType)
 	}
 }
 
@@ -255,9 +258,11 @@ func TestExecuteAutoOpsRule(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 	_, err := autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
-		EnvironmentNamespace:                *environmentNamespace,
-		Id:                                  autoOpsRules[0].Id,
-		ChangeAutoOpsRuleTriggeredAtCommand: &autoopsproto.ChangeAutoOpsRuleTriggeredAtCommand{},
+		EnvironmentNamespace: *environmentNamespace,
+		Id:                   autoOpsRules[0].Id,
+		ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
+			Clause: autoOpsRules[0].Clauses[0],
+		},
 	})
 	if err != nil {
 		t.Fatalf("failed to execute auto ops: %s", err.Error())
@@ -267,8 +272,11 @@ func TestExecuteAutoOpsRule(t *testing.T) {
 		t.Fatalf("feature is enabled")
 	}
 	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if autoOpsRules[0].TriggeredAt == 0 {
-		t.Fatalf("triggered at is empty")
+	if len(autoOpsRules[0].Clauses) > 1 && autoOpsRules[0].AutoOpsStatus != autoopsproto.AutoOpsStatus_WAITING {
+		t.Fatalf("auto ops status is not waiting")
+	}
+	if len(autoOpsRules[0].Clauses) == 1 && autoOpsRules[0].AutoOpsStatus != autoopsproto.AutoOpsStatus_COMPLETED {
+		t.Fatalf("auto ops status is not completed")
 	}
 }
 
@@ -527,12 +535,14 @@ func createOpsEventRateClause(t *testing.T, variationID, goalID string) *autoops
 		MinCount:        int64(5),
 		ThreadsholdRate: float64(0.5),
 		Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+		ActionType:      autoopsproto.ActionType_DISABLE,
 	}
 }
 
 func createDatetimeClause(t *testing.T) *autoopsproto.DatetimeClause {
 	return &autoopsproto.DatetimeClause{
-		Time: time.Now().Add(5 * time.Second).Unix(),
+		Time:       time.Now().Add(5 * time.Second).Unix(),
+		ActionType: autoopsproto.ActionType_DISABLE,
 	}
 }
 
@@ -547,7 +557,7 @@ func createAutoOpsRule(
 	t.Helper()
 	cmd := &autoopsproto.CreateAutoOpsRuleCommand{
 		FeatureId:           featureID,
-		OpsType:             autoopsproto.OpsType_DISABLE_FEATURE,
+		OpsType:             autoopsproto.OpsType_SCHEDULE,
 		OpsEventRateClauses: oercs,
 		DatetimeClauses:     dcs,
 	}
@@ -1054,8 +1064,8 @@ func checkIfAutoOpsRulesAreTriggered(t *testing.T, featureID string) {
 			continue
 		}
 		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-		if autoOpsRules[0].TriggeredAt == 0 {
-			t.Fatalf("triggered at must not be zero")
+		if autoOpsRules[0].AutoOpsStatus != autoopsproto.AutoOpsStatus_COMPLETED {
+			t.Fatalf("auto ops status is not completed")
 		}
 		break
 	}
