@@ -276,7 +276,7 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 	patterns := []struct {
 		desc           string
 		inputEnvAPIKey *accountproto.EnvironmentAPIKey
-		inputRole      accountproto.APIKey_Role
+		inputRole      []accountproto.APIKey_Role
 		expected       error
 	}{
 		{
@@ -289,7 +289,7 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 					Disabled: false,
 				},
 			},
-			inputRole: accountproto.APIKey_SDK_CLIENT,
+			inputRole: []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT},
 			expected:  ErrBadRole,
 		},
 		{
@@ -303,7 +303,7 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 				},
 				EnvironmentDisabled: true,
 			},
-			inputRole: accountproto.APIKey_SDK_CLIENT,
+			inputRole: []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT},
 			expected:  ErrDisabledAPIKey,
 		},
 		{
@@ -317,7 +317,7 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 				},
 				EnvironmentDisabled: false,
 			},
-			inputRole: accountproto.APIKey_SDK_CLIENT,
+			inputRole: []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT},
 			expected:  ErrDisabledAPIKey,
 		},
 		{
@@ -330,7 +330,7 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 					Disabled: false,
 				},
 			},
-			inputRole: accountproto.APIKey_SDK_CLIENT,
+			inputRole: []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT},
 			expected:  nil,
 		},
 	}
