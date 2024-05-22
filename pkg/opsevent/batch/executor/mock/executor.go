@@ -9,6 +9,8 @@ import (
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
+
+	autoops "github.com/bucketeer-io/bucketeer/proto/autoops"
 )
 
 // MockAutoOpsExecutor is a mock of AutoOpsExecutor interface.
@@ -35,15 +37,15 @@ func (m *MockAutoOpsExecutor) EXPECT() *MockAutoOpsExecutorMockRecorder {
 }
 
 // Execute mocks base method.
-func (m *MockAutoOpsExecutor) Execute(ctx context.Context, environmentNamespace, ruleID string) error {
+func (m *MockAutoOpsExecutor) Execute(ctx context.Context, environmentNamespace, ruleID string, clause *autoops.Clause, status autoops.AutoOpsStatus) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Execute", ctx, environmentNamespace, ruleID)
+	ret := m.ctrl.Call(m, "Execute", ctx, environmentNamespace, ruleID, clause, status)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Execute indicates an expected call of Execute.
-func (mr *MockAutoOpsExecutorMockRecorder) Execute(ctx, environmentNamespace, ruleID interface{}) *gomock.Call {
+func (mr *MockAutoOpsExecutorMockRecorder) Execute(ctx, environmentNamespace, ruleID, clause, status interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockAutoOpsExecutor)(nil).Execute), ctx, environmentNamespace, ruleID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockAutoOpsExecutor)(nil).Execute), ctx, environmentNamespace, ruleID, clause, status)
 }
