@@ -28,7 +28,7 @@ message AutoOpsRule {
   int64 created_at = 7;
   int64 updated_at = 8;
   bool deleted = 9 [deprecated = true];
-  AutoOpsStatus autoOpsStatus = 10;
+  AutoOpsStatus auto_ops_status = 10;
   int64 stopped_at = 11;
 }
 

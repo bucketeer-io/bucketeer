@@ -1941,7 +1941,7 @@
               },
               {
                 "id": 10,
-                "name": "autoOpsStatus",
+                "name": "auto_ops_status",
                 "type": "AutoOpsStatus"
               },
               {
@@ -2044,7 +2044,7 @@
               },
               {
                 "id": 3,
-                "name": "actionType",
+                "name": "action_type",
                 "type": "ActionType"
               }
             ]
