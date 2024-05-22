@@ -22,6 +22,12 @@ import "google/protobuf/any.proto";
 message Clause {
   string id = 1;
   google.protobuf.Any clause = 2;
+  ActionType actionType = 3;
+}
+
+enum ActionType {
+  ENABLE = 0;
+  DISABLE = 1;
 }
 
 message OpsEventRateClause {
@@ -35,10 +41,12 @@ message OpsEventRateClause {
   int64 min_count = 4;
   double threadshold_rate = 5;
   Operator operator = 6;
+  ActionType action_type = 7;
 }
 
 message DatetimeClause {
   int64 time = 1;
+  ActionType action_type = 2;
 }
 
 message ProgressiveRolloutSchedule {

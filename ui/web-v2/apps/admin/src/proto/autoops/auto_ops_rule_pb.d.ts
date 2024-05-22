@@ -31,6 +31,12 @@ export class AutoOpsRule extends jspb.Message {
   getDeleted(): boolean;
   setDeleted(value: boolean): void;
 
+  getAutoopsstatus(): AutoOpsStatusMap[keyof AutoOpsStatusMap];
+  setAutoopsstatus(value: AutoOpsStatusMap[keyof AutoOpsStatusMap]): void;
+
+  getStoppedAt(): number;
+  setStoppedAt(value: number): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AutoOpsRule.AsObject;
   static toObject(includeInstance: boolean, msg: AutoOpsRule): AutoOpsRule.AsObject;
@@ -51,6 +57,8 @@ export namespace AutoOpsRule {
     createdAt: number,
     updatedAt: number,
     deleted: boolean,
+    autoopsstatus: AutoOpsStatusMap[keyof AutoOpsStatusMap],
+    stoppedAt: number,
   }
 }
 
@@ -79,7 +87,19 @@ export namespace AutoOpsRules {
 export interface OpsTypeMap {
   ENABLE_FEATURE: 0;
   DISABLE_FEATURE: 1;
+  SCHEDULE: 2;
+  EVENT_RATE: 3;
 }
 
 export const OpsType: OpsTypeMap;
+
+export interface AutoOpsStatusMap {
+  WAITING: 0;
+  RUNNING: 1;
+  COMPLETED: 2;
+  STOPPED: 3;
+  DELETED: 4;
+}
+
+export const AutoOpsStatus: AutoOpsStatusMap;
 

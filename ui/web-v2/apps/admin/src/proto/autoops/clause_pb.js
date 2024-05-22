@@ -23,6 +23,7 @@ var global =
 
 var google_protobuf_any_pb = require('google-protobuf/google/protobuf/any_pb.js');
 goog.object.extend(proto, google_protobuf_any_pb);
+goog.exportSymbol('proto.bucketeer.autoops.ActionType', null, global);
 goog.exportSymbol('proto.bucketeer.autoops.Clause', null, global);
 goog.exportSymbol('proto.bucketeer.autoops.DatetimeClause', null, global);
 goog.exportSymbol('proto.bucketeer.autoops.OpsEventRateClause', null, global);
@@ -190,7 +191,8 @@ proto.bucketeer.autoops.Clause.prototype.toObject = function(opt_includeInstance
 proto.bucketeer.autoops.Clause.toObject = function(includeInstance, msg) {
   var f, obj = {
     id: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    clause: (f = msg.getClause()) && google_protobuf_any_pb.Any.toObject(includeInstance, f)
+    clause: (f = msg.getClause()) && google_protobuf_any_pb.Any.toObject(includeInstance, f),
+    action: jspb.Message.getFieldWithDefault(msg, 3, 0)
   };
 
   if (includeInstance) {
@@ -236,6 +238,10 @@ proto.bucketeer.autoops.Clause.deserializeBinaryFromReader = function(msg, reade
       reader.readMessage(value,google_protobuf_any_pb.Any.deserializeBinaryFromReader);
       msg.setClause(value);
       break;
+    case 3:
+      var value = /** @type {!proto.bucketeer.autoops.ActionType} */ (reader.readEnum());
+      msg.setAction(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -278,6 +284,13 @@ proto.bucketeer.autoops.Clause.serializeBinaryToWriter = function(message, write
       2,
       f,
       google_protobuf_any_pb.Any.serializeBinaryToWriter
+    );
+  }
+  f = message.getAction();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      3,
+      f
     );
   }
 };
@@ -335,6 +348,24 @@ proto.bucketeer.autoops.Clause.prototype.clearClause = function() {
  */
 proto.bucketeer.autoops.Clause.prototype.hasClause = function() {
   return jspb.Message.getField(this, 2) != null;
+};
+
+
+/**
+ * optional ActionType action = 3;
+ * @return {!proto.bucketeer.autoops.ActionType}
+ */
+proto.bucketeer.autoops.Clause.prototype.getAction = function() {
+  return /** @type {!proto.bucketeer.autoops.ActionType} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+};
+
+
+/**
+ * @param {!proto.bucketeer.autoops.ActionType} value
+ * @return {!proto.bucketeer.autoops.Clause} returns this
+ */
+proto.bucketeer.autoops.Clause.prototype.setAction = function(value) {
+  return jspb.Message.setProto3EnumField(this, 3, value);
 };
 
 
@@ -1395,5 +1426,13 @@ proto.bucketeer.autoops.ProgressiveRolloutTemplateScheduleClause.prototype.setVa
   return jspb.Message.setProto3StringField(this, 4, value);
 };
 
+
+/**
+ * @enum {number}
+ */
+proto.bucketeer.autoops.ActionType = {
+  ENABLE: 0,
+  DISABLE: 1
+};
 
 goog.object.extend(exports, proto.bucketeer.autoops);

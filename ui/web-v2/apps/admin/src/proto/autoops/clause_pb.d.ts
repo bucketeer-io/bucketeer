@@ -13,6 +13,9 @@ export class Clause extends jspb.Message {
   getClause(): google_protobuf_any_pb.Any | undefined;
   setClause(value?: google_protobuf_any_pb.Any): void;
 
+  getAction(): ActionTypeMap[keyof ActionTypeMap];
+  setAction(value: ActionTypeMap[keyof ActionTypeMap]): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Clause.AsObject;
   static toObject(includeInstance: boolean, msg: Clause): Clause.AsObject;
@@ -27,6 +30,7 @@ export namespace Clause {
   export type AsObject = {
     id: string,
     clause?: google_protobuf_any_pb.Any.AsObject,
+    action: ActionTypeMap[keyof ActionTypeMap],
   }
 }
 
@@ -193,4 +197,11 @@ export namespace ProgressiveRolloutTemplateScheduleClause {
 
   export const Interval: IntervalMap;
 }
+
+export interface ActionTypeMap {
+  ENABLE: 0;
+  DISABLE: 1;
+}
+
+export const ActionType: ActionTypeMap;
 

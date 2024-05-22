@@ -34,7 +34,17 @@ message ChangeAutoOpsRuleOpsTypeCommand {
 
 message DeleteAutoOpsRuleCommand {}
 
+message StopAutoOpsRuleCommand {}
+
 message ChangeAutoOpsRuleTriggeredAtCommand {}
+
+message ChangeAutoOpsStatusCommand {
+  AutoOpsStatus status = 1;
+}
+
+message ExecuteAutoOpsRuleCommand {
+  Clause clause = 1;
+}
 
 message AddOpsEventRateClauseCommand {
   OpsEventRateClause ops_event_rate_clause = 1;

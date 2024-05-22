@@ -1829,11 +1829,55 @@
             "name": "OpsType",
             "enum_fields": [
               {
-                "name": "ENABLE_FEATURE"
+                "name": "ENABLE_FEATURE",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "DISABLE_FEATURE",
+                "integer": 1,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "name": "SCHEDULE",
+                "integer": 2
+              },
+              {
+                "name": "EVENT_RATE",
+                "integer": 3
+              }
+            ]
+          },
+          {
+            "name": "AutoOpsStatus",
+            "enum_fields": [
+              {
+                "name": "WAITING"
+              },
+              {
+                "name": "RUNNING",
                 "integer": 1
+              },
+              {
+                "name": "COMPLETED",
+                "integer": 2
+              },
+              {
+                "name": "STOPPED",
+                "integer": 3
+              },
+              {
+                "name": "DELETED",
+                "integer": 4
               }
             ]
           }
@@ -1866,7 +1910,13 @@
               {
                 "id": 6,
                 "name": "triggered_at",
-                "type": "int64"
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 7,
@@ -1881,7 +1931,23 @@
               {
                 "id": 9,
                 "name": "deleted",
-                "type": "bool"
+                "type": "bool",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 10,
+                "name": "autoOpsStatus",
+                "type": "AutoOpsStatus"
+              },
+              {
+                "id": 11,
+                "name": "stopped_at",
+                "type": "int64"
               }
             ]
           },
@@ -1917,6 +1983,18 @@
       "protopath": "autoops:/:clause.proto",
       "def": {
         "enums": [
+          {
+            "name": "ActionType",
+            "enum_fields": [
+              {
+                "name": "ENABLE"
+              },
+              {
+                "name": "DISABLE",
+                "integer": 1
+              }
+            ]
+          },
           {
             "name": "OpsEventRateClause.Operator",
             "enum_fields": [
@@ -1963,6 +2041,11 @@
                 "id": 2,
                 "name": "clause",
                 "type": "google.protobuf.Any"
+              },
+              {
+                "id": 3,
+                "name": "action",
+                "type": "ActionType"
               }
             ]
           },
@@ -2114,13 +2197,67 @@
                 "id": 3,
                 "name": "ops_event_rate_clauses",
                 "type": "OpsEventRateClause",
-                "is_repeated": true
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 4,
                 "name": "datetime_clauses",
                 "type": "DatetimeClause",
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 5,
+                "name": "ops_event_rate_clauses_command",
+                "type": "CreateOpsEventRateClauseCommand",
                 "is_repeated": true
+              },
+              {
+                "id": 6,
+                "name": "datetime_clauses_command",
+                "type": "CreateDatetimeClauseCommand",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "CreateDatetimeClauseCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "datetime_clause",
+                "type": "DatetimeClause"
+              },
+              {
+                "id": 2,
+                "name": "action_type",
+                "type": "ActionType"
+              }
+            ]
+          },
+          {
+            "name": "CreateOpsEventRateClauseCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "ops_event_rate_clause",
+                "type": "OpsEventRateClause"
+              },
+              {
+                "id": 2,
+                "name": "action_type",
+                "type": "ActionType"
               }
             ]
           },
@@ -2625,7 +2762,13 @@
               {
                 "id": 3,
                 "name": "change_auto_ops_rule_ops_type_command",
-                "type": "ChangeAutoOpsRuleOpsTypeCommand"
+                "type": "ChangeAutoOpsRuleOpsTypeCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 4,

@@ -50,6 +50,14 @@ message ListAutoOpsRulesResponse {
   string cursor = 2;
 }
 
+message StopAutoOpsRuleRequest {
+  string environment_namespace = 1;
+  string id = 2;
+  StopAutoOpsRuleCommand command = 3;
+}
+
+message StopAutoOpsRuleResponse {}
+
 message DeleteAutoOpsRuleRequest {
   string environment_namespace = 1;
   string id = 2;
@@ -76,7 +84,9 @@ message ExecuteAutoOpsRequest {
   string environment_namespace = 1;
   string id = 2;
   ChangeAutoOpsRuleTriggeredAtCommand
-      change_auto_ops_rule_triggered_at_command = 3;
+      change_auto_ops_rule_triggered_at_command = 3 [deprecated = true];
+  ChangeAutoOpsStatusCommand change_auto_ops_status_command = 4;
+  ExecuteAutoOpsRuleCommand execute_auto_ops_rule_command = 5;
 }
 
 message ExecuteAutoOpsResponse {

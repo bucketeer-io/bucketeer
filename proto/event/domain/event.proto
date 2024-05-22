@@ -162,11 +162,13 @@ message Event {
     AUTOOPS_RULE_DELETED = 801;
     AUTOOPS_RULE_OPS_TYPE_CHANGED = 802;
     AUTOOPS_RULE_CLAUSE_DELETED = 803;
-    AUTOOPS_RULE_TRIGGERED_AT_CHANGED = 804;
+    AUTOOPS_RULE_TRIGGERED_AT_CHANGED = 804 [deprecated = true];
     OPS_EVENT_RATE_CLAUSE_ADDED = 805;
     OPS_EVENT_RATE_CLAUSE_CHANGED = 806;
     DATETIME_CLAUSE_ADDED = 807;
     DATETIME_CLAUSE_CHANGED = 808;
+    AUTOOPS_RULE_OPS_STATUS_CHANGED = 809;
+    AUTOOPS_RULE_STOPED = 810;
     PUSH_CREATED = 900;
     PUSH_DELETED = 901;
     PUSH_TAGS_ADDED = 902;
@@ -778,10 +780,14 @@ message AutoOpsRuleCreatedEvent {
   string feature_id = 1;
   bucketeer.autoops.OpsType ops_type = 2;
   repeated bucketeer.autoops.Clause clauses = 3;
-  int64 triggered_at = 4;
+  int64 triggered_at = 4 [deprecated = true];
   int64 created_at = 5;
   int64 updated_at = 6;
+  bucketeer.autoops.AutoOpsStatus ops_status = 7;
+  int64 stopped_at = 8;
 }
+
+message AutoOpsRuleStopEvent {}
 
 message AutoOpsRuleDeletedEvent {}
 
@@ -789,7 +795,11 @@ message AutoOpsRuleOpsTypeChangedEvent {
   bucketeer.autoops.OpsType ops_type = 1;
 }
 
-message AutoOpsRuleTriggeredAtChangedEvent {}
+//message AutoOpsRuleTriggeredAtChangedEvent {}
+
+message AutoOpsRuleOpsStatusChangedEvent {
+  bucketeer.autoops.AutoOpsStatus ops_status = 1;
+}
 
 message OpsEventRateClauseAddedEvent {
   string clause_id = 1;
