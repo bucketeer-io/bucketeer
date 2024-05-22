@@ -552,6 +552,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		experimentClient,
 		featureClient,
 		batchClient,
+		autoOpsClient,
 		notificationSender,
 		registerer,
 		logger,
@@ -629,7 +630,7 @@ func (s *server) startMultiPubSub(
 	}
 	var onDemandConfigMap map[string]subscriber.OnDemandConfiguration
 	if err := json.Unmarshal(onDemandSubscriberConfigBytes, &onDemandConfigMap); err != nil {
-		logger.Error("subscriber: failed to unmarshal subscriber config",
+		logger.Error("subscriber: failed to unmarshal onDemand subscriber config",
 			zap.Error(err),
 		)
 		return nil, err
@@ -654,7 +655,7 @@ func (s *server) startMultiPubSub(
 	for name, config := range onDemandConfigMap {
 		p, err := processors.GetProcessorByName(name)
 		if err != nil {
-			logger.Error("subscriber: processor not found",
+			logger.Error("subscriber: onDemand processor not found",
 				zap.String("name", name),
 				zap.Error(err),
 			)
@@ -678,6 +679,7 @@ func (s *server) registerProcessorMap(
 	exClient experimentclient.Client,
 	ftClient featureclient.Client,
 	batchClient btclient.Client,
+	opsClient autoopsclient.Client,
 	sender notificationsender.Sender,
 	registerer metrics.Registerer,
 	logger *zap.Logger,
@@ -692,6 +694,20 @@ func (s *server) registerProcessorMap(
 	var processorsConfigMap map[string]interface{}
 	if err := json.Unmarshal(processorsConfigBytes, &processorsConfigMap); err != nil {
 		logger.Error("subscriber: failed to unmarshal processors config",
+			zap.Error(err),
+		)
+		return nil, err
+	}
+	onDemandProcessorsConfigBytes, err := os.ReadFile(*s.onDemandProcessorsConfig)
+	if err != nil {
+		logger.Error("subscriber: failed to read onDemand processors config",
+			zap.Error(err),
+		)
+		return nil, err
+	}
+	var onDemandProcessorsConfigMap map[string]interface{}
+	if err := json.Unmarshal(onDemandProcessorsConfigBytes, &onDemandProcessorsConfigMap); err != nil {
+		logger.Error("subscriber: failed to unmarshal onDemand processors config",
 			zap.Error(err),
 		)
 		return nil, err
@@ -743,6 +759,44 @@ func (s *server) registerProcessorMap(
 	processors.RegisterProcessor(
 		processor.EvaluationCountEventPersisterName,
 		evaluationCountEventPersister,
+	)
+
+	evaluationEventsDWHPersister, err := processor.NewEventsDWHPersister(
+		ctx,
+		onDemandProcessorsConfigMap[processor.EvaluationCountEventDWHPersisterName],
+		mysqlClient,
+		persistentRedisClient,
+		exClient,
+		ftClient,
+		processor.EvaluationCountEventDWHPersisterName,
+		registerer,
+		logger,
+	)
+	if err != nil {
+		return nil, err
+	}
+	processors.RegisterProcessor(
+		processor.EvaluationCountEventDWHPersisterName,
+		evaluationEventsDWHPersister,
+	)
+
+	goalEventsDWHPersister, err := processor.NewEventsDWHPersister(
+		ctx,
+		onDemandProcessorsConfigMap[processor.GoalCountEventDWHPersisterName],
+		mysqlClient,
+		persistentRedisClient,
+		exClient,
+		ftClient,
+		processor.GoalCountEventDWHPersisterName,
+		registerer,
+		logger,
+	)
+	if err != nil {
+		return nil, err
+	}
+	processors.RegisterProcessor(
+		processor.GoalCountEventDWHPersisterName,
+		goalEventsDWHPersister,
 	)
 
 	return processors, nil

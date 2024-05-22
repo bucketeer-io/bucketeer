@@ -24,66 +24,120 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber"
+	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	storage "github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/storage/v2"
+	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
+	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
+	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
+	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 
-type evaluationEventsPersisterConfig struct {
+type eventsDWHPersisterConfig struct {
 	FlushInterval     int    `json:"flushInterval"`
 	FlushTimeout      int    `json:"flushTimeout"`
 	FlushSize         int    `json:"flushSize"`
 	Project           string `json:"project"`
 	BigQueryDataSet   string `json:"bigQueryDataSet"`
 	BigQueryBatchSize int    `json:"bigQueryBatchSize"`
-	Location          string `json:"location"`
+	Timezone          string `json:"timezone"`
 }
 
-type evaluationEventsPersister struct {
-	evaluationEventsPersisterConfig evaluationEventsPersisterConfig
-	mysqlClient                     mysql.Client
-	writer                          Writer
-	logger                          *zap.Logger
+type eventsDWHPersister struct {
+	eventsDWHPersisterConfig eventsDWHPersisterConfig
+	mysqlClient              mysql.Client
+	writer                   Writer
+	subscriberType           string
+	logger                   *zap.Logger
 }
 
-func NewEvaluationEventsDWHPersister(
+func NewEventsDWHPersister(
+	ctx context.Context,
 	config interface{},
 	mysqlClient mysql.Client,
-	writer Writer,
+	persistentRedisClient redisv3.Client,
+	exClient experimentclient.Client,
+	ftClient featureclient.Client,
+	persisterName string,
+	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (subscriber.Processor, error) {
 	jsonConfig, ok := config.(map[string]interface{})
 	if !ok {
-		logger.Error("EvaluationEventsDWHPersister: invalid config")
+		logger.Error("eventsDWHPersister: invalid config")
 		return nil, ErrSegmentInvalidConfig
 	}
 	configBytes, err := json.Marshal(jsonConfig)
 	if err != nil {
-		logger.Error("EvaluationEventsDWHPersister: failed to marshal config", zap.Error(err))
+		logger.Error("eventsDWHPersister: failed to marshal config", zap.Error(err))
 		return nil, err
 	}
-	var persisterConfig evaluationEventsPersisterConfig
+	var persisterConfig eventsDWHPersisterConfig
 	err = json.Unmarshal(configBytes, &persisterConfig)
 	if err != nil {
-		logger.Error("EvaluationEventsDWHPersister: failed to unmarshal config", zap.Error(err))
+		logger.Error("eventsDWHPersister: failed to unmarshal config", zap.Error(err))
 		return nil, err
 	}
-	return &evaluationEventsPersister{
-		evaluationEventsPersisterConfig: persisterConfig,
-		mysqlClient:                     mysqlClient,
-		writer:                          writer,
-		logger:                          logger,
-	}, nil
+	e := &eventsDWHPersister{
+		eventsDWHPersisterConfig: persisterConfig,
+		mysqlClient:              mysqlClient,
+		logger:                   logger,
+	}
+	experimentsCache := cachev3.NewExperimentsCache(cachev3.NewRedisCache(persistentRedisClient))
+	location, err := locale.GetLocation(e.eventsDWHPersisterConfig.Timezone)
+	if err != nil {
+		return nil, err
+	}
+	switch persisterName {
+	case EvaluationCountEventDWHPersisterName:
+		e.subscriberType = subscriberEvaluationEventDWH
+		writer, err := NewEvalEventWriter(
+			ctx,
+			registerer,
+			logger,
+			exClient,
+			experimentsCache,
+			e.eventsDWHPersisterConfig.Project,
+			e.eventsDWHPersisterConfig.BigQueryDataSet,
+			e.eventsDWHPersisterConfig.BigQueryBatchSize,
+			location,
+		)
+		if err != nil {
+			return nil, err
+		}
+		e.writer = writer
+	case GoalCountEventDWHPersisterName:
+		e.subscriberType = subscriberGoalEventDWH
+		writer, err := NewGoalEventWriter(
+			ctx,
+			registerer,
+			logger,
+			exClient,
+			ftClient,
+			experimentsCache,
+			e.eventsDWHPersisterConfig.Project,
+			e.eventsDWHPersisterConfig.BigQueryDataSet,
+			e.eventsDWHPersisterConfig.BigQueryBatchSize,
+			location,
+		)
+		if err != nil {
+			return nil, err
+		}
+		e.writer = writer
+	}
+	return e, nil
 }
 
-func (e *evaluationEventsPersister) Process(
+func (e *eventsDWHPersister) Process(
 	ctx context.Context,
 	msgChan <-chan *puller.Message,
 ) error {
 	batch := make(map[string]*puller.Message)
-	ticker := time.NewTicker(time.Duration(e.evaluationEventsPersisterConfig.FlushInterval) * time.Second)
+	ticker := time.NewTicker(time.Duration(e.eventsDWHPersisterConfig.FlushInterval) * time.Second)
 	defer ticker.Stop()
 	for {
 		select {
@@ -91,21 +145,21 @@ func (e *evaluationEventsPersister) Process(
 			if !ok {
 				return nil
 			}
-			subscriberReceivedCounter.WithLabelValues(subscriberEvaluationEventDWH).Inc()
+			subscriberReceivedCounter.WithLabelValues(e.subscriberType).Inc()
 			id := msg.Attributes["id"]
 			if id == "" {
 				msg.Ack()
 				// TODO: better log format for msg data
-				subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codes.MissingID.String()).Inc()
+				subscriberHandledCounter.WithLabelValues(e.subscriberType, codes.MissingID.String()).Inc()
 				continue
 			}
 			if previous, ok := batch[id]; ok {
 				previous.Ack()
 				e.logger.Warn("Message with duplicate id", zap.String("id", id))
-				subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codes.DuplicateID.String()).Inc()
+				subscriberHandledCounter.WithLabelValues(e.subscriberType, codes.DuplicateID.String()).Inc()
 			}
 			batch[id] = msg
-			if len(batch) < e.evaluationEventsPersisterConfig.FlushSize {
+			if len(batch) < e.eventsDWHPersisterConfig.FlushSize {
 				continue
 			}
 			e.send(batch)
@@ -130,7 +184,7 @@ func (e *evaluationEventsPersister) Process(
 	}
 }
 
-func (e *evaluationEventsPersister) Switch(ctx context.Context) (bool, error) {
+func (e *eventsDWHPersister) Switch(ctx context.Context) (bool, error) {
 	experimentStorage := storage.NewExperimentStorage(e.mysqlClient)
 	count, err := experimentStorage.CountRunningExperiments(ctx)
 	if err != nil {
@@ -139,10 +193,10 @@ func (e *evaluationEventsPersister) Switch(ctx context.Context) (bool, error) {
 	return count > 0, nil
 }
 
-func (e *evaluationEventsPersister) send(messages map[string]*puller.Message) {
+func (e *eventsDWHPersister) send(messages map[string]*puller.Message) {
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		time.Duration(e.evaluationEventsPersisterConfig.FlushTimeout)*time.Second,
+		time.Duration(e.eventsDWHPersisterConfig.FlushTimeout)*time.Second,
 	)
 	defer cancel()
 	envEvents := e.extractEvents(messages)
@@ -156,28 +210,28 @@ func (e *evaluationEventsPersister) send(messages map[string]*puller.Message) {
 			if repeatable {
 				m.Nack()
 				subscriberHandledCounter.WithLabelValues(
-					subscriberEvaluationEventDWH,
+					e.subscriberType,
 					codes.RepeatableError.String(),
 				).Inc()
 			} else {
 				m.Ack()
 				subscriberHandledCounter.WithLabelValues(
-					subscriberEvaluationEventDWH,
+					e.subscriberType,
 					codes.NonRepeatableError.String(),
 				).Inc()
 			}
 			continue
 		}
 		m.Ack()
-		subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codes.OK.String()).Inc()
+		subscriberHandledCounter.WithLabelValues(e.subscriberType, codes.OK.String()).Inc()
 	}
 }
-func (e *evaluationEventsPersister) extractEvents(messages map[string]*puller.Message) environmentEventDWHMap {
+func (e *eventsDWHPersister) extractEvents(messages map[string]*puller.Message) environmentEventDWHMap {
 	envEvents := environmentEventDWHMap{}
 	handleBadMessage := func(m *puller.Message, err error) {
 		m.Ack()
 		e.logger.Error("bad message", zap.Error(err), zap.Any("msg", m))
-		subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codes.BadMessage.String()).Inc()
+		subscriberHandledCounter.WithLabelValues(e.subscriberType, codes.BadMessage.String()).Inc()
 	}
 	for _, m := range messages {
 		event := &eventproto.Event{}

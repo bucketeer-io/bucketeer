@@ -23,10 +23,13 @@ import (
 type eventDWHMap map[string]proto.Message
 type environmentEventDWHMap map[string]eventDWHMap
 
+type eventOPSMap map[string]proto.Message
+type environmentEventOPSMap map[string]eventOPSMap
+
 type Writer interface {
 	Write(ctx context.Context, evt environmentEventDWHMap) map[string]bool
 }
 
 type Updater interface {
-	UpdateUserCounts(ctx context.Context, events environmentEventMap) map[string]bool
+	UpdateUserCounts(ctx context.Context, events environmentEventOPSMap) map[string]bool
 }

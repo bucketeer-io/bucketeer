@@ -57,14 +57,16 @@ func NewOnDemandSubscriber(
 	processor OnDemandProcessor,
 	opts ...Option,
 ) *OnDemandSubscriber {
-
+	options := defaultOptions
+	for _, o := range opts {
+		o(&options)
+	}
 	return &OnDemandSubscriber{
 		name:          name,
-		configuration: OnDemandConfiguration{},
+		configuration: configuration,
 		processor:     processor,
-		cancel:        nil,
-		opts:          options{},
-		logger:        nil,
+		opts:          options,
+		logger:        options.logger.Named(name),
 	}
 }
 

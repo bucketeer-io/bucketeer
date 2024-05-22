@@ -32,6 +32,26 @@ const (
 	subscriberUserEvent          = "UserEvent"
 )
 
+const (
+	codeAutoOpsRuleNotFound                 = "ErrAutoOpsRuleNotFound"
+	codeFailedToExtractOpsEventRateClauses  = "FailedToExtractOpsEventRateClauses"
+	codeFailedToGetFeatures                 = "FailedToGetFeatures"
+	codeFailedToFindFeatureVersion          = "FailedToFindFeatureVersion"
+	codeFailedToListAutoOpsRules            = "FailedToListAutoOpsRules"
+	codeFailedToUpdateUserCount             = "FailedToUpdateUserCount"
+	codeGetFeaturesReturnedEmpty            = "GetFeaturesReturnedEmpty"
+	codeEvaluationsAreEmpty                 = "EvaluationsAreEmpty"
+	codeEventIssuedAfterExperimentEnded     = "EventIssuedAfterExperimentEnded"
+	codeEventOlderThanExperiment            = "EventOlderThanExperiment"
+	codeExperimentNotFound                  = "ExperimentNotFound"
+	codeGoalEventIssuedAfterExperimentEnded = "GoalEventIssuedAfterExperimentEnded"
+	codeFailedToEvaluateUser                = "FailedToEvaluateUser"
+	codeFailedToListExperiments             = "FailedToListExperiments"
+	codeFailedToAppendEvaluationEvents      = "FailedToAppendEvaluationEvents"
+	codeFailedToAppendGoalEvents            = "FailedToAppendGoalEvents"
+	codeLinked                              = "Linked"
+)
+
 var (
 	subscriberReceivedCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{

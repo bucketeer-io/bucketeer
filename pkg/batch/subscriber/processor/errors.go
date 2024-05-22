@@ -30,4 +30,7 @@ var (
 	ErrEvaluationsAreEmpty                       = errors.New("eventpersister: evaluations are empty")
 	ErrEvaluationEventIssuedAfterExperimentEnded = errors.New("eventpersister: evaluation event issued after experiment ended") //nolint:lll
 	ErrFailedToEvaluateUser                      = errors.New("eventpersister: failed to evaluate user")
+	ErrAutoOpsRuleNotFound                       = errors.New("eventpersister: auto ops rule not found")
+	ErrFeatureEmptyList                          = errors.New("eventpersister: list feature returned empty")
+	ErrFeatureVersionNotFound                    = errors.New("eventpersister: feature version not found")
 )
