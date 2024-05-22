@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	domain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
+	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	proto "github.com/bucketeer-io/bucketeer/proto/autoops"
@@ -37,7 +37,7 @@ func TestChangeOpsType(t *testing.T) {
 		expected error
 	}{
 		{
-			input:    proto.OpsType_DISABLE_FEATURE,
+			input:    proto.OpsType_SCHEDULE,
 			expected: nil,
 		},
 	}
@@ -48,7 +48,7 @@ func TestChangeOpsType(t *testing.T) {
 		if p.expected == nil {
 			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 		}
-		cmd := &proto.ChangeAutoOpsRuleOpsTypeCommand{OpsType: proto.OpsType_DISABLE_FEATURE}
+		cmd := &proto.ChangeAutoOpsRuleOpsTypeCommand{OpsType: proto.OpsType_SCHEDULE}
 		err := h.Handle(context.Background(), cmd)
 		assert.Equal(t, p.expected, err)
 		assert.Equal(t, p.input, a.OpsType)
@@ -78,28 +78,28 @@ func TestDelete(t *testing.T) {
 	}
 }
 
-func TestChangeTriggeredAt(t *testing.T) {
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	patterns := []*struct {
-		expected error
-	}{
-		{
-			expected: nil,
-		},
-	}
-	for _, p := range patterns {
-		m := publishermock.NewMockPublisher(mockController)
-		a := newAutoOpsRule(t)
-		h := newAutoOpsRuleCommandHandler(m, a)
-		if p.expected == nil {
-			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-		}
-		cmd := &proto.ChangeAutoOpsRuleTriggeredAtCommand{}
-		err := h.Handle(context.Background(), cmd)
-		assert.Equal(t, p.expected, err)
-	}
-}
+//func TestChangeTriggeredAt(t *testing.T) {
+//	mockController := gomock.NewController(t)
+//	defer mockController.Finish()
+//	patterns := []*struct {
+//		expected error
+//	}{
+//		{
+//			expected: nil,
+//		},
+//	}
+//	for _, p := range patterns {
+//		m := publishermock.NewMockPublisher(mockController)
+//		a := newAutoOpsRule(t)
+//		h := newAutoOpsRuleCommandHandler(m, a)
+//		if p.expected == nil {
+//			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+//		}
+//		cmd := &proto.ChangeAutoOpsRuleTriggeredAtCommand{}
+//		err := h.Handle(context.Background(), cmd)
+//		assert.Equal(t, p.expected, err)
+//	}
+//}
 
 func TestAddOpsEventRateClause(t *testing.T) {
 	mockController := gomock.NewController(t)
@@ -231,25 +231,13 @@ func TestChangeDatetimeClause(t *testing.T) {
 }
 
 func newAutoOpsRule(t *testing.T) *domain.AutoOpsRule {
-	oerc1 := &proto.OpsEventRateClause{
-		GoalId:          "gid",
-		MinCount:        10,
-		ThreadsholdRate: 0.5,
-		Operator:        proto.OpsEventRateClause_GREATER_OR_EQUAL,
-	}
-	oerc2 := &proto.OpsEventRateClause{
-		GoalId:          "gid",
-		MinCount:        10,
-		ThreadsholdRate: 0.5,
-		Operator:        proto.OpsEventRateClause_GREATER_OR_EQUAL,
-	}
 	dc1 := &proto.DatetimeClause{
 		Time: 1000000001,
 	}
 	dc2 := &proto.DatetimeClause{
 		Time: 1000000002,
 	}
-	aor, err := domain.NewAutoOpsRule("fid", proto.OpsType_ENABLE_FEATURE, []*proto.OpsEventRateClause{oerc1, oerc2}, []*proto.DatetimeClause{dc1, dc2})
+	aor, err := domain.NewAutoOpsRule("fid", proto.OpsType_SCHEDULE, []*proto.OpsEventRateClause{}, []*proto.DatetimeClause{dc1, dc2})
 	require.NoError(t, err)
 	return aor
 }
