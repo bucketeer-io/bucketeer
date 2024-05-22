@@ -22,15 +22,10 @@ import (
 var (
 	ErrSegmentInvalidConfig                      = errors.New("segment: invalid config")
 	ErrSegmentInUse                              = errors.New("segment: segment is in use")
-	ErrSegmentExceededMaxUserIDLength            = fmt.Errorf("segment: max user id length allowed is %d", maxUserIDLength)
+	ErrSegmentExceededMaxUserIDLength            = fmt.Errorf("segment: max user id length allowed is %d", maxUserIDLength) //nolint:lll
 	ErrUserEventInvalidConfig                    = errors.New("user event: invalid config")
 	ErrEvaluationCountInvalidConfig              = errors.New("evaluation count: invalid config")
-	ErrUnexpectedMessageType                     = errors.New("eventpersister: unexpected message type")
-	ErrAutoOpsRulesNotFound                      = errors.New("eventpersister: auto ops rules not found")
 	ErrExperimentNotFound                        = errors.New("eventpersister: experiment not found")
-	ErrNoAutoOpsRules                            = errors.New("eventpersister: no auto ops rules")
-	ErrNoExperiments                             = errors.New("eventpersister: no experiments")
-	ErrNothingToLink                             = errors.New("eventpersister: nothing to link")
 	ErrReasonNil                                 = errors.New("eventpersister: reason is nil")
 	ErrEvaluationsAreEmpty                       = errors.New("eventpersister: evaluations are empty")
 	ErrEvaluationEventIssuedAfterExperimentEnded = errors.New("eventpersister: evaluation event issued after experiment ended") //nolint:lll

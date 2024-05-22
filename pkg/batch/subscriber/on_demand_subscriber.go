@@ -30,16 +30,16 @@ const (
 	pubsubErrNotFound = "NotFound"
 )
 
-type ServerlessConfiguration struct {
-	NormalConfiguration
+type OnDemandConfiguration struct {
+	Configuration
 	CheckInterval int `json:"check_interval"`
 }
 
-type ServerlessSubscriber struct {
+type OnDemandSubscriber struct {
 	name                string
-	configuration       ServerlessConfiguration
+	configuration       OnDemandConfiguration
 	rateLimitedPuller   puller.RateLimitedPuller
-	processor           ServerlessProcessor
+	processor           OnDemandProcessor
 	ctx                 context.Context
 	cancel              context.CancelFunc
 	runningPullerCtx    context.Context
@@ -51,16 +51,16 @@ type ServerlessSubscriber struct {
 	logger              *zap.Logger
 }
 
-func NewServerlessSubscriber(
+func NewOnDemandSubscriber(
 	name string,
-	configuration ServerlessConfiguration,
-	processor ServerlessProcessor,
+	configuration OnDemandConfiguration,
+	processor OnDemandProcessor,
 	opts ...Option,
-) *ServerlessSubscriber {
+) *OnDemandSubscriber {
 
-	return &ServerlessSubscriber{
+	return &OnDemandSubscriber{
 		name:          name,
-		configuration: ServerlessConfiguration{},
+		configuration: OnDemandConfiguration{},
 		processor:     processor,
 		cancel:        nil,
 		opts:          options{},
@@ -68,8 +68,8 @@ func NewServerlessSubscriber(
 	}
 }
 
-func (s *ServerlessSubscriber) Run(ctx context.Context) {
-	s.logger.Info("Serverless Subscriber starting",
+func (s *OnDemandSubscriber) Run(ctx context.Context) {
+	s.logger.Info("OnDemandSubscriber starting",
 		zap.String("name", s.name),
 		zap.String("project", s.configuration.Project),
 		zap.String("subscription", s.configuration.Subscription),
@@ -99,7 +99,7 @@ func (s *ServerlessSubscriber) Run(ctx context.Context) {
 			}
 			if start {
 				s.logger.Debug(
-					"ServerlessSubscriber start pulling messages",
+					"OnDemandSubscriber start pulling messages",
 					zap.String("name", s.name),
 				)
 				if !s.IsRunning() {
@@ -120,7 +120,7 @@ func (s *ServerlessSubscriber) Run(ctx context.Context) {
 				}
 			} else {
 				s.logger.Debug(
-					"ServerlessSubscriber stop pulling messages",
+					"OnDemandSubscriber stop pulling messages",
 					zap.String("name", s.name),
 				)
 				if s.IsRunning() {
@@ -173,7 +173,7 @@ func (s *ServerlessSubscriber) Run(ctx context.Context) {
 	}
 }
 
-func (s *ServerlessSubscriber) subscribe(subscription chan struct{}) {
+func (s *OnDemandSubscriber) subscribe(subscription chan struct{}) {
 	for {
 		select {
 		case <-subscription:
@@ -211,19 +211,19 @@ func (s *ServerlessSubscriber) subscribe(subscription chan struct{}) {
 	}
 }
 
-func (s *ServerlessSubscriber) batch() error {
+func (s *OnDemandSubscriber) batch() error {
 	return s.processor.Process(s.runningPullerCtx, s.rateLimitedPuller.MessageCh())
 }
 
-func (s *ServerlessSubscriber) unsubscribe() {
+func (s *OnDemandSubscriber) unsubscribe() {
 	s.runningPullerCancel()
 }
 
-func (s *ServerlessSubscriber) IsRunning() bool {
+func (s *OnDemandSubscriber) IsRunning() bool {
 	return s.isRunning
 }
 
-func (s *ServerlessSubscriber) createPubSubClient(ctx context.Context) error {
+func (s *OnDemandSubscriber) createPubSubClient(ctx context.Context) error {
 	pubsubClient, err := pubsub.NewClient(
 		ctx,
 		s.configuration.Project,
@@ -238,7 +238,7 @@ func (s *ServerlessSubscriber) createPubSubClient(ctx context.Context) error {
 	return nil
 }
 
-func (s *ServerlessSubscriber) createPuller() error {
+func (s *OnDemandSubscriber) createPuller() error {
 	pubsubPuller, err := s.client.CreatePuller(
 		s.configuration.Subscription,
 		s.configuration.Topic,
@@ -254,6 +254,6 @@ func (s *ServerlessSubscriber) createPuller() error {
 	return nil
 }
 
-func (s *ServerlessSubscriber) Stop() {
+func (s *OnDemandSubscriber) Stop() {
 	s.cancel()
 }

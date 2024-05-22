@@ -12,5 +12,11 @@ data:
   subscribers.json: |-
     {{ toJson .Values.subscribers }}
 
+  onDemandSubscribers.json: |-
+    {{ toJson .Values.onDemandSubscribers }}
+
   processors.json: |-
     {{ toJson .Values.processors }}
+
+  onDemandProcessors.json: |-
+      {{ toJson .Values.onDemandProcessors }}

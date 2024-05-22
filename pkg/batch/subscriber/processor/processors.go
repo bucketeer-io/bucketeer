@@ -29,38 +29,27 @@ const (
 	UserEventPersisterName            = "userEventPersister"
 )
 
-const (
-	TypeNormal     = "normal"
-	TypeServerless = "serverless"
-)
-
 var (
 	unsupportedProcessorErr = errors.New("subscriber: unsupported processor")
 )
 
 type Processors struct {
-	processorMap map[string]map[string]subscriber.Processor
+	processorMap map[string]subscriber.Processor
 }
 
 func NewProcessors(r metrics.Registerer) *Processors {
 	registerMetrics(r)
 	return &Processors{
-		processorMap: map[string]map[string]subscriber.Processor{
-			TypeNormal:     make(map[string]subscriber.Processor),
-			TypeServerless: make(map[string]subscriber.Processor),
-		},
+		processorMap: make(map[string]subscriber.Processor),
 	}
 }
 
-func (p *Processors) RegisterProcessor(
-	processorType, name string,
-	processor subscriber.Processor,
-) {
-	p.processorMap[processorType][name] = processor
+func (p *Processors) RegisterProcessor(name string, processor subscriber.Processor) {
+	p.processorMap[name] = processor
 }
 
-func (p *Processors) GetProcessorByName(processorType, name string) (subscriber.Processor, error) {
-	if p, ok := p.processorMap[processorType][name]; ok {
+func (p *Processors) GetProcessorByName(name string) (subscriber.Processor, error) {
+	if p, ok := p.processorMap[name]; ok {
 		return p, nil
 	}
 	return nil, unsupportedProcessorErr

@@ -16,8 +16,17 @@ package processor
 
 import (
 	"context"
+
+	"github.com/golang/protobuf/proto"
 )
+
+type eventDWHMap map[string]proto.Message
+type environmentEventDWHMap map[string]eventDWHMap
 
 type Writer interface {
 	Write(ctx context.Context, evt environmentEventDWHMap) map[string]bool
+}
+
+type Updater interface {
+	UpdateUserCounts(ctx context.Context, events environmentEventMap) map[string]bool
 }

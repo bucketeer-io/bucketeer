@@ -115,8 +115,12 @@ spec:
               value: /usr/local/certs/service/tls.crt
             - name : BUCKETEER_BATCH_SUBSCRIBER_CONFIG
               value: /usr/local/conf/subscribers.json
+            - name: BUCKETEER_BATCH_ON_DEMAND_SUBSCRIBER_CONFIG
+              value: /usr/local/conf/onDemandSubscribers.json
             - name: BUCKETEER_BATCH_PROCESSORS_CONFIG
               value: /usr/local/conf/processors.json
+            - name: BUCKETEER_BATCH_ON_DEMAND_PROCESSORS_CONFIG
+              value: /usr/local/conf/onDemandProcessors.json
             - name: BUCKETEER_BATCH_KEY
               value: /usr/local/certs/service/tls.key
             - name: BUCKETEER_BATCH_OAUTH_PUBLIC_KEY

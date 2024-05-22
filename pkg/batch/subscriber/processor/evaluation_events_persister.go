@@ -16,12 +16,14 @@ package processor
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
 
+	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber"
 	storage "github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
@@ -29,28 +31,59 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 
-type eventDWHMap map[string]proto.Message
-type environmentEventDWHMap map[string]eventDWHMap
-
-type evaluationEventsDWHPersisterConfig struct {
-	FlushInterval int `json:"flushInterval"`
-	FlushTimeout  int `json:"flushTimeout"`
-	FlushSize     int `json:"flushSize"`
+type evaluationEventsPersisterConfig struct {
+	FlushInterval     int    `json:"flushInterval"`
+	FlushTimeout      int    `json:"flushTimeout"`
+	FlushSize         int    `json:"flushSize"`
+	Project           string `json:"project"`
+	BigQueryDataSet   string `json:"bigQueryDataSet"`
+	BigQueryBatchSize int    `json:"bigQueryBatchSize"`
+	Location          string `json:"location"`
 }
 
-type evaluationEventsDWHPersister struct {
-	evaluationEventsDWHPersisterConfig evaluationEventsDWHPersisterConfig
-	mysqlClient                        mysql.Client
-	writer                             Writer
-	logger                             *zap.Logger
+type evaluationEventsPersister struct {
+	evaluationEventsPersisterConfig evaluationEventsPersisterConfig
+	mysqlClient                     mysql.Client
+	writer                          Writer
+	logger                          *zap.Logger
 }
 
-func (e *evaluationEventsDWHPersister) Process(
+func NewEvaluationEventsDWHPersister(
+	config interface{},
+	mysqlClient mysql.Client,
+	writer Writer,
+	logger *zap.Logger,
+) (subscriber.Processor, error) {
+	jsonConfig, ok := config.(map[string]interface{})
+	if !ok {
+		logger.Error("EvaluationEventsDWHPersister: invalid config")
+		return nil, ErrSegmentInvalidConfig
+	}
+	configBytes, err := json.Marshal(jsonConfig)
+	if err != nil {
+		logger.Error("EvaluationEventsDWHPersister: failed to marshal config", zap.Error(err))
+		return nil, err
+	}
+	var persisterConfig evaluationEventsPersisterConfig
+	err = json.Unmarshal(configBytes, &persisterConfig)
+	if err != nil {
+		logger.Error("EvaluationEventsDWHPersister: failed to unmarshal config", zap.Error(err))
+		return nil, err
+	}
+	return &evaluationEventsPersister{
+		evaluationEventsPersisterConfig: persisterConfig,
+		mysqlClient:                     mysqlClient,
+		writer:                          writer,
+		logger:                          logger,
+	}, nil
+}
+
+func (e *evaluationEventsPersister) Process(
 	ctx context.Context,
 	msgChan <-chan *puller.Message,
 ) error {
 	batch := make(map[string]*puller.Message)
-	ticker := time.NewTicker(time.Duration(e.evaluationEventsDWHPersisterConfig.FlushInterval) * time.Second)
+	ticker := time.NewTicker(time.Duration(e.evaluationEventsPersisterConfig.FlushInterval) * time.Second)
 	defer ticker.Stop()
 	for {
 		select {
@@ -72,7 +105,7 @@ func (e *evaluationEventsDWHPersister) Process(
 				subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codes.DuplicateID.String()).Inc()
 			}
 			batch[id] = msg
-			if len(batch) < e.evaluationEventsDWHPersisterConfig.FlushSize {
+			if len(batch) < e.evaluationEventsPersisterConfig.FlushSize {
 				continue
 			}
 			e.send(batch)
@@ -87,14 +120,17 @@ func (e *evaluationEventsDWHPersister) Process(
 			e.logger.Info("Context is done", zap.Int("batchSize", batchSize))
 			if len(batch) > 0 {
 				e.send(batch)
-				e.logger.Info("All the left messages are processed successfully", zap.Int("batchSize", batchSize))
+				e.logger.Info(
+					"All the left messages are processed successfully",
+					zap.Int("batchSize", batchSize),
+				)
 			}
 			return nil
 		}
 	}
 }
 
-func (e *evaluationEventsDWHPersister) Switch(ctx context.Context) (bool, error) {
+func (e *evaluationEventsPersister) Switch(ctx context.Context) (bool, error) {
 	experimentStorage := storage.NewExperimentStorage(e.mysqlClient)
 	count, err := experimentStorage.CountRunningExperiments(ctx)
 	if err != nil {
@@ -103,10 +139,10 @@ func (e *evaluationEventsDWHPersister) Switch(ctx context.Context) (bool, error)
 	return count > 0, nil
 }
 
-func (e *evaluationEventsDWHPersister) send(messages map[string]*puller.Message) {
+func (e *evaluationEventsPersister) send(messages map[string]*puller.Message) {
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		time.Duration(e.evaluationEventsDWHPersisterConfig.FlushTimeout)*time.Second,
+		time.Duration(e.evaluationEventsPersisterConfig.FlushTimeout)*time.Second,
 	)
 	defer cancel()
 	envEvents := e.extractEvents(messages)
@@ -119,10 +155,16 @@ func (e *evaluationEventsDWHPersister) send(messages map[string]*puller.Message)
 		if repeatable, ok := fails[id]; ok {
 			if repeatable {
 				m.Nack()
-				subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codes.RepeatableError.String()).Inc()
+				subscriberHandledCounter.WithLabelValues(
+					subscriberEvaluationEventDWH,
+					codes.RepeatableError.String(),
+				).Inc()
 			} else {
 				m.Ack()
-				subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codes.NonRepeatableError.String()).Inc()
+				subscriberHandledCounter.WithLabelValues(
+					subscriberEvaluationEventDWH,
+					codes.NonRepeatableError.String(),
+				).Inc()
 			}
 			continue
 		}
@@ -130,7 +172,7 @@ func (e *evaluationEventsDWHPersister) send(messages map[string]*puller.Message)
 		subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codes.OK.String()).Inc()
 	}
 }
-func (e *evaluationEventsDWHPersister) extractEvents(messages map[string]*puller.Message) environmentEventDWHMap {
+func (e *evaluationEventsPersister) extractEvents(messages map[string]*puller.Message) environmentEventDWHMap {
 	envEvents := environmentEventDWHMap{}
 	handleBadMessage := func(m *puller.Message, err error) {
 		m.Ack()

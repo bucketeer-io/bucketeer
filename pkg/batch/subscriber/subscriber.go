@@ -49,21 +49,21 @@ func WithLogger(logger *zap.Logger) Option {
 	}
 }
 
-type Processor interface {
-	Process(ctx context.Context, msgChan <-chan *puller.Message) error
-}
-
-type ServerlessProcessor interface {
-	Processor
-	Switch(ctx context.Context) (bool, error)
-}
-
 type Subscriber interface {
 	Run(ctx context.Context)
 	Stop()
 }
 
-type NormalConfiguration struct {
+type Processor interface {
+	Process(ctx context.Context, msgChan <-chan *puller.Message) error
+}
+
+type OnDemandProcessor interface {
+	Processor
+	Switch(ctx context.Context) (bool, error)
+}
+
+type Configuration struct {
 	Project                      string `json:"project"`
 	Subscription                 string `json:"subscription"`
 	Topic                        string `json:"topic"`
@@ -76,16 +76,16 @@ type NormalConfiguration struct {
 
 type NormalSubscriber struct {
 	name          string
-	configuration NormalConfiguration
+	configuration Configuration
 	processor     Processor
 	cancel        context.CancelFunc
 	opts          options
 	logger        *zap.Logger
 }
 
-func NewNormalSubscriber(
+func NewSubscriber(
 	name string,
-	configuration NormalConfiguration,
+	configuration Configuration,
 	processor Processor,
 	opts ...Option,
 ) Subscriber {
@@ -103,7 +103,7 @@ func NewNormalSubscriber(
 }
 
 func (s NormalSubscriber) Run(ctx context.Context) {
-	s.logger.Info("Normal Subscriber starting",
+	s.logger.Info("NormalSubscriber starting",
 		zap.String("name", s.name),
 		zap.String("project", s.configuration.Project),
 		zap.String("subscription", s.configuration.Subscription),
