@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -109,7 +110,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_ENABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_SCHEDULE,
 				},
 			},
 			expectedErr: createError(statusClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause")),
@@ -118,16 +119,11 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			desc: "err: ErrIncompatibleOpsType",
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
-					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_ENABLE_FEATURE,
-					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
-						{
-							VariationId:     "",
-							GoalId:          "gid",
-							MinCount:        10,
-							ThreadsholdRate: 0.5,
-							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
-						},
+					FeatureId:           "fid",
+					OpsType:             autoopsproto.OpsType_EVENT_RATE,
+					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{},
+					DatetimeClauses: []*autoopsproto.DatetimeClause{
+						{Time: 0, ActionType: autoopsproto.ActionType_ENABLE},
 					},
 				},
 			},
@@ -138,7 +134,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_DISABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_EVENT_RATE,
 					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
 						{
 							VariationId:     "",
@@ -146,6 +142,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 							MinCount:        10,
 							ThreadsholdRate: 0.5,
 							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+							ActionType:      autoopsproto.ActionType_DISABLE,
 						},
 					},
 				},
@@ -157,7 +154,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_DISABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_EVENT_RATE,
 					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
 						{
 							VariationId:     "vid",
@@ -165,6 +162,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 							MinCount:        10,
 							ThreadsholdRate: 0.5,
 							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+							ActionType:      autoopsproto.ActionType_DISABLE,
 						},
 					},
 				},
@@ -176,7 +174,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_DISABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_EVENT_RATE,
 					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
 						{
 							VariationId:     "vid",
@@ -184,6 +182,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 							MinCount:        0,
 							ThreadsholdRate: 0.5,
 							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+							ActionType:      autoopsproto.ActionType_DISABLE,
 						},
 					},
 				},
@@ -195,7 +194,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_DISABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_EVENT_RATE,
 					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
 						{
 							VariationId:     "vid",
@@ -203,6 +202,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 							MinCount:        10,
 							ThreadsholdRate: -0.1,
 							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+							ActionType:      autoopsproto.ActionType_DISABLE,
 						},
 					},
 				},
@@ -214,7 +214,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_DISABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_EVENT_RATE,
 					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
 						{
 							VariationId:     "vid",
@@ -222,6 +222,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 							MinCount:        10,
 							ThreadsholdRate: 1.1,
 							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+							ActionType:      autoopsproto.ActionType_DISABLE,
 						},
 					},
 				},
@@ -233,9 +234,9 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_ENABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_SCHEDULE,
 					DatetimeClauses: []*autoopsproto.DatetimeClause{
-						{Time: 0},
+						{Time: 0, ActionType: autoopsproto.ActionType_ENABLE},
 					},
 				},
 			},
@@ -251,7 +252,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_DISABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_EVENT_RATE,
 					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
 						{
 							VariationId:     "vid",
@@ -259,17 +260,18 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 							MinCount:        10,
 							ThreadsholdRate: 0.5,
 							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+							ActionType:      autoopsproto.ActionType_DISABLE,
 						},
 					},
 					DatetimeClauses: []*autoopsproto.DatetimeClause{
-						{Time: time.Now().AddDate(0, 0, 1).Unix()},
+						{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
 					},
 				},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
-			desc: "success",
+			desc: "success for EventRate",
 			setup: func(s *AutoOpsService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().GetGoal(
 					gomock.Any(), gomock.Any(),
@@ -282,7 +284,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_DISABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_EVENT_RATE,
 					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
 						{
 							VariationId:     "vid",
@@ -290,10 +292,30 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 							MinCount:        10,
 							ThreadsholdRate: 0.5,
 							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+							ActionType:      autoopsproto.ActionType_DISABLE,
 						},
 					},
+					DatetimeClauses: []*autoopsproto.DatetimeClause{},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success for DateTime",
+			setup: func(s *AutoOpsService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				Command: &autoopsproto.CreateAutoOpsRuleCommand{
+					FeatureId:           "fid",
+					OpsType:             autoopsproto.OpsType_SCHEDULE,
+					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{},
 					DatetimeClauses: []*autoopsproto.DatetimeClause{
-						{Time: time.Now().AddDate(0, 0, 1).Unix()},
+						{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_DISABLE},
+						{Time: time.Now().AddDate(0, 0, 2).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
 					},
 				},
 			},
@@ -307,6 +329,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 				p.setup(s)
 			}
 			_, err := s.CreateAutoOpsRule(ctx, p.req)
+			fmt.Printf("err: %v\n", err)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -425,7 +448,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.UpdateAutoOpsRuleRequest{
 				Id:                              "aid1",
 				EnvironmentNamespace:            "ns0",
-				ChangeAutoOpsRuleOpsTypeCommand: &autoopsproto.ChangeAutoOpsRuleOpsTypeCommand{OpsType: autoopsproto.OpsType_DISABLE_FEATURE},
+				ChangeAutoOpsRuleOpsTypeCommand: &autoopsproto.ChangeAutoOpsRuleOpsTypeCommand{OpsType: autoopsproto.OpsType_EVENT_RATE},
 				AddOpsEventRateClauseCommands: []*autoopsproto.AddOpsEventRateClauseCommand{{
 					OpsEventRateClause: &autoopsproto.OpsEventRateClause{
 						VariationId:     "vid",
@@ -433,6 +456,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 						MinCount:        10,
 						ThreadsholdRate: 0.5,
 						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+						ActionType:      autoopsproto.ActionType_DISABLE,
 					},
 				}},
 				DeleteClauseCommands: []*autoopsproto.DeleteClauseCommand{{
@@ -440,7 +464,8 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 				}},
 				AddDatetimeClauseCommands: []*autoopsproto.AddDatetimeClauseCommand{{
 					DatetimeClause: &autoopsproto.DatetimeClause{
-						Time: time.Now().AddDate(0, 0, 1).Unix(),
+						Time:       time.Now().AddDate(0, 0, 1).Unix(),
+						ActionType: autoopsproto.ActionType_DISABLE,
 					},
 				}},
 			},
@@ -455,6 +480,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 				p.setup(s)
 			}
 			_, err := s.UpdateAutoOpsRule(ctx, p.req)
+			fmt.Printf("err: %v\n", err)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -798,11 +824,42 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			desc: "err: ErrNoCommand",
+			desc: "err: ErrNoExecuteAutoOpsRuleCommand",
 			req: &autoopsproto.ExecuteAutoOpsRequest{
 				Id: "aid",
 			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "executeAutoOpsRuleCommand")),
+		},
+		{
+			desc: "err: ErrNoExecuteAutoOpsRuleCommand_Clause",
+			req: &autoopsproto.ExecuteAutoOpsRequest{
+				Id:                        "aid",
+				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{},
+			},
+			expectedErr: createError(statusClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause")),
+		},
+		{
+			desc: "err: ErrNoChangeAutoOpsStatusCommand",
+			req: &autoopsproto.ExecuteAutoOpsRequest{
+				Id: "aid",
+				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
+					Clause: &autoopsproto.Clause{},
+				},
+			},
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "changeAutoOpsStatusCommand")),
+		},
+		{
+			desc: "err: ErrNoChangeAutoOpsStatusCommand",
+			req: &autoopsproto.ExecuteAutoOpsRequest{
+				Id: "aid",
+				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
+					Clause: &autoopsproto.Clause{},
+				},
+				ChangeAutoOpsStatusCommand: &autoopsproto.ChangeAutoOpsStatusCommand{
+					Status: autoopsproto.AutoOpsStatus_STOPPED,
+				},
+			},
+			expectedErr: createError(statusChangeCommandInvalidOpsStatus, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "changeAutoOpsStatusCommand")),
 		},
 		{
 			desc: "err: ErrNotFound",
@@ -814,9 +871,14 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 				).Return(row)
 			},
 			req: &autoopsproto.ExecuteAutoOpsRequest{
-				Id:                                  "aid1",
-				EnvironmentNamespace:                "ns0",
-				ChangeAutoOpsRuleTriggeredAtCommand: &autoopsproto.ChangeAutoOpsRuleTriggeredAtCommand{},
+				Id:                   "aid1",
+				EnvironmentNamespace: "ns0",
+				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
+					Clause: &autoopsproto.Clause{},
+				},
+				ChangeAutoOpsStatusCommand: &autoopsproto.ChangeAutoOpsStatusCommand{
+					Status: autoopsproto.AutoOpsStatus_RUNNING,
+				},
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -834,9 +896,14 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &autoopsproto.ExecuteAutoOpsRequest{
-				Id:                                  "aid1",
-				EnvironmentNamespace:                "ns0",
-				ChangeAutoOpsRuleTriggeredAtCommand: &autoopsproto.ChangeAutoOpsRuleTriggeredAtCommand{},
+				Id:                   "aid1",
+				EnvironmentNamespace: "ns0",
+				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
+					Clause: &autoopsproto.Clause{},
+				},
+				ChangeAutoOpsStatusCommand: &autoopsproto.ChangeAutoOpsStatusCommand{
+					Status: autoopsproto.AutoOpsStatus_RUNNING,
+				},
 			},
 			expectedErr: nil,
 		},
@@ -848,6 +915,7 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 				p.setup(s)
 			}
 			_, err := s.ExecuteAutoOps(ctx, p.req)
+			fmt.Printf("err: %v\n", err)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

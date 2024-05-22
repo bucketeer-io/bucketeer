@@ -273,7 +273,17 @@ func (s *AutoOpsService) validateCreateAutoOpsRuleRequest(
 		}
 		return dt.Err()
 	}
-	if req.Command.OpsType == autoopsproto.OpsType_ENABLE_FEATURE && len(req.Command.OpsEventRateClauses) > 0 {
+	if req.Command.OpsType == autoopsproto.OpsType_EVENT_RATE && len(req.Command.OpsEventRateClauses) == 0 {
+		dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.Command.OpsType == autoopsproto.OpsType_SCHEDULE && len(req.Command.DatetimeClauses) == 0 {
 		dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
@@ -348,6 +358,16 @@ func (s *AutoOpsService) validateOpsEventRateClause(
 		}
 		return dt.Err()
 	}
+	if clause.ActionType == autoopsproto.ActionType_ENABLE {
+		dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "action_type"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
 	return nil
 }
 
@@ -375,6 +395,58 @@ func (s *AutoOpsService) validateDatetimeClause(clause *autoopsproto.DatetimeCla
 		return dt.Err()
 	}
 	return nil
+}
+
+func (s *AutoOpsService) StopAutoOpsRule(
+	ctx context.Context,
+	req *autoopsproto.StopAutoOpsRuleRequest,
+) (*autoopsproto.StopAutoOpsRuleResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := validateStopAutoOpsRuleRequest(req, localizer); err != nil {
+		return nil, err
+	}
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
+		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentNamespace)
+		if err != nil {
+			return err
+		}
+		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+		if err := handler.Handle(ctx, req.Command); err != nil {
+			return err
+		}
+		return autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentNamespace)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return &autoopsproto.StopAutoOpsRuleResponse{}, nil
 }
 
 func (s *AutoOpsService) DeleteAutoOpsRule(
@@ -474,6 +546,30 @@ func validateDeleteAutoOpsRuleRequest(req *autoopsproto.DeleteAutoOpsRuleRequest
 	return nil
 }
 
+func validateStopAutoOpsRuleRequest(req *autoopsproto.StopAutoOpsRuleRequest, localizer locale.Localizer) error {
+	if req.Id == "" {
+		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.Command == nil {
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
+
 func (s *AutoOpsService) UpdateAutoOpsRule(
 	ctx context.Context,
 	req *autoopsproto.UpdateAutoOpsRuleRequest,
@@ -547,8 +643,8 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 			return err
 		}
 		if req.ChangeAutoOpsRuleOpsTypeCommand != nil {
-			if req.ChangeAutoOpsRuleOpsTypeCommand.OpsType == autoopsproto.OpsType_ENABLE_FEATURE &&
-				len(req.AddOpsEventRateClauseCommands) > 0 {
+			if req.ChangeAutoOpsRuleOpsTypeCommand.OpsType == autoopsproto.OpsType_EVENT_RATE &&
+				len(req.AddOpsEventRateClauseCommands) == 0 {
 				dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
 					Locale:  localizer.GetLocale(),
 					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
@@ -558,7 +654,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 				}
 				return dt.Err()
 			}
-		} else if autoOpsRule.OpsType == autoopsproto.OpsType_ENABLE_FEATURE && len(req.AddOpsEventRateClauseCommands) > 0 {
+		} else if autoOpsRule.OpsType == autoopsproto.OpsType_EVENT_RATE && len(req.AddOpsEventRateClauseCommands) == 0 {
 			dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
@@ -972,7 +1068,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		}
 		prStorage := v2as.NewProgressiveRolloutStorage(tx)
 		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
-		if err := handler.Handle(ctx, req.ChangeAutoOpsRuleTriggeredAtCommand); err != nil {
+		if err := handler.Handle(ctx, req.ChangeAutoOpsStatusCommand); err != nil {
 			return err
 		}
 		if err = autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentNamespace); err != nil {
@@ -990,7 +1086,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			return err
 		}
 		// Stop the running progressive rollout if the operation type is disable
-		if autoOpsRule.OpsType == autoopsproto.OpsType_DISABLE_FEATURE {
+		if req.ExecuteAutoOpsRuleCommand.Clause.ActionType == autoopsproto.ActionType_DISABLE {
 			if err := s.stopProgressiveRollout(
 				ctx,
 				req.EnvironmentNamespace,
@@ -1005,7 +1101,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			ctx,
 			ftStorage,
 			req.EnvironmentNamespace,
-			autoOpsRule.OpsType,
+			req.ExecuteAutoOpsRuleCommand.Clause.ActionType,
 			feature,
 			s.logger,
 			localizer,
@@ -1138,10 +1234,41 @@ func (s *AutoOpsService) validateExecuteAutoOpsRequest(
 		}
 		return dt.Err()
 	}
-	if req.ChangeAutoOpsRuleTriggeredAtCommand == nil {
+	if req.ExecuteAutoOpsRuleCommand == nil {
 		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "executeAutoOpsRuleCommand"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.ExecuteAutoOpsRuleCommand != nil && req.ExecuteAutoOpsRuleCommand.Clause == nil {
+		dt, err := statusClauseRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.ChangeAutoOpsStatusCommand == nil {
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "changeAutoOpsStatusCommand"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.ChangeAutoOpsStatusCommand != nil &&
+		(req.ChangeAutoOpsStatusCommand.Status != autoopsproto.AutoOpsStatus_COMPLETED && req.ChangeAutoOpsStatusCommand.Status != autoopsproto.AutoOpsStatus_RUNNING) {
+		dt, err := statusChangeCommandInvalidOpsStatus.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "changeAutoOpsStatusCommand"),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -1194,7 +1321,7 @@ func (s *AutoOpsService) checkIfHasAlreadyTriggered(
 		}
 		return false, dt.Err()
 	}
-	if autoOpsRule.AlreadyTriggered() {
+	if !autoOpsRule.HasExecuteClause() {
 		s.logger.Warn(
 			"Auto Ops Rule already triggered",
 			log.FieldsFromImcomingContext(ctx).AddFields(
