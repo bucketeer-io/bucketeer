@@ -40,19 +40,6 @@ const (
 	evaluationEventTable = "evaluation_event"
 )
 
-const (
-	codeEvaluationsAreEmpty                 = "EvaluationsAreEmpty"
-	codeEventIssuedAfterExperimentEnded     = "EventIssuedAfterExperimentEnded"
-	codeEventOlderThanExperiment            = "EventOlderThanExperiment"
-	codeExperimentNotFound                  = "ExperimentNotFound"
-	codeGoalEventIssuedAfterExperimentEnded = "GoalEventIssuedAfterExperimentEnded"
-	codeFailedToEvaluateUser                = "FailedToEvaluateUser"
-	codeFailedToListExperiments             = "FailedToListExperiments"
-	codeFailedToAppendEvaluationEvents      = "FailedToAppendEvaluationEvents"
-	codeFailedToAppendGoalEvents            = "FailedToAppendGoalEvents"
-	codeLinked                              = "Linked"
-)
-
 type evalEvtWriter struct {
 	writer           storage.EvalEventWriter
 	experimentClient ec.Client
@@ -144,7 +131,7 @@ func (w *evalEvtWriter) Write(
 					continue
 				}
 				evalEvents = append(evalEvents, e)
-				subscriberHandledCounter.WithLabelValues(codeLinked).Inc()
+				subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventOPS, codeLinked).Inc()
 			default:
 				w.logger.Error(
 					"The event is an unexpected message type",
