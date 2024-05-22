@@ -839,29 +839,6 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: createError(statusClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause")),
 		},
 		{
-			desc: "err: ErrNoChangeAutoOpsStatusCommand",
-			req: &autoopsproto.ExecuteAutoOpsRequest{
-				Id: "aid",
-				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
-					Clause: &autoopsproto.Clause{},
-				},
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "changeAutoOpsStatusCommand")),
-		},
-		{
-			desc: "err: ErrNoChangeAutoOpsStatusCommand",
-			req: &autoopsproto.ExecuteAutoOpsRequest{
-				Id: "aid",
-				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
-					Clause: &autoopsproto.Clause{},
-				},
-				ChangeAutoOpsStatusCommand: &autoopsproto.ChangeAutoOpsStatusCommand{
-					Status: autoopsproto.AutoOpsStatus_STOPPED,
-				},
-			},
-			expectedErr: createError(statusChangeCommandInvalidOpsStatus, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "changeAutoOpsStatusCommand")),
-		},
-		{
 			desc: "err: ErrNotFound",
 			setup: func(s *AutoOpsService) {
 				row := mysqlmock.NewMockRow(mockController)
@@ -875,9 +852,6 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 				EnvironmentNamespace: "ns0",
 				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
 					Clause: &autoopsproto.Clause{},
-				},
-				ChangeAutoOpsStatusCommand: &autoopsproto.ChangeAutoOpsStatusCommand{
-					Status: autoopsproto.AutoOpsStatus_RUNNING,
 				},
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
@@ -900,9 +874,6 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 				EnvironmentNamespace: "ns0",
 				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
 					Clause: &autoopsproto.Clause{},
-				},
-				ChangeAutoOpsStatusCommand: &autoopsproto.ChangeAutoOpsStatusCommand{
-					Status: autoopsproto.AutoOpsStatus_RUNNING,
 				},
 			},
 			expectedErr: nil,

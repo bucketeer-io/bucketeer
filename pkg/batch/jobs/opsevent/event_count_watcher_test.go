@@ -297,7 +297,7 @@ func TestRunCountWatcher(t *testing.T) {
 				)
 
 				w.autoOpsExecutor.(*executormock.MockAutoOpsExecutor).
-					EXPECT().Execute(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+					EXPECT().Execute(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
 			expectedErr: nil,
 		},

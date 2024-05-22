@@ -2827,11 +2827,6 @@
               },
               {
                 "id": 4,
-                "name": "change_auto_ops_status_command",
-                "type": "ChangeAutoOpsStatusCommand"
-              },
-              {
-                "id": 5,
                 "name": "execute_auto_ops_rule_command",
                 "type": "ExecuteAutoOpsRuleCommand"
               }

@@ -102,7 +102,7 @@ func (w *eventCountWatcher) Run(ctx context.Context) (lastErr error) {
 			if clause == nil {
 				continue
 			}
-			if err = w.autoOpsExecutor.Execute(ctx, env.Id, a.Id, clause, autoopsproto.AutoOpsStatus_COMPLETED); err != nil {
+			if err = w.autoOpsExecutor.Execute(ctx, env.Id, a.Id, clause); err != nil {
 				lastErr = err
 			}
 		}

@@ -1097,10 +1097,6 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			return err
 		}
 		prStorage := v2as.NewProgressiveRolloutStorage(tx)
-		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
-		if err := handler.Handle(ctx, req.ChangeAutoOpsStatusCommand); err != nil {
-			return err
-		}
 		if err = autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentNamespace); err != nil {
 			if err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
 				s.logger.Warn(
@@ -1145,6 +1141,16 @@ func (s *AutoOpsService) ExecuteAutoOps(
 					zap.String("featureId", autoOpsRule.FeatureId),
 				)...,
 			)
+			return err
+		}
+		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+
+		opsStatus := autoopsproto.AutoOpsStatus_RUNNING
+		if autoOpsRule.Clauses[len(autoOpsRule.Clauses)-1].Id == req.Id {
+			opsStatus = autoopsproto.AutoOpsStatus_COMPLETED
+		}
+
+		if err := handler.Handle(ctx, autoopsproto.ChangeAutoOpsStatusCommand{Status: opsStatus}); err != nil {
 			return err
 		}
 		return nil
@@ -1278,27 +1284,6 @@ func (s *AutoOpsService) validateExecuteAutoOpsRequest(
 		dt, err := statusClauseRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.ChangeAutoOpsStatusCommand == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "changeAutoOpsStatusCommand"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.ChangeAutoOpsStatusCommand != nil &&
-		(req.ChangeAutoOpsStatusCommand.Status != autoopsproto.AutoOpsStatus_COMPLETED && req.ChangeAutoOpsStatusCommand.Status != autoopsproto.AutoOpsStatus_RUNNING) {
-		dt, err := statusChangeCommandInvalidOpsStatus.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "changeAutoOpsStatusCommand"),
 		})
 		if err != nil {
 			return statusInternal.Err()

@@ -79,18 +79,14 @@ func (w *datetimeWatcher) Run(ctx context.Context) (lastErr error) {
 			if !aor.HasExecuteClause() {
 				continue
 			}
-			executeClause, hasNextAutoOps, err := w.getExecuteDateTimeClause(ctx, env.Id, aor)
+			executeClause, err := w.getExecuteDateTimeClause(ctx, env.Id, aor)
 			if err != nil {
 				lastErr = err
 			}
 			if executeClause == nil {
 				continue
 			}
-			status := autoopsproto.AutoOpsStatus_RUNNING
-			if !hasNextAutoOps {
-				status = autoopsproto.AutoOpsStatus_COMPLETED
-			}
-			if err = w.autoOpsExecutor.Execute(ctx, env.Id, a.Id, executeClause, status); err != nil {
+			if err = w.autoOpsExecutor.Execute(ctx, env.Id, a.Id, executeClause); err != nil {
 				lastErr = err
 			}
 		}
@@ -127,7 +123,7 @@ func (w *datetimeWatcher) getExecuteDateTimeClause(
 	ctx context.Context,
 	environmentNamespace string,
 	a *autoopsdomain.AutoOpsRule,
-) (*autoopsproto.Clause, bool, error) {
+) (*autoopsproto.Clause, error) {
 	datetimeClauses, err := a.ExtractDatetimeClauses()
 	if err != nil {
 		w.logger.Error("Failed to extract datetime clauses", zap.Error(err),
@@ -135,7 +131,7 @@ func (w *datetimeWatcher) getExecuteDateTimeClause(
 			zap.String("featureId", a.FeatureId),
 			zap.String("autoOpsRuleId", a.Id),
 		)
-		return nil, false, err
+		return nil, err
 	}
 	nowTimestamp := time.Now().Unix()
 	var latestExecuteClause *autoopsproto.Clause
@@ -149,7 +145,7 @@ func (w *datetimeWatcher) getExecuteDateTimeClause(
 				zap.String("featureId", a.FeatureId),
 				zap.String("clauseId", c.Id),
 			)
-			return nil, false, err
+			return nil, err
 		}
 
 		if w.assessRule(datetimeClause, nowTimestamp) {
@@ -168,13 +164,9 @@ func (w *datetimeWatcher) getExecuteDateTimeClause(
 			zap.String("autoOpsRuleId", a.Id),
 			zap.Any("datetimeClauseId", latestExecuteClause.Id),
 		)
-		hasNextAutoOps := false
-		if waitingOpsCount > 0 {
-			hasNextAutoOps = true
-		}
-		return latestExecuteClause, hasNextAutoOps, nil
+		return latestExecuteClause, nil
 	} else {
-		return nil, false, nil
+		return nil, nil
 	}
 }
 
