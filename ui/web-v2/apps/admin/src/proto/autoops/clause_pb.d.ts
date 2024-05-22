@@ -13,8 +13,8 @@ export class Clause extends jspb.Message {
   getClause(): google_protobuf_any_pb.Any | undefined;
   setClause(value?: google_protobuf_any_pb.Any): void;
 
-  getAction(): ActionTypeMap[keyof ActionTypeMap];
-  setAction(value: ActionTypeMap[keyof ActionTypeMap]): void;
+  getActiontype(): ActionTypeMap[keyof ActionTypeMap];
+  setActiontype(value: ActionTypeMap[keyof ActionTypeMap]): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Clause.AsObject;
@@ -30,7 +30,7 @@ export namespace Clause {
   export type AsObject = {
     id: string,
     clause?: google_protobuf_any_pb.Any.AsObject,
-    action: ActionTypeMap[keyof ActionTypeMap],
+    actiontype: ActionTypeMap[keyof ActionTypeMap],
   }
 }
 
@@ -50,6 +50,9 @@ export class OpsEventRateClause extends jspb.Message {
   getOperator(): OpsEventRateClause.OperatorMap[keyof OpsEventRateClause.OperatorMap];
   setOperator(value: OpsEventRateClause.OperatorMap[keyof OpsEventRateClause.OperatorMap]): void;
 
+  getActionType(): ActionTypeMap[keyof ActionTypeMap];
+  setActionType(value: ActionTypeMap[keyof ActionTypeMap]): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): OpsEventRateClause.AsObject;
   static toObject(includeInstance: boolean, msg: OpsEventRateClause): OpsEventRateClause.AsObject;
@@ -67,6 +70,7 @@ export namespace OpsEventRateClause {
     minCount: number,
     threadsholdRate: number,
     operator: OpsEventRateClause.OperatorMap[keyof OpsEventRateClause.OperatorMap],
+    actionType: ActionTypeMap[keyof ActionTypeMap],
   }
 
   export interface OperatorMap {
@@ -81,6 +85,9 @@ export class DatetimeClause extends jspb.Message {
   getTime(): number;
   setTime(value: number): void;
 
+  getActionType(): ActionTypeMap[keyof ActionTypeMap];
+  setActionType(value: ActionTypeMap[keyof ActionTypeMap]): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DatetimeClause.AsObject;
   static toObject(includeInstance: boolean, msg: DatetimeClause): DatetimeClause.AsObject;
@@ -94,6 +101,7 @@ export class DatetimeClause extends jspb.Message {
 export namespace DatetimeClause {
   export type AsObject = {
     time: number,
+    actionType: ActionTypeMap[keyof ActionTypeMap],
   }
 }
 

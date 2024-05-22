@@ -213,6 +213,8 @@ export namespace Event {
     OPS_EVENT_RATE_CLAUSE_CHANGED: 806;
     DATETIME_CLAUSE_ADDED: 807;
     DATETIME_CLAUSE_CHANGED: 808;
+    AUTOOPS_RULE_OPS_STATUS_CHANGED: 809;
+    AUTOOPS_RULE_STOPED: 810;
     PUSH_CREATED: 900;
     PUSH_DELETED: 901;
     PUSH_TAGS_ADDED: 902;
@@ -2882,6 +2884,12 @@ export class AutoOpsRuleCreatedEvent extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getOpsStatus(): proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap];
+  setOpsStatus(value: proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap]): void;
+
+  getStoppedAt(): number;
+  setStoppedAt(value: number): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AutoOpsRuleCreatedEvent.AsObject;
   static toObject(includeInstance: boolean, msg: AutoOpsRuleCreatedEvent): AutoOpsRuleCreatedEvent.AsObject;
@@ -2900,6 +2908,24 @@ export namespace AutoOpsRuleCreatedEvent {
     triggeredAt: number,
     createdAt: number,
     updatedAt: number,
+    opsStatus: proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap],
+    stoppedAt: number,
+  }
+}
+
+export class AutoOpsRuleStopEvent extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AutoOpsRuleStopEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: AutoOpsRuleStopEvent): AutoOpsRuleStopEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: AutoOpsRuleStopEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AutoOpsRuleStopEvent;
+  static deserializeBinaryFromReader(message: AutoOpsRuleStopEvent, reader: jspb.BinaryReader): AutoOpsRuleStopEvent;
+}
+
+export namespace AutoOpsRuleStopEvent {
+  export type AsObject = {
   }
 }
 
@@ -2939,19 +2965,23 @@ export namespace AutoOpsRuleOpsTypeChangedEvent {
   }
 }
 
-export class AutoOpsRuleTriggeredAtChangedEvent extends jspb.Message {
+export class AutoOpsRuleOpsStatusChangedEvent extends jspb.Message {
+  getOpsStatus(): proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap];
+  setOpsStatus(value: proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap]): void;
+
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): AutoOpsRuleTriggeredAtChangedEvent.AsObject;
-  static toObject(includeInstance: boolean, msg: AutoOpsRuleTriggeredAtChangedEvent): AutoOpsRuleTriggeredAtChangedEvent.AsObject;
+  toObject(includeInstance?: boolean): AutoOpsRuleOpsStatusChangedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: AutoOpsRuleOpsStatusChangedEvent): AutoOpsRuleOpsStatusChangedEvent.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: AutoOpsRuleTriggeredAtChangedEvent, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): AutoOpsRuleTriggeredAtChangedEvent;
-  static deserializeBinaryFromReader(message: AutoOpsRuleTriggeredAtChangedEvent, reader: jspb.BinaryReader): AutoOpsRuleTriggeredAtChangedEvent;
+  static serializeBinaryToWriter(message: AutoOpsRuleOpsStatusChangedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): AutoOpsRuleOpsStatusChangedEvent;
+  static deserializeBinaryFromReader(message: AutoOpsRuleOpsStatusChangedEvent, reader: jspb.BinaryReader): AutoOpsRuleOpsStatusChangedEvent;
 }
 
-export namespace AutoOpsRuleTriggeredAtChangedEvent {
+export namespace AutoOpsRuleOpsStatusChangedEvent {
   export type AsObject = {
+    opsStatus: proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap],
   }
 }
 

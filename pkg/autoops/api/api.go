@@ -436,6 +436,16 @@ func (s *AutoOpsService) StopAutoOpsRule(
 		if err != nil {
 			return err
 		}
+		if autoOpsRule.AutoOpsStatus == autoopsproto.AutoOpsStatus_COMPLETED {
+			dt, err := statusAutoOpsRuleCompleted.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InvalidArgumentError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
 		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
@@ -485,6 +495,16 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentNamespace)
 		if err != nil {
 			return err
+		}
+		if autoOpsRule.AutoOpsStatus == autoopsproto.AutoOpsStatus_COMPLETED {
+			dt, err := statusAutoOpsRuleCompleted.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InvalidArgumentError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
 		if err := handler.Handle(ctx, req.Command); err != nil {
@@ -641,6 +661,16 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentNamespace)
 		if err != nil {
 			return err
+		}
+		if autoOpsRule.AutoOpsStatus == autoopsproto.AutoOpsStatus_COMPLETED {
+			dt, err := statusAutoOpsRuleCompleted.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InvalidArgumentError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 		if req.ChangeAutoOpsRuleOpsTypeCommand != nil {
 			if req.ChangeAutoOpsRuleOpsTypeCommand.OpsType == autoopsproto.OpsType_EVENT_RATE &&
