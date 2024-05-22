@@ -2044,7 +2044,7 @@
               },
               {
                 "id": 3,
-                "name": "action",
+                "name": "actionType",
                 "type": "ActionType"
               }
             ]
@@ -2076,6 +2076,11 @@
                 "id": 6,
                 "name": "operator",
                 "type": "Operator"
+              },
+              {
+                "id": 7,
+                "name": "action_type",
+                "type": "ActionType"
               }
             ],
             "reserved_ids": [
@@ -2089,6 +2094,11 @@
                 "id": 1,
                 "name": "time",
                 "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "action_type",
+                "type": "ActionType"
               }
             ]
           },
@@ -2197,67 +2207,13 @@
                 "id": 3,
                 "name": "ops_event_rate_clauses",
                 "type": "OpsEventRateClause",
-                "is_repeated": true,
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
+                "is_repeated": true
               },
               {
                 "id": 4,
                 "name": "datetime_clauses",
                 "type": "DatetimeClause",
-                "is_repeated": true,
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "id": 5,
-                "name": "ops_event_rate_clauses_command",
-                "type": "CreateOpsEventRateClauseCommand",
                 "is_repeated": true
-              },
-              {
-                "id": 6,
-                "name": "datetime_clauses_command",
-                "type": "CreateDatetimeClauseCommand",
-                "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "CreateDatetimeClauseCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "datetime_clause",
-                "type": "DatetimeClause"
-              },
-              {
-                "id": 2,
-                "name": "action_type",
-                "type": "ActionType"
-              }
-            ]
-          },
-          {
-            "name": "CreateOpsEventRateClauseCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "ops_event_rate_clause",
-                "type": "OpsEventRateClause"
-              },
-              {
-                "id": 2,
-                "name": "action_type",
-                "type": "ActionType"
               }
             ]
           },
@@ -2275,7 +2231,30 @@
             "name": "DeleteAutoOpsRuleCommand"
           },
           {
+            "name": "StopAutoOpsRuleCommand"
+          },
+          {
             "name": "ChangeAutoOpsRuleTriggeredAtCommand"
+          },
+          {
+            "name": "ChangeAutoOpsStatusCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "status",
+                "type": "AutoOpsStatus"
+              }
+            ]
+          },
+          {
+            "name": "ExecuteAutoOpsRuleCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "clause",
+                "type": "Clause"
+              }
+            ]
           },
           {
             "name": "AddOpsEventRateClauseCommand",
@@ -2724,6 +2703,29 @@
             ]
           },
           {
+            "name": "StopAutoOpsRuleRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "command",
+                "type": "StopAutoOpsRuleCommand"
+              }
+            ]
+          },
+          {
+            "name": "StopAutoOpsRuleResponse"
+          },
+          {
             "name": "DeleteAutoOpsRuleRequest",
             "fields": [
               {
@@ -2762,13 +2764,7 @@
               {
                 "id": 3,
                 "name": "change_auto_ops_rule_ops_type_command",
-                "type": "ChangeAutoOpsRuleOpsTypeCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
+                "type": "ChangeAutoOpsRuleOpsTypeCommand"
               },
               {
                 "id": 4,
@@ -2821,7 +2817,23 @@
               {
                 "id": 3,
                 "name": "change_auto_ops_rule_triggered_at_command",
-                "type": "ChangeAutoOpsRuleTriggeredAtCommand"
+                "type": "ChangeAutoOpsRuleTriggeredAtCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "change_auto_ops_status_command",
+                "type": "ChangeAutoOpsStatusCommand"
+              },
+              {
+                "id": 5,
+                "name": "execute_auto_ops_rule_command",
+                "type": "ExecuteAutoOpsRuleCommand"
               }
             ]
           },
@@ -5889,7 +5901,13 @@
               },
               {
                 "name": "AUTOOPS_RULE_TRIGGERED_AT_CHANGED",
-                "integer": 804
+                "integer": 804,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "OPS_EVENT_RATE_CLAUSE_ADDED",
@@ -5906,6 +5924,14 @@
               {
                 "name": "DATETIME_CLAUSE_CHANGED",
                 "integer": 808
+              },
+              {
+                "name": "AUTOOPS_RULE_OPS_STATUS_CHANGED",
+                "integer": 809
+              },
+              {
+                "name": "AUTOOPS_RULE_STOPED",
+                "integer": 810
               },
               {
                 "name": "PUSH_CREATED",
@@ -7993,7 +8019,13 @@
               {
                 "id": 4,
                 "name": "triggered_at",
-                "type": "int64"
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 5,
@@ -8004,8 +8036,21 @@
                 "id": 6,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "ops_status",
+                "type": "bucketeer.autoops.AutoOpsStatus"
+              },
+              {
+                "id": 8,
+                "name": "stopped_at",
+                "type": "int64"
               }
             ]
+          },
+          {
+            "name": "AutoOpsRuleStopEvent"
           },
           {
             "name": "AutoOpsRuleDeletedEvent"
@@ -8021,7 +8066,14 @@
             ]
           },
           {
-            "name": "AutoOpsRuleTriggeredAtChangedEvent"
+            "name": "AutoOpsRuleOpsStatusChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "ops_status",
+                "type": "bucketeer.autoops.AutoOpsStatus"
+              }
+            ]
           },
           {
             "name": "OpsEventRateClauseAddedEvent",

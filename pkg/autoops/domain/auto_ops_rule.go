@@ -18,11 +18,12 @@ import (
 	"errors"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
-	proto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
+
+	"github.com/bucketeer-io/bucketeer/pkg/uuid"
+	proto "github.com/bucketeer-io/bucketeer/proto/autoops"
 )
 
 var (

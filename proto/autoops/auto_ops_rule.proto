@@ -24,10 +24,10 @@ message AutoOpsRule {
   string feature_id = 2;
   OpsType ops_type = 3;
   repeated Clause clauses = 4;
-  int64 triggered_at = 6  [deprecated = true];
+  int64 triggered_at = 6 [deprecated = true];
   int64 created_at = 7;
   int64 updated_at = 8;
-  bool deleted = 9  [deprecated = true];
+  bool deleted = 9 [deprecated = true];
   AutoOpsStatus autoOpsStatus = 10;
   int64 stopped_at = 11;
 }

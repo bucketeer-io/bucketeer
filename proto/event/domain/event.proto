@@ -795,8 +795,6 @@ message AutoOpsRuleOpsTypeChangedEvent {
   bucketeer.autoops.OpsType ops_type = 1;
 }
 
-//message AutoOpsRuleTriggeredAtChangedEvent {}
-
 message AutoOpsRuleOpsStatusChangedEvent {
   bucketeer.autoops.AutoOpsStatus ops_status = 1;
 }
