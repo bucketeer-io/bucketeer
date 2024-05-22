@@ -840,7 +840,7 @@ func TestGrpcGetSegmentUsers(t *testing.T) {
 					UserId:    "user-id",
 				},
 			},
-			UpdatedAt: timeNow.Add(30 * time.Minute).Unix(),
+			UpdatedAt: timeNow.Add(-30 * time.Minute).Unix(),
 		},
 		{
 			SegmentId: "segment-id-4",
@@ -850,7 +850,7 @@ func TestGrpcGetSegmentUsers(t *testing.T) {
 					UserId:    "user-id",
 				},
 			},
-			UpdatedAt: timeNow.Add(1 * time.Hour).Unix(),
+			UpdatedAt: timeNow.Add(-1 * time.Hour).Unix(),
 		},
 		{
 			SegmentId: "segment-id-5",
@@ -860,7 +860,7 @@ func TestGrpcGetSegmentUsers(t *testing.T) {
 					UserId:    "user-id",
 				},
 			},
-			UpdatedAt: timeNow.Add(1 * time.Hour).Unix(),
+			UpdatedAt: timeNow.Add(-1 * time.Hour).Unix(),
 		},
 	}
 	singleFeature := []*featureproto.Feature{
@@ -1233,7 +1233,7 @@ func TestGrpcGetSegmentUsers(t *testing.T) {
 			},
 			input: &gwproto.GetSegmentUsersRequest{
 				SegmentIds:  []string{"segment-id-1", "segment-id-2", "segment-id-3"},
-				RequestedAt: timeNow.Add(10 * time.Minute).Unix(),
+				RequestedAt: timeNow.Add(-10 * time.Minute).Unix(),
 				SourceId:    eventproto.SourceId_GO_SERVER,
 				SdkVersion:  "v0.0.1",
 			},
@@ -1268,7 +1268,7 @@ func TestGrpcGetSegmentUsers(t *testing.T) {
 			},
 			input: &gwproto.GetSegmentUsersRequest{
 				SegmentIds:  []string{"segment-id-1", "segment-id-2", "segment-id-3"},
-				RequestedAt: timeNow.Add(40 * time.Minute).Unix(),
+				RequestedAt: timeNow.Add(-40 * time.Minute).Unix(),
 				SourceId:    eventproto.SourceId_GO_SERVER,
 				SdkVersion:  "v0.0.1",
 			},
@@ -1303,7 +1303,7 @@ func TestGrpcGetSegmentUsers(t *testing.T) {
 			},
 			input: &gwproto.GetSegmentUsersRequest{
 				SegmentIds:  []string{"segment-id-2"},
-				RequestedAt: timeNow.Add(20 * time.Minute).Unix(),
+				RequestedAt: timeNow.Add(-20 * time.Minute).Unix(),
 				SourceId:    eventproto.SourceId_GO_SERVER,
 				SdkVersion:  "v0.0.1",
 			},
