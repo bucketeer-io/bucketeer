@@ -3,10 +3,10 @@ INSERT INTO auto_ops_rule (
     feature_id,
     ops_type,
     clauses,
-    triggered_at,
     created_at,
     updated_at,
-    deleted,
+    stopped_at,
+    status,
     environment_namespace
 ) VALUES (
     ?, ?, ?, ?, ?, ?, ?, ?, ?

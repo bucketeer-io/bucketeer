@@ -75,10 +75,10 @@ func (s *autoOpsRuleStorage) CreateAutoOpsRule(
 		e.FeatureId,
 		int32(e.OpsType),
 		mysql.JSONObject{Val: e.Clauses},
-		e.TriggeredAt,
 		e.CreatedAt,
 		e.UpdatedAt,
-		e.Deleted,
+		e.StoppedAt,
+		int32(e.AutoOpsStatus),
 		environmentNamespace,
 	)
 	if err != nil {
@@ -101,10 +101,10 @@ func (s *autoOpsRuleStorage) UpdateAutoOpsRule(
 		e.FeatureId,
 		int32(e.OpsType),
 		mysql.JSONObject{Val: e.Clauses},
-		e.TriggeredAt,
 		e.CreatedAt,
 		e.UpdatedAt,
-		e.Deleted,
+		e.StoppedAt,
+		int32(e.AutoOpsStatus),
 		e.Id,
 		environmentNamespace,
 	)
@@ -137,10 +137,10 @@ func (s *autoOpsRuleStorage) GetAutoOpsRule(
 		&autoOpsRule.FeatureId,
 		&opsType,
 		&mysql.JSONObject{Val: &autoOpsRule.Clauses},
-		&autoOpsRule.TriggeredAt,
 		&autoOpsRule.CreatedAt,
 		&autoOpsRule.UpdatedAt,
-		&autoOpsRule.Deleted,
+		&autoOpsRule.StoppedAt,
+		&autoOpsRule.AutoOpsStatus,
 	)
 	if err != nil {
 		if err == mysql.ErrNoRows {
@@ -176,10 +176,10 @@ func (s *autoOpsRuleStorage) ListAutoOpsRules(
 			&autoOpsRule.FeatureId,
 			&opsType,
 			&mysql.JSONObject{Val: &autoOpsRule.Clauses},
-			&autoOpsRule.TriggeredAt,
 			&autoOpsRule.CreatedAt,
 			&autoOpsRule.UpdatedAt,
-			&autoOpsRule.Deleted,
+			&autoOpsRule.StoppedAt,
+			&autoOpsRule.AutoOpsStatus,
 		)
 		if err != nil {
 			return nil, 0, err
