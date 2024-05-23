@@ -140,6 +140,44 @@ subscribers:
     maxMps: 50
     workerNum: 1
 
+onDemandSubscribers:
+  evaluationCountEventDWHPersister:
+    project: bucketeer-test
+    topic: evaluation
+    subscription: evaluation-dwh-sub
+    pullerNumGoroutines: 1
+    pullerMaxOutstandingMessages: 1000
+    pullerMaxOutstandingBytes: 1000000000
+    maxMps: 50
+    workerNum: 1
+  evaluationCountEventOPSPersister:
+    project: bucketeer-test
+    topic: evaluation
+    subscription: evaluation-ops-sub
+    pullerNumGoroutines: 1
+    pullerMaxOutstandingMessages: 1000
+    pullerMaxOutstandingBytes: 1000000000
+    maxMps: 50
+    workerNum: 1
+  goalCountEventDWHPersister:
+    project: bucketeer-test
+    topic: goal
+    subscription: goal-dwh-sub
+    pullerNumGoroutines: 1
+    pullerMaxOutstandingMessages: 1000
+    pullerMaxOutstandingBytes: 1000000000
+    maxMps: 50
+    workerNum: 1
+  goalCountEventOPSPersister:
+    project: bucketeer-test
+    topic: goal
+    subscription: goal-ops-sub
+    pullerNumGoroutines: 1
+    pullerMaxOutstandingMessages: 1000
+    pullerMaxOutstandingBytes: 1000000000
+    maxMps: 50
+    workerNum: 1
+
 
 # This configuration is used for add custom params to Processors
 processors:
@@ -157,3 +195,29 @@ processors:
   userEventPersister:
     flushSize: 100
     flushInterval: 10
+
+onDemandProcessors:
+  evaluationCountEventDWHPersister:
+    flushSize: 100
+    flushInterval: 10
+    flushTimeout: 10
+    project: bucketeer-test
+    bigQueryDataSet: bucketeer
+    bigQueryBatchSize: 10
+    timezone: UTC
+  evaluationCountEventOPSPersister:
+    flushSize: 100
+    flushInterval: 10
+    flushTimeout: 10
+  goalCountEventDWHPersister:
+    flushSize: 100
+    flushInterval: 10
+    flushTimeout: 10
+    project: bucketeer-test
+    bigQueryDataSet: bucketeer
+    bigQueryBatchSize: 10
+    timezone: UTC
+  goalCountEventOPSPersister:
+    flushSize: 100
+    flushInterval: 10
+    flushTimeout: 10
