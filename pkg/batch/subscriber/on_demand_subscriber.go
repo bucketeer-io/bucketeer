@@ -32,7 +32,7 @@ const (
 
 type OnDemandConfiguration struct {
 	Configuration
-	CheckInterval int `json:"check_interval"`
+	CheckInterval int `json:"checkInterval"`
 }
 
 type OnDemandSubscriber struct {
@@ -87,7 +87,7 @@ func (s *OnDemandSubscriber) Run(ctx context.Context) {
 		)
 		return
 	}
-	ticker := time.NewTicker(time.Duration(s.configuration.CheckInterval))
+	ticker := time.NewTicker(time.Duration(s.configuration.CheckInterval) * time.Second)
 	defer ticker.Stop()
 	subscription := make(chan struct{})
 	go s.subscribe(subscription)

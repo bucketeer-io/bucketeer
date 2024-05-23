@@ -214,6 +214,7 @@ onDemandSubscribers:
     pullerMaxOutstandingBytes: 1000000000
     maxMps: 50
     workerNum: 1
+    checkInterval: 5
   evaluationCountEventOPSPersister:
     project:
     topic:
@@ -223,6 +224,7 @@ onDemandSubscribers:
     pullerMaxOutstandingBytes: 1000000000
     maxMps: 50
     workerNum: 1
+    checkInterval: 5
   goalCountEventDWHPersister:
     project:
     topic:
@@ -232,6 +234,7 @@ onDemandSubscribers:
     pullerMaxOutstandingBytes: 1000000000
     maxMps: 50
     workerNum: 1
+    checkInterval: 5
   goalCountEventOPSPersister:
     project:
     topic:
@@ -241,6 +244,7 @@ onDemandSubscribers:
     pullerMaxOutstandingBytes: 1000000000
     maxMps: 50
     workerNum: 1
+    checkInterval: 5
 
 
 # This configuration is used for add custom params to Processors
