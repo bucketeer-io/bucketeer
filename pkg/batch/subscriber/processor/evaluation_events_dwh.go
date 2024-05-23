@@ -111,11 +111,11 @@ func (w *evalEvtWriter) Write(
 				if err != nil {
 					// If there is nothing to link, we don't report it as an error
 					if errors.Is(err, ErrExperimentNotFound) {
-						subscriberHandledCounter.WithLabelValues(codeExperimentNotFound).Inc()
+						subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codeExperimentNotFound).Inc()
 						continue
 					}
 					if errors.Is(err, ErrEvaluationEventIssuedAfterExperimentEnded) {
-						subscriberHandledCounter.WithLabelValues(codeEventIssuedAfterExperimentEnded).Inc()
+						subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codeEventIssuedAfterExperimentEnded).Inc()
 						continue
 					}
 					if !retriable {
@@ -131,7 +131,7 @@ func (w *evalEvtWriter) Write(
 					continue
 				}
 				evalEvents = append(evalEvents, e)
-				subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventOPS, codeLinked).Inc()
+				subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codeLinked).Inc()
 			default:
 				w.logger.Error(
 					"The event is an unexpected message type",
@@ -145,7 +145,7 @@ func (w *evalEvtWriter) Write(
 	}
 	fs, err := w.writer.AppendRows(ctx, evalEvents)
 	if err != nil {
-		subscriberHandledCounter.WithLabelValues(codeFailedToAppendEvaluationEvents).Inc()
+		subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codeFailedToAppendEvaluationEvents).Inc()
 		w.logger.Error(
 			"failed to append rows to evaluation event",
 			zap.Error(err),

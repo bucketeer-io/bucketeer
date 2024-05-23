@@ -799,6 +799,36 @@ func (s *server) registerProcessorMap(
 		goalEventsDWHPersister,
 	)
 
+	evaluationEventsOPSPersister, err := processor.NewEventsOPSPersister(
+		ctx,
+		onDemandProcessorsConfigMap[processor.EvaluationCountEventOPSPersisterName],
+		mysqlClient,
+		persistentRedisClient,
+		opsClient,
+		ftClient,
+		processor.EvaluationCountEventOPSPersisterName,
+		logger,
+	)
+	if err != nil {
+		return nil, err
+	}
+	processors.RegisterProcessor(processor.EvaluationCountEventOPSPersisterName, evaluationEventsOPSPersister)
+
+	goalEventsOPSPersister, err := processor.NewEventsOPSPersister(
+		ctx,
+		onDemandProcessorsConfigMap[processor.GoalCountEventOPSPersisterName],
+		mysqlClient,
+		persistentRedisClient,
+		opsClient,
+		ftClient,
+		processor.GoalCountEventOPSPersisterName,
+		logger,
+	)
+	if err != nil {
+		return nil, err
+	}
+	processors.RegisterProcessor(processor.GoalCountEventOPSPersisterName, goalEventsOPSPersister)
+
 	return processors, nil
 }
 

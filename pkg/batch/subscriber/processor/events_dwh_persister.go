@@ -69,7 +69,7 @@ func NewEventsDWHPersister(
 	jsonConfig, ok := config.(map[string]interface{})
 	if !ok {
 		logger.Error("eventsDWHPersister: invalid config")
-		return nil, ErrSegmentInvalidConfig
+		return nil, ErrEventsDWHPersisterInvalidConfig
 	}
 	configBytes, err := json.Marshal(jsonConfig)
 	if err != nil {

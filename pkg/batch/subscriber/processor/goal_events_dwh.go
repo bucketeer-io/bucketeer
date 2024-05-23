@@ -96,7 +96,7 @@ func (w *goalEvtWriter) Write(
 				zap.Error(err),
 				zap.String("environmentNamespace", environmentNamespace),
 			)
-			subscriberHandledCounter.WithLabelValues(codeFailedToListExperiments).Inc()
+			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToListExperiments).Inc()
 			// Make sure to retry all the events in the next pulling
 			for id := range events {
 				fails[id] = true
@@ -113,7 +113,7 @@ func (w *goalEvtWriter) Write(
 				if err != nil {
 					if errors.Is(err, ErrExperimentNotFound) {
 						// If there is nothing to link, we don't report it as an error
-						subscriberHandledCounter.WithLabelValues(codeExperimentNotFound).Inc()
+						subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeExperimentNotFound).Inc()
 						continue
 					}
 					if !retriable {
@@ -129,7 +129,7 @@ func (w *goalEvtWriter) Write(
 					continue
 				}
 				goalEvents = append(goalEvents, e...)
-				subscriberHandledCounter.WithLabelValues(codeLinked).Inc()
+				subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeLinked).Inc()
 			default:
 				w.logger.Error(
 					"The event is an unexpected message type",
@@ -143,7 +143,7 @@ func (w *goalEvtWriter) Write(
 	}
 	fs, err := w.writer.AppendRows(ctx, goalEvents)
 	if err != nil {
-		subscriberHandledCounter.WithLabelValues(codeFailedToAppendGoalEvents).Inc()
+		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToAppendGoalEvents).Inc()
 		w.logger.Error(
 			"failed to append rows to goal event",
 			zap.Error(err),
@@ -260,13 +260,13 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 			// If the goal event was issued before the experiment started running,
 			// we ignore those events to avoid issues in the conversion rate
 			if exp.StartAt > event.Timestamp {
-				subscriberHandledCounter.WithLabelValues(codeEventOlderThanExperiment).Inc()
+				subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeEventOlderThanExperiment).Inc()
 				continue
 			}
 			// If the goal event was issued after the experiment ended,
 			// we ignore those events to avoid issues in the conversion rate
 			if exp.StopAt < event.Timestamp {
-				subscriberHandledCounter.WithLabelValues(codeGoalEventIssuedAfterExperimentEnded).Inc()
+				subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeGoalEventIssuedAfterExperimentEnded).Inc()
 				continue
 			}
 			exps = append(exps, exp)
@@ -385,11 +385,11 @@ func (w *goalEvtWriter) getUserEvaluation(
 			zap.Int32("featureVersion", featureVersion),
 			zap.String("tag", tag),
 		)
-		subscriberHandledCounter.WithLabelValues(codeFailedToEvaluateUser).Inc()
+		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToEvaluateUser).Inc()
 		return nil, ErrFailedToEvaluateUser
 	}
 	if len(resp.UserEvaluations.Evaluations) == 0 {
-		subscriberHandledCounter.WithLabelValues(codeEvaluationsAreEmpty).Inc()
+		subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeEvaluationsAreEmpty).Inc()
 		w.logger.Error(
 			"Evaluations are empty",
 			zap.Error(err),
