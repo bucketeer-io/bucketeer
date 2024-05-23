@@ -17,7 +17,6 @@ package processor
 import (
 	"context"
 	"encoding/json"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -30,7 +29,6 @@ import (
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
@@ -64,7 +62,6 @@ func NewEventsDWHPersister(
 	exClient experimentclient.Client,
 	ftClient featureclient.Client,
 	persisterName string,
-	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (subscriber.Processor, error) {
 	jsonConfig, ok := config.(map[string]interface{})
@@ -93,7 +90,6 @@ func NewEventsDWHPersister(
 	if err != nil {
 		return nil, err
 	}
-	writer.RegisterMetrics(registerer)
 	switch persisterName {
 	case EvaluationCountEventDWHPersisterName:
 		e.subscriberType = subscriberEvaluationEventDWH

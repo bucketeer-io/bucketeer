@@ -55,6 +55,7 @@ import (
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 )
@@ -713,6 +714,7 @@ func (s *server) registerProcessorMap(
 		return nil, err
 	}
 	processors := processor.NewProcessors(registerer)
+	writer.RegisterMetrics(registerer)
 
 	processors.RegisterProcessor(
 		processor.DomainEventInformerName,
@@ -769,7 +771,6 @@ func (s *server) registerProcessorMap(
 		exClient,
 		ftClient,
 		processor.EvaluationCountEventDWHPersisterName,
-		registerer,
 		logger,
 	)
 	if err != nil {
@@ -788,7 +789,6 @@ func (s *server) registerProcessorMap(
 		exClient,
 		ftClient,
 		processor.GoalCountEventDWHPersisterName,
-		registerer,
 		logger,
 	)
 	if err != nil {
