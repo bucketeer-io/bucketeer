@@ -393,7 +393,8 @@ proto.bucketeer.account.EnvironmentAPIKey.toObject = function(includeInstance, m
     apiKey: (f = msg.getApiKey()) && proto.bucketeer.account.APIKey.toObject(includeInstance, f),
     environmentDisabled: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
     projectId: jspb.Message.getFieldWithDefault(msg, 4, ""),
-    environment: (f = msg.getEnvironment()) && proto_environment_environment_pb.EnvironmentV2.toObject(includeInstance, f)
+    environment: (f = msg.getEnvironment()) && proto_environment_environment_pb.EnvironmentV2.toObject(includeInstance, f),
+    projectUrlCode: jspb.Message.getFieldWithDefault(msg, 6, "")
   };
 
   if (includeInstance) {
@@ -451,6 +452,10 @@ proto.bucketeer.account.EnvironmentAPIKey.deserializeBinaryFromReader = function
       var value = new proto_environment_environment_pb.EnvironmentV2;
       reader.readMessage(value,proto_environment_environment_pb.EnvironmentV2.deserializeBinaryFromReader);
       msg.setEnvironment(value);
+      break;
+    case 6:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setProjectUrlCode(value);
       break;
     default:
       reader.skipField();
@@ -516,6 +521,13 @@ proto.bucketeer.account.EnvironmentAPIKey.serializeBinaryToWriter = function(mes
       5,
       f,
       proto_environment_environment_pb.EnvironmentV2.serializeBinaryToWriter
+    );
+  }
+  f = message.getProjectUrlCode();
+  if (f.length > 0) {
+    writer.writeString(
+      6,
+      f
     );
   }
 };
@@ -646,6 +658,24 @@ proto.bucketeer.account.EnvironmentAPIKey.prototype.clearEnvironment = function(
  */
 proto.bucketeer.account.EnvironmentAPIKey.prototype.hasEnvironment = function() {
   return jspb.Message.getField(this, 5) != null;
+};
+
+
+/**
+ * optional string project_url_code = 6;
+ * @return {string}
+ */
+proto.bucketeer.account.EnvironmentAPIKey.prototype.getProjectUrlCode = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.EnvironmentAPIKey} returns this
+ */
+proto.bucketeer.account.EnvironmentAPIKey.prototype.setProjectUrlCode = function(value) {
+  return jspb.Message.setProto3StringField(this, 6, value);
 };
 
 

@@ -354,12 +354,23 @@
               {
                 "id": 4,
                 "name": "project_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 5,
                 "name": "environment",
                 "type": "environment.EnvironmentV2"
+              },
+              {
+                "id": 6,
+                "name": "project_url_code",
+                "type": "string"
               }
             ]
           }
