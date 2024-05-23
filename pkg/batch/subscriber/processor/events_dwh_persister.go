@@ -17,6 +17,7 @@ package processor
 import (
 	"context"
 	"encoding/json"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -92,12 +93,12 @@ func NewEventsDWHPersister(
 	if err != nil {
 		return nil, err
 	}
+	writer.RegisterMetrics(registerer)
 	switch persisterName {
 	case EvaluationCountEventDWHPersisterName:
 		e.subscriberType = subscriberEvaluationEventDWH
-		writer, err := NewEvalEventWriter(
+		evalEventWriter, err := NewEvalEventWriter(
 			ctx,
-			registerer,
 			logger,
 			exClient,
 			experimentsCache,
@@ -109,12 +110,11 @@ func NewEventsDWHPersister(
 		if err != nil {
 			return nil, err
 		}
-		e.writer = writer
+		e.writer = evalEventWriter
 	case GoalCountEventDWHPersisterName:
 		e.subscriberType = subscriberGoalEventDWH
-		writer, err := NewGoalEventWriter(
+		goalEventWriter, err := NewGoalEventWriter(
 			ctx,
-			registerer,
 			logger,
 			exClient,
 			ftClient,
@@ -127,7 +127,7 @@ func NewEventsDWHPersister(
 		if err != nil {
 			return nil, err
 		}
-		e.writer = writer
+		e.writer = goalEventWriter
 	}
 	return e, nil
 }

@@ -28,7 +28,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/storage"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	ft "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
@@ -51,7 +50,6 @@ type goalEvtWriter struct {
 
 func NewGoalEventWriter(
 	ctx context.Context,
-	r metrics.Registerer,
 	l *zap.Logger,
 	exClient ec.Client,
 	ftClient ft.Client,
@@ -67,7 +65,6 @@ func NewGoalEventWriter(
 		ds,
 		goalEventTable,
 		evt.ProtoReflect().Descriptor(),
-		writer.WithMetrics(r),
 		writer.WithLogger(l),
 	)
 	if err != nil {

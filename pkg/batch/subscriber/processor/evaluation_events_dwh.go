@@ -27,7 +27,6 @@ import (
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/storage"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
@@ -51,7 +50,6 @@ type evalEvtWriter struct {
 
 func NewEvalEventWriter(
 	ctx context.Context,
-	r metrics.Registerer,
 	l *zap.Logger,
 	exClient ec.Client,
 	cache cachev3.ExperimentsCache,
@@ -66,7 +64,6 @@ func NewEvalEventWriter(
 		ds,
 		evaluationEventTable,
 		evt.ProtoReflect().Descriptor(),
-		writer.WithMetrics(r),
 		writer.WithLogger(l),
 	)
 	if err != nil {
