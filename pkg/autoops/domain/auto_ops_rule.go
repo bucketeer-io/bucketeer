@@ -59,14 +59,18 @@ func NewAutoOpsRule(
 		AutoOpsStatus: proto.AutoOpsStatus_WAITING,
 		StoppedAt:     0,
 	}}
-	for _, c := range opsEventRateClauses {
-		if _, err := autoOpsRule.AddOpsEventRateClause(c); err != nil {
-			return nil, err
+	if opsType == proto.OpsType_EVENT_RATE {
+		for _, c := range opsEventRateClauses {
+			if _, err := autoOpsRule.AddOpsEventRateClause(c); err != nil {
+				return nil, err
+			}
 		}
 	}
-	for _, c := range datetimeClauses {
-		if _, err := autoOpsRule.AddDatetimeClause(c); err != nil {
-			return nil, err
+	if opsType == proto.OpsType_SCHEDULE {
+		for _, c := range datetimeClauses {
+			if _, err := autoOpsRule.AddDatetimeClause(c); err != nil {
+				return nil, err
+			}
 		}
 	}
 	if len(autoOpsRule.Clauses) == 0 {

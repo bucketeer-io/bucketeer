@@ -17,45 +17,99 @@ package domain
 import (
 	"testing"
 
+	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 )
 
 func TestNewAutoOpsRule(t *testing.T) {
 	t.Parallel()
-	datetimeClauses := []*autoopsproto.DatetimeClause{
-		{Time: 0, ActionType: autoopsproto.ActionType_ENABLE},
-		{Time: 1, ActionType: autoopsproto.ActionType_DISABLE},
+
+	patterns := []struct {
+		featureId        string
+		desc             string
+		opsType          autoopsproto.OpsType
+		datetimeClauses  []*autoopsproto.DatetimeClause
+		eventRateClauses []*autoopsproto.OpsEventRateClause
+	}{
+		{
+			desc:      "OpsType: Schedule",
+			featureId: "feature-id",
+			opsType:   autoopsproto.OpsType_SCHEDULE,
+			datetimeClauses: []*autoopsproto.DatetimeClause{
+				{Time: 0, ActionType: autoopsproto.ActionType_ENABLE},
+				{Time: 1, ActionType: autoopsproto.ActionType_DISABLE},
+			},
+			eventRateClauses: []*autoopsproto.OpsEventRateClause{
+				{
+					GoalId:          "goalid01",
+					MinCount:        10,
+					ThreadsholdRate: 0.5,
+					Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+					ActionType:      autoopsproto.ActionType_DISABLE,
+				},
+			},
+		},
+		{
+			desc:      "OpsType: EventRate",
+			featureId: "feature-id",
+			opsType:   autoopsproto.OpsType_EVENT_RATE,
+			datetimeClauses: []*autoopsproto.DatetimeClause{
+				{Time: 0, ActionType: autoopsproto.ActionType_ENABLE},
+				{Time: 1, ActionType: autoopsproto.ActionType_DISABLE},
+			},
+			eventRateClauses: []*autoopsproto.OpsEventRateClause{
+				{
+					GoalId:          "goalid01",
+					MinCount:        10,
+					ThreadsholdRate: 0.5,
+					Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+					ActionType:      autoopsproto.ActionType_DISABLE,
+				},
+			},
+		},
 	}
 
-	aor, err := NewAutoOpsRule(
-		"feature-id",
-		autoopsproto.OpsType_SCHEDULE,
-		[]*autoopsproto.OpsEventRateClause{},
-		datetimeClauses,
-	)
-	require.NoError(t, err)
-	assert.IsType(t, &AutoOpsRule{}, aor)
-	assert.Equal(t, "feature-id", aor.FeatureId)
-	assert.Equal(t, autoopsproto.OpsType_SCHEDULE, aor.OpsType)
-	assert.Equal(t, autoopsproto.AutoOpsStatus_WAITING, aor.AutoOpsStatus)
-	assert.NotZero(t, aor.CreatedAt)
-	assert.NotZero(t, aor.UpdatedAt)
-	assert.Zero(t, aor.StoppedAt)
+	for _, p := range patterns {
+		aor, err := NewAutoOpsRule(
+			p.featureId,
+			p.opsType,
+			p.eventRateClauses,
+			p.datetimeClauses,
+		)
+		require.NoError(t, err)
+		assert.IsType(t, &AutoOpsRule{}, aor)
+		assert.Equal(t, p.featureId, aor.FeatureId)
+		assert.Equal(t, p.opsType, aor.OpsType)
+		assert.Equal(t, autoopsproto.AutoOpsStatus_WAITING, aor.AutoOpsStatus)
+		assert.NotZero(t, aor.CreatedAt)
+		assert.NotZero(t, aor.UpdatedAt)
+		assert.Zero(t, aor.StoppedAt)
 
-	dc1, err := aor.UnmarshalDatetimeClause(aor.Clauses[0])
-	require.NoError(t, err)
-	assert.Equal(t, datetimeClauses[0].Time, dc1.Time)
-	assert.Equal(t, datetimeClauses[0].ActionType, dc1.ActionType)
-
-	dc2, err := aor.UnmarshalDatetimeClause(aor.Clauses[1])
-	require.NoError(t, err)
-	assert.Equal(t, datetimeClauses[1].Time, dc2.Time)
-	assert.Equal(t, datetimeClauses[1].ActionType, dc2.ActionType)
+		if aor.OpsType == autoopsproto.OpsType_EVENT_RATE {
+			assert.Equal(t, len(p.eventRateClauses), len(aor.Clauses))
+			for i, c := range p.eventRateClauses {
+				eventRateClause, err := aor.UnmarshalOpsEventRateClause(aor.Clauses[i])
+				require.NoError(t, err)
+				assert.Equal(t, c.GoalId, eventRateClause.GoalId)
+				assert.Equal(t, c.MinCount, eventRateClause.MinCount)
+				assert.Equal(t, c.ThreadsholdRate, eventRateClause.ThreadsholdRate)
+				assert.Equal(t, c.Operator, eventRateClause.Operator)
+				assert.Equal(t, c.ActionType, eventRateClause.ActionType)
+			}
+		}
+		if aor.OpsType == autoopsproto.OpsType_SCHEDULE {
+			assert.Equal(t, len(p.datetimeClauses), len(aor.Clauses))
+			for i, c := range p.datetimeClauses {
+				datetimeClause, err := aor.UnmarshalDatetimeClause(aor.Clauses[i])
+				require.NoError(t, err)
+				assert.Equal(t, c.Time, datetimeClause.Time)
+				assert.Equal(t, c.ActionType, datetimeClause.ActionType)
+			}
+		}
+	}
 }
 
 func TestSetDeleted(t *testing.T) {
@@ -439,7 +493,7 @@ func TestHasScheduleOps(t *testing.T) {
 	t.Parallel()
 	aor, err := NewAutoOpsRule(
 		"feature-id",
-		autoopsproto.OpsType_SCHEDULE,
+		autoopsproto.OpsType_EVENT_RATE,
 		[]*autoopsproto.OpsEventRateClause{
 			{
 				GoalId:          "goalid01",

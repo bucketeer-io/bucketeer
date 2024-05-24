@@ -114,7 +114,7 @@ func TestCreateAndListAutoOpsRule(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_EVENT_RATE, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -166,7 +166,7 @@ func TestGetAutoOpsRule(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_EVENT_RATE, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -215,7 +215,7 @@ func TestDeleteAutoOpsRule(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_EVENT_RATE, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -252,7 +252,7 @@ func TestExecuteAutoOpsRule(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_EVENT_RATE, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -298,7 +298,7 @@ func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_EVENT_RATE, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -336,7 +336,7 @@ func TestGrpcOpsEventRateBatch(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_EVENT_RATE, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -397,7 +397,7 @@ func TestOpsEventRateBatch(t *testing.T) {
 
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_EVENT_RATE, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -462,7 +462,7 @@ func TestDatetimeBatch(t *testing.T) {
 	}
 
 	clause := createDatetimeClause(t)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, nil, []*autoopsproto.DatetimeClause{clause})
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, []*autoopsproto.DatetimeClause{clause})
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -551,13 +551,14 @@ func createAutoOpsRule(
 	t *testing.T,
 	client autoopsclient.Client,
 	featureID string,
+	opsType autoopsproto.OpsType,
 	oercs []*autoopsproto.OpsEventRateClause,
 	dcs []*autoopsproto.DatetimeClause,
 ) {
 	t.Helper()
 	cmd := &autoopsproto.CreateAutoOpsRuleCommand{
 		FeatureId:           featureID,
-		OpsType:             autoopsproto.OpsType_SCHEDULE,
+		OpsType:             opsType,
 		OpsEventRateClauses: oercs,
 		DatetimeClauses:     dcs,
 	}

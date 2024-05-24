@@ -116,20 +116,6 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: createError(statusClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause")),
 		},
 		{
-			desc: "err: ErrIncompatibleOpsType",
-			req: &autoopsproto.CreateAutoOpsRuleRequest{
-				Command: &autoopsproto.CreateAutoOpsRuleCommand{
-					FeatureId:           "fid",
-					OpsType:             autoopsproto.OpsType_EVENT_RATE,
-					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{},
-					DatetimeClauses: []*autoopsproto.DatetimeClause{
-						{Time: 0, ActionType: autoopsproto.ActionType_ENABLE},
-					},
-				},
-			},
-			expectedErr: createError(statusIncompatibleOpsType, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type")),
-		},
-		{
 			desc: "err: ErrOpsEventRateClauseVariationIDRequired",
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
@@ -257,6 +243,41 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: createError(statusDatetimeClauseInvalidTimeNotAsc, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time")),
 		},
 		{
+			desc: "err: ErrDatetimeClauseMustSpecified",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				Command: &autoopsproto.CreateAutoOpsRuleCommand{
+					FeatureId:       "fid",
+					OpsType:         autoopsproto.OpsType_SCHEDULE,
+					DatetimeClauses: []*autoopsproto.DatetimeClause{},
+					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
+						{
+							VariationId:     "vid",
+							GoalId:          "gid",
+							MinCount:        10,
+							ThreadsholdRate: 0.5,
+							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+							ActionType:      autoopsproto.ActionType_DISABLE,
+						},
+					},
+				},
+			},
+			expectedErr: createError(statusClauseRequiredForDateTime, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause")),
+		},
+		{
+			desc: "err: ErrDatetimeClauseMustSpecified",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				Command: &autoopsproto.CreateAutoOpsRuleCommand{
+					FeatureId: "fid",
+					OpsType:   autoopsproto.OpsType_EVENT_RATE,
+					DatetimeClauses: []*autoopsproto.DatetimeClause{
+						{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
+					},
+					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{},
+				},
+			},
+			expectedErr: createError(statusClauseRequiredForEventDate, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause")),
+		},
+		{
 			desc: "err: internal error",
 			setup: func(s *AutoOpsService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().GetGoal(
@@ -277,9 +298,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 							ActionType:      autoopsproto.ActionType_DISABLE,
 						},
 					},
-					DatetimeClauses: []*autoopsproto.DatetimeClause{
-						{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
-					},
+					DatetimeClauses: []*autoopsproto.DatetimeClause{},
 				},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),

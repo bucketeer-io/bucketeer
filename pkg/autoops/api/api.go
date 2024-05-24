@@ -273,25 +273,49 @@ func (s *AutoOpsService) validateCreateAutoOpsRuleRequest(
 		}
 		return dt.Err()
 	}
-	if req.Command.OpsType == autoopsproto.OpsType_EVENT_RATE && len(req.Command.OpsEventRateClauses) == 0 {
-		dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
-		})
-		if err != nil {
-			return statusInternal.Err()
+	if req.Command.OpsType == autoopsproto.OpsType_EVENT_RATE {
+		if len(req.Command.OpsEventRateClauses) == 0 {
+			dt, err := statusClauseRequiredForEventDate.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
-		return dt.Err()
+		if len(req.Command.DatetimeClauses) > 0 {
+			dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
 	}
-	if req.Command.OpsType == autoopsproto.OpsType_SCHEDULE && len(req.Command.DatetimeClauses) == 0 {
-		dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
-		})
-		if err != nil {
-			return statusInternal.Err()
+	if req.Command.OpsType == autoopsproto.OpsType_SCHEDULE {
+		if len(req.Command.DatetimeClauses) == 0 {
+			dt, err := statusClauseRequiredForDateTime.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
-		return dt.Err()
+		if len(req.Command.OpsEventRateClauses) > 0 {
+			dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
 	}
 	if err := s.validateOpsEventRateClauses(req.Command.OpsEventRateClauses, localizer); err != nil {
 		return err
@@ -684,22 +708,37 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 			}
 			return dt.Err()
 		}
-		if req.ChangeAutoOpsRuleOpsTypeCommand != nil {
-			if req.ChangeAutoOpsRuleOpsTypeCommand.OpsType == autoopsproto.OpsType_EVENT_RATE &&
-				len(req.AddOpsEventRateClauseCommands) == 0 {
-				dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
+		//If It makes a change to an AutoOpsType that is different from its current type, make sure that the update or deletion is done for all current clauses.
+		//Reason: To prevent Clauses of different AutoOpsTypes from mixing
+		if req.ChangeAutoOpsRuleOpsTypeCommand != nil && req.ChangeAutoOpsRuleOpsTypeCommand.OpsType != autoOpsRule.OpsType {
+			if autoOpsRule.OpsType == autoopsproto.OpsType_EVENT_RATE &&
+				len(autoOpsRule.Clauses) != len(req.ChangeDatetimeClauseCommands)+len(req.DeleteClauseCommands) {
+				dt, err := statusShouldChangedOrDeletedAllClauses.WithDetails(&errdetails.LocalizedMessage{
 					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
+					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "delete_clause_commands", "change_datetime_clause"),
 				})
 				if err != nil {
 					return statusInternal.Err()
 				}
 				return dt.Err()
 			}
-		} else if autoOpsRule.OpsType == autoopsproto.OpsType_EVENT_RATE && len(req.AddOpsEventRateClauseCommands) == 0 {
-			dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
+			if req.ChangeAutoOpsRuleOpsTypeCommand.OpsType == autoopsproto.OpsType_SCHEDULE &&
+				len(autoOpsRule.Clauses) != len(req.ChangeOpsEventRateClauseCommands)+len(req.DeleteClauseCommands) {
+				dt, err := statusShouldChangedOrDeletedAllClauses.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "delete_clause_commands", "change_ops_event_rate_clause"),
+				})
+				if err != nil {
+					return statusInternal.Err()
+				}
+				return dt.Err()
+			}
+		}
+		if req.DeleteClauseCommands != nil && len(autoOpsRule.Clauses) == len(req.DeleteClauseCommands) &&
+			len(req.AddOpsEventRateClauseCommands) == 0 && len(req.AddDatetimeClauseCommands) == 0 {
+			dt, err := statusShouldAddMoreClauses.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "add_event_rate_clause_commands", "add_datetime_clause_commands"),
 			})
 			if err != nil {
 				return statusInternal.Err()
@@ -1006,7 +1045,7 @@ func (s *AutoOpsService) listAutoOpsRules(
 	storage v2as.AutoOpsRuleStorage,
 ) ([]*autoopsproto.AutoOpsRule, string, error) {
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("deleted", "=", false),
+		mysql.NewFilter("status", "!=", autoopsproto.AutoOpsStatus_DELETED),
 		mysql.NewFilter("environment_namespace", "=", environmentNamespace),
 	}
 	fIDs := make([]interface{}, 0, len(featureIds))

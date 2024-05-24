@@ -299,7 +299,7 @@ func TestDatetimeWatcher(t *testing.T) {
 		).Return(
 			&autoopsproto.ListAutoOpsRulesResponse{
 				AutoOpsRules: []*autoopsproto.AutoOpsRule{
-					newAutoOpsRule(t),
+					newAutoOpsRuleForSchedule(t),
 				},
 			},
 			nil,
@@ -350,7 +350,7 @@ func TestEventCountWatcher(t *testing.T) {
 		).Return(
 			&autoopsproto.ListAutoOpsRulesResponse{
 				AutoOpsRules: []*autoopsproto.AutoOpsRule{
-					newAutoOpsRule(t),
+					newAutoOpsRuleForEventRate(t),
 				},
 			},
 			nil,
@@ -364,7 +364,7 @@ func TestEventCountWatcher(t *testing.T) {
 		).Return(
 			&autoopsproto.ListAutoOpsRulesResponse{
 				AutoOpsRules: []*autoopsproto.AutoOpsRule{
-					newAutoOpsRule(t),
+					newAutoOpsRuleForEventRate(t),
 				},
 			},
 			nil,
@@ -722,7 +722,7 @@ func TestAutoOpsRulesCacher(t *testing.T) {
 			Return(
 				&autoopsproto.ListAutoOpsRulesResponse{
 					AutoOpsRules: []*autoopsproto.AutoOpsRule{
-						newAutoOpsRule(t),
+						newAutoOpsRuleForEventRate(t),
 					},
 				},
 				nil,
@@ -941,7 +941,7 @@ func getProjects(t *testing.T) []*environmentproto.Project {
 	}
 }
 
-func newAutoOpsRule(t *testing.T) *autoopsproto.AutoOpsRule {
+func newAutoOpsRuleForEventRate(t *testing.T) *autoopsproto.AutoOpsRule {
 	oerc1 := &autoopsproto.OpsEventRateClause{
 		GoalId:          "gid",
 		MinCount:        10,
@@ -954,17 +954,25 @@ func newAutoOpsRule(t *testing.T) *autoopsproto.AutoOpsRule {
 		ThreadsholdRate: 0.5,
 		Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
 	}
+	aor, err := autoopsdomain.NewAutoOpsRule(
+		"fid",
+		autoopsproto.OpsType_EVENT_RATE,
+		[]*autoopsproto.OpsEventRateClause{oerc1, oerc2},
+		[]*autoopsproto.DatetimeClause{},
+	)
+	require.NoError(t, err)
+	return aor.AutoOpsRule
+}
+
+func newAutoOpsRuleForSchedule(t *testing.T) *autoopsproto.AutoOpsRule {
 	dc1 := &autoopsproto.DatetimeClause{
 		Time: 1000000001,
 	}
-	dc2 := &autoopsproto.DatetimeClause{
-		Time: 1000000002,
-	}
 	aor, err := autoopsdomain.NewAutoOpsRule(
 		"fid",
-		autoopsproto.OpsType_ENABLE_FEATURE,
-		[]*autoopsproto.OpsEventRateClause{oerc1, oerc2},
-		[]*autoopsproto.DatetimeClause{dc1, dc2},
+		autoopsproto.OpsType_SCHEDULE,
+		[]*autoopsproto.OpsEventRateClause{},
+		[]*autoopsproto.DatetimeClause{dc1},
 	)
 	require.NoError(t, err)
 	return aor.AutoOpsRule
