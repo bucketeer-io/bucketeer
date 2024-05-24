@@ -23,7 +23,7 @@ import (
 )
 
 var (
-	//go:embed ../../../batch/storage/v2/sql/count_auto_ops_rules.sql
+	//go:embed sql/count_auto_ops_rules.sql
 	countAutoOpsRulesSql string
 )
 
