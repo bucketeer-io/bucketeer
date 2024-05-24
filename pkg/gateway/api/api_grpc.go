@@ -306,7 +306,7 @@ func (s *grpcGatewayService) GetEvaluations(
 ) (*gwproto.GetEvaluationsResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluations")
 	defer span.End()
-	envAPIKey, err := s.checkRequest(ctx, accountproto.APIKey_SDK_CLIENT)
+	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT})
 	if err != nil {
 		s.logger.Error("Failed to check GetEvaluations request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -485,7 +485,7 @@ func (s *grpcGatewayService) GetEvaluation(
 ) (*gwproto.GetEvaluationResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluation")
 	defer span.End()
-	envAPIKey, err := s.checkRequest(ctx, accountproto.APIKey_SDK_CLIENT)
+	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT})
 	if err != nil {
 		s.logger.Error("Failed to check GetEvaluation request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -594,7 +594,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 ) (*gwproto.GetFeatureFlagsResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetFeatureFlags")
 	defer span.End()
-	envAPIKey, err := s.checkRequest(ctx, accountproto.APIKey_SDK_SERVER)
+	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_SERVER})
 	if err != nil {
 		s.logger.Error("Failed to check GetFeatureFlags request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -745,7 +745,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 ) (*gwproto.GetSegmentUsersResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetSegmentUsers")
 	defer span.End()
-	envAPIKey, err := s.checkRequest(ctx, accountproto.APIKey_SDK_SERVER)
+	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_SERVER})
 	if err != nil {
 		s.logger.Error("Failed to check GetSegmentUsers request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -855,7 +855,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	// Find deleted segments
 	deletedSegmentIDs := make([]string, 0)
 	for _, id := range req.SegmentIds {
-		if !s.contains(targetSegmentIDs, id) {
+		if !contains(targetSegmentIDs, id) {
 			deletedSegmentIDs = append(deletedSegmentIDs, id)
 		}
 	}
@@ -902,15 +902,6 @@ func (s *grpcGatewayService) emptyGetSegmentUsersResponse() (*gwproto.GetSegment
 		RequestedAt:       time.Now().Unix(),
 		ForceUpdate:       true,
 	}, nil
-}
-
-func (s *grpcGatewayService) contains(elems []string, elem string) bool {
-	for _, v := range elems {
-		if v == elem {
-			return true
-		}
-	}
-	return false
 }
 
 func (s *grpcGatewayService) getTargetFeatures(fs []*featureproto.Feature, id string) ([]*featureproto.Feature, error) {
@@ -1217,7 +1208,8 @@ func (s *grpcGatewayService) RegisterEvents(
 ) (*gwproto.RegisterEventsResponse, error) {
 	ctx, span := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.RegisterEvents")
 	defer span.End()
-	envAPIKey, err := s.checkRequest(ctx, accountproto.APIKey_SDK_CLIENT)
+	allowedRoles := []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT, accountproto.APIKey_SDK_SERVER}
+	envAPIKey, err := s.checkRequest(ctx, allowedRoles)
 	if err != nil {
 		s.logger.Error("Failed to check RegisterEvents request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -1406,7 +1398,7 @@ func (s *grpcGatewayService) checkTrackRequest(
 		)
 		return nil, err
 	}
-	if err := checkEnvironmentAPIKey(envAPIKey, accountproto.APIKey_SDK_CLIENT); err != nil {
+	if err := checkEnvironmentAPIKey(envAPIKey, []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT}); err != nil {
 		s.logger.Error("Failed to check environment API key",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -1420,7 +1412,7 @@ func (s *grpcGatewayService) checkTrackRequest(
 
 func (s *grpcGatewayService) checkRequest(
 	ctx context.Context,
-	role accountproto.APIKey_Role,
+	roles []accountproto.APIKey_Role,
 ) (*accountproto.EnvironmentAPIKey, error) {
 	if isContextCanceled(ctx) {
 		s.logger.Warn(
@@ -1448,7 +1440,7 @@ func (s *grpcGatewayService) checkRequest(
 		)
 		return nil, err
 	}
-	if err := checkEnvironmentAPIKey(envAPIKey, role); err != nil {
+	if err := checkEnvironmentAPIKey(envAPIKey, roles); err != nil {
 		s.logger.Error("Failed to check environment API key",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -1554,8 +1546,12 @@ func getEnvironmentAPIKeyFromCache(
 	return nil, err
 }
 
-func checkEnvironmentAPIKey(environmentAPIKey *accountproto.EnvironmentAPIKey, role accountproto.APIKey_Role) error {
-	if environmentAPIKey.ApiKey.Role != role {
+func checkEnvironmentAPIKey(
+	environmentAPIKey *accountproto.EnvironmentAPIKey,
+	roles []accountproto.APIKey_Role,
+) error {
+
+	if !contains(roles, environmentAPIKey.ApiKey.Role) {
 		return ErrBadRole
 	}
 	if environmentAPIKey.EnvironmentDisabled {
@@ -1565,6 +1561,15 @@ func checkEnvironmentAPIKey(environmentAPIKey *accountproto.EnvironmentAPIKey, r
 		return ErrDisabledAPIKey
 	}
 	return nil
+}
+
+func contains[T comparable](s []T, e T) bool {
+	for _, v := range s {
+		if v == e {
+			return true
+		}
+	}
+	return false
 }
 
 func isContextCanceled(ctx context.Context) bool {
