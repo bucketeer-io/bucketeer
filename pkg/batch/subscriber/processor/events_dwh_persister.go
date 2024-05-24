@@ -23,9 +23,9 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
 
+	storage "github.com/bucketeer-io/bucketeer/pkg/batch/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	storage "github.com/bucketeer-io/bucketeer/pkg/eventpersisterdwh/storage/v2"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"

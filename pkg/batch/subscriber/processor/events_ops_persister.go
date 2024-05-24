@@ -24,9 +24,9 @@ import (
 	"go.uber.org/zap"
 
 	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
+	storage "github.com/bucketeer-io/bucketeer/pkg/batch/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	storage "github.com/bucketeer-io/bucketeer/pkg/eventpersisterops/storage/v2"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
