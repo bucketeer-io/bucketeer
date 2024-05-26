@@ -36,6 +36,7 @@ message EnvironmentAPIKey {
   string environment_namespace = 1 [deprecated = true];
   APIKey api_key = 2;
   bool environment_disabled = 3;
-  string project_id = 4;
+  string project_id = 4 [deprecated = true];
   environment.EnvironmentV2 environment = 5;
+  string project_url_code = 6;
 }

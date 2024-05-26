@@ -72,6 +72,9 @@ export class EnvironmentAPIKey extends jspb.Message {
   getEnvironment(): proto_environment_environment_pb.EnvironmentV2 | undefined;
   setEnvironment(value?: proto_environment_environment_pb.EnvironmentV2): void;
 
+  getProjectUrlCode(): string;
+  setProjectUrlCode(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EnvironmentAPIKey.AsObject;
   static toObject(includeInstance: boolean, msg: EnvironmentAPIKey): EnvironmentAPIKey.AsObject;
@@ -89,6 +92,7 @@ export namespace EnvironmentAPIKey {
     environmentDisabled: boolean,
     projectId: string,
     environment?: proto_environment_environment_pb.EnvironmentV2.AsObject,
+    projectUrlCode: string,
   }
 }
 
