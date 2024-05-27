@@ -166,7 +166,7 @@ func TestGetAutoOpsRule(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_EVENT_RATE, []*autoopsproto.OpsEventRateClause{clause}, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_EVENT_RATE, []*autoopsproto.OpsEventRateClause{clause}, []*autoopsproto.DatetimeClause{})
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
