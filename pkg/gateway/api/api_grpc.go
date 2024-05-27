@@ -220,7 +220,7 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 		return nil, err
 	}
 	requestTotal.WithLabelValues(
-		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId,
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, methodTrack, "").Inc()
 	goalEvent := &eventproto.GoalEvent{
 		GoalId:    req.Goalid,
@@ -322,13 +322,14 @@ func (s *grpcGatewayService) GetEvaluations(
 	projectID := envAPIKey.ProjectId
 	environmentId := envAPIKey.Environment.Id
 	requestTotal.WithLabelValues(
-		envAPIKey.Environment.OrganizationId, projectID,
+		envAPIKey.Environment.OrganizationId, projectID, envAPIKey.ProjectUrlCode,
 		environmentId, methodGetEvaluations, req.SourceId.String()).Inc()
 	if err := s.validateGetEvaluationsRequest(req); err != nil {
 		s.logger.Error("Failed to validate GetEvaluations request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("projectId", projectID),
+				zap.String("projectUrlCode", envAPIKey.ProjectUrlCode),
 				zap.String("environmentId", environmentId),
 				zap.String("tag", req.Tag),
 				zap.Any("user", req.User),
@@ -336,7 +337,7 @@ func (s *grpcGatewayService) GetEvaluations(
 				zap.String("sdkVersion", req.SdkVersion),
 			)...,
 		)
-		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeBadRequest).Inc()
+		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId, req.Tag, codeBadRequest).Inc()
 		return nil, err
 	}
 	s.publishUser(ctx, environmentId, req.Tag, req.User, req.SourceId)
@@ -348,7 +349,7 @@ func (s *grpcGatewayService) GetEvaluations(
 		},
 	)
 	if err != nil {
-		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeInternalError).Inc()
+		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId, req.Tag, codeInternalError).Inc()
 		return nil, err
 	}
 	spanGetFeatures.End()
@@ -356,7 +357,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	activeFeatures := s.filterOutArchivedFeatures(features)
 	filteredByTag := s.filterByTag(activeFeatures, req.Tag)
 	if len(features) == 0 {
-		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeNoFeatures).Inc()
+		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId, req.Tag, codeNoFeatures).Inc()
 		return &gwproto.GetEvaluationsResponse{
 			State:             featureproto.UserEvaluations_FULL,
 			Evaluations:       s.emptyUserEvaluations(),
@@ -365,7 +366,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	}
 	ueid := evaluation.UserEvaluationsID(req.User.Id, req.User.Data, filteredByTag)
 	if req.UserEvaluationsId == ueid {
-		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeNone).Inc()
+		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId, req.Tag, codeNone).Inc()
 		s.logger.Debug(
 			"Features length when UEID is the same",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -384,7 +385,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	}
 	segmentUsersMap, err := s.getSegmentUsersMap(ctx, features, environmentId)
 	if err != nil {
-		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeInternalError).Inc()
+		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId, req.Tag, codeInternalError).Inc()
 		s.logger.Error(
 			"Failed to get segment users map",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -401,7 +402,7 @@ func (s *grpcGatewayService) GetEvaluations(
 	if req.UserEvaluationCondition == nil {
 		// Old evaluation requires tag to be set.
 		if req.Tag == "" {
-			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeBadRequest).Inc()
+			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId, req.Tag, codeBadRequest).Inc()
 			return nil, ErrTagRequired
 		}
 		evaluations, err = evaluator.EvaluateFeatures(
@@ -411,7 +412,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.Tag,
 		)
 		if err != nil {
-			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeInternalError).Inc()
+			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId, req.Tag, codeInternalError).Inc()
 			s.logger.Error(
 				"Failed to evaluate",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -422,7 +423,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			)
 			return nil, ErrInternal
 		}
-		evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeOld).Inc()
+		evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId, req.Tag, codeOld).Inc()
 	} else {
 		evaluations, err = evaluator.EvaluateFeaturesByEvaluatedAt(
 			features,
@@ -434,7 +435,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			req.Tag,
 		)
 		if err != nil {
-			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeInternalError).Inc()
+			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId, req.Tag, codeInternalError).Inc()
 			s.logger.Error(
 				"Failed to evaluate",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -446,9 +447,9 @@ func (s *grpcGatewayService) GetEvaluations(
 			return nil, ErrInternal
 		}
 		if evaluations.ForceUpdate {
-			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeAll).Inc()
+			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId, req.Tag, codeAll).Inc()
 		} else {
-			evaluationsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeDiff).Inc()
+			evaluationsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId, req.Tag, codeDiff).Inc()
 		}
 	}
 	s.logger.Debug(
@@ -500,13 +501,14 @@ func (s *grpcGatewayService) GetEvaluation(
 		return nil, err
 	}
 	requestTotal.WithLabelValues(
-		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId,
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, methodGetEvaluation, req.SourceId.String()).Inc()
 	if err := s.validateGetEvaluationRequest(req); err != nil {
 		s.logger.Error("Failed to validate GetEvaluation request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("projectId", envAPIKey.ProjectId),
+				zap.String("projectUrlCode", envAPIKey.ProjectUrlCode),
 				zap.String("environmentId", envAPIKey.Environment.Id),
 				zap.String("tag", req.Tag),
 				zap.Any("user", req.User),
@@ -574,6 +576,7 @@ func (s *grpcGatewayService) GetEvaluation(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("projectId", envAPIKey.ProjectId),
+				zap.String("projectUrlCode", envAPIKey.ProjectUrlCode),
 				zap.String("environmentId", envAPIKey.Environment.Id),
 				zap.String("tag", req.Tag),
 				zap.Any("user", req.User),
@@ -610,7 +613,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	projectID := envAPIKey.ProjectId
 	environmentId := envAPIKey.Environment.Id
 	requestTotal.WithLabelValues(
-		envAPIKey.Environment.OrganizationId, projectID,
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		environmentId, methodGetEvaluations, req.SourceId.String()).Inc()
 
 	if err := s.validateGetFeatureFlagsRequest(req); err != nil {
@@ -618,13 +621,14 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("projectId", projectID),
+				zap.String("projectUrlCode", envAPIKey.ProjectUrlCode),
 				zap.String("environmentId", environmentId),
 				zap.String("apiKey", envAPIKey.ApiKey.Id),
 				zap.Any("sourceId", req.SourceId),
 				zap.String("sdkVersion", req.SdkVersion),
 			)...,
 		)
-		getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeBadRequest).Inc()
+		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId, req.Tag, codeBadRequest).Inc()
 		return nil, err
 	}
 	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetFeatureFlags.GetFeatures")
@@ -635,7 +639,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 		},
 	)
 	if err != nil {
-		getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeInternalError).Inc()
+		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId, req.Tag, codeInternalError).Inc()
 		return nil, err
 	}
 	spanGetFeatures.End()
@@ -649,7 +653,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	}
 	now := time.Now()
 	if len(targetFeatures) == 0 {
-		getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeNoFeatures).Inc()
+		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId, req.Tag, codeNoFeatures).Inc()
 		return &gwproto.GetFeatureFlagsResponse{
 			FeatureFlagsId:         "",
 			Features:               []*featureproto.Feature{},
@@ -662,7 +666,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	ffID := evaluation.GenerateFeaturesID(filteredArchivedFlags)
 	// Return an empty response because nothing changed
 	if req.FeatureFlagsId == ffID {
-		getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeNone).Inc()
+		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId, req.Tag, codeNone).Inc()
 		s.logger.Debug(
 			"Feature Flags ID is the same",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -690,7 +694,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	)
 	// Return all the flags except archived flags
 	if req.FeatureFlagsId == "" || req.RequestedAt < now.Unix()-secondsToReturnAllFlags {
-		getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeAll).Inc()
+		getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId, req.Tag, codeAll).Inc()
 		return &gwproto.GetFeatureFlagsResponse{
 			FeatureFlagsId:         ffID,
 			Features:               filteredArchivedFlags,
@@ -714,7 +718,7 @@ func (s *grpcGatewayService) GetFeatureFlags(
 			updatedFeatures = append(updatedFeatures, feature)
 		}
 	}
-	getFeatureFlagsCounter.WithLabelValues(projectID, environmentId, req.Tag, codeDiff).Inc()
+	getFeatureFlagsCounter.WithLabelValues(projectID, envAPIKey.ProjectUrlCode, environmentId, req.Tag, codeDiff).Inc()
 	return &gwproto.GetFeatureFlagsResponse{
 		FeatureFlagsId:         ffID,
 		Features:               updatedFeatures,
@@ -760,7 +764,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	projectID := envAPIKey.ProjectId
 	environmentId := envAPIKey.Environment.Id
 	requestTotal.WithLabelValues(
-		envAPIKey.Environment.OrganizationId, projectID,
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		environmentId, methodGetEvaluations, req.SourceId.String()).Inc()
 
 	if err := s.validateGetSegmentUsersRequest(req); err != nil {
@@ -768,6 +772,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("projectId", projectID),
+				zap.String("projectUrlCode", envAPIKey.ProjectUrlCode),
 				zap.String("environmentId", environmentId),
 				zap.String("apiKey", envAPIKey.ApiKey.Id),
 				zap.Strings("segmentIds", req.SegmentIds),
@@ -776,7 +781,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 			)...,
 		)
 		getSegmentUsersCounter.WithLabelValues(
-			projectID, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeBadRequest).Inc()
+			projectID, envAPIKey.ProjectUrlCode, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeBadRequest).Inc()
 		return nil, err
 	}
 
@@ -790,7 +795,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	)
 	if err != nil {
 		getSegmentUsersCounter.WithLabelValues(
-			projectID, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeInternalError).Inc()
+			projectID, envAPIKey.ProjectUrlCode, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeInternalError).Inc()
 		return nil, err
 	}
 	spanGetFeatures.End()
@@ -799,7 +804,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	targetFeatures := s.filterOutArchivedFeatures(f.([]*featureproto.Feature))
 	if len(targetFeatures) == 0 {
 		getSegmentUsersCounter.WithLabelValues(
-			projectID, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeNoFeatures).Inc()
+			projectID, envAPIKey.ProjectUrlCode, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeNoFeatures).Inc()
 		return s.emptyGetSegmentUsersResponse()
 	}
 
@@ -816,7 +821,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	// Return an empty response when there is no segments
 	if len(targetSegmentIDs) == 0 {
 		getSegmentUsersCounter.WithLabelValues(
-			projectID, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeNoSegments).Inc()
+			projectID, envAPIKey.ProjectUrlCode, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeNoSegments).Inc()
 		return s.emptyGetSegmentUsersResponse()
 	}
 
@@ -832,7 +837,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 		})
 		if err != nil {
 			getSegmentUsersCounter.WithLabelValues(
-				projectID, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeInternalError).Inc()
+				projectID, envAPIKey.ProjectUrlCode, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeInternalError).Inc()
 			return nil, err
 		}
 		spanGetSegmentUsers.End()
@@ -843,7 +848,7 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	// Return all the flags if the last request is older than 30 days
 	if req.RequestedAt < time.Now().Unix()-secondsToReturnAllFlags {
 		getSegmentUsersCounter.WithLabelValues(
-			projectID, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeAll).Inc()
+			projectID, envAPIKey.ProjectUrlCode, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeAll).Inc()
 		return &gwproto.GetSegmentUsersResponse{
 			SegmentUsers:      targetSegmentUsers,
 			DeletedSegmentIds: make([]string, 0),
@@ -872,10 +877,10 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	// Check if there is a difference when compared to the last request
 	if len(updatedSegments) == 0 && len(deletedSegmentIDs) == 0 {
 		getSegmentUsersCounter.WithLabelValues(
-			projectID, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeNone).Inc()
+			projectID, envAPIKey.ProjectUrlCode, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeNone).Inc()
 	} else {
 		getSegmentUsersCounter.WithLabelValues(
-			projectID, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeDiff).Inc()
+			projectID, envAPIKey.ProjectUrlCode, environmentId, req.SourceId.String(), req.GetSdkVersion(), codeDiff).Inc()
 	}
 	return &gwproto.GetSegmentUsersResponse{
 		SegmentUsers:      updatedSegments,
@@ -1222,7 +1227,7 @@ func (s *grpcGatewayService) RegisterEvents(
 		return nil, err
 	}
 	requestTotal.WithLabelValues(
-		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId,
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, methodRegisterEvents, req.SourceId.String()).Inc()
 	if len(req.Events) == 0 {
 		s.logger.Error("Failed to validate RegisterEvents request. Missing events.",
