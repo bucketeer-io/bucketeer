@@ -44,9 +44,9 @@ env:
     poolMaxIdle: 25
     poolMaxActive: 25
 
-affinity: { }
+affinity: {}
 
-nodeSelector: { }
+nodeSelector: {}
 
 pdb:
   enabled:
@@ -68,7 +68,7 @@ envoy:
   config:
   port: 9000
   adminPort: 8001
-  resources: { }
+  resources: {}
 
 tls:
   service:
@@ -102,10 +102,10 @@ health:
     periodSeconds: 3
     failureThreshold: 2
 
-resources: { }
+resources: {}
 
 serviceAccount:
-  annotations: { }
+  annotations: {}
 
 cronjob:
   successfulJobsHistoryLimit: 1
