@@ -594,37 +594,36 @@ func (s *server) startMultiPubSub(
 	processors *processor.Processors,
 	logger *zap.Logger,
 ) (*subscriber.MultiSubscriber, error) {
-	bytes, err := os.ReadFile(*s.subscriberConfig)
-	if err != nil {
-		logger.Error("subscriber: failed to read subscriber config",
-			zap.Error(err),
-		)
-		return nil, err
-	}
-	var configMap map[string]subscriber.Configuration
-	if err := json.Unmarshal(bytes, &configMap); err != nil {
-		logger.Error("subscriber: failed to unmarshal subscriber config",
-			zap.Error(err),
-		)
-		return nil, err
-	}
 	multiSubscriber := subscriber.NewMultiSubscriber(
 		subscriber.WithLogger(logger),
 	)
-	for name, config := range configMap {
-		p, err := processors.GetProcessorByName(name)
-		if err != nil {
-			logger.Error("subscriber: processor not found",
-				zap.String("name", name),
+	subscriberConfigBytes, err := os.ReadFile(*s.subscriberConfig)
+	if err != nil {
+		logger.Error("subscriber: failed to read subscriber config", zap.Error(err))
+	} else {
+		var configMap map[string]subscriber.Configuration
+		if err := json.Unmarshal(subscriberConfigBytes, &configMap); err != nil {
+			logger.Error("subscriber: failed to unmarshal subscriber config",
 				zap.Error(err),
 			)
 			return nil, err
 		}
-		multiSubscriber.AddSubscriber(subscriber.NewSubscriber(
-			name, config, p,
-			subscriber.WithLogger(logger),
-		))
+		for name, config := range configMap {
+			p, err := processors.GetProcessorByName(name)
+			if err != nil {
+				logger.Error("subscriber: processor not found",
+					zap.String("name", name),
+					zap.Error(err),
+				)
+				return nil, err
+			}
+			multiSubscriber.AddSubscriber(subscriber.NewSubscriber(
+				name, config, p,
+				subscriber.WithLogger(logger),
+			))
+		}
 	}
+
 	multiSubscriber.Start(ctx)
 	return multiSubscriber, nil
 }
@@ -639,68 +638,66 @@ func (s *server) registerProcessorMap(
 	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (*processor.Processors, error) {
-	bytes, err := os.ReadFile(*s.processorsConfig)
-	if err != nil {
-		logger.Error("subscriber: failed to read processors config",
-			zap.Error(err),
-		)
-		return nil, err
-	}
-	var configMap map[string]interface{}
-	if err := json.Unmarshal(bytes, &configMap); err != nil {
-		logger.Error("subscriber: failed to unmarshal processors config",
-			zap.Error(err),
-		)
-		return nil, err
-	}
 	processors := processor.NewProcessors(registerer)
 
-	processors.RegisterProcessor(
-		processor.DomainEventInformerName,
-		processor.NewDomainEventInformer(environmentClient, sender, logger),
-	)
-
-	segmentPersister, err := processor.NewSegmentUserPersister(
-		configMap[processor.SegmentUserPersisterName],
-		batchClient,
-		mysqlClient,
-		logger,
-	)
+	processorsConfigBytes, err := os.ReadFile(*s.processorsConfig)
 	if err != nil {
-		return nil, err
-	}
-	processors.RegisterProcessor(
-		processor.SegmentUserPersisterName,
-		segmentPersister,
-	)
+		logger.Error("subscriber: failed to read processors config", zap.Error(err))
+	} else {
+		var processorsConfigMap map[string]interface{}
+		if err := json.Unmarshal(processorsConfigBytes, &processorsConfigMap); err != nil {
+			logger.Error("subscriber: failed to unmarshal processors config",
+				zap.Error(err),
+			)
+			return nil, err
+		}
+		processors.RegisterProcessor(
+			processor.DomainEventInformerName,
+			processor.NewDomainEventInformer(environmentClient, sender, logger),
+		)
 
-	userEventPersister, err := processor.NewUserEventPersister(
-		configMap[processor.UserEventPersisterName],
-		mysqlClient,
-		logger,
-	)
-	if err != nil {
-		return nil, err
-	}
-	processors.RegisterProcessor(
-		processor.UserEventPersisterName,
-		userEventPersister,
-	)
+		segmentPersister, err := processor.NewSegmentUserPersister(
+			processorsConfigMap[processor.SegmentUserPersisterName],
+			batchClient,
+			mysqlClient,
+			logger,
+		)
+		if err != nil {
+			return nil, err
+		}
+		processors.RegisterProcessor(
+			processor.SegmentUserPersisterName,
+			segmentPersister,
+		)
 
-	evaluationCountEventPersister, err := processor.NewEvaluationCountEventPersister(
-		ctx,
-		configMap[processor.EvaluationCountEventPersisterName],
-		mysqlClient,
-		cachev3.NewRedisCache(persistentRedisClient),
-		logger,
-	)
-	if err != nil {
-		return nil, err
+		userEventPersister, err := processor.NewUserEventPersister(
+			processorsConfigMap[processor.UserEventPersisterName],
+			mysqlClient,
+			logger,
+		)
+		if err != nil {
+			return nil, err
+		}
+		processors.RegisterProcessor(
+			processor.UserEventPersisterName,
+			userEventPersister,
+		)
+
+		evaluationCountEventPersister, err := processor.NewEvaluationCountEventPersister(
+			ctx,
+			processorsConfigMap[processor.EvaluationCountEventPersisterName],
+			mysqlClient,
+			cachev3.NewRedisCache(persistentRedisClient),
+			logger,
+		)
+		if err != nil {
+			return nil, err
+		}
+		processors.RegisterProcessor(
+			processor.EvaluationCountEventPersisterName,
+			evaluationCountEventPersister,
+		)
 	}
-	processors.RegisterProcessor(
-		processor.EvaluationCountEventPersisterName,
-		evaluationCountEventPersister,
-	)
 
 	return processors, nil
 }
