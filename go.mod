@@ -1,6 +1,8 @@
 module github.com/bucketeer-io/bucketeer
 
-go 1.20
+go 1.21
+
+toolchain go1.21.10
 
 require (
 	cloud.google.com/go/bigquery v1.60.0
