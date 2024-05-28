@@ -148,8 +148,10 @@ WEB_GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
 GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
 API_KEY_PATH=/workspaces/bucketeer/apitoken ENVIRONMENT_NAMESPACE=e2e \
+API_KEY_ROLE=SDK_CLIENT \
 make create-api-key 
 ```
+> Note: The `API_KEY_ROLE` is the role of the api key, you can set it to `SDK_CLIENT` or `SDK_SERVER`.
 
 * Run e2e tests
 
