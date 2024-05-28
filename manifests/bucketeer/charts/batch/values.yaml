@@ -211,40 +211,40 @@ onDemandSubscribers:
     subscription:
     pullerNumGoroutines: 5
     pullerMaxOutstandingMessages: 1000
-    pullerMaxOutstandingBytes: 1000000000
-    maxMps: 50
+    pullerMaxOutstandingBytes: 100000000
+    maxMps: 100
     workerNum: 1
-    checkInterval: 5
+    checkInterval: 10
   evaluationCountEventOPSPersister:
     project:
     topic:
     subscription:
     pullerNumGoroutines: 5
     pullerMaxOutstandingMessages: 1000
-    pullerMaxOutstandingBytes: 1000000000
-    maxMps: 50
+    pullerMaxOutstandingBytes: 100000000
+    maxMps: 100
     workerNum: 1
-    checkInterval: 5
+    checkInterval: 10
   goalCountEventDWHPersister:
     project:
     topic:
     subscription:
     pullerNumGoroutines: 5
     pullerMaxOutstandingMessages: 1000
-    pullerMaxOutstandingBytes: 1000000000
-    maxMps: 50
+    pullerMaxOutstandingBytes: 100000000
+    maxMps: 100
     workerNum: 1
-    checkInterval: 5
+    checkInterval: 10
   goalCountEventOPSPersister:
     project:
     topic:
     subscription:
     pullerNumGoroutines: 5
     pullerMaxOutstandingMessages: 1000
-    pullerMaxOutstandingBytes: 1000000000
-    maxMps: 50
+    pullerMaxOutstandingBytes: 100000000
+    maxMps: 100
     workerNum: 1
-    checkInterval: 5
+    checkInterval: 10
 
 
 # This configuration is used for add custom params to Processors
@@ -266,26 +266,26 @@ processors:
 
 onDemandProcessors:
   evaluationCountEventDWHPersister:
-    flushSize: 100
-    flushInterval: 10
-    flushTimeout: 10
+    flushSize: 20
+    flushInterval: 5
+    flushTimeout: 30
     project:
     bigQueryDataSet:
     bigQueryBatchSize:
     timezone:
   evaluationCountEventOPSPersister:
-    flushSize: 100
-    flushInterval: 10
-    flushTimeout: 10
+    flushSize: 20
+    flushInterval: 5
+    flushTimeout: 30
   goalCountEventDWHPersister:
-    flushSize: 100
-    flushInterval: 10
-    flushTimeout: 10
+    flushSize: 20
+    flushInterval: 5
+    flushTimeout: 30
     project:
     bigQueryDataSet:
     bigQueryBatchSize:
     timezone:
   goalCountEventOPSPersister:
-    flushSize: 100
-    flushInterval: 10
-    flushTimeout: 10
+    flushSize: 20
+    flushInterval: 5
+    flushTimeout: 30
