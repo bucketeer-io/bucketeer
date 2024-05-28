@@ -1045,7 +1045,6 @@ func (s *AutoOpsService) listAutoOpsRules(
 	storage v2as.AutoOpsRuleStorage,
 ) ([]*autoopsproto.AutoOpsRule, string, error) {
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("status", "!=", autoopsproto.AutoOpsStatus_DELETED.Number()),
 		mysql.NewFilter("environment_namespace", "=", environmentNamespace),
 	}
 	fIDs := make([]interface{}, 0, len(featureIds))
