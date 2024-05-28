@@ -23,7 +23,7 @@ import (
 	"io/ioutil"
 	"time"
 
-	jose "gopkg.in/square/go-jose.v2"
+	jose "github.com/go-jose/go-jose/v4"
 )
 
 type Verifier interface {
@@ -55,7 +55,7 @@ func NewVerifier(keyPath, issuer, clientID string) (Verifier, error) {
 }
 
 func (v *verifier) Verify(rawIDToken string) (*IDToken, error) {
-	jws, err := jose.ParseSigned(rawIDToken)
+	jws, err := jose.ParseSigned(rawIDToken, []jose.SignatureAlgorithm{v.algorithm})
 	if err != nil {
 		return nil, fmt.Errorf("malformed jwt: %v", err)
 	}
