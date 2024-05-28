@@ -225,7 +225,7 @@ func TestDeleteAutoOpsRule(t *testing.T) {
 		EnvironmentNamespace: *environmentNamespace,
 		Id:                   autoOpsRules[0].Id,
 	})
-	if resp != nil {
+	if resp.AutoOpsRule.AutoOpsStatus != autoopsproto.AutoOpsStatus_DELETED {
 		t.Fatal("autoOpsRules is not deleted")
 	}
 	if err == nil {
@@ -250,9 +250,8 @@ func TestExecuteAutoOpsRule(t *testing.T) {
 	featureID := createFeatureID(t)
 	createFeature(ctx, t, featureClient, featureID)
 	feature := getFeature(t, featureClient, featureID)
-	goalID := createGoal(ctx, t, experimentClient)
-	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_EVENT_RATE, []*autoopsproto.OpsEventRateClause{clause}, nil)
+	clause := createDatetimeClause(t)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, []*autoopsproto.DatetimeClause{clause})
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
