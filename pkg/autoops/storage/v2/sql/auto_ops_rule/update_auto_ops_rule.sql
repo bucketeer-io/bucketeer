@@ -7,7 +7,7 @@ SET
     created_at = ?,
     updated_at = ?,
     stopped_at = ?,
-    status = ?,
+    status = ?
 WHERE
     id = ? AND
     environment_namespace = ?

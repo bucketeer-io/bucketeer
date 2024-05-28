@@ -6,7 +6,7 @@ SELECT
     created_at,
     updated_at,
     stopped_at,
-    status,
+    status
 FROM
     auto_ops_rule
 %s %s %s
