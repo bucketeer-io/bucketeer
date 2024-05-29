@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/bucketeer-io/bucketeer/proto v0.0.0
+	github.com/bucketeer-io/bucketeer/proto v0.0.0-20240529105832-0d897d36a2f3
 	github.com/golang/protobuf v1.5.4
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/mock v0.4.0
@@ -23,4 +23,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/bucketeer-io/bucketeer/proto v0.0.0 => ../proto
+replace github.com/bucketeer-io/bucketeer/proto v0.0.0-20240529105832-0d897d36a2f3 => ../proto
