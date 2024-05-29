@@ -35,59 +35,59 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
-//func TestStanCompileModel(t *testing.T) {
-//	compileModel(t)
-//}
+func TestStanCompileModel(t *testing.T) {
+	compileModel(t)
+}
 
-//func TestStanSample(t *testing.T) {
-//	// compile model
-//	compileModel := compileModel(t)
-//	// create fit
-//	modelID := compileModel.Name[len("models/"):]
-//	req := CreateFitReq{
-//		Chain: 1,
-//		Data: map[string]interface{}{
-//			"g": 3,
-//			"x": []int{1, 2, 3},
-//			"n": []int{10, 10, 10},
-//		},
-//		Function:   HmcNUTSFunction,
-//		NumSamples: 1000,
-//		NumWarmup:  1000,
-//		RandomSeed: 1234,
-//	}
-//	fit, err := stan.CreateFit(context.TODO(), modelID, req)
-//	assert.NoError(t, err, "Failed to create fit")
-//	if assert.NotEmpty(t, fit) {
-//		fmt.Printf("HttpStan created fit name: %s\n", fit)
-//	}
-//	// get operation details
-//	fitId := fit[len("operations/"):]
-//	checkOperationUntilDone(t, fitId)
-//	// get fit
-//	res, err := stan.GetFitResult(context.TODO(), modelID, fitId)
-//	assert.NoError(t, err, "Failed to get fit result")
-//	stanDataframe := stan.ExtractFromFitResult(context.TODO(), res)
-//	assert.Equal(t, req.NumSamples, stanDataframe.Nrow(), "Failed to get fit result")
-//}
+func TestStanSample(t *testing.T) {
+	// compile model
+	compileModel := compileModel(t)
+	// create fit
+	modelID := compileModel.Name[len("models/"):]
+	req := CreateFitReq{
+		Chain: 1,
+		Data: map[string]interface{}{
+			"g": 3,
+			"x": []int{1, 2, 3},
+			"n": []int{10, 10, 10},
+		},
+		Function:   HmcNUTSFunction,
+		NumSamples: 1000,
+		NumWarmup:  1000,
+		RandomSeed: 1234,
+	}
+	fit, err := stan.CreateFit(context.TODO(), modelID, req)
+	assert.NoError(t, err, "Failed to create fit")
+	if assert.NotEmpty(t, fit) {
+		fmt.Printf("HttpStan created fit name: %s\n", fit)
+	}
+	// get operation details
+	fitId := fit[len("operations/"):]
+	checkOperationUntilDone(t, fitId)
+	// get fit
+	res, err := stan.GetFitResult(context.TODO(), modelID, fitId)
+	assert.NoError(t, err, "Failed to get fit result")
+	stanDataframe := stan.ExtractFromFitResult(context.TODO(), res)
+	assert.Equal(t, req.NumSamples, stanDataframe.Nrow(), "Failed to get fit result")
+}
 
-//func TestStanStanParams(t *testing.T) {
-//	// compile model
-//	compileModel := compileModel(t)
-//	constrainedNames, paramNames := stan.StanParams(context.TODO(),
-//		compileModel.Name[len("models/"):],
-//		map[string]interface{}{
-//			"g": 3,
-//			"x": []int{1, 2, 3},
-//			"n": []int{10, 10, 10},
-//		})
-//	if assert.NotEmpty(t, constrainedNames, "Failed to get constrained names") {
-//		fmt.Printf("HttpStan constrained names: %v\n", constrainedNames)
-//	}
-//	if assert.NotEmpty(t, paramNames, "Failed to get param names") {
-//		fmt.Printf("HttpStan param names: %v\n", paramNames)
-//	}
-//}
+func TestStanStanParams(t *testing.T) {
+	// compile model
+	compileModel := compileModel(t)
+	constrainedNames, paramNames := stan.StanParams(context.TODO(),
+		compileModel.Name[len("models/"):],
+		map[string]interface{}{
+			"g": 3,
+			"x": []int{1, 2, 3},
+			"n": []int{10, 10, 10},
+		})
+	if assert.NotEmpty(t, constrainedNames, "Failed to get constrained names") {
+		fmt.Printf("HttpStan constrained names: %v\n", constrainedNames)
+	}
+	if assert.NotEmpty(t, paramNames, "Failed to get param names") {
+		fmt.Printf("HttpStan param names: %v\n", paramNames)
+	}
+}
 
 func compileModel(t *testing.T) ModelCompileResp {
 	// compile model
