@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 package processor
 
@@ -70,7 +69,7 @@ func (d domainEventInformer) Process(ctx context.Context, msgChan <-chan *puller
 			subscriberReceivedCounter.WithLabelValues(subscriberDomainEvent).Inc()
 			d.handleMessage(msg)
 		case <-ctx.Done():
-			d.logger.Info("NormalSubscriber context done, stopped processing messages")
+			d.logger.Info("subscriber context done, stopped processing messages")
 			return nil
 		}
 	}

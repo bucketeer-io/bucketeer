@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 package subscriber
 
@@ -74,7 +73,7 @@ type Configuration struct {
 	WorkerNum                    int    `json:"workerNum"`
 }
 
-type NormalSubscriber struct {
+type subscriber struct {
 	name          string
 	configuration Configuration
 	processor     Processor
@@ -93,7 +92,7 @@ func NewSubscriber(
 	for _, o := range opts {
 		o(&options)
 	}
-	return &NormalSubscriber{
+	return &subscriber{
 		name:          name,
 		configuration: configuration,
 		processor:     processor,
@@ -102,8 +101,8 @@ func NewSubscriber(
 	}
 }
 
-func (s NormalSubscriber) Run(ctx context.Context) {
-	s.logger.Info("NormalSubscriber starting",
+func (s subscriber) Run(ctx context.Context) {
+	s.logger.Info("subscriber starting",
 		zap.String("name", s.name),
 		zap.String("project", s.configuration.Project),
 		zap.String("subscription", s.configuration.Subscription),
@@ -123,21 +122,21 @@ func (s NormalSubscriber) Run(ctx context.Context) {
 	}
 	err := group.Wait()
 	if err != nil {
-		s.logger.Error("NormalSubscriber stopped with error",
+		s.logger.Error("subscriber stopped with error",
 			zap.String("name", s.name),
 			zap.Error(err))
 	}
-	s.logger.Info("NormalSubscriber stopped",
+	s.logger.Info("subscriber stopped",
 		zap.String("name", s.name))
 }
 
-func (s NormalSubscriber) Stop() {
+func (s subscriber) Stop() {
 	if s.cancel != nil {
 		s.cancel()
 	}
 }
 
-func (s NormalSubscriber) createPuller(
+func (s subscriber) createPuller(
 	ctx context.Context,
 ) puller.RateLimitedPuller {
 	pubsubClient, err := pubsub.NewClient(

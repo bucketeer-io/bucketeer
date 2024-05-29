@@ -35,7 +35,7 @@ type OnDemandConfiguration struct {
 	CheckInterval int `json:"checkInterval"`
 }
 
-type OnDemandSubscriber struct {
+type onDemandSubscriber struct {
 	name                string
 	configuration       OnDemandConfiguration
 	rateLimitedPuller   puller.RateLimitedPuller
@@ -56,12 +56,12 @@ func NewOnDemandSubscriber(
 	configuration OnDemandConfiguration,
 	processor OnDemandProcessor,
 	opts ...Option,
-) *OnDemandSubscriber {
+) Subscriber {
 	options := defaultOptions
 	for _, o := range opts {
 		o(&options)
 	}
-	return &OnDemandSubscriber{
+	return &onDemandSubscriber{
 		name:          name,
 		configuration: configuration,
 		processor:     processor,
@@ -70,8 +70,8 @@ func NewOnDemandSubscriber(
 	}
 }
 
-func (s *OnDemandSubscriber) Run(ctx context.Context) {
-	s.logger.Info("OnDemandSubscriber starting",
+func (s *onDemandSubscriber) Run(ctx context.Context) {
+	s.logger.Info("onDemandSubscriber starting",
 		zap.String("name", s.name),
 		zap.String("project", s.configuration.Project),
 		zap.String("subscription", s.configuration.Subscription),
@@ -101,7 +101,7 @@ func (s *OnDemandSubscriber) Run(ctx context.Context) {
 			}
 			if start {
 				s.logger.Debug(
-					"OnDemandSubscriber start pulling messages",
+					"onDemandSubscriber start pulling messages",
 					zap.String("name", s.name),
 				)
 				if !s.IsRunning() {
@@ -122,7 +122,7 @@ func (s *OnDemandSubscriber) Run(ctx context.Context) {
 				}
 			} else {
 				s.logger.Debug(
-					"OnDemandSubscriber stop pulling messages",
+					"onDemandSubscriber stop pulling messages",
 					zap.String("name", s.name),
 				)
 				if s.IsRunning() {
@@ -175,7 +175,7 @@ func (s *OnDemandSubscriber) Run(ctx context.Context) {
 	}
 }
 
-func (s *OnDemandSubscriber) subscribe(subscription chan struct{}) {
+func (s *onDemandSubscriber) subscribe(subscription chan struct{}) {
 	for {
 		select {
 		case <-subscription:
@@ -213,19 +213,19 @@ func (s *OnDemandSubscriber) subscribe(subscription chan struct{}) {
 	}
 }
 
-func (s *OnDemandSubscriber) batch() error {
+func (s *onDemandSubscriber) batch() error {
 	return s.processor.Process(s.runningPullerCtx, s.rateLimitedPuller.MessageCh())
 }
 
-func (s *OnDemandSubscriber) unsubscribe() {
+func (s *onDemandSubscriber) unsubscribe() {
 	s.runningPullerCancel()
 }
 
-func (s *OnDemandSubscriber) IsRunning() bool {
+func (s *onDemandSubscriber) IsRunning() bool {
 	return s.isRunning
 }
 
-func (s *OnDemandSubscriber) createPubSubClient(ctx context.Context) error {
+func (s *onDemandSubscriber) createPubSubClient(ctx context.Context) error {
 	pubsubClient, err := pubsub.NewClient(
 		ctx,
 		s.configuration.Project,
@@ -240,7 +240,7 @@ func (s *OnDemandSubscriber) createPubSubClient(ctx context.Context) error {
 	return nil
 }
 
-func (s *OnDemandSubscriber) createPuller() error {
+func (s *onDemandSubscriber) createPuller() error {
 	pubsubPuller, err := s.client.CreatePuller(
 		s.configuration.Subscription,
 		s.configuration.Topic,
@@ -256,6 +256,6 @@ func (s *OnDemandSubscriber) createPuller() error {
 	return nil
 }
 
-func (s *OnDemandSubscriber) Stop() {
+func (s *onDemandSubscriber) Stop() {
 	s.cancel()
 }
