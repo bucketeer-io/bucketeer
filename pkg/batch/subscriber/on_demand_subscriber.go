@@ -96,7 +96,7 @@ func (s *onDemandSubscriber) Run(ctx context.Context) {
 		case <-ticker.C:
 			start, err := s.processor.Switch(ctx)
 			if err != nil {
-				s.logger.Error("Failed to check experiments existence", zap.Error(err))
+				s.logger.Error("Failed to check switch status", zap.Error(err))
 				continue
 			}
 			if start {
