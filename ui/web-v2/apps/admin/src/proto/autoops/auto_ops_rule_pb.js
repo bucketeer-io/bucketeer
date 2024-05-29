@@ -117,7 +117,7 @@ proto.bucketeer.autoops.AutoOpsRule.toObject = function(includeInstance, msg) {
     createdAt: jspb.Message.getFieldWithDefault(msg, 7, 0),
     updatedAt: jspb.Message.getFieldWithDefault(msg, 8, 0),
     deleted: jspb.Message.getBooleanFieldWithDefault(msg, 9, false),
-    autoopsstatus: jspb.Message.getFieldWithDefault(msg, 10, 0),
+    autoOpsStatus: jspb.Message.getFieldWithDefault(msg, 10, 0),
     stoppedAt: jspb.Message.getFieldWithDefault(msg, 11, 0)
   };
 
@@ -190,7 +190,7 @@ proto.bucketeer.autoops.AutoOpsRule.deserializeBinaryFromReader = function(msg, 
       break;
     case 10:
       var value = /** @type {!proto.bucketeer.autoops.AutoOpsStatus} */ (reader.readEnum());
-      msg.setAutoopsstatus(value);
+      msg.setAutoOpsStatus(value);
       break;
     case 11:
       var value = /** @type {number} */ (reader.readInt64());
@@ -282,7 +282,7 @@ proto.bucketeer.autoops.AutoOpsRule.serializeBinaryToWriter = function(message, 
       f
     );
   }
-  f = message.getAutoopsstatus();
+  f = message.getAutoOpsStatus();
   if (f !== 0.0) {
     writer.writeEnum(
       10,
@@ -464,10 +464,10 @@ proto.bucketeer.autoops.AutoOpsRule.prototype.setDeleted = function(value) {
 
 
 /**
- * optional AutoOpsStatus autoOpsStatus = 10;
+ * optional AutoOpsStatus auto_ops_status = 10;
  * @return {!proto.bucketeer.autoops.AutoOpsStatus}
  */
-proto.bucketeer.autoops.AutoOpsRule.prototype.getAutoopsstatus = function() {
+proto.bucketeer.autoops.AutoOpsRule.prototype.getAutoOpsStatus = function() {
   return /** @type {!proto.bucketeer.autoops.AutoOpsStatus} */ (jspb.Message.getFieldWithDefault(this, 10, 0));
 };
 
@@ -476,7 +476,7 @@ proto.bucketeer.autoops.AutoOpsRule.prototype.getAutoopsstatus = function() {
  * @param {!proto.bucketeer.autoops.AutoOpsStatus} value
  * @return {!proto.bucketeer.autoops.AutoOpsRule} returns this
  */
-proto.bucketeer.autoops.AutoOpsRule.prototype.setAutoopsstatus = function(value) {
+proto.bucketeer.autoops.AutoOpsRule.prototype.setAutoOpsStatus = function(value) {
   return jspb.Message.setProto3EnumField(this, 10, value);
 };
 

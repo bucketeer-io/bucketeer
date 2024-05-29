@@ -61,6 +61,7 @@ const (
 	codeDiff          = "Diff"
 	codeNone          = "None"
 	codeNoFeatures    = "NoFeatures"
+	codeNoSegments    = "NoSegments"
 	codeOld           = "Old"
 	codeInternalError = "InternalError"
 	codeBadRequest    = "BadRequest"
@@ -88,21 +89,32 @@ var (
 			Subsystem: "gateway",
 			Name:      "api_evaluations_total",
 			Help:      "Total number of evaluations",
-		}, []string{"project_id", "environment_namespace", "tag", "evaluation_type"})
+			// TODO: Remove project_id.
+		}, []string{"project_id", "project_url_code", "environment_namespace", "tag", "evaluation_type"})
 	getFeatureFlagsCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
 			Subsystem: "gateway",
 			Name:      "api_get_feature_flags_total",
 			Help:      "Total number of get feature flags",
-		}, []string{"project_id", "environment_namespace", "tag", "response_type"})
+			// TODO: Remove project_id.
+		}, []string{"project_id", "project_url_code", "environment_namespace", "tag", "response_type"})
+	getSegmentUsersCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "gateway",
+			Name:      "api_get_segment_users_total",
+			Help:      "Total number of get segment users api requests",
+			// TODO: Remove project_id.
+		}, []string{"project_id", "project_url_code", "environment_namespace", "source_id", "sdk_version", "response_type"})
 	requestTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
 			Subsystem: "gateway",
 			Name:      "api_request_total",
 			Help:      "Total number of request",
-		}, []string{"organization_id", "project_id", "environment_id", "method", "source_id"})
+			// TODO: Remove project_id.
+		}, []string{"organization_id", "project_id", "project_url_code", "environment_id", "method", "source_id"})
 	// TODO: Remove after deleting api-gateway REST server
 	restCacheCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -185,6 +197,7 @@ func registerMetrics(r metrics.Registerer) {
 			eventCounter,
 			evaluationsCounter,
 			getFeatureFlagsCounter,
+			getSegmentUsersCounter,
 			requestTotal,
 			sdkGetEvaluationsLatencyHistogram,
 			sdkGetEvaluationsSizeHistogram,

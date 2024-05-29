@@ -241,7 +241,7 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 		return
 	}
 	requestTotal.WithLabelValues(
-		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId,
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, methodGetEvaluations, reqBody.SourceID.String()).Inc()
 	s.publishUser(req.Context(), envAPIKey.Environment.Id, reqBody.Tag, reqBody.User, reqBody.SourceID)
 	f, err, _ := s.flightgroup.Do(
@@ -311,7 +311,7 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 		return
 	}
 	requestTotal.WithLabelValues(
-		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId,
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, methodGetEvaluation, reqBody.SourceId.String()).Inc()
 	s.publishUser(req.Context(), envAPIKey.Environment.Id, reqBody.Tag, reqBody.User, reqBody.SourceId)
 	f, err, _ := s.flightgroup.Do(
@@ -857,7 +857,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 		return
 	}
 	requestTotal.WithLabelValues(
-		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId,
+		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, methodRegisterEvents, "").Inc()
 	errs := make(map[string]*registerEventsResponseError)
 	goalMessages := make([]publisher.Message, 0)

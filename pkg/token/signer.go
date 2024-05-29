@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	jose "gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 )
 
 type Signer interface {
@@ -61,7 +61,7 @@ func NewSignerWithPrivateKey(privateKey *rsa.PrivateKey) (Signer, error) {
 }
 
 func (s *signer) Sign(token *IDToken) (string, error) {
-	return jwt.Signed(s.sig).Claims(token).CompactSerialize()
+	return jwt.Signed(s.sig).Claims(token).Serialize()
 }
 
 func parseRSAPrivateKey(data []byte) (*rsa.PrivateKey, error) {

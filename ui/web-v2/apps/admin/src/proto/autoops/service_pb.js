@@ -2919,7 +2919,6 @@ proto.bucketeer.autoops.ExecuteAutoOpsRequest.toObject = function(includeInstanc
     environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ""),
     id: jspb.Message.getFieldWithDefault(msg, 2, ""),
     changeAutoOpsRuleTriggeredAtCommand: (f = msg.getChangeAutoOpsRuleTriggeredAtCommand()) && proto_autoops_command_pb.ChangeAutoOpsRuleTriggeredAtCommand.toObject(includeInstance, f),
-    changeAutoOpsStatusCommand: (f = msg.getChangeAutoOpsStatusCommand()) && proto_autoops_command_pb.ChangeAutoOpsStatusCommand.toObject(includeInstance, f),
     executeAutoOpsRuleCommand: (f = msg.getExecuteAutoOpsRuleCommand()) && proto_autoops_command_pb.ExecuteAutoOpsRuleCommand.toObject(includeInstance, f)
   };
 
@@ -2971,11 +2970,6 @@ proto.bucketeer.autoops.ExecuteAutoOpsRequest.deserializeBinaryFromReader = func
       msg.setChangeAutoOpsRuleTriggeredAtCommand(value);
       break;
     case 4:
-      var value = new proto_autoops_command_pb.ChangeAutoOpsStatusCommand;
-      reader.readMessage(value,proto_autoops_command_pb.ChangeAutoOpsStatusCommand.deserializeBinaryFromReader);
-      msg.setChangeAutoOpsStatusCommand(value);
-      break;
-    case 5:
       var value = new proto_autoops_command_pb.ExecuteAutoOpsRuleCommand;
       reader.readMessage(value,proto_autoops_command_pb.ExecuteAutoOpsRuleCommand.deserializeBinaryFromReader);
       msg.setExecuteAutoOpsRuleCommand(value);
@@ -3031,18 +3025,10 @@ proto.bucketeer.autoops.ExecuteAutoOpsRequest.serializeBinaryToWriter = function
       proto_autoops_command_pb.ChangeAutoOpsRuleTriggeredAtCommand.serializeBinaryToWriter
     );
   }
-  f = message.getChangeAutoOpsStatusCommand();
-  if (f != null) {
-    writer.writeMessage(
-      4,
-      f,
-      proto_autoops_command_pb.ChangeAutoOpsStatusCommand.serializeBinaryToWriter
-    );
-  }
   f = message.getExecuteAutoOpsRuleCommand();
   if (f != null) {
     writer.writeMessage(
-      5,
+      4,
       f,
       proto_autoops_command_pb.ExecuteAutoOpsRuleCommand.serializeBinaryToWriter
     );
@@ -3124,49 +3110,12 @@ proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.hasChangeAutoOpsRuleTrig
 
 
 /**
- * optional ChangeAutoOpsStatusCommand change_auto_ops_status_command = 4;
- * @return {?proto.bucketeer.autoops.ChangeAutoOpsStatusCommand}
- */
-proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.getChangeAutoOpsStatusCommand = function() {
-  return /** @type{?proto.bucketeer.autoops.ChangeAutoOpsStatusCommand} */ (
-    jspb.Message.getWrapperField(this, proto_autoops_command_pb.ChangeAutoOpsStatusCommand, 4));
-};
-
-
-/**
- * @param {?proto.bucketeer.autoops.ChangeAutoOpsStatusCommand|undefined} value
- * @return {!proto.bucketeer.autoops.ExecuteAutoOpsRequest} returns this
-*/
-proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.setChangeAutoOpsStatusCommand = function(value) {
-  return jspb.Message.setWrapperField(this, 4, value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.autoops.ExecuteAutoOpsRequest} returns this
- */
-proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.clearChangeAutoOpsStatusCommand = function() {
-  return this.setChangeAutoOpsStatusCommand(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.hasChangeAutoOpsStatusCommand = function() {
-  return jspb.Message.getField(this, 4) != null;
-};
-
-
-/**
- * optional ExecuteAutoOpsRuleCommand execute_auto_ops_rule_command = 5;
+ * optional ExecuteAutoOpsRuleCommand execute_auto_ops_rule_command = 4;
  * @return {?proto.bucketeer.autoops.ExecuteAutoOpsRuleCommand}
  */
 proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.getExecuteAutoOpsRuleCommand = function() {
   return /** @type{?proto.bucketeer.autoops.ExecuteAutoOpsRuleCommand} */ (
-    jspb.Message.getWrapperField(this, proto_autoops_command_pb.ExecuteAutoOpsRuleCommand, 5));
+    jspb.Message.getWrapperField(this, proto_autoops_command_pb.ExecuteAutoOpsRuleCommand, 4));
 };
 
 
@@ -3175,7 +3124,7 @@ proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.getExecuteAutoOpsRuleCom
  * @return {!proto.bucketeer.autoops.ExecuteAutoOpsRequest} returns this
 */
 proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.setExecuteAutoOpsRuleCommand = function(value) {
-  return jspb.Message.setWrapperField(this, 5, value);
+  return jspb.Message.setWrapperField(this, 4, value);
 };
 
 
@@ -3193,7 +3142,7 @@ proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.clearExecuteAutoOpsRuleC
  * @return {boolean}
  */
 proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.hasExecuteAutoOpsRuleCommand = function() {
-  return jspb.Message.getField(this, 5) != null;
+  return jspb.Message.getField(this, 4) != null;
 };
 
 

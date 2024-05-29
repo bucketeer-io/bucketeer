@@ -276,7 +276,7 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 	patterns := []struct {
 		desc           string
 		inputEnvAPIKey *accountproto.EnvironmentAPIKey
-		inputRole      accountproto.APIKey_Role
+		inputRole      []accountproto.APIKey_Role
 		expected       error
 	}{
 		{
@@ -289,7 +289,7 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 					Disabled: false,
 				},
 			},
-			inputRole: accountproto.APIKey_SDK_CLIENT,
+			inputRole: []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT},
 			expected:  ErrBadRole,
 		},
 		{
@@ -303,7 +303,7 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 				},
 				EnvironmentDisabled: true,
 			},
-			inputRole: accountproto.APIKey_SDK_CLIENT,
+			inputRole: []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT},
 			expected:  ErrDisabledAPIKey,
 		},
 		{
@@ -317,7 +317,7 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 				},
 				EnvironmentDisabled: false,
 			},
-			inputRole: accountproto.APIKey_SDK_CLIENT,
+			inputRole: []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT},
 			expected:  ErrDisabledAPIKey,
 		},
 		{
@@ -330,7 +330,7 @@ func TestGrpcCheckEnvironmentAPIKey(t *testing.T) {
 					Disabled: false,
 				},
 			},
-			inputRole: accountproto.APIKey_SDK_CLIENT,
+			inputRole: []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT},
 			expected:  nil,
 		},
 	}
@@ -782,6 +782,551 @@ func TestGrpcGetEvaluationsContextCanceled(t *testing.T) {
 		actual, err := gs.GetEvaluations(ctx, &gwproto.GetEvaluationsRequest{})
 		assert.Equal(t, p.expected, actual, "%s", p.desc)
 		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+	}
+}
+
+func TestGrpcGetSegmentUsersContextCanceled(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	patterns := []struct {
+		desc        string
+		cancel      bool
+		expected    *gwproto.GetSegmentUsersResponse
+		expectedErr error
+	}{
+		{
+			desc:        "error: context canceled",
+			cancel:      true,
+			expected:    nil,
+			expectedErr: ErrContextCanceled,
+		},
+		{
+			desc:        "error: missing API key",
+			cancel:      false,
+			expected:    nil,
+			expectedErr: ErrMissingAPIKey,
+		},
+	}
+	for _, p := range patterns {
+		gs := newGrpcGatewayServiceWithMock(t, mockController)
+		ctx, cancel := context.WithCancel(context.Background())
+		if p.cancel {
+			cancel()
+		} else {
+			defer cancel()
+		}
+		actual, err := gs.GetSegmentUsers(ctx, &gwproto.GetSegmentUsersRequest{})
+		assert.Equal(t, p.expected, actual, "%s", p.desc)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+	}
+}
+
+func TestGrpcGetSegmentUsers(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	timeNow := time.Now()
+	apiKey := "api-key-id"
+	envID := "ns0"
+	tag := "tag"
+	multiSegmentUsers := []*featureproto.SegmentUsers{
+		{
+			SegmentId: "segment-id-2",
+			Users: []*featureproto.SegmentUser{
+				{
+					SegmentId: "segment-id-2",
+					UserId:    "user-id",
+				},
+			},
+			UpdatedAt: timeNow.Add(-30 * time.Minute).Unix(),
+		},
+		{
+			SegmentId: "segment-id-4",
+			Users: []*featureproto.SegmentUser{
+				{
+					SegmentId: "segment-id-4",
+					UserId:    "user-id",
+				},
+			},
+			UpdatedAt: timeNow.Add(-1 * time.Hour).Unix(),
+		},
+		{
+			SegmentId: "segment-id-5",
+			Users: []*featureproto.SegmentUser{
+				{
+					SegmentId: "segment-id-5",
+					UserId:    "user-id",
+				},
+			},
+			UpdatedAt: timeNow.Add(-1 * time.Hour).Unix(),
+		},
+	}
+	singleFeature := []*featureproto.Feature{
+		{
+			Id:        "feature-id-1",
+			Version:   1,
+			Tags:      []string{tag},
+			UpdatedAt: timeNow.Add(-20 * time.Minute).Unix(),
+		},
+	}
+	multiFeatures := []*featureproto.Feature{
+		{
+			Id:        "feature-id-1",
+			Version:   1,
+			Tags:      []string{tag},
+			UpdatedAt: timeNow.Add(-20 * time.Minute).Unix(),
+		},
+		{
+			Id:      "feature-id-2",
+			Version: 1,
+			Tags:    []string{},
+			Rules: []*featureproto.Rule{
+				{
+					Id: "rule-id",
+					Clauses: []*featureproto.Clause{
+						{
+							Id:       "clause-id",
+							Operator: featureproto.Clause_SEGMENT,
+							Values:   []string{"segment-id-2"},
+						},
+					},
+				},
+			},
+			UpdatedAt: timeNow.Add(-20 * time.Minute).Unix(),
+		},
+		{
+			Id:        "feature-id-3",
+			Version:   1,
+			Tags:      []string{},
+			UpdatedAt: timeNow.Add(-20 * time.Minute).Unix(),
+		},
+		{
+			Id:      "feature-id-4",
+			Version: 1,
+			Tags:    []string{tag},
+			Rules: []*featureproto.Rule{
+				{
+					Id: "rule-id",
+					Clauses: []*featureproto.Clause{
+						{
+							Id:       "clause-id",
+							Operator: featureproto.Clause_SEGMENT,
+							Values:   []string{"segment-id-4"},
+						},
+					},
+				},
+			},
+			UpdatedAt: timeNow.Add(-secondsToReturnAllFlags * time.Second).Unix(),
+			Archived:  true,
+		},
+		{
+			Id:      "feature-id-5",
+			Version: 1,
+			Tags:    []string{tag},
+			Rules: []*featureproto.Rule{
+				{
+					Id: "rule-id",
+					Clauses: []*featureproto.Clause{
+						{
+							Id:       "clause-id",
+							Operator: featureproto.Clause_SEGMENT,
+							Values:   []string{"segment-id-5"},
+						},
+					},
+				},
+			},
+			UpdatedAt: timeNow.Add(-10 * time.Minute).Unix(),
+			Archived:  false,
+		},
+	}
+	patterns := []struct {
+		desc        string
+		setup       func(*grpcGatewayService)
+		input       *gwproto.GetSegmentUsersRequest
+		expected    *gwproto.GetSegmentUsersResponse
+		expectedErr error
+	}{
+		{
+			desc: "err: environment api key not found",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					nil, errors.New("internal error"))
+				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetAPIKeyBySearchingAllEnvironments(gomock.Any(), gomock.Any()).Return(
+					nil, status.Errorf(codes.NotFound, "test"))
+			},
+			input:       &gwproto.GetSegmentUsersRequest{},
+			expected:    nil,
+			expectedErr: ErrInvalidAPIKey,
+		},
+		{
+			desc: "err: bad role",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envID},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_CLIENT,
+							Disabled: false,
+						},
+					}, nil)
+			},
+			input:       &gwproto.GetSegmentUsersRequest{},
+			expected:    nil,
+			expectedErr: ErrBadRole,
+		},
+		{
+			desc: "err: source id is required",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envID},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+			},
+			input: &gwproto.GetSegmentUsersRequest{
+				SourceId: eventproto.SourceId_UNKNOWN,
+			},
+			expected:    nil,
+			expectedErr: ErrSourceIDRequired,
+		},
+		{
+			desc: "err: sdk version is required",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envID},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+			},
+			input: &gwproto.GetSegmentUsersRequest{
+				SourceId:   eventproto.SourceId_GO_SERVER,
+				SdkVersion: "",
+			},
+			expected:    nil,
+			expectedErr: ErrSDKVersionRequired,
+		},
+		{
+			desc: "err: internal error while getting feature flags",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envID},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envID).Return(
+					nil, errors.New("internal error"))
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListFeatures(gomock.Any(), gomock.Any()).Return(
+					nil, ErrInternal)
+			},
+			input: &gwproto.GetSegmentUsersRequest{
+				SegmentIds:  []string{},
+				RequestedAt: 0,
+				SourceId:    eventproto.SourceId_GO_SERVER,
+				SdkVersion:  "v0.0.1",
+			},
+			expected:    nil,
+			expectedErr: ErrInternal,
+		},
+		{
+			desc: "err: internal error while getting segments users",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envID},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envID).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{multiFeatures[1]},
+					}, nil)
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get("segment-id-2", envID).Return(
+					nil, errors.New("internal error"))
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+					nil, ErrInternal)
+			},
+			input: &gwproto.GetSegmentUsersRequest{
+				SegmentIds:  []string{},
+				RequestedAt: 0,
+				SourceId:    eventproto.SourceId_GO_SERVER,
+				SdkVersion:  "v0.0.1",
+			},
+			expected:    nil,
+			expectedErr: ErrInternal,
+		},
+		{
+			desc: "err: internal error while getting segment",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envID},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envID).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{multiFeatures[1]},
+					}, nil)
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get("segment-id-2", envID).Return(
+					nil, errors.New("internal error"))
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
+					&featureproto.ListSegmentUsersResponse{
+						Users: []*featureproto.SegmentUser{
+							{
+								SegmentId: "segment-id-2",
+							},
+						},
+					}, nil)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().GetSegment(gomock.Any(), gomock.Any()).Return(
+					nil, ErrInternal)
+			},
+			input: &gwproto.GetSegmentUsersRequest{
+				SegmentIds:  []string{},
+				RequestedAt: 0,
+				SourceId:    eventproto.SourceId_GO_SERVER,
+				SdkVersion:  "v0.0.1",
+			},
+			expected:    nil,
+			expectedErr: ErrInternal,
+		},
+		{
+			desc: "success: zero feature",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envID},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envID).Return(
+					&featureproto.Features{
+						Features: []*featureproto.Feature{},
+					}, nil)
+			},
+			input: &gwproto.GetSegmentUsersRequest{
+				SegmentIds:  []string{},
+				RequestedAt: 0,
+				SourceId:    eventproto.SourceId_GO_SERVER,
+				SdkVersion:  "v0.0.1",
+			},
+			expected: &gwproto.GetSegmentUsersResponse{
+				SegmentUsers:      make([]*featureproto.SegmentUsers, 0),
+				DeletedSegmentIds: make([]string, 0),
+				RequestedAt:       timeNow.Unix(),
+				ForceUpdate:       true,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: no segments",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envID},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envID).Return(
+					&featureproto.Features{
+						Features: singleFeature,
+					}, nil)
+			},
+			input: &gwproto.GetSegmentUsersRequest{
+				SegmentIds:  []string{},
+				RequestedAt: 0,
+				SourceId:    eventproto.SourceId_GO_SERVER,
+				SdkVersion:  "v0.0.1",
+			},
+			expected: &gwproto.GetSegmentUsersResponse{
+				SegmentUsers:      make([]*featureproto.SegmentUsers, 0),
+				DeletedSegmentIds: make([]string, 0),
+				RequestedAt:       timeNow.Unix(),
+				ForceUpdate:       true,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: request at older than 30 days",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envID},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envID).Return(
+					&featureproto.Features{
+						Features: multiFeatures,
+					}, nil)
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get("segment-id-2", envID).Return(
+					multiSegmentUsers[0], nil)
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get("segment-id-5", envID).Return(
+					multiSegmentUsers[2], nil)
+			},
+			input: &gwproto.GetSegmentUsersRequest{
+				SegmentIds:  []string{"segment-id-1", "segment-id-2", "segment-id-3"},
+				RequestedAt: timeNow.Add(-31 * 24 * time.Hour).Unix(),
+				SourceId:    eventproto.SourceId_GO_SERVER,
+				SdkVersion:  "v0.0.1",
+			},
+			expected: &gwproto.GetSegmentUsersResponse{
+				SegmentUsers: []*featureproto.SegmentUsers{
+					multiSegmentUsers[0],
+					multiSegmentUsers[2],
+				},
+				DeletedSegmentIds: make([]string, 0),
+				RequestedAt:       timeNow.Unix(),
+				ForceUpdate:       true,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: return deleted segment ids",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envID},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envID).Return(
+					&featureproto.Features{
+						Features: multiFeatures,
+					}, nil)
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get("segment-id-2", envID).Return(
+					multiSegmentUsers[0], nil)
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get("segment-id-5", envID).Return(
+					multiSegmentUsers[2], nil)
+			},
+			input: &gwproto.GetSegmentUsersRequest{
+				SegmentIds:  []string{"segment-id-1", "segment-id-2", "segment-id-3"},
+				RequestedAt: timeNow.Add(-10 * time.Minute).Unix(),
+				SourceId:    eventproto.SourceId_GO_SERVER,
+				SdkVersion:  "v0.0.1",
+			},
+			expected: &gwproto.GetSegmentUsersResponse{
+				SegmentUsers:      make([]*featureproto.SegmentUsers, 0),
+				DeletedSegmentIds: []string{"segment-id-1", "segment-id-3"},
+				RequestedAt:       timeNow.Unix(),
+				ForceUpdate:       false,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: return updated segment users",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envID},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envID).Return(
+					&featureproto.Features{
+						Features: multiFeatures,
+					}, nil)
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get("segment-id-2", envID).Return(
+					multiSegmentUsers[0], nil)
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get("segment-id-5", envID).Return(
+					multiSegmentUsers[2], nil)
+			},
+			input: &gwproto.GetSegmentUsersRequest{
+				SegmentIds:  []string{"segment-id-1", "segment-id-2", "segment-id-3"},
+				RequestedAt: timeNow.Add(-40 * time.Minute).Unix(),
+				SourceId:    eventproto.SourceId_GO_SERVER,
+				SdkVersion:  "v0.0.1",
+			},
+			expected: &gwproto.GetSegmentUsersResponse{
+				SegmentUsers:      []*featureproto.SegmentUsers{multiSegmentUsers[0]},
+				DeletedSegmentIds: []string{"segment-id-1", "segment-id-3"},
+				RequestedAt:       timeNow.Unix(),
+				ForceUpdate:       false,
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: nothing to update",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(apiKey).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: envID},
+						ApiKey: &accountproto.APIKey{
+							Id:       apiKey,
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featuresCache.(*cachev3mock.MockFeaturesCache).EXPECT().Get(envID).Return(
+					&featureproto.Features{
+						Features: multiFeatures,
+					}, nil)
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get("segment-id-2", envID).Return(
+					multiSegmentUsers[0], nil)
+				gs.segmentUsersCache.(*cachev3mock.MockSegmentUsersCache).EXPECT().Get("segment-id-5", envID).Return(
+					multiSegmentUsers[2], nil)
+			},
+			input: &gwproto.GetSegmentUsersRequest{
+				SegmentIds:  []string{"segment-id-2"},
+				RequestedAt: timeNow.Add(-20 * time.Minute).Unix(),
+				SourceId:    eventproto.SourceId_GO_SERVER,
+				SdkVersion:  "v0.0.1",
+			},
+			expected: &gwproto.GetSegmentUsersResponse{
+				SegmentUsers:      make([]*featureproto.SegmentUsers, 0),
+				DeletedSegmentIds: make([]string, 0),
+				RequestedAt:       timeNow.Unix(),
+				ForceUpdate:       false,
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newGrpcGatewayServiceWithMock(t, mockController)
+			p.setup(gs)
+			ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
+				"authorization": []string{apiKey},
+			})
+			actual, err := gs.GetSegmentUsers(ctx, p.input)
+			assert.Equal(t, p.expected, actual, "%s", p.desc)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		})
 	}
 }
 
@@ -2171,6 +2716,8 @@ func TestGrpcGetEvaluationsEvaluateFeatures(t *testing.T) {
 					nil).MaxTimes(1)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().ListSegmentUsers(gomock.Any(), gomock.Any()).Return(
 					&featureproto.ListSegmentUsersResponse{}, nil)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().GetSegment(gomock.Any(), gomock.Any()).Return(
+					&featureproto.GetSegmentResponse{Segment: &featureproto.Segment{}}, nil)
 			},
 			input: &gwproto.GetEvaluationsRequest{Tag: "test", User: &userproto.User{Id: "user-id-1"}},
 			expected: &gwproto.GetEvaluationsResponse{

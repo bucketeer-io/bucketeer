@@ -31,8 +31,8 @@ export class AutoOpsRule extends jspb.Message {
   getDeleted(): boolean;
   setDeleted(value: boolean): void;
 
-  getAutoopsstatus(): AutoOpsStatusMap[keyof AutoOpsStatusMap];
-  setAutoopsstatus(value: AutoOpsStatusMap[keyof AutoOpsStatusMap]): void;
+  getAutoOpsStatus(): AutoOpsStatusMap[keyof AutoOpsStatusMap];
+  setAutoOpsStatus(value: AutoOpsStatusMap[keyof AutoOpsStatusMap]): void;
 
   getStoppedAt(): number;
   setStoppedAt(value: number): void;
@@ -57,7 +57,7 @@ export namespace AutoOpsRule {
     createdAt: number,
     updatedAt: number,
     deleted: boolean,
-    autoopsstatus: AutoOpsStatusMap[keyof AutoOpsStatusMap],
+    autoOpsStatus: AutoOpsStatusMap[keyof AutoOpsStatusMap],
     stoppedAt: number,
   }
 }

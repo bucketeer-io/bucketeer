@@ -13,8 +13,8 @@ export class Clause extends jspb.Message {
   getClause(): google_protobuf_any_pb.Any | undefined;
   setClause(value?: google_protobuf_any_pb.Any): void;
 
-  getActiontype(): ActionTypeMap[keyof ActionTypeMap];
-  setActiontype(value: ActionTypeMap[keyof ActionTypeMap]): void;
+  getActionType(): ActionTypeMap[keyof ActionTypeMap];
+  setActionType(value: ActionTypeMap[keyof ActionTypeMap]): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Clause.AsObject;
@@ -30,7 +30,7 @@ export namespace Clause {
   export type AsObject = {
     id: string,
     clause?: google_protobuf_any_pb.Any.AsObject,
-    actiontype: ActionTypeMap[keyof ActionTypeMap],
+    actionType: ActionTypeMap[keyof ActionTypeMap],
   }
 }
 

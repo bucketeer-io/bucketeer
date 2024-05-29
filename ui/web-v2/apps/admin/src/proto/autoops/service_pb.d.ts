@@ -335,11 +335,6 @@ export class ExecuteAutoOpsRequest extends jspb.Message {
   getChangeAutoOpsRuleTriggeredAtCommand(): proto_autoops_command_pb.ChangeAutoOpsRuleTriggeredAtCommand | undefined;
   setChangeAutoOpsRuleTriggeredAtCommand(value?: proto_autoops_command_pb.ChangeAutoOpsRuleTriggeredAtCommand): void;
 
-  hasChangeAutoOpsStatusCommand(): boolean;
-  clearChangeAutoOpsStatusCommand(): void;
-  getChangeAutoOpsStatusCommand(): proto_autoops_command_pb.ChangeAutoOpsStatusCommand | undefined;
-  setChangeAutoOpsStatusCommand(value?: proto_autoops_command_pb.ChangeAutoOpsStatusCommand): void;
-
   hasExecuteAutoOpsRuleCommand(): boolean;
   clearExecuteAutoOpsRuleCommand(): void;
   getExecuteAutoOpsRuleCommand(): proto_autoops_command_pb.ExecuteAutoOpsRuleCommand | undefined;
@@ -360,7 +355,6 @@ export namespace ExecuteAutoOpsRequest {
     environmentNamespace: string,
     id: string,
     changeAutoOpsRuleTriggeredAtCommand?: proto_autoops_command_pb.ChangeAutoOpsRuleTriggeredAtCommand.AsObject,
-    changeAutoOpsStatusCommand?: proto_autoops_command_pb.ChangeAutoOpsStatusCommand.AsObject,
     executeAutoOpsRuleCommand?: proto_autoops_command_pb.ExecuteAutoOpsRuleCommand.AsObject,
   }
 }
