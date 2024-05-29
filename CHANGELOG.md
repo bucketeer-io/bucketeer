@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.2](https://github.com/bucketeer-io/bucketeer/compare/v0.4.1...v0.4.2) (2024-05-29)
+
+
+### Miscellaneous
+
+* update evaluation module version ([#964](https://github.com/bucketeer-io/bucketeer/issues/964)) ([5bfcfab](https://github.com/bucketeer-io/bucketeer/commit/5bfcfab672aaf5999a7791a5a2d28cb1c4209371))
+
 ## [0.4.1](https://github.com/bucketeer-io/bucketeer/compare/v0.4.0...v0.4.1) (2024-05-28)
 
 
