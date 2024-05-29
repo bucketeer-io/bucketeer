@@ -973,7 +973,7 @@ func (s *AutoOpsService) GetAutoOpsRule(
 		}
 		return nil, dt.Err()
 	}
-	if autoOpsRule.Deleted {
+	if autoOpsRule.AutoOpsStatus == autoopsproto.AutoOpsStatus_DELETED {
 		dt, err := statusAlreadyDeleted.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.AlreadyDeletedError),

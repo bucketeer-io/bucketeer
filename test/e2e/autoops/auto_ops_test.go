@@ -225,7 +225,7 @@ func TestDeleteAutoOpsRule(t *testing.T) {
 		EnvironmentNamespace: *environmentNamespace,
 		Id:                   autoOpsRules[0].Id,
 	})
-	if resp.AutoOpsRule.AutoOpsStatus != autoopsproto.AutoOpsStatus_DELETED {
+	if resp != nil {
 		t.Fatal("autoOpsRules is not deleted")
 	}
 	if err == nil {
@@ -256,7 +256,7 @@ func TestExecuteAutoOpsRule(t *testing.T) {
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
 	}
-	_, err := autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
+	res, err := autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
 		EnvironmentNamespace: *environmentNamespace,
 		Id:                   autoOpsRules[0].Id,
 		ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
@@ -265,6 +265,9 @@ func TestExecuteAutoOpsRule(t *testing.T) {
 	})
 	if err != nil {
 		t.Fatalf("failed to execute auto ops: %s", err.Error())
+	}
+	if res.AlreadyTriggered {
+		t.Fatalf("auto ops rule is already triggered")
 	}
 	feature = getFeature(t, featureClient, featureID)
 	if feature.Enabled == true {

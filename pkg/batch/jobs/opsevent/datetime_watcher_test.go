@@ -93,16 +93,18 @@ func TestRunDatetimeWatcher(t *testing.T) {
 					&autoopsproto.ListAutoOpsRulesResponse{
 						AutoOpsRules: []*autoopsproto.AutoOpsRule{
 							{
-								Id:          "id-0",
-								FeatureId:   "fid-0",
-								Clauses:     []*autoopsproto.Clause{{Clause: c}},
-								TriggeredAt: 0,
+								Id:            "id-0",
+								FeatureId:     "fid-0",
+								Clauses:       []*autoopsproto.Clause{{Clause: c}},
+								OpsType:       autoopsproto.OpsType_SCHEDULE,
+								AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
 							},
 							{
-								Id:          "id-1",
-								FeatureId:   "fid-1",
-								Clauses:     []*autoopsproto.Clause{{Clause: c}},
-								TriggeredAt: 1,
+								Id:            "id-1",
+								FeatureId:     "fid-1",
+								Clauses:       []*autoopsproto.Clause{{Clause: c}},
+								OpsType:       autoopsproto.OpsType_SCHEDULE,
+								AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
 							},
 						},
 					},

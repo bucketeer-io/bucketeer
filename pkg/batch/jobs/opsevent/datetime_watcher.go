@@ -61,6 +61,7 @@ func NewDatetimeWatcher(
 }
 
 func (w *datetimeWatcher) Run(ctx context.Context) (lastErr error) {
+	w.logger.Debug("Start datetime watcher")
 	ctx, cancel := context.WithTimeout(ctx, w.opts.Timeout)
 	defer cancel()
 	envs, err := w.listEnvironments(ctx)
@@ -76,6 +77,13 @@ func (w *datetimeWatcher) Run(ctx context.Context) (lastErr error) {
 		}
 		for _, a := range autoOpsRules {
 			aor := &autoopsdomain.AutoOpsRule{AutoOpsRule: a}
+			w.logger.Debug("[datetime] auto ops rule",
+				zap.String("autoOpsRuleId", a.Id),
+				zap.String("environmentNamespace", env.Id),
+				zap.String("featureId", a.FeatureId),
+				zap.String("status", a.AutoOpsStatus.String()),
+				zap.Any("clauses", a.Clauses))
+
 			if !aor.HasExecuteClause() {
 				continue
 			}
@@ -86,6 +94,10 @@ func (w *datetimeWatcher) Run(ctx context.Context) (lastErr error) {
 			if executeClause == nil {
 				continue
 			}
+			w.logger.Debug("Execute auto ops rule",
+				zap.String("executeClauseId", executeClause.Id),
+				zap.String("executeActionType", executeClause.ActionType.String()),
+			)
 			if err = w.autoOpsExecutor.Execute(ctx, env.Id, a.Id, executeClause); err != nil {
 				lastErr = err
 			}
@@ -136,7 +148,6 @@ func (w *datetimeWatcher) getExecuteDateTimeClause(
 	nowTimestamp := time.Now().Unix()
 	var latestExecuteClause *autoopsproto.Clause
 	var latestDatetime = int64(0)
-	var waitingOpsCount = 0
 	for _, c := range datetimeClauses {
 		datetimeClause, err := a.UnmarshalDatetimeClause(c)
 		if err != nil {
@@ -149,7 +160,6 @@ func (w *datetimeWatcher) getExecuteDateTimeClause(
 		}
 
 		if w.assessRule(datetimeClause, nowTimestamp) {
-			waitingOpsCount++
 			if datetimeClause.Time >= latestDatetime {
 				latestDatetime = datetimeClause.Time
 				latestExecuteClause = c
