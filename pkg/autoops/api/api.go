@@ -1199,6 +1199,21 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		if err := handler.Handle(ctx, autoopsproto.ChangeAutoOpsStatusCommand{Status: opsStatus}); err != nil {
 			return err
 		}
+		s.logger.Debug(fmt.Sprintf("ExecuteAutoOps  autoOpsRuleStatus %v - ClauseId = %v", autoOpsRule.AutoOpsStatus, req.Id))
+		if err = autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentNamespace); err != nil {
+			if err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
+				s.logger.Warn(
+					"No rows were affected",
+					log.FieldsFromImcomingContext(ctx).AddFields(
+						zap.Error(err),
+						zap.String("id", req.Id),
+						zap.String("environmentNamespace", req.EnvironmentNamespace),
+					)...,
+				)
+				return nil
+			}
+			return err
+		}
 		return nil
 	})
 	if err != nil {
