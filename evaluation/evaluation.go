@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"time"
 
+	"golang.org/x/exp/maps"
+
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
@@ -101,8 +103,10 @@ func (e *evaluator) EvaluateFeaturesByEvaluatedAt(
 	if len(updatedFeatures) == 0 {
 		return e.evaluate(fs, user, mapSegmentUsers, true, targetTag)
 	}
-	featuresHavePrerequisite := e.getFeaturesHavePrerequisite(fs)
-	evalTargets := e.getPrerequisiteUpwards(updatedFeatures, featuresHavePrerequisite)
+	evalTargets, err := e.getEvalFeatures(updatedFeatures, fs)
+	if err != nil {
+		return nil, err
+	}
 	return e.evaluate(evalTargets, user, mapSegmentUsers, false, targetTag)
 }
 
@@ -384,6 +388,44 @@ func (e *evaluator) getPrerequisiteUpwards( // nolint:unused
 		queue = queue[1:]
 	}
 	return e.getPrerequisiteResult(targetFeatures, upwardsFeatures)
+}
+
+// getEvalFeatures gets the features to be evaluated including features used as the prerequisite and the flag dependency.
+func (e *evaluator) getEvalFeatures(
+	targetFeatures, allFeatures []*ftproto.Feature,
+) ([]*ftproto.Feature, error) {
+	allFeaturesMap := make(map[string]*ftproto.Feature, len(allFeatures))
+	for _, f := range allFeatures {
+		allFeaturesMap[f.Id] = f
+	}
+	evalFeatures := make(map[string]*ftproto.Feature)
+	for _, tf := range targetFeatures {
+		evalFeatures[tf.Id] = tf
+		if tf.Rules == nil {
+			continue
+		}
+		// Add a feature that are used as the prerequisite.
+		for _, p := range tf.Prerequisites {
+			f, ok := allFeaturesMap[p.FeatureId]
+			if !ok {
+				return nil, ErrFeatureNotFound
+			}
+			evalFeatures[f.Id] = f
+		}
+		// Add a feature that are used as the flag dependency.
+		for _, r := range tf.Rules {
+			for _, c := range r.Clauses {
+				if c.Operator == ftproto.Clause_FEATURE_FLAG {
+					f, ok := allFeaturesMap[c.Attribute]
+					if !ok {
+						return nil, ErrFeatureNotFound
+					}
+					evalFeatures[f.Id] = f
+				}
+			}
+		}
+	}
+	return maps.Values(evalFeatures), nil
 }
 
 func (e *evaluator) getPrerequisiteResult(
