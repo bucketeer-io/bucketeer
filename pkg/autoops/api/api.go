@@ -1196,7 +1196,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		}
 		s.logger.Debug(fmt.Sprintf("ExecuteAutoOps ChangeAutoOpsStatusCommand opsStatus %v - ClauseId = %v", opsStatus, req.Id))
 
-		if err := handler.Handle(ctx, autoopsproto.ChangeAutoOpsStatusCommand{Status: opsStatus}); err != nil {
+		if err := handler.Handle(ctx, &autoopsproto.ChangeAutoOpsStatusCommand{Status: opsStatus}); err != nil {
 			return err
 		}
 		s.logger.Debug(fmt.Sprintf("ExecuteAutoOps  autoOpsRuleStatus %v - ClauseId = %v", autoOpsRule.AutoOpsStatus, req.Id))
