@@ -1153,20 +1153,6 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		}
 		s.logger.Debug(fmt.Sprintf("ExecuteAutoOps Get featureId = %v - ClauseId = %v", feature.Id, req.Id))
 		prStorage := v2as.NewProgressiveRolloutStorage(tx)
-		if err = autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentNamespace); err != nil {
-			if err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
-				s.logger.Warn(
-					"No rows were affected",
-					log.FieldsFromImcomingContext(ctx).AddFields(
-						zap.Error(err),
-						zap.String("id", req.Id),
-						zap.String("environmentNamespace", req.EnvironmentNamespace),
-					)...,
-				)
-				return nil
-			}
-			return err
-		}
 		// Stop the running progressive rollout if the operation type is disable
 		if req.ExecuteAutoOpsRuleCommand.Clause.ActionType == autoopsproto.ActionType_DISABLE {
 			s.logger.Debug(fmt.Sprintf("ExecuteAutoOps stopProgressiveRollout - ClauseId = %v", req.Id))
