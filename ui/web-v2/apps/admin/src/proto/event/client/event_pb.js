@@ -5856,7 +5856,9 @@ proto.bucketeer.event.client.ApiId = {
   UNKNOWN_API: 0,
   GET_EVALUATION: 1,
   GET_EVALUATIONS: 2,
-  REGISTER_EVENTS: 3
+  REGISTER_EVENTS: 3,
+  GET_FEATURE_FLAGS: 4,
+  GET_SEGMENT_USERS: 5
 };
 
 goog.object.extend(exports, proto.bucketeer.event.client);

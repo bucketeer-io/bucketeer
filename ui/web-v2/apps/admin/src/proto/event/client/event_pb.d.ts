@@ -752,6 +752,8 @@ export interface ApiIdMap {
   GET_EVALUATION: 1;
   GET_EVALUATIONS: 2;
   REGISTER_EVENTS: 3;
+  GET_FEATURE_FLAGS: 4;
+  GET_SEGMENT_USERS: 5;
 }
 
 export const ApiId: ApiIdMap;
