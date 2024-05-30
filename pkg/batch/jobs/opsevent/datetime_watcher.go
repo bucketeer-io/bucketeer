@@ -95,6 +95,8 @@ func (w *datetimeWatcher) Run(ctx context.Context) (lastErr error) {
 				continue
 			}
 			w.logger.Debug("Execute auto ops rule",
+				zap.String("featureId", a.FeatureId),
+				zap.String("autoOpsRuleId", a.Id),
 				zap.String("executeClauseId", executeClause.Id),
 				zap.String("executeActionType", executeClause.ActionType.String()),
 			)
