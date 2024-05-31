@@ -14,8 +14,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.16
 	github.com/aws/aws-sdk-go-v2/service/kms v1.32.1
 	github.com/blang/semver v3.5.1+incompatible
-	github.com/bucketeer-io/bucketeer/evaluation v0.0.0
-	github.com/bucketeer-io/bucketeer/proto v0.0.0
 	github.com/coreos/go-oidc v2.2.1+incompatible
 	github.com/go-gota/gota v0.12.0
 	github.com/go-jose/go-jose/v4 v4.0.2
@@ -45,6 +43,7 @@ require (
 	gonum.org/v1/gonum v0.15.0
 	google.golang.org/api v0.180.0
 	google.golang.org/genproto v0.0.0-20240401170217-c3f982113cda
+	google.golang.org/genproto/googleapis/api v0.0.0-20240513163218-0867130af1f8
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240509183442-62759503f434
 	google.golang.org/grpc v1.64.0
 	google.golang.org/protobuf v1.34.1
@@ -127,20 +126,17 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/crypto v0.23.0 // indirect
-	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
+	golang.org/x/exp v0.0.0-20240529005216-23cca8864a10 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/tools v0.20.0 // indirect
+	golang.org/x/tools v0.21.0 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240513163218-0867130af1f8 // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 replace (
-	github.com/bucketeer-io/bucketeer/evaluation v0.0.0 => ./evaluation
-	github.com/bucketeer-io/bucketeer/proto v0.0.0 => ./proto
 	google.golang.org/grpc v1.36.0 => google.golang.org/grpc v1.29.1
 	k8s.io/code-generator => k8s.io/code-generator v0.0.0-20191003035328-700b1226c0bd
 )
