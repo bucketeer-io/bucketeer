@@ -356,7 +356,7 @@ func (e *evaluator) getFeaturesDependedOnTargets(
 			return
 		}
 		evals[f.Id] = f
-		dmn := &domain.Feature{f}
+		dmn := &domain.Feature{Feature: f}
 		for _, fid := range dmn.FeatureIDsDependsOn() {
 			dfs(all[fid])
 		}
@@ -381,7 +381,7 @@ func (e *evaluator) getFeaturesDependsOnTargets(
 		if _, ok := evals[f.Id]; ok {
 			return true
 		}
-		dmn := &domain.Feature{f}
+		dmn := &domain.Feature{Feature: f}
 		for _, fid := range dmn.FeatureIDsDependsOn() {
 			if dfs(all[fid]) {
 				evals[f.Id] = f
