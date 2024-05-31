@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"time"
 
+	"golang.org/x/exp/maps"
+
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
@@ -58,7 +60,6 @@ func NewEvaluator() *evaluator {
 	return &evaluator{}
 }
 
-// Deprecated: use EvaluateFeaturesByEvaluatedAt instead.
 // This function will be removed once all the SDK clients are updated.
 func (e *evaluator) EvaluateFeatures(
 	fs []*ftproto.Feature,
@@ -101,8 +102,10 @@ func (e *evaluator) EvaluateFeaturesByEvaluatedAt(
 	if len(updatedFeatures) == 0 {
 		return e.evaluate(fs, user, mapSegmentUsers, true, targetTag)
 	}
-	featuresHavePrerequisite := e.getFeaturesHavePrerequisite(fs)
-	evalTargets := e.getPrerequisiteUpwards(updatedFeatures, featuresHavePrerequisite)
+	evalTargets, err := e.getEvalFeatures(updatedFeatures, fs)
+	if err != nil {
+		return nil, err
+	}
 	return e.evaluate(evalTargets, user, mapSegmentUsers, false, targetTag)
 }
 
@@ -315,26 +318,6 @@ func (e *evaluator) assignUser(
 	return &ftproto.Reason{Type: ftproto.Reason_DEFAULT}, variation, nil
 }
 
-func (e *evaluator) getFeaturesHavePrerequisite(
-	fs []*ftproto.Feature,
-) []*ftproto.Feature {
-	featuresHavePrerequisite := make(map[string]*ftproto.Feature)
-	for _, f := range fs {
-		if len(f.Prerequisites) == 0 {
-			continue
-		}
-		if _, ok := featuresHavePrerequisite[f.Id]; ok {
-			continue
-		}
-		featuresHavePrerequisite[f.Id] = f
-	}
-	result := make([]*ftproto.Feature, 0, len(featuresHavePrerequisite))
-	for _, v := range featuresHavePrerequisite {
-		result = append(result, v)
-	}
-	return result
-}
-
 // GetPrerequisiteDownwards gets the features specified as prerequisite by the targetFeatures.
 func (e *evaluator) GetPrerequisiteDownwards(
 	targetFeatures, allFeatures []*ftproto.Feature,
@@ -343,66 +326,71 @@ func (e *evaluator) GetPrerequisiteDownwards(
 	for _, f := range allFeatures {
 		allFeaturesMap[f.Id] = f
 	}
-	prerequisites := make(map[string]*ftproto.Feature)
-	// depth first search
-	queue := append([]*ftproto.Feature{}, targetFeatures...)
-	for len(queue) > 0 {
-		f := queue[0]
+	return maps.Values(e.getFeaturesDependedOnTargets(targetFeatures, allFeaturesMap)), nil
+}
+
+func (e *evaluator) getEvalFeatures(
+	targetFeatures, allFeatures []*ftproto.Feature,
+) ([]*ftproto.Feature, error) {
+	all := make(map[string]*ftproto.Feature, len(allFeatures))
+	for _, f := range allFeatures {
+		all[f.Id] = f
+	}
+
+	evals1 := e.getFeaturesDependedOnTargets(targetFeatures, all)
+	evals2 := e.getFeaturesDependsOnTargets(targetFeatures, all)
+	evals := e.mapMerge(evals1, evals2)
+	return maps.Values(evals), nil
+}
+
+// getFeaturesDependedOnTargets returns the features that are depended on the target features.
+// targetFeatures are included in the result.
+func (e *evaluator) getFeaturesDependedOnTargets(
+	targets []*ftproto.Feature, all map[string]*ftproto.Feature,
+) map[string]*ftproto.Feature {
+	evals := make(map[string]*ftproto.Feature)
+	var dfs func(f *ftproto.Feature)
+	dfs = func(f *ftproto.Feature) {
+		if _, ok := evals[f.Id]; ok {
+			return
+		}
+		evals[f.Id] = f
 		for _, p := range f.Prerequisites {
-			preFeature, ok := allFeaturesMap[p.FeatureId]
-			if !ok {
-				return nil, ErrFeatureNotFound
-			}
-			prerequisites[preFeature.Id] = preFeature
-			queue = append(queue, preFeature)
+			dfs(all[p.FeatureId])
 		}
-		queue = queue[1:]
 	}
-	return e.getPrerequisiteResult(targetFeatures, prerequisites), nil
+	for _, f := range targets {
+		dfs(f)
+	}
+	return evals
 }
 
-// Gets the features that have the specified targetFeatures as the prerequisite.
-func (e *evaluator) getPrerequisiteUpwards( // nolint:unused
-	targetFeatures, featuresHavePrerequisite []*ftproto.Feature,
-) []*ftproto.Feature {
-	upwardsFeatures := make(map[string]*ftproto.Feature)
-	// depth first search
-	queue := append([]*ftproto.Feature{}, targetFeatures...)
-	for len(queue) > 0 {
-		f := queue[0]
-		for _, newTarget := range featuresHavePrerequisite {
-			for _, p := range newTarget.Prerequisites {
-				if p.FeatureId == f.Id {
-					if _, ok := upwardsFeatures[newTarget.Id]; ok {
-						continue
-					}
-					upwardsFeatures[newTarget.Id] = newTarget
-					queue = append(queue, newTarget)
-				}
+// getFeaturesDependsOnTargets returns the features that depend on the target features.
+// targetFeatures are included in the result.
+func (e *evaluator) getFeaturesDependsOnTargets(
+	targets []*ftproto.Feature, all map[string]*ftproto.Feature,
+) map[string]*ftproto.Feature {
+	evals := make(map[string]*ftproto.Feature)
+	for _, f := range targets {
+		evals[f.Id] = f
+	}
+	var dfs func(f *ftproto.Feature) bool
+	dfs = func(f *ftproto.Feature) bool {
+		if _, ok := evals[f.Id]; ok {
+			return true
+		}
+		for _, p := range f.Prerequisites {
+			if dfs(all[p.FeatureId]) {
+				evals[f.Id] = f
+				return true
 			}
 		}
-		queue = queue[1:]
+		return false
 	}
-	return e.getPrerequisiteResult(targetFeatures, upwardsFeatures)
-}
-
-func (e *evaluator) getPrerequisiteResult(
-	targetFeatures []*ftproto.Feature,
-	featuresDependencies map[string]*ftproto.Feature,
-) []*ftproto.Feature {
-	if len(featuresDependencies) == 0 {
-		return targetFeatures
+	for _, f := range all {
+		dfs(f)
 	}
-	targetFeaturesMap := make(map[string]*ftproto.Feature, len(targetFeatures))
-	for _, f := range targetFeatures {
-		targetFeaturesMap[f.Id] = f
-	}
-	merged := e.mapMerge(targetFeaturesMap, featuresDependencies)
-	result := make([]*ftproto.Feature, 0, len(merged))
-	for _, v := range merged {
-		result = append(result, v)
-	}
-	return result
+	return evals
 }
 
 func (e *evaluator) mapMerge(m1, m2 map[string]*ftproto.Feature) map[string]*ftproto.Feature {

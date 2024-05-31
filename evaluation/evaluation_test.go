@@ -698,6 +698,64 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 			expectedEvalFeatureIDs: []string{"feature1", "feature2", "feature3", "feature4"},
 			expectedError:          nil,
 		},
+		{
+			desc:                  "success: including up/downwards features of target feature with prerequisite",
+			prevUEID:              "prevUEID",
+			evaluatedAt:           tenMinutesAgo.Unix(),
+			userAttributesUpdated: false,
+			tag:                   "",
+			createFeatures: func() []*ftproto.Feature {
+				f1 := makeFeature("feature1")
+				f1.UpdatedAt = oneHourAgo.Unix()
+				f1.Prerequisites = []*ftproto.Prerequisite{{
+					FeatureId:   "feature2",
+					VariationId: "B",
+				}}
+
+				f2 := makeFeature("feature2")
+				f2.UpdatedAt = fiveMinutesAgo.Unix()
+				f2.Prerequisites = []*ftproto.Prerequisite{{
+					FeatureId:   "feature3",
+					VariationId: "B",
+				}}
+				f3 := makeFeature("feature3")
+				f3.UpdatedAt = oneHourAgo.Unix()
+				return []*ftproto.Feature{f1, f2, f3}
+			},
+			expectedEvals: NewUserEvaluations(
+				"dummy",
+				[]*ftproto.Evaluation{
+					{
+						Id:             "feature1:1:user1",
+						FeatureId:      "feature1",
+						VariationId:    "variation-B",
+						VariationName:  "Variation B",
+						VariationValue: "B",
+						Reason:         &ftproto.Reason{Type: ftproto.Reason_RULE},
+					},
+					{
+						Id:             "feature2:1:user1",
+						FeatureId:      "feature2",
+						VariationId:    "variation-B",
+						VariationName:  "Variation B",
+						VariationValue: "B",
+						Reason:         &ftproto.Reason{Type: ftproto.Reason_RULE},
+					},
+					{
+						Id:             "feature3:1:user1",
+						FeatureId:      "feature3",
+						VariationId:    "variation-B",
+						VariationName:  "Variation B",
+						VariationValue: "B",
+						Reason:         &ftproto.Reason{Type: ftproto.Reason_RULE},
+					},
+				},
+				[]string{},
+				false,
+			),
+			expectedEvalFeatureIDs: []string{"feature1", "feature2", "feature3"},
+			expectedError:          nil,
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -712,8 +770,11 @@ func TestEvaluateFeaturesByEvaluatedAt(t *testing.T) {
 				p.tag,
 			)
 			assert.Equal(t, p.expectedError, err)
+			if p.expectedError != nil {
+				return
+			}
 			assert.Equal(t, p.expectedEvals.UserEvaluations.ForceUpdate, actual.ForceUpdate)
-			assert.Equal(t, p.expectedEvals.UserEvaluations.ArchivedFeatureIds, actual.ArchivedFeatureIds)
+			assert.ElementsMatch(t, p.expectedEvals.UserEvaluations.ArchivedFeatureIds, actual.ArchivedFeatureIds)
 			assert.Equal(t, len(p.expectedEvals.UserEvaluations.Evaluations), len(actual.Evaluations))
 			for _, e := range actual.Evaluations {
 				assert.Contains(t, p.expectedEvalFeatureIDs, e.FeatureId)
@@ -1069,7 +1130,7 @@ func TestGetPrerequisiteDownwards(t *testing.T) {
 	}
 }
 
-func TestGetPrerequisiteUpwards(t *testing.T) {
+func TestGetEvalFeatures(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -1077,73 +1138,191 @@ func TestGetPrerequisiteUpwards(t *testing.T) {
 	evaluator := NewEvaluator()
 
 	patterns := []struct {
-		desc     string
-		target   []*ftproto.Feature
-		expected []*ftproto.Feature
+		desc        string
+		targets     []*ftproto.Feature
+		all         []*ftproto.Feature
+		expectedIDs []string
 	}{
 		{
 			desc: "success: No prerequisites",
-			target: []*ftproto.Feature{
-				allFeaturesForPrerequisiteTest["featureA"],
-				allFeaturesForPrerequisiteTest["featureB"],
-				allFeaturesForPrerequisiteTest["featureC"],
-				allFeaturesForPrerequisiteTest["featureD"],
+			targets: []*ftproto.Feature{
+				{Id: "featureA"},
 			},
-			expected: []*ftproto.Feature{
-				allFeaturesForPrerequisiteTest["featureA"],
-				allFeaturesForPrerequisiteTest["featureB"],
-				allFeaturesForPrerequisiteTest["featureC"],
-				allFeaturesForPrerequisiteTest["featureD"],
+			all: []*ftproto.Feature{
+				{Id: "featureA"},
+				{Id: "featureB"},
 			},
+			expectedIDs: []string{"featureA"},
 		},
 		{
-			desc: "success: Get prerequisites pattern1",
-			target: []*ftproto.Feature{
-				allFeaturesForPrerequisiteTest["featureF"],
+			desc: "success: one feature depends on target",
+			targets: []*ftproto.Feature{
+				{Id: "featureA"},
 			},
-			expected: []*ftproto.Feature{
-				allFeaturesForPrerequisiteTest["featureA"],
-				allFeaturesForPrerequisiteTest["featureF"],
+			all: []*ftproto.Feature{
+				{Id: "featureA"},
+				{
+					Id: "featureB",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "featureA"},
+					},
+				},
+				{Id: "featureC"},
 			},
+			expectedIDs: []string{"featureA", "featureB"},
 		},
 		{
-			desc: "success: Get prerequisites pattern2",
-			target: []*ftproto.Feature{
-				allFeaturesForPrerequisiteTest["featureK"],
-				allFeaturesForPrerequisiteTest["featureE"],
+			desc: "success: multiple features depends on target",
+			targets: []*ftproto.Feature{
+				{Id: "featureA"},
 			},
-			expected: []*ftproto.Feature{
-				allFeaturesForPrerequisiteTest["featureA"],
-				allFeaturesForPrerequisiteTest["featureE"],
-				allFeaturesForPrerequisiteTest["featureG"],
-				allFeaturesForPrerequisiteTest["featureH"],
-				allFeaturesForPrerequisiteTest["featureI"],
-				allFeaturesForPrerequisiteTest["featureK"],
+			all: []*ftproto.Feature{
+				{Id: "featureA"},
+				{
+					Id: "featureB",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "featureA"},
+					},
+				},
+				{
+					Id: "featureC",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "featureB"},
+					},
+				},
+				{
+					Id: "featureD",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "featureA"},
+					},
+				},
+				{Id: "featureE"},
 			},
+			expectedIDs: []string{"featureA", "featureB", "featureC", "featureD"},
 		},
 		{
-			desc: "success: Get prerequisites pattern3",
-			target: []*ftproto.Feature{
-				allFeaturesForPrerequisiteTest["featureM"],
-				allFeaturesForPrerequisiteTest["featureN"],
+			desc: "success: target depends on one feature",
+			targets: []*ftproto.Feature{
+				{
+					Id: "featureA",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "featureB"},
+					},
+				},
 			},
-			expected: []*ftproto.Feature{
-				allFeaturesForPrerequisiteTest["featureC"],
-				allFeaturesForPrerequisiteTest["featureL"],
-				allFeaturesForPrerequisiteTest["featureM"],
-				allFeaturesForPrerequisiteTest["featureN"],
+			all: []*ftproto.Feature{
+				{
+					Id: "featureA",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "featureB"},
+					},
+				},
+				{
+					Id: "featureB",
+				},
+				{Id: "featureC"},
+			},
+			expectedIDs: []string{"featureA", "featureB"},
+		},
+		{
+			desc: "success: target depends on multiple features",
+			targets: []*ftproto.Feature{
+				{
+					Id: "featureA",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "featureB"},
+						{FeatureId: "featureC"},
+					},
+				},
+			},
+			all: []*ftproto.Feature{
+				{
+					Id: "featureA",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "featureB"},
+					},
+				},
+				{
+					Id: "featureB",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "featureD"},
+					},
+				},
+				{Id: "featureC"},
+				{Id: "featureD"},
+				{Id: "featureE"},
+			},
+			expectedIDs: []string{"featureA", "featureB", "featureC", "featureD"},
+		},
+		{
+			desc: "success: complex pattern 1",
+			targets: []*ftproto.Feature{
+				{
+					Id: "featureD",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "featureB"},
+					},
+				},
+			},
+			all: []*ftproto.Feature{
+				{
+					Id: "featureA",
+				},
+				{
+					Id: "featureB",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "featureA"},
+					},
+				},
+				{
+					Id: "featureC",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "featureB"},
+					},
+				},
+				{
+					Id: "featureD",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "featureB"},
+					},
+				},
+				{
+					Id: "featureE",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "featureC"},
+						{FeatureId: "featureD"},
+					},
+				},
+				{
+					Id: "featureF",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "featureE"},
+					},
+				},
+				{
+					Id: "featureG",
+					Prerequisites: []*ftproto.Prerequisite{
+						{FeatureId: "featureA"},
+					},
+				},
+				{
+					Id: "featureH",
+				},
+			},
+			expectedIDs: []string{
+				"featureA", "featureB", "featureD", "featureE", "featureF",
 			},
 		},
-	}
-	allFeatures := make([]*ftproto.Feature, 0, len(allFeaturesForPrerequisiteTest))
-	for _, v := range allFeaturesForPrerequisiteTest {
-		allFeatures = append(allFeatures, v)
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			featuresHavePrerequisite := evaluator.getFeaturesHavePrerequisite(allFeatures)
-			actual := evaluator.getPrerequisiteUpwards(p.target, featuresHavePrerequisite)
-			assert.ElementsMatch(t, p.expected, actual)
+			actual, _ := evaluator.getEvalFeatures(p.targets, p.all)
+			assert.Equal(t, len(p.expectedIDs), len(actual))
+			actualIDs := make([]string, 0, len(actual))
+			for _, v := range actual {
+				actualIDs = append(actualIDs, v.Id)
+			}
+			assert.ElementsMatch(t, p.expectedIDs, actualIDs)
 		})
 	}
 }
