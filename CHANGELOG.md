@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.3](https://github.com/bucketeer-io/bucketeer/compare/v0.4.2...v0.4.3) (2024-05-31)
+
+
+### Miscellaneous
+
+* **proto:** add get feature flags and segment users to api ID ([#969](https://github.com/bucketeer-io/bucketeer/issues/969)) ([5375af5](https://github.com/bucketeer-io/bucketeer/commit/5375af5e99076b6328cd8de6f248755a276d37f7))
+
 ## [0.4.2](https://github.com/bucketeer-io/bucketeer/compare/v0.4.1...v0.4.2) (2024-05-29)
 
 
