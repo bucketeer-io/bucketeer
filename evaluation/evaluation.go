@@ -388,12 +388,6 @@ func (e *evaluator) getFeaturesDependsOnTargets(
 				return true
 			}
 		}
-		for _, p := range f.Prerequisites {
-			if dfs(all[p.FeatureId]) {
-				evals[f.Id] = f
-				return true
-			}
-		}
 		return false
 	}
 	for _, f := range all {
