@@ -4521,6 +4521,10 @@
               {
                 "name": "GET_SEGMENT_USERS",
                 "integer": 5
+              },
+              {
+                "name": "SDK_GET_VARIATION",
+                "integer": 100
               }
             ]
           }
