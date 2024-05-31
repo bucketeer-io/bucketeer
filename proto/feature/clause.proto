@@ -30,6 +30,8 @@ message Clause {
     LESS_OR_EQUAL = 8;
     BEFORE = 9;
     AFTER = 10;
+    // Attribute is feture ID and value is variation ID.
+    FEATURE_FLAG = 11;
   }
   string id = 1;
   string attribute = 2;
