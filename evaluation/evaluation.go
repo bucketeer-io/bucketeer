@@ -202,8 +202,9 @@ func (e *evaluator) TopologicalSort(features []*ftproto.Feature) ([]*ftproto.Fea
 			return ErrCycleExists
 		}
 		marks[f.Id] = temporary
-		for _, p := range f.Prerequisites {
-			pf, ok := mapFeatures[p.FeatureId]
+		df := &domain.Feature{Feature: f}
+		for _, fid := range df.FeatureIDsDependsOn() {
+			pf, ok := mapFeatures[fid]
 			if !ok {
 				return ErrFeatureNotFound
 			}
