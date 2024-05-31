@@ -326,7 +326,7 @@ func (e *evaluator) GetPrerequisiteDownwards(
 	for _, f := range allFeatures {
 		allFeaturesMap[f.Id] = f
 	}
-	return maps.Values(e.getFeaturesDependedByTargets(targetFeatures, allFeaturesMap)), nil
+	return maps.Values(e.getFeaturesDependedOnTargets(targetFeatures, allFeaturesMap)), nil
 }
 
 func (e *evaluator) getEvalFeatures(
@@ -337,15 +337,15 @@ func (e *evaluator) getEvalFeatures(
 		all[f.Id] = f
 	}
 
-	evals1 := e.getFeaturesDependedByTargets(targetFeatures, all)
+	evals1 := e.getFeaturesDependedOnTargets(targetFeatures, all)
 	evals2 := e.getFeaturesDependsOnTargets(targetFeatures, all)
 	evals := e.mapMerge(evals1, evals2)
 	return maps.Values(evals), nil
 }
 
-// getFeaturesDependedByTargets returns the features that are depended by the target features.
+// getFeaturesDependedOnTargets returns the features that are depended on the target features.
 // targetFeatures are included in the result.
-func (e *evaluator) getFeaturesDependedByTargets(
+func (e *evaluator) getFeaturesDependedOnTargets(
 	targets []*ftproto.Feature, all map[string]*ftproto.Feature,
 ) map[string]*ftproto.Feature {
 	evals := make(map[string]*ftproto.Feature)
