@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.4](https://github.com/bucketeer-io/bucketeer/compare/v0.4.3...v0.4.4) (2024-05-31)
+
+
+### Features
+
+* add flag depencency proto to rule ([#970](https://github.com/bucketeer-io/bucketeer/issues/970)) ([f4eb6ff](https://github.com/bucketeer-io/bucketeer/commit/f4eb6ff57a7976576ed31dc477b459918a3fb8d8))
+
+
+### Bug Fixes
+
+* evaluation fails ([#967](https://github.com/bucketeer-io/bucketeer/issues/967)) ([22e06a2](https://github.com/bucketeer-io/bucketeer/commit/22e06a2d9405cb9072de7e4abe5272dcc6a97f74))
+
 ## [0.4.3](https://github.com/bucketeer-io/bucketeer/compare/v0.4.2...v0.4.3) (2024-05-31)
 
 
