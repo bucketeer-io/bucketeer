@@ -1598,3 +1598,77 @@ func TestResetSamplingSeed(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEmpty(t, f.SamplingSeed)
 }
+
+func TestFeatureIDsDependsOn(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		feature  *feature.Feature
+		expected []string
+	}{
+		{
+			feature:  &feature.Feature{},
+			expected: []string{},
+		},
+		{
+			feature: &feature.Feature{
+				Prerequisites: []*feature.Prerequisite{
+					{FeatureId: "feature-1"},
+				},
+			},
+			expected: []string{"feature-1"},
+		},
+		{
+			feature: &feature.Feature{
+				Prerequisites: []*feature.Prerequisite{
+					{FeatureId: "feature-1"},
+					{FeatureId: "feature-2"},
+				},
+			},
+			expected: []string{"feature-1", "feature-2"},
+		},
+		{
+			feature: &feature.Feature{
+				Rules: []*feature.Rule{
+					{
+						Clauses: []*feature.Clause{
+							{Attribute: "feature-1", Operator: feature.Clause_FEATURE_FLAG},
+						},
+					},
+				},
+			},
+			expected: []string{"feature-1"},
+		},
+		{
+			feature: &feature.Feature{
+				Rules: []*feature.Rule{
+					{
+						Clauses: []*feature.Clause{
+							{Attribute: "feature-1", Operator: feature.Clause_FEATURE_FLAG},
+							{Attribute: "feature-2", Operator: feature.Clause_FEATURE_FLAG},
+						},
+					},
+				},
+			},
+			expected: []string{"feature-1", "feature-2"},
+		},
+		{
+			feature: &feature.Feature{
+				Prerequisites: []*feature.Prerequisite{
+					{FeatureId: "feature-1"},
+				},
+				Rules: []*feature.Rule{
+					{
+						Clauses: []*feature.Clause{
+							{Attribute: "feature-2", Operator: feature.Clause_FEATURE_FLAG},
+						},
+					},
+				},
+			},
+			expected: []string{"feature-1", "feature-2"},
+		},
+	}
+	for _, p := range patterns {
+		f := &Feature{Feature: p.feature}
+		assert.Equal(t, p.expected, f.FeatureIDsDependsOn())
+	}
+}

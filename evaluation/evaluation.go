@@ -21,6 +21,7 @@ import (
 
 	"golang.org/x/exp/maps"
 
+	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
@@ -355,8 +356,9 @@ func (e *evaluator) getFeaturesDependedOnTargets(
 			return
 		}
 		evals[f.Id] = f
-		for _, p := range f.Prerequisites {
-			dfs(all[p.FeatureId])
+		dmn := &domain.Feature{f}
+		for _, fid := range dmn.FeatureIDsDependsOn() {
+			dfs(all[fid])
 		}
 	}
 	for _, f := range targets {
@@ -378,6 +380,13 @@ func (e *evaluator) getFeaturesDependsOnTargets(
 	dfs = func(f *ftproto.Feature) bool {
 		if _, ok := evals[f.Id]; ok {
 			return true
+		}
+		dmn := &domain.Feature{f}
+		for _, fid := range dmn.FeatureIDsDependsOn() {
+			if dfs(all[fid]) {
+				evals[f.Id] = f
+				return true
+			}
 		}
 		for _, p := range f.Prerequisites {
 			if dfs(all[p.FeatureId]) {
