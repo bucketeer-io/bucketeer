@@ -76,7 +76,7 @@ func NewEventsOPSPersister(
 		return nil, err
 	}
 	e := &eventsOPSPersister{
-		eventsOPSPersisterConfig: eventsOPSPersisterConfig{},
+		eventsOPSPersisterConfig: persisterConfig,
 		mysqlClient:              mysqlClient,
 		logger:                   logger,
 	}
@@ -115,7 +115,7 @@ func (e eventsOPSPersister) Process(ctx context.Context, msgChan <-chan *puller.
 			if !ok {
 				return nil
 			}
-			subscriberReceivedCounter.WithLabelValues().Inc()
+			subscriberReceivedCounter.WithLabelValues(e.subscriberType).Inc()
 			id := msg.Attributes["id"]
 			if id == "" {
 				msg.Ack()
