@@ -48,7 +48,7 @@ const (
 	Clause_LESS_OR_EQUAL    Clause_Operator = 8
 	Clause_BEFORE           Clause_Operator = 9
 	Clause_AFTER            Clause_Operator = 10
-	// Attribute is feture ID and value is variation ID.
+	// Attribute is feature ID, and value is variation ID.
 	Clause_FEATURE_FLAG Clause_Operator = 11
 )
 
