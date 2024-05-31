@@ -1,4 +1,4 @@
 global:
   image:
-    tag: v0.4.3 # x-release-please-version
+    tag: v0.4.4 # x-release-please-version
     imagePullSecrets:
