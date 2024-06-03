@@ -2406,10 +2406,12 @@ func TestAddFixedStrategyRule(t *testing.T) {
 		return st.Err()
 	}
 	patterns := []struct {
+		fs       []*featureproto.Feature
 		rule     *featureproto.Rule
 		expected error
 	}{
 		{
+			fs: []*featureproto.Feature{},
 			rule: &featureproto.Rule{
 				Id: "",
 				Strategy: &featureproto.Strategy{
@@ -2420,6 +2422,7 @@ func TestAddFixedStrategyRule(t *testing.T) {
 			expected: createError(statusMissingRuleID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_id")),
 		},
 		{
+			fs: []*featureproto.Feature{},
 			rule: &featureproto.Rule{
 				Id: "rule-id",
 				Strategy: &featureproto.Strategy{
@@ -2430,6 +2433,7 @@ func TestAddFixedStrategyRule(t *testing.T) {
 			expected: createError(statusIncorrectUUIDFormat, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
 		},
 		{
+			fs: []*featureproto.Feature{},
 			rule: &featureproto.Rule{
 				Id:       rID,
 				Strategy: nil,
@@ -2437,6 +2441,7 @@ func TestAddFixedStrategyRule(t *testing.T) {
 			expected: createError(statusMissingRuleStrategy, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "rule_strategy")),
 		},
 		{
+			fs: []*featureproto.Feature{},
 			rule: &featureproto.Rule{
 				Id: rID,
 				Strategy: &featureproto.Strategy{
@@ -2447,12 +2452,33 @@ func TestAddFixedStrategyRule(t *testing.T) {
 			expected: createError(statusMissingVariationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
 		},
 		{
+			fs: []*featureproto.Feature{
+				f.Feature,
+				{Id: "feature-1",
+					Prerequisites: []*featureproto.Prerequisite{
+						{FeatureId: "feature-id"},
+					}},
+			},
+			rule: &featureproto.Rule{
+				Id: rID,
+				Clauses: []*featureproto.Clause{
+					{Operator: featureproto.Clause_FEATURE_FLAG, Attribute: "feature-1"},
+				},
+				Strategy: &featureproto.Strategy{
+					Type:          featureproto.Strategy_FIXED,
+					FixedStrategy: &featureproto.FixedStrategy{},
+				},
+			},
+			expected: createError(statusCycleExists, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "rule")),
+		},
+		{
+			fs:       []*featureproto.Feature{},
 			rule:     expected,
 			expected: nil,
 		},
 	}
 	for _, p := range patterns {
-		err := validateRule(f.Variations, p.rule, localizer)
+		err := validateRule(p.fs, f.Feature, p.rule, localizer)
 		assert.Equal(t, p.expected, err)
 	}
 }
@@ -2675,7 +2701,7 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		err := validateRule(f.Variations, p.rule, localizer)
+		err := validateRule([]*featureproto.Feature{}, f.Feature, p.rule, localizer)
 		assert.Equal(t, p.expected, err)
 	}
 }
