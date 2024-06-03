@@ -92,7 +92,8 @@ func TestRuleEvaluator(t *testing.T) {
 	ruleEvaluator := &ruleEvaluator{}
 	for i, tc := range testcases {
 		des := fmt.Sprintf("index: %d", i)
-		assert.Equal(t, tc.expected, ruleEvaluator.Evaluate(f.Rules, tc.user, values), des)
+		actual, _ := ruleEvaluator.Evaluate(f.Rules, tc.user, values, nil)
+		assert.Equal(t, tc.expected, actual, des)
 	}
 }
 

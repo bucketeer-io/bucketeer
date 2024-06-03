@@ -27,38 +27,49 @@ func (e *ruleEvaluator) Evaluate(
 	rules []*featureproto.Rule,
 	user *userproto.User,
 	segmentUsers []*featureproto.SegmentUser,
-) *featureproto.Rule {
+	flagVariations map[string]string,
+) (*featureproto.Rule, error) {
 	for _, rule := range rules {
-		if e.evaluateRule(rule, user, segmentUsers) {
-			return rule
+		matched, err := e.evaluateRule(rule, user, segmentUsers, flagVariations)
+		if err != nil {
+			return nil, err
+		}
+		if matched {
+			return rule, nil
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 func (e *ruleEvaluator) evaluateRule(
 	rule *featureproto.Rule,
 	user *userproto.User,
 	segmentUsers []*featureproto.SegmentUser,
-) bool {
+	flagVariations map[string]string,
+) (bool, error) {
 	for _, clause := range rule.Clauses {
-		if !e.evaluateClause(clause, user, segmentUsers) {
-			return false
+		matched, err := e.evaluateClause(clause, user, segmentUsers, flagVariations)
+		if err != nil {
+			return false, err
+		}
+		if !matched {
+			return false, nil
 		}
 	}
-	return true
+	return true, nil
 }
 
 func (e *ruleEvaluator) evaluateClause(
 	clause *featureproto.Clause,
 	user *userproto.User,
 	segmentUsers []*featureproto.SegmentUser,
-) bool {
+	flagVariations map[string]string,
+) (bool, error) {
 	var targetAttr string
 	if clause.Attribute == "id" {
 		targetAttr = user.Id
 	} else {
 		targetAttr = user.Data[clause.Attribute]
 	}
-	return e.clauseEvaluator.Evaluate(targetAttr, clause, user.Id, segmentUsers)
+	return e.clauseEvaluator.Evaluate(targetAttr, clause, user.Id, segmentUsers, flagVariations)
 }

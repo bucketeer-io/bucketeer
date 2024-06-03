@@ -25,6 +25,7 @@ import (
 
 type clauseEvaluator struct {
 	segmentEvaluator
+	dependencyEvaluator
 }
 
 func (c *clauseEvaluator) Evaluate(
@@ -32,33 +33,36 @@ func (c *clauseEvaluator) Evaluate(
 	clause *featureproto.Clause,
 	userID string,
 	segmentUsers []*featureproto.SegmentUser,
-) bool {
+	flagVariations map[string]string,
+) (bool, error) {
 	switch clause.Operator {
 	case featureproto.Clause_EQUALS:
 		// TODO: this should only be one value or equals makes no sense.
-		return c.equals(targetValue, clause.Values)
+		return c.equals(targetValue, clause.Values), nil
 	case featureproto.Clause_IN:
-		return c.in(targetValue, clause.Values)
+		return c.in(targetValue, clause.Values), nil
 	case featureproto.Clause_STARTS_WITH:
-		return c.startsWith(targetValue, clause.Values)
+		return c.startsWith(targetValue, clause.Values), nil
 	case featureproto.Clause_ENDS_WITH:
-		return c.endsWith(targetValue, clause.Values)
+		return c.endsWith(targetValue, clause.Values), nil
 	case featureproto.Clause_SEGMENT:
-		return c.segmentEvaluator.Evaluate(clause.Values, userID, segmentUsers)
+		return c.segmentEvaluator.Evaluate(clause.Values, userID, segmentUsers), nil
 	case featureproto.Clause_GREATER:
-		return c.greater(targetValue, clause.Values)
+		return c.greater(targetValue, clause.Values), nil
 	case featureproto.Clause_GREATER_OR_EQUAL:
-		return c.greaterOrEqual(targetValue, clause.Values)
+		return c.greaterOrEqual(targetValue, clause.Values), nil
 	case featureproto.Clause_LESS:
-		return c.less(targetValue, clause.Values)
+		return c.less(targetValue, clause.Values), nil
 	case featureproto.Clause_LESS_OR_EQUAL:
-		return c.lessOrEqual(targetValue, clause.Values)
+		return c.lessOrEqual(targetValue, clause.Values), nil
 	case featureproto.Clause_BEFORE:
-		return c.before(targetValue, clause.Values)
+		return c.before(targetValue, clause.Values), nil
 	case featureproto.Clause_AFTER:
-		return c.after(targetValue, clause.Values)
+		return c.after(targetValue, clause.Values), nil
+	case featureproto.Clause_FEATURE_FLAG:
+		return c.dependencyEvaluator.Evaluate(clause.Attribute, clause.Values, flagVariations)
 	}
-	return false
+	return false, nil
 }
 
 func (c *clauseEvaluator) equals(targetValue string, values []string) bool {
