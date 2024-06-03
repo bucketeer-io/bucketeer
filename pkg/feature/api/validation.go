@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"regexp"
 
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -1162,7 +1163,6 @@ func validateRule(
 	tarF.Rules = append(tarF.Rules, rule)
 	defer func() { tarF.Rules = tarF.Rules[:len(tarF.Rules)-1] }()
 	if err := validateFeatureDependencies(fs); err != nil {
-	if err != nil {
 		if errors.Is(err, evaluation.ErrCycleExists) {
 			dt, err := statusCycleExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -1422,7 +1422,6 @@ func validateAddPrerequisite(
 	tarF.Prerequisites = append(tarF.Prerequisites, p)
 	defer func() { tarF.Prerequisites = prevPrerequisites }()
 	if err := validateFeatureDependencies(fs); err != nil {
-	if err != nil {
 		if err == evaluation.ErrCycleExists {
 			dt, err := statusCycleExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
