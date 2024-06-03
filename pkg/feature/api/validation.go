@@ -1421,7 +1421,7 @@ func validateAddPrerequisite(
 	prevPrerequisites := tarF.Prerequisites
 	tarF.Prerequisites = append(tarF.Prerequisites, p)
 	defer func() { tarF.Prerequisites = prevPrerequisites }()
-	err := validateFeatureDependencies(fs)
+	if err := validateFeatureDependencies(fs); err != nil {
 	if err != nil {
 		if err == evaluation.ErrCycleExists {
 			dt, err := statusCycleExists.WithDetails(&errdetails.LocalizedMessage{
