@@ -25,7 +25,7 @@ import (
 
 type clauseEvaluator struct {
 	segmentEvaluator
-	featureDependencyEvaluator
+	dependencyEvaluator
 }
 
 func (c *clauseEvaluator) Evaluate(
@@ -60,7 +60,7 @@ func (c *clauseEvaluator) Evaluate(
 	case featureproto.Clause_AFTER:
 		return c.after(targetValue, clause.Values), nil
 	case featureproto.Clause_FEATURE_FLAG:
-		return c.featureDependencyEvaluator.Evaluate(clause.Attribute, clause.Values, flagVariations)
+		return c.dependencyEvaluator.Evaluate(clause.Attribute, clause.Values, flagVariations)
 	}
 	return false, nil
 }

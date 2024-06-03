@@ -68,7 +68,7 @@ func TestEvaluate(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
-	eval := &featureDependencyEvaluator{}
+	eval := &dependencyEvaluator{}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			actual, err := eval.Evaluate(p.targetFeatureID, p.variationIDs, p.flagVariations)

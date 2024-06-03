@@ -14,10 +14,10 @@
 
 package evaluation
 
-type featureDependencyEvaluator struct {
+type dependencyEvaluator struct {
 }
 
-func (e *featureDependencyEvaluator) Evaluate(
+func (e *dependencyEvaluator) Evaluate(
 	featureID string, variationIDs []string,
 	flagVariations map[string]string,
 ) (bool, error) {
