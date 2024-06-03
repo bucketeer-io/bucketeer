@@ -1161,7 +1161,7 @@ func validateRule(
 	// Check dependency.
 	tarF.Rules = append(tarF.Rules, rule)
 	defer func() { tarF.Rules = tarF.Rules[:len(tarF.Rules)-1] }()
-	err := validateFeatureDependencies(fs)
+	if err := validateFeatureDependencies(fs); err != nil {
 	if err != nil {
 		if errors.Is(err, evaluation.ErrCycleExists) {
 			dt, err := statusCycleExists.WithDetails(&errdetails.LocalizedMessage{
