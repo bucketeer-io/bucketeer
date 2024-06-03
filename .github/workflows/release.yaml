@@ -11,21 +11,6 @@ jobs:
     name: Release Please
     runs-on: ubuntu-latest
     steps:
-      - uses: google-github-actions/release-please-action@4c5670f886fe259db4d11222f7dff41c1382304d # v3.7.12
+      - uses: googleapis/release-please-action@v4
         with:
-          changelog-types: |
-            [
-              {"type":"build","section":"Build System","hidden":false},
-              {"type":"chore","section":"Miscellaneous","hidden":false},
-              {"type":"feat","section":"Features","hidden":false},
-              {"type":"fix","section":"Bug Fixes","hidden":false},
-              {"type":"perf","section":"Performance Improvements","hidden":false},
-              {"type":"revert","section":"Reverts","hidden":false}
-            ]
-          release-type: simple
-          package-name: release-please-action
-          bump-minor-pre-major: true
-          bump-patch-for-minor-pre-major: true
           token: ${{ secrets.REPO_ACCESS_PAT }} # We need to set the PAT so the publishing workflow can be triggered
-          extra-files: |
-            manifests/bucketeer/values.yaml
