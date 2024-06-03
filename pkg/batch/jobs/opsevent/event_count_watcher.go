@@ -102,6 +102,13 @@ func (w *eventCountWatcher) Run(ctx context.Context) (lastErr error) {
 			if clause == nil {
 				continue
 			}
+			w.logger.Debug("eventCountWatcher Execute auto ops rule",
+				zap.String("featureId", a.FeatureId),
+				zap.String("autoOpsRuleId", a.Id),
+				zap.String("executeClauseId", clause.Id),
+				zap.String("executeActionType", clause.ActionType.String()),
+			)
+
 			if err = w.autoOpsExecutor.Execute(ctx, env.Id, a.Id, clause); err != nil {
 				lastErr = err
 			}
