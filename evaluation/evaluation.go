@@ -289,7 +289,10 @@ func (e *evaluator) assignUser(
 		}
 	}
 	// evaluate ruleset
-	rule := e.ruleEvaluator.Evaluate(feature.Rules, user, segmentUsers)
+	rule, err := e.ruleEvaluator.Evaluate(feature.Rules, user, segmentUsers, flagVariations)
+	if err != nil {
+		return nil, nil, err
+	}
 	if rule != nil {
 		variation, err := e.strategyEvaluator.Evaluate(
 			rule.Strategy,
