@@ -1130,8 +1130,8 @@ func checkIfAutoOpsRulesAreTriggered(t *testing.T, featureID string) {
 		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 		if len(autoOpsRules[0].Clauses) == 1 && autoOpsRules[0].AutoOpsStatus != autoopsproto.AutoOpsStatus_COMPLETED {
 			t.Fatalf("auto ops status is not completed")
-		} else if len(autoOpsRules[0].Clauses) > 1 && autoOpsRules[0].AutoOpsStatus != autoopsproto.AutoOpsStatus_WAITING {
-			t.Fatalf("auto ops status is not waiting")
+		} else if len(autoOpsRules[0].Clauses) > 1 && autoOpsRules[0].AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING {
+			t.Fatalf("auto ops status is not running")
 		}
 		break
 	}
