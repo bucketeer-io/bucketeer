@@ -1163,7 +1163,7 @@ func validateRule(
 	defer func() { tarF.Rules = tarF.Rules[:len(tarF.Rules)-1] }()
 	err := validateFeatureDependencies(fs)
 	if err != nil {
-		if err == evaluation.ErrCycleExists {
+		if errors.Is(err, evaluation.ErrCycleExists) {
 			dt, err := statusCycleExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "rule"),
