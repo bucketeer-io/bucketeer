@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.4.5](https://github.com/bucketeer-io/bucketeer/compare/v0.4.4...v0.4.5) (2024-06-03)
+
+
+### Build System
+
+* **deps:** bump the dependencies group with 2 updates ([#980](https://github.com/bucketeer-io/bucketeer/issues/980)) ([c8b60e6](https://github.com/bucketeer-io/bucketeer/commit/c8b60e6247921d65d4d0493f250c9a2872170024))
+* **deps:** bump the dependencies group with 2 updates ([#981](https://github.com/bucketeer-io/bucketeer/issues/981)) ([9aa66d8](https://github.com/bucketeer-io/bucketeer/commit/9aa66d8c6369faf2f8963f9a988a4e7fd601acce))
+
+
+### Miscellaneous
+
+* add function to return other features to depends on the feature ([#976](https://github.com/bucketeer-io/bucketeer/issues/976)) ([7256a1e](https://github.com/bucketeer-io/bucketeer/commit/7256a1ef37fcdc296a328610c9ba4b8b1effc4f3))
+* add validation of feature dependency rule ([#979](https://github.com/bucketeer-io/bucketeer/issues/979)) ([b54668e](https://github.com/bucketeer-io/bucketeer/commit/b54668e92df42015dd774ba246ef2d30bdba945c))
+
+
+### Features
+
+* evaluate flag dependency of targeting rule ([#983](https://github.com/bucketeer-io/bucketeer/issues/983)) ([15f1008](https://github.com/bucketeer-io/bucketeer/commit/15f10084d06a74ff111350161a691967a6df3699))
+
 ## [0.4.4](https://github.com/bucketeer-io/bucketeer/compare/v0.4.3...v0.4.4) (2024-05-31)
 
 
