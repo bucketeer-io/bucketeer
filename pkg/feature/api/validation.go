@@ -1158,7 +1158,7 @@ func validateRule(
 		}
 		return dt.Err()
 	}
-	// Check depencendy.
+	// Check dependency.
 	tarF.Rules = append(tarF.Rules, rule)
 	defer func() { tarF.Rules = tarF.Rules[:len(tarF.Rules)-1] }()
 	err := validateFeatureDependencies(fs)
