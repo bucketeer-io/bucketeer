@@ -12,29 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-syntax = "proto3";
+package evaluation
 
-package bucketeer.feature;
-option go_package = "github.com/bucketeer-io/bucketeer/proto/feature";
+type dependencyEvaluator struct {
+}
 
-message Clause {
-  enum Operator {
-    EQUALS = 0;
-    IN = 1;
-    ENDS_WITH = 2;
-    STARTS_WITH = 3;
-    SEGMENT = 4;
-    GREATER = 5;
-    GREATER_OR_EQUAL = 6;
-    LESS = 7;
-    LESS_OR_EQUAL = 8;
-    BEFORE = 9;
-    AFTER = 10;
-    // Attribute is feature ID, and value is variation ID.
-    FEATURE_FLAG = 11;
-  }
-  string id = 1;
-  string attribute = 2;
-  Operator operator = 3;
-  repeated string values = 4;
+func (e *dependencyEvaluator) Evaluate(
+	featureID string, variationIDs []string,
+	flagVariations map[string]string,
+) (bool, error) {
+	targetVarID, ok := flagVariations[featureID]
+	if !ok {
+		return false, ErrFeatureNotFound
+	}
+	for _, varID := range variationIDs {
+		if varID == targetVarID {
+			return true, nil
+		}
+	}
+	return false, nil
 }

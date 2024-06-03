@@ -97,7 +97,7 @@ func (h *autoOpsRuleCommandHandler) changeOpsType(
 
 func (h *autoOpsRuleCommandHandler) stop(ctx context.Context, cmd *proto.StopAutoOpsRuleCommand) error {
 	h.autoOpsRule.SetStopped()
-	return h.send(ctx, eventproto.Event_AUTOOPS_RULE_STOPED, &eventproto.AutoOpsRuleStopEvent{})
+	return h.send(ctx, eventproto.Event_AUTOOPS_RULE_STOPPED, &eventproto.AutoOpsRuleStopEvent{})
 }
 
 func (h *autoOpsRuleCommandHandler) delete(ctx context.Context, cmd *proto.DeleteAutoOpsRuleCommand) error {

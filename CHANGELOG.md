@@ -1,5 +1,115 @@
 # Changelog
 
+## [0.4.4](https://github.com/bucketeer-io/bucketeer/compare/v0.4.3...v0.4.4) (2024-05-31)
+
+
+### Features
+
+* add flag depencency proto to rule ([#970](https://github.com/bucketeer-io/bucketeer/issues/970)) ([f4eb6ff](https://github.com/bucketeer-io/bucketeer/commit/f4eb6ff57a7976576ed31dc477b459918a3fb8d8))
+
+
+### Bug Fixes
+
+* evaluation fails ([#967](https://github.com/bucketeer-io/bucketeer/issues/967)) ([22e06a2](https://github.com/bucketeer-io/bucketeer/commit/22e06a2d9405cb9072de7e4abe5272dcc6a97f74))
+
+## [0.4.3](https://github.com/bucketeer-io/bucketeer/compare/v0.4.2...v0.4.3) (2024-05-31)
+
+
+### Miscellaneous
+
+* **proto:** add get feature flags and segment users to api ID ([#969](https://github.com/bucketeer-io/bucketeer/issues/969)) ([5375af5](https://github.com/bucketeer-io/bucketeer/commit/5375af5e99076b6328cd8de6f248755a276d37f7))
+
+## [0.4.2](https://github.com/bucketeer-io/bucketeer/compare/v0.4.1...v0.4.2) (2024-05-29)
+
+
+### Miscellaneous
+
+* update evaluation module version ([#964](https://github.com/bucketeer-io/bucketeer/issues/964)) ([5bfcfab](https://github.com/bucketeer-io/bucketeer/commit/5bfcfab672aaf5999a7791a5a2d28cb1c4209371))
+
+## [0.4.1](https://github.com/bucketeer-io/bucketeer/compare/v0.4.0...v0.4.1) (2024-05-28)
+
+
+### Build System
+
+* **deps:** bump docker/setup-buildx-action in the dependencies group ([#911](https://github.com/bucketeer-io/bucketeer/issues/911)) ([76f22e7](https://github.com/bucketeer-io/bucketeer/commit/76f22e7989ece653be94a9c1e4217757a066a01f))
+* **deps:** bump lewagon/wait-on-check-action in the dependencies group ([#906](https://github.com/bucketeer-io/bucketeer/issues/906)) ([5b4819e](https://github.com/bucketeer-io/bucketeer/commit/5b4819ebb448b507fc2b096560dff803f2ed217c))
+* **deps:** bump the dependencies group across 1 directory with 19 updates ([#961](https://github.com/bucketeer-io/bucketeer/issues/961)) ([e3c95ce](https://github.com/bucketeer-io/bucketeer/commit/e3c95ceef4b341abfd18469af75c64e5c2a56660))
+* **deps:** bump the dependencies group with 15 updates ([#864](https://github.com/bucketeer-io/bucketeer/issues/864)) ([6f3dc15](https://github.com/bucketeer-io/bucketeer/commit/6f3dc15a070e06a8d46a245d236cae684ead31eb))
+* **deps:** bump the dependencies group with 17 updates ([#899](https://github.com/bucketeer-io/bucketeer/issues/899)) ([2b3f487](https://github.com/bucketeer-io/bucketeer/commit/2b3f487df88f354cf3de69cc97a59648ee47a5d9))
+* **deps:** bump the dependencies group with 2 updates ([#912](https://github.com/bucketeer-io/bucketeer/issues/912)) ([3e3f551](https://github.com/bucketeer-io/bucketeer/commit/3e3f551f5a196aef8705109e9d6c4fa5aaff6cba))
+* **deps:** bump the dependencies group with 4 updates ([#932](https://github.com/bucketeer-io/bucketeer/issues/932)) ([b54c4d7](https://github.com/bucketeer-io/bucketeer/commit/b54c4d7229f4d86b55ca8aaca75ae2a169c3afa3))
+* **deps:** bump the dependencies group with 5 updates ([#900](https://github.com/bucketeer-io/bucketeer/issues/900)) ([7ccf69f](https://github.com/bucketeer-io/bucketeer/commit/7ccf69fb1c2a39bdd406630af2bb06704e40c9c3))
+* **deps:** bump the dependencies group with 5 updates ([#907](https://github.com/bucketeer-io/bucketeer/issues/907)) ([8fbd877](https://github.com/bucketeer-io/bucketeer/commit/8fbd8773d656758a182fe9104f31cacdb5d519d7))
+
+
+### Miscellaneous
+
+* add environment settings proto ([#875](https://github.com/bucketeer-io/bucketeer/issues/875)) ([b4df666](https://github.com/bucketeer-io/bucketeer/commit/b4df66670d6b5229edfe6937889fd9a8a53eeb7e))
+* add error logs when checking requests in the api-gateway ([#902](https://github.com/bucketeer-io/bucketeer/issues/902)) ([3818270](https://github.com/bucketeer-io/bucketeer/commit/38182700e1803ed3ac937849e5da565f2562aec5))
+* add error logs when checking the env api key ([#905](https://github.com/bucketeer-io/bucketeer/issues/905)) ([5e1d525](https://github.com/bucketeer-io/bucketeer/commit/5e1d525923f5cb468f0386fbfd49bff0f32c19a2))
+* add get segment users api  ([#951](https://github.com/bucketeer-io/bucketeer/issues/951)) ([69f55ef](https://github.com/bucketeer-io/bucketeer/commit/69f55ef9a09f17f961df999f697ff83f91539756))
+* add hpa to batch service ([#942](https://github.com/bucketeer-io/bucketeer/issues/942)) ([2c48255](https://github.com/bucketeer-io/bucketeer/commit/2c482553d0288eadf0969eb738cc3fb8b8fc9370))
+* add mysql open connection configuration to batch server ([#945](https://github.com/bucketeer-io/bucketeer/issues/945)) ([e436a11](https://github.com/bucketeer-io/bucketeer/commit/e436a1150e210d5db8cdd25c7d8b9b301f8d8340))
+* add project url code to environment api key ([#956](https://github.com/bucketeer-io/bucketeer/issues/956)) ([85796c8](https://github.com/bucketeer-io/bucketeer/commit/85796c8fb4240efd9d4551392396fd033a6bf241))
+* add project url code to metrics ([#958](https://github.com/bucketeer-io/bucketeer/issues/958)) ([89b6687](https://github.com/bucketeer-io/bucketeer/commit/89b668726e07b226171610e9229495fd65c9b109))
+* add SDK_SERVER role to api key ([#923](https://github.com/bucketeer-io/bucketeer/issues/923)) ([047bc6d](https://github.com/bucketeer-io/bucketeer/commit/047bc6dceb1310b88739e2c0445ba09c6f289241))
+* add source id to register events request ([#915](https://github.com/bucketeer-io/bucketeer/issues/915)) ([d09e2dd](https://github.com/bucketeer-io/bucketeer/commit/d09e2dd995461d06f8febb1816b1350525c58fa2))
+* add subscribers config for dev container ([#917](https://github.com/bucketeer-io/bucketeer/issues/917)) ([1ab88cd](https://github.com/bucketeer-io/bucketeer/commit/1ab88cd2d95801cb5cf800d8678a97a018fde53e))
+* change cronjob error code condition to ignore 503 and 000 errors ([#928](https://github.com/bucketeer-io/bucketeer/issues/928)) ([09f1516](https://github.com/bucketeer-io/bucketeer/commit/09f1516dfb6be7a88bf878008156c4818215a393))
+* change metrics name for persister ([#944](https://github.com/bucketeer-io/bucketeer/issues/944)) ([eb61bb5](https://github.com/bucketeer-io/bucketeer/commit/eb61bb5cf9836a6b9a9dd6ff034d3de31e6c1d9d))
+* change to allow server api role in the register events api ([#954](https://github.com/bucketeer-io/bucketeer/issues/954)) ([e179528](https://github.com/bucketeer-io/bucketeer/commit/e179528ee1946703d10d9121b422532d3c6c8774))
+* change to use redis to cache environment api key ([#934](https://github.com/bucketeer-io/bucketeer/issues/934)) ([1c5a8f8](https://github.com/bucketeer-io/bucketeer/commit/1c5a8f8bab2a79da2c43eea232f59f74b38569d0))
+* implement created_at in the feature and segment users cache ([#931](https://github.com/bucketeer-io/bucketeer/issues/931)) ([1f57182](https://github.com/bucketeer-io/bucketeer/commit/1f571824aefaf06ea3f59cc3c0fa950c2d970e1e))
+* implement proto dir as go module ([#920](https://github.com/bucketeer-io/bucketeer/issues/920)) ([0b5de79](https://github.com/bucketeer-io/bucketeer/commit/0b5de79829bd1e8dbc146fd7a658278e5c8b1319))
+* move evaluation events persister ([#948](https://github.com/bucketeer-io/bucketeer/issues/948)) ([e887f32](https://github.com/bucketeer-io/bucketeer/commit/e887f324d339a0ceca2b243bad407346f92011c5))
+* move user persister to batch service ([#938](https://github.com/bucketeer-io/bucketeer/issues/938)) ([04ac1de](https://github.com/bucketeer-io/bucketeer/commit/04ac1deff4f0df7a08591fa86bdb201ba5739f6e))
+* remove domain informer job for dev container ([#918](https://github.com/bucketeer-io/bucketeer/issues/918)) ([f87a0c9](https://github.com/bucketeer-io/bucketeer/commit/f87a0c9c4703630753f9e3ead945cc881506804c))
+* remove segment persister ([#909](https://github.com/bucketeer-io/bucketeer/issues/909)) ([1c6bce1](https://github.com/bucketeer-io/bucketeer/commit/1c6bce114e59bfe88cda619a58aea26519455196))
+* remove transaction from upserting in the user persister ([#946](https://github.com/bucketeer-io/bucketeer/issues/946)) ([1335afe](https://github.com/bucketeer-io/bucketeer/commit/1335afe52afb368784bca5d57ebdee46e3d9e480))
+* remove unnecessary Stop() ([#867](https://github.com/bucketeer-io/bucketeer/issues/867)) ([ecce354](https://github.com/bucketeer-io/bucketeer/commit/ecce35428b83dac2941ce815fcd7181f5d03c6b8))
+* remove unused import ([#878](https://github.com/bucketeer-io/bucketeer/issues/878)) ([2a4a89a](https://github.com/bucketeer-io/bucketeer/commit/2a4a89ab9d934bdc43d6c89116fe49560f112502))
+* rename batch server subscriber metrics ([#949](https://github.com/bucketeer-io/bucketeer/issues/949)) ([6275053](https://github.com/bucketeer-io/bucketeer/commit/6275053a2960680e5f1bfe4640c01e7723dd7ada))
+* revert check environment role condition ([#925](https://github.com/bucketeer-io/bucketeer/issues/925)) ([3b9d3ac](https://github.com/bucketeer-io/bucketeer/commit/3b9d3acc58a7fc641dc7f4c60da653ad3d3e3961))
+* update create api key command ([#957](https://github.com/bucketeer-io/bucketeer/issues/957)) ([1ea71f9](https://github.com/bucketeer-io/bucketeer/commit/1ea71f94b86085a3262226b3c060c2c896cc847f))
+* update flag cache when a flag changes ([#874](https://github.com/bucketeer-io/bucketeer/issues/874)) ([3795a5f](https://github.com/bucketeer-io/bucketeer/commit/3795a5f19d3e04a3241772c74f17a6b1818ad09a))
+* update go-jose ([#960](https://github.com/bucketeer-io/bucketeer/issues/960)) ([3cd13b6](https://github.com/bucketeer-io/bucketeer/commit/3cd13b60f7faf5d1891d70dd32ec169a4d095b13))
+* use go-sql-driver in the mysql client ([#876](https://github.com/bucketeer-io/bucketeer/issues/876)) ([1112bc3](https://github.com/bucketeer-io/bucketeer/commit/1112bc30f26f37794858e39354af45e96eb45909))
+* validate environment settings when updating flags ([#881](https://github.com/bucketeer-io/bucketeer/issues/881)) ([4d97774](https://github.com/bucketeer-io/bucketeer/commit/4d977740c1eab7b7051d87eca9464d9942876c77))
+
+
+### Features
+
+* add `require_comment` option to environment settings  ([#883](https://github.com/bucketeer-io/bucketeer/issues/883)) ([5c10ae3](https://github.com/bucketeer-io/bucketeer/commit/5c10ae3a8966a34bf58f2d1d1d8a74d05248f49d))
+* add batch service authentication ([#926](https://github.com/bucketeer-io/bucketeer/issues/926)) ([094adce](https://github.com/bucketeer-io/bucketeer/commit/094adce29e134f4e96dca7380358306462abdf32))
+* add evaluation module ([#922](https://github.com/bucketeer-io/bucketeer/issues/922)) ([4551f8d](https://github.com/bucketeer-io/bucketeer/commit/4551f8d5869a81fe2960174ccac51c50b4d83369))
+* add get feature flags api for server sdk ([#940](https://github.com/bucketeer-io/bucketeer/issues/940)) ([2470bed](https://github.com/bucketeer-io/bucketeer/commit/2470bed3e79a9e8ada94af85ba5289230a2c5107))
+* add requst counter metrics to api-gateway ([#930](https://github.com/bucketeer-io/bucketeer/issues/930)) ([0d6d9b2](https://github.com/bucketeer-io/bucketeer/commit/0d6d9b2c2d72942fe6d6d8485fc1012edc70b285))
+* create local environment using dev container ([#486](https://github.com/bucketeer-io/bucketeer/issues/486)) ([d5bbd2d](https://github.com/bucketeer-io/bucketeer/commit/d5bbd2d1f834c8a57720895937ceac8d2ce0ef84))
+* move segment persister to batch service ([#896](https://github.com/bucketeer-io/bucketeer/issues/896)) ([58b34f1](https://github.com/bucketeer-io/bucketeer/commit/58b34f1620fd89495ceefa6521ad8a6f59dafb6d))
+* multi subscriber arch in batch service ([#880](https://github.com/bucketeer-io/bucketeer/issues/880)) ([2961aa0](https://github.com/bucketeer-io/bucketeer/commit/2961aa0c88f1f412db6777ad1f52cc747c960ffe))
+* **ui:** add require_comment option to environment settings ([#882](https://github.com/bucketeer-io/bucketeer/issues/882)) ([4c3a60e](https://github.com/bucketeer-io/bucketeer/commit/4c3a60e583c4f5bee7db6418eb0dc883043111e7))
+
+
+### Bug Fixes
+
+* cannot create a rollout when the flag has a scheduled operation ([#859](https://github.com/bucketeer-io/bucketeer/issues/859)) ([4a23a14](https://github.com/bucketeer-io/bucketeer/commit/4a23a14ac6758edfdf798585209d69ce01aa9449))
+* Confirm dialog on targeting page shouldn't display Enabled/Disabled and scheduling options unless only the flag switch is altered. ([#894](https://github.com/bucketeer-io/bucketeer/issues/894)) ([2b8d5fd](https://github.com/bucketeer-io/bucketeer/commit/2b8d5fd191c877c6e901aeb2d28506868a321e5a))
+* get segment users api condition ([#953](https://github.com/bucketeer-io/bucketeer/issues/953)) ([7d3d8a1](https://github.com/bucketeer-io/bucketeer/commit/7d3d8a1ce88670b78e8c4377445b39d974488720))
+* infinite loop when trying to enable/disable a flag when using auto operation ([#914](https://github.com/bucketeer-io/bucketeer/issues/914)) ([77e61b9](https://github.com/bucketeer-io/bucketeer/commit/77e61b967187279e78c6778c6da2ef56df41dcf9))
+* mysql db open connection flag in the batch server ([#947](https://github.com/bucketeer-io/bucketeer/issues/947)) ([b3ebf79](https://github.com/bucketeer-io/bucketeer/commit/b3ebf793614eea1b92d862b1392c4f3fb14f76eb))
+* nil pointer when logging ([#943](https://github.com/bucketeer-io/bucketeer/issues/943)) ([0cce006](https://github.com/bucketeer-io/bucketeer/commit/0cce006abf385b982c3bc2bd33779516ac2e9a34))
+* pubsub subscription check stops working when an error occurs ([#852](https://github.com/bucketeer-io/bucketeer/issues/852)) ([2525fca](https://github.com/bucketeer-io/bucketeer/commit/2525fca807034ca87e56d8471a9a706a37e36671))
+* report subscriberReceivedCounter for domainEventInformer ([#950](https://github.com/bucketeer-io/bucketeer/issues/950)) ([8cb15a4](https://github.com/bucketeer-io/bucketeer/commit/8cb15a497501ce2f82078a94bc1eff04db86291e))
+* **ui:** experiment creation page shouldn't list archived items ([#851](https://github.com/bucketeer-io/bucketeer/issues/851)) ([4c735a8](https://github.com/bucketeer-io/bucketeer/commit/4c735a8439fccb58504a4f7ffca272807beca6e8))
+* **ui:** invalid documentation links for pushes and notifications pages ([#856](https://github.com/bucketeer-io/bucketeer/issues/856)) ([1cdda52](https://github.com/bucketeer-io/bucketeer/commit/1cdda529502e6b643f25ba0942aea62885be64e8))
+* **ui:** kill switch operation's start status is incorrect ([#853](https://github.com/bucketeer-io/bucketeer/issues/853)) ([8aee89e](https://github.com/bucketeer-io/bucketeer/commit/8aee89ecd4dca4f65369a316b52b56a8b767588b))
+
+
+### Performance Improvements
+
+* implement multiple upserting for user persister ([#936](https://github.com/bucketeer-io/bucketeer/issues/936)) ([9fb40ca](https://github.com/bucketeer-io/bucketeer/commit/9fb40ca38086f506da0aa736839fe4de4331ddcd))
+* upsert segment user query ([#898](https://github.com/bucketeer-io/bucketeer/issues/898)) ([7c2f097](https://github.com/bucketeer-io/bucketeer/commit/7c2f097b724f6f4ef9177f5fa1e38b63724863ae))
+
 ## [0.4.0](https://github.com/bucketeer-io/bucketeer/compare/v0.3.0...v0.4.0) (2024-02-02)
 
 

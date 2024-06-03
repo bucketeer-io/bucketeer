@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"regexp"
 
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -1115,7 +1116,7 @@ func (s *FeatureService) validateFeatureTargetingCommand(
 ) error {
 	switch c := cmd.(type) {
 	case *featureproto.AddRuleCommand:
-		return validateRule(tarF.Variations, c.Rule, localizer)
+		return validateRule(fs, tarF, c.Rule, localizer)
 	case *featureproto.ChangeRuleStrategyCommand:
 		return validateChangeRuleStrategy(tarF.Variations, c, localizer)
 	case *featureproto.ChangeDefaultStrategyCommand:
@@ -1133,7 +1134,11 @@ func (s *FeatureService) validateFeatureTargetingCommand(
 	}
 }
 
-func validateRule(variations []*featureproto.Variation, rule *featureproto.Rule, localizer locale.Localizer) error {
+func validateRule(
+	fs []*featureproto.Feature,
+	tarF *featureproto.Feature,
+	rule *featureproto.Rule,
+	localizer locale.Localizer) error {
 	if rule.Id == "" {
 		dt, err := statusMissingRuleID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -1154,7 +1159,35 @@ func validateRule(variations []*featureproto.Variation, rule *featureproto.Rule,
 		}
 		return dt.Err()
 	}
-	return validateStrategy(variations, rule.Strategy, localizer)
+	// Check dependency.
+	tarF.Rules = append(tarF.Rules, rule)
+	defer func() { tarF.Rules = tarF.Rules[:len(tarF.Rules)-1] }()
+	if err := validateFeatureDependencies(fs); err != nil {
+		if errors.Is(err, evaluation.ErrCycleExists) {
+			dt, err := statusCycleExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "rule"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return validateStrategy(tarF.Variations, rule.Strategy, localizer)
+}
+
+func validateFeatureDependencies(fs []*featureproto.Feature) error {
+	_, err := evaluation.NewEvaluator().TopologicalSort(fs)
+	return err
 }
 
 func validateChangeRuleStrategy(
@@ -1385,11 +1418,10 @@ func validateAddPrerequisite(
 	if err := validateVariationID(fs, p, localizer); err != nil {
 		return err
 	}
-	evaluator := evaluation.NewEvaluator()
 	prevPrerequisites := tarF.Prerequisites
 	tarF.Prerequisites = append(tarF.Prerequisites, p)
-	_, err := evaluator.TopologicalSort(fs)
-	if err != nil {
+	defer func() { tarF.Prerequisites = prevPrerequisites }()
+	if err := validateFeatureDependencies(fs); err != nil {
 		if err == evaluation.ErrCycleExists {
 			dt, err := statusCycleExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -1409,7 +1441,6 @@ func validateAddPrerequisite(
 		}
 		return dt.Err()
 	}
-	tarF.Prerequisites = prevPrerequisites
 	return nil
 }
 

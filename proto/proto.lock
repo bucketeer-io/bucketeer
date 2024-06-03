@@ -4663,6 +4663,18 @@
               {
                 "name": "REGISTER_EVENTS",
                 "integer": 3
+              },
+              {
+                "name": "GET_FEATURE_FLAGS",
+                "integer": 4
+              },
+              {
+                "name": "GET_SEGMENT_USERS",
+                "integer": 5
+              },
+              {
+                "name": "SDK_GET_VARIATION",
+                "integer": 100
               }
             ]
           }
@@ -5936,7 +5948,7 @@
                 "integer": 809
               },
               {
-                "name": "AUTOOPS_RULE_STOPED",
+                "name": "AUTOOPS_RULE_STOPPED",
                 "integer": 810
               },
               {
@@ -11701,6 +11713,10 @@
               {
                 "name": "AFTER",
                 "integer": 10
+              },
+              {
+                "name": "FEATURE_FLAG",
+                "integer": 11
               }
             ]
           }

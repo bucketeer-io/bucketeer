@@ -791,6 +791,22 @@ func contains(needle string, haystack []string) bool {
 	return false
 }
 
+// FeatureIDsDependsOn returns the ids of the features that this feature depends on.
+func (f *Feature) FeatureIDsDependsOn() []string {
+	ids := []string{}
+	for _, p := range f.Prerequisites {
+		ids = append(ids, p.FeatureId)
+	}
+	for _, p := range f.Rules {
+		for _, c := range p.Clauses {
+			if c.Operator == feature.Clause_FEATURE_FLAG {
+				ids = append(ids, c.Attribute)
+			}
+		}
+	}
+	return ids
+}
+
 func (f *Feature) Clone(
 	maintainer string,
 ) (*Feature, error) {
