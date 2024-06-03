@@ -167,6 +167,15 @@ cronjob:
 subscribers:
   # This is the processor's name. It must match the same name defined in the
   # pkg/batch/subscriber/processor/processors.go
+  auditLogPersister:
+    project:
+    topic:
+    subscription:
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: 1000
+    pullerMaxOutstandingBytes: 1000000000
+    maxMps: 50
+    workerNum: 1
   domainEventInformer:
     project:
     topic:
@@ -251,6 +260,9 @@ onDemandSubscribers:
 processors:
   # This is the processor's name. It must match the same name defined in the
   # pkg/batch/subscriber/processor/processors.go
+  auditLogPersister:
+    flushSize: 100
+    flushInterval: 10
   evaluationCountEventPersister:
     flushSize: 100
     flushInterval: 10
