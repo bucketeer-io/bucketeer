@@ -17,7 +17,6 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
@@ -362,7 +361,6 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 				p.setup(s)
 			}
 			_, err := s.CreateAutoOpsRule(ctx, p.req)
-			fmt.Printf("err: %v\n", err)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -513,7 +511,6 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 				p.setup(s)
 			}
 			_, err := s.UpdateAutoOpsRule(ctx, p.req)
-			fmt.Printf("err: %v\n", err)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -919,7 +916,6 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 				p.setup(s)
 			}
 			_, err := s.ExecuteAutoOps(ctx, p.req)
-			fmt.Printf("err: %v\n", err)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

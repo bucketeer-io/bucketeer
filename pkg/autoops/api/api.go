@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -1103,7 +1102,6 @@ func (s *AutoOpsService) ExecuteAutoOps(
 	ctx context.Context,
 	req *autoopsproto.ExecuteAutoOpsRequest,
 ) (*autoopsproto.ExecuteAutoOpsResponse, error) {
-	s.logger.Debug(fmt.Sprintf("ExecuteAutoOps Start- ClauseId = %v", req.ExecuteAutoOpsRuleCommand.Clause.Id))
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
@@ -1114,7 +1112,6 @@ func (s *AutoOpsService) ExecuteAutoOps(
 	if err := s.validateExecuteAutoOpsRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	s.logger.Debug(fmt.Sprintf("ExecuteAutoOps validate Clear - ClauseId = %v", req.ExecuteAutoOpsRuleCommand.Clause.Id))
 	triggered, err := s.checkIfHasAlreadyTriggered(ctx, localizer, req.Id, req.EnvironmentNamespace)
 	if err != nil {
 		return nil, err
@@ -1122,7 +1119,6 @@ func (s *AutoOpsService) ExecuteAutoOps(
 	if triggered {
 		return &autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: true}, nil
 	}
-	s.logger.Debug(fmt.Sprintf("ExecuteAutoOps Not Triggered - ClauseId = %v", req.ExecuteAutoOpsRuleCommand.Clause.Id))
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
 		s.logger.Error(
@@ -1151,11 +1147,9 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		if err != nil {
 			return err
 		}
-		s.logger.Debug(fmt.Sprintf("ExecuteAutoOps Get featureId = %v - ClauseId = %v", feature.Id, req.ExecuteAutoOpsRuleCommand.Clause.Id))
 		prStorage := v2as.NewProgressiveRolloutStorage(tx)
 		// Stop the running progressive rollout if the operation type is disable
 		if req.ExecuteAutoOpsRuleCommand.Clause.ActionType == autoopsproto.ActionType_DISABLE {
-			s.logger.Debug(fmt.Sprintf("ExecuteAutoOps stopProgressiveRollout - ClauseId = %v", req.ExecuteAutoOpsRuleCommand.Clause.Id))
 			if err := s.stopProgressiveRollout(
 				ctx,
 				req.EnvironmentNamespace,
@@ -1166,7 +1160,6 @@ func (s *AutoOpsService) ExecuteAutoOps(
 				return err
 			}
 		}
-		s.logger.Debug(fmt.Sprintf("ExecuteAutoOps executeAutoOpsRuleOperation actionType = %v - ClauseId = %v", req.ExecuteAutoOpsRuleCommand.Clause.ActionType, req.ExecuteAutoOpsRuleCommand.Clause.Id))
 		if err := executeAutoOpsRuleOperation(
 			ctx,
 			ftStorage,
@@ -1187,20 +1180,16 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			)
 			return err
 		}
-		s.logger.Debug(fmt.Sprintf("ExecuteAutoOps NewAutoOpsCommandHandler - ClauseId = %v", req.ExecuteAutoOpsRuleCommand.Clause.Id))
 		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
 
 		opsStatus := autoopsproto.AutoOpsStatus_RUNNING
-		s.logger.Debug(fmt.Sprintf("ExecuteAutoOps lastClauseId %v - ClauseId = %v", autoOpsRule.Clauses[len(autoOpsRule.Clauses)-1].Id, req.ExecuteAutoOpsRuleCommand.Clause.Id))
 		if autoOpsRule.Clauses[len(autoOpsRule.Clauses)-1].Id == req.ExecuteAutoOpsRuleCommand.Clause.Id {
 			opsStatus = autoopsproto.AutoOpsStatus_COMPLETED
 		}
-		s.logger.Debug(fmt.Sprintf("ExecuteAutoOps ChangeAutoOpsStatusCommand opsStatus %v - ClauseId = %v", opsStatus, req.ExecuteAutoOpsRuleCommand.Clause.Id))
 
 		if err := handler.Handle(ctx, &autoopsproto.ChangeAutoOpsStatusCommand{Status: opsStatus}); err != nil {
 			return err
 		}
-		s.logger.Debug(fmt.Sprintf("ExecuteAutoOps  autoOpsRuleStatus %v - ClauseId = %v", autoOpsRule.AutoOpsStatus, req.ExecuteAutoOpsRuleCommand.Clause.Id))
 		if err = autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentNamespace); err != nil {
 			if err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
 				s.logger.Warn(

@@ -356,8 +356,6 @@ func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
 	}
-	t.Logf("TestOpsEventRateBatchWithoutTag featureID: %v", featureID)
-
 	// Wait for the event-persister-ops subscribe to the pubsub
 	// The batch runs every minute, so we give a extra 10 seconds
 	// to ensure that it will subscribe correctly.

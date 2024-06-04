@@ -36,8 +36,6 @@ func executeAutoOpsRuleOperation(
 	logger *zap.Logger,
 	localizer locale.Localizer,
 ) error {
-	logger.Debug("Start Execute auto ops rule operation actionType",
-		zap.Int("actionType", int(actionType)))
 	switch actionType {
 	case autoopsproto.ActionType_ENABLE:
 		return enableFeature(ctx, ftStorage, environmentNamespace, feature, logger)
