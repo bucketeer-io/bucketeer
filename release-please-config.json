@@ -1,15 +1,15 @@
 {
 	"bump-minor-pre-major": true,
 	"bump-patch-for-minor-pre-major": true,
-	"draft": true,
+	"draft": false,
 	"prerelease": false,
 	"changelog-sections": [
-		{"type":"build","section":"Build System","hidden":false},
-		{"type":"chore","section":"Miscellaneous","hidden":false},
 		{"type":"feat","section":"Features","hidden":false},
 		{"type":"fix","section":"Bug Fixes","hidden":false},
+		{"type":"chore","section":"Miscellaneous","hidden":false},
 		{"type":"perf","section":"Performance Improvements","hidden":false},
-		{"type":"revert","section":"Reverts","hidden":false}
+		{"type":"revert","section":"Reverts","hidden":false},
+		{"type":"build","section":"Build System","hidden":false}
 	],
 	"release-type": "simple",
   "packages": {
