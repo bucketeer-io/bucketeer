@@ -60,7 +60,7 @@ func NewAuditLogPersister(
 		return nil, err
 	}
 	var persisterConfig auditLogPersisterConfig
-	err = json.Unmarshal(configBytes, &config)
+	err = json.Unmarshal(configBytes, &persisterConfig)
 	if err != nil {
 		logger.Error("AuditLogPersister: failed to unmarshal config", zap.Error(err))
 		return nil, err
