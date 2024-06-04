@@ -162,6 +162,9 @@ func (w *eventCountWatcher) assessAutoOpsRule(
 	var lastErr error
 	for _, c := range opsEventRateClauses {
 		opsEventRateClause, err := a.UnmarshalOpsEventRateClause(c)
+		if err != nil {
+			return nil, err
+		}
 		logFunc := func(msg string) {
 			w.logger.Debug(msg,
 				zap.String("environmentNamespace", environmentNamespace),

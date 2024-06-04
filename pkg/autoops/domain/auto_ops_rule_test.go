@@ -17,11 +17,12 @@ package domain
 import (
 	"testing"
 
-	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 )
 
 func TestNewAutoOpsRule(t *testing.T) {

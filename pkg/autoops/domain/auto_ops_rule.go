@@ -191,7 +191,9 @@ func (a *AutoOpsRule) insertClause(ac *any.Any, actionType proto.ActionType, ind
 		Clause:     ac,
 		ActionType: actionType,
 	}
-	a.AutoOpsRule.Clauses = append(a.AutoOpsRule.Clauses[:index], append([]*proto.Clause{clause}, a.AutoOpsRule.Clauses[index:]...)...)
+	a.AutoOpsRule.Clauses = append(a.AutoOpsRule.Clauses[:index],
+		append([]*proto.Clause{clause}, a.AutoOpsRule.Clauses[index:]...)...)
+
 	return clause, nil
 }
 
