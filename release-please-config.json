@@ -3,6 +3,7 @@
 	"bump-patch-for-minor-pre-major": true,
 	"draft": false,
 	"prerelease": false,
+	"draft-pull-request": true,
 	"changelog-sections": [
 		{"type":"feat","section":"Features","hidden":false},
 		{"type":"fix","section":"Bug Fixes","hidden":false},
