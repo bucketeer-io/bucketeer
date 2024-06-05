@@ -26,9 +26,8 @@ message Clause {
 }
 
 enum ActionType {
-  UNKNOWN = 0;
-  ENABLE = 1;
-  DISABLE = 2;
+  ENABLE = 0;
+  DISABLE = 1;
 }
 
 message OpsEventRateClause {

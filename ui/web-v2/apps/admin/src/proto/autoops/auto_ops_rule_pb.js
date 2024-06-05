@@ -117,7 +117,8 @@ proto.bucketeer.autoops.AutoOpsRule.toObject = function(includeInstance, msg) {
     createdAt: jspb.Message.getFieldWithDefault(msg, 7, 0),
     updatedAt: jspb.Message.getFieldWithDefault(msg, 8, 0),
     deleted: jspb.Message.getBooleanFieldWithDefault(msg, 9, false),
-    autoOpsStatus: jspb.Message.getFieldWithDefault(msg, 10, 0)
+    autoOpsStatus: jspb.Message.getFieldWithDefault(msg, 10, 0),
+    stoppedAt: jspb.Message.getFieldWithDefault(msg, 11, 0)
   };
 
   if (includeInstance) {
@@ -190,6 +191,10 @@ proto.bucketeer.autoops.AutoOpsRule.deserializeBinaryFromReader = function(msg, 
     case 10:
       var value = /** @type {!proto.bucketeer.autoops.AutoOpsStatus} */ (reader.readEnum());
       msg.setAutoOpsStatus(value);
+      break;
+    case 11:
+      var value = /** @type {number} */ (reader.readInt64());
+      msg.setStoppedAt(value);
       break;
     default:
       reader.skipField();
@@ -281,6 +286,13 @@ proto.bucketeer.autoops.AutoOpsRule.serializeBinaryToWriter = function(message, 
   if (f !== 0.0) {
     writer.writeEnum(
       10,
+      f
+    );
+  }
+  f = message.getStoppedAt();
+  if (f !== 0) {
+    writer.writeInt64(
+      11,
       f
     );
   }
@@ -469,6 +481,24 @@ proto.bucketeer.autoops.AutoOpsRule.prototype.setAutoOpsStatus = function(value)
 };
 
 
+/**
+ * optional int64 stopped_at = 11;
+ * @return {number}
+ */
+proto.bucketeer.autoops.AutoOpsRule.prototype.getStoppedAt = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 11, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.autoops.AutoOpsRule} returns this
+ */
+proto.bucketeer.autoops.AutoOpsRule.prototype.setStoppedAt = function(value) {
+  return jspb.Message.setProto3IntField(this, 11, value);
+};
+
+
 
 /**
  * List of repeated fields within this message type.
@@ -645,8 +675,9 @@ proto.bucketeer.autoops.OpsType = {
 proto.bucketeer.autoops.AutoOpsStatus = {
   WAITING: 0,
   RUNNING: 1,
-  FINISHED: 2,
-  STOPPED: 3
+  COMPLETED: 2,
+  STOPPED: 3,
+  DELETED: 4
 };
 
 goog.object.extend(exports, proto.bucketeer.autoops);
