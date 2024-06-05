@@ -48,7 +48,10 @@ import {
   listFeatures,
 } from '../../modules/features';
 import { useCurrentEnvironment, useIsEditable } from '../../modules/me';
-import { listSegments, selectAll } from '../../modules/segments';
+import {
+  listSegments,
+  selectAll as selectAllSegments,
+} from '../../modules/segments';
 import { Clause } from '../../proto/feature/clause_pb';
 import { Feature } from '../../proto/feature/feature_pb';
 import { Strategy } from '../../proto/feature/strategy_pb';
@@ -60,6 +63,7 @@ import { colourStyles, CreatableSelect } from '../CreatableSelect';
 import { Option, Select } from '../Select';
 import { OptionFeatureFlag, SelectFeatureFlag } from '../SelectFeatureFlag';
 import { Switch } from '../Switch';
+import { fi } from 'date-fns/locale';
 
 interface FeatureTargetingFormProps {
   featureId: string;
@@ -573,11 +577,6 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
       keyName: 'key',
     });
 
-    const isFeaturesLoading = useSelector<AppState, boolean>(
-      (state) => state.features.loading,
-      shallowEqual
-    );
-
     const features = useSelector<AppState, Feature.AsObject[]>(
       (state) => selectAllFeatures(state.features),
       shallowEqual
@@ -869,7 +868,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
                     </div>
                   )}
                 </div>
-                <ClausesInput ruleIdx={ruleIdx} />
+                <ClausesInput featureId={feature.id} ruleIdx={ruleIdx} />
               </div>
               <StrategyInput
                 feature={feature}
@@ -905,6 +904,7 @@ export const ClauseType = {
   COMPARE: 'compare',
   SEGMENT: 'segment',
   DATE: 'date',
+  FEATURE_FLAG: 'feature_flag',
 } as const;
 
 export type ClauseType = typeof ClauseType[keyof typeof ClauseType];
@@ -921,6 +921,10 @@ export const clauseTypeOptions: Option[] = [
   {
     value: ClauseType.DATE,
     label: intl.formatMessage(messages.feature.clause.type.date),
+  },
+  {
+    value: ClauseType.FEATURE_FLAG,
+    label: intl.formatMessage(messages.feature.clause.type.featureFlag),
   },
 ];
 
@@ -971,357 +975,509 @@ export const clauseDateOperatorOptions: Option[] = [
 ];
 
 export interface ClausesInputProps {
+  featureId: string;
   ruleIdx: number;
 }
 
-export const ClausesInput: FC<ClausesInputProps> = memo(({ ruleIdx }) => {
-  const { formatMessage: f } = useIntl();
-  const dispatch = useDispatch<AppDispatch>();
-  const editable = useIsEditable();
-  const currentEnvironment = useCurrentEnvironment();
-  const isSegmentLoading = useSelector<AppState, boolean>(
-    (state) => state.segments.loading
-  );
-  const methods = useFormContext();
-  const {
-    register,
-    control,
-    formState: { errors },
-  } = methods;
-  const clausesName = `rules.${ruleIdx}.clauses`;
-  const {
-    fields: clauses,
-    append,
-    remove,
-    update,
-  } = useFieldArray({
-    control,
-    name: clausesName,
-    keyName: 'key',
-  });
-
-  const segmentOptions = useSelector<AppState, Option[]>(
-    (state) =>
-      selectAll(state.segments).map((s) => {
-        return {
-          value: s.id,
-          label: s.name,
-        };
-      }),
-    shallowEqual
-  );
-
-  const handleChangeType = useCallback(
-    (idx: number, type: string) => {
-      switch (type) {
-        case ClauseType.COMPARE: {
-          update(idx, {
-            id: uuid(),
-            type: type,
-            attribute: '',
-            operator: Clause.Operator.EQUALS.toString(),
-            values: [],
-          });
-          break;
-        }
-        case ClauseType.SEGMENT: {
-          update(idx, {
-            id: uuid(),
-            type: type,
-            attribute: '',
-            operator: Clause.Operator.SEGMENT.toString(),
-            values: [segmentOptions[0]?.value],
-          });
-          dispatch(
-            listSegments({
-              environmentNamespace: currentEnvironment.id,
-              cursor: '',
-            })
-          );
-          break;
-        }
-        case ClauseType.DATE: {
-          const now = String(Math.round(new Date().getTime() / 1000));
-          update(idx, {
-            id: uuid(),
-            type: type,
-            attribute: '',
-            operator: Clause.Operator.BEFORE.toString(),
-            values: [now],
-          });
-          break;
-        }
-      }
-    },
-    [update, dispatch, currentEnvironment, segmentOptions]
-  );
-
-  const handleAdd = useCallback(() => {
-    append({
-      id: uuid(),
-      type: ClauseType.COMPARE,
-      attribute: '',
-      operator: Clause.Operator.EQUALS.toString(),
-      values: [],
+export const ClausesInput: FC<ClausesInputProps> = memo(
+  ({ featureId, ruleIdx }) => {
+    const { formatMessage: f } = useIntl();
+    const dispatch = useDispatch<AppDispatch>();
+    const editable = useIsEditable();
+    const currentEnvironment = useCurrentEnvironment();
+    const isSegmentLoading = useSelector<AppState, boolean>(
+      (state) => state.segments.loading
+    );
+    const isFeaturesLoading = useSelector<AppState, boolean>(
+      (state) => state.features.loading
+    );
+    const methods = useFormContext();
+    const {
+      register,
+      control,
+      formState: { errors },
+    } = methods;
+    const clausesName = `rules.${ruleIdx}.clauses`;
+    const {
+      fields: clauses,
+      append,
+      remove,
+      update,
+    } = useFieldArray({
+      control,
+      name: clausesName,
+      keyName: 'key',
     });
-  }, [append]);
 
-  const handleRemove = useCallback(
-    (idx) => {
-      remove(idx);
-    },
-    [remove]
-  );
+    const segmentOptions = useSelector<AppState, Option[]>(
+      (state) =>
+        selectAllSegments(state.segments).map((s) => {
+          return {
+            value: s.id,
+            label: s.name,
+          };
+        }),
+      shallowEqual
+    );
 
-  return (
-    <div className="grid grid-cols-1 gap-2">
-      {clauses.map((c: any, clauseIdx) => {
-        const clauseName = `rules.${ruleIdx}.clauses.${clauseIdx}`;
-        const clauseType = `${clauseName}.type`;
-        const clauseAttribute = `${clauseName}.attribute`;
-        const clauseOperator = `${clauseName}.operator`;
-        const clauseValues = `${clauseName}.values`;
+    const [featureOptions, variationOptionsMap] = useSelector<
+      AppState,
+      [Option[], Map<string, Option[]>]
+    >((state) => {
+      const features = selectAllFeatures(state.features);
+      const fos = features
+        .filter((f) => f.id !== featureId)
+        .map((f) => {
+          return {
+            value: f.id,
+            label: f.name,
+          };
+        });
+      const vos = new Map<string, Option[]>();
+      features.map((f) => {
+        vos[f.id] = f.variationsList.map((v) => {
+          return {
+            value: v.id,
+            label: v.value,
+          };
+        });
+      });
+      return [fos, vos];
+    }, shallowEqual);
 
-        return (
-          <div key={c.id} className={classNames('flex space-x-2')}>
-            <div className="w-[2rem] flex justify-center items-center">
-              {clauseIdx === 0 ? (
-                <div
-                  className={classNames(
-                    'py-1 px-2 text-xs text-white',
-                    'bg-gray-400 mr-3 rounded-full'
-                  )}
-                >
-                  IF
-                </div>
-              ) : (
-                <div className="p-1 text-xs">AND</div>
-              )}
-            </div>
-            <Controller
-              name={clauseType}
-              control={control}
-              render={({ field }) => (
-                <Select
-                  onChange={(e) => {
-                    if (e.value === field.value) {
-                      return;
-                    }
-                    handleChangeType(clauseIdx, e.value);
-                    field.onChange(e.value);
-                  }}
-                  className={classNames('flex-none w-[200px]')}
-                  options={clauseTypeOptions}
-                  disabled={!editable}
-                  isSearchable={false}
-                  value={clauseTypeOptions.find((o) => o.value == c.type)}
-                />
-              )}
-            />
-            {c.type == ClauseType.COMPARE && (
-              <div className={classNames('flex-grow grid grid-cols-4 gap-1')}>
-                <div>
-                  <input
-                    {...register(clauseAttribute)}
-                    type="text"
-                    defaultValue={c.attribute}
-                    className={classNames('input-text w-full')}
-                    disabled={!editable}
-                  />
-                  <p className="input-error">
-                    {errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.attribute
-                      ?.message && (
-                      <span role="alert">
-                        {
-                          errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]
-                            ?.attribute?.message
-                        }
-                      </span>
+    const handleChangeType = useCallback(
+      (idx: number, type: string) => {
+        switch (type) {
+          case ClauseType.COMPARE: {
+            update(idx, {
+              id: uuid(),
+              type: type,
+              attribute: '',
+              operator: Clause.Operator.EQUALS.toString(),
+              values: [],
+            });
+            break;
+          }
+          case ClauseType.SEGMENT: {
+            update(idx, {
+              id: uuid(),
+              type: type,
+              attribute: '',
+              operator: Clause.Operator.SEGMENT.toString(),
+              values: [segmentOptions[0]?.value],
+            });
+            dispatch(
+              listSegments({
+                environmentNamespace: currentEnvironment.id,
+                cursor: '',
+              })
+            );
+            break;
+          }
+          case ClauseType.DATE: {
+            const now = String(Math.round(new Date().getTime() / 1000));
+            update(idx, {
+              id: uuid(),
+              type: type,
+              attribute: '',
+              operator: Clause.Operator.BEFORE.toString(),
+              values: [now],
+            });
+            break;
+          }
+          case ClauseType.FEATURE_FLAG: {
+            update(idx, {
+              id: uuid(),
+              type: type,
+              attribute: '',
+              operator: Clause.Operator.FEATURE_FLAG.toString(),
+              values: [],
+            });
+            dispatch(
+              listFeatures({
+                environmentNamespace: currentEnvironment.id,
+                pageSize: 99999,
+                cursor: '',
+                tags: [],
+                searchKeyword: null,
+                maintainerId: null,
+                enabled: null,
+                hasExperiment: null,
+                archived: false,
+                orderBy: ListFeaturesRequest.OrderBy.DEFAULT,
+                orderDirection: ListFeaturesRequest.OrderDirection.ASC,
+              })
+            );
+            break;
+          }
+        }
+      },
+      [update, dispatch, currentEnvironment, segmentOptions, featureOptions]
+    );
+
+    const handleAdd = useCallback(() => {
+      append({
+        id: uuid(),
+        type: ClauseType.COMPARE,
+        attribute: '',
+        operator: Clause.Operator.EQUALS.toString(),
+        values: [],
+      });
+    }, [append]);
+
+    const handleRemove = useCallback(
+      (idx) => {
+        remove(idx);
+      },
+      [remove]
+    );
+
+    useEffect(() => {
+      dispatch(
+        listFeatures({
+          environmentNamespace: currentEnvironment.id,
+          pageSize: 99999,
+          cursor: '',
+          tags: [],
+          searchKeyword: null,
+          maintainerId: null,
+          enabled: null,
+          hasExperiment: null,
+          archived: false,
+          orderBy: ListFeaturesRequest.OrderBy.DEFAULT,
+          orderDirection: ListFeaturesRequest.OrderDirection.ASC,
+        })
+      );
+    }, []);
+
+    return (
+      <div className="grid grid-cols-1 gap-2">
+        {clauses.map((c: any, clauseIdx) => {
+          const clauseName = `rules.${ruleIdx}.clauses.${clauseIdx}`;
+          const clauseType = `${clauseName}.type`;
+          const clauseAttribute = `${clauseName}.attribute`;
+          const clauseOperator = `${clauseName}.operator`;
+          const clauseValues = `${clauseName}.values`;
+
+          return (
+            <div key={c.id} className={classNames('flex space-x-2')}>
+              <div className="w-[2rem] flex justify-center items-center">
+                {clauseIdx === 0 ? (
+                  <div
+                    className={classNames(
+                      'py-1 px-2 text-xs text-white',
+                      'bg-gray-400 mr-3 rounded-full'
                     )}
-                  </p>
-                </div>
-                <Controller
-                  name={clauseOperator}
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      onChange={(e) => {
-                        field.onChange(e.value);
-                      }}
-                      options={clauseCompareOperatorOptions}
-                      disabled={!editable}
-                      value={clauseCompareOperatorOptions.find(
-                        (o) => o.value === field.value
-                      )}
-                    />
-                  )}
-                />
-                <div className="col-span-2">
-                  <Controller
-                    name={clauseValues}
-                    control={control}
-                    render={({ field }) => {
-                      return (
-                        <CreatableSelect
-                          disabled={!editable}
-                          defaultValues={field.value.map((v) => {
-                            return {
-                              value: v,
-                              label: v,
-                            };
-                          })}
-                          onChange={(opts: Option[]) =>
-                            field.onChange(opts.map((o) => o.value))
-                          }
-                        />
-                      );
-                    }}
-                  />
-                  <p className="input-error">
-                    {errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.values
-                      ?.message && (
-                      <span role="alert">
-                        {
-                          errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.values
-                            ?.message
-                        }
-                      </span>
-                    )}
-                  </p>
-                </div>
+                  >
+                    IF
+                  </div>
+                ) : (
+                  <div className="p-1 text-xs">AND</div>
+                )}
               </div>
-            )}
-            {c.type == ClauseType.SEGMENT &&
-              (segmentOptions?.length > 0 ? (
-                <div className={classNames('flex-grow grid grid-cols-2 gap-1')}>
-                  <div className="flex content-center">
+              <Controller
+                name={clauseType}
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    onChange={(e) => {
+                      if (e.value === field.value) {
+                        return;
+                      }
+                      handleChangeType(clauseIdx, e.value);
+                      field.onChange(e.value);
+                    }}
+                    className={classNames('flex-none w-[200px]')}
+                    options={clauseTypeOptions}
+                    disabled={!editable}
+                    isSearchable={false}
+                    value={clauseTypeOptions.find((o) => o.value == c.type)}
+                  />
+                )}
+              />
+              {c.type == ClauseType.COMPARE && (
+                <div className={classNames('flex-grow grid grid-cols-4 gap-1')}>
+                  <div>
+                    <input
+                      {...register(clauseAttribute)}
+                      type="text"
+                      defaultValue={c.attribute}
+                      className={classNames('input-text w-full')}
+                      disabled={!editable}
+                    />
+                    <p className="input-error">
+                      {errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.attribute
+                        ?.message && (
+                        <span role="alert">
+                          {
+                            errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]
+                              ?.attribute?.message
+                          }
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <Controller
+                    name={clauseOperator}
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        onChange={(e) => {
+                          field.onChange(e.value);
+                        }}
+                        options={clauseCompareOperatorOptions}
+                        disabled={!editable}
+                        value={clauseCompareOperatorOptions.find(
+                          (o) => o.value === field.value
+                        )}
+                      />
+                    )}
+                  />
+                  <div className="col-span-2">
+                    <Controller
+                      name={clauseValues}
+                      control={control}
+                      render={({ field }) => {
+                        return (
+                          <CreatableSelect
+                            disabled={!editable}
+                            defaultValues={field.value.map((v) => {
+                              return {
+                                value: v,
+                                label: v,
+                              };
+                            })}
+                            onChange={(opts: Option[]) =>
+                              field.onChange(opts.map((o) => o.value))
+                            }
+                          />
+                        );
+                      }}
+                    />
+                    <p className="input-error">
+                      {errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.values
+                        ?.message && (
+                        <span role="alert">
+                          {
+                            errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]
+                              ?.values?.message
+                          }
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {c.type == ClauseType.SEGMENT &&
+                (segmentOptions?.length > 0 ? (
+                  <div
+                    className={classNames('flex-grow grid grid-cols-2 gap-1')}
+                  >
+                    <div className="flex content-center">
+                      <span className="inline-flex items-center text-sm text-gray-700 px-2">
+                        {f(messages.feature.clause.operator.segment)}
+                      </span>
+                    </div>
+                    {isSegmentLoading ? (
+                      <div>loading</div>
+                    ) : (
+                      <div>
+                        <Controller
+                          name={clauseValues}
+                          control={control}
+                          render={({ field }) => {
+                            return (
+                              <Select
+                                onChange={(o: Option) => {
+                                  field.onChange([o.value]);
+                                }}
+                                options={segmentOptions}
+                                disabled={!editable}
+                                value={segmentOptions.find(
+                                  (o) => o.value === field.value[0]
+                                )}
+                                isSearchable={false}
+                              />
+                            );
+                          }}
+                        />
+                        <p className="input-error">
+                          {errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.values
+                            ?.message && (
+                            <span role="alert">
+                              {
+                                errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]
+                                  ?.values?.message
+                              }
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex-grow flex content-center">
                     <span className="inline-flex items-center text-sm text-gray-700 px-2">
-                      {f(messages.feature.clause.operator.segment)}
+                      {f(messages.segment.select.noData.description)}
                     </span>
                   </div>
-                  {isSegmentLoading ? (
-                    <div>loading</div>
-                  ) : (
-                    <div>
+                ))}
+              {c.type == ClauseType.DATE && (
+                <div className={classNames('flex-grow grid grid-cols-4 gap-1')}>
+                  <div>
+                    <input
+                      {...register(clauseAttribute)}
+                      type="text"
+                      defaultValue={c.attribute}
+                      className={classNames('input-text w-full')}
+                      disabled={!editable}
+                    />
+                    <p className="input-error">
+                      {errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.attribute
+                        ?.message && (
+                        <span role="alert">
+                          {
+                            errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]
+                              ?.attribute?.message
+                          }
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <Controller
+                    name={clauseOperator}
+                    control={control}
+                    render={({ field }) => (
+                      <Select
+                        onChange={(o: Option) => field.onChange(o.value)}
+                        options={clauseDateOperatorOptions}
+                        disabled={!editable}
+                        value={clauseDateOperatorOptions.find(
+                          (o) => o.value === field.value
+                        )}
+                        isSearchable={false}
+                      />
+                    )}
+                  />
+                  <div className="col-span-2">
+                    <DatetimePicker name={clauseValues} />
+                    <p className="input-error">
+                      {errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.values
+                        ?.message && (
+                        <span role="alert">
+                          {
+                            errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]
+                              ?.values?.message
+                          }
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {c.type == ClauseType.FEATURE_FLAG &&
+                (featureOptions?.length > 0 ? (
+                  <div className={classNames('flex-grow')}>
+                    {isFeaturesLoading ? (
+                      <div>loading</div>
+                    ) : (
                       <Controller
-                        name={clauseValues}
+                        name={clauseName}
                         control={control}
                         render={({ field }) => {
+                          const variationOptions =
+                            variationOptionsMap[field.value.attribute] ?? [];
                           return (
-                            <Select
-                              onChange={(o: Option) => {
-                                field.onChange([o.value]);
-                              }}
-                              options={segmentOptions}
-                              disabled={!editable}
-                              value={segmentOptions.find(
-                                (o) => o.value === field.value[0]
+                            <div
+                              className={classNames(
+                                'flex-grow grid grid-cols-3 gap-1'
                               )}
-                              isSearchable={false}
-                            />
+                            >
+                              <Select
+                                onChange={(o: Option) => {
+                                  field.onChange({
+                                    ...field.value,
+                                    attribute: o.value,
+                                    values: [
+                                      variationOptionsMap[o.value][0].value,
+                                    ],
+                                  });
+                                }}
+                                options={featureOptions}
+                                disabled={!editable}
+                                value={featureOptions.find(
+                                  (o) => o.value === field.value.attribute
+                                )}
+                                isSearchable={false}
+                              />
+                              <span className="inline-flex items-center text-sm text-gray-700 px-2">
+                                {f(messages.feature.clause.operator.equal)}
+                              </span>
+                              <Select
+                                onChange={(o: Option) => {
+                                  field.onChange({
+                                    ...field.value,
+                                    values: [o.value],
+                                  });
+                                }}
+                                options={variationOptions}
+                                disabled={!editable}
+                                value={variationOptions.find(
+                                  (o) => o.value === field.value.values[0]
+                                )}
+                                isSearchable={false}
+                              />
+                            </div>
                           );
                         }}
                       />
-                      <p className="input-error">
-                        {errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.values
-                          ?.message && (
-                          <span role="alert">
-                            {
-                              errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]
-                                ?.values?.message
-                            }
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex-grow flex content-center">
-                  <span className="inline-flex items-center text-sm text-gray-700 px-2">
-                    {f(messages.segment.select.noData.description)}
-                  </span>
-                </div>
-              ))}
-            {c.type == ClauseType.DATE && (
-              <div className={classNames('flex-grow grid grid-cols-4 gap-1')}>
-                <div>
-                  <input
-                    {...register(clauseAttribute)}
-                    type="text"
-                    defaultValue={c.attribute}
-                    className={classNames('input-text w-full')}
-                    disabled={!editable}
-                  />
-                  <p className="input-error">
-                    {errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.attribute
-                      ?.message && (
-                      <span role="alert">
-                        {
-                          errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]
-                            ?.attribute?.message
-                        }
-                      </span>
                     )}
-                  </p>
-                </div>
-                <Controller
-                  name={clauseOperator}
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      onChange={(o: Option) => field.onChange(o.value)}
-                      options={clauseDateOperatorOptions}
-                      disabled={!editable}
-                      value={clauseDateOperatorOptions.find(
-                        (o) => o.value === field.value
+                    <p className="input-error">
+                      {errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.values
+                        ?.message && (
+                        <span role="alert">
+                          {
+                            errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]
+                              ?.values?.message
+                          }
+                        </span>
                       )}
-                      isSearchable={false}
-                    />
-                  )}
-                />
-                <div className="col-span-2">
-                  <DatetimePicker name={clauseValues} />
-                  <p className="input-error">
-                    {errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.values
-                      ?.message && (
-                      <span role="alert">
-                        {
-                          errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.values
-                            ?.message
-                        }
-                      </span>
-                    )}
-                  </p>
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex-grow flex content-center">
+                    <span className="inline-flex items-center text-sm text-gray-700 px-2">
+                      {f(messages.feature.noData)}
+                    </span>
+                  </div>
+                ))}
+              {editable && (
+                <div className="flex items-center">
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(clauseIdx)}
+                    className="minus-circle-icon"
+                    disabled={clauses.length <= 1}
+                  >
+                    <MinusCircleIcon aria-hidden="true" />
+                  </button>
                 </div>
-              </div>
-            )}
-            {editable && (
-              <div className="flex items-center">
-                <button
-                  type="button"
-                  onClick={() => handleRemove(clauseIdx)}
-                  className="minus-circle-icon"
-                  disabled={clauses.length <= 1}
-                >
-                  <MinusCircleIcon aria-hidden="true" />
-                </button>
-              </div>
-            )}
-          </div>
-        );
-      })}
+              )}
+            </div>
+          );
+        })}
 
-      <div className="py-4 flex">
-        {editable && (
-          <button type="button" className="btn-submit" onClick={handleAdd}>
-            {f(messages.button.addCondition)}
-          </button>
-        )}
+        <div className="py-4 flex">
+          {editable && (
+            <button type="button" className="btn-submit" onClick={handleAdd}>
+              {f(messages.button.addCondition)}
+            </button>
+          )}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 export interface StrategyInputProps {
   feature: Feature.AsObject;

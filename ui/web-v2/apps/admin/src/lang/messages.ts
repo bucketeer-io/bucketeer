@@ -1520,6 +1520,10 @@ export const messages = {
           id: 'feature.clause.type.date',
           defaultMessage: 'Date',
         }),
+        featureFlag: defineMessage({
+          id: 'feature.clause.type.featureFlag',
+          defaultMessage: 'Feature flag',
+        }),
       },
       operator: {
         equal: defineMessage({
@@ -1623,6 +1627,10 @@ export const messages = {
     selectFlag: defineMessage({
       id: 'feature.selectFlag',
       defaultMessage: 'Select a feature flag',
+    }),
+    noData: defineMessage({
+      id: 'feature.noData',
+      defaultMessage: 'No selectable feature flags exist.',
     }),
     selectVariation: defineMessage({
       id: 'feature.selectVariation',

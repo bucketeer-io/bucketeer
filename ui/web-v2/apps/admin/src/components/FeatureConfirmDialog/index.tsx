@@ -44,6 +44,7 @@ import { isProgressiveRolloutsRunningWaiting } from '../AddProgressiveRolloutOpe
 import { CheckBox } from '../CheckBox';
 import { getFlagStatus, FlagStatus } from '../FeatureList';
 import { Modal } from '../Modal';
+import { Clause } from '@/proto/feature/clause_pb';
 
 interface FeatureConfirmDialogProps {
   open: boolean;
@@ -150,23 +151,31 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
 
   useEffect(() => {
     if (isArchive && open && features.length > 0) {
-      setFlagList(
-        features.reduce((acc, feature) => {
-          if (
-            feature.prerequisitesList.find(
-              (prerequisite) => prerequisite.featureId === featureId
-            )
-          ) {
-            return [
-              ...acc,
-              {
-                id: feature.id,
-                name: feature.name,
-              },
-            ];
+      const dependents = new Set<string>();
+      features.forEach((f) => {
+        f.prerequisitesList.forEach((p) => {
+          if (p.featureId === featureId) {
+            dependents.add(f.id);
           }
-          return acc;
-        }, [])
+        });
+        f.rulesList.forEach((r) => {
+          r.clausesList.forEach((c) => {
+            if (
+              c.operator.toString() ===
+                Clause.Operator.FEATURE_FLAG.toString() &&
+              c.attribute === featureId
+            ) {
+              dependents.add(f.id);
+            }
+          });
+        });
+      });
+      setFlagList(
+        features
+          .filter((f) => dependents.has(f.id))
+          .map((f) => {
+            return { id: f.id, name: f.name };
+          })
       );
     }
   }, [isArchive, open, features, featureId]);

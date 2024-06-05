@@ -101,15 +101,14 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
     const dispatch = useDispatch<AppDispatch>();
 
     const currentEnvironment = useCurrentEnvironment();
-    const [feature, getFeatureError] = useSelector<
-      AppState,
-      [Feature.AsObject | undefined, SerializedError | null]
-    >(
-      (state) => [
-        selectFeatureById(state.features, featureId),
-        state.features.getFeatureError,
-      ],
-      shallowEqual
+    const feature = useSelector<AppState, Feature.AsObject | undefined>(
+      (state) => {
+        const f = selectFeatureById(state.features, featureId);
+        return f;
+      },
+      (left: Feature.AsObject | undefined, right: any): boolean => {
+        return JSON.stringify(left) === JSON.stringify(right);
+      }
     );
     const [isResetTargeting, setIsResetTargeting] = useState(false);
 
@@ -350,6 +349,8 @@ const createClauseType = (
     case Clause.Operator.BEFORE:
     case Clause.Operator.AFTER:
       return ClauseType.DATE;
+    case Clause.Operator.FEATURE_FLAG:
+      return ClauseType.FEATURE_FLAG;
     default:
       return ClauseType.COMPARE;
   }
