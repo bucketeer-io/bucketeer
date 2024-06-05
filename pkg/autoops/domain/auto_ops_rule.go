@@ -38,7 +38,44 @@ type AutoOpsRule struct {
 	*proto.AutoOpsRule
 }
 
+// Remove it and replace it with NewAutoOpsRule_V2 when adding multi-scheduling support to the API.
 func NewAutoOpsRule(
+	featureID string,
+	opsType proto.OpsType,
+	opsEventRateClauses []*proto.OpsEventRateClause,
+	datetimeClauses []*proto.DatetimeClause,
+) (*AutoOpsRule, error) {
+	now := time.Now().Unix()
+	id, err := uuid.NewUUID()
+	if err != nil {
+		return nil, err
+	}
+	autoOpsRule := &AutoOpsRule{&proto.AutoOpsRule{
+		Id:        id.String(),
+		FeatureId: featureID,
+		OpsType:   opsType,
+		Clauses:   []*proto.Clause{},
+		CreatedAt: now,
+		UpdatedAt: now,
+	}}
+	for _, c := range opsEventRateClauses {
+		if _, err := autoOpsRule.AddOpsEventRateClause(c); err != nil {
+			return nil, err
+		}
+	}
+	for _, c := range datetimeClauses {
+		if _, err := autoOpsRule.AddDatetimeClause(c); err != nil {
+			return nil, err
+		}
+	}
+	if len(autoOpsRule.Clauses) == 0 {
+		return nil, errClauseEmpty
+	}
+	return autoOpsRule, nil
+
+}
+
+func NewAutoOpsRule_V2(
 	featureID string,
 	opsType proto.OpsType,
 	opsEventRateClauses []*proto.OpsEventRateClause,

@@ -26,6 +26,29 @@ import (
 )
 
 func TestNewAutoOpsRule(t *testing.T) {
+	t.Parallel()
+
+	aor, err := NewAutoOpsRule(
+		"feature-id",
+		autoopsproto.OpsType_ENABLE_FEATURE,
+		[]*autoopsproto.OpsEventRateClause{},
+		[]*autoopsproto.DatetimeClause{
+			{Time: 0},
+			{Time: 0, ActionType: autoopsproto.ActionType_ENABLE},
+		},
+	)
+	require.NoError(t, err)
+
+	assert.IsType(t, &AutoOpsRule{}, aor)
+	assert.Equal(t, "feature-id", aor.FeatureId)
+	assert.Equal(t, autoopsproto.OpsType_ENABLE_FEATURE, aor.OpsType)
+	assert.NotZero(t, aor.Clauses)
+	assert.Zero(t, aor.TriggeredAt)
+	assert.NotZero(t, aor.CreatedAt)
+	assert.NotZero(t, aor.UpdatedAt)
+}
+
+func TestNewAutoOpsRule_V2(t *testing.T) {
 	patterns := []struct {
 		featureId        string
 		desc             string
@@ -71,7 +94,7 @@ func TestNewAutoOpsRule(t *testing.T) {
 		},
 	}
 	for _, p := range patterns {
-		aor, err := NewAutoOpsRule(
+		aor, err := NewAutoOpsRule_V2(
 			p.featureId,
 			p.opsType,
 			p.eventRateClauses,
@@ -315,7 +338,7 @@ func TestDeleteClause(t *testing.T) {
 }
 
 func createAutoOpsRule(t *testing.T) *AutoOpsRule {
-	aor, err := NewAutoOpsRule(
+	aor, err := NewAutoOpsRule_V2(
 		"feature-id",
 		autoopsproto.OpsType_SCHEDULE,
 		[]*autoopsproto.OpsEventRateClause{},
