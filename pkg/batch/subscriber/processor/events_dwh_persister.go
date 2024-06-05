@@ -58,7 +58,7 @@ func NewEventsDWHPersister(
 	ctx context.Context,
 	config interface{},
 	mysqlClient mysql.Client,
-	persistentRedisClient redisv3.Client,
+	redisClient redisv3.Client,
 	exClient experimentclient.Client,
 	ftClient featureclient.Client,
 	persisterName string,
@@ -85,7 +85,7 @@ func NewEventsDWHPersister(
 		mysqlClient:              mysqlClient,
 		logger:                   logger,
 	}
-	experimentsCache := cachev3.NewExperimentsCache(cachev3.NewRedisCache(persistentRedisClient))
+	experimentsCache := cachev3.NewExperimentsCache(cachev3.NewRedisCache(redisClient))
 	location, err := locale.GetLocation(e.eventsDWHPersisterConfig.Timezone)
 	if err != nil {
 		return nil, err

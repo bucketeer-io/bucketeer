@@ -550,6 +550,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		environmentClient,
 		mysqlClient,
 		persistentRedisClient,
+		nonPersistentRedisClient,
 		experimentClient,
 		featureClient,
 		batchClient,
@@ -673,6 +674,7 @@ func (s *server) registerProcessorMap(
 	environmentClient environmentclient.Client,
 	mysqlClient mysql.Client,
 	persistentRedisClient redisv3.Client,
+	nonPersistentRedisClient redisv3.Client,
 	exClient experimentclient.Client,
 	ftClient featureclient.Client,
 	batchClient btclient.Client,
@@ -760,7 +762,7 @@ func (s *server) registerProcessorMap(
 			ctx,
 			onDemandProcessorsConfigMap[processor.EvaluationCountEventDWHPersisterName],
 			mysqlClient,
-			persistentRedisClient,
+			nonPersistentRedisClient, // use non-persistent redis instance here
 			exClient,
 			ftClient,
 			processor.EvaluationCountEventDWHPersisterName,
@@ -778,7 +780,7 @@ func (s *server) registerProcessorMap(
 			ctx,
 			onDemandProcessorsConfigMap[processor.GoalCountEventDWHPersisterName],
 			mysqlClient,
-			persistentRedisClient,
+			nonPersistentRedisClient, // use non-persistent redis instance here
 			exClient,
 			ftClient,
 			processor.GoalCountEventDWHPersisterName,
@@ -796,7 +798,7 @@ func (s *server) registerProcessorMap(
 			ctx,
 			onDemandProcessorsConfigMap[processor.EvaluationCountEventOPSPersisterName],
 			mysqlClient,
-			persistentRedisClient,
+			persistentRedisClient, // use persistent redis instance here
 			opsClient,
 			ftClient,
 			processor.EvaluationCountEventOPSPersisterName,
@@ -811,7 +813,7 @@ func (s *server) registerProcessorMap(
 			ctx,
 			onDemandProcessorsConfigMap[processor.GoalCountEventOPSPersisterName],
 			mysqlClient,
-			persistentRedisClient,
+			persistentRedisClient, // use persistent redis instance here
 			opsClient,
 			ftClient,
 			processor.GoalCountEventOPSPersisterName,
