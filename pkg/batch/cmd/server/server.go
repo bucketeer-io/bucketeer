@@ -630,7 +630,9 @@ func (s *server) startMultiPubSub(
 					zap.String("name", name),
 					zap.Error(err),
 				)
-				return nil, err
+				// since we will keep old and new configmap at the same time during canary release,
+				// we should skip the error, just log it here
+				continue
 			}
 			multiSubscriber.AddSubscriber(subscriber.NewSubscriber(
 				name, config, p,
@@ -656,7 +658,9 @@ func (s *server) startMultiPubSub(
 					zap.String("name", name),
 					zap.Error(err),
 				)
-				return nil, err
+				// since we will keep old and new configmap at the same time during canary release,
+				// we should skip the error, just log it here
+				continue
 			}
 			multiSubscriber.AddSubscriber(subscriber.NewOnDemandSubscriber(
 				name, config, p.(subscriber.OnDemandProcessor),
@@ -748,7 +752,6 @@ func (s *server) registerProcessorMap(
 	onDemandProcessorsConfigBytes, err := os.ReadFile(*s.onDemandProcessorsConfig)
 	if err != nil {
 		logger.Error("subscriber: failed to read onDemand processors config", zap.Error(err))
-		return nil, err
 	} else {
 		var onDemandProcessorsConfigMap map[string]interface{}
 		if err := json.Unmarshal(onDemandProcessorsConfigBytes, &onDemandProcessorsConfigMap); err != nil {
