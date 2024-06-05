@@ -34,6 +34,9 @@ export class AutoOpsRule extends jspb.Message {
   getAutoOpsStatus(): AutoOpsStatusMap[keyof AutoOpsStatusMap];
   setAutoOpsStatus(value: AutoOpsStatusMap[keyof AutoOpsStatusMap]): void;
 
+  getStoppedAt(): number;
+  setStoppedAt(value: number): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AutoOpsRule.AsObject;
   static toObject(includeInstance: boolean, msg: AutoOpsRule): AutoOpsRule.AsObject;
@@ -55,6 +58,7 @@ export namespace AutoOpsRule {
     updatedAt: number,
     deleted: boolean,
     autoOpsStatus: AutoOpsStatusMap[keyof AutoOpsStatusMap],
+    stoppedAt: number,
   }
 }
 

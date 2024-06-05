@@ -287,18 +287,6 @@
               {
                 "name": "SDK_SERVER",
                 "integer": 2
-              },
-              {
-                "name": "PUBLIC_API_READ_ONLY",
-                "integer": 3
-              },
-              {
-                "name": "PUBLIC_API_WRITE",
-                "integer": 4
-              },
-              {
-                "name": "PUBLIC_API_ADMIN",
-                "integer": 5
               }
             ]
           }
@@ -1966,6 +1954,11 @@
                 "id": 10,
                 "name": "auto_ops_status",
                 "type": "AutoOpsStatus"
+              },
+              {
+                "id": 11,
+                "name": "stopped_at",
+                "type": "int64"
               }
             ]
           },
@@ -2005,15 +1998,11 @@
             "name": "ActionType",
             "enum_fields": [
               {
-                "name": "UNKNOWN"
-              },
-              {
-                "name": "ENABLE",
-                "integer": 1
+                "name": "ENABLE"
               },
               {
                 "name": "DISABLE",
-                "integer": 2
+                "integer": 1
               }
             ]
           },
