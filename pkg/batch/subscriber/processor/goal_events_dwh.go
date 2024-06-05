@@ -173,6 +173,10 @@ func (w *goalEvtWriter) convToGoalEvents(
 	id, environmentNamespace string,
 	experiments []*exproto.Experiment,
 ) ([]*epproto.GoalEvent, bool, error) {
+	w.logger.Debug("link goal event", zap.String("type", subscriberGoalEventDWH),
+		zap.Any("goalEvent", e),
+		zap.Any("experiments", experiments),
+	)
 	evals, retriable, err := w.linkGoalEvent(ctx, e, environmentNamespace, e.Tag, experiments)
 	if err != nil {
 		return nil, retriable, err

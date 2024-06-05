@@ -174,6 +174,10 @@ func (w *evalEvtWriter) convToEvaluationEvent(
 	id, environmentNamespace string,
 	experiments []*exproto.Experiment,
 ) (*epproto.EvaluationEvent, bool, error) {
+	w.logger.Debug("link evaluation event", zap.String("type", subscriberEvaluationEventDWH),
+		zap.Any("evalEvent", e),
+		zap.Any("experiments", experiments),
+	)
 	exp := w.existExperiment(experiments, e.FeatureId, e.FeatureVersion)
 	if exp == nil {
 		return nil, false, ErrExperimentNotFound

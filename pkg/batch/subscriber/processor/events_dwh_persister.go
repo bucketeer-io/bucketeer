@@ -200,6 +200,10 @@ func (e *eventsDWHPersister) send(messages map[string]*puller.Message) {
 		e.logger.Error("all messages were bad")
 		return
 	}
+	e.logger.Debug("writing events",
+		zap.Any("events", envEvents),
+		zap.String("subscriberType", e.subscriberType),
+	)
 	fails := e.writer.Write(ctx, envEvents)
 	for id, m := range messages {
 		if repeatable, ok := fails[id]; ok {
