@@ -63,7 +63,6 @@ import { colourStyles, CreatableSelect } from '../CreatableSelect';
 import { Option, Select } from '../Select';
 import { OptionFeatureFlag, SelectFeatureFlag } from '../SelectFeatureFlag';
 import { Switch } from '../Switch';
-import { fi } from 'date-fns/locale';
 
 interface FeatureTargetingFormProps {
   featureId: string;
@@ -993,6 +992,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
     );
     const methods = useFormContext();
     const {
+      getValues,
       register,
       control,
       formState: { errors },
@@ -1008,6 +1008,9 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
       name: clausesName,
       keyName: 'key',
     });
+    const selectedFeatureIds = new Set(
+      (clauses as any).map((c) => c.attribute)
+    );
 
     const segmentOptions = useSelector<AppState, Option[]>(
       (state) =>
@@ -1381,56 +1384,62 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                     {isFeaturesLoading ? (
                       <div>loading</div>
                     ) : (
-                      <Controller
-                        name={clauseName}
-                        control={control}
-                        render={({ field }) => {
-                          const variationOptions =
-                            variationOptionsMap[field.value.attribute] ?? [];
-                          return (
-                            <div
-                              className={classNames(
-                                'flex-grow grid grid-cols-3 gap-1'
-                              )}
-                            >
+                      <div
+                        className={classNames(
+                          'flex-grow grid grid-cols-3 gap-1'
+                        )}
+                      >
+                        <Controller
+                          name={clauseAttribute}
+                          control={control}
+                          render={({ field }) => {
+                            const clauseFeatureOptions = featureOptions.filter(
+                              (o) =>
+                                o.value === field.value ||
+                                !selectedFeatureIds.has(o.value)
+                            );
+                            return (
                               <Select
                                 onChange={(o: Option) => {
-                                  field.onChange({
-                                    ...field.value,
-                                    attribute: o.value,
-                                    values: [
-                                      variationOptionsMap[o.value][0].value,
-                                    ],
-                                  });
+                                  field.onChange(o.value);
                                 }}
-                                options={featureOptions}
+                                options={clauseFeatureOptions}
                                 disabled={!editable}
                                 value={featureOptions.find(
-                                  (o) => o.value === field.value.attribute
+                                  (o) => o.value === field.value
                                 )}
                                 isSearchable={false}
                               />
-                              <span className="inline-flex items-center text-sm text-gray-700 px-2">
-                                {f(messages.feature.clause.operator.equal)}
-                              </span>
+                            );
+                          }}
+                        />
+                        <span className="inline-flex items-center text-sm text-gray-700 px-2">
+                          {f(messages.feature.clause.operator.equal)}
+                        </span>
+                        <Controller
+                          name={clauseValues}
+                          control={control}
+                          render={({ field }) => {
+                            const selectedfeatureId =
+                              getValues(clauseAttribute);
+                            const variationOptions =
+                              variationOptionsMap[selectedfeatureId] ?? [];
+                            return (
                               <Select
                                 onChange={(o: Option) => {
-                                  field.onChange({
-                                    ...field.value,
-                                    values: [o.value],
-                                  });
+                                  field.onChange([o.value]);
                                 }}
                                 options={variationOptions}
                                 disabled={!editable}
                                 value={variationOptions.find(
-                                  (o) => o.value === field.value.values[0]
+                                  (o) => o.value === field.value[0]
                                 )}
                                 isSearchable={false}
                               />
-                            </div>
-                          );
-                        }}
-                      />
+                            );
+                          }}
+                        />
+                      </div>
                     )}
                     <p className="input-error">
                       {errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.values
