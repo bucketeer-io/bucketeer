@@ -69,6 +69,8 @@ spec:
               value: "{{ .Values.env.notificationService }}"
             - name: BUCKETEER_BATCH_ENVIRONMENT_SERVICE
               value: "{{ .Values.env.environmentService }}"
+            - name: BUCKETEER_BATCH_PUSH_SERVICE
+              value: "{{ .Values.env.pushService }}"
             - name: BUCKETEER_BATCH_AUTO_OPS_SERVICE
               value: "{{ .Values.env.autoOpsService }}"
             - name: BUCKETEER_BATCH_EXPERIMENT_SERVICE

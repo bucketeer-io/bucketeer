@@ -52,6 +52,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/notification/sender/notifier"
 	"github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor"
 	opsexecutor "github.com/bucketeer-io/bucketeer/pkg/opsevent/batch/executor"
+	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
@@ -93,6 +94,7 @@ type server struct {
 	experimentService           *string
 	autoOpsService              *string
 	eventCounterService         *string
+	pushService                 *string
 	featureService              *string
 	notificationService         *string
 	experimentCalculatorService *string
@@ -164,6 +166,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"event-counter-service",
 			"bucketeer-event-counter-service address.",
 		).Default("event-counter-server:9090").String(),
+		pushService: cmd.Flag(
+			"push-service",
+			"bucketeer-push-service address.",
+		).Default("push:9090").String(),
 		featureService: cmd.Flag(
 			"feature-service",
 			"bucketeer-feature-service address.",
@@ -298,6 +304,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
+
+	pushClient, err := pushclient.NewClient(*s.pushService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer pushClient.Close()
 
 	featureClient, err := featureclient.NewClient(*s.featureService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -548,6 +566,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	processors, err := s.registerProcessorMap(
 		ctx,
 		environmentClient,
+		pushClient,
 		mysqlClient,
 		persistentRedisClient,
 		nonPersistentRedisClient,
@@ -676,6 +695,7 @@ func (s *server) startMultiPubSub(
 func (s *server) registerProcessorMap(
 	ctx context.Context,
 	environmentClient environmentclient.Client,
+	pushClient pushclient.Client,
 	mysqlClient mysql.Client,
 	persistentRedisClient redisv3.Client,
 	nonPersistentRedisClient redisv3.Client,
