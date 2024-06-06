@@ -19,6 +19,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"time"
+
+	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
+
 	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
@@ -30,10 +36,6 @@ import (
 	domaineventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
-	"go.uber.org/zap"
-	"google.golang.org/protobuf/proto"
-	"net/http"
-	"time"
 )
 
 const (
