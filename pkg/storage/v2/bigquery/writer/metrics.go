@@ -103,7 +103,7 @@ func getCodeFromError(err error) string {
 	return codeUnknown
 }
 
-func registerMetrics(r metrics.Registerer) {
+func RegisterMetrics(r metrics.Registerer) {
 	r.MustRegister(
 		handledCounter,
 		handledHistogram,

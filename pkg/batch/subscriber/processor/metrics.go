@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
 package processor
 
@@ -22,10 +21,34 @@ import (
 )
 
 const (
-	subscriberDomainEvent     = "DomainEvent"
-	subscriberEvaluationCount = "EvaluationCount"
-	subscriberSegmentUser     = "SegmentUser"
-	subscriberUserEvent       = "UserEvent"
+	subscriberDomainEvent        = "DomainEvent"
+	subscriberEvaluationCount    = "EvaluationCount"
+	subscriberEvaluationEventDWH = "EvaluationEventDWH"
+	subscriberEvaluationEventOPS = "EvaluationEventOPS"
+	subscriberGoalEventDWH       = "GoalEventDWH"
+	subscriberGoalEventOPS       = "GoalEventOPS"
+	subscriberSegmentUser        = "SegmentUser"
+	subscriberUserEvent          = "UserEvent"
+)
+
+const (
+	codeAutoOpsRuleNotFound                 = "ErrAutoOpsRuleNotFound"
+	codeFailedToExtractOpsEventRateClauses  = "FailedToExtractOpsEventRateClauses"
+	codeFailedToGetFeatures                 = "FailedToGetFeatures"
+	codeFailedToFindFeatureVersion          = "FailedToFindFeatureVersion"
+	codeFailedToListAutoOpsRules            = "FailedToListAutoOpsRules"
+	codeFailedToUpdateUserCount             = "FailedToUpdateUserCount"
+	codeGetFeaturesReturnedEmpty            = "GetFeaturesReturnedEmpty"
+	codeEvaluationsAreEmpty                 = "EvaluationsAreEmpty"
+	codeEventIssuedAfterExperimentEnded     = "EventIssuedAfterExperimentEnded"
+	codeEventOlderThanExperiment            = "EventOlderThanExperiment"
+	codeExperimentNotFound                  = "ExperimentNotFound"
+	codeGoalEventIssuedAfterExperimentEnded = "GoalEventIssuedAfterExperimentEnded"
+	codeFailedToEvaluateUser                = "FailedToEvaluateUser"
+	codeFailedToListExperiments             = "FailedToListExperiments"
+	codeFailedToAppendEvaluationEvents      = "FailedToAppendEvaluationEvents"
+	codeFailedToAppendGoalEvents            = "FailedToAppendGoalEvents"
+	codeLinked                              = "Linked"
 )
 
 var (

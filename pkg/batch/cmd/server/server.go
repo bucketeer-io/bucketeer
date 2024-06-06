@@ -55,6 +55,7 @@ import (
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 )
@@ -97,8 +98,10 @@ type server struct {
 	experimentCalculatorService *string
 	batchService                *string
 	// PubSub config
-	subscriberConfig *string
-	processorsConfig *string
+	subscriberConfig         *string
+	onDemandSubscriberConfig *string
+	processorsConfig         *string
+	onDemandProcessorsConfig *string
 	// Persistent Redis
 	persistentRedisServerName    *string
 	persistentRedisAddr          *string
@@ -181,9 +184,17 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"subscriber-config",
 			"Path to subscribers config.",
 		).Required().String(),
+		onDemandSubscriberConfig: cmd.Flag(
+			"on-demand-subscriber-config",
+			"Path to on-demand subscribers config.",
+		).Required().String(),
 		processorsConfig: cmd.Flag(
 			"processors-config",
 			"Path to processors config.",
+		).Required().String(),
+		onDemandProcessorsConfig: cmd.Flag(
+			"on-demand-processors-config",
+			"Path to on-demand processors config.",
 		).Required().String(),
 		persistentRedisServerName: cmd.Flag(
 			"persistent-redis-server-name",
@@ -539,7 +550,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		environmentClient,
 		mysqlClient,
 		persistentRedisClient,
+		nonPersistentRedisClient,
+		experimentClient,
+		featureClient,
 		batchClient,
+		autoOpsClient,
 		notificationSender,
 		registerer,
 		logger,
@@ -594,37 +609,66 @@ func (s *server) startMultiPubSub(
 	processors *processor.Processors,
 	logger *zap.Logger,
 ) (*subscriber.MultiSubscriber, error) {
-	bytes, err := os.ReadFile(*s.subscriberConfig)
-	if err != nil {
-		logger.Error("subscriber: failed to read subscriber config",
-			zap.Error(err),
-		)
-		return nil, err
-	}
-	var configMap map[string]subscriber.Configuration
-	if err := json.Unmarshal(bytes, &configMap); err != nil {
-		logger.Error("subscriber: failed to unmarshal subscriber config",
-			zap.Error(err),
-		)
-		return nil, err
-	}
 	multiSubscriber := subscriber.NewMultiSubscriber(
 		subscriber.WithLogger(logger),
 	)
-	for name, config := range configMap {
-		p, err := processors.GetProcessorByName(name)
-		if err != nil {
-			logger.Error("subscriber: processor not found",
-				zap.String("name", name),
+	subscriberConfigBytes, err := os.ReadFile(*s.subscriberConfig)
+	if err != nil {
+		logger.Error("subscriber: failed to read subscriber config", zap.Error(err))
+	} else {
+		var configMap map[string]subscriber.Configuration
+		if err := json.Unmarshal(subscriberConfigBytes, &configMap); err != nil {
+			logger.Error("subscriber: failed to unmarshal subscriber config",
 				zap.Error(err),
 			)
 			return nil, err
 		}
-		multiSubscriber.AddSubscriber(subscriber.NewSubscriber(
-			name, config, p,
-			subscriber.WithLogger(logger),
-		))
+		for name, config := range configMap {
+			p, err := processors.GetProcessorByName(name)
+			if err != nil {
+				logger.Error("subscriber: processor not found",
+					zap.String("name", name),
+					zap.Error(err),
+				)
+				// since we will keep old and new configmap at the same time during canary release,
+				// we should skip the error, just log it here
+				continue
+			}
+			multiSubscriber.AddSubscriber(subscriber.NewSubscriber(
+				name, config, p,
+				subscriber.WithLogger(logger),
+			))
+		}
 	}
+	onDemandSubscriberConfigBytes, err := os.ReadFile(*s.onDemandSubscriberConfig)
+	if err != nil {
+		logger.Error("subscriber: failed to read subscriber config", zap.Error(err))
+	} else {
+		var onDemandConfigMap map[string]subscriber.OnDemandConfiguration
+		if err := json.Unmarshal(onDemandSubscriberConfigBytes, &onDemandConfigMap); err != nil {
+			logger.Error("subscriber: failed to unmarshal onDemand subscriber config",
+				zap.Error(err),
+			)
+			return nil, err
+		}
+		for name, config := range onDemandConfigMap {
+			p, err := processors.GetProcessorByName(name)
+			if err != nil {
+				logger.Error("subscriber: onDemand processor not found",
+					zap.String("name", name),
+					zap.Error(err),
+				)
+				// since we will keep old and new configmap at the same time during canary release,
+				// we should skip the error, just log it here
+				continue
+			}
+			multiSubscriber.AddSubscriber(subscriber.NewOnDemandSubscriber(
+				name, config, p.(subscriber.OnDemandProcessor),
+				subscriber.WithLogger(logger),
+			))
+		}
+	}
+
 	multiSubscriber.Start(ctx)
 	return multiSubscriber, nil
 }
@@ -634,73 +678,155 @@ func (s *server) registerProcessorMap(
 	environmentClient environmentclient.Client,
 	mysqlClient mysql.Client,
 	persistentRedisClient redisv3.Client,
+	nonPersistentRedisClient redisv3.Client,
+	exClient experimentclient.Client,
+	ftClient featureclient.Client,
 	batchClient btclient.Client,
+	opsClient autoopsclient.Client,
 	sender notificationsender.Sender,
 	registerer metrics.Registerer,
 	logger *zap.Logger,
 ) (*processor.Processors, error) {
-	bytes, err := os.ReadFile(*s.processorsConfig)
-	if err != nil {
-		logger.Error("subscriber: failed to read processors config",
-			zap.Error(err),
-		)
-		return nil, err
-	}
-	var configMap map[string]interface{}
-	if err := json.Unmarshal(bytes, &configMap); err != nil {
-		logger.Error("subscriber: failed to unmarshal processors config",
-			zap.Error(err),
-		)
-		return nil, err
-	}
 	processors := processor.NewProcessors(registerer)
+	writer.RegisterMetrics(registerer)
 
-	processors.RegisterProcessor(
-		processor.DomainEventInformerName,
-		processor.NewDomainEventInformer(environmentClient, sender, logger),
-	)
-
-	segmentPersister, err := processor.NewSegmentUserPersister(
-		configMap[processor.SegmentUserPersisterName],
-		batchClient,
-		mysqlClient,
-		logger,
-	)
+	processorsConfigBytes, err := os.ReadFile(*s.processorsConfig)
 	if err != nil {
-		return nil, err
-	}
-	processors.RegisterProcessor(
-		processor.SegmentUserPersisterName,
-		segmentPersister,
-	)
+		logger.Error("subscriber: failed to read processors config", zap.Error(err))
+	} else {
+		var processorsConfigMap map[string]interface{}
+		if err := json.Unmarshal(processorsConfigBytes, &processorsConfigMap); err != nil {
+			logger.Error("subscriber: failed to unmarshal processors config",
+				zap.Error(err),
+			)
+			return nil, err
+		}
+		processors.RegisterProcessor(
+			processor.DomainEventInformerName,
+			processor.NewDomainEventInformer(environmentClient, sender, logger),
+		)
 
-	userEventPersister, err := processor.NewUserEventPersister(
-		configMap[processor.UserEventPersisterName],
-		mysqlClient,
-		logger,
-	)
-	if err != nil {
-		return nil, err
-	}
-	processors.RegisterProcessor(
-		processor.UserEventPersisterName,
-		userEventPersister,
-	)
+		segmentPersister, err := processor.NewSegmentUserPersister(
+			processorsConfigMap[processor.SegmentUserPersisterName],
+			batchClient,
+			mysqlClient,
+			logger,
+		)
+		if err != nil {
+			return nil, err
+		}
+		processors.RegisterProcessor(
+			processor.SegmentUserPersisterName,
+			segmentPersister,
+		)
 
-	evaluationCountEventPersister, err := processor.NewEvaluationCountEventPersister(
-		ctx,
-		configMap[processor.EvaluationCountEventPersisterName],
-		mysqlClient,
-		cachev3.NewRedisCache(persistentRedisClient),
-		logger,
-	)
-	if err != nil {
-		return nil, err
+		userEventPersister, err := processor.NewUserEventPersister(
+			processorsConfigMap[processor.UserEventPersisterName],
+			mysqlClient,
+			logger,
+		)
+		if err != nil {
+			return nil, err
+		}
+		processors.RegisterProcessor(
+			processor.UserEventPersisterName,
+			userEventPersister,
+		)
+
+		evaluationCountEventPersister, err := processor.NewEvaluationCountEventPersister(
+			ctx,
+			processorsConfigMap[processor.EvaluationCountEventPersisterName],
+			mysqlClient,
+			cachev3.NewRedisCache(persistentRedisClient),
+			logger,
+		)
+		if err != nil {
+			return nil, err
+		}
+		processors.RegisterProcessor(
+			processor.EvaluationCountEventPersisterName,
+			evaluationCountEventPersister,
+		)
 	}
-	processors.RegisterProcessor(
-		processor.EvaluationCountEventPersisterName,
-		evaluationCountEventPersister,
-	)
+
+	onDemandProcessorsConfigBytes, err := os.ReadFile(*s.onDemandProcessorsConfig)
+	if err != nil {
+		logger.Error("subscriber: failed to read onDemand processors config", zap.Error(err))
+	} else {
+		var onDemandProcessorsConfigMap map[string]interface{}
+		if err := json.Unmarshal(onDemandProcessorsConfigBytes, &onDemandProcessorsConfigMap); err != nil {
+			logger.Error("subscriber: failed to unmarshal onDemand processors config",
+				zap.Error(err),
+			)
+			return nil, err
+		}
+
+		evaluationEventsDWHPersister, err := processor.NewEventsDWHPersister(
+			ctx,
+			onDemandProcessorsConfigMap[processor.EvaluationCountEventDWHPersisterName],
+			mysqlClient,
+			nonPersistentRedisClient, // use non-persistent redis instance here
+			exClient,
+			ftClient,
+			processor.EvaluationCountEventDWHPersisterName,
+			logger,
+		)
+		if err != nil {
+			return nil, err
+		}
+		processors.RegisterProcessor(
+			processor.EvaluationCountEventDWHPersisterName,
+			evaluationEventsDWHPersister,
+		)
+
+		goalEventsDWHPersister, err := processor.NewEventsDWHPersister(
+			ctx,
+			onDemandProcessorsConfigMap[processor.GoalCountEventDWHPersisterName],
+			mysqlClient,
+			nonPersistentRedisClient, // use non-persistent redis instance here
+			exClient,
+			ftClient,
+			processor.GoalCountEventDWHPersisterName,
+			logger,
+		)
+		if err != nil {
+			return nil, err
+		}
+		processors.RegisterProcessor(
+			processor.GoalCountEventDWHPersisterName,
+			goalEventsDWHPersister,
+		)
+
+		evaluationEventsOPSPersister, err := processor.NewEventsOPSPersister(
+			ctx,
+			onDemandProcessorsConfigMap[processor.EvaluationCountEventOPSPersisterName],
+			mysqlClient,
+			persistentRedisClient, // use persistent redis instance here
+			opsClient,
+			ftClient,
+			processor.EvaluationCountEventOPSPersisterName,
+			logger,
+		)
+		if err != nil {
+			return nil, err
+		}
+		processors.RegisterProcessor(processor.EvaluationCountEventOPSPersisterName, evaluationEventsOPSPersister)
+
+		goalEventsOPSPersister, err := processor.NewEventsOPSPersister(
+			ctx,
+			onDemandProcessorsConfigMap[processor.GoalCountEventOPSPersisterName],
+			mysqlClient,
+			persistentRedisClient, // use persistent redis instance here
+			opsClient,
+			ftClient,
+			processor.GoalCountEventOPSPersisterName,
+			logger,
+		)
+		if err != nil {
+			return nil, err
+		}
+		processors.RegisterProcessor(processor.GoalCountEventOPSPersisterName, goalEventsOPSPersister)
+	}
 
 	return processors, nil
 }

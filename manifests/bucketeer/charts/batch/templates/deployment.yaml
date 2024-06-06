@@ -53,6 +53,8 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["server"]
           env:
+            - name: BIGQUERY_EMULATOR_HOST
+              value: "{{.Values.env.bigqueryEmulatorHost}}"
             - name: BUCKETEER_BATCH_PROJECT
               value: "{{ .Values.env.project }}"
             - name: BUCKETEER_BATCH_PROFILE
@@ -79,13 +81,13 @@ spec:
               value: "{{ .Values.env.experimentCalculatorService }}"
             - name: BUCKETEER_BATCH_BATCH_SERVICE
               value: "{{ .Values.env.batchService }}"
-            - name: BUCKETEER_OPS_EVENT_SCHEDULE_COUNT_WATCHER
+            - name: BUCKETEER_BATCH_EVENT_SCHEDULE_COUNT_WATCHER
               value: "{{ .Values.env.scheduleCountWatcher }}"
-            - name: BUCKETEER_OPS_EVENT_SCHEDULE_DATETIME_WATCHER
+            - name: BUCKETEER_BATCH_EVENT_SCHEDULE_DATETIME_WATCHER
               value: "{{ .Values.env.scheduleDatetimeWatcher }}"
-            - name: BUCKETEER_OPS_EVENT_SCHEDULE_PROGRESSIVE_ROLLOUT_WATCHER
+            - name: BUCKETEER_BATCH_EVENT_SCHEDULE_PROGRESSIVE_ROLLOUT_WATCHER
               value: "{{ .Values.env.scheduleProgressiveRolloutWatcher }}"
-            - name: BUCKETEER_OPS_EVENT_REFRESH_INTERVAL
+            - name: BUCKETEER_BATCH_EVENT_REFRESH_INTERVAL
               value: "{{ .Values.env.refreshInterval }}"
             - name: BUCKETEER_BATCH_MYSQL_USER
               value: "{{ .Values.env.mysqlUser }}"
@@ -115,8 +117,12 @@ spec:
               value: /usr/local/certs/service/tls.crt
             - name : BUCKETEER_BATCH_SUBSCRIBER_CONFIG
               value: /usr/local/conf/subscribers.json
+            - name: BUCKETEER_BATCH_ON_DEMAND_SUBSCRIBER_CONFIG
+              value: /usr/local/conf/onDemandSubscribers.json
             - name: BUCKETEER_BATCH_PROCESSORS_CONFIG
               value: /usr/local/conf/processors.json
+            - name: BUCKETEER_BATCH_ON_DEMAND_PROCESSORS_CONFIG
+              value: /usr/local/conf/onDemandProcessors.json
             - name: BUCKETEER_BATCH_KEY
               value: /usr/local/certs/service/tls.key
             - name: BUCKETEER_BATCH_OAUTH_PUBLIC_KEY

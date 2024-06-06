@@ -85,7 +85,7 @@ func NewWriter(
 		opt(dopts)
 	}
 	if dopts.metrics != nil {
-		registerMetrics(dopts.metrics)
+		RegisterMetrics(dopts.metrics)
 	}
 	var gcpOpts []option.ClientOption
 	if bigqueryEmulatorEndpoint := os.Getenv(bigqueryEmulatorHostEnv); bigqueryEmulatorEndpoint != "" {

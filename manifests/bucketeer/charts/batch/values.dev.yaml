@@ -12,6 +12,7 @@ env:
   mysqlHost: localenv-mysql-headless.default.svc.cluster.local
   mysqlPort: 3306
   mysqlDbName: bucketeer
+  bigqueryEmulatorHost: localenv-bq.default.svc.cluster.local:9060
   pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
   notificationService: localhost:9001
   environmentService: localhost:9001
@@ -140,6 +141,48 @@ subscribers:
     maxMps: 50
     workerNum: 1
 
+onDemandSubscribers:
+  evaluationCountEventDWHPersister:
+    project: bucketeer-test
+    topic: evaluation
+    subscription: evaluation-dwh-sub
+    pullerNumGoroutines: 1
+    pullerMaxOutstandingMessages: 1000
+    pullerMaxOutstandingBytes: 1000000000
+    maxMps: 50
+    workerNum: 1
+    checkInterval: 5
+  evaluationCountEventOPSPersister:
+    project: bucketeer-test
+    topic: evaluation
+    subscription: evaluation-ops-sub
+    pullerNumGoroutines: 1
+    pullerMaxOutstandingMessages: 1000
+    pullerMaxOutstandingBytes: 1000000000
+    maxMps: 50
+    workerNum: 1
+    checkInterval: 5
+  goalCountEventDWHPersister:
+    project: bucketeer-test
+    topic: goal
+    subscription: goal-dwh-sub
+    pullerNumGoroutines: 1
+    pullerMaxOutstandingMessages: 1000
+    pullerMaxOutstandingBytes: 1000000000
+    maxMps: 50
+    workerNum: 1
+    checkInterval: 5
+  goalCountEventOPSPersister:
+    project: bucketeer-test
+    topic: goal
+    subscription: goal-ops-sub
+    pullerNumGoroutines: 1
+    pullerMaxOutstandingMessages: 1000
+    pullerMaxOutstandingBytes: 1000000000
+    maxMps: 50
+    workerNum: 1
+    checkInterval: 5
+
 
 # This configuration is used for add custom params to Processors
 processors:
@@ -157,3 +200,29 @@ processors:
   userEventPersister:
     flushSize: 100
     flushInterval: 10
+
+onDemandProcessors:
+  evaluationCountEventDWHPersister:
+    flushSize: 100
+    flushInterval: 10
+    flushTimeout: 10
+    project: bucketeer-test
+    bigQueryDataSet: bucketeer
+    bigQueryBatchSize: 10
+    timezone: UTC
+  evaluationCountEventOPSPersister:
+    flushSize: 100
+    flushInterval: 10
+    flushTimeout: 10
+  goalCountEventDWHPersister:
+    flushSize: 100
+    flushInterval: 10
+    flushTimeout: 10
+    project: bucketeer-test
+    bigQueryDataSet: bucketeer
+    bigQueryBatchSize: 10
+    timezone: UTC
+  goalCountEventOPSPersister:
+    flushSize: 100
+    flushInterval: 10
+    flushTimeout: 10

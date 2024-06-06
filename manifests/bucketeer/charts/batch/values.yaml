@@ -204,6 +204,49 @@ subscribers:
     maxMps: 1000
     workerNum: 5
 
+onDemandSubscribers:
+  evaluationCountEventDWHPersister:
+    project:
+    topic:
+    subscription:
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: 1000
+    pullerMaxOutstandingBytes: 100000000
+    maxMps: 100
+    workerNum: 1
+    checkInterval: 10
+  evaluationCountEventOPSPersister:
+    project:
+    topic:
+    subscription:
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: 1000
+    pullerMaxOutstandingBytes: 100000000
+    maxMps: 100
+    workerNum: 1
+    checkInterval: 10
+  goalCountEventDWHPersister:
+    project:
+    topic:
+    subscription:
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: 1000
+    pullerMaxOutstandingBytes: 100000000
+    maxMps: 100
+    workerNum: 1
+    checkInterval: 10
+  goalCountEventOPSPersister:
+    project:
+    topic:
+    subscription:
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: 1000
+    pullerMaxOutstandingBytes: 100000000
+    maxMps: 100
+    workerNum: 1
+    checkInterval: 10
+
+
 # This configuration is used for add custom params to Processors
 processors:
   # This is the processor's name. It must match the same name defined in the
@@ -220,3 +263,29 @@ processors:
   userEventPersister:
     flushSize: 200
     flushInterval: 5
+
+onDemandProcessors:
+  evaluationCountEventDWHPersister:
+    flushSize: 20
+    flushInterval: 5
+    flushTimeout: 30
+    project:
+    bigQueryDataSet:
+    bigQueryBatchSize:
+    timezone: UTC
+  evaluationCountEventOPSPersister:
+    flushSize: 20
+    flushInterval: 5
+    flushTimeout: 30
+  goalCountEventDWHPersister:
+    flushSize: 20
+    flushInterval: 5
+    flushTimeout: 30
+    project:
+    bigQueryDataSet:
+    bigQueryBatchSize:
+    timezone: UTC
+  goalCountEventOPSPersister:
+    flushSize: 20
+    flushInterval: 5
+    flushTimeout: 30

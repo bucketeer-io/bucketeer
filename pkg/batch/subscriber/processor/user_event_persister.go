@@ -1,16 +1,16 @@
-//  Copyright 2024 The Bucketeer Authors.
+// Copyright 2024 The Bucketeer Authors.
 //
-//  Licensed under the Apache License, Version 2.0 (the "License");
-//  you may not use this file except in compliance with the License.
-//  You may obtain a copy of the License at
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-//      http://www.apache.org/licenses/LICENSE-2.0
+//     http://www.apache.org/licenses/LICENSE-2.0
 //
-//  Unless required by applicable law or agreed to in writing, software
-//  distributed under the License is distributed on an "AS IS" BASIS,
-//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//  See the License for the specific language governing permissions and
-//  limitations under the License.
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package processor
 
@@ -23,11 +23,11 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
 
+	ustorage "github.com/bucketeer-io/bucketeer/pkg/batch/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	ustorage "github.com/bucketeer-io/bucketeer/pkg/user/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	ecproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/service"
@@ -54,7 +54,7 @@ func NewUserEventPersister(
 	userEventPerisiterJsonConfig, ok := config.(map[string]interface{})
 	if !ok {
 		logger.Error("UserEventPersister: invalid config")
-		return nil, errUserEventInvalidConfig
+		return nil, ErrUserEventInvalidConfig
 	}
 	configBytes, err := json.Marshal(userEventPerisiterJsonConfig)
 	if err != nil {
