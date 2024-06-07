@@ -701,6 +701,16 @@ func (s *server) registerProcessorMap(
 			)
 			return nil, err
 		}
+		auditLogPersister, err := processor.NewAuditLogPersister(
+			processorsConfigMap[processor.AuditLogPersisterName],
+			mysqlClient,
+			logger,
+		)
+		if err != nil {
+			return nil, err
+		}
+		processors.RegisterProcessor(processor.AuditLogPersisterName, auditLogPersister)
+
 		processors.RegisterProcessor(
 			processor.DomainEventInformerName,
 			processor.NewDomainEventInformer(environmentClient, sender, logger),

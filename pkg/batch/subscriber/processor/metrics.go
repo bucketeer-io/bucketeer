@@ -21,6 +21,7 @@ import (
 )
 
 const (
+	subscriberAuditLog           = "AuditLog"
 	subscriberDomainEvent        = "DomainEvent"
 	subscriberEvaluationCount    = "EvaluationCount"
 	subscriberEvaluationEventDWH = "EvaluationEventDWH"

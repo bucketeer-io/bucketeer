@@ -22,6 +22,7 @@ import (
 )
 
 const (
+	AuditLogPersisterName                = "auditLogPersister"
 	DomainEventInformerName              = "domainEventInformer"
 	EvaluationCountEventDWHPersisterName = "evaluationCountEventDWHPersister"
 	EvaluationCountEventOPSPersisterName = "evaluationCountEventOPSPersister"
