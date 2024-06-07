@@ -130,6 +130,7 @@ func (a auditLogPersister) extractAuditLogs(
 		event := &domainevent.Event{}
 		if err := pb.Unmarshal(msg.Data, event); err != nil {
 			a.logger.Error("Failed to unmarshal message", zap.Error(err))
+			subscriberHandledCounter.WithLabelValues(subscriberAuditLog, codes.BadMessage.String()).Inc()
 			msg.Ack()
 			continue
 		}
