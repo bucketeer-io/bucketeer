@@ -1628,9 +1628,9 @@ export const messages = {
       id: 'feature.selectFlag',
       defaultMessage: 'Select a feature flag',
     }),
-    noData: defineMessage({
-      id: 'feature.noData',
-      defaultMessage: 'No selectable feature flags exist.',
+    noSelectableFeatureFlags: defineMessage({
+      id: 'feature.noSelectableFlags',
+      defaultMessage: 'There are no selectable feature flags.',
     }),
     selectVariation: defineMessage({
       id: 'feature.selectVariation',
