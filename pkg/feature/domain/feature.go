@@ -31,6 +31,9 @@ const (
 
 var (
 	errClauseNotFound                = errors.New("feature: clause not found")
+	errClauseAttributeNotEmpty       = errors.New("feature: clause attribute must be empty")
+	errClauseAttributeEmpty          = errors.New("feature: clause attribute cannot be empty")
+	errClauseValuesEmpty             = errors.New("feature: clause values cannot be empty")
 	errClauseAlreadyExists           = errors.New("feature: clause already exists")
 	errRuleMustHaveAtLeastOneClause  = errors.New("feature: rule must have at least one clause")
 	errClauseMustHaveAtLeastOneValue = errors.New("feature: clause must have at least one value")
@@ -222,6 +225,9 @@ func (f *Feature) AddRule(rule *feature.Rule) error {
 	if _, err := f.findRule(rule.Id); err == nil {
 		return errRuleAlreadyExists
 	}
+	if err := validateClauses(rule.Clauses); err != nil {
+		return err
+	}
 	if err := validateStrategy(rule.Strategy, f.Variations); err != nil {
 		return err
 	}
@@ -277,6 +283,35 @@ func (f *Feature) getRule(id string) (*feature.Rule, error) {
 	return nil, errRuleNotFound
 }
 
+func validateClauses(clauses []*feature.Clause) error {
+	for _, c := range clauses {
+		if err := validateClause(c); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateClause(c *feature.Clause) error {
+	switch c.Operator {
+	case feature.Clause_SEGMENT:
+		if c.Attribute != "" {
+			return errClauseAttributeNotEmpty
+		}
+		if len(c.Values) == 0 {
+			return errClauseValuesEmpty
+		}
+	default:
+		if c.Attribute == "" {
+			return errClauseAttributeEmpty
+		}
+		if len(c.Values) == 0 {
+			return errClauseValuesEmpty
+		}
+	}
+	return nil
+}
+
 func validateStrategy(strategy *feature.Strategy, variations []*feature.Variation) error {
 	switch strategy.Type {
 	case feature.Strategy_FIXED:
@@ -315,6 +350,9 @@ func (f *Feature) DeleteRule(rule string) error {
 }
 
 func (f *Feature) AddClause(rule string, clause *feature.Clause) error {
+	if err := validateClause(clause); err != nil {
+		return err
+	}
 	// TODO: do same validation as in addrule?
 	idx, err := f.findRule(rule)
 	if err != nil {
