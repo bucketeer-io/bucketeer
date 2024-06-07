@@ -295,7 +295,7 @@
   "feature.list.header.title": "Feature Flags",
   "feature.list.noData.description": "Create feature flags to manage who sees your features.",
   "feature.list.noResult.searchKeyword": "ID, name and description",
-  "feature.noData": "No selectable feature flags exist.",
+  "feature.noSelectableFlags": "There are no selectable feature flags.",
   "feature.offVariation": "off variation",
   "feature.onVariation": "on variation",
   "feature.prerequisites": "Prerequisites",
