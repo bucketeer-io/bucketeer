@@ -296,7 +296,7 @@
   "feature.list.header.title": "フィーチャーフラグ",
   "feature.list.noData.description": "フィーチャーフラグを作成して、機能を表示するユーザーを管理できます。",
   "feature.list.noResult.searchKeyword": "ID、名前、説明",
-  "feature.noData": "選択可能なフィーチャーフラグが存在しません。",
+  "feature.noSelectableFlags": "選択可能なフィーチャーフラグがありません。",
   "feature.offVariation": "オフバリエーション",
   "feature.onVariation": "オンバリエーション",
   "feature.prerequisites": "前提条件",
