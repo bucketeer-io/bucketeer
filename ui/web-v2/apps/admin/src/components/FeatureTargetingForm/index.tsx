@@ -1456,7 +1456,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                 ) : (
                   <div className="flex-grow flex content-center">
                     <span className="inline-flex items-center text-sm text-gray-700 px-2">
-                      {f(messages.feature.noData)}
+                      {f(messages.feature.noSelectableFeatureFlags)}
                     </span>
                   </div>
                 ))}
