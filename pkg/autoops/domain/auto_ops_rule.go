@@ -29,6 +29,7 @@ import (
 var (
 	errClauseNotFound = errors.New("autoOpsRule: clause not found")
 	errClauseEmpty    = errors.New("autoOpsRule: clause cannot be empty")
+	errOpsTypeEnable  = errors.New("autoOpsRule: opsType cannot be enable for EventRate")
 
 	OpsEventRateClause = &proto.OpsEventRateClause{}
 	DatetimeClause     = &proto.DatetimeClause{}
@@ -38,7 +39,6 @@ type AutoOpsRule struct {
 	*proto.AutoOpsRule
 }
 
-// Remove it and replace it with NewAutoOpsRule_V2 when adding multi-scheduling support to the API.
 func NewAutoOpsRule(
 	featureID string,
 	opsType proto.OpsType,
@@ -58,53 +58,37 @@ func NewAutoOpsRule(
 		CreatedAt: now,
 		UpdatedAt: now,
 	}}
-	for _, c := range opsEventRateClauses {
-		if _, err := autoOpsRule.AddOpsEventRateClause(c); err != nil {
-			return nil, err
-		}
-	}
-	for _, c := range datetimeClauses {
-		if _, err := autoOpsRule.AddDatetimeClause(c); err != nil {
-			return nil, err
-		}
-	}
-	if len(autoOpsRule.Clauses) == 0 {
-		return nil, errClauseEmpty
-	}
-	return autoOpsRule, nil
-
-}
-
-func NewAutoOpsRule_V2(
-	featureID string,
-	opsType proto.OpsType,
-	opsEventRateClauses []*proto.OpsEventRateClause,
-	datetimeClauses []*proto.DatetimeClause,
-) (*AutoOpsRule, error) {
-	now := time.Now().Unix()
-	id, err := uuid.NewUUID()
-	if err != nil {
-		return nil, err
-	}
-	autoOpsRule := &AutoOpsRule{&proto.AutoOpsRule{
-		Id:            id.String(),
-		FeatureId:     featureID,
-		OpsType:       opsType,
-		Clauses:       []*proto.Clause{},
-		CreatedAt:     now,
-		UpdatedAt:     now,
-		AutoOpsStatus: proto.AutoOpsStatus_WAITING,
-		StoppedAt:     0,
-	}}
 	if opsType == proto.OpsType_EVENT_RATE {
 		for _, c := range opsEventRateClauses {
 			if _, err := autoOpsRule.AddOpsEventRateClause(c); err != nil {
 				return nil, err
 			}
 		}
-	}
-	if opsType == proto.OpsType_SCHEDULE {
+	} else if opsType == proto.OpsType_SCHEDULE {
 		for _, c := range datetimeClauses {
+			if _, err := autoOpsRule.AddDatetimeClause(c); err != nil {
+				return nil, err
+			}
+		}
+	} else if opsType == proto.OpsType_ENABLE_FEATURE {
+		if len(opsEventRateClauses) != 0 {
+			return nil, errOpsTypeEnable
+		}
+		for _, c := range datetimeClauses {
+			c.ActionType = proto.ActionType_ENABLE
+			if _, err := autoOpsRule.AddDatetimeClause(c); err != nil {
+				return nil, err
+			}
+		}
+	} else if opsType == proto.OpsType_DISABLE_FEATURE {
+		for _, c := range opsEventRateClauses {
+			c.ActionType = proto.ActionType_DISABLE
+			if _, err := autoOpsRule.AddOpsEventRateClause(c); err != nil {
+				return nil, err
+			}
+		}
+		for _, c := range datetimeClauses {
+			c.ActionType = proto.ActionType_DISABLE
 			if _, err := autoOpsRule.AddDatetimeClause(c); err != nil {
 				return nil, err
 			}
@@ -120,7 +104,6 @@ func NewAutoOpsRule_V2(
 func (a *AutoOpsRule) SetStopped() {
 	now := time.Now().Unix()
 	a.AutoOpsRule.AutoOpsStatus = proto.AutoOpsStatus_STOPPED
-	a.AutoOpsRule.StoppedAt = now
 	a.AutoOpsRule.UpdatedAt = now
 }
 
@@ -133,6 +116,7 @@ func (a *AutoOpsRule) SetDeleted() {
 func (a *AutoOpsRule) SetTriggeredAt() {
 	now := time.Now().Unix()
 	a.AutoOpsRule.TriggeredAt = now
+	a.AutoOpsStatus = proto.AutoOpsStatus_COMPLETED
 	a.AutoOpsRule.UpdatedAt = now
 }
 
@@ -142,10 +126,10 @@ func (a *AutoOpsRule) SetCompleted() {
 }
 
 func (a *AutoOpsRule) AlreadyTriggered() bool {
-	return a.TriggeredAt > 0
+	return a.TriggeredAt > 0 || a.AutoOpsStatus == proto.AutoOpsStatus_COMPLETED
 }
 
-func (a *AutoOpsRule) HasExecuteClause() bool {
+func (a *AutoOpsRule) IsNotCompletedStatus() bool {
 	return a.AutoOpsStatus == proto.AutoOpsStatus_WAITING || a.AutoOpsStatus == proto.AutoOpsStatus_RUNNING
 }
 
@@ -153,10 +137,6 @@ func (a *AutoOpsRule) SetOpsType(opsType proto.OpsType) {
 	a.AutoOpsRule.OpsType = opsType
 	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
 	a.AutoOpsRule.TriggeredAt = 0
-	if a.AutoOpsRule.AutoOpsStatus != proto.AutoOpsStatus_RUNNING {
-		a.AutoOpsRule.AutoOpsStatus = proto.AutoOpsStatus_WAITING
-		a.AutoOpsRule.StoppedAt = 0
-	}
 }
 
 func (a *AutoOpsRule) SetAutoOpsStatus(status proto.AutoOpsStatus) {
@@ -174,10 +154,7 @@ func (a *AutoOpsRule) AddOpsEventRateClause(oerc *proto.OpsEventRateClause) (*pr
 		return nil, err
 	}
 	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
-	if a.AutoOpsRule.AutoOpsStatus != proto.AutoOpsStatus_RUNNING {
-		a.AutoOpsRule.AutoOpsStatus = proto.AutoOpsStatus_WAITING
-		a.AutoOpsRule.StoppedAt = 0
-	}
+	a.AutoOpsRule.TriggeredAt = 0
 	return clause, nil
 }
 
@@ -208,10 +185,6 @@ func (a *AutoOpsRule) AddDatetimeClause(dc *proto.DatetimeClause) (*proto.Clause
 		return nil, err
 	}
 	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
-	if a.AutoOpsRule.AutoOpsStatus != proto.AutoOpsStatus_RUNNING {
-		a.AutoOpsRule.AutoOpsStatus = proto.AutoOpsStatus_WAITING
-		a.AutoOpsRule.StoppedAt = 0
-	}
 	return clause, nil
 }
 
@@ -226,7 +199,6 @@ func (a *AutoOpsRule) addClause(ac *any.Any, actionType proto.ActionType) (*prot
 		ActionType: actionType,
 	}
 	a.AutoOpsRule.Clauses = append(a.AutoOpsRule.Clauses, clause)
-	a.AutoOpsRule.TriggeredAt = 0
 	return clause, nil
 }
 
@@ -253,19 +225,15 @@ func (a *AutoOpsRule) ChangeOpsEventRateClause(id string, oerc *proto.OpsEventRa
 		return err
 	}
 	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
-	if a.AutoOpsRule.AutoOpsStatus != proto.AutoOpsStatus_RUNNING {
-		a.AutoOpsRule.AutoOpsStatus = proto.AutoOpsStatus_WAITING
-		a.AutoOpsRule.StoppedAt = 0
-	}
 	return nil
 }
 
 func (a *AutoOpsRule) ChangeDatetimeClause(id string, dc *proto.DatetimeClause) error {
-	var index = int64(-1)
-	var swapIndex = int64(-1)
+	var srcIndex = int64(-1)
+	var dectIndex = int64(-1)
 	for i, c := range a.Clauses {
 		if c.Id == id {
-			index = int64(i)
+			srcIndex = int64(i)
 		}
 		datetimeClause, err := a.unmarshalDatetimeClause(c)
 		if err != nil {
@@ -274,26 +242,22 @@ func (a *AutoOpsRule) ChangeDatetimeClause(id string, dc *proto.DatetimeClause) 
 		if datetimeClause == nil {
 			continue
 		}
-		if swapIndex == -1 && dc.Time <= datetimeClause.Time {
-			swapIndex = int64(i)
+		if dectIndex == -1 && dc.Time <= datetimeClause.Time {
+			dectIndex = int64(i)
 		}
 	}
-	if index == -1 {
+	if srcIndex == -1 {
 		return errClauseNotFound
 	}
-	if swapIndex == -1 {
-		swapIndex = int64(len(a.Clauses) - 1)
+	if dectIndex == -1 {
+		dectIndex = int64(len(a.Clauses) - 1)
 	}
-	err := a.swapClause(id, dc, dc.ActionType, swapIndex)
+	err := a.swapClause(dc, dc.ActionType, srcIndex, dectIndex)
 	if err != nil {
 		return err
 	}
 	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
 	a.AutoOpsRule.TriggeredAt = 0
-	if a.AutoOpsRule.AutoOpsStatus != proto.AutoOpsStatus_RUNNING {
-		a.AutoOpsRule.AutoOpsStatus = proto.AutoOpsStatus_WAITING
-		a.AutoOpsRule.StoppedAt = 0
-	}
 	return nil
 }
 
@@ -313,28 +277,20 @@ func (a *AutoOpsRule) changeClause(id string, mc pb.Message, actionType proto.Ac
 	return errClauseNotFound
 }
 
-func (a *AutoOpsRule) swapClause(id string, mc pb.Message, actionType proto.ActionType, swapIndex int64) error {
+func (a *AutoOpsRule) swapClause(mc pb.Message, actionType proto.ActionType, srcIndex int64, destIndex int64) error {
 	clause, err := ptypes.MarshalAny(mc)
 	if err != nil {
 		return err
 	}
 
-	index := -1
-	for i, c := range a.Clauses {
-		if c.Id == id {
-			index = i
-		}
-	}
-	if index == -1 || swapIndex > int64(len(a.Clauses)) {
+	if srcIndex > int64(len(a.Clauses)) || destIndex > int64(len(a.Clauses)) {
 		return errClauseNotFound
 	}
 
-	a.Clauses[index].Clause = clause
-	a.Clauses[index].ActionType = actionType
+	a.Clauses[srcIndex].Clause = clause
+	a.Clauses[srcIndex].ActionType = actionType
 
-	tmp := a.Clauses[swapIndex]
-	copy(a.Clauses[swapIndex:], a.Clauses[swapIndex+1:])
-	a.Clauses[index] = tmp
+	a.Clauses[srcIndex], a.Clauses[destIndex] = a.Clauses[destIndex], a.Clauses[srcIndex]
 	return nil
 }
 

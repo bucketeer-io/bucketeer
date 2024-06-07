@@ -1966,11 +1966,6 @@
                 "id": 10,
                 "name": "auto_ops_status",
                 "type": "AutoOpsStatus"
-              },
-              {
-                "id": 11,
-                "name": "stopped_at",
-                "type": "int64"
               }
             ]
           },
@@ -2010,11 +2005,15 @@
             "name": "ActionType",
             "enum_fields": [
               {
-                "name": "ENABLE"
+                "name": "UNKNOWN"
+              },
+              {
+                "name": "ENABLE",
+                "integer": 1
               },
               {
                 "name": "DISABLE",
-                "integer": 1
+                "integer": 2
               }
             ]
           },

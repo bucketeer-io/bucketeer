@@ -29,11 +29,10 @@ message AutoOpsRule {
   int64 updated_at = 8;
   bool deleted = 9 [deprecated = true];
   AutoOpsStatus auto_ops_status = 10;
-  int64 stopped_at = 11;
 }
 
 enum OpsType {
-  ENABLE_FEATURE = 0 [deprecated = true];
+  ENABLE_FEATURE = 0 [deprecated = true];  // Refactor as Unknown instead of deleting
   DISABLE_FEATURE = 1 [deprecated = true];
   SCHEDULE = 2;
   EVENT_RATE = 3;

@@ -207,8 +207,9 @@ export namespace ProgressiveRolloutTemplateScheduleClause {
 }
 
 export interface ActionTypeMap {
-  ENABLE: 0;
-  DISABLE: 1;
+  UNKNOWN: 0;
+  ENABLE: 1;
+  DISABLE: 2;
 }
 
 export const ActionType: ActionTypeMap;

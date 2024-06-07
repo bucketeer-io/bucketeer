@@ -962,7 +962,7 @@ func newAutoOpsRule(t *testing.T) *autoopsproto.AutoOpsRule {
 	}
 	aor, err := autoopsdomain.NewAutoOpsRule(
 		"fid",
-		autoopsproto.OpsType_ENABLE_FEATURE,
+		autoopsproto.OpsType_DISABLE_FEATURE,
 		[]*autoopsproto.OpsEventRateClause{oerc1, oerc2},
 		[]*autoopsproto.DatetimeClause{dc1, dc2},
 	)

@@ -249,7 +249,7 @@ func newAutoOpsRule(t *testing.T) *domain.AutoOpsRule {
 	dc2 := &proto.DatetimeClause{
 		Time: 1000000002,
 	}
-	aor, err := domain.NewAutoOpsRule("fid", proto.OpsType_ENABLE_FEATURE, []*proto.OpsEventRateClause{oerc1, oerc2}, []*proto.DatetimeClause{dc1, dc2})
+	aor, err := domain.NewAutoOpsRule("fid", proto.OpsType_DISABLE_FEATURE, []*proto.OpsEventRateClause{oerc1, oerc2}, []*proto.DatetimeClause{dc1, dc2})
 	require.NoError(t, err)
 	return aor
 }

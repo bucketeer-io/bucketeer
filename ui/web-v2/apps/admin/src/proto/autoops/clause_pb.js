@@ -1491,8 +1491,9 @@ proto.bucketeer.autoops.ProgressiveRolloutTemplateScheduleClause.prototype.setVa
  * @enum {number}
  */
 proto.bucketeer.autoops.ActionType = {
-  ENABLE: 0,
-  DISABLE: 1
+  UNKNOWN: 0,
+  ENABLE: 1,
+  DISABLE: 2
 };
 
 goog.object.extend(exports, proto.bucketeer.autoops);
