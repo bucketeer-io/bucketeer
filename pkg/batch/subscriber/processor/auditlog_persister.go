@@ -35,6 +35,7 @@ import (
 type auditLogPersisterConfig struct {
 	FlushSize     int `json:"flushSize"`
 	FlushInterval int `json:"flushInterval"`
+	FlushTimeout  int `json:"flushTimeout"`
 }
 
 type auditLogPersister struct {
@@ -115,7 +116,10 @@ func (a auditLogPersister) Process(
 
 func (a auditLogPersister) flushChunk(chunk map[string]*puller.Message) {
 	auditlogs, adminAuditLogs, messages, adminMessages := a.extractAuditLogs(chunk)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		time.Duration(a.auditLogPersisterConfig.FlushTimeout)*time.Second,
+	)
 	defer cancel()
 	// Environment audit logs
 	a.createAuditLogsMySQL(ctx, auditlogs, messages, a.mysqlStorage.CreateAuditLogs)

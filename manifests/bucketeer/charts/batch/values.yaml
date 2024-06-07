@@ -263,6 +263,7 @@ processors:
   auditLogPersister:
     flushSize: 100
     flushInterval: 10
+    flushTimeout: 10
   evaluationCountEventPersister:
     flushSize: 100
     flushInterval: 10
