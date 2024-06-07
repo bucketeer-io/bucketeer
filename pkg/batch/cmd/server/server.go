@@ -777,6 +777,16 @@ func (s *server) registerProcessorMap(
 			processor.EvaluationCountEventPersisterName,
 			evaluationCountEventPersister,
 		)
+
+		processors.RegisterProcessor(
+			processor.PushSenderName,
+			processor.NewPushSender(
+				pushClient,
+				ftClient,
+				batchClient,
+				logger,
+			),
+		)
 	}
 
 	onDemandProcessorsConfigBytes, err := os.ReadFile(*s.onDemandProcessorsConfig)
