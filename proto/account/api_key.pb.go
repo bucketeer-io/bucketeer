@@ -43,7 +43,8 @@ const (
 	APIKey_SDK_SERVER           APIKey_Role = 2
 	APIKey_PUBLIC_API_READ_ONLY APIKey_Role = 3
 	APIKey_PUBLIC_API_WRITE     APIKey_Role = 4
-	APIKey_PUBLIC_API_ADMIN     APIKey_Role = 5 // For sensitive data
+	// For sensitive data
+	APIKey_PUBLIC_API_ADMIN APIKey_Role = 5
 )
 
 // Enum value maps for APIKey_Role.

@@ -25,7 +25,8 @@ message APIKey {
     SDK_SERVER = 2;
     PUBLIC_API_READ_ONLY = 3;
     PUBLIC_API_WRITE = 4;
-    PUBLIC_API_ADMIN = 5; // For sensitive data
+    // For sensitive data
+    PUBLIC_API_ADMIN = 5;
   }
   string id = 1;
   string name = 2;
