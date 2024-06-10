@@ -287,6 +287,18 @@
               {
                 "name": "SDK_SERVER",
                 "integer": 2
+              },
+              {
+                "name": "PUBLIC_API_READ_ONLY",
+                "integer": 3
+              },
+              {
+                "name": "PUBLIC_API_WRITE",
+                "integer": 4
+              },
+              {
+                "name": "PUBLIC_API_ADMIN",
+                "integer": 5
               }
             ]
           }
