@@ -91,13 +91,15 @@ proto-lock-commit-force:
 	make -C proto lock-commit-force
 
 .PHONY: proto-all
-proto-all:
-	make -C proto go
-	make -C ui/web-v2 gen_proto
+proto-all: proto-fmt proto-lock-commit proto-go proto-web proto-go-descriptor
 
 .PHONY: proto-go
 proto-go:
 	make -C proto go
+
+.PHONY: proto-web
+proto-web:
+	make -C ui/web-v2 gen_proto
 
 .PHONY: proto-go-check
 proto-go-check:
