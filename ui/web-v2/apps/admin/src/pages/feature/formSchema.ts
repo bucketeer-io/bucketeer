@@ -360,6 +360,25 @@ export const strategySchema = yup.object().shape({
     ),
 });
 
+export const clauseFormSchema = yup.object().shape({
+  id: yup.string(),
+  type: yup.string(),
+  attribute: yup
+    .string()
+    .test(
+      'required',
+      intl.formatMessage(messages.input.error.required),
+      (value, context) => {
+        if (context.parent.type in ['segment', 'feature_flag']) {
+          return true;
+        }
+        return !!value;
+      }
+    ),
+  operator: yup.string(),
+  values: yup.array().of(yup.string()).min(1),
+});
+
 export const targetingFormSchema = (requireComment: boolean) =>
   yup.object().shape({
     prerequisites: yup.array().of(
@@ -378,26 +397,7 @@ export const targetingFormSchema = (requireComment: boolean) =>
     rules: yup.array().of(
       yup.object().shape({
         id: yup.string(),
-        clauses: yup.array().of(
-          yup.object().shape({
-            id: yup.string(),
-            type: yup.string(),
-            attribute: yup
-              .string()
-              .test(
-                'required',
-                intl.formatMessage(messages.input.error.required),
-                (value, context) => {
-                  if (context.parent.type === 'segment') {
-                    return true;
-                  }
-                  return !!value;
-                }
-              ),
-            operator: yup.string(),
-            values: yup.array().of(yup.string()).min(1),
-          })
-        ),
+        clauses: yup.array().of(clauseFormSchema),
         strategy: strategySchema,
       })
     ),
