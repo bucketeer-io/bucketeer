@@ -5468,6 +5468,10 @@
                 "integer": 39
               },
               {
+                "name": "FEATURE_UPDATED",
+                "integer": 40
+              },
+              {
                 "name": "GOAL_CREATED",
                 "integer": 100
               },
@@ -6146,6 +6150,26 @@
                 "name": "targets",
                 "type": "bucketeer.feature.Target",
                 "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "FeatureUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "data",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "previous_data",
+                "type": "string"
               }
             ]
           },
@@ -13477,6 +13501,34 @@
             "name": "CreateFeatureResponse"
           },
           {
+            "name": "UpdateFeatureRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "comment",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "field_mask",
+                "type": "google.protobuf.FieldMask"
+              },
+              {
+                "id": 4,
+                "name": "feature",
+                "type": "Feature"
+              }
+            ]
+          },
+          {
+            "name": "UpdateFeatureResponse"
+          },
+          {
             "name": "EnableFeatureRequest",
             "fields": [
               {
@@ -14490,6 +14542,11 @@
                 "out_type": "CreateFeatureResponse"
               },
               {
+                "name": "UpdateFeature",
+                "in_type": "UpdateFeatureRequest",
+                "out_type": "UpdateFeatureResponse"
+              },
+              {
                 "name": "EnableFeature",
                 "in_type": "EnableFeatureRequest",
                 "out_type": "EnableFeatureResponse",
@@ -14569,7 +14626,18 @@
               {
                 "name": "UpdateSegment",
                 "in_type": "UpdateSegmentRequest",
-                "out_type": "UpdateSegmentResponse"
+                "out_type": "UpdateSegmentResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "{environment-namespace}/features/{id}"
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "AddSegmentUser",
@@ -14694,6 +14762,9 @@
           },
           {
             "path": "google/protobuf/wrappers.proto"
+          },
+          {
+            "path": "google/protobuf/field_mask.proto"
           },
           {
             "path": "proto/feature/command.proto"

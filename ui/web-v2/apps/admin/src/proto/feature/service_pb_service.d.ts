@@ -49,6 +49,15 @@ type FeatureServiceCreateFeature = {
   readonly responseType: typeof proto_feature_service_pb.CreateFeatureResponse;
 };
 
+type FeatureServiceUpdateFeature = {
+  readonly methodName: string;
+  readonly service: typeof FeatureService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_feature_service_pb.UpdateFeatureRequest;
+  readonly responseType: typeof proto_feature_service_pb.UpdateFeatureResponse;
+};
+
 type FeatureServiceEnableFeature = {
   readonly methodName: string;
   readonly service: typeof FeatureService;
@@ -335,6 +344,7 @@ export class FeatureService {
   static readonly ListFeatures: FeatureServiceListFeatures;
   static readonly ListEnabledFeatures: FeatureServiceListEnabledFeatures;
   static readonly CreateFeature: FeatureServiceCreateFeature;
+  static readonly UpdateFeature: FeatureServiceUpdateFeature;
   static readonly EnableFeature: FeatureServiceEnableFeature;
   static readonly DisableFeature: FeatureServiceDisableFeature;
   static readonly ArchiveFeature: FeatureServiceArchiveFeature;
@@ -444,6 +454,15 @@ export class FeatureServiceClient {
   createFeature(
     requestMessage: proto_feature_service_pb.CreateFeatureRequest,
     callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.CreateFeatureResponse|null) => void
+  ): UnaryResponse;
+  updateFeature(
+    requestMessage: proto_feature_service_pb.UpdateFeatureRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.UpdateFeatureResponse|null) => void
+  ): UnaryResponse;
+  updateFeature(
+    requestMessage: proto_feature_service_pb.UpdateFeatureRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_feature_service_pb.UpdateFeatureResponse|null) => void
   ): UnaryResponse;
   enableFeature(
     requestMessage: proto_feature_service_pb.EnableFeatureRequest,

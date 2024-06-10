@@ -142,6 +142,7 @@ export namespace Event {
     PREREQUISITE_REMOVED: 37;
     PREREQUISITE_VARIATION_CHANGED: 38;
     FEATURE_RULES_ORDER_CHANGED: 39;
+    FEATURE_UPDATED: 40;
     GOAL_CREATED: 100;
     GOAL_RENAMED: 101;
     GOAL_DESCRIPTION_CHANGED: 102;
@@ -386,6 +387,34 @@ export namespace FeatureCreatedEvent {
     prerequisitesList: Array<proto_feature_prerequisite_pb.Prerequisite.AsObject>,
     rulesList: Array<proto_feature_rule_pb.Rule.AsObject>,
     targetsList: Array<proto_feature_target_pb.Target.AsObject>,
+  }
+}
+
+export class FeatureUpdatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getData(): string;
+  setData(value: string): void;
+
+  getPreviousData(): string;
+  setPreviousData(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): FeatureUpdatedEvent.AsObject;
+  static toObject(includeInstance: boolean, msg: FeatureUpdatedEvent): FeatureUpdatedEvent.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: FeatureUpdatedEvent, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): FeatureUpdatedEvent;
+  static deserializeBinaryFromReader(message: FeatureUpdatedEvent, reader: jspb.BinaryReader): FeatureUpdatedEvent;
+}
+
+export namespace FeatureUpdatedEvent {
+  export type AsObject = {
+    id: string,
+    data: string,
+    previousData: string,
   }
 }
 

@@ -19,6 +19,7 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/feature";
 
 import "google/api/annotations.proto";
 import "google/protobuf/wrappers.proto";
+import "google/protobuf/field_mask.proto";
 
 import "proto/feature/command.proto";
 import "proto/feature/feature.proto";
@@ -96,6 +97,15 @@ message CreateFeatureRequest {
 }
 
 message CreateFeatureResponse {}
+
+message UpdateFeatureRequest {
+  string comment = 1;
+  string environment_namespace = 2;
+  google.protobuf.FieldMask field_mask = 3;
+  Feature feature = 4;
+}
+
+message UpdateFeatureResponse {}
 
 message EnableFeatureRequest {
   string id = 1;
@@ -447,6 +457,7 @@ service FeatureService {
   rpc ListEnabledFeatures(ListEnabledFeaturesRequest)
       returns (ListEnabledFeaturesResponse) {}
   rpc CreateFeature(CreateFeatureRequest) returns (CreateFeatureResponse) {}
+  rpc UpdateFeature(UpdateFeatureRequest) returns (UpdateFeatureResponse) {}
   rpc EnableFeature(EnableFeatureRequest) returns (EnableFeatureResponse) {
     option deprecated = true;
   }
@@ -469,7 +480,11 @@ service FeatureService {
   rpc GetSegment(GetSegmentRequest) returns (GetSegmentResponse) {}
   rpc ListSegments(ListSegmentsRequest) returns (ListSegmentsResponse) {}
   rpc DeleteSegment(DeleteSegmentRequest) returns (DeleteSegmentResponse) {}
-  rpc UpdateSegment(UpdateSegmentRequest) returns (UpdateSegmentResponse) {}
+  rpc UpdateSegment(UpdateSegmentRequest) returns (UpdateSegmentResponse) {
+    option (google.api.http) = {
+      patch: "{environment-namespace}/features/{id}"
+    };
+  }
 
   rpc AddSegmentUser(AddSegmentUserRequest) returns (AddSegmentUserResponse) {
     option deprecated = true;

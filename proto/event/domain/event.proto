@@ -96,6 +96,7 @@ message Event {
     PREREQUISITE_REMOVED = 37;
     PREREQUISITE_VARIATION_CHANGED = 38;
     FEATURE_RULES_ORDER_CHANGED = 39;
+    FEATURE_UPDATED = 40;
     GOAL_CREATED = 100;
     GOAL_RENAMED = 101;
     GOAL_DESCRIPTION_CHANGED = 102;
@@ -256,6 +257,12 @@ message FeatureCreatedEvent {
   repeated bucketeer.feature.Prerequisite prerequisites = 10;
   repeated bucketeer.feature.Rule rules = 11;
   repeated bucketeer.feature.Target targets = 12;
+}
+
+message FeatureUpdatedEvent {
+  string id = 1;
+  string data = 2;
+  string previous_data = 3;
 }
 
 message FeatureEnabledEvent {
