@@ -1672,3 +1672,117 @@ func TestFeatureIDsDependsOn(t *testing.T) {
 		assert.Equal(t, p.expected, f.FeatureIDsDependsOn())
 	}
 }
+
+func TestValidateClauses(t *testing.T) {
+	patterns := []struct {
+		desc     string
+		clauses  []*proto.Clause
+		expected error
+	}{
+		{
+			desc: "success: 2 clauses",
+			clauses: []*proto.Clause{
+				{
+					Id:        "clause-1",
+					Attribute: "name",
+					Operator:  proto.Clause_EQUALS,
+					Values: []string{
+						"user1",
+						"user2",
+					},
+				},
+				{
+					Id:       "clause-2",
+					Operator: proto.Clause_SEGMENT,
+					Values: []string{
+						"value",
+					},
+				},
+				{
+					Id:        "clause-3",
+					Operator:  proto.Clause_FEATURE_FLAG,
+					Attribute: "feature-1",
+					Values: []string{
+						"true",
+					},
+				},
+			},
+			expected: nil,
+		},
+		{
+			desc: "err: compare missing attribute",
+			clauses: []*proto.Clause{
+				{
+					Id:       "clause-1",
+					Operator: proto.Clause_EQUALS,
+					Values: []string{
+						"user1",
+						"user2",
+					},
+				},
+			},
+			expected: errClauseAttributeEmpty,
+		},
+		{
+			desc: "err: compare missing values",
+			clauses: []*proto.Clause{
+				{
+					Id:        "clause-1",
+					Operator:  proto.Clause_EQUALS,
+					Attribute: "name",
+				},
+			},
+			expected: errClauseValuesEmpty,
+		},
+		{
+			desc: "err: segment attribute not empty",
+			clauses: []*proto.Clause{
+				{
+					Id:        "clause-1",
+					Operator:  proto.Clause_SEGMENT,
+					Attribute: "name",
+					Values: []string{
+						"user1",
+					},
+				},
+			},
+			expected: errClauseAttributeNotEmpty,
+		},
+		{
+			desc: "err: segment value empty",
+			clauses: []*proto.Clause{
+				{
+					Id:       "clause-1",
+					Operator: proto.Clause_SEGMENT,
+				},
+			},
+			expected: errClauseValuesEmpty,
+		},
+		{
+			desc: "err: feature flag attribute empty",
+			clauses: []*proto.Clause{
+				{
+					Id:       "clause-1",
+					Operator: proto.Clause_FEATURE_FLAG,
+				},
+			},
+			expected: errClauseAttributeEmpty,
+		},
+		{
+			desc: "err: feature flag values empty",
+			clauses: []*proto.Clause{
+				{
+					Id:        "clause-1",
+					Operator:  proto.Clause_FEATURE_FLAG,
+					Attribute: "feature-1",
+				},
+			},
+			expected: errClauseValuesEmpty,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			assert.Equal(t, p.expected, validateClauses(p.clauses))
+		})
+	}
+}
