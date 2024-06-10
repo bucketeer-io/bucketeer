@@ -16,6 +16,7 @@ package domain
 
 import (
 	"errors"
+	"sort"
 	"time"
 
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
@@ -58,19 +59,20 @@ func NewAutoOpsRule(
 		CreatedAt: now,
 		UpdatedAt: now,
 	}}
-	if opsType == proto.OpsType_EVENT_RATE {
+	switch opsType {
+	case proto.OpsType_EVENT_RATE:
 		for _, c := range opsEventRateClauses {
 			if _, err := autoOpsRule.AddOpsEventRateClause(c); err != nil {
 				return nil, err
 			}
 		}
-	} else if opsType == proto.OpsType_SCHEDULE {
+	case proto.OpsType_SCHEDULE:
 		for _, c := range datetimeClauses {
 			if _, err := autoOpsRule.AddDatetimeClause(c); err != nil {
 				return nil, err
 			}
 		}
-	} else if opsType == proto.OpsType_ENABLE_FEATURE {
+	case proto.OpsType_ENABLE_FEATURE:
 		if len(opsEventRateClauses) != 0 {
 			return nil, errOpsTypeEnable
 		}
@@ -80,7 +82,7 @@ func NewAutoOpsRule(
 				return nil, err
 			}
 		}
-	} else if opsType == proto.OpsType_DISABLE_FEATURE {
+	case proto.OpsType_DISABLE_FEATURE:
 		for _, c := range opsEventRateClauses {
 			c.ActionType = proto.ActionType_DISABLE
 			if _, err := autoOpsRule.AddOpsEventRateClause(c); err != nil {
@@ -163,28 +165,14 @@ func (a *AutoOpsRule) AddDatetimeClause(dc *proto.DatetimeClause) (*proto.Clause
 	if err != nil {
 		return nil, err
 	}
-	var insertIndex = int64(-1)
-	for i, c := range a.Clauses {
-		datetimeClause, err := a.unmarshalDatetimeClause(c)
-		if err != nil {
-			return nil, err
-		}
-		if datetimeClause == nil {
-			continue
-		}
-		if dc.Time <= datetimeClause.Time {
-			insertIndex = int64(i)
-			break
-		}
-	}
-	if insertIndex == -1 {
-		insertIndex = int64(len(a.Clauses))
-	}
-	clause, err := a.insertClause(ac, dc.ActionType, insertIndex)
+	clause, err := a.addClause(ac, dc.ActionType)
+	a.sortDatetimeClause()
+
 	if err != nil {
 		return nil, err
 	}
 	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
+	a.AutoOpsRule.TriggeredAt = 0
 	return clause, nil
 }
 
@@ -202,21 +190,36 @@ func (a *AutoOpsRule) addClause(ac *any.Any, actionType proto.ActionType) (*prot
 	return clause, nil
 }
 
-func (a *AutoOpsRule) insertClause(ac *any.Any, actionType proto.ActionType, index int64) (*proto.Clause, error) {
-	id, err := uuid.NewUUID()
-	if err != nil {
-		return nil, err
+func (a *AutoOpsRule) sortDatetimeClause() {
+	type SortClause struct {
+		clause         *proto.Clause
+		dataTimeClause *proto.DatetimeClause
 	}
-	clause := &proto.Clause{
-		Id:         id.String(),
-		Clause:     ac,
-		ActionType: actionType,
+	newClauses := []*proto.Clause{}
+	//	datetimeClauses := []*proto.DatetimeClause{}
+	sortClauses := []*SortClause{}
+	for _, c := range a.Clauses {
+		datetimeClause, _ := a.unmarshalDatetimeClause(c)
+		if datetimeClause == nil {
+			newClauses = append(newClauses, c)
+			continue
+		}
+		s := &SortClause{
+			clause:         c,
+			dataTimeClause: datetimeClause,
+		}
+		sortClauses = append(sortClauses, s)
+		//datetimeClauses = append(datetimeClauses, datetimeClause)
 	}
-	a.AutoOpsRule.Clauses = append(a.AutoOpsRule.Clauses[:index],
-		append([]*proto.Clause{clause}, a.AutoOpsRule.Clauses[index:]...)...)
-	a.AutoOpsRule.TriggeredAt = 0
 
-	return clause, nil
+	sort.Slice(sortClauses, func(i, j int) bool {
+		return sortClauses[i].dataTimeClause.Time < sortClauses[j].dataTimeClause.Time
+	})
+
+	for _, c := range sortClauses {
+		newClauses = append(newClauses, c.clause)
+	}
+	a.AutoOpsRule.Clauses = newClauses
 }
 
 func (a *AutoOpsRule) ChangeOpsEventRateClause(id string, oerc *proto.OpsEventRateClause) error {
@@ -229,30 +232,8 @@ func (a *AutoOpsRule) ChangeOpsEventRateClause(id string, oerc *proto.OpsEventRa
 }
 
 func (a *AutoOpsRule) ChangeDatetimeClause(id string, dc *proto.DatetimeClause) error {
-	var srcIndex = int64(-1)
-	var dectIndex = int64(-1)
-	for i, c := range a.Clauses {
-		if c.Id == id {
-			srcIndex = int64(i)
-		}
-		datetimeClause, err := a.unmarshalDatetimeClause(c)
-		if err != nil {
-			return err
-		}
-		if datetimeClause == nil {
-			continue
-		}
-		if dectIndex == -1 && dc.Time <= datetimeClause.Time {
-			dectIndex = int64(i)
-		}
-	}
-	if srcIndex == -1 {
-		return errClauseNotFound
-	}
-	if dectIndex == -1 {
-		dectIndex = int64(len(a.Clauses) - 1)
-	}
-	err := a.swapClause(dc, dc.ActionType, srcIndex, dectIndex)
+	err := a.changeClause(id, dc, dc.ActionType)
+	a.sortDatetimeClause()
 	if err != nil {
 		return err
 	}
@@ -275,23 +256,6 @@ func (a *AutoOpsRule) changeClause(id string, mc pb.Message, actionType proto.Ac
 		}
 	}
 	return errClauseNotFound
-}
-
-func (a *AutoOpsRule) swapClause(mc pb.Message, actionType proto.ActionType, srcIndex int64, destIndex int64) error {
-	clause, err := ptypes.MarshalAny(mc)
-	if err != nil {
-		return err
-	}
-
-	if srcIndex > int64(len(a.Clauses)) || destIndex > int64(len(a.Clauses)) {
-		return errClauseNotFound
-	}
-
-	a.Clauses[srcIndex].Clause = clause
-	a.Clauses[srcIndex].ActionType = actionType
-
-	a.Clauses[srcIndex], a.Clauses[destIndex] = a.Clauses[destIndex], a.Clauses[srcIndex]
-	return nil
 }
 
 func (a *AutoOpsRule) DeleteClause(id string) error {
