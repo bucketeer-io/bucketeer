@@ -480,11 +480,7 @@ service FeatureService {
   rpc GetSegment(GetSegmentRequest) returns (GetSegmentResponse) {}
   rpc ListSegments(ListSegmentsRequest) returns (ListSegmentsResponse) {}
   rpc DeleteSegment(DeleteSegmentRequest) returns (DeleteSegmentResponse) {}
-  rpc UpdateSegment(UpdateSegmentRequest) returns (UpdateSegmentResponse) {
-    option (google.api.http) = {
-      patch: "{environment-namespace}/features/{id}"
-    };
-  }
+  rpc UpdateSegment(UpdateSegmentRequest) returns (UpdateSegmentResponse) {}
 
   rpc AddSegmentUser(AddSegmentUserRequest) returns (AddSegmentUserResponse) {
     option deprecated = true;

@@ -3041,6 +3041,125 @@
       }
     },
     {
+      "protopath": "backend:/:service.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "GetFeatureRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetFeatureResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature",
+                "type": "feature.Feature"
+              }
+            ]
+          },
+          {
+            "name": "UpdateFeatureRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "comment",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "field_mask",
+                "type": "google.protobuf.FieldMask"
+              },
+              {
+                "id": 4,
+                "name": "feature",
+                "type": "feature.Feature"
+              }
+            ]
+          },
+          {
+            "name": "UpdateFeatureResponse"
+          }
+        ],
+        "services": [
+          {
+            "name": "PublicAPIService",
+            "rpcs": [
+              {
+                "name": "GetFeature",
+                "in_type": "GetFeatureRequest",
+                "out_type": "GetFeatureResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "environment/{environment-namespace}/features/{id}"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "UpdateFeature",
+                "in_type": "UpdateFeatureRequest",
+                "out_type": "UpdateFeatureResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "environment/{environment-namespace}/features/{id}"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "google/protobuf/field_mask.proto"
+          },
+          {
+            "path": "proto/feature/feature.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.backend"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/backend"
+          }
+        ]
+      }
+    },
+    {
       "protopath": "batch:/:service.proto",
       "def": {
         "enums": [
@@ -14626,18 +14745,7 @@
               {
                 "name": "UpdateSegment",
                 "in_type": "UpdateSegmentRequest",
-                "out_type": "UpdateSegmentResponse",
-                "options": [
-                  {
-                    "name": "(google.api.http)",
-                    "aggregated": [
-                      {
-                        "name": "patch",
-                        "value": "{environment-namespace}/features/{id}"
-                      }
-                    ]
-                  }
-                ]
+                "out_type": "UpdateSegmentResponse"
               },
               {
                 "name": "AddSegmentUser",
