@@ -68,7 +68,10 @@ func NewPushSender(
 func (p pushSender) Process(ctx context.Context, msgChan <-chan *puller.Message) error {
 	record := func(code codes.Code, startTime time.Time) {
 		subscriberHandledCounter.WithLabelValues(subscriberPushSender, code.String()).Inc()
-		pushHandledHistogram.WithLabelValues(code.String()).Observe(time.Since(startTime).Seconds())
+		subscriberHandledHistogram.WithLabelValues(
+			subscriberPushSender,
+			code.String(),
+		).Observe(time.Since(startTime).Seconds())
 	}
 	for {
 		select {

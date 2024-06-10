@@ -70,20 +70,20 @@ var (
 			Help:      "Total number of handled messages",
 		}, []string{"subscriber", "code"})
 
-	pushHandledHistogram = prometheus.NewHistogramVec(
+	subscriberHandledHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "bucketeer",
 			Subsystem: "batch_server",
-			Name:      "push_sender_handled_seconds",
+			Name:      "subscriber_handled_seconds",
 			Help:      "Histogram of message handling duration (seconds)",
 			Buckets:   prometheus.DefBuckets,
-		}, []string{"code"})
+		}, []string{"subscriber", "code"})
 )
 
 func registerMetrics(r metrics.Registerer) {
 	r.MustRegister(
 		subscriberReceivedCounter,
 		subscriberHandledCounter,
-		pushHandledHistogram,
+		subscriberHandledHistogram,
 	)
 }
