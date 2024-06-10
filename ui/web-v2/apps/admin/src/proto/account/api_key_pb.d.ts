@@ -47,8 +47,9 @@ export namespace APIKey {
     UNKNOWN: 0;
     SDK_CLIENT: 1;
     SDK_SERVER: 2;
-    API_READ_ONLY: 3;
-    API_READ_WRITE: 4;
+    PUBLIC_API_READ_ONLY: 3;
+    PUBLIC_API_WRITE: 4;
+    PUBLIC_API_ADMIN: 5;
   }
 
   export const Role: RoleMap;

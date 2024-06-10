@@ -289,12 +289,16 @@
                 "integer": 2
               },
               {
-                "name": "API_READ_ONLY",
+                "name": "PUBLIC_API_READ_ONLY",
                 "integer": 3
               },
               {
-                "name": "API_READ_WRITE",
+                "name": "PUBLIC_API_WRITE",
                 "integer": 4
+              },
+              {
+                "name": "PUBLIC_API_ADMIN",
+                "integer": 5
               }
             ]
           }
