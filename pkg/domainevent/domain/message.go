@@ -35,6 +35,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.FeatureFlag),
 			),
 		}
+	case proto.Event_FEATURE_UPDATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.UpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.FeatureFlag),
+			),
+		}
 	case proto.Event_FEATURE_RENAMED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),

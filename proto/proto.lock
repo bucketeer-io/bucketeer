@@ -3041,6 +3041,117 @@
       }
     },
     {
+      "protopath": "backend:/:service.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "GetFeatureRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetFeatureResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature",
+                "type": "feature.Feature"
+              }
+            ]
+          },
+          {
+            "name": "UpdateFeatureRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "comment",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "feature",
+                "type": "feature.Feature"
+              }
+            ]
+          },
+          {
+            "name": "UpdateFeatureResponse"
+          }
+        ],
+        "services": [
+          {
+            "name": "PublicAPIService",
+            "rpcs": [
+              {
+                "name": "GetFeature",
+                "in_type": "GetFeatureRequest",
+                "out_type": "GetFeatureResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "environment/{environment-id}/features/{feature-id}"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "UpdateFeature",
+                "in_type": "UpdateFeatureRequest",
+                "out_type": "UpdateFeatureResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "environment/{environment-id}/features/{feature-id}"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "proto/feature/feature.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.backend"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/backend"
+          }
+        ]
+      }
+    },
+    {
       "protopath": "batch:/:service.proto",
       "def": {
         "enums": [
@@ -5468,6 +5579,10 @@
                 "integer": 39
               },
               {
+                "name": "FEATURE_UPDATED",
+                "integer": 40
+              },
+              {
                 "name": "GOAL_CREATED",
                 "integer": 100
               },
@@ -6146,6 +6261,26 @@
                 "name": "targets",
                 "type": "bucketeer.feature.Target",
                 "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "FeatureUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "data",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "previous_data",
+                "type": "string"
               }
             ]
           },
@@ -13477,6 +13612,29 @@
             "name": "CreateFeatureResponse"
           },
           {
+            "name": "UpdateFeatureRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "comment",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "feature",
+                "type": "Feature"
+              }
+            ]
+          },
+          {
+            "name": "UpdateFeatureResponse"
+          },
+          {
             "name": "EnableFeatureRequest",
             "fields": [
               {
@@ -14488,6 +14646,11 @@
                 "name": "CreateFeature",
                 "in_type": "CreateFeatureRequest",
                 "out_type": "CreateFeatureResponse"
+              },
+              {
+                "name": "UpdateFeature",
+                "in_type": "UpdateFeatureRequest",
+                "out_type": "UpdateFeatureResponse"
               },
               {
                 "name": "EnableFeature",

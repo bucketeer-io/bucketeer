@@ -97,6 +97,14 @@ message CreateFeatureRequest {
 
 message CreateFeatureResponse {}
 
+message UpdateFeatureRequest {
+  string comment = 1;
+  string environment_id = 2;
+  Feature feature = 3;
+}
+
+message UpdateFeatureResponse {}
+
 message EnableFeatureRequest {
   string id = 1;
   EnableFeatureCommand command = 2;
@@ -447,6 +455,7 @@ service FeatureService {
   rpc ListEnabledFeatures(ListEnabledFeaturesRequest)
       returns (ListEnabledFeaturesResponse) {}
   rpc CreateFeature(CreateFeatureRequest) returns (CreateFeatureResponse) {}
+  rpc UpdateFeature(UpdateFeatureRequest) returns (UpdateFeatureResponse) {}
   rpc EnableFeature(EnableFeatureRequest) returns (EnableFeatureResponse) {
     option deprecated = true;
   }

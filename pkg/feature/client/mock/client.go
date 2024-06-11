@@ -674,6 +674,26 @@ func (mr *MockClientMockRecorder) UnarchiveFeature(ctx, in any, opts ...any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnarchiveFeature", reflect.TypeOf((*MockClient)(nil).UnarchiveFeature), varargs...)
 }
 
+// UpdateFeature mocks base method.
+func (m *MockClient) UpdateFeature(ctx context.Context, in *feature.UpdateFeatureRequest, opts ...grpc.CallOption) (*feature.UpdateFeatureResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateFeature", varargs...)
+	ret0, _ := ret[0].(*feature.UpdateFeatureResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateFeature indicates an expected call of UpdateFeature.
+func (mr *MockClientMockRecorder) UpdateFeature(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFeature", reflect.TypeOf((*MockClient)(nil).UpdateFeature), varargs...)
+}
+
 // UpdateFeatureDetails mocks base method.
 func (m *MockClient) UpdateFeatureDetails(ctx context.Context, in *feature.UpdateFeatureDetailsRequest, opts ...grpc.CallOption) (*feature.UpdateFeatureDetailsResponse, error) {
 	m.ctrl.T.Helper()

@@ -329,6 +329,52 @@ export namespace CreateFeatureResponse {
   }
 }
 
+export class UpdateFeatureRequest extends jspb.Message {
+  getComment(): string;
+  setComment(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  hasFeature(): boolean;
+  clearFeature(): void;
+  getFeature(): proto_feature_feature_pb.Feature | undefined;
+  setFeature(value?: proto_feature_feature_pb.Feature): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateFeatureRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: UpdateFeatureRequest): UpdateFeatureRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: UpdateFeatureRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateFeatureRequest;
+  static deserializeBinaryFromReader(message: UpdateFeatureRequest, reader: jspb.BinaryReader): UpdateFeatureRequest;
+}
+
+export namespace UpdateFeatureRequest {
+  export type AsObject = {
+    comment: string,
+    environmentId: string,
+    feature?: proto_feature_feature_pb.Feature.AsObject,
+  }
+}
+
+export class UpdateFeatureResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateFeatureResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: UpdateFeatureResponse): UpdateFeatureResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: UpdateFeatureResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateFeatureResponse;
+  static deserializeBinaryFromReader(message: UpdateFeatureResponse, reader: jspb.BinaryReader): UpdateFeatureResponse;
+}
+
+export namespace UpdateFeatureResponse {
+  export type AsObject = {
+  }
+}
+
 export class EnableFeatureRequest extends jspb.Message {
   getId(): string;
   setId(value: string): void;

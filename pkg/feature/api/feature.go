@@ -656,6 +656,13 @@ func (s *FeatureService) CreateFeature(
 	return &featureproto.CreateFeatureResponse{}, nil
 }
 
+func (s *FeatureService) UpdateFeature(
+	ctx context.Context,
+	req *featureproto.UpdateFeatureRequest,
+) (*featureproto.UpdateFeatureResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateFeatureDetails not implemented")
+}
+
 func (s *FeatureService) UpdateFeatureDetails(
 	ctx context.Context,
 	req *featureproto.UpdateFeatureDetailsRequest,
