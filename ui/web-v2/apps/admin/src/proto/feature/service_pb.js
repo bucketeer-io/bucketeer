@@ -3914,7 +3914,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.toObject = function(opt_i
 proto.bucketeer.feature.UpdateFeatureRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     comment: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    environmentId: jspb.Message.getFieldWithDefault(msg, 2, ""),
     feature: (f = msg.getFeature()) && proto_feature_feature_pb.Feature.toObject(includeInstance, f)
   };
 
@@ -3958,7 +3958,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.deserializeBinaryFromReader = funct
       break;
     case 2:
       var value = /** @type {string} */ (reader.readString());
-      msg.setEnvironmentNamespace(value);
+      msg.setEnvironmentId(value);
       break;
     case 3:
       var value = new proto_feature_feature_pb.Feature;
@@ -4001,7 +4001,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.serializeBinaryToWriter = function(
       f
     );
   }
-  f = message.getEnvironmentNamespace();
+  f = message.getEnvironmentId();
   if (f.length > 0) {
     writer.writeString(
       2,
@@ -4038,10 +4038,10 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.setComment = function(val
 
 
 /**
- * optional string environment_namespace = 2;
+ * optional string environment_id = 2;
  * @return {string}
  */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.getEnvironmentNamespace = function() {
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.getEnvironmentId = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
 };
 
@@ -4050,7 +4050,7 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.getEnvironmentNamespace =
  * @param {string} value
  * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
  */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.setEnvironmentNamespace = function(value) {
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.setEnvironmentId = function(value) {
   return jspb.Message.setProto3StringField(this, 2, value);
 };
 

@@ -6,8 +6,8 @@ import * as google_api_annotations_pb from "../../google/api/annotations_pb";
 import * as proto_feature_feature_pb from "../../proto/feature/feature_pb";
 
 export class GetFeatureRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   getId(): string;
   setId(value: string): void;
@@ -24,7 +24,7 @@ export class GetFeatureRequest extends jspb.Message {
 
 export namespace GetFeatureRequest {
   export type AsObject = {
-    environmentNamespace: string,
+    environmentId: string,
     id: string,
   }
 }
@@ -55,8 +55,8 @@ export class UpdateFeatureRequest extends jspb.Message {
   getComment(): string;
   setComment(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   hasFeature(): boolean;
   clearFeature(): void;
@@ -76,7 +76,7 @@ export class UpdateFeatureRequest extends jspb.Message {
 export namespace UpdateFeatureRequest {
   export type AsObject = {
     comment: string,
-    environmentNamespace: string,
+    environmentId: string,
     feature?: proto_feature_feature_pb.Feature.AsObject,
   }
 }

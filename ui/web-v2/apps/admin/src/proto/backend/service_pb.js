@@ -145,7 +145,7 @@ proto.bucketeer.backend.GetFeatureRequest.prototype.toObject = function(opt_incl
  */
 proto.bucketeer.backend.GetFeatureRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    environmentId: jspb.Message.getFieldWithDefault(msg, 1, ""),
     id: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
@@ -185,7 +185,7 @@ proto.bucketeer.backend.GetFeatureRequest.deserializeBinaryFromReader = function
     switch (field) {
     case 1:
       var value = /** @type {string} */ (reader.readString());
-      msg.setEnvironmentNamespace(value);
+      msg.setEnvironmentId(value);
       break;
     case 2:
       var value = /** @type {string} */ (reader.readString());
@@ -220,7 +220,7 @@ proto.bucketeer.backend.GetFeatureRequest.prototype.serializeBinary = function()
  */
 proto.bucketeer.backend.GetFeatureRequest.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getEnvironmentNamespace();
+  f = message.getEnvironmentId();
   if (f.length > 0) {
     writer.writeString(
       1,
@@ -238,10 +238,10 @@ proto.bucketeer.backend.GetFeatureRequest.serializeBinaryToWriter = function(mes
 
 
 /**
- * optional string environment_namespace = 1;
+ * optional string environment_id = 1;
  * @return {string}
  */
-proto.bucketeer.backend.GetFeatureRequest.prototype.getEnvironmentNamespace = function() {
+proto.bucketeer.backend.GetFeatureRequest.prototype.getEnvironmentId = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
 };
 
@@ -250,7 +250,7 @@ proto.bucketeer.backend.GetFeatureRequest.prototype.getEnvironmentNamespace = fu
  * @param {string} value
  * @return {!proto.bucketeer.backend.GetFeatureRequest} returns this
  */
-proto.bucketeer.backend.GetFeatureRequest.prototype.setEnvironmentNamespace = function(value) {
+proto.bucketeer.backend.GetFeatureRequest.prototype.setEnvironmentId = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
 
@@ -457,7 +457,7 @@ proto.bucketeer.backend.UpdateFeatureRequest.prototype.toObject = function(opt_i
 proto.bucketeer.backend.UpdateFeatureRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     comment: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    environmentId: jspb.Message.getFieldWithDefault(msg, 2, ""),
     feature: (f = msg.getFeature()) && proto_feature_feature_pb.Feature.toObject(includeInstance, f)
   };
 
@@ -501,7 +501,7 @@ proto.bucketeer.backend.UpdateFeatureRequest.deserializeBinaryFromReader = funct
       break;
     case 2:
       var value = /** @type {string} */ (reader.readString());
-      msg.setEnvironmentNamespace(value);
+      msg.setEnvironmentId(value);
       break;
     case 3:
       var value = new proto_feature_feature_pb.Feature;
@@ -544,7 +544,7 @@ proto.bucketeer.backend.UpdateFeatureRequest.serializeBinaryToWriter = function(
       f
     );
   }
-  f = message.getEnvironmentNamespace();
+  f = message.getEnvironmentId();
   if (f.length > 0) {
     writer.writeString(
       2,
@@ -581,10 +581,10 @@ proto.bucketeer.backend.UpdateFeatureRequest.prototype.setComment = function(val
 
 
 /**
- * optional string environment_namespace = 2;
+ * optional string environment_id = 2;
  * @return {string}
  */
-proto.bucketeer.backend.UpdateFeatureRequest.prototype.getEnvironmentNamespace = function() {
+proto.bucketeer.backend.UpdateFeatureRequest.prototype.getEnvironmentId = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
 };
 
@@ -593,7 +593,7 @@ proto.bucketeer.backend.UpdateFeatureRequest.prototype.getEnvironmentNamespace =
  * @param {string} value
  * @return {!proto.bucketeer.backend.UpdateFeatureRequest} returns this
  */
-proto.bucketeer.backend.UpdateFeatureRequest.prototype.setEnvironmentNamespace = function(value) {
+proto.bucketeer.backend.UpdateFeatureRequest.prototype.setEnvironmentId = function(value) {
   return jspb.Message.setProto3StringField(this, 2, value);
 };
 

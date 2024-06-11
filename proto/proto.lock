@@ -3049,7 +3049,7 @@
             "fields": [
               {
                 "id": 1,
-                "name": "environment_namespace",
+                "name": "environment_id",
                 "type": "string"
               },
               {
@@ -3079,7 +3079,7 @@
               },
               {
                 "id": 2,
-                "name": "environment_namespace",
+                "name": "environment_id",
                 "type": "string"
               },
               {
@@ -3107,7 +3107,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "environment/{environment-namespace}/features/{id}"
+                        "value": "environment/{environment-id}/features/{id}"
                       }
                     ]
                   }
@@ -3123,7 +3123,7 @@
                     "aggregated": [
                       {
                         "name": "patch",
-                        "value": "environment/{environment-namespace}/features/{id}"
+                        "value": "environment/{environment-id}/features/{id}"
                       }
                     ]
                   }
@@ -13621,7 +13621,7 @@
               },
               {
                 "id": 2,
-                "name": "environment_namespace",
+                "name": "environment_id",
                 "type": "string"
               },
               {

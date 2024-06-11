@@ -333,8 +333,8 @@ export class UpdateFeatureRequest extends jspb.Message {
   getComment(): string;
   setComment(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   hasFeature(): boolean;
   clearFeature(): void;
@@ -354,7 +354,7 @@ export class UpdateFeatureRequest extends jspb.Message {
 export namespace UpdateFeatureRequest {
   export type AsObject = {
     comment: string,
-    environmentNamespace: string,
+    environmentId: string,
     feature?: proto_feature_feature_pb.Feature.AsObject,
   }
 }

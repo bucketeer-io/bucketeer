@@ -22,7 +22,7 @@ import "google/api/annotations.proto";
 import "proto/feature/feature.proto";
 
 message GetFeatureRequest {
-  string environment_namespace = 1;
+  string environment_id = 1;
   string id = 2;
 }
 
@@ -32,7 +32,7 @@ message GetFeatureResponse {
 
 message UpdateFeatureRequest {
   string comment = 1;
-  string environment_namespace = 2;
+  string environment_id = 2;
   feature.Feature feature = 3;
 }
 
@@ -46,7 +46,7 @@ service PublicAPIService {
   }
   rpc UpdateFeature(UpdateFeatureRequest) returns (UpdateFeatureResponse) {
     option (google.api.http) = {
-      patch: "environment/{environment-namespace}/features/{id}"
+      patch: "environment/{environment-id}/features/{id}"
     };
   }
 }
