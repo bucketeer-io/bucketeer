@@ -24,15 +24,27 @@ message AutoOpsRule {
   string feature_id = 2;
   OpsType ops_type = 3;
   repeated Clause clauses = 4;
-  int64 triggered_at = 6;
+  int64 triggered_at = 6 [deprecated = true];
   int64 created_at = 7;
   int64 updated_at = 8;
-  bool deleted = 9;
+  bool deleted = 9 [deprecated = true];
+  AutoOpsStatus auto_ops_status = 10;
 }
 
 enum OpsType {
-  ENABLE_FEATURE = 0;
-  DISABLE_FEATURE = 1;
+  ENABLE_FEATURE = 0
+      [deprecated = true];  // Refactor as Unknown instead of deleting
+  DISABLE_FEATURE = 1 [deprecated = true];
+  SCHEDULE = 2;
+  EVENT_RATE = 3;
+}
+
+enum AutoOpsStatus {
+  WAITING = 0;
+  RUNNING = 1;
+  COMPLETED = 2;
+  STOPPED = 3;
+  DELETED = 4;
 }
 
 message AutoOpsRules {
