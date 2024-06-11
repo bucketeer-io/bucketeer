@@ -90,7 +90,10 @@ var (
 			Name:      "api_evaluations_total",
 			Help:      "Total number of evaluations",
 			// TODO: Remove project_id.
-		}, []string{"project_id", "project_url_code", "environment_namespace", "tag", "evaluation_type"})
+		}, []string{
+			"project_id", "project_url_code",
+			"environment_namespace", "environment_url_code", "tag", "evaluation_type",
+		})
 	getFeatureFlagsCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -98,7 +101,10 @@ var (
 			Name:      "api_get_feature_flags_total",
 			Help:      "Total number of get feature flags",
 			// TODO: Remove project_id.
-		}, []string{"project_id", "project_url_code", "environment_namespace", "tag", "response_type"})
+		}, []string{
+			"project_id", "project_url_code",
+			"environment_namespace", "environment_url_code", "tag", "response_type",
+		})
 	getSegmentUsersCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -106,7 +112,10 @@ var (
 			Name:      "api_get_segment_users_total",
 			Help:      "Total number of get segment users api requests",
 			// TODO: Remove project_id.
-		}, []string{"project_id", "project_url_code", "environment_namespace", "source_id", "sdk_version", "response_type"})
+		}, []string{
+			"project_id", "project_url_code", "environment_namespace", "environment_url_code",
+			"source_id", "sdk_version", "response_type",
+		})
 	requestTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
@@ -114,7 +123,10 @@ var (
 			Name:      "api_request_total",
 			Help:      "Total number of request",
 			// TODO: Remove project_id.
-		}, []string{"organization_id", "project_id", "project_url_code", "environment_id", "method", "source_id"})
+		}, []string{
+			"organization_id", "project_id", "project_url_code",
+			"environment_id", "environment_url_code", "method", "source_id",
+		})
 	// TODO: Remove after deleting api-gateway REST server
 	restCacheCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
