@@ -23,8 +23,6 @@ var global =
 
 var google_api_annotations_pb = require('../../google/api/annotations_pb.js');
 goog.object.extend(proto, google_api_annotations_pb);
-var google_protobuf_field_mask_pb = require('google-protobuf/google/protobuf/field_mask_pb.js');
-goog.object.extend(proto, google_protobuf_field_mask_pb);
 var proto_feature_feature_pb = require('../../proto/feature/feature_pb.js');
 goog.object.extend(proto, proto_feature_feature_pb);
 goog.exportSymbol('proto.bucketeer.backend.GetFeatureRequest', null, global);
@@ -460,7 +458,6 @@ proto.bucketeer.backend.UpdateFeatureRequest.toObject = function(includeInstance
   var f, obj = {
     comment: jspb.Message.getFieldWithDefault(msg, 1, ""),
     environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    fieldMask: (f = msg.getFieldMask()) && google_protobuf_field_mask_pb.FieldMask.toObject(includeInstance, f),
     feature: (f = msg.getFeature()) && proto_feature_feature_pb.Feature.toObject(includeInstance, f)
   };
 
@@ -507,11 +504,6 @@ proto.bucketeer.backend.UpdateFeatureRequest.deserializeBinaryFromReader = funct
       msg.setEnvironmentNamespace(value);
       break;
     case 3:
-      var value = new google_protobuf_field_mask_pb.FieldMask;
-      reader.readMessage(value,google_protobuf_field_mask_pb.FieldMask.deserializeBinaryFromReader);
-      msg.setFieldMask(value);
-      break;
-    case 4:
       var value = new proto_feature_feature_pb.Feature;
       reader.readMessage(value,proto_feature_feature_pb.Feature.deserializeBinaryFromReader);
       msg.setFeature(value);
@@ -559,18 +551,10 @@ proto.bucketeer.backend.UpdateFeatureRequest.serializeBinaryToWriter = function(
       f
     );
   }
-  f = message.getFieldMask();
-  if (f != null) {
-    writer.writeMessage(
-      3,
-      f,
-      google_protobuf_field_mask_pb.FieldMask.serializeBinaryToWriter
-    );
-  }
   f = message.getFeature();
   if (f != null) {
     writer.writeMessage(
-      4,
+      3,
       f,
       proto_feature_feature_pb.Feature.serializeBinaryToWriter
     );
@@ -615,49 +599,12 @@ proto.bucketeer.backend.UpdateFeatureRequest.prototype.setEnvironmentNamespace =
 
 
 /**
- * optional google.protobuf.FieldMask field_mask = 3;
- * @return {?proto.google.protobuf.FieldMask}
- */
-proto.bucketeer.backend.UpdateFeatureRequest.prototype.getFieldMask = function() {
-  return /** @type{?proto.google.protobuf.FieldMask} */ (
-    jspb.Message.getWrapperField(this, google_protobuf_field_mask_pb.FieldMask, 3));
-};
-
-
-/**
- * @param {?proto.google.protobuf.FieldMask|undefined} value
- * @return {!proto.bucketeer.backend.UpdateFeatureRequest} returns this
-*/
-proto.bucketeer.backend.UpdateFeatureRequest.prototype.setFieldMask = function(value) {
-  return jspb.Message.setWrapperField(this, 3, value);
-};
-
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.backend.UpdateFeatureRequest} returns this
- */
-proto.bucketeer.backend.UpdateFeatureRequest.prototype.clearFieldMask = function() {
-  return this.setFieldMask(undefined);
-};
-
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.backend.UpdateFeatureRequest.prototype.hasFieldMask = function() {
-  return jspb.Message.getField(this, 3) != null;
-};
-
-
-/**
- * optional bucketeer.feature.Feature feature = 4;
+ * optional bucketeer.feature.Feature feature = 3;
  * @return {?proto.bucketeer.feature.Feature}
  */
 proto.bucketeer.backend.UpdateFeatureRequest.prototype.getFeature = function() {
   return /** @type{?proto.bucketeer.feature.Feature} */ (
-    jspb.Message.getWrapperField(this, proto_feature_feature_pb.Feature, 4));
+    jspb.Message.getWrapperField(this, proto_feature_feature_pb.Feature, 3));
 };
 
 
@@ -666,7 +613,7 @@ proto.bucketeer.backend.UpdateFeatureRequest.prototype.getFeature = function() {
  * @return {!proto.bucketeer.backend.UpdateFeatureRequest} returns this
 */
 proto.bucketeer.backend.UpdateFeatureRequest.prototype.setFeature = function(value) {
-  return jspb.Message.setWrapperField(this, 4, value);
+  return jspb.Message.setWrapperField(this, 3, value);
 };
 
 
@@ -684,7 +631,7 @@ proto.bucketeer.backend.UpdateFeatureRequest.prototype.clearFeature = function()
  * @return {boolean}
  */
 proto.bucketeer.backend.UpdateFeatureRequest.prototype.hasFeature = function() {
-  return jspb.Message.getField(this, 4) != null;
+  return jspb.Message.getField(this, 3) != null;
 };
 
 

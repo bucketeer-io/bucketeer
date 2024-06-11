@@ -3084,11 +3084,6 @@
               },
               {
                 "id": 3,
-                "name": "field_mask",
-                "type": "google.protobuf.FieldMask"
-              },
-              {
-                "id": 4,
                 "name": "feature",
                 "type": "feature.Feature"
               }
@@ -3140,9 +3135,6 @@
         "imports": [
           {
             "path": "google/api/annotations.proto"
-          },
-          {
-            "path": "google/protobuf/field_mask.proto"
           },
           {
             "path": "proto/feature/feature.proto"
@@ -13634,11 +13626,6 @@
               },
               {
                 "id": 3,
-                "name": "field_mask",
-                "type": "google.protobuf.FieldMask"
-              },
-              {
-                "id": 4,
                 "name": "feature",
                 "type": "Feature"
               }
@@ -14870,9 +14857,6 @@
           },
           {
             "path": "google/protobuf/wrappers.proto"
-          },
-          {
-            "path": "google/protobuf/field_mask.proto"
           },
           {
             "path": "proto/feature/command.proto"

@@ -3,7 +3,6 @@
 
 import * as jspb from "google-protobuf";
 import * as google_api_annotations_pb from "../../google/api/annotations_pb";
-import * as google_protobuf_field_mask_pb from "google-protobuf/google/protobuf/field_mask_pb";
 import * as proto_feature_feature_pb from "../../proto/feature/feature_pb";
 
 export class GetFeatureRequest extends jspb.Message {
@@ -59,11 +58,6 @@ export class UpdateFeatureRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
-  hasFieldMask(): boolean;
-  clearFieldMask(): void;
-  getFieldMask(): google_protobuf_field_mask_pb.FieldMask | undefined;
-  setFieldMask(value?: google_protobuf_field_mask_pb.FieldMask): void;
-
   hasFeature(): boolean;
   clearFeature(): void;
   getFeature(): proto_feature_feature_pb.Feature | undefined;
@@ -83,7 +77,6 @@ export namespace UpdateFeatureRequest {
   export type AsObject = {
     comment: string,
     environmentNamespace: string,
-    fieldMask?: google_protobuf_field_mask_pb.FieldMask.AsObject,
     feature?: proto_feature_feature_pb.Feature.AsObject,
   }
 }

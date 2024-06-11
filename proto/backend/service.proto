@@ -18,7 +18,6 @@ package bucketeer.backend;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/backend";
 
 import "google/api/annotations.proto";
-import "google/protobuf/field_mask.proto";
 
 import "proto/feature/feature.proto";
 
@@ -34,8 +33,7 @@ message GetFeatureResponse {
 message UpdateFeatureRequest {
   string comment = 1;
   string environment_namespace = 2;
-  google.protobuf.FieldMask field_mask = 3;
-  feature.Feature feature = 4;
+  feature.Feature feature = 3;
 }
 
 message UpdateFeatureResponse {}
