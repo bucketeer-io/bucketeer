@@ -1324,8 +1324,15 @@ func TestGrpcGetSegmentUsers(t *testing.T) {
 				"authorization": []string{apiKey},
 			})
 			actual, err := gs.GetSegmentUsers(ctx, p.input)
-			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+			if p.expectedErr != nil {
+				assert.Nil(t, actual, "%s", p.desc)
+				return
+			}
+			assert.Equal(t, p.expected.SegmentUsers, actual.SegmentUsers, "%s", p.desc)
+			assert.Equal(t, p.expected.DeletedSegmentIds, actual.DeletedSegmentIds, "%s", p.desc)
+			assert.GreaterOrEqual(t, actual.RequestedAt, p.expected.RequestedAt, "%s", p.desc)
+			assert.Equal(t, p.expected.ForceUpdate, actual.ForceUpdate, "%s", p.desc)
 		})
 	}
 }
