@@ -15,10 +15,9 @@ concurrency:
 env:
   PROTOC_VERSION: 23.4
   GO_VERSION: 1.21.10
-  GOLANGCI_LINT: v1.51.2
   PROTOLOCK_VERSION: v0.16.0
   PROTOC_GEN_GO_VERSION: v1.5.2
-  MOCKGEN_VERSION: v0.1.0
+  MOCKGEN_VERSION: v0.4.0
 
 jobs:
   unit-test:
@@ -152,6 +151,6 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
           cache: true
       - name: Install golangci-lint
-        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@${{ env.GOLANGCI_LINT }}
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
       - name: Lint
         run: make lint
