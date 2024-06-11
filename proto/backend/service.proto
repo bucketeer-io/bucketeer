@@ -41,12 +41,12 @@ message UpdateFeatureResponse {}
 service PublicAPIService {
   rpc GetFeature(GetFeatureRequest) returns (GetFeatureResponse) {
     option (google.api.http) = {
-      get: "environment/{environment-id}/features/{id}"
+      get: "environment/{environment-id}/features/{feature-id}"
     };
   }
   rpc UpdateFeature(UpdateFeatureRequest) returns (UpdateFeatureResponse) {
     option (google.api.http) = {
-      patch: "environment/{environment-id}/features/{id}"
+      patch: "environment/{environment-id}/features/{feature-id}"
     };
   }
 }

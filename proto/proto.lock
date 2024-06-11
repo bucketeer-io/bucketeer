@@ -3107,7 +3107,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "environment/{environment-id}/features/{id}"
+                        "value": "environment/{environment-id}/features/{feature-id}"
                       }
                     ]
                   }
@@ -3123,7 +3123,7 @@
                     "aggregated": [
                       {
                         "name": "patch",
-                        "value": "environment/{environment-id}/features/{id}"
+                        "value": "environment/{environment-id}/features/{feature-id}"
                       }
                     ]
                   }

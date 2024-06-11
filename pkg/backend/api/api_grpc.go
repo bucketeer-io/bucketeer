@@ -52,7 +52,7 @@ func NewBackendService(
 	}
 	return &BackendService{
 		opts:   dopts,
-		logger: dopts.logger.Named("api"),
+		logger: dopts.logger.Named("backend/api"),
 	}
 }
 
