@@ -37,8 +37,8 @@ docker-run:
 # Go
 #############################
 
-.PHONY: all
-all: gofmt-check proto-check update-repos-check lint build-go test-go
+.PHONY: check-all
+check-all: proto-check mockgen update-repos diff-check lint build-go test-go
 
 .PHONY: local-deps
 local-deps:
@@ -62,9 +62,7 @@ gofmt:
 		$$(find . -path "./vendor" -prune -o -path "./proto" -prune -o -type f -name '*.go' -print)
 
 .PHONY: gofmt-check
-gofmt-check:
-	test -z "$$(goimports -local ${LOCAL_IMPORT_PATH} -d \
-		$$(find . -path "./vendor" -prune -o -path "./proto" -prune -o -type f -name '*.go' -print))"
+gofmt-check: gofmt diff-check
 
 .PHONY: proto-check
 proto-check:
@@ -119,6 +117,9 @@ mockgen: proto-go
 	go generate -run="mockgen" ./pkg/...
 	make gofmt
 
+.PHONY: mockgen-check
+mockgen: mockgen diff-check
+
 .PHONY: vendor
 vendor:
 	go mod vendor
@@ -149,7 +150,7 @@ $(GO_APP_BUILD_TARGETS): build-%:
 .PHONY: build-go
 build-go: $(GO_APP_BUILD_TARGETS)
 
-# Make sure bucketeer-httpstan is already running. If not, run "make run-httpstan".
+# Make sure bucketeer-httpstan is already running. If not, run "make start-httpstan".
 .PHONY: test-go
 test-go:
 	TZ=UTC CGO_ENABLED=0 go test -v ./pkg/... ./evaluation/...
