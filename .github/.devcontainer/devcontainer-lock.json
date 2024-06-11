@@ -40,6 +40,11 @@
       "resolved": "ghcr.io/devcontainers/features/kubectl-helm-minikube@sha256:23aca9dfe058b498b4d7fa2d5592c75b1ff06e581b950419a56e19568d8ecaf7",
       "integrity": "sha256:23aca9dfe058b498b4d7fa2d5592c75b1ff06e581b950419a56e19568d8ecaf7"
     },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "1.4.1",
+      "resolved": "ghcr.io/devcontainers/features/node@sha256:6c4f444d8e3eb68594d60ec128bce76a80647edc2b9a94960ca377895855145f",
+      "integrity": "sha256:6c4f444d8e3eb68594d60ec128bce76a80647edc2b9a94960ca377895855145f"
+    },
     "ghcr.io/devcontainers/features/sshd:1": {
       "version": "1.0.9",
       "resolved": "ghcr.io/devcontainers/features/sshd@sha256:7f6467f25d23c47371ba59f6f3350c9de3439a4d4cdf7497ae50e8aca40bc0e0",

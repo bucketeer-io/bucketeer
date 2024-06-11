@@ -265,8 +265,12 @@ update-copyright:
 # dev container
 #############################
 
+# build devcontainer locally
+build-devcontainer:
+	devcontainer build --workspace-folder=.github --push=false --image-name="ghcr.io/bucketeer-io/bucketeer-devcontainer:latest"
+
 # start minikube
-start-minikube: 
+start-minikube:
 	if [ $$(minikube status | grep -c "minikube start") -eq 1 ]; then \
 		make -C tools/dev setup-minikube; \
 	elif [ $$(minikube status | grep -c "Stopped") -gt 1 ]; then \

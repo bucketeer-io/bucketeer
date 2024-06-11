@@ -14,7 +14,12 @@
       "settings": {
         "go.toolsManagement.checkForUpdates": "local",
         "go.useLanguageServer": true,
-        "go.gopath": "/go"
+        "go.gopath": "/go",
+        "go.lintTool": "golangci-lint",
+        "go.lintFlags": [
+          "--config=${workspaceFolder}/.golangci.yml",
+          "--fast"
+        ]
       },
       // Add the IDs of extensions you want installed when the container is created.
       "extensions": [
@@ -26,5 +31,6 @@
     "cpus": 4,
     "memory": "8gb",
     "storage": "32gb"
-  }
+  },
+  "postAttachCommand": "make local-deps && make vendor && (cd ui/web-v2 && yarn)"
 }
