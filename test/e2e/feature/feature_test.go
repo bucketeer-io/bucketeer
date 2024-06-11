@@ -1885,9 +1885,8 @@ func newFixedStrategyRuleWithSegment(variationID, segmentID string) *feature.Rul
 		},
 		Clauses: []*feature.Clause{
 			{
-				Attribute: "attribute-1",
-				Operator:  feature.Clause_SEGMENT,
-				Values:    []string{segmentID},
+				Operator: feature.Clause_SEGMENT,
+				Values:   []string{segmentID},
 			},
 		},
 	}
