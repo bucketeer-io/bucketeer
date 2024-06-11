@@ -28,6 +28,7 @@ const (
 	subscriberEvaluationEventOPS = "EvaluationEventOPS"
 	subscriberGoalEventDWH       = "GoalEventDWH"
 	subscriberGoalEventOPS       = "GoalEventOPS"
+	subscriberMetricsEvent       = "MetricsEvent"
 	subscriberPushSender         = "PushSender"
 	subscriberSegmentUser        = "SegmentUser"
 	subscriberUserEvent          = "UserEvent"

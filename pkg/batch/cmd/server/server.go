@@ -787,6 +787,14 @@ func (s *server) registerProcessorMap(
 				logger,
 			),
 		)
+
+		processors.RegisterProcessor(
+			processor.MetricsEventPersisterName,
+			processor.NewMetricsEventPersister(
+				registerer,
+				logger,
+			),
+		)
 	}
 
 	onDemandProcessorsConfigBytes, err := os.ReadFile(*s.onDemandProcessorsConfig)
