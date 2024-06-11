@@ -63,7 +63,7 @@ func (s *BackendService) GetFeature(
 	return nil, status.Error(codes.Unimplemented, "method not implemented")
 }
 
-func (s *BackendService) UpdateFeatureFeature(
+func (s *BackendService) UpdateFeature(
 	ctx context.Context,
 	req *backendproto.UpdateFeatureRequest,
 ) (*backendproto.UpdateFeatureResponse, error) {
