@@ -99,7 +99,7 @@ message CreateFeatureResponse {}
 
 message UpdateFeatureRequest {
   string comment = 1;
-  string environment_namespace = 2;
+  string environment_id = 2;
   Feature feature = 3;
 }
 
