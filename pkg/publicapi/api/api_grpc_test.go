@@ -41,18 +41,34 @@ func TestCheckAuth(t *testing.T) {
 
 	patterns := []struct {
 		desc        string
-		setup       func(*PublicAPIService)
+		setup       func(*PublicAPIService) context.Context
 		input       []accountproto.APIKey_Role
 		expected    *accountproto.EnvironmentAPIKey
 		expectedErr error
 	}{
 		{
+			desc: "error: context canceled",
+			setup: func(s *PublicAPIService) context.Context {
+				ctx, cancel := context.WithCancel(context.Background())
+				cancel()
+				return ctx
+			},
+			input: []accountproto.APIKey_Role{
+				accountproto.APIKey_PUBLIC_API_READ_ONLY,
+			},
+			expected:    nil,
+			expectedErr: ErrContextCanceled,
+		},
+		{
 			desc: "error: invalid api key",
-			setup: func(s *PublicAPIService) {
+			setup: func(s *PublicAPIService) context.Context {
 				s.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					nil, cache.ErrNotFound)
 				s.accountClient.(*accountclientmock.MockClient).EXPECT().GetAPIKeyBySearchingAllEnvironments(gomock.Any(), gomock.Any()).Return(
 					nil, status.Errorf(codes.NotFound, "error: apy key not found"))
+				return metadata.NewIncomingContext(context.TODO(), metadata.MD{
+					"authorization": []string{"test-key"},
+				})
 			},
 			input: []accountproto.APIKey_Role{
 				accountproto.APIKey_PUBLIC_API_READ_ONLY,
@@ -61,17 +77,69 @@ func TestCheckAuth(t *testing.T) {
 			expectedErr: ErrInvalidAPIKey,
 		},
 		{
+			desc: "error: internal",
+			setup: func(s *PublicAPIService) context.Context {
+				s.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					nil, cache.ErrNotFound)
+				s.accountClient.(*accountclientmock.MockClient).EXPECT().GetAPIKeyBySearchingAllEnvironments(gomock.Any(), gomock.Any()).Return(
+					nil, status.Errorf(codes.Internal, "error: internal"))
+				return metadata.NewIncomingContext(context.TODO(), metadata.MD{
+					"authorization": []string{"test-key"},
+				})
+			},
+			input: []accountproto.APIKey_Role{
+				accountproto.APIKey_PUBLIC_API_READ_ONLY,
+			},
+			expected:    nil,
+			expectedErr: ErrInternal,
+		},
+		{
+			desc: "error: api key missing",
+			setup: func(s *PublicAPIService) context.Context {
+				return context.Background()
+			},
+			input: []accountproto.APIKey_Role{
+				accountproto.APIKey_PUBLIC_API_READ_ONLY,
+			},
+			expected:    nil,
+			expectedErr: ErrMissingAPIKey,
+		},
+		{
+			desc: "error: api key disabled",
+			setup: func(s *PublicAPIService) context.Context {
+				s.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment:         &environmentproto.EnvironmentV2{Id: "ns0"},
+						EnvironmentDisabled: true,
+						ApiKey: &accountproto.APIKey{
+							Id:   "test-key",
+							Role: accountproto.APIKey_PUBLIC_API_READ_ONLY,
+						},
+					}, nil)
+				return metadata.NewIncomingContext(context.TODO(), metadata.MD{
+					"authorization": []string{"test-key"},
+				})
+			},
+			input: []accountproto.APIKey_Role{
+				accountproto.APIKey_PUBLIC_API_READ_ONLY,
+			},
+			expected:    nil,
+			expectedErr: ErrDisabledAPIKey,
+		},
+		{
 			desc: "success",
-			setup: func(gs *PublicAPIService) {
-				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+			setup: func(s *PublicAPIService) context.Context {
+				s.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
 						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 						ApiKey: &accountproto.APIKey{
-							Id:       "test-key",
-							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
-							Disabled: false,
+							Id:   "test-key",
+							Role: accountproto.APIKey_PUBLIC_API_READ_ONLY,
 						},
 					}, nil)
+				return metadata.NewIncomingContext(context.TODO(), metadata.MD{
+					"authorization": []string{"test-key"},
+				})
 			},
 			input: []accountproto.APIKey_Role{
 				accountproto.APIKey_PUBLIC_API_READ_ONLY,
@@ -79,28 +147,27 @@ func TestCheckAuth(t *testing.T) {
 			expected: &accountproto.EnvironmentAPIKey{
 				Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
 				ApiKey: &accountproto.APIKey{
-					Id:       "test-key",
-					Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
-					Disabled: false,
+					Id:   "test-key",
+					Role: accountproto.APIKey_PUBLIC_API_READ_ONLY,
 				},
 			},
 			expectedErr: nil,
 		},
 	}
 
-	ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
-		"authorization": []string{"test-key"},
-	})
 	for _, p := range patterns {
-		gs := newBackendServiceWithMock(t, mockController)
-		p.setup(gs)
-		actual, err := gs.checkAuth(ctx, p.input)
-		assert.Equal(t, p.expected, actual, "%s", p.desc)
-		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		t.Run(p.desc, func(t *testing.T) {
+			p := p
+			s := newPublicAPIServiceWithMock(t, mockController)
+			ctx := p.setup(s)
+			actual, err := s.checkAuth(ctx, p.input)
+			assert.Equal(t, p.expected, actual)
+			assert.Equal(t, p.expectedErr, err)
+		})
 	}
 }
 
-func newBackendServiceWithMock(t *testing.T, mockController *gomock.Controller) *PublicAPIService {
+func newPublicAPIServiceWithMock(t *testing.T, mockController *gomock.Controller) *PublicAPIService {
 	logger, err := log.NewLogger()
 	require.NoError(t, err)
 	return &PublicAPIService{
