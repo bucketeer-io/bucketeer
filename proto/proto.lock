@@ -1897,10 +1897,6 @@
               {
                 "name": "STOPPED",
                 "integer": 3
-              },
-              {
-                "name": "DELETED",
-                "integer": 4
               }
             ]
           }
@@ -1954,13 +1950,7 @@
               {
                 "id": 9,
                 "name": "deleted",
-                "type": "bool",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
+                "type": "bool"
               },
               {
                 "id": 10,

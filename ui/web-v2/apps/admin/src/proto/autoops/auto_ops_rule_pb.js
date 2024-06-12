@@ -646,8 +646,7 @@ proto.bucketeer.autoops.AutoOpsStatus = {
   WAITING: 0,
   RUNNING: 1,
   COMPLETED: 2,
-  STOPPED: 3,
-  DELETED: 4
+  STOPPED: 3
 };
 
 goog.object.extend(exports, proto.bucketeer.autoops);

@@ -27,7 +27,7 @@ message AutoOpsRule {
   int64 triggered_at = 6 [deprecated = true];
   int64 created_at = 7;
   int64 updated_at = 8;
-  bool deleted = 9 [deprecated = true];
+  bool deleted = 9;
   AutoOpsStatus auto_ops_status = 10;
 }
 
@@ -44,7 +44,6 @@ enum AutoOpsStatus {
   RUNNING = 1;
   COMPLETED = 2;
   STOPPED = 3;
-  DELETED = 4;
 }
 
 message AutoOpsRules {
