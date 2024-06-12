@@ -37,6 +37,9 @@
     "ghcr.io/devcontainers/features/go:1": {
       "version": "latest"
     },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "latest"
+    },
     "./local-features/setup-user": "latest"
   },
   "overrideFeatureInstallOrder": [

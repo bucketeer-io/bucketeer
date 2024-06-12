@@ -1,10 +1,10 @@
-FROM ubuntu:focal
+FROM ubuntu:jammy
 
 COPY first-run-notice.txt /tmp/scripts/
 
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     # Restore man command
-    && yes | unminimize 2>&1 
+    && yes | unminimize 2>&1
 
 ENV LANG="C.UTF-8"
 
@@ -29,15 +29,13 @@ RUN apt-get update \
         zip \
         libgdiplus \
         jq \
-        # By default pip is not available in the buildpacks image
-        python-pip-whl \
         python3-pip \
         #.NET Core related pre-requisites
         libc6 \
         libgcc1 \
         libgssapi-krb5-2 \
         libncurses5 \
-        liblttng-ust0 \
+        liblttng-ust1 \
         libssl-dev \
         libstdc++6 \
         zlib1g \
@@ -59,7 +57,7 @@ RUN apt-get update \
 
 # Verify expected build and debug tools are present
 RUN apt-get update \
-    && apt-get -y install build-essential cmake cppcheck valgrind clang lldb llvm gdb python3-dev \
+    && apt-get -y install build-essential cmake cppcheck valgrind clang clang-format lldb llvm gdb python3-dev \
     # Install tools and shells not in common script
     && apt-get install -yq vim vim-doc xtail software-properties-common libsecret-1-dev \
     # Install additional tools (useful for 'puppeteer' project)
@@ -78,7 +76,7 @@ ENV SHELL=/bin/bash \
 # Remove scripts now that we're done with them
 RUN apt-get clean -y && rm -rf /tmp/scripts
 
-# Mount for docker-in-docker 
+# Mount for docker-in-docker
 VOLUME [ "/var/lib/docker" ]
 
 # Fire Docker/Moby script if needed
@@ -88,7 +86,7 @@ CMD [ "sleep", "infinity" ]
 # [Optional] Install debugger for development of Codespaces - Not in resulting image by default
 ARG DeveloperBuild
 RUN if [ -z $DeveloperBuild ]; then \
-        echo "not including debugger" ; \
+    echo "not including debugger" ; \
     else \
-        curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg ; \
+    curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg ; \
     fi
