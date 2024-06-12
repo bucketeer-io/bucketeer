@@ -31,6 +31,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/auth/oidc"
 	autoopsapi "github.com/bucketeer-io/bucketeer/pkg/autoops/api"
 	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
+	publicapi "github.com/bucketeer-io/bucketeer/pkg/backend/api"
 	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
@@ -110,6 +111,7 @@ type server struct {
 	authServicePort         *int
 	auditLogServicePort     *int
 	autoOpsServicePort      *int
+	publicAPIServicePort    *int
 	environmentServicePort  *int
 	eventCounterServicePort *int
 	experimentServicePort   *int
@@ -125,6 +127,7 @@ type server struct {
 	experimentService  *string
 	featureService     *string
 	autoOpsService     *string
+	publicAPIService   *string
 	// auth
 	oauthIssuerCertPath *string
 	emailFilter         *string
@@ -209,6 +212,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"auto-ops-service-port",
 			"Port to bind to auto ops service.",
 		).Default("9094").Int(),
+		publicAPIServicePort: cmd.Flag(
+			"public-api-service-port",
+			"Port to bind to public API service.",
+		).Default("9094").Int(),
 		environmentServicePort: cmd.Flag(
 			"environment-service-port",
 			"Port to bind to environment service.",
@@ -264,6 +271,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		autoOpsService: cmd.Flag(
 			"autoops-service",
 			"bucketeer-autoops-service address.",
+		).Default("localhost:9001").String(),
+		publicAPIService: cmd.Flag(
+			"public-api-service",
+			"bucketeer-publica-pi-service address.",
 		).Default("localhost:9001").String(),
 		timezone:         cmd.Flag("timezone", "Time zone").Required().String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
@@ -537,6 +548,24 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go autoOpsServer.Run()
+	// publicAPIService
+	publicAPIService := publicapi.NewPublicAPIService(
+		accountClient,
+		featureClient,
+		persistentRedisV3Cache,
+		publicapi.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	publicAPIServer := rpc.NewServer(publicAPIService, *s.certPath, *s.keyPath,
+		"public-api-server",
+		rpc.WithPort(*s.publicAPIServicePort),
+		rpc.WithVerifier(verifier),
+		rpc.WithMetrics(registerer),
+		rpc.WithLogger(logger),
+	)
+	go publicAPIServer.Run()
 	// environmentService
 	environmentService := environmentapi.NewEnvironmentService(
 		accountClient,
@@ -676,6 +705,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go accountServer.Stop(serverShutDownTimeout)
 		go auditLogServer.Stop(serverShutDownTimeout)
 		go autoOpsServer.Stop(serverShutDownTimeout)
+		go publicAPIServer.Stop(serverShutDownTimeout)
 		go environmentServer.Stop(serverShutDownTimeout)
 		go experimentServer.Stop(serverShutDownTimeout)
 		go eventCounterServer.Stop(serverShutDownTimeout)
