@@ -17,6 +17,7 @@ export const APIKeyAddForm: FC<APIKeyAddFormProps> = memo(
     const {
       register,
       formState: { errors, isSubmitting, isValid },
+      getValues,
     } = methods;
 
     return (
@@ -45,12 +46,13 @@ export const APIKeyAddForm: FC<APIKeyAddFormProps> = memo(
               <div
                 className="
                   space-y-6 px-5 pt-6 pb-5
-                  flex flex-col
+                  flex flex-col divide-y
                 "
               >
                 <div className="">
                   <label htmlFor="name">
                     <span className="input-label">{f(messages.name)}</span>
+                    <span className="text-red-500">*</span>
                   </label>
                   <div className="mt-1">
                     <input
@@ -65,6 +67,50 @@ export const APIKeyAddForm: FC<APIKeyAddFormProps> = memo(
                         <span role="alert">{errors.name.message}</span>
                       )}
                     </p>
+                  </div>
+                </div>
+                <div className="pt-6">
+                  <p className="font-bold text-lg">Key Type</p>
+                  <div className="divide-y">
+                    <div className="flex items-center py-4">
+                      <label
+                        htmlFor="sdk-client"
+                        className="flex-1 cursor-pointer"
+                      >
+                        <p className="text-base">Client Side</p>
+                        <p className="text-sm">
+                          On user devices, can be compromised, not for server
+                          keys
+                        </p>
+                      </label>
+                      <input
+                        {...register('role')}
+                        id="sdk-client"
+                        type="radio"
+                        value={1}
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 mt-1"
+                        defaultChecked={getValues('role') === 1}
+                      />
+                    </div>
+                    <div className="flex items-center py-4">
+                      <label
+                        htmlFor="sdk-server"
+                        className="flex-1 cursor-pointer"
+                      >
+                        <p className="text-base">Server-side SDKs</p>
+                        <p className="text-sm">
+                          Server apps, no user access, safe for data handling
+                        </p>
+                      </label>
+                      <input
+                        {...register('role')}
+                        id="sdk-server"
+                        type="radio"
+                        value={2}
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 mt-1"
+                        defaultChecked={getValues('role') === 2}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

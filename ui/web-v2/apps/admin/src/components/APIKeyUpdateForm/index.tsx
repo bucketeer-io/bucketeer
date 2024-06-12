@@ -19,6 +19,7 @@ export const APIKeyUpdateForm: FC<APIKeyUpdateFormProps> = memo(
     const {
       register,
       formState: { errors, isSubmitting, isDirty, isValid },
+      getValues,
     } = methods;
 
     return (
@@ -68,6 +69,42 @@ export const APIKeyUpdateForm: FC<APIKeyUpdateFormProps> = memo(
                         <span role="alert">{errors.name.message}</span>
                       )}
                     </p>
+                  </div>
+                </div>
+                <div className="pt-6">
+                  <p className="font-bold text-lg text-gray-600">Key Type</p>
+                  <div className="divide-y">
+                    <div className="flex items-center py-4 opacity-50">
+                      <label htmlFor="sdk-client" className="flex-1">
+                        <p className="text-base">Client Side</p>
+                        <p className="text-sm">
+                          On user devices, can be compromised, not for server
+                          keys
+                        </p>
+                      </label>
+                      <input
+                        id="sdk-client"
+                        type="radio"
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 mt-1"
+                        disabled={true}
+                        checked={getValues('role') === 1}
+                      />
+                    </div>
+                    <div className="flex items-center py-4 opacity-50">
+                      <label htmlFor="sdk-server" className="flex-1">
+                        <p className="text-base">Server-side SDKs</p>
+                        <p className="text-sm">
+                          Server apps, no user access, safe for data handling
+                        </p>
+                      </label>
+                      <input
+                        id="sdk-server"
+                        type="radio"
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 mt-1"
+                        disabled={true}
+                        checked={getValues('role') === 2}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
