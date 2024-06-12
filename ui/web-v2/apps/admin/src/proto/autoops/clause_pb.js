@@ -23,6 +23,7 @@ var global =
 
 var google_protobuf_any_pb = require('google-protobuf/google/protobuf/any_pb.js');
 goog.object.extend(proto, google_protobuf_any_pb);
+goog.exportSymbol('proto.bucketeer.autoops.ActionType', null, global);
 goog.exportSymbol('proto.bucketeer.autoops.Clause', null, global);
 goog.exportSymbol('proto.bucketeer.autoops.DatetimeClause', null, global);
 goog.exportSymbol('proto.bucketeer.autoops.OpsEventRateClause', null, global);
@@ -190,7 +191,8 @@ proto.bucketeer.autoops.Clause.prototype.toObject = function(opt_includeInstance
 proto.bucketeer.autoops.Clause.toObject = function(includeInstance, msg) {
   var f, obj = {
     id: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    clause: (f = msg.getClause()) && google_protobuf_any_pb.Any.toObject(includeInstance, f)
+    clause: (f = msg.getClause()) && google_protobuf_any_pb.Any.toObject(includeInstance, f),
+    actionType: jspb.Message.getFieldWithDefault(msg, 3, 0)
   };
 
   if (includeInstance) {
@@ -236,6 +238,10 @@ proto.bucketeer.autoops.Clause.deserializeBinaryFromReader = function(msg, reade
       reader.readMessage(value,google_protobuf_any_pb.Any.deserializeBinaryFromReader);
       msg.setClause(value);
       break;
+    case 3:
+      var value = /** @type {!proto.bucketeer.autoops.ActionType} */ (reader.readEnum());
+      msg.setActionType(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -278,6 +284,13 @@ proto.bucketeer.autoops.Clause.serializeBinaryToWriter = function(message, write
       2,
       f,
       google_protobuf_any_pb.Any.serializeBinaryToWriter
+    );
+  }
+  f = message.getActionType();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      3,
+      f
     );
   }
 };
@@ -338,6 +351,24 @@ proto.bucketeer.autoops.Clause.prototype.hasClause = function() {
 };
 
 
+/**
+ * optional ActionType action_type = 3;
+ * @return {!proto.bucketeer.autoops.ActionType}
+ */
+proto.bucketeer.autoops.Clause.prototype.getActionType = function() {
+  return /** @type {!proto.bucketeer.autoops.ActionType} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+};
+
+
+/**
+ * @param {!proto.bucketeer.autoops.ActionType} value
+ * @return {!proto.bucketeer.autoops.Clause} returns this
+ */
+proto.bucketeer.autoops.Clause.prototype.setActionType = function(value) {
+  return jspb.Message.setProto3EnumField(this, 3, value);
+};
+
+
 
 
 
@@ -374,7 +405,8 @@ proto.bucketeer.autoops.OpsEventRateClause.toObject = function(includeInstance, 
     goalId: jspb.Message.getFieldWithDefault(msg, 3, ""),
     minCount: jspb.Message.getFieldWithDefault(msg, 4, 0),
     threadsholdRate: jspb.Message.getFloatingPointFieldWithDefault(msg, 5, 0.0),
-    operator: jspb.Message.getFieldWithDefault(msg, 6, 0)
+    operator: jspb.Message.getFieldWithDefault(msg, 6, 0),
+    actionType: jspb.Message.getFieldWithDefault(msg, 7, 0)
   };
 
   if (includeInstance) {
@@ -430,6 +462,10 @@ proto.bucketeer.autoops.OpsEventRateClause.deserializeBinaryFromReader = functio
     case 6:
       var value = /** @type {!proto.bucketeer.autoops.OpsEventRateClause.Operator} */ (reader.readEnum());
       msg.setOperator(value);
+      break;
+    case 7:
+      var value = /** @type {!proto.bucketeer.autoops.ActionType} */ (reader.readEnum());
+      msg.setActionType(value);
       break;
     default:
       reader.skipField();
@@ -492,6 +528,13 @@ proto.bucketeer.autoops.OpsEventRateClause.serializeBinaryToWriter = function(me
   if (f !== 0.0) {
     writer.writeEnum(
       6,
+      f
+    );
+  }
+  f = message.getActionType();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      7,
       f
     );
   }
@@ -596,6 +639,24 @@ proto.bucketeer.autoops.OpsEventRateClause.prototype.setOperator = function(valu
 };
 
 
+/**
+ * optional ActionType action_type = 7;
+ * @return {!proto.bucketeer.autoops.ActionType}
+ */
+proto.bucketeer.autoops.OpsEventRateClause.prototype.getActionType = function() {
+  return /** @type {!proto.bucketeer.autoops.ActionType} */ (jspb.Message.getFieldWithDefault(this, 7, 0));
+};
+
+
+/**
+ * @param {!proto.bucketeer.autoops.ActionType} value
+ * @return {!proto.bucketeer.autoops.OpsEventRateClause} returns this
+ */
+proto.bucketeer.autoops.OpsEventRateClause.prototype.setActionType = function(value) {
+  return jspb.Message.setProto3EnumField(this, 7, value);
+};
+
+
 
 
 
@@ -628,7 +689,8 @@ proto.bucketeer.autoops.DatetimeClause.prototype.toObject = function(opt_include
  */
 proto.bucketeer.autoops.DatetimeClause.toObject = function(includeInstance, msg) {
   var f, obj = {
-    time: jspb.Message.getFieldWithDefault(msg, 1, 0)
+    time: jspb.Message.getFieldWithDefault(msg, 1, 0),
+    actionType: jspb.Message.getFieldWithDefault(msg, 2, 0)
   };
 
   if (includeInstance) {
@@ -669,6 +731,10 @@ proto.bucketeer.autoops.DatetimeClause.deserializeBinaryFromReader = function(ms
       var value = /** @type {number} */ (reader.readInt64());
       msg.setTime(value);
       break;
+    case 2:
+      var value = /** @type {!proto.bucketeer.autoops.ActionType} */ (reader.readEnum());
+      msg.setActionType(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -705,6 +771,13 @@ proto.bucketeer.autoops.DatetimeClause.serializeBinaryToWriter = function(messag
       f
     );
   }
+  f = message.getActionType();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      2,
+      f
+    );
+  }
 };
 
 
@@ -723,6 +796,24 @@ proto.bucketeer.autoops.DatetimeClause.prototype.getTime = function() {
  */
 proto.bucketeer.autoops.DatetimeClause.prototype.setTime = function(value) {
   return jspb.Message.setProto3IntField(this, 1, value);
+};
+
+
+/**
+ * optional ActionType action_type = 2;
+ * @return {!proto.bucketeer.autoops.ActionType}
+ */
+proto.bucketeer.autoops.DatetimeClause.prototype.getActionType = function() {
+  return /** @type {!proto.bucketeer.autoops.ActionType} */ (jspb.Message.getFieldWithDefault(this, 2, 0));
+};
+
+
+/**
+ * @param {!proto.bucketeer.autoops.ActionType} value
+ * @return {!proto.bucketeer.autoops.DatetimeClause} returns this
+ */
+proto.bucketeer.autoops.DatetimeClause.prototype.setActionType = function(value) {
+  return jspb.Message.setProto3EnumField(this, 2, value);
 };
 
 
@@ -1395,5 +1486,14 @@ proto.bucketeer.autoops.ProgressiveRolloutTemplateScheduleClause.prototype.setVa
   return jspb.Message.setProto3StringField(this, 4, value);
 };
 
+
+/**
+ * @enum {number}
+ */
+proto.bucketeer.autoops.ActionType = {
+  UNKNOWN: 0,
+  ENABLE: 1,
+  DISABLE: 2
+};
 
 goog.object.extend(exports, proto.bucketeer.autoops);
