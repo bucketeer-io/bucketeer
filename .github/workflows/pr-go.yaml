@@ -100,8 +100,14 @@ jobs:
         with:
           version: ${{ env.PROTOC_VERSION }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Check proto files
-        run: make proto-check
+      - name:  Check proto format
+        uses: jidicula/clang-format-action@c74383674bf5f7c69f60ce562019c1c94bc1421a # v4.13.0
+        with:
+          clang-format-version: '18'
+          check-path: 'proto'
+          exclude-regex: 'external' # googleapis proto files
+      - name: Check proto lock
+        run: make proto-lock-check
 
   proto-descriptor-check:
     runs-on: ubuntu-latest
