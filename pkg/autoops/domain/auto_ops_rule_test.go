@@ -171,9 +171,7 @@ func TestNewAutoOpsRule(t *testing.T) {
 func TestSetDeleted(t *testing.T) {
 	t.Parallel()
 	aor := createAutoOpsRule(t)
-	assert.NotEqual(t, autoopsproto.AutoOpsStatus_DELETED, aor.AutoOpsStatus)
 	aor.SetDeleted()
-	assert.Equal(t, autoopsproto.AutoOpsStatus_DELETED, aor.AutoOpsStatus)
 	assert.NotZero(t, aor.UpdatedAt)
 	assert.Equal(t, true, aor.Deleted)
 }

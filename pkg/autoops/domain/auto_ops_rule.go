@@ -111,7 +111,6 @@ func (a *AutoOpsRule) SetStopped() {
 
 func (a *AutoOpsRule) SetDeleted() {
 	a.AutoOpsRule.Deleted = true
-	a.AutoOpsRule.AutoOpsStatus = proto.AutoOpsStatus_DELETED
 	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
 }
 
