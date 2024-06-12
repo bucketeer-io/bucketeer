@@ -552,7 +552,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	publicAPIService := publicapi.NewPublicAPIService(
 		accountClient,
 		featureClient,
-		persistentRedisV3Cache,
+		nonPersistentRedisV3Cache,
 		publicapi.WithLogger(logger),
 	)
 	if err != nil {
