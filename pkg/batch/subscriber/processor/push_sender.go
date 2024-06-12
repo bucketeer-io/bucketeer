@@ -124,7 +124,7 @@ func (p pushSender) handle(msg *puller.Message) {
 }
 
 func (p pushSender) send(featureID, environmentNamespace string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	resp, err := p.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
 		Id:                   featureID,
