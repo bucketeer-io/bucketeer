@@ -37,8 +37,10 @@ const (
 type OpsType int32
 
 const (
+	// Refactor as Unknown instead of deleting
+	//
 	// Deprecated: Do not use.
-	OpsType_ENABLE_FEATURE OpsType = 0 // Refactor as Unknown instead of deleting
+	OpsType_ENABLE_FEATURE OpsType = 0
 	// Deprecated: Do not use.
 	OpsType_DISABLE_FEATURE OpsType = 1
 	OpsType_SCHEDULE        OpsType = 2

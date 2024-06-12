@@ -32,8 +32,8 @@ message AutoOpsRule {
 }
 
 enum OpsType {
-  ENABLE_FEATURE = 0
-      [deprecated = true];  // Refactor as Unknown instead of deleting
+  // Refactor as Unknown instead of deleting
+  ENABLE_FEATURE = 0 [deprecated = true];
   DISABLE_FEATURE = 1 [deprecated = true];
   SCHEDULE = 2;
   EVENT_RATE = 3;
