@@ -94,7 +94,6 @@ export interface AutoOpsStatusMap {
   RUNNING: 1;
   FINISHED: 2;
   STOPPED: 3;
-  DELETED: 4;
 }
 
 export const AutoOpsStatus: AutoOpsStatusMap;

@@ -27,13 +27,13 @@ message AutoOpsRule {
   int64 triggered_at = 6 [deprecated = true];
   int64 created_at = 7;
   int64 updated_at = 8;
-  bool deleted = 9 [deprecated = true];
+  bool deleted = 9;
   AutoOpsStatus auto_ops_status = 10;
 }
 
 enum OpsType {
-  ENABLE_FEATURE = 0
-      [deprecated = true];  // Refactor as Unknown instead of deleting
+  // Refactor as Unknown instead of deleting
+  ENABLE_FEATURE = 0 [deprecated = true];
   DISABLE_FEATURE = 1 [deprecated = true];
   SCHEDULE = 2;
   EVENT_RATE = 3;
@@ -44,7 +44,6 @@ enum AutoOpsStatus {
   RUNNING = 1;
   FINISHED = 2;
   STOPPED = 3;
-  DELETED = 4;
 }
 
 message AutoOpsRules {
