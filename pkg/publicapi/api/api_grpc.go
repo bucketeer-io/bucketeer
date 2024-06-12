@@ -30,8 +30,8 @@ import (
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	backendproto "github.com/bucketeer-io/bucketeer/proto/backend"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	publicapiproto "github.com/bucketeer-io/bucketeer/proto/publicapi"
 )
 
 var (
@@ -86,13 +86,13 @@ func NewPublicAPIService(
 }
 
 func (s *PublicAPIService) Register(server *grpc.Server) {
-	backendproto.RegisterPublicAPIServiceServer(server, s)
+	publicapiproto.RegisterPublicAPIServiceServer(server, s)
 }
 
 func (s *PublicAPIService) GetFeature(
 	ctx context.Context,
-	req *backendproto.GetFeatureRequest,
-) (*backendproto.GetFeatureResponse, error) {
+	req *publicapiproto.GetFeatureRequest,
+) (*publicapiproto.GetFeatureResponse, error) {
 	if _, err := s.checkAuth(ctx, []accountproto.APIKey_Role{
 		accountproto.APIKey_PUBLIC_API_READ_ONLY,
 		accountproto.APIKey_PUBLIC_API_WRITE,
@@ -112,15 +112,15 @@ func (s *PublicAPIService) GetFeature(
 	if err != nil {
 		return nil, err
 	}
-	return &backendproto.GetFeatureResponse{
+	return &publicapiproto.GetFeatureResponse{
 		Feature: resp.Feature,
 	}, nil
 }
 
 func (s *PublicAPIService) UpdateFeature(
 	ctx context.Context,
-	req *backendproto.UpdateFeatureRequest,
-) (*backendproto.UpdateFeatureResponse, error) {
+	req *publicapiproto.UpdateFeatureRequest,
+) (*publicapiproto.UpdateFeatureResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method not implemented")
 }
 

@@ -1,7 +1,7 @@
 // package: bucketeer.backend
-// file: proto/backend/service.proto
+// file: proto/publicapi/service.proto
 
-var proto_backend_service_pb = require("../../proto/backend/service_pb");
+var proto_publicapi_service_pb = require("../../proto/publicapi/service_pb");
 var grpc = require("@improbable-eng/grpc-web").grpc;
 
 var PublicAPIService = (function () {
@@ -15,8 +15,8 @@ PublicAPIService.GetFeature = {
   service: PublicAPIService,
   requestStream: false,
   responseStream: false,
-  requestType: proto_backend_service_pb.GetFeatureRequest,
-  responseType: proto_backend_service_pb.GetFeatureResponse
+  requestType: proto_publicapi_service_pb.GetFeatureRequest,
+  responseType: proto_publicapi_service_pb.GetFeatureResponse
 };
 
 PublicAPIService.UpdateFeature = {
@@ -24,8 +24,8 @@ PublicAPIService.UpdateFeature = {
   service: PublicAPIService,
   requestStream: false,
   responseStream: false,
-  requestType: proto_backend_service_pb.UpdateFeatureRequest,
-  responseType: proto_backend_service_pb.UpdateFeatureResponse
+  requestType: proto_publicapi_service_pb.UpdateFeatureRequest,
+  responseType: proto_publicapi_service_pb.UpdateFeatureResponse
 };
 
 exports.PublicAPIService = PublicAPIService;

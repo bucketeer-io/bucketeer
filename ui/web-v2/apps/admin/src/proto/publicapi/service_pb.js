@@ -1,4 +1,4 @@
-// source: proto/backend/service.proto
+// source: proto/publicapi/service.proto
 /**
  * @fileoverview
  * @enhanceable

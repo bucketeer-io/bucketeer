@@ -552,7 +552,7 @@ data:
                                   retry_on: 5xx
                                   num_retries: 3
                             - match:
-                                prefix: /bucketeer.backend.PublicAPIService
+                                prefix: /bucketeer.publicapi.PublicAPIService
                               route:
                                 cluster: publicapi
                                 timeout: 60s

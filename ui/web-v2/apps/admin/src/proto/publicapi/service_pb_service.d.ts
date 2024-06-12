@@ -1,7 +1,7 @@
 // package: bucketeer.backend
-// file: proto/backend/service.proto
+// file: proto/publicapi/service.proto
 
-import * as proto_backend_service_pb from "../../proto/backend/service_pb";
+import * as proto_publicapi_service_pb from "../../proto/publicapi/service_pb";
 import {grpc} from "@improbable-eng/grpc-web";
 
 type PublicAPIServiceGetFeature = {
@@ -9,8 +9,8 @@ type PublicAPIServiceGetFeature = {
   readonly service: typeof PublicAPIService;
   readonly requestStream: false;
   readonly responseStream: false;
-  readonly requestType: typeof proto_backend_service_pb.GetFeatureRequest;
-  readonly responseType: typeof proto_backend_service_pb.GetFeatureResponse;
+  readonly requestType: typeof proto_publicapi_service_pb.GetFeatureRequest;
+  readonly responseType: typeof proto_publicapi_service_pb.GetFeatureResponse;
 };
 
 type PublicAPIServiceUpdateFeature = {
@@ -18,8 +18,8 @@ type PublicAPIServiceUpdateFeature = {
   readonly service: typeof PublicAPIService;
   readonly requestStream: false;
   readonly responseStream: false;
-  readonly requestType: typeof proto_backend_service_pb.UpdateFeatureRequest;
-  readonly responseType: typeof proto_backend_service_pb.UpdateFeatureResponse;
+  readonly requestType: typeof proto_publicapi_service_pb.UpdateFeatureRequest;
+  readonly responseType: typeof proto_publicapi_service_pb.UpdateFeatureResponse;
 };
 
 export class PublicAPIService {
@@ -61,22 +61,22 @@ export class PublicAPIServiceClient {
 
   constructor(serviceHost: string, options?: grpc.RpcOptions);
   getFeature(
-    requestMessage: proto_backend_service_pb.GetFeatureRequest,
+    requestMessage: proto_publicapi_service_pb.GetFeatureRequest,
     metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_backend_service_pb.GetFeatureResponse|null) => void
+    callback: (error: ServiceError|null, responseMessage: proto_publicapi_service_pb.GetFeatureResponse|null) => void
   ): UnaryResponse;
   getFeature(
-    requestMessage: proto_backend_service_pb.GetFeatureRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_backend_service_pb.GetFeatureResponse|null) => void
+    requestMessage: proto_publicapi_service_pb.GetFeatureRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_publicapi_service_pb.GetFeatureResponse|null) => void
   ): UnaryResponse;
   updateFeature(
-    requestMessage: proto_backend_service_pb.UpdateFeatureRequest,
+    requestMessage: proto_publicapi_service_pb.UpdateFeatureRequest,
     metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_backend_service_pb.UpdateFeatureResponse|null) => void
+    callback: (error: ServiceError|null, responseMessage: proto_publicapi_service_pb.UpdateFeatureResponse|null) => void
   ): UnaryResponse;
   updateFeature(
-    requestMessage: proto_backend_service_pb.UpdateFeatureRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_backend_service_pb.UpdateFeatureResponse|null) => void
+    requestMessage: proto_publicapi_service_pb.UpdateFeatureRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_publicapi_service_pb.UpdateFeatureResponse|null) => void
   ): UnaryResponse;
 }
 
