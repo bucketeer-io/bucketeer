@@ -369,7 +369,7 @@ export const clauseFormSchema = yup.object().shape({
       'required',
       intl.formatMessage(messages.input.error.required),
       (value, context) => {
-        if (context.parent.type in ['segment', 'feature_flag']) {
+        if (context.parent.type === 'segment') {
           return true;
         }
         return !!value;
