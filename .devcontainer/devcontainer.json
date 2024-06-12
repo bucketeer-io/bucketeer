@@ -32,5 +32,5 @@
     "memory": "8gb",
     "storage": "32gb"
   },
-  "postAttachCommand": "make local-deps && make vendor && (cd ui/web-v2 && yarn)"
+  "postAttachCommand": "make local-deps && make update-repos && (cd ui/web-v2 && yarn)"
 }
