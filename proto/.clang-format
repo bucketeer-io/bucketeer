@@ -1,1 +1,4 @@
 BasedOnStyle: Google
+---
+Language: Proto
+ColumnLimit: 80
