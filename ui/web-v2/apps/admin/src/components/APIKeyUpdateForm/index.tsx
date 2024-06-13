@@ -99,7 +99,7 @@ export const APIKeyUpdateForm: FC<APIKeyUpdateFormProps> = memo(
                         className="flex items-center py-4 space-x-5"
                       >
                         <label htmlFor={id} className="flex-1">
-                          <p className="text-base">{label}</p>
+                          <p className="font-bold text-sm text-gray-600 text-md text-gray-500">{label}</p>
                           <p className="text-sm text-gray-500">{description}</p>
                         </label>
                         <input
