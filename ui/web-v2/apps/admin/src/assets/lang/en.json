@@ -80,7 +80,7 @@
   "apiKey.list.noResult.searchKeyword": "name",
   "apiKey.search.placeholder": "Name",
   "apiKey.section.clientSdk": "Client SDKs",
-  "apiKey.section.clientSdkDescription": "This role allows all the SDKs to evaluate the end-user on the Bucketeer server.",
+  "apiKey.section.clientSdkDescription": "This role allows all SDKs to evaluate end users on the Bucketeer server.",
   "apiKey.section.serverSdk": "Server SDKs",
   "apiKey.section.serverSdkDescription": "This role allows the server SDKs to evaluate the end-user locally. If you want to evaluate it on the Bucketeer server, please use the client SDK key instead.",
   "apiKey.section.title": "Key Role",
