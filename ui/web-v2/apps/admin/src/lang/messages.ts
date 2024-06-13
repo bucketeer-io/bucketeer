@@ -1055,7 +1055,7 @@ export const messages = {
       serverSdkDescription: defineMessage({
         id: 'apiKey.section.serverSdkDescription',
         defaultMessage:
-          'This role allows the server SDKs to evaluate the end-user locally. If you want to evaluate it on the Bucketeer server, please use the client SDK key instead.',
+          'This role allows the server SDK to evaluate end users locally within the SDK. To evaluate them on the Bucketeer server, use the client SDK key instead.',
       }),
     },
   },
