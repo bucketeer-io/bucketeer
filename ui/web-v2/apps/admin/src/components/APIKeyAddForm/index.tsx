@@ -69,7 +69,7 @@ export const APIKeyAddForm: FC<APIKeyAddFormProps> = memo(
                   </div>
                 </div>
                 <div className="pt-6">
-                  <p className="font-bold text-lg text-gray-600">
+                  <p className="font-bold text-md text-gray-600">
                     {f(messages.apiKey.section.title)}
                   </p>
                   <div className="divide-y">
