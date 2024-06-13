@@ -46,7 +46,6 @@ export const APIKeyAddForm: FC<APIKeyAddFormProps> = memo(
               <div
                 className="
                   space-y-6 px-5 pt-6 pb-5
-                  flex flex-col divide-y
                 "
               >
                 <div className="">
