@@ -82,7 +82,7 @@
   "apiKey.section.clientSdk": "クライアントSDK",
   "apiKey.section.clientSdkDescription": "このロールはすべてのSDKがエンドユーザーに対するBucketeerサーバーでの評価を許可します。",
   "apiKey.section.serverSdk": "サーバーSDK",
-  "apiKey.section.serverSdkDescription": "このロールにより、サーバーSDKがエンドユーザーをローカルで評価できます。Bucketeerサーバーで評価したい場合は、代わりにクライアントSDKキーを利用してください。",
+  "apiKey.section.serverSdkDescription": "このロールはサーバーSDKがエンドユーザーに対するSDK内でローカルに評価を許可します。Bucketeerサーバーで評価したい場合は、クライアントSDKキーを利用してください。",
   "apiKey.section.title": "キーロール",
   "apiKey.update.header.description": "APIキーはクライアントSDKがサーバーAPIにアクセスするために必要です。",
   "apiKey.update.header.title": "APIキーの更新",
