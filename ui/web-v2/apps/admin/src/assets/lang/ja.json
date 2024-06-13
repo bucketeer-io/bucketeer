@@ -80,7 +80,7 @@
   "apiKey.list.noResult.searchKeyword": "名前",
   "apiKey.search.placeholder": "名前",
   "apiKey.section.clientSdk": "クライアントSDK",
-  "apiKey.section.clientSdkDescription": "このロールにより、すべてのSDKがエンドユーザーをBucketeerサーバーで評価できます。",
+  "apiKey.section.clientSdkDescription": "このロールはすべてのSDKがエンドユーザーに対するBucketeerサーバーでの評価を許可します。",
   "apiKey.section.serverSdk": "サーバーSDK",
   "apiKey.section.serverSdkDescription": "このロールにより、サーバーSDKがエンドユーザーをローカルで評価できます。Bucketeerサーバーで評価したい場合は、代わりにクライアントSDKキーを利用してください。",
   "apiKey.section.title": "キーロール",
