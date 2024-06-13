@@ -1046,7 +1046,7 @@ export const messages = {
       clientSdkDescription: defineMessage({
         id: 'apiKey.section.clientSdkDescription',
         defaultMessage:
-          'This role allows all the SDKs to evaluate the end-user on the Bucketeer server.',
+          'This role allows all SDKs to evaluate end users on the Bucketeer server.',
       }),
       serverSdk: defineMessage({
         id: 'apiKey.section.serverSdk',
