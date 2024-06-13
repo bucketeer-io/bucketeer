@@ -1,5 +1,42 @@
 # Changelog
 
+## [0.4.5](https://github.com/bucketeer-io/bucketeer/compare/v0.4.4...v0.4.5) (2024-06-13)
+
+
+### Features
+
+* evaluate flag dependency of targeting rule ([#983](https://github.com/bucketeer-io/bucketeer/issues/983)) ([15f1008](https://github.com/bucketeer-io/bucketeer/commit/15f10084d06a74ff111350161a691967a6df3699))
+* feature can be set in targeting ([#993](https://github.com/bucketeer-io/bucketeer/issues/993)) ([0f62cb2](https://github.com/bucketeer-io/bucketeer/commit/0f62cb2c7399c62c11e7e153c40fa0fd46877f37))
+* move auditLog persister to batch service ([#984](https://github.com/bucketeer-io/bucketeer/issues/984)) ([25ed7ea](https://github.com/bucketeer-io/bucketeer/commit/25ed7ea2fde3efc247be24c67cdf3f39e295593b))
+* move on-demand subscribers to batch service ([#952](https://github.com/bucketeer-io/bucketeer/issues/952)) ([b6c3b40](https://github.com/bucketeer-io/bucketeer/commit/b6c3b4068cbf95ed58fec580f0168f1d83549b80))
+* move push sender to batch service ([#995](https://github.com/bucketeer-io/bucketeer/issues/995)) ([7120406](https://github.com/bucketeer-io/bucketeer/commit/71204063ab4173dd9afcd313b148476cee0c85cc))
+* **ui:** add client and server SDKs role in API key page ([#1016](https://github.com/bucketeer-io/bucketeer/issues/1016)) ([83d9a43](https://github.com/bucketeer-io/bucketeer/commit/83d9a433887653cc54fd65acdbd63af131f925d1))
+
+
+### Bug Fixes
+
+* including archived features in the count query ([#996](https://github.com/bucketeer-io/bucketeer/issues/996)) ([e7cc082](https://github.com/bucketeer-io/bucketeer/commit/e7cc0827d42ae6818ec9587ab3a2452b244b4340))
+* missing rule clause validation ([#999](https://github.com/bucketeer-io/bucketeer/issues/999)) ([8b12f92](https://github.com/bucketeer-io/bucketeer/commit/8b12f92fb9541c0e2cf7a77004155ab766642aed))
+* segment cannot be set in the targeting rule ([#1015](https://github.com/bucketeer-io/bucketeer/issues/1015)) ([b6aa2af](https://github.com/bucketeer-io/bucketeer/commit/b6aa2af63b8b7d70831a9ef0a62beb692c6e64a2))
+
+
+### Miscellaneous
+
+* add api key roles for public api ([#998](https://github.com/bucketeer-io/bucketeer/issues/998)) ([62356ab](https://github.com/bucketeer-io/bucketeer/commit/62356abdd4b828cd4cb0294a6007d7723c8789a6))
+* add environment url code label to metrics ([#1005](https://github.com/bucketeer-io/bucketeer/issues/1005)) ([f0ad1fb](https://github.com/bucketeer-io/bucketeer/commit/f0ad1fb934fc2e218d7cb69e788dbc139ec2852c))
+* add function to return other features to depends on the feature ([#976](https://github.com/bucketeer-io/bucketeer/issues/976)) ([7256a1e](https://github.com/bucketeer-io/bucketeer/commit/7256a1ef37fcdc296a328610c9ba4b8b1effc4f3))
+* add UpdateFeature ([#1001](https://github.com/bucketeer-io/bucketeer/issues/1001)) ([9259bed](https://github.com/bucketeer-io/bucketeer/commit/9259bedcf36bd635942f6603a21e25acf6545ca9))
+* add validation of feature dependency rule ([#979](https://github.com/bucketeer-io/bucketeer/issues/979)) ([b54668e](https://github.com/bucketeer-io/bucketeer/commit/b54668e92df42015dd774ba246ef2d30bdba945c))
+* change proto-all to run all the proto commands ([#1000](https://github.com/bucketeer-io/bucketeer/issues/1000)) ([a8c00ad](https://github.com/bucketeer-io/bucketeer/commit/a8c00ad066e6371ac9365b0ef6e4fdaa57b2e081))
+* fix devcontainer for development ([#1008](https://github.com/bucketeer-io/bucketeer/issues/1008)) ([74406be](https://github.com/bucketeer-io/bucketeer/commit/74406bef5645e9c23090c3340f5442f69dd7e2ab))
+* update proto for multi-schedule ([#1010](https://github.com/bucketeer-io/bucketeer/issues/1010)) ([cbb91b9](https://github.com/bucketeer-io/bucketeer/commit/cbb91b99ba5b655fda55ca505f4b83c6049e6441))
+
+
+### Build System
+
+* **deps:** bump the dependencies group with 2 updates ([#980](https://github.com/bucketeer-io/bucketeer/issues/980)) ([c8b60e6](https://github.com/bucketeer-io/bucketeer/commit/c8b60e6247921d65d4d0493f250c9a2872170024))
+* **deps:** bump the dependencies group with 2 updates ([#981](https://github.com/bucketeer-io/bucketeer/issues/981)) ([9aa66d8](https://github.com/bucketeer-io/bucketeer/commit/9aa66d8c6369faf2f8963f9a988a4e7fd601acce))
+
 ## [0.4.4](https://github.com/bucketeer-io/bucketeer/compare/v0.4.3...v0.4.4) (2024-05-31)
 
 
