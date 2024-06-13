@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: 16
+  NODE_VERSION: 18
   PROTOC_VERSION: 23.4
   WEB_DIRECTORY: "ui/web-v2"
 
