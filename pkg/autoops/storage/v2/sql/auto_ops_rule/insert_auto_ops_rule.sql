@@ -7,7 +7,8 @@ INSERT INTO auto_ops_rule (
     created_at,
     updated_at,
     deleted,
+    status,
     environment_namespace
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 )

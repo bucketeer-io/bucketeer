@@ -7,7 +7,8 @@ SET
     triggered_at = ?,
     created_at = ?,
     updated_at = ?,
-    deleted = ?
+    deleted = ?,
+    status = ?
 WHERE
     id = ? AND
     environment_namespace = ?
