@@ -20,6 +20,7 @@ env:
   accountService: localhost:9001
   notificationService: localhost:9001
   environmentService: localhost:9001
+  pushService: localhost:9001
   autoOpsService: localhost:9001
   experimentService: localhost:9001
   eventCounterService: localhost:9001
@@ -193,6 +194,15 @@ subscribers:
     pullerMaxOutstandingMessages: 1000
     pullerMaxOutstandingBytes: 1000000000
     maxMps: 50
+    workerNum: 1
+  pushSender:
+    project:
+    topic:
+    subscription:
+    pullerNumGoroutines: 5
+    pullerMaxOutstandingMessages: 500
+    pullerMaxOutstandingBytes: 50000000
+    maxMps: 100
     workerNum: 1
   segmentUserPersister:
     project:

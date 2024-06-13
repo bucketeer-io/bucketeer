@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package sender
+package processor
 
 import (
 	"testing"
@@ -63,7 +63,7 @@ func TestExtractFeatureID(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			s := &sender{}
+			s := &pushSender{}
 			actualID, actualIsTarget := s.extractFeatureID(p.input)
 			assert.Equal(t, p.expectedID, actualID)
 			assert.Equal(t, p.expectedIsTarget, actualIsTarget)

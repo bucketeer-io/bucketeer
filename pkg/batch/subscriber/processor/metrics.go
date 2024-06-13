@@ -28,6 +28,7 @@ const (
 	subscriberEvaluationEventOPS = "EvaluationEventOPS"
 	subscriberGoalEventDWH       = "GoalEventDWH"
 	subscriberGoalEventOPS       = "GoalEventOPS"
+	subscriberPushSender         = "PushSender"
 	subscriberSegmentUser        = "SegmentUser"
 	subscriberUserEvent          = "UserEvent"
 )
@@ -68,11 +69,21 @@ var (
 			Name:      "subscriber_handled_event_total",
 			Help:      "Total number of handled messages",
 		}, []string{"subscriber", "code"})
+
+	subscriberHandledHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "bucketeer",
+			Subsystem: "batch_server",
+			Name:      "subscriber_handled_seconds",
+			Help:      "Histogram of message handling duration (seconds)",
+			Buckets:   prometheus.DefBuckets,
+		}, []string{"subscriber", "code"})
 )
 
 func registerMetrics(r metrics.Registerer) {
 	r.MustRegister(
 		subscriberReceivedCounter,
 		subscriberHandledCounter,
+		subscriberHandledHistogram,
 	)
 }
