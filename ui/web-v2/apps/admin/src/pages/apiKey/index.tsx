@@ -52,12 +52,7 @@ import {
   useSearchParams,
 } from '../../utils/search-params';
 
-import {
-  addApiKeyFormSchema,
-  AddApiKeyFormSchema,
-  updateApiKeyFormSchema,
-  UpdateApiKeyFormSchema,
-} from './formSchema';
+import { addApiKeyFormSchema, updateApiKeyFormSchema } from './formSchema';
 
 interface Sort {
   orderBy: OrderBy;
@@ -220,15 +215,20 @@ export const APIKeyIndexPage: FC = memo(() => {
 
   const addMethod = useForm({
     resolver: yupResolver(addApiKeyFormSchema),
+    mode: 'onChange',
     defaultValues: {
       name: '',
+      role: 1,
     },
-    mode: 'onChange',
   });
   const { handleSubmit: handleAddSubmit, reset: resetAdd } = addMethod;
 
   const updateMethod = useForm({
     resolver: yupResolver(updateApiKeyFormSchema),
+    defaultValues: {
+      name: '',
+      role: 1,
+    },
     mode: 'onChange',
   });
   const { handleSubmit: handleUpdateSubmit, reset: resetUpdate } = updateMethod;
@@ -246,6 +246,7 @@ export const APIKeyIndexPage: FC = memo(() => {
       setOpen(true);
       resetUpdate({
         name: a.name,
+        role: a.role,
       });
       history.push({
         pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_APIKEYS}/${a.id}`,
@@ -266,13 +267,12 @@ export const APIKeyIndexPage: FC = memo(() => {
   }, [setOpen, history, location, resetAdd, resetUpdate]);
 
   const handleAdd = useCallback(
-    async (data: AddApiKeyFormSchema) => {
+    async (data) => {
       dispatch(
         createAPIKey({
           environmentNamespace: currentEnvironment.id,
           name: data.name,
-          // TODO: Implement the `role` radio button in the create page
-          role: 1, // SDK_CLIENT
+          role: data.role,
         })
       ).then(() => {
         setOpen(false);
@@ -287,7 +287,7 @@ export const APIKeyIndexPage: FC = memo(() => {
   );
 
   const handleUpdate = useCallback(
-    async (data: UpdateApiKeyFormSchema) => {
+    async (data) => {
       dispatch(
         updateAPIKey({
           environmentNamespace: currentEnvironment.id,
@@ -327,8 +327,10 @@ export const APIKeyIndexPage: FC = memo(() => {
         })
       ).then((e) => {
         const payload = e.payload as APIKey.AsObject;
+
         resetUpdate({
           name: payload.name,
+          role: payload.role,
         });
       });
     }

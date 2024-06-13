@@ -1034,6 +1034,30 @@ export const messages = {
         defaultMessage: 'Enabled',
       }),
     },
+    section: {
+      title: defineMessage({
+        id: 'apiKey.section.title',
+        defaultMessage: 'Key Role',
+      }),
+      clientSdk: defineMessage({
+        id: 'apiKey.section.clientSdk',
+        defaultMessage: 'Client SDKs',
+      }),
+      clientSdkDescription: defineMessage({
+        id: 'apiKey.section.clientSdkDescription',
+        defaultMessage:
+          'This role allows all SDKs to evaluate end users on the Bucketeer server.',
+      }),
+      serverSdk: defineMessage({
+        id: 'apiKey.section.serverSdk',
+        defaultMessage: 'Server SDKs',
+      }),
+      serverSdkDescription: defineMessage({
+        id: 'apiKey.section.serverSdkDescription',
+        defaultMessage:
+          'This role allows the server SDK to evaluate end users locally within the SDK. To evaluate them on the Bucketeer server, use the client SDK key instead.',
+      }),
+    },
   },
   auditLog: {
     list: {

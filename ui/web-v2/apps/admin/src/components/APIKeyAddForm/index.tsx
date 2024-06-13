@@ -17,6 +17,7 @@ export const APIKeyAddForm: FC<APIKeyAddFormProps> = memo(
     const {
       register,
       formState: { errors, isSubmitting, isValid },
+      getValues,
     } = methods;
 
     return (
@@ -45,12 +46,12 @@ export const APIKeyAddForm: FC<APIKeyAddFormProps> = memo(
               <div
                 className="
                   space-y-6 px-5 pt-6 pb-5
-                  flex flex-col
                 "
               >
                 <div className="">
                   <label htmlFor="name">
                     <span className="input-label">{f(messages.name)}</span>
+                    <span className="text-red-500">*</span>
                   </label>
                   <div className="mt-1">
                     <input
@@ -65,6 +66,49 @@ export const APIKeyAddForm: FC<APIKeyAddFormProps> = memo(
                         <span role="alert">{errors.name.message}</span>
                       )}
                     </p>
+                  </div>
+                </div>
+                <div className="pt-6">
+                  <p className="font-bold text-md text-gray-600">
+                    {f(messages.apiKey.section.title)}
+                  </p>
+                  <div className="divide-y">
+                    {[
+                      {
+                        id: 'client-sdk',
+                        label: f(messages.apiKey.section.clientSdk),
+                        description: f(
+                          messages.apiKey.section.clientSdkDescription
+                        ),
+                        value: 1,
+                      },
+                      {
+                        id: 'server-sdk',
+                        label: f(messages.apiKey.section.serverSdk),
+                        description: f(
+                          messages.apiKey.section.serverSdkDescription
+                        ),
+                        value: 2,
+                      },
+                    ].map(({ id, label, description, value }) => (
+                      <div
+                        key={id}
+                        className="flex items-center py-4 space-x-5"
+                      >
+                        <label htmlFor={id} className="flex-1 cursor-pointer">
+                          <p className="font-bold text-sm text-gray-600 text-md text-gray-500">{label}</p>
+                          <p className="text-sm text-gray-500">{description}</p>
+                        </label>
+                        <input
+                          {...register('role')}
+                          id={id}
+                          type="radio"
+                          value={value}
+                          className="h-4 w-4 text-primary focus:ring-primary border-gray-300 mt-1"
+                          defaultChecked={getValues('role') === value}
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
