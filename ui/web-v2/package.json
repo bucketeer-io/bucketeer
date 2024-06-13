@@ -64,15 +64,15 @@
     "jstat": "1.9.4",
     "option-t": "23.0.2",
     "query-string": "7.0.1",
-    "react": "17.0.2",
+    "react": "18.3.1",
     "react-chartjs-2": "2.11.1",
     "react-date-range": "^1.4.0",
     "react-datepicker": "4.1.1",
     "react-datetime-picker": "3.3.0",
-    "react-dom": "17.0.2",
+    "react-dom": "18.3.1",
     "react-dropzone": "11.2.4",
     "react-gtm-module": "^2.0.11",
-    "react-hook-form": "7.14.1",
+    "react-hook-form": "7.51.5",
     "react-intl": "5.20.10",
     "react-popper": "^2.2.5",
     "react-redux": "7.2.6",
@@ -85,7 +85,7 @@
     "tslib": "2.1.0",
     "twin.macro": "2.5.0",
     "uuid": "8.3.1",
-    "yup": "0.32.9"
+    "yup": "1.4.0"
   },
   "devDependencies": {
     "@babel/core": "7.14.8",
@@ -136,6 +136,6 @@
     "ts-jest": "26.4.0",
     "ts-node": "9.1.1",
     "ts-protoc-gen": "0.15.0",
-    "typescript": "4.3.4"
+    "typescript": "5.4.5"
   }
 }

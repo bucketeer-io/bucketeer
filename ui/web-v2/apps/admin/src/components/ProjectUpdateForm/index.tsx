@@ -99,7 +99,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = memo(
                     />
                     <p className="input-error">
                       {errors.urlCode && (
-                        <span role="alert">{errors.name.urlCode}</span>
+                        <span role="alert">{errors.urlCode.message}</span>
                       )}
                     </p>
                   </div>

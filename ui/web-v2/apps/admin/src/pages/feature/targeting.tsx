@@ -8,10 +8,7 @@ import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 
 import { FeatureConfirmDialog } from '../../components/FeatureConfirmDialog';
-import {
-  ClauseType,
-  FeatureTargetingForm,
-} from '../../components/FeatureTargetingForm';
+import { FeatureTargetingForm } from '../../components/FeatureTargetingForm';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
@@ -60,36 +57,14 @@ import {
 import { Variation } from '../../proto/feature/variation_pb';
 import { AppDispatch } from '../../store';
 
-import { targetingFormSchema } from './formSchema';
-
-interface OptionSchema {
-  value: string | number;
-  label: string;
-}
-
-interface RolloutStrategySchema {
-  id: string;
-  percentage: number;
-}
-
-interface StrategySchema {
-  option: OptionSchema;
-  rolloutStrategy: RolloutStrategySchema[];
-}
-
-interface ClauseSchema {
-  id: string;
-  type: ClauseType;
-  attribute: string;
-  operator: string;
-  values: string[];
-}
-
-interface RuleSchema {
-  id: string;
-  clauses: ClauseSchema[];
-  strategy: StrategySchema;
-}
+import {
+  ruleClauseType,
+  targetingFormSchema,
+  RuleClauseType,
+  StrategySchema,
+  RuleClauseSchema,
+  RuleSchema,
+} from './formSchema';
 
 interface FeatureTargetingPageProps {
   featureId: string;
@@ -112,7 +87,7 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
     );
     const [isResetTargeting, setIsResetTargeting] = useState(false);
 
-    const getDefaultValues = (feature) => {
+    const getDefaultValues = (feature, requireComment: boolean) => {
       return {
         prerequisites: [
           ...new Map(
@@ -154,15 +129,17 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
             feature.variationsList.find((v) => v.id === feature.offVariation)
           ),
         },
+        requireComment: requireComment,
         comment: '',
       };
     };
 
     const methods = useForm({
-      resolver: yupResolver(
-        targetingFormSchema(currentEnvironment.requireComment)
+      resolver: yupResolver(targetingFormSchema),
+      defaultValues: getDefaultValues(
+        feature,
+        currentEnvironment.requireComment
       ),
-      defaultValues: getDefaultValues(feature),
       mode: 'onChange',
     });
     const {
@@ -175,7 +152,10 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
     const handleUpdate = useCallback(
       async (data) => {
         const commands: Array<Command> = [];
-        const defaultValues = getDefaultValues(feature);
+        const defaultValues = getDefaultValues(
+          feature,
+          currentEnvironment.requireComment
+        );
 
         dirtyFields.enabled &&
           commands.push(...createEnabledCommands(defaultValues, data));
@@ -250,14 +230,14 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
 
     useEffect(() => {
       if (isResetTargeting) {
-        reset(getDefaultValues(feature));
+        reset(getDefaultValues(feature, currentEnvironment.requireComment));
         setIsResetTargeting(false);
       }
     }, [feature, isResetTargeting]);
 
     useEffect(() => {
       if (feature) {
-        reset(getDefaultValues(feature));
+        reset(getDefaultValues(feature, currentEnvironment.requireComment));
       }
     }, [feature]);
 
@@ -297,7 +277,11 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
             displayResetSampling={true}
             featureId={featureId}
             isSwitchEnabledConfirm={isSwitchEnabledConfirm}
-            isEnabled={dirtyFields.enabled && getDefaultValues(feature).enabled}
+            isEnabled={
+              dirtyFields.enabled &&
+              getDefaultValues(feature, currentEnvironment.requireComment)
+                .enabled
+            }
           />
         )}
       </FormProvider>
@@ -342,17 +326,17 @@ const createStrategyDefaultValue = (
 
 const createClauseType = (
   cause: Clause.OperatorMap[keyof Clause.OperatorMap]
-): ClauseType => {
+): RuleClauseType => {
   switch (cause) {
     case Clause.Operator.SEGMENT:
-      return ClauseType.SEGMENT;
+      return ruleClauseType.SEGMENT;
     case Clause.Operator.BEFORE:
     case Clause.Operator.AFTER:
-      return ClauseType.DATE;
+      return ruleClauseType.DATE;
     case Clause.Operator.FEATURE_FLAG:
-      return ClauseType.FEATURE_FLAG;
+      return ruleClauseType.FEATURE_FLAG;
     default:
-      return ClauseType.COMPARE;
+      return ruleClauseType.COMPARE;
   }
 };
 
@@ -495,7 +479,7 @@ const createRule = (rule: any): Rule => {
 
 const createStrategy = (strategy: StrategySchema): Strategy => {
   const s = new Strategy();
-  if (strategy.option.value == Strategy.Type.ROLLOUT) {
+  if (strategy.option.value == Strategy.Type.ROLLOUT.toString()) {
     const variations = strategy.rolloutStrategy.map((rs) => {
       const v = new RolloutStrategy.Variation();
       v.setVariation(rs.id);
@@ -515,7 +499,7 @@ const createStrategy = (strategy: StrategySchema): Strategy => {
   return s;
 };
 
-const createClauses = (clauses: ClauseSchema[]): Clause[] => {
+const createClauses = (clauses: RuleClauseSchema[]): Clause[] => {
   const cs: Clause[] = [];
   clauses.forEach((c) => {
     cs.push(createClause(c));
@@ -523,7 +507,7 @@ const createClauses = (clauses: ClauseSchema[]): Clause[] => {
   return cs;
 };
 
-const createClause = (clause: ClauseSchema): Clause => {
+const createClause = (clause: RuleClauseSchema): Clause => {
   const c = new Clause();
   c.setAttribute(clause.attribute);
   c.setOperator(
@@ -602,8 +586,8 @@ function createClauseAttributeCommands(
 
 function createClauseValueCommands(
   ruleId: string,
-  orgClause: ClauseSchema,
-  valClause: ClauseSchema
+  orgClause: RuleClauseSchema,
+  valClause: RuleClauseSchema
 ): Command[] {
   const commands: Command[] = [];
   // Intersection of org and val values.
@@ -637,8 +621,8 @@ function createClauseValueCommands(
 
 const createClauseOperatorCommands = (
   ruleId: string,
-  orgClause: ClauseSchema,
-  valClause: ClauseSchema
+  orgClause: RuleClauseSchema,
+  valClause: RuleClauseSchema
 ): Command[] => {
   const commands: Command[] = [];
   if (orgClause.operator != valClause.operator) {
@@ -669,8 +653,8 @@ const createStrategyCommands = (
     const valRule = valRules.find((r) => r.id === rid);
     if (orgRule.strategy.option.value != valRule.strategy.option.value) {
       if (
-        orgRule.strategy.option.value == Strategy.Type.ROLLOUT ||
-        valRule.strategy.option.value == Strategy.Type.ROLLOUT
+        orgRule.strategy.option.value == Strategy.Type.ROLLOUT.toString() ||
+        valRule.strategy.option.value == Strategy.Type.ROLLOUT.toString()
       ) {
         const command = new ChangeRuleStrategyCommand();
         command.setRuleId(rid);

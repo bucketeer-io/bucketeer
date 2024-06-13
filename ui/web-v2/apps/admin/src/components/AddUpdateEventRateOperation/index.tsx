@@ -30,6 +30,7 @@ import {
 } from '../../modules/goals';
 import { operatorOptions } from '../FeatureAutoOpsRulesForm';
 import { Select, Option } from '../Select';
+import { OperationForm } from '@/pages/feature/formSchema';
 
 interface AddUpdateEventRateOperationProps {
   isSeeDetailsSelected: boolean;
@@ -46,7 +47,7 @@ export const AddUpdateEventRateOperation: FC<AddUpdateEventRateOperationProps> =
 
     const [isAddGoalOpen, setIsAddGoalOpen] = useState(false);
 
-    const methods = useFormContext<any>();
+    const methods = useFormContext<OperationForm>();
     const {
       control,
       formState: { errors },

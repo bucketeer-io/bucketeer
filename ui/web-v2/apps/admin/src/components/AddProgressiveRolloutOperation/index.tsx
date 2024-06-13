@@ -45,6 +45,7 @@ import { isExperimentStatusWaitingRunnning } from '../ExperimentList';
 import { getIntervalForDayjs } from '../FeatureAutoOpsRulesForm';
 import { ProgressiveRolloutTypeTab } from '../OperationAddUpdateForm';
 import { Option, Select } from '../Select';
+import { OperationForm } from '@/pages/feature/formSchema';
 
 export const isProgressiveRolloutsRunningWaiting = (
   status: ProgressiveRollout.StatusMap[keyof ProgressiveRollout.StatusMap]
@@ -98,7 +99,7 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
       const currentEnvironment = useCurrentEnvironment();
       const [isLoading, setIsLoading] = useState(true);
 
-      const methods = useFormContext<any>();
+      const methods = useFormContext<OperationForm>();
       const { control } = methods;
 
       const [feature] = useSelector<
@@ -340,7 +341,7 @@ interface TemplateProgressiveRolloutProps {
 const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
   ({ isSeeDetailsSelected, progressiveRolloutTypeList }) => {
     const { formatMessage: f } = useIntl();
-    const methods = useFormContext<any>();
+    const methods = useFormContext<OperationForm>();
     const {
       control,
       formState: { errors },
@@ -424,7 +425,7 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
                 {...register('progressiveRollout.template.increments')}
                 min="0"
                 max="100"
-                onKeyDown={(evt: any) => {
+                onKeyDown={(evt) => {
                   if (evt.key === '.') {
                     evt.preventDefault();
                   }
@@ -461,7 +462,9 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
                   onChange={(o: Option) => field.onChange(o.value)}
                   options={intervalOptions}
                   disabled={!editable || isSeeDetailsSelected}
-                  value={intervalOptions.find((o) => o.value === field.value)}
+                  value={intervalOptions.find(
+                    (o) => o.value === field.value.toString()
+                  )}
                 />
               )}
             />
@@ -487,7 +490,7 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
                       {...register(
                         `progressiveRollout.template.schedulesList.${index}.weight`
                       )}
-                      onKeyDown={(evt: any) => {
+                      onKeyDown={(evt) => {
                         if (evt.key === '.') {
                           evt.preventDefault();
                         }
@@ -531,7 +534,7 @@ interface ManualProgressiveRolloutProps {
 const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
   ({ isSeeDetailsSelected }) => {
     const { formatMessage: f } = useIntl();
-    const methods = useFormContext<any>();
+    const methods = useFormContext<OperationForm>();
     const {
       control,
       formState: { errors },
@@ -556,7 +559,7 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
     const handleAddOperation = (e) => {
       e.preventDefault();
 
-      const lastSchedule: any =
+      const lastSchedule =
         watchManualSchedulesList[watchManualSchedulesList.length - 1];
       const time = dayjs(lastSchedule?.executeAt.time)
         .add(5, 'minute')
