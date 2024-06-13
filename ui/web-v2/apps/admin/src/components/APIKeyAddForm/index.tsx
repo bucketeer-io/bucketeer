@@ -97,7 +97,7 @@ export const APIKeyAddForm: FC<APIKeyAddFormProps> = memo(
                       >
                         <label htmlFor={id} className="flex-1 cursor-pointer">
                           <p className="text-base">{label}</p>
-                          <p className="text-sm">{description}</p>
+                          <p className="text-sm text-gray-500">{description}</p>
                         </label>
                         <input
                           {...register('role')}
