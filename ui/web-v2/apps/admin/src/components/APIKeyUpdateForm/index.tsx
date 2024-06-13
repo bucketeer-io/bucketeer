@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 
 import { messages } from '../../lang/messages';
-import { useIsEditable, useIsOwner } from '../../modules/me';
+import { useIsOwner } from '../../modules/me';
 
 export interface APIKeyUpdateFormProps {
   onSubmit: () => void;
@@ -72,39 +72,45 @@ export const APIKeyUpdateForm: FC<APIKeyUpdateFormProps> = memo(
                   </div>
                 </div>
                 <div className="pt-6">
-                  <p className="font-bold text-lg text-gray-600">Key Type</p>
-                  <div className="divide-y">
-                    <div className="flex items-center py-4 opacity-50">
-                      <label htmlFor="sdk-client" className="flex-1">
-                        <p className="text-base">Client Side</p>
-                        <p className="text-sm">
-                          On user devices, can be compromised, not for server
-                          keys
-                        </p>
-                      </label>
-                      <input
-                        id="sdk-client"
-                        type="radio"
-                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 mt-1"
-                        disabled={true}
-                        checked={getValues('role') === 1}
-                      />
-                    </div>
-                    <div className="flex items-center py-4 opacity-50">
-                      <label htmlFor="sdk-server" className="flex-1">
-                        <p className="text-base">Server-side SDKs</p>
-                        <p className="text-sm">
-                          Server apps, no user access, safe for data handling
-                        </p>
-                      </label>
-                      <input
-                        id="sdk-server"
-                        type="radio"
-                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 mt-1"
-                        disabled={true}
-                        checked={getValues('role') === 2}
-                      />
-                    </div>
+                  <p className="font-bold text-lg text-gray-600">
+                    {f(messages.apiKey.section.title)}
+                  </p>
+                  <div className="divide-y opacity-50">
+                    {[
+                      {
+                        id: 'client-sdk',
+                        label: f(messages.apiKey.section.clientSdk),
+                        description: f(
+                          messages.apiKey.section.clientSdkDescription
+                        ),
+                        value: 1,
+                      },
+                      {
+                        id: 'server-sdk',
+                        label: f(messages.apiKey.section.serverSdk),
+                        description: f(
+                          messages.apiKey.section.serverSdkDescription
+                        ),
+                        value: 2,
+                      },
+                    ].map(({ id, label, description, value }) => (
+                      <div
+                        key={id}
+                        className="flex items-center py-4 space-x-5"
+                      >
+                        <label htmlFor={id} className="flex-1">
+                          <p className="text-base">{label}</p>
+                          <p className="text-sm">{description}</p>
+                        </label>
+                        <input
+                          id={id}
+                          type="radio"
+                          className="h-4 w-4 text-primary focus:ring-primary border-gray-300 mt-1"
+                          checked={getValues('role') === value}
+                          disabled={true}
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

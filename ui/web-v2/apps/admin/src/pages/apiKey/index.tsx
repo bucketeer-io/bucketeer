@@ -216,6 +216,10 @@ export const APIKeyIndexPage: FC = memo(() => {
   const addMethod = useForm({
     resolver: yupResolver(addApiKeyFormSchema),
     mode: 'onChange',
+    defaultValues: {
+      name: '',
+      role: 1,
+    },
   });
   const { handleSubmit: handleAddSubmit, reset: resetAdd } = addMethod;
 

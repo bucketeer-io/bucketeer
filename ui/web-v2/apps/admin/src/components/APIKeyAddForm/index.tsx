@@ -70,47 +70,46 @@ export const APIKeyAddForm: FC<APIKeyAddFormProps> = memo(
                   </div>
                 </div>
                 <div className="pt-6">
-                  <p className="font-bold text-lg">Key Type</p>
+                  <p className="font-bold text-lg text-gray-600">
+                    {f(messages.apiKey.section.title)}
+                  </p>
                   <div className="divide-y">
-                    <div className="flex items-center py-4">
-                      <label
-                        htmlFor="sdk-client"
-                        className="flex-1 cursor-pointer"
+                    {[
+                      {
+                        id: 'client-sdk',
+                        label: f(messages.apiKey.section.clientSdk),
+                        description: f(
+                          messages.apiKey.section.clientSdkDescription
+                        ),
+                        value: 1,
+                      },
+                      {
+                        id: 'server-sdk',
+                        label: f(messages.apiKey.section.serverSdk),
+                        description: f(
+                          messages.apiKey.section.serverSdkDescription
+                        ),
+                        value: 2,
+                      },
+                    ].map(({ id, label, description, value }) => (
+                      <div
+                        key={id}
+                        className="flex items-center py-4 space-x-5"
                       >
-                        <p className="text-base">Client Side</p>
-                        <p className="text-sm">
-                          On user devices, can be compromised, not for server
-                          keys
-                        </p>
-                      </label>
-                      <input
-                        {...register('role')}
-                        id="sdk-client"
-                        type="radio"
-                        value={1}
-                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 mt-1"
-                        defaultChecked={getValues('role') === 1}
-                      />
-                    </div>
-                    <div className="flex items-center py-4">
-                      <label
-                        htmlFor="sdk-server"
-                        className="flex-1 cursor-pointer"
-                      >
-                        <p className="text-base">Server-side SDKs</p>
-                        <p className="text-sm">
-                          Server apps, no user access, safe for data handling
-                        </p>
-                      </label>
-                      <input
-                        {...register('role')}
-                        id="sdk-server"
-                        type="radio"
-                        value={2}
-                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 mt-1"
-                        defaultChecked={getValues('role') === 2}
-                      />
-                    </div>
+                        <label htmlFor={id} className="flex-1 cursor-pointer">
+                          <p className="text-base">{label}</p>
+                          <p className="text-sm">{description}</p>
+                        </label>
+                        <input
+                          {...register('role')}
+                          id={id}
+                          type="radio"
+                          value={value}
+                          className="h-4 w-4 text-primary focus:ring-primary border-gray-300 mt-1"
+                          defaultChecked={getValues('role') === value}
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
