@@ -932,7 +932,7 @@ func (s *grpcGatewayService) GetFeature(
 	ctx context.Context,
 	req *gwproto.GetFeatureRequest,
 ) (*gwproto.GetFeatureResponse, error) {
-	_, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
+	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
 		accountproto.APIKey_PUBLIC_API_READ_ONLY,
 		accountproto.APIKey_PUBLIC_API_WRITE,
 		accountproto.APIKey_PUBLIC_API_ADMIN,
@@ -941,14 +941,13 @@ func (s *grpcGatewayService) GetFeature(
 		s.logger.Error("Failed to check GetFeature request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
 				zap.String("featureId", req.Id),
 			)...,
 		)
 		return nil, err
 	}
 	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
-		EnvironmentNamespace: req.EnvironmentId,
+		EnvironmentNamespace: envAPIKey.Environment.Id,
 		Id:                   req.Id,
 	})
 	if err != nil {

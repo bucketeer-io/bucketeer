@@ -15369,11 +15369,6 @@
             "fields": [
               {
                 "id": 1,
-                "name": "environment_id",
-                "type": "string"
-              },
-              {
-                "id": 2,
                 "name": "id",
                 "type": "string"
               }
@@ -15399,11 +15394,6 @@
               },
               {
                 "id": 2,
-                "name": "environment_id",
-                "type": "string"
-              },
-              {
-                "id": 3,
                 "name": "feature",
                 "type": "feature.Feature"
               }
@@ -15563,7 +15553,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "environment/{environment-id}/features/{feature-id}"
+                        "value": "/features/{feature-id}"
                       }
                     ]
                   }
@@ -15579,7 +15569,11 @@
                     "aggregated": [
                       {
                         "name": "patch",
-                        "value": "environment/{environment-id}/features/{feature-id}"
+                        "value": "/features/{feature-id}"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
                       }
                     ]
                   }

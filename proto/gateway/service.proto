@@ -119,8 +119,7 @@ message TrackRequest {
 message TrackResponse {}
 
 message GetFeatureRequest {
-  string environment_id = 1;
-  string id = 2;
+  string id = 1;
 }
 
 message GetFeatureResponse {
@@ -129,8 +128,7 @@ message GetFeatureResponse {
 
 message UpdateFeatureRequest {
   string comment = 1;
-  string environment_id = 2;
-  feature.Feature feature = 3;
+  feature.Feature feature = 2;
 }
 
 message UpdateFeatureResponse {}
@@ -180,12 +178,13 @@ service Gateway {
   }
   rpc GetFeature(GetFeatureRequest) returns (GetFeatureResponse) {
     option (google.api.http) = {
-      get: "environment/{environment-id}/features/{feature-id}"
+      get: "/features/{feature-id}"
     };
   }
   rpc UpdateFeature(UpdateFeatureRequest) returns (UpdateFeatureResponse) {
     option (google.api.http) = {
-      patch: "environment/{environment-id}/features/{feature-id}"
+      patch: "/features/{feature-id}"
+      body: "*"
     };
   }
 }
