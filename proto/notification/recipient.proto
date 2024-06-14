@@ -18,7 +18,9 @@ package bucketeer.notification;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/notification";
 
 message Recipient {
-  enum Type { SlackChannel = 0; }
+  enum Type {
+    SlackChannel = 0;
+  }
   enum Language {
     ENGLISH = 0;
     JAPANESE = 1;
