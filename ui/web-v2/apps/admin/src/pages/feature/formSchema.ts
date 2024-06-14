@@ -22,6 +22,7 @@ import { messages } from '../../lang/messages';
 import { Feature } from '../../proto/feature/feature_pb';
 import { Strategy } from '../../proto/feature/strategy_pb';
 import { isJsonString } from '../../utils/validate';
+import { ProgressiveRolloutTemplateScheduleClause } from '@/proto/autoops/clause_pb';
 
 yup.setLocale(yupLocale);
 
@@ -123,6 +124,68 @@ const variationsSchema = yup.array().of(
     .required()
 );
 
+const schedulesListSchema = yup.array().of(
+  yup.object().shape({
+    weight: yup
+      .number()
+      .transform((value) => (isNaN(value) ? undefined : value))
+      .required()
+      .min(1)
+      .max(100)
+      .test('isAscending', '', function (value) {
+        const { from } = this as any;
+
+        if (from[3].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT) {
+          return isArraySorted(
+            from[3].value.progressiveRollout.manual.schedulesList.map((d) =>
+              Number(d.weight)
+            )
+          );
+        }
+        return true;
+      }),
+    executeAt: yup.object().shape({
+      time: yup
+        .date()
+        .test(
+          'isLaterThanNow',
+          intl.formatMessage(messages.input.error.notLaterThanCurrentTime),
+          function (value) {
+            const { from } = this as any;
+            if (from[4].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT) {
+              return value.getTime() > new Date().getTime();
+            }
+            return true;
+          }
+        )
+        .test('isAscending', '', function () {
+          const { from } = this as any;
+
+          if (from[4].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT) {
+            return isArraySorted(
+              from[4].value.progressiveRollout.manual.schedulesList.map((d) =>
+                d.executeAt.time.getTime()
+              )
+            );
+          }
+          return true;
+        })
+        .test('timeIntervals', '', function () {
+          const { from } = this as any;
+
+          if (from[4].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT) {
+            return isIntervals5MinutesApart(
+              from[4].value.progressiveRollout.manual.schedulesList.map((d) =>
+                d.executeAt.time.getTime()
+              )
+            );
+          }
+          return true;
+        }),
+    }),
+  })
+);
+
 export const operationFormSchema = yup.object().shape({
   opsType: yup.string().required(),
   clauseType: yup.string().required(),
@@ -173,6 +236,7 @@ export const operationFormSchema = yup.object().shape({
   }),
   progressiveRollout: yup.object().shape({
     template: yup.object().shape({
+      variationId: yup.string().required(),
       increments: yup
         .number()
         .transform((value) => (isNaN(value) ? undefined : value))
@@ -194,80 +258,20 @@ export const operationFormSchema = yup.object().shape({
             }
           ),
       }),
+      schedulesList: schedulesListSchema,
+      interval: yup
+        .mixed<
+          ProgressiveRolloutTemplateScheduleClause.IntervalMap[keyof ProgressiveRolloutTemplateScheduleClause.IntervalMap]
+        >()
+        .required(),
     }),
     manual: yup.object().shape({
-      schedulesList: yup.array().of(
-        yup.object().shape({
-          weight: yup
-            .number()
-            .transform((value) => (isNaN(value) ? undefined : value))
-            .required()
-            .min(1)
-            .max(100)
-            .test('isAscending', '', function (value) {
-              const { from } = this as any;
-
-              if (from[3].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT) {
-                return isArraySorted(
-                  from[3].value.progressiveRollout.manual.schedulesList.map(
-                    (d) => Number(d.weight)
-                  )
-                );
-              }
-              return true;
-            }),
-          executeAt: yup.object().shape({
-            time: yup
-              .date()
-              .test(
-                'isLaterThanNow',
-                intl.formatMessage(
-                  messages.input.error.notLaterThanCurrentTime
-                ),
-                function (value) {
-                  const { from } = this as any;
-                  if (
-                    from[4].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT
-                  ) {
-                    return value.getTime() > new Date().getTime();
-                  }
-                  return true;
-                }
-              )
-              .test('isAscending', '', function () {
-                const { from } = this as any;
-
-                if (
-                  from[4].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT
-                ) {
-                  return isArraySorted(
-                    from[4].value.progressiveRollout.manual.schedulesList.map(
-                      (d) => d.executeAt.time.getTime()
-                    )
-                  );
-                }
-                return true;
-              })
-              .test('timeIntervals', '', function () {
-                const { from } = this as any;
-
-                if (
-                  from[4].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT
-                ) {
-                  return isIntervals5MinutesApart(
-                    from[4].value.progressiveRollout.manual.schedulesList.map(
-                      (d) => d.executeAt.time.getTime()
-                    )
-                  );
-                }
-                return true;
-              }),
-          }),
-        })
-      ),
+      variationId: yup.string().required(),
+      schedulesList: schedulesListSchema,
     }),
   }),
 });
+export type OperationForm = yup.InferType<typeof operationFormSchema>;
 
 const tagsSchema = yup.array().min(FEATURE_TAG_MIN_SIZE).of(yup.string());
 
@@ -297,7 +301,6 @@ export const onVariationSchema = yup.object().shape({
 });
 
 export const offVariationSchema = yup.object().shape({
-  id: yup.string(),
   value: yup.string(),
   label: yup.string(),
 });
@@ -312,14 +315,19 @@ export const addFormSchema = yup.object().shape({
   onVariation: onVariationSchema,
   offVariation: offVariationSchema,
 });
+export type AddForm = yup.InferType<typeof addFormSchema>;
 
-export const variationsFormSchema = (requireComment: boolean) =>
-  yup.object().shape({
-    onVariation: onVariationSchema,
-    variations: variationsSchema,
-    resetSampling: yup.bool(),
-    comment: requireComment ? commentSchema : yup.string(),
-  });
+export const variationsFormSchema = yup.object().shape({
+  onVariation: onVariationSchema,
+  variations: variationsSchema,
+  resetSampling: yup.bool(),
+  requireComment: yup.bool(),
+  comment: yup.string().when('requireComment', {
+    is: (requireComment: boolean) => requireComment,
+    then: (schema) => schema.required(),
+  }),
+});
+export type VariationForm = yup.InferType<typeof variationsFormSchema>;
 
 export const settingsFormSchema = (requireComment: boolean) =>
   yup.object().shape({
@@ -329,7 +337,7 @@ export const settingsFormSchema = (requireComment: boolean) =>
     comment: requireComment ? commentSchema : yup.string(),
   });
 
-export const strategySchema = yup.object().shape({
+const strategySchema = yup.object().shape({
   option: yup.object().shape({
     value: yup.string(),
     label: yup.string(),
@@ -359,57 +367,61 @@ export const strategySchema = yup.object().shape({
       }
     ),
 });
+export type StrategySchema = yup.InferType<typeof strategySchema>;
 
-export const clauseFormSchema = yup.object().shape({
+export const ruleClauseType = {
+  COMPARE: 'compare',
+  SEGMENT: 'segment',
+  DATE: 'date',
+  FEATURE_FLAG: 'feature_flag',
+} as const;
+export type RuleClauseType = typeof ruleClauseType[keyof typeof ruleClauseType];
+
+const ruleClauseSchema = yup.object().shape({
   id: yup.string(),
   type: yup.string(),
-  attribute: yup
-    .string()
-    .test(
-      'required',
-      intl.formatMessage(messages.input.error.required),
-      (value, context) => {
-        if (context.parent.type === 'segment') {
-          return true;
-        }
-        return !!value;
-      }
-    ),
+  attribute: yup.string().when('type', {
+    is: (type: string) => type === ruleClauseType.SEGMENT,
+    then: (schema) => schema,
+    otherwise: (schema) => schema.required(),
+  }),
   operator: yup.string(),
   values: yup.array().of(yup.string()).min(1),
 });
+export type RuleClauseSchema = yup.InferType<typeof ruleClauseSchema>;
 
-export const targetingFormSchema = (requireComment: boolean) =>
-  yup.object().shape({
-    prerequisites: yup.array().of(
-      yup.object().shape({
-        featureId: yup.string().required(),
-        variationId: yup.string().required(),
-      })
-    ),
-    enabled: yup.bool(),
-    targets: yup.array().of(
-      yup.object().shape({
-        variationId: yup.string().required(),
-        users: yup.array().of(yup.string()),
-      })
-    ),
-    rules: yup.array().of(
-      yup.object().shape({
-        id: yup.string(),
-        clauses: yup.array().of(clauseFormSchema),
-        strategy: strategySchema,
-      })
-    ),
-    defaultStrategy: strategySchema,
-    offVariation: yup.object().shape({
-      id: yup.string(),
-      value: yup.string(),
-      label: yup.string(),
-    }),
-    resetSampling: yup.bool(),
-    comment: requireComment ? yup.string().required() : yup.string(),
-  });
+export const rulesSchema = yup.object().shape({
+  id: yup.string(),
+  clauses: yup.array().of(ruleClauseSchema),
+  strategy: strategySchema,
+});
+export type RuleSchema = yup.InferType<typeof rulesSchema>;
+
+export const targetingFormSchema = yup.object().shape({
+  prerequisites: yup.array().of(
+    yup.object().shape({
+      featureId: yup.string().required(),
+      variationId: yup.string().required(),
+    })
+  ),
+  enabled: yup.bool(),
+  targets: yup.array().of(
+    yup.object().shape({
+      variationId: yup.string().required(),
+      users: yup.array().of(yup.string()),
+    })
+  ),
+  rules: yup.array().of(rulesSchema),
+  defaultStrategy: strategySchema,
+  offVariation: offVariationSchema,
+  resetSampling: yup.bool(),
+  requireComment: yup.bool(),
+  comment: yup.string().when('requireComment', {
+    is: (requireComment: boolean) => requireComment,
+    then: (schema) => schema.required(),
+  }),
+});
+export type TargetingForm = yup.InferType<typeof targetingFormSchema>;
 
 export const triggerFormSchema = yup.object().shape({
   triggerType: yup.string().nullable().required(),

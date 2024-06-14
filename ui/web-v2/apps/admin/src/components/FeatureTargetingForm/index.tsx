@@ -63,6 +63,7 @@ import { colourStyles, CreatableSelect } from '../CreatableSelect';
 import { Option, Select } from '../Select';
 import { OptionFeatureFlag, SelectFeatureFlag } from '../SelectFeatureFlag';
 import { Switch } from '../Switch';
+import { TargetingForm, ruleClauseType } from '@/pages/feature/formSchema';
 
 interface FeatureTargetingFormProps {
   featureId: string;
@@ -73,7 +74,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
   ({ featureId, onOpenConfirmDialog }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsEditable();
-    const methods = useFormContext();
+    const methods = useFormContext<TargetingForm>();
     const {
       control,
       formState: { errors, isDirty, dirtyFields },
@@ -117,7 +118,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
       value: Strategy.Type.ROLLOUT.toString(),
       label: f(messages.feature.strategy.selectRolloutPercentage),
     });
-    const offVariationOptions = feature.variationsList.map((v) => {
+    const offVariationOptions: Option[] = feature.variationsList.map((v) => {
       return {
         value: v.id,
         label: createVariationLabel(v),
@@ -133,7 +134,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
       // check if all rules fields are dirty
       const checkRules = rules.every((rule) =>
         rule.clauses.every((clause) => {
-          if (clause.type === ClauseType.SEGMENT) {
+          if (clause.type === ruleClauseType.SEGMENT) {
             return clause.values.length > 0;
           }
           return clause.attribute && clause.values.length > 0;
@@ -208,7 +209,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                 {`${f(messages.feature.targetingUsers)}`}
               </label>
               <div className="bg-white rounded-md p-3 border">
-                {targets.map((t: any, idx) => {
+                {targets.map((t, idx) => {
                   return (
                     <div key={idx} className="col-span-1">
                       <div className="truncate">
@@ -225,7 +226,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                       </div>
                       <div className="flex space-x-2">
                         <Controller
-                          name={`targets.[${idx}].users`}
+                          name={`targets.${idx}.users`}
                           control={control}
                           render={({ field }) => {
                             return (
@@ -416,7 +417,9 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                       onChange={field.onChange}
                       options={offVariationOptions}
                       disabled={!editable}
-                      value={field.value}
+                      value={offVariationOptions.find(
+                        (o) => o.value === field.value.value
+                      )}
                       isSearchable={false}
                     />
                   )}
@@ -558,7 +561,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
     const { formatMessage: f } = useIntl();
     const dispatch = useDispatch<AppDispatch>();
     const editable = useIsEditable();
-    const methods = useFormContext();
+    const methods = useFormContext<TargetingForm>();
     const currentEnvironment = useCurrentEnvironment();
 
     const {
@@ -641,10 +644,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
       <div className="">
         {prerequisites.length > 0 && (
           <div className="bg-white rounded-md p-3 border space-y-2">
-            {prerequisites.map((p: any, prerequisitesIdx) => {
-              const featureIdName = `prerequisites[${prerequisitesIdx}].featureId`;
-              const variationIdName = `prerequisites[${prerequisitesIdx}].variationId`;
-
+            {prerequisites.map((p, prerequisitesIdx) => {
               const variationList = features.find(
                 (f) => f.id === p.featureId
               )?.variationsList;
@@ -659,7 +659,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
                 .filter(
                   (f) =>
                     !prerequisites.some(
-                      (p2: any) =>
+                      (p2) =>
                         p2.featureId === f.id && p2.featureId !== p.featureId
                     )
                 )
@@ -674,7 +674,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
               return (
                 <div key={p.key} className="flex space-x-2">
                   <Controller
-                    name={featureIdName}
+                    name={`prerequisites.${prerequisitesIdx}.featureId`}
                     control={control}
                     render={({ field }) => {
                       return (
@@ -701,7 +701,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
                   />
 
                   <Controller
-                    name={variationIdName}
+                    name={`prerequisites.${prerequisitesIdx}.variationId`}
                     control={control}
                     render={({ field }) => {
                       return (
@@ -767,7 +767,7 @@ export interface RuleInputProps {
 export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
   const { formatMessage: f } = useIntl();
   const editable = useIsEditable();
-  const methods = useFormContext();
+  const methods = useFormContext<TargetingForm>();
   const {
     control,
     formState: { errors },
@@ -803,7 +803,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
       clauses: [
         {
           id: uuid(),
-          type: ClauseType.COMPARE,
+          type: ruleClauseType.COMPARE,
           attribute: '',
           operator: Clause.Operator.EQUALS.toString(),
           values: [],
@@ -822,7 +822,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
   return (
     <div>
       <div className="grid grid-cols-1 gap-2">
-        {rules.map((r: any, ruleIdx) => {
+        {rules.map((r, ruleIdx) => {
           return (
             <div
               key={r.id}
@@ -899,30 +899,21 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
   );
 });
 
-export const ClauseType = {
-  COMPARE: 'compare',
-  SEGMENT: 'segment',
-  DATE: 'date',
-  FEATURE_FLAG: 'feature_flag',
-} as const;
-
-export type ClauseType = typeof ClauseType[keyof typeof ClauseType];
-
 export const clauseTypeOptions: Option[] = [
   {
-    value: ClauseType.COMPARE,
+    value: ruleClauseType.COMPARE,
     label: intl.formatMessage(messages.feature.clause.type.compare),
   },
   {
-    value: ClauseType.SEGMENT,
+    value: ruleClauseType.SEGMENT,
     label: intl.formatMessage(messages.feature.clause.type.segment),
   },
   {
-    value: ClauseType.DATE,
+    value: ruleClauseType.DATE,
     label: intl.formatMessage(messages.feature.clause.type.date),
   },
   {
-    value: ClauseType.FEATURE_FLAG,
+    value: ruleClauseType.FEATURE_FLAG,
     label: intl.formatMessage(messages.feature.clause.type.featureFlag),
   },
 ];
@@ -990,14 +981,13 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
     const isFeaturesLoading = useSelector<AppState, boolean>(
       (state) => state.features.loading
     );
-    const methods = useFormContext();
+    const methods = useFormContext<TargetingForm>();
     const {
       getValues,
       register,
       control,
       formState: { errors },
     } = methods;
-    const clausesName = `rules.${ruleIdx}.clauses`;
     const {
       fields: clauses,
       append,
@@ -1005,12 +995,10 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
       update,
     } = useFieldArray({
       control,
-      name: clausesName,
+      name: `rules.${ruleIdx}.clauses`,
       keyName: 'key',
     });
-    const selectedFeatureIds = new Set(
-      (clauses as any).map((c) => c.attribute)
-    );
+    const selectedFeatureIds = new Set(clauses.map((c) => c.attribute));
 
     const segmentOptions = useSelector<AppState, Option[]>(
       (state) =>
@@ -1051,7 +1039,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
     const handleChangeType = useCallback(
       (idx: number, type: string) => {
         switch (type) {
-          case ClauseType.COMPARE: {
+          case ruleClauseType.COMPARE: {
             update(idx, {
               id: uuid(),
               type: type,
@@ -1061,7 +1049,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
             });
             break;
           }
-          case ClauseType.SEGMENT: {
+          case ruleClauseType.SEGMENT: {
             update(idx, {
               id: uuid(),
               type: type,
@@ -1077,7 +1065,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
             );
             break;
           }
-          case ClauseType.DATE: {
+          case ruleClauseType.DATE: {
             const now = String(Math.round(new Date().getTime() / 1000));
             update(idx, {
               id: uuid(),
@@ -1088,7 +1076,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
             });
             break;
           }
-          case ClauseType.FEATURE_FLAG: {
+          case ruleClauseType.FEATURE_FLAG: {
             update(idx, {
               id: uuid(),
               type: type,
@@ -1121,7 +1109,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
     const handleAdd = useCallback(() => {
       append({
         id: uuid(),
-        type: ClauseType.COMPARE,
+        type: ruleClauseType.COMPARE,
         attribute: '',
         operator: Clause.Operator.EQUALS.toString(),
         values: [],
@@ -1155,13 +1143,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
 
     return (
       <div className="grid grid-cols-1 gap-2">
-        {clauses.map((c: any, clauseIdx) => {
-          const clauseName = `rules.${ruleIdx}.clauses.${clauseIdx}`;
-          const clauseType = `${clauseName}.type`;
-          const clauseAttribute = `${clauseName}.attribute`;
-          const clauseOperator = `${clauseName}.operator`;
-          const clauseValues = `${clauseName}.values`;
-
+        {clauses.map((c, clauseIdx) => {
           return (
             <div key={c.id} className={classNames('flex space-x-2')}>
               <div className="w-[2rem] flex justify-center items-center">
@@ -1179,7 +1161,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                 )}
               </div>
               <Controller
-                name={clauseType}
+                name={`rules.${ruleIdx}.clauses.${clauseIdx}.type`}
                 control={control}
                 render={({ field }) => (
                   <Select
@@ -1198,11 +1180,13 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                   />
                 )}
               />
-              {c.type == ClauseType.COMPARE && (
+              {c.type == ruleClauseType.COMPARE && (
                 <div className={classNames('flex-grow grid grid-cols-4 gap-1')}>
                   <div>
                     <input
-                      {...register(clauseAttribute)}
+                      {...register(
+                        `rules.${ruleIdx}.clauses.${clauseIdx}.attribute`
+                      )}
                       type="text"
                       defaultValue={c.attribute}
                       className={classNames('input-text w-full')}
@@ -1221,7 +1205,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                     </p>
                   </div>
                   <Controller
-                    name={clauseOperator}
+                    name={`rules.${ruleIdx}.clauses.${clauseIdx}.operator`}
                     control={control}
                     render={({ field }) => (
                       <Select
@@ -1238,7 +1222,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                   />
                   <div className="col-span-2">
                     <Controller
-                      name={clauseValues}
+                      name={`rules.${ruleIdx}.clauses.${clauseIdx}.values`}
                       control={control}
                       render={({ field }) => {
                         return (
@@ -1271,7 +1255,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                   </div>
                 </div>
               )}
-              {c.type == ClauseType.SEGMENT &&
+              {c.type == ruleClauseType.SEGMENT &&
                 (segmentOptions?.length > 0 ? (
                   <div
                     className={classNames('flex-grow grid grid-cols-2 gap-1')}
@@ -1286,7 +1270,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                     ) : (
                       <div>
                         <Controller
-                          name={clauseValues}
+                          name={`rules.${ruleIdx}.clauses.${clauseIdx}.values`}
                           control={control}
                           render={({ field }) => {
                             return (
@@ -1325,11 +1309,13 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                     </span>
                   </div>
                 ))}
-              {c.type == ClauseType.DATE && (
+              {c.type == ruleClauseType.DATE && (
                 <div className={classNames('flex-grow grid grid-cols-4 gap-1')}>
                   <div>
                     <input
-                      {...register(clauseAttribute)}
+                      {...register(
+                        `rules.${ruleIdx}.clauses.${clauseIdx}.attribute`
+                      )}
                       type="text"
                       defaultValue={c.attribute}
                       className={classNames('input-text w-full')}
@@ -1348,7 +1334,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                     </p>
                   </div>
                   <Controller
-                    name={clauseOperator}
+                    name={`rules.${ruleIdx}.clauses.${clauseIdx}.operator`}
                     control={control}
                     render={({ field }) => (
                       <Select
@@ -1363,7 +1349,9 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                     )}
                   />
                   <div className="col-span-2">
-                    <DatetimePicker name={clauseValues} />
+                    <DatetimePicker
+                      name={`rules.${ruleIdx}.clauses.${clauseIdx}.values`}
+                    />
                     <p className="input-error">
                       {errors.rules?.[ruleIdx]?.clauses?.[clauseIdx]?.values
                         ?.message && (
@@ -1378,7 +1366,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                   </div>
                 </div>
               )}
-              {c.type == ClauseType.FEATURE_FLAG &&
+              {c.type == ruleClauseType.FEATURE_FLAG &&
                 (featureOptions?.length > 0 ? (
                   <div className={classNames('flex-grow')}>
                     {isFeaturesLoading ? (
@@ -1390,7 +1378,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                         )}
                       >
                         <Controller
-                          name={clauseAttribute}
+                          name={`rules.${ruleIdx}.clauses.${clauseIdx}.attribute`}
                           control={control}
                           render={({ field }) => {
                             const clauseFeatureOptions = featureOptions.filter(
@@ -1417,11 +1405,12 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                           {f(messages.feature.clause.operator.equal)}
                         </span>
                         <Controller
-                          name={clauseValues}
+                          name={`rules.${ruleIdx}.clauses.${clauseIdx}.values`}
                           control={control}
                           render={({ field }) => {
-                            const selectedfeatureId =
-                              getValues(clauseAttribute);
+                            const selectedfeatureId = getValues(
+                              `rules.${ruleIdx}.clauses.${clauseIdx}.attribute`
+                            );
                             const variationOptions =
                               variationOptionsMap[selectedfeatureId] ?? [];
                             return (
@@ -1490,7 +1479,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
 
 export interface StrategyInputProps {
   feature: Feature.AsObject;
-  strategyName: string;
+  strategyName: `rules.${number}.strategy` | `defaultStrategy`;
   disabled?: boolean;
 }
 
@@ -1498,22 +1487,20 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
   ({ feature, strategyName, disabled }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsEditable();
-    const methods = useFormContext();
+    const methods = useFormContext<TargetingForm>();
     const {
       register,
       control,
       formState: { errors },
       trigger,
     } = methods;
-    const optionName = `${strategyName}.option`;
-    const rolloutStrategyName = `${strategyName}.rolloutStrategy`;
     const selectedOption = useWatch({
       control,
-      name: optionName,
+      name: `${strategyName}.option`,
     });
     const { fields: rolloutStrategy, update } = useFieldArray({
       control,
-      name: rolloutStrategyName,
+      name: `${strategyName}.rolloutStrategy`,
       keyName: 'key', // the default keyName is "id" and it conflicts with the variation id field
     });
 
@@ -1541,26 +1528,31 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
     return (
       <div>
         <Controller
-          name={optionName}
+          name={`${strategyName}.option`}
           control={control}
           render={({ field }) => (
             <Select
               options={strategyOptions}
               disabled={!editable || disabled}
-              value={selectedOption}
+              value={{
+                label: selectedOption.label ?? '',
+                value: selectedOption.value ?? '',
+              }}
               onChange={field.onChange}
               isSearchable={false}
             />
           )}
         />
-        {selectedOption.value == Strategy.Type.ROLLOUT && (
+        {selectedOption.value == Strategy.Type.ROLLOUT.toString() && (
           <div className="mt-2 space-y-2">
-            {rolloutStrategy.map((s: any, idx: number) => {
+            {rolloutStrategy.map((s, idx: number) => {
               return (
                 <div key={s.id} className="flex items-center space-x-2">
                   <div className="flex w-36 flex-shrink-0">
                     <input
-                      {...register(`${rolloutStrategyName}.${idx}.percentage`)}
+                      {...register(
+                        `${strategyName}.rolloutStrategy.${idx}.percentage`
+                      )}
                       type="number"
                       min="0"
                       max="100"
@@ -1614,7 +1606,7 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
                   )}
                 >
                   {rolloutStrategy
-                    .map((s: any) => Number(s.percentage))
+                    .map((s) => Number(s.percentage))
                     .reduce((previousValue, currentValue) => {
                       return previousValue + currentValue;
                     })}

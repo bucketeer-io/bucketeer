@@ -57,16 +57,17 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
       ],
       shallowEqual
     );
-    const defaultValues = {
-      variationType: feature.variationType.toString(),
-      variations: feature.variationsList,
-      comment: '',
+    const defaultValues = (feature, requireComment: boolean) => {
+      return {
+        variationType: feature.variationType.toString(),
+        variations: feature.variationsList,
+        requireComment: requireComment,
+        comment: '',
+      };
     };
     const methods = useForm({
-      resolver: yupResolver(
-        variationsFormSchema(currentEnvironment.requireComment)
-      ),
-      defaultValues: defaultValues,
+      resolver: yupResolver(variationsFormSchema),
+      defaultValues: defaultValues(feature, currentEnvironment.requireComment),
       mode: 'onChange',
     });
     const {
@@ -80,10 +81,7 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
         const commands: Array<Command> = [];
         dirtyFields.variations &&
           commands.push(
-            ...createVariationCommands(
-              defaultValues.variations,
-              data.variations
-            )
+            ...createVariationCommands(feature.variationsList, data.variations)
           );
         data.resetSampling && commands.push(createResetSampleSeedCommand());
         dispatch(
@@ -103,7 +101,7 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
           );
         });
       },
-      [dispatch, dirtyFields]
+      [feature, dispatch, dirtyFields]
     );
 
     if (isLoading) {

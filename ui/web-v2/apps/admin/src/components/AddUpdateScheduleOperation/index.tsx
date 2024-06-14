@@ -4,6 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 
 import { DatetimePicker } from '../DatetimePicker';
+import { OperationForm } from '@/pages/feature/formSchema';
 
 interface AddUpdateScheduleOperationProps {
   isSeeDetailsSelected: boolean;
@@ -12,7 +13,7 @@ interface AddUpdateScheduleOperationProps {
 export const AddUpdateScheduleOperation: FC<AddUpdateScheduleOperationProps> =
   memo(({ isSeeDetailsSelected }) => {
     const { formatMessage: f } = useIntl();
-    const methods = useFormContext<any>();
+    const methods = useFormContext<OperationForm>();
 
     const {
       formState: { errors },
