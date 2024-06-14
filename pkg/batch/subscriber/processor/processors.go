@@ -29,6 +29,7 @@ const (
 	EvaluationCountEventPersisterName    = "evaluationCountEventPersister"
 	GoalCountEventDWHPersisterName       = "goalCountEventDWHPersister"
 	GoalCountEventOPSPersisterName       = "goalCountEventOPSPersister"
+	MetricsEventPersisterName            = "metricsEventPersister"
 	PushSenderName                       = "pushSender"
 	SegmentUserPersisterName             = "segmentUserPersister"
 	UserEventPersisterName               = "userEventPersister"

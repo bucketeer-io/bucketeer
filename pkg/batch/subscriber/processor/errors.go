@@ -36,4 +36,7 @@ var (
 	ErrAutoOpsRuleNotFound                       = errors.New("eventpersister: auto ops rule not found")
 	ErrFeatureEmptyList                          = errors.New("eventpersister: list feature returned empty")
 	ErrFeatureVersionNotFound                    = errors.New("eventpersister: feature version not found")
+	ErrUnknownEvent                              = errors.New("metricsevent persister: unknown metrics event")
+	ErrInvalidDuration                           = errors.New("metricsevent persister: invalid duration")
+	ErrUnknownApiId                              = errors.New("metricsevent persister: unknown api id")
 )
