@@ -67,12 +67,16 @@ func (v *verifier) Verify(rawIDToken string) (*IDToken, error) {
 	if err := json.Unmarshal(payload, t); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal claims: %v", err)
 	}
-	if t.Issuer != v.issuer {
-		return nil, fmt.Errorf("id token issued by a different provider, expected %q got %q", v.issuer, t.Issuer)
-	}
-	if t.Audience != v.clientID {
-		return nil, fmt.Errorf("expected audience %q got %q", v.clientID, t.Audience)
-	}
+	// Since we will keep old and new authentication API work at then same time, we don't check the issuer and clientID
+	// temporarily (new authentication will have different issuer and clientID).
+	// After new api is working as expected, we will upgrade the Verifier.
+
+	//if t.Issuer != v.issuer {
+	//	return nil, fmt.Errorf("id token issued by a different provider, expected %q got %q", v.issuer, t.Issuer)
+	//}
+	//if t.Audience != v.clientID {
+	//	return nil, fmt.Errorf("expected audience %q got %q", v.clientID, t.Audience)
+	//}
 	if t.Expiry.Before(time.Now()) {
 		return nil, fmt.Errorf("token is expired (Token Expiry: %v)", t.Expiry)
 	}
