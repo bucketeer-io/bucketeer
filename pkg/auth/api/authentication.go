@@ -32,10 +32,10 @@ func (s *authService) GetAuthenticationURL(
 	localizer := locale.NewLocalizer(ctx)
 	// The state parameter is used to help mitigate CSRF attacks.
 	// Before sending a request to get authCodeURL, the client has to generate a random string,
-	// store it in local and set to the state parameter in GetAuthCodeURLRequest.
+	// store it in local and set to the state parameter in GetAuthenticationURLRequest.
 	// When the client is redirected back, the state value will be included in that redirect.
 	// Client compares the returned state to the one generated before,
-	// if the values match then send a new request to ExchangeToken, else deny it.
+	// if the values match then send a new request to ExchangeBucketeerToken, else deny it.
 	if err := validateGetAuthenticationURLRequest(req, localizer); err != nil {
 		return nil, err
 	}
