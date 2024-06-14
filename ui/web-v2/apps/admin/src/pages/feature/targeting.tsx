@@ -92,7 +92,6 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
       feature: Feature.AsObject,
       requireComment: boolean
     ): TargetingForm => {
-      console.log('feature', feature);
       return {
         prerequisites: [
           ...new Map(
