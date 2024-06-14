@@ -52,7 +52,7 @@ AuthService.ExchangeBucketeerToken = {
   requestStream: false,
   responseStream: false,
   requestType: proto_auth_service_pb.ExchangeBucketeerTokenRequest,
-  responseType: proto_auth_service_pb.ExchangeTokenResponse
+  responseType: proto_auth_service_pb.ExchangeBucketeerTokenResponse
 };
 
 AuthService.RefreshBucketeerToken = {
@@ -61,7 +61,7 @@ AuthService.RefreshBucketeerToken = {
   requestStream: false,
   responseStream: false,
   requestType: proto_auth_service_pb.RefreshBucketeerTokenRequest,
-  responseType: proto_auth_service_pb.RefreshTokenResponse
+  responseType: proto_auth_service_pb.RefreshBucketeerTokenResponse
 };
 
 exports.AuthService = AuthService;
