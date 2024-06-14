@@ -31,11 +31,41 @@ type AuthServiceRefreshToken = {
   readonly responseType: typeof proto_auth_service_pb.RefreshTokenResponse;
 };
 
+type AuthServiceGetAuthenticationURL = {
+  readonly methodName: string;
+  readonly service: typeof AuthService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_auth_service_pb.GetAuthenticationURLRequest;
+  readonly responseType: typeof proto_auth_service_pb.GetAuthenticationURLResponse;
+};
+
+type AuthServiceExchangeBucketeerToken = {
+  readonly methodName: string;
+  readonly service: typeof AuthService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_auth_service_pb.ExchangeBucketeerTokenRequest;
+  readonly responseType: typeof proto_auth_service_pb.ExchangeTokenResponse;
+};
+
+type AuthServiceRefreshBucketeerToken = {
+  readonly methodName: string;
+  readonly service: typeof AuthService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_auth_service_pb.RefreshBucketeerTokenRequest;
+  readonly responseType: typeof proto_auth_service_pb.RefreshTokenResponse;
+};
+
 export class AuthService {
   static readonly serviceName: string;
   static readonly GetAuthCodeURL: AuthServiceGetAuthCodeURL;
   static readonly ExchangeToken: AuthServiceExchangeToken;
   static readonly RefreshToken: AuthServiceRefreshToken;
+  static readonly GetAuthenticationURL: AuthServiceGetAuthenticationURL;
+  static readonly ExchangeBucketeerToken: AuthServiceExchangeBucketeerToken;
+  static readonly RefreshBucketeerToken: AuthServiceRefreshBucketeerToken;
 }
 
 export type ServiceError = {
@@ -127,5 +157,32 @@ export class AuthServiceClient {
       error: ServiceError | null,
       responseMessage: proto_auth_service_pb.RefreshTokenResponse | null
     ) => void
+  ): UnaryResponse;
+  getAuthenticationURL(
+    requestMessage: proto_auth_service_pb.GetAuthenticationURLRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_auth_service_pb.GetAuthenticationURLResponse|null) => void
+  ): UnaryResponse;
+  getAuthenticationURL(
+    requestMessage: proto_auth_service_pb.GetAuthenticationURLRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_auth_service_pb.GetAuthenticationURLResponse|null) => void
+  ): UnaryResponse;
+  exchangeBucketeerToken(
+    requestMessage: proto_auth_service_pb.ExchangeBucketeerTokenRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_auth_service_pb.ExchangeTokenResponse|null) => void
+  ): UnaryResponse;
+  exchangeBucketeerToken(
+    requestMessage: proto_auth_service_pb.ExchangeBucketeerTokenRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_auth_service_pb.ExchangeTokenResponse|null) => void
+  ): UnaryResponse;
+  refreshBucketeerToken(
+    requestMessage: proto_auth_service_pb.RefreshBucketeerTokenRequest,
+    metadata: grpc.Metadata,
+    callback: (error: ServiceError|null, responseMessage: proto_auth_service_pb.RefreshTokenResponse|null) => void
+  ): UnaryResponse;
+  refreshBucketeerToken(
+    requestMessage: proto_auth_service_pb.RefreshBucketeerTokenRequest,
+    callback: (error: ServiceError|null, responseMessage: proto_auth_service_pb.RefreshTokenResponse|null) => void
   ): UnaryResponse;
 }

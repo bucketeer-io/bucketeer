@@ -19,6 +19,9 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/bucketeer-io/bucketeer/pkg/auth"
+	"github.com/bucketeer-io/bucketeer/pkg/auth/google"
+
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -67,29 +70,33 @@ func WithLogger(logger *zap.Logger) Option {
 }
 
 type authService struct {
-	oidc          *oidc.OIDC
-	signer        token.Signer
-	accountClient accountclient.Client
-	opts          *options
-	logger        *zap.Logger
+	oidc                *oidc.OIDC
+	signer              token.Signer
+	accountClient       accountclient.Client
+	googleAuthenticator auth.Authenticator
+	opts                *options
+	logger              *zap.Logger
 }
 
 func NewAuthService(
 	oidc *oidc.OIDC,
 	signer token.Signer,
 	accountClient accountclient.Client,
+	config *auth.OAuthConfig,
 	opts ...Option,
 ) rpc.Service {
 	options := defaultOptions
 	for _, opt := range opts {
 		opt(&options)
 	}
+	logger := options.logger.Named("api")
 	return &authService{
-		oidc:          oidc,
-		signer:        signer,
-		accountClient: accountClient,
-		opts:          &options,
-		logger:        options.logger.Named("api"),
+		oidc:                oidc,
+		signer:              signer,
+		accountClient:       accountClient,
+		googleAuthenticator: google.NewAuthenticator(config.GoogleConfig, accountClient, signer, logger),
+		opts:                &options,
+		logger:              logger,
 	}
 }
 

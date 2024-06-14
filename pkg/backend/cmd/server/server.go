@@ -16,9 +16,13 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
 	"regexp"
 	"time"
+
+	"github.com/bucketeer-io/bucketeer/pkg/auth"
 
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -122,6 +126,7 @@ type server struct {
 	// auth
 	oauthIssuerCertPath *string
 	emailFilter         *string
+	oauthConfigPath     *string
 	oauthRedirectURLs   *[]string
 	oauthClientSecret   *string
 	oauthPrivateKeyPath *string
@@ -267,6 +272,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 		// auth
 		oauthIssuerCertPath: cmd.Flag("oauth-issuer-cert", "Path to TLS certificate of issuer.").Required().String(),
 		emailFilter:         cmd.Flag("email-filter", "Regexp pattern for filtering email.").String(),
+		oauthConfigPath:     cmd.Flag("oauth-config-path", "Path to oauth config.").Required().String(),
 		oauthRedirectURLs:   cmd.Flag("oauth-redirect-urls", "The redirect urls registered at Dex.").Required().Strings(),
 		oauthClientSecret: cmd.Flag(
 			"oauth-client-secret",
@@ -290,6 +296,14 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 
 func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Logger) error {
 	registerer := metrics.DefaultRegisterer()
+
+	// oauth config
+	oAuthConfig, err := s.readOAuthConfig(ctx, logger)
+	if err != nil {
+		logger.Error("Failed to read OAuth config", zap.Error(err))
+		return err
+	}
+
 	// verifier
 	verifier, err := token.NewVerifier(*s.oauthPublicKeyPath, *s.oauthIssuer, *s.oauthClientID)
 	if err != nil {
@@ -453,7 +467,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer autoOpsClient.Close()
 	// authService
-	authService, err := s.createAuthService(ctx, accountClient, logger)
+	authService, err := s.createAuthService(ctx, accountClient, oAuthConfig, logger)
 	if err != nil {
 		return err
 	}
@@ -710,9 +724,31 @@ func (s *server) createPublisher(
 	return client.CreatePublisher(topic)
 }
 
+func (s *server) readOAuthConfig(
+	ctx context.Context,
+	logger *zap.Logger,
+) (*auth.OAuthConfig, error) {
+	bytes, err := os.ReadFile(*s.oauthConfigPath)
+	if err != nil {
+		logger.Error("auth: failed to read auth config file",
+			zap.Error(err),
+		)
+		return nil, err
+	}
+	config := auth.OAuthConfig{}
+	if err = json.Unmarshal(bytes, &config); err != nil {
+		logger.Error("auth: failed to unmarshal auth config",
+			zap.Error(err),
+		)
+		return nil, err
+	}
+	return &config, nil
+}
+
 func (s *server) createAuthService(
 	ctx context.Context,
 	accountClient accountclient.Client,
+	config *auth.OAuthConfig,
 	logger *zap.Logger,
 ) (rpc.Service, error) {
 	o, err := oidc.NewOIDC(
@@ -740,7 +776,7 @@ func (s *server) createAuthService(
 		}
 		serviceOptions = append(serviceOptions, authapi.WithEmailFilter(filter))
 	}
-	return authapi.NewAuthService(o, signer, accountClient, serviceOptions...), nil
+	return authapi.NewAuthService(o, signer, accountClient, config, serviceOptions...), nil
 }
 
 func (s *server) createFeatureService(

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "backend.fullname" . }}-oauth-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "backend.name" . }}
+    chart: {{ template "backend.chart" . }}
+    release: {{ template "backend.fullname" . }}
+    heritage: {{ .Release.Service }}
+data:
+  oauth-config.json: |-
+    {{ toJson .Values.oauth }}

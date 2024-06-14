@@ -1668,6 +1668,28 @@
     {
       "protopath": "auth:/:service.proto",
       "def": {
+        "enums": [
+          {
+            "name": "AuthType",
+            "enum_fields": [
+              {
+                "name": "AUTH_TYPE_UNSPECIFIED"
+              },
+              {
+                "name": "AUTH_TYPE_USER_PASSWORD",
+                "integer": 1
+              },
+              {
+                "name": "AUTH_TYPE_GOOGLE",
+                "integer": 2
+              },
+              {
+                "name": "AUTH_TYPE_GITHUB",
+                "integer": 3
+              }
+            ]
+          }
+        ],
         "messages": [
           {
             "name": "GetAuthCodeURLRequest",
@@ -1743,6 +1765,96 @@
                 "type": "Token"
               }
             ]
+          },
+          {
+            "name": "GetAuthenticationURLRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "state",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "redirect_url",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "type",
+                "type": "AuthType"
+              }
+            ]
+          },
+          {
+            "name": "GetAuthenticationURLResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "url",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ExchangeBucketeerTokenRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "redirect_url",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "type",
+                "type": "AuthType"
+              }
+            ]
+          },
+          {
+            "name": "ExchangeBucketeerTokenResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "token",
+                "type": "Token"
+              }
+            ]
+          },
+          {
+            "name": "RefreshBucketeerTokenRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "refresh_token",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "redirect_url",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "type",
+                "type": "AuthType"
+              }
+            ]
+          },
+          {
+            "name": "RefreshBucketeerTokenResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "token",
+                "type": "Token"
+              }
+            ]
           }
         ],
         "services": [
@@ -1763,6 +1875,21 @@
                 "name": "RefreshToken",
                 "in_type": "RefreshTokenRequest",
                 "out_type": "RefreshTokenResponse"
+              },
+              {
+                "name": "GetAuthenticationURL",
+                "in_type": "GetAuthenticationURLRequest",
+                "out_type": "GetAuthenticationURLResponse"
+              },
+              {
+                "name": "ExchangeBucketeerToken",
+                "in_type": "ExchangeBucketeerTokenRequest",
+                "out_type": "ExchangeBucketeerTokenResponse"
+              },
+              {
+                "name": "RefreshBucketeerToken",
+                "in_type": "RefreshBucketeerTokenRequest",
+                "out_type": "RefreshBucketeerTokenResponse"
               }
             ]
           }
