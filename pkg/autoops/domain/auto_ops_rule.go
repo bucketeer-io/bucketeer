@@ -30,7 +30,6 @@ import (
 var (
 	errClauseNotFound = errors.New("autoOpsRule: clause not found")
 	errClauseEmpty    = errors.New("autoOpsRule: clause cannot be empty")
-	errOpsTypeEnable  = errors.New("autoOpsRule: opsType cannot be enable for EventRate")
 
 	OpsEventRateClause = &proto.OpsEventRateClause{}
 	DatetimeClause     = &proto.DatetimeClause{}
@@ -73,9 +72,6 @@ func NewAutoOpsRule(
 			}
 		}
 	case proto.OpsType_ENABLE_FEATURE:
-		if len(opsEventRateClauses) != 0 {
-			return nil, errOpsTypeEnable
-		}
 		for _, c := range datetimeClauses {
 			c.ActionType = proto.ActionType_ENABLE
 			if _, err := autoOpsRule.AddDatetimeClause(c); err != nil {
@@ -104,9 +100,8 @@ func NewAutoOpsRule(
 }
 
 func (a *AutoOpsRule) SetStopped() {
-	now := time.Now().Unix()
 	a.AutoOpsRule.AutoOpsStatus = proto.AutoOpsStatus_STOPPED
-	a.AutoOpsRule.UpdatedAt = now
+	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
 }
 
 func (a *AutoOpsRule) SetDeleted() {
@@ -114,6 +109,8 @@ func (a *AutoOpsRule) SetDeleted() {
 	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
 }
 
+// TODO: Remove this function after auto ops migration.
+// Deprecated
 func (a *AutoOpsRule) SetTriggeredAt() {
 	now := time.Now().Unix()
 	a.AutoOpsRule.TriggeredAt = now
@@ -123,14 +120,13 @@ func (a *AutoOpsRule) SetTriggeredAt() {
 
 func (a *AutoOpsRule) SetCompleted() {
 	a.AutoOpsRule.AutoOpsStatus = proto.AutoOpsStatus_COMPLETED
-	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
 }
 
 func (a *AutoOpsRule) AlreadyTriggered() bool {
 	return a.TriggeredAt > 0 || a.AutoOpsStatus == proto.AutoOpsStatus_COMPLETED
 }
 
-func (a *AutoOpsRule) IsNotCompletedStatus() bool {
+func (a *AutoOpsRule) IsNotCompleted() bool {
 	return a.AutoOpsStatus == proto.AutoOpsStatus_WAITING || a.AutoOpsStatus == proto.AutoOpsStatus_RUNNING
 }
 
@@ -171,7 +167,6 @@ func (a *AutoOpsRule) AddDatetimeClause(dc *proto.DatetimeClause) (*proto.Clause
 		return nil, err
 	}
 	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
-	a.AutoOpsRule.TriggeredAt = 0
 	return clause, nil
 }
 
@@ -195,7 +190,6 @@ func (a *AutoOpsRule) sortDatetimeClause() {
 		dataTimeClause *proto.DatetimeClause
 	}
 	newClauses := []*proto.Clause{}
-	//	datetimeClauses := []*proto.DatetimeClause{}
 	sortClauses := []*SortClause{}
 	for _, c := range a.Clauses {
 		datetimeClause, _ := a.unmarshalDatetimeClause(c)
@@ -208,7 +202,6 @@ func (a *AutoOpsRule) sortDatetimeClause() {
 			dataTimeClause: datetimeClause,
 		}
 		sortClauses = append(sortClauses, s)
-		//datetimeClauses = append(datetimeClauses, datetimeClause)
 	}
 
 	sort.Slice(sortClauses, func(i, j int) bool {

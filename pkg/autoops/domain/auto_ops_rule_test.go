@@ -16,13 +16,14 @@ package domain
 
 import (
 	"testing"
+	"time"
 
+	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 func TestNewAutoOpsRule(t *testing.T) {
@@ -32,17 +33,36 @@ func TestNewAutoOpsRule(t *testing.T) {
 		opsType          autoopsproto.OpsType
 		datetimeClauses  []*autoopsproto.DatetimeClause
 		eventRateClauses []*autoopsproto.OpsEventRateClause
+		expectedClauses  *AutoOpsRule
 		expectedErr      error
 	}{
 		{
-			desc:             "OpsType: EnableFeature",
-			featureId:        "feature-id",
-			opsType:          autoopsproto.OpsType_ENABLE_FEATURE,
-			datetimeClauses:  []*autoopsproto.DatetimeClause{{Time: 0}},
-			eventRateClauses: []*autoopsproto.OpsEventRateClause{},
+			desc:            "OpsType: EnableFeature",
+			featureId:       "feature-id",
+			opsType:         autoopsproto.OpsType_ENABLE_FEATURE,
+			datetimeClauses: []*autoopsproto.DatetimeClause{{Time: 0}},
+			eventRateClauses: []*autoopsproto.OpsEventRateClause{
+				{
+					GoalId:          "goalid01",
+					MinCount:        10,
+					ThreadsholdRate: 0.5,
+					Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+				},
+			},
+			expectedClauses: &AutoOpsRule{&autoopsproto.AutoOpsRule{FeatureId: "feature-id",
+				OpsType: autoopsproto.OpsType_ENABLE_FEATURE,
+				Clauses: []*autoopsproto.Clause{
+					newDateTimeClause(t, &autoopsproto.DatetimeClause{Time: 0, ActionType: autoopsproto.ActionType_ENABLE}),
+				},
+				CreatedAt:     time.Now().Unix(),
+				UpdatedAt:     time.Now().Unix(),
+				TriggeredAt:   0,
+				Deleted:       false,
+				AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
+			}},
 		},
 		{
-			desc:            "OpsType: EnableFeature For EventRate",
+			desc:            "Err: For Enable type, EventRateClause cannot be specified",
 			featureId:       "feature-id",
 			opsType:         autoopsproto.OpsType_ENABLE_FEATURE,
 			datetimeClauses: []*autoopsproto.DatetimeClause{},
@@ -54,15 +74,16 @@ func TestNewAutoOpsRule(t *testing.T) {
 					Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
 				},
 			},
-			expectedErr: errOpsTypeEnable,
+			expectedClauses: nil,
+			expectedErr:     errClauseEmpty,
 		},
 		{
 			desc:      "OpsType: DisableFeature",
 			featureId: "feature-id",
 			opsType:   autoopsproto.OpsType_DISABLE_FEATURE,
 			datetimeClauses: []*autoopsproto.DatetimeClause{
-				{Time: 0},
 				{Time: 2},
+				{Time: 0},
 			},
 			eventRateClauses: []*autoopsproto.OpsEventRateClause{
 				{
@@ -72,13 +93,33 @@ func TestNewAutoOpsRule(t *testing.T) {
 					Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
 				},
 			},
+			expectedClauses: &AutoOpsRule{&autoopsproto.AutoOpsRule{FeatureId: "feature-id",
+				OpsType: autoopsproto.OpsType_DISABLE_FEATURE,
+				Clauses: []*autoopsproto.Clause{
+					newEventRateClause(t, &autoopsproto.OpsEventRateClause{
+						GoalId:          "goalid01",
+						MinCount:        10,
+						ThreadsholdRate: 0.5,
+						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+						ActionType:      autoopsproto.ActionType_DISABLE,
+					}),
+					newDateTimeClause(t, &autoopsproto.DatetimeClause{Time: 0, ActionType: autoopsproto.ActionType_DISABLE}),
+					newDateTimeClause(t, &autoopsproto.DatetimeClause{Time: 2, ActionType: autoopsproto.ActionType_DISABLE}),
+				},
+				CreatedAt:     time.Now().Unix(),
+				UpdatedAt:     time.Now().Unix(),
+				TriggeredAt:   0,
+				Deleted:       false,
+				AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
+			}},
+			expectedErr: nil,
 		},
 		{
 			desc:      "OpsType: Schedule",
 			featureId: "feature-id",
 			opsType:   autoopsproto.OpsType_SCHEDULE,
 			datetimeClauses: []*autoopsproto.DatetimeClause{
-				{Time: 0, ActionType: autoopsproto.ActionType_ENABLE},
+				{Time: 2, ActionType: autoopsproto.ActionType_ENABLE},
 				{Time: 1, ActionType: autoopsproto.ActionType_DISABLE},
 			},
 			eventRateClauses: []*autoopsproto.OpsEventRateClause{
@@ -90,14 +131,27 @@ func TestNewAutoOpsRule(t *testing.T) {
 					ActionType:      autoopsproto.ActionType_DISABLE,
 				},
 			},
+			expectedErr: nil,
+			expectedClauses: &AutoOpsRule{&autoopsproto.AutoOpsRule{FeatureId: "feature-id",
+				OpsType: autoopsproto.OpsType_SCHEDULE,
+				Clauses: []*autoopsproto.Clause{
+					newDateTimeClause(t, &autoopsproto.DatetimeClause{Time: 1, ActionType: autoopsproto.ActionType_DISABLE}),
+					newDateTimeClause(t, &autoopsproto.DatetimeClause{Time: 2, ActionType: autoopsproto.ActionType_ENABLE}),
+				},
+				CreatedAt:     time.Now().Unix(),
+				UpdatedAt:     time.Now().Unix(),
+				TriggeredAt:   0,
+				Deleted:       false,
+				AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
+			}},
 		},
 		{
 			desc:      "OpsType: EventRate",
 			featureId: "feature-id",
 			opsType:   autoopsproto.OpsType_EVENT_RATE,
 			datetimeClauses: []*autoopsproto.DatetimeClause{
-				{Time: 0, ActionType: autoopsproto.ActionType_ENABLE},
-				{Time: 1, ActionType: autoopsproto.ActionType_DISABLE},
+				{Time: 1, ActionType: autoopsproto.ActionType_ENABLE},
+				{Time: 0, ActionType: autoopsproto.ActionType_DISABLE},
 			},
 			eventRateClauses: []*autoopsproto.OpsEventRateClause{
 				{
@@ -108,6 +162,24 @@ func TestNewAutoOpsRule(t *testing.T) {
 					ActionType:      autoopsproto.ActionType_DISABLE,
 				},
 			},
+			expectedErr: nil,
+			expectedClauses: &AutoOpsRule{&autoopsproto.AutoOpsRule{FeatureId: "feature-id",
+				OpsType: autoopsproto.OpsType_EVENT_RATE,
+				Clauses: []*autoopsproto.Clause{
+					newEventRateClause(t, &autoopsproto.OpsEventRateClause{
+						GoalId:          "goalid01",
+						MinCount:        10,
+						ThreadsholdRate: 0.5,
+						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+						ActionType:      autoopsproto.ActionType_DISABLE,
+					}),
+				},
+				CreatedAt:     time.Now().Unix(),
+				UpdatedAt:     time.Now().Unix(),
+				TriggeredAt:   0,
+				Deleted:       false,
+				AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
+			}},
 		},
 	}
 	for _, p := range patterns {
@@ -119,49 +191,19 @@ func TestNewAutoOpsRule(t *testing.T) {
 				p.datetimeClauses,
 			)
 			assert.Equal(t, p.expectedErr, err)
-			if err == nil {
-				assert.IsType(t, &AutoOpsRule{}, aor)
-				assert.Equal(t, p.featureId, aor.FeatureId)
-				assert.Equal(t, p.opsType, aor.OpsType)
-				assert.Equal(t, autoopsproto.AutoOpsStatus_WAITING, aor.AutoOpsStatus)
-				assert.NotZero(t, aor.CreatedAt)
-				assert.NotZero(t, aor.UpdatedAt)
-				assert.Zero(t, aor.TriggeredAt)
 
-				if aor.OpsType == autoopsproto.OpsType_EVENT_RATE {
-					assert.Equal(t, len(p.eventRateClauses), len(aor.Clauses))
-					for i, c := range aor.Clauses {
-						eventRateClause, err := aor.unmarshalOpsEventRateClause(c)
-						require.NoError(t, err)
-						assert.Equal(t, p.eventRateClauses[i].ActionType, c.ActionType)
-						assert.Equal(t, p.eventRateClauses[i].GoalId, eventRateClause.GoalId)
-						assert.Equal(t, p.eventRateClauses[i].MinCount, eventRateClause.MinCount)
-						assert.Equal(t, p.eventRateClauses[i].ThreadsholdRate, eventRateClause.ThreadsholdRate)
-						assert.Equal(t, p.eventRateClauses[i].Operator, eventRateClause.Operator)
-						assert.Equal(t, p.eventRateClauses[i].ActionType, eventRateClause.ActionType)
-					}
-				}
-				if aor.OpsType == autoopsproto.OpsType_SCHEDULE {
-					assert.Equal(t, len(p.datetimeClauses), len(aor.Clauses))
-					for i, c := range aor.Clauses {
-						datetimeClause, err := aor.unmarshalDatetimeClause(c)
-						require.NoError(t, err)
-						assert.Equal(t, p.datetimeClauses[i].ActionType, c.ActionType)
-						assert.Equal(t, p.datetimeClauses[i].Time, datetimeClause.Time)
-						assert.Equal(t, p.datetimeClauses[i].ActionType, datetimeClause.ActionType)
-					}
-				}
-				if aor.OpsType == autoopsproto.OpsType_ENABLE_FEATURE {
-					assert.Equal(t, len(p.datetimeClauses), len(aor.Clauses))
-					for _, c := range aor.Clauses {
-						assert.Equal(t, autoopsproto.ActionType_ENABLE, c.ActionType)
-					}
-				}
-				if aor.OpsType == autoopsproto.OpsType_DISABLE_FEATURE {
-					assert.Equal(t, len(p.datetimeClauses)+len(p.eventRateClauses), len(aor.Clauses))
-					for _, c := range aor.Clauses {
-						assert.Equal(t, autoopsproto.ActionType_DISABLE, c.ActionType)
-					}
+			if err == nil {
+				assert.Equal(t, p.expectedClauses.FeatureId, aor.FeatureId)
+				assert.Equal(t, p.expectedClauses.OpsType, aor.OpsType)
+				assert.Equal(t, p.expectedClauses.AutoOpsStatus, aor.AutoOpsStatus)
+				assert.Equal(t, p.expectedClauses.CreatedAt, aor.CreatedAt)
+				assert.Equal(t, p.expectedClauses.UpdatedAt, aor.UpdatedAt)
+				assert.Equal(t, p.expectedClauses.TriggeredAt, aor.TriggeredAt)
+				assert.Equal(t, p.expectedClauses.Deleted, aor.Deleted)
+
+				for i, c := range aor.Clauses {
+					assert.Equal(t, p.expectedClauses.Clauses[i].ActionType, c.ActionType)
+					assert.Equal(t, p.expectedClauses.Clauses[i].Clause, c.Clause)
 				}
 			}
 		})
@@ -232,7 +274,6 @@ func TestAddOpsEventRateClause(t *testing.T) {
 func TestAddDatetimeClause(t *testing.T) {
 	t.Parallel()
 	aor := createAutoOpsRule(t)
-	aor.TriggeredAt = 1
 	l := len(aor.Clauses)
 	c1 := &autoopsproto.DatetimeClause{
 		Time:       1000000001,
@@ -251,7 +292,6 @@ func TestAddDatetimeClause(t *testing.T) {
 	assert.Equal(t, c1.ActionType, aor.Clauses[l].ActionType)
 	require.NoError(t, err)
 	assert.Equal(t, c1.Time, dc.Time)
-	assert.Zero(t, aor.TriggeredAt)
 	assert.Equal(t, autoopsproto.AutoOpsStatus_WAITING, aor.AutoOpsStatus)
 
 	clause2, err := aor.AddDatetimeClause(c2)
@@ -467,13 +507,13 @@ func TestSetCompleted(t *testing.T) {
 	assert.Equal(t, autoopsproto.AutoOpsStatus_COMPLETED, aor.AutoOpsStatus)
 }
 
-func TestIsNotCompletedStatus(t *testing.T) {
+func TestIsNotCompleted(t *testing.T) {
 	t.Parallel()
 	aor := createAutoOpsRule(t)
-	assert.True(t, aor.IsNotCompletedStatus())
+	assert.True(t, aor.IsNotCompleted())
 
 	aor.AutoOpsStatus = autoopsproto.AutoOpsStatus_COMPLETED
-	assert.False(t, aor.IsNotCompletedStatus())
+	assert.False(t, aor.IsNotCompleted())
 }
 
 func TestSetAutoOpsStatus(t *testing.T) {
@@ -589,4 +629,26 @@ func TestUnmarshalDatetimeClause(t *testing.T) {
 	dataTimeClause, err := aor.unmarshalDatetimeClause(aor.Clauses[0])
 	require.NoError(t, err)
 	assert.Equal(t, dtc.Time, dataTimeClause.Time)
+}
+
+func newDateTimeClause(t *testing.T, c *autoopsproto.DatetimeClause) *autoopsproto.Clause {
+	clause, err := anypb.New(c)
+	require.NoError(t, err)
+	newClause := &autoopsproto.Clause{
+		Id:         "testClause",
+		Clause:     clause,
+		ActionType: c.ActionType,
+	}
+	return newClause
+}
+
+func newEventRateClause(t *testing.T, c *autoopsproto.OpsEventRateClause) *autoopsproto.Clause {
+	clause, err := anypb.New(c)
+	require.NoError(t, err)
+	newClause := &autoopsproto.Clause{
+		Id:         "testClause",
+		Clause:     clause,
+		ActionType: c.ActionType,
+	}
+	return newClause
 }
