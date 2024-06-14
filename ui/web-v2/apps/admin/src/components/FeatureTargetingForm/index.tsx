@@ -418,7 +418,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                       options={offVariationOptions}
                       disabled={!editable}
                       value={offVariationOptions.find(
-                        (o) => o.value === field.value
+                        (o) => o.value === field.value.value
                       )}
                       isSearchable={false}
                     />

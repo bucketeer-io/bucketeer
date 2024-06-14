@@ -64,6 +64,7 @@ import {
   StrategySchema,
   RuleClauseSchema,
   RuleSchema,
+  TargetingForm,
 } from './formSchema';
 
 interface FeatureTargetingPageProps {
@@ -87,7 +88,11 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
     );
     const [isResetTargeting, setIsResetTargeting] = useState(false);
 
-    const getDefaultValues = (feature, requireComment: boolean) => {
+    const getDefaultValues = (
+      feature: Feature.AsObject,
+      requireComment: boolean
+    ): TargetingForm => {
+      console.log('feature', feature);
       return {
         prerequisites: [
           ...new Map(
@@ -292,7 +297,7 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
 const createStrategyDefaultValue = (
   strategy: Strategy.AsObject,
   variations: Variation.AsObject[]
-) => {
+): StrategySchema => {
   return {
     option:
       strategy.type === Strategy.Type.FIXED
@@ -303,7 +308,7 @@ const createStrategyDefaultValue = (
             ),
           }
         : {
-            value: Strategy.Type.ROLLOUT,
+            value: Strategy.Type.ROLLOUT.toString(),
             label: intl.formatMessage(
               messages.feature.strategy.selectRolloutPercentage
             ),

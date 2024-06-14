@@ -301,7 +301,6 @@ export const onVariationSchema = yup.object().shape({
 });
 
 export const offVariationSchema = yup.object().shape({
-  id: yup.string(),
   value: yup.string(),
   label: yup.string(),
 });

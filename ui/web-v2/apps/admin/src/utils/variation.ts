@@ -1,6 +1,6 @@
 import { Variation } from '@/proto/feature/variation_pb';
 
-export const createVariationLabel = (variation: Variation.AsObject) => {
+export const createVariationLabel = (variation: Variation.AsObject): string => {
   if (variation == null) {
     return 'None';
   }
