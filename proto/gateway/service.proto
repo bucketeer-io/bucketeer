@@ -118,6 +118,22 @@ message TrackRequest {
 
 message TrackResponse {}
 
+message GetFeatureRequest {
+  string environment_id = 1;
+  string id = 2;
+}
+
+message GetFeatureResponse {
+  feature.Feature feature = 1;
+}
+
+message UpdateFeatureRequest {
+  string comment = 1;
+  string environment_id = 2;
+  feature.Feature feature = 3;
+}
+
+message UpdateFeatureResponse {}
 service Gateway {
   rpc Ping(PingRequest) returns (PingResponse) {
     option (google.api.http) = {
@@ -160,6 +176,16 @@ service Gateway {
   rpc Track(TrackRequest) returns (TrackResponse) {
     option (google.api.http) = {
       get: "/track"
+    };
+  }
+  rpc GetFeature(GetFeatureRequest) returns (GetFeatureResponse) {
+    option (google.api.http) = {
+      get: "environment/{environment-id}/features/{feature-id}"
+    };
+  }
+  rpc UpdateFeature(UpdateFeatureRequest) returns (UpdateFeatureResponse) {
+    option (google.api.http) = {
+      patch: "environment/{environment-id}/features/{feature-id}"
     };
   }
 }

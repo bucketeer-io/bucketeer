@@ -114,8 +114,6 @@ spec:
               value: "{{ .Values.env.auditLogServicePort }}"
             - name: BUCKETEER_BACKEND_AUTO_OPS_SERVICE_PORT
               value: "{{ .Values.env.autoOpsServicePort }}"
-            - name: BUCKETEER_BACKEND_PUBLIC_API_SERVICE_PORT
-              value: "{{ .Values.env.publicApiServicePort }}"
             - name: BUCKETEER_BACKEND_ENVIRONMENT_SERVICE_PORT
               value: "{{ .Values.env.environmentServicePort }}"
             - name: BUCKETEER_BACKEND_EVENT_COUNTER_SERVICE_PORT
@@ -144,8 +142,6 @@ spec:
               value: "{{ .Values.env.featureService }}"
             - name: BUCKETEER_BACKEND_AUTO_OPS_SERVICE
               value: "{{ .Values.env.autoOpsService }}"
-            - name: BUCKETEER_BACKEND_PUBLIC_API_SERVICE
-              value: "{{ .Values.env.publicApiService }}"
             - name: BUCKETEER_BACKEND_TIMEZONE
               value: "{{ .Values.env.timezone }}"
             - name: BUCKETEER_BACKEND_METRICS_PORT

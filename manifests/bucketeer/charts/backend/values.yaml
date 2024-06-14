@@ -42,7 +42,6 @@ env:
   experimentService: localhost:9001
   featureService: localhost:9001
   autoOpsService: localhost:9001
-  publicApiService: localhost:9001
   healthCheckServicePort: 8000
   accountServicePort: 9091
   authServicePort: 9092
@@ -55,7 +54,6 @@ env:
   migrateMysqlServicePort: 9099
   notificationServicePort: 9100
   pushServicePort: 9101
-  publicApiServicePort: 9102
   metricsPort: 9002
   timezone: UTC
   emailFilter:
