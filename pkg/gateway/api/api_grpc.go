@@ -928,6 +928,44 @@ func (s *grpcGatewayService) emptyGetSegmentUsersResponse() (*gwproto.GetSegment
 	}, nil
 }
 
+func (s *grpcGatewayService) GetFeature(
+	ctx context.Context,
+	req *gwproto.GetFeatureRequest,
+) (*gwproto.GetFeatureResponse, error) {
+	_, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
+		accountproto.APIKey_PUBLIC_API_READ_ONLY,
+		accountproto.APIKey_PUBLIC_API_WRITE,
+		accountproto.APIKey_PUBLIC_API_ADMIN,
+	})
+	if err != nil {
+		s.logger.Error("Failed to check GetFeature request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("featureId", req.Id),
+			)...,
+		)
+		return nil, err
+	}
+	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
+		EnvironmentNamespace: req.EnvironmentId,
+		Id:                   req.Id,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &gwproto.GetFeatureResponse{
+		Feature: resp.Feature,
+	}, nil
+}
+
+func (s *grpcGatewayService) UpdateFeature(
+	ctx context.Context,
+	req *gwproto.UpdateFeatureRequest,
+) (*gwproto.UpdateFeatureResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method not implemented")
+}
+
 func (s *grpcGatewayService) getTargetFeatures(fs []*featureproto.Feature, id string) ([]*featureproto.Feature, error) {
 	feature, err := s.findFeature(fs, id)
 	if err != nil {
