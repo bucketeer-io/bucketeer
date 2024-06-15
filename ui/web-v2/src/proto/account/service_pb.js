@@ -1,0 +1,7797 @@
+// source: proto/account/service.proto
+/**
+ * @fileoverview
+ * @enhanceable
+ * @suppress {missingRequire} reports error on implicit type usages.
+ * @suppress {messageConventions} JS Compiler reports an error if a variable or
+ *     field starts with 'MSG_' and isn't a translatable message.
+ * @public
+ */
+// GENERATED CODE -- DO NOT EDIT!
+/* eslint-disable */
+// @ts-nocheck
+
+var jspb = require('google-protobuf');
+var goog = jspb;
+var global =
+  (typeof globalThis !== 'undefined' && globalThis) ||
+  (typeof window !== 'undefined' && window) ||
+  (typeof global !== 'undefined' && global) ||
+  (typeof self !== 'undefined' && self) ||
+  function () {
+    return this;
+  }.call(null) ||
+  Function('return this')();
+
+var google_protobuf_wrappers_pb = require('google-protobuf/google/protobuf/wrappers_pb.js');
+goog.object.extend(proto, google_protobuf_wrappers_pb);
+var proto_account_account_pb = require('./account_pb.js');
+goog.object.extend(proto, proto_account_account_pb);
+var proto_account_api_key_pb = require('./api_key_pb.js');
+goog.object.extend(proto, proto_account_api_key_pb);
+var proto_account_command_pb = require('./command_pb.js');
+goog.object.extend(proto, proto_account_command_pb);
+var proto_environment_organization_pb = require('../environment/organization_pb.js');
+goog.object.extend(proto, proto_environment_organization_pb);
+goog.exportSymbol(
+  'proto.bucketeer.account.ChangeAPIKeyNameRequest',
+  null,
+  global
+);
+goog.exportSymbol(
+  'proto.bucketeer.account.ChangeAPIKeyNameResponse',
+  null,
+  global
+);
+goog.exportSymbol('proto.bucketeer.account.CreateAPIKeyRequest', null, global);
+goog.exportSymbol('proto.bucketeer.account.CreateAPIKeyResponse', null, global);
+goog.exportSymbol(
+  'proto.bucketeer.account.CreateAccountV2Request',
+  null,
+  global
+);
+goog.exportSymbol(
+  'proto.bucketeer.account.CreateAccountV2Response',
+  null,
+  global
+);
+goog.exportSymbol(
+  'proto.bucketeer.account.DeleteAccountV2Request',
+  null,
+  global
+);
+goog.exportSymbol(
+  'proto.bucketeer.account.DeleteAccountV2Response',
+  null,
+  global
+);
+goog.exportSymbol('proto.bucketeer.account.DisableAPIKeyRequest', null, global);
+goog.exportSymbol(
+  'proto.bucketeer.account.DisableAPIKeyResponse',
+  null,
+  global
+);
+goog.exportSymbol(
+  'proto.bucketeer.account.DisableAccountV2Request',
+  null,
+  global
+);
+goog.exportSymbol(
+  'proto.bucketeer.account.DisableAccountV2Response',
+  null,
+  global
+);
+goog.exportSymbol('proto.bucketeer.account.EnableAPIKeyRequest', null, global);
+goog.exportSymbol('proto.bucketeer.account.EnableAPIKeyResponse', null, global);
+goog.exportSymbol(
+  'proto.bucketeer.account.EnableAccountV2Request',
+  null,
+  global
+);
+goog.exportSymbol(
+  'proto.bucketeer.account.EnableAccountV2Response',
+  null,
+  global
+);
+goog.exportSymbol(
+  'proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest',
+  null,
+  global
+);
+goog.exportSymbol(
+  'proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse',
+  null,
+  global
+);
+goog.exportSymbol('proto.bucketeer.account.GetAPIKeyRequest', null, global);
+goog.exportSymbol('proto.bucketeer.account.GetAPIKeyResponse', null, global);
+goog.exportSymbol(
+  'proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest',
+  null,
+  global
+);
+goog.exportSymbol(
+  'proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse',
+  null,
+  global
+);
+goog.exportSymbol('proto.bucketeer.account.GetAccountV2Request', null, global);
+goog.exportSymbol('proto.bucketeer.account.GetAccountV2Response', null, global);
+goog.exportSymbol('proto.bucketeer.account.GetMeRequest', null, global);
+goog.exportSymbol('proto.bucketeer.account.GetMeResponse', null, global);
+goog.exportSymbol(
+  'proto.bucketeer.account.GetMyOrganizationsByEmailRequest',
+  null,
+  global
+);
+goog.exportSymbol(
+  'proto.bucketeer.account.GetMyOrganizationsRequest',
+  null,
+  global
+);
+goog.exportSymbol(
+  'proto.bucketeer.account.GetMyOrganizationsResponse',
+  null,
+  global
+);
+goog.exportSymbol('proto.bucketeer.account.ListAPIKeysRequest', null, global);
+goog.exportSymbol(
+  'proto.bucketeer.account.ListAPIKeysRequest.OrderBy',
+  null,
+  global
+);
+goog.exportSymbol(
+  'proto.bucketeer.account.ListAPIKeysRequest.OrderDirection',
+  null,
+  global
+);
+goog.exportSymbol('proto.bucketeer.account.ListAPIKeysResponse', null, global);
+goog.exportSymbol(
+  'proto.bucketeer.account.ListAccountsV2Request',
+  null,
+  global
+);
+goog.exportSymbol(
+  'proto.bucketeer.account.ListAccountsV2Request.OrderBy',
+  null,
+  global
+);
+goog.exportSymbol(
+  'proto.bucketeer.account.ListAccountsV2Request.OrderDirection',
+  null,
+  global
+);
+goog.exportSymbol(
+  'proto.bucketeer.account.ListAccountsV2Response',
+  null,
+  global
+);
+goog.exportSymbol(
+  'proto.bucketeer.account.UpdateAccountV2Request',
+  null,
+  global
+);
+goog.exportSymbol(
+  'proto.bucketeer.account.UpdateAccountV2Response',
+  null,
+  global
+);
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.GetMeRequest = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.GetMeRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.GetMeRequest.displayName =
+    'proto.bucketeer.account.GetMeRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.GetMeResponse = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.GetMeResponse, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.GetMeResponse.displayName =
+    'proto.bucketeer.account.GetMeResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.GetMyOrganizationsRequest = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.GetMyOrganizationsRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.GetMyOrganizationsRequest.displayName =
+    'proto.bucketeer.account.GetMyOrganizationsRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.GetMyOrganizationsByEmailRequest = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(
+  proto.bucketeer.account.GetMyOrganizationsByEmailRequest,
+  jspb.Message
+);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.GetMyOrganizationsByEmailRequest.displayName =
+    'proto.bucketeer.account.GetMyOrganizationsByEmailRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.GetMyOrganizationsResponse = function (opt_data) {
+  jspb.Message.initialize(
+    this,
+    opt_data,
+    0,
+    -1,
+    proto.bucketeer.account.GetMyOrganizationsResponse.repeatedFields_,
+    null
+  );
+};
+goog.inherits(proto.bucketeer.account.GetMyOrganizationsResponse, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.GetMyOrganizationsResponse.displayName =
+    'proto.bucketeer.account.GetMyOrganizationsResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.CreateAccountV2Request = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.CreateAccountV2Request, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.CreateAccountV2Request.displayName =
+    'proto.bucketeer.account.CreateAccountV2Request';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.CreateAccountV2Response = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.CreateAccountV2Response, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.CreateAccountV2Response.displayName =
+    'proto.bucketeer.account.CreateAccountV2Response';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.EnableAccountV2Request = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.EnableAccountV2Request, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.EnableAccountV2Request.displayName =
+    'proto.bucketeer.account.EnableAccountV2Request';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.EnableAccountV2Response = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.EnableAccountV2Response, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.EnableAccountV2Response.displayName =
+    'proto.bucketeer.account.EnableAccountV2Response';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.DisableAccountV2Request = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.DisableAccountV2Request, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.DisableAccountV2Request.displayName =
+    'proto.bucketeer.account.DisableAccountV2Request';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.DisableAccountV2Response = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.DisableAccountV2Response, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.DisableAccountV2Response.displayName =
+    'proto.bucketeer.account.DisableAccountV2Response';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.DeleteAccountV2Request = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.DeleteAccountV2Request, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.DeleteAccountV2Request.displayName =
+    'proto.bucketeer.account.DeleteAccountV2Request';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.DeleteAccountV2Response = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.DeleteAccountV2Response, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.DeleteAccountV2Response.displayName =
+    'proto.bucketeer.account.DeleteAccountV2Response';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.UpdateAccountV2Request = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.UpdateAccountV2Request, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.UpdateAccountV2Request.displayName =
+    'proto.bucketeer.account.UpdateAccountV2Request';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.UpdateAccountV2Response = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.UpdateAccountV2Response, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.UpdateAccountV2Response.displayName =
+    'proto.bucketeer.account.UpdateAccountV2Response';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.GetAccountV2Request = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.GetAccountV2Request, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.GetAccountV2Request.displayName =
+    'proto.bucketeer.account.GetAccountV2Request';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.GetAccountV2Response = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.GetAccountV2Response, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.GetAccountV2Response.displayName =
+    'proto.bucketeer.account.GetAccountV2Response';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest = function (
+  opt_data
+) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(
+  proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest,
+  jspb.Message
+);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest.displayName =
+    'proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse = function (
+  opt_data
+) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(
+  proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse,
+  jspb.Message
+);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse.displayName =
+    'proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.ListAccountsV2Request = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.ListAccountsV2Request, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.ListAccountsV2Request.displayName =
+    'proto.bucketeer.account.ListAccountsV2Request';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.ListAccountsV2Response = function (opt_data) {
+  jspb.Message.initialize(
+    this,
+    opt_data,
+    0,
+    -1,
+    proto.bucketeer.account.ListAccountsV2Response.repeatedFields_,
+    null
+  );
+};
+goog.inherits(proto.bucketeer.account.ListAccountsV2Response, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.ListAccountsV2Response.displayName =
+    'proto.bucketeer.account.ListAccountsV2Response';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.CreateAPIKeyRequest = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.CreateAPIKeyRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.CreateAPIKeyRequest.displayName =
+    'proto.bucketeer.account.CreateAPIKeyRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.CreateAPIKeyResponse = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.CreateAPIKeyResponse, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.CreateAPIKeyResponse.displayName =
+    'proto.bucketeer.account.CreateAPIKeyResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.ChangeAPIKeyNameRequest = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.ChangeAPIKeyNameRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.ChangeAPIKeyNameRequest.displayName =
+    'proto.bucketeer.account.ChangeAPIKeyNameRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.ChangeAPIKeyNameResponse = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.ChangeAPIKeyNameResponse, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.ChangeAPIKeyNameResponse.displayName =
+    'proto.bucketeer.account.ChangeAPIKeyNameResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.EnableAPIKeyRequest = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.EnableAPIKeyRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.EnableAPIKeyRequest.displayName =
+    'proto.bucketeer.account.EnableAPIKeyRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.EnableAPIKeyResponse = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.EnableAPIKeyResponse, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.EnableAPIKeyResponse.displayName =
+    'proto.bucketeer.account.EnableAPIKeyResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.DisableAPIKeyRequest = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.DisableAPIKeyRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.DisableAPIKeyRequest.displayName =
+    'proto.bucketeer.account.DisableAPIKeyRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.DisableAPIKeyResponse = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.DisableAPIKeyResponse, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.DisableAPIKeyResponse.displayName =
+    'proto.bucketeer.account.DisableAPIKeyResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.GetAPIKeyRequest = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.GetAPIKeyRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.GetAPIKeyRequest.displayName =
+    'proto.bucketeer.account.GetAPIKeyRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.GetAPIKeyResponse = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.GetAPIKeyResponse, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.GetAPIKeyResponse.displayName =
+    'proto.bucketeer.account.GetAPIKeyResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.ListAPIKeysRequest = function (opt_data) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(proto.bucketeer.account.ListAPIKeysRequest, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.ListAPIKeysRequest.displayName =
+    'proto.bucketeer.account.ListAPIKeysRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.ListAPIKeysResponse = function (opt_data) {
+  jspb.Message.initialize(
+    this,
+    opt_data,
+    0,
+    -1,
+    proto.bucketeer.account.ListAPIKeysResponse.repeatedFields_,
+    null
+  );
+};
+goog.inherits(proto.bucketeer.account.ListAPIKeysResponse, jspb.Message);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.ListAPIKeysResponse.displayName =
+    'proto.bucketeer.account.ListAPIKeysResponse';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest = function (
+  opt_data
+) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(
+  proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest,
+  jspb.Message
+);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.displayName =
+    'proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest';
+}
+/**
+ * Generated by JsPbCodeGenerator.
+ * @param {Array=} opt_data Optional initial data array, typically from a
+ * server response, or constructed directly in Javascript. The array is used
+ * in place and becomes part of the constructed object. It is not cloned.
+ * If no data is provided, the constructed object will be empty, but still
+ * valid.
+ * @extends {jspb.Message}
+ * @constructor
+ */
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse = function (
+  opt_data
+) {
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+};
+goog.inherits(
+  proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse,
+  jspb.Message
+);
+if (goog.DEBUG && !COMPILED) {
+  /**
+   * @public
+   * @override
+   */
+  proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse.displayName =
+    'proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse';
+}
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.GetMeRequest.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.GetMeRequest.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.GetMeRequest} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.GetMeRequest.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        organizationId: jspb.Message.getFieldWithDefault(msg, 1, ''),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.GetMeRequest}
+ */
+proto.bucketeer.account.GetMeRequest.deserializeBinary = function (bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.GetMeRequest();
+  return proto.bucketeer.account.GetMeRequest.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.GetMeRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.GetMeRequest}
+ */
+proto.bucketeer.account.GetMeRequest.deserializeBinaryFromReader = function (
+  msg,
+  reader
+) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+      case 1:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setOrganizationId(value);
+        break;
+      default:
+        reader.skipField();
+        break;
+    }
+  }
+  return msg;
+};
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.GetMeRequest.prototype.serializeBinary = function () {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.account.GetMeRequest.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.GetMeRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.GetMeRequest.serializeBinaryToWriter = function (
+  message,
+  writer
+) {
+  var f = undefined;
+  f = message.getOrganizationId();
+  if (f.length > 0) {
+    writer.writeString(1, f);
+  }
+};
+
+/**
+ * optional string organization_id = 1;
+ * @return {string}
+ */
+proto.bucketeer.account.GetMeRequest.prototype.getOrganizationId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.GetMeRequest} returns this
+ */
+proto.bucketeer.account.GetMeRequest.prototype.setOrganizationId = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.GetMeResponse.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.GetMeResponse.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.GetMeResponse} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.GetMeResponse.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        account:
+          (f = msg.getAccount()) &&
+          proto_account_account_pb.ConsoleAccount.toObject(includeInstance, f),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.GetMeResponse}
+ */
+proto.bucketeer.account.GetMeResponse.deserializeBinary = function (bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.GetMeResponse();
+  return proto.bucketeer.account.GetMeResponse.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.GetMeResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.GetMeResponse}
+ */
+proto.bucketeer.account.GetMeResponse.deserializeBinaryFromReader = function (
+  msg,
+  reader
+) {
+  while (reader.nextField()) {
+    if (reader.isEndGroup()) {
+      break;
+    }
+    var field = reader.getFieldNumber();
+    switch (field) {
+      case 1:
+        var value = new proto_account_account_pb.ConsoleAccount();
+        reader.readMessage(
+          value,
+          proto_account_account_pb.ConsoleAccount.deserializeBinaryFromReader
+        );
+        msg.setAccount(value);
+        break;
+      default:
+        reader.skipField();
+        break;
+    }
+  }
+  return msg;
+};
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.GetMeResponse.prototype.serializeBinary = function () {
+  var writer = new jspb.BinaryWriter();
+  proto.bucketeer.account.GetMeResponse.serializeBinaryToWriter(this, writer);
+  return writer.getResultBuffer();
+};
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.GetMeResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.GetMeResponse.serializeBinaryToWriter = function (
+  message,
+  writer
+) {
+  var f = undefined;
+  f = message.getAccount();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      proto_account_account_pb.ConsoleAccount.serializeBinaryToWriter
+    );
+  }
+};
+
+/**
+ * optional ConsoleAccount account = 1;
+ * @return {?proto.bucketeer.account.ConsoleAccount}
+ */
+proto.bucketeer.account.GetMeResponse.prototype.getAccount = function () {
+  return /** @type{?proto.bucketeer.account.ConsoleAccount} */ (
+    jspb.Message.getWrapperField(
+      this,
+      proto_account_account_pb.ConsoleAccount,
+      1
+    )
+  );
+};
+
+/**
+ * @param {?proto.bucketeer.account.ConsoleAccount|undefined} value
+ * @return {!proto.bucketeer.account.GetMeResponse} returns this
+ */
+proto.bucketeer.account.GetMeResponse.prototype.setAccount = function (value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.GetMeResponse} returns this
+ */
+proto.bucketeer.account.GetMeResponse.prototype.clearAccount = function () {
+  return this.setAccount(undefined);
+};
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.GetMeResponse.prototype.hasAccount = function () {
+  return jspb.Message.getField(this, 1) != null;
+};
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.GetMyOrganizationsRequest.prototype.toObject =
+    function (opt_includeInstance) {
+      return proto.bucketeer.account.GetMyOrganizationsRequest.toObject(
+        opt_includeInstance,
+        this
+      );
+    };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.GetMyOrganizationsRequest} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.GetMyOrganizationsRequest.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {};
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.GetMyOrganizationsRequest}
+ */
+proto.bucketeer.account.GetMyOrganizationsRequest.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.GetMyOrganizationsRequest();
+  return proto.bucketeer.account.GetMyOrganizationsRequest.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.GetMyOrganizationsRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.GetMyOrganizationsRequest}
+ */
+proto.bucketeer.account.GetMyOrganizationsRequest.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.GetMyOrganizationsRequest.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.GetMyOrganizationsRequest.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.GetMyOrganizationsRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.GetMyOrganizationsRequest.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.GetMyOrganizationsByEmailRequest.prototype.toObject =
+    function (opt_includeInstance) {
+      return proto.bucketeer.account.GetMyOrganizationsByEmailRequest.toObject(
+        opt_includeInstance,
+        this
+      );
+    };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.GetMyOrganizationsByEmailRequest} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.GetMyOrganizationsByEmailRequest.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        email: jspb.Message.getFieldWithDefault(msg, 1, ''),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.GetMyOrganizationsByEmailRequest}
+ */
+proto.bucketeer.account.GetMyOrganizationsByEmailRequest.deserializeBinary =
+  function (bytes) {
+    var reader = new jspb.BinaryReader(bytes);
+    var msg = new proto.bucketeer.account.GetMyOrganizationsByEmailRequest();
+    return proto.bucketeer.account.GetMyOrganizationsByEmailRequest.deserializeBinaryFromReader(
+      msg,
+      reader
+    );
+  };
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.GetMyOrganizationsByEmailRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.GetMyOrganizationsByEmailRequest}
+ */
+proto.bucketeer.account.GetMyOrganizationsByEmailRequest.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEmail(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.GetMyOrganizationsByEmailRequest.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.GetMyOrganizationsByEmailRequest.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.GetMyOrganizationsByEmailRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.GetMyOrganizationsByEmailRequest.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+    f = message.getEmail();
+    if (f.length > 0) {
+      writer.writeString(1, f);
+    }
+  };
+
+/**
+ * optional string email = 1;
+ * @return {string}
+ */
+proto.bucketeer.account.GetMyOrganizationsByEmailRequest.prototype.getEmail =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 1, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.GetMyOrganizationsByEmailRequest} returns this
+ */
+proto.bucketeer.account.GetMyOrganizationsByEmailRequest.prototype.setEmail =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 1, value);
+  };
+
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.account.GetMyOrganizationsResponse.repeatedFields_ = [1];
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.GetMyOrganizationsResponse.prototype.toObject =
+    function (opt_includeInstance) {
+      return proto.bucketeer.account.GetMyOrganizationsResponse.toObject(
+        opt_includeInstance,
+        this
+      );
+    };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.GetMyOrganizationsResponse} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.GetMyOrganizationsResponse.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        organizationsList: jspb.Message.toObjectList(
+          msg.getOrganizationsList(),
+          proto_environment_organization_pb.Organization.toObject,
+          includeInstance
+        ),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.GetMyOrganizationsResponse}
+ */
+proto.bucketeer.account.GetMyOrganizationsResponse.deserializeBinary =
+  function (bytes) {
+    var reader = new jspb.BinaryReader(bytes);
+    var msg = new proto.bucketeer.account.GetMyOrganizationsResponse();
+    return proto.bucketeer.account.GetMyOrganizationsResponse.deserializeBinaryFromReader(
+      msg,
+      reader
+    );
+  };
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.GetMyOrganizationsResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.GetMyOrganizationsResponse}
+ */
+proto.bucketeer.account.GetMyOrganizationsResponse.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = new proto_environment_organization_pb.Organization();
+          reader.readMessage(
+            value,
+            proto_environment_organization_pb.Organization
+              .deserializeBinaryFromReader
+          );
+          msg.addOrganizations(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.GetMyOrganizationsResponse.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.GetMyOrganizationsResponse.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.GetMyOrganizationsResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.GetMyOrganizationsResponse.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+    f = message.getOrganizationsList();
+    if (f.length > 0) {
+      writer.writeRepeatedMessage(
+        1,
+        f,
+        proto_environment_organization_pb.Organization.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * repeated bucketeer.environment.Organization organizations = 1;
+ * @return {!Array<!proto.bucketeer.environment.Organization>}
+ */
+proto.bucketeer.account.GetMyOrganizationsResponse.prototype.getOrganizationsList =
+  function () {
+    return /** @type{!Array<!proto.bucketeer.environment.Organization>} */ (
+      jspb.Message.getRepeatedWrapperField(
+        this,
+        proto_environment_organization_pb.Organization,
+        1
+      )
+    );
+  };
+
+/**
+ * @param {!Array<!proto.bucketeer.environment.Organization>} value
+ * @return {!proto.bucketeer.account.GetMyOrganizationsResponse} returns this
+ */
+proto.bucketeer.account.GetMyOrganizationsResponse.prototype.setOrganizationsList =
+  function (value) {
+    return jspb.Message.setRepeatedWrapperField(this, 1, value);
+  };
+
+/**
+ * @param {!proto.bucketeer.environment.Organization=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.environment.Organization}
+ */
+proto.bucketeer.account.GetMyOrganizationsResponse.prototype.addOrganizations =
+  function (opt_value, opt_index) {
+    return jspb.Message.addToRepeatedWrapperField(
+      this,
+      1,
+      opt_value,
+      proto.bucketeer.environment.Organization,
+      opt_index
+    );
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.account.GetMyOrganizationsResponse} returns this
+ */
+proto.bucketeer.account.GetMyOrganizationsResponse.prototype.clearOrganizationsList =
+  function () {
+    return this.setOrganizationsList([]);
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.CreateAccountV2Request.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.CreateAccountV2Request.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.CreateAccountV2Request} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.CreateAccountV2Request.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        organizationId: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        command:
+          (f = msg.getCommand()) &&
+          proto_account_command_pb.CreateAccountV2Command.toObject(
+            includeInstance,
+            f
+          ),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.CreateAccountV2Request}
+ */
+proto.bucketeer.account.CreateAccountV2Request.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.CreateAccountV2Request();
+  return proto.bucketeer.account.CreateAccountV2Request.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.CreateAccountV2Request} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.CreateAccountV2Request}
+ */
+proto.bucketeer.account.CreateAccountV2Request.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOrganizationId(value);
+          break;
+        case 2:
+          var value = new proto_account_command_pb.CreateAccountV2Command();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.CreateAccountV2Command
+              .deserializeBinaryFromReader
+          );
+          msg.setCommand(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.CreateAccountV2Request.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.CreateAccountV2Request} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.CreateAccountV2Request.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+    f = message.getOrganizationId();
+    if (f.length > 0) {
+      writer.writeString(1, f);
+    }
+    f = message.getCommand();
+    if (f != null) {
+      writer.writeMessage(
+        2,
+        f,
+        proto_account_command_pb.CreateAccountV2Command.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional string organization_id = 1;
+ * @return {string}
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.getOrganizationId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 1, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.CreateAccountV2Request} returns this
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.setOrganizationId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 1, value);
+  };
+
+/**
+ * optional CreateAccountV2Command command = 2;
+ * @return {?proto.bucketeer.account.CreateAccountV2Command}
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.getCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.CreateAccountV2Command} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.CreateAccountV2Command,
+        2
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.CreateAccountV2Command|undefined} value
+ * @return {!proto.bucketeer.account.CreateAccountV2Request} returns this
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.setCommand = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 2, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.CreateAccountV2Request} returns this
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.clearCommand =
+  function () {
+    return this.setCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.hasCommand =
+  function () {
+    return jspb.Message.getField(this, 2) != null;
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.CreateAccountV2Response.prototype.toObject =
+    function (opt_includeInstance) {
+      return proto.bucketeer.account.CreateAccountV2Response.toObject(
+        opt_includeInstance,
+        this
+      );
+    };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.CreateAccountV2Response} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.CreateAccountV2Response.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        account:
+          (f = msg.getAccount()) &&
+          proto_account_account_pb.AccountV2.toObject(includeInstance, f),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.CreateAccountV2Response}
+ */
+proto.bucketeer.account.CreateAccountV2Response.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.CreateAccountV2Response();
+  return proto.bucketeer.account.CreateAccountV2Response.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.CreateAccountV2Response} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.CreateAccountV2Response}
+ */
+proto.bucketeer.account.CreateAccountV2Response.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = new proto_account_account_pb.AccountV2();
+          reader.readMessage(
+            value,
+            proto_account_account_pb.AccountV2.deserializeBinaryFromReader
+          );
+          msg.setAccount(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.CreateAccountV2Response.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.CreateAccountV2Response.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.CreateAccountV2Response} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.CreateAccountV2Response.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+    f = message.getAccount();
+    if (f != null) {
+      writer.writeMessage(
+        1,
+        f,
+        proto_account_account_pb.AccountV2.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional AccountV2 account = 1;
+ * @return {?proto.bucketeer.account.AccountV2}
+ */
+proto.bucketeer.account.CreateAccountV2Response.prototype.getAccount =
+  function () {
+    return /** @type{?proto.bucketeer.account.AccountV2} */ (
+      jspb.Message.getWrapperField(this, proto_account_account_pb.AccountV2, 1)
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.AccountV2|undefined} value
+ * @return {!proto.bucketeer.account.CreateAccountV2Response} returns this
+ */
+proto.bucketeer.account.CreateAccountV2Response.prototype.setAccount =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 1, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.CreateAccountV2Response} returns this
+ */
+proto.bucketeer.account.CreateAccountV2Response.prototype.clearAccount =
+  function () {
+    return this.setAccount(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.CreateAccountV2Response.prototype.hasAccount =
+  function () {
+    return jspb.Message.getField(this, 1) != null;
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.EnableAccountV2Request.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.EnableAccountV2Request.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.EnableAccountV2Request} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.EnableAccountV2Request.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        email: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        organizationId: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        command:
+          (f = msg.getCommand()) &&
+          proto_account_command_pb.EnableAccountV2Command.toObject(
+            includeInstance,
+            f
+          ),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.EnableAccountV2Request}
+ */
+proto.bucketeer.account.EnableAccountV2Request.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.EnableAccountV2Request();
+  return proto.bucketeer.account.EnableAccountV2Request.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.EnableAccountV2Request} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.EnableAccountV2Request}
+ */
+proto.bucketeer.account.EnableAccountV2Request.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEmail(value);
+          break;
+        case 2:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOrganizationId(value);
+          break;
+        case 3:
+          var value = new proto_account_command_pb.EnableAccountV2Command();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.EnableAccountV2Command
+              .deserializeBinaryFromReader
+          );
+          msg.setCommand(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.EnableAccountV2Request.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.EnableAccountV2Request.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.EnableAccountV2Request} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.EnableAccountV2Request.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+    f = message.getEmail();
+    if (f.length > 0) {
+      writer.writeString(1, f);
+    }
+    f = message.getOrganizationId();
+    if (f.length > 0) {
+      writer.writeString(2, f);
+    }
+    f = message.getCommand();
+    if (f != null) {
+      writer.writeMessage(
+        3,
+        f,
+        proto_account_command_pb.EnableAccountV2Command.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional string email = 1;
+ * @return {string}
+ */
+proto.bucketeer.account.EnableAccountV2Request.prototype.getEmail =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 1, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.EnableAccountV2Request} returns this
+ */
+proto.bucketeer.account.EnableAccountV2Request.prototype.setEmail = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+/**
+ * optional string organization_id = 2;
+ * @return {string}
+ */
+proto.bucketeer.account.EnableAccountV2Request.prototype.getOrganizationId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 2, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.EnableAccountV2Request} returns this
+ */
+proto.bucketeer.account.EnableAccountV2Request.prototype.setOrganizationId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 2, value);
+  };
+
+/**
+ * optional EnableAccountV2Command command = 3;
+ * @return {?proto.bucketeer.account.EnableAccountV2Command}
+ */
+proto.bucketeer.account.EnableAccountV2Request.prototype.getCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.EnableAccountV2Command} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.EnableAccountV2Command,
+        3
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.EnableAccountV2Command|undefined} value
+ * @return {!proto.bucketeer.account.EnableAccountV2Request} returns this
+ */
+proto.bucketeer.account.EnableAccountV2Request.prototype.setCommand = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 3, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.EnableAccountV2Request} returns this
+ */
+proto.bucketeer.account.EnableAccountV2Request.prototype.clearCommand =
+  function () {
+    return this.setCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.EnableAccountV2Request.prototype.hasCommand =
+  function () {
+    return jspb.Message.getField(this, 3) != null;
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.EnableAccountV2Response.prototype.toObject =
+    function (opt_includeInstance) {
+      return proto.bucketeer.account.EnableAccountV2Response.toObject(
+        opt_includeInstance,
+        this
+      );
+    };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.EnableAccountV2Response} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.EnableAccountV2Response.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {};
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.EnableAccountV2Response}
+ */
+proto.bucketeer.account.EnableAccountV2Response.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.EnableAccountV2Response();
+  return proto.bucketeer.account.EnableAccountV2Response.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.EnableAccountV2Response} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.EnableAccountV2Response}
+ */
+proto.bucketeer.account.EnableAccountV2Response.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.EnableAccountV2Response.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.EnableAccountV2Response.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.EnableAccountV2Response} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.EnableAccountV2Response.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.DisableAccountV2Request.prototype.toObject =
+    function (opt_includeInstance) {
+      return proto.bucketeer.account.DisableAccountV2Request.toObject(
+        opt_includeInstance,
+        this
+      );
+    };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.DisableAccountV2Request} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.DisableAccountV2Request.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        email: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        organizationId: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        command:
+          (f = msg.getCommand()) &&
+          proto_account_command_pb.DisableAccountV2Command.toObject(
+            includeInstance,
+            f
+          ),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.DisableAccountV2Request}
+ */
+proto.bucketeer.account.DisableAccountV2Request.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.DisableAccountV2Request();
+  return proto.bucketeer.account.DisableAccountV2Request.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.DisableAccountV2Request} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.DisableAccountV2Request}
+ */
+proto.bucketeer.account.DisableAccountV2Request.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEmail(value);
+          break;
+        case 2:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOrganizationId(value);
+          break;
+        case 3:
+          var value = new proto_account_command_pb.DisableAccountV2Command();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.DisableAccountV2Command
+              .deserializeBinaryFromReader
+          );
+          msg.setCommand(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.DisableAccountV2Request.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.DisableAccountV2Request.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.DisableAccountV2Request} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.DisableAccountV2Request.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+    f = message.getEmail();
+    if (f.length > 0) {
+      writer.writeString(1, f);
+    }
+    f = message.getOrganizationId();
+    if (f.length > 0) {
+      writer.writeString(2, f);
+    }
+    f = message.getCommand();
+    if (f != null) {
+      writer.writeMessage(
+        3,
+        f,
+        proto_account_command_pb.DisableAccountV2Command.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional string email = 1;
+ * @return {string}
+ */
+proto.bucketeer.account.DisableAccountV2Request.prototype.getEmail =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 1, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.DisableAccountV2Request} returns this
+ */
+proto.bucketeer.account.DisableAccountV2Request.prototype.setEmail = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+/**
+ * optional string organization_id = 2;
+ * @return {string}
+ */
+proto.bucketeer.account.DisableAccountV2Request.prototype.getOrganizationId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 2, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.DisableAccountV2Request} returns this
+ */
+proto.bucketeer.account.DisableAccountV2Request.prototype.setOrganizationId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 2, value);
+  };
+
+/**
+ * optional DisableAccountV2Command command = 3;
+ * @return {?proto.bucketeer.account.DisableAccountV2Command}
+ */
+proto.bucketeer.account.DisableAccountV2Request.prototype.getCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.DisableAccountV2Command} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.DisableAccountV2Command,
+        3
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.DisableAccountV2Command|undefined} value
+ * @return {!proto.bucketeer.account.DisableAccountV2Request} returns this
+ */
+proto.bucketeer.account.DisableAccountV2Request.prototype.setCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 3, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.DisableAccountV2Request} returns this
+ */
+proto.bucketeer.account.DisableAccountV2Request.prototype.clearCommand =
+  function () {
+    return this.setCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.DisableAccountV2Request.prototype.hasCommand =
+  function () {
+    return jspb.Message.getField(this, 3) != null;
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.DisableAccountV2Response.prototype.toObject =
+    function (opt_includeInstance) {
+      return proto.bucketeer.account.DisableAccountV2Response.toObject(
+        opt_includeInstance,
+        this
+      );
+    };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.DisableAccountV2Response} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.DisableAccountV2Response.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {};
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.DisableAccountV2Response}
+ */
+proto.bucketeer.account.DisableAccountV2Response.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.DisableAccountV2Response();
+  return proto.bucketeer.account.DisableAccountV2Response.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.DisableAccountV2Response} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.DisableAccountV2Response}
+ */
+proto.bucketeer.account.DisableAccountV2Response.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.DisableAccountV2Response.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.DisableAccountV2Response.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.DisableAccountV2Response} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.DisableAccountV2Response.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.DeleteAccountV2Request.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.DeleteAccountV2Request.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.DeleteAccountV2Request} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.DeleteAccountV2Request.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        email: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        organizationId: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        command:
+          (f = msg.getCommand()) &&
+          proto_account_command_pb.DeleteAccountV2Command.toObject(
+            includeInstance,
+            f
+          ),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.DeleteAccountV2Request}
+ */
+proto.bucketeer.account.DeleteAccountV2Request.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.DeleteAccountV2Request();
+  return proto.bucketeer.account.DeleteAccountV2Request.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.DeleteAccountV2Request} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.DeleteAccountV2Request}
+ */
+proto.bucketeer.account.DeleteAccountV2Request.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEmail(value);
+          break;
+        case 2:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOrganizationId(value);
+          break;
+        case 3:
+          var value = new proto_account_command_pb.DeleteAccountV2Command();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.DeleteAccountV2Command
+              .deserializeBinaryFromReader
+          );
+          msg.setCommand(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.DeleteAccountV2Request.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.DeleteAccountV2Request.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.DeleteAccountV2Request} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.DeleteAccountV2Request.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+    f = message.getEmail();
+    if (f.length > 0) {
+      writer.writeString(1, f);
+    }
+    f = message.getOrganizationId();
+    if (f.length > 0) {
+      writer.writeString(2, f);
+    }
+    f = message.getCommand();
+    if (f != null) {
+      writer.writeMessage(
+        3,
+        f,
+        proto_account_command_pb.DeleteAccountV2Command.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional string email = 1;
+ * @return {string}
+ */
+proto.bucketeer.account.DeleteAccountV2Request.prototype.getEmail =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 1, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.DeleteAccountV2Request} returns this
+ */
+proto.bucketeer.account.DeleteAccountV2Request.prototype.setEmail = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+/**
+ * optional string organization_id = 2;
+ * @return {string}
+ */
+proto.bucketeer.account.DeleteAccountV2Request.prototype.getOrganizationId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 2, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.DeleteAccountV2Request} returns this
+ */
+proto.bucketeer.account.DeleteAccountV2Request.prototype.setOrganizationId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 2, value);
+  };
+
+/**
+ * optional DeleteAccountV2Command command = 3;
+ * @return {?proto.bucketeer.account.DeleteAccountV2Command}
+ */
+proto.bucketeer.account.DeleteAccountV2Request.prototype.getCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.DeleteAccountV2Command} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.DeleteAccountV2Command,
+        3
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.DeleteAccountV2Command|undefined} value
+ * @return {!proto.bucketeer.account.DeleteAccountV2Request} returns this
+ */
+proto.bucketeer.account.DeleteAccountV2Request.prototype.setCommand = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 3, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.DeleteAccountV2Request} returns this
+ */
+proto.bucketeer.account.DeleteAccountV2Request.prototype.clearCommand =
+  function () {
+    return this.setCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.DeleteAccountV2Request.prototype.hasCommand =
+  function () {
+    return jspb.Message.getField(this, 3) != null;
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.DeleteAccountV2Response.prototype.toObject =
+    function (opt_includeInstance) {
+      return proto.bucketeer.account.DeleteAccountV2Response.toObject(
+        opt_includeInstance,
+        this
+      );
+    };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.DeleteAccountV2Response} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.DeleteAccountV2Response.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {};
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.DeleteAccountV2Response}
+ */
+proto.bucketeer.account.DeleteAccountV2Response.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.DeleteAccountV2Response();
+  return proto.bucketeer.account.DeleteAccountV2Response.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.DeleteAccountV2Response} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.DeleteAccountV2Response}
+ */
+proto.bucketeer.account.DeleteAccountV2Response.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.DeleteAccountV2Response.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.DeleteAccountV2Response.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.DeleteAccountV2Response} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.DeleteAccountV2Response.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.UpdateAccountV2Request.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.UpdateAccountV2Request.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.UpdateAccountV2Request} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.UpdateAccountV2Request.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        email: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        organizationId: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        changeNameCommand:
+          (f = msg.getChangeNameCommand()) &&
+          proto_account_command_pb.ChangeAccountV2NameCommand.toObject(
+            includeInstance,
+            f
+          ),
+        changeAvatarUrlCommand:
+          (f = msg.getChangeAvatarUrlCommand()) &&
+          proto_account_command_pb.ChangeAccountV2AvatarImageUrlCommand.toObject(
+            includeInstance,
+            f
+          ),
+        changeOrganizationRoleCommand:
+          (f = msg.getChangeOrganizationRoleCommand()) &&
+          proto_account_command_pb.ChangeAccountV2OrganizationRoleCommand.toObject(
+            includeInstance,
+            f
+          ),
+        changeEnvironmentRolesCommand:
+          (f = msg.getChangeEnvironmentRolesCommand()) &&
+          proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand.toObject(
+            includeInstance,
+            f
+          ),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.UpdateAccountV2Request();
+  return proto.bucketeer.account.UpdateAccountV2Request.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.UpdateAccountV2Request} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEmail(value);
+          break;
+        case 2:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOrganizationId(value);
+          break;
+        case 3:
+          var value = new proto_account_command_pb.ChangeAccountV2NameCommand();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.ChangeAccountV2NameCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setChangeNameCommand(value);
+          break;
+        case 4:
+          var value =
+            new proto_account_command_pb.ChangeAccountV2AvatarImageUrlCommand();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.ChangeAccountV2AvatarImageUrlCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setChangeAvatarUrlCommand(value);
+          break;
+        case 5:
+          var value =
+            new proto_account_command_pb.ChangeAccountV2OrganizationRoleCommand();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.ChangeAccountV2OrganizationRoleCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setChangeOrganizationRoleCommand(value);
+          break;
+        case 6:
+          var value =
+            new proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setChangeEnvironmentRolesCommand(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.UpdateAccountV2Request.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.UpdateAccountV2Request} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.UpdateAccountV2Request.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+    f = message.getEmail();
+    if (f.length > 0) {
+      writer.writeString(1, f);
+    }
+    f = message.getOrganizationId();
+    if (f.length > 0) {
+      writer.writeString(2, f);
+    }
+    f = message.getChangeNameCommand();
+    if (f != null) {
+      writer.writeMessage(
+        3,
+        f,
+        proto_account_command_pb.ChangeAccountV2NameCommand
+          .serializeBinaryToWriter
+      );
+    }
+    f = message.getChangeAvatarUrlCommand();
+    if (f != null) {
+      writer.writeMessage(
+        4,
+        f,
+        proto_account_command_pb.ChangeAccountV2AvatarImageUrlCommand
+          .serializeBinaryToWriter
+      );
+    }
+    f = message.getChangeOrganizationRoleCommand();
+    if (f != null) {
+      writer.writeMessage(
+        5,
+        f,
+        proto_account_command_pb.ChangeAccountV2OrganizationRoleCommand
+          .serializeBinaryToWriter
+      );
+    }
+    f = message.getChangeEnvironmentRolesCommand();
+    if (f != null) {
+      writer.writeMessage(
+        6,
+        f,
+        proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand
+          .serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional string email = 1;
+ * @return {string}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.getEmail =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 1, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.setEmail = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+/**
+ * optional string organization_id = 2;
+ * @return {string}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.getOrganizationId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 2, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.setOrganizationId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 2, value);
+  };
+
+/**
+ * optional ChangeAccountV2NameCommand change_name_command = 3;
+ * @return {?proto.bucketeer.account.ChangeAccountV2NameCommand}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.getChangeNameCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.ChangeAccountV2NameCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.ChangeAccountV2NameCommand,
+        3
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.ChangeAccountV2NameCommand|undefined} value
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.setChangeNameCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 3, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.clearChangeNameCommand =
+  function () {
+    return this.setChangeNameCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.hasChangeNameCommand =
+  function () {
+    return jspb.Message.getField(this, 3) != null;
+  };
+
+/**
+ * optional ChangeAccountV2AvatarImageUrlCommand change_avatar_url_command = 4;
+ * @return {?proto.bucketeer.account.ChangeAccountV2AvatarImageUrlCommand}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.getChangeAvatarUrlCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.ChangeAccountV2AvatarImageUrlCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.ChangeAccountV2AvatarImageUrlCommand,
+        4
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.ChangeAccountV2AvatarImageUrlCommand|undefined} value
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.setChangeAvatarUrlCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 4, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.clearChangeAvatarUrlCommand =
+  function () {
+    return this.setChangeAvatarUrlCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.hasChangeAvatarUrlCommand =
+  function () {
+    return jspb.Message.getField(this, 4) != null;
+  };
+
+/**
+ * optional ChangeAccountV2OrganizationRoleCommand change_organization_role_command = 5;
+ * @return {?proto.bucketeer.account.ChangeAccountV2OrganizationRoleCommand}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.getChangeOrganizationRoleCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.ChangeAccountV2OrganizationRoleCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.ChangeAccountV2OrganizationRoleCommand,
+        5
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.ChangeAccountV2OrganizationRoleCommand|undefined} value
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.setChangeOrganizationRoleCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 5, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.clearChangeOrganizationRoleCommand =
+  function () {
+    return this.setChangeOrganizationRoleCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.hasChangeOrganizationRoleCommand =
+  function () {
+    return jspb.Message.getField(this, 5) != null;
+  };
+
+/**
+ * optional ChangeAccountV2EnvironmentRolesCommand change_environment_roles_command = 6;
+ * @return {?proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.getChangeEnvironmentRolesCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand,
+        6
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand|undefined} value
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.setChangeEnvironmentRolesCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 6, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.clearChangeEnvironmentRolesCommand =
+  function () {
+    return this.setChangeEnvironmentRolesCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.hasChangeEnvironmentRolesCommand =
+  function () {
+    return jspb.Message.getField(this, 6) != null;
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.UpdateAccountV2Response.prototype.toObject =
+    function (opt_includeInstance) {
+      return proto.bucketeer.account.UpdateAccountV2Response.toObject(
+        opt_includeInstance,
+        this
+      );
+    };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.UpdateAccountV2Response} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.UpdateAccountV2Response.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {};
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.UpdateAccountV2Response}
+ */
+proto.bucketeer.account.UpdateAccountV2Response.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.UpdateAccountV2Response();
+  return proto.bucketeer.account.UpdateAccountV2Response.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.UpdateAccountV2Response} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.UpdateAccountV2Response}
+ */
+proto.bucketeer.account.UpdateAccountV2Response.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.UpdateAccountV2Response.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.UpdateAccountV2Response.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.UpdateAccountV2Response} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.UpdateAccountV2Response.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.GetAccountV2Request.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.GetAccountV2Request.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.GetAccountV2Request} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.GetAccountV2Request.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        email: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        organizationId: jspb.Message.getFieldWithDefault(msg, 2, ''),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.GetAccountV2Request}
+ */
+proto.bucketeer.account.GetAccountV2Request.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.GetAccountV2Request();
+  return proto.bucketeer.account.GetAccountV2Request.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.GetAccountV2Request} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.GetAccountV2Request}
+ */
+proto.bucketeer.account.GetAccountV2Request.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEmail(value);
+          break;
+        case 2:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOrganizationId(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.GetAccountV2Request.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.GetAccountV2Request.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.GetAccountV2Request} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.GetAccountV2Request.serializeBinaryToWriter = function (
+  message,
+  writer
+) {
+  var f = undefined;
+  f = message.getEmail();
+  if (f.length > 0) {
+    writer.writeString(1, f);
+  }
+  f = message.getOrganizationId();
+  if (f.length > 0) {
+    writer.writeString(2, f);
+  }
+};
+
+/**
+ * optional string email = 1;
+ * @return {string}
+ */
+proto.bucketeer.account.GetAccountV2Request.prototype.getEmail = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.GetAccountV2Request} returns this
+ */
+proto.bucketeer.account.GetAccountV2Request.prototype.setEmail = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+/**
+ * optional string organization_id = 2;
+ * @return {string}
+ */
+proto.bucketeer.account.GetAccountV2Request.prototype.getOrganizationId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 2, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.GetAccountV2Request} returns this
+ */
+proto.bucketeer.account.GetAccountV2Request.prototype.setOrganizationId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 2, value);
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.GetAccountV2Response.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.GetAccountV2Response.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.GetAccountV2Response} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.GetAccountV2Response.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        account:
+          (f = msg.getAccount()) &&
+          proto_account_account_pb.AccountV2.toObject(includeInstance, f),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.GetAccountV2Response}
+ */
+proto.bucketeer.account.GetAccountV2Response.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.GetAccountV2Response();
+  return proto.bucketeer.account.GetAccountV2Response.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.GetAccountV2Response} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.GetAccountV2Response}
+ */
+proto.bucketeer.account.GetAccountV2Response.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = new proto_account_account_pb.AccountV2();
+          reader.readMessage(
+            value,
+            proto_account_account_pb.AccountV2.deserializeBinaryFromReader
+          );
+          msg.setAccount(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.GetAccountV2Response.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.GetAccountV2Response.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.GetAccountV2Response} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.GetAccountV2Response.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+    f = message.getAccount();
+    if (f != null) {
+      writer.writeMessage(
+        1,
+        f,
+        proto_account_account_pb.AccountV2.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional AccountV2 account = 1;
+ * @return {?proto.bucketeer.account.AccountV2}
+ */
+proto.bucketeer.account.GetAccountV2Response.prototype.getAccount =
+  function () {
+    return /** @type{?proto.bucketeer.account.AccountV2} */ (
+      jspb.Message.getWrapperField(this, proto_account_account_pb.AccountV2, 1)
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.AccountV2|undefined} value
+ * @return {!proto.bucketeer.account.GetAccountV2Response} returns this
+ */
+proto.bucketeer.account.GetAccountV2Response.prototype.setAccount = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.GetAccountV2Response} returns this
+ */
+proto.bucketeer.account.GetAccountV2Response.prototype.clearAccount =
+  function () {
+    return this.setAccount(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.GetAccountV2Response.prototype.hasAccount =
+  function () {
+    return jspb.Message.getField(this, 1) != null;
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest.prototype.toObject =
+    function (opt_includeInstance) {
+      return proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest.toObject(
+        opt_includeInstance,
+        this
+      );
+    };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest.toObject =
+    function (includeInstance, msg) {
+      var f,
+        obj = {
+          email: jspb.Message.getFieldWithDefault(msg, 1, ''),
+          environmentId: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        };
+
+      if (includeInstance) {
+        obj.$jspbMessageInstance = msg;
+      }
+      return obj;
+    };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest}
+ */
+proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest.deserializeBinary =
+  function (bytes) {
+    var reader = new jspb.BinaryReader(bytes);
+    var msg = new proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest();
+    return proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest.deserializeBinaryFromReader(
+      msg,
+      reader
+    );
+  };
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest}
+ */
+proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEmail(value);
+          break;
+        case 2:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+    f = message.getEmail();
+    if (f.length > 0) {
+      writer.writeString(1, f);
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(2, f);
+    }
+  };
+
+/**
+ * optional string email = 1;
+ * @return {string}
+ */
+proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest.prototype.getEmail =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 1, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest} returns this
+ */
+proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest.prototype.setEmail =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 1, value);
+  };
+
+/**
+ * optional string environment_id = 2;
+ * @return {string}
+ */
+proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 2, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest} returns this
+ */
+proto.bucketeer.account.GetAccountV2ByEnvironmentIDRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 2, value);
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse.prototype.toObject =
+    function (opt_includeInstance) {
+      return proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse.toObject(
+        opt_includeInstance,
+        this
+      );
+    };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse.toObject =
+    function (includeInstance, msg) {
+      var f,
+        obj = {
+          account:
+            (f = msg.getAccount()) &&
+            proto_account_account_pb.AccountV2.toObject(includeInstance, f),
+        };
+
+      if (includeInstance) {
+        obj.$jspbMessageInstance = msg;
+      }
+      return obj;
+    };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse}
+ */
+proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse.deserializeBinary =
+  function (bytes) {
+    var reader = new jspb.BinaryReader(bytes);
+    var msg = new proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse();
+    return proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse.deserializeBinaryFromReader(
+      msg,
+      reader
+    );
+  };
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse}
+ */
+proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = new proto_account_account_pb.AccountV2();
+          reader.readMessage(
+            value,
+            proto_account_account_pb.AccountV2.deserializeBinaryFromReader
+          );
+          msg.setAccount(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+    f = message.getAccount();
+    if (f != null) {
+      writer.writeMessage(
+        1,
+        f,
+        proto_account_account_pb.AccountV2.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional AccountV2 account = 1;
+ * @return {?proto.bucketeer.account.AccountV2}
+ */
+proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse.prototype.getAccount =
+  function () {
+    return /** @type{?proto.bucketeer.account.AccountV2} */ (
+      jspb.Message.getWrapperField(this, proto_account_account_pb.AccountV2, 1)
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.AccountV2|undefined} value
+ * @return {!proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse} returns this
+ */
+proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse.prototype.setAccount =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 1, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse} returns this
+ */
+proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse.prototype.clearAccount =
+  function () {
+    return this.setAccount(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.GetAccountV2ByEnvironmentIDResponse.prototype.hasAccount =
+  function () {
+    return jspb.Message.getField(this, 1) != null;
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.ListAccountsV2Request.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.ListAccountsV2Request.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.ListAccountsV2Request} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.ListAccountsV2Request.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        pageSize: jspb.Message.getFieldWithDefault(msg, 1, 0),
+        cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        organizationId: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        orderBy: jspb.Message.getFieldWithDefault(msg, 4, 0),
+        orderDirection: jspb.Message.getFieldWithDefault(msg, 5, 0),
+        searchKeyword: jspb.Message.getFieldWithDefault(msg, 6, ''),
+        disabled:
+          (f = msg.getDisabled()) &&
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
+        organizationRole:
+          (f = msg.getOrganizationRole()) &&
+          google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f),
+        environmentId:
+          (f = msg.getEnvironmentId()) &&
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
+        environmentRole:
+          (f = msg.getEnvironmentRole()) &&
+          google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.ListAccountsV2Request}
+ */
+proto.bucketeer.account.ListAccountsV2Request.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.ListAccountsV2Request();
+  return proto.bucketeer.account.ListAccountsV2Request.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.ListAccountsV2Request} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.ListAccountsV2Request}
+ */
+proto.bucketeer.account.ListAccountsV2Request.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = /** @type {number} */ (reader.readInt64());
+          msg.setPageSize(value);
+          break;
+        case 2:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setCursor(value);
+          break;
+        case 3:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOrganizationId(value);
+          break;
+        case 4:
+          var value =
+            /** @type {!proto.bucketeer.account.ListAccountsV2Request.OrderBy} */ (
+              reader.readEnum()
+            );
+          msg.setOrderBy(value);
+          break;
+        case 5:
+          var value =
+            /** @type {!proto.bucketeer.account.ListAccountsV2Request.OrderDirection} */ (
+              reader.readEnum()
+            );
+          msg.setOrderDirection(value);
+          break;
+        case 6:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setSearchKeyword(value);
+          break;
+        case 7:
+          var value = new google_protobuf_wrappers_pb.BoolValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader
+          );
+          msg.setDisabled(value);
+          break;
+        case 8:
+          var value = new google_protobuf_wrappers_pb.Int32Value();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.Int32Value.deserializeBinaryFromReader
+          );
+          msg.setOrganizationRole(value);
+          break;
+        case 9:
+          var value = new google_protobuf_wrappers_pb.StringValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
+          );
+          msg.setEnvironmentId(value);
+          break;
+        case 10:
+          var value = new google_protobuf_wrappers_pb.Int32Value();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.Int32Value.deserializeBinaryFromReader
+          );
+          msg.setEnvironmentRole(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.ListAccountsV2Request.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.ListAccountsV2Request} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.ListAccountsV2Request.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+    f = message.getPageSize();
+    if (f !== 0) {
+      writer.writeInt64(1, f);
+    }
+    f = message.getCursor();
+    if (f.length > 0) {
+      writer.writeString(2, f);
+    }
+    f = message.getOrganizationId();
+    if (f.length > 0) {
+      writer.writeString(3, f);
+    }
+    f = message.getOrderBy();
+    if (f !== 0.0) {
+      writer.writeEnum(4, f);
+    }
+    f = message.getOrderDirection();
+    if (f !== 0.0) {
+      writer.writeEnum(5, f);
+    }
+    f = message.getSearchKeyword();
+    if (f.length > 0) {
+      writer.writeString(6, f);
+    }
+    f = message.getDisabled();
+    if (f != null) {
+      writer.writeMessage(
+        7,
+        f,
+        google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
+      );
+    }
+    f = message.getOrganizationRole();
+    if (f != null) {
+      writer.writeMessage(
+        8,
+        f,
+        google_protobuf_wrappers_pb.Int32Value.serializeBinaryToWriter
+      );
+    }
+    f = message.getEnvironmentId();
+    if (f != null) {
+      writer.writeMessage(
+        9,
+        f,
+        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
+      );
+    }
+    f = message.getEnvironmentRole();
+    if (f != null) {
+      writer.writeMessage(
+        10,
+        f,
+        google_protobuf_wrappers_pb.Int32Value.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * @enum {number}
+ */
+proto.bucketeer.account.ListAccountsV2Request.OrderBy = {
+  DEFAULT: 0,
+  EMAIL: 1,
+  CREATED_AT: 2,
+  UPDATED_AT: 3,
+};
+
+/**
+ * @enum {number}
+ */
+proto.bucketeer.account.ListAccountsV2Request.OrderDirection = {
+  ASC: 0,
+  DESC: 1,
+};
+
+/**
+ * optional int64 page_size = 1;
+ * @return {number}
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.getPageSize =
+  function () {
+    return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
+  };
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.account.ListAccountsV2Request} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.setPageSize = function (
+  value
+) {
+  return jspb.Message.setProto3IntField(this, 1, value);
+};
+
+/**
+ * optional string cursor = 2;
+ * @return {string}
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.getCursor =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 2, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.ListAccountsV2Request} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.setCursor = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+/**
+ * optional string organization_id = 3;
+ * @return {string}
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.getOrganizationId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 3, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.ListAccountsV2Request} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.setOrganizationId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 3, value);
+  };
+
+/**
+ * optional OrderBy order_by = 4;
+ * @return {!proto.bucketeer.account.ListAccountsV2Request.OrderBy}
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.getOrderBy =
+  function () {
+    return /** @type {!proto.bucketeer.account.ListAccountsV2Request.OrderBy} */ (
+      jspb.Message.getFieldWithDefault(this, 4, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.account.ListAccountsV2Request.OrderBy} value
+ * @return {!proto.bucketeer.account.ListAccountsV2Request} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.setOrderBy = function (
+  value
+) {
+  return jspb.Message.setProto3EnumField(this, 4, value);
+};
+
+/**
+ * optional OrderDirection order_direction = 5;
+ * @return {!proto.bucketeer.account.ListAccountsV2Request.OrderDirection}
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.getOrderDirection =
+  function () {
+    return /** @type {!proto.bucketeer.account.ListAccountsV2Request.OrderDirection} */ (
+      jspb.Message.getFieldWithDefault(this, 5, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.account.ListAccountsV2Request.OrderDirection} value
+ * @return {!proto.bucketeer.account.ListAccountsV2Request} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.setOrderDirection =
+  function (value) {
+    return jspb.Message.setProto3EnumField(this, 5, value);
+  };
+
+/**
+ * optional string search_keyword = 6;
+ * @return {string}
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.getSearchKeyword =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 6, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.ListAccountsV2Request} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.setSearchKeyword =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 6, value);
+  };
+
+/**
+ * optional google.protobuf.BoolValue disabled = 7;
+ * @return {?proto.google.protobuf.BoolValue}
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.getDisabled =
+  function () {
+    return /** @type{?proto.google.protobuf.BoolValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.BoolValue,
+        7
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.BoolValue|undefined} value
+ * @return {!proto.bucketeer.account.ListAccountsV2Request} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.setDisabled = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 7, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.ListAccountsV2Request} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.clearDisabled =
+  function () {
+    return this.setDisabled(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.hasDisabled =
+  function () {
+    return jspb.Message.getField(this, 7) != null;
+  };
+
+/**
+ * optional google.protobuf.Int32Value organization_role = 8;
+ * @return {?proto.google.protobuf.Int32Value}
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.getOrganizationRole =
+  function () {
+    return /** @type{?proto.google.protobuf.Int32Value} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.Int32Value,
+        8
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.Int32Value|undefined} value
+ * @return {!proto.bucketeer.account.ListAccountsV2Request} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.setOrganizationRole =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 8, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.ListAccountsV2Request} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.clearOrganizationRole =
+  function () {
+    return this.setOrganizationRole(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.hasOrganizationRole =
+  function () {
+    return jspb.Message.getField(this, 8) != null;
+  };
+
+/**
+ * optional google.protobuf.StringValue environment_id = 9;
+ * @return {?proto.google.protobuf.StringValue}
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.getEnvironmentId =
+  function () {
+    return /** @type{?proto.google.protobuf.StringValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.StringValue,
+        9
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.StringValue|undefined} value
+ * @return {!proto.bucketeer.account.ListAccountsV2Request} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 9, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.ListAccountsV2Request} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.clearEnvironmentId =
+  function () {
+    return this.setEnvironmentId(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.hasEnvironmentId =
+  function () {
+    return jspb.Message.getField(this, 9) != null;
+  };
+
+/**
+ * optional google.protobuf.Int32Value environment_role = 10;
+ * @return {?proto.google.protobuf.Int32Value}
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.getEnvironmentRole =
+  function () {
+    return /** @type{?proto.google.protobuf.Int32Value} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.Int32Value,
+        10
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.Int32Value|undefined} value
+ * @return {!proto.bucketeer.account.ListAccountsV2Request} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.setEnvironmentRole =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 10, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.ListAccountsV2Request} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.clearEnvironmentRole =
+  function () {
+    return this.setEnvironmentRole(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.ListAccountsV2Request.prototype.hasEnvironmentRole =
+  function () {
+    return jspb.Message.getField(this, 10) != null;
+  };
+
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.account.ListAccountsV2Response.repeatedFields_ = [1];
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.ListAccountsV2Response.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.ListAccountsV2Response.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.ListAccountsV2Response} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.ListAccountsV2Response.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        accountsList: jspb.Message.toObjectList(
+          msg.getAccountsList(),
+          proto_account_account_pb.AccountV2.toObject,
+          includeInstance
+        ),
+        cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.ListAccountsV2Response}
+ */
+proto.bucketeer.account.ListAccountsV2Response.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.ListAccountsV2Response();
+  return proto.bucketeer.account.ListAccountsV2Response.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.ListAccountsV2Response} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.ListAccountsV2Response}
+ */
+proto.bucketeer.account.ListAccountsV2Response.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = new proto_account_account_pb.AccountV2();
+          reader.readMessage(
+            value,
+            proto_account_account_pb.AccountV2.deserializeBinaryFromReader
+          );
+          msg.addAccounts(value);
+          break;
+        case 2:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setCursor(value);
+          break;
+        case 3:
+          var value = /** @type {number} */ (reader.readInt64());
+          msg.setTotalCount(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.ListAccountsV2Response.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.ListAccountsV2Response.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.ListAccountsV2Response} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.ListAccountsV2Response.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+    f = message.getAccountsList();
+    if (f.length > 0) {
+      writer.writeRepeatedMessage(
+        1,
+        f,
+        proto_account_account_pb.AccountV2.serializeBinaryToWriter
+      );
+    }
+    f = message.getCursor();
+    if (f.length > 0) {
+      writer.writeString(2, f);
+    }
+    f = message.getTotalCount();
+    if (f !== 0) {
+      writer.writeInt64(3, f);
+    }
+  };
+
+/**
+ * repeated AccountV2 accounts = 1;
+ * @return {!Array<!proto.bucketeer.account.AccountV2>}
+ */
+proto.bucketeer.account.ListAccountsV2Response.prototype.getAccountsList =
+  function () {
+    return /** @type{!Array<!proto.bucketeer.account.AccountV2>} */ (
+      jspb.Message.getRepeatedWrapperField(
+        this,
+        proto_account_account_pb.AccountV2,
+        1
+      )
+    );
+  };
+
+/**
+ * @param {!Array<!proto.bucketeer.account.AccountV2>} value
+ * @return {!proto.bucketeer.account.ListAccountsV2Response} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Response.prototype.setAccountsList =
+  function (value) {
+    return jspb.Message.setRepeatedWrapperField(this, 1, value);
+  };
+
+/**
+ * @param {!proto.bucketeer.account.AccountV2=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.account.AccountV2}
+ */
+proto.bucketeer.account.ListAccountsV2Response.prototype.addAccounts =
+  function (opt_value, opt_index) {
+    return jspb.Message.addToRepeatedWrapperField(
+      this,
+      1,
+      opt_value,
+      proto.bucketeer.account.AccountV2,
+      opt_index
+    );
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.account.ListAccountsV2Response} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Response.prototype.clearAccountsList =
+  function () {
+    return this.setAccountsList([]);
+  };
+
+/**
+ * optional string cursor = 2;
+ * @return {string}
+ */
+proto.bucketeer.account.ListAccountsV2Response.prototype.getCursor =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 2, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.ListAccountsV2Response} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Response.prototype.setCursor = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+/**
+ * optional int64 total_count = 3;
+ * @return {number}
+ */
+proto.bucketeer.account.ListAccountsV2Response.prototype.getTotalCount =
+  function () {
+    return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+  };
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.account.ListAccountsV2Response} returns this
+ */
+proto.bucketeer.account.ListAccountsV2Response.prototype.setTotalCount =
+  function (value) {
+    return jspb.Message.setProto3IntField(this, 3, value);
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.CreateAPIKeyRequest.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.CreateAPIKeyRequest.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.CreateAPIKeyRequest} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.CreateAPIKeyRequest.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        command:
+          (f = msg.getCommand()) &&
+          proto_account_command_pb.CreateAPIKeyCommand.toObject(
+            includeInstance,
+            f
+          ),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ''),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.CreateAPIKeyRequest}
+ */
+proto.bucketeer.account.CreateAPIKeyRequest.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.CreateAPIKeyRequest();
+  return proto.bucketeer.account.CreateAPIKeyRequest.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.CreateAPIKeyRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.CreateAPIKeyRequest}
+ */
+proto.bucketeer.account.CreateAPIKeyRequest.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = new proto_account_command_pb.CreateAPIKeyCommand();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.CreateAPIKeyCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setCommand(value);
+          break;
+        case 2:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentNamespace(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.CreateAPIKeyRequest.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.CreateAPIKeyRequest.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.CreateAPIKeyRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.CreateAPIKeyRequest.serializeBinaryToWriter = function (
+  message,
+  writer
+) {
+  var f = undefined;
+  f = message.getCommand();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      proto_account_command_pb.CreateAPIKeyCommand.serializeBinaryToWriter
+    );
+  }
+  f = message.getEnvironmentNamespace();
+  if (f.length > 0) {
+    writer.writeString(2, f);
+  }
+};
+
+/**
+ * optional CreateAPIKeyCommand command = 1;
+ * @return {?proto.bucketeer.account.CreateAPIKeyCommand}
+ */
+proto.bucketeer.account.CreateAPIKeyRequest.prototype.getCommand = function () {
+  return /** @type{?proto.bucketeer.account.CreateAPIKeyCommand} */ (
+    jspb.Message.getWrapperField(
+      this,
+      proto_account_command_pb.CreateAPIKeyCommand,
+      1
+    )
+  );
+};
+
+/**
+ * @param {?proto.bucketeer.account.CreateAPIKeyCommand|undefined} value
+ * @return {!proto.bucketeer.account.CreateAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.CreateAPIKeyRequest.prototype.setCommand = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.CreateAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.CreateAPIKeyRequest.prototype.clearCommand =
+  function () {
+    return this.setCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.CreateAPIKeyRequest.prototype.hasCommand = function () {
+  return jspb.Message.getField(this, 1) != null;
+};
+
+/**
+ * optional string environment_namespace = 2;
+ * @return {string}
+ */
+proto.bucketeer.account.CreateAPIKeyRequest.prototype.getEnvironmentNamespace =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 2, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.CreateAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.CreateAPIKeyRequest.prototype.setEnvironmentNamespace =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 2, value);
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.CreateAPIKeyResponse.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.CreateAPIKeyResponse.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.CreateAPIKeyResponse} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.CreateAPIKeyResponse.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        apiKey:
+          (f = msg.getApiKey()) &&
+          proto_account_api_key_pb.APIKey.toObject(includeInstance, f),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.CreateAPIKeyResponse}
+ */
+proto.bucketeer.account.CreateAPIKeyResponse.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.CreateAPIKeyResponse();
+  return proto.bucketeer.account.CreateAPIKeyResponse.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.CreateAPIKeyResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.CreateAPIKeyResponse}
+ */
+proto.bucketeer.account.CreateAPIKeyResponse.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = new proto_account_api_key_pb.APIKey();
+          reader.readMessage(
+            value,
+            proto_account_api_key_pb.APIKey.deserializeBinaryFromReader
+          );
+          msg.setApiKey(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.CreateAPIKeyResponse.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.CreateAPIKeyResponse.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.CreateAPIKeyResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.CreateAPIKeyResponse.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+    f = message.getApiKey();
+    if (f != null) {
+      writer.writeMessage(
+        1,
+        f,
+        proto_account_api_key_pb.APIKey.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional APIKey api_key = 1;
+ * @return {?proto.bucketeer.account.APIKey}
+ */
+proto.bucketeer.account.CreateAPIKeyResponse.prototype.getApiKey = function () {
+  return /** @type{?proto.bucketeer.account.APIKey} */ (
+    jspb.Message.getWrapperField(this, proto_account_api_key_pb.APIKey, 1)
+  );
+};
+
+/**
+ * @param {?proto.bucketeer.account.APIKey|undefined} value
+ * @return {!proto.bucketeer.account.CreateAPIKeyResponse} returns this
+ */
+proto.bucketeer.account.CreateAPIKeyResponse.prototype.setApiKey = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.CreateAPIKeyResponse} returns this
+ */
+proto.bucketeer.account.CreateAPIKeyResponse.prototype.clearApiKey =
+  function () {
+    return this.setApiKey(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.CreateAPIKeyResponse.prototype.hasApiKey = function () {
+  return jspb.Message.getField(this, 1) != null;
+};
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.ChangeAPIKeyNameRequest.prototype.toObject =
+    function (opt_includeInstance) {
+      return proto.bucketeer.account.ChangeAPIKeyNameRequest.toObject(
+        opt_includeInstance,
+        this
+      );
+    };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.ChangeAPIKeyNameRequest} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.ChangeAPIKeyNameRequest.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        command:
+          (f = msg.getCommand()) &&
+          proto_account_command_pb.ChangeAPIKeyNameCommand.toObject(
+            includeInstance,
+            f
+          ),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.ChangeAPIKeyNameRequest}
+ */
+proto.bucketeer.account.ChangeAPIKeyNameRequest.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.ChangeAPIKeyNameRequest();
+  return proto.bucketeer.account.ChangeAPIKeyNameRequest.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.ChangeAPIKeyNameRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.ChangeAPIKeyNameRequest}
+ */
+proto.bucketeer.account.ChangeAPIKeyNameRequest.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setId(value);
+          break;
+        case 2:
+          var value = new proto_account_command_pb.ChangeAPIKeyNameCommand();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.ChangeAPIKeyNameCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setCommand(value);
+          break;
+        case 3:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentNamespace(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.ChangeAPIKeyNameRequest.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.ChangeAPIKeyNameRequest.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.ChangeAPIKeyNameRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.ChangeAPIKeyNameRequest.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+    f = message.getId();
+    if (f.length > 0) {
+      writer.writeString(1, f);
+    }
+    f = message.getCommand();
+    if (f != null) {
+      writer.writeMessage(
+        2,
+        f,
+        proto_account_command_pb.ChangeAPIKeyNameCommand.serializeBinaryToWriter
+      );
+    }
+    f = message.getEnvironmentNamespace();
+    if (f.length > 0) {
+      writer.writeString(3, f);
+    }
+  };
+
+/**
+ * optional string id = 1;
+ * @return {string}
+ */
+proto.bucketeer.account.ChangeAPIKeyNameRequest.prototype.getId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.ChangeAPIKeyNameRequest} returns this
+ */
+proto.bucketeer.account.ChangeAPIKeyNameRequest.prototype.setId = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+/**
+ * optional ChangeAPIKeyNameCommand command = 2;
+ * @return {?proto.bucketeer.account.ChangeAPIKeyNameCommand}
+ */
+proto.bucketeer.account.ChangeAPIKeyNameRequest.prototype.getCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.ChangeAPIKeyNameCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.ChangeAPIKeyNameCommand,
+        2
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.ChangeAPIKeyNameCommand|undefined} value
+ * @return {!proto.bucketeer.account.ChangeAPIKeyNameRequest} returns this
+ */
+proto.bucketeer.account.ChangeAPIKeyNameRequest.prototype.setCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 2, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.ChangeAPIKeyNameRequest} returns this
+ */
+proto.bucketeer.account.ChangeAPIKeyNameRequest.prototype.clearCommand =
+  function () {
+    return this.setCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.ChangeAPIKeyNameRequest.prototype.hasCommand =
+  function () {
+    return jspb.Message.getField(this, 2) != null;
+  };
+
+/**
+ * optional string environment_namespace = 3;
+ * @return {string}
+ */
+proto.bucketeer.account.ChangeAPIKeyNameRequest.prototype.getEnvironmentNamespace =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 3, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.ChangeAPIKeyNameRequest} returns this
+ */
+proto.bucketeer.account.ChangeAPIKeyNameRequest.prototype.setEnvironmentNamespace =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 3, value);
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.ChangeAPIKeyNameResponse.prototype.toObject =
+    function (opt_includeInstance) {
+      return proto.bucketeer.account.ChangeAPIKeyNameResponse.toObject(
+        opt_includeInstance,
+        this
+      );
+    };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.ChangeAPIKeyNameResponse} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.ChangeAPIKeyNameResponse.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {};
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.ChangeAPIKeyNameResponse}
+ */
+proto.bucketeer.account.ChangeAPIKeyNameResponse.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.ChangeAPIKeyNameResponse();
+  return proto.bucketeer.account.ChangeAPIKeyNameResponse.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.ChangeAPIKeyNameResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.ChangeAPIKeyNameResponse}
+ */
+proto.bucketeer.account.ChangeAPIKeyNameResponse.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.ChangeAPIKeyNameResponse.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.ChangeAPIKeyNameResponse.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.ChangeAPIKeyNameResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.ChangeAPIKeyNameResponse.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.EnableAPIKeyRequest.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.EnableAPIKeyRequest.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.EnableAPIKeyRequest} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.EnableAPIKeyRequest.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        command:
+          (f = msg.getCommand()) &&
+          proto_account_command_pb.EnableAPIKeyCommand.toObject(
+            includeInstance,
+            f
+          ),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.EnableAPIKeyRequest}
+ */
+proto.bucketeer.account.EnableAPIKeyRequest.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.EnableAPIKeyRequest();
+  return proto.bucketeer.account.EnableAPIKeyRequest.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.EnableAPIKeyRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.EnableAPIKeyRequest}
+ */
+proto.bucketeer.account.EnableAPIKeyRequest.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setId(value);
+          break;
+        case 2:
+          var value = new proto_account_command_pb.EnableAPIKeyCommand();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.EnableAPIKeyCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setCommand(value);
+          break;
+        case 3:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentNamespace(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.EnableAPIKeyRequest.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.EnableAPIKeyRequest.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.EnableAPIKeyRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.EnableAPIKeyRequest.serializeBinaryToWriter = function (
+  message,
+  writer
+) {
+  var f = undefined;
+  f = message.getId();
+  if (f.length > 0) {
+    writer.writeString(1, f);
+  }
+  f = message.getCommand();
+  if (f != null) {
+    writer.writeMessage(
+      2,
+      f,
+      proto_account_command_pb.EnableAPIKeyCommand.serializeBinaryToWriter
+    );
+  }
+  f = message.getEnvironmentNamespace();
+  if (f.length > 0) {
+    writer.writeString(3, f);
+  }
+};
+
+/**
+ * optional string id = 1;
+ * @return {string}
+ */
+proto.bucketeer.account.EnableAPIKeyRequest.prototype.getId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.EnableAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.EnableAPIKeyRequest.prototype.setId = function (value) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+/**
+ * optional EnableAPIKeyCommand command = 2;
+ * @return {?proto.bucketeer.account.EnableAPIKeyCommand}
+ */
+proto.bucketeer.account.EnableAPIKeyRequest.prototype.getCommand = function () {
+  return /** @type{?proto.bucketeer.account.EnableAPIKeyCommand} */ (
+    jspb.Message.getWrapperField(
+      this,
+      proto_account_command_pb.EnableAPIKeyCommand,
+      2
+    )
+  );
+};
+
+/**
+ * @param {?proto.bucketeer.account.EnableAPIKeyCommand|undefined} value
+ * @return {!proto.bucketeer.account.EnableAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.EnableAPIKeyRequest.prototype.setCommand = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 2, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.EnableAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.EnableAPIKeyRequest.prototype.clearCommand =
+  function () {
+    return this.setCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.EnableAPIKeyRequest.prototype.hasCommand = function () {
+  return jspb.Message.getField(this, 2) != null;
+};
+
+/**
+ * optional string environment_namespace = 3;
+ * @return {string}
+ */
+proto.bucketeer.account.EnableAPIKeyRequest.prototype.getEnvironmentNamespace =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 3, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.EnableAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.EnableAPIKeyRequest.prototype.setEnvironmentNamespace =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 3, value);
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.EnableAPIKeyResponse.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.EnableAPIKeyResponse.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.EnableAPIKeyResponse} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.EnableAPIKeyResponse.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {};
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.EnableAPIKeyResponse}
+ */
+proto.bucketeer.account.EnableAPIKeyResponse.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.EnableAPIKeyResponse();
+  return proto.bucketeer.account.EnableAPIKeyResponse.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.EnableAPIKeyResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.EnableAPIKeyResponse}
+ */
+proto.bucketeer.account.EnableAPIKeyResponse.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.EnableAPIKeyResponse.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.EnableAPIKeyResponse.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.EnableAPIKeyResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.EnableAPIKeyResponse.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.DisableAPIKeyRequest.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.DisableAPIKeyRequest.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.DisableAPIKeyRequest} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.DisableAPIKeyRequest.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        command:
+          (f = msg.getCommand()) &&
+          proto_account_command_pb.DisableAPIKeyCommand.toObject(
+            includeInstance,
+            f
+          ),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.DisableAPIKeyRequest}
+ */
+proto.bucketeer.account.DisableAPIKeyRequest.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.DisableAPIKeyRequest();
+  return proto.bucketeer.account.DisableAPIKeyRequest.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.DisableAPIKeyRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.DisableAPIKeyRequest}
+ */
+proto.bucketeer.account.DisableAPIKeyRequest.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setId(value);
+          break;
+        case 2:
+          var value = new proto_account_command_pb.DisableAPIKeyCommand();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.DisableAPIKeyCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setCommand(value);
+          break;
+        case 3:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentNamespace(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.DisableAPIKeyRequest.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.DisableAPIKeyRequest.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.DisableAPIKeyRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.DisableAPIKeyRequest.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+    f = message.getId();
+    if (f.length > 0) {
+      writer.writeString(1, f);
+    }
+    f = message.getCommand();
+    if (f != null) {
+      writer.writeMessage(
+        2,
+        f,
+        proto_account_command_pb.DisableAPIKeyCommand.serializeBinaryToWriter
+      );
+    }
+    f = message.getEnvironmentNamespace();
+    if (f.length > 0) {
+      writer.writeString(3, f);
+    }
+  };
+
+/**
+ * optional string id = 1;
+ * @return {string}
+ */
+proto.bucketeer.account.DisableAPIKeyRequest.prototype.getId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.DisableAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.DisableAPIKeyRequest.prototype.setId = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+/**
+ * optional DisableAPIKeyCommand command = 2;
+ * @return {?proto.bucketeer.account.DisableAPIKeyCommand}
+ */
+proto.bucketeer.account.DisableAPIKeyRequest.prototype.getCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.DisableAPIKeyCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.DisableAPIKeyCommand,
+        2
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.DisableAPIKeyCommand|undefined} value
+ * @return {!proto.bucketeer.account.DisableAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.DisableAPIKeyRequest.prototype.setCommand = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 2, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.DisableAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.DisableAPIKeyRequest.prototype.clearCommand =
+  function () {
+    return this.setCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.DisableAPIKeyRequest.prototype.hasCommand =
+  function () {
+    return jspb.Message.getField(this, 2) != null;
+  };
+
+/**
+ * optional string environment_namespace = 3;
+ * @return {string}
+ */
+proto.bucketeer.account.DisableAPIKeyRequest.prototype.getEnvironmentNamespace =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 3, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.DisableAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.DisableAPIKeyRequest.prototype.setEnvironmentNamespace =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 3, value);
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.DisableAPIKeyResponse.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.DisableAPIKeyResponse.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.DisableAPIKeyResponse} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.DisableAPIKeyResponse.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {};
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.DisableAPIKeyResponse}
+ */
+proto.bucketeer.account.DisableAPIKeyResponse.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.DisableAPIKeyResponse();
+  return proto.bucketeer.account.DisableAPIKeyResponse.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.DisableAPIKeyResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.DisableAPIKeyResponse}
+ */
+proto.bucketeer.account.DisableAPIKeyResponse.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.DisableAPIKeyResponse.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.DisableAPIKeyResponse.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.DisableAPIKeyResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.DisableAPIKeyResponse.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.GetAPIKeyRequest.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.GetAPIKeyRequest.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.GetAPIKeyRequest} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.GetAPIKeyRequest.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ''),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.GetAPIKeyRequest}
+ */
+proto.bucketeer.account.GetAPIKeyRequest.deserializeBinary = function (bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.GetAPIKeyRequest();
+  return proto.bucketeer.account.GetAPIKeyRequest.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.GetAPIKeyRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.GetAPIKeyRequest}
+ */
+proto.bucketeer.account.GetAPIKeyRequest.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setId(value);
+          break;
+        case 2:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentNamespace(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.GetAPIKeyRequest.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.GetAPIKeyRequest.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.GetAPIKeyRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.GetAPIKeyRequest.serializeBinaryToWriter = function (
+  message,
+  writer
+) {
+  var f = undefined;
+  f = message.getId();
+  if (f.length > 0) {
+    writer.writeString(1, f);
+  }
+  f = message.getEnvironmentNamespace();
+  if (f.length > 0) {
+    writer.writeString(2, f);
+  }
+};
+
+/**
+ * optional string id = 1;
+ * @return {string}
+ */
+proto.bucketeer.account.GetAPIKeyRequest.prototype.getId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.GetAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.GetAPIKeyRequest.prototype.setId = function (value) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+/**
+ * optional string environment_namespace = 2;
+ * @return {string}
+ */
+proto.bucketeer.account.GetAPIKeyRequest.prototype.getEnvironmentNamespace =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 2, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.GetAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.GetAPIKeyRequest.prototype.setEnvironmentNamespace =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 2, value);
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.GetAPIKeyResponse.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.GetAPIKeyResponse.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.GetAPIKeyResponse} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.GetAPIKeyResponse.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        apiKey:
+          (f = msg.getApiKey()) &&
+          proto_account_api_key_pb.APIKey.toObject(includeInstance, f),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.GetAPIKeyResponse}
+ */
+proto.bucketeer.account.GetAPIKeyResponse.deserializeBinary = function (bytes) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.GetAPIKeyResponse();
+  return proto.bucketeer.account.GetAPIKeyResponse.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.GetAPIKeyResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.GetAPIKeyResponse}
+ */
+proto.bucketeer.account.GetAPIKeyResponse.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = new proto_account_api_key_pb.APIKey();
+          reader.readMessage(
+            value,
+            proto_account_api_key_pb.APIKey.deserializeBinaryFromReader
+          );
+          msg.setApiKey(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.GetAPIKeyResponse.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.GetAPIKeyResponse.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.GetAPIKeyResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.GetAPIKeyResponse.serializeBinaryToWriter = function (
+  message,
+  writer
+) {
+  var f = undefined;
+  f = message.getApiKey();
+  if (f != null) {
+    writer.writeMessage(
+      1,
+      f,
+      proto_account_api_key_pb.APIKey.serializeBinaryToWriter
+    );
+  }
+};
+
+/**
+ * optional APIKey api_key = 1;
+ * @return {?proto.bucketeer.account.APIKey}
+ */
+proto.bucketeer.account.GetAPIKeyResponse.prototype.getApiKey = function () {
+  return /** @type{?proto.bucketeer.account.APIKey} */ (
+    jspb.Message.getWrapperField(this, proto_account_api_key_pb.APIKey, 1)
+  );
+};
+
+/**
+ * @param {?proto.bucketeer.account.APIKey|undefined} value
+ * @return {!proto.bucketeer.account.GetAPIKeyResponse} returns this
+ */
+proto.bucketeer.account.GetAPIKeyResponse.prototype.setApiKey = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.GetAPIKeyResponse} returns this
+ */
+proto.bucketeer.account.GetAPIKeyResponse.prototype.clearApiKey = function () {
+  return this.setApiKey(undefined);
+};
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.GetAPIKeyResponse.prototype.hasApiKey = function () {
+  return jspb.Message.getField(this, 1) != null;
+};
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.ListAPIKeysRequest.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.ListAPIKeysRequest.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.ListAPIKeysRequest} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.ListAPIKeysRequest.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        pageSize: jspb.Message.getFieldWithDefault(msg, 1, 0),
+        cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        orderBy: jspb.Message.getFieldWithDefault(msg, 4, 0),
+        orderDirection: jspb.Message.getFieldWithDefault(msg, 5, 0),
+        searchKeyword: jspb.Message.getFieldWithDefault(msg, 6, ''),
+        disabled:
+          (f = msg.getDisabled()) &&
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.ListAPIKeysRequest}
+ */
+proto.bucketeer.account.ListAPIKeysRequest.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.ListAPIKeysRequest();
+  return proto.bucketeer.account.ListAPIKeysRequest.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.ListAPIKeysRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.ListAPIKeysRequest}
+ */
+proto.bucketeer.account.ListAPIKeysRequest.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = /** @type {number} */ (reader.readInt64());
+          msg.setPageSize(value);
+          break;
+        case 2:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setCursor(value);
+          break;
+        case 3:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentNamespace(value);
+          break;
+        case 4:
+          var value =
+            /** @type {!proto.bucketeer.account.ListAPIKeysRequest.OrderBy} */ (
+              reader.readEnum()
+            );
+          msg.setOrderBy(value);
+          break;
+        case 5:
+          var value =
+            /** @type {!proto.bucketeer.account.ListAPIKeysRequest.OrderDirection} */ (
+              reader.readEnum()
+            );
+          msg.setOrderDirection(value);
+          break;
+        case 6:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setSearchKeyword(value);
+          break;
+        case 7:
+          var value = new google_protobuf_wrappers_pb.BoolValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader
+          );
+          msg.setDisabled(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.ListAPIKeysRequest.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.ListAPIKeysRequest.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.ListAPIKeysRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.ListAPIKeysRequest.serializeBinaryToWriter = function (
+  message,
+  writer
+) {
+  var f = undefined;
+  f = message.getPageSize();
+  if (f !== 0) {
+    writer.writeInt64(1, f);
+  }
+  f = message.getCursor();
+  if (f.length > 0) {
+    writer.writeString(2, f);
+  }
+  f = message.getEnvironmentNamespace();
+  if (f.length > 0) {
+    writer.writeString(3, f);
+  }
+  f = message.getOrderBy();
+  if (f !== 0.0) {
+    writer.writeEnum(4, f);
+  }
+  f = message.getOrderDirection();
+  if (f !== 0.0) {
+    writer.writeEnum(5, f);
+  }
+  f = message.getSearchKeyword();
+  if (f.length > 0) {
+    writer.writeString(6, f);
+  }
+  f = message.getDisabled();
+  if (f != null) {
+    writer.writeMessage(
+      7,
+      f,
+      google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
+    );
+  }
+};
+
+/**
+ * @enum {number}
+ */
+proto.bucketeer.account.ListAPIKeysRequest.OrderBy = {
+  DEFAULT: 0,
+  NAME: 1,
+  CREATED_AT: 2,
+  UPDATED_AT: 3,
+};
+
+/**
+ * @enum {number}
+ */
+proto.bucketeer.account.ListAPIKeysRequest.OrderDirection = {
+  ASC: 0,
+  DESC: 1,
+};
+
+/**
+ * optional int64 page_size = 1;
+ * @return {number}
+ */
+proto.bucketeer.account.ListAPIKeysRequest.prototype.getPageSize = function () {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
+};
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.account.ListAPIKeysRequest} returns this
+ */
+proto.bucketeer.account.ListAPIKeysRequest.prototype.setPageSize = function (
+  value
+) {
+  return jspb.Message.setProto3IntField(this, 1, value);
+};
+
+/**
+ * optional string cursor = 2;
+ * @return {string}
+ */
+proto.bucketeer.account.ListAPIKeysRequest.prototype.getCursor = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.ListAPIKeysRequest} returns this
+ */
+proto.bucketeer.account.ListAPIKeysRequest.prototype.setCursor = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+/**
+ * optional string environment_namespace = 3;
+ * @return {string}
+ */
+proto.bucketeer.account.ListAPIKeysRequest.prototype.getEnvironmentNamespace =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 3, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.ListAPIKeysRequest} returns this
+ */
+proto.bucketeer.account.ListAPIKeysRequest.prototype.setEnvironmentNamespace =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 3, value);
+  };
+
+/**
+ * optional OrderBy order_by = 4;
+ * @return {!proto.bucketeer.account.ListAPIKeysRequest.OrderBy}
+ */
+proto.bucketeer.account.ListAPIKeysRequest.prototype.getOrderBy = function () {
+  return /** @type {!proto.bucketeer.account.ListAPIKeysRequest.OrderBy} */ (
+    jspb.Message.getFieldWithDefault(this, 4, 0)
+  );
+};
+
+/**
+ * @param {!proto.bucketeer.account.ListAPIKeysRequest.OrderBy} value
+ * @return {!proto.bucketeer.account.ListAPIKeysRequest} returns this
+ */
+proto.bucketeer.account.ListAPIKeysRequest.prototype.setOrderBy = function (
+  value
+) {
+  return jspb.Message.setProto3EnumField(this, 4, value);
+};
+
+/**
+ * optional OrderDirection order_direction = 5;
+ * @return {!proto.bucketeer.account.ListAPIKeysRequest.OrderDirection}
+ */
+proto.bucketeer.account.ListAPIKeysRequest.prototype.getOrderDirection =
+  function () {
+    return /** @type {!proto.bucketeer.account.ListAPIKeysRequest.OrderDirection} */ (
+      jspb.Message.getFieldWithDefault(this, 5, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.account.ListAPIKeysRequest.OrderDirection} value
+ * @return {!proto.bucketeer.account.ListAPIKeysRequest} returns this
+ */
+proto.bucketeer.account.ListAPIKeysRequest.prototype.setOrderDirection =
+  function (value) {
+    return jspb.Message.setProto3EnumField(this, 5, value);
+  };
+
+/**
+ * optional string search_keyword = 6;
+ * @return {string}
+ */
+proto.bucketeer.account.ListAPIKeysRequest.prototype.getSearchKeyword =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 6, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.ListAPIKeysRequest} returns this
+ */
+proto.bucketeer.account.ListAPIKeysRequest.prototype.setSearchKeyword =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 6, value);
+  };
+
+/**
+ * optional google.protobuf.BoolValue disabled = 7;
+ * @return {?proto.google.protobuf.BoolValue}
+ */
+proto.bucketeer.account.ListAPIKeysRequest.prototype.getDisabled = function () {
+  return /** @type{?proto.google.protobuf.BoolValue} */ (
+    jspb.Message.getWrapperField(this, google_protobuf_wrappers_pb.BoolValue, 7)
+  );
+};
+
+/**
+ * @param {?proto.google.protobuf.BoolValue|undefined} value
+ * @return {!proto.bucketeer.account.ListAPIKeysRequest} returns this
+ */
+proto.bucketeer.account.ListAPIKeysRequest.prototype.setDisabled = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 7, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.ListAPIKeysRequest} returns this
+ */
+proto.bucketeer.account.ListAPIKeysRequest.prototype.clearDisabled =
+  function () {
+    return this.setDisabled(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.ListAPIKeysRequest.prototype.hasDisabled = function () {
+  return jspb.Message.getField(this, 7) != null;
+};
+
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.account.ListAPIKeysResponse.repeatedFields_ = [1];
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.ListAPIKeysResponse.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.account.ListAPIKeysResponse.toObject(
+      opt_includeInstance,
+      this
+    );
+  };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.ListAPIKeysResponse} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.ListAPIKeysResponse.toObject = function (
+    includeInstance,
+    msg
+  ) {
+    var f,
+      obj = {
+        apiKeysList: jspb.Message.toObjectList(
+          msg.getApiKeysList(),
+          proto_account_api_key_pb.APIKey.toObject,
+          includeInstance
+        ),
+        cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0),
+      };
+
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.ListAPIKeysResponse}
+ */
+proto.bucketeer.account.ListAPIKeysResponse.deserializeBinary = function (
+  bytes
+) {
+  var reader = new jspb.BinaryReader(bytes);
+  var msg = new proto.bucketeer.account.ListAPIKeysResponse();
+  return proto.bucketeer.account.ListAPIKeysResponse.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
+};
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.ListAPIKeysResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.ListAPIKeysResponse}
+ */
+proto.bucketeer.account.ListAPIKeysResponse.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = new proto_account_api_key_pb.APIKey();
+          reader.readMessage(
+            value,
+            proto_account_api_key_pb.APIKey.deserializeBinaryFromReader
+          );
+          msg.addApiKeys(value);
+          break;
+        case 2:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setCursor(value);
+          break;
+        case 3:
+          var value = /** @type {number} */ (reader.readInt64());
+          msg.setTotalCount(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.ListAPIKeysResponse.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.ListAPIKeysResponse.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.ListAPIKeysResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.ListAPIKeysResponse.serializeBinaryToWriter = function (
+  message,
+  writer
+) {
+  var f = undefined;
+  f = message.getApiKeysList();
+  if (f.length > 0) {
+    writer.writeRepeatedMessage(
+      1,
+      f,
+      proto_account_api_key_pb.APIKey.serializeBinaryToWriter
+    );
+  }
+  f = message.getCursor();
+  if (f.length > 0) {
+    writer.writeString(2, f);
+  }
+  f = message.getTotalCount();
+  if (f !== 0) {
+    writer.writeInt64(3, f);
+  }
+};
+
+/**
+ * repeated APIKey api_keys = 1;
+ * @return {!Array<!proto.bucketeer.account.APIKey>}
+ */
+proto.bucketeer.account.ListAPIKeysResponse.prototype.getApiKeysList =
+  function () {
+    return /** @type{!Array<!proto.bucketeer.account.APIKey>} */ (
+      jspb.Message.getRepeatedWrapperField(
+        this,
+        proto_account_api_key_pb.APIKey,
+        1
+      )
+    );
+  };
+
+/**
+ * @param {!Array<!proto.bucketeer.account.APIKey>} value
+ * @return {!proto.bucketeer.account.ListAPIKeysResponse} returns this
+ */
+proto.bucketeer.account.ListAPIKeysResponse.prototype.setApiKeysList =
+  function (value) {
+    return jspb.Message.setRepeatedWrapperField(this, 1, value);
+  };
+
+/**
+ * @param {!proto.bucketeer.account.APIKey=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.account.APIKey}
+ */
+proto.bucketeer.account.ListAPIKeysResponse.prototype.addApiKeys = function (
+  opt_value,
+  opt_index
+) {
+  return jspb.Message.addToRepeatedWrapperField(
+    this,
+    1,
+    opt_value,
+    proto.bucketeer.account.APIKey,
+    opt_index
+  );
+};
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.account.ListAPIKeysResponse} returns this
+ */
+proto.bucketeer.account.ListAPIKeysResponse.prototype.clearApiKeysList =
+  function () {
+    return this.setApiKeysList([]);
+  };
+
+/**
+ * optional string cursor = 2;
+ * @return {string}
+ */
+proto.bucketeer.account.ListAPIKeysResponse.prototype.getCursor = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.ListAPIKeysResponse} returns this
+ */
+proto.bucketeer.account.ListAPIKeysResponse.prototype.setCursor = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+/**
+ * optional int64 total_count = 3;
+ * @return {number}
+ */
+proto.bucketeer.account.ListAPIKeysResponse.prototype.getTotalCount =
+  function () {
+    return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 3, 0));
+  };
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.account.ListAPIKeysResponse} returns this
+ */
+proto.bucketeer.account.ListAPIKeysResponse.prototype.setTotalCount = function (
+  value
+) {
+  return jspb.Message.setProto3IntField(this, 3, value);
+};
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.prototype.toObject =
+    function (opt_includeInstance) {
+      return proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.toObject(
+        opt_includeInstance,
+        this
+      );
+    };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.toObject =
+    function (includeInstance, msg) {
+      var f,
+        obj = {
+          id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        };
+
+      if (includeInstance) {
+        obj.$jspbMessageInstance = msg;
+      }
+      return obj;
+    };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest}
+ */
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.deserializeBinary =
+  function (bytes) {
+    var reader = new jspb.BinaryReader(bytes);
+    var msg =
+      new proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest();
+    return proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.deserializeBinaryFromReader(
+      msg,
+      reader
+    );
+  };
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest}
+ */
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setId(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+    f = message.getId();
+    if (f.length > 0) {
+      writer.writeString(1, f);
+    }
+  };
+
+/**
+ * optional string id = 1;
+ * @return {string}
+ */
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.prototype.getId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 1, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest} returns this
+ */
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.prototype.setId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 1, value);
+  };
+
+if (jspb.Message.GENERATE_TO_OBJECT) {
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse.prototype.toObject =
+    function (opt_includeInstance) {
+      return proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse.toObject(
+        opt_includeInstance,
+        this
+      );
+    };
+
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse.toObject =
+    function (includeInstance, msg) {
+      var f,
+        obj = {
+          environmentApiKey:
+            (f = msg.getEnvironmentApiKey()) &&
+            proto_account_api_key_pb.EnvironmentAPIKey.toObject(
+              includeInstance,
+              f
+            ),
+        };
+
+      if (includeInstance) {
+        obj.$jspbMessageInstance = msg;
+      }
+      return obj;
+    };
+}
+
+/**
+ * Deserializes binary data (in protobuf wire format).
+ * @param {jspb.ByteSource} bytes The bytes to deserialize.
+ * @return {!proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse}
+ */
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse.deserializeBinary =
+  function (bytes) {
+    var reader = new jspb.BinaryReader(bytes);
+    var msg =
+      new proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse();
+    return proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse.deserializeBinaryFromReader(
+      msg,
+      reader
+    );
+  };
+
+/**
+ * Deserializes binary data (in protobuf wire format) from the
+ * given reader into the given message object.
+ * @param {!proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse} msg The message object to deserialize into.
+ * @param {!jspb.BinaryReader} reader The BinaryReader to use.
+ * @return {!proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse}
+ */
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse.deserializeBinaryFromReader =
+  function (msg, reader) {
+    while (reader.nextField()) {
+      if (reader.isEndGroup()) {
+        break;
+      }
+      var field = reader.getFieldNumber();
+      switch (field) {
+        case 1:
+          var value = new proto_account_api_key_pb.EnvironmentAPIKey();
+          reader.readMessage(
+            value,
+            proto_account_api_key_pb.EnvironmentAPIKey
+              .deserializeBinaryFromReader
+          );
+          msg.setEnvironmentApiKey(value);
+          break;
+        default:
+          reader.skipField();
+          break;
+      }
+    }
+    return msg;
+  };
+
+/**
+ * Serializes the message to binary data (in protobuf wire format).
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse.prototype.serializeBinary =
+  function () {
+    var writer = new jspb.BinaryWriter();
+    proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse.serializeBinaryToWriter(
+      this,
+      writer
+    );
+    return writer.getResultBuffer();
+  };
+
+/**
+ * Serializes the given message to binary data (in protobuf wire
+ * format), writing to the given BinaryWriter.
+ * @param {!proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse} message
+ * @param {!jspb.BinaryWriter} writer
+ * @suppress {unusedLocalVariables} f is only used for nested messages
+ */
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse.serializeBinaryToWriter =
+  function (message, writer) {
+    var f = undefined;
+    f = message.getEnvironmentApiKey();
+    if (f != null) {
+      writer.writeMessage(
+        1,
+        f,
+        proto_account_api_key_pb.EnvironmentAPIKey.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional EnvironmentAPIKey environment_api_key = 1;
+ * @return {?proto.bucketeer.account.EnvironmentAPIKey}
+ */
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse.prototype.getEnvironmentApiKey =
+  function () {
+    return /** @type{?proto.bucketeer.account.EnvironmentAPIKey} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_api_key_pb.EnvironmentAPIKey,
+        1
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.EnvironmentAPIKey|undefined} value
+ * @return {!proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse} returns this
+ */
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse.prototype.setEnvironmentApiKey =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 1, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse} returns this
+ */
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse.prototype.clearEnvironmentApiKey =
+  function () {
+    return this.setEnvironmentApiKey(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse.prototype.hasEnvironmentApiKey =
+  function () {
+    return jspb.Message.getField(this, 1) != null;
+  };
+
+goog.object.extend(exports, proto.bucketeer.account);
