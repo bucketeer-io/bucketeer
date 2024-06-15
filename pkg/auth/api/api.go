@@ -94,7 +94,7 @@ func NewAuthService(
 		oidc:                oidc,
 		signer:              signer,
 		accountClient:       accountClient,
-		googleAuthenticator: google.NewAuthenticator(config.GoogleConfig, accountClient, signer, logger),
+		googleAuthenticator: google.NewAuthenticator(&config.GoogleConfig, accountClient, signer, logger),
 		opts:                &options,
 		logger:              logger,
 	}

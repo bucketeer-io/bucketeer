@@ -43,7 +43,7 @@ func (s *authService) GetAuthenticationURL(
 	if err != nil {
 		return nil, err
 	}
-	loginURL := authenticator.Login(ctx, req.State, localizer)
+	loginURL, err := authenticator.Login(ctx, req.State, req.RedirectUrl, localizer)
 	return &authproto.GetAuthenticationURLResponse{Url: loginURL}, nil
 }
 
@@ -59,7 +59,7 @@ func (s *authService) ExchangeBucketeerToken(
 	if err != nil {
 		return nil, err
 	}
-	authToken, err := authenticator.Exchange(ctx, req.Code, localizer)
+	authToken, err := authenticator.Exchange(ctx, req.Code, req.RedirectUrl, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Failed to exchange token",
@@ -83,7 +83,7 @@ func (s *authService) RefreshBucketeerToken(
 	if err != nil {
 		return nil, err
 	}
-	newToken, err := authenticator.Refresh(ctx, req.RefreshToken, s.opts.refreshTokenTTL, localizer)
+	newToken, err := authenticator.Refresh(ctx, req.RefreshToken, req.RedirectUrl, s.opts.refreshTokenTTL, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Failed to refresh token",

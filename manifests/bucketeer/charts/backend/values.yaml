@@ -97,7 +97,7 @@ oauth:
     issuer:
     clientId:
     clientSecret:
-    redirectUrl:
+    redirectUrls:
 
 webhook:
   baseURL:

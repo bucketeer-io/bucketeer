@@ -17,6 +17,7 @@ package google
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"regexp"
 	"time"
@@ -37,6 +38,10 @@ import (
 )
 
 var (
+	ErrUnregisteredRedirectURL = errors.New("google: unregistered redirectURL")
+)
+
+var (
 	defaultScopes = []string{
 		"https://www.googleapis.com/auth/userinfo.email",
 		"https://www.googleapis.com/auth/userinfo.profile",
@@ -44,7 +49,7 @@ var (
 )
 
 type Authenticator struct {
-	config        *oauth2.Config
+	config        *auth.GoogleConfig
 	accountClient accountclient.Client
 	signer        token.Signer
 	emailFilter   *regexp.Regexp
@@ -52,66 +57,75 @@ type Authenticator struct {
 }
 
 func NewAuthenticator(
-	config auth.GoogleConfig,
+	config *auth.GoogleConfig,
 	accountClient accountclient.Client,
 	signer token.Signer,
 	logger *zap.Logger,
 ) *Authenticator {
 	return &Authenticator{
-		config: &oauth2.Config{
-			ClientID:     config.ClientID,
-			ClientSecret: config.ClientSecret,
-			RedirectURL:  config.RedirectURL,
-			Scopes:       defaultScopes,
-			Endpoint:     google.Endpoint,
-		},
+		config:        config,
 		accountClient: accountClient,
 		signer:        signer,
 		logger:        logger.Named("google-authenticator"),
 	}
 }
 
-func (a Authenticator) Login(ctx context.Context, state string, localizer locale.Localizer) string {
-	return a.config.AuthCodeURL(state)
+func (a Authenticator) Login(
+	ctx context.Context,
+	state, redirectURL string,
+	localizer locale.Localizer,
+) (string, error) {
+	if err := a.validateRedirectURL(redirectURL); err != nil {
+		return "", err
+	}
+	return a.oauth2Config(defaultScopes, redirectURL).AuthCodeURL(state), nil
 }
 
 func (a Authenticator) Exchange(
 	ctx context.Context,
-	code string,
+	code, redirectURL string,
 	localizer locale.Localizer,
 ) (*authproto.Token, error) {
-	authToken, err := a.config.Exchange(ctx, code)
+	if err := a.validateRedirectURL(redirectURL); err != nil {
+		return nil, err
+	}
+	authToken, err := a.oauth2Config(defaultScopes, redirectURL).Exchange(ctx, code)
 	if err != nil {
 		a.logger.Error("Google: failed to exchange token", zap.Error(err))
 		return nil, err
 	}
-	return a.generateToken(ctx, authToken, localizer)
+	return a.generateToken(ctx, authToken, nil, localizer)
 }
 
 func (a Authenticator) Refresh(
 	ctx context.Context,
-	token string,
+	token, redirectURL string,
 	expires time.Duration,
 	localizer locale.Localizer,
 ) (*authproto.Token, error) {
+	if err := a.validateRedirectURL(redirectURL); err != nil {
+		return nil, err
+	}
 	t := &oauth2.Token{
 		RefreshToken: token,
 		Expiry:       time.Now().Add(expires),
 	}
-	newToken, err := a.config.TokenSource(ctx, t).Token()
+	oauth2Config := a.oauth2Config(defaultScopes, redirectURL)
+	newToken, err := oauth2Config.TokenSource(ctx, t).Token()
 	if err != nil {
 		a.logger.Error("Google: failed to refresh token", zap.Error(err))
 		return nil, err
 	}
-	return a.generateToken(ctx, newToken, localizer)
+	return a.generateToken(ctx, newToken, oauth2Config, localizer)
 }
 
 func (a Authenticator) generateToken(
 	ctx context.Context,
 	t *oauth2.Token,
+	config *oauth2.Config,
 	localizer locale.Localizer,
 ) (*authproto.Token, error) {
-	client := a.config.Client(ctx, t)
+	client := config.Client(ctx, t)
 	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
 	if err != nil {
 		a.logger.Error("Google: failed to get user info", zap.Error(err))
@@ -221,6 +235,25 @@ func (a Authenticator) generateToken(
 		Expiry:       t.Expiry.Unix(),
 		IdToken:      signedIDToken,
 	}, nil
+}
+
+func (a Authenticator) validateRedirectURL(url string) error {
+	for _, r := range a.config.RedirectURLs {
+		if r == url {
+			return nil
+		}
+	}
+	return ErrUnregisteredRedirectURL
+}
+
+func (a Authenticator) oauth2Config(scopes []string, redirectURL string) *oauth2.Config {
+	return &oauth2.Config{
+		ClientID:     a.config.ClientID,
+		ClientSecret: a.config.ClientSecret,
+		Endpoint:     google.Endpoint,
+		Scopes:       scopes,
+		RedirectURL:  redirectURL,
+	}
 }
 
 func (a Authenticator) maybeCheckEmail(

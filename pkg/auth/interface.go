@@ -23,21 +23,21 @@ import (
 )
 
 type Authenticator interface {
-	Login(ctx context.Context, state string, localizer locale.Localizer) string
-	Exchange(ctx context.Context, code string, localizer locale.Localizer) (*authproto.Token, error)
+	Login(ctx context.Context, state, redirectURL string, localizer locale.Localizer) (string, error)
+	Exchange(ctx context.Context, code, redirectURL string, localizer locale.Localizer) (*authproto.Token, error)
 	Refresh(
 		ctx context.Context,
-		token string,
+		token, redirectURL string,
 		expires time.Duration,
 		localizer locale.Localizer,
 	) (*authproto.Token, error)
 }
 
 type GoogleConfig struct {
-	Issuer       string `json:"issuer"`
-	ClientID     string `json:"clientId"`
-	ClientSecret string `json:"clientSecret"`
-	RedirectURL  string `json:"redirectUrl"`
+	Issuer       string   `json:"issuer"`
+	ClientID     string   `json:"clientId"`
+	ClientSecret string   `json:"clientSecret"`
+	RedirectURLs []string `json:"redirectUrls"`
 }
 
 type OAuthConfig struct {

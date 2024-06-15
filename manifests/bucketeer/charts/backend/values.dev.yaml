@@ -55,7 +55,7 @@ oauth:
     issuer: https://accounts.google.com
     clientId: bucketeer
     clientSecret:
-    redirectUrl:
+    redirectUrls:
 
 webhook:
   baseURL: https://web-gateway.bucketeer.io
