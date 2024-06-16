@@ -44,6 +44,14 @@ func (s *authService) GetAuthenticationURL(
 		return nil, err
 	}
 	loginURL, err := authenticator.Login(ctx, req.State, req.RedirectUrl, localizer)
+	if err != nil {
+		s.logger.Error(
+			"Get authentication url failed",
+			zap.Error(err),
+			zap.String("redirectURL", req.RedirectUrl),
+		)
+		return &authproto.GetAuthenticationURLResponse{}, err
+	}
 	return &authproto.GetAuthenticationURLResponse{Url: loginURL}, nil
 }
 
