@@ -11,18 +11,18 @@ module.exports = merge(common, {
     host: 'localhost',
     port: 8000,
     historyApiFallback: true,
-    allowedHosts: 'all',
+    allowedHosts: 'all'
   },
   plugins: [
     new HtmlWebpackPlugin({
       template: './src/index.html',
-      favicon: './src/assets/favicon.ico',
+      favicon: './src/assets/favicon.ico'
     }),
     new MiniCssExtractPlugin(),
     new webpack.EnvironmentPlugin({
       RELEASE_CHANNEL: 'dev',
       DEV_WEB_API_ENDPOINT: process.env.DEV_WEB_API_ENDPOINT,
-      DEV_AUTH_REDIRECT_ENDPOINT: process.env.DEV_AUTH_REDIRECT_ENDPOINT,
-    }),
-  ],
+      DEV_AUTH_REDIRECT_ENDPOINT: process.env.DEV_AUTH_REDIRECT_ENDPOINT
+    })
+  ]
 });

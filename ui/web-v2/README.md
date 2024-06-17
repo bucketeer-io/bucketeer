@@ -25,6 +25,7 @@ cp .env.example .env
 ```
 
 Add your API endpoint to the `.env` file like this:
+
 ```
 DEV_WEB_API_ENDPOINT=https://example.com
 DEV_AUTH_REDIRECT_ENDPOINT=http://localhost:8000

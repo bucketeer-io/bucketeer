@@ -9,7 +9,7 @@ module.exports = {
     globalObject: 'this',
     libraryTarget: 'umd',
     path: path.resolve(__dirname, 'dist'),
-    clean: true,
+    clean: true
   },
   module: {
     rules: [
@@ -17,50 +17,50 @@ module.exports = {
         test: /\.(png|jpg|gif|ico)$/,
         type: 'asset/resource',
         generator: {
-          filename: 'assets/[name][ext]',
-        },
+          filename: 'assets/[name][ext]'
+        }
       },
       {
         test: /\.svg$/i,
         issuer: /\.[jt]sx?$/,
-        use: ['@svgr/webpack'],
+        use: ['@svgr/webpack']
       },
       {
         test: /\.css$/,
         use: [
           MiniCssExtractPlugin.loader,
           {
-            loader: 'css-loader',
+            loader: 'css-loader'
           },
           {
             loader: 'postcss-loader',
             options: {
               postcssOptions: {
                 // This is necessary to import css from node_modules
-                config: './src/postcss.config.js',
-              },
-            },
-          },
-        ],
+                config: './src/postcss.config.js'
+              }
+            }
+          }
+        ]
       },
       {
         test: /\.tsx?$/,
         loader: 'ts-loader',
         options: {
-          transpileOnly: true,
+          transpileOnly: true
         },
-        options: {},
+        options: {}
       },
       {
         type: 'javascript/auto',
         test: /\.m?js$/,
         resolve: { fullySpecified: false },
-        use: [],
-      },
-    ],
+        use: []
+      }
+    ]
   },
   resolve: {
-    extensions: ['.ts', '.tsx', '.js', '.json'],
+    extensions: ['.ts', '.tsx', '.js', '.json']
   },
   optimization: {
     splitChunks: {
@@ -69,9 +69,9 @@ module.exports = {
       maxAsyncRequests: 20, // for HTTP2
       cacheGroups: {
         service: {
-          test: /[\\/]service/,
-        },
-      },
-    },
-  },
+          test: /[\\/]service/
+        }
+      }
+    }
+  }
 };

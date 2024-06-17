@@ -3,9 +3,7 @@
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist/out-tsc",
-    "types": [
-      "node"
-    ],
+    "types": ["node"],
     "sourceMap": true,
     "declaration": false,
     "moduleResolution": "node",
@@ -25,15 +23,8 @@
     "experimentalDecorators": true,
     "importHelpers": true,
     "preserveConstEnums": true,
-    "pretty": true,
+    "pretty": true
   },
-  "include": [
-    "./src/**/*.*",
-  ],
-  "exclude": [
-    "node_modules",
-    "tmp",
-    "**/*.spec.ts",
-    "**/*.spec.tsx"
-  ],
+  "include": ["./src/**/*.*"],
+  "exclude": ["node_modules", "tmp", "**/*.spec.ts", "**/*.spec.tsx"]
 }
