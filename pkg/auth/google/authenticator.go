@@ -89,12 +89,13 @@ func (a Authenticator) Exchange(
 	if err := a.validateRedirectURL(redirectURL); err != nil {
 		return nil, err
 	}
-	authToken, err := a.oauth2Config(defaultScopes, redirectURL).Exchange(ctx, code)
+	oauth2Config := a.oauth2Config(defaultScopes, redirectURL)
+	authToken, err := oauth2Config.Exchange(ctx, code)
 	if err != nil {
 		a.logger.Error("Google: failed to exchange token", zap.Error(err))
 		return nil, err
 	}
-	return a.generateToken(ctx, authToken, nil, localizer)
+	return a.generateToken(ctx, authToken, oauth2Config, localizer)
 }
 
 func (a Authenticator) Refresh(
