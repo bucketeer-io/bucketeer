@@ -645,7 +645,7 @@ proto.bucketeer.autoops.OpsType = {
 proto.bucketeer.autoops.AutoOpsStatus = {
   WAITING: 0,
   RUNNING: 1,
-  COMPLETED: 2,
+  FINISHED: 2,
   STOPPED: 3
 };
 
