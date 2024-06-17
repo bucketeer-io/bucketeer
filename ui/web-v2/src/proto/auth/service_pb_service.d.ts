@@ -161,28 +161,46 @@ export class AuthServiceClient {
   getAuthenticationURL(
     requestMessage: proto_auth_service_pb.GetAuthenticationURLRequest,
     metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_auth_service_pb.GetAuthenticationURLResponse|null) => void
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auth_service_pb.GetAuthenticationURLResponse | null
+    ) => void
   ): UnaryResponse;
   getAuthenticationURL(
     requestMessage: proto_auth_service_pb.GetAuthenticationURLRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_auth_service_pb.GetAuthenticationURLResponse|null) => void
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auth_service_pb.GetAuthenticationURLResponse | null
+    ) => void
   ): UnaryResponse;
   exchangeBucketeerToken(
     requestMessage: proto_auth_service_pb.ExchangeBucketeerTokenRequest,
     metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_auth_service_pb.ExchangeBucketeerTokenResponse|null) => void
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auth_service_pb.ExchangeBucketeerTokenResponse | null
+    ) => void
   ): UnaryResponse;
   exchangeBucketeerToken(
     requestMessage: proto_auth_service_pb.ExchangeBucketeerTokenRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_auth_service_pb.ExchangeBucketeerTokenResponse|null) => void
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auth_service_pb.ExchangeBucketeerTokenResponse | null
+    ) => void
   ): UnaryResponse;
   refreshBucketeerToken(
     requestMessage: proto_auth_service_pb.RefreshBucketeerTokenRequest,
     metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_auth_service_pb.RefreshBucketeerTokenResponse|null) => void
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auth_service_pb.RefreshBucketeerTokenResponse | null
+    ) => void
   ): UnaryResponse;
   refreshBucketeerToken(
     requestMessage: proto_auth_service_pb.RefreshBucketeerTokenRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_auth_service_pb.RefreshBucketeerTokenResponse|null) => void
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auth_service_pb.RefreshBucketeerTokenResponse | null
+    ) => void
   ): UnaryResponse;
 }
