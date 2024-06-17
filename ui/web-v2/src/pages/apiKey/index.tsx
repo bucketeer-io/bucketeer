@@ -52,7 +52,11 @@ import {
   useSearchParams
 } from '../../utils/search-params';
 
-import { addApiKeyFormSchema, updateApiKeyFormSchema } from './formSchema';
+import {
+  AddApiKeyForm,
+  addApiKeyFormSchema,
+  updateApiKeyFormSchema
+} from './formSchema';
 
 interface Sort {
   orderBy: OrderBy;
@@ -213,12 +217,12 @@ export const APIKeyIndexPage: FC = memo(() => {
     [updateURL, searchOptions]
   );
 
-  const addMethod = useForm({
+  const addMethod = useForm<AddApiKeyForm>({
     resolver: yupResolver(addApiKeyFormSchema),
     mode: 'onChange',
     defaultValues: {
       name: '',
-      role: 1
+      role: APIKey.Role.SDK_CLIENT
     }
   });
   const { handleSubmit: handleAddSubmit, reset: resetAdd } = addMethod;
