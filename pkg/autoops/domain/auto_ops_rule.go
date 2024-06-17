@@ -100,8 +100,7 @@ func NewAutoOpsRule(
 }
 
 func (a *AutoOpsRule) SetStopped() {
-	a.AutoOpsRule.AutoOpsStatus = proto.AutoOpsStatus_STOPPED
-	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
+	a.SetAutoOpsStatus(proto.AutoOpsStatus_STOPPED)
 }
 
 func (a *AutoOpsRule) SetDeleted() {
@@ -119,7 +118,7 @@ func (a *AutoOpsRule) SetTriggeredAt() {
 }
 
 func (a *AutoOpsRule) SetFinished() {
-	a.AutoOpsRule.AutoOpsStatus = proto.AutoOpsStatus_FINISHED
+	a.SetAutoOpsStatus(proto.AutoOpsStatus_FINISHED)
 }
 
 func (a *AutoOpsRule) AlreadyTriggered() bool {

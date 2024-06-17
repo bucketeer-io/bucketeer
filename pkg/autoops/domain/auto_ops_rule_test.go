@@ -34,7 +34,7 @@ func TestNewAutoOpsRule(t *testing.T) {
 		opsType          autoopsproto.OpsType
 		datetimeClauses  []*autoopsproto.DatetimeClause
 		eventRateClauses []*autoopsproto.OpsEventRateClause
-		expectedClauses  *AutoOpsRule
+		expected         *AutoOpsRule
 		expectedErr      error
 	}{
 		{
@@ -50,7 +50,7 @@ func TestNewAutoOpsRule(t *testing.T) {
 					Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
 				},
 			},
-			expectedClauses: &AutoOpsRule{&autoopsproto.AutoOpsRule{FeatureId: "feature-id",
+			expected: &AutoOpsRule{&autoopsproto.AutoOpsRule{FeatureId: "feature-id",
 				OpsType: autoopsproto.OpsType_ENABLE_FEATURE,
 				Clauses: []*autoopsproto.Clause{
 					newDateTimeClause(t, &autoopsproto.DatetimeClause{Time: 0, ActionType: autoopsproto.ActionType_ENABLE}),
@@ -75,8 +75,8 @@ func TestNewAutoOpsRule(t *testing.T) {
 					Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
 				},
 			},
-			expectedClauses: nil,
-			expectedErr:     errClauseEmpty,
+			expected:    nil,
+			expectedErr: errClauseEmpty,
 		},
 		{
 			desc:      "OpsType: DisableFeature",
@@ -94,7 +94,7 @@ func TestNewAutoOpsRule(t *testing.T) {
 					Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
 				},
 			},
-			expectedClauses: &AutoOpsRule{&autoopsproto.AutoOpsRule{FeatureId: "feature-id",
+			expected: &AutoOpsRule{&autoopsproto.AutoOpsRule{FeatureId: "feature-id",
 				OpsType: autoopsproto.OpsType_DISABLE_FEATURE,
 				Clauses: []*autoopsproto.Clause{
 					newEventRateClause(t, &autoopsproto.OpsEventRateClause{
@@ -133,7 +133,7 @@ func TestNewAutoOpsRule(t *testing.T) {
 				},
 			},
 			expectedErr: nil,
-			expectedClauses: &AutoOpsRule{&autoopsproto.AutoOpsRule{FeatureId: "feature-id",
+			expected: &AutoOpsRule{&autoopsproto.AutoOpsRule{FeatureId: "feature-id",
 				OpsType: autoopsproto.OpsType_SCHEDULE,
 				Clauses: []*autoopsproto.Clause{
 					newDateTimeClause(t, &autoopsproto.DatetimeClause{Time: 1, ActionType: autoopsproto.ActionType_DISABLE}),
@@ -164,7 +164,7 @@ func TestNewAutoOpsRule(t *testing.T) {
 				},
 			},
 			expectedErr: nil,
-			expectedClauses: &AutoOpsRule{&autoopsproto.AutoOpsRule{FeatureId: "feature-id",
+			expected: &AutoOpsRule{&autoopsproto.AutoOpsRule{FeatureId: "feature-id",
 				OpsType: autoopsproto.OpsType_EVENT_RATE,
 				Clauses: []*autoopsproto.Clause{
 					newEventRateClause(t, &autoopsproto.OpsEventRateClause{
@@ -194,17 +194,17 @@ func TestNewAutoOpsRule(t *testing.T) {
 			assert.Equal(t, p.expectedErr, err)
 
 			if err == nil {
-				assert.Equal(t, p.expectedClauses.FeatureId, aor.FeatureId)
-				assert.Equal(t, p.expectedClauses.OpsType, aor.OpsType)
-				assert.Equal(t, p.expectedClauses.AutoOpsStatus, aor.AutoOpsStatus)
-				assert.Equal(t, p.expectedClauses.CreatedAt, aor.CreatedAt)
-				assert.Equal(t, p.expectedClauses.UpdatedAt, aor.UpdatedAt)
-				assert.Equal(t, p.expectedClauses.TriggeredAt, aor.TriggeredAt)
-				assert.Equal(t, p.expectedClauses.Deleted, aor.Deleted)
+				assert.Equal(t, p.expected.FeatureId, aor.FeatureId)
+				assert.Equal(t, p.expected.OpsType, aor.OpsType)
+				assert.Equal(t, p.expected.AutoOpsStatus, aor.AutoOpsStatus)
+				assert.Equal(t, p.expected.CreatedAt, aor.CreatedAt)
+				assert.Equal(t, p.expected.UpdatedAt, aor.UpdatedAt)
+				assert.Equal(t, p.expected.TriggeredAt, aor.TriggeredAt)
+				assert.Equal(t, p.expected.Deleted, aor.Deleted)
 
 				for i, c := range aor.Clauses {
-					assert.Equal(t, p.expectedClauses.Clauses[i].ActionType, c.ActionType)
-					assert.Equal(t, p.expectedClauses.Clauses[i].Clause, c.Clause)
+					assert.Equal(t, p.expected.Clauses[i].ActionType, c.ActionType)
+					assert.Equal(t, p.expected.Clauses[i].Clause, c.Clause)
 				}
 			}
 		})
