@@ -167,7 +167,7 @@ jobs:
       - name: Install protoc-gen-openapiv2
         run: go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@${{ env.PROTOC_GEN_OPENAPIV2 }}
       - name: Generate proto go files
-        run: make proto-openapi
+        run: make proto-openapi-gen
       - name: Check diff
         run: make diff-check
 
