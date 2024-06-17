@@ -12,28 +12,28 @@ import {
   TableBody,
   TableCell,
   TableHeader,
-  TableRow,
+  TableRow
 } from '../Table';
 
 const createHeadCells = (): Array<HeaderCell> => [
   {
     id: 'variation',
     label: intl.formatMessage(messages.experiment.result.variation.label),
-    helpText: '',
+    helpText: ''
   },
   {
     id: 'conversion-rate',
     label: intl.formatMessage(messages.experiment.result.conversionRate.label),
     helpText: intl.formatMessage(
       messages.experiment.result.conversionRate.helpText
-    ),
+    )
   },
   {
     id: 'improvement',
     label: intl.formatMessage(messages.experiment.result.improvement.label),
     helpText: intl.formatMessage(
       messages.experiment.result.improvement.helpText
-    ),
+    )
   },
   {
     id: 'prob-beat-baseline',
@@ -42,7 +42,7 @@ const createHeadCells = (): Array<HeaderCell> => [
     ),
     helpText: intl.formatMessage(
       messages.experiment.result.probabilityToBeatBaseline.helpText
-    ),
+    )
   },
   {
     id: 'prob-best',
@@ -51,8 +51,8 @@ const createHeadCells = (): Array<HeaderCell> => [
     ),
     helpText: intl.formatMessage(
       messages.experiment.result.probabilityToBest.helpText
-    ),
-  },
+    )
+  }
 ];
 
 interface ConversionRateTableProps {
@@ -64,7 +64,7 @@ interface ConversionRateTableProps {
 export const ConversionRateTable: FC<ConversionRateTableProps> = ({
   goalResult,
   baseVariationId,
-  variations,
+  variations
 }) => {
   const baseVariationResult = unwrapUndefinable(
     goalResult.variationResultsList.find(
@@ -106,20 +106,20 @@ export const ConversionRateTable: FC<ConversionRateTableProps> = ({
                 {baseVariationId === variationResult.variationId
                   ? 'Baseline'
                   : Number.isNaN(conversionRate - baseConversionRate)
-                  ? 'n/a'
-                  : (conversionRate - baseConversionRate).toFixed(1) +
-                    ' %'}{' '}
+                    ? 'n/a'
+                    : (conversionRate - baseConversionRate).toFixed(1) +
+                      ' %'}{' '}
               </TableCell>
               <TableCell textLeft={true}>
                 {' '}
                 {baseVariationId === variationResult.variationId
                   ? 'Baseline'
                   : cvrProbBeeatBaseline
-                  ? (
-                      unwrapUndefinable(variationResult.cvrProbBeatBaseline)
-                        .mean * 100
-                    ).toFixed(1) + ' %'
-                  : '-'}{' '}
+                    ? (
+                        unwrapUndefinable(variationResult.cvrProbBeatBaseline)
+                          .mean * 100
+                      ).toFixed(1) + ' %'
+                    : '-'}{' '}
               </TableCell>
               <TableCell textLeft={true}>
                 {' '}

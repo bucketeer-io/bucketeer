@@ -1,7 +1,7 @@
 // package: bucketeer.feature
 // file: proto/feature/service.proto
 
-var proto_feature_service_pb = require('./service_pb');
+var proto_feature_service_pb = require('../../proto/feature/service_pb');
 var grpc = require('@improbable-eng/grpc-web').grpc;
 
 var FeatureService = (function () {
@@ -16,7 +16,7 @@ FeatureService.GetFeature = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.GetFeatureRequest,
-  responseType: proto_feature_service_pb.GetFeatureResponse,
+  responseType: proto_feature_service_pb.GetFeatureResponse
 };
 
 FeatureService.GetFeatures = {
@@ -25,7 +25,7 @@ FeatureService.GetFeatures = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.GetFeaturesRequest,
-  responseType: proto_feature_service_pb.GetFeaturesResponse,
+  responseType: proto_feature_service_pb.GetFeaturesResponse
 };
 
 FeatureService.ListFeatures = {
@@ -34,7 +34,7 @@ FeatureService.ListFeatures = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.ListFeaturesRequest,
-  responseType: proto_feature_service_pb.ListFeaturesResponse,
+  responseType: proto_feature_service_pb.ListFeaturesResponse
 };
 
 FeatureService.ListEnabledFeatures = {
@@ -43,7 +43,7 @@ FeatureService.ListEnabledFeatures = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.ListEnabledFeaturesRequest,
-  responseType: proto_feature_service_pb.ListEnabledFeaturesResponse,
+  responseType: proto_feature_service_pb.ListEnabledFeaturesResponse
 };
 
 FeatureService.CreateFeature = {
@@ -52,7 +52,7 @@ FeatureService.CreateFeature = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.CreateFeatureRequest,
-  responseType: proto_feature_service_pb.CreateFeatureResponse,
+  responseType: proto_feature_service_pb.CreateFeatureResponse
 };
 
 FeatureService.UpdateFeature = {
@@ -61,7 +61,7 @@ FeatureService.UpdateFeature = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.UpdateFeatureRequest,
-  responseType: proto_feature_service_pb.UpdateFeatureResponse,
+  responseType: proto_feature_service_pb.UpdateFeatureResponse
 };
 
 FeatureService.EnableFeature = {
@@ -70,7 +70,7 @@ FeatureService.EnableFeature = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.EnableFeatureRequest,
-  responseType: proto_feature_service_pb.EnableFeatureResponse,
+  responseType: proto_feature_service_pb.EnableFeatureResponse
 };
 
 FeatureService.DisableFeature = {
@@ -79,7 +79,7 @@ FeatureService.DisableFeature = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.DisableFeatureRequest,
-  responseType: proto_feature_service_pb.DisableFeatureResponse,
+  responseType: proto_feature_service_pb.DisableFeatureResponse
 };
 
 FeatureService.ArchiveFeature = {
@@ -88,7 +88,7 @@ FeatureService.ArchiveFeature = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.ArchiveFeatureRequest,
-  responseType: proto_feature_service_pb.ArchiveFeatureResponse,
+  responseType: proto_feature_service_pb.ArchiveFeatureResponse
 };
 
 FeatureService.UnarchiveFeature = {
@@ -97,7 +97,7 @@ FeatureService.UnarchiveFeature = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.UnarchiveFeatureRequest,
-  responseType: proto_feature_service_pb.UnarchiveFeatureResponse,
+  responseType: proto_feature_service_pb.UnarchiveFeatureResponse
 };
 
 FeatureService.DeleteFeature = {
@@ -106,7 +106,7 @@ FeatureService.DeleteFeature = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.DeleteFeatureRequest,
-  responseType: proto_feature_service_pb.DeleteFeatureResponse,
+  responseType: proto_feature_service_pb.DeleteFeatureResponse
 };
 
 FeatureService.UpdateFeatureDetails = {
@@ -115,7 +115,7 @@ FeatureService.UpdateFeatureDetails = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.UpdateFeatureDetailsRequest,
-  responseType: proto_feature_service_pb.UpdateFeatureDetailsResponse,
+  responseType: proto_feature_service_pb.UpdateFeatureDetailsResponse
 };
 
 FeatureService.UpdateFeatureVariations = {
@@ -124,7 +124,7 @@ FeatureService.UpdateFeatureVariations = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.UpdateFeatureVariationsRequest,
-  responseType: proto_feature_service_pb.UpdateFeatureVariationsResponse,
+  responseType: proto_feature_service_pb.UpdateFeatureVariationsResponse
 };
 
 FeatureService.UpdateFeatureTargeting = {
@@ -133,7 +133,7 @@ FeatureService.UpdateFeatureTargeting = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.UpdateFeatureTargetingRequest,
-  responseType: proto_feature_service_pb.UpdateFeatureTargetingResponse,
+  responseType: proto_feature_service_pb.UpdateFeatureTargetingResponse
 };
 
 FeatureService.CloneFeature = {
@@ -142,7 +142,7 @@ FeatureService.CloneFeature = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.CloneFeatureRequest,
-  responseType: proto_feature_service_pb.CloneFeatureResponse,
+  responseType: proto_feature_service_pb.CloneFeatureResponse
 };
 
 FeatureService.CreateSegment = {
@@ -151,7 +151,7 @@ FeatureService.CreateSegment = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.CreateSegmentRequest,
-  responseType: proto_feature_service_pb.CreateSegmentResponse,
+  responseType: proto_feature_service_pb.CreateSegmentResponse
 };
 
 FeatureService.GetSegment = {
@@ -160,7 +160,7 @@ FeatureService.GetSegment = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.GetSegmentRequest,
-  responseType: proto_feature_service_pb.GetSegmentResponse,
+  responseType: proto_feature_service_pb.GetSegmentResponse
 };
 
 FeatureService.ListSegments = {
@@ -169,7 +169,7 @@ FeatureService.ListSegments = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.ListSegmentsRequest,
-  responseType: proto_feature_service_pb.ListSegmentsResponse,
+  responseType: proto_feature_service_pb.ListSegmentsResponse
 };
 
 FeatureService.DeleteSegment = {
@@ -178,7 +178,7 @@ FeatureService.DeleteSegment = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.DeleteSegmentRequest,
-  responseType: proto_feature_service_pb.DeleteSegmentResponse,
+  responseType: proto_feature_service_pb.DeleteSegmentResponse
 };
 
 FeatureService.UpdateSegment = {
@@ -187,7 +187,7 @@ FeatureService.UpdateSegment = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.UpdateSegmentRequest,
-  responseType: proto_feature_service_pb.UpdateSegmentResponse,
+  responseType: proto_feature_service_pb.UpdateSegmentResponse
 };
 
 FeatureService.AddSegmentUser = {
@@ -196,7 +196,7 @@ FeatureService.AddSegmentUser = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.AddSegmentUserRequest,
-  responseType: proto_feature_service_pb.AddSegmentUserResponse,
+  responseType: proto_feature_service_pb.AddSegmentUserResponse
 };
 
 FeatureService.DeleteSegmentUser = {
@@ -205,7 +205,7 @@ FeatureService.DeleteSegmentUser = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.DeleteSegmentUserRequest,
-  responseType: proto_feature_service_pb.DeleteSegmentUserResponse,
+  responseType: proto_feature_service_pb.DeleteSegmentUserResponse
 };
 
 FeatureService.GetSegmentUser = {
@@ -214,7 +214,7 @@ FeatureService.GetSegmentUser = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.GetSegmentUserRequest,
-  responseType: proto_feature_service_pb.GetSegmentUserResponse,
+  responseType: proto_feature_service_pb.GetSegmentUserResponse
 };
 
 FeatureService.ListSegmentUsers = {
@@ -223,7 +223,7 @@ FeatureService.ListSegmentUsers = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.ListSegmentUsersRequest,
-  responseType: proto_feature_service_pb.ListSegmentUsersResponse,
+  responseType: proto_feature_service_pb.ListSegmentUsersResponse
 };
 
 FeatureService.BulkUploadSegmentUsers = {
@@ -232,7 +232,7 @@ FeatureService.BulkUploadSegmentUsers = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.BulkUploadSegmentUsersRequest,
-  responseType: proto_feature_service_pb.BulkUploadSegmentUsersResponse,
+  responseType: proto_feature_service_pb.BulkUploadSegmentUsersResponse
 };
 
 FeatureService.BulkDownloadSegmentUsers = {
@@ -241,7 +241,7 @@ FeatureService.BulkDownloadSegmentUsers = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.BulkDownloadSegmentUsersRequest,
-  responseType: proto_feature_service_pb.BulkDownloadSegmentUsersResponse,
+  responseType: proto_feature_service_pb.BulkDownloadSegmentUsersResponse
 };
 
 FeatureService.EvaluateFeatures = {
@@ -250,7 +250,7 @@ FeatureService.EvaluateFeatures = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.EvaluateFeaturesRequest,
-  responseType: proto_feature_service_pb.EvaluateFeaturesResponse,
+  responseType: proto_feature_service_pb.EvaluateFeaturesResponse
 };
 
 FeatureService.ListTags = {
@@ -259,7 +259,7 @@ FeatureService.ListTags = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.ListTagsRequest,
-  responseType: proto_feature_service_pb.ListTagsResponse,
+  responseType: proto_feature_service_pb.ListTagsResponse
 };
 
 FeatureService.CreateFlagTrigger = {
@@ -268,7 +268,7 @@ FeatureService.CreateFlagTrigger = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.CreateFlagTriggerRequest,
-  responseType: proto_feature_service_pb.CreateFlagTriggerResponse,
+  responseType: proto_feature_service_pb.CreateFlagTriggerResponse
 };
 
 FeatureService.UpdateFlagTrigger = {
@@ -277,7 +277,7 @@ FeatureService.UpdateFlagTrigger = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.UpdateFlagTriggerRequest,
-  responseType: proto_feature_service_pb.UpdateFlagTriggerResponse,
+  responseType: proto_feature_service_pb.UpdateFlagTriggerResponse
 };
 
 FeatureService.EnableFlagTrigger = {
@@ -286,7 +286,7 @@ FeatureService.EnableFlagTrigger = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.EnableFlagTriggerRequest,
-  responseType: proto_feature_service_pb.EnableFlagTriggerResponse,
+  responseType: proto_feature_service_pb.EnableFlagTriggerResponse
 };
 
 FeatureService.DisableFlagTrigger = {
@@ -295,7 +295,7 @@ FeatureService.DisableFlagTrigger = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.DisableFlagTriggerRequest,
-  responseType: proto_feature_service_pb.DisableFlagTriggerResponse,
+  responseType: proto_feature_service_pb.DisableFlagTriggerResponse
 };
 
 FeatureService.ResetFlagTrigger = {
@@ -304,7 +304,7 @@ FeatureService.ResetFlagTrigger = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.ResetFlagTriggerRequest,
-  responseType: proto_feature_service_pb.ResetFlagTriggerResponse,
+  responseType: proto_feature_service_pb.ResetFlagTriggerResponse
 };
 
 FeatureService.DeleteFlagTrigger = {
@@ -313,7 +313,7 @@ FeatureService.DeleteFlagTrigger = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.DeleteFlagTriggerRequest,
-  responseType: proto_feature_service_pb.DeleteFlagTriggerResponse,
+  responseType: proto_feature_service_pb.DeleteFlagTriggerResponse
 };
 
 FeatureService.GetFlagTrigger = {
@@ -322,7 +322,7 @@ FeatureService.GetFlagTrigger = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.GetFlagTriggerRequest,
-  responseType: proto_feature_service_pb.GetFlagTriggerResponse,
+  responseType: proto_feature_service_pb.GetFlagTriggerResponse
 };
 
 FeatureService.ListFlagTriggers = {
@@ -331,7 +331,7 @@ FeatureService.ListFlagTriggers = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.ListFlagTriggersRequest,
-  responseType: proto_feature_service_pb.ListFlagTriggersResponse,
+  responseType: proto_feature_service_pb.ListFlagTriggersResponse
 };
 
 FeatureService.FlagTriggerWebhook = {
@@ -340,7 +340,7 @@ FeatureService.FlagTriggerWebhook = {
   requestStream: false,
   responseStream: false,
   requestType: proto_feature_service_pb.FlagTriggerWebhookRequest,
-  responseType: proto_feature_service_pb.FlagTriggerWebhookResponse,
+  responseType: proto_feature_service_pb.FlagTriggerWebhookResponse
 };
 
 exports.FeatureService = FeatureService;
@@ -375,13 +375,13 @@ FeatureServiceClient.prototype.getFeature = function getFeature(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -410,13 +410,13 @@ FeatureServiceClient.prototype.getFeatures = function getFeatures(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -445,13 +445,13 @@ FeatureServiceClient.prototype.listFeatures = function listFeatures(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -477,13 +477,13 @@ FeatureServiceClient.prototype.listEnabledFeatures =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -512,13 +512,13 @@ FeatureServiceClient.prototype.createFeature = function createFeature(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -547,13 +547,13 @@ FeatureServiceClient.prototype.updateFeature = function updateFeature(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -582,13 +582,13 @@ FeatureServiceClient.prototype.enableFeature = function enableFeature(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -617,13 +617,13 @@ FeatureServiceClient.prototype.disableFeature = function disableFeature(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -652,13 +652,13 @@ FeatureServiceClient.prototype.archiveFeature = function archiveFeature(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -687,13 +687,13 @@ FeatureServiceClient.prototype.unarchiveFeature = function unarchiveFeature(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -722,13 +722,13 @@ FeatureServiceClient.prototype.deleteFeature = function deleteFeature(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -754,13 +754,13 @@ FeatureServiceClient.prototype.updateFeatureDetails =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -786,13 +786,13 @@ FeatureServiceClient.prototype.updateFeatureVariations =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -818,13 +818,13 @@ FeatureServiceClient.prototype.updateFeatureTargeting =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -853,13 +853,13 @@ FeatureServiceClient.prototype.cloneFeature = function cloneFeature(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -888,13 +888,13 @@ FeatureServiceClient.prototype.createSegment = function createSegment(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -923,13 +923,13 @@ FeatureServiceClient.prototype.getSegment = function getSegment(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -958,13 +958,13 @@ FeatureServiceClient.prototype.listSegments = function listSegments(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -993,13 +993,13 @@ FeatureServiceClient.prototype.deleteSegment = function deleteSegment(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -1028,13 +1028,13 @@ FeatureServiceClient.prototype.updateSegment = function updateSegment(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -1063,13 +1063,13 @@ FeatureServiceClient.prototype.addSegmentUser = function addSegmentUser(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -1098,13 +1098,13 @@ FeatureServiceClient.prototype.deleteSegmentUser = function deleteSegmentUser(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -1133,13 +1133,13 @@ FeatureServiceClient.prototype.getSegmentUser = function getSegmentUser(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -1168,13 +1168,13 @@ FeatureServiceClient.prototype.listSegmentUsers = function listSegmentUsers(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -1200,13 +1200,13 @@ FeatureServiceClient.prototype.bulkUploadSegmentUsers =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -1232,13 +1232,13 @@ FeatureServiceClient.prototype.bulkDownloadSegmentUsers =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -1267,13 +1267,13 @@ FeatureServiceClient.prototype.evaluateFeatures = function evaluateFeatures(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -1302,13 +1302,13 @@ FeatureServiceClient.prototype.listTags = function listTags(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -1337,13 +1337,13 @@ FeatureServiceClient.prototype.createFlagTrigger = function createFlagTrigger(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -1372,13 +1372,13 @@ FeatureServiceClient.prototype.updateFlagTrigger = function updateFlagTrigger(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -1407,13 +1407,13 @@ FeatureServiceClient.prototype.enableFlagTrigger = function enableFlagTrigger(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -1442,13 +1442,13 @@ FeatureServiceClient.prototype.disableFlagTrigger = function disableFlagTrigger(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -1477,13 +1477,13 @@ FeatureServiceClient.prototype.resetFlagTrigger = function resetFlagTrigger(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -1512,13 +1512,13 @@ FeatureServiceClient.prototype.deleteFlagTrigger = function deleteFlagTrigger(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -1547,13 +1547,13 @@ FeatureServiceClient.prototype.getFlagTrigger = function getFlagTrigger(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -1582,13 +1582,13 @@ FeatureServiceClient.prototype.listFlagTriggers = function listFlagTriggers(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -1617,13 +1617,13 @@ FeatureServiceClient.prototype.flagTriggerWebhook = function flagTriggerWebhook(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 

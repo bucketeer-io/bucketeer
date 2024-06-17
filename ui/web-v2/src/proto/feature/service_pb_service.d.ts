@@ -1,7 +1,7 @@
 // package: bucketeer.feature
 // file: proto/feature/service.proto
 
-import * as proto_feature_service_pb from './service_pb';
+import * as proto_feature_service_pb from '../../proto/feature/service_pb';
 import { grpc } from '@improbable-eng/grpc-web';
 
 type FeatureServiceGetFeature = {

@@ -1,7 +1,7 @@
 // package: bucketeer.environment
 // file: proto/environment/service.proto
 
-var proto_environment_service_pb = require('./service_pb');
+var proto_environment_service_pb = require('../../proto/environment/service_pb');
 var grpc = require('@improbable-eng/grpc-web').grpc;
 
 var EnvironmentService = (function () {
@@ -16,7 +16,7 @@ EnvironmentService.GetEnvironmentV2 = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.GetEnvironmentV2Request,
-  responseType: proto_environment_service_pb.GetEnvironmentV2Response,
+  responseType: proto_environment_service_pb.GetEnvironmentV2Response
 };
 
 EnvironmentService.ListEnvironmentsV2 = {
@@ -25,7 +25,7 @@ EnvironmentService.ListEnvironmentsV2 = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.ListEnvironmentsV2Request,
-  responseType: proto_environment_service_pb.ListEnvironmentsV2Response,
+  responseType: proto_environment_service_pb.ListEnvironmentsV2Response
 };
 
 EnvironmentService.CreateEnvironmentV2 = {
@@ -34,7 +34,7 @@ EnvironmentService.CreateEnvironmentV2 = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.CreateEnvironmentV2Request,
-  responseType: proto_environment_service_pb.CreateEnvironmentV2Response,
+  responseType: proto_environment_service_pb.CreateEnvironmentV2Response
 };
 
 EnvironmentService.UpdateEnvironmentV2 = {
@@ -43,7 +43,7 @@ EnvironmentService.UpdateEnvironmentV2 = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.UpdateEnvironmentV2Request,
-  responseType: proto_environment_service_pb.UpdateEnvironmentV2Response,
+  responseType: proto_environment_service_pb.UpdateEnvironmentV2Response
 };
 
 EnvironmentService.ArchiveEnvironmentV2 = {
@@ -52,7 +52,7 @@ EnvironmentService.ArchiveEnvironmentV2 = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.ArchiveEnvironmentV2Request,
-  responseType: proto_environment_service_pb.ArchiveEnvironmentV2Response,
+  responseType: proto_environment_service_pb.ArchiveEnvironmentV2Response
 };
 
 EnvironmentService.UnarchiveEnvironmentV2 = {
@@ -61,7 +61,7 @@ EnvironmentService.UnarchiveEnvironmentV2 = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.UnarchiveEnvironmentV2Request,
-  responseType: proto_environment_service_pb.UnarchiveEnvironmentV2Response,
+  responseType: proto_environment_service_pb.UnarchiveEnvironmentV2Response
 };
 
 EnvironmentService.GetProject = {
@@ -70,7 +70,7 @@ EnvironmentService.GetProject = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.GetProjectRequest,
-  responseType: proto_environment_service_pb.GetProjectResponse,
+  responseType: proto_environment_service_pb.GetProjectResponse
 };
 
 EnvironmentService.ListProjects = {
@@ -79,7 +79,7 @@ EnvironmentService.ListProjects = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.ListProjectsRequest,
-  responseType: proto_environment_service_pb.ListProjectsResponse,
+  responseType: proto_environment_service_pb.ListProjectsResponse
 };
 
 EnvironmentService.CreateProject = {
@@ -88,7 +88,7 @@ EnvironmentService.CreateProject = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.CreateProjectRequest,
-  responseType: proto_environment_service_pb.CreateProjectResponse,
+  responseType: proto_environment_service_pb.CreateProjectResponse
 };
 
 EnvironmentService.CreateTrialProject = {
@@ -97,7 +97,7 @@ EnvironmentService.CreateTrialProject = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.CreateTrialProjectRequest,
-  responseType: proto_environment_service_pb.CreateTrialProjectResponse,
+  responseType: proto_environment_service_pb.CreateTrialProjectResponse
 };
 
 EnvironmentService.UpdateProject = {
@@ -106,7 +106,7 @@ EnvironmentService.UpdateProject = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.UpdateProjectRequest,
-  responseType: proto_environment_service_pb.UpdateProjectResponse,
+  responseType: proto_environment_service_pb.UpdateProjectResponse
 };
 
 EnvironmentService.EnableProject = {
@@ -115,7 +115,7 @@ EnvironmentService.EnableProject = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.EnableProjectRequest,
-  responseType: proto_environment_service_pb.EnableProjectResponse,
+  responseType: proto_environment_service_pb.EnableProjectResponse
 };
 
 EnvironmentService.DisableProject = {
@@ -124,7 +124,7 @@ EnvironmentService.DisableProject = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.DisableProjectRequest,
-  responseType: proto_environment_service_pb.DisableProjectResponse,
+  responseType: proto_environment_service_pb.DisableProjectResponse
 };
 
 EnvironmentService.ConvertTrialProject = {
@@ -133,7 +133,7 @@ EnvironmentService.ConvertTrialProject = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.ConvertTrialProjectRequest,
-  responseType: proto_environment_service_pb.ConvertTrialProjectResponse,
+  responseType: proto_environment_service_pb.ConvertTrialProjectResponse
 };
 
 EnvironmentService.GetOrganization = {
@@ -142,7 +142,7 @@ EnvironmentService.GetOrganization = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.GetOrganizationRequest,
-  responseType: proto_environment_service_pb.GetOrganizationResponse,
+  responseType: proto_environment_service_pb.GetOrganizationResponse
 };
 
 EnvironmentService.ListOrganizations = {
@@ -151,7 +151,7 @@ EnvironmentService.ListOrganizations = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.ListOrganizationsRequest,
-  responseType: proto_environment_service_pb.ListOrganizationsResponse,
+  responseType: proto_environment_service_pb.ListOrganizationsResponse
 };
 
 EnvironmentService.CreateOrganization = {
@@ -160,7 +160,7 @@ EnvironmentService.CreateOrganization = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.CreateOrganizationRequest,
-  responseType: proto_environment_service_pb.CreateOrganizationResponse,
+  responseType: proto_environment_service_pb.CreateOrganizationResponse
 };
 
 EnvironmentService.UpdateOrganization = {
@@ -169,7 +169,7 @@ EnvironmentService.UpdateOrganization = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.UpdateOrganizationRequest,
-  responseType: proto_environment_service_pb.UpdateOrganizationResponse,
+  responseType: proto_environment_service_pb.UpdateOrganizationResponse
 };
 
 EnvironmentService.EnableOrganization = {
@@ -178,7 +178,7 @@ EnvironmentService.EnableOrganization = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.EnableOrganizationRequest,
-  responseType: proto_environment_service_pb.EnableOrganizationResponse,
+  responseType: proto_environment_service_pb.EnableOrganizationResponse
 };
 
 EnvironmentService.DisableOrganization = {
@@ -187,7 +187,7 @@ EnvironmentService.DisableOrganization = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.DisableOrganizationRequest,
-  responseType: proto_environment_service_pb.DisableOrganizationResponse,
+  responseType: proto_environment_service_pb.DisableOrganizationResponse
 };
 
 EnvironmentService.ArchiveOrganization = {
@@ -196,7 +196,7 @@ EnvironmentService.ArchiveOrganization = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.ArchiveOrganizationRequest,
-  responseType: proto_environment_service_pb.ArchiveOrganizationResponse,
+  responseType: proto_environment_service_pb.ArchiveOrganizationResponse
 };
 
 EnvironmentService.UnarchiveOrganization = {
@@ -205,7 +205,7 @@ EnvironmentService.UnarchiveOrganization = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.UnarchiveOrganizationRequest,
-  responseType: proto_environment_service_pb.UnarchiveOrganizationResponse,
+  responseType: proto_environment_service_pb.UnarchiveOrganizationResponse
 };
 
 EnvironmentService.ConvertTrialOrganization = {
@@ -214,7 +214,7 @@ EnvironmentService.ConvertTrialOrganization = {
   requestStream: false,
   responseStream: false,
   requestType: proto_environment_service_pb.ConvertTrialOrganizationRequest,
-  responseType: proto_environment_service_pb.ConvertTrialOrganizationResponse,
+  responseType: proto_environment_service_pb.ConvertTrialOrganizationResponse
 };
 
 exports.EnvironmentService = EnvironmentService;
@@ -249,13 +249,13 @@ EnvironmentServiceClient.prototype.getEnvironmentV2 = function getEnvironmentV2(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -281,13 +281,13 @@ EnvironmentServiceClient.prototype.listEnvironmentsV2 =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -313,13 +313,13 @@ EnvironmentServiceClient.prototype.createEnvironmentV2 =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -345,13 +345,13 @@ EnvironmentServiceClient.prototype.updateEnvironmentV2 =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -377,13 +377,13 @@ EnvironmentServiceClient.prototype.archiveEnvironmentV2 =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -409,13 +409,13 @@ EnvironmentServiceClient.prototype.unarchiveEnvironmentV2 =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -444,13 +444,13 @@ EnvironmentServiceClient.prototype.getProject = function getProject(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -479,13 +479,13 @@ EnvironmentServiceClient.prototype.listProjects = function listProjects(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -514,13 +514,13 @@ EnvironmentServiceClient.prototype.createProject = function createProject(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -546,13 +546,13 @@ EnvironmentServiceClient.prototype.createTrialProject =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -581,13 +581,13 @@ EnvironmentServiceClient.prototype.updateProject = function updateProject(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -616,13 +616,13 @@ EnvironmentServiceClient.prototype.enableProject = function enableProject(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -651,13 +651,13 @@ EnvironmentServiceClient.prototype.disableProject = function disableProject(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -683,13 +683,13 @@ EnvironmentServiceClient.prototype.convertTrialProject =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -718,13 +718,13 @@ EnvironmentServiceClient.prototype.getOrganization = function getOrganization(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -750,13 +750,13 @@ EnvironmentServiceClient.prototype.listOrganizations =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -782,13 +782,13 @@ EnvironmentServiceClient.prototype.createOrganization =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -814,13 +814,13 @@ EnvironmentServiceClient.prototype.updateOrganization =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -846,13 +846,13 @@ EnvironmentServiceClient.prototype.enableOrganization =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -878,13 +878,13 @@ EnvironmentServiceClient.prototype.disableOrganization =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -910,13 +910,13 @@ EnvironmentServiceClient.prototype.archiveOrganization =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -942,13 +942,13 @@ EnvironmentServiceClient.prototype.unarchiveOrganization =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -974,13 +974,13 @@ EnvironmentServiceClient.prototype.convertTrialOrganization =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 

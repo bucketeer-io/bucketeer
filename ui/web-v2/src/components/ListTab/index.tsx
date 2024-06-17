@@ -11,12 +11,12 @@ export const ListTab: FC = memo(() => {
   const tabs = [
     {
       id: 'active',
-      message: f(messages.feature.list.active),
+      message: f(messages.feature.list.active)
     },
     {
       id: 'archive',
-      message: f(messages.feature.list.archive),
-    },
+      message: f(messages.feature.list.archive)
+    }
   ];
 
   return (

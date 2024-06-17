@@ -1,7 +1,7 @@
 import {
   PAGE_PATH_FEATURES,
   PAGE_PATH_FEATURE_AUTOOPS,
-  PAGE_PATH_ROOT,
+  PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { listProgressiveRollout } from '../../modules/porgressiveRollout';
 import { ListProgressiveRolloutsResponse } from '../../proto/autoops/service_pb';
@@ -17,7 +17,7 @@ import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import {
   selectAll as selectAllFeatures,
-  listFeatures,
+  listFeatures
 } from '../../modules/features';
 import { listGoals, selectAll as selectAllGoals } from '../../modules/goals';
 import { useCurrentEnvironment } from '../../modules/me';
@@ -41,7 +41,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
   ({ onSubmit, onCancel }) => {
     const [
       isFeatureHasRunningProgressiveRollout,
-      setIsFeatureHasRunningProgressiveRollout,
+      setIsFeatureHasRunningProgressiveRollout
     ] = useState<boolean>(false);
     const { formatMessage: f } = useIntl();
     const dispatch = useDispatch<AppDispatch>();
@@ -68,13 +68,13 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
       return {
         value: feature.id,
         label: `${feature.id}(${feature.name})`,
-        enabled: feature.enabled,
+        enabled: feature.enabled
       };
     });
     const goalOptions = goals.map((goal) => {
       return {
         value: goal.id,
-        label: `${goal.id}(${goal.name})`,
+        label: `${goal.id}(${goal.name})`
       };
     });
     const methods = useFormContext();
@@ -84,7 +84,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
       formState: { errors, isSubmitting, isDirty, isValid },
       getValues,
       reset,
-      watch,
+      watch
     } = methods;
     const watchBaselineVariation = watch('baselineVariation', null);
     const featureId = getValues('featureId');
@@ -100,7 +100,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
             keepDirty: true,
             keepErrors: true,
             keepIsValid: true,
-            keepTouched: true,
+            keepTouched: true
           }
         );
       },
@@ -117,7 +117,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
           status: null,
           orderBy: ListGoalsRequest.OrderBy.DEFAULT,
           orderDirection: ListGoalsRequest.OrderDirection.ASC,
-          archived: false,
+          archived: false
         })
       );
       dispatch(
@@ -132,7 +132,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
           maintainerId: null,
           archived: false,
           orderBy: ListFeaturesRequest.OrderBy.DEFAULT,
-          orderDirection: ListFeaturesRequest.OrderDirection.ASC,
+          orderDirection: ListFeaturesRequest.OrderDirection.ASC
         })
       );
     }, [dispatch]);
@@ -142,7 +142,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
         dispatch(
           listProgressiveRollout({
             featureId: featureId,
-            environmentNamespace: currentEnvironment.id,
+            environmentNamespace: currentEnvironment.id
           })
         ).then((res) => {
           const response =
@@ -286,7 +286,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
                                 >
                                   {f(messages.sourceType.progressiveRollout)}
                                 </Link>
-                              ),
+                              )
                             })}
                           </p>
                         </div>
@@ -421,7 +421,7 @@ function createBaselineVariationOptions(
     ?.variationsList.map((v) => {
       return {
         value: v.id,
-        label: v.value,
+        label: v.value
       };
     });
 }

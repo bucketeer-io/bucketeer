@@ -23,7 +23,7 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_experiment_experiment_pb = require('../experiment/experiment_pb.js');
+var proto_experiment_experiment_pb = require('../../proto/experiment/experiment_pb.js');
 goog.object.extend(proto, proto_experiment_experiment_pb);
 goog.exportSymbol(
   'proto.bucketeer.experimentcalculator.BatchCalcRequest',
@@ -125,10 +125,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         environmentId: jspb.Message.getFieldWithDefault(msg, 1, ''),
         experiment:
           (f = msg.getExperiment()) &&
-          proto_experiment_experiment_pb.Experiment.toObject(
-            includeInstance,
-            f
-          ),
+          proto_experiment_experiment_pb.Experiment.toObject(includeInstance, f)
       };
 
     if (includeInstance) {

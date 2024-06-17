@@ -23,7 +23,7 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_user_user_pb = require('../../user/user_pb.js');
+var proto_user_user_pb = require('../../../proto/user/user_pb.js');
 goog.object.extend(proto, proto_user_user_pb);
 goog.exportSymbol(
   'proto.bucketeer.event.service.EvaluationRequestEvent',
@@ -98,7 +98,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           (f = msg.getUser()) &&
           proto_user_user_pb.User.toObject(includeInstance, f),
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 5, ''),
-        tag: jspb.Message.getFieldWithDefault(msg, 6, ''),
+        tag: jspb.Message.getFieldWithDefault(msg, 6, '')
       };
 
     if (includeInstance) {

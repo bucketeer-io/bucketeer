@@ -2,7 +2,7 @@
 // file: proto/eventcounter/goal_result.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_eventcounter_variation_result_pb from './variation_result_pb';
+import * as proto_eventcounter_variation_result_pb from '../../proto/eventcounter/variation_result_pb';
 
 export class GoalResult extends jspb.Message {
   getGoalId(): string;

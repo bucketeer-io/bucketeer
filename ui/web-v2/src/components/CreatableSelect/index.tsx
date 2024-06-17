@@ -33,38 +33,38 @@ export const colourStyles = {
     backgroundColor: isDisabled ? backgroundColorDisabled : backgroundColor,
     borderColor: borderColor,
     '&:hover': {
-      borderColor: borderColor,
+      borderColor: borderColor
     },
     fontSize: fontSize,
     lineHeight: lineHeight,
     minHeight: minHeight,
     '*': {
-      boxShadow: 'none !important',
-    },
+      boxShadow: 'none !important'
+    }
   }),
   option: (styles, { isFocused }) => {
     return {
       ...styles,
       backgroundColor: isFocused ? backgroundColor : null,
-      color: textColor,
+      color: textColor
     };
   },
   menu: (base) => ({
     ...base,
     fontSize: fontSize,
     lineHeight: lineHeight,
-    color: textColor,
+    color: textColor
   }),
   multiValueLabel: (base, { isDisabled }) => ({
     ...base,
-    color: isDisabled ? textColorDisabled : textColor,
+    color: isDisabled ? textColorDisabled : textColor
   }),
   singleValue: (styles, { isDisabled }) => {
     return {
       ...styles,
-      color: isDisabled ? textColorDisabled : textColor,
+      color: isDisabled ? textColorDisabled : textColor
     };
-  },
+  }
 };
 
 export const CreatableSelect: FC<CreatableSelectProps> = memo(
@@ -77,7 +77,7 @@ export const CreatableSelect: FC<CreatableSelectProps> = memo(
     defaultValues,
     closeMenuOnSelect,
     value,
-    placeholder = '',
+    placeholder = ''
   }) => {
     return (
       <ReactCreatableSelect
@@ -88,7 +88,7 @@ export const CreatableSelect: FC<CreatableSelectProps> = memo(
         classNamePrefix="react-select"
         styles={colourStyles}
         components={{
-          DropdownIndicator: null,
+          DropdownIndicator: null
         }}
         isDisabled={disabled}
         isSearchable={isSearchable}

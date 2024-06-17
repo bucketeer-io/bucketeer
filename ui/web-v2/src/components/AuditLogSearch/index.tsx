@@ -8,7 +8,7 @@ import { AppState } from '../../modules';
 import { AuditLogSearchOptions } from '../../types/auditLog';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
-  SORT_OPTIONS_CREATED_AT_DESC,
+  SORT_OPTIONS_CREATED_AT_DESC
 } from '../../types/list';
 import { classNames } from '../../utils/css';
 import { DateRangePopover } from '../DateRangePopover';
@@ -19,12 +19,12 @@ import { SortItem, SortSelect } from '../SortSelect';
 const sortItems: SortItem[] = [
   {
     key: SORT_OPTIONS_CREATED_AT_DESC,
-    message: intl.formatMessage(messages.auditLog.sort.newest),
+    message: intl.formatMessage(messages.auditLog.sort.newest)
   },
   {
     key: SORT_OPTIONS_CREATED_AT_ASC,
-    message: intl.formatMessage(messages.auditLog.sort.oldest),
-  },
+    message: intl.formatMessage(messages.auditLog.sort.oldest)
+  }
 ];
 
 export interface AuditLogSearchProps {
@@ -55,7 +55,7 @@ export const AuditLogSearch: FC<AuditLogSearchProps> = memo(
       setSelectedEntityType(option);
       onChange({
         ...options,
-        entityType: option ? Number(option.value) : null,
+        entityType: option ? Number(option.value) : null
       });
     };
 
@@ -81,7 +81,7 @@ export const AuditLogSearch: FC<AuditLogSearchProps> = memo(
                 value={options.q}
                 onChange={(query: string) =>
                   handleUpdateOption({
-                    q: query,
+                    q: query
                   })
                 }
               />
@@ -103,7 +103,7 @@ export const AuditLogSearch: FC<AuditLogSearchProps> = memo(
                 onChange={(from: number, to: number) =>
                   handleUpdateOption({
                     from,
-                    to,
+                    to
                   })
                 }
               />
@@ -115,7 +115,7 @@ export const AuditLogSearch: FC<AuditLogSearchProps> = memo(
               sortItems={sortItems}
               onChange={(sort: string) =>
                 handleUpdateOption({
-                  sort: sort,
+                  sort: sort
                 })
               }
             />

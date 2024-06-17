@@ -27,11 +27,11 @@ import {
   UpdateFeatureVariationsRequest,
   UpdateFeatureVariationsResponse,
   ListTagsRequest,
-  ListTagsResponse,
+  ListTagsResponse
 } from '../proto/feature/service_pb';
 import {
   FeatureServiceClient,
-  ServiceError,
+  ServiceError
 } from '../proto/feature/service_pb_service';
 
 import { extractErrorMessage } from './messages';

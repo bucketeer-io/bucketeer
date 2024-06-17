@@ -1,7 +1,7 @@
 // package: bucketeer.auth
 // file: proto/auth/service.proto
 
-var proto_auth_service_pb = require('./service_pb');
+var proto_auth_service_pb = require('../../proto/auth/service_pb');
 var grpc = require('@improbable-eng/grpc-web').grpc;
 
 var AuthService = (function () {
@@ -16,7 +16,7 @@ AuthService.GetAuthCodeURL = {
   requestStream: false,
   responseStream: false,
   requestType: proto_auth_service_pb.GetAuthCodeURLRequest,
-  responseType: proto_auth_service_pb.GetAuthCodeURLResponse,
+  responseType: proto_auth_service_pb.GetAuthCodeURLResponse
 };
 
 AuthService.ExchangeToken = {
@@ -25,7 +25,7 @@ AuthService.ExchangeToken = {
   requestStream: false,
   responseStream: false,
   requestType: proto_auth_service_pb.ExchangeTokenRequest,
-  responseType: proto_auth_service_pb.ExchangeTokenResponse,
+  responseType: proto_auth_service_pb.ExchangeTokenResponse
 };
 
 AuthService.RefreshToken = {
@@ -34,7 +34,7 @@ AuthService.RefreshToken = {
   requestStream: false,
   responseStream: false,
   requestType: proto_auth_service_pb.RefreshTokenRequest,
-  responseType: proto_auth_service_pb.RefreshTokenResponse,
+  responseType: proto_auth_service_pb.RefreshTokenResponse
 };
 
 exports.AuthService = AuthService;
@@ -69,13 +69,13 @@ AuthServiceClient.prototype.getAuthCodeURL = function getAuthCodeURL(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -104,13 +104,13 @@ AuthServiceClient.prototype.exchangeToken = function exchangeToken(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -139,13 +139,13 @@ AuthServiceClient.prototype.refreshToken = function refreshToken(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 

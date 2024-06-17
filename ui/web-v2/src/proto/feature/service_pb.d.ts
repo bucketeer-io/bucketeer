@@ -4,12 +4,12 @@
 import * as jspb from 'google-protobuf';
 import * as google_api_annotations_pb from '../../google/api/annotations_pb';
 import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
-import * as proto_feature_command_pb from './command_pb';
-import * as proto_feature_feature_pb from './feature_pb';
-import * as proto_feature_evaluation_pb from './evaluation_pb';
-import * as proto_user_user_pb from '../user/user_pb';
-import * as proto_feature_segment_pb from './segment_pb';
-import * as proto_feature_flag_trigger_pb from './flag_trigger_pb';
+import * as proto_feature_command_pb from '../../proto/feature/command_pb';
+import * as proto_feature_feature_pb from '../../proto/feature/feature_pb';
+import * as proto_feature_evaluation_pb from '../../proto/feature/evaluation_pb';
+import * as proto_user_user_pb from '../../proto/user/user_pb';
+import * as proto_feature_segment_pb from '../../proto/feature/segment_pb';
+import * as proto_feature_flag_trigger_pb from '../../proto/feature/flag_trigger_pb';
 
 export class GetFeatureRequest extends jspb.Message {
   getId(): string;

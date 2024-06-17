@@ -1,7 +1,7 @@
 // package: bucketeer.notification
 // file: proto/notification/service.proto
 
-var proto_notification_service_pb = require('./service_pb');
+var proto_notification_service_pb = require('../../proto/notification/service_pb');
 var grpc = require('@improbable-eng/grpc-web').grpc;
 
 var NotificationService = (function () {
@@ -17,7 +17,7 @@ NotificationService.GetAdminSubscription = {
   requestStream: false,
   responseStream: false,
   requestType: proto_notification_service_pb.GetAdminSubscriptionRequest,
-  responseType: proto_notification_service_pb.GetAdminSubscriptionResponse,
+  responseType: proto_notification_service_pb.GetAdminSubscriptionResponse
 };
 
 NotificationService.ListAdminSubscriptions = {
@@ -26,7 +26,7 @@ NotificationService.ListAdminSubscriptions = {
   requestStream: false,
   responseStream: false,
   requestType: proto_notification_service_pb.ListAdminSubscriptionsRequest,
-  responseType: proto_notification_service_pb.ListAdminSubscriptionsResponse,
+  responseType: proto_notification_service_pb.ListAdminSubscriptionsResponse
 };
 
 NotificationService.ListEnabledAdminSubscriptions = {
@@ -37,7 +37,7 @@ NotificationService.ListEnabledAdminSubscriptions = {
   requestType:
     proto_notification_service_pb.ListEnabledAdminSubscriptionsRequest,
   responseType:
-    proto_notification_service_pb.ListEnabledAdminSubscriptionsResponse,
+    proto_notification_service_pb.ListEnabledAdminSubscriptionsResponse
 };
 
 NotificationService.CreateAdminSubscription = {
@@ -46,7 +46,7 @@ NotificationService.CreateAdminSubscription = {
   requestStream: false,
   responseStream: false,
   requestType: proto_notification_service_pb.CreateAdminSubscriptionRequest,
-  responseType: proto_notification_service_pb.CreateAdminSubscriptionResponse,
+  responseType: proto_notification_service_pb.CreateAdminSubscriptionResponse
 };
 
 NotificationService.DeleteAdminSubscription = {
@@ -55,7 +55,7 @@ NotificationService.DeleteAdminSubscription = {
   requestStream: false,
   responseStream: false,
   requestType: proto_notification_service_pb.DeleteAdminSubscriptionRequest,
-  responseType: proto_notification_service_pb.DeleteAdminSubscriptionResponse,
+  responseType: proto_notification_service_pb.DeleteAdminSubscriptionResponse
 };
 
 NotificationService.EnableAdminSubscription = {
@@ -64,7 +64,7 @@ NotificationService.EnableAdminSubscription = {
   requestStream: false,
   responseStream: false,
   requestType: proto_notification_service_pb.EnableAdminSubscriptionRequest,
-  responseType: proto_notification_service_pb.EnableAdminSubscriptionResponse,
+  responseType: proto_notification_service_pb.EnableAdminSubscriptionResponse
 };
 
 NotificationService.DisableAdminSubscription = {
@@ -73,7 +73,7 @@ NotificationService.DisableAdminSubscription = {
   requestStream: false,
   responseStream: false,
   requestType: proto_notification_service_pb.DisableAdminSubscriptionRequest,
-  responseType: proto_notification_service_pb.DisableAdminSubscriptionResponse,
+  responseType: proto_notification_service_pb.DisableAdminSubscriptionResponse
 };
 
 NotificationService.UpdateAdminSubscription = {
@@ -82,7 +82,7 @@ NotificationService.UpdateAdminSubscription = {
   requestStream: false,
   responseStream: false,
   requestType: proto_notification_service_pb.UpdateAdminSubscriptionRequest,
-  responseType: proto_notification_service_pb.UpdateAdminSubscriptionResponse,
+  responseType: proto_notification_service_pb.UpdateAdminSubscriptionResponse
 };
 
 NotificationService.GetSubscription = {
@@ -91,7 +91,7 @@ NotificationService.GetSubscription = {
   requestStream: false,
   responseStream: false,
   requestType: proto_notification_service_pb.GetSubscriptionRequest,
-  responseType: proto_notification_service_pb.GetSubscriptionResponse,
+  responseType: proto_notification_service_pb.GetSubscriptionResponse
 };
 
 NotificationService.ListSubscriptions = {
@@ -100,7 +100,7 @@ NotificationService.ListSubscriptions = {
   requestStream: false,
   responseStream: false,
   requestType: proto_notification_service_pb.ListSubscriptionsRequest,
-  responseType: proto_notification_service_pb.ListSubscriptionsResponse,
+  responseType: proto_notification_service_pb.ListSubscriptionsResponse
 };
 
 NotificationService.ListEnabledSubscriptions = {
@@ -109,7 +109,7 @@ NotificationService.ListEnabledSubscriptions = {
   requestStream: false,
   responseStream: false,
   requestType: proto_notification_service_pb.ListEnabledSubscriptionsRequest,
-  responseType: proto_notification_service_pb.ListEnabledSubscriptionsResponse,
+  responseType: proto_notification_service_pb.ListEnabledSubscriptionsResponse
 };
 
 NotificationService.CreateSubscription = {
@@ -118,7 +118,7 @@ NotificationService.CreateSubscription = {
   requestStream: false,
   responseStream: false,
   requestType: proto_notification_service_pb.CreateSubscriptionRequest,
-  responseType: proto_notification_service_pb.CreateSubscriptionResponse,
+  responseType: proto_notification_service_pb.CreateSubscriptionResponse
 };
 
 NotificationService.DeleteSubscription = {
@@ -127,7 +127,7 @@ NotificationService.DeleteSubscription = {
   requestStream: false,
   responseStream: false,
   requestType: proto_notification_service_pb.DeleteSubscriptionRequest,
-  responseType: proto_notification_service_pb.DeleteSubscriptionResponse,
+  responseType: proto_notification_service_pb.DeleteSubscriptionResponse
 };
 
 NotificationService.EnableSubscription = {
@@ -136,7 +136,7 @@ NotificationService.EnableSubscription = {
   requestStream: false,
   responseStream: false,
   requestType: proto_notification_service_pb.EnableSubscriptionRequest,
-  responseType: proto_notification_service_pb.EnableSubscriptionResponse,
+  responseType: proto_notification_service_pb.EnableSubscriptionResponse
 };
 
 NotificationService.DisableSubscription = {
@@ -145,7 +145,7 @@ NotificationService.DisableSubscription = {
   requestStream: false,
   responseStream: false,
   requestType: proto_notification_service_pb.DisableSubscriptionRequest,
-  responseType: proto_notification_service_pb.DisableSubscriptionResponse,
+  responseType: proto_notification_service_pb.DisableSubscriptionResponse
 };
 
 NotificationService.UpdateSubscription = {
@@ -154,7 +154,7 @@ NotificationService.UpdateSubscription = {
   requestStream: false,
   responseStream: false,
   requestType: proto_notification_service_pb.UpdateSubscriptionRequest,
-  responseType: proto_notification_service_pb.UpdateSubscriptionResponse,
+  responseType: proto_notification_service_pb.UpdateSubscriptionResponse
 };
 
 exports.NotificationService = NotificationService;
@@ -186,13 +186,13 @@ NotificationServiceClient.prototype.getAdminSubscription =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -218,13 +218,13 @@ NotificationServiceClient.prototype.listAdminSubscriptions =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -250,13 +250,13 @@ NotificationServiceClient.prototype.listEnabledAdminSubscriptions =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -282,13 +282,13 @@ NotificationServiceClient.prototype.createAdminSubscription =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -314,13 +314,13 @@ NotificationServiceClient.prototype.deleteAdminSubscription =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -346,13 +346,13 @@ NotificationServiceClient.prototype.enableAdminSubscription =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -378,13 +378,13 @@ NotificationServiceClient.prototype.disableAdminSubscription =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -410,13 +410,13 @@ NotificationServiceClient.prototype.updateAdminSubscription =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -445,13 +445,13 @@ NotificationServiceClient.prototype.getSubscription = function getSubscription(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -477,13 +477,13 @@ NotificationServiceClient.prototype.listSubscriptions =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -509,13 +509,13 @@ NotificationServiceClient.prototype.listEnabledSubscriptions =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -541,13 +541,13 @@ NotificationServiceClient.prototype.createSubscription =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -573,13 +573,13 @@ NotificationServiceClient.prototype.deleteSubscription =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -605,13 +605,13 @@ NotificationServiceClient.prototype.enableSubscription =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -637,13 +637,13 @@ NotificationServiceClient.prototype.disableSubscription =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -669,13 +669,13 @@ NotificationServiceClient.prototype.updateSubscription =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 

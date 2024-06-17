@@ -19,7 +19,7 @@ export const ExperimentUpdateForm: FC<ExperimentUpdateFormProps> = memo(
     const {
       register,
       getValues,
-      formState: { errors, isSubmitting, isDirty, isValid },
+      formState: { errors, isSubmitting, isDirty, isValid }
     } = methods;
 
     return (

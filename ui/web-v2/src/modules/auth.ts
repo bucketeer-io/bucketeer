@@ -7,13 +7,13 @@ import * as authGrpc from '../grpc/auth';
 import {
   ExchangeTokenRequest,
   GetAuthCodeURLRequest,
-  RefreshTokenRequest,
+  RefreshTokenRequest
 } from '../proto/auth/service_pb';
 import { Token } from '../proto/auth/token_pb';
 import {
   clearToken as clearTokenFromStorage,
   getToken as getTokenFromStorage,
-  setToken,
+  setToken
 } from '../storage/token';
 
 const MODULE_NAME = 'auth';
@@ -48,7 +48,7 @@ export const setupAuthToken = createAsyncThunk<void>(
     if (isExpiredToken(token.expiry)) {
       thunkAPI.dispatch(
         refreshToken({
-          token: token.refreshToken,
+          token: token.refreshToken
         })
       );
       return;
@@ -117,7 +117,7 @@ export const hasToken = (): boolean => {
 };
 
 const initialState = {
-  loading: false,
+  loading: false
 };
 
 export type AuthState = typeof initialState;
@@ -129,7 +129,7 @@ export const authSlice = createSlice({
     clearToken(state) {
       clearTokenFromStorage();
       return initialState;
-    },
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -168,7 +168,7 @@ export const authSlice = createSlice({
         setToken(action.payload);
         state.loading = false;
       });
-  },
+  }
 });
 
 export const { clearToken } = authSlice.actions;

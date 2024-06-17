@@ -13,7 +13,7 @@ interface CountResultBarChartProps {
 export const CountResultBarChart: FC<CountResultBarChartProps> = ({
   label,
   variationValues,
-  data,
+  data
 }) => {
   const chartData = {
     labels: variationValues,
@@ -25,28 +25,28 @@ export const CountResultBarChart: FC<CountResultBarChartProps> = ({
           variationValues.length % COLORS.length
         ),
         borderWidth: 1,
-        data: data,
-      },
-    ],
+        data: data
+      }
+    ]
   };
   const options = {
     legend: {
-      display: false,
+      display: false
     },
     title: {
       display: true,
       text: label,
-      fontStyle: 'normal',
+      fontStyle: 'normal'
     },
     scales: {
       yAxes: [
         {
           ticks: {
-            beginAtZero: true,
-          },
-        },
-      ],
-    },
+            beginAtZero: true
+          }
+        }
+      ]
+    }
   };
 
   return (

@@ -12,28 +12,28 @@ import {
   TableBody,
   TableCell,
   TableHeader,
-  TableRow,
+  TableRow
 } from '../Table';
 
 const createHeadCells = (): Array<HeaderCell> => [
   {
     id: 'variation',
     label: intl.formatMessage(messages.experiment.result.variation.label),
-    helpText: '',
+    helpText: ''
   },
   {
     id: 'value-per-user',
     label: intl.formatMessage(messages.experiment.result.valuePerUser.label),
     helpText: intl.formatMessage(
       messages.experiment.result.valuePerUser.helpText
-    ),
+    )
   },
   {
     id: 'improvement',
     label: intl.formatMessage(messages.experiment.result.improvement.label),
     helpText: intl.formatMessage(
       messages.experiment.result.improvement.helpText
-    ),
+    )
   },
   {
     id: 'prob-beat-baseline',
@@ -42,7 +42,7 @@ const createHeadCells = (): Array<HeaderCell> => [
     ),
     helpText: intl.formatMessage(
       messages.experiment.result.probabilityToBeatBaseline.helpText
-    ),
+    )
   },
   {
     id: 'prob-best',
@@ -51,8 +51,8 @@ const createHeadCells = (): Array<HeaderCell> => [
     ),
     helpText: intl.formatMessage(
       messages.experiment.result.probabilityToBest.helpText
-    ),
-  },
+    )
+  }
 ];
 
 interface ValuePerUserTableProps {
@@ -64,7 +64,7 @@ interface ValuePerUserTableProps {
 export const ValuePerUserTable: FC<ValuePerUserTableProps> = ({
   goalResult,
   baseVariationId,
-  variations,
+  variations
 }) => {
   const baseVariationResult = unwrapUndefinable(
     goalResult.variationResultsList.find(
@@ -105,20 +105,20 @@ export const ValuePerUserTable: FC<ValuePerUserTableProps> = ({
                 {baseVariationId === variationResult.variationId
                   ? 'Baseline'
                   : Number.isNaN(valuePerUser - baseValuePerUser)
-                  ? 'n/a'
-                  : (valuePerUser - baseValuePerUser).toFixed(1)}{' '}
+                    ? 'n/a'
+                    : (valuePerUser - baseValuePerUser).toFixed(1)}{' '}
               </TableCell>
               <TableCell textLeft={true}>
                 {' '}
                 {baseVariationId === variationResult.variationId
                   ? 'Baseline'
                   : probBeeatBaseline
-                  ? (
-                      unwrapUndefinable(
-                        variationResult.goalValueSumPerUserProbBeatBaseline
-                      ).mean * 100
-                    ).toFixed(1) + ' %'
-                  : '-'}{' '}
+                    ? (
+                        unwrapUndefinable(
+                          variationResult.goalValueSumPerUserProbBeatBaseline
+                        ).mean * 100
+                      ).toFixed(1) + ' %'
+                    : '-'}{' '}
               </TableCell>
               <TableCell textLeft={true}>
                 {' '}

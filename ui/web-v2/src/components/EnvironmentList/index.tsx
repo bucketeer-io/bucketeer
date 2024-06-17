@@ -54,7 +54,7 @@ export const EnvironmentList: FC<EnvironmentListProps> = memo(
               <div className="text-gray-700">
                 <h1 className="text-lg">
                   {f(messages.noResult.title, {
-                    title: f(messages.adminEnvironment.list.header.title),
+                    title: f(messages.adminEnvironment.list.header.title)
                   })}
                 </h1>
                 <div className="flex justify-center mt-4">
@@ -63,7 +63,7 @@ export const EnvironmentList: FC<EnvironmentListProps> = memo(
                       {f(messages.noResult.searchByKeyword, {
                         keyword: f(
                           messages.adminEnvironment.list.noResult.searchKeyword
-                        ),
+                        )
                       })}
                     </li>
                     <li>{f(messages.noResult.changeFilterSelection)}</li>
@@ -77,7 +77,7 @@ export const EnvironmentList: FC<EnvironmentListProps> = memo(
               <div className="w-[600px] text-gray-700 text-center">
                 <h1 className="text-lg">
                   {f(messages.noData.title, {
-                    title: f(messages.adminEnvironment.list.header.title),
+                    title: f(messages.adminEnvironment.list.header.title)
                   })}
                 </h1>
                 <a

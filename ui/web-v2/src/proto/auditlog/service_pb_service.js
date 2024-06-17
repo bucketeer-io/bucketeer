@@ -1,7 +1,7 @@
 // package: bucketeer.auditlog
 // file: proto/auditlog/service.proto
 
-var proto_auditlog_service_pb = require('./service_pb');
+var proto_auditlog_service_pb = require('../../proto/auditlog/service_pb');
 var grpc = require('@improbable-eng/grpc-web').grpc;
 
 var AuditLogService = (function () {
@@ -16,7 +16,7 @@ AuditLogService.ListAuditLogs = {
   requestStream: false,
   responseStream: false,
   requestType: proto_auditlog_service_pb.ListAuditLogsRequest,
-  responseType: proto_auditlog_service_pb.ListAuditLogsResponse,
+  responseType: proto_auditlog_service_pb.ListAuditLogsResponse
 };
 
 AuditLogService.ListAdminAuditLogs = {
@@ -25,7 +25,7 @@ AuditLogService.ListAdminAuditLogs = {
   requestStream: false,
   responseStream: false,
   requestType: proto_auditlog_service_pb.ListAdminAuditLogsRequest,
-  responseType: proto_auditlog_service_pb.ListAdminAuditLogsResponse,
+  responseType: proto_auditlog_service_pb.ListAdminAuditLogsResponse
 };
 
 AuditLogService.ListFeatureHistory = {
@@ -34,7 +34,7 @@ AuditLogService.ListFeatureHistory = {
   requestStream: false,
   responseStream: false,
   requestType: proto_auditlog_service_pb.ListFeatureHistoryRequest,
-  responseType: proto_auditlog_service_pb.ListFeatureHistoryResponse,
+  responseType: proto_auditlog_service_pb.ListFeatureHistoryResponse
 };
 
 exports.AuditLogService = AuditLogService;
@@ -69,13 +69,13 @@ AuditLogServiceClient.prototype.listAuditLogs = function listAuditLogs(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -101,13 +101,13 @@ AuditLogServiceClient.prototype.listAdminAuditLogs =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -133,13 +133,13 @@ AuditLogServiceClient.prototype.listFeatureHistory =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 

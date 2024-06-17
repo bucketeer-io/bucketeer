@@ -2,11 +2,11 @@ import {
   createSlice,
   createEntityAdapter,
   createAsyncThunk,
-  SerializedError,
+  SerializedError
 } from '@reduxjs/toolkit';
 import {
   BoolValue,
-  StringValue,
+  StringValue
 } from 'google-protobuf/google/protobuf/wrappers_pb';
 
 import * as accountGrpc from '../grpc/account';
@@ -15,14 +15,14 @@ import {
   CreateAccountV2Command,
   ChangeAccountV2NameCommand,
   ChangeAccountV2EnvironmentRolesCommand,
-  ChangeAccountV2OrganizationRoleCommand,
+  ChangeAccountV2OrganizationRoleCommand
 } from '../proto/account/command_pb';
 import {
   ListAccountsV2Request,
   ListAccountsV2Response,
   GetAccountV2Request,
   CreateAccountV2Request,
-  UpdateAccountV2Request,
+  UpdateAccountV2Request
 } from '../proto/account/service_pb';
 
 import { setupAuthToken } from './auth';
@@ -32,7 +32,7 @@ import { AppState } from '.';
 const MODULE_NAME = 'accounts';
 
 export const accountsAdapter = createEntityAdapter<AccountV2.AsObject>({
-  selectId: (segment) => segment.email,
+  selectId: (segment) => segment.email
 });
 
 export const { selectAll, selectById } = accountsAdapter.getSelectors();
@@ -44,7 +44,7 @@ const initialState = accountsAdapter.getInitialState<{
 }>({
   loading: false,
   totalCount: 0,
-  getAccountError: null,
+  getAccountError: null
 });
 
 export type OrderBy =
@@ -269,5 +269,5 @@ export const accountsSlice = createSlice({
       .addCase(updateAccount.pending, (state) => {})
       .addCase(updateAccount.fulfilled, (state, action) => {})
       .addCase(updateAccount.rejected, (state, action) => {});
-  },
+  }
 });

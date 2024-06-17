@@ -4,14 +4,14 @@
 import * as jspb from 'google-protobuf';
 import * as google_protobuf_any_pb from 'google-protobuf/google/protobuf/any_pb';
 import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
-import * as proto_feature_clause_pb from './clause_pb';
-import * as proto_feature_feature_pb from './feature_pb';
-import * as proto_feature_rule_pb from './rule_pb';
-import * as proto_feature_variation_pb from './variation_pb';
-import * as proto_feature_strategy_pb from './strategy_pb';
-import * as proto_feature_segment_pb from './segment_pb';
-import * as proto_feature_prerequisite_pb from './prerequisite_pb';
-import * as proto_feature_flag_trigger_pb from './flag_trigger_pb';
+import * as proto_feature_clause_pb from '../../proto/feature/clause_pb';
+import * as proto_feature_feature_pb from '../../proto/feature/feature_pb';
+import * as proto_feature_rule_pb from '../../proto/feature/rule_pb';
+import * as proto_feature_variation_pb from '../../proto/feature/variation_pb';
+import * as proto_feature_strategy_pb from '../../proto/feature/strategy_pb';
+import * as proto_feature_segment_pb from '../../proto/feature/segment_pb';
+import * as proto_feature_prerequisite_pb from '../../proto/feature/prerequisite_pb';
+import * as proto_feature_flag_trigger_pb from '../../proto/feature/flag_trigger_pb';
 
 export class Command extends jspb.Message {
   hasCommand(): boolean;

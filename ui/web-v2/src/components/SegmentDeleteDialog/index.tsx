@@ -3,7 +3,7 @@ import { useCurrentEnvironment } from '../../modules/me';
 import { Dialog, Transition } from '@headlessui/react';
 import {
   InformationCircleIcon,
-  ExclamationCircleIcon,
+  ExclamationCircleIcon
 } from '@heroicons/react/solid';
 import { Fragment, FC } from 'react';
 import { useIntl } from 'react-intl';
@@ -24,7 +24,7 @@ export const SegmentDeleteDialog: FC<SegmentDeleteDialogProps> = ({
   open,
   segment,
   onConfirm,
-  onClose,
+  onClose
 }) => {
   const { formatMessage: f } = useIntl();
   const currentEnvironment = useCurrentEnvironment();
@@ -51,7 +51,7 @@ export const SegmentDeleteDialog: FC<SegmentDeleteDialogProps> = ({
                 <p className="text-sm text-yellow-700">
                   {f(messages.segment.confirm.cannotDelete, {
                     segmentName: <strong>{`${segment.name}`}</strong>,
-                    length: segment.featuresList.length,
+                    length: segment.featuresList.length
                   })}
                 </p>
                 <div className="mt-2 text-sm text-yellow-700">
@@ -74,7 +74,7 @@ export const SegmentDeleteDialog: FC<SegmentDeleteDialogProps> = ({
         ) : (
           <p className="text-sm text-red-500">
             {f(messages.segment.confirm.deleteDescription, {
-              segmentName: <strong>{segment && segment.name}</strong>,
+              segmentName: <strong>{segment && segment.name}</strong>
             })}
           </p>
         )}

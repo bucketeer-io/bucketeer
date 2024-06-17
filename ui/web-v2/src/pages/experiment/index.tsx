@@ -8,7 +8,7 @@ import {
   useHistory,
   useRouteMatch,
   useParams,
-  useLocation,
+  useLocation
 } from 'react-router-dom';
 
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -22,7 +22,7 @@ import {
   ID_NEW,
   PAGE_PATH_EXPERIMENTS,
   PAGE_PATH_NEW,
-  PAGE_PATH_ROOT,
+  PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
@@ -35,29 +35,29 @@ import {
   OrderBy,
   OrderDirection,
   updateExperiment,
-  stopExperiment,
+  stopExperiment
 } from '../../modules/experiments';
 import { useCurrentEnvironment } from '../../modules/me';
 import {
   ChangeExperimentDescriptionCommand,
-  ChangeExperimentNameCommand,
+  ChangeExperimentNameCommand
 } from '../../proto/experiment/command_pb';
 import { Experiment } from '../../proto/experiment/experiment_pb';
 import { ListExperimentsRequest } from '../../proto/experiment/service_pb';
 import { AppDispatch } from '../../store';
 import {
   ExperimentSortOption,
-  isExperimentSortOption,
+  isExperimentSortOption
 } from '../../types/experiment';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
-  SORT_OPTIONS_NAME_ASC,
+  SORT_OPTIONS_NAME_ASC
 } from '../../types/list';
 import {
   SearchParams,
   stringifySearchParams,
-  useSearchParams,
+  useSearchParams
 } from '../../utils/search-params';
 
 import { addFormSchema, updateFormSchema } from './formSchema';
@@ -72,22 +72,22 @@ const createSort = (sortOption?: ExperimentSortOption): Sort => {
     case SORT_OPTIONS_CREATED_AT_ASC:
       return {
         orderBy: ListExperimentsRequest.OrderBy.CREATED_AT,
-        orderDirection: ListExperimentsRequest.OrderDirection.ASC,
+        orderDirection: ListExperimentsRequest.OrderDirection.ASC
       };
     case SORT_OPTIONS_CREATED_AT_DESC:
       return {
         orderBy: ListExperimentsRequest.OrderBy.CREATED_AT,
-        orderDirection: ListExperimentsRequest.OrderDirection.DESC,
+        orderDirection: ListExperimentsRequest.OrderDirection.DESC
       };
     case SORT_OPTIONS_NAME_ASC:
       return {
         orderBy: ListExperimentsRequest.OrderBy.NAME,
-        orderDirection: ListExperimentsRequest.OrderDirection.ASC,
+        orderDirection: ListExperimentsRequest.OrderDirection.ASC
       };
     default:
       return {
         orderBy: ListExperimentsRequest.OrderBy.NAME,
-        orderDirection: ListExperimentsRequest.OrderDirection.DESC,
+        orderDirection: ListExperimentsRequest.OrderDirection.DESC
       };
   }
 };
@@ -101,7 +101,7 @@ export const ExperimentIndexPage: FC = memo(() => {
   const searchParams = useSearchParams();
   const searchOptions: SearchParams = {
     ...searchParams,
-    sort: searchParams.sort || '-createdAt',
+    sort: searchParams.sort || '-createdAt'
   };
   const { url } = useRouteMatch();
   const { experimentId } = useParams<{ experimentId: string }>();
@@ -118,7 +118,7 @@ export const ExperimentIndexPage: FC = memo(() => {
   >(
     (state) => [
       selectExperimentById(state.experiments, experimentId),
-      state.experiments.getExperimentError,
+      state.experiments.getExperimentError
     ],
     shallowEqual
   );
@@ -130,26 +130,26 @@ export const ExperimentIndexPage: FC = memo(() => {
     baselineVariation: null,
     goalIds: null,
     startAt: null,
-    stopAt: null,
+    stopAt: null
   };
   const addMethod = useForm({
     resolver: yupResolver(addFormSchema),
     defaultValues: {
       ...defaultValues,
-      ...{ featureId: isNew && searchOptions.fid ? searchOptions.fid : null },
+      ...{ featureId: isNew && searchOptions.fid ? searchOptions.fid : null }
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const { handleSubmit: handleAddSubmit, reset: resetAdd } = addMethod;
 
   const updateMethod = useForm({
     resolver: yupResolver(updateFormSchema),
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const {
     handleSubmit: handleUpdateSubmit,
     formState: { dirtyFields },
-    reset: resetUpdate,
+    reset: resetUpdate
   } = updateMethod;
 
   const updateExperimentList = useCallback(
@@ -173,7 +173,7 @@ export const ExperimentIndexPage: FC = memo(() => {
           maintainer: options && (options.maintainerId as string),
           archived,
           orderBy: sort.orderBy,
-          orderDirection: sort.orderDirection,
+          orderDirection: sort.orderDirection
         })
       );
     },
@@ -184,7 +184,7 @@ export const ExperimentIndexPage: FC = memo(() => {
     (options: Record<string, string | number | boolean | undefined>) => {
       history.replace(
         `${url}?${stringifySearchParams({
-          ...options,
+          ...options
         })}`
       );
     },
@@ -211,7 +211,7 @@ export const ExperimentIndexPage: FC = memo(() => {
     setOpen(true);
     history.push({
       pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}${PAGE_PATH_NEW}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location]);
 
@@ -221,11 +221,11 @@ export const ExperimentIndexPage: FC = memo(() => {
       resetUpdate({
         name: e.name,
         description: e.description,
-        maintainer: e.maintainer,
+        maintainer: e.maintainer
       });
       history.push({
         pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}/${e.id}`,
-        search: location.search,
+        search: location.search
       });
     },
     [setOpen, resetUpdate, history, experiment, location]
@@ -238,7 +238,7 @@ export const ExperimentIndexPage: FC = memo(() => {
     const { fid, ...opts } = searchParams;
     history.push({
       pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}`,
-      search: stringifySearchParams(opts),
+      search: stringifySearchParams(opts)
     });
   }, [searchParams, setOpen, history, resetAdd, resetUpdate]);
 
@@ -253,7 +253,7 @@ export const ExperimentIndexPage: FC = memo(() => {
           baseVariationId: data.baselineVariation,
           goalIdsList: data.goalIds,
           startAt: data.startAt.getTime() / 1000,
-          stopAt: data.stopAt.getTime() / 1000,
+          stopAt: data.stopAt.getTime() / 1000
         })
       ).then(() => {
         handleClose();
@@ -281,13 +281,13 @@ export const ExperimentIndexPage: FC = memo(() => {
           environmentNamespace: currentEnvironment.id,
           id: experimentId,
           changeNameCommand: changeExperimentNameCommand,
-          changeDescriptionCommand: changeExperimentDescriptionCommand,
+          changeDescriptionCommand: changeExperimentDescriptionCommand
         })
       ).then(() => {
         dispatch(
           getExperiment({
             environmentNamespace: currentEnvironment.id,
-            id: experimentId,
+            id: experimentId
           })
         );
         handleClose();
@@ -298,14 +298,14 @@ export const ExperimentIndexPage: FC = memo(() => {
 
   const archiveMethod = useForm({
     defaultValues: {
-      experiment: null,
+      experiment: null
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const {
     handleSubmit: archiveHandleSubmit,
     setValue: archiveSetValue,
-    reset: archiveReset,
+    reset: archiveReset
   } = archiveMethod;
 
   const handleClickArchive = useCallback(
@@ -326,7 +326,7 @@ export const ExperimentIndexPage: FC = memo(() => {
       dispatch(
         archiveExperiment({
           environmentNamespace: currentEnvironment.id,
-          id: data.experiment.id,
+          id: data.experiment.id
         })
       ).then(() => {
         archiveReset();
@@ -341,7 +341,7 @@ export const ExperimentIndexPage: FC = memo(() => {
     dispatch(
       stopExperiment({
         environmentNamespace: currentEnvironment.id,
-        experimentId: experimentIdForStop,
+        experimentId: experimentIdForStop
       })
     ).then(() => {
       updateExperimentList(searchOptions, 1);
@@ -354,14 +354,14 @@ export const ExperimentIndexPage: FC = memo(() => {
       dispatch(
         getExperiment({
           environmentNamespace: currentEnvironment.id,
-          id: experimentId,
+          id: experimentId
         })
       ).then((e) => {
         const experiment = e.payload as Experiment.AsObject;
         resetUpdate({
           name: experiment.name,
           description: experiment.description,
-          maintainer: experiment.maintainer,
+          maintainer: experiment.maintainer
         });
       });
     }
@@ -427,7 +427,7 @@ export const ExperimentIndexPage: FC = memo(() => {
         description={f(messages.experiment.confirm.archiveDescription, {
           experimentName:
             archiveMethod.getValues().experiment &&
-            archiveMethod.getValues().experiment.name,
+            archiveMethod.getValues().experiment.name
         })}
         onCloseButton={f(messages.button.cancel)}
         onConfirmButton={f(messages.button.submit)}

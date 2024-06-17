@@ -7,7 +7,7 @@ import { AUDITLOG_LIST_PAGE_SIZE } from '../../constants/auditLog';
 import {
   listFeatureHistory,
   OrderBy,
-  OrderDirection,
+  OrderDirection
 } from '../../modules/auditLogs';
 import { useCurrentEnvironment } from '../../modules/me';
 import { ListAuditLogsRequest } from '../../proto/auditlog/service_pb';
@@ -16,7 +16,7 @@ import { AuditLogSortOption, isAuditLogSortOption } from '../../types/auditLog';
 import { SORT_OPTIONS_CREATED_AT_ASC } from '../../types/list';
 import {
   stringifySearchParams,
-  useSearchParams,
+  useSearchParams
 } from '../../utils/search-params';
 
 interface Sort {
@@ -29,12 +29,12 @@ const createSort = (sortOption?: AuditLogSortOption): Sort => {
     case SORT_OPTIONS_CREATED_AT_ASC:
       return {
         orderBy: ListAuditLogsRequest.OrderBy.TIMESTAMP,
-        orderDirection: ListAuditLogsRequest.OrderDirection.ASC,
+        orderDirection: ListAuditLogsRequest.OrderDirection.ASC
       };
     default:
       return {
         orderBy: ListAuditLogsRequest.OrderBy.TIMESTAMP,
-        orderDirection: ListAuditLogsRequest.OrderDirection.DESC,
+        orderDirection: ListAuditLogsRequest.OrderDirection.DESC
       };
   }
 };
@@ -72,7 +72,7 @@ export const FeatureHistoryPage: FC<FeatureHistoryPageProps> = memo(
             orderBy: sort.orderBy,
             orderDirection: sort.orderDirection,
             from: from,
-            to: to,
+            to: to
           })
         );
       },
@@ -83,7 +83,7 @@ export const FeatureHistoryPage: FC<FeatureHistoryPageProps> = memo(
       (options: Record<string, string | number | boolean | undefined>) => {
         history.replace(
           `${url}?${stringifySearchParams({
-            ...options,
+            ...options
           })}`
         );
       },

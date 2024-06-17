@@ -5,7 +5,7 @@ import {
   SEGMENT_DESCRIPTION_MAX_LENGTH,
   SEGMENT_MAX_FILE_SIZE,
   SEGMENT_NAME_MAX_LENGTH,
-  SEGMENT_SUPPORTED_FORMATS,
+  SEGMENT_SUPPORTED_FORMATS
 } from '../../constants/segment';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
@@ -42,11 +42,11 @@ const fileSchema = yup
 export const addFormSchema = yup.object().shape({
   name: nameSchema,
   description: descriptionSchema,
-  file: fileSchema,
+  file: fileSchema
 });
 
 export const updateFormSchema = yup.object().shape({
   name: nameSchema,
   description: descriptionSchema,
-  file: fileSchema,
+  file: fileSchema
 });

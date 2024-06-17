@@ -1,7 +1,7 @@
 // package: bucketeer.migration
 // file: proto/migration/mysql_service.proto
 
-import * as proto_migration_mysql_service_pb from './mysql_service_pb';
+import * as proto_migration_mysql_service_pb from '../../proto/migration/mysql_service_pb';
 import { grpc } from '@improbable-eng/grpc-web';
 
 type MigrationMySQLServiceMigrateAllMasterSchema = {

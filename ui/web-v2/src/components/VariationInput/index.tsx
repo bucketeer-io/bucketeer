@@ -14,26 +14,26 @@ import { Option, Select } from '../Select';
 
 const variationTypeOptionsBoolean: Option = {
   value: Feature.VariationType.BOOLEAN.toString(),
-  label: intl.formatMessage(messages.feature.type.boolean),
+  label: intl.formatMessage(messages.feature.type.boolean)
 };
 const variationTypeOptionsString: Option = {
   value: Feature.VariationType.STRING.toString(),
-  label: intl.formatMessage(messages.feature.type.string),
+  label: intl.formatMessage(messages.feature.type.string)
 };
 const variationTypeOptionsNumber: Option = {
   value: Feature.VariationType.NUMBER.toString(),
-  label: intl.formatMessage(messages.feature.type.number),
+  label: intl.formatMessage(messages.feature.type.number)
 };
 const variationTypeOptionsJson: Option = {
   value: Feature.VariationType.JSON.toString(),
-  label: intl.formatMessage(messages.feature.type.json),
+  label: intl.formatMessage(messages.feature.type.json)
 };
 
 export const variationTypeOptions: Option[] = [
   variationTypeOptionsBoolean,
   variationTypeOptionsString,
   variationTypeOptionsNumber,
-  variationTypeOptionsJson,
+  variationTypeOptionsJson
 ];
 
 export const getVariationTypeOption = (
@@ -66,7 +66,7 @@ export const VariationInput: FC<VariationInputProps> = memo(
   ({
     typeDisabled,
     rulesAppliedVariationList,
-    isProgressiveRolloutsRunning,
+    isProgressiveRolloutsRunning
   }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsEditable();
@@ -77,16 +77,16 @@ export const VariationInput: FC<VariationInputProps> = memo(
       getValues,
       watch,
       reset,
-      formState: { errors },
+      formState: { errors }
     } = methods;
     const {
       fields: variations,
       append,
-      remove,
+      remove
     } = useFieldArray({
       control,
       name: 'variations',
-      keyName: 'key',
+      keyName: 'key'
       // keyName: 'key', // the default keyName is "id" and it conflicts with the variation id field
     });
     const variationType = watch('variationType');
@@ -111,7 +111,7 @@ export const VariationInput: FC<VariationInputProps> = memo(
               value:
                 type === Feature.VariationType.BOOLEAN.toString() ? 'true' : '',
               name: '',
-              description: '',
+              description: ''
             },
             {
               id: defaultVariationId2,
@@ -120,19 +120,19 @@ export const VariationInput: FC<VariationInputProps> = memo(
                   ? 'false'
                   : '',
               name: '',
-              description: '',
-            },
+              description: ''
+            }
           ],
           onVariation: {
             id: defaultVariationId1,
             value: 0,
-            label: `${f(messages.feature.variation)} 1`,
+            label: `${f(messages.feature.variation)} 1`
           },
           offVariation: {
             id: defaultVariationId2,
             value: 1,
-            label: `${f(messages.feature.variation)} 2`,
-          },
+            label: `${f(messages.feature.variation)} 2`
+          }
         },
         { keepDirty: true }
       );
@@ -143,7 +143,7 @@ export const VariationInput: FC<VariationInputProps> = memo(
         id: uuid(),
         value: '',
         name: '',
-        description: '',
+        description: ''
       });
     }, []);
 

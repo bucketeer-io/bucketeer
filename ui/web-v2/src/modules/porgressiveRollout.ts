@@ -1,14 +1,14 @@
 import {
   createSlice,
   createEntityAdapter,
-  createAsyncThunk,
+  createAsyncThunk
 } from '@reduxjs/toolkit';
 
 import * as progressiveRolloutGrpc from '../grpc/progressiveRollout';
 import {
   CreateProgressiveRolloutCommand,
   DeleteProgressiveRolloutCommand,
-  StopProgressiveRolloutCommand,
+  StopProgressiveRolloutCommand
 } from '../proto/autoops/command_pb';
 import { ProgressiveRollout } from '../proto/autoops/progressive_rollout_pb';
 import {
@@ -16,7 +16,7 @@ import {
   ListProgressiveRolloutsRequest,
   ListProgressiveRolloutsResponse,
   DeleteProgressiveRolloutRequest,
-  StopProgressiveRolloutRequest,
+  StopProgressiveRolloutRequest
 } from '../proto/autoops/service_pb';
 
 import { setupAuthToken } from './auth';
@@ -27,7 +27,7 @@ const MODULE_NAME = 'progressiveRollout';
 
 export const progressiveRolloutAdapter =
   createEntityAdapter<ProgressiveRollout.AsObject>({
-    selectId: (progressiveRollout) => progressiveRollout.id,
+    selectId: (progressiveRollout) => progressiveRollout.id
   });
 
 export const { selectAll, selectById } =
@@ -111,7 +111,7 @@ export const stopProgressiveRollout = createAsyncThunk<
 const initialState = progressiveRolloutAdapter.getInitialState<{
   loading: boolean;
 }>({
-  loading: false,
+  loading: false
 });
 
 export type ProgressiveRolloutState = typeof initialState;
@@ -145,5 +145,5 @@ export const progressiveRolloutSlice = createSlice({
       .addCase(deleteProgressiveRollout.rejected, (state) => {
         state.loading = false;
       });
-  },
+  }
 });

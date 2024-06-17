@@ -3,7 +3,7 @@
 
 import * as jspb from 'google-protobuf';
 import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
-import * as proto_auditlog_auditlog_pb from './auditlog_pb';
+import * as proto_auditlog_auditlog_pb from '../../proto/auditlog/auditlog_pb';
 
 export class ListAuditLogsRequest extends jspb.Message {
   getPageSize(): number;

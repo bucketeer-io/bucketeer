@@ -10,7 +10,7 @@ import { EXPERIMENT_LIST_PAGE_SIZE } from '../../constants/experiment';
 import {
   PAGE_PATH_EXPERIMENTS,
   PAGE_PATH_FEATURES,
-  PAGE_PATH_ROOT,
+  PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
@@ -52,7 +52,7 @@ export const ExperimentList: FC<ExperimentListProps> = memo(
     onAdd,
     onUpdate,
     onArchive,
-    onStop,
+    onStop
   }) => {
     const { formatMessage: f } = useIntl();
     const history = useHistory();
@@ -78,7 +78,7 @@ export const ExperimentList: FC<ExperimentListProps> = memo(
         items.push({
           action: MenuActions.STOP,
           name: intl.formatMessage(messages.experiment.stop.button),
-          iconElement: <BanIcon />,
+          iconElement: <BanIcon />
         });
       }
       items.push({
@@ -89,7 +89,7 @@ export const ExperimentList: FC<ExperimentListProps> = memo(
         tooltipMessage: isExperimentStatusWaitingRunnning(experimentSatus)
           ? intl.formatMessage(messages.experiment.action.archiveTooltip)
           : null,
-        alignRight: true,
+        alignRight: true
       });
       return items;
     };
@@ -113,7 +113,7 @@ export const ExperimentList: FC<ExperimentListProps> = memo(
               <div className="text-gray-700">
                 <h1 className="text-lg">
                   {f(messages.noResult.title, {
-                    title: f(messages.experiment.list.header.title),
+                    title: f(messages.experiment.list.header.title)
                   })}
                 </h1>
                 <div className="flex justify-center mt-4">
@@ -122,7 +122,7 @@ export const ExperimentList: FC<ExperimentListProps> = memo(
                       {f(messages.noResult.searchByKeyword, {
                         keyword: f(
                           messages.experiment.list.noResult.searchKeyword
-                        ),
+                        )
                       })}
                     </li>
                     <li>{f(messages.noResult.changeFilterSelection)}</li>
@@ -136,7 +136,7 @@ export const ExperimentList: FC<ExperimentListProps> = memo(
               <div className="w-[600px] text-gray-700 text-center">
                 <h1 className="text-lg">
                   {f(messages.noData.title, {
-                    title: f(messages.experiment.list.header.title),
+                    title: f(messages.experiment.list.header.title)
                   })}
                 </h1>
                 <p className="mt-5">
@@ -183,7 +183,7 @@ export const ExperimentList: FC<ExperimentListProps> = memo(
                         <div className="text-xs text-gray-700">
                           {`${f(messages.experiment.period)}: `}
                           {`${formatDate({ date: startAt })} - ${formatDate({
-                            date: endAt,
+                            date: endAt
                           })}`}
                         </div>
                       </td>

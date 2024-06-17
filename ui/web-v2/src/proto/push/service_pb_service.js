@@ -1,7 +1,7 @@
 // package: bucketeer.push
 // file: proto/push/service.proto
 
-var proto_push_service_pb = require('./service_pb');
+var proto_push_service_pb = require('../../proto/push/service_pb');
 var grpc = require('@improbable-eng/grpc-web').grpc;
 
 var PushService = (function () {
@@ -16,7 +16,7 @@ PushService.ListPushes = {
   requestStream: false,
   responseStream: false,
   requestType: proto_push_service_pb.ListPushesRequest,
-  responseType: proto_push_service_pb.ListPushesResponse,
+  responseType: proto_push_service_pb.ListPushesResponse
 };
 
 PushService.CreatePush = {
@@ -25,7 +25,7 @@ PushService.CreatePush = {
   requestStream: false,
   responseStream: false,
   requestType: proto_push_service_pb.CreatePushRequest,
-  responseType: proto_push_service_pb.CreatePushResponse,
+  responseType: proto_push_service_pb.CreatePushResponse
 };
 
 PushService.DeletePush = {
@@ -34,7 +34,7 @@ PushService.DeletePush = {
   requestStream: false,
   responseStream: false,
   requestType: proto_push_service_pb.DeletePushRequest,
-  responseType: proto_push_service_pb.DeletePushResponse,
+  responseType: proto_push_service_pb.DeletePushResponse
 };
 
 PushService.UpdatePush = {
@@ -43,7 +43,7 @@ PushService.UpdatePush = {
   requestStream: false,
   responseStream: false,
   requestType: proto_push_service_pb.UpdatePushRequest,
-  responseType: proto_push_service_pb.UpdatePushResponse,
+  responseType: proto_push_service_pb.UpdatePushResponse
 };
 
 exports.PushService = PushService;
@@ -78,13 +78,13 @@ PushServiceClient.prototype.listPushes = function listPushes(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -113,13 +113,13 @@ PushServiceClient.prototype.createPush = function createPush(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -148,13 +148,13 @@ PushServiceClient.prototype.deletePush = function deletePush(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -183,13 +183,13 @@ PushServiceClient.prototype.updatePush = function updatePush(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 

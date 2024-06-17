@@ -14,7 +14,7 @@ interface ValuePerUserDetailProps {
 export const ValuePerUserDetail: FC<ValuePerUserDetailProps> = ({
   goalResult,
   baseVariationId,
-  variations,
+  variations
 }) => {
   return (
     <div>

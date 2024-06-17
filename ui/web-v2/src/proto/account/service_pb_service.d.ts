@@ -1,7 +1,7 @@
 // package: bucketeer.account
 // file: proto/account/service.proto
 
-import * as proto_account_service_pb from './service_pb';
+import * as proto_account_service_pb from '../../proto/account/service_pb';
 import { grpc } from '@improbable-eng/grpc-web';
 
 type AccountServiceGetMe = {

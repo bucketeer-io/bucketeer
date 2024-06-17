@@ -13,7 +13,7 @@ interface GoalTotalTimeseriesChartProps {
 
 export const GoalTotalTimeseriesChart: FC<GoalTotalTimeseriesChartProps> = ({
   goalResult,
-  variations,
+  variations
 }) => {
   const variationValues = goalResult.variationResultsList.map((vr) => {
     return unwrapUndefinable(variations.get(vr.variationId)).value;

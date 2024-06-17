@@ -9,7 +9,7 @@ import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
   SORT_OPTIONS_NAME_ASC,
-  SORT_OPTIONS_NAME_DESC,
+  SORT_OPTIONS_NAME_DESC
 } from '../../types/list';
 import { PushSearchOptions } from '../../types/push';
 import { classNames } from '../../utils/css';
@@ -19,20 +19,20 @@ import { SortItem, SortSelect } from '../SortSelect';
 const sortItems: SortItem[] = [
   {
     key: SORT_OPTIONS_CREATED_AT_DESC,
-    message: intl.formatMessage(messages.push.sort.newest),
+    message: intl.formatMessage(messages.push.sort.newest)
   },
   {
     key: SORT_OPTIONS_CREATED_AT_ASC,
-    message: intl.formatMessage(messages.push.sort.oldest),
+    message: intl.formatMessage(messages.push.sort.oldest)
   },
   {
     key: SORT_OPTIONS_NAME_ASC,
-    message: intl.formatMessage(messages.push.sort.nameAz),
+    message: intl.formatMessage(messages.push.sort.nameAz)
   },
   {
     key: SORT_OPTIONS_NAME_DESC,
-    message: intl.formatMessage(messages.push.sort.nameZa),
-  },
+    message: intl.formatMessage(messages.push.sort.nameZa)
+  }
 ];
 
 export interface PushSearchProps {
@@ -66,7 +66,7 @@ export const PushSearch: FC<PushSearchProps> = memo(
               value={options.q}
               onChange={(query: string) =>
                 handleUpdateOption({
-                  q: query,
+                  q: query
                 })
               }
             />
@@ -78,7 +78,7 @@ export const PushSearch: FC<PushSearchProps> = memo(
               sortItems={sortItems}
               onChange={(sort: string) =>
                 handleUpdateOption({
-                  sort: sort,
+                  sort: sort
                 })
               }
             />

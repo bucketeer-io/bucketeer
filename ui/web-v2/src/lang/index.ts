@@ -1,6 +1,7 @@
+import { createIntl, createIntlCache } from 'react-intl';
+
 import en from '../assets/lang/en.json';
 import ja from '../assets/lang/ja.json';
-import { createIntl, createIntlCache } from 'react-intl';
 
 import { getSelectedLanguage, isLanguageJapanese } from './getSelectedLanguage';
 
@@ -18,7 +19,7 @@ export const intl = createIntl(
   {
     locale,
     defaultLocale: defaultLocale,
-    messages,
+    messages
   },
   cache
 );

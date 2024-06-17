@@ -1,7 +1,7 @@
 import { Transition } from '@headlessui/react';
 import {
   CheckCircleIcon,
-  ExclamationCircleIcon,
+  ExclamationCircleIcon
 } from '@heroicons/react/outline';
 import { XIcon } from '@heroicons/react/solid';
 import React, { FC, Fragment, memo, SyntheticEvent } from 'react';

@@ -2,7 +2,7 @@ import {
   createSlice,
   createEntityAdapter,
   createAsyncThunk,
-  SerializedError,
+  SerializedError
 } from '@reduxjs/toolkit';
 
 import * as grpc from '../grpc/environment';
@@ -10,7 +10,7 @@ import {
   ChangeDescriptionEnvironmentV2Command,
   CreateEnvironmentV2Command,
   RenameEnvironmentV2Command,
-  ChangeRequireCommentCommand,
+  ChangeRequireCommentCommand
 } from '../proto/environment/command_pb';
 import { EnvironmentV2 } from '../proto/environment/environment_pb';
 import {
@@ -18,7 +18,7 @@ import {
   GetEnvironmentV2Request,
   ListEnvironmentsV2Request,
   ListEnvironmentsV2Response,
-  UpdateEnvironmentV2Request,
+  UpdateEnvironmentV2Request
 } from '../proto/environment/service_pb';
 
 import { setupAuthToken } from './auth';
@@ -28,7 +28,7 @@ import { AppState } from '.';
 const MODULE_NAME = 'environments';
 
 export const environmentAdapter = createEntityAdapter<EnvironmentV2.AsObject>({
-  selectId: (e) => e.id,
+  selectId: (e) => e.id
 });
 
 export const { selectAll, selectById } = environmentAdapter.getSelectors();
@@ -40,7 +40,7 @@ const initialState = environmentAdapter.getInitialState<{
 }>({
   loading: false,
   totalCount: 0,
-  getEnvironmentError: null,
+  getEnvironmentError: null
 });
 
 export type OrderBy =
@@ -186,5 +186,5 @@ export const environmentsSlice = createSlice({
       .addCase(updateEnvironment.pending, (state) => {})
       .addCase(updateEnvironment.fulfilled, (state, action) => {})
       .addCase(updateEnvironment.rejected, (state, action) => {});
-  },
+  }
 });

@@ -27,7 +27,7 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
       formState: { errors, isSubmitting, isDirty, isValid },
       getValues,
       setValue,
-      watch,
+      watch
     } = methods;
     const tagsList = useSelector<AppState, Tag.AsObject[]>(
       (state) => selectAllTags(state.tags),
@@ -38,7 +38,7 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
       return {
         id: variation.id,
         value: idx.toString(),
-        label: `${f(messages.feature.variation)} ${idx + 1}`,
+        label: `${f(messages.feature.variation)} ${idx + 1}`
       };
     });
 
@@ -147,7 +147,7 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
                         <CreatableSelect
                           options={tagsList.map((tag) => ({
                             label: tag.id,
-                            value: tag.id,
+                            value: tag.id
                           }))}
                           onChange={(options: Option[]) => {
                             field.onChange(options.map((o) => o.value));
@@ -168,7 +168,7 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
                     typeDisabled={false}
                     rulesAppliedVariationList={{
                       onVariationId: onVariation.id,
-                      offVariationId: offVariation.id,
+                      offVariationId: offVariation.id
                     }}
                   />
                 </div>

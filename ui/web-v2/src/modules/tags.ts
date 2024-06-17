@@ -2,7 +2,7 @@ import {
   createSlice,
   createEntityAdapter,
   createAsyncThunk,
-  SerializedError,
+  SerializedError
 } from '@reduxjs/toolkit';
 import { Message } from 'google-protobuf';
 import { Any } from 'google-protobuf/google/protobuf/any_pb';
@@ -19,7 +19,7 @@ import { AppState } from '.';
 const MODULE_NAME = 'tags';
 
 export const tagsAdapter = createEntityAdapter<Tag.AsObject>({
-  selectId: (tag) => tag.id,
+  selectId: (tag) => tag.id
 });
 
 export const { selectAll, selectById } = tagsAdapter.getSelectors();
@@ -63,7 +63,7 @@ const initialState = tagsAdapter.getInitialState<{
 }>({
   loading: false,
   totalCount: 0,
-  getFeatureError: null,
+  getFeatureError: null
 });
 
 export const tagsSlice = createSlice({
@@ -80,12 +80,12 @@ export const tagsSlice = createSlice({
         tagsAdapter.upsertMany(state, action.payload.tagsList);
         state.loading = false;
       });
-  },
+  }
 });
 
 export const createCommand = ({
   message,
-  name,
+  name
 }: {
   message: Message;
   name: string;

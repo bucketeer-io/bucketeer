@@ -2,8 +2,8 @@
 // file: proto/event/service/segment.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_feature_segment_pb from '../../feature/segment_pb';
-import * as proto_event_domain_event_pb from '../domain/event_pb';
+import * as proto_feature_segment_pb from '../../../proto/feature/segment_pb';
+import * as proto_event_domain_event_pb from '../../../proto/event/domain/event_pb';
 
 export class BulkSegmentUsersReceivedEvent extends jspb.Message {
   getId(): string;

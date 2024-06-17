@@ -1,18 +1,18 @@
 import {
   PAGE_PATH_FEATURES,
   PAGE_PATH_FEATURE_AUTOOPS,
-  PAGE_PATH_ROOT,
+  PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { AppState } from '../../modules';
 import { createAutoOpsRule } from '../../modules/autoOpsRules';
 import {
   listFeatures,
-  selectAll as selectAllFeatures,
+  selectAll as selectAllFeatures
 } from '../../modules/features';
 import { useCurrentEnvironment } from '../../modules/me';
 import {
   listProgressiveRollout,
-  selectAll as selectAllProgressiveRollouts,
+  selectAll as selectAllProgressiveRollouts
 } from '../../modules/porgressiveRollout';
 import { addToast } from '../../modules/toasts';
 import { OpsType } from '../../proto/autoops/auto_ops_rule_pb';
@@ -26,7 +26,7 @@ import { Dialog } from '@headlessui/react';
 import {
   XCircleIcon,
   ExclamationIcon,
-  InformationCircleIcon,
+  InformationCircleIcon
 } from '@heroicons/react/solid';
 import dayjs from 'dayjs';
 import { FC, useEffect, useState } from 'react';
@@ -63,7 +63,7 @@ interface FeatureConfirmDialogProps {
 const SwitchEnabledType = {
   ENABLE_NOW: intl.formatMessage(messages.feature.confirm.enableNow),
   DISABLE_NOW: intl.formatMessage(messages.feature.confirm.disableNow),
-  SCHEDULE: intl.formatMessage(messages.feature.confirm.schedule),
+  SCHEDULE: intl.formatMessage(messages.feature.confirm.schedule)
 };
 
 export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
@@ -77,7 +77,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   isEnabled,
   isArchive,
   featureId,
-  feature,
+  feature
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { formatMessage: f } = useIntl();
@@ -96,7 +96,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   const {
     register,
     control,
-    formState: { errors, isSubmitting, isValid },
+    formState: { errors, isSubmitting, isValid }
   } = methods;
 
   const features = useSelector<AppState, Feature.AsObject[]>(
@@ -128,7 +128,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
       dispatch(
         listProgressiveRollout({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.id,
+          environmentNamespace: currentEnvironment.id
         })
       );
     }
@@ -144,7 +144,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
         searchKeyword: null,
         maintainerId: null,
         orderBy: ListFeaturesRequest.OrderBy.DEFAULT,
-        orderDirection: ListFeaturesRequest.OrderDirection.ASC,
+        orderDirection: ListFeaturesRequest.OrderDirection.ASC
       });
     }
   }, [isArchive, open]);
@@ -196,8 +196,8 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
       return selectedSwitchEnabledType === SwitchEnabledType.ENABLE_NOW
         ? f(messages.button.enable)
         : selectedSwitchEnabledType === SwitchEnabledType.DISABLE_NOW
-        ? f(messages.button.disable)
-        : f(messages.button.schedule);
+          ? f(messages.button.disable)
+          : f(messages.button.schedule);
     }
     return f(messages.button.submit);
   };
@@ -216,13 +216,13 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
     dispatch(
       createAutoOpsRule({
         environmentNamespace: currentEnvironment.id,
-        command: command,
+        command: command
       })
     ).then(() => {
       dispatch(
         addToast({
           message: f(messages.feature.successMessages.schedule),
-          severity: 'success',
+          severity: 'success'
         })
       );
       onClose();
@@ -323,7 +323,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
           <div className="mt-1">
             <textarea
               {...register('comment', {
-                maxLength: FEATURE_UPDATE_COMMENT_MAX_LENGTH,
+                maxLength: FEATURE_UPDATE_COMMENT_MAX_LENGTH
               })}
               id="comment"
               rows={3}
@@ -489,7 +489,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
                             {f(messages.sourceType.progressiveRollout)}
                           </span>
                         </span>
-                      ),
+                      )
                     }
                   )}
                 </p>

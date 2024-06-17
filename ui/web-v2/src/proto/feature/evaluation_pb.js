@@ -23,9 +23,9 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_feature_variation_pb = require('./variation_pb.js');
+var proto_feature_variation_pb = require('../../proto/feature/variation_pb.js');
 goog.object.extend(proto, proto_feature_variation_pb);
-var proto_feature_reason_pb = require('./reason_pb.js');
+var proto_feature_reason_pb = require('../../proto/feature/reason_pb.js');
 goog.object.extend(proto, proto_feature_reason_pb);
 goog.exportSymbol('proto.bucketeer.feature.Evaluation', null, global);
 goog.exportSymbol('proto.bucketeer.feature.UserEvaluations', null, global);
@@ -135,7 +135,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           (f = msg.getReason()) &&
           proto_feature_reason_pb.Reason.toObject(includeInstance, f),
         variationValue: jspb.Message.getFieldWithDefault(msg, 8, ''),
-        variationName: jspb.Message.getFieldWithDefault(msg, 9, ''),
+        variationName: jspb.Message.getFieldWithDefault(msg, 9, '')
       };
 
     if (includeInstance) {
@@ -535,7 +535,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         createdAt: jspb.Message.getFieldWithDefault(msg, 3, 0),
         archivedFeatureIdsList:
           (f = jspb.Message.getRepeatedField(msg, 4)) == null ? undefined : f,
-        forceUpdate: jspb.Message.getBooleanFieldWithDefault(msg, 5, false),
+        forceUpdate: jspb.Message.getBooleanFieldWithDefault(msg, 5, false)
       };
 
     if (includeInstance) {
@@ -666,7 +666,7 @@ proto.bucketeer.feature.UserEvaluations.serializeBinaryToWriter = function (
 proto.bucketeer.feature.UserEvaluations.State = {
   QUEUED: 0,
   PARTIAL: 1,
-  FULL: 2,
+  FULL: 2
 };
 
 /**

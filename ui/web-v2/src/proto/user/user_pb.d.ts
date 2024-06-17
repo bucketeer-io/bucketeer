@@ -1,7 +1,7 @@
 // package: bucketeer.user
 // file: proto/user/user.proto
 
-import * as jspb from "google-protobuf";
+import * as jspb from 'google-protobuf';
 
 export class User extends jspb.Message {
   getId(): string;
@@ -20,21 +20,29 @@ export class User extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): User.AsObject;
   static toObject(includeInstance: boolean, msg: User): User.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: User, writer: jspb.BinaryWriter): void;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: User,
+    writer: jspb.BinaryWriter
+  ): void;
   static deserializeBinary(bytes: Uint8Array): User;
-  static deserializeBinaryFromReader(message: User, reader: jspb.BinaryReader): User;
+  static deserializeBinaryFromReader(
+    message: User,
+    reader: jspb.BinaryReader
+  ): User;
 }
 
 export namespace User {
   export type AsObject = {
-    id: string,
-    dataMap: Array<[string, string]>,
-    taggedDataMap: Array<[string, User.Data.AsObject]>,
-    lastSeen: number,
-    createdAt: number,
-  }
+    id: string;
+    dataMap: Array<[string, string]>;
+    taggedDataMap: Array<[string, User.Data.AsObject]>;
+    lastSeen: number;
+    createdAt: number;
+  };
 
   export class Data extends jspb.Message {
     getValueMap(): jspb.Map<string, string>;
@@ -42,17 +50,24 @@ export namespace User {
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): Data.AsObject;
     static toObject(includeInstance: boolean, msg: Data): Data.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: Data, writer: jspb.BinaryWriter): void;
+    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+    static extensionsBinary: {
+      [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+    };
+    static serializeBinaryToWriter(
+      message: Data,
+      writer: jspb.BinaryWriter
+    ): void;
     static deserializeBinary(bytes: Uint8Array): Data;
-    static deserializeBinaryFromReader(message: Data, reader: jspb.BinaryReader): Data;
+    static deserializeBinaryFromReader(
+      message: Data,
+      reader: jspb.BinaryReader
+    ): Data;
   }
 
   export namespace Data {
     export type AsObject = {
-      valueMap: Array<[string, string]>,
-    }
+      valueMap: Array<[string, string]>;
+    };
   }
 }
-

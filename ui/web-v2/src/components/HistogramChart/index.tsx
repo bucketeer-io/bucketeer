@@ -14,7 +14,7 @@ export const HistogramChart: FC<HistogramChartProps> = ({
   label,
   dataLabels,
   hist,
-  bins,
+  bins
 }) => {
   const chartData = {
     labels: bins,
@@ -22,15 +22,15 @@ export const HistogramChart: FC<HistogramChartProps> = ({
       return {
         label: e,
         data: hist[i],
-        backgroundColor: COLORS[i % COLORS.length],
+        backgroundColor: COLORS[i % COLORS.length]
       };
-    }),
+    })
   };
   const options = {
     title: {
       display: true,
       text: label,
-      fontStyle: 'normal',
+      fontStyle: 'normal'
     },
     scales: {
       xAxes: [
@@ -38,26 +38,26 @@ export const HistogramChart: FC<HistogramChartProps> = ({
           display: false,
           barPercentage: 1.5,
           ticks: {
-            max: hist[0].length - 1,
-          },
+            max: hist[0].length - 1
+          }
         },
         {
           display: true,
           ticks: {
             autoSkip: true,
-            max: hist[0].length,
-          },
-        },
+            max: hist[0].length
+          }
+        }
       ],
       yAxes: [
         {
           display: false,
           ticks: {
-            beginAtZero: true,
-          },
-        },
-      ],
-    },
+            beginAtZero: true
+          }
+        }
+      ]
+    }
   };
 
   return <Bar data={chartData} options={options} />;

@@ -10,7 +10,7 @@ import {
   useHistory,
   useRouteMatch,
   useLocation,
-  useParams,
+  useParams
 } from 'react-router-dom';
 
 import { AccountAddForm } from '../../components/AccountAddForm';
@@ -24,7 +24,7 @@ import {
   ID_NEW,
   PAGE_PATH_ACCOUNTS,
   PAGE_PATH_NEW,
-  PAGE_PATH_ROOT,
+  PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
@@ -37,7 +37,7 @@ import {
   getAccount,
   createAccount,
   OrderBy,
-  OrderDirection,
+  OrderDirection
 } from '../../modules/accounts';
 import { useCurrentEnvironment } from '../../modules/me';
 import { AccountV2 } from '../../proto/account/account_pb';
@@ -47,11 +47,11 @@ import { AccountSortOption, isAccountSortOption } from '../../types/account';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
-  SORT_OPTIONS_NAME_ASC,
+  SORT_OPTIONS_NAME_ASC
 } from '../../types/list';
 import {
   stringifySearchParams,
-  useSearchParams,
+  useSearchParams
 } from '../../utils/search-params';
 
 import { addFormSchema, updateFormSchema } from './formSchema';
@@ -66,22 +66,22 @@ const createSort = (sortOption?: AccountSortOption): Sort => {
     case SORT_OPTIONS_CREATED_AT_ASC:
       return {
         orderBy: ListAccountsV2Request.OrderBy.CREATED_AT,
-        orderDirection: ListAccountsV2Request.OrderDirection.ASC,
+        orderDirection: ListAccountsV2Request.OrderDirection.ASC
       };
     case SORT_OPTIONS_CREATED_AT_DESC:
       return {
         orderBy: ListAccountsV2Request.OrderBy.CREATED_AT,
-        orderDirection: ListAccountsV2Request.OrderDirection.DESC,
+        orderDirection: ListAccountsV2Request.OrderDirection.DESC
       };
     case SORT_OPTIONS_NAME_ASC:
       return {
         orderBy: ListAccountsV2Request.OrderBy.EMAIL,
-        orderDirection: ListAccountsV2Request.OrderDirection.ASC,
+        orderDirection: ListAccountsV2Request.OrderDirection.ASC
       };
     default:
       return {
         orderBy: ListAccountsV2Request.OrderBy.EMAIL,
-        orderDirection: ListAccountsV2Request.OrderDirection.DESC,
+        orderDirection: ListAccountsV2Request.OrderDirection.DESC
       };
   }
 };
@@ -90,7 +90,7 @@ const createSort = (sortOption?: AccountSortOption): Sort => {
 enum AccountRoleV1 {
   VIEWER = 0,
   EDITOR = 1,
-  OWNER = 2,
+  OWNER = 2
 }
 
 // TODO: Remove this when the console 3.0 is ready
@@ -98,16 +98,16 @@ export const getRoleListV1 = (): Option[] => {
   return [
     {
       value: AccountRoleV1.VIEWER.toString(),
-      label: intl.formatMessage(messages.account.role.viewer),
+      label: intl.formatMessage(messages.account.role.viewer)
     },
     {
       value: AccountRoleV1.EDITOR.toString(),
-      label: intl.formatMessage(messages.account.role.editor),
+      label: intl.formatMessage(messages.account.role.editor)
     },
     {
       value: AccountRoleV1.OWNER.toString(),
-      label: intl.formatMessage(messages.account.role.owner),
-    },
+      label: intl.formatMessage(messages.account.role.owner)
+    }
   ];
 };
 
@@ -123,7 +123,7 @@ export const getRoleV1 = (
   ) {
     return {
       value: AccountRoleV1.EDITOR.toString(),
-      label: intl.formatMessage(messages.account.role.editor),
+      label: intl.formatMessage(messages.account.role.editor)
     };
     // If it's an admin
   } else if (
@@ -132,7 +132,7 @@ export const getRoleV1 = (
   ) {
     return {
       value: AccountRoleV1.OWNER.toString(),
-      label: intl.formatMessage(messages.account.role.owner),
+      label: intl.formatMessage(messages.account.role.owner)
     };
     // If it's an onwer
   } else if (
@@ -141,13 +141,13 @@ export const getRoleV1 = (
   ) {
     return {
       value: AccountRoleV1.OWNER.toString(),
-      label: intl.formatMessage(messages.account.role.owner),
+      label: intl.formatMessage(messages.account.role.owner)
     };
   }
   // Anything else returns viewer
   return {
     value: AccountRoleV1.VIEWER.toString(),
-    label: intl.formatMessage(messages.account.role.viewer),
+    label: intl.formatMessage(messages.account.role.viewer)
   };
 };
 
@@ -161,18 +161,18 @@ export const convertToAccountV2Role = (
   if (roleV1 == AccountRoleV1.VIEWER) {
     return [
       AccountV2.Role.Organization.ORGANIZATION_MEMBER,
-      AccountV2.Role.Environment.ENVIRONMENT_VIEWER,
+      AccountV2.Role.Environment.ENVIRONMENT_VIEWER
     ];
   }
   if (roleV1 == AccountRoleV1.EDITOR) {
     return [
       AccountV2.Role.Organization.ORGANIZATION_MEMBER,
-      AccountV2.Role.Environment.ENVIRONMENT_EDITOR,
+      AccountV2.Role.Environment.ENVIRONMENT_EDITOR
     ];
   }
   return [
     AccountV2.Role.Organization.ORGANIZATION_ADMIN,
-    AccountV2.Role.Environment.ENVIRONMENT_EDITOR,
+    AccountV2.Role.Environment.ENVIRONMENT_EDITOR
   ];
 };
 
@@ -195,7 +195,7 @@ export const AccountIndexPage: FC = memo(() => {
   >(
     (state) => [
       selectAccountById(state.accounts, accountId),
-      state.accounts.getAccountError,
+      state.accounts.getAccountError
     ],
     shallowEqual
   );
@@ -203,7 +203,7 @@ export const AccountIndexPage: FC = memo(() => {
     (options: Record<string, string | number | boolean | undefined>) => {
       history.replace(
         `${url}?${stringifySearchParams({
-          ...options,
+          ...options
         })}`
       );
     },
@@ -232,7 +232,7 @@ export const AccountIndexPage: FC = memo(() => {
           orderBy: sort.orderBy,
           orderDirection: sort.orderDirection,
           disabled: disabled,
-          role: role,
+          role: role
         })
       );
     },
@@ -244,14 +244,14 @@ export const AccountIndexPage: FC = memo(() => {
   const switchEnabledMethod = useForm({
     defaultValues: {
       accountId: '',
-      enabled: false,
+      enabled: false
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
 
   const {
     handleSubmit: switchEnableHandleSubmit,
-    setValue: switchEnabledSetValue,
+    setValue: switchEnabledSetValue
   } = switchEnabledMethod;
 
   const handleClickSwitchEnabled = useCallback(
@@ -271,13 +271,13 @@ export const AccountIndexPage: FC = memo(() => {
             return enableAccount({
               organizationId: currentEnvironment.organizationId,
               environmentId: currentEnvironment.id,
-              email: data.accountId,
+              email: data.accountId
             });
           }
           return disableAccount({
             organizationId: currentEnvironment.organizationId,
             environmentId: currentEnvironment.id,
-            email: data.accountId,
+            email: data.accountId
           });
         })()
       ).then(() => {
@@ -285,7 +285,7 @@ export const AccountIndexPage: FC = memo(() => {
         dispatch(
           getAccount({
             organizationId: currentEnvironment.organizationId,
-            email: data.accountId,
+            email: data.accountId
           })
         );
       });
@@ -313,7 +313,7 @@ export const AccountIndexPage: FC = memo(() => {
     setOpen(true);
     history.push({
       pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_ACCOUNTS}${PAGE_PATH_NEW}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location]);
 
@@ -326,11 +326,11 @@ export const AccountIndexPage: FC = memo(() => {
       resetUpdate({
         name: a.name,
         email: a.email,
-        role: getRoleV1(a.organizationRole, envRole.role).value,
+        role: getRoleV1(a.organizationRole, envRole.role).value
       });
       history.push({
         pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_ACCOUNTS}/${a.email}`,
-        search: location.search,
+        search: location.search
       });
     },
     [setOpen, history, account, location]
@@ -340,20 +340,20 @@ export const AccountIndexPage: FC = memo(() => {
     resolver: yupResolver(addFormSchema),
     defaultValues: {
       email: null,
-      role: null,
+      role: null
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const { handleSubmit: handleAddSubmit, reset: resetAdd } = addMethod;
 
   const updateMethod = useForm({
     resolver: yupResolver(updateFormSchema),
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const {
     handleSubmit: handleUpdateSubmit,
     reset: resetUpdate,
-    formState: { dirtyFields },
+    formState: { dirtyFields }
   } = updateMethod;
 
   const handleClose = useCallback(() => {
@@ -362,7 +362,7 @@ export const AccountIndexPage: FC = memo(() => {
     setOpen(false);
     history.replace({
       pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_ACCOUNTS}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location, resetAdd, resetUpdate]);
 
@@ -376,7 +376,7 @@ export const AccountIndexPage: FC = memo(() => {
           email: data.email,
           environmentId: currentEnvironment.id,
           environmentRole: envRole,
-          organizationRole: orgRole,
+          organizationRole: orgRole
         })
       ).then(() => {
         resetAdd();
@@ -404,13 +404,13 @@ export const AccountIndexPage: FC = memo(() => {
           name: name,
           email: accountId,
           environmentRole: envRole,
-          organizationRole: orgRole,
+          organizationRole: orgRole
         })
       ).then(() => {
         dispatch(
           getAccount({
             organizationId: currentEnvironment.organizationId,
-            email: accountId,
+            email: accountId
           })
         );
         handleClose();
@@ -442,7 +442,7 @@ export const AccountIndexPage: FC = memo(() => {
       dispatch(
         getAccount({
           organizationId: currentEnvironment.organizationId,
-          email: accountId,
+          email: accountId
         })
       ).then((e) => {
         const payload = e.payload as AccountV2.AsObject;
@@ -452,7 +452,7 @@ export const AccountIndexPage: FC = memo(() => {
         resetUpdate({
           name: payload.name,
           email: payload.email,
-          role: getRoleV1(payload.organizationRole, envRole.role).value,
+          role: getRoleV1(payload.organizationRole, envRole.role).value
         });
       });
     }

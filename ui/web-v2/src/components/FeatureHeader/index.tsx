@@ -10,7 +10,7 @@ import React, {
   useCallback,
   useEffect,
   useRef,
-  useState,
+  useState
 } from 'react';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useSelector } from 'react-redux';
@@ -51,7 +51,7 @@ export const FeatureHeader: FC<FeatureHeaderProps> = memo(({ featureId }) => {
   >(
     (state) => [
       selectFeatureById(state.features, featureId),
-      state.features.getFeatureError,
+      state.features.getFeatureError
     ],
     shallowEqual
   );
@@ -104,12 +104,12 @@ const createPages = (envUrlCode, featureId, detailPath: string) => {
     {
       name: intl.formatMessage(messages.sideMenu.featureFlags),
       path: `${PAGE_PATH_ROOT}${envUrlCode}${PAGE_PATH_FEATURES}`,
-      current: false,
+      current: false
     },
     {
       name: featureId,
       path: `${PAGE_PATH_ROOT}${envUrlCode}${PAGE_PATH_FEATURES}/${featureId}/${detailPath}`,
-      current: true,
-    },
+      current: true
+    }
   ];
 };

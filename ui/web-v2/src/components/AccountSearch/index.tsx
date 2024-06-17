@@ -14,7 +14,7 @@ import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
   SORT_OPTIONS_NAME_ASC,
-  SORT_OPTIONS_NAME_DESC,
+  SORT_OPTIONS_NAME_DESC
 } from '../../types/list';
 import { classNames } from '../../utils/css';
 import { FilterChip } from '../FilterChip';
@@ -26,62 +26,62 @@ import { SortItem, SortSelect } from '../SortSelect';
 const sortItems: SortItem[] = [
   {
     key: SORT_OPTIONS_CREATED_AT_DESC,
-    message: intl.formatMessage(messages.account.sort.newest),
+    message: intl.formatMessage(messages.account.sort.newest)
   },
   {
     key: SORT_OPTIONS_CREATED_AT_ASC,
-    message: intl.formatMessage(messages.account.sort.oldest),
+    message: intl.formatMessage(messages.account.sort.oldest)
   },
   {
     key: SORT_OPTIONS_NAME_ASC,
-    message: intl.formatMessage(messages.account.sort.emailAz),
+    message: intl.formatMessage(messages.account.sort.emailAz)
   },
   {
     key: SORT_OPTIONS_NAME_DESC,
-    message: intl.formatMessage(messages.account.sort.emailZa),
-  },
+    message: intl.formatMessage(messages.account.sort.emailZa)
+  }
 ];
 
 export enum FilterTypes {
   ROLE = 'role',
-  ENABLED = 'enabled',
+  ENABLED = 'enabled'
 }
 
 export const filterOptions: Option[] = [
   {
     value: FilterTypes.ROLE,
-    label: intl.formatMessage(messages.account.filter.role),
+    label: intl.formatMessage(messages.account.filter.role)
   },
   {
     value: FilterTypes.ENABLED,
-    label: intl.formatMessage(messages.account.filter.enabled),
-  },
+    label: intl.formatMessage(messages.account.filter.enabled)
+  }
 ];
 
 export const roleOptions: Option[] = [
   {
     value: '0',
-    label: intl.formatMessage(messages.account.role.viewer),
+    label: intl.formatMessage(messages.account.role.viewer)
   },
   {
     value: '1',
-    label: intl.formatMessage(messages.account.role.editor),
+    label: intl.formatMessage(messages.account.role.editor)
   },
   {
     value: '2',
-    label: intl.formatMessage(messages.account.role.owner),
-  },
+    label: intl.formatMessage(messages.account.role.owner)
+  }
 ];
 
 export const enabledOptions: Option[] = [
   {
     value: 'true',
-    label: intl.formatMessage(messages.enabled),
+    label: intl.formatMessage(messages.enabled)
   },
   {
     value: 'false',
-    label: intl.formatMessage(messages.disabled),
-  },
+    label: intl.formatMessage(messages.disabled)
+  }
 ];
 
 export interface AccountSearchProps {
@@ -128,12 +128,12 @@ export const AccountSearch: FC<AccountSearchProps> = memo(
       switch (key) {
         case FilterTypes.ROLE:
           handleUpdateOption({
-            role: value,
+            role: value
           });
           return;
         case FilterTypes.ENABLED:
           handleUpdateOption({
-            enabled: value,
+            enabled: value
           });
           return;
       }
@@ -153,7 +153,7 @@ export const AccountSearch: FC<AccountSearchProps> = memo(
               value={options.q}
               onChange={(query: string) =>
                 handleUpdateOption({
-                  q: query,
+                  q: query
                 })
               }
             />
@@ -174,7 +174,7 @@ export const AccountSearch: FC<AccountSearchProps> = memo(
               sortItems={sortItems}
               onChange={(sort: string) =>
                 handleUpdateOption({
-                  sort: sort,
+                  sort: sort
                 })
               }
             />
@@ -203,7 +203,7 @@ export const AccountSearch: FC<AccountSearchProps> = memo(
                 }`}
                 onRemove={() =>
                   handleUpdateOption({
-                    role: null,
+                    role: null
                   })
                 }
               />
@@ -217,7 +217,7 @@ export const AccountSearch: FC<AccountSearchProps> = memo(
                 }`}
                 onRemove={() =>
                   handleUpdateOption({
-                    enabled: null,
+                    enabled: null
                   })
                 }
               />
@@ -227,7 +227,7 @@ export const AccountSearch: FC<AccountSearchProps> = memo(
                 onClick={() =>
                   handleUpdateOption({
                     enabled: null,
-                    role: null,
+                    role: null
                   })
                 }
               />

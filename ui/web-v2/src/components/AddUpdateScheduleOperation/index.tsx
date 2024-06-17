@@ -16,7 +16,7 @@ export const AddUpdateScheduleOperation: FC<AddUpdateScheduleOperationProps> =
     const methods = useFormContext<OperationForm>();
 
     const {
-      formState: { errors },
+      formState: { errors }
     } = methods;
 
     return (

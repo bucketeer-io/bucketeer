@@ -8,7 +8,7 @@ import {
   useHistory,
   useRouteMatch,
   useLocation,
-  useParams,
+  useParams
 } from 'react-router-dom';
 
 import { APIKeyAddForm } from '../../components/APIKeyAddForm';
@@ -22,7 +22,7 @@ import {
   ID_NEW,
   PAGE_PATH_APIKEYS,
   PAGE_PATH_NEW,
-  PAGE_PATH_ROOT,
+  PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
@@ -35,7 +35,7 @@ import {
   createAPIKey,
   updateAPIKey,
   OrderBy,
-  OrderDirection,
+  OrderDirection
 } from '../../modules/apiKeys';
 import { useCurrentEnvironment } from '../../modules/me';
 import { APIKey } from '../../proto/account/api_key_pb';
@@ -45,11 +45,11 @@ import { APIKeySortOption, isAPIKeySortOption } from '../../types/apiKey';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
-  SORT_OPTIONS_NAME_ASC,
+  SORT_OPTIONS_NAME_ASC
 } from '../../types/list';
 import {
   stringifySearchParams,
-  useSearchParams,
+  useSearchParams
 } from '../../utils/search-params';
 
 import { addApiKeyFormSchema, updateApiKeyFormSchema } from './formSchema';
@@ -64,22 +64,22 @@ const createSort = (sortOption?: APIKeySortOption): Sort => {
     case SORT_OPTIONS_CREATED_AT_ASC:
       return {
         orderBy: ListAPIKeysRequest.OrderBy.CREATED_AT,
-        orderDirection: ListAPIKeysRequest.OrderDirection.ASC,
+        orderDirection: ListAPIKeysRequest.OrderDirection.ASC
       };
     case SORT_OPTIONS_CREATED_AT_DESC:
       return {
         orderBy: ListAPIKeysRequest.OrderBy.CREATED_AT,
-        orderDirection: ListAPIKeysRequest.OrderDirection.DESC,
+        orderDirection: ListAPIKeysRequest.OrderDirection.DESC
       };
     case SORT_OPTIONS_NAME_ASC:
       return {
         orderBy: ListAPIKeysRequest.OrderBy.NAME,
-        orderDirection: ListAPIKeysRequest.OrderDirection.ASC,
+        orderDirection: ListAPIKeysRequest.OrderDirection.ASC
       };
     default:
       return {
         orderBy: ListAPIKeysRequest.OrderBy.NAME,
-        orderDirection: ListAPIKeysRequest.OrderDirection.DESC,
+        orderDirection: ListAPIKeysRequest.OrderDirection.DESC
       };
   }
 };
@@ -103,7 +103,7 @@ export const APIKeyIndexPage: FC = memo(() => {
   >(
     (state) => [
       selectAPIKeyById(state.apiKeys, apiKeyId),
-      state.apiKeys.getAPIKeyError,
+      state.apiKeys.getAPIKeyError
     ],
     shallowEqual
   );
@@ -111,7 +111,7 @@ export const APIKeyIndexPage: FC = memo(() => {
     (options: Record<string, string | number | boolean | undefined>) => {
       history.replace(
         `${url}?${stringifySearchParams({
-          ...options,
+          ...options
         })}`
       );
     },
@@ -136,7 +136,7 @@ export const APIKeyIndexPage: FC = memo(() => {
           searchKeyword: options && (options.q as string),
           orderBy: sort.orderBy,
           orderDirection: sort.orderDirection,
-          disabled: disabled,
+          disabled: disabled
         })
       );
     },
@@ -149,14 +149,14 @@ export const APIKeyIndexPage: FC = memo(() => {
     defaultValues: {
       apiKeyId: '',
       apiKeyName: '',
-      enabled: false,
+      enabled: false
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
 
   const {
     handleSubmit: switchEnableHandleSubmit,
-    setValue: switchEnabledSetValue,
+    setValue: switchEnabledSetValue
   } = switchEnabledMethod;
 
   const handleClickSwitchEnabled = useCallback(
@@ -176,12 +176,12 @@ export const APIKeyIndexPage: FC = memo(() => {
           if (data.enabled) {
             return enableAPIKey({
               environmentNamespace: currentEnvironment.id,
-              id: data.apiKeyId,
+              id: data.apiKeyId
             });
           }
           return disableAPIKey({
             environmentNamespace: currentEnvironment.id,
-            id: data.apiKeyId,
+            id: data.apiKeyId
           });
         })()
       ).then(() => {
@@ -189,7 +189,7 @@ export const APIKeyIndexPage: FC = memo(() => {
         dispatch(
           getAPIKey({
             environmentNamespace: currentEnvironment.id,
-            id: data.apiKeyId,
+            id: data.apiKeyId
           })
         );
       });
@@ -218,8 +218,8 @@ export const APIKeyIndexPage: FC = memo(() => {
     mode: 'onChange',
     defaultValues: {
       name: '',
-      role: 1,
-    },
+      role: 1
+    }
   });
   const { handleSubmit: handleAddSubmit, reset: resetAdd } = addMethod;
 
@@ -227,9 +227,9 @@ export const APIKeyIndexPage: FC = memo(() => {
     resolver: yupResolver(updateApiKeyFormSchema),
     defaultValues: {
       name: '',
-      role: 1,
+      role: 1
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const { handleSubmit: handleUpdateSubmit, reset: resetUpdate } = updateMethod;
 
@@ -237,7 +237,7 @@ export const APIKeyIndexPage: FC = memo(() => {
     setOpen(true);
     history.push({
       pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_APIKEYS}${PAGE_PATH_NEW}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location]);
 
@@ -246,11 +246,11 @@ export const APIKeyIndexPage: FC = memo(() => {
       setOpen(true);
       resetUpdate({
         name: a.name,
-        role: a.role,
+        role: a.role
       });
       history.push({
         pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_APIKEYS}/${a.id}`,
-        search: location.search,
+        search: location.search
       });
     },
     [setOpen, history, apiKey, location]
@@ -262,7 +262,7 @@ export const APIKeyIndexPage: FC = memo(() => {
     resetUpdate();
     history.replace({
       pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_APIKEYS}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location, resetAdd, resetUpdate]);
 
@@ -272,7 +272,7 @@ export const APIKeyIndexPage: FC = memo(() => {
         createAPIKey({
           environmentNamespace: currentEnvironment.id,
           name: data.name,
-          role: data.role,
+          role: data.role
         })
       ).then(() => {
         setOpen(false);
@@ -292,13 +292,13 @@ export const APIKeyIndexPage: FC = memo(() => {
         updateAPIKey({
           environmentNamespace: currentEnvironment.id,
           id: apiKeyId,
-          name: data.name,
+          name: data.name
         })
       ).then(() => {
         dispatch(
           getAPIKey({
             environmentNamespace: currentEnvironment.id,
-            id: apiKeyId,
+            id: apiKeyId
           })
         );
         handleClose();
@@ -323,14 +323,14 @@ export const APIKeyIndexPage: FC = memo(() => {
       dispatch(
         getAPIKey({
           environmentNamespace: currentEnvironment.id,
-          id: apiKeyId,
+          id: apiKeyId
         })
       ).then((e) => {
         const payload = e.payload as APIKey.AsObject;
 
         resetUpdate({
           name: payload.name,
-          role: payload.role,
+          role: payload.role
         });
       });
     }

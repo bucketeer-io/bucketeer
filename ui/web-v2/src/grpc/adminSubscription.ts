@@ -16,11 +16,11 @@ import {
   ListAdminSubscriptionsRequest,
   ListAdminSubscriptionsResponse,
   UpdateAdminSubscriptionRequest,
-  UpdateAdminSubscriptionResponse,
+  UpdateAdminSubscriptionResponse
 } from '../proto/notification/service_pb';
 import {
   NotificationServiceClient,
-  ServiceError,
+  ServiceError
 } from '../proto/notification/service_pb_service';
 
 import { getMetaDataForClient as getMetaData } from './utils';

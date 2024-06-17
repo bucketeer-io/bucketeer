@@ -29,7 +29,7 @@ export const AuditLogList: FC<AuditLogListProps> = memo(
     onChangePage,
     onChangeSearchOptions,
     showEntityTypeFilter,
-    entityTypeOptions,
+    entityTypeOptions
   }) => {
     const auditLogs = useSelector<AppState, AuditLog.AsObject[]>(
       (state) => selectAll(state.auditLog),
@@ -118,14 +118,14 @@ const NoData: FC<NoDataProps> = ({ searchOptions }) => {
         <div className="text-gray-700">
           <h1 className="text-lg">
             {f(messages.noResult.title, {
-              title: f(messages.auditLog.list.header.title),
+              title: f(messages.auditLog.list.header.title)
             })}
           </h1>
           <div className="flex justify-center mt-4">
             <ul className="list-disc">
               <li>
                 {f(messages.noResult.searchByKeyword, {
-                  keyword: f(messages.auditLog.list.noResult.searchKeyword),
+                  keyword: f(messages.auditLog.list.noResult.searchKeyword)
                 })}
               </li>
               <li>{f(messages.noResult.checkTypos)}</li>
@@ -140,7 +140,7 @@ const NoData: FC<NoDataProps> = ({ searchOptions }) => {
         <div className="w-[600px] text-gray-700 text-center">
           <h1 className="text-lg">
             {f(messages.noData.title, {
-              title: f(messages.auditLog.list.header.title),
+              title: f(messages.auditLog.list.header.title)
             })}
           </h1>
           <p className="mt-5">{f(messages.auditLog.list.noData.description)}</p>

@@ -2,7 +2,7 @@
 // file: proto/eventcounter/mau_summary.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_event_client_event_pb from '../event/client/event_pb';
+import * as proto_event_client_event_pb from '../../proto/event/client/event_pb';
 
 export class MAUSummary extends jspb.Message {
   getYearmonth(): string;

@@ -4,7 +4,7 @@ import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import {
   FeatureEvaluation,
   TimeRange,
-  timeRangeOptions,
+  timeRangeOptions
 } from '../../components/FeatureEvaluation';
 import { AppState } from '../../modules';
 import { getEvaluationTimeseriesCount } from '../../modules/evaluationTimeseriesCount';
@@ -32,7 +32,7 @@ export const FeatureEvaluationPage: FC<FeatureEvaluationPageProps> = memo(
         getEvaluationTimeseriesCount({
           featureId: featureId,
           environmentNamespace: currentEnvironment.id,
-          timeRange: TimeRange.LAST_THIRTY_DAYS,
+          timeRange: TimeRange.LAST_THIRTY_DAYS
         })
       );
     }, [dispatch, featureId, currentEnvironment]);

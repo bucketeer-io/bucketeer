@@ -2,7 +2,7 @@ import {
   createSlice,
   createEntityAdapter,
   createAsyncThunk,
-  SerializedError,
+  SerializedError
 } from '@reduxjs/toolkit';
 import * as jspb from 'google-protobuf';
 import { Any } from 'google-protobuf/google/protobuf/any_pb';
@@ -15,7 +15,7 @@ import {
   DeleteSegmentCommand,
   ChangeSegmentNameCommand,
   ChangeSegmentDescriptionCommand,
-  Command,
+  Command
 } from '../proto/feature/command_pb';
 import { Segment } from '../proto/feature/segment_pb';
 import {
@@ -26,7 +26,7 @@ import {
   CreateSegmentRequest,
   UpdateSegmentRequest,
   DeleteSegmentRequest,
-  ListSegmentsResponse,
+  ListSegmentsResponse
 } from '../proto/feature/service_pb';
 
 import { setupAuthToken } from './auth';
@@ -36,7 +36,7 @@ import { AppState } from '.';
 const MODULE_NAME = 'segments';
 
 export const segmentsAdapter = createEntityAdapter<Segment.AsObject>({
-  selectId: (segment) => segment.id,
+  selectId: (segment) => segment.id
 });
 
 export const { selectAll, selectById } = segmentsAdapter.getSelectors();
@@ -225,7 +225,7 @@ const initialState = segmentsAdapter.getInitialState<{
 }>({
   loading: false,
   totalCount: 0,
-  getSegmentError: null,
+  getSegmentError: null
 });
 
 export type SegmentsState = typeof initialState;
@@ -277,5 +277,5 @@ export const segmentsSlice = createSlice({
         segmentsAdapter.removeOne(state, action.payload);
       })
       .addCase(deleteSegmentUser.rejected, (state) => {});
-  },
+  }
 });

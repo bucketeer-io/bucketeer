@@ -1,7 +1,7 @@
 import {
   createSlice,
   createEntityAdapter,
-  createAsyncThunk,
+  createAsyncThunk
 } from '@reduxjs/toolkit';
 
 import * as autoOpsGrpc from '../grpc/autoops';
@@ -14,14 +14,14 @@ import {
   ChangeOpsEventRateClauseCommand,
   CreateAutoOpsRuleCommand,
   DeleteAutoOpsRuleCommand,
-  DeleteClauseCommand,
+  DeleteClauseCommand
 } from '../proto/autoops/command_pb';
 import {
   CreateAutoOpsRuleRequest,
   DeleteAutoOpsRuleRequest,
   ListAutoOpsRulesRequest,
   ListAutoOpsRulesResponse,
-  UpdateAutoOpsRuleRequest,
+  UpdateAutoOpsRuleRequest
 } from '../proto/autoops/service_pb';
 
 import { setupAuthToken } from './auth';
@@ -31,7 +31,7 @@ import { AppState } from '.';
 const MODULE_NAME = 'autoOpsRules';
 
 export const autoOpsRulesAdapter = createEntityAdapter<AutoOpsRule.AsObject>({
-  selectId: (autoOpsRule) => autoOpsRule.id,
+  selectId: (autoOpsRule) => autoOpsRule.id
 });
 
 export const { selectAll, selectById } = autoOpsRulesAdapter.getSelectors();
@@ -136,7 +136,7 @@ export const deleteAutoOpsRule = createAsyncThunk<
 const initialState = autoOpsRulesAdapter.getInitialState<{
   loading: boolean;
 }>({
-  loading: false,
+  loading: false
 });
 
 export type AutoOpsRulesState = typeof initialState;
@@ -176,5 +176,5 @@ export const autoOpsRulesSlice = createSlice({
       .addCase(updateAutoOpsRule.rejected, (state) => {
         state.loading = false;
       });
-  },
+  }
 });

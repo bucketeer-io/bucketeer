@@ -3,9 +3,9 @@
 
 import * as jspb from 'google-protobuf';
 import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
-import * as proto_eventcounter_experiment_result_pb from './experiment_result_pb';
-import * as proto_eventcounter_timeseries_pb from './timeseries_pb';
-import * as proto_eventcounter_variation_count_pb from './variation_count_pb';
+import * as proto_eventcounter_experiment_result_pb from '../../proto/eventcounter/experiment_result_pb';
+import * as proto_eventcounter_timeseries_pb from '../../proto/eventcounter/timeseries_pb';
+import * as proto_eventcounter_variation_count_pb from '../../proto/eventcounter/variation_count_pb';
 
 export class GetExperimentEvaluationCountRequest extends jspb.Message {
   getEnvironmentNamespace(): string;

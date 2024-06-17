@@ -23,7 +23,7 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_auth_token_pb = require('./token_pb.js');
+var proto_auth_token_pb = require('../../proto/auth/token_pb.js');
 goog.object.extend(proto, proto_auth_token_pb);
 goog.exportSymbol('proto.bucketeer.auth.ExchangeTokenRequest', null, global);
 goog.exportSymbol('proto.bucketeer.auth.ExchangeTokenResponse', null, global);
@@ -202,7 +202,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         state: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        redirectUrl: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        redirectUrl: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -371,7 +371,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        url: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        url: jspb.Message.getFieldWithDefault(msg, 1, '')
       };
 
     if (includeInstance) {
@@ -512,7 +512,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         code: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        redirectUrl: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        redirectUrl: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -679,7 +679,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         token:
           (f = msg.getToken()) &&
-          proto_auth_token_pb.Token.toObject(includeInstance, f),
+          proto_auth_token_pb.Token.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -846,7 +846,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         refreshToken: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        redirectUrl: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        redirectUrl: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -1018,7 +1018,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         token:
           (f = msg.getToken()) &&
-          proto_auth_token_pb.Token.toObject(includeInstance, f),
+          proto_auth_token_pb.Token.toObject(includeInstance, f)
       };
 
     if (includeInstance) {

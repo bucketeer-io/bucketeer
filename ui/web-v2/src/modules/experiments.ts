@@ -2,11 +2,11 @@ import {
   createSlice,
   createEntityAdapter,
   createAsyncThunk,
-  SerializedError,
+  SerializedError
 } from '@reduxjs/toolkit';
 import {
   BoolValue,
-  Int32Value,
+  Int32Value
 } from 'google-protobuf/google/protobuf/wrappers_pb';
 
 import * as grpc from '../grpc/experiment';
@@ -16,7 +16,7 @@ import {
   ChangeExperimentNameCommand,
   ChangeExperimentPeriodCommand,
   CreateExperimentCommand,
-  StopExperimentCommand,
+  StopExperimentCommand
 } from '../proto/experiment/command_pb';
 import { Experiment } from '../proto/experiment/experiment_pb';
 import {
@@ -26,7 +26,7 @@ import {
   ListExperimentsRequest,
   ListExperimentsResponse,
   StopExperimentRequest,
-  UpdateExperimentRequest,
+  UpdateExperimentRequest
 } from '../proto/experiment/service_pb';
 
 import { setupAuthToken } from './auth';
@@ -36,7 +36,7 @@ import { AppState } from '.';
 const MODULE_NAME = 'experiments';
 
 export const experimentsAdapter = createEntityAdapter<Experiment.AsObject>({
-  selectId: (experiment) => experiment.id,
+  selectId: (experiment) => experiment.id
 });
 
 export const { selectAll, selectById } = experimentsAdapter.getSelectors();
@@ -48,7 +48,7 @@ const initialState = experimentsAdapter.getInitialState<{
 }>({
   loading: false,
   totalCount: 0,
-  getExperimentError: null,
+  getExperimentError: null
 });
 
 export type ExperimentsState = typeof initialState;
@@ -266,5 +266,5 @@ export const experimentsSlice = createSlice({
       .addCase(createExperiment.pending, (state) => {})
       .addCase(createExperiment.fulfilled, (state, action) => {})
       .addCase(createExperiment.rejected, (state, action) => {});
-  },
+  }
 });

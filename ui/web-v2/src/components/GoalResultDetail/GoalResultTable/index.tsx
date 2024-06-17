@@ -12,51 +12,51 @@ import {
   TableBody,
   TableCell,
   TableHeader,
-  TableRow,
+  TableRow
 } from '../Table';
 
 const createHeadCells = (): Array<HeaderCell> => [
   {
     id: 'variation',
     label: intl.formatMessage(messages.experiment.result.variation.label),
-    helpText: '',
+    helpText: ''
   },
   {
     id: 'evaluation-user',
     label: intl.formatMessage(messages.experiment.result.evaluationUser.label),
     helpText: intl.formatMessage(
       messages.experiment.result.evaluationUser.helpText
-    ),
+    )
   },
   {
     id: 'goals',
     label: intl.formatMessage(messages.experiment.result.goals.label),
-    helpText: intl.formatMessage(messages.experiment.result.goals.helpText),
+    helpText: intl.formatMessage(messages.experiment.result.goals.helpText)
   },
   {
     id: 'goal-user',
     label: intl.formatMessage(messages.experiment.result.goalUser.label),
-    helpText: intl.formatMessage(messages.experiment.result.goalUser.helpText),
+    helpText: intl.formatMessage(messages.experiment.result.goalUser.helpText)
   },
   {
     id: 'conversion rate',
     label: intl.formatMessage(messages.experiment.result.conversionRate.label),
     helpText: intl.formatMessage(
       messages.experiment.result.conversionRate.helpText
-    ),
+    )
   },
   {
     id: 'value-sum',
     label: intl.formatMessage(messages.experiment.result.valueSum.label),
-    helpText: intl.formatMessage(messages.experiment.result.valueSum.helpText),
+    helpText: intl.formatMessage(messages.experiment.result.valueSum.helpText)
   },
   {
     id: 'value-per-user',
     label: intl.formatMessage(messages.experiment.result.valuePerUser.label),
     helpText: intl.formatMessage(
       messages.experiment.result.valuePerUser.helpText
-    ),
-  },
+    )
+  }
 ];
 
 interface GoalResultTableProps {
@@ -66,7 +66,7 @@ interface GoalResultTableProps {
 
 export const GoalResultTable: FC<GoalResultTableProps> = ({
   goalResult,
-  variations,
+  variations
 }) => {
   return (
     <Table>

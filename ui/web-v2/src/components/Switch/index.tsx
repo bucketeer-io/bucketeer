@@ -16,7 +16,7 @@ export const Switch: FC<SwitchProps> = ({
   enabled,
   onChange,
   size,
-  readOnly,
+  readOnly
 }) => {
   return (
     <SwitchReact
@@ -53,8 +53,8 @@ export const Switch: FC<SwitchProps> = ({
               ? 'translate-x-[2.1rem]'
               : 'translate-x-[2.73rem]'
             : size === 'small'
-            ? 'translate-x-[0.3rem]'
-            : 'translate-x-[0.39rem]',
+              ? 'translate-x-[0.3rem]'
+              : 'translate-x-[0.39rem]',
           'w-[1rem] h-[1rem]',
           size === 'small' ? 'w-[1rem] h-[1rem]' : 'w-[1.3rem] h-[1.3rem]',
           'inline-block transform bg-white rounded-full text-gray-700'

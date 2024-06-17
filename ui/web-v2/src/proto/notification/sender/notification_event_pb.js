@@ -23,9 +23,9 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_notification_sender_notification_pb = require('./notification_pb.js');
+var proto_notification_sender_notification_pb = require('../../../proto/notification/sender/notification_pb.js');
 goog.object.extend(proto, proto_notification_sender_notification_pb);
-var proto_notification_subscription_pb = require('../subscription_pb.js');
+var proto_notification_subscription_pb = require('../../../proto/notification/subscription_pb.js');
 goog.object.extend(proto, proto_notification_subscription_pb);
 goog.exportSymbol(
   'proto.bucketeer.notification.sender.NotificationEvent',
@@ -103,7 +103,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        isAdminEvent: jspb.Message.getBooleanFieldWithDefault(msg, 5, false),
+        isAdminEvent: jspb.Message.getBooleanFieldWithDefault(msg, 5, false)
       };
 
     if (includeInstance) {

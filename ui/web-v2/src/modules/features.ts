@@ -2,13 +2,13 @@ import {
   createSlice,
   createEntityAdapter,
   createAsyncThunk,
-  SerializedError,
+  SerializedError
 } from '@reduxjs/toolkit';
 import { Message } from 'google-protobuf';
 import { Any } from 'google-protobuf/google/protobuf/any_pb';
 import {
   BoolValue,
-  Int32Value,
+  Int32Value
 } from 'google-protobuf/google/protobuf/wrappers_pb';
 
 import * as featureGrpc from '../grpc/features';
@@ -23,7 +23,7 @@ import {
   DisableFeatureCommand,
   ArchiveFeatureCommand,
   UnarchiveFeatureCommand,
-  Command,
+  Command
 } from '../proto/feature/command_pb';
 import { Feature } from '../proto/feature/feature_pb';
 import {
@@ -40,7 +40,7 @@ import {
   UpdateFeatureTargetingRequest,
   UpdateFeatureVariationsRequest,
   ListTagsRequest,
-  ListTagsResponse,
+  ListTagsResponse
 } from '../proto/feature/service_pb';
 import { Variation } from '../proto/feature/variation_pb';
 
@@ -51,7 +51,7 @@ import { AppState } from '.';
 const MODULE_NAME = 'features';
 
 export const featuresAdapter = createEntityAdapter<Feature.AsObject>({
-  selectId: (feature) => feature.id,
+  selectId: (feature) => feature.id
 });
 
 export const { selectAll, selectById } = featuresAdapter.getSelectors();
@@ -222,7 +222,7 @@ const initialState = featuresAdapter.getInitialState<{
   loading: false,
   listFeaturesLoading: false,
   totalCount: 0,
-  getFeatureError: null,
+  getFeatureError: null
 });
 
 export interface UpdateFeatureDetailsParams {
@@ -252,7 +252,7 @@ export const updateFeatureDetails = createAsyncThunk<
     renameCommand,
     changeDescriptionCommand,
     addTagCommands,
-    removeTagCommands,
+    removeTagCommands
   } = params.updateDetailCommands;
   if (renameCommand) {
     request.setRenameFeatureCommand(renameCommand);
@@ -449,12 +449,12 @@ export const featuresSlice = createSlice({
       .addCase(disableFeature.pending, (state) => {})
       .addCase(disableFeature.fulfilled, (state, action) => {})
       .addCase(disableFeature.rejected, (state, action) => {});
-  },
+  }
 });
 
 export const createCommand = ({
   message,
-  name,
+  name
 }: {
   message: Message;
   name: string;

@@ -1,14 +1,14 @@
 import {
   PAGE_PATH_FEATURES,
   PAGE_PATH_ROOT,
-  PAGE_PATH_FEATURE_EXPERIMENTS,
+  PAGE_PATH_FEATURE_EXPERIMENTS
 } from '../../constants/routing';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import { selectAll as selectAllAutoOpsRules } from '../../modules/autoOpsRules';
 import {
   listExperiments,
-  selectAll as selectAllExperiment,
+  selectAll as selectAllExperiment
 } from '../../modules/experiments';
 import { useCurrentEnvironment, useIsEditable } from '../../modules/me';
 import { selectAll as selectAllProgressiveRollouts } from '../../modules/porgressiveRollout';
@@ -24,7 +24,7 @@ import {
   ExclamationCircleIcon,
   InformationCircleIcon,
   MinusCircleIcon,
-  PlusIcon,
+  PlusIcon
 } from '@heroicons/react/outline';
 import { SerializedError } from '@reduxjs/toolkit';
 import dayjs from 'dayjs';
@@ -33,7 +33,7 @@ import {
   Controller,
   useFieldArray,
   useFormContext,
-  useWatch,
+  useWatch
 } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
@@ -62,7 +62,7 @@ interface isProgressiveRolloutsWarningsExists {
 export const isProgressiveRolloutsWarningsExists = ({
   feature,
   progressiveRolloutList,
-  experiments,
+  experiments
 }: isProgressiveRolloutsWarningsExists): boolean => {
   const check =
     feature.variationsList.length !== 2 ||
@@ -90,7 +90,7 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
       variationOptions,
       isSeeDetailsSelected,
       progressiveRolloutTypeList,
-      setProgressiveRolloutTypeList,
+      setProgressiveRolloutTypeList
     }) => {
       const { formatMessage: f } = useIntl();
       const editable = useIsEditable();
@@ -107,7 +107,7 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
         [Feature.AsObject | undefined, SerializedError | null]
       >((state) => [
         selectFeatureById(state.features, featureId),
-        state.features.getFeatureError,
+        state.features.getFeatureError
       ]);
 
       const autoOpsRules = useSelector<AppState, AutoOpsRule.AsObject[]>(
@@ -141,7 +141,7 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
             environmentNamespace: currentEnvironment.id,
             searchKeyword: '',
             pageSize: 1000,
-            cursor: '',
+            cursor: ''
           })
         ).then(() => setIsLoading(false));
       }, [dispatch, featureId, currentEnvironment]);
@@ -160,7 +160,7 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
         isProgressiveRolloutsWarningsExists({
           feature,
           progressiveRolloutList,
-          experiments,
+          experiments
         })
       ) {
         return (
@@ -210,7 +210,7 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
                                     {f(messages.sourceType.experiment)}
                                   </span>
                                 </span>
-                              ),
+                              )
                             }
                           )}
                         </p>
@@ -245,7 +245,7 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
                         >
                           {f(messages.feature.documentation)}
                         </a>
-                      ),
+                      )
                     }
                   )}
                 </p>
@@ -287,7 +287,7 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
                   setProgressiveRolloutTypeList(
                     progressiveRolloutTypeList.map((p) => ({
                       ...p,
-                      selected: p.label === label,
+                      selected: p.label === label
                     }))
                   );
                 }}
@@ -346,15 +346,15 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
       control,
       formState: { errors },
       register,
-      setValue,
+      setValue
     } = methods;
     const editable = useIsEditable();
 
     const {
-      template: { schedulesList, increments, interval, datetime },
+      template: { schedulesList, increments, interval, datetime }
     } = useWatch({
       control,
-      name: 'progressiveRollout',
+      name: 'progressiveRollout'
     });
 
     useEffect(() => {
@@ -375,9 +375,9 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
 
             return {
               executeAt: {
-                time: time,
+                time: time
               },
-              weight: weight > 100 ? 100 : Math.round(weight * 100) / 100,
+              weight: weight > 100 ? 100 : Math.round(weight * 100) / 100
             };
           });
         setValue('progressiveRollout.template.schedulesList', scheduleList);
@@ -387,16 +387,16 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
     const intervalOptions = [
       {
         label: f(messages.autoOps.hourly),
-        value: '1',
+        value: '1'
       },
       {
         label: f(messages.autoOps.daily),
-        value: '2',
+        value: '2'
       },
       {
         label: f(messages.autoOps.weekly),
-        value: '3',
-      },
+        value: '3'
+      }
     ];
 
     return (
@@ -538,22 +538,22 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
     const {
       control,
       formState: { errors },
-      register,
+      register
     } = methods;
     const editable = useIsEditable();
 
     const watchManualSchedulesList = useWatch({
       control,
-      name: 'progressiveRollout.manual.schedulesList',
+      name: 'progressiveRollout.manual.schedulesList'
     });
 
     const {
       fields: manualSchedulesList,
       remove: removeTrigger,
-      append,
+      append
     } = useFieldArray({
       control,
-      name: 'progressiveRollout.manual.schedulesList',
+      name: 'progressiveRollout.manual.schedulesList'
     });
 
     const handleAddOperation = (e) => {
@@ -575,9 +575,9 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
 
       append({
         executeAt: {
-          time,
+          time
         },
-        weight,
+        weight
       });
     };
 

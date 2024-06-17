@@ -9,7 +9,7 @@ import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import {
   selectAll as selectAllProjects,
-  listProjects,
+  listProjects
 } from '../../modules/projects';
 import { Project } from '../../proto/environment/project_pb';
 import { AppDispatch } from '../../store';
@@ -27,7 +27,7 @@ export const EnvironmentAddForm: FC<EnvironmentAddFormProps> = memo(
     const {
       control,
       register,
-      formState: { errors, isValid, isSubmitted },
+      formState: { errors, isValid, isSubmitted }
     } = methods;
     const projects = useSelector<AppState, Project.AsObject[]>(
       (state) => selectAllProjects(state.projects),
@@ -40,7 +40,7 @@ export const EnvironmentAddForm: FC<EnvironmentAddFormProps> = memo(
     const projectIdOptions = projects.map((project) => {
       return {
         value: project.id,
-        label: project.id,
+        label: project.id
       };
     });
     const dispatch = useDispatch<AppDispatch>();
@@ -48,7 +48,7 @@ export const EnvironmentAddForm: FC<EnvironmentAddFormProps> = memo(
       dispatch(
         listProjects({
           pageSize: 0,
-          cursor: '',
+          cursor: ''
         })
       );
     }, [dispatch]);

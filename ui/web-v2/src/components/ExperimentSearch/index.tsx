@@ -15,7 +15,7 @@ import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
   SORT_OPTIONS_NAME_ASC,
-  SORT_OPTIONS_NAME_DESC,
+  SORT_OPTIONS_NAME_DESC
 } from '../../types/list';
 import { classNames } from '../../utils/css';
 import { FilterChip } from '../FilterChip';
@@ -27,71 +27,71 @@ import { SortItem, SortSelect } from '../SortSelect';
 const sortItems: SortItem[] = [
   {
     key: SORT_OPTIONS_CREATED_AT_DESC,
-    message: intl.formatMessage(messages.feature.sort.newest),
+    message: intl.formatMessage(messages.feature.sort.newest)
   },
   {
     key: SORT_OPTIONS_CREATED_AT_ASC,
-    message: intl.formatMessage(messages.feature.sort.oldest),
+    message: intl.formatMessage(messages.feature.sort.oldest)
   },
   {
     key: SORT_OPTIONS_NAME_ASC,
-    message: intl.formatMessage(messages.feature.sort.nameAz),
+    message: intl.formatMessage(messages.feature.sort.nameAz)
   },
   {
     key: SORT_OPTIONS_NAME_DESC,
-    message: intl.formatMessage(messages.feature.sort.nameZa),
-  },
+    message: intl.formatMessage(messages.feature.sort.nameZa)
+  }
 ];
 
 export enum FilterTypes {
   MAINTAINER = 'maintainer',
   STATUS = 'status',
-  ARCHIVED = 'archived',
+  ARCHIVED = 'archived'
 }
 
 export const filterOptions: Option[] = [
   {
     value: FilterTypes.MAINTAINER,
-    label: intl.formatMessage(messages.experiment.filter.maintainer),
+    label: intl.formatMessage(messages.experiment.filter.maintainer)
   },
   {
     value: FilterTypes.STATUS,
-    label: intl.formatMessage(messages.experiment.filter.status),
+    label: intl.formatMessage(messages.experiment.filter.status)
   },
   {
     value: FilterTypes.ARCHIVED,
-    label: intl.formatMessage(messages.experiment.filter.archived),
-  },
+    label: intl.formatMessage(messages.experiment.filter.archived)
+  }
 ];
 
 export const statusOptions: Option[] = [
   {
     value: Experiment.Status.WAITING.toString(),
-    label: intl.formatMessage(messages.experiment.status.waiting),
+    label: intl.formatMessage(messages.experiment.status.waiting)
   },
   {
     value: Experiment.Status.RUNNING.toString(),
-    label: intl.formatMessage(messages.experiment.status.running),
+    label: intl.formatMessage(messages.experiment.status.running)
   },
   {
     value: Experiment.Status.STOPPED.toString(),
-    label: intl.formatMessage(messages.experiment.status.stopped),
+    label: intl.formatMessage(messages.experiment.status.stopped)
   },
   {
     value: Experiment.Status.FORCE_STOPPED.toString(),
-    label: intl.formatMessage(messages.experiment.status.forceStopped),
-  },
+    label: intl.formatMessage(messages.experiment.status.forceStopped)
+  }
 ];
 
 const archivedOptions: Option[] = [
   {
     value: 'true',
-    label: intl.formatMessage(messages.yes),
+    label: intl.formatMessage(messages.yes)
   },
   {
     value: 'false',
-    label: intl.formatMessage(messages.no),
-  },
+    label: intl.formatMessage(messages.no)
+  }
 ];
 
 export interface ExperimentSearchProps {
@@ -128,7 +128,7 @@ export const ExperimentSearch: FC<ExperimentSearchProps> = memo(
               accounts.map((account) => {
                 return {
                   value: account.email,
-                  label: account.email,
+                  label: account.email
                 };
               })
             );
@@ -148,17 +148,17 @@ export const ExperimentSearch: FC<ExperimentSearchProps> = memo(
       switch (key) {
         case FilterTypes.STATUS:
           handleUpdateOption({
-            status: value,
+            status: value
           });
           return;
         case FilterTypes.ARCHIVED:
           handleUpdateOption({
-            archived: value,
+            archived: value
           });
           return;
         case FilterTypes.MAINTAINER:
           handleUpdateOption({
-            maintainerId: value,
+            maintainerId: value
           });
           return;
       }
@@ -178,7 +178,7 @@ export const ExperimentSearch: FC<ExperimentSearchProps> = memo(
               value={options.q}
               onChange={(query: string) =>
                 handleUpdateOption({
-                  q: query,
+                  q: query
                 })
               }
             />
@@ -198,7 +198,7 @@ export const ExperimentSearch: FC<ExperimentSearchProps> = memo(
               sortItems={sortItems}
               onChange={(sort: string) =>
                 handleUpdateOption({
-                  sort: sort,
+                  sort: sort
                 })
               }
             />
@@ -228,7 +228,7 @@ export const ExperimentSearch: FC<ExperimentSearchProps> = memo(
                 }`}
                 onRemove={() =>
                   handleUpdateOption({
-                    status: null,
+                    status: null
                   })
                 }
               />
@@ -242,7 +242,7 @@ export const ExperimentSearch: FC<ExperimentSearchProps> = memo(
                 }`}
                 onRemove={() =>
                   handleUpdateOption({
-                    archived: null,
+                    archived: null
                   })
                 }
               />
@@ -254,7 +254,7 @@ export const ExperimentSearch: FC<ExperimentSearchProps> = memo(
                 }`}
                 onRemove={() =>
                   handleUpdateOption({
-                    maintainerId: null,
+                    maintainerId: null
                   })
                 }
               />
@@ -265,7 +265,7 @@ export const ExperimentSearch: FC<ExperimentSearchProps> = memo(
                   handleUpdateOption({
                     status: null,
                     maintainerId: null,
-                    archived: null,
+                    archived: null
                   })
                 }
               />

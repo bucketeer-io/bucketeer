@@ -1,14 +1,14 @@
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
-  SORT_OPTIONS_CREATED_AT_DESC,
+  SORT_OPTIONS_CREATED_AT_DESC
 } from './list';
 
 const auditLogSortOptions = [
   SORT_OPTIONS_CREATED_AT_ASC,
-  SORT_OPTIONS_CREATED_AT_DESC,
+  SORT_OPTIONS_CREATED_AT_DESC
 ];
 
-export type AuditLogSortOption = typeof auditLogSortOptions[number];
+export type AuditLogSortOption = (typeof auditLogSortOptions)[number];
 
 export function isAuditLogSortOption(so: unknown): so is AuditLogSortOption {
   return typeof so === 'string' && auditLogSortOptions.includes(so);

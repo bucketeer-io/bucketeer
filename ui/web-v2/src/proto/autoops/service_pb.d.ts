@@ -2,10 +2,10 @@
 // file: proto/autoops/service.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_autoops_auto_ops_rule_pb from './auto_ops_rule_pb';
-import * as proto_autoops_command_pb from './command_pb';
-import * as proto_autoops_ops_count_pb from './ops_count_pb';
-import * as proto_autoops_progressive_rollout_pb from './progressive_rollout_pb';
+import * as proto_autoops_auto_ops_rule_pb from '../../proto/autoops/auto_ops_rule_pb';
+import * as proto_autoops_command_pb from '../../proto/autoops/command_pb';
+import * as proto_autoops_ops_count_pb from '../../proto/autoops/ops_count_pb';
+import * as proto_autoops_progressive_rollout_pb from '../../proto/autoops/progressive_rollout_pb';
 
 export class GetAutoOpsRuleRequest extends jspb.Message {
   getEnvironmentNamespace(): string;

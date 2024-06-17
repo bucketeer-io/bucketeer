@@ -13,7 +13,7 @@ import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import {
   getExperimentResult,
-  selectById as selectExperimentResultById,
+  selectById as selectExperimentResultById
 } from '../../modules/experimentResult';
 import { selectById as selectExperimentById } from '../../modules/experiments';
 import { useCurrentEnvironment } from '../../modules/me';
@@ -30,7 +30,7 @@ interface ExperimentResultDetailProps {
 }
 
 export const ExperimentResultDetail: FC<ExperimentResultDetailProps> = ({
-  experimentId,
+  experimentId
 }) => {
   const { formatMessage: f } = useIntl();
   const dispatch = useDispatch<AppDispatch>();
@@ -41,7 +41,7 @@ export const ExperimentResultDetail: FC<ExperimentResultDetailProps> = ({
   >(
     (state) => [
       selectExperimentById(state.experiments, experimentId),
-      state.experiments.getExperimentError,
+      state.experiments.getExperimentError
     ],
     shallowEqual
   );
@@ -51,7 +51,7 @@ export const ExperimentResultDetail: FC<ExperimentResultDetailProps> = ({
   >(
     (state) => [
       selectExperimentResultById(state.experimentResults, experimentId),
-      state.experimentResults.getExperimentResultError,
+      state.experimentResults.getExperimentResultError
     ],
     shallowEqual
   );
@@ -69,7 +69,7 @@ export const ExperimentResultDetail: FC<ExperimentResultDetailProps> = ({
   const goalOptions = experimentResult?.goalResultsList.map((gr) => {
     return {
       value: gr.goalId,
-      label: gr.goalId,
+      label: gr.goalId
     };
   });
 
@@ -78,7 +78,7 @@ export const ExperimentResultDetail: FC<ExperimentResultDetailProps> = ({
       dispatch(
         getExperimentResult({
           environmentNamespace: currentEnvironment.id,
-          experimentId: experimentId,
+          experimentId: experimentId
         })
       );
     }
@@ -117,7 +117,7 @@ export const ExperimentResultDetail: FC<ExperimentResultDetailProps> = ({
       <div className="w-[600px] text-gray-700 text-center">
         <h1 className="text-lg">
           {f(messages.noData.title, {
-            title: f(messages.experiment.result.noData.experimentResult),
+            title: f(messages.experiment.result.noData.experimentResult)
           })}
         </h1>
         <p className="mt-5">

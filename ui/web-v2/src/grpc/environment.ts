@@ -13,11 +13,11 @@ import {
   UnarchiveEnvironmentV2Request,
   UnarchiveEnvironmentV2Response,
   UpdateEnvironmentV2Request,
-  UpdateEnvironmentV2Response,
+  UpdateEnvironmentV2Response
 } from '../proto/environment/service_pb';
 import {
   EnvironmentServiceClient,
-  ServiceError,
+  ServiceError
 } from '../proto/environment/service_pb_service';
 
 import { extractErrorMessage } from './messages';
@@ -55,19 +55,23 @@ export function getEnvironment(
 ): Promise<GetEnvironmentResult> {
   return new Promise(
     (resolve: (result: GetEnvironmentResult) => void, reject): void => {
-      client.getEnvironmentV2(request, getMetaData(), (error, response): void => {
-        if (isNotNull(error) || isNull(response)) {
-          reject(
-            new EnvironmentServiceError(
-              extractErrorMessage(error),
-              request,
-              error
-            )
-          );
-        } else {
-          resolve({ request, response });
+      client.getEnvironmentV2(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new EnvironmentServiceError(
+                extractErrorMessage(error),
+                request,
+                error
+              )
+            );
+          } else {
+            resolve({ request, response });
+          }
         }
-      });
+      );
     }
   );
 }

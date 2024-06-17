@@ -7,11 +7,11 @@ import {
   GetAuthCodeURLRequest,
   GetAuthCodeURLResponse,
   RefreshTokenRequest,
-  RefreshTokenResponse,
+  RefreshTokenResponse
 } from '../proto/auth/service_pb';
 import {
   AuthServiceClient,
-  ServiceError,
+  ServiceError
 } from '../proto/auth/service_pb_service';
 
 import { extractErrorMessage } from './messages';

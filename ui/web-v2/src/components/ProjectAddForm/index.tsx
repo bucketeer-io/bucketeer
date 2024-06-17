@@ -16,7 +16,7 @@ export const ProjectAddForm: FC<ProjectAddFormProps> = memo(
     const methods = useFormContext();
     const {
       register,
-      formState: { errors, isValid, isSubmitted },
+      formState: { errors, isValid, isSubmitted }
     } = methods;
 
     return (

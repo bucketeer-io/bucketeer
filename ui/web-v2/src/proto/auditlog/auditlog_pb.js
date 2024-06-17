@@ -25,9 +25,9 @@ var global =
 
 var google_protobuf_any_pb = require('google-protobuf/google/protobuf/any_pb.js');
 goog.object.extend(proto, google_protobuf_any_pb);
-var proto_event_domain_event_pb = require('../event/domain/event_pb.js');
+var proto_event_domain_event_pb = require('../../proto/event/domain/event_pb.js');
 goog.object.extend(proto, proto_event_domain_event_pb);
-var proto_event_domain_localized_message_pb = require('../event/domain/localized_message_pb.js');
+var proto_event_domain_localized_message_pb = require('../../proto/event/domain/localized_message_pb.js');
 goog.object.extend(proto, proto_event_domain_localized_message_pb);
 goog.exportSymbol('proto.bucketeer.auditlog.AuditLog', null, global);
 /**
@@ -106,7 +106,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_event_domain_localized_message_pb.LocalizedMessage.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {

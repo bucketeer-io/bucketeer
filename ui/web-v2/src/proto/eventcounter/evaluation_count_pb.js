@@ -23,7 +23,7 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_eventcounter_variation_count_pb = require('./variation_count_pb.js');
+var proto_eventcounter_variation_count_pb = require('../../proto/eventcounter/variation_count_pb.js');
 goog.object.extend(proto, proto_eventcounter_variation_count_pb);
 goog.exportSymbol('proto.bucketeer.eventcounter.EvaluationCount', null, global);
 /**
@@ -113,7 +113,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_eventcounter_variation_count_pb.VariationCount.toObject,
           includeInstance
         ),
-        updatedAt: jspb.Message.getFieldWithDefault(msg, 6, 0),
+        updatedAt: jspb.Message.getFieldWithDefault(msg, 6, 0)
       };
 
     if (includeInstance) {

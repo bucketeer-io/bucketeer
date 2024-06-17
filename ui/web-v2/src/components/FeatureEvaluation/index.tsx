@@ -21,12 +21,12 @@ export enum TimeRange {
   TWENTY_FOUR_HOURS = 1,
   SEVEN_DAYS = 2,
   FOURTEEN_DAYS = 3,
-  LAST_THIRTY_DAYS = 4,
+  LAST_THIRTY_DAYS = 4
 }
 
 enum CountsListType {
   USER_COUNT = 'userCount',
-  Event_COUNT = 'eventCount',
+  Event_COUNT = 'eventCount'
 }
 
 export interface TimeRangeOption {
@@ -43,30 +43,30 @@ interface FeatureEvaluationProps {
 
 const countsListOptions = [
   { value: CountsListType.Event_COUNT, label: 'Event Count' },
-  { value: CountsListType.USER_COUNT, label: 'User Count' },
+  { value: CountsListType.USER_COUNT, label: 'User Count' }
 ];
 
 export const timeRangeOptions: TimeRangeOption[] = [
   {
     value: TimeRange.LAST_THIRTY_DAYS.toString(),
     label: intl.formatMessage(messages.feature.evaluation.last30Days),
-    data: 'day',
+    data: 'day'
   },
   {
     value: TimeRange.FOURTEEN_DAYS.toString(),
     label: intl.formatMessage(messages.feature.evaluation.last14Days),
-    data: 'day',
+    data: 'day'
   },
   {
     value: TimeRange.SEVEN_DAYS.toString(),
     label: intl.formatMessage(messages.feature.evaluation.last7Days),
-    data: 'day',
+    data: 'day'
   },
   {
     value: TimeRange.TWENTY_FOUR_HOURS.toString(),
     label: intl.formatMessage(messages.feature.evaluation.last24Hours),
-    data: 'hour',
-  },
+    data: 'hour'
+  }
 ];
 
 export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
@@ -79,7 +79,7 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
     >(
       (state) => [
         state.evaluationTimeseriesCount.userCountsList,
-        state.evaluationTimeseriesCount.eventCountsList,
+        state.evaluationTimeseriesCount.eventCountsList
       ],
       shallowEqual
     );
@@ -89,7 +89,7 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
     >(
       (state) => [
         selectFeatureById(state.features, featureId),
-        state.features.getFeatureError,
+        state.features.getFeatureError
       ],
       shallowEqual
     );
@@ -129,7 +129,7 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
         getEvaluationTimeseriesCount({
           featureId: featureId,
           environmentNamespace: currentEnvironment.id,
-          timeRange: o.value,
+          timeRange: o.value
         })
       );
     };
@@ -151,7 +151,7 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
             ? `${variation.substring(0, 50)}...`
             : variation,
         backgroundColor: COLORS[i % COLORS.length],
-        totalCounts: vt.timeseries.totalCounts,
+        totalCounts: vt.timeseries.totalCounts
       };
     });
 
@@ -226,7 +226,7 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
                               <div
                                 className="w-4 h-4"
                                 style={{
-                                  backgroundColor,
+                                  backgroundColor
                                 }}
                               />
                               <span className="">{variation}</span>

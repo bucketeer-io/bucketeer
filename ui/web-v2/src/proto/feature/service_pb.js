@@ -27,17 +27,17 @@ var google_api_annotations_pb = require('../../google/api/annotations_pb.js');
 goog.object.extend(proto, google_api_annotations_pb);
 var google_protobuf_wrappers_pb = require('google-protobuf/google/protobuf/wrappers_pb.js');
 goog.object.extend(proto, google_protobuf_wrappers_pb);
-var proto_feature_command_pb = require('./command_pb.js');
+var proto_feature_command_pb = require('../../proto/feature/command_pb.js');
 goog.object.extend(proto, proto_feature_command_pb);
-var proto_feature_feature_pb = require('./feature_pb.js');
+var proto_feature_feature_pb = require('../../proto/feature/feature_pb.js');
 goog.object.extend(proto, proto_feature_feature_pb);
-var proto_feature_evaluation_pb = require('./evaluation_pb.js');
+var proto_feature_evaluation_pb = require('../../proto/feature/evaluation_pb.js');
 goog.object.extend(proto, proto_feature_evaluation_pb);
-var proto_user_user_pb = require('../user/user_pb.js');
+var proto_user_user_pb = require('../../proto/user/user_pb.js');
 goog.object.extend(proto, proto_user_user_pb);
-var proto_feature_segment_pb = require('./segment_pb.js');
+var proto_feature_segment_pb = require('../../proto/feature/segment_pb.js');
 goog.object.extend(proto, proto_feature_segment_pb);
-var proto_feature_flag_trigger_pb = require('./flag_trigger_pb.js');
+var proto_feature_flag_trigger_pb = require('../../proto/feature/flag_trigger_pb.js');
 goog.object.extend(proto, proto_feature_flag_trigger_pb);
 goog.exportSymbol(
   'proto.bucketeer.feature.AddSegmentUserRequest',
@@ -2200,7 +2200,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -2366,7 +2366,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         feature:
           (f = msg.getFeature()) &&
-          proto_feature_feature_pb.Feature.toObject(includeInstance, f),
+          proto_feature_feature_pb.Feature.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -2542,7 +2542,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         idsList:
-          (f = jspb.Message.getRepeatedField(msg, 2)) == null ? undefined : f,
+          (f = jspb.Message.getRepeatedField(msg, 2)) == null ? undefined : f
       };
 
     if (includeInstance) {
@@ -2742,7 +2742,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg.getFeaturesList(),
           proto_feature_feature_pb.Feature.toObject,
           includeInstance
-        ),
+        )
       };
 
     if (includeInstance) {
@@ -2950,7 +2950,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
         hasPrerequisites:
           (f = msg.getHasPrerequisites()) &&
-          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -3170,7 +3170,7 @@ proto.bucketeer.feature.ListFeaturesRequest.OrderBy = {
   CREATED_AT: 2,
   UPDATED_AT: 3,
   TAGS: 4,
-  ENABLED: 5,
+  ENABLED: 5
 };
 
 /**
@@ -3178,7 +3178,7 @@ proto.bucketeer.feature.ListFeaturesRequest.OrderBy = {
  */
 proto.bucketeer.feature.ListFeaturesRequest.OrderDirection = {
   ASC: 0,
-  DESC: 1,
+  DESC: 1
 };
 
 /**
@@ -3575,7 +3575,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           includeInstance
         ),
         cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0)
       };
 
     if (includeInstance) {
@@ -3816,7 +3816,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
         tagsList:
           (f = jspb.Message.getRepeatedField(msg, 3)) == null ? undefined : f,
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -4067,7 +4067,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_feature_feature_pb.Feature.toObject,
           includeInstance
         ),
-        cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        cursor: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -4277,7 +4277,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -4591,7 +4591,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         environmentId: jspb.Message.getFieldWithDefault(msg, 2, ''),
         feature:
           (f = msg.getFeature()) &&
-          proto_feature_feature_pb.Feature.toObject(includeInstance, f),
+          proto_feature_feature_pb.Feature.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -4933,7 +4933,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             f
           ),
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
-        comment: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        comment: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -5306,7 +5306,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             f
           ),
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
-        comment: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        comment: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -5679,7 +5679,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             f
           ),
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
-        comment: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        comment: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -6051,7 +6051,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             f
           ),
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
-        comment: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        comment: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -6421,7 +6421,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             f
           ),
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
-        comment: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        comment: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -6816,7 +6816,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           includeInstance
         ),
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 6, ''),
-        comment: jspb.Message.getFieldWithDefault(msg, 7, ''),
+        comment: jspb.Message.getFieldWithDefault(msg, 7, '')
       };
 
     if (includeInstance) {
@@ -7383,7 +7383,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           includeInstance
         ),
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
-        comment: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        comment: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -7765,7 +7765,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         ),
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
         comment: jspb.Message.getFieldWithDefault(msg, 4, ''),
-        from: jspb.Message.getFieldWithDefault(msg, 5, 0),
+        from: jspb.Message.getFieldWithDefault(msg, 5, 0)
       };
 
     if (includeInstance) {
@@ -7896,7 +7896,7 @@ proto.bucketeer.feature.UpdateFeatureTargetingRequest.serializeBinaryToWriter =
 proto.bucketeer.feature.UpdateFeatureTargetingRequest.From = {
   UNKNOWN: 0,
   USER: 1,
-  OPS: 2,
+  OPS: 2
 };
 
 /**
@@ -8180,7 +8180,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, '')
       };
 
     if (includeInstance) {
@@ -8520,7 +8520,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -8722,7 +8722,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         segment:
           (f = msg.getSegment()) &&
-          proto_feature_segment_pb.Segment.toObject(includeInstance, f),
+          proto_feature_segment_pb.Segment.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -8890,7 +8890,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -9056,7 +9056,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         segment:
           (f = msg.getSegment()) &&
-          proto_feature_segment_pb.Segment.toObject(includeInstance, f),
+          proto_feature_segment_pb.Segment.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -9234,7 +9234,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f),
         isInUseStatus:
           (f = msg.getIsInUseStatus()) &&
-          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -9404,7 +9404,7 @@ proto.bucketeer.feature.ListSegmentsRequest.OrderBy = {
   DEFAULT: 0,
   NAME: 1,
   CREATED_AT: 2,
-  UPDATED_AT: 3,
+  UPDATED_AT: 3
 };
 
 /**
@@ -9412,7 +9412,7 @@ proto.bucketeer.feature.ListSegmentsRequest.OrderBy = {
  */
 proto.bucketeer.feature.ListSegmentsRequest.OrderDirection = {
   ASC: 0,
-  DESC: 1,
+  DESC: 1
 };
 
 /**
@@ -9665,7 +9665,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           includeInstance
         ),
         cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0)
       };
 
     if (includeInstance) {
@@ -9903,7 +9903,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, '')
       };
 
     if (includeInstance) {
@@ -10252,7 +10252,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_feature_command_pb.Command.toObject,
           includeInstance
         ),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, '')
       };
 
     if (includeInstance) {
@@ -10602,7 +10602,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, '')
       };
 
     if (includeInstance) {
@@ -10944,7 +10944,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, '')
       };
 
     if (includeInstance) {
@@ -11282,7 +11282,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         segmentId: jspb.Message.getFieldWithDefault(msg, 1, ''),
         userId: jspb.Message.getFieldWithDefault(msg, 2, ''),
         state: jspb.Message.getFieldWithDefault(msg, 3, 0),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -11512,7 +11512,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         user:
           (f = msg.getUser()) &&
-          proto_feature_segment_pb.SegmentUser.toObject(includeInstance, f),
+          proto_feature_segment_pb.SegmentUser.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -11683,7 +11683,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           (f = msg.getState()) &&
           google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f),
         userId: jspb.Message.getFieldWithDefault(msg, 5, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 6, ''),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 6, '')
       };
 
     if (includeInstance) {
@@ -12005,7 +12005,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_feature_segment_pb.SegmentUser.toObject,
           includeInstance
         ),
-        cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        cursor: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -12218,7 +12218,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_feature_command_pb.BulkUploadSegmentUsersCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -12555,7 +12555,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         segmentId: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        state: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        state: jspb.Message.getFieldWithDefault(msg, 3, 0)
       };
 
     if (includeInstance) {
@@ -12752,7 +12752,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        data: msg.getData_asB64(),
+        data: msg.getData_asB64()
       };
 
     if (includeInstance) {
@@ -12917,7 +12917,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_user_user_pb.User.toObject(includeInstance, f),
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ''),
         tag: jspb.Message.getFieldWithDefault(msg, 3, ''),
-        featureId: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        featureId: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -13170,7 +13170,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_feature_evaluation_pb.UserEvaluations.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -13346,7 +13346,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         cursor: jspb.Message.getFieldWithDefault(msg, 3, ''),
         orderBy: jspb.Message.getFieldWithDefault(msg, 4, 0),
         orderDirection: jspb.Message.getFieldWithDefault(msg, 5, 0),
-        searchKeyword: jspb.Message.getFieldWithDefault(msg, 6, ''),
+        searchKeyword: jspb.Message.getFieldWithDefault(msg, 6, '')
       };
 
     if (includeInstance) {
@@ -13484,7 +13484,7 @@ proto.bucketeer.feature.ListTagsRequest.OrderBy = {
   DEFAULT: 0,
   ID: 1,
   CREATED_AT: 2,
-  UPDATED_AT: 3,
+  UPDATED_AT: 3
 };
 
 /**
@@ -13492,7 +13492,7 @@ proto.bucketeer.feature.ListTagsRequest.OrderBy = {
  */
 proto.bucketeer.feature.ListTagsRequest.OrderDirection = {
   ASC: 0,
-  DESC: 1,
+  DESC: 1
 };
 
 /**
@@ -13661,7 +13661,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           includeInstance
         ),
         cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0)
       };
 
     if (includeInstance) {
@@ -13892,7 +13892,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_feature_command_pb.CreateFlagTriggerCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -14097,7 +14097,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        url: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        url: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -14303,7 +14303,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_feature_command_pb.DeleteFlagTriggerCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -14644,7 +14644,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -14986,7 +14986,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_feature_command_pb.EnableFlagTriggerCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -15327,7 +15327,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_feature_command_pb.DisableFlagTriggerCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -15670,7 +15670,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_feature_command_pb.ResetFlagTriggerCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -15900,7 +15900,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        url: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        url: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -16101,7 +16101,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -16273,7 +16273,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        url: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        url: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -16474,7 +16474,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         cursor: jspb.Message.getFieldWithDefault(msg, 3, ''),
         pageSize: jspb.Message.getFieldWithDefault(msg, 4, 0),
         orderBy: jspb.Message.getFieldWithDefault(msg, 5, 0),
-        orderDirection: jspb.Message.getFieldWithDefault(msg, 6, 0),
+        orderDirection: jspb.Message.getFieldWithDefault(msg, 6, 0)
       };
 
     if (includeInstance) {
@@ -16609,7 +16609,7 @@ proto.bucketeer.feature.ListFlagTriggersRequest.serializeBinaryToWriter =
 proto.bucketeer.feature.ListFlagTriggersRequest.OrderBy = {
   DEFAULT: 0,
   CREATED_AT: 1,
-  UPDATED_AT: 2,
+  UPDATED_AT: 2
 };
 
 /**
@@ -16617,7 +16617,7 @@ proto.bucketeer.feature.ListFlagTriggersRequest.OrderBy = {
  */
 proto.bucketeer.feature.ListFlagTriggersRequest.OrderDirection = {
   ASC: 0,
-  DESC: 1,
+  DESC: 1
 };
 
 /**
@@ -16789,7 +16789,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           includeInstance
         ),
         cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0)
       };
 
     if (includeInstance) {
@@ -16939,7 +16939,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
               includeInstance,
               f
             ),
-          url: jspb.Message.getFieldWithDefault(msg, 2, ''),
+          url: jspb.Message.getFieldWithDefault(msg, 2, '')
         };
 
       if (includeInstance) {
@@ -17224,7 +17224,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        token: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        token: jspb.Message.getFieldWithDefault(msg, 1, '')
       };
 
     if (includeInstance) {

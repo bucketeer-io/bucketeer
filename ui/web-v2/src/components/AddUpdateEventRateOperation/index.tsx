@@ -16,7 +16,7 @@ import React, {
   memo,
   useCallback,
   useEffect,
-  useState,
+  useState
 } from 'react';
 import { Controller, useForm, useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
@@ -26,7 +26,7 @@ import ReactSelect, { components } from 'react-select';
 import {
   createGoal,
   listGoals,
-  selectAll as selectAllGoals,
+  selectAll as selectAllGoals
 } from '../../modules/goals';
 import { operatorOptions } from '../FeatureAutoOpsRulesForm';
 import { Select, Option } from '../Select';
@@ -51,7 +51,7 @@ export const AddUpdateEventRateOperation: FC<AddUpdateEventRateOperationProps> =
     const {
       control,
       formState: { errors },
-      register,
+      register
     } = methods;
 
     const goals = useSelector<AppState, Goal.AsObject[]>(
@@ -68,7 +68,7 @@ export const AddUpdateEventRateOperation: FC<AddUpdateEventRateOperationProps> =
           searchKeyword: '',
           status: null,
           orderBy: ListGoalsRequest.OrderBy.NAME,
-          orderDirection: ListGoalsRequest.OrderDirection.ASC,
+          orderDirection: ListGoalsRequest.OrderDirection.ASC
         })
       );
     }, [dispatch, featureId, currentEnvironment]);
@@ -76,7 +76,7 @@ export const AddUpdateEventRateOperation: FC<AddUpdateEventRateOperationProps> =
     const goalOptions = goals.map((goal) => {
       return {
         value: goal.id,
-        label: goal.id,
+        label: goal.id
       };
     });
 
@@ -227,7 +227,7 @@ const AddGoalSelect: FC<AddGoalSelectProps> = memo(
     options,
     value,
     placeholder,
-    openAddGoalModal,
+    openAddGoalModal
   }) => {
     const textColor = '#3F3F46';
     const textColorDisabled = '#6B7280';
@@ -243,14 +243,14 @@ const AddGoalSelect: FC<AddGoalSelectProps> = memo(
         backgroundColor: isDisabled ? backgroundColorDisabled : backgroundColor,
         borderColor: borderColor,
         '&:hover': {
-          borderColor: borderColor,
+          borderColor: borderColor
         },
         fontSize: fontSize,
         lineHeight: lineHeight,
         minHeight: minHeight,
         '*': {
-          boxShadow: 'none !important',
-        },
+          boxShadow: 'none !important'
+        }
       }),
       option: (styles, { isFocused, isSelected }) => {
         return {
@@ -258,31 +258,31 @@ const AddGoalSelect: FC<AddGoalSelectProps> = memo(
           backgroundColor: isFocused
             ? backgroundColorDisabled
             : isSelected
-            ? backgroundColor
-            : null,
+              ? backgroundColor
+              : null,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
           color: textColor,
           ':active': {
-            backgroundColor: backgroundColor,
-          },
+            backgroundColor: backgroundColor
+          }
         };
       },
       menu: (base) => ({
         ...base,
         fontSize: fontSize,
         lineHeight: lineHeight,
-        color: textColor,
+        color: textColor
       }),
       multiValueLabel: (base, { isDisabled }) => ({
         ...base,
-        color: isDisabled ? textColorDisabled : textColor,
+        color: isDisabled ? textColorDisabled : textColor
       }),
       singleValue: (base, { isDisabled }) => ({
         ...base,
-        color: isDisabled ? textColorDisabled : textColor,
-      }),
+        color: isDisabled ? textColorDisabled : textColor
+      })
     };
     return (
       <ReactSelect
@@ -293,7 +293,7 @@ const AddGoalSelect: FC<AddGoalSelectProps> = memo(
         components={{
           Option: (props) => (
             <CustomOption {...props} openAddGoalModal={openAddGoalModal} />
-          ),
+          )
         }}
         isDisabled={isLoading || disabled}
         isClearable={clearable}
@@ -353,15 +353,15 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
     register,
     handleSubmit,
     formState: { errors, isValid, isSubmitting },
-    reset: resetAdd,
+    reset: resetAdd
   } = useForm({
     resolver: yupResolver(addFormSchema),
     defaultValues: {
       id: '',
       name: '',
-      description: '',
+      description: ''
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
 
   const handleCreateGoal = useCallback(
@@ -371,7 +371,7 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
           environmentNamespace: currentEnvironment.id,
           id: data.id,
           name: data.name,
-          description: data.description,
+          description: data.description
         })
       ).then(() => {
         setOpen(false);
@@ -384,7 +384,7 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
             searchKeyword: '',
             status: null,
             orderBy: ListGoalsRequest.OrderBy.NAME,
-            orderDirection: ListGoalsRequest.OrderDirection.ASC,
+            orderDirection: ListGoalsRequest.OrderDirection.ASC
           })
         );
         setValue('eventRate.goal', data.id);

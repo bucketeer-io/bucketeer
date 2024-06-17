@@ -3,7 +3,7 @@ import * as yup from 'yup';
 
 import {
   PROJECT_NAME_MAX_LENGTH,
-  PROJECT_URL_CODE_MAX_LENGTH,
+  PROJECT_URL_CODE_MAX_LENGTH
 } from '../../../constants/project';
 import { intl } from '../../../lang';
 import { messages } from '../../../lang/messages';
@@ -23,7 +23,7 @@ const urlCodeSchema = yup
   .test(
     'maxLength',
     intl.formatMessage(messages.input.error.maxLength, {
-      max: `${PROJECT_URL_CODE_MAX_LENGTH}`,
+      max: `${PROJECT_URL_CODE_MAX_LENGTH}`
     }),
     function (value) {
       return value.length <= PROJECT_URL_CODE_MAX_LENGTH;
@@ -32,9 +32,9 @@ const urlCodeSchema = yup
 
 export const addFormSchema = yup.object().shape({
   name: nameSchema,
-  urlCode: urlCodeSchema,
+  urlCode: urlCodeSchema
 });
 
 export const updateFormSchema = yup.object().shape({
-  name: nameSchema,
+  name: nameSchema
 });

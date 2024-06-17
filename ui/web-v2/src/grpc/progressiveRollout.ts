@@ -9,11 +9,11 @@ import {
   ListProgressiveRolloutsRequest,
   ListProgressiveRolloutsResponse,
   StopProgressiveRolloutRequest,
-  StopProgressiveRolloutResponse,
+  StopProgressiveRolloutResponse
 } from '../proto/autoops/service_pb';
 import {
   AutoOpsServiceClient,
-  ServiceError,
+  ServiceError
 } from '../proto/autoops/service_pb_service';
 
 import { extractErrorMessage } from './messages';

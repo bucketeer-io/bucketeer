@@ -1,7 +1,7 @@
 // package: bucketeer.experiment
 // file: proto/experiment/service.proto
 
-var proto_experiment_service_pb = require('./service_pb');
+var proto_experiment_service_pb = require('../../proto/experiment/service_pb');
 var grpc = require('@improbable-eng/grpc-web').grpc;
 
 var ExperimentService = (function () {
@@ -16,7 +16,7 @@ ExperimentService.GetGoal = {
   requestStream: false,
   responseStream: false,
   requestType: proto_experiment_service_pb.GetGoalRequest,
-  responseType: proto_experiment_service_pb.GetGoalResponse,
+  responseType: proto_experiment_service_pb.GetGoalResponse
 };
 
 ExperimentService.ListGoals = {
@@ -25,7 +25,7 @@ ExperimentService.ListGoals = {
   requestStream: false,
   responseStream: false,
   requestType: proto_experiment_service_pb.ListGoalsRequest,
-  responseType: proto_experiment_service_pb.ListGoalsResponse,
+  responseType: proto_experiment_service_pb.ListGoalsResponse
 };
 
 ExperimentService.CreateGoal = {
@@ -34,7 +34,7 @@ ExperimentService.CreateGoal = {
   requestStream: false,
   responseStream: false,
   requestType: proto_experiment_service_pb.CreateGoalRequest,
-  responseType: proto_experiment_service_pb.CreateGoalResponse,
+  responseType: proto_experiment_service_pb.CreateGoalResponse
 };
 
 ExperimentService.UpdateGoal = {
@@ -43,7 +43,7 @@ ExperimentService.UpdateGoal = {
   requestStream: false,
   responseStream: false,
   requestType: proto_experiment_service_pb.UpdateGoalRequest,
-  responseType: proto_experiment_service_pb.UpdateGoalResponse,
+  responseType: proto_experiment_service_pb.UpdateGoalResponse
 };
 
 ExperimentService.ArchiveGoal = {
@@ -52,7 +52,7 @@ ExperimentService.ArchiveGoal = {
   requestStream: false,
   responseStream: false,
   requestType: proto_experiment_service_pb.ArchiveGoalRequest,
-  responseType: proto_experiment_service_pb.ArchiveGoalResponse,
+  responseType: proto_experiment_service_pb.ArchiveGoalResponse
 };
 
 ExperimentService.DeleteGoal = {
@@ -61,7 +61,7 @@ ExperimentService.DeleteGoal = {
   requestStream: false,
   responseStream: false,
   requestType: proto_experiment_service_pb.DeleteGoalRequest,
-  responseType: proto_experiment_service_pb.DeleteGoalResponse,
+  responseType: proto_experiment_service_pb.DeleteGoalResponse
 };
 
 ExperimentService.GetExperiment = {
@@ -70,7 +70,7 @@ ExperimentService.GetExperiment = {
   requestStream: false,
   responseStream: false,
   requestType: proto_experiment_service_pb.GetExperimentRequest,
-  responseType: proto_experiment_service_pb.GetExperimentResponse,
+  responseType: proto_experiment_service_pb.GetExperimentResponse
 };
 
 ExperimentService.ListExperiments = {
@@ -79,7 +79,7 @@ ExperimentService.ListExperiments = {
   requestStream: false,
   responseStream: false,
   requestType: proto_experiment_service_pb.ListExperimentsRequest,
-  responseType: proto_experiment_service_pb.ListExperimentsResponse,
+  responseType: proto_experiment_service_pb.ListExperimentsResponse
 };
 
 ExperimentService.CreateExperiment = {
@@ -88,7 +88,7 @@ ExperimentService.CreateExperiment = {
   requestStream: false,
   responseStream: false,
   requestType: proto_experiment_service_pb.CreateExperimentRequest,
-  responseType: proto_experiment_service_pb.CreateExperimentResponse,
+  responseType: proto_experiment_service_pb.CreateExperimentResponse
 };
 
 ExperimentService.UpdateExperiment = {
@@ -97,7 +97,7 @@ ExperimentService.UpdateExperiment = {
   requestStream: false,
   responseStream: false,
   requestType: proto_experiment_service_pb.UpdateExperimentRequest,
-  responseType: proto_experiment_service_pb.UpdateExperimentResponse,
+  responseType: proto_experiment_service_pb.UpdateExperimentResponse
 };
 
 ExperimentService.StartExperiment = {
@@ -106,7 +106,7 @@ ExperimentService.StartExperiment = {
   requestStream: false,
   responseStream: false,
   requestType: proto_experiment_service_pb.StartExperimentRequest,
-  responseType: proto_experiment_service_pb.StartExperimentResponse,
+  responseType: proto_experiment_service_pb.StartExperimentResponse
 };
 
 ExperimentService.FinishExperiment = {
@@ -115,7 +115,7 @@ ExperimentService.FinishExperiment = {
   requestStream: false,
   responseStream: false,
   requestType: proto_experiment_service_pb.FinishExperimentRequest,
-  responseType: proto_experiment_service_pb.FinishExperimentResponse,
+  responseType: proto_experiment_service_pb.FinishExperimentResponse
 };
 
 ExperimentService.StopExperiment = {
@@ -124,7 +124,7 @@ ExperimentService.StopExperiment = {
   requestStream: false,
   responseStream: false,
   requestType: proto_experiment_service_pb.StopExperimentRequest,
-  responseType: proto_experiment_service_pb.StopExperimentResponse,
+  responseType: proto_experiment_service_pb.StopExperimentResponse
 };
 
 ExperimentService.ArchiveExperiment = {
@@ -133,7 +133,7 @@ ExperimentService.ArchiveExperiment = {
   requestStream: false,
   responseStream: false,
   requestType: proto_experiment_service_pb.ArchiveExperimentRequest,
-  responseType: proto_experiment_service_pb.ArchiveExperimentResponse,
+  responseType: proto_experiment_service_pb.ArchiveExperimentResponse
 };
 
 ExperimentService.DeleteExperiment = {
@@ -142,7 +142,7 @@ ExperimentService.DeleteExperiment = {
   requestStream: false,
   responseStream: false,
   requestType: proto_experiment_service_pb.DeleteExperimentRequest,
-  responseType: proto_experiment_service_pb.DeleteExperimentResponse,
+  responseType: proto_experiment_service_pb.DeleteExperimentResponse
 };
 
 exports.ExperimentService = ExperimentService;
@@ -177,13 +177,13 @@ ExperimentServiceClient.prototype.getGoal = function getGoal(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -212,13 +212,13 @@ ExperimentServiceClient.prototype.listGoals = function listGoals(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -247,13 +247,13 @@ ExperimentServiceClient.prototype.createGoal = function createGoal(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -282,13 +282,13 @@ ExperimentServiceClient.prototype.updateGoal = function updateGoal(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -317,13 +317,13 @@ ExperimentServiceClient.prototype.archiveGoal = function archiveGoal(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -352,13 +352,13 @@ ExperimentServiceClient.prototype.deleteGoal = function deleteGoal(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -387,13 +387,13 @@ ExperimentServiceClient.prototype.getExperiment = function getExperiment(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -422,13 +422,13 @@ ExperimentServiceClient.prototype.listExperiments = function listExperiments(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -457,13 +457,13 @@ ExperimentServiceClient.prototype.createExperiment = function createExperiment(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -492,13 +492,13 @@ ExperimentServiceClient.prototype.updateExperiment = function updateExperiment(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -527,13 +527,13 @@ ExperimentServiceClient.prototype.startExperiment = function startExperiment(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -562,13 +562,13 @@ ExperimentServiceClient.prototype.finishExperiment = function finishExperiment(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -597,13 +597,13 @@ ExperimentServiceClient.prototype.stopExperiment = function stopExperiment(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -629,13 +629,13 @@ ExperimentServiceClient.prototype.archiveExperiment =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -664,13 +664,13 @@ ExperimentServiceClient.prototype.deleteExperiment = function deleteExperiment(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 

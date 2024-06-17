@@ -1,6 +1,6 @@
 export enum LanguageTypes {
   JAPANESE = 'ja',
-  ENGLISH = 'en',
+  ENGLISH = 'en'
 }
 
 export const getSelectedLanguage = () => {

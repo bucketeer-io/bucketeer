@@ -33,14 +33,14 @@ export const SelectFeatureFlag: FC<SelectFeatureFlagProps> = memo(
         backgroundColor: isDisabled ? backgroundColorDisabled : backgroundColor,
         borderColor: borderColor,
         '&:hover': {
-          borderColor: borderColor,
+          borderColor: borderColor
         },
         fontSize: fontSize,
         lineHeight: lineHeight,
         minHeight: minHeight,
         '*': {
-          boxShadow: 'none !important',
-        },
+          boxShadow: 'none !important'
+        }
       }),
       option: (styles, { isFocused, isSelected }) => {
         return {
@@ -48,29 +48,29 @@ export const SelectFeatureFlag: FC<SelectFeatureFlagProps> = memo(
           backgroundColor: isFocused
             ? backgroundColorDisabled
             : isSelected
-            ? backgroundColor
-            : null,
+              ? backgroundColor
+              : null,
           color: textColor,
           ':active': {
-            backgroundColor: backgroundColor,
-          },
+            backgroundColor: backgroundColor
+          }
         };
       },
       menu: (base) => ({
         ...base,
         fontSize: fontSize,
         lineHeight: lineHeight,
-        color: textColor,
+        color: textColor
       }),
       multiValueLabel: (base, { isDisabled }) => ({
         ...base,
-        color: isDisabled ? textColorDisabled : textColor,
+        color: isDisabled ? textColorDisabled : textColor
       }),
       singleValue: (base, { isDisabled }) => ({
         ...base,
         color: isDisabled ? textColorDisabled : textColor,
-        width: '100%',
-      }),
+        width: '100%'
+      })
     };
 
     const formatOptionLabel = ({ label, enabled, ...rest }) => {

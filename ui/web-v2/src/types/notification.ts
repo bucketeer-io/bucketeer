@@ -2,17 +2,17 @@ import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
   SORT_OPTIONS_NAME_ASC,
-  SORT_OPTIONS_NAME_DESC,
+  SORT_OPTIONS_NAME_DESC
 } from './list';
 
 const notificationSortOptions = [
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
   SORT_OPTIONS_NAME_ASC,
-  SORT_OPTIONS_NAME_DESC,
+  SORT_OPTIONS_NAME_DESC
 ];
 
-export type NotificationSortOption = typeof notificationSortOptions[number];
+export type NotificationSortOption = (typeof notificationSortOptions)[number];
 
 export function isNotificationSortOption(
   so: unknown

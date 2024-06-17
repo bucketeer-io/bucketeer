@@ -37,7 +37,7 @@ export const APIKeyList: FC<APIKeyListProps> = memo(
     onSwitchEnabled,
     onChangeSearchOptions,
     onAdd,
-    onUpdate,
+    onUpdate
   }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsOwner();
@@ -72,14 +72,14 @@ export const APIKeyList: FC<APIKeyListProps> = memo(
               <div className="text-gray-700">
                 <h1 className="text-lg">
                   {f(messages.noResult.title, {
-                    title: f(messages.apiKey.list.header.title),
+                    title: f(messages.apiKey.list.header.title)
                   })}
                 </h1>
                 <div className="flex justify-center mt-4">
                   <ul className="list-disc">
                     <li>
                       {f(messages.noResult.searchByKeyword, {
-                        keyword: f(messages.apiKey.list.noResult.searchKeyword),
+                        keyword: f(messages.apiKey.list.noResult.searchKeyword)
                       })}
                     </li>
                     <li>{f(messages.noResult.changeFilterSelection)}</li>
@@ -93,7 +93,7 @@ export const APIKeyList: FC<APIKeyListProps> = memo(
               <div className="w-[600px] text-gray-700 text-center">
                 <h1 className="text-lg">
                   {f(messages.noData.title, {
-                    title: f(messages.apiKey.list.header.title),
+                    title: f(messages.apiKey.list.header.title)
                   })}
                 </h1>
                 <p className="mt-5">

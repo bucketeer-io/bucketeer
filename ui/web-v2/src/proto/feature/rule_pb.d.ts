@@ -2,8 +2,8 @@
 // file: proto/feature/rule.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_feature_clause_pb from './clause_pb';
-import * as proto_feature_strategy_pb from './strategy_pb';
+import * as proto_feature_clause_pb from '../../proto/feature/clause_pb';
+import * as proto_feature_strategy_pb from '../../proto/feature/strategy_pb';
 
 export class Rule extends jspb.Message {
   getId(): string;

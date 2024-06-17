@@ -12,7 +12,7 @@ import React, { FC, Fragment, memo, useEffect, useRef, useState } from 'react';
 import {
   DateRangePicker,
   defaultStaticRanges,
-  createStaticRanges,
+  createStaticRanges
 } from 'react-date-range';
 import { FormattedDate, useIntl } from 'react-intl';
 
@@ -25,7 +25,7 @@ const defaultEnRangesLabels = [
   'This week',
   'Last week',
   'This month',
-  'Last month',
+  'Last month'
 ];
 
 const defaultJaRangesLabels = ['今日', '昨日', '今週', '先週', '今月', '先月'];
@@ -33,13 +33,13 @@ const defaultJaRangesLabels = ['今日', '昨日', '今週', '先週', '今月',
 const extraEnRangesLabels = [
   { label: 'Last 3 months', month: 3 },
   { label: 'Last 6 months', month: 6 },
-  { label: 'Last 12 months', month: 12 },
+  { label: 'Last 12 months', month: 12 }
 ];
 
 const extraJaRangesLabels = [
   { label: '過去3ヶ月', month: 3 },
   { label: '過去6ヶ月', month: 6 },
-  { label: '過去12ヶ月', month: 12 },
+  { label: '過去12ヶ月', month: 12 }
 ];
 
 export interface DateRangePopoverProps {
@@ -56,8 +56,8 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
       {
         startDate: new Date(),
         endDate: new Date(),
-        key: 'selection',
-      },
+        key: 'selection'
+      }
     ]);
     const [isDateSelected, setIsDateSelected] = useState(false);
 
@@ -68,8 +68,8 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
           {
             ...ranges[0],
             startDate: new Date(options.from * 1000),
-            endDate: new Date(options.to * 1000),
-          },
+            endDate: new Date(options.to * 1000)
+          }
         ]);
       } else if (isDateSelected === true) {
         setIsDateSelected(false);
@@ -118,8 +118,8 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
         {
           startDate: new Date(),
           endDate: new Date(),
-          key: 'selection',
-        },
+          key: 'selection'
+        }
       ]);
       onChange(null, null);
     };
@@ -145,7 +145,7 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
 
     staticRanges = defaultStaticRanges.map((range, rangeIdx) => ({
       ...range,
-      label: labels[rangeIdx],
+      label: labels[rangeIdx]
     }));
 
     staticRanges = [
@@ -155,10 +155,10 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
           label,
           range: () => ({
             startDate: dayjs().subtract(month, 'month').toDate(),
-            endDate: new Date(),
-          }),
+            endDate: new Date()
+          })
         }))
-      ),
+      )
     ];
 
     return (

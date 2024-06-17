@@ -23,11 +23,11 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_environment_environment_pb = require('../environment/environment_pb.js');
+var proto_environment_environment_pb = require('../../proto/environment/environment_pb.js');
 goog.object.extend(proto, proto_environment_environment_pb);
-var proto_environment_project_pb = require('../environment/project_pb.js');
+var proto_environment_project_pb = require('../../proto/environment/project_pb.js');
 goog.object.extend(proto, proto_environment_project_pb);
-var proto_environment_organization_pb = require('../environment/organization_pb.js');
+var proto_environment_organization_pb = require('../../proto/environment/organization_pb.js');
 goog.object.extend(proto, proto_environment_organization_pb);
 goog.exportSymbol('proto.bucketeer.account.Account', null, global);
 goog.exportSymbol('proto.bucketeer.account.Account.Role', null, global);
@@ -242,7 +242,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         disabled: jspb.Message.getBooleanFieldWithDefault(msg, 5, false),
         createdAt: jspb.Message.getFieldWithDefault(msg, 6, 0),
         updatedAt: jspb.Message.getFieldWithDefault(msg, 7, 0),
-        deleted: jspb.Message.getBooleanFieldWithDefault(msg, 8, false),
+        deleted: jspb.Message.getBooleanFieldWithDefault(msg, 8, false)
       };
 
     if (includeInstance) {
@@ -388,7 +388,7 @@ proto.bucketeer.account.Account.Role = {
   VIEWER: 0,
   EDITOR: 1,
   OWNER: 2,
-  UNASSIGNED: 99,
+  UNASSIGNED: 99
 };
 
 /**
@@ -578,7 +578,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         ),
         disabled: jspb.Message.getBooleanFieldWithDefault(msg, 7, false),
         createdAt: jspb.Message.getFieldWithDefault(msg, 8, 0),
-        updatedAt: jspb.Message.getFieldWithDefault(msg, 9, 0),
+        updatedAt: jspb.Message.getFieldWithDefault(msg, 9, 0)
       };
 
     if (includeInstance) {
@@ -849,7 +849,7 @@ proto.bucketeer.account.AccountV2.Role.serializeBinaryToWriter = function (
 proto.bucketeer.account.AccountV2.Role.Environment = {
   ENVIRONMENT_UNASSIGNED: 0,
   ENVIRONMENT_VIEWER: 1,
-  ENVIRONMENT_EDITOR: 2,
+  ENVIRONMENT_EDITOR: 2
 };
 
 /**
@@ -859,7 +859,7 @@ proto.bucketeer.account.AccountV2.Role.Organization = {
   ORGANIZATION_UNASSIGNED: 0,
   ORGANIZATION_MEMBER: 1,
   ORGANIZATION_ADMIN: 2,
-  ORGANIZATION_OWNER: 3,
+  ORGANIZATION_OWNER: 3
 };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -899,7 +899,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         environmentId: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        role: jspb.Message.getFieldWithDefault(msg, 2, 0),
+        role: jspb.Message.getFieldWithDefault(msg, 2, 0)
       };
 
     if (includeInstance) {
@@ -1283,7 +1283,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg.getEnvironmentRolesList(),
           proto.bucketeer.account.ConsoleAccount.EnvironmentRole.toObject,
           includeInstance
-        ),
+        )
       };
 
     if (includeInstance) {
@@ -1480,7 +1480,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         project:
           (f = msg.getProject()) &&
           proto_environment_project_pb.Project.toObject(includeInstance, f),
-        role: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        role: jspb.Message.getFieldWithDefault(msg, 3, 0)
       };
 
     if (includeInstance) {

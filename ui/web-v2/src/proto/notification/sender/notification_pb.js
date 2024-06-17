@@ -23,11 +23,11 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_event_domain_event_pb = require('../../event/domain/event_pb.js');
+var proto_event_domain_event_pb = require('../../../proto/event/domain/event_pb.js');
 goog.object.extend(proto, proto_event_domain_event_pb);
-var proto_feature_feature_pb = require('../../feature/feature_pb.js');
+var proto_feature_feature_pb = require('../../../proto/feature/feature_pb.js');
 goog.object.extend(proto, proto_feature_feature_pb);
-var proto_experiment_experiment_pb = require('../../experiment/experiment_pb.js');
+var proto_experiment_experiment_pb = require('../../../proto/experiment/experiment_pb.js');
 goog.object.extend(proto, proto_experiment_experiment_pb);
 goog.exportSymbol(
   'proto.bucketeer.notification.sender.DomainEventNotification',
@@ -264,7 +264,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto.bucketeer.notification.sender.MauCountNotification.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -433,7 +433,7 @@ proto.bucketeer.notification.sender.Notification.Type = {
   DOMAINEVENT: 0,
   FEATURESTALE: 1,
   EXPERIMENTRUNNING: 2,
-  MAUCOUNT: 3,
+  MAUCOUNT: 3
 };
 
 /**
@@ -666,7 +666,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           entityId: jspb.Message.getFieldWithDefault(msg, 4, ''),
           type: jspb.Message.getFieldWithDefault(msg, 5, 0),
           environmentName: jspb.Message.getFieldWithDefault(msg, 7, ''),
-          environmentUrlCode: jspb.Message.getFieldWithDefault(msg, 8, ''),
+          environmentUrlCode: jspb.Message.getFieldWithDefault(msg, 8, '')
         };
 
       if (includeInstance) {
@@ -945,7 +945,7 @@ proto.bucketeer.notification.sender.DomainEventNotification.prototype.setEnviron
  * @const
  */
 proto.bucketeer.notification.sender.FeatureStaleNotification.repeatedFields_ = [
-  2,
+  2
 ];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -988,7 +988,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance
           ),
           environmentName: jspb.Message.getFieldWithDefault(msg, 4, ''),
-          environmentUrlCode: jspb.Message.getFieldWithDefault(msg, 5, ''),
+          environmentUrlCode: jspb.Message.getFieldWithDefault(msg, 5, '')
         };
 
       if (includeInstance) {
@@ -1232,7 +1232,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance
           ),
           environmentName: jspb.Message.getFieldWithDefault(msg, 4, ''),
-          environmentUrlCode: jspb.Message.getFieldWithDefault(msg, 5, ''),
+          environmentUrlCode: jspb.Message.getFieldWithDefault(msg, 5, '')
         };
 
       if (includeInstance) {
@@ -1469,7 +1469,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         userCount: jspb.Message.getFieldWithDefault(msg, 3, 0),
         month: jspb.Message.getFieldWithDefault(msg, 4, 0),
         environmentName: jspb.Message.getFieldWithDefault(msg, 5, ''),
-        environmentUrlCode: jspb.Message.getFieldWithDefault(msg, 6, ''),
+        environmentUrlCode: jspb.Message.getFieldWithDefault(msg, 6, '')
       };
 
     if (includeInstance) {

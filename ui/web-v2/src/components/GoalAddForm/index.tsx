@@ -16,7 +16,7 @@ export const GoalAddForm: FC<GoalAddFormProps> = memo(
     const methods = useFormContext();
     const {
       register,
-      formState: { errors, isSubmitting, isValid },
+      formState: { errors, isSubmitting, isValid }
     } = methods;
 
     return (

@@ -15,18 +15,18 @@ export interface SegmentAddFormProps {
 
 export enum UserIdListTypes {
   BROWSE = 'browse',
-  USER_IDS = 'userIds',
+  USER_IDS = 'userIds'
 }
 
 export const userIdListTypes = [
   {
     id: UserIdListTypes.BROWSE,
-    title: 'Browse files',
+    title: 'Browse files'
   },
   {
     id: UserIdListTypes.USER_IDS,
-    title: 'Enter user IDs',
-  },
+    title: 'Enter user IDs'
+  }
 ];
 
 export const SegmentAddForm: FC<SegmentAddFormProps> = memo(
@@ -40,7 +40,7 @@ export const SegmentAddForm: FC<SegmentAddFormProps> = memo(
     const {
       register,
       trigger,
-      formState: { errors, isSubmitted, isValid },
+      formState: { errors, isSubmitted, isValid }
     } = methods;
 
     const onFileInput = (e: ChangeEvent<HTMLInputElement>): void => {
@@ -224,8 +224,7 @@ export const SegmentAddForm: FC<SegmentAddFormProps> = memo(
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   {f(messages.segment.fileUpload.fileSize, {
-                                    fileSize:
-                                      selectedFile.size.toLocaleString(),
+                                    fileSize: selectedFile.size.toLocaleString()
                                   })}
                                 </p>
                               </div>

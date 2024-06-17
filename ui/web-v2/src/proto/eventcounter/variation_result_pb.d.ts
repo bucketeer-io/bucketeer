@@ -2,9 +2,9 @@
 // file: proto/eventcounter/variation_result.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_eventcounter_variation_count_pb from './variation_count_pb';
-import * as proto_eventcounter_distribution_summary_pb from './distribution_summary_pb';
-import * as proto_eventcounter_timeseries_pb from './timeseries_pb';
+import * as proto_eventcounter_variation_count_pb from '../../proto/eventcounter/variation_count_pb';
+import * as proto_eventcounter_distribution_summary_pb from '../../proto/eventcounter/distribution_summary_pb';
+import * as proto_eventcounter_timeseries_pb from '../../proto/eventcounter/timeseries_pb';
 
 export class VariationResult extends jspb.Message {
   getVariationId(): string;

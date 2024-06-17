@@ -23,17 +23,17 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_feature_rule_pb = require('./rule_pb.js');
+var proto_feature_rule_pb = require('../../proto/feature/rule_pb.js');
 goog.object.extend(proto, proto_feature_rule_pb);
-var proto_feature_target_pb = require('./target_pb.js');
+var proto_feature_target_pb = require('../../proto/feature/target_pb.js');
 goog.object.extend(proto, proto_feature_target_pb);
-var proto_feature_variation_pb = require('./variation_pb.js');
+var proto_feature_variation_pb = require('../../proto/feature/variation_pb.js');
 goog.object.extend(proto, proto_feature_variation_pb);
-var proto_feature_strategy_pb = require('./strategy_pb.js');
+var proto_feature_strategy_pb = require('../../proto/feature/strategy_pb.js');
 goog.object.extend(proto, proto_feature_strategy_pb);
-var proto_feature_feature_last_used_info_pb = require('./feature_last_used_info_pb.js');
+var proto_feature_feature_last_used_info_pb = require('../../proto/feature/feature_last_used_info_pb.js');
 goog.object.extend(proto, proto_feature_feature_last_used_info_pb);
-var proto_feature_prerequisite_pb = require('./prerequisite_pb.js');
+var proto_feature_prerequisite_pb = require('../../proto/feature/prerequisite_pb.js');
 goog.object.extend(proto, proto_feature_prerequisite_pb);
 goog.exportSymbol('proto.bucketeer.feature.Feature', null, global);
 goog.exportSymbol(
@@ -210,7 +210,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_feature_prerequisite_pb.Prerequisite.toObject,
           includeInstance
         ),
-        samplingSeed: jspb.Message.getFieldWithDefault(msg, 22, ''),
+        samplingSeed: jspb.Message.getFieldWithDefault(msg, 22, '')
       };
 
     if (includeInstance) {
@@ -520,7 +520,7 @@ proto.bucketeer.feature.Feature.VariationType = {
   STRING: 0,
   BOOLEAN: 1,
   NUMBER: 2,
-  JSON: 3,
+  JSON: 3
 };
 
 /**
@@ -1121,7 +1121,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto.bucketeer.feature.Feature.toObject,
           includeInstance
         ),
-        id: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        id: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -1315,7 +1315,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
         createdAt: jspb.Message.getFieldWithDefault(msg, 2, 0),
-        updatedAt: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        updatedAt: jspb.Message.getFieldWithDefault(msg, 3, 0)
       };
 
     if (includeInstance) {

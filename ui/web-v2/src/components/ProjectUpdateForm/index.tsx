@@ -17,7 +17,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = memo(
     const {
       register,
       getValues,
-      formState: { errors, isValid, isDirty, isSubmitted },
+      formState: { errors, isValid, isDirty, isSubmitted }
     } = methods;
 
     return (

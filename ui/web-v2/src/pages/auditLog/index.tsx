@@ -13,7 +13,7 @@ import { AppState } from '../../modules';
 import {
   listAuditLogs,
   OrderBy,
-  OrderDirection,
+  OrderDirection
 } from '../../modules/auditLogs';
 import { useCurrentEnvironment } from '../../modules/me';
 import { ListAuditLogsRequest } from '../../proto/auditlog/service_pb';
@@ -23,50 +23,50 @@ import { AuditLogSortOption, isAuditLogSortOption } from '../../types/auditLog';
 import { SORT_OPTIONS_CREATED_AT_ASC } from '../../types/list';
 import {
   useSearchParams,
-  stringifySearchParams,
+  stringifySearchParams
 } from '../../utils/search-params';
 
 const entityTypeOptions: Option[] = [
   {
     value: Event.EntityType.FEATURE.toString(),
-    label: intl.formatMessage(messages.sourceType.featureFlag),
+    label: intl.formatMessage(messages.sourceType.featureFlag)
   },
   {
     value: Event.EntityType.GOAL.toString(),
-    label: intl.formatMessage(messages.sourceType.goal),
+    label: intl.formatMessage(messages.sourceType.goal)
   },
   {
     value: Event.EntityType.EXPERIMENT.toString(),
-    label: intl.formatMessage(messages.sourceType.experiment),
+    label: intl.formatMessage(messages.sourceType.experiment)
   },
   {
     value: Event.EntityType.SEGMENT.toString(),
-    label: intl.formatMessage(messages.sourceType.segment),
+    label: intl.formatMessage(messages.sourceType.segment)
   },
   {
     value: Event.EntityType.ACCOUNT.toString(),
-    label: intl.formatMessage(messages.sourceType.account),
+    label: intl.formatMessage(messages.sourceType.account)
   },
   {
     value: Event.EntityType.APIKEY.toString(),
-    label: intl.formatMessage(messages.sourceType.apiKey),
+    label: intl.formatMessage(messages.sourceType.apiKey)
   },
   {
     value: Event.EntityType.AUTOOPS_RULE.toString(),
-    label: intl.formatMessage(messages.sourceType.autoOperation),
+    label: intl.formatMessage(messages.sourceType.autoOperation)
   },
   {
     value: Event.EntityType.PROGRESSIVE_ROLLOUT.toString(),
-    label: intl.formatMessage(messages.sourceType.progressiveRollout),
+    label: intl.formatMessage(messages.sourceType.progressiveRollout)
   },
   {
     value: Event.EntityType.PUSH.toString(),
-    label: intl.formatMessage(messages.sourceType.push),
+    label: intl.formatMessage(messages.sourceType.push)
   },
   {
     value: Event.EntityType.SUBSCRIPTION.toString(),
-    label: intl.formatMessage(messages.sourceType.subscription),
-  },
+    label: intl.formatMessage(messages.sourceType.subscription)
+  }
 ];
 
 interface Sort {
@@ -79,12 +79,12 @@ const createSort = (sortOption?: AuditLogSortOption): Sort => {
     case SORT_OPTIONS_CREATED_AT_ASC:
       return {
         orderBy: ListAuditLogsRequest.OrderBy.TIMESTAMP,
-        orderDirection: ListAuditLogsRequest.OrderDirection.ASC,
+        orderDirection: ListAuditLogsRequest.OrderDirection.ASC
       };
     default:
       return {
         orderBy: ListAuditLogsRequest.OrderBy.TIMESTAMP,
-        orderDirection: ListAuditLogsRequest.OrderDirection.DESC,
+        orderDirection: ListAuditLogsRequest.OrderDirection.DESC
       };
   }
 };
@@ -106,7 +106,7 @@ export const AuditLogIndexPage: FC = memo(() => {
     (options: Record<string, string | number | boolean | undefined>) => {
       history.replace(
         `${url}?${stringifySearchParams({
-          ...options,
+          ...options
         })}`
       );
     },
@@ -151,7 +151,7 @@ export const AuditLogIndexPage: FC = memo(() => {
         orderDirection: sort.orderDirection,
         from: from,
         to: to,
-        entityType,
+        entityType
       })
     );
   }, [dispatch, searchOptions, currentEnvironment]);

@@ -8,11 +8,11 @@ import {
   GetEvaluationTimeseriesCountRequest,
   GetEvaluationTimeseriesCountResponse,
   GetExperimentResultRequest,
-  GetExperimentResultResponse,
+  GetExperimentResultResponse
 } from '../proto/eventcounter/service_pb';
 import {
   EventCounterServiceClient,
-  ServiceError,
+  ServiceError
 } from '../proto/eventcounter/service_pb_service';
 
 import { deserializeStatus, extractErrorMessage } from './messages';

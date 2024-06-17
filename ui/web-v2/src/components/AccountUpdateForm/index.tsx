@@ -21,7 +21,7 @@ export const AccountUpdateForm: FC<AccountUpdateFormProps> = memo(
     const {
       register,
       control,
-      formState: { errors, isSubmitting, isDirty, isValid },
+      formState: { errors, isSubmitting, isDirty, isValid }
     } = methods;
 
     return (

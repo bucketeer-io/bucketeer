@@ -131,7 +131,7 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                             menu: ({ width, ...css }) => ({
                               width: 'max-content',
                               minWidth: '100%',
-                              ...css,
+                              ...css
                             }),
                             singleValue: ({
                               maxWidth,
@@ -139,7 +139,7 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                               top,
                               transform,
                               ...otherStyles
-                            }) => ({ ...otherStyles }),
+                            }) => ({ ...otherStyles })
                           }}
                           value={isMultiFilter ? multiValueOption : valueOption}
                           onChange={(o) => {

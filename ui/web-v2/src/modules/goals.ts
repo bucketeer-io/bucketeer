@@ -2,7 +2,7 @@ import {
   createSlice,
   createEntityAdapter,
   createAsyncThunk,
-  SerializedError,
+  SerializedError
 } from '@reduxjs/toolkit';
 import { BoolValue } from 'google-protobuf/google/protobuf/wrappers_pb';
 
@@ -12,7 +12,7 @@ import {
   ChangeDescriptionGoalCommand,
   CreateGoalCommand,
   DeleteGoalCommand,
-  RenameGoalCommand,
+  RenameGoalCommand
 } from '../proto/experiment/command_pb';
 import { Goal } from '../proto/experiment/goal_pb';
 import {
@@ -23,7 +23,7 @@ import {
   GetGoalResponse,
   ListGoalsRequest,
   ListGoalsResponse,
-  UpdateGoalRequest,
+  UpdateGoalRequest
 } from '../proto/experiment/service_pb';
 
 import { setupAuthToken } from './auth';
@@ -33,7 +33,7 @@ import { AppState } from '.';
 const MODULE_NAME = 'goals';
 
 export const goalsAdapter = createEntityAdapter<Goal.AsObject>({
-  selectId: (goal) => goal.id,
+  selectId: (goal) => goal.id
 });
 
 export const { selectAll, selectById } = goalsAdapter.getSelectors();
@@ -192,7 +192,7 @@ const initialState = goalsAdapter.getInitialState<{
 }>({
   loading: false,
   totalCount: 0,
-  getGoalError: null,
+  getGoalError: null
 });
 
 export type GoalsState = typeof initialState;
@@ -233,5 +233,5 @@ export const goalsSlice = createSlice({
       .addCase(updateGoal.pending, (state) => {})
       .addCase(updateGoal.fulfilled, (state, action) => {})
       .addCase(updateGoal.rejected, (state, action) => {});
-  },
+  }
 });

@@ -23,7 +23,7 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_feature_variation_pb = require('../feature/variation_pb.js');
+var proto_feature_variation_pb = require('../../proto/feature/variation_pb.js');
 goog.object.extend(proto, proto_feature_variation_pb);
 goog.exportSymbol('proto.bucketeer.experiment.Experiment', null, global);
 goog.exportSymbol('proto.bucketeer.experiment.Experiment.Status', null, global);
@@ -154,7 +154,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         baseVariationId: jspb.Message.getFieldWithDefault(msg, 16, ''),
         status: jspb.Message.getFieldWithDefault(msg, 18, 0),
         maintainer: jspb.Message.getFieldWithDefault(msg, 19, ''),
-        archived: jspb.Message.getBooleanFieldWithDefault(msg, 20, false),
+        archived: jspb.Message.getBooleanFieldWithDefault(msg, 20, false)
       };
 
     if (includeInstance) {
@@ -397,7 +397,7 @@ proto.bucketeer.experiment.Experiment.Status = {
   WAITING: 0,
   RUNNING: 1,
   STOPPED: 2,
-  FORCE_STOPPED: 3,
+  FORCE_STOPPED: 3
 };
 
 /**
@@ -840,7 +840,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg.getExperimentsList(),
           proto.bucketeer.experiment.Experiment.toObject,
           includeInstance
-        ),
+        )
       };
 
     if (includeInstance) {

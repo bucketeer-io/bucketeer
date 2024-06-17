@@ -2,8 +2,8 @@
 // file: proto/notification/sender/notification_event.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_notification_sender_notification_pb from './notification_pb';
-import * as proto_notification_subscription_pb from '../subscription_pb';
+import * as proto_notification_sender_notification_pb from '../../../proto/notification/sender/notification_pb';
+import * as proto_notification_subscription_pb from '../../../proto/notification/subscription_pb';
 
 export class NotificationEvent extends jspb.Message {
   getId(): string;

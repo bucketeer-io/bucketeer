@@ -1,6 +1,6 @@
 import {
   getSelectedLanguage,
-  LanguageTypes,
+  LanguageTypes
 } from '../../lang/getSelectedLanguage';
 import { Listbox, Transition } from '@headlessui/react';
 import { Translate, ArrowDropDown } from '@material-ui/icons';
@@ -15,7 +15,7 @@ interface ILanguageItem {
 
 const languageList: ILanguageItem[] = [
   { label: '日本語', value: LanguageTypes.JAPANESE },
-  { label: 'English', value: LanguageTypes.ENGLISH },
+  { label: 'English', value: LanguageTypes.ENGLISH }
 ];
 
 export const LanguageSelect: FC = memo(() => {

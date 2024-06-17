@@ -8,7 +8,7 @@ import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import {
   listProjects,
-  selectAll as selectAllProjects,
+  selectAll as selectAllProjects
 } from '../../modules/projects';
 import { Project } from '../../proto/environment/project_pb';
 import { AppDispatch } from '../../store';
@@ -17,7 +17,7 @@ import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
   SORT_OPTIONS_NAME_ASC,
-  SORT_OPTIONS_NAME_DESC,
+  SORT_OPTIONS_NAME_DESC
 } from '../../types/list';
 import { classNames } from '../../utils/css';
 import { FilterChip } from '../FilterChip';
@@ -29,31 +29,31 @@ import { SortItem, SortSelect } from '../SortSelect';
 const sortItems: SortItem[] = [
   {
     key: SORT_OPTIONS_CREATED_AT_DESC,
-    message: intl.formatMessage(messages.adminEnvironment.sort.newest),
+    message: intl.formatMessage(messages.adminEnvironment.sort.newest)
   },
   {
     key: SORT_OPTIONS_CREATED_AT_ASC,
-    message: intl.formatMessage(messages.adminEnvironment.sort.oldest),
+    message: intl.formatMessage(messages.adminEnvironment.sort.oldest)
   },
   {
     key: SORT_OPTIONS_NAME_ASC,
-    message: intl.formatMessage(messages.adminEnvironment.sort.nameAz),
+    message: intl.formatMessage(messages.adminEnvironment.sort.nameAz)
   },
   {
     key: SORT_OPTIONS_NAME_DESC,
-    message: intl.formatMessage(messages.adminEnvironment.sort.nameZa),
-  },
+    message: intl.formatMessage(messages.adminEnvironment.sort.nameZa)
+  }
 ];
 
 export enum FilterTypes {
-  PROJECT = 'project',
+  PROJECT = 'project'
 }
 
 export const filterOptions: Option[] = [
   {
     value: FilterTypes.PROJECT,
-    label: intl.formatMessage(messages.adminEnvironment.filter.project),
-  },
+    label: intl.formatMessage(messages.adminEnvironment.filter.project)
+  }
 ];
 
 export interface EnvironmentSearchProps {
@@ -79,7 +79,7 @@ export const EnvironmentSearch: FC<EnvironmentSearchProps> = memo(
               projects.map((project) => {
                 return {
                   value: project.id,
-                  label: project.id,
+                  label: project.id
                 };
               })
             );
@@ -99,7 +99,7 @@ export const EnvironmentSearch: FC<EnvironmentSearchProps> = memo(
       switch (key) {
         case FilterTypes.PROJECT:
           handleUpdateOption({
-            projectId: value,
+            projectId: value
           });
           return;
       }
@@ -109,7 +109,7 @@ export const EnvironmentSearch: FC<EnvironmentSearchProps> = memo(
       dispatch(
         listProjects({
           pageSize: 0,
-          cursor: '',
+          cursor: ''
         })
       );
     }, [dispatch]);
@@ -128,7 +128,7 @@ export const EnvironmentSearch: FC<EnvironmentSearchProps> = memo(
               value={options.q}
               onChange={(query: string) =>
                 handleUpdateOption({
-                  q: query,
+                  q: query
                 })
               }
             />
@@ -148,7 +148,7 @@ export const EnvironmentSearch: FC<EnvironmentSearchProps> = memo(
               sortItems={sortItems}
               onChange={(sort: string) =>
                 handleUpdateOption({
-                  sort: sort,
+                  sort: sort
                 })
               }
             />
@@ -174,7 +174,7 @@ export const EnvironmentSearch: FC<EnvironmentSearchProps> = memo(
                 }`}
                 onRemove={() =>
                   handleUpdateOption({
-                    projectId: null,
+                    projectId: null
                   })
                 }
               />
@@ -183,7 +183,7 @@ export const EnvironmentSearch: FC<EnvironmentSearchProps> = memo(
               <FilterRemoveAllButtonProps
                 onClick={() =>
                   handleUpdateOption({
-                    projectId: null,
+                    projectId: null
                   })
                 }
               />

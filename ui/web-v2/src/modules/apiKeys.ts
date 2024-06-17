@@ -2,7 +2,7 @@ import {
   createSlice,
   createEntityAdapter,
   createAsyncThunk,
-  SerializedError,
+  SerializedError
 } from '@reduxjs/toolkit';
 import { BoolValue } from 'google-protobuf/google/protobuf/wrappers_pb';
 
@@ -12,7 +12,7 @@ import {
   EnableAPIKeyCommand,
   DisableAPIKeyCommand,
   CreateAPIKeyCommand,
-  ChangeAPIKeyNameCommand,
+  ChangeAPIKeyNameCommand
 } from '../proto/account/command_pb';
 import {
   ListAPIKeysRequest,
@@ -21,7 +21,7 @@ import {
   EnableAPIKeyRequest,
   DisableAPIKeyRequest,
   CreateAPIKeyRequest,
-  ChangeAPIKeyNameRequest,
+  ChangeAPIKeyNameRequest
 } from '../proto/account/service_pb';
 
 import { setupAuthToken } from './auth';
@@ -31,7 +31,7 @@ import { AppState } from '.';
 const MODULE_NAME = 'apiKeys';
 
 export const apiKeysAdapter = createEntityAdapter<APIKey.AsObject>({
-  selectId: (apykey) => apykey.id,
+  selectId: (apykey) => apykey.id
 });
 
 export const { selectAll, selectById } = apiKeysAdapter.getSelectors();
@@ -174,7 +174,7 @@ const initialState = apiKeysAdapter.getInitialState<{
 }>({
   loading: false,
   totalCount: 0,
-  getAPIKeyError: null,
+  getAPIKeyError: null
 });
 
 export const apiKeySlice = createSlice({
@@ -219,5 +219,5 @@ export const apiKeySlice = createSlice({
       .addCase(updateAPIKey.pending, (state) => {})
       .addCase(updateAPIKey.fulfilled, (state, action) => {})
       .addCase(updateAPIKey.rejected, (state, action) => {});
-  },
+  }
 });

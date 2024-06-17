@@ -1,10 +1,17 @@
 import {
+  createSlice,
+  createEntityAdapter,
+  createAsyncThunk
+} from '@reduxjs/toolkit';
+
+import * as flagTriggersGrpc from '../grpc/flagTriggers';
+import {
   CreateFlagTriggerCommand,
   DeleteFlagTriggerCommand,
   ChangeFlagTriggerDescriptionCommand,
   ResetFlagTriggerCommand,
   DisableFlagTriggerCommand,
-  EnableFlagTriggerCommand,
+  EnableFlagTriggerCommand
 } from '../proto/feature/command_pb';
 import { FlagTrigger } from '../proto/feature/flag_trigger_pb';
 import {
@@ -17,15 +24,8 @@ import {
   ResetFlagTriggerRequest,
   DisableFlagTriggerRequest,
   EnableFlagTriggerRequest,
-  ResetFlagTriggerResponse,
+  ResetFlagTriggerResponse
 } from '../proto/feature/service_pb';
-import {
-  createSlice,
-  createEntityAdapter,
-  createAsyncThunk,
-} from '@reduxjs/toolkit';
-
-import * as flagTriggersGrpc from '../grpc/flagTriggers';
 
 import { setupAuthToken } from './auth';
 
@@ -35,7 +35,7 @@ const MODULE_NAME = 'flagTriggers';
 
 export const flagTriggersAdapter =
   createEntityAdapter<ListFlagTriggersResponse.FlagTriggerWithUrl.AsObject>({
-    selectId: (flagTriggerWithUrl) => flagTriggerWithUrl.flagTrigger.id,
+    selectId: (flagTriggerWithUrl) => flagTriggerWithUrl.flagTrigger.id
   });
 
 export const { selectAll, selectById } = flagTriggersAdapter.getSelectors();
@@ -190,7 +190,7 @@ export const disableFlagTrigger = createAsyncThunk<
 const initialState = flagTriggersAdapter.getInitialState<{
   loading: boolean;
 }>({
-  loading: false,
+  loading: false
 });
 
 export type flagTriggersState = typeof initialState;
@@ -257,5 +257,5 @@ export const flagTriggersSlice = createSlice({
       .addCase(disableFlagTrigger.rejected, (state) => {
         state.loading = false;
       });
-  },
+  }
 });

@@ -23,7 +23,7 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_autoops_clause_pb = require('./clause_pb.js');
+var proto_autoops_clause_pb = require('../../proto/autoops/clause_pb.js');
 goog.object.extend(proto, proto_autoops_clause_pb);
 goog.exportSymbol('proto.bucketeer.autoops.AutoOpsRule', null, global);
 goog.exportSymbol('proto.bucketeer.autoops.AutoOpsRules', null, global);
@@ -144,7 +144,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         createdAt: jspb.Message.getFieldWithDefault(msg, 7, 0),
         updatedAt: jspb.Message.getFieldWithDefault(msg, 8, 0),
         deleted: jspb.Message.getBooleanFieldWithDefault(msg, 9, false),
-        autoOpsStatus: jspb.Message.getFieldWithDefault(msg, 10, 0),
+        autoOpsStatus: jspb.Message.getFieldWithDefault(msg, 10, 0)
       };
 
     if (includeInstance) {
@@ -537,7 +537,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg.getAutoOpsRulesList(),
           proto.bucketeer.autoops.AutoOpsRule.toObject,
           includeInstance
-        ),
+        )
       };
 
     if (includeInstance) {
@@ -685,7 +685,7 @@ proto.bucketeer.autoops.OpsType = {
   ENABLE_FEATURE: 0,
   DISABLE_FEATURE: 1,
   SCHEDULE: 2,
-  EVENT_RATE: 3,
+  EVENT_RATE: 3
 };
 
 /**

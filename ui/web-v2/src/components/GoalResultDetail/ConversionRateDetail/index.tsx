@@ -15,7 +15,7 @@ interface ConversionRateDetailProps {
 export const ConversionRateDetail: FC<ConversionRateDetailProps> = ({
   goalResult,
   baseVariationId,
-  variations,
+  variations
 }) => {
   return (
     <div>

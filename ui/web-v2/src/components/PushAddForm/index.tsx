@@ -22,7 +22,7 @@ export const PushAddForm: FC<PushAddFormProps> = memo(
     const {
       register,
       control,
-      formState: { errors, isValid, isSubmitted },
+      formState: { errors, isValid, isSubmitted }
     } = methods;
 
     const tagsList = useSelector<AppState, Tag.AsObject[]>(
@@ -113,7 +113,7 @@ export const PushAddForm: FC<PushAddFormProps> = memo(
                           disabled={isSubmitted}
                           options={tagsList.map((tag) => ({
                             label: tag.id,
-                            value: tag.id,
+                            value: tag.id
                           }))}
                           closeMenuOnSelect={false}
                         />

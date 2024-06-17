@@ -1,10 +1,10 @@
 import {
   listAutoOpsRules,
-  selectAll as selectAllAutoOpsRules,
+  selectAll as selectAllAutoOpsRules
 } from '../../modules/autoOpsRules';
 import {
   listFlagTriggers,
-  selectAll as selectAllFlagTriggers,
+  selectAll as selectAllFlagTriggers
 } from '../../modules/flagTriggers';
 import { listProgressiveRollout } from '../../modules/porgressiveRollout';
 import { AutoOpsRule } from '../../proto/autoops/auto_ops_rule_pb';
@@ -18,7 +18,7 @@ import {
   Switch,
   Redirect,
   useRouteMatch,
-  useParams,
+  useParams
 } from 'react-router-dom';
 
 import { FeatureHeader } from '../../components/FeatureHeader';
@@ -33,14 +33,14 @@ import {
   PAGE_PATH_FEATURE_TRIGGER,
   PAGE_PATH_FEATURE_VARIATION,
   PAGE_PATH_NEW,
-  PAGE_PATH_ROOT,
+  PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import {
   selectById as selectFeatureById,
-  getFeature,
+  getFeature
 } from '../../modules/features';
 import { useCurrentEnvironment } from '../../modules/me';
 import { Feature } from '../../proto/feature/feature_pb';
@@ -66,7 +66,7 @@ export const FeatureDetailPage: FC = memo(() => {
   >(
     (state) => [
       selectFeatureById(state.features, featureId),
-      state.features.getFeatureError,
+      state.features.getFeatureError
     ],
     shallowEqual
   );
@@ -88,25 +88,25 @@ export const FeatureDetailPage: FC = memo(() => {
       dispatch(
         getFeature({
           environmentNamespace: currentEnvironment.id,
-          id: featureId,
+          id: featureId
         })
       );
       dispatch(
         listAutoOpsRules({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.id,
+          environmentNamespace: currentEnvironment.id
         })
       );
       dispatch(
         listFlagTriggers({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.id,
+          environmentNamespace: currentEnvironment.id
         })
       );
       dispatch(
         listProgressiveRollout({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.id,
+          environmentNamespace: currentEnvironment.id
         })
       );
     }
@@ -181,7 +181,7 @@ export const FeatureDetailPage: FC = memo(() => {
           exact
           path={[
             `${url}${PAGE_PATH_FEATURE_EXPERIMENTS}`,
-            `${url}${PAGE_PATH_FEATURE_EXPERIMENTS}${PAGE_PATH_NEW}`,
+            `${url}${PAGE_PATH_FEATURE_EXPERIMENTS}${PAGE_PATH_NEW}`
           ]}
         >
           <FeatureExperimentsPage featureId={featureId} />
@@ -196,7 +196,7 @@ export const FeatureDetailPage: FC = memo(() => {
           exact
           path={[
             `${url}${PAGE_PATH_FEATURE_AUTOOPS}`,
-            `${url}${PAGE_PATH_FEATURE_AUTOOPS}/:operationId`,
+            `${url}${PAGE_PATH_FEATURE_AUTOOPS}/:operationId`
           ]}
         >
           <FeatureAutoOpsPage featureId={featureId} />
@@ -218,35 +218,35 @@ const createTabs = (): Array<TabItem> => {
   return [
     {
       message: intl.formatMessage(messages.feature.tab.targeting),
-      to: PAGE_PATH_FEATURE_TARGETING,
+      to: PAGE_PATH_FEATURE_TARGETING
     },
     {
       message: intl.formatMessage(messages.feature.tab.variations),
-      to: PAGE_PATH_FEATURE_VARIATION,
+      to: PAGE_PATH_FEATURE_VARIATION
     },
     {
       message: intl.formatMessage(messages.feature.tab.autoOps),
-      to: PAGE_PATH_FEATURE_AUTOOPS,
+      to: PAGE_PATH_FEATURE_AUTOOPS
     },
     {
       message: intl.formatMessage(messages.feature.tab.triggers),
-      to: PAGE_PATH_FEATURE_TRIGGER,
+      to: PAGE_PATH_FEATURE_TRIGGER
     },
     {
       message: intl.formatMessage(messages.feature.tab.experiments),
-      to: PAGE_PATH_FEATURE_EXPERIMENTS,
+      to: PAGE_PATH_FEATURE_EXPERIMENTS
     },
     {
       message: intl.formatMessage(messages.feature.tab.evaluation),
-      to: PAGE_PATH_FEATURE_EVALUATION,
+      to: PAGE_PATH_FEATURE_EVALUATION
     },
     {
       message: intl.formatMessage(messages.feature.tab.history),
-      to: PAGE_PATH_FEATURE_HISTORY,
+      to: PAGE_PATH_FEATURE_HISTORY
     },
     {
       message: intl.formatMessage(messages.feature.tab.settings),
-      to: PAGE_PATH_FEATURE_SETTING,
-    },
+      to: PAGE_PATH_FEATURE_SETTING
+    }
   ];
 };

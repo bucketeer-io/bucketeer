@@ -14,7 +14,7 @@ import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
   SORT_OPTIONS_NAME_ASC,
-  SORT_OPTIONS_NAME_DESC,
+  SORT_OPTIONS_NAME_DESC
 } from '../../types/list';
 import { classNames } from '../../utils/css';
 import { FilterChip } from '../FilterChip';
@@ -26,42 +26,42 @@ import { SortItem, SortSelect } from '../SortSelect';
 const sortItems: SortItem[] = [
   {
     key: SORT_OPTIONS_CREATED_AT_DESC,
-    message: intl.formatMessage(messages.feature.sort.newest),
+    message: intl.formatMessage(messages.feature.sort.newest)
   },
   {
     key: SORT_OPTIONS_CREATED_AT_ASC,
-    message: intl.formatMessage(messages.feature.sort.oldest),
+    message: intl.formatMessage(messages.feature.sort.oldest)
   },
   {
     key: SORT_OPTIONS_NAME_ASC,
-    message: intl.formatMessage(messages.feature.sort.nameAz),
+    message: intl.formatMessage(messages.feature.sort.nameAz)
   },
   {
     key: SORT_OPTIONS_NAME_DESC,
-    message: intl.formatMessage(messages.feature.sort.nameZa),
-  },
+    message: intl.formatMessage(messages.feature.sort.nameZa)
+  }
 ];
 
 export enum FilterTypes {
-  ENABLED = 'enabled',
+  ENABLED = 'enabled'
 }
 
 export const filterOptions: Option[] = [
   {
     value: FilterTypes.ENABLED,
-    label: intl.formatMessage(messages.apiKey.filter.enabled),
-  },
+    label: intl.formatMessage(messages.apiKey.filter.enabled)
+  }
 ];
 
 export const enabledOptions: Option[] = [
   {
     value: 'true',
-    label: intl.formatMessage(messages.enabled),
+    label: intl.formatMessage(messages.enabled)
   },
   {
     value: 'false',
-    label: intl.formatMessage(messages.disabled),
-  },
+    label: intl.formatMessage(messages.disabled)
+  }
 ];
 
 export interface APIKeySearchProps {
@@ -105,7 +105,7 @@ export const APIKeySearch: FC<APIKeySearchProps> = memo(
       switch (key) {
         case FilterTypes.ENABLED:
           handleUpdateOption({
-            enabled: value,
+            enabled: value
           });
           return;
       }
@@ -125,7 +125,7 @@ export const APIKeySearch: FC<APIKeySearchProps> = memo(
               value={options.q}
               onChange={(query: string) =>
                 handleUpdateOption({
-                  q: query,
+                  q: query
                 })
               }
             />
@@ -145,7 +145,7 @@ export const APIKeySearch: FC<APIKeySearchProps> = memo(
               sortItems={sortItems}
               onChange={(sort: string) =>
                 handleUpdateOption({
-                  sort: sort,
+                  sort: sort
                 })
               }
             />
@@ -170,7 +170,7 @@ export const APIKeySearch: FC<APIKeySearchProps> = memo(
                 }`}
                 onRemove={() =>
                   handleUpdateOption({
-                    enabled: null,
+                    enabled: null
                   })
                 }
               />
@@ -179,7 +179,7 @@ export const APIKeySearch: FC<APIKeySearchProps> = memo(
               <FilterRemoveAllButtonProps
                 onClick={() =>
                   handleUpdateOption({
-                    enabled: null,
+                    enabled: null
                   })
                 }
               />

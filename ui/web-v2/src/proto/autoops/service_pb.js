@@ -23,13 +23,13 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_autoops_auto_ops_rule_pb = require('./auto_ops_rule_pb.js');
+var proto_autoops_auto_ops_rule_pb = require('../../proto/autoops/auto_ops_rule_pb.js');
 goog.object.extend(proto, proto_autoops_auto_ops_rule_pb);
-var proto_autoops_command_pb = require('./command_pb.js');
+var proto_autoops_command_pb = require('../../proto/autoops/command_pb.js');
 goog.object.extend(proto, proto_autoops_command_pb);
-var proto_autoops_ops_count_pb = require('./ops_count_pb.js');
+var proto_autoops_ops_count_pb = require('../../proto/autoops/ops_count_pb.js');
 goog.object.extend(proto, proto_autoops_ops_count_pb);
-var proto_autoops_progressive_rollout_pb = require('./progressive_rollout_pb.js');
+var proto_autoops_progressive_rollout_pb = require('../../proto/autoops/progressive_rollout_pb.js');
 goog.object.extend(proto, proto_autoops_progressive_rollout_pb);
 goog.exportSymbol(
   'proto.bucketeer.autoops.CreateAutoOpsRuleRequest',
@@ -865,7 +865,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        id: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        id: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -1036,7 +1036,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_auto_ops_rule_pb.AutoOpsRule.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -1212,7 +1212,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_command_pb.CreateAutoOpsRuleCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -1531,7 +1531,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         pageSize: jspb.Message.getFieldWithDefault(msg, 2, 0),
         cursor: jspb.Message.getFieldWithDefault(msg, 3, ''),
         featureIdsList:
-          (f = jspb.Message.getRepeatedField(msg, 4)) == null ? undefined : f,
+          (f = jspb.Message.getRepeatedField(msg, 4)) == null ? undefined : f
       };
 
     if (includeInstance) {
@@ -1784,7 +1784,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_auto_ops_rule_pb.AutoOpsRule.toObject,
           includeInstance
         ),
-        cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        cursor: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -1996,7 +1996,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_command_pb.DeleteAutoOpsRuleCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -2300,7 +2300,7 @@ proto.bucketeer.autoops.DeleteAutoOpsRuleResponse.serializeBinaryToWriter =
  * @const
  */
 proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.repeatedFields_ = [
-  4, 5, 6, 7, 8,
+  4, 5, 6, 7, 8
 ];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -2371,7 +2371,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg.getChangeDatetimeClauseCommandsList(),
           proto_autoops_command_pb.ChangeDatetimeClauseCommand.toObject,
           includeInstance
-        ),
+        )
       };
 
     if (includeInstance) {
@@ -3051,7 +3051,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_command_pb.ChangeAutoOpsRuleTriggeredAtCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -3278,11 +3278,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        alreadyTriggered: jspb.Message.getBooleanFieldWithDefault(
-          msg,
-          1,
-          false
-        ),
+        alreadyTriggered: jspb.Message.getBooleanFieldWithDefault(msg, 1, false)
       };
 
     if (includeInstance) {
@@ -3435,7 +3431,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         autoOpsRuleIdsList:
           (f = jspb.Message.getRepeatedField(msg, 4)) == null ? undefined : f,
         featureIdsList:
-          (f = jspb.Message.getRepeatedField(msg, 5)) == null ? undefined : f,
+          (f = jspb.Message.getRepeatedField(msg, 5)) == null ? undefined : f
       };
 
     if (includeInstance) {
@@ -3734,7 +3730,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg.getOpsCountsList(),
           proto_autoops_ops_count_pb.OpsCount.toObject,
           includeInstance
-        ),
+        )
       };
 
     if (includeInstance) {
@@ -3945,7 +3941,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_command_pb.CreateProgressiveRolloutCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -4253,7 +4249,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        id: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        id: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -4424,7 +4420,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_progressive_rollout_pb.ProgressiveRollout.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -4602,7 +4598,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_command_pb.StopProgressiveRolloutCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -4944,7 +4940,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_command_pb.DeleteProgressiveRolloutCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -5294,7 +5290,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         orderBy: jspb.Message.getFieldWithDefault(msg, 5, 0),
         orderDirection: jspb.Message.getFieldWithDefault(msg, 6, 0),
         status: jspb.Message.getFieldWithDefault(msg, 7, 0),
-        type: jspb.Message.getFieldWithDefault(msg, 8, 0),
+        type: jspb.Message.getFieldWithDefault(msg, 8, 0)
       };
 
     if (includeInstance) {
@@ -5454,7 +5450,7 @@ proto.bucketeer.autoops.ListProgressiveRolloutsRequest.serializeBinaryToWriter =
 proto.bucketeer.autoops.ListProgressiveRolloutsRequest.OrderBy = {
   DEFAULT: 0,
   CREATED_AT: 1,
-  UPDATED_AT: 2,
+  UPDATED_AT: 2
 };
 
 /**
@@ -5462,7 +5458,7 @@ proto.bucketeer.autoops.ListProgressiveRolloutsRequest.OrderBy = {
  */
 proto.bucketeer.autoops.ListProgressiveRolloutsRequest.OrderDirection = {
   ASC: 0,
-  DESC: 1,
+  DESC: 1
 };
 
 /**
@@ -5727,7 +5723,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           includeInstance
         ),
         cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0)
       };
 
     if (includeInstance) {
@@ -5966,7 +5962,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_command_pb.ChangeProgressiveRolloutScheduleTriggeredAtCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {

@@ -1,7 +1,7 @@
 import 'react-datepicker/dist/react-datepicker.css';
 import {
   listProgressiveRollout,
-  selectAll as selectAllProgressiveRollouts,
+  selectAll as selectAllProgressiveRollouts
 } from '../../modules/porgressiveRollout';
 import { ProgressiveRollout } from '../../proto/autoops/progressive_rollout_pb';
 import { AppDispatch } from '../../store';
@@ -43,14 +43,14 @@ export const FeatureVariationsForm: FC<FeatureVariationsFormProps> = memo(
     const {
       control,
       formState: { errors, isDirty },
-      watch,
+      watch
     } = methods;
     const [feature, _] = useSelector<
       AppState,
       [Feature.AsObject | undefined, SerializedError | null]
     >((state) => [
       selectFeatureById(state.features, featureId),
-      state.features.getFeatureError,
+      state.features.getFeatureError
     ]);
 
     const progressiveRollouts = useSelector<
@@ -68,7 +68,7 @@ export const FeatureVariationsForm: FC<FeatureVariationsFormProps> = memo(
       dispatch(
         listProgressiveRollout({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.id,
+          environmentNamespace: currentEnvironment.id
         })
       );
     }, []);
@@ -120,7 +120,7 @@ export const FeatureVariationsForm: FC<FeatureVariationsFormProps> = memo(
               isProgressiveRolloutsRunning={isProgressiveRolloutsRunning}
               rulesAppliedVariationList={{
                 onVariationIds,
-                offVariationId: feature.offVariation,
+                offVariationId: feature.offVariation
               }}
             />
           </div>

@@ -1,7 +1,7 @@
 import {
   createSlice,
   createEntityAdapter,
-  createAsyncThunk,
+  createAsyncThunk
 } from '@reduxjs/toolkit';
 
 import * as pushGrpc from '../grpc/push';
@@ -10,7 +10,7 @@ import {
   AddPushTagsCommand,
   DeletePushTagsCommand,
   RenamePushCommand,
-  DeletePushCommand,
+  DeletePushCommand
 } from '../proto/push/command_pb';
 import { Push } from '../proto/push/push_pb';
 import {
@@ -18,7 +18,7 @@ import {
   CreatePushRequest,
   UpdatePushRequest,
   DeletePushRequest,
-  ListPushesResponse,
+  ListPushesResponse
 } from '../proto/push/service_pb';
 
 import { setupAuthToken } from './auth';
@@ -28,7 +28,7 @@ import { AppState } from '.';
 const MODULE_NAME = 'pushes';
 
 export const pushAdapter = createEntityAdapter<Push.AsObject>({
-  selectId: (push) => push.id,
+  selectId: (push) => push.id
 });
 
 export const { selectAll, selectById } = pushAdapter.getSelectors();
@@ -38,7 +38,7 @@ const initialState = pushAdapter.getInitialState<{
   totalCount: number;
 }>({
   loading: false,
-  totalCount: 0,
+  totalCount: 0
 });
 
 export type OrderBy =
@@ -182,5 +182,5 @@ export const pushSlice = createSlice({
       .addCase(deletePush.pending, (state) => {})
       .addCase(deletePush.fulfilled, (state, action) => {})
       .addCase(deletePush.rejected, (state, action) => {});
-  },
+  }
 });

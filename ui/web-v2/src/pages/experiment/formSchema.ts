@@ -6,7 +6,7 @@ import {
   EXPERIMENT_NAME_MAX_LENGTH,
   EXPERIMENT_GOAL_MIN_LENGTH,
   EXPERIMENT_GOAL_MAX_LENGTH,
-  EXPERIMENT_START_AT_OLDEST_DAYS,
+  EXPERIMENT_START_AT_OLDEST_DAYS
 } from '../../constants/experiment';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
@@ -32,7 +32,7 @@ export const addFormSchema = yup.object().shape({
     .test(
       'laterThanStartAt',
       intl.formatMessage(messages.input.error.notLaterThanOrEqualDays, {
-        days: `${EXPERIMENT_START_AT_OLDEST_DAYS}`,
+        days: `${EXPERIMENT_START_AT_OLDEST_DAYS}`
       }),
       function (value) {
         const d = new Date();
@@ -62,10 +62,10 @@ export const addFormSchema = yup.object().shape({
           maxPeriodSeconds
         );
       }
-    ),
+    )
 });
 
 export const updateFormSchema = yup.object().shape({
   name: nameSchema,
-  description: descriptionSchema,
+  description: descriptionSchema
 });

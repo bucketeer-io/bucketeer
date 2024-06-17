@@ -23,11 +23,11 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_autoops_auto_ops_rule_pb = require('./auto_ops_rule_pb.js');
+var proto_autoops_auto_ops_rule_pb = require('../../proto/autoops/auto_ops_rule_pb.js');
 goog.object.extend(proto, proto_autoops_auto_ops_rule_pb);
-var proto_autoops_clause_pb = require('./clause_pb.js');
+var proto_autoops_clause_pb = require('../../proto/autoops/clause_pb.js');
 goog.object.extend(proto, proto_autoops_clause_pb);
-var proto_autoops_progressive_rollout_pb = require('./progressive_rollout_pb.js');
+var proto_autoops_progressive_rollout_pb = require('../../proto/autoops/progressive_rollout_pb.js');
 goog.object.extend(proto, proto_autoops_progressive_rollout_pb);
 goog.exportSymbol(
   'proto.bucketeer.autoops.AddDatetimeClauseCommand',
@@ -530,7 +530,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg.getDatetimeClausesList(),
           proto_autoops_clause_pb.DatetimeClause.toObject,
           includeInstance
-        ),
+        )
       };
 
     if (includeInstance) {
@@ -830,7 +830,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        opsType: jspb.Message.getFieldWithDefault(msg, 1, 0),
+        opsType: jspb.Message.getFieldWithDefault(msg, 1, 0)
       };
 
     if (includeInstance) {
@@ -1190,7 +1190,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_clause_pb.OpsEventRateClause.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -1365,7 +1365,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_clause_pb.OpsEventRateClause.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -1563,7 +1563,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        id: jspb.Message.getFieldWithDefault(msg, 1, '')
       };
 
     if (includeInstance) {
@@ -1702,7 +1702,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         datetimeClause:
           (f = msg.getDatetimeClause()) &&
-          proto_autoops_clause_pb.DatetimeClause.toObject(includeInstance, f),
+          proto_autoops_clause_pb.DatetimeClause.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -1874,7 +1874,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
         datetimeClause:
           (f = msg.getDatetimeClause()) &&
-          proto_autoops_clause_pb.DatetimeClause.toObject(includeInstance, f),
+          proto_autoops_clause_pb.DatetimeClause.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -2083,7 +2083,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_clause_pb.ProgressiveRolloutTemplateScheduleClause.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -2343,7 +2343,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        stoppedBy: jspb.Message.getFieldWithDefault(msg, 1, 0),
+        stoppedBy: jspb.Message.getFieldWithDefault(msg, 1, 0)
       };
 
     if (includeInstance) {
@@ -2595,7 +2595,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             proto_autoops_clause_pb.ProgressiveRolloutManualScheduleClause.toObject(
               includeInstance,
               f
-            ),
+            )
         };
 
       if (includeInstance) {
@@ -2770,7 +2770,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             proto_autoops_clause_pb.ProgressiveRolloutTemplateScheduleClause.toObject(
               includeInstance,
               f
-            ),
+            )
         };
 
       if (includeInstance) {
@@ -2940,7 +2940,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     function (includeInstance, msg) {
       var f,
         obj = {
-          scheduleId: jspb.Message.getFieldWithDefault(msg, 1, ''),
+          scheduleId: jspb.Message.getFieldWithDefault(msg, 1, '')
         };
 
       if (includeInstance) {

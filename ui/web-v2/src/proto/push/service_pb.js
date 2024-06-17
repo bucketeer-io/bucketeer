@@ -23,9 +23,9 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_push_push_pb = require('./push_pb.js');
+var proto_push_push_pb = require('../../proto/push/push_pb.js');
 goog.object.extend(proto, proto_push_push_pb);
-var proto_push_command_pb = require('./command_pb.js');
+var proto_push_command_pb = require('../../proto/push/command_pb.js');
 goog.object.extend(proto, proto_push_command_pb);
 goog.exportSymbol('proto.bucketeer.push.CreatePushRequest', null, global);
 goog.exportSymbol('proto.bucketeer.push.CreatePushResponse', null, global);
@@ -269,7 +269,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         command:
           (f = msg.getCommand()) &&
-          proto_push_command_pb.CreatePushCommand.toObject(includeInstance, f),
+          proto_push_command_pb.CreatePushCommand.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -578,7 +578,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         cursor: jspb.Message.getFieldWithDefault(msg, 3, ''),
         orderBy: jspb.Message.getFieldWithDefault(msg, 4, 0),
         orderDirection: jspb.Message.getFieldWithDefault(msg, 5, 0),
-        searchKeyword: jspb.Message.getFieldWithDefault(msg, 6, ''),
+        searchKeyword: jspb.Message.getFieldWithDefault(msg, 6, '')
       };
 
     if (includeInstance) {
@@ -712,7 +712,7 @@ proto.bucketeer.push.ListPushesRequest.OrderBy = {
   DEFAULT: 0,
   NAME: 1,
   CREATED_AT: 2,
-  UPDATED_AT: 3,
+  UPDATED_AT: 3
 };
 
 /**
@@ -720,7 +720,7 @@ proto.bucketeer.push.ListPushesRequest.OrderBy = {
  */
 proto.bucketeer.push.ListPushesRequest.OrderDirection = {
   ASC: 0,
-  DESC: 1,
+  DESC: 1
 };
 
 /**
@@ -887,7 +887,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           includeInstance
         ),
         cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0)
       };
 
     if (includeInstance) {
@@ -1118,7 +1118,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         id: jspb.Message.getFieldWithDefault(msg, 2, ''),
         command:
           (f = msg.getCommand()) &&
-          proto_push_command_pb.DeletePushCommand.toObject(includeInstance, f),
+          proto_push_command_pb.DeletePushCommand.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -1459,7 +1459,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           ),
         renamePushCommand:
           (f = msg.getRenamePushCommand()) &&
-          proto_push_command_pb.RenamePushCommand.toObject(includeInstance, f),
+          proto_push_command_pb.RenamePushCommand.toObject(includeInstance, f)
       };
 
     if (includeInstance) {

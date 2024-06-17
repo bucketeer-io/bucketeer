@@ -25,9 +25,9 @@ var global =
 
 var google_protobuf_wrappers_pb = require('google-protobuf/google/protobuf/wrappers_pb.js');
 goog.object.extend(proto, google_protobuf_wrappers_pb);
-var proto_notification_subscription_pb = require('./subscription_pb.js');
+var proto_notification_subscription_pb = require('../../proto/notification/subscription_pb.js');
 goog.object.extend(proto, proto_notification_subscription_pb);
-var proto_notification_command_pb = require('./command_pb.js');
+var proto_notification_command_pb = require('../../proto/notification/command_pb.js');
 goog.object.extend(proto, proto_notification_command_pb);
 goog.exportSymbol(
   'proto.bucketeer.notification.CreateAdminSubscriptionRequest',
@@ -1140,7 +1140,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        id: jspb.Message.getFieldWithDefault(msg, 1, '')
       };
 
     if (includeInstance) {
@@ -1281,7 +1281,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             proto_notification_subscription_pb.Subscription.toObject(
               includeInstance,
               f
-            ),
+            )
         };
 
       if (includeInstance) {
@@ -1420,7 +1420,7 @@ proto.bucketeer.notification.GetAdminSubscriptionResponse.prototype.hasSubscript
  * @const
  */
 proto.bucketeer.notification.ListAdminSubscriptionsRequest.repeatedFields_ = [
-  3,
+  3
 ];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -1466,7 +1466,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           searchKeyword: jspb.Message.getFieldWithDefault(msg, 6, ''),
           disabled:
             (f = msg.getDisabled()) &&
-            google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
+            google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
         };
 
       if (includeInstance) {
@@ -1624,7 +1624,7 @@ proto.bucketeer.notification.ListAdminSubscriptionsRequest.OrderBy = {
   DEFAULT: 0,
   NAME: 1,
   CREATED_AT: 2,
-  UPDATED_AT: 3,
+  UPDATED_AT: 3
 };
 
 /**
@@ -1632,7 +1632,7 @@ proto.bucketeer.notification.ListAdminSubscriptionsRequest.OrderBy = {
  */
 proto.bucketeer.notification.ListAdminSubscriptionsRequest.OrderDirection = {
   ASC: 0,
-  DESC: 1,
+  DESC: 1
 };
 
 /**
@@ -1820,7 +1820,7 @@ proto.bucketeer.notification.ListAdminSubscriptionsRequest.prototype.hasDisabled
  * @const
  */
 proto.bucketeer.notification.ListAdminSubscriptionsResponse.repeatedFields_ = [
-  1,
+  1
 ];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -1863,7 +1863,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance
           ),
           cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
-          totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0),
+          totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0)
         };
 
       if (includeInstance) {
@@ -2102,7 +2102,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           pageSize: jspb.Message.getFieldWithDefault(msg, 1, 0),
           cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
           sourceTypesList:
-            (f = jspb.Message.getRepeatedField(msg, 3)) == null ? undefined : f,
+            (f = jspb.Message.getRepeatedField(msg, 3)) == null ? undefined : f
         };
 
       if (includeInstance) {
@@ -2332,7 +2332,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             proto_notification_subscription_pb.Subscription.toObject,
             includeInstance
           ),
-          cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
+          cursor: jspb.Message.getFieldWithDefault(msg, 2, '')
         };
 
       if (includeInstance) {
@@ -2540,7 +2540,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             proto_notification_command_pb.CreateAdminSubscriptionCommand.toObject(
               includeInstance,
               f
-            ),
+            )
         };
 
       if (includeInstance) {
@@ -2822,7 +2822,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             proto_notification_command_pb.DeleteAdminSubscriptionCommand.toObject(
               includeInstance,
               f
-            ),
+            )
         };
 
       if (includeInstance) {
@@ -3132,7 +3132,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             proto_notification_command_pb.EnableAdminSubscriptionCommand.toObject(
               includeInstance,
               f
-            ),
+            )
         };
 
       if (includeInstance) {
@@ -3442,7 +3442,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             proto_notification_command_pb.DisableAdminSubscriptionCommand.toObject(
               includeInstance,
               f
-            ),
+            )
         };
 
       if (includeInstance) {
@@ -3765,7 +3765,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             proto_notification_command_pb.RenameAdminSubscriptionCommand.toObject(
               includeInstance,
               f
-            ),
+            )
         };
 
       if (includeInstance) {
@@ -4195,7 +4195,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        id: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        id: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -4367,7 +4367,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_notification_subscription_pb.Subscription.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -4553,7 +4553,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         searchKeyword: jspb.Message.getFieldWithDefault(msg, 7, ''),
         disabled:
           (f = msg.getDisabled()) &&
-          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -4719,7 +4719,7 @@ proto.bucketeer.notification.ListSubscriptionsRequest.OrderBy = {
   DEFAULT: 0,
   NAME: 1,
   CREATED_AT: 2,
-  UPDATED_AT: 3,
+  UPDATED_AT: 3
 };
 
 /**
@@ -4727,7 +4727,7 @@ proto.bucketeer.notification.ListSubscriptionsRequest.OrderBy = {
  */
 proto.bucketeer.notification.ListSubscriptionsRequest.OrderDirection = {
   ASC: 0,
-  DESC: 1,
+  DESC: 1
 };
 
 /**
@@ -4978,7 +4978,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           includeInstance
         ),
         cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0)
       };
 
     if (includeInstance) {
@@ -5178,7 +5178,7 @@ proto.bucketeer.notification.ListSubscriptionsResponse.prototype.setTotalCount =
  * @const
  */
 proto.bucketeer.notification.ListEnabledSubscriptionsRequest.repeatedFields_ = [
-  4,
+  4
 ];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -5219,7 +5219,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           pageSize: jspb.Message.getFieldWithDefault(msg, 2, 0),
           cursor: jspb.Message.getFieldWithDefault(msg, 3, ''),
           sourceTypesList:
-            (f = jspb.Message.getRepeatedField(msg, 4)) == null ? undefined : f,
+            (f = jspb.Message.getRepeatedField(msg, 4)) == null ? undefined : f
         };
 
       if (includeInstance) {
@@ -5477,7 +5477,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             proto_notification_subscription_pb.Subscription.toObject,
             includeInstance
           ),
-          cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
+          cursor: jspb.Message.getFieldWithDefault(msg, 2, '')
         };
 
       if (includeInstance) {
@@ -5688,7 +5688,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_notification_command_pb.CreateSubscriptionCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -6002,7 +6002,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_notification_command_pb.DeleteSubscriptionCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -6344,7 +6344,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_notification_command_pb.EnableSubscriptionCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -6686,7 +6686,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_notification_command_pb.DisableSubscriptionCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -7040,7 +7040,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_notification_command_pb.RenameSubscriptionCommand.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {

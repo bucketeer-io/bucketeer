@@ -33,7 +33,7 @@ export const AccountList: FC<AccountListProps> = memo(
     onSwitchEnabled,
     onChangeSearchOptions,
     onAdd,
-    onUpdate,
+    onUpdate
   }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsOwner();
@@ -68,16 +68,14 @@ export const AccountList: FC<AccountListProps> = memo(
               <div className="text-gray-700">
                 <h1 className="text-lg">
                   {f(messages.noResult.title, {
-                    title: f(messages.account.list.header.title),
+                    title: f(messages.account.list.header.title)
                   })}
                 </h1>
                 <div className="flex justify-center mt-4">
                   <ul className="list-disc">
                     <li>
                       {f(messages.noResult.searchByKeyword, {
-                        keyword: f(
-                          messages.account.list.noResult.searchKeyword
-                        ),
+                        keyword: f(messages.account.list.noResult.searchKeyword)
                       })}
                     </li>
                     <li>{f(messages.noResult.changeFilterSelection)}</li>
@@ -91,7 +89,7 @@ export const AccountList: FC<AccountListProps> = memo(
               <div className="w-[600px] text-gray-700 text-center">
                 <h1 className="text-lg">
                   {f(messages.noData.title, {
-                    title: f(messages.account.list.header.title),
+                    title: f(messages.account.list.header.title)
                   })}
                 </h1>
                 <p className="mt-5">

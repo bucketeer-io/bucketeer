@@ -1,7 +1,7 @@
 // package: bucketeer.notification
 // file: proto/notification/service.proto
 
-import * as proto_notification_service_pb from './service_pb';
+import * as proto_notification_service_pb from '../../proto/notification/service_pb';
 import { grpc } from '@improbable-eng/grpc-web';
 
 type NotificationServiceGetAdminSubscription = {

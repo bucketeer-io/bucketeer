@@ -1,7 +1,7 @@
 // package: bucketeer.migration
 // file: proto/migration/mysql_service.proto
 
-var proto_migration_mysql_service_pb = require('./mysql_service_pb');
+var proto_migration_mysql_service_pb = require('../../proto/migration/mysql_service_pb');
 var grpc = require('@improbable-eng/grpc-web').grpc;
 
 var MigrationMySQLService = (function () {
@@ -17,7 +17,7 @@ MigrationMySQLService.MigrateAllMasterSchema = {
   requestStream: false,
   responseStream: false,
   requestType: proto_migration_mysql_service_pb.MigrateAllMasterSchemaRequest,
-  responseType: proto_migration_mysql_service_pb.MigrateAllMasterSchemaResponse,
+  responseType: proto_migration_mysql_service_pb.MigrateAllMasterSchemaResponse
 };
 
 MigrationMySQLService.RollbackMasterSchema = {
@@ -26,7 +26,7 @@ MigrationMySQLService.RollbackMasterSchema = {
   requestStream: false,
   responseStream: false,
   requestType: proto_migration_mysql_service_pb.RollbackMasterSchemaRequest,
-  responseType: proto_migration_mysql_service_pb.RollbackMasterSchemaResponse,
+  responseType: proto_migration_mysql_service_pb.RollbackMasterSchemaResponse
 };
 
 exports.MigrationMySQLService = MigrationMySQLService;
@@ -58,13 +58,13 @@ MigrationMySQLServiceClient.prototype.migrateAllMasterSchema =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -90,13 +90,13 @@ MigrationMySQLServiceClient.prototype.rollbackMasterSchema =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 

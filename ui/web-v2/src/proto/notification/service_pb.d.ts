@@ -3,8 +3,8 @@
 
 import * as jspb from 'google-protobuf';
 import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
-import * as proto_notification_subscription_pb from './subscription_pb';
-import * as proto_notification_command_pb from './command_pb';
+import * as proto_notification_subscription_pb from '../../proto/notification/subscription_pb';
+import * as proto_notification_command_pb from '../../proto/notification/command_pb';
 
 export class GetAdminSubscriptionRequest extends jspb.Message {
   getId(): string;

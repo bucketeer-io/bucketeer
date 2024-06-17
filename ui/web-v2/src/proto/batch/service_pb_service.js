@@ -1,7 +1,7 @@
 // package: bucketeer.batch
 // file: proto/batch/service.proto
 
-var proto_batch_service_pb = require('./service_pb');
+var proto_batch_service_pb = require('../../proto/batch/service_pb');
 var grpc = require('@improbable-eng/grpc-web').grpc;
 
 var BatchService = (function () {
@@ -16,7 +16,7 @@ BatchService.ExecuteBatchJob = {
   requestStream: false,
   responseStream: false,
   requestType: proto_batch_service_pb.BatchJobRequest,
-  responseType: proto_batch_service_pb.BatchJobResponse,
+  responseType: proto_batch_service_pb.BatchJobResponse
 };
 
 exports.BatchService = BatchService;
@@ -51,13 +51,13 @@ BatchServiceClient.prototype.executeBatchJob = function executeBatchJob(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 

@@ -16,7 +16,7 @@ import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
   SORT_OPTIONS_NAME_ASC,
-  SORT_OPTIONS_NAME_DESC,
+  SORT_OPTIONS_NAME_DESC
 } from '../../types/list';
 import { classNames } from '../../utils/css';
 import { ActionMenu, MenuActions, MenuItem } from '../ActionMenu';
@@ -45,7 +45,7 @@ export const GoalList: FC<GoalListProps> = memo(
     onChangeSearchOptions,
     onAdd,
     onUpdate,
-    onArchive,
+    onArchive
   }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsEditable();
@@ -67,7 +67,7 @@ export const GoalList: FC<GoalListProps> = memo(
       items.push({
         action: MenuActions.ARCHIVE,
         name: intl.formatMessage(messages.feature.action.archive),
-        iconElement: <MUArchiveIcon />,
+        iconElement: <MUArchiveIcon />
       });
       return items;
     };
@@ -91,14 +91,14 @@ export const GoalList: FC<GoalListProps> = memo(
               <div className="text-gray-700">
                 <h1 className="text-lg">
                   {f(messages.noResult.title, {
-                    title: f(messages.goal.list.header.title),
+                    title: f(messages.goal.list.header.title)
                   })}
                 </h1>
                 <div className="flex justify-center mt-4">
                   <ul className="list-disc">
                     <li>
                       {f(messages.noResult.searchByKeyword, {
-                        keyword: f(messages.goal.list.noResult.searchKeyword),
+                        keyword: f(messages.goal.list.noResult.searchKeyword)
                       })}
                     </li>
                     <li>{f(messages.noResult.changeFilterSelection)}</li>
@@ -112,7 +112,7 @@ export const GoalList: FC<GoalListProps> = memo(
               <div className="w-[600px] text-gray-700 text-center">
                 <h1 className="text-lg">
                   {f(messages.noData.title, {
-                    title: f(messages.goal.list.header.title),
+                    title: f(messages.goal.list.header.title)
                   })}
                 </h1>
                 <p className="mt-5">
@@ -205,58 +205,58 @@ export const GoalList: FC<GoalListProps> = memo(
 const sortItems: SortItem[] = [
   {
     key: SORT_OPTIONS_CREATED_AT_DESC,
-    message: intl.formatMessage(messages.feature.sort.newest),
+    message: intl.formatMessage(messages.feature.sort.newest)
   },
   {
     key: SORT_OPTIONS_CREATED_AT_ASC,
-    message: intl.formatMessage(messages.feature.sort.oldest),
+    message: intl.formatMessage(messages.feature.sort.oldest)
   },
   {
     key: SORT_OPTIONS_NAME_ASC,
-    message: intl.formatMessage(messages.feature.sort.nameAz),
+    message: intl.formatMessage(messages.feature.sort.nameAz)
   },
   {
     key: SORT_OPTIONS_NAME_DESC,
-    message: intl.formatMessage(messages.feature.sort.nameZa),
-  },
+    message: intl.formatMessage(messages.feature.sort.nameZa)
+  }
 ];
 
 export enum FilterTypes {
   STATUS = 'status',
-  ARCHIVED = 'archived',
+  ARCHIVED = 'archived'
 }
 
 export const filterOptions: Option[] = [
   {
     value: FilterTypes.STATUS,
-    label: intl.formatMessage(messages.goal.filter.status),
+    label: intl.formatMessage(messages.goal.filter.status)
   },
   {
     value: FilterTypes.ARCHIVED,
-    label: intl.formatMessage(messages.goal.filter.archived),
-  },
+    label: intl.formatMessage(messages.goal.filter.archived)
+  }
 ];
 
 export const statusOptions: Option[] = [
   {
     value: 'true',
-    label: intl.formatMessage(messages.goal.status.inUse),
+    label: intl.formatMessage(messages.goal.status.inUse)
   },
   {
     value: 'false',
-    label: intl.formatMessage(messages.goal.status.notInUse),
-  },
+    label: intl.formatMessage(messages.goal.status.notInUse)
+  }
 ];
 
 const archivedOptions: Option[] = [
   {
     value: 'true',
-    label: intl.formatMessage(messages.yes),
+    label: intl.formatMessage(messages.yes)
   },
   {
     value: 'false',
-    label: intl.formatMessage(messages.no),
-  },
+    label: intl.formatMessage(messages.no)
+  }
 ];
 
 export interface GoalSearchProps {
@@ -295,12 +295,12 @@ export const GoalSearch: FC<GoalSearchProps> = memo(
       switch (key) {
         case FilterTypes.STATUS:
           handleUpdateOption({
-            status: value,
+            status: value
           });
           return;
         case FilterTypes.ARCHIVED:
           handleUpdateOption({
-            archived: value,
+            archived: value
           });
           return;
       }
@@ -320,7 +320,7 @@ export const GoalSearch: FC<GoalSearchProps> = memo(
               value={options.q}
               onChange={(query: string) =>
                 handleUpdateOption({
-                  q: query,
+                  q: query
                 })
               }
             />
@@ -340,7 +340,7 @@ export const GoalSearch: FC<GoalSearchProps> = memo(
               sortItems={sortItems}
               onChange={(sort: string) =>
                 handleUpdateOption({
-                  sort: sort,
+                  sort: sort
                 })
               }
             />
@@ -370,7 +370,7 @@ export const GoalSearch: FC<GoalSearchProps> = memo(
                 }`}
                 onRemove={() =>
                   handleUpdateOption({
-                    status: null,
+                    status: null
                   })
                 }
               />
@@ -384,7 +384,7 @@ export const GoalSearch: FC<GoalSearchProps> = memo(
                 }`}
                 onRemove={() =>
                   handleUpdateOption({
-                    archived: null,
+                    archived: null
                   })
                 }
               />
@@ -394,7 +394,7 @@ export const GoalSearch: FC<GoalSearchProps> = memo(
                 onClick={() =>
                   handleUpdateOption({
                     status: null,
-                    archived: null,
+                    archived: null
                   })
                 }
               />

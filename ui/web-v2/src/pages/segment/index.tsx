@@ -8,7 +8,7 @@ import {
   useHistory,
   useRouteMatch,
   useLocation,
-  useParams,
+  useParams
 } from 'react-router-dom';
 
 import { Header } from '../../components/Header';
@@ -22,7 +22,7 @@ import {
   ID_NEW,
   PAGE_PATH_USER_SEGMENTS,
   PAGE_PATH_NEW,
-  PAGE_PATH_ROOT,
+  PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { SEGMENT_LIST_PAGE_SIZE } from '../../constants/segment';
 import { messages } from '../../lang/messages';
@@ -38,7 +38,7 @@ import {
   updateSegment,
   deleteSegmentUser,
   OrderBy,
-  OrderDirection,
+  OrderDirection
 } from '../../modules/segments';
 import { Segment } from '../../proto/feature/segment_pb';
 import { ListSegmentsRequest } from '../../proto/feature/service_pb';
@@ -46,12 +46,12 @@ import { AppDispatch } from '../../store';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
-  SORT_OPTIONS_NAME_ASC,
+  SORT_OPTIONS_NAME_ASC
 } from '../../types/list';
 import { SegmentSortOption, isSegmentSortOption } from '../../types/segment';
 import {
   stringifySearchParams,
-  useSearchParams,
+  useSearchParams
 } from '../../utils/search-params';
 
 import { addFormSchema, updateFormSchema } from './formSchema';
@@ -66,22 +66,22 @@ const createSort = (sortOption?: SegmentSortOption): Sort => {
     case SORT_OPTIONS_CREATED_AT_ASC:
       return {
         orderBy: ListSegmentsRequest.OrderBy.CREATED_AT,
-        orderDirection: ListSegmentsRequest.OrderDirection.ASC,
+        orderDirection: ListSegmentsRequest.OrderDirection.ASC
       };
     case SORT_OPTIONS_CREATED_AT_DESC:
       return {
         orderBy: ListSegmentsRequest.OrderBy.CREATED_AT,
-        orderDirection: ListSegmentsRequest.OrderDirection.DESC,
+        orderDirection: ListSegmentsRequest.OrderDirection.DESC
       };
     case SORT_OPTIONS_NAME_ASC:
       return {
         orderBy: ListSegmentsRequest.OrderBy.NAME,
-        orderDirection: ListSegmentsRequest.OrderDirection.ASC,
+        orderDirection: ListSegmentsRequest.OrderDirection.ASC
       };
     default:
       return {
         orderBy: ListSegmentsRequest.OrderBy.NAME,
-        orderDirection: ListSegmentsRequest.OrderDirection.DESC,
+        orderDirection: ListSegmentsRequest.OrderDirection.DESC
       };
   }
 };
@@ -106,7 +106,7 @@ export const SegmentIndexPage: FC = memo(() => {
   >(
     (state) => [
       selectSegmentById(state.segments, segmentId),
-      state.segments.getSegmentError,
+      state.segments.getSegmentError
     ],
     shallowEqual
   );
@@ -114,7 +114,7 @@ export const SegmentIndexPage: FC = memo(() => {
     (options: Record<string, string | number | boolean | undefined>) => {
       history.replace(
         `${url}?${stringifySearchParams({
-          ...options,
+          ...options
         })}`
       );
     },
@@ -139,7 +139,7 @@ export const SegmentIndexPage: FC = memo(() => {
           searchKeyword: options && (options.q as string),
           orderBy: sort.orderBy,
           orderDirection: sort.orderDirection,
-          inUse: inUse,
+          inUse: inUse
         })
       );
     },
@@ -150,9 +150,9 @@ export const SegmentIndexPage: FC = memo(() => {
 
   const deleteMethod = useForm({
     defaultValues: {
-      segment: null,
+      segment: null
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
 
   const { handleSubmit: deleteHandleSubmit, setValue: deleteSetValue } =
@@ -175,7 +175,7 @@ export const SegmentIndexPage: FC = memo(() => {
       dispatch(
         deleteSegmentUser({
           environmentNamespace: currentEnvironment.id,
-          id: data.segment.id,
+          id: data.segment.id
         })
       );
     },
@@ -187,7 +187,7 @@ export const SegmentIndexPage: FC = memo(() => {
       dispatch(
         bulkDownloadSegmentUsers({
           environmentNamespace: currentEnvironment.id,
-          segmentId: segment.id,
+          segmentId: segment.id
         })
       ).then((data) => {
         const url = window.URL.createObjectURL(
@@ -229,7 +229,7 @@ export const SegmentIndexPage: FC = memo(() => {
     setOpen(true);
     history.push({
       pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}${PAGE_PATH_NEW}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location]);
 
@@ -245,11 +245,11 @@ export const SegmentIndexPage: FC = memo(() => {
           isInUseStatus: s.isInUseStatus,
           status: s.status,
           file: null,
-          featureList: s.featuresList,
+          featureList: s.featuresList
         });
         history.push({
           pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}/${s.id}`,
-          search: location.search,
+          search: location.search
         });
       }
     },
@@ -262,20 +262,20 @@ export const SegmentIndexPage: FC = memo(() => {
       name: '',
       description: '',
       file: null,
-      userIds: '',
+      userIds: ''
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const { handleSubmit: handleAddSubmit, reset: resetAdd } = addMethod;
 
   const updateMethod = useForm({
     resolver: yupResolver(updateFormSchema),
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const {
     handleSubmit: handleUpdateSubmit,
     formState: { dirtyFields },
-    reset: resetUpdate,
+    reset: resetUpdate
   } = updateMethod;
 
   const handleOnClose = useCallback(() => {
@@ -284,7 +284,7 @@ export const SegmentIndexPage: FC = memo(() => {
     setOpen(false);
     history.replace({
       pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location, resetAdd, resetUpdate]);
 
@@ -294,7 +294,7 @@ export const SegmentIndexPage: FC = memo(() => {
         createSegment({
           environmentNamespace: currentEnvironment.id,
           name: data.name,
-          description: data.description,
+          description: data.description
         })
       ).then((response) => {
         let file: File;
@@ -303,7 +303,7 @@ export const SegmentIndexPage: FC = memo(() => {
         } else if (data.userIds) {
           // Convert string to file object
           file = new File([data.userIds], 'filename.txt', {
-            type: 'text/plain',
+            type: 'text/plain'
           });
         }
 
@@ -313,7 +313,7 @@ export const SegmentIndexPage: FC = memo(() => {
               bulkUploadSegmentUsers({
                 environmentNamespace: currentEnvironment.id,
                 segmentId: response.payload as string,
-                data: uint8Array,
+                data: uint8Array
               })
             ).then(addFinished);
           });
@@ -362,7 +362,7 @@ export const SegmentIndexPage: FC = memo(() => {
       } else if (data.userIds) {
         // Convert string to file object
         file = new File([data.userIds], 'filename.txt', {
-          type: 'text/plain',
+          type: 'text/plain'
         });
       }
 
@@ -373,13 +373,13 @@ export const SegmentIndexPage: FC = memo(() => {
             bulkUploadSegmentUsers({
               environmentNamespace: currentEnvironment.id,
               segmentId: segmentId,
-              data: uint8Array,
+              data: uint8Array
             })
           ).then(() => {
             dispatch(
               getSegment({
                 environmentNamespace: currentEnvironment.id,
-                id: segmentId,
+                id: segmentId
               })
             ).then(handleOnClose);
           });
@@ -392,14 +392,14 @@ export const SegmentIndexPage: FC = memo(() => {
           environmentNamespace: currentEnvironment.id,
           id: segmentId,
           name: name,
-          description: description,
+          description: description
         })
       ).then(() => {
         if (!file) {
           dispatch(
             getSegment({
               environmentNamespace: currentEnvironment.id,
-              id: segmentId,
+              id: segmentId
             })
           ).then(handleOnClose);
           return;
@@ -409,13 +409,13 @@ export const SegmentIndexPage: FC = memo(() => {
             bulkUploadSegmentUsers({
               environmentNamespace: currentEnvironment.id,
               segmentId: segmentId,
-              data: uint8Array,
+              data: uint8Array
             })
           ).then(() => {
             dispatch(
               getSegment({
                 environmentNamespace: currentEnvironment.id,
-                id: segmentId,
+                id: segmentId
               })
             ).then(handleOnClose);
           });
@@ -438,13 +438,13 @@ export const SegmentIndexPage: FC = memo(() => {
       dispatch(
         getSegment({
           environmentNamespace: currentEnvironment.id,
-          id: segmentId,
+          id: segmentId
         })
       ).then((response) => {
         const payload = response.payload as Segment.AsObject;
         resetUpdate({
           name: payload.name,
-          description: payload.description,
+          description: payload.description
         });
       });
     }

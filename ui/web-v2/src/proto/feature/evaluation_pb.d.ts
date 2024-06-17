@@ -2,8 +2,8 @@
 // file: proto/feature/evaluation.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_feature_variation_pb from './variation_pb';
-import * as proto_feature_reason_pb from './reason_pb';
+import * as proto_feature_variation_pb from '../../proto/feature/variation_pb';
+import * as proto_feature_reason_pb from '../../proto/feature/reason_pb';
 
 export class Evaluation extends jspb.Message {
   getId(): string;

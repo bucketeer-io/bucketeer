@@ -4,7 +4,7 @@ import * as yup from 'yup';
 import {
   PUSH_NAME_MAX_LENGTH,
   PUSH_FCM_API_KEY_MAX_LENGTH,
-  PUSH_TAG_LIST_MIN_LENGTH,
+  PUSH_TAG_LIST_MIN_LENGTH
 } from '../../constants/push';
 
 yup.setLocale(yupLocale);
@@ -19,11 +19,11 @@ const tagsSchema = yup.array().required().min(PUSH_TAG_LIST_MIN_LENGTH);
 export const addFormSchema = yup.object().shape({
   name: nameSchema,
   fcmApiKey: fcmApiKeySchema,
-  tags: tagsSchema,
+  tags: tagsSchema
 });
 
 export const updateFormSchema = yup.object().shape({
   name: nameSchema,
   fcmApiKey: fcmApiKeySchema,
-  tags: tagsSchema,
+  tags: tagsSchema
 });

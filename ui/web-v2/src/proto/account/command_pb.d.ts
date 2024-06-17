@@ -2,8 +2,8 @@
 // file: proto/account/command.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_account_account_pb from './account_pb';
-import * as proto_account_api_key_pb from './api_key_pb';
+import * as proto_account_account_pb from '../../proto/account/account_pb';
+import * as proto_account_api_key_pb from '../../proto/account/api_key_pb';
 
 export class CreateAccountV2Command extends jspb.Message {
   getEmail(): string;

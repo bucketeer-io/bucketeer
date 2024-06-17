@@ -2,7 +2,7 @@
 // file: proto/eventcounter/distribution_summary.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_eventcounter_histogram_pb from './histogram_pb';
+import * as proto_eventcounter_histogram_pb from '../../proto/eventcounter/histogram_pb';
 
 export class DistributionSummary extends jspb.Message {
   getMean(): number;

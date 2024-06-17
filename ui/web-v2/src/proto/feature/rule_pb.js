@@ -23,9 +23,9 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_feature_clause_pb = require('./clause_pb.js');
+var proto_feature_clause_pb = require('../../proto/feature/clause_pb.js');
 goog.object.extend(proto, proto_feature_clause_pb);
-var proto_feature_strategy_pb = require('./strategy_pb.js');
+var proto_feature_strategy_pb = require('../../proto/feature/strategy_pb.js');
 goog.object.extend(proto, proto_feature_strategy_pb);
 goog.exportSymbol('proto.bucketeer.feature.Rule', null, global);
 /**
@@ -103,7 +103,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg.getClausesList(),
           proto_feature_clause_pb.Clause.toObject,
           includeInstance
-        ),
+        )
       };
 
     if (includeInstance) {

@@ -25,7 +25,7 @@ var global =
 
 var google_protobuf_wrappers_pb = require('google-protobuf/google/protobuf/wrappers_pb.js');
 goog.object.extend(proto, google_protobuf_wrappers_pb);
-var proto_auditlog_auditlog_pb = require('./auditlog_pb.js');
+var proto_auditlog_auditlog_pb = require('../../proto/auditlog/auditlog_pb.js');
 goog.object.extend(proto, proto_auditlog_auditlog_pb);
 goog.exportSymbol(
   'proto.bucketeer.auditlog.ListAdminAuditLogsRequest',
@@ -294,7 +294,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         to: jspb.Message.getFieldWithDefault(msg, 8, 0),
         entityType:
           (f = msg.getEntityType()) &&
-          google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f),
+          google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -460,7 +460,7 @@ proto.bucketeer.auditlog.ListAuditLogsRequest.serializeBinaryToWriter =
  */
 proto.bucketeer.auditlog.ListAuditLogsRequest.OrderBy = {
   DEFAULT: 0,
-  TIMESTAMP: 1,
+  TIMESTAMP: 1
 };
 
 /**
@@ -468,7 +468,7 @@ proto.bucketeer.auditlog.ListAuditLogsRequest.OrderBy = {
  */
 proto.bucketeer.auditlog.ListAuditLogsRequest.OrderDirection = {
   DESC: 0,
-  ASC: 1,
+  ASC: 1
 };
 
 /**
@@ -720,7 +720,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           includeInstance
         ),
         cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0)
       };
 
     if (includeInstance) {
@@ -960,7 +960,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         to: jspb.Message.getFieldWithDefault(msg, 7, 0),
         entityType:
           (f = msg.getEntityType()) &&
-          google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f),
+          google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -1117,7 +1117,7 @@ proto.bucketeer.auditlog.ListAdminAuditLogsRequest.serializeBinaryToWriter =
  */
 proto.bucketeer.auditlog.ListAdminAuditLogsRequest.OrderBy = {
   DEFAULT: 0,
-  TIMESTAMP: 1,
+  TIMESTAMP: 1
 };
 
 /**
@@ -1125,7 +1125,7 @@ proto.bucketeer.auditlog.ListAdminAuditLogsRequest.OrderBy = {
  */
 proto.bucketeer.auditlog.ListAdminAuditLogsRequest.OrderDirection = {
   DESC: 0,
-  ASC: 1,
+  ASC: 1
 };
 
 /**
@@ -1354,7 +1354,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           includeInstance
         ),
         cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0)
       };
 
     if (includeInstance) {
@@ -1591,7 +1591,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         orderDirection: jspb.Message.getFieldWithDefault(msg, 6, 0),
         searchKeyword: jspb.Message.getFieldWithDefault(msg, 7, ''),
         from: jspb.Message.getFieldWithDefault(msg, 8, 0),
-        to: jspb.Message.getFieldWithDefault(msg, 9, 0),
+        to: jspb.Message.getFieldWithDefault(msg, 9, 0)
       };
 
     if (includeInstance) {
@@ -1748,7 +1748,7 @@ proto.bucketeer.auditlog.ListFeatureHistoryRequest.serializeBinaryToWriter =
  */
 proto.bucketeer.auditlog.ListFeatureHistoryRequest.OrderBy = {
   DEFAULT: 0,
-  TIMESTAMP: 1,
+  TIMESTAMP: 1
 };
 
 /**
@@ -1756,7 +1756,7 @@ proto.bucketeer.auditlog.ListFeatureHistoryRequest.OrderBy = {
  */
 proto.bucketeer.auditlog.ListFeatureHistoryRequest.OrderDirection = {
   DESC: 0,
-  ASC: 1,
+  ASC: 1
 };
 
 /**
@@ -1983,7 +1983,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           includeInstance
         ),
         cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        totalCount: jspb.Message.getFieldWithDefault(msg, 3, 0)
       };
 
     if (includeInstance) {

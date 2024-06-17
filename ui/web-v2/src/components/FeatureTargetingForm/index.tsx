@@ -1,7 +1,7 @@
 import {
   PAGE_PATH_FEATURES,
   PAGE_PATH_FEATURE_AUTOOPS,
-  PAGE_PATH_ROOT,
+  PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { isLanguageJapanese } from '../../lang/getSelectedLanguage';
 import { selectAll as selectAllProgressiveRollouts } from '../../modules/porgressiveRollout';
@@ -9,7 +9,7 @@ import { ProgressiveRollout } from '../../proto/autoops/progressive_rollout_pb';
 import { ListFeaturesRequest } from '../../proto/feature/service_pb';
 import {
   createVariationLabel,
-  getAlreadyTargetedVariation,
+  getAlreadyTargetedVariation
 } from '../../utils/variation';
 import {
   MinusCircleIcon,
@@ -19,7 +19,7 @@ import {
   ChevronUpIcon,
   PlusCircleIcon,
   ArrowUpIcon,
-  ArrowDownIcon,
+  ArrowDownIcon
 } from '@heroicons/react/solid';
 import { FileCopyOutlined } from '@material-ui/icons';
 import { SerializedError } from '@reduxjs/toolkit';
@@ -29,7 +29,7 @@ import {
   useFormContext,
   Controller,
   useFieldArray,
-  useWatch,
+  useWatch
 } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
@@ -45,12 +45,12 @@ import { AppState } from '../../modules';
 import {
   selectById as selectFeatureById,
   selectAll as selectAllFeatures,
-  listFeatures,
+  listFeatures
 } from '../../modules/features';
 import { useCurrentEnvironment, useIsEditable } from '../../modules/me';
 import {
   listSegments,
-  selectAll as selectAllSegments,
+  selectAll as selectAllSegments
 } from '../../modules/segments';
 import { Clause } from '../../proto/feature/clause_pb';
 import { Feature } from '../../proto/feature/feature_pb';
@@ -78,7 +78,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
     const {
       control,
       formState: { errors, isDirty, dirtyFields },
-      watch,
+      watch
     } = methods;
     const history = useHistory();
     const currentEnvironment = useCurrentEnvironment();
@@ -92,7 +92,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
       [Feature.AsObject | undefined, SerializedError | null]
     >((state) => [
       selectFeatureById(state.features, featureId),
-      state.features.getFeatureError,
+      state.features.getFeatureError
     ]);
     const progressiveRolloutList = useSelector<
       AppState,
@@ -111,17 +111,17 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
     const strategyOptions = feature.variationsList.map((v) => {
       return {
         value: v.id,
-        label: createVariationLabel(v),
+        label: createVariationLabel(v)
       };
     });
     strategyOptions.push({
       value: Strategy.Type.ROLLOUT.toString(),
-      label: f(messages.feature.strategy.selectRolloutPercentage),
+      label: f(messages.feature.strategy.selectRolloutPercentage)
     });
     const offVariationOptions: Option[] = feature.variationsList.map((v) => {
       return {
         value: v.id,
-        label: createVariationLabel(v),
+        label: createVariationLabel(v)
       };
     });
 
@@ -270,7 +270,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                                                 .alreadyTargetedInVariation,
                                               {
                                                 userId: userInput,
-                                                variationName,
+                                                variationName
                                               }
                                             )}
                                           </span>
@@ -287,7 +287,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
 
                                         <span className="text-blue-700">
                                           {f(messages.feature.addUser, {
-                                            userId: userInput,
+                                            userId: userInput
                                           })}
                                         </span>
                                       </div>
@@ -297,12 +297,12 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                                     DropdownIndicator: null,
                                     NoOptionsMessage: (props) => (
                                       <NoOptionsMessage props={props} />
-                                    ),
+                                    )
                                   }}
                                   value={field.value.map((u) => {
                                     return {
                                       value: u,
-                                      label: u,
+                                      label: u
                                     };
                                   })}
                                   onChange={(options: Option[]) => {
@@ -382,7 +382,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
                                     {f(messages.sourceType.progressiveRollout)}
                                   </span>
                                 </span>
-                              ),
+                              )
                             }
                           )}
                         </p>
@@ -471,7 +471,7 @@ const FlagIsPrerequisite: FC<FlagIsPrerequisiteProps> = ({ featureId }) => {
       searchKeyword: null,
       maintainerId: null,
       orderBy: ListFeaturesRequest.OrderBy.DEFAULT,
-      orderDirection: ListFeaturesRequest.OrderDirection.ASC,
+      orderDirection: ListFeaturesRequest.OrderDirection.ASC
     });
   }, []);
 
@@ -485,8 +485,8 @@ const FlagIsPrerequisite: FC<FlagIsPrerequisiteProps> = ({ featureId }) => {
         ...acc,
         {
           id: feature.id,
-          name: feature.name,
-        },
+          name: feature.name
+        }
       ];
     }
     return acc;
@@ -510,7 +510,7 @@ const FlagIsPrerequisite: FC<FlagIsPrerequisiteProps> = ({ featureId }) => {
         <div className="ml-3 flex-1">
           <p className="text-sm text-blue-700">
             {f(messages.feature.flagIsPrerequisite, {
-              length: flagListLength,
+              length: flagListLength
             })}
           </p>
           <div
@@ -530,7 +530,7 @@ const FlagIsPrerequisite: FC<FlagIsPrerequisiteProps> = ({ featureId }) => {
             <div className="pl-4 mt-2 space-y-2 text-sm">
               <p className="text-gray-600">
                 {f(messages.feature.flagIsPrerequisiteDescription, {
-                  length: flagListLength,
+                  length: flagListLength
                 })}
               </p>
               <ul className="list-disc pl-4">
@@ -566,17 +566,17 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
 
     const {
       control,
-      formState: { errors },
+      formState: { errors }
     } = methods;
     const {
       fields: prerequisites,
       append: appendPrerequisite,
       remove,
-      update,
+      update
     } = useFieldArray({
       control,
       name: 'prerequisites',
-      keyName: 'key',
+      keyName: 'key'
     });
 
     const features = useSelector<AppState, Feature.AsObject[]>(
@@ -590,14 +590,14 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
           setTimeout(() => {
             appendPrerequisite({
               featureId: null,
-              variationId: null,
+              variationId: null
             });
           });
         });
       } else {
         appendPrerequisite({
           featureId: null,
-          variationId: null,
+          variationId: null
         });
       }
     }, [prerequisites]);
@@ -622,7 +622,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
           maintainerId: null,
           archived: false,
           orderBy: ListFeaturesRequest.OrderBy.DEFAULT,
-          orderDirection: ListFeaturesRequest.OrderDirection.ASC,
+          orderDirection: ListFeaturesRequest.OrderDirection.ASC
         })
       );
     };
@@ -651,7 +651,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
 
               const variationOptions = variationList?.map((v) => ({
                 label: v.value,
-                value: v.id,
+                value: v.id
               }));
 
               const featureFlagOptions = features
@@ -667,7 +667,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
                   return {
                     value: f.id,
                     label: f.name,
-                    enabled: f.enabled,
+                    enabled: f.enabled
                   };
                 });
 
@@ -688,7 +688,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
                               update(prerequisitesIdx, {
                                 ...p,
                                 featureId: e.value,
-                                variationId: null,
+                                variationId: null
                               });
                             }
                           }}
@@ -713,7 +713,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
                             field.onChange(e.value);
                             update(prerequisitesIdx, {
                               ...p,
-                              variationId: e.value,
+                              variationId: e.value
                             });
                           }}
                           value={
@@ -770,24 +770,24 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
   const methods = useFormContext<TargetingForm>();
   const {
     control,
-    formState: { errors },
+    formState: { errors }
   } = methods;
   const {
     fields: rules,
     append: appendRule,
     remove,
-    swap,
+    swap
   } = useFieldArray({
     control,
     name: 'rules',
-    keyName: 'key',
+    keyName: 'key'
   });
 
   const newRolloutStrategy = [];
   feature.variationsList.forEach((val, _) => {
     newRolloutStrategy.push({
       id: val.id,
-      percentage: 0,
+      percentage: 0
     });
   });
   const handleAddRule = useCallback(() => {
@@ -796,9 +796,9 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
       strategy: {
         option: {
           value: feature.variationsList[0].id,
-          label: createVariationLabel(feature.variationsList[0]),
+          label: createVariationLabel(feature.variationsList[0])
         },
-        rolloutStrategy: newRolloutStrategy,
+        rolloutStrategy: newRolloutStrategy
       },
       clauses: [
         {
@@ -806,9 +806,9 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
           type: ruleClauseType.COMPARE,
           attribute: '',
           operator: Clause.Operator.EQUALS.toString(),
-          values: [],
-        },
-      ],
+          values: []
+        }
+      ]
     });
   }, []);
 
@@ -902,66 +902,66 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
 export const clauseTypeOptions: Option[] = [
   {
     value: ruleClauseType.COMPARE,
-    label: intl.formatMessage(messages.feature.clause.type.compare),
+    label: intl.formatMessage(messages.feature.clause.type.compare)
   },
   {
     value: ruleClauseType.SEGMENT,
-    label: intl.formatMessage(messages.feature.clause.type.segment),
+    label: intl.formatMessage(messages.feature.clause.type.segment)
   },
   {
     value: ruleClauseType.DATE,
-    label: intl.formatMessage(messages.feature.clause.type.date),
+    label: intl.formatMessage(messages.feature.clause.type.date)
   },
   {
     value: ruleClauseType.FEATURE_FLAG,
-    label: intl.formatMessage(messages.feature.clause.type.featureFlag),
-  },
+    label: intl.formatMessage(messages.feature.clause.type.featureFlag)
+  }
 ];
 
 export const clauseCompareOperatorOptions: Option[] = [
   {
     value: Clause.Operator.EQUALS.toString(),
-    label: intl.formatMessage(messages.feature.clause.operator.equal),
+    label: intl.formatMessage(messages.feature.clause.operator.equal)
   },
   {
     value: Clause.Operator.GREATER_OR_EQUAL.toString(),
-    label: intl.formatMessage(messages.feature.clause.operator.greaterOrEqual),
+    label: intl.formatMessage(messages.feature.clause.operator.greaterOrEqual)
   },
   {
     value: Clause.Operator.GREATER.toString(),
-    label: intl.formatMessage(messages.feature.clause.operator.greater),
+    label: intl.formatMessage(messages.feature.clause.operator.greater)
   },
   {
     value: Clause.Operator.LESS_OR_EQUAL.toString(),
-    label: intl.formatMessage(messages.feature.clause.operator.lessOrEqual),
+    label: intl.formatMessage(messages.feature.clause.operator.lessOrEqual)
   },
   {
     value: Clause.Operator.LESS.toString(),
-    label: intl.formatMessage(messages.feature.clause.operator.less),
+    label: intl.formatMessage(messages.feature.clause.operator.less)
   },
   {
     value: Clause.Operator.IN.toString(),
-    label: intl.formatMessage(messages.feature.clause.operator.in),
+    label: intl.formatMessage(messages.feature.clause.operator.in)
   },
   {
     value: Clause.Operator.STARTS_WITH.toString(),
-    label: intl.formatMessage(messages.feature.clause.operator.startWith),
+    label: intl.formatMessage(messages.feature.clause.operator.startWith)
   },
   {
     value: Clause.Operator.ENDS_WITH.toString(),
-    label: intl.formatMessage(messages.feature.clause.operator.endWith),
-  },
+    label: intl.formatMessage(messages.feature.clause.operator.endWith)
+  }
 ];
 
 export const clauseDateOperatorOptions: Option[] = [
   {
     value: Clause.Operator.BEFORE.toString(),
-    label: intl.formatMessage(messages.feature.clause.operator.before),
+    label: intl.formatMessage(messages.feature.clause.operator.before)
   },
   {
     value: Clause.Operator.AFTER.toString(),
-    label: intl.formatMessage(messages.feature.clause.operator.after),
-  },
+    label: intl.formatMessage(messages.feature.clause.operator.after)
+  }
 ];
 
 export interface ClausesInputProps {
@@ -986,17 +986,17 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
       getValues,
       register,
       control,
-      formState: { errors },
+      formState: { errors }
     } = methods;
     const {
       fields: clauses,
       append,
       remove,
-      update,
+      update
     } = useFieldArray({
       control,
       name: `rules.${ruleIdx}.clauses`,
-      keyName: 'key',
+      keyName: 'key'
     });
     const selectedFeatureIds = new Set(clauses.map((c) => c.attribute));
 
@@ -1005,7 +1005,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
         selectAllSegments(state.segments).map((s) => {
           return {
             value: s.id,
-            label: s.name,
+            label: s.name
           };
         }),
       shallowEqual
@@ -1021,7 +1021,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
         .map((f) => {
           return {
             value: f.id,
-            label: f.name,
+            label: f.name
           };
         });
       const vos = new Map<string, Option[]>();
@@ -1029,7 +1029,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
         vos[f.id] = f.variationsList.map((v) => {
           return {
             value: v.id,
-            label: v.value,
+            label: v.value
           };
         });
       });
@@ -1045,7 +1045,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
               type: type,
               attribute: '',
               operator: Clause.Operator.EQUALS.toString(),
-              values: [],
+              values: []
             });
             break;
           }
@@ -1055,12 +1055,12 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
               type: type,
               attribute: '',
               operator: Clause.Operator.SEGMENT.toString(),
-              values: [segmentOptions[0]?.value],
+              values: [segmentOptions[0]?.value]
             });
             dispatch(
               listSegments({
                 environmentNamespace: currentEnvironment.id,
-                cursor: '',
+                cursor: ''
               })
             );
             break;
@@ -1072,7 +1072,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
               type: type,
               attribute: '',
               operator: Clause.Operator.BEFORE.toString(),
-              values: [now],
+              values: [now]
             });
             break;
           }
@@ -1082,7 +1082,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
               type: type,
               attribute: '',
               operator: Clause.Operator.FEATURE_FLAG.toString(),
-              values: [],
+              values: []
             });
             dispatch(
               listFeatures({
@@ -1096,7 +1096,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                 hasExperiment: null,
                 archived: false,
                 orderBy: ListFeaturesRequest.OrderBy.DEFAULT,
-                orderDirection: ListFeaturesRequest.OrderDirection.ASC,
+                orderDirection: ListFeaturesRequest.OrderDirection.ASC
               })
             );
             break;
@@ -1112,7 +1112,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
         type: ruleClauseType.COMPARE,
         attribute: '',
         operator: Clause.Operator.EQUALS.toString(),
-        values: [],
+        values: []
       });
     }, [append]);
 
@@ -1136,7 +1136,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
           hasExperiment: null,
           archived: false,
           orderBy: ListFeaturesRequest.OrderBy.DEFAULT,
-          orderDirection: ListFeaturesRequest.OrderDirection.ASC,
+          orderDirection: ListFeaturesRequest.OrderDirection.ASC
         })
       );
     }, []);
@@ -1231,7 +1231,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                             defaultValues={field.value.map((v) => {
                               return {
                                 value: v,
-                                label: v,
+                                label: v
                               };
                             })}
                             onChange={(opts: Option[]) =>
@@ -1492,33 +1492,33 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
       register,
       control,
       formState: { errors },
-      trigger,
+      trigger
     } = methods;
     const selectedOption = useWatch({
       control,
-      name: `${strategyName}.option`,
+      name: `${strategyName}.option`
     });
     const { fields: rolloutStrategy, update } = useFieldArray({
       control,
       name: `${strategyName}.rolloutStrategy`,
-      keyName: 'key', // the default keyName is "id" and it conflicts with the variation id field
+      keyName: 'key' // the default keyName is "id" and it conflicts with the variation id field
     });
 
     const strategyOptions = feature.variationsList.map((v) => {
       return {
         value: v.id,
-        label: createVariationLabel(v),
+        label: createVariationLabel(v)
       };
     });
     strategyOptions.push({
       value: String(Strategy.Type.ROLLOUT),
-      label: f(messages.feature.strategy.selectRolloutPercentage),
+      label: f(messages.feature.strategy.selectRolloutPercentage)
     });
     const handleOnChange = useCallback(
       (idx: number, id: string, e: React.ChangeEvent<HTMLInputElement>) => {
         update(idx, {
           id: id,
-          percentage: Number(e.target.value),
+          percentage: Number(e.target.value)
         });
         trigger(strategyName);
       },
@@ -1536,7 +1536,7 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
               disabled={!editable || disabled}
               value={{
                 label: selectedOption.label ?? '',
-                value: selectedOption.value ?? '',
+                value: selectedOption.value ?? ''
               }}
               onChange={field.onChange}
               isSearchable={false}

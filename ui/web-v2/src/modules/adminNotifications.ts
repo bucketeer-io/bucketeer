@@ -2,7 +2,7 @@ import {
   createSlice,
   createEntityAdapter,
   createAsyncThunk,
-  SerializedError,
+  SerializedError
 } from '@reduxjs/toolkit';
 import { BoolValue } from 'google-protobuf/google/protobuf/wrappers_pb';
 
@@ -14,11 +14,11 @@ import {
   DeleteAdminSubscriptionCommand,
   DisableAdminSubscriptionCommand,
   EnableAdminSubscriptionCommand,
-  RenameAdminSubscriptionCommand,
+  RenameAdminSubscriptionCommand
 } from '../proto/notification/command_pb';
 import {
   Recipient,
-  SlackChannelRecipient,
+  SlackChannelRecipient
 } from '../proto/notification/recipient_pb';
 import {
   CreateAdminSubscriptionRequest,
@@ -28,7 +28,7 @@ import {
   GetAdminSubscriptionRequest,
   ListAdminSubscriptionsRequest,
   ListAdminSubscriptionsResponse,
-  UpdateAdminSubscriptionRequest,
+  UpdateAdminSubscriptionRequest
 } from '../proto/notification/service_pb';
 import { Subscription } from '../proto/notification/subscription_pb';
 
@@ -39,7 +39,7 @@ import { AppState } from '.';
 const MODULE_NAME = 'notifications';
 
 export const notificationAdapter = createEntityAdapter<Subscription.AsObject>({
-  selectId: (notification) => notification.id,
+  selectId: (notification) => notification.id
 });
 
 export const { selectAll, selectById } = notificationAdapter.getSelectors();
@@ -51,7 +51,7 @@ const initialState = notificationAdapter.getInitialState<{
 }>({
   loading: false,
   totalCount: 0,
-  getSubscriptionError: null,
+  getSubscriptionError: null
 });
 
 export type OrderBy =
@@ -276,5 +276,5 @@ export const adminNotificationSlice = createSlice({
       .addCase(deleteNotification.pending, (state) => {})
       .addCase(deleteNotification.fulfilled, (state, action) => {})
       .addCase(deleteNotification.rejected, (state, action) => {});
-  },
+  }
 });

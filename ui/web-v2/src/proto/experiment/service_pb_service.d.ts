@@ -1,7 +1,7 @@
 // package: bucketeer.experiment
 // file: proto/experiment/service.proto
 
-import * as proto_experiment_service_pb from './service_pb';
+import * as proto_experiment_service_pb from '../../proto/experiment/service_pb';
 import { grpc } from '@improbable-eng/grpc-web';
 
 type ExperimentServiceGetGoal = {

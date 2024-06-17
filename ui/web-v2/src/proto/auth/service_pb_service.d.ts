@@ -1,7 +1,7 @@
 // package: bucketeer.auth
 // file: proto/auth/service.proto
 
-import * as proto_auth_service_pb from './service_pb';
+import * as proto_auth_service_pb from '../../proto/auth/service_pb';
 import { grpc } from '@improbable-eng/grpc-web';
 
 type AuthServiceGetAuthCodeURL = {

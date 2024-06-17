@@ -2,9 +2,9 @@
 // file: proto/notification/sender/notification.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_event_domain_event_pb from '../../event/domain/event_pb';
-import * as proto_feature_feature_pb from '../../feature/feature_pb';
-import * as proto_experiment_experiment_pb from '../../experiment/experiment_pb';
+import * as proto_event_domain_event_pb from '../../../proto/event/domain/event_pb';
+import * as proto_feature_feature_pb from '../../../proto/feature/feature_pb';
+import * as proto_experiment_experiment_pb from '../../../proto/experiment/experiment_pb';
 
 export class Notification extends jspb.Message {
   getType(): Notification.TypeMap[keyof Notification.TypeMap];

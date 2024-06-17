@@ -42,6 +42,7 @@ gen_proto: clean_proto gen_google_api
 	-I $(PROTOBUF_INCLUDE_DIR) \
 	-I $(GOOGLEAPIS) \
 	$(shell find $(ROOT_DIR)/proto -type f -name "*.proto" -not -path "**/gateway/*.proto" -not -path "**/google/protobuf/*.proto" -not -path "**/google/api/*.proto")
+	yarn lintfix
 
 .PHONY: gen_google_api
 gen_google_api:

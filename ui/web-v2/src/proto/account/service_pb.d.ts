@@ -3,10 +3,10 @@
 
 import * as jspb from 'google-protobuf';
 import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
-import * as proto_account_account_pb from './account_pb';
-import * as proto_account_api_key_pb from './api_key_pb';
-import * as proto_account_command_pb from './command_pb';
-import * as proto_environment_organization_pb from '../environment/organization_pb';
+import * as proto_account_account_pb from '../../proto/account/account_pb';
+import * as proto_account_api_key_pb from '../../proto/account/api_key_pb';
+import * as proto_account_command_pb from '../../proto/account/command_pb';
+import * as proto_environment_organization_pb from '../../proto/environment/organization_pb';
 
 export class GetMeRequest extends jspb.Message {
   getOrganizationId(): string;

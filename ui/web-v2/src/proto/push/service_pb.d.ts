@@ -2,8 +2,8 @@
 // file: proto/push/service.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_push_push_pb from './push_pb';
-import * as proto_push_command_pb from './command_pb';
+import * as proto_push_push_pb from '../../proto/push/push_pb';
+import * as proto_push_command_pb from '../../proto/push/command_pb';
 
 export class CreatePushRequest extends jspb.Message {
   getEnvironmentNamespace(): string;

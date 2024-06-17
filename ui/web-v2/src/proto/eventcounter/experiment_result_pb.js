@@ -23,7 +23,7 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_eventcounter_goal_result_pb = require('./goal_result_pb.js');
+var proto_eventcounter_goal_result_pb = require('../../proto/eventcounter/goal_result_pb.js');
 goog.object.extend(proto, proto_eventcounter_goal_result_pb);
 goog.exportSymbol(
   'proto.bucketeer.eventcounter.ExperimentResult',
@@ -111,7 +111,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg.getGoalResultsList(),
           proto_eventcounter_goal_result_pb.GoalResult.toObject,
           includeInstance
-        ),
+        )
       };
 
     if (includeInstance) {

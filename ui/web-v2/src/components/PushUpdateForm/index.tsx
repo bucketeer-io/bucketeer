@@ -24,7 +24,7 @@ export const PushUpdateForm: FC<PushUpdateFormProps> = memo(
     const {
       register,
       control,
-      formState: { errors, isValid, isDirty, isSubmitted },
+      formState: { errors, isValid, isDirty, isSubmitted }
     } = methods;
 
     const tagsList = useSelector<AppState, Tag.AsObject[]>(
@@ -109,12 +109,12 @@ export const PushUpdateForm: FC<PushUpdateFormProps> = memo(
                           value={field.value?.map((tag: string) => {
                             return {
                               value: tag,
-                              label: tag,
+                              label: tag
                             };
                           })}
                           options={tagsList.map((tag) => ({
                             label: tag.id,
-                            value: tag.id,
+                            value: tag.id
                           }))}
                           closeMenuOnSelect={false}
                         />

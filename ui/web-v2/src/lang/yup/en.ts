@@ -5,7 +5,7 @@ export const localEn = {
     oneOf: ({ values }) => `Must be one of the following values: ${values}`,
     notOneOf: ({ values }) =>
       `Must not be one of the following values: ${values}`,
-    isNumber: 'Different format',
+    isNumber: 'Different format'
   },
   string: {
     required: 'Required field',
@@ -17,7 +17,7 @@ export const localEn = {
     url: 'Different format',
     trim: 'Do not put spaces before or after',
     lowercase: 'Must be lowercase',
-    uppercase: 'Must be uppercase',
+    uppercase: 'Must be uppercase'
   },
   number: {
     min: ({ min }) => `Please enter a value greater than or equal to ${min}`,
@@ -28,18 +28,18 @@ export const localEn = {
       `Please enter a value different from ${notEqual}`,
     positive: 'Please enter a positive number',
     negative: 'Please enter a negative number',
-    integer: 'Please enter an integer',
+    integer: 'Please enter an integer'
   },
   date: {
     default: 'Different format',
     min: ({ min }) => `Please enter a date greater than or equal to ${min}`,
-    max: ({ max }) => `Please enter a date less than or equal to ${max}`,
+    max: ({ max }) => `Please enter a date less than or equal to ${max}`
   },
   object: {
-    noUnknown: 'Please enter data with a valid key',
+    noUnknown: 'Please enter data with a valid key'
   },
   array: {
     min: ({ min }) => `Please enter at least ${min} values`,
-    max: ({ max }) => `Please enter no more than ${max} values`,
-  },
+    max: ({ max }) => `Please enter no more than ${max} values`
+  }
 };

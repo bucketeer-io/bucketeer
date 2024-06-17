@@ -1,7 +1,7 @@
 // package: bucketeer.test
 // file: proto/test/service.proto
 
-var proto_test_service_pb = require('./service_pb');
+var proto_test_service_pb = require('../../proto/test/service_pb');
 var grpc = require('@improbable-eng/grpc-web').grpc;
 
 var TestService = (function () {
@@ -16,7 +16,7 @@ TestService.Test = {
   requestStream: false,
   responseStream: false,
   requestType: proto_test_service_pb.TestRequest,
-  responseType: proto_test_service_pb.TestResponse,
+  responseType: proto_test_service_pb.TestResponse
 };
 
 exports.TestService = TestService;
@@ -51,13 +51,13 @@ TestServiceClient.prototype.test = function test(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 

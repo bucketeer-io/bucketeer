@@ -20,7 +20,7 @@ export const EnvironmentUpdateForm: FC<EnvironmentUpdateFormProps> = memo(
       register,
       getValues,
       formState: { errors, isDirty, dirtyFields, isSubmitted, isValid },
-      control,
+      control
     } = methods;
 
     return (
@@ -110,12 +110,12 @@ export const EnvironmentUpdateForm: FC<EnvironmentUpdateFormProps> = memo(
                     options={[
                       {
                         value: getValues().projectId,
-                        label: getValues().projectId,
-                      },
+                        label: getValues().projectId
+                      }
                     ]}
                     value={{
                       value: getValues().projectId,
-                      label: getValues().projectId,
+                      label: getValues().projectId
                     }}
                     onChange={null}
                     disabled={true}

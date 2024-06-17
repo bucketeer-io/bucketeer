@@ -10,7 +10,7 @@ import React, {
   memo,
   useCallback,
   useEffect,
-  useState,
+  useState
 } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useIntl } from 'react-intl';
@@ -28,7 +28,7 @@ import {
   PAGE_PATH_EXPERIMENTS,
   PAGE_PATH_FEATURES,
   PAGE_PATH_NEW,
-  PAGE_PATH_ROOT,
+  PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
@@ -37,7 +37,7 @@ import {
   getExperiment,
   listExperiments,
   selectAll as selectAllExperiment,
-  stopExperiment,
+  stopExperiment
 } from '../../modules/experiments';
 import { selectById as selectFeatureById } from '../../modules/features';
 import { useCurrentEnvironment, useIsEditable } from '../../modules/me';
@@ -66,7 +66,7 @@ export const FeatureExperimentsPage: FC<FeatureExperimentsPageProps> = memo(
     >(
       (state) => [
         selectFeatureById(state.features, featureId),
-        state.features.getFeatureError,
+        state.features.getFeatureError
       ],
       shallowEqual
     );
@@ -88,7 +88,7 @@ export const FeatureExperimentsPage: FC<FeatureExperimentsPageProps> = memo(
     const experimentOptions = experiments.map((e) => {
       return {
         value: e.id,
-        label: e.name,
+        label: e.name
       };
     });
     const experiment = experiments?.find((e) => e.id === experimentId);
@@ -97,13 +97,13 @@ export const FeatureExperimentsPage: FC<FeatureExperimentsPageProps> = memo(
       dispatch(
         stopExperiment({
           environmentNamespace: currentEnvironment.id,
-          experimentId: experimentId,
+          experimentId: experimentId
         })
       ).then(() => {
         dispatch(
           getExperiment({
             environmentNamespace: currentEnvironment.id,
-            id: experimentId,
+            id: experimentId
           })
         );
         setIsConfirmDialogOpen(false);
@@ -119,7 +119,7 @@ export const FeatureExperimentsPage: FC<FeatureExperimentsPageProps> = memo(
           pageSize: 1000,
           cursor: '',
           orderBy: ListExperimentsRequest.OrderBy.CREATED_AT,
-          orderDirection: ListExperimentsRequest.OrderDirection.DESC,
+          orderDirection: ListExperimentsRequest.OrderDirection.DESC
         })
       );
     }, [dispatch, featureId, currentEnvironment, searchOptions]);
@@ -188,7 +188,7 @@ export const FeatureExperimentsPage: FC<FeatureExperimentsPageProps> = memo(
               <div className="w-[600px] text-gray-700 text-center">
                 <h1 className="text-lg">
                   {f(messages.noData.title, {
-                    title: f(messages.experiment.list.header.title),
+                    title: f(messages.experiment.list.header.title)
                   })}
                 </h1>
                 <p className="mt-5">
@@ -255,7 +255,7 @@ export const ExperimentDetail: FC<ExperimentDetailProps> = memo(
           <div className="inline-flex justify-center text-sm">
             {`${f(messages.experiment.period)}
             ${formatDate({ date: startAt })} - ${formatDate({
-              date: endAt,
+              date: endAt
             })}`}
           </div>
         </div>

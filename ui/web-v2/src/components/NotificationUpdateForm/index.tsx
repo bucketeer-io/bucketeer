@@ -23,7 +23,7 @@ export const NotificationUpdateForm: FC<NotificationUpdateFormProps> = memo(
       control,
       getValues,
       reset,
-      formState: { errors, isValid, isDirty, isSubmitted },
+      formState: { errors, isValid, isDirty, isSubmitted }
     } = methods;
 
     const [defaultValues] = useState(() =>

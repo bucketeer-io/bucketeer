@@ -2,7 +2,7 @@
 // file: proto/autoops/auto_ops_rule.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_autoops_clause_pb from './clause_pb';
+import * as proto_autoops_clause_pb from '../../proto/autoops/clause_pb';
 
 export class AutoOpsRule extends jspb.Message {
   getId(): string;

@@ -17,11 +17,11 @@ import {
   ListAccountsV2Request,
   ListAccountsV2Response,
   UpdateAccountV2Request,
-  UpdateAccountV2Response,
+  UpdateAccountV2Response
 } from '../proto/account/service_pb';
 import {
   AccountServiceClient,
-  ServiceError,
+  ServiceError
 } from '../proto/account/service_pb_service';
 
 import { extractErrorMessage } from './messages';

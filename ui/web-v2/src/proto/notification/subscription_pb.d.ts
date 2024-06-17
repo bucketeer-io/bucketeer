@@ -2,7 +2,7 @@
 // file: proto/notification/subscription.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_notification_recipient_pb from './recipient_pb';
+import * as proto_notification_recipient_pb from '../../proto/notification/recipient_pb';
 
 export class Subscription extends jspb.Message {
   getId(): string;

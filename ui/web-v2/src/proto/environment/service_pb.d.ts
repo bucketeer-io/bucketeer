@@ -3,10 +3,10 @@
 
 import * as jspb from 'google-protobuf';
 import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
-import * as proto_environment_environment_pb from './environment_pb';
-import * as proto_environment_project_pb from './project_pb';
-import * as proto_environment_organization_pb from './organization_pb';
-import * as proto_environment_command_pb from './command_pb';
+import * as proto_environment_environment_pb from '../../proto/environment/environment_pb';
+import * as proto_environment_project_pb from '../../proto/environment/project_pb';
+import * as proto_environment_organization_pb from '../../proto/environment/organization_pb';
+import * as proto_environment_command_pb from '../../proto/environment/command_pb';
 
 export class GetEnvironmentV2Request extends jspb.Message {
   getId(): string;

@@ -15,11 +15,11 @@ import {
   ListProjectsRequest,
   ListProjectsResponse,
   UpdateProjectRequest,
-  UpdateProjectResponse,
+  UpdateProjectResponse
 } from '../proto/environment/service_pb';
 import {
   EnvironmentServiceClient,
-  ServiceError,
+  ServiceError
 } from '../proto/environment/service_pb_service';
 
 import { extractErrorMessage } from './messages';

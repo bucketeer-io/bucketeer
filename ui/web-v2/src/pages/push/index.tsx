@@ -18,7 +18,7 @@ import {
   PAGE_PATH_SETTINGS,
   PAGE_PATH_PUSHES,
   PAGE_PATH_NEW,
-  PAGE_PATH_ROOT,
+  PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
@@ -30,7 +30,7 @@ import {
   updatePush,
   deletePush,
   OrderBy,
-  OrderDirection,
+  OrderDirection
 } from '../../modules/pushes';
 import { Push } from '../../proto/push/push_pb';
 import { ListPushesRequest } from '../../proto/push/service_pb';
@@ -39,12 +39,12 @@ import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
   SORT_OPTIONS_NAME_ASC,
-  SORT_OPTIONS_NAME_DESC,
+  SORT_OPTIONS_NAME_DESC
 } from '../../types/list';
 import { PushSortOption, isPushSortOption } from '../../types/push';
 import {
   useSearchParams,
-  stringifySearchParams,
+  stringifySearchParams
 } from '../../utils/search-params';
 
 import { addFormSchema, updateFormSchema } from './formSchema';
@@ -59,27 +59,27 @@ const createSort = (sortOption?: PushSortOption): Sort => {
     case SORT_OPTIONS_CREATED_AT_ASC:
       return {
         orderBy: ListPushesRequest.OrderBy.CREATED_AT,
-        orderDirection: ListPushesRequest.OrderDirection.ASC,
+        orderDirection: ListPushesRequest.OrderDirection.ASC
       };
     case SORT_OPTIONS_CREATED_AT_DESC:
       return {
         orderBy: ListPushesRequest.OrderBy.CREATED_AT,
-        orderDirection: ListPushesRequest.OrderDirection.DESC,
+        orderDirection: ListPushesRequest.OrderDirection.DESC
       };
     case SORT_OPTIONS_NAME_ASC:
       return {
         orderBy: ListPushesRequest.OrderBy.NAME,
-        orderDirection: ListPushesRequest.OrderDirection.ASC,
+        orderDirection: ListPushesRequest.OrderDirection.ASC
       };
     case SORT_OPTIONS_NAME_DESC:
       return {
         orderBy: ListPushesRequest.OrderBy.NAME,
-        orderDirection: ListPushesRequest.OrderDirection.DESC,
+        orderDirection: ListPushesRequest.OrderDirection.DESC
       };
     default:
       return {
         orderBy: ListPushesRequest.OrderBy.CREATED_AT,
-        orderDirection: ListPushesRequest.OrderDirection.DESC,
+        orderDirection: ListPushesRequest.OrderDirection.DESC
       };
   }
 };
@@ -115,7 +115,7 @@ export const PushIndexPage: FC = memo(() => {
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
           orderBy: sort.orderBy,
-          orderDirection: sort.orderDirection,
+          orderDirection: sort.orderDirection
         })
       );
     },
@@ -126,7 +126,7 @@ export const PushIndexPage: FC = memo(() => {
     (options: Record<string, string | number | boolean | undefined>) => {
       history.replace(
         `${url}?${stringifySearchParams({
-          ...options,
+          ...options
         })}`
       );
     },
@@ -153,7 +153,7 @@ export const PushIndexPage: FC = memo(() => {
     setOpen(true);
     history.push({
       pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}${PAGE_PATH_NEW}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location]);
 
@@ -162,9 +162,9 @@ export const PushIndexPage: FC = memo(() => {
     defaultValues: {
       name: '',
       fcmApiKey: '',
-      tags: null,
+      tags: null
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const { handleSubmit: handleAddSubmit, reset: resetAdd } = addMethod;
 
@@ -175,7 +175,7 @@ export const PushIndexPage: FC = memo(() => {
           environmentNamespace: currentEnvironment.id,
           name: data.name,
           fcmApiKey: data.fcmApiKey,
-          tags: data.tags,
+          tags: data.tags
         })
       ).then(() => {
         setOpen(false);
@@ -195,11 +195,11 @@ export const PushIndexPage: FC = memo(() => {
       resetUpdate({
         name: p.name,
         fcmApiKey: p.fcmApiKey,
-        tags: p.tagsList,
+        tags: p.tagsList
       });
       history.push({
         pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}/${p.id}`,
-        search: location.search,
+        search: location.search
       });
     },
     [setOpen, history, push, location]
@@ -207,13 +207,13 @@ export const PushIndexPage: FC = memo(() => {
 
   const updateMethod = useForm({
     resolver: yupResolver(updateFormSchema),
-    mode: 'onChange',
+    mode: 'onChange'
   });
 
   const {
     handleSubmit: handleUpdateSubmit,
     formState: { dirtyFields },
-    reset: resetUpdate,
+    reset: resetUpdate
   } = updateMethod;
 
   const update = useCallback(
@@ -232,7 +232,7 @@ export const PushIndexPage: FC = memo(() => {
           id: pushId,
           name: name,
           currentTags: push.tagsList,
-          tags: tags,
+          tags: tags
         })
       ).then(() => {
         updatePushList(
@@ -251,15 +251,15 @@ export const PushIndexPage: FC = memo(() => {
     setOpen(false);
     history.replace({
       pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location, resetAdd]);
 
   const deleteMethod = useForm({
     defaultValues: {
-      push: null,
+      push: null
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
 
   const { handleSubmit: deleteHandleSubmit, setValue: deleteSetValue } =
@@ -278,7 +278,7 @@ export const PushIndexPage: FC = memo(() => {
       dispatch(
         deletePush({
           environmentNamespace: currentEnvironment.id,
-          id: data.push.id,
+          id: data.push.id
         })
       ).then(() => {
         updatePushList(searchOptions, 1);
@@ -304,7 +304,7 @@ export const PushIndexPage: FC = memo(() => {
       resetUpdate({
         name: push.name,
         fcmApiKey: push.fcmApiKey,
-        tags: push.tagsList,
+        tags: push.tagsList
       });
     }
   }, [push]);
@@ -324,7 +324,7 @@ export const PushIndexPage: FC = memo(() => {
         cursor: '',
         orderBy: ListTagsRequest.OrderBy.DEFAULT,
         orderDirection: ListTagsRequest.OrderDirection.ASC,
-        searchKeyword: null,
+        searchKeyword: null
       })
     );
   }, []);
@@ -366,7 +366,7 @@ export const PushIndexPage: FC = memo(() => {
         title={f(messages.push.confirm.deleteTitle)}
         description={f(messages.push.confirm.deleteDescription, {
           pushName:
-            deleteMethod.getValues().push && deleteMethod.getValues().push.name,
+            deleteMethod.getValues().push && deleteMethod.getValues().push.name
         })}
         onCloseButton={f(messages.button.cancel)}
         onConfirmButton={f(messages.button.submit)}

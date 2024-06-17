@@ -1,7 +1,7 @@
 // package: bucketeer.autoops
 // file: proto/autoops/service.proto
 
-var proto_autoops_service_pb = require('./service_pb');
+var proto_autoops_service_pb = require('../../proto/autoops/service_pb');
 var grpc = require('@improbable-eng/grpc-web').grpc;
 
 var AutoOpsService = (function () {
@@ -16,7 +16,7 @@ AutoOpsService.GetAutoOpsRule = {
   requestStream: false,
   responseStream: false,
   requestType: proto_autoops_service_pb.GetAutoOpsRuleRequest,
-  responseType: proto_autoops_service_pb.GetAutoOpsRuleResponse,
+  responseType: proto_autoops_service_pb.GetAutoOpsRuleResponse
 };
 
 AutoOpsService.ListAutoOpsRules = {
@@ -25,7 +25,7 @@ AutoOpsService.ListAutoOpsRules = {
   requestStream: false,
   responseStream: false,
   requestType: proto_autoops_service_pb.ListAutoOpsRulesRequest,
-  responseType: proto_autoops_service_pb.ListAutoOpsRulesResponse,
+  responseType: proto_autoops_service_pb.ListAutoOpsRulesResponse
 };
 
 AutoOpsService.CreateAutoOpsRule = {
@@ -34,7 +34,7 @@ AutoOpsService.CreateAutoOpsRule = {
   requestStream: false,
   responseStream: false,
   requestType: proto_autoops_service_pb.CreateAutoOpsRuleRequest,
-  responseType: proto_autoops_service_pb.CreateAutoOpsRuleResponse,
+  responseType: proto_autoops_service_pb.CreateAutoOpsRuleResponse
 };
 
 AutoOpsService.DeleteAutoOpsRule = {
@@ -43,7 +43,7 @@ AutoOpsService.DeleteAutoOpsRule = {
   requestStream: false,
   responseStream: false,
   requestType: proto_autoops_service_pb.DeleteAutoOpsRuleRequest,
-  responseType: proto_autoops_service_pb.DeleteAutoOpsRuleResponse,
+  responseType: proto_autoops_service_pb.DeleteAutoOpsRuleResponse
 };
 
 AutoOpsService.UpdateAutoOpsRule = {
@@ -52,7 +52,7 @@ AutoOpsService.UpdateAutoOpsRule = {
   requestStream: false,
   responseStream: false,
   requestType: proto_autoops_service_pb.UpdateAutoOpsRuleRequest,
-  responseType: proto_autoops_service_pb.UpdateAutoOpsRuleResponse,
+  responseType: proto_autoops_service_pb.UpdateAutoOpsRuleResponse
 };
 
 AutoOpsService.ExecuteAutoOps = {
@@ -61,7 +61,7 @@ AutoOpsService.ExecuteAutoOps = {
   requestStream: false,
   responseStream: false,
   requestType: proto_autoops_service_pb.ExecuteAutoOpsRequest,
-  responseType: proto_autoops_service_pb.ExecuteAutoOpsResponse,
+  responseType: proto_autoops_service_pb.ExecuteAutoOpsResponse
 };
 
 AutoOpsService.ListOpsCounts = {
@@ -70,7 +70,7 @@ AutoOpsService.ListOpsCounts = {
   requestStream: false,
   responseStream: false,
   requestType: proto_autoops_service_pb.ListOpsCountsRequest,
-  responseType: proto_autoops_service_pb.ListOpsCountsResponse,
+  responseType: proto_autoops_service_pb.ListOpsCountsResponse
 };
 
 AutoOpsService.CreateProgressiveRollout = {
@@ -79,7 +79,7 @@ AutoOpsService.CreateProgressiveRollout = {
   requestStream: false,
   responseStream: false,
   requestType: proto_autoops_service_pb.CreateProgressiveRolloutRequest,
-  responseType: proto_autoops_service_pb.CreateProgressiveRolloutResponse,
+  responseType: proto_autoops_service_pb.CreateProgressiveRolloutResponse
 };
 
 AutoOpsService.GetProgressiveRollout = {
@@ -88,7 +88,7 @@ AutoOpsService.GetProgressiveRollout = {
   requestStream: false,
   responseStream: false,
   requestType: proto_autoops_service_pb.GetProgressiveRolloutRequest,
-  responseType: proto_autoops_service_pb.GetProgressiveRolloutResponse,
+  responseType: proto_autoops_service_pb.GetProgressiveRolloutResponse
 };
 
 AutoOpsService.StopProgressiveRollout = {
@@ -97,7 +97,7 @@ AutoOpsService.StopProgressiveRollout = {
   requestStream: false,
   responseStream: false,
   requestType: proto_autoops_service_pb.StopProgressiveRolloutRequest,
-  responseType: proto_autoops_service_pb.StopProgressiveRolloutResponse,
+  responseType: proto_autoops_service_pb.StopProgressiveRolloutResponse
 };
 
 AutoOpsService.DeleteProgressiveRollout = {
@@ -106,7 +106,7 @@ AutoOpsService.DeleteProgressiveRollout = {
   requestStream: false,
   responseStream: false,
   requestType: proto_autoops_service_pb.DeleteProgressiveRolloutRequest,
-  responseType: proto_autoops_service_pb.DeleteProgressiveRolloutResponse,
+  responseType: proto_autoops_service_pb.DeleteProgressiveRolloutResponse
 };
 
 AutoOpsService.ListProgressiveRollouts = {
@@ -115,7 +115,7 @@ AutoOpsService.ListProgressiveRollouts = {
   requestStream: false,
   responseStream: false,
   requestType: proto_autoops_service_pb.ListProgressiveRolloutsRequest,
-  responseType: proto_autoops_service_pb.ListProgressiveRolloutsResponse,
+  responseType: proto_autoops_service_pb.ListProgressiveRolloutsResponse
 };
 
 AutoOpsService.ExecuteProgressiveRollout = {
@@ -124,7 +124,7 @@ AutoOpsService.ExecuteProgressiveRollout = {
   requestStream: false,
   responseStream: false,
   requestType: proto_autoops_service_pb.ExecuteProgressiveRolloutRequest,
-  responseType: proto_autoops_service_pb.ExecuteProgressiveRolloutResponse,
+  responseType: proto_autoops_service_pb.ExecuteProgressiveRolloutResponse
 };
 
 exports.AutoOpsService = AutoOpsService;
@@ -159,13 +159,13 @@ AutoOpsServiceClient.prototype.getAutoOpsRule = function getAutoOpsRule(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -194,13 +194,13 @@ AutoOpsServiceClient.prototype.listAutoOpsRules = function listAutoOpsRules(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -229,13 +229,13 @@ AutoOpsServiceClient.prototype.createAutoOpsRule = function createAutoOpsRule(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -264,13 +264,13 @@ AutoOpsServiceClient.prototype.deleteAutoOpsRule = function deleteAutoOpsRule(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -299,13 +299,13 @@ AutoOpsServiceClient.prototype.updateAutoOpsRule = function updateAutoOpsRule(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -334,13 +334,13 @@ AutoOpsServiceClient.prototype.executeAutoOps = function executeAutoOps(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -369,13 +369,13 @@ AutoOpsServiceClient.prototype.listOpsCounts = function listOpsCounts(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -401,13 +401,13 @@ AutoOpsServiceClient.prototype.createProgressiveRollout =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -433,13 +433,13 @@ AutoOpsServiceClient.prototype.getProgressiveRollout =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -465,13 +465,13 @@ AutoOpsServiceClient.prototype.stopProgressiveRollout =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -497,13 +497,13 @@ AutoOpsServiceClient.prototype.deleteProgressiveRollout =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -529,13 +529,13 @@ AutoOpsServiceClient.prototype.listProgressiveRollouts =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -561,13 +561,13 @@ AutoOpsServiceClient.prototype.executeProgressiveRollout =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 

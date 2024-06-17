@@ -23,7 +23,7 @@ export const FeatureSettingsForm: FC<FeatureSettingsFormProps> = memo(
     const {
       register,
       control,
-      formState: { errors, isDirty },
+      formState: { errors, isDirty }
     } = methods;
     const isValid = Object.keys(errors).length == 0;
 
@@ -93,13 +93,13 @@ export const FeatureSettingsForm: FC<FeatureSettingsFormProps> = memo(
                     <CreatableSelect
                       options={tagsList.map((tag) => ({
                         label: tag.id,
-                        value: tag.id,
+                        value: tag.id
                       }))}
                       disabled={!editable}
                       defaultValues={field.value.map((tag) => {
                         return {
                           value: tag,
-                          label: tag,
+                          label: tag
                         };
                       })}
                       onChange={(options: Option[]) => {

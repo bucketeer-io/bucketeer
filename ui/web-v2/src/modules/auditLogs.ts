@@ -1,7 +1,7 @@
 import {
   createSlice,
   createEntityAdapter,
-  createAsyncThunk,
+  createAsyncThunk
 } from '@reduxjs/toolkit';
 import { Int32Value } from 'google-protobuf/google/protobuf/wrappers_pb';
 
@@ -13,7 +13,7 @@ import {
   ListAuditLogsRequest,
   ListAuditLogsResponse,
   ListFeatureHistoryRequest,
-  ListFeatureHistoryResponse,
+  ListFeatureHistoryResponse
 } from '../proto/auditlog/service_pb';
 
 import { setupAuthToken } from './auth';
@@ -23,7 +23,7 @@ import { AppState } from '.';
 const MODULE_NAME = 'auditLogs';
 
 export const auditLogsAdapter = createEntityAdapter<AuditLog.AsObject>({
-  selectId: (auditLog) => auditLog.id,
+  selectId: (auditLog) => auditLog.id
 });
 
 export const { selectAll, selectById } = auditLogsAdapter.getSelectors();
@@ -142,7 +142,7 @@ const initialState = auditLogsAdapter.getInitialState<{
   totalCount: number;
 }>({
   loading: false,
-  totalCount: 0,
+  totalCount: 0
 });
 
 export type AuditLogsState = typeof initialState;
@@ -189,5 +189,5 @@ export const auditLogSlice = createSlice({
       .addCase(listFeatureHistory.rejected, (state) => {
         state.loading = false;
       });
-  },
+  }
 });

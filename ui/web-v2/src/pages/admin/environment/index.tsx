@@ -15,7 +15,7 @@ import {
   ID_NEW,
   PAGE_PATH_ADMIN,
   PAGE_PATH_ENVIRONMENTS,
-  PAGE_PATH_NEW,
+  PAGE_PATH_NEW
 } from '../../../constants/routing';
 import { messages } from '../../../lang/messages';
 import {
@@ -24,24 +24,24 @@ import {
   listEnvironments,
   OrderBy,
   OrderDirection,
-  updateEnvironment,
+  updateEnvironment
 } from '../../../modules/environments';
 import { EnvironmentV2 } from '../../../proto/environment/environment_pb';
 import { ListEnvironmentsV2Request } from '../../../proto/environment/service_pb';
 import { AppDispatch } from '../../../store';
 import {
   EnvironmentSortOption,
-  isEnvironmentSortOption,
+  isEnvironmentSortOption
 } from '../../../types/environment';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
   SORT_OPTIONS_NAME_DESC,
-  SORT_OPTIONS_NAME_ASC,
+  SORT_OPTIONS_NAME_ASC
 } from '../../../types/list';
 import {
   useSearchParams,
-  stringifySearchParams,
+  stringifySearchParams
 } from '../../../utils/search-params';
 
 import { addFormSchema, updateFormSchema } from './formSchema';
@@ -56,27 +56,27 @@ const createSort = (sortOption?: EnvironmentSortOption): Sort => {
     case SORT_OPTIONS_CREATED_AT_ASC:
       return {
         orderBy: ListEnvironmentsV2Request.OrderBy.CREATED_AT,
-        orderDirection: ListEnvironmentsV2Request.OrderDirection.ASC,
+        orderDirection: ListEnvironmentsV2Request.OrderDirection.ASC
       };
     case SORT_OPTIONS_CREATED_AT_DESC:
       return {
         orderBy: ListEnvironmentsV2Request.OrderBy.CREATED_AT,
-        orderDirection: ListEnvironmentsV2Request.OrderDirection.DESC,
+        orderDirection: ListEnvironmentsV2Request.OrderDirection.DESC
       };
     case SORT_OPTIONS_NAME_ASC:
       return {
         orderBy: ListEnvironmentsV2Request.OrderBy.NAME,
-        orderDirection: ListEnvironmentsV2Request.OrderDirection.ASC,
+        orderDirection: ListEnvironmentsV2Request.OrderDirection.ASC
       };
     case SORT_OPTIONS_NAME_DESC:
       return {
         orderBy: ListEnvironmentsV2Request.OrderBy.NAME,
-        orderDirection: ListEnvironmentsV2Request.OrderDirection.DESC,
+        orderDirection: ListEnvironmentsV2Request.OrderDirection.DESC
       };
     default:
       return {
         orderBy: ListEnvironmentsV2Request.OrderBy.CREATED_AT,
-        orderDirection: ListEnvironmentsV2Request.OrderDirection.DESC,
+        orderDirection: ListEnvironmentsV2Request.OrderDirection.DESC
       };
   }
 };
@@ -108,7 +108,7 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
           orderBy: sort.orderBy,
           orderDirection: sort.orderDirection,
           searchKeyword: options && (options.q as string),
-          projectId: options && (options.projectId as string),
+          projectId: options && (options.projectId as string)
         })
       );
     },
@@ -119,7 +119,7 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
     (options: Record<string, string | number | boolean | undefined>) => {
       history.replace(
         `${url}?${stringifySearchParams({
-          ...options,
+          ...options
         })}`
       );
     },
@@ -146,7 +146,7 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
     setOpen(true);
     history.push({
       pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_ENVIRONMENTS}${PAGE_PATH_NEW}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location]);
 
@@ -158,9 +158,9 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
       urlCode: '',
       projectId: '',
       description: '',
-      requireComment: true,
+      requireComment: true
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const { handleSubmit: handleAddSubmit, reset: resetAdd } = addMethod;
 
@@ -173,11 +173,11 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
         urlCode: e.urlCode,
         projectId: e.projectId,
         description: e.description,
-        requireComment: e.requireComment,
+        requireComment: e.requireComment
       });
       history.push({
         pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_ENVIRONMENTS}/${e.id}`,
-        search: location.search,
+        search: location.search
       });
     },
     [setOpen, history, location]
@@ -191,14 +191,14 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
       urlCode: '',
       projectId: '',
       description: '',
-      requireComment: false,
+      requireComment: false
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const {
     handleSubmit: handleUpdateSubmit,
     formState: { dirtyFields },
-    reset: resetUpdate,
+    reset: resetUpdate
   } = updateMethod;
 
   const handleClose = useCallback(() => {
@@ -207,7 +207,7 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
     setOpen(false);
     history.replace({
       pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_ENVIRONMENTS}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location, resetAdd, resetUpdate]);
 
@@ -219,7 +219,7 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
           urlCode: data.urlCode,
           projectId: data.projectId,
           description: data.description,
-          requireComment: data.requireComment,
+          requireComment: data.requireComment
         })
       ).then(() => {
         resetAdd();
@@ -251,17 +251,17 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
           id: data.id,
           name: name,
           description: description,
-          requireComment: requireComment,
+          requireComment: requireComment
         })
       ).then(() => {
         dispatch(
           getEnvironment({
-            id: data.id,
+            id: data.id
           })
         );
         dispatch(
           fetchMe({
-            organizationId: currentEnvironment.organizationId,
+            organizationId: currentEnvironment.organizationId
           })
         );
         handleClose();
@@ -274,7 +274,7 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
     if (isUpdate) {
       dispatch(
         getEnvironment({
-          id: environmentId,
+          id: environmentId
         })
       ).then((res) => {
         const payload = res.payload as EnvironmentV2.AsObject;
@@ -284,7 +284,7 @@ export const AdminEnvironmentIndexPage: FC = memo(() => {
           urlCode: payload.urlCode,
           projectId: payload.projectId,
           description: payload.description,
-          requireComment: payload.requireComment,
+          requireComment: payload.requireComment
         });
       });
     }

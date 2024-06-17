@@ -13,7 +13,7 @@ export const Modal: FC<ModalProps> = ({
   open,
   onClose,
   children,
-  overflowVisible,
+  overflowVisible
 }) => {
   const handleClose = useCallback((): void => {
     onClose();

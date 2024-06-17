@@ -2,8 +2,8 @@
 // file: proto/notification/command.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_notification_subscription_pb from './subscription_pb';
-import * as proto_notification_recipient_pb from './recipient_pb';
+import * as proto_notification_subscription_pb from '../../proto/notification/subscription_pb';
+import * as proto_notification_recipient_pb from '../../proto/notification/recipient_pb';
 
 export class CreateAdminSubscriptionCommand extends jspb.Message {
   clearSourceTypesList(): void;

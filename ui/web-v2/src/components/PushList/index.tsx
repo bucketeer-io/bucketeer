@@ -33,7 +33,7 @@ export const PushList: FC<PushListProps> = memo(
     onChangeSearchOptions,
     onAdd,
     onUpdate,
-    onDelete,
+    onDelete
   }) => {
     const editable = useIsEditable();
     const { formatMessage: f } = useIntl();
@@ -81,14 +81,14 @@ export const PushList: FC<PushListProps> = memo(
                 <div className="text-gray-700">
                   <h1 className="text-lg">
                     {f(messages.noResult.title, {
-                      title: f(messages.push.list.header.title),
+                      title: f(messages.push.list.header.title)
                     })}
                   </h1>
                   <div className="flex justify-center mt-4">
                     <ul className="list-disc">
                       <li>
                         {f(messages.noResult.searchByKeyword, {
-                          keyword: f(messages.push.list.noResult.searchKeyword),
+                          keyword: f(messages.push.list.noResult.searchKeyword)
                         })}
                       </li>
                       <li>{f(messages.noResult.checkTypos)}</li>
@@ -101,7 +101,7 @@ export const PushList: FC<PushListProps> = memo(
                 <div className="w-[600px] text-gray-700 text-center">
                   <h1 className="text-lg">
                     {f(messages.noData.title, {
-                      title: f(messages.push.list.header.title),
+                      title: f(messages.push.list.header.title)
                     })}
                   </h1>
                   <p className="mt-5">

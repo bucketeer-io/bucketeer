@@ -19,7 +19,7 @@ export const AdminNotificationAddForm: FC<AdminNotificationAddFormProps> = memo(
     const {
       register,
       control,
-      formState: { errors, isValid, isSubmitted },
+      formState: { errors, isValid, isSubmitted }
     } = methods;
 
     return (

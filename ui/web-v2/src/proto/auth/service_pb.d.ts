@@ -2,7 +2,7 @@
 // file: proto/auth/service.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_auth_token_pb from './token_pb';
+import * as proto_auth_token_pb from '../../proto/auth/token_pb';
 
 export class GetAuthCodeURLRequest extends jspb.Message {
   getState(): string;

@@ -15,7 +15,7 @@ import {
   ID_NEW,
   PAGE_PATH_ADMIN,
   PAGE_PATH_PROJECTS,
-  PAGE_PATH_NEW,
+  PAGE_PATH_NEW
 } from '../../../constants/routing';
 import { messages } from '../../../lang/messages';
 import {
@@ -27,7 +27,7 @@ import {
   listProjects,
   updateProject,
   OrderBy,
-  OrderDirection,
+  OrderDirection
 } from '../../../modules/projects';
 import { Project } from '../../../proto/environment/project_pb';
 import { ListProjectsRequest } from '../../../proto/environment/service_pb';
@@ -36,12 +36,12 @@ import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
   SORT_OPTIONS_NAME_DESC,
-  SORT_OPTIONS_NAME_ASC,
+  SORT_OPTIONS_NAME_ASC
 } from '../../../types/list';
 import { ProjectSortOption, isProjectSortOption } from '../../../types/project';
 import {
   useSearchParams,
-  stringifySearchParams,
+  stringifySearchParams
 } from '../../../utils/search-params';
 
 import { addFormSchema, updateFormSchema } from './formSchema';
@@ -56,27 +56,27 @@ const createSort = (sortOption?: ProjectSortOption): Sort => {
     case SORT_OPTIONS_CREATED_AT_ASC:
       return {
         orderBy: ListProjectsRequest.OrderBy.CREATED_AT,
-        orderDirection: ListProjectsRequest.OrderDirection.ASC,
+        orderDirection: ListProjectsRequest.OrderDirection.ASC
       };
     case SORT_OPTIONS_CREATED_AT_DESC:
       return {
         orderBy: ListProjectsRequest.OrderBy.CREATED_AT,
-        orderDirection: ListProjectsRequest.OrderDirection.DESC,
+        orderDirection: ListProjectsRequest.OrderDirection.DESC
       };
     case SORT_OPTIONS_NAME_ASC:
       return {
         orderBy: ListProjectsRequest.OrderBy.NAME,
-        orderDirection: ListProjectsRequest.OrderDirection.ASC,
+        orderDirection: ListProjectsRequest.OrderDirection.ASC
       };
     case SORT_OPTIONS_NAME_DESC:
       return {
         orderBy: ListProjectsRequest.OrderBy.NAME,
-        orderDirection: ListProjectsRequest.OrderDirection.DESC,
+        orderDirection: ListProjectsRequest.OrderDirection.DESC
       };
     default:
       return {
         orderBy: ListProjectsRequest.OrderBy.CREATED_AT,
-        orderDirection: ListProjectsRequest.OrderDirection.DESC,
+        orderDirection: ListProjectsRequest.OrderDirection.DESC
       };
   }
 };
@@ -112,7 +112,7 @@ export const AdminProjectIndexPage: FC = memo(() => {
           orderBy: sort.orderBy,
           orderDirection: sort.orderDirection,
           searchKeyword: options && (options.q as string),
-          disabled,
+          disabled
         })
       );
     },
@@ -123,7 +123,7 @@ export const AdminProjectIndexPage: FC = memo(() => {
     (options: Record<string, string | number | boolean | undefined>) => {
       history.replace(
         `${url}?${stringifySearchParams({
-          ...options,
+          ...options
         })}`
       );
     },
@@ -150,7 +150,7 @@ export const AdminProjectIndexPage: FC = memo(() => {
     setOpen(true);
     history.push({
       pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_PROJECTS}${PAGE_PATH_NEW}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location]);
 
@@ -159,9 +159,9 @@ export const AdminProjectIndexPage: FC = memo(() => {
     defaultValues: {
       name: '',
       urlCode: '',
-      description: '',
+      description: ''
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const { handleSubmit: handleAddSubmit, reset: resetAdd } = addMethod;
 
@@ -173,11 +173,11 @@ export const AdminProjectIndexPage: FC = memo(() => {
         name: p.name,
         urlCode: p.urlCode,
         description: p.description,
-        creatorEmail: p.creatorEmail,
+        creatorEmail: p.creatorEmail
       });
       history.push({
         pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_PROJECTS}/${p.id}`,
-        search: location.search,
+        search: location.search
       });
     },
     [setOpen, history, location]
@@ -185,12 +185,12 @@ export const AdminProjectIndexPage: FC = memo(() => {
 
   const updateMethod = useForm({
     resolver: yupResolver(updateFormSchema),
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const {
     handleSubmit: handleUpdateSubmit,
     formState: { dirtyFields },
-    reset: resetUpdate,
+    reset: resetUpdate
   } = updateMethod;
 
   const handleClose = useCallback(() => {
@@ -199,7 +199,7 @@ export const AdminProjectIndexPage: FC = memo(() => {
     setOpen(false);
     history.replace({
       pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_PROJECTS}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location, resetAdd]);
 
@@ -209,7 +209,7 @@ export const AdminProjectIndexPage: FC = memo(() => {
         createProject({
           name: data.name,
           urlCode: data.urlCode,
-          description: data.description,
+          description: data.description
         })
       ).then(() => {
         resetAdd();
@@ -235,12 +235,12 @@ export const AdminProjectIndexPage: FC = memo(() => {
         updateProject({
           id: data.id,
           name: name,
-          description: description,
+          description: description
         })
       ).then(() => {
         dispatch(
           getProject({
-            id: data.id,
+            id: data.id
           })
         );
         handleClose();
@@ -252,14 +252,14 @@ export const AdminProjectIndexPage: FC = memo(() => {
   const switchEnabledMethod = useForm({
     defaultValues: {
       projectId: '',
-      enabled: false,
+      enabled: false
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
 
   const {
     handleSubmit: switchEnableHandleSubmit,
-    setValue: switchEnabledSetValue,
+    setValue: switchEnabledSetValue
   } = switchEnabledMethod;
 
   const handleClickSwitchEnabled = useCallback(
@@ -277,18 +277,18 @@ export const AdminProjectIndexPage: FC = memo(() => {
         (() => {
           if (data.enabled) {
             return enableProject({
-              id: data.projectId,
+              id: data.projectId
             });
           }
           return disableProject({
-            id: data.projectId,
+            id: data.projectId
           });
         })()
       ).then(() => {
         setIsConfirmDialogOpen(false);
         dispatch(
           getProject({
-            id: data.projectId,
+            id: data.projectId
           })
         );
       });
@@ -298,15 +298,15 @@ export const AdminProjectIndexPage: FC = memo(() => {
 
   const convertMethod = useForm({
     defaultValues: {
-      project: null,
+      project: null
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
 
   const {
     handleSubmit: convertHandleSubmit,
     setValue: convertSetValue,
-    reset: convertReset,
+    reset: convertReset
   } = convertMethod;
 
   const handleClickConvert = useCallback(
@@ -321,7 +321,7 @@ export const AdminProjectIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         convertProject({
-          id: data.project.id,
+          id: data.project.id
         })
       ).then(() => {
         convertReset();
@@ -336,7 +336,7 @@ export const AdminProjectIndexPage: FC = memo(() => {
     if (isUpdate) {
       dispatch(
         getProject({
-          id: projectId,
+          id: projectId
         })
       ).then((e) => {
         const project = e.payload as Project.AsObject;
@@ -345,7 +345,7 @@ export const AdminProjectIndexPage: FC = memo(() => {
           name: project.name,
           urlCode: project.urlCode,
           description: project.description,
-          creatorEmail: project.creatorEmail,
+          creatorEmail: project.creatorEmail
         });
       });
     }
@@ -427,7 +427,7 @@ export const AdminProjectIndexPage: FC = memo(() => {
             ? messages.adminProject.confirm.enableDescription
             : messages.adminProject.confirm.disableDescription,
           {
-            projectId: switchEnabledMethod.getValues().projectId,
+            projectId: switchEnabledMethod.getValues().projectId
           }
         )}
         onCloseButton={f(messages.button.cancel)}
@@ -443,7 +443,7 @@ export const AdminProjectIndexPage: FC = memo(() => {
           {
             projectId:
               convertMethod.getValues().project &&
-              convertMethod.getValues().project.id,
+              convertMethod.getValues().project.id
           }
         )}
         onCloseButton={f(messages.button.cancel)}

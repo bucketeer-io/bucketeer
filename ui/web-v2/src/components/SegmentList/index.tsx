@@ -37,7 +37,7 @@ export const SegmentList: FC<SegmentListProps> = memo(
     onDownload,
     onChangeSearchOptions,
     onAdd,
-    onUpdate,
+    onUpdate
   }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsEditable();
@@ -87,12 +87,12 @@ export const SegmentList: FC<SegmentListProps> = memo(
         action: MenuActions.DOWNLOAD,
         name: intl.formatMessage(messages.segment.action.download),
         iconElement: <MUCloudDownloadIcon />,
-        disabled: includedUserCount === 0,
+        disabled: includedUserCount === 0
       });
       items.push({
         action: MenuActions.DELETE,
         name: intl.formatMessage(messages.segment.action.delete),
-        iconElement: <MUDeleteIcon />,
+        iconElement: <MUDeleteIcon />
       });
       return items;
     };
@@ -114,16 +114,14 @@ export const SegmentList: FC<SegmentListProps> = memo(
               <div className="text-gray-700">
                 <h1 className="text-lg">
                   {f(messages.noResult.title, {
-                    title: f(messages.segment.list.header.title),
+                    title: f(messages.segment.list.header.title)
                   })}
                 </h1>
                 <div className="flex justify-center mt-4">
                   <ul className="list-disc">
                     <li>
                       {f(messages.noResult.searchByKeyword, {
-                        keyword: f(
-                          messages.segment.list.noResult.searchKeyword
-                        ),
+                        keyword: f(messages.segment.list.noResult.searchKeyword)
                       })}
                     </li>
                     <li>{f(messages.noResult.changeFilterSelection)}</li>
@@ -137,7 +135,7 @@ export const SegmentList: FC<SegmentListProps> = memo(
               <div className="w-[600px] text-gray-700 text-center">
                 <h1 className="text-lg">
                   {f(messages.noData.title, {
-                    title: f(messages.segment.list.header.title),
+                    title: f(messages.segment.list.header.title)
                   })}
                 </h1>
                 <p className="mt-5">

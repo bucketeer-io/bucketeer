@@ -7,11 +7,11 @@ import {
   ListAuditLogsRequest,
   ListAuditLogsResponse,
   ListFeatureHistoryRequest,
-  ListFeatureHistoryResponse,
+  ListFeatureHistoryResponse
 } from '../proto/auditlog/service_pb';
 import {
   AuditLogServiceClient,
-  ServiceError,
+  ServiceError
 } from '../proto/auditlog/service_pb_service';
 
 import { extractErrorMessage } from './messages';

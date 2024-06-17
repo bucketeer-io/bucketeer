@@ -23,9 +23,9 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_feature_segment_pb = require('../../feature/segment_pb.js');
+var proto_feature_segment_pb = require('../../../proto/feature/segment_pb.js');
 goog.object.extend(proto, proto_feature_segment_pb);
-var proto_event_domain_event_pb = require('../domain/event_pb.js');
+var proto_event_domain_event_pb = require('../../../proto/event/domain/event_pb.js');
 goog.object.extend(proto, proto_event_domain_event_pb);
 goog.exportSymbol(
   'proto.bucketeer.event.service.BulkSegmentUsersReceivedEvent',
@@ -101,7 +101,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           state: jspb.Message.getFieldWithDefault(msg, 5, 0),
           editor:
             (f = msg.getEditor()) &&
-            proto_event_domain_event_pb.Editor.toObject(includeInstance, f),
+            proto_event_domain_event_pb.Editor.toObject(includeInstance, f)
         };
 
       if (includeInstance) {

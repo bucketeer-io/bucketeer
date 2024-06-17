@@ -16,7 +16,7 @@ import {
   selectById as selectFeatureById,
   updateFeatureTargeting,
   getFeature,
-  createCommand,
+  createCommand
 } from '../../modules/features';
 import { useCurrentEnvironment } from '../../modules/me';
 import { listSegments } from '../../modules/segments';
@@ -44,7 +44,7 @@ import {
   ResetSamplingSeedCommand,
   RemovePrerequisiteCommand,
   ChangePrerequisiteVariationCommand,
-  ChangeRulesOrderCommand,
+  ChangeRulesOrderCommand
 } from '../../proto/feature/command_pb';
 import { Feature } from '../../proto/feature/feature_pb';
 import { Prerequisite } from '../../proto/feature/prerequisite_pb';
@@ -52,7 +52,7 @@ import { Rule } from '../../proto/feature/rule_pb';
 import {
   FixedStrategy,
   RolloutStrategy,
-  Strategy,
+  Strategy
 } from '../../proto/feature/strategy_pb';
 import { Variation } from '../../proto/feature/variation_pb';
 import { AppDispatch } from '../../store';
@@ -64,7 +64,7 @@ import {
   StrategySchema,
   RuleClauseSchema,
   RuleSchema,
-  TargetingForm,
+  TargetingForm
 } from './formSchema';
 
 interface FeatureTargetingPageProps {
@@ -96,13 +96,13 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
         prerequisites: [
           ...new Map(
             feature.prerequisitesList.map((p) => [p.featureId, p])
-          ).values(),
+          ).values()
         ], // remove duplicate prerequisites
         enabled: feature.enabled,
         targets: feature.targetsList.map((t) => {
           return {
             variationId: t.variation,
-            users: t.usersList,
+            users: t.usersList
           };
         }),
         rules: feature.rulesList.map((r) => {
@@ -118,9 +118,9 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
                 type: createClauseType(c.operator),
                 attribute: c.attribute,
                 operator: c.operator.toString(),
-                values: c.valuesList,
+                values: c.valuesList
               };
-            }),
+            })
           };
         }),
         defaultStrategy: createStrategyDefaultValue(
@@ -131,10 +131,10 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
           value: feature.offVariation,
           label: createVariationLabel(
             feature.variationsList.find((v) => v.id === feature.offVariation)
-          ),
+          )
         },
         requireComment: requireComment,
-        comment: '',
+        comment: ''
       };
     };
 
@@ -144,12 +144,12 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
         feature,
         currentEnvironment.requireComment
       ),
-      mode: 'onChange',
+      mode: 'onChange'
     });
     const {
       handleSubmit,
       formState: { dirtyFields },
-      reset,
+      reset
     } = methods;
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
@@ -206,14 +206,14 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
             environmentNamespace: currentEnvironment.id,
             id: feature.id,
             comment: data.comment,
-            commands: commands,
+            commands: commands
           })
         ).then(() => {
           setIsConfirmDialogOpen(false);
           dispatch(
             getFeature({
               environmentNamespace: currentEnvironment.id,
-              id: featureId,
+              id: featureId
             })
           ).then(() => {
             setIsResetTargeting(true);
@@ -227,7 +227,7 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
       dispatch(
         listSegments({
           environmentNamespace: currentEnvironment.id,
-          cursor: '',
+          cursor: ''
         })
       );
     }, [dispatch, currentEnvironment]);
@@ -304,27 +304,27 @@ const createStrategyDefaultValue = (
             value: strategy.fixedStrategy.variation,
             label: createVariationLabel(
               variations.find((v) => v.id === strategy.fixedStrategy.variation)
-            ),
+            )
           }
         : {
             value: Strategy.Type.ROLLOUT.toString(),
             label: intl.formatMessage(
               messages.feature.strategy.selectRolloutPercentage
-            ),
+            )
           },
     rolloutStrategy: strategy.rolloutStrategy
       ? strategy.rolloutStrategy.variationsList.map((v) => {
           return {
             id: v.variation,
-            percentage: v.weight / 1000,
+            percentage: v.weight / 1000
           };
         })
       : variations.map((v) => {
           return {
             id: v.id,
-            percentage: 0,
+            percentage: 0
           };
-        }),
+        })
   };
 };
 
@@ -378,7 +378,7 @@ export const createTargetCommands = (
         commands.push(
           createCommand({
             message: command,
-            name: 'RemoveUserFromVariationCommand',
+            name: 'RemoveUserFromVariationCommand'
           })
         );
       });
@@ -389,7 +389,10 @@ export const createTargetCommands = (
         command.setId(org.variationId);
         command.setUser(u);
         commands.push(
-          createCommand({ message: command, name: 'AddUserToVariationCommand' })
+          createCommand({
+            message: command,
+            name: 'AddUserToVariationCommand'
+          })
         );
       });
   });
@@ -469,7 +472,7 @@ const createChangeRulesOrderCommand = (valIds: string[]): Command => {
   command.setRuleIdsList(valIds);
   return createCommand({
     message: command,
-    name: 'ChangeRulesOrderCommand',
+    name: 'ChangeRulesOrderCommand'
   });
 };
 
@@ -664,7 +667,10 @@ const createStrategyCommands = (
         command.setRuleId(rid);
         command.setStrategy(createStrategy(valRule.strategy));
         commands.push(
-          createCommand({ message: command, name: 'ChangeRuleStrategyCommand' })
+          createCommand({
+            message: command,
+            name: 'ChangeRuleStrategyCommand'
+          })
         );
         return;
       }
@@ -674,7 +680,7 @@ const createStrategyCommands = (
       commands.push(
         createCommand({
           message: command,
-          name: 'ChangeFixedStrategyCommand',
+          name: 'ChangeFixedStrategyCommand'
         })
       );
       return;
@@ -693,7 +699,7 @@ const createStrategyCommands = (
       commands.push(
         createCommand({
           message: command,
-          name: 'ChangeRolloutStrategyCommand',
+          name: 'ChangeRolloutStrategyCommand'
         })
       );
     }
@@ -762,7 +768,7 @@ export function createPrerequisitesCommands(org: any, val: any): Command[] {
       commands.push(
         createCommand({
           message: command,
-          name: 'ChangePrerequisiteVariationCommand',
+          name: 'ChangePrerequisiteVariationCommand'
         })
       );
     }

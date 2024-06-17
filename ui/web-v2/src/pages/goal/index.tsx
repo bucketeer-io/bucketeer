@@ -17,7 +17,7 @@ import {
   ID_NEW,
   PAGE_PATH_GOALS,
   PAGE_PATH_NEW,
-  PAGE_PATH_ROOT,
+  PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
@@ -29,7 +29,7 @@ import {
   getGoal,
   updateGoal,
   OrderBy,
-  OrderDirection,
+  OrderDirection
 } from '../../modules/goals';
 import { useCurrentEnvironment } from '../../modules/me';
 import { Goal } from '../../proto/experiment/goal_pb';
@@ -39,11 +39,11 @@ import { GoalSortOption, isGoalSortOption } from '../../types/goal';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
-  SORT_OPTIONS_NAME_ASC,
+  SORT_OPTIONS_NAME_ASC
 } from '../../types/list';
 import {
   stringifySearchParams,
-  useSearchParams,
+  useSearchParams
 } from '../../utils/search-params';
 
 import { addFormSchema, updateFormSchema } from './formSchema';
@@ -61,22 +61,22 @@ const createSort = (sortOption?: GoalSortOption): Sort => {
     case SORT_OPTIONS_CREATED_AT_ASC:
       return {
         orderBy: ListGoalsRequest.OrderBy.CREATED_AT,
-        orderDirection: ListGoalsRequest.OrderDirection.ASC,
+        orderDirection: ListGoalsRequest.OrderDirection.ASC
       };
     case SORT_OPTIONS_CREATED_AT_DESC:
       return {
         orderBy: ListGoalsRequest.OrderBy.CREATED_AT,
-        orderDirection: ListGoalsRequest.OrderDirection.DESC,
+        orderDirection: ListGoalsRequest.OrderDirection.DESC
       };
     case SORT_OPTIONS_NAME_ASC:
       return {
         orderBy: ListGoalsRequest.OrderBy.NAME,
-        orderDirection: ListGoalsRequest.OrderDirection.ASC,
+        orderDirection: ListGoalsRequest.OrderDirection.ASC
       };
     default:
       return {
         orderBy: ListGoalsRequest.OrderBy.NAME,
-        orderDirection: ListGoalsRequest.OrderDirection.DESC,
+        orderDirection: ListGoalsRequest.OrderDirection.DESC
       };
   }
 };
@@ -107,9 +107,9 @@ export const GoalIndexPage: FC = memo(() => {
     defaultValues: {
       id: '',
       name: '',
-      description: '',
+      description: ''
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const { handleSubmit: handleAddSubmit, reset: resetAdd } = addMethod;
 
@@ -120,7 +120,7 @@ export const GoalIndexPage: FC = memo(() => {
           environmentNamespace: currentEnvironment.id,
           id: data.id,
           name: data.name,
-          description: data.description,
+          description: data.description
         })
       ).then(() => {
         setOpen(false);
@@ -136,13 +136,13 @@ export const GoalIndexPage: FC = memo(() => {
 
   const updateMethod = useForm({
     resolver: yupResolver(updateFormSchema),
-    mode: 'onChange',
+    mode: 'onChange'
   });
 
   const {
     handleSubmit: handleUpdateSubmit,
     formState: { dirtyFields },
-    reset: resetUpdate,
+    reset: resetUpdate
   } = updateMethod;
 
   const handleUpdate = useCallback(
@@ -160,13 +160,13 @@ export const GoalIndexPage: FC = memo(() => {
           environmentNamespace: currentEnvironment.id,
           id: goalId,
           name: name,
-          description: description,
+          description: description
         })
       ).then(() => {
         dispatch(
           getGoal({
             environmentNamespace: currentEnvironment.id,
-            id: goalId,
+            id: goalId
           })
         );
         handleClose();
@@ -179,7 +179,7 @@ export const GoalIndexPage: FC = memo(() => {
     (options: Record<string, string | number | boolean | undefined>) => {
       history.replace(
         `${url}?${stringifySearchParams({
-          ...options,
+          ...options
         })}`
       );
     },
@@ -207,7 +207,7 @@ export const GoalIndexPage: FC = memo(() => {
           status: status,
           archived,
           orderBy: sort.orderBy,
-          orderDirection: sort.orderDirection,
+          orderDirection: sort.orderDirection
         })
       );
     },
@@ -234,7 +234,7 @@ export const GoalIndexPage: FC = memo(() => {
     setOpen(true);
     history.push({
       pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_GOALS}${PAGE_PATH_NEW}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location]);
 
@@ -244,11 +244,11 @@ export const GoalIndexPage: FC = memo(() => {
       resetUpdate({
         id: g.id,
         name: g.name,
-        description: g.description,
+        description: g.description
       });
       history.push({
         pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_GOALS}/${g.id}`,
-        search: location.search,
+        search: location.search
       });
     },
     [setOpen, history, goal, location]
@@ -256,14 +256,14 @@ export const GoalIndexPage: FC = memo(() => {
 
   const archiveMethod = useForm({
     defaultValues: {
-      goal: null,
+      goal: null
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const {
     handleSubmit: archiveHandleSubmit,
     setValue: archiveSetValue,
-    reset: archiveReset,
+    reset: archiveReset
   } = archiveMethod;
 
   const handleClickArchive = useCallback(
@@ -279,7 +279,7 @@ export const GoalIndexPage: FC = memo(() => {
       dispatch(
         archiveGoal({
           environmentNamespace: currentEnvironment.id,
-          id: data.goal.id,
+          id: data.goal.id
         })
       ).then(() => {
         archiveReset();
@@ -296,7 +296,7 @@ export const GoalIndexPage: FC = memo(() => {
     resetUpdate();
     history.replace({
       pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_GOALS}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location, resetAdd, resetUpdate]);
 
@@ -305,7 +305,7 @@ export const GoalIndexPage: FC = memo(() => {
       dispatch(
         getGoal({
           environmentNamespace: currentEnvironment.id,
-          id: goalId,
+          id: goalId
         })
       ).then((e) => {
         const { goal } = e.payload as GoalPayload;
@@ -313,7 +313,7 @@ export const GoalIndexPage: FC = memo(() => {
         resetUpdate({
           id: goal.id,
           name: goal.name,
-          description: goal.description,
+          description: goal.description
         });
       });
     }
@@ -377,7 +377,7 @@ export const GoalIndexPage: FC = memo(() => {
         title={f(messages.goal.confirm.archiveTitle)}
         description={f(messages.goal.confirm.archiveDescription, {
           goalId:
-            archiveMethod.getValues().goal && archiveMethod.getValues().goal.id,
+            archiveMethod.getValues().goal && archiveMethod.getValues().goal.id
         })}
         onCloseButton={f(messages.button.cancel)}
         onConfirmButton={f(messages.button.submit)}

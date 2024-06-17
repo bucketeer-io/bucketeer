@@ -1,7 +1,7 @@
 // package: bucketeer.auditlog
 // file: proto/auditlog/service.proto
 
-import * as proto_auditlog_service_pb from './service_pb';
+import * as proto_auditlog_service_pb from '../../proto/auditlog/service_pb';
 import { grpc } from '@improbable-eng/grpc-web';
 
 type AuditLogServiceListAuditLogs = {

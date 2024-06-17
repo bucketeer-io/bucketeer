@@ -23,9 +23,9 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_feature_rule_pb = require('./rule_pb.js');
+var proto_feature_rule_pb = require('../../proto/feature/rule_pb.js');
 goog.object.extend(proto, proto_feature_rule_pb);
-var proto_feature_feature_pb = require('./feature_pb.js');
+var proto_feature_feature_pb = require('../../proto/feature/feature_pb.js');
 goog.object.extend(proto, proto_feature_feature_pb);
 goog.exportSymbol('proto.bucketeer.feature.Segment', null, global);
 goog.exportSymbol('proto.bucketeer.feature.Segment.Status', null, global);
@@ -171,7 +171,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg.getFeaturesList(),
           proto_feature_feature_pb.Feature.toObject,
           includeInstance
-        ),
+        )
       };
 
     if (includeInstance) {
@@ -373,7 +373,7 @@ proto.bucketeer.feature.Segment.Status = {
   INITIAL: 0,
   UPLOADING: 1,
   SUCEEDED: 2,
-  FAILED: 3,
+  FAILED: 3
 };
 
 /**
@@ -695,7 +695,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         segmentId: jspb.Message.getFieldWithDefault(msg, 2, ''),
         userId: jspb.Message.getFieldWithDefault(msg, 3, ''),
         state: jspb.Message.getFieldWithDefault(msg, 4, 0),
-        deleted: jspb.Message.getBooleanFieldWithDefault(msg, 5, false),
+        deleted: jspb.Message.getBooleanFieldWithDefault(msg, 5, false)
       };
 
     if (includeInstance) {
@@ -815,7 +815,7 @@ proto.bucketeer.feature.SegmentUser.serializeBinaryToWriter = function (
  */
 proto.bucketeer.feature.SegmentUser.State = {
   INCLUDED: 0,
-  EXCLUDED: 1,
+  EXCLUDED: 1
 };
 
 /**
@@ -952,7 +952,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto.bucketeer.feature.SegmentUser.toObject,
           includeInstance
         ),
-        updatedAt: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        updatedAt: jspb.Message.getFieldWithDefault(msg, 3, 0)
       };
 
     if (includeInstance) {

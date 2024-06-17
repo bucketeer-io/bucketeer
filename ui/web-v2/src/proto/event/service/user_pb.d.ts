@@ -2,7 +2,7 @@
 // file: proto/event/service/user.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_event_client_event_pb from '../client/event_pb';
+import * as proto_event_client_event_pb from '../../../proto/event/client/event_pb';
 
 export class UserEvent extends jspb.Message {
   getId(): string;

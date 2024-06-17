@@ -1,7 +1,7 @@
 // package: bucketeer.account
 // file: proto/account/service.proto
 
-var proto_account_service_pb = require('./service_pb');
+var proto_account_service_pb = require('../../proto/account/service_pb');
 var grpc = require('@improbable-eng/grpc-web').grpc;
 
 var AccountService = (function () {
@@ -16,7 +16,7 @@ AccountService.GetMe = {
   requestStream: false,
   responseStream: false,
   requestType: proto_account_service_pb.GetMeRequest,
-  responseType: proto_account_service_pb.GetMeResponse,
+  responseType: proto_account_service_pb.GetMeResponse
 };
 
 AccountService.GetMyOrganizations = {
@@ -25,7 +25,7 @@ AccountService.GetMyOrganizations = {
   requestStream: false,
   responseStream: false,
   requestType: proto_account_service_pb.GetMyOrganizationsRequest,
-  responseType: proto_account_service_pb.GetMyOrganizationsResponse,
+  responseType: proto_account_service_pb.GetMyOrganizationsResponse
 };
 
 AccountService.GetMyOrganizationsByEmail = {
@@ -34,7 +34,7 @@ AccountService.GetMyOrganizationsByEmail = {
   requestStream: false,
   responseStream: false,
   requestType: proto_account_service_pb.GetMyOrganizationsByEmailRequest,
-  responseType: proto_account_service_pb.GetMyOrganizationsResponse,
+  responseType: proto_account_service_pb.GetMyOrganizationsResponse
 };
 
 AccountService.CreateAccountV2 = {
@@ -43,7 +43,7 @@ AccountService.CreateAccountV2 = {
   requestStream: false,
   responseStream: false,
   requestType: proto_account_service_pb.CreateAccountV2Request,
-  responseType: proto_account_service_pb.CreateAccountV2Response,
+  responseType: proto_account_service_pb.CreateAccountV2Response
 };
 
 AccountService.EnableAccountV2 = {
@@ -52,7 +52,7 @@ AccountService.EnableAccountV2 = {
   requestStream: false,
   responseStream: false,
   requestType: proto_account_service_pb.EnableAccountV2Request,
-  responseType: proto_account_service_pb.EnableAccountV2Response,
+  responseType: proto_account_service_pb.EnableAccountV2Response
 };
 
 AccountService.DisableAccountV2 = {
@@ -61,7 +61,7 @@ AccountService.DisableAccountV2 = {
   requestStream: false,
   responseStream: false,
   requestType: proto_account_service_pb.DisableAccountV2Request,
-  responseType: proto_account_service_pb.DisableAccountV2Response,
+  responseType: proto_account_service_pb.DisableAccountV2Response
 };
 
 AccountService.UpdateAccountV2 = {
@@ -70,7 +70,7 @@ AccountService.UpdateAccountV2 = {
   requestStream: false,
   responseStream: false,
   requestType: proto_account_service_pb.UpdateAccountV2Request,
-  responseType: proto_account_service_pb.UpdateAccountV2Response,
+  responseType: proto_account_service_pb.UpdateAccountV2Response
 };
 
 AccountService.DeleteAccountV2 = {
@@ -79,7 +79,7 @@ AccountService.DeleteAccountV2 = {
   requestStream: false,
   responseStream: false,
   requestType: proto_account_service_pb.DeleteAccountV2Request,
-  responseType: proto_account_service_pb.DeleteAccountV2Response,
+  responseType: proto_account_service_pb.DeleteAccountV2Response
 };
 
 AccountService.GetAccountV2 = {
@@ -88,7 +88,7 @@ AccountService.GetAccountV2 = {
   requestStream: false,
   responseStream: false,
   requestType: proto_account_service_pb.GetAccountV2Request,
-  responseType: proto_account_service_pb.GetAccountV2Response,
+  responseType: proto_account_service_pb.GetAccountV2Response
 };
 
 AccountService.GetAccountV2ByEnvironmentID = {
@@ -97,7 +97,7 @@ AccountService.GetAccountV2ByEnvironmentID = {
   requestStream: false,
   responseStream: false,
   requestType: proto_account_service_pb.GetAccountV2ByEnvironmentIDRequest,
-  responseType: proto_account_service_pb.GetAccountV2ByEnvironmentIDResponse,
+  responseType: proto_account_service_pb.GetAccountV2ByEnvironmentIDResponse
 };
 
 AccountService.ListAccountsV2 = {
@@ -106,7 +106,7 @@ AccountService.ListAccountsV2 = {
   requestStream: false,
   responseStream: false,
   requestType: proto_account_service_pb.ListAccountsV2Request,
-  responseType: proto_account_service_pb.ListAccountsV2Response,
+  responseType: proto_account_service_pb.ListAccountsV2Response
 };
 
 AccountService.CreateAPIKey = {
@@ -115,7 +115,7 @@ AccountService.CreateAPIKey = {
   requestStream: false,
   responseStream: false,
   requestType: proto_account_service_pb.CreateAPIKeyRequest,
-  responseType: proto_account_service_pb.CreateAPIKeyResponse,
+  responseType: proto_account_service_pb.CreateAPIKeyResponse
 };
 
 AccountService.ChangeAPIKeyName = {
@@ -124,7 +124,7 @@ AccountService.ChangeAPIKeyName = {
   requestStream: false,
   responseStream: false,
   requestType: proto_account_service_pb.ChangeAPIKeyNameRequest,
-  responseType: proto_account_service_pb.ChangeAPIKeyNameResponse,
+  responseType: proto_account_service_pb.ChangeAPIKeyNameResponse
 };
 
 AccountService.EnableAPIKey = {
@@ -133,7 +133,7 @@ AccountService.EnableAPIKey = {
   requestStream: false,
   responseStream: false,
   requestType: proto_account_service_pb.EnableAPIKeyRequest,
-  responseType: proto_account_service_pb.EnableAPIKeyResponse,
+  responseType: proto_account_service_pb.EnableAPIKeyResponse
 };
 
 AccountService.DisableAPIKey = {
@@ -142,7 +142,7 @@ AccountService.DisableAPIKey = {
   requestStream: false,
   responseStream: false,
   requestType: proto_account_service_pb.DisableAPIKeyRequest,
-  responseType: proto_account_service_pb.DisableAPIKeyResponse,
+  responseType: proto_account_service_pb.DisableAPIKeyResponse
 };
 
 AccountService.GetAPIKey = {
@@ -151,7 +151,7 @@ AccountService.GetAPIKey = {
   requestStream: false,
   responseStream: false,
   requestType: proto_account_service_pb.GetAPIKeyRequest,
-  responseType: proto_account_service_pb.GetAPIKeyResponse,
+  responseType: proto_account_service_pb.GetAPIKeyResponse
 };
 
 AccountService.ListAPIKeys = {
@@ -160,7 +160,7 @@ AccountService.ListAPIKeys = {
   requestStream: false,
   responseStream: false,
   requestType: proto_account_service_pb.ListAPIKeysRequest,
-  responseType: proto_account_service_pb.ListAPIKeysResponse,
+  responseType: proto_account_service_pb.ListAPIKeysResponse
 };
 
 AccountService.GetAPIKeyBySearchingAllEnvironments = {
@@ -171,7 +171,7 @@ AccountService.GetAPIKeyBySearchingAllEnvironments = {
   requestType:
     proto_account_service_pb.GetAPIKeyBySearchingAllEnvironmentsRequest,
   responseType:
-    proto_account_service_pb.GetAPIKeyBySearchingAllEnvironmentsResponse,
+    proto_account_service_pb.GetAPIKeyBySearchingAllEnvironmentsResponse
 };
 
 exports.AccountService = AccountService;
@@ -206,13 +206,13 @@ AccountServiceClient.prototype.getMe = function getMe(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -241,13 +241,13 @@ AccountServiceClient.prototype.getMyOrganizations = function getMyOrganizations(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -273,13 +273,13 @@ AccountServiceClient.prototype.getMyOrganizationsByEmail =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -308,13 +308,13 @@ AccountServiceClient.prototype.createAccountV2 = function createAccountV2(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -343,13 +343,13 @@ AccountServiceClient.prototype.enableAccountV2 = function enableAccountV2(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -378,13 +378,13 @@ AccountServiceClient.prototype.disableAccountV2 = function disableAccountV2(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -413,13 +413,13 @@ AccountServiceClient.prototype.updateAccountV2 = function updateAccountV2(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -448,13 +448,13 @@ AccountServiceClient.prototype.deleteAccountV2 = function deleteAccountV2(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -483,13 +483,13 @@ AccountServiceClient.prototype.getAccountV2 = function getAccountV2(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -515,13 +515,13 @@ AccountServiceClient.prototype.getAccountV2ByEnvironmentID =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -550,13 +550,13 @@ AccountServiceClient.prototype.listAccountsV2 = function listAccountsV2(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -585,13 +585,13 @@ AccountServiceClient.prototype.createAPIKey = function createAPIKey(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -620,13 +620,13 @@ AccountServiceClient.prototype.changeAPIKeyName = function changeAPIKeyName(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -655,13 +655,13 @@ AccountServiceClient.prototype.enableAPIKey = function enableAPIKey(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -690,13 +690,13 @@ AccountServiceClient.prototype.disableAPIKey = function disableAPIKey(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -725,13 +725,13 @@ AccountServiceClient.prototype.getAPIKey = function getAPIKey(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -760,13 +760,13 @@ AccountServiceClient.prototype.listAPIKeys = function listAPIKeys(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -798,14 +798,14 @@ AccountServiceClient.prototype.getAPIKeyBySearchingAllEnvironments =
               callback(null, response.message);
             }
           }
-        },
+        }
       }
     );
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 

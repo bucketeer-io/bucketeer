@@ -23,16 +23,16 @@ export const FeatureTriggerPage: FC<FeatureTriggerPageProps> = memo(
       [Feature.AsObject | undefined, SerializedError | null]
     >((state) => [
       selectFeatureById(state.features, featureId),
-      state.features.getFeatureError,
+      state.features.getFeatureError
     ]);
     const methods = useForm({
       resolver: yupResolver(triggerFormSchema),
       defaultValues: {
         triggerType: FlagTrigger.Type.TYPE_WEBHOOK.toString(),
         action: null,
-        description: '',
+        description: ''
       },
-      mode: 'onChange',
+      mode: 'onChange'
     });
     return (
       <FormProvider {...methods}>

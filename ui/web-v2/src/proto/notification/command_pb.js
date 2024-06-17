@@ -23,9 +23,9 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_notification_subscription_pb = require('./subscription_pb.js');
+var proto_notification_subscription_pb = require('../../proto/notification/subscription_pb.js');
 goog.object.extend(proto, proto_notification_subscription_pb);
-var proto_notification_recipient_pb = require('./recipient_pb.js');
+var proto_notification_recipient_pb = require('../../proto/notification/recipient_pb.js');
 goog.object.extend(proto, proto_notification_recipient_pb);
 goog.exportSymbol(
   'proto.bucketeer.notification.AddAdminSubscriptionSourceTypesCommand',
@@ -508,7 +508,7 @@ if (goog.DEBUG && !COMPILED) {
  * @const
  */
 proto.bucketeer.notification.CreateAdminSubscriptionCommand.repeatedFields_ = [
-  1,
+  1
 ];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -553,7 +553,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
               includeInstance,
               f
             ),
-          name: jspb.Message.getFieldWithDefault(msg, 3, ''),
+          name: jspb.Message.getFieldWithDefault(msg, 3, '')
         };
 
       if (includeInstance) {
@@ -811,7 +811,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       var f,
         obj = {
           sourceTypesList:
-            (f = jspb.Message.getRepeatedField(msg, 1)) == null ? undefined : f,
+            (f = jspb.Message.getRepeatedField(msg, 1)) == null ? undefined : f
         };
 
       if (includeInstance) {
@@ -983,7 +983,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       var f,
         obj = {
           sourceTypesList:
-            (f = jspb.Message.getRepeatedField(msg, 1)) == null ? undefined : f,
+            (f = jspb.Message.getRepeatedField(msg, 1)) == null ? undefined : f
         };
 
       if (includeInstance) {
@@ -1465,7 +1465,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     function (includeInstance, msg) {
       var f,
         obj = {
-          name: jspb.Message.getFieldWithDefault(msg, 1, ''),
+          name: jspb.Message.getFieldWithDefault(msg, 1, '')
         };
 
       if (includeInstance) {
@@ -1618,7 +1618,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        name: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        name: jspb.Message.getFieldWithDefault(msg, 3, '')
       };
 
     if (includeInstance) {
@@ -1877,7 +1877,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         sourceTypesList:
-          (f = jspb.Message.getRepeatedField(msg, 1)) == null ? undefined : f,
+          (f = jspb.Message.getRepeatedField(msg, 1)) == null ? undefined : f
       };
 
     if (includeInstance) {
@@ -2049,7 +2049,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         sourceTypesList:
-          (f = jspb.Message.getRepeatedField(msg, 1)) == null ? undefined : f,
+          (f = jspb.Message.getRepeatedField(msg, 1)) == null ? undefined : f
       };
 
     if (includeInstance) {
@@ -2537,7 +2537,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        name: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        name: jspb.Message.getFieldWithDefault(msg, 1, '')
       };
 
     if (includeInstance) {

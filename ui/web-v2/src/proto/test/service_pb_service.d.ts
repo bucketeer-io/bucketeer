@@ -1,7 +1,7 @@
 // package: bucketeer.test
 // file: proto/test/service.proto
 
-import * as proto_test_service_pb from './service_pb';
+import * as proto_test_service_pb from '../../proto/test/service_pb';
 import { grpc } from '@improbable-eng/grpc-web';
 
 type TestServiceTest = {

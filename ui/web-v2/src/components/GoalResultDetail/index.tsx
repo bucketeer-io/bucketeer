@@ -35,28 +35,28 @@ const CHART_VALUE_PER_USER = 'Value/User';
 const chartOptions = [
   {
     value: CHART_EVALUATION_USER,
-    label: intl.formatMessage(messages.experiment.result.evaluationUser.label),
+    label: intl.formatMessage(messages.experiment.result.evaluationUser.label)
   },
   {
     value: CHART_GOAL_TOTAL,
-    label: intl.formatMessage(messages.experiment.result.goals.label),
+    label: intl.formatMessage(messages.experiment.result.goals.label)
   },
   {
     value: CHART_GOAL_USER,
-    label: intl.formatMessage(messages.experiment.result.goalUser.label),
+    label: intl.formatMessage(messages.experiment.result.goalUser.label)
   },
   {
     value: CHART_CONVERSION_RATE,
-    label: intl.formatMessage(messages.experiment.result.conversionRate.label),
+    label: intl.formatMessage(messages.experiment.result.conversionRate.label)
   },
   {
     value: CHART_VALUE_TOTAL,
-    label: intl.formatMessage(messages.experiment.result.valueSum.label),
+    label: intl.formatMessage(messages.experiment.result.valueSum.label)
   },
   {
     value: CHART_VALUE_PER_USER,
-    label: intl.formatMessage(messages.experiment.result.valuePerUser.label),
-  },
+    label: intl.formatMessage(messages.experiment.result.valuePerUser.label)
+  }
 ];
 
 const ANALYSIS_CONVERSION_RATE = 'Conversion Rate Analysis';
@@ -64,12 +64,12 @@ const ANALYSIS_VALUE_PER_USER = 'Value Per User Analysis';
 const analysisOptions = [
   {
     value: ANALYSIS_CONVERSION_RATE,
-    label: intl.formatMessage(messages.experiment.result.conversionRate.label),
+    label: intl.formatMessage(messages.experiment.result.conversionRate.label)
   },
   {
     value: ANALYSIS_VALUE_PER_USER,
-    label: intl.formatMessage(messages.experiment.result.valuePerUser.label),
-  },
+    label: intl.formatMessage(messages.experiment.result.valuePerUser.label)
+  }
 ];
 
 interface GoalResultDetailProps {
@@ -85,7 +85,7 @@ export const GoalResultDetail: FC<GoalResultDetailProps> = memo(
     >(
       (state) => [
         selectExperimentById(state.experiments, experimentId),
-        state.experiments.getExperimentError,
+        state.experiments.getExperimentError
       ],
       shallowEqual
     );
@@ -95,7 +95,7 @@ export const GoalResultDetail: FC<GoalResultDetailProps> = memo(
     >(
       (state) => [
         selectExperimentResultById(state.experimentResults, experimentId),
-        state.experimentResults.getExperimentResultError,
+        state.experimentResults.getExperimentResultError
       ],
       shallowEqual
     );
@@ -162,7 +162,7 @@ interface GoalResultDetailChartProps {
 
 export const GoalResultDetailChart: FC<GoalResultDetailChartProps> = ({
   goalResult,
-  variationMap,
+  variationMap
 }) => {
   const [chart, setChart] = useState<string>(CHART_EVALUATION_USER);
 
@@ -228,7 +228,7 @@ interface GoalResultDetailAnalysisProps {
 export const GoalResultDetailAnalysis: FC<GoalResultDetailAnalysisProps> = ({
   experiment,
   goalResult,
-  variationMap,
+  variationMap
 }) => {
   const [analysis, setAnalysis] = useState<string>(ANALYSIS_CONVERSION_RATE);
 

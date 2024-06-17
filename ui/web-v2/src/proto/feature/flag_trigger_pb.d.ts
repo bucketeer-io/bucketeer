@@ -1,7 +1,7 @@
 // package: bucketeer.feature
 // file: proto/feature/flag_trigger.proto
 
-import * as jspb from "google-protobuf";
+import * as jspb from 'google-protobuf';
 
 export class FlagTrigger extends jspb.Message {
   getId(): string;
@@ -42,29 +42,40 @@ export class FlagTrigger extends jspb.Message {
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTrigger.AsObject;
-  static toObject(includeInstance: boolean, msg: FlagTrigger): FlagTrigger.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: FlagTrigger, writer: jspb.BinaryWriter): void;
+  static toObject(
+    includeInstance: boolean,
+    msg: FlagTrigger
+  ): FlagTrigger.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: FlagTrigger,
+    writer: jspb.BinaryWriter
+  ): void;
   static deserializeBinary(bytes: Uint8Array): FlagTrigger;
-  static deserializeBinaryFromReader(message: FlagTrigger, reader: jspb.BinaryReader): FlagTrigger;
+  static deserializeBinaryFromReader(
+    message: FlagTrigger,
+    reader: jspb.BinaryReader
+  ): FlagTrigger;
 }
 
 export namespace FlagTrigger {
   export type AsObject = {
-    id: string,
-    featureId: string,
-    environmentNamespace: string,
-    type: FlagTrigger.TypeMap[keyof FlagTrigger.TypeMap],
-    action: FlagTrigger.ActionMap[keyof FlagTrigger.ActionMap],
-    description: string,
-    triggerCount: number,
-    lastTriggeredAt: number,
-    token: string,
-    disabled: boolean,
-    createdAt: number,
-    updatedAt: number,
-  }
+    id: string;
+    featureId: string;
+    environmentNamespace: string;
+    type: FlagTrigger.TypeMap[keyof FlagTrigger.TypeMap];
+    action: FlagTrigger.ActionMap[keyof FlagTrigger.ActionMap];
+    description: string;
+    triggerCount: number;
+    lastTriggeredAt: number;
+    token: string;
+    disabled: boolean;
+    createdAt: number;
+    updatedAt: number;
+  };
 
   export interface TypeMap {
     TYPE_UNKNOWN: 0;
@@ -81,4 +92,3 @@ export namespace FlagTrigger {
 
   export const Action: ActionMap;
 }
-

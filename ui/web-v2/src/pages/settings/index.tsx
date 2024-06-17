@@ -6,7 +6,7 @@ import {
   Route,
   Switch,
   Redirect,
-  useRouteMatch,
+  useRouteMatch
 } from 'react-router-dom';
 
 import {
@@ -14,7 +14,7 @@ import {
   PAGE_PATH_PUSHES,
   PAGE_PATH_NOTIFICATIONS,
   PAGE_PATH_NEW,
-  PAGE_PATH_ROOT,
+  PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
@@ -67,7 +67,7 @@ export const SettingsIndexPage: FC = memo(() => {
             exact
             path={[
               `${url}${PAGE_PATH_PUSHES}`,
-              `${url}${PAGE_PATH_PUSHES}/:pushId`,
+              `${url}${PAGE_PATH_PUSHES}/:pushId`
             ]}
           >
             <PushIndexPage />
@@ -76,7 +76,7 @@ export const SettingsIndexPage: FC = memo(() => {
             exact
             path={[
               `${url}${PAGE_PATH_NOTIFICATIONS}`,
-              `${url}${PAGE_PATH_NOTIFICATIONS}/:notificationId`,
+              `${url}${PAGE_PATH_NOTIFICATIONS}/:notificationId`
             ]}
           >
             <NotificationIndexPage />
@@ -96,11 +96,11 @@ const createTabs = (): Array<TabItem> => {
   return [
     {
       message: intl.formatMessage(messages.settings.tab.pushes),
-      to: PAGE_PATH_PUSHES,
+      to: PAGE_PATH_PUSHES
     },
     {
       message: intl.formatMessage(messages.settings.tab.notifications),
-      to: PAGE_PATH_NOTIFICATIONS,
-    },
+      to: PAGE_PATH_NOTIFICATIONS
+    }
   ];
 };

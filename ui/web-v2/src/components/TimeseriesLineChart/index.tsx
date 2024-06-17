@@ -23,33 +23,33 @@ export const TimeseriesLineChart: FC<TimeseriesLineChartProps> = memo(
           data: [...data[i]], // Copy arrays to avoid  "Uncaught TypeError: Cannot assign to read only property 'length' of object '[object Array]""
           borderColor: color,
           backgroundColor: color,
-          fill: false,
+          fill: false
         };
-      }),
+      })
     };
     const options: ChartOptions = {
       title: {
         display: label == '' ? false : true,
         text: label,
-        fontStyle: 'normal',
+        fontStyle: 'normal'
       },
       scales: {
         xAxes: [
           {
             type: 'time',
             time: {
-              unit: 'day',
-            },
-          },
+              unit: 'day'
+            }
+          }
         ],
         yAxes: [
           {
-            display: true,
-          },
-        ],
+            display: true
+          }
+        ]
       },
       responsive: true,
-      maintainAspectRatio: false,
+      maintainAspectRatio: false
     };
 
     return <Line data={chartData} options={options} height={height} />;

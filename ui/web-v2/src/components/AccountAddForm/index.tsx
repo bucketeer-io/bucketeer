@@ -18,7 +18,7 @@ export const AccountAddForm: FC<AccountAddFormProps> = memo(
     const {
       register,
       control,
-      formState: { errors, isSubmitting, isValid },
+      formState: { errors, isSubmitting, isValid }
     } = methods;
 
     return (

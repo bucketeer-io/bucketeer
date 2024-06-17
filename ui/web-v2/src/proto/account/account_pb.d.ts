@@ -2,9 +2,9 @@
 // file: proto/account/account.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_environment_environment_pb from '../environment/environment_pb';
-import * as proto_environment_project_pb from '../environment/project_pb';
-import * as proto_environment_organization_pb from '../environment/organization_pb';
+import * as proto_environment_environment_pb from '../../proto/environment/environment_pb';
+import * as proto_environment_project_pb from '../../proto/environment/project_pb';
+import * as proto_environment_organization_pb from '../../proto/environment/organization_pb';
 
 export class Account extends jspb.Message {
   getId(): string;

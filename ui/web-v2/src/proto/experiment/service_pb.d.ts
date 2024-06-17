@@ -3,9 +3,9 @@
 
 import * as jspb from 'google-protobuf';
 import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
-import * as proto_experiment_command_pb from './command_pb';
-import * as proto_experiment_goal_pb from './goal_pb';
-import * as proto_experiment_experiment_pb from './experiment_pb';
+import * as proto_experiment_command_pb from '../../proto/experiment/command_pb';
+import * as proto_experiment_goal_pb from '../../proto/experiment/goal_pb';
+import * as proto_experiment_experiment_pb from '../../proto/experiment/experiment_pb';
 
 export class GetGoalRequest extends jspb.Message {
   getId(): string;

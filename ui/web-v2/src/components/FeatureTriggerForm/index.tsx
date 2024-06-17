@@ -9,13 +9,13 @@ import {
   updateFlagTrigger,
   resetFlagTrigger,
   disableFlagTrigger,
-  enableFlagTrigger,
+  enableFlagTrigger
 } from '../../modules/flagTriggers';
 import { FlagTrigger } from '../../proto/feature/flag_trigger_pb';
 import {
   CreateFlagTriggerResponse,
   ListFlagTriggersResponse,
-  ResetFlagTriggerResponse,
+  ResetFlagTriggerResponse
 } from '../../proto/feature/service_pb';
 import { AppDispatch } from '../../store';
 import { classNames } from '../../utils/css';
@@ -30,7 +30,7 @@ import {
   CheckCircleIcon,
   XIcon,
   ClockIcon,
-  InformationCircleIcon,
+  InformationCircleIcon
 } from '@heroicons/react/outline';
 import { ExclamationCircleIcon } from '@heroicons/react/solid';
 import { FileCopyOutlined } from '@material-ui/icons';
@@ -53,19 +53,19 @@ import { TriggerResetDialog } from '../TriggerResetDialog';
 const triggerTypeOptions = [
   {
     value: FlagTrigger.Type.TYPE_WEBHOOK.toString(),
-    label: 'Webhook',
-  },
+    label: 'Webhook'
+  }
 ];
 
 const actionOptions = [
   {
     value: FlagTrigger.Action.ACTION_OFF.toString(),
-    label: intl.formatMessage(messages.trigger.turnTheFlagOFF),
+    label: intl.formatMessage(messages.trigger.turnTheFlagOFF)
   },
   {
     value: FlagTrigger.Action.ACTION_ON.toString(),
-    label: intl.formatMessage(messages.trigger.turnTheFlagON),
-  },
+    label: intl.formatMessage(messages.trigger.turnTheFlagON)
+  }
 ];
 
 interface CopyUrl {
@@ -106,7 +106,7 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
       dispatch(
         listFlagTriggers({
           environmentNamespace: currentEnvironment.id,
-          featureId,
+          featureId
         })
       );
     }, []);
@@ -121,7 +121,7 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
       dispatch(
         deleteFlagTrigger({
           id: selectedFlagTrigger.flagTrigger.id,
-          environmentNamespace: currentEnvironment.id,
+          environmentNamespace: currentEnvironment.id
         })
       ).then(() => fetchFlagTriggers());
     };
@@ -133,13 +133,13 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
       dispatch(
         resetFlagTrigger({
           id: selectedFlagTrigger.flagTrigger.id,
-          environmentNamespace: currentEnvironment.id,
+          environmentNamespace: currentEnvironment.id
         })
       ).then((response) => {
         const payload = response.payload as ResetFlagTriggerResponse.AsObject;
         setSelectedFlagTriggerForCopyUrl({
           id: payload.flagTrigger.id,
-          url: payload.url,
+          url: payload.url
         });
         fetchFlagTriggers();
       });
@@ -149,7 +149,7 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
       dispatch(
         enableFlagTrigger({
           id: flagTriggerId,
-          environmentNamespace: currentEnvironment.id,
+          environmentNamespace: currentEnvironment.id
         })
       ).then(() => fetchFlagTriggers());
     }, []);
@@ -158,7 +158,7 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
       dispatch(
         disableFlagTrigger({
           id: flagTriggerId,
-          environmentNamespace: currentEnvironment.id,
+          environmentNamespace: currentEnvironment.id
         })
       ).then(() => fetchFlagTriggers());
     }, []);
@@ -189,7 +189,7 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
                       <span>{f(messages.trigger.documentation)}</span>
                       <OpenInNewSvg />
                     </a>
-                  ),
+                  )
                 })}
                 {f(messages.fullStop)}
               </p>
@@ -501,7 +501,7 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
     flagTriggerWithUrl,
     featureId,
     fetchFlagTriggers,
-    setSelectedFlagTriggerForCopyUrl,
+    setSelectedFlagTriggerForCopyUrl
   }) => {
     const dispatch = useDispatch<AppDispatch>();
     const { formatMessage: f } = useIntl();
@@ -513,7 +513,7 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
       handleSubmit,
       register,
       reset,
-      setValue,
+      setValue
     } = methods;
     const editable = useIsEditable();
     const currentEnvironment = useCurrentEnvironment();
@@ -533,13 +533,13 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
           featureId,
           triggerType: data.triggerType,
           action: data.action,
-          description: data.description,
+          description: data.description
         })
       ).then((response) => {
         const payload = response.payload as CreateFlagTriggerResponse.AsObject;
         setSelectedFlagTriggerForCopyUrl({
           id: payload.flagTrigger.id,
-          url: payload.url,
+          url: payload.url
         });
         fetchFlagTriggers();
         reset();
@@ -553,7 +553,7 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
           updateFlagTrigger({
             environmentNamespace: currentEnvironment.id,
             id: flagTriggerWithUrl.flagTrigger.id,
-            description: data.description,
+            description: data.description
           })
         ).then(() => {
           fetchFlagTriggers();

@@ -14,7 +14,7 @@ import {
   selectById as selectFeatureById,
   updateFeatureVariations,
   getFeature,
-  createCommand,
+  createCommand
 } from '../../modules/features';
 import { useCurrentEnvironment } from '../../modules/me';
 import {
@@ -23,7 +23,7 @@ import {
   ChangeVariationNameCommand,
   ChangeVariationValueCommand,
   Command,
-  RemoveVariationCommand,
+  RemoveVariationCommand
 } from '../../proto/feature/command_pb';
 import { Feature } from '../../proto/feature/feature_pb';
 import { AppDispatch } from '../../store';
@@ -53,7 +53,7 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
     >(
       (state) => [
         selectFeatureById(state.features, featureId),
-        state.features.getFeatureError,
+        state.features.getFeatureError
       ],
       shallowEqual
     );
@@ -62,17 +62,17 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
         variationType: feature.variationType.toString(),
         variations: feature.variationsList,
         requireComment: requireComment,
-        comment: '',
+        comment: ''
       };
     };
     const methods = useForm({
       resolver: yupResolver(variationsFormSchema),
       defaultValues: defaultValues(feature, currentEnvironment.requireComment),
-      mode: 'onChange',
+      mode: 'onChange'
     });
     const {
       handleSubmit,
-      formState: { dirtyFields },
+      formState: { dirtyFields }
     } = methods;
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
@@ -89,14 +89,14 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
             environmentNamespace: currentEnvironment.id,
             id: feature.id,
             comment: data.comment,
-            commands: commands,
+            commands: commands
           })
         ).then(() => {
           setIsConfirmDialogOpen(false);
           dispatch(
             getFeature({
               environmentNamespace: currentEnvironment.id,
-              id: featureId,
+              id: featureId
             })
           );
         });
@@ -219,7 +219,7 @@ function createVariationDescriptionCommands(
     commands.push(
       createCommand({
         message: command,
-        name: 'ChangeVariationDescriptionCommand',
+        name: 'ChangeVariationDescriptionCommand'
       })
     );
   }

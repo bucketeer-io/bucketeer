@@ -13,65 +13,66 @@ interface TimeseriesStackedLineChartProps {
   unit: string;
 }
 
-export const TimeseriesStackedLineChart: FC<TimeseriesStackedLineChartProps> =
-  ({ label, dataLabels, timeseries, data, unit }) => {
-    const chartData = {
-      labels: timeseries.map((t) => new Date(t * 1000)),
-      datasets: dataLabels.map((e, i) => {
-        return {
-          label: e.length > 40 ? `${e.substring(0, 40)}...` : e,
-          data: data[i],
-          backgroundColor: COLORS[i % COLORS.length],
-          borderColor: COLORS[i % COLORS.length],
-          fill: false,
-        };
-      }),
-    };
-    const options: ChartOptions = {
-      title: {
-        display: true,
-        text: label,
-        fontStyle: 'normal',
-      },
-      tooltips: {
-        callbacks: {
-          label: function (tooltipItem, data) {
-            return (
-              data.datasets[tooltipItem.datasetIndex].label +
-              ': ' +
-              Number(tooltipItem.value).toLocaleString()
-            );
-          },
-        },
-      },
-      scales: {
-        xAxes: [
-          {
-            type: 'time',
-            time: {
-              unit,
-              displayFormats: { hour: 'HH:mm' },
-            },
-          },
-        ],
-        yAxes: [
-          {
-            display: true,
-            stacked: false,
-            ticks: {
-              // beginAtZero: true,
-              userCallback: function (value) {
-                return Number(value).toLocaleString();
-              },
-            },
-          },
-        ],
-      },
-    };
-
-    return (
-      <div>
-        <Line data={chartData} options={options} />
-      </div>
-    );
+export const TimeseriesStackedLineChart: FC<
+  TimeseriesStackedLineChartProps
+> = ({ label, dataLabels, timeseries, data, unit }) => {
+  const chartData = {
+    labels: timeseries.map((t) => new Date(t * 1000)),
+    datasets: dataLabels.map((e, i) => {
+      return {
+        label: e.length > 40 ? `${e.substring(0, 40)}...` : e,
+        data: data[i],
+        backgroundColor: COLORS[i % COLORS.length],
+        borderColor: COLORS[i % COLORS.length],
+        fill: false
+      };
+    })
   };
+  const options: ChartOptions = {
+    title: {
+      display: true,
+      text: label,
+      fontStyle: 'normal'
+    },
+    tooltips: {
+      callbacks: {
+        label: function (tooltipItem, data) {
+          return (
+            data.datasets[tooltipItem.datasetIndex].label +
+            ': ' +
+            Number(tooltipItem.value).toLocaleString()
+          );
+        }
+      }
+    },
+    scales: {
+      xAxes: [
+        {
+          type: 'time',
+          time: {
+            unit,
+            displayFormats: { hour: 'HH:mm' }
+          }
+        }
+      ],
+      yAxes: [
+        {
+          display: true,
+          stacked: false,
+          ticks: {
+            // beginAtZero: true,
+            userCallback: function (value) {
+              return Number(value).toLocaleString();
+            }
+          }
+        }
+      ]
+    }
+  };
+
+  return (
+    <div>
+      <Line data={chartData} options={options} />
+    </div>
+  );
+};

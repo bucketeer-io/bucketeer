@@ -1,3 +1,6 @@
+import { Nullable, isNotNull, isNull } from 'option-t/lib/Nullable/Nullable';
+
+import { urls } from '../config';
 import {
   CreateFlagTriggerRequest,
   CreateFlagTriggerResponse,
@@ -12,15 +15,12 @@ import {
   EnableFlagTriggerRequest,
   EnableFlagTriggerResponse,
   DisableFlagTriggerRequest,
-  DisableFlagTriggerResponse,
+  DisableFlagTriggerResponse
 } from '../proto/feature/service_pb';
 import {
   FeatureServiceClient,
-  ServiceError,
+  ServiceError
 } from '../proto/feature/service_pb_service';
-import { Nullable, isNotNull, isNull } from 'option-t/lib/Nullable/Nullable';
-
-import { urls } from '../config';
 
 import { extractErrorMessage } from './messages';
 import { getMetaDataForClient as getMetaData } from './utils';

@@ -1,7 +1,7 @@
 // package: bucketeer.eventcounter
 // file: proto/eventcounter/variation_count.proto
 
-import * as jspb from "google-protobuf";
+import * as jspb from 'google-protobuf';
 
 export class VariationCount extends jspb.Message {
   getVariationId(): string;
@@ -30,24 +30,34 @@ export class VariationCount extends jspb.Message {
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): VariationCount.AsObject;
-  static toObject(includeInstance: boolean, msg: VariationCount): VariationCount.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: VariationCount, writer: jspb.BinaryWriter): void;
+  static toObject(
+    includeInstance: boolean,
+    msg: VariationCount
+  ): VariationCount.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: VariationCount,
+    writer: jspb.BinaryWriter
+  ): void;
   static deserializeBinary(bytes: Uint8Array): VariationCount;
-  static deserializeBinaryFromReader(message: VariationCount, reader: jspb.BinaryReader): VariationCount;
+  static deserializeBinaryFromReader(
+    message: VariationCount,
+    reader: jspb.BinaryReader
+  ): VariationCount;
 }
 
 export namespace VariationCount {
   export type AsObject = {
-    variationId: string,
-    userCount: number,
-    eventCount: number,
-    valueSum: number,
-    createdAt: number,
-    variationValue: string,
-    valueSumPerUserMean: number,
-    valueSumPerUserVariance: number,
-  }
+    variationId: string;
+    userCount: number;
+    eventCount: number;
+    valueSum: number;
+    createdAt: number;
+    variationValue: string;
+    valueSumPerUserMean: number;
+    valueSumPerUserVariance: number;
+  };
 }
-

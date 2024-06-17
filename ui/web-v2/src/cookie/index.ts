@@ -4,7 +4,7 @@ import Cookies from 'js-cookie';
 const STATE_AVAILABLE_DAY = 1 / 24;
 
 enum Keys {
-  STATE = 'state',
+  STATE = 'state'
 }
 
 export const getState = (): string => {

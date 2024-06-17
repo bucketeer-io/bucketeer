@@ -33,7 +33,7 @@ export const SegmentUpdateForm: FC<SegmentUpdateFormProps> = memo(
       trigger,
       formState,
       getValues,
-      formState: { errors, isSubmitted, isValid, dirtyFields },
+      formState: { errors, isSubmitted, isValid, dirtyFields }
     } = methods;
 
     const { isInUseStatus, featureList } = getValues();
@@ -146,7 +146,7 @@ export const SegmentUpdateForm: FC<SegmentUpdateFormProps> = memo(
                       <div className="ml-3 flex-1">
                         <p className="text-sm text-yellow-700">
                           {f(messages.segment.update.userId, {
-                            length: featureList.length,
+                            length: featureList.length
                           })}
                         </p>
                         <div className="mt-2 text-sm text-yellow-700">
@@ -287,8 +287,7 @@ export const SegmentUpdateForm: FC<SegmentUpdateFormProps> = memo(
                                 </p>
                                 <p className="text-xs text-gray-500">
                                   {f(messages.segment.fileUpload.fileSize, {
-                                    fileSize:
-                                      selectedFile.size.toLocaleString(),
+                                    fileSize: selectedFile.size.toLocaleString()
                                   })}
                                 </p>
                               </div>

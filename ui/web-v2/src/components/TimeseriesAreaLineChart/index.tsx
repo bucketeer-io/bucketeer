@@ -25,7 +25,7 @@ export const TimeseriesAreaLineChart: FC<TimeseriesAreaLineChartProps> = ({
   upperBoundaries,
   lowerBoundaries,
   representatives,
-  height,
+  height
 }) => {
   const datasets = Array<any>();
   dataLabels.forEach((l, i) => {
@@ -36,7 +36,7 @@ export const TimeseriesAreaLineChart: FC<TimeseriesAreaLineChartProps> = ({
       borderWidth: 0,
       backgroundColor: hexToRgba(color, 0.2),
       pointRadius: 0,
-      fill: '+1',
+      fill: '+1'
     });
     datasets.push({
       label: null,
@@ -44,52 +44,52 @@ export const TimeseriesAreaLineChart: FC<TimeseriesAreaLineChartProps> = ({
       borderWidth: 0,
       backgroundColor: hexToRgba(color, 0.2),
       pointRadius: 0,
-      fill: '-1',
+      fill: '-1'
     });
     datasets.push({
       label: l,
       data: representatives[i],
       borderColor: COLORS[i % COLORS.length],
       pointRadius: 0,
-      fill: false,
+      fill: false
     });
   });
   const chartData = {
     labels: timeseries.map((t) => new Date(t * 1000)),
-    datasets: datasets,
+    datasets: datasets
   };
   const options: ChartOptions = {
     title: {
       display: label == '' ? false : true,
       text: label,
-      fontStyle: 'normal',
+      fontStyle: 'normal'
     },
     legend: {
       display: true,
       labels: {
         filter: (legendItem: any, _: any) => {
           return !!legendItem.text;
-        },
+        }
       },
-      onClick: undefined,
+      onClick: undefined
     },
     scales: {
       xAxes: [
         {
           type: 'time',
           time: {
-            unit: 'day',
-          },
-        },
+            unit: 'day'
+          }
+        }
       ],
       yAxes: [
         {
-          display: true,
-        },
-      ],
+          display: true
+        }
+      ]
     },
     responsive: true,
-    maintainAspectRatio: false,
+    maintainAspectRatio: false
   };
 
   return (

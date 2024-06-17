@@ -17,7 +17,7 @@ export const AutoOpsDeleteDialog: FC<AutoOpsDeleteDialogProps> = ({
   open,
   onConfirm,
   onClose,
-  selectedOperation,
+  selectedOperation
 }) => {
   const { formatMessage: f } = useIntl();
 

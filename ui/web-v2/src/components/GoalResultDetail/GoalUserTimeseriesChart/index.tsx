@@ -12,7 +12,7 @@ interface GoalUserTimeseriesChartProps {
 
 export const GoalUserTimeseriesChart: FC<GoalUserTimeseriesChartProps> = ({
   goalResult,
-  variations,
+  variations
 }) => {
   const variationValues = goalResult.variationResultsList.map((vr) => {
     return unwrapUndefinable(variations.get(vr.variationId)).value;

@@ -9,13 +9,13 @@ import {
   FEATURE_DESCRIPTION_MAX_LENGTH,
   FEATURE_ID_MAX_LENGTH,
   FEATURE_NAME_MAX_LENGTH,
-  FEATURE_TAG_MIN_SIZE,
+  FEATURE_TAG_MIN_SIZE
 } from '../../constants/feature';
 import {
   VARIATION_DESCRIPTION_MAX_LENGTH,
   VARIATION_NAME_MAX_LENGTH,
   VARIATION_VALUE_MAX_LENGTH,
-  VARIATION_NUMBER_VALUE_MAX_LENGTH,
+  VARIATION_NUMBER_VALUE_MAX_LENGTH
 } from '../../constants/variation';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
@@ -77,7 +77,7 @@ const variationsSchema = yup.array().of(
         .test(
           'maxLength',
           intl.formatMessage(messages.input.error.maxLength, {
-            max: `${VARIATION_VALUE_MAX_LENGTH}`,
+            max: `${VARIATION_VALUE_MAX_LENGTH}`
           }),
           function (value) {
             const { from } = this as any;
@@ -94,7 +94,7 @@ const variationsSchema = yup.array().of(
         .test(
           'maxLengthNumber',
           intl.formatMessage(messages.input.error.maxLength, {
-            max: `${VARIATION_NUMBER_VALUE_MAX_LENGTH}`,
+            max: `${VARIATION_NUMBER_VALUE_MAX_LENGTH}`
           }),
           function (value) {
             const { from } = this as any;
@@ -119,7 +119,7 @@ const variationsSchema = yup.array().of(
           }
         ),
       name: yup.string().required().max(VARIATION_NAME_MAX_LENGTH),
-      description: yup.string().max(VARIATION_DESCRIPTION_MAX_LENGTH),
+      description: yup.string().max(VARIATION_DESCRIPTION_MAX_LENGTH)
     })
     .required()
 );
@@ -181,8 +181,8 @@ const schedulesListSchema = yup.array().of(
             );
           }
           return true;
-        }),
-    }),
+        })
+    })
   })
 );
 
@@ -202,7 +202,7 @@ export const operationFormSchema = yup.object().shape({
           }
           return true;
         }
-      ),
+      )
   }),
   eventRate: yup.object().shape({
     variation: yup.string(),
@@ -232,7 +232,7 @@ export const operationFormSchema = yup.object().shape({
       .required()
       .moreThan(0)
       .max(100),
-    operator: yup.string(),
+    operator: yup.string()
   }),
   progressiveRollout: yup.object().shape({
     template: yup.object().shape({
@@ -256,20 +256,20 @@ export const operationFormSchema = yup.object().shape({
               }
               return true;
             }
-          ),
+          )
       }),
       schedulesList: schedulesListSchema,
       interval: yup
         .mixed<
           ProgressiveRolloutTemplateScheduleClause.IntervalMap[keyof ProgressiveRolloutTemplateScheduleClause.IntervalMap]
         >()
-        .required(),
+        .required()
     }),
     manual: yup.object().shape({
       variationId: yup.string().required(),
-      schedulesList: schedulesListSchema,
-    }),
-  }),
+      schedulesList: schedulesListSchema
+    })
+  })
 });
 export type OperationForm = yup.InferType<typeof operationFormSchema>;
 
@@ -279,14 +279,14 @@ export const switchEnabledFormSchema = (requireComment: boolean) => {
   return yup.object().shape({
     featureId: idSchema,
     enabled: yup.boolean().required(),
-    comment: requireComment ? commentSchema : yup.string(),
+    comment: requireComment ? commentSchema : yup.string()
   });
 };
 
 export const archiveFormSchema = (requireComment: boolean) =>
   yup.object().shape({
     featureId: idSchema,
-    comment: requireComment ? commentSchema : yup.string(),
+    comment: requireComment ? commentSchema : yup.string()
   });
 
 export const cloneSchema = yup.object().shape({
@@ -297,12 +297,12 @@ export const cloneSchema = yup.object().shape({
 export const onVariationSchema = yup.object().shape({
   id: yup.string(),
   value: yup.string(),
-  label: yup.string(),
+  label: yup.string()
 });
 
 export const offVariationSchema = yup.object().shape({
   value: yup.string(),
-  label: yup.string(),
+  label: yup.string()
 });
 
 export const addFormSchema = yup.object().shape({
@@ -313,7 +313,7 @@ export const addFormSchema = yup.object().shape({
   variationType: variationTypeSchema,
   variations: variationsSchema,
   onVariation: onVariationSchema,
-  offVariation: offVariationSchema,
+  offVariation: offVariationSchema
 });
 export type AddForm = yup.InferType<typeof addFormSchema>;
 
@@ -324,8 +324,8 @@ export const variationsFormSchema = yup.object().shape({
   requireComment: yup.bool(),
   comment: yup.string().when('requireComment', {
     is: (requireComment: boolean) => requireComment,
-    then: (schema) => schema.required(),
-  }),
+    then: (schema) => schema.required()
+  })
 });
 export type VariationForm = yup.InferType<typeof variationsFormSchema>;
 
@@ -334,20 +334,20 @@ export const settingsFormSchema = (requireComment: boolean) =>
     name: nameSchema,
     description: descriptionSchema,
     tags: tagsSchema,
-    comment: requireComment ? commentSchema : yup.string(),
+    comment: requireComment ? commentSchema : yup.string()
   });
 
 const strategySchema = yup.object().shape({
   option: yup.object().shape({
     value: yup.string(),
-    label: yup.string(),
+    label: yup.string()
   }),
   rolloutStrategy: yup
     .array()
     .of(
       yup.object().shape({
         id: yup.string(),
-        percentage: yup.number(),
+        percentage: yup.number()
       })
     )
     .required()
@@ -365,7 +365,7 @@ const strategySchema = yup.object().shape({
           }, 0);
         return total == 100;
       }
-    ),
+    )
 });
 export type StrategySchema = yup.InferType<typeof strategySchema>;
 
@@ -373,9 +373,10 @@ export const ruleClauseType = {
   COMPARE: 'compare',
   SEGMENT: 'segment',
   DATE: 'date',
-  FEATURE_FLAG: 'feature_flag',
+  FEATURE_FLAG: 'feature_flag'
 } as const;
-export type RuleClauseType = typeof ruleClauseType[keyof typeof ruleClauseType];
+export type RuleClauseType =
+  (typeof ruleClauseType)[keyof typeof ruleClauseType];
 
 const ruleClauseSchema = yup.object().shape({
   id: yup.string(),
@@ -383,17 +384,17 @@ const ruleClauseSchema = yup.object().shape({
   attribute: yup.string().when('type', {
     is: (type: string) => type === ruleClauseType.SEGMENT,
     then: (schema) => schema,
-    otherwise: (schema) => schema.required(),
+    otherwise: (schema) => schema.required()
   }),
   operator: yup.string(),
-  values: yup.array().of(yup.string()).min(1),
+  values: yup.array().of(yup.string()).min(1)
 });
 export type RuleClauseSchema = yup.InferType<typeof ruleClauseSchema>;
 
 export const rulesSchema = yup.object().shape({
   id: yup.string(),
   clauses: yup.array().of(ruleClauseSchema),
-  strategy: strategySchema,
+  strategy: strategySchema
 });
 export type RuleSchema = yup.InferType<typeof rulesSchema>;
 
@@ -401,14 +402,14 @@ export const targetingFormSchema = yup.object().shape({
   prerequisites: yup.array().of(
     yup.object().shape({
       featureId: yup.string().required(),
-      variationId: yup.string().required(),
+      variationId: yup.string().required()
     })
   ),
   enabled: yup.bool(),
   targets: yup.array().of(
     yup.object().shape({
       variationId: yup.string().required(),
-      users: yup.array().of(yup.string()),
+      users: yup.array().of(yup.string())
     })
   ),
   rules: yup.array().of(rulesSchema),
@@ -418,13 +419,13 @@ export const targetingFormSchema = yup.object().shape({
   requireComment: yup.bool(),
   comment: yup.string().when('requireComment', {
     is: (requireComment: boolean) => requireComment,
-    then: (schema) => schema.required(),
-  }),
+    then: (schema) => schema.required()
+  })
 });
 export type TargetingForm = yup.InferType<typeof targetingFormSchema>;
 
 export const triggerFormSchema = yup.object().shape({
   triggerType: yup.string().nullable().required(),
   action: yup.string().nullable().required(),
-  description: yup.string(),
+  description: yup.string()
 });

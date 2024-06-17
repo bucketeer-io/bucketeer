@@ -11,16 +11,15 @@ import {
   ListOpsCountsRequest,
   ListOpsCountsResponse,
   UpdateAutoOpsRuleRequest,
-  UpdateAutoOpsRuleResponse,
+  UpdateAutoOpsRuleResponse
 } from '../proto/autoops/service_pb';
 import {
   AutoOpsServiceClient,
-  ServiceError,
+  ServiceError
 } from '../proto/autoops/service_pb_service';
 
 import { extractErrorMessage } from './messages';
 import { getMetaDataForClient as getMetaData } from './utils';
-
 
 export class AutoOpsServiceError<Request> extends Error {
   request: Request;

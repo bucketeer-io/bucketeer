@@ -14,14 +14,14 @@ import {
   selectById as selectFeatureById,
   UpdateDetailCommands,
   updateFeatureDetails,
-  getFeature,
+  getFeature
 } from '../../modules/features';
 import { useCurrentEnvironment } from '../../modules/me';
 import {
   AddTagCommand,
   ChangeDescriptionCommand,
   RemoveTagCommand,
-  RenameFeatureCommand,
+  RenameFeatureCommand
 } from '../../proto/feature/command_pb';
 import { Feature } from '../../proto/feature/feature_pb';
 import { AppDispatch } from '../../store';
@@ -45,7 +45,7 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
       [Feature.AsObject | undefined, SerializedError | null]
     >((state) => [
       selectFeatureById(state.features, featureId),
-      state.features.getFeatureError,
+      state.features.getFeatureError
     ]);
     const methods = useForm({
       resolver: yupResolver(
@@ -55,13 +55,13 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
         name: feature.name,
         description: feature.description,
         tags: feature.tagsList,
-        comment: '',
+        comment: ''
       },
-      mode: 'onChange',
+      mode: 'onChange'
     });
     const {
       handleSubmit,
-      formState: { dirtyFields },
+      formState: { dirtyFields }
     } = methods;
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
@@ -103,14 +103,14 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
             environmentNamespace: currentEnvironment.id,
             id: feature.id,
             comment: data.comment,
-            updateDetailCommands: commands,
+            updateDetailCommands: commands
           })
         ).then(() => {
           setIsConfirmDialogOpen(false);
           dispatch(
             getFeature({
               environmentNamespace: currentEnvironment.id,
-              id: featureId,
+              id: featureId
             })
           );
         });

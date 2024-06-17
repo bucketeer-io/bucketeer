@@ -5,8 +5,10 @@
   "scripts": {
     "build": "webpack --mode production --config ./webpack.config.js",
     "start": "TAILWIND_MODE=watch webpack-cli serve --mode development --config webpack.dev.js",
-    "lint": "eslint ./src/**/*.{js,ts,tsx}",
-    "lintfix": "eslint --fix ./src/**/*.{js,ts,tsx}",
+    "lint": "yarn eslint && yarn prettier",
+    "lintfix": "yarn eslintfix && yarn prettierfix",
+    "eslint": "eslint ./src/**/*.{js,ts,tsx}",
+    "eslintfix": "eslint --fix ./src/**/*.{js,ts,tsx}",
     "prettier": "prettier . --check",
     "prettierfix": "prettier . --write",
     "formatjs-extract": "formatjs extract 'src/**/!(*.d).{ts,tsx}*' --ignore src/proto --ignore src/types --out-file src/lang/extracted-messages.json",

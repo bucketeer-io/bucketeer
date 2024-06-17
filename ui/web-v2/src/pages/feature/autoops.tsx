@@ -11,7 +11,7 @@ import {
   ClauseType,
   createInitialDatetimeClause,
   createInitialOpsEventRateClause,
-  FeatureAutoOpsRulesForm,
+  FeatureAutoOpsRulesForm
 } from '../../components/FeatureAutoOpsRulesForm';
 import { AppState } from '../../modules';
 import { listAutoOpsRules } from '../../modules/autoOpsRules';
@@ -39,7 +39,7 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
       [Feature.AsObject | undefined, SerializedError | null]
     >((state) => [
       selectFeatureById(state.features, featureId),
-      state.features.getFeatureError,
+      state.features.getFeatureError
     ]);
 
     const defaultValues = {
@@ -53,24 +53,24 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
           interval: '1',
           increments: 10,
           variationId: feature.variationsList[0].id,
-          schedulesList: [],
+          schedulesList: []
         },
         manual: {
           variationId: feature.variationsList[0].id,
           schedulesList: [
             {
               executeAt: createInitialDatetimeClause(),
-              weight: 10,
-            },
-          ],
-        },
-      },
+              weight: 10
+            }
+          ]
+        }
+      }
     };
 
     const methods = useForm({
       resolver: yupResolver(operationFormSchema),
       defaultValues,
-      mode: 'onChange',
+      mode: 'onChange'
     });
 
     const { reset, setValue } = methods;
@@ -84,7 +84,7 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
       dispatch(
         listAutoOpsRules({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.id,
+          environmentNamespace: currentEnvironment.id
         })
       );
     }, [dispatch]);
@@ -93,7 +93,7 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
       dispatch(
         listProgressiveRollout({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.id,
+          environmentNamespace: currentEnvironment.id
         })
       );
     }, [dispatch]);

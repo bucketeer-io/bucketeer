@@ -2,7 +2,7 @@
 // file: proto/experiment/experiment.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_feature_variation_pb from '../feature/variation_pb';
+import * as proto_feature_variation_pb from '../../proto/feature/variation_pb';
 
 export class Experiment extends jspb.Message {
   getId(): string;

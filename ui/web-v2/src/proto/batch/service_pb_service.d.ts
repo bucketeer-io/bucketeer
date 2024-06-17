@@ -1,7 +1,7 @@
 // package: bucketeer.batch
 // file: proto/batch/service.proto
 
-import * as proto_batch_service_pb from './service_pb';
+import * as proto_batch_service_pb from '../../proto/batch/service_pb';
 import { grpc } from '@improbable-eng/grpc-web';
 
 type BatchServiceExecuteBatchJob = {

@@ -1,7 +1,7 @@
 import {
   createEntityAdapter,
   createSlice,
-  PayloadAction,
+  PayloadAction
 } from '@reduxjs/toolkit';
 
 export type ToastSeverity = 'error' | 'success' | 'warning' | undefined;
@@ -33,13 +33,13 @@ export const toastsSlice = createSlice({
         id: `${Date.now()}`,
         message: action.payload.message,
         severity: action.payload.severity,
-        to: action.payload.to,
+        to: action.payload.to
       });
     },
     removeToast(state, action: PayloadAction<{ id: string }>) {
       toastsAdapter.removeOne(state, action.payload.id);
-    },
-  },
+    }
+  }
 });
 
 export const { addToast, removeToast } = toastsSlice.actions;

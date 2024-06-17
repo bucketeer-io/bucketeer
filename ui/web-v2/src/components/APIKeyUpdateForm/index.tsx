@@ -19,7 +19,7 @@ export const APIKeyUpdateForm: FC<APIKeyUpdateFormProps> = memo(
     const {
       register,
       formState: { errors, isSubmitting, isDirty, isValid },
-      getValues,
+      getValues
     } = methods;
 
     return (
@@ -83,7 +83,7 @@ export const APIKeyUpdateForm: FC<APIKeyUpdateFormProps> = memo(
                         description: f(
                           messages.apiKey.section.clientSdkDescription
                         ),
-                        value: 1,
+                        value: 1
                       },
                       {
                         id: 'server-sdk',
@@ -91,15 +91,17 @@ export const APIKeyUpdateForm: FC<APIKeyUpdateFormProps> = memo(
                         description: f(
                           messages.apiKey.section.serverSdkDescription
                         ),
-                        value: 2,
-                      },
+                        value: 2
+                      }
                     ].map(({ id, label, description, value }) => (
                       <div
                         key={id}
                         className="flex items-center py-4 space-x-5"
                       >
                         <label htmlFor={id} className="flex-1">
-                          <p className="font-bold text-sm text-gray-600 text-md text-gray-500">{label}</p>
+                          <p className="font-bold text-sm text-gray-600 text-md text-gray-500">
+                            {label}
+                          </p>
                           <p className="text-sm text-gray-500">{description}</p>
                         </label>
                         <input

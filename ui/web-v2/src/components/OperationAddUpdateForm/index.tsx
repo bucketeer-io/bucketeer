@@ -3,7 +3,7 @@ import { AppState } from '../../modules';
 import { selectAll as selectAllAutoOpsRules } from '../../modules/autoOpsRules';
 import {
   listExperiments,
-  selectAll as selectAllExperiment,
+  selectAll as selectAllExperiment
 } from '../../modules/experiments';
 import { useCurrentEnvironment } from '../../modules/me';
 import { selectAll as selectAllProgressiveRollouts } from '../../modules/porgressiveRollout';
@@ -13,14 +13,14 @@ import {
   OpsEventRateClause,
   ProgressiveRolloutManualScheduleClause,
   ProgressiveRolloutTemplateScheduleClause,
-  ProgressiveRolloutSchedule,
+  ProgressiveRolloutSchedule
 } from '../../proto/autoops/clause_pb';
 import {
   ChangeAutoOpsRuleOpsTypeCommand,
   ChangeDatetimeClauseCommand,
   ChangeOpsEventRateClauseCommand,
   CreateAutoOpsRuleCommand,
-  CreateProgressiveRolloutCommand,
+  CreateProgressiveRolloutCommand
 } from '../../proto/autoops/command_pb';
 import { ProgressiveRollout } from '../../proto/autoops/progressive_rollout_pb';
 import { Experiment } from '../../proto/experiment/experiment_pb';
@@ -39,17 +39,17 @@ import { messages } from '../../lang/messages';
 import {
   createAutoOpsRule,
   updateAutoOpsRule,
-  UpdateAutoOpsRuleParams,
+  UpdateAutoOpsRuleParams
 } from '../../modules/autoOpsRules';
 import { selectById as selectFeatureById } from '../../modules/features';
 import { createProgressiveRollout } from '../../modules/porgressiveRollout';
 import {
   AddProgressiveRolloutOperation,
-  isProgressiveRolloutsWarningsExists,
+  isProgressiveRolloutsWarningsExists
 } from '../AddProgressiveRolloutOperation';
 import {
   AddUpdateEventRateOperation,
-  createOpsEventRateClause,
+  createOpsEventRateClause
 } from '../AddUpdateEventRateOperation';
 import { AddUpdateScheduleOperation } from '../AddUpdateScheduleOperation';
 import { ClauseType } from '../FeatureAutoOpsRulesForm';
@@ -73,7 +73,7 @@ export interface OperationAddUpdateFormProps {
 
 const TabLabel = {
   ENABLE: intl.formatMessage(messages.autoOps.enable),
-  KILL_SWITCH: intl.formatMessage(messages.autoOps.killSwitch),
+  KILL_SWITCH: intl.formatMessage(messages.autoOps.killSwitch)
 };
 
 export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
@@ -85,7 +85,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
     autoOpsRule,
     isKillSwitchSelected,
     isActiveTabSelected,
-    isProgressiveRolloutSelected,
+    isProgressiveRolloutSelected
   }) => {
     const dispatch = useDispatch<AppDispatch>();
     const currentEnvironment = useCurrentEnvironment();
@@ -97,7 +97,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
       [Feature.AsObject | undefined, SerializedError | null]
     >((state) => [
       selectFeatureById(state.features, featureId),
-      state.features.getFeatureError,
+      state.features.getFeatureError
     ]);
     const autoOpsRules = useSelector<AppState, AutoOpsRule.AsObject[]>(
       (state) =>
@@ -130,28 +130,28 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
       control,
       formState: { isValid, isSubmitting },
       register,
-      setValue,
+      setValue
     } = methods;
 
     const opsType = useWatch({
       control,
-      name: 'opsType',
+      name: 'opsType'
     });
 
     const clauseType = useWatch({
       control,
-      name: 'clauseType',
+      name: 'clauseType'
     });
 
     const tabs = [
       {
         label: TabLabel.ENABLE,
-        value: OpsType.ENABLE_FEATURE,
+        value: OpsType.ENABLE_FEATURE
       },
       {
         label: TabLabel.KILL_SWITCH,
-        value: OpsType.DISABLE_FEATURE,
-      },
+        value: OpsType.DISABLE_FEATURE
+      }
     ];
 
     const [progressiveRolloutTypeList, setProgressiveRolloutTypeList] =
@@ -159,13 +159,13 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
         {
           label: f(messages.autoOps.template),
           value: ProgressiveRollout.Type.TEMPLATE_SCHEDULE,
-          selected: true,
+          selected: true
         },
         {
           label: f(messages.autoOps.manual),
           value: ProgressiveRollout.Type.MANUAL_SCHEDULE,
-          selected: false,
-        },
+          selected: false
+        }
       ]);
 
     const isSeeDetailsSelected = autoOpsRule && !isActiveTabSelected;
@@ -175,19 +175,19 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
         setRadioList([
           {
             label: f(messages.autoOps.schedule),
-            value: ClauseType.DATETIME,
-          },
+            value: ClauseType.DATETIME
+          }
         ]);
       } else {
         setRadioList([
           {
             label: f(messages.autoOps.schedule),
-            value: ClauseType.DATETIME,
+            value: ClauseType.DATETIME
           },
           {
             label: f(messages.autoOps.progressiveRollout),
-            value: ClauseType.PROGRESSIVE_ROLLOUT,
-          },
+            value: ClauseType.PROGRESSIVE_ROLLOUT
+          }
         ]);
       }
     };
@@ -196,12 +196,12 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
       setRadioList([
         {
           label: f(messages.autoOps.schedule),
-          value: ClauseType.DATETIME,
+          value: ClauseType.DATETIME
         },
         {
           label: f(messages.autoOps.eventRate),
-          value: ClauseType.EVENT_RATE,
-        },
+          value: ClauseType.EVENT_RATE
+        }
       ]);
     };
 
@@ -295,7 +295,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
             id: autoOpsRule.id,
             changeDatetimeClauseCommands,
             changeOpsEventRateClauseCommands,
-            changeAutoOpsRuleOpsTypeCommand,
+            changeAutoOpsRuleOpsTypeCommand
           };
 
           dispatch(updateAutoOpsRule(param)).then(() => onSubmit());
@@ -318,14 +318,14 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
             }
             if (data.clauseType === ClauseType.EVENT_RATE) {
               command.setOpsEventRateClausesList([
-                createOpsEventRateClause(data.eventRate),
+                createOpsEventRateClause(data.eventRate)
               ]);
             }
 
             dispatch(
               createAutoOpsRule({
                 environmentNamespace: currentEnvironment.id,
-                command: command,
+                command: command
               })
             ).then(() => onSubmit());
           } else if (data.clauseType === ClauseType.PROGRESSIVE_ROLLOUT) {
@@ -341,13 +341,8 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
             ) {
               const {
                 progressiveRollout: {
-                  template: {
-                    increments,
-                    interval,
-                    schedulesList,
-                    variationId,
-                  },
-                },
+                  template: { increments, interval, schedulesList, variationId }
+                }
               } = data;
 
               const clause = new ProgressiveRolloutTemplateScheduleClause();
@@ -376,8 +371,8 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
             ) {
               const {
                 progressiveRollout: {
-                  manual: { schedulesList, variationId },
-                },
+                  manual: { schedulesList, variationId }
+                }
               } = data;
 
               const clause = new ProgressiveRolloutManualScheduleClause();
@@ -401,7 +396,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
             dispatch(
               createProgressiveRollout({
                 environmentNamespace: currentEnvironment.id,
-                command: command,
+                command: command
               })
             ).then(() => {
               onSubmitProgressiveRollout();
@@ -415,7 +410,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
     const variationOptions = feature.variationsList.map((v) => {
       return {
         value: v.id,
-        label: createVariationLabel(v),
+        label: createVariationLabel(v)
       };
     });
 
@@ -552,7 +547,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
                   isProgressiveRolloutsWarningsExists({
                     progressiveRolloutList,
                     feature,
-                    experiments,
+                    experiments
                   }))
               }
               onClick={handleSubmit(handleOnSubmit)}

@@ -2,14 +2,14 @@ import {
   createSlice,
   createAsyncThunk,
   createEntityAdapter,
-  SerializedError,
+  SerializedError
 } from '@reduxjs/toolkit';
 
 import * as grpc from '../grpc/eventcounter';
 import { ExperimentResult } from '../proto/eventcounter/experiment_result_pb';
 import {
   GetExperimentResultRequest,
-  GetExperimentResultResponse,
+  GetExperimentResultResponse
 } from '../proto/eventcounter/service_pb';
 
 import { setupAuthToken } from './auth';
@@ -20,7 +20,7 @@ const MODULE_NAME = 'experimentResult';
 
 export const experimentResultsAdapter =
   createEntityAdapter<ExperimentResult.AsObject>({
-    selectId: (experimentResult) => experimentResult.id,
+    selectId: (experimentResult) => experimentResult.id
   });
 
 export const { selectAll, selectById } =
@@ -33,7 +33,7 @@ const initialState = experimentResultsAdapter.getInitialState<{
 }>({
   loading: false,
   totalCount: 0,
-  getExperimentResultError: null,
+  getExperimentResultError: null
 });
 
 export interface GetExperimentResultParams {
@@ -75,5 +75,5 @@ export const experimentResultSlice = createSlice({
         state.loading = false;
         state.getExperimentResultError = action.error;
       });
-  },
+  }
 });

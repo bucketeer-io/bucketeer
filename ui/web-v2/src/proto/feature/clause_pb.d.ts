@@ -1,7 +1,7 @@
 // package: bucketeer.feature
 // file: proto/feature/clause.proto
 
-import * as jspb from "google-protobuf";
+import * as jspb from 'google-protobuf';
 
 export class Clause extends jspb.Message {
   getId(): string;
@@ -21,20 +21,28 @@ export class Clause extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Clause.AsObject;
   static toObject(includeInstance: boolean, msg: Clause): Clause.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: Clause, writer: jspb.BinaryWriter): void;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: Clause,
+    writer: jspb.BinaryWriter
+  ): void;
   static deserializeBinary(bytes: Uint8Array): Clause;
-  static deserializeBinaryFromReader(message: Clause, reader: jspb.BinaryReader): Clause;
+  static deserializeBinaryFromReader(
+    message: Clause,
+    reader: jspb.BinaryReader
+  ): Clause;
 }
 
 export namespace Clause {
   export type AsObject = {
-    id: string,
-    attribute: string,
-    operator: Clause.OperatorMap[keyof Clause.OperatorMap],
-    valuesList: Array<string>,
-  }
+    id: string;
+    attribute: string;
+    operator: Clause.OperatorMap[keyof Clause.OperatorMap];
+    valuesList: Array<string>;
+  };
 
   export interface OperatorMap {
     EQUALS: 0;
@@ -53,4 +61,3 @@ export namespace Clause {
 
   export const Operator: OperatorMap;
 }
-

@@ -9,11 +9,11 @@ import {
   ListPushesRequest,
   ListPushesResponse,
   UpdatePushRequest,
-  UpdatePushResponse,
+  UpdatePushResponse
 } from '../proto/push/service_pb';
 import {
   PushServiceClient,
-  ServiceError,
+  ServiceError
 } from '../proto/push/service_pb_service';
 
 import { extractErrorMessage } from './messages';

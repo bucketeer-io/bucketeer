@@ -4,9 +4,9 @@
 import * as jspb from 'google-protobuf';
 import * as google_protobuf_any_pb from 'google-protobuf/google/protobuf/any_pb';
 import * as google_protobuf_duration_pb from 'google-protobuf/google/protobuf/duration_pb';
-import * as proto_feature_evaluation_pb from '../../feature/evaluation_pb';
-import * as proto_feature_reason_pb from '../../feature/reason_pb';
-import * as proto_user_user_pb from '../../user/user_pb';
+import * as proto_feature_evaluation_pb from '../../../proto/feature/evaluation_pb';
+import * as proto_feature_reason_pb from '../../../proto/feature/reason_pb';
+import * as proto_user_user_pb from '../../../proto/user/user_pb';
 
 export class Event extends jspb.Message {
   getId(): string;

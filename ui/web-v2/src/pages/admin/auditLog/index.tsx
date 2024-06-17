@@ -14,18 +14,18 @@ import { AppState } from '../../../modules';
 import {
   listAdminAuditLogs,
   AdminOrderBy,
-  AdminOrderDirection,
+  AdminOrderDirection
 } from '../../../modules/auditLogs';
 import { ListAuditLogsRequest } from '../../../proto/auditlog/service_pb';
 import { AppDispatch } from '../../../store';
 import {
   AuditLogSortOption,
-  isAuditLogSortOption,
+  isAuditLogSortOption
 } from '../../../types/auditLog';
 import { SORT_OPTIONS_CREATED_AT_ASC } from '../../../types/list';
 import {
   useSearchParams,
-  stringifySearchParams,
+  stringifySearchParams
 } from '../../../utils/search-params';
 
 interface Sort {
@@ -38,12 +38,12 @@ const createSort = (sortOption?: AuditLogSortOption): Sort => {
     case SORT_OPTIONS_CREATED_AT_ASC:
       return {
         orderBy: ListAuditLogsRequest.OrderBy.TIMESTAMP,
-        orderDirection: ListAuditLogsRequest.OrderDirection.ASC,
+        orderDirection: ListAuditLogsRequest.OrderDirection.ASC
       };
     default:
       return {
         orderBy: ListAuditLogsRequest.OrderBy.TIMESTAMP,
-        orderDirection: ListAuditLogsRequest.OrderDirection.DESC,
+        orderDirection: ListAuditLogsRequest.OrderDirection.DESC
       };
   }
 };
@@ -51,16 +51,16 @@ const createSort = (sortOption?: AuditLogSortOption): Sort => {
 const entityTypeOptions: Option[] = [
   {
     value: Event.EntityType.ENVIRONMENT.toString(),
-    label: intl.formatMessage(messages.sourceType.environment),
+    label: intl.formatMessage(messages.sourceType.environment)
   },
   {
     value: Event.EntityType.ADMIN_SUBSCRIPTION.toString(),
-    label: intl.formatMessage(messages.sourceType.adminSubscription),
+    label: intl.formatMessage(messages.sourceType.adminSubscription)
   },
   {
     value: Event.EntityType.PROJECT.toString(),
-    label: intl.formatMessage(messages.sourceType.project),
-  },
+    label: intl.formatMessage(messages.sourceType.project)
+  }
 ];
 
 export const AdminAuditLogIndexPage: FC = memo(() => {
@@ -98,7 +98,7 @@ export const AdminAuditLogIndexPage: FC = memo(() => {
           from: from,
           to: to,
           resource: resource,
-          entityType,
+          entityType
         })
       );
     },
@@ -109,7 +109,7 @@ export const AdminAuditLogIndexPage: FC = memo(() => {
     (options: Record<string, string | number | boolean | undefined>) => {
       history.replace(
         `${url}?${stringifySearchParams({
-          ...options,
+          ...options
         })}`
       );
     },

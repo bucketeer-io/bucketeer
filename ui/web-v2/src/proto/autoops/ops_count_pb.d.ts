@@ -1,7 +1,7 @@
 // package: bucketeer.autoops
 // file: proto/autoops/ops_count.proto
 
-import * as jspb from "google-protobuf";
+import * as jspb from 'google-protobuf';
 
 export class OpsCount extends jspb.Message {
   getId(): string;
@@ -28,22 +28,29 @@ export class OpsCount extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): OpsCount.AsObject;
   static toObject(includeInstance: boolean, msg: OpsCount): OpsCount.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: OpsCount, writer: jspb.BinaryWriter): void;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: OpsCount,
+    writer: jspb.BinaryWriter
+  ): void;
   static deserializeBinary(bytes: Uint8Array): OpsCount;
-  static deserializeBinaryFromReader(message: OpsCount, reader: jspb.BinaryReader): OpsCount;
+  static deserializeBinaryFromReader(
+    message: OpsCount,
+    reader: jspb.BinaryReader
+  ): OpsCount;
 }
 
 export namespace OpsCount {
   export type AsObject = {
-    id: string,
-    autoOpsRuleId: string,
-    clauseId: string,
-    updatedAt: number,
-    opsEventCount: number,
-    evaluationCount: number,
-    featureId: string,
-  }
+    id: string;
+    autoOpsRuleId: string;
+    clauseId: string;
+    updatedAt: number;
+    opsEventCount: number;
+    evaluationCount: number;
+    featureId: string;
+  };
 }
-

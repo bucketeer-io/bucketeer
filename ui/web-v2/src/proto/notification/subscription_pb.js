@@ -23,7 +23,7 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_notification_recipient_pb = require('./recipient_pb.js');
+var proto_notification_recipient_pb = require('../../proto/notification/recipient_pb.js');
 goog.object.extend(proto, proto_notification_recipient_pb);
 goog.exportSymbol('proto.bucketeer.notification.Subscription', null, global);
 goog.exportSymbol(
@@ -117,7 +117,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        name: jspb.Message.getFieldWithDefault(msg, 7, ''),
+        name: jspb.Message.getFieldWithDefault(msg, 7, '')
       };
 
     if (includeInstance) {
@@ -287,7 +287,7 @@ proto.bucketeer.notification.Subscription.SourceType = {
   DOMAIN_EVENT_FLAG_TRIGGER: 16,
   FEATURE_STALE: 100,
   EXPERIMENT_RUNNING: 200,
-  MAU_COUNT: 300,
+  MAU_COUNT: 300
 };
 
 /**

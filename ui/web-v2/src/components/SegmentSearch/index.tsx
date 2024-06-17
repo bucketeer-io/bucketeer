@@ -13,7 +13,7 @@ import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
   SORT_OPTIONS_NAME_ASC,
-  SORT_OPTIONS_NAME_DESC,
+  SORT_OPTIONS_NAME_DESC
 } from '../../types/list';
 import { SegmentSearchOptions } from '../../types/segment';
 import { classNames } from '../../utils/css';
@@ -26,42 +26,42 @@ import { SortItem, SortSelect } from '../SortSelect';
 const sortItems: SortItem[] = [
   {
     key: SORT_OPTIONS_CREATED_AT_DESC,
-    message: intl.formatMessage(messages.segment.sort.newest),
+    message: intl.formatMessage(messages.segment.sort.newest)
   },
   {
     key: SORT_OPTIONS_CREATED_AT_ASC,
-    message: intl.formatMessage(messages.segment.sort.oldest),
+    message: intl.formatMessage(messages.segment.sort.oldest)
   },
   {
     key: SORT_OPTIONS_NAME_ASC,
-    message: intl.formatMessage(messages.segment.sort.nameAz),
+    message: intl.formatMessage(messages.segment.sort.nameAz)
   },
   {
     key: SORT_OPTIONS_NAME_DESC,
-    message: intl.formatMessage(messages.segment.sort.nameZa),
-  },
+    message: intl.formatMessage(messages.segment.sort.nameZa)
+  }
 ];
 
 export enum FilterTypes {
-  STATUS = 'status',
+  STATUS = 'status'
 }
 
 export const filterOptions: Option[] = [
   {
     value: FilterTypes.STATUS,
-    label: intl.formatMessage(messages.segment.filter.status),
-  },
+    label: intl.formatMessage(messages.segment.filter.status)
+  }
 ];
 
 export const inUseOptions: Option[] = [
   {
     value: 'true',
-    label: intl.formatMessage(messages.segment.filterOptions.inUse),
+    label: intl.formatMessage(messages.segment.filterOptions.inUse)
   },
   {
     value: 'false',
-    label: intl.formatMessage(messages.segment.filterOptions.notInUse),
-  },
+    label: intl.formatMessage(messages.segment.filterOptions.notInUse)
+  }
 ];
 
 export interface SegmentSearchProps {
@@ -104,7 +104,7 @@ export const SegmentSearch: FC<SegmentSearchProps> = memo(
       switch (key) {
         case FilterTypes.STATUS:
           handleUpdateOption({
-            inUse: value,
+            inUse: value
           });
           return;
       }
@@ -124,7 +124,7 @@ export const SegmentSearch: FC<SegmentSearchProps> = memo(
               value={options.q}
               onChange={(query: string) =>
                 handleUpdateOption({
-                  q: query,
+                  q: query
                 })
               }
             />
@@ -144,7 +144,7 @@ export const SegmentSearch: FC<SegmentSearchProps> = memo(
               sortItems={sortItems}
               onChange={(sort: string) =>
                 handleUpdateOption({
-                  sort: sort,
+                  sort: sort
                 })
               }
             />
@@ -172,14 +172,14 @@ export const SegmentSearch: FC<SegmentSearchProps> = memo(
               }`}
               onRemove={() =>
                 handleUpdateOption({
-                  inUse: null,
+                  inUse: null
                 })
               }
             />
             <FilterRemoveAllButtonProps
               onClick={() =>
                 handleUpdateOption({
-                  inUse: null,
+                  inUse: null
                 })
               }
             />

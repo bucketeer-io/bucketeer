@@ -3,8 +3,8 @@
 
 import * as jspb from 'google-protobuf';
 import * as google_protobuf_any_pb from 'google-protobuf/google/protobuf/any_pb';
-import * as proto_event_domain_event_pb from '../event/domain/event_pb';
-import * as proto_event_domain_localized_message_pb from '../event/domain/localized_message_pb';
+import * as proto_event_domain_event_pb from '../../proto/event/domain/event_pb';
+import * as proto_event_domain_localized_message_pb from '../../proto/event/domain/localized_message_pb';
 
 export class AuditLog extends jspb.Message {
   getId(): string;

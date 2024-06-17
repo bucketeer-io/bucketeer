@@ -12,7 +12,7 @@ interface ValueTotalTimeseriesChartProps {
 
 export const ValueTotalTimeseriesChart: FC<ValueTotalTimeseriesChartProps> = ({
   goalResult,
-  variations,
+  variations
 }) => {
   const variationValues = goalResult.variationResultsList.map((vr) => {
     return unwrapUndefinable(variations.get(vr.variationId)).value;

@@ -1,7 +1,7 @@
 // package: bucketeer.push
 // file: proto/push/service.proto
 
-import * as proto_push_service_pb from './service_pb';
+import * as proto_push_service_pb from '../../proto/push/service_pb';
 import { grpc } from '@improbable-eng/grpc-web';
 
 type PushServiceListPushes = {

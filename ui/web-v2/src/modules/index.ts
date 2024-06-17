@@ -48,7 +48,7 @@ export const reducers = combineReducers({
   toasts: toastsSlice.reducer,
   tags: tagsSlice.reducer,
   myOrganization: myOrganizationSlice.reducer,
-  flagTriggers: flagTriggersSlice.reducer,
+  flagTriggers: flagTriggersSlice.reducer
 });
 
 export type AppState = ReturnType<typeof reducers>;

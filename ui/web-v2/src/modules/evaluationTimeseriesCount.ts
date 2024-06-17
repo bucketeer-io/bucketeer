@@ -3,7 +3,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import * as grpc from '../grpc/eventcounter';
 import {
   GetEvaluationTimeseriesCountRequest,
-  GetEvaluationTimeseriesCountResponse,
+  GetEvaluationTimeseriesCountResponse
 } from '../proto/eventcounter/service_pb';
 import { VariationTimeseries } from '../proto/eventcounter/timeseries_pb';
 
@@ -43,7 +43,7 @@ export const getEvaluationTimeseriesCount = createAsyncThunk<
 const initialState: EvaluationTimeseriesCount = {
   loading: false,
   userCountsList: [],
-  eventCountsList: [],
+  eventCountsList: []
 };
 
 export type EvaluationTimeseriesCountState = typeof initialState;
@@ -65,5 +65,5 @@ export const evaluationTimeseriesCountSlice = createSlice({
       .addCase(getEvaluationTimeseriesCount.rejected, (state) => {
         state.loading = false;
       });
-  },
+  }
 });

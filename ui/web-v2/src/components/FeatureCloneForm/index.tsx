@@ -21,7 +21,7 @@ export const FeatureCloneForm: FC<FeatureCloneFormProps> = memo(
     const {
       control,
       getValues,
-      formState: { errors, isValid, isSubmitted },
+      formState: { errors, isValid, isSubmitted }
     } = methods;
     const filteredOptions = environments.filter((environment) => {
       return environment.id != currenEnvironment.id;
@@ -29,7 +29,7 @@ export const FeatureCloneForm: FC<FeatureCloneFormProps> = memo(
     const environmentOptions = filteredOptions.map((environment) => {
       return {
         value: environment.id,
-        label: environment.name,
+        label: environment.name
       };
     });
     return (

@@ -18,14 +18,14 @@ import { Header } from '../../components/Header';
 import { Overlay } from '../../components/Overlay';
 import {
   FEATURE_ACCOUNT_PAGE_SIZE,
-  FEATURE_LIST_PAGE_SIZE,
+  FEATURE_LIST_PAGE_SIZE
 } from '../../constants/feature';
 import {
   PAGE_PATH_FEATURES,
   PAGE_PATH_FEATURE_CLONE,
   PAGE_PATH_FEATURE_TARGETING,
   PAGE_PATH_NEW,
-  PAGE_PATH_ROOT,
+  PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { messages } from '../../lang/messages';
 import { listAccounts } from '../../modules/accounts';
@@ -39,31 +39,31 @@ import {
   getFeature,
   listFeatures,
   OrderBy,
-  OrderDirection,
+  OrderDirection
 } from '../../modules/features';
 import { useCurrentEnvironment, useEnvironments } from '../../modules/me';
 import { Feature } from '../../proto/feature/feature_pb';
 import {
   ListFeaturesRequest,
-  ListTagsRequest,
+  ListTagsRequest
 } from '../../proto/feature/service_pb';
 import { AppDispatch } from '../../store';
 import { isFeatureSortOption, FeatureSortOption } from '../../types/feature';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
-  SORT_OPTIONS_NAME_ASC,
+  SORT_OPTIONS_NAME_ASC
 } from '../../types/list';
 import {
   stringifySearchParams,
-  useSearchParams,
+  useSearchParams
 } from '../../utils/search-params';
 
 import {
   addFormSchema,
   cloneSchema,
   switchEnabledFormSchema,
-  archiveFormSchema,
+  archiveFormSchema
 } from './formSchema';
 
 interface Sort {
@@ -76,22 +76,22 @@ const createSort = (sortOption?: FeatureSortOption): Sort => {
     case SORT_OPTIONS_CREATED_AT_ASC:
       return {
         orderBy: ListFeaturesRequest.OrderBy.CREATED_AT,
-        orderDirection: ListFeaturesRequest.OrderDirection.ASC,
+        orderDirection: ListFeaturesRequest.OrderDirection.ASC
       };
     case SORT_OPTIONS_CREATED_AT_DESC:
       return {
         orderBy: ListFeaturesRequest.OrderBy.CREATED_AT,
-        orderDirection: ListFeaturesRequest.OrderDirection.DESC,
+        orderDirection: ListFeaturesRequest.OrderDirection.DESC
       };
     case SORT_OPTIONS_NAME_ASC:
       return {
         orderBy: ListFeaturesRequest.OrderBy.NAME,
-        orderDirection: ListFeaturesRequest.OrderDirection.ASC,
+        orderDirection: ListFeaturesRequest.OrderDirection.ASC
       };
     default:
       return {
         orderBy: ListFeaturesRequest.OrderBy.NAME,
-        orderDirection: ListFeaturesRequest.OrderDirection.DESC,
+        orderDirection: ListFeaturesRequest.OrderDirection.DESC
       };
   }
 };
@@ -127,27 +127,27 @@ export const FeatureIndexPage: FC = memo(() => {
           id: defaultVariationId1,
           value: 'true',
           name: '',
-          description: '',
+          description: ''
         },
         {
           id: defaultVariationId2,
           value: 'false',
           name: '',
-          description: '',
-        },
+          description: ''
+        }
       ],
       onVariation: {
         id: defaultVariationId1,
         value: '0',
-        label: `${f(messages.feature.variation)} 1`,
+        label: `${f(messages.feature.variation)} 1`
       },
       offVariation: {
         id: defaultVariationId2,
         value: '1',
-        label: `${f(messages.feature.variation)} 2`,
-      },
+        label: `${f(messages.feature.variation)} 2`
+      }
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const { handleSubmit: handleAddSubmit, reset } = addMethod;
 
@@ -161,42 +161,42 @@ export const FeatureIndexPage: FC = memo(() => {
     defaultValues: {
       featureId: '',
       comment: '',
-      enabled: false,
+      enabled: false
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const {
     handleSubmit: switchEnableHandleSubmit,
     setValue: switchEnabledSetValue,
     getValues: switchEnabledGetValues,
-    reset: switchEnabledReset,
+    reset: switchEnabledReset
   } = switchEnabledMethod;
   const archiveMethod = useForm({
     resolver: yupResolver(archiveFormSchema(currentEnvironment.requireComment)),
     defaultValues: {
       feature: null,
       featureId: '',
-      comment: '',
+      comment: ''
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const {
     handleSubmit: archiveHandleSubmit,
     setValue: archiveSetValue,
-    reset: archiveReset,
+    reset: archiveReset
   } = archiveMethod;
 
   const cloneMethod = useForm({
     resolver: yupResolver(cloneSchema),
     defaultValues: {
-      feature: null,
+      feature: null
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const {
     handleSubmit: cloneHandleSubmit,
     setValue: cloneSetValue,
-    reset: cloneReset,
+    reset: cloneReset
   } = cloneMethod;
 
   const [isSwitchEnableConfirmDialogOpen, setIsSwitchEnableConfirmDialogOpen] =
@@ -225,8 +225,8 @@ export const FeatureIndexPage: FC = memo(() => {
         options && Array.isArray(options.tagIds)
           ? options.tagIds
           : typeof options?.tagIds === 'string' && options?.tagIds.length > 0
-          ? [options.tagIds]
-          : [];
+            ? [options.tagIds]
+            : [];
       const hasPrerequisites =
         options && options.hasPrerequisites
           ? options.hasPrerequisites === 'true'
@@ -245,7 +245,7 @@ export const FeatureIndexPage: FC = memo(() => {
           archived: archived,
           hasExperiment: hasExperiment,
           hasPrerequisites: hasPrerequisites,
-          maintainerId: options && (options.maintainerId as string),
+          maintainerId: options && (options.maintainerId as string)
         })
       );
     },
@@ -260,7 +260,7 @@ export const FeatureIndexPage: FC = memo(() => {
     (options: Record<string, string | number | boolean | undefined>) => {
       history.replace(
         `${url}?${stringifySearchParams({
-          ...options,
+          ...options
         })}`
       );
     },
@@ -292,7 +292,7 @@ export const FeatureIndexPage: FC = memo(() => {
     setOpen(true);
     history.push({
       pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}${PAGE_PATH_NEW}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location]);
 
@@ -302,7 +302,7 @@ export const FeatureIndexPage: FC = memo(() => {
     cloneReset();
     history.replace({
       pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location, reset]);
 
@@ -320,11 +320,11 @@ export const FeatureIndexPage: FC = memo(() => {
             return {
               value: variation.value,
               name: variation.name,
-              description: variation.description,
+              description: variation.description
             };
           }),
           defaultOnVariationIndex: data.onVariation.value,
-          defaultOffVariationIndex: data.offVariation.value,
+          defaultOffVariationIndex: data.offVariation.value
         })
       ).then(() => {
         setOpen(false);
@@ -342,10 +342,10 @@ export const FeatureIndexPage: FC = memo(() => {
               return {
                 value: variation.value,
                 name: variation.name,
-                description: variation.description,
+                description: variation.description
               };
-            }),
-          },
+            })
+          }
         });
       });
     },
@@ -361,7 +361,7 @@ export const FeatureIndexPage: FC = memo(() => {
         cloneFeature({
           environmentNamespace: currentEnvironment.id,
           id: featureId,
-          destinationEnvironmentNamespace: destinationEnvironment.id,
+          destinationEnvironmentNamespace: destinationEnvironment.id
         })
       )
         .then(unwrapResult)
@@ -395,13 +395,13 @@ export const FeatureIndexPage: FC = memo(() => {
             return enableFeature({
               environmentNamespace: currentEnvironment.id,
               id: data.featureId,
-              comment: data.comment,
+              comment: data.comment
             });
           }
           return disableFeature({
             environmentNamespace: currentEnvironment.id,
             id: data.featureId,
-            comment: data.comment,
+            comment: data.comment
           });
         })()
       ).then(() => {
@@ -409,14 +409,14 @@ export const FeatureIndexPage: FC = memo(() => {
           dispatch(
             addToast({
               message: f(messages.feature.successMessages.flagEnabled),
-              severity: 'success',
+              severity: 'success'
             })
           );
         } else {
           dispatch(
             addToast({
               message: f(messages.feature.successMessages.flagDisabled),
-              severity: 'success',
+              severity: 'success'
             })
           );
         }
@@ -425,7 +425,7 @@ export const FeatureIndexPage: FC = memo(() => {
         dispatch(
           getFeature({
             environmentNamespace: currentEnvironment.id,
-            id: data.featureId,
+            id: data.featureId
           })
         );
       });
@@ -448,7 +448,7 @@ export const FeatureIndexPage: FC = memo(() => {
       cloneSetValue('feature', feature);
       history.push({
         pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}${PAGE_PATH_FEATURE_CLONE}/${feature.id}`,
-        search: location.search,
+        search: location.search
       });
     },
     [dispatch, history, location]
@@ -461,12 +461,12 @@ export const FeatureIndexPage: FC = memo(() => {
           ? unarchiveFeature({
               environmentNamespace: currentEnvironment.id,
               id: data.feature.id,
-              comment: data.comment,
+              comment: data.comment
             })
           : archiveFeature({
               environmentNamespace: currentEnvironment.id,
               id: data.feature.id,
-              comment: data.comment,
+              comment: data.comment
             })
       ).then(() => {
         archiveReset();
@@ -496,12 +496,12 @@ export const FeatureIndexPage: FC = memo(() => {
       dispatch(
         getFeature({
           environmentNamespace: currentEnvironment.id,
-          id: featureId,
+          id: featureId
         })
       ).then((e) => {
         const feature = e.payload as Feature.AsObject;
         cloneReset({
-          feature: feature,
+          feature: feature
         });
       });
     }
@@ -510,7 +510,7 @@ export const FeatureIndexPage: FC = memo(() => {
         environmentId: currentEnvironment.id,
         organizationId: currentEnvironment.organizationId,
         pageSize: FEATURE_ACCOUNT_PAGE_SIZE,
-        cursor: '',
+        cursor: ''
       })
     );
     updateFeatureList(
@@ -524,7 +524,7 @@ export const FeatureIndexPage: FC = memo(() => {
         cursor: '',
         orderBy: ListTagsRequest.OrderBy.DEFAULT,
         orderDirection: ListTagsRequest.OrderDirection.ASC,
-        searchKeyword: null,
+        searchKeyword: null
       })
     );
   }, [dispatch, updateFeatureList]);
@@ -602,12 +602,12 @@ export const FeatureIndexPage: FC = memo(() => {
                 ? f(messages.feature.confirm.unarchiveDescription, {
                     featureId:
                       archiveMethod.getValues().feature &&
-                      archiveMethod.getValues().feature.id,
+                      archiveMethod.getValues().feature.id
                   })
                 : f(messages.feature.confirm.archiveDescription, {
                     featureId:
                       archiveMethod.getValues().feature &&
-                      archiveMethod.getValues().feature.id,
+                      archiveMethod.getValues().feature.id
                   })
             }
           />

@@ -12,7 +12,7 @@ import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
   SORT_OPTIONS_NAME_ASC,
-  SORT_OPTIONS_NAME_DESC,
+  SORT_OPTIONS_NAME_DESC
 } from '../../types/list';
 import { NotificationSearchOptions } from '../../types/notification';
 import { classNames } from '../../utils/css';
@@ -27,42 +27,42 @@ export interface Option {
 const sortItems: SortItem[] = [
   {
     key: SORT_OPTIONS_CREATED_AT_DESC,
-    message: intl.formatMessage(messages.notification.sort.newest),
+    message: intl.formatMessage(messages.notification.sort.newest)
   },
   {
     key: SORT_OPTIONS_CREATED_AT_ASC,
-    message: intl.formatMessage(messages.notification.sort.oldest),
+    message: intl.formatMessage(messages.notification.sort.oldest)
   },
   {
     key: SORT_OPTIONS_NAME_ASC,
-    message: intl.formatMessage(messages.notification.sort.nameAz),
+    message: intl.formatMessage(messages.notification.sort.nameAz)
   },
   {
     key: SORT_OPTIONS_NAME_DESC,
-    message: intl.formatMessage(messages.notification.sort.nameZa),
-  },
+    message: intl.formatMessage(messages.notification.sort.nameZa)
+  }
 ];
 
 export enum FilterTypes {
-  ENABLED = 'enabled',
+  ENABLED = 'enabled'
 }
 
 export const filterOptions: Option[] = [
   {
     value: FilterTypes.ENABLED,
-    label: intl.formatMessage(messages.notification.filter.enabled),
-  },
+    label: intl.formatMessage(messages.notification.filter.enabled)
+  }
 ];
 
 export const enabledOptions: Option[] = [
   {
     value: 'true',
-    label: intl.formatMessage(messages.notification.filterOptions.enabled),
+    label: intl.formatMessage(messages.notification.filterOptions.enabled)
   },
   {
     value: 'false',
-    label: intl.formatMessage(messages.notification.filterOptions.disabled),
-  },
+    label: intl.formatMessage(messages.notification.filterOptions.disabled)
+  }
 ];
 
 export interface NotificationSearchProps {
@@ -85,7 +85,7 @@ export const NotificationSearch: FC<NotificationSearchProps> = memo(
       switch (key) {
         case FilterTypes.ENABLED:
           handleUpdateOption({
-            enabled: value,
+            enabled: value
           });
           return;
       }
@@ -116,7 +116,7 @@ export const NotificationSearch: FC<NotificationSearchProps> = memo(
               value={options.q}
               onChange={(query: string) =>
                 handleUpdateOption({
-                  q: query,
+                  q: query
                 })
               }
             />
@@ -136,7 +136,7 @@ export const NotificationSearch: FC<NotificationSearchProps> = memo(
               sortItems={sortItems}
               onChange={(sort: string) =>
                 handleUpdateOption({
-                  sort: sort,
+                  sort: sort
                 })
               }
             />
@@ -161,7 +161,7 @@ export const NotificationSearch: FC<NotificationSearchProps> = memo(
                 }`}
                 onRemove={() =>
                   handleUpdateOption({
-                    enabled: null,
+                    enabled: null
                   })
                 }
               />
@@ -170,7 +170,7 @@ export const NotificationSearch: FC<NotificationSearchProps> = memo(
               <FilterRemoveAllButtonProps
                 onClick={() =>
                   handleUpdateOption({
-                    enabled: null,
+                    enabled: null
                   })
                 }
               />

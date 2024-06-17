@@ -23,9 +23,9 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_account_account_pb = require('./account_pb.js');
+var proto_account_account_pb = require('../../proto/account/account_pb.js');
 goog.object.extend(proto, proto_account_account_pb);
-var proto_account_api_key_pb = require('./api_key_pb.js');
+var proto_account_api_key_pb = require('../../proto/account/api_key_pb.js');
 goog.object.extend(proto, proto_account_api_key_pb);
 goog.exportSymbol(
   'proto.bucketeer.account.ChangeAPIKeyNameCommand',
@@ -427,7 +427,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg.getEnvironmentRolesList(),
           proto_account_account_pb.AccountV2.EnvironmentRole.toObject,
           includeInstance
-        ),
+        )
       };
 
     if (includeInstance) {
@@ -719,7 +719,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        name: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        name: jspb.Message.getFieldWithDefault(msg, 1, '')
       };
 
     if (includeInstance) {
@@ -855,7 +855,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     function (includeInstance, msg) {
       var f,
         obj = {
-          avatarImageUrl: jspb.Message.getFieldWithDefault(msg, 1, ''),
+          avatarImageUrl: jspb.Message.getFieldWithDefault(msg, 1, '')
         };
 
       if (includeInstance) {
@@ -992,7 +992,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     function (includeInstance, msg) {
       var f,
         obj = {
-          role: jspb.Message.getFieldWithDefault(msg, 1, 0),
+          role: jspb.Message.getFieldWithDefault(msg, 1, 0)
         };
 
       if (includeInstance) {
@@ -1145,7 +1145,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             proto_account_account_pb.AccountV2.EnvironmentRole.toObject,
             includeInstance
           ),
-          writeType: jspb.Message.getFieldWithDefault(msg, 2, 0),
+          writeType: jspb.Message.getFieldWithDefault(msg, 2, 0)
         };
 
       if (includeInstance) {
@@ -1255,7 +1255,7 @@ proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.serializeBinaryTo
 proto.bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.WriteType = {
   WRITETYPE_UNSPECIFIED: 0,
   WRITETYPE_OVERRIDE: 1,
-  WRITETYPE_PATCH: 2,
+  WRITETYPE_PATCH: 2
 };
 
 /**
@@ -1694,7 +1694,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         name: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        role: jspb.Message.getFieldWithDefault(msg, 2, 0),
+        role: jspb.Message.getFieldWithDefault(msg, 2, 0)
       };
 
     if (includeInstance) {
@@ -1863,7 +1863,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        name: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        name: jspb.Message.getFieldWithDefault(msg, 1, '')
       };
 
     if (includeInstance) {

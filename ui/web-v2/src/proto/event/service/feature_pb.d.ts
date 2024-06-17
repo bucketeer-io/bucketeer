@@ -2,7 +2,7 @@
 // file: proto/event/service/feature.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_user_user_pb from '../../user/user_pb';
+import * as proto_user_user_pb from '../../../proto/user/user_pb';
 
 export class EvaluationRequestEvent extends jspb.Message {
   getId(): string;

@@ -2,7 +2,7 @@
 // file: proto/account/api_key.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_environment_environment_pb from '../environment/environment_pb';
+import * as proto_environment_environment_pb from '../../proto/environment/environment_pb';
 
 export class APIKey extends jspb.Message {
   getId(): string;

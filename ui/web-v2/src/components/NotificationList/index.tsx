@@ -35,7 +35,7 @@ export const NotificationList: FC<NotificationListProps> = memo(
     onAdd,
     onUpdate,
     onSwitch,
-    onDelete,
+    onDelete
   }) => {
     const editable = useIsEditable();
     const { formatMessage: f } = useIntl();
@@ -83,7 +83,7 @@ export const NotificationList: FC<NotificationListProps> = memo(
                 <div className="text-gray-700">
                   <h1 className="text-lg">
                     {f(messages.noResult.title, {
-                      title: f(messages.notification.list.header.title),
+                      title: f(messages.notification.list.header.title)
                     })}
                   </h1>
                   <div className="flex justify-center mt-4">
@@ -92,7 +92,7 @@ export const NotificationList: FC<NotificationListProps> = memo(
                         {f(messages.noResult.searchByKeyword, {
                           keyword: f(
                             messages.notification.list.noResult.searchKeyword
-                          ),
+                          )
                         })}
                       </li>
                       <li>{f(messages.noResult.changeFilterSelection)}</li>
@@ -106,7 +106,7 @@ export const NotificationList: FC<NotificationListProps> = memo(
                 <div className="w-[600px] text-gray-700 text-center">
                   <h1 className="text-lg">
                     {f(messages.noData.title, {
-                      title: f(messages.notification.list.header.title),
+                      title: f(messages.notification.list.header.title)
                     })}
                   </h1>
                   <p className="mt-5">

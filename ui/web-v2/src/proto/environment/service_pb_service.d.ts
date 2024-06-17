@@ -1,7 +1,7 @@
 // package: bucketeer.environment
 // file: proto/environment/service.proto
 
-import * as proto_environment_service_pb from './service_pb';
+import * as proto_environment_service_pb from '../../proto/environment/service_pb';
 import { grpc } from '@improbable-eng/grpc-web';
 
 type EnvironmentServiceGetEnvironmentV2 = {

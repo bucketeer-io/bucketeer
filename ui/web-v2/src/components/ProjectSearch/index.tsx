@@ -12,7 +12,7 @@ import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
   SORT_OPTIONS_NAME_ASC,
-  SORT_OPTIONS_NAME_DESC,
+  SORT_OPTIONS_NAME_DESC
 } from '../../types/list';
 import { ProjectSearchOptions } from '../../types/project';
 import { classNames } from '../../utils/css';
@@ -25,42 +25,42 @@ import { SortItem, SortSelect } from '../SortSelect';
 const sortItems: SortItem[] = [
   {
     key: SORT_OPTIONS_CREATED_AT_DESC,
-    message: intl.formatMessage(messages.adminProject.sort.newest),
+    message: intl.formatMessage(messages.adminProject.sort.newest)
   },
   {
     key: SORT_OPTIONS_CREATED_AT_ASC,
-    message: intl.formatMessage(messages.adminProject.sort.oldest),
+    message: intl.formatMessage(messages.adminProject.sort.oldest)
   },
   {
     key: SORT_OPTIONS_NAME_ASC,
-    message: intl.formatMessage(messages.adminProject.sort.nameAz),
+    message: intl.formatMessage(messages.adminProject.sort.nameAz)
   },
   {
     key: SORT_OPTIONS_NAME_DESC,
-    message: intl.formatMessage(messages.adminProject.sort.idZa),
-  },
+    message: intl.formatMessage(messages.adminProject.sort.idZa)
+  }
 ];
 
 export enum FilterTypes {
-  ENABLED = 'enabled',
+  ENABLED = 'enabled'
 }
 
 export const filterOptions: Option[] = [
   {
     value: FilterTypes.ENABLED,
-    label: intl.formatMessage(messages.account.filter.enabled),
-  },
+    label: intl.formatMessage(messages.account.filter.enabled)
+  }
 ];
 
 export const enabledOptions: Option[] = [
   {
     value: 'true',
-    label: intl.formatMessage(messages.enabled),
+    label: intl.formatMessage(messages.enabled)
   },
   {
     value: 'false',
-    label: intl.formatMessage(messages.disabled),
-  },
+    label: intl.formatMessage(messages.disabled)
+  }
 ];
 
 export interface ProjectSearchProps {
@@ -99,7 +99,7 @@ export const ProjectSearch: FC<ProjectSearchProps> = memo(
       switch (key) {
         case FilterTypes.ENABLED:
           handleUpdateOption({
-            enabled: value,
+            enabled: value
           });
           return;
       }
@@ -119,7 +119,7 @@ export const ProjectSearch: FC<ProjectSearchProps> = memo(
               value={options.q}
               onChange={(query: string) =>
                 handleUpdateOption({
-                  q: query,
+                  q: query
                 })
               }
             />
@@ -139,7 +139,7 @@ export const ProjectSearch: FC<ProjectSearchProps> = memo(
               sortItems={sortItems}
               onChange={(sort: string) =>
                 handleUpdateOption({
-                  sort: sort,
+                  sort: sort
                 })
               }
             />
@@ -167,7 +167,7 @@ export const ProjectSearch: FC<ProjectSearchProps> = memo(
                 }`}
                 onRemove={() =>
                   handleUpdateOption({
-                    enabled: null,
+                    enabled: null
                   })
                 }
               />
@@ -176,7 +176,7 @@ export const ProjectSearch: FC<ProjectSearchProps> = memo(
               <FilterRemoveAllButtonProps
                 onClick={() =>
                   handleUpdateOption({
-                    enabled: null,
+                    enabled: null
                   })
                 }
               />

@@ -21,7 +21,7 @@ export const ConfirmDialog: FC<ConfirmDialogProps> = ({
   title,
   description,
   onCloseButton,
-  onConfirmButton,
+  onConfirmButton
 }) => {
   return (
     <Modal open={open} onClose={onClose}>

@@ -3,20 +3,20 @@ import {
   PAGE_PATH_FEATURES,
   PAGE_PATH_FEATURE_AUTOOPS,
   PAGE_PATH_NEW,
-  PAGE_PATH_ROOT,
+  PAGE_PATH_ROOT
 } from '../../constants/routing';
 import {
   deleteAutoOpsRule,
-  selectAll as selectAllAutoOpsRules,
+  selectAll as selectAllAutoOpsRules
 } from '../../modules/autoOpsRules';
 import {
   listOpsCounts,
-  selectAll as selectAllOpsCounts,
+  selectAll as selectAllOpsCounts
 } from '../../modules/opsCounts';
 import {
   selectAll as selectAllProgressiveRollouts,
   deleteProgressiveRollout,
-  stopProgressiveRollout,
+  stopProgressiveRollout
 } from '../../modules/porgressiveRollout';
 import { OpsCount } from '../../proto/autoops/ops_count_pb';
 import { ProgressiveRollout } from '../../proto/autoops/progressive_rollout_pb';
@@ -32,7 +32,7 @@ import {
   ArrowNarrowRightIcon,
   BanIcon,
   ClockIcon,
-  CalendarIcon,
+  CalendarIcon
 } from '@heroicons/react/outline';
 import { SerializedError } from '@reduxjs/toolkit';
 import dayjs from 'dayjs';
@@ -43,7 +43,7 @@ import React, {
   memo,
   useCallback,
   useEffect,
-  useState,
+  useState
 } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
@@ -69,7 +69,7 @@ import {
   OpsEventRateClause,
   ProgressiveRolloutManualScheduleClause,
   ProgressiveRolloutSchedule,
-  ProgressiveRolloutTemplateScheduleClause,
+  ProgressiveRolloutTemplateScheduleClause
 } from '../../proto/autoops/clause_pb';
 import { Feature } from '../../proto/feature/feature_pb';
 import { classNames } from '../../utils/css';
@@ -86,12 +86,12 @@ import { isLanguageJapanese } from '../../lang/getSelectedLanguage';
 
 enum SORT_TYPE {
   ASC = 'ASC',
-  DESC = 'DESC',
+  DESC = 'DESC'
 }
 
 enum OperationType {
   AutoOps = 'AutoOps',
-  Progressive = 'Progressive',
+  Progressive = 'Progressive'
 }
 interface ProgressiveRolloutWithType extends ProgressiveRollout.AsObject {
   operationType: OperationType;
@@ -169,7 +169,7 @@ const sortOperations = (
 
 const TabLabel = {
   ACTIVE: intl.formatMessage(messages.autoOps.active),
-  FINISHED: intl.formatMessage(messages.autoOps.finished),
+  FINISHED: intl.formatMessage(messages.autoOps.finished)
 };
 
 export interface ClauseTypeMap {
@@ -181,7 +181,7 @@ export interface ClauseTypeMap {
 export const ClauseType: ClauseTypeMap = {
   EVENT_RATE: 'bucketeer.autoops.OpsEventRateClause',
   DATETIME: 'bucketeer.autoops.DatetimeClause',
-  PROGRESSIVE_ROLLOUT: 'bucketeer.autoops.ProgressiveRolloutClause',
+  PROGRESSIVE_ROLLOUT: 'bucketeer.autoops.ProgressiveRolloutClause'
 };
 
 interface Tab {
@@ -273,11 +273,11 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
     useEffect(() => {
       const rules = autoOpsRules.map((r) => ({
         ...r,
-        operationType: OperationType.AutoOps,
+        operationType: OperationType.AutoOps
       }));
       const rollouts = progressiveRollout.map((r) => ({
         ...r,
-        operationType: OperationType.Progressive,
+        operationType: OperationType.Progressive
       }));
 
       setTabs([
@@ -290,7 +290,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
             ),
             SORT_TYPE.ASC
           ),
-          selected: true,
+          selected: true
         },
         {
           label: TabLabel.FINISHED,
@@ -301,8 +301,8 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
             ),
             SORT_TYPE.DESC
           ),
-          selected: false,
-        },
+          selected: false
+        }
       ]);
     }, [autoOpsRules, progressiveRollout, setTabs]);
 
@@ -320,7 +320,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
           dispatch(
             listOpsCounts({
               environmentNamespace: currentEnvironment.id,
-              ids,
+              ids
             })
           );
         }
@@ -331,7 +331,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       reset();
       history.replace({
         pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_AUTOOPS}`,
-        search: location.search,
+        search: location.search
       });
       setOpen(false);
       setIsKillSwitchSelected(false);
@@ -341,7 +341,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       setOpen(true);
       history.push({
         pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_AUTOOPS}${PAGE_PATH_NEW}`,
-        search: location.search,
+        search: location.search
       });
     }, [setOpen, history, location]);
 
@@ -374,7 +374,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
         dispatch(
           deleteAutoOpsRule({
             environmentNamespace: currentEnvironment.id,
-            id: selectedOperation.id,
+            id: selectedOperation.id
           })
         ).then(() => {
           refetchAutoOpsRules();
@@ -383,7 +383,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
         dispatch(
           deleteProgressiveRollout({
             environmentNamespace: currentEnvironment.id,
-            id: selectedOperation.id,
+            id: selectedOperation.id
           })
         ).then(() => {
           refetchProgressiveRollouts();
@@ -402,7 +402,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       dispatch(
         stopProgressiveRollout({
           environmentNamespace: currentEnvironment.id,
-          id: selectedOperation.id,
+          id: selectedOperation.id
         })
       ).then(() => {
         refetchProgressiveRollouts();
@@ -540,7 +540,7 @@ const ActiveCompletedTabs: FC<ActiveCompletedTabsProps> = memo(
       setTabs(
         tabs.map((t) => ({
           ...t,
-          selected: t.label === tabLabel,
+          selected: t.label === tabLabel
         }))
       );
     };
@@ -580,7 +580,7 @@ const AutoOpsInfos: FC<AutoOpsInfosProps> = memo(
     openAddOperation,
     activateSchedule,
     activateKillSwitch,
-    activateProgressiveRollout,
+    activateProgressiveRollout
   }) => (
     <div className="py-6">
       <p className="text-xl font-bold">
@@ -599,7 +599,7 @@ const AutoOpsInfos: FC<AutoOpsInfosProps> = memo(
             onClick: () => {
               activateSchedule();
               openAddOperation();
-            },
+            }
           },
           {
             id: 2,
@@ -617,7 +617,7 @@ const AutoOpsInfos: FC<AutoOpsInfosProps> = memo(
             onClick: () => {
               activateKillSwitch();
               openAddOperation();
-            },
+            }
           },
           {
             id: 3,
@@ -630,8 +630,8 @@ const AutoOpsInfos: FC<AutoOpsInfosProps> = memo(
             onClick: () => {
               activateProgressiveRollout();
               openAddOperation();
-            },
-          },
+            }
+          }
         ].map(({ id, title, detail, bgColor, icon, onClick }) => (
           <div
             key={id}
@@ -671,20 +671,20 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
     isActiveTabSelected,
     progressiveRollout,
     handleDelete,
-    handleStop,
+    handleStop
   }) => {
     const [feature] = useSelector<
       AppState,
       [Feature.AsObject | undefined, SerializedError | null]
     >((state) => [
       selectFeatureById(state.features, featureId),
-      state.features.getFeatureError,
+      state.features.getFeatureError
     ]);
 
     const variationOptions = feature.variationsList.map((v) => {
       return {
         value: v.id,
-        label: v.value,
+        label: v.value
       };
     });
 
@@ -704,13 +704,13 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
           deleteRule={() =>
             handleDelete({
               type: 'PROGRESSIVE_ROLLOUT',
-              id: progressiveRollout.id,
+              id: progressiveRollout.id
             })
           }
           stopRule={() =>
             handleStop({
               type: 'PROGRESSIVE_ROLLOUT',
-              id: progressiveRollout.id,
+              id: progressiveRollout.id
             })
           }
           schedulesList={schedulesList}
@@ -737,13 +737,13 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
           deleteRule={() =>
             handleDelete({
               type: 'PROGRESSIVE_ROLLOUT',
-              id: progressiveRollout.id,
+              id: progressiveRollout.id
             })
           }
           stopRule={() =>
             handleStop({
               type: 'PROGRESSIVE_ROLLOUT',
-              id: progressiveRollout.id,
+              id: progressiveRollout.id
             })
           }
           schedulesList={schedulesList}
@@ -819,12 +819,12 @@ const Operation: FC<OperationProps> = memo(
                         if (type === ClauseType.DATETIME) {
                           handleDelete({
                             type: 'DATETIME',
-                            id: rule.id,
+                            id: rule.id
                           });
                         } else if (type === ClauseType.EVENT_RATE) {
                           handleDelete({
                             type: 'EVENT_RATE',
-                            id: rule.id,
+                            id: rule.id
                           });
                         }
                       }}
@@ -1024,7 +1024,7 @@ const EventRateOperation = memo(
             <div
               className="bg-pink-500 absolute h-[4px]"
               style={{
-                width: `${barWidth}%`,
+                width: `${barWidth}%`
               }}
             />
             <div className={classNames('flex items-center h-[4px]')}>
@@ -1097,7 +1097,7 @@ const ProgressiveRolloutComponent = memo(
     increments,
     interval,
     variationId,
-    isActiveTabSelected,
+    isActiveTabSelected
   }: ProgressiveRolloutTemplateScheduleProps) => {
     const { formatMessage: f } = useIntl();
 
@@ -1142,7 +1142,7 @@ const ProgressiveRolloutComponent = memo(
       executeAt:
         selectedPagination === 0
           ? rule.createdAt
-          : schedulesList[selectedPagination * 10 - 1].executeAt,
+          : schedulesList[selectedPagination * 10 - 1].executeAt
     };
 
     return (
@@ -1257,7 +1257,7 @@ const ProgressiveRolloutComponent = memo(
                         </div>
                       ),
                       stoppedByIcon: <UserSvg className="mx-[6px]" />,
-                      clockIcon: <ClockIcon width={18} className="mx-[6px]" />,
+                      clockIcon: <ClockIcon width={18} className="mx-[6px]" />
                     })}
                   </div>
                 )}
@@ -1285,7 +1285,7 @@ const ProgressiveRolloutComponent = memo(
                           />
                         </div>
                       ),
-                      clockIcon: <ClockIcon width={18} className="mx-[6px]" />,
+                      clockIcon: <ClockIcon width={18} className="mx-[6px]" />
                     })}
                   </div>
                 )}
@@ -1310,7 +1310,7 @@ const ProgressiveRolloutComponent = memo(
                           className="text-primary mx-[6px]"
                         />
                       ),
-                      clockIcon: <ClockIcon width={18} className="mx-[6px]" />,
+                      clockIcon: <ClockIcon width={18} className="mx-[6px]" />
                     })}
                   </div>
                 )}
@@ -1427,12 +1427,12 @@ const ProgressiveRolloutComponent = memo(
 export const opsTypeOptions = [
   {
     value: OpsType.ENABLE_FEATURE.toString(),
-    label: intl.formatMessage(messages.autoOps.enableFeatureType),
+    label: intl.formatMessage(messages.autoOps.enableFeatureType)
   },
   {
     value: OpsType.DISABLE_FEATURE.toString(),
-    label: intl.formatMessage(messages.autoOps.disableFeatureType),
-  },
+    label: intl.formatMessage(messages.autoOps.disableFeatureType)
+  }
 ];
 
 export const createInitialAutoOpsRule = (feature: Feature.AsObject) => {
@@ -1441,7 +1441,7 @@ export const createInitialAutoOpsRule = (feature: Feature.AsObject) => {
     featureId: feature.id,
     triggeredAt: 0,
     opsType: opsTypeOptions[0].value,
-    clauses: [createInitialClause(feature)],
+    clauses: [createInitialClause(feature)]
   };
 };
 
@@ -1451,13 +1451,13 @@ export const createInitialOpsEventRateClause = (feature: Feature.AsObject) => {
     goal: null,
     minCount: 50,
     threadsholdRate: 50,
-    operator: operatorOptions[0].value,
+    operator: operatorOptions[0].value
   };
 };
 
 export const createInitialDatetimeClause = () => {
   return {
-    time: dayjs().add(1, 'hour').toDate(),
+    time: dayjs().add(1, 'hour').toDate()
   };
 };
 
@@ -1466,23 +1466,23 @@ export const createInitialClause = (feature: Feature.AsObject) => {
     id: uuid(),
     clauseType: ClauseType.DATETIME.toString(),
     datetimeClause: createInitialDatetimeClause(),
-    opsEventRateClause: createInitialOpsEventRateClause(feature),
+    opsEventRateClause: createInitialOpsEventRateClause(feature)
   };
 };
 
 export const clauseTypeOptionEventRate = {
   value: ClauseType.EVENT_RATE.toString(),
-  label: intl.formatMessage(messages.autoOps.eventRateClauseType),
+  label: intl.formatMessage(messages.autoOps.eventRateClauseType)
 };
 
 export const clauseTypeOptionDatetime = {
   value: ClauseType.DATETIME.toString(),
-  label: intl.formatMessage(messages.autoOps.datetimeClauseType),
+  label: intl.formatMessage(messages.autoOps.datetimeClauseType)
 };
 
 export const clauseTypeOptions = [
   clauseTypeOptionEventRate,
-  clauseTypeOptionDatetime,
+  clauseTypeOptionDatetime
 ];
 
 export const createClauseTypeOption = (
@@ -1496,12 +1496,12 @@ export const createClauseTypeOption = (
 export const operatorOptions = [
   {
     value: OpsEventRateClause.Operator.GREATER_OR_EQUAL.toString(),
-    label: intl.formatMessage(messages.feature.clause.operator.greaterOrEqual),
+    label: intl.formatMessage(messages.feature.clause.operator.greaterOrEqual)
   },
   {
     value: OpsEventRateClause.Operator.LESS_OR_EQUAL.toString(),
-    label: intl.formatMessage(messages.feature.clause.operator.lessOrEqual),
-  },
+    label: intl.formatMessage(messages.feature.clause.operator.lessOrEqual)
+  }
 ];
 
 export const createOperatorOption = (

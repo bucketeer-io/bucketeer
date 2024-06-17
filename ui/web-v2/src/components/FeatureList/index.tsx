@@ -12,7 +12,7 @@ import { FEATURE_LIST_PAGE_SIZE } from '../../constants/feature';
 import {
   PAGE_PATH_FEATURES,
   PAGE_PATH_FEATURE_TARGETING,
-  PAGE_PATH_ROOT,
+  PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
@@ -28,7 +28,7 @@ import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
   SORT_OPTIONS_NAME_ASC,
-  SORT_OPTIONS_NAME_DESC,
+  SORT_OPTIONS_NAME_DESC
 } from '../../types/list';
 import { classNames } from '../../utils/css';
 import { ActionMenu, MenuActions, MenuItem } from '../ActionMenu';
@@ -47,7 +47,7 @@ import { TagChips } from '../TagsChips';
 export enum FlagStatus {
   NEW, // This flag is new and has not been requested yet.
   RECEIVING_REQUESTS, // It is receiving one more requests in the last 7 days.
-  INACTIVE, // It is not receiving requests for 7 days.
+  INACTIVE // It is not receiving requests for 7 days.
 }
 
 interface FlagStatusIconProps {
@@ -77,20 +77,20 @@ export const FlagStatucIcon: FC<FlagStatusIconProps> = ({ flagStatus }) => {
 const sortItems: SortItem[] = [
   {
     key: SORT_OPTIONS_CREATED_AT_DESC,
-    message: intl.formatMessage(messages.feature.sort.newest),
+    message: intl.formatMessage(messages.feature.sort.newest)
   },
   {
     key: SORT_OPTIONS_CREATED_AT_ASC,
-    message: intl.formatMessage(messages.feature.sort.oldest),
+    message: intl.formatMessage(messages.feature.sort.oldest)
   },
   {
     key: SORT_OPTIONS_NAME_ASC,
-    message: intl.formatMessage(messages.feature.sort.nameAz),
+    message: intl.formatMessage(messages.feature.sort.nameAz)
   },
   {
     key: SORT_OPTIONS_NAME_DESC,
-    message: intl.formatMessage(messages.feature.sort.nameZa),
-  },
+    message: intl.formatMessage(messages.feature.sort.nameZa)
+  }
 ];
 
 export function getFlagStatus(
@@ -138,78 +138,78 @@ export enum FilterTypes {
   ENABLED = 'enabled',
   ARCHIVED = 'archived',
   TAGS = 'tags',
-  HAS_PREREQUISITES = 'prerequisites',
+  HAS_PREREQUISITES = 'prerequisites'
 }
 
 const filterOptions: Option[] = [
   {
     value: FilterTypes.TAGS,
-    label: intl.formatMessage(messages.tags),
+    label: intl.formatMessage(messages.tags)
   },
   {
     value: FilterTypes.HAS_PREREQUISITES,
-    label: intl.formatMessage(messages.feature.filter.hasPrerequisites),
+    label: intl.formatMessage(messages.feature.filter.hasPrerequisites)
   },
   {
     value: FilterTypes.MAINTAINER,
-    label: intl.formatMessage(messages.feature.filter.maintainer),
+    label: intl.formatMessage(messages.feature.filter.maintainer)
   },
   {
     value: FilterTypes.HAS_EXPERIMENT,
-    label: intl.formatMessage(messages.feature.filter.hasExperiment),
+    label: intl.formatMessage(messages.feature.filter.hasExperiment)
   },
   {
     value: FilterTypes.ENABLED,
-    label: intl.formatMessage(messages.feature.filter.enabled),
+    label: intl.formatMessage(messages.feature.filter.enabled)
   },
   {
     value: FilterTypes.ARCHIVED,
-    label: intl.formatMessage(messages.feature.filter.archived),
-  },
+    label: intl.formatMessage(messages.feature.filter.archived)
+  }
 ];
 
 const enabledOptions: Option[] = [
   {
     value: 'true',
-    label: intl.formatMessage(messages.enabled),
+    label: intl.formatMessage(messages.enabled)
   },
   {
     value: 'false',
-    label: intl.formatMessage(messages.disabled),
-  },
+    label: intl.formatMessage(messages.disabled)
+  }
 ];
 
 const hasExperimentOptions: Option[] = [
   {
     value: 'true',
-    label: intl.formatMessage(messages.yes),
+    label: intl.formatMessage(messages.yes)
   },
   {
     value: 'false',
-    label: intl.formatMessage(messages.no),
-  },
+    label: intl.formatMessage(messages.no)
+  }
 ];
 
 const archivedOptions: Option[] = [
   {
     value: 'true',
-    label: intl.formatMessage(messages.yes),
+    label: intl.formatMessage(messages.yes)
   },
   {
     value: 'false',
-    label: intl.formatMessage(messages.no),
-  },
+    label: intl.formatMessage(messages.no)
+  }
 ];
 
 const hasPrerequisitesOptions: Option[] = [
   {
     value: 'true',
-    label: intl.formatMessage(messages.yes),
+    label: intl.formatMessage(messages.yes)
   },
   {
     value: 'false',
-    label: intl.formatMessage(messages.no),
-  },
+    label: intl.formatMessage(messages.no)
+  }
 ];
 
 export interface FeatureListProps {
@@ -232,7 +232,7 @@ export const FeatureList: FC<FeatureListProps> = memo(
     onChangeSearchOptions,
     onClearSearchOptions,
     onArchive,
-    onClone,
+    onClone
   }) => {
     const { formatMessage: f } = useIntl();
     const currentEnvironment = useCurrentEnvironment();
@@ -262,19 +262,19 @@ export const FeatureList: FC<FeatureListProps> = memo(
         items.push({
           action: MenuActions.ARCHIVE,
           name: intl.formatMessage(messages.feature.action.unarchive),
-          iconElement: <MUUnarchiveIcon />,
+          iconElement: <MUUnarchiveIcon />
         });
         return items;
       }
       items.push({
         action: MenuActions.ARCHIVE,
         name: intl.formatMessage(messages.feature.action.archive),
-        iconElement: <MUArchiveIcon />,
+        iconElement: <MUArchiveIcon />
       });
       items.push({
         action: MenuActions.CLONE,
         name: intl.formatMessage(messages.feature.action.clone),
-        iconElement: <MUFileCopyIcon />,
+        iconElement: <MUFileCopyIcon />
       });
       return items;
     };
@@ -302,16 +302,14 @@ export const FeatureList: FC<FeatureListProps> = memo(
               <div className="text-gray-700">
                 <h1 className="text-lg">
                   {f(messages.noResult.title, {
-                    title: f(messages.feature.list.header.title),
+                    title: f(messages.feature.list.header.title)
                   })}
                 </h1>
                 <div className="flex justify-center mt-4">
                   <ul className="list-disc">
                     <li>
                       {f(messages.noResult.searchByKeyword, {
-                        keyword: f(
-                          messages.feature.list.noResult.searchKeyword
-                        ),
+                        keyword: f(messages.feature.list.noResult.searchKeyword)
                       })}
                     </li>
                     <li>{f(messages.noResult.changeFilterSelection)}</li>
@@ -325,7 +323,7 @@ export const FeatureList: FC<FeatureListProps> = memo(
               <div className="w-[600px] text-gray-700 text-center">
                 <h1 className="text-lg">
                   {f(messages.noData.title, {
-                    title: f(messages.feature.list.header.title),
+                    title: f(messages.feature.list.header.title)
                   })}
                 </h1>
                 <p className="mt-5">
@@ -476,7 +474,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
               accounts.map((account) => {
                 return {
                   value: account.email,
-                  label: account.email,
+                  label: account.email
                 };
               })
             );
@@ -488,7 +486,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
             setFilterValues(
               tagsList.map((tag) => ({
                 value: tag.id,
-                label: tag.id,
+                label: tag.id
               }))
             );
             return;
@@ -507,27 +505,27 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       switch (key) {
         case FilterTypes.ENABLED:
           handleUpdateOption({
-            enabled: value,
+            enabled: value
           });
           return;
         case FilterTypes.ARCHIVED:
           handleUpdateOption({
-            archived: value,
+            archived: value
           });
           return;
         case FilterTypes.HAS_EXPERIMENT:
           handleUpdateOption({
-            hasExperiment: value,
+            hasExperiment: value
           });
           return;
         case FilterTypes.HAS_PREREQUISITES:
           handleUpdateOption({
-            hasPrerequisites: value,
+            hasPrerequisites: value
           });
           return;
         case FilterTypes.MAINTAINER:
           handleUpdateOption({
-            maintainerId: value,
+            maintainerId: value
           });
           return;
       }
@@ -535,7 +533,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     const handleMultiFilterAdd = (key: string, value: string[]): void => {
       if (key === FilterTypes.TAGS) {
         handleUpdateOption({
-          tagIds: value,
+          tagIds: value
         });
       }
     };
@@ -555,7 +553,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
               value={options.q}
               onChange={(query: string) =>
                 handleUpdateOption({
-                  q: query,
+                  q: query
                 })
               }
             />
@@ -576,7 +574,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
               sortItems={sortItems}
               onChange={(sort: string) =>
                 handleUpdateOption({
-                  sort: sort,
+                  sort: sort
                 })
               }
             />
@@ -611,7 +609,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                 }`}
                 onRemove={() =>
                   handleUpdateOption({
-                    enabled: null,
+                    enabled: null
                   })
                 }
               />
@@ -625,7 +623,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                 }`}
                 onRemove={() =>
                   handleUpdateOption({
-                    archived: null,
+                    archived: null
                   })
                 }
               />
@@ -639,7 +637,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                 }`}
                 onRemove={() =>
                   handleUpdateOption({
-                    hasExperiment: null,
+                    hasExperiment: null
                   })
                 }
               />
@@ -653,7 +651,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                 }`}
                 onRemove={() =>
                   handleUpdateOption({
-                    hasPrerequisites: null,
+                    hasPrerequisites: null
                   })
                 }
               />
@@ -665,7 +663,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                 }`}
                 onRemove={() =>
                   handleUpdateOption({
-                    maintainerId: null,
+                    maintainerId: null
                   })
                 }
               />
@@ -675,7 +673,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                 label={`${f(messages.feature.filter.tags)}: ${options.tagIds}`}
                 onRemove={() =>
                   handleUpdateOption({
-                    tagIds: null,
+                    tagIds: null
                   })
                 }
               />
@@ -687,7 +685,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                   label={`${f(messages.feature.filter.tags)}: ${tagId}`}
                   onRemove={() =>
                     handleUpdateOption({
-                      tagIds: options.tagIds.filter((tId) => tId !== tagId),
+                      tagIds: options.tagIds.filter((tId) => tId !== tagId)
                     })
                   }
                 />

@@ -3,7 +3,7 @@ import * as yup from 'yup';
 
 import {
   NOTIFICATION_NAME_MAX_LENGTH,
-  NOTIFICATION_SOURCE_TYPES_MIN_LENGTH,
+  NOTIFICATION_SOURCE_TYPES_MIN_LENGTH
 } from '../../constants/notification';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
@@ -23,10 +23,10 @@ const webhookUrlSchema = yup.string().required().url();
 export const addFormSchema = yup.object().shape({
   name: nameSchema,
   sourceTypes: sourceTypesSchema,
-  webhookUrl: webhookUrlSchema,
+  webhookUrl: webhookUrlSchema
 });
 
 export const updateFormSchema = yup.object().shape({
   name: nameSchema,
-  sourceTypes: sourceTypesSchema,
+  sourceTypes: sourceTypesSchema
 });

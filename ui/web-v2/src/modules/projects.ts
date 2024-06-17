@@ -2,7 +2,7 @@ import {
   createSlice,
   createEntityAdapter,
   createAsyncThunk,
-  SerializedError,
+  SerializedError
 } from '@reduxjs/toolkit';
 import { BoolValue } from 'google-protobuf/google/protobuf/wrappers_pb';
 
@@ -13,7 +13,7 @@ import {
   CreateProjectCommand,
   EnableProjectCommand,
   DisableProjectCommand,
-  RenameProjectCommand,
+  RenameProjectCommand
 } from '../proto/environment/command_pb';
 import { Project } from '../proto/environment/project_pb';
 import {
@@ -24,7 +24,7 @@ import {
   GetProjectRequest,
   EnableProjectRequest,
   DisableProjectRequest,
-  UpdateProjectRequest,
+  UpdateProjectRequest
 } from '../proto/environment/service_pb';
 
 import { setupAuthToken } from './auth';
@@ -34,7 +34,7 @@ import { AppState } from '.';
 const MODULE_NAME = 'projects';
 
 export const projectAdapter = createEntityAdapter<Project.AsObject>({
-  selectId: (e) => e.id,
+  selectId: (e) => e.id
 });
 
 export const { selectAll, selectById } = projectAdapter.getSelectors();
@@ -46,7 +46,7 @@ const initialState = projectAdapter.getInitialState<{
 }>({
   loading: false,
   totalCount: 0,
-  getProjectError: null,
+  getProjectError: null
 });
 
 export type OrderBy =
@@ -234,5 +234,5 @@ export const projectsSlice = createSlice({
       .addCase(createProject.pending, (state) => {})
       .addCase(createProject.fulfilled, (state, action) => {})
       .addCase(createProject.rejected, (state, action) => {});
-  },
+  }
 });

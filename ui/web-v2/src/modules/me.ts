@@ -7,7 +7,7 @@ import { GetMeRequest } from '../proto/account/service_pb';
 import { EnvironmentV2 } from '../proto/environment/environment_pb';
 import {
   getCurrentEnvironmentId,
-  setCurrentEnvironmentId,
+  setCurrentEnvironmentId
 } from '../storage/environment';
 
 import { AppState } from '.';
@@ -37,7 +37,7 @@ export const fetchMe = createAsyncThunk<
   return {
     isAdmin: res.response.toObject().account.isSystemAdmin,
     isLogin: true,
-    consoleAccount: res.response.toObject().account,
+    consoleAccount: res.response.toObject().account
   };
 });
 
@@ -46,7 +46,7 @@ export const meSlice = createSlice({
   initialState: {
     isAdmin: false,
     isLogin: false,
-    consoleAccount: null,
+    consoleAccount: null
   } as MeState,
   reducers: {
     clearMe(state) {
@@ -55,7 +55,7 @@ export const meSlice = createSlice({
     setCurrentEnvironment(state, action: PayloadAction<string>) {
       setCurrentEnvironmentId(action.payload);
       return state;
-    },
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -72,7 +72,7 @@ export const meSlice = createSlice({
       .addCase(fetchMe.rejected, () => {
         return { isAdmin: false, isLogin: false, consoleAccount: null };
       });
-  },
+  }
 });
 
 export const useMe = (): MeState =>

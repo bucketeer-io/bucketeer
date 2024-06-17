@@ -22,7 +22,7 @@ export const AdminNotificationUpdateForm: FC<AdminNotificationUpdateFormProps> =
       register,
       control,
       getValues,
-      formState: { errors, isValid, isDirty, isSubmitted },
+      formState: { errors, isValid, isDirty, isSubmitted }
     } = methods;
 
     const defaultValues = SOURCE_TYPE_ITEMS.filter((item) =>

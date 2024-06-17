@@ -2,9 +2,9 @@
 // file: proto/autoops/command.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_autoops_auto_ops_rule_pb from './auto_ops_rule_pb';
-import * as proto_autoops_clause_pb from './clause_pb';
-import * as proto_autoops_progressive_rollout_pb from './progressive_rollout_pb';
+import * as proto_autoops_auto_ops_rule_pb from '../../proto/autoops/auto_ops_rule_pb';
+import * as proto_autoops_clause_pb from '../../proto/autoops/clause_pb';
+import * as proto_autoops_progressive_rollout_pb from '../../proto/autoops/progressive_rollout_pb';
 
 export class CreateAutoOpsRuleCommand extends jspb.Message {
   getFeatureId(): string;

@@ -1,7 +1,7 @@
 // package: google.rpc
 // file: google/rpc/code.proto
 
-import * as jspb from "google-protobuf";
+import * as jspb from 'google-protobuf';
 
 export interface CodeMap {
   OK: 0;
@@ -24,4 +24,3 @@ export interface CodeMap {
 }
 
 export const Code: CodeMap;
-

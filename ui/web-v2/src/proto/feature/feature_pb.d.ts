@@ -2,12 +2,12 @@
 // file: proto/feature/feature.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_feature_rule_pb from './rule_pb';
-import * as proto_feature_target_pb from './target_pb';
-import * as proto_feature_variation_pb from './variation_pb';
-import * as proto_feature_strategy_pb from './strategy_pb';
-import * as proto_feature_feature_last_used_info_pb from './feature_last_used_info_pb';
-import * as proto_feature_prerequisite_pb from './prerequisite_pb';
+import * as proto_feature_rule_pb from '../../proto/feature/rule_pb';
+import * as proto_feature_target_pb from '../../proto/feature/target_pb';
+import * as proto_feature_variation_pb from '../../proto/feature/variation_pb';
+import * as proto_feature_strategy_pb from '../../proto/feature/strategy_pb';
+import * as proto_feature_feature_last_used_info_pb from '../../proto/feature/feature_last_used_info_pb';
+import * as proto_feature_prerequisite_pb from '../../proto/feature/prerequisite_pb';
 
 export class Feature extends jspb.Message {
   getId(): string;

@@ -17,7 +17,7 @@ export const APIKeyAddForm: FC<APIKeyAddFormProps> = memo(
     const {
       register,
       formState: { errors, isSubmitting, isValid },
-      getValues,
+      getValues
     } = methods;
 
     return (
@@ -80,7 +80,7 @@ export const APIKeyAddForm: FC<APIKeyAddFormProps> = memo(
                         description: f(
                           messages.apiKey.section.clientSdkDescription
                         ),
-                        value: 1,
+                        value: 1
                       },
                       {
                         id: 'server-sdk',
@@ -88,15 +88,17 @@ export const APIKeyAddForm: FC<APIKeyAddFormProps> = memo(
                         description: f(
                           messages.apiKey.section.serverSdkDescription
                         ),
-                        value: 2,
-                      },
+                        value: 2
+                      }
                     ].map(({ id, label, description, value }) => (
                       <div
                         key={id}
                         className="flex items-center py-4 space-x-5"
                       >
                         <label htmlFor={id} className="flex-1 cursor-pointer">
-                          <p className="font-bold text-sm text-gray-600 text-md text-gray-500">{label}</p>
+                          <p className="font-bold text-sm text-gray-600 text-md text-gray-500">
+                            {label}
+                          </p>
                           <p className="text-sm text-gray-500">{description}</p>
                         </label>
                         <input

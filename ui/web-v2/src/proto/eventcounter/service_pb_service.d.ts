@@ -1,7 +1,7 @@
 // package: bucketeer.eventcounter
 // file: proto/eventcounter/service.proto
 
-import * as proto_eventcounter_service_pb from './service_pb';
+import * as proto_eventcounter_service_pb from '../../proto/eventcounter/service_pb';
 import { grpc } from '@improbable-eng/grpc-web';
 
 type EventCounterServiceGetExperimentEvaluationCount = {

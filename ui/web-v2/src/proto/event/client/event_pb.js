@@ -27,11 +27,11 @@ var google_protobuf_any_pb = require('google-protobuf/google/protobuf/any_pb.js'
 goog.object.extend(proto, google_protobuf_any_pb);
 var google_protobuf_duration_pb = require('google-protobuf/google/protobuf/duration_pb.js');
 goog.object.extend(proto, google_protobuf_duration_pb);
-var proto_feature_evaluation_pb = require('../../feature/evaluation_pb.js');
+var proto_feature_evaluation_pb = require('../../../proto/feature/evaluation_pb.js');
 goog.object.extend(proto, proto_feature_evaluation_pb);
-var proto_feature_reason_pb = require('../../feature/reason_pb.js');
+var proto_feature_reason_pb = require('../../../proto/feature/reason_pb.js');
 goog.object.extend(proto, proto_feature_reason_pb);
-var proto_user_user_pb = require('../../user/user_pb.js');
+var proto_user_user_pb = require('../../../proto/user/user_pb.js');
 goog.object.extend(proto, proto_user_user_pb);
 goog.exportSymbol('proto.bucketeer.event.client.ApiId', null, global);
 goog.exportSymbol(
@@ -838,7 +838,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         event:
           (f = msg.getEvent()) &&
           google_protobuf_any_pb.Any.toObject(includeInstance, f),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, '')
       };
 
     if (includeInstance) {
@@ -1066,7 +1066,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         sdkVersion: jspb.Message.getFieldWithDefault(msg, 10, ''),
         metadataMap: (f = msg.getMetadataMap())
           ? f.toObject(includeInstance, undefined)
-          : [],
+          : []
       };
 
     if (includeInstance) {
@@ -1574,7 +1574,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         sdkVersion: jspb.Message.getFieldWithDefault(msg, 9, ''),
         metadataMap: (f = msg.getMetadataMap())
           ? f.toObject(includeInstance, undefined)
-          : [],
+          : []
       };
 
     if (includeInstance) {
@@ -2033,7 +2033,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         sdkVersion: jspb.Message.getFieldWithDefault(msg, 4, ''),
         metadataMap: (f = msg.getMetadataMap())
           ? f.toObject(includeInstance, undefined)
-          : [],
+          : []
       };
 
     if (includeInstance) {
@@ -2331,7 +2331,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             : [],
           duration:
             (f = msg.getDuration()) &&
-            google_protobuf_duration_pb.Duration.toObject(includeInstance, f),
+            google_protobuf_duration_pb.Duration.toObject(includeInstance, f)
         };
 
       if (includeInstance) {
@@ -2547,7 +2547,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           labelsMap: (f = msg.getLabelsMap())
             ? f.toObject(includeInstance, undefined)
             : [],
-          sizeByte: jspb.Message.getFieldWithDefault(msg, 2, 0),
+          sizeByte: jspb.Message.getFieldWithDefault(msg, 2, 0)
         };
 
       if (includeInstance) {
@@ -2740,7 +2740,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg,
           4,
           0.0
-        ),
+        )
       };
 
     if (includeInstance) {
@@ -3019,7 +3019,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         labelsMap: (f = msg.getLabelsMap())
           ? f.toObject(includeInstance, undefined)
           : [],
-        sizeByte: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        sizeByte: jspb.Message.getFieldWithDefault(msg, 3, 0)
       };
 
     if (includeInstance) {
@@ -3231,7 +3231,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     function (includeInstance, msg) {
       var f,
         obj = {
-          tag: jspb.Message.getFieldWithDefault(msg, 1, ''),
+          tag: jspb.Message.getFieldWithDefault(msg, 1, '')
         };
 
       if (includeInstance) {
@@ -3367,7 +3367,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     function (includeInstance, msg) {
       var f,
         obj = {
-          tag: jspb.Message.getFieldWithDefault(msg, 1, ''),
+          tag: jspb.Message.getFieldWithDefault(msg, 1, '')
         };
 
       if (includeInstance) {
@@ -3506,7 +3506,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           apiId: jspb.Message.getFieldWithDefault(msg, 1, 0),
           labelsMap: (f = msg.getLabelsMap())
             ? f.toObject(includeInstance, undefined)
-            : [],
+            : []
         };
 
       if (includeInstance) {
@@ -3696,7 +3696,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         apiId: jspb.Message.getFieldWithDefault(msg, 1, 0),
         labelsMap: (f = msg.getLabelsMap())
           ? f.toObject(includeInstance, undefined)
-          : [],
+          : []
       };
 
     if (includeInstance) {
@@ -3883,7 +3883,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           apiId: jspb.Message.getFieldWithDefault(msg, 1, 0),
           labelsMap: (f = msg.getLabelsMap())
             ? f.toObject(includeInstance, undefined)
-            : [],
+            : []
         };
 
       if (includeInstance) {
@@ -4072,7 +4072,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         apiId: jspb.Message.getFieldWithDefault(msg, 1, 0),
         labelsMap: (f = msg.getLabelsMap())
           ? f.toObject(includeInstance, undefined)
-          : [],
+          : []
       };
 
     if (includeInstance) {
@@ -4261,7 +4261,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         apiId: jspb.Message.getFieldWithDefault(msg, 1, 0),
         labelsMap: (f = msg.getLabelsMap())
           ? f.toObject(includeInstance, undefined)
-          : [],
+          : []
       };
 
     if (includeInstance) {
@@ -4448,7 +4448,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           apiId: jspb.Message.getFieldWithDefault(msg, 1, 0),
           labelsMap: (f = msg.getLabelsMap())
             ? f.toObject(includeInstance, undefined)
-            : [],
+            : []
         };
 
       if (includeInstance) {
@@ -4635,7 +4635,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           apiId: jspb.Message.getFieldWithDefault(msg, 1, 0),
           labelsMap: (f = msg.getLabelsMap())
             ? f.toObject(includeInstance, undefined)
-            : [],
+            : []
         };
 
       if (includeInstance) {
@@ -4823,7 +4823,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           apiId: jspb.Message.getFieldWithDefault(msg, 1, 0),
           labelsMap: (f = msg.getLabelsMap())
             ? f.toObject(includeInstance, undefined)
-            : [],
+            : []
         };
 
       if (includeInstance) {
@@ -5011,7 +5011,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           apiId: jspb.Message.getFieldWithDefault(msg, 1, 0),
           labelsMap: (f = msg.getLabelsMap())
             ? f.toObject(includeInstance, undefined)
-            : [],
+            : []
         };
 
       if (includeInstance) {
@@ -5201,7 +5201,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         apiId: jspb.Message.getFieldWithDefault(msg, 1, 0),
         labelsMap: (f = msg.getLabelsMap())
           ? f.toObject(includeInstance, undefined)
-          : [],
+          : []
       };
 
     if (includeInstance) {
@@ -5390,7 +5390,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         apiId: jspb.Message.getFieldWithDefault(msg, 1, 0),
         labelsMap: (f = msg.getLabelsMap())
           ? f.toObject(includeInstance, undefined)
-          : [],
+          : []
       };
 
     if (includeInstance) {
@@ -5579,7 +5579,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         apiId: jspb.Message.getFieldWithDefault(msg, 1, 0),
         labelsMap: (f = msg.getLabelsMap())
           ? f.toObject(includeInstance, undefined)
-          : [],
+          : []
       };
 
     if (includeInstance) {
@@ -5766,7 +5766,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           apiId: jspb.Message.getFieldWithDefault(msg, 1, 0),
           labelsMap: (f = msg.getLabelsMap())
             ? f.toObject(includeInstance, undefined)
-            : [],
+            : []
         };
 
       if (includeInstance) {
@@ -5955,7 +5955,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         apiId: jspb.Message.getFieldWithDefault(msg, 1, 0),
         labelsMap: (f = msg.getLabelsMap())
           ? f.toObject(includeInstance, undefined)
-          : [],
+          : []
       };
 
     if (includeInstance) {
@@ -6147,7 +6147,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         featureVersion: jspb.Message.getFieldWithDefault(msg, 3, 0),
         variationId: jspb.Message.getFieldWithDefault(msg, 4, ''),
         goalId: jspb.Message.getFieldWithDefault(msg, 5, ''),
-        userId: jspb.Message.getFieldWithDefault(msg, 6, ''),
+        userId: jspb.Message.getFieldWithDefault(msg, 6, '')
       };
 
     if (includeInstance) {
@@ -6412,7 +6412,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         timestamp: jspb.Message.getFieldWithDefault(msg, 1, 0),
         goalId: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        value: jspb.Message.getFloatingPointFieldWithDefault(msg, 3, 0.0),
+        value: jspb.Message.getFloatingPointFieldWithDefault(msg, 3, 0.0)
       };
 
     if (includeInstance) {
@@ -6580,7 +6580,7 @@ proto.bucketeer.event.client.SourceId = {
   WEB: 3,
   GO_SERVER: 5,
   NODE_SERVER: 6,
-  JAVASCRIPT: 7,
+  JAVASCRIPT: 7
 };
 
 /**
@@ -6593,7 +6593,7 @@ proto.bucketeer.event.client.ApiId = {
   REGISTER_EVENTS: 3,
   GET_FEATURE_FLAGS: 4,
   GET_SEGMENT_USERS: 5,
-  SDK_GET_VARIATION: 100,
+  SDK_GET_VARIATION: 100
 };
 
 goog.object.extend(exports, proto.bucketeer.event.client);

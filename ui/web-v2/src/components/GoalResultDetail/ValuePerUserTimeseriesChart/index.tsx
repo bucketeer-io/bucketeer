@@ -10,26 +10,27 @@ interface ValuePerUserTimeseriesChartProps {
   variations: Map<string, Variation.AsObject>;
 }
 
-export const ValuePerUserTimeseriesChart: FC<ValuePerUserTimeseriesChartProps> =
-  ({ goalResult, variations }) => {
-    const variationValues = goalResult.variationResultsList.map((vr) => {
-      return unwrapUndefinable(variations.get(vr.variationId)).value;
-    });
-    const timeseries = unwrapUndefinable(
-      goalResult.variationResultsList[0].goalValueSumPerUserTimeseries
-        ?.timestampsList
-    );
-    const data = goalResult.variationResultsList.map((vr) => {
-      return unwrapUndefinable(vr.goalValueSumPerUserTimeseries).valuesList;
-    });
+export const ValuePerUserTimeseriesChart: FC<
+  ValuePerUserTimeseriesChartProps
+> = ({ goalResult, variations }) => {
+  const variationValues = goalResult.variationResultsList.map((vr) => {
+    return unwrapUndefinable(variations.get(vr.variationId)).value;
+  });
+  const timeseries = unwrapUndefinable(
+    goalResult.variationResultsList[0].goalValueSumPerUserTimeseries
+      ?.timestampsList
+  );
+  const data = goalResult.variationResultsList.map((vr) => {
+    return unwrapUndefinable(vr.goalValueSumPerUserTimeseries).valuesList;
+  });
 
-    return (
-      <TimeseriesLineChart
-        label={''}
-        dataLabels={variationValues}
-        timeseries={timeseries}
-        data={data}
-        height={300}
-      />
-    );
-  };
+  return (
+    <TimeseriesLineChart
+      label={''}
+      dataLabels={variationValues}
+      timeseries={timeseries}
+      data={data}
+      height={300}
+    />
+  );
+};

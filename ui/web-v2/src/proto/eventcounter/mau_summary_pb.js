@@ -23,7 +23,7 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_event_client_event_pb = require('../event/client/event_pb.js');
+var proto_event_client_event_pb = require('../../proto/event/client/event_pb.js');
 goog.object.extend(proto, proto_event_client_event_pb);
 goog.exportSymbol('proto.bucketeer.eventcounter.MAUSummary', null, global);
 /**
@@ -96,7 +96,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         isAll: jspb.Message.getBooleanFieldWithDefault(msg, 8, false),
         isFinished: jspb.Message.getBooleanFieldWithDefault(msg, 9, false),
         createdAt: jspb.Message.getFieldWithDefault(msg, 10, 0),
-        updatedAt: jspb.Message.getFieldWithDefault(msg, 11, 0),
+        updatedAt: jspb.Message.getFieldWithDefault(msg, 11, 0)
       };
 
     if (includeInstance) {

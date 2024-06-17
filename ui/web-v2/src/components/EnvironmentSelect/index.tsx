@@ -7,7 +7,7 @@ import React, {
   useState,
   memo,
   useCallback,
-  useEffect,
+  useEffect
 } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
@@ -18,7 +18,7 @@ import { messages } from '../../lang/messages';
 import {
   setCurrentEnvironment,
   useCurrentEnvironment,
-  useEnvironments,
+  useEnvironments
 } from '../../modules/me';
 import { EnvironmentV2 } from '../../proto/environment/environment_pb';
 import { AppDispatch } from '../../store';

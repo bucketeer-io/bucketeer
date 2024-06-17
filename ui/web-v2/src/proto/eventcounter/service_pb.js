@@ -25,11 +25,11 @@ var global =
 
 var google_protobuf_wrappers_pb = require('google-protobuf/google/protobuf/wrappers_pb.js');
 goog.object.extend(proto, google_protobuf_wrappers_pb);
-var proto_eventcounter_experiment_result_pb = require('./experiment_result_pb.js');
+var proto_eventcounter_experiment_result_pb = require('../../proto/eventcounter/experiment_result_pb.js');
 goog.object.extend(proto, proto_eventcounter_experiment_result_pb);
-var proto_eventcounter_timeseries_pb = require('./timeseries_pb.js');
+var proto_eventcounter_timeseries_pb = require('../../proto/eventcounter/timeseries_pb.js');
 goog.object.extend(proto, proto_eventcounter_timeseries_pb);
-var proto_eventcounter_variation_count_pb = require('./variation_count_pb.js');
+var proto_eventcounter_variation_count_pb = require('../../proto/eventcounter/variation_count_pb.js');
 goog.object.extend(proto, proto_eventcounter_variation_count_pb);
 goog.exportSymbol(
   'proto.bucketeer.eventcounter.GetEvaluationTimeseriesCountRequest',
@@ -677,7 +677,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           featureId: jspb.Message.getFieldWithDefault(msg, 4, ''),
           featureVersion: jspb.Message.getFieldWithDefault(msg, 5, 0),
           variationIdsList:
-            (f = jspb.Message.getRepeatedField(msg, 6)) == null ? undefined : f,
+            (f = jspb.Message.getRepeatedField(msg, 6)) == null ? undefined : f
         };
 
       if (includeInstance) {
@@ -981,7 +981,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             msg.getVariationCountsList(),
             proto_eventcounter_variation_count_pb.VariationCount.toObject,
             includeInstance
-          ),
+          )
         };
 
       if (includeInstance) {
@@ -1214,7 +1214,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         obj = {
           environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
           featureId: jspb.Message.getFieldWithDefault(msg, 2, ''),
-          timeRange: jspb.Message.getFieldWithDefault(msg, 3, 0),
+          timeRange: jspb.Message.getFieldWithDefault(msg, 3, 0)
         };
 
       if (includeInstance) {
@@ -1324,7 +1324,7 @@ proto.bucketeer.eventcounter.GetEvaluationTimeseriesCountRequest.TimeRange = {
   TWENTY_FOUR_HOURS: 1,
   SEVEN_DAYS: 2,
   FOURTEEN_DAYS: 3,
-  THIRTY_DAYS: 4,
+  THIRTY_DAYS: 4
 };
 
 /**
@@ -1438,7 +1438,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             msg.getEventCountsList(),
             proto_eventcounter_timeseries_pb.VariationTimeseries.toObject,
             includeInstance
-          ),
+          )
         };
 
       if (includeInstance) {
@@ -1686,7 +1686,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        experimentId: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        experimentId: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -1857,7 +1857,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_eventcounter_experiment_result_pb.ExperimentResult.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {
@@ -2030,7 +2030,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           featureVersion:
             (f = msg.getFeatureVersion()) &&
             google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f),
-          environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
+          environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, '')
         };
 
       if (includeInstance) {
@@ -2257,7 +2257,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
                 includeInstance,
                 proto.bucketeer.eventcounter.ExperimentResult.toObject
               )
-            : [],
+            : []
         };
 
       if (includeInstance) {
@@ -2390,7 +2390,7 @@ proto.bucketeer.eventcounter.ListExperimentResultsResponse.prototype.clearResult
  * @const
  */
 proto.bucketeer.eventcounter.GetExperimentGoalCountRequest.repeatedFields_ = [
-  7,
+  7
 ];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -2434,7 +2434,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           featureId: jspb.Message.getFieldWithDefault(msg, 5, ''),
           featureVersion: jspb.Message.getFieldWithDefault(msg, 6, 0),
           variationIdsList:
-            (f = jspb.Message.getRepeatedField(msg, 7)) == null ? undefined : f,
+            (f = jspb.Message.getRepeatedField(msg, 7)) == null ? undefined : f
         };
 
       if (includeInstance) {
@@ -2723,7 +2723,7 @@ proto.bucketeer.eventcounter.GetExperimentGoalCountRequest.prototype.clearVariat
  * @const
  */
 proto.bucketeer.eventcounter.GetExperimentGoalCountResponse.repeatedFields_ = [
-  2,
+  2
 ];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -2765,7 +2765,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             msg.getVariationCountsList(),
             proto_eventcounter_variation_count_pb.VariationCount.toObject,
             includeInstance
-          ),
+          )
         };
 
       if (includeInstance) {
@@ -2974,7 +2974,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           clauseId: jspb.Message.getFieldWithDefault(msg, 3, ''),
           featureId: jspb.Message.getFieldWithDefault(msg, 4, ''),
           featureVersion: jspb.Message.getFieldWithDefault(msg, 5, 0),
-          variationId: jspb.Message.getFieldWithDefault(msg, 6, ''),
+          variationId: jspb.Message.getFieldWithDefault(msg, 6, '')
         };
 
       if (includeInstance) {
@@ -3251,7 +3251,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         obj = {
           opsRuleId: jspb.Message.getFieldWithDefault(msg, 1, ''),
           clauseId: jspb.Message.getFieldWithDefault(msg, 2, ''),
-          count: jspb.Message.getFieldWithDefault(msg, 3, 0),
+          count: jspb.Message.getFieldWithDefault(msg, 3, 0)
         };
 
       if (includeInstance) {
@@ -3449,7 +3449,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         clauseId: jspb.Message.getFieldWithDefault(msg, 3, ''),
         featureId: jspb.Message.getFieldWithDefault(msg, 4, ''),
         featureVersion: jspb.Message.getFieldWithDefault(msg, 5, 0),
-        variationId: jspb.Message.getFieldWithDefault(msg, 6, ''),
+        variationId: jspb.Message.getFieldWithDefault(msg, 6, '')
       };
 
     if (includeInstance) {
@@ -3727,7 +3727,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         opsRuleId: jspb.Message.getFieldWithDefault(msg, 1, ''),
         clauseId: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        count: jspb.Message.getFieldWithDefault(msg, 3, 0),
+        count: jspb.Message.getFieldWithDefault(msg, 3, 0)
       };
 
     if (includeInstance) {
@@ -3920,7 +3920,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        yearMonth: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        yearMonth: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -4088,7 +4088,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         eventCount: jspb.Message.getFieldWithDefault(msg, 1, 0),
-        userCount: jspb.Message.getFieldWithDefault(msg, 2, 0),
+        userCount: jspb.Message.getFieldWithDefault(msg, 2, 0)
       };
 
     if (includeInstance) {
@@ -4252,7 +4252,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         yearMonth: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        isFinished: jspb.Message.getBooleanFieldWithDefault(msg, 2, false),
+        isFinished: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
       };
 
     if (includeInstance) {

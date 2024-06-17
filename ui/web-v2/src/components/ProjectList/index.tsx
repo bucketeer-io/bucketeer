@@ -37,7 +37,7 @@ export const ProjectList: FC<ProjectListProps> = memo(
     onChangeSearchOptions,
     onAdd,
     onUpdate,
-    onConvert,
+    onConvert
   }) => {
     const { formatMessage: f } = useIntl();
     const projects = useSelector<AppState, Project.AsObject[]>(
@@ -58,7 +58,7 @@ export const ProjectList: FC<ProjectListProps> = memo(
         action: MenuActions.CONVERT_PROJECT,
         name: intl.formatMessage(messages.adminProject.action.convertProject),
         iconElement: <MUAutorenewIcon />,
-        disabled: !project.trial,
+        disabled: !project.trial
       });
       return items;
     };
@@ -85,7 +85,7 @@ export const ProjectList: FC<ProjectListProps> = memo(
               <div className="text-gray-700">
                 <h1 className="text-lg">
                   {f(messages.noResult.title, {
-                    title: f(messages.adminProject.list.header.title),
+                    title: f(messages.adminProject.list.header.title)
                   })}
                 </h1>
                 <div className="flex justify-center mt-4">
@@ -94,7 +94,7 @@ export const ProjectList: FC<ProjectListProps> = memo(
                       {f(messages.noResult.searchByKeyword, {
                         keyword: f(
                           messages.adminProject.list.noResult.searchKeyword
-                        ),
+                        )
                       })}
                     </li>
                     <li>{f(messages.noResult.changeFilterSelection)}</li>
@@ -108,7 +108,7 @@ export const ProjectList: FC<ProjectListProps> = memo(
               <div className="w-[600px] text-gray-700 text-center">
                 <h1 className="text-lg">
                   {f(messages.noData.title, {
-                    title: f(messages.adminProject.list.header.title),
+                    title: f(messages.adminProject.list.header.title)
                   })}
                 </h1>
                 <a
@@ -149,14 +149,14 @@ export const ProjectList: FC<ProjectListProps> = memo(
                             {`${f(messages.adminProject.trialPeriod)}: `}
                             {`${formatDate({
                               date: new Date(project.createdAt * 1000),
-                              showDateOnly: true,
+                              showDateOnly: true
                             })}
                           - ${formatDate({
                             date: addDays(
                               new Date(project.createdAt * 1000),
                               179
                             ),
-                            showDateOnly: true,
+                            showDateOnly: true
                           })}`}
                           </div>
                         )}

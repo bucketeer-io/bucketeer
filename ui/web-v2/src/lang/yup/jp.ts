@@ -4,7 +4,7 @@ export const localJp = {
     required: '必須入力項目です',
     oneOf: ({ values }) => `次の値のいずれかでなければなりません: ${values}`,
     notOneOf: ({ values }) => `次の値のいずれかであってはなりません: ${values}`,
-    isNumber: '形式が違います',
+    isNumber: '形式が違います'
   },
   string: {
     required: '必須入力項目です',
@@ -16,7 +16,7 @@ export const localJp = {
     url: '形式が違います',
     trim: '前後にスペースを入れてはいけません',
     lowercase: '小文字でなければなりません',
-    uppercase: '大文字でなければなりません',
+    uppercase: '大文字でなければなりません'
   },
   number: {
     min: ({ min }) => `${min}以上の値を入力して下さい`,
@@ -26,18 +26,18 @@ export const localJp = {
     notEqual: ({ notEqual }) => `${notEqual}と違う値を入力して下さい`,
     positive: '正の数を入力して下さい',
     negative: '負の数を入力して下さい',
-    integer: '整数を入力して下さい',
+    integer: '整数を入力して下さい'
   },
   date: {
     default: '形式が違います',
     min: ({ min }) => `${min}以上の日付を入力して下さい`,
-    max: ({ max }) => `${max}以下の日付を入力して下さい`,
+    max: ({ max }) => `${max}以下の日付を入力して下さい`
   },
   object: {
-    noUnknown: '有効なキーを持ったデータを入力して下さい',
+    noUnknown: '有効なキーを持ったデータを入力して下さい'
   },
   array: {
     min: ({ min }) => `${min}個以上の値を入力して下さい`,
-    max: ({ max }) => `${max}個以下の値を入力して下さい`,
-  },
+    max: ({ max }) => `${max}個以下の値を入力して下さい`
+  }
 };

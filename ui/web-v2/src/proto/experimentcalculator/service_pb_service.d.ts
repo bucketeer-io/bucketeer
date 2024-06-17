@@ -1,7 +1,7 @@
 // package: bucketeer.experimentcalculator
 // file: proto/experimentcalculator/service.proto
 
-import * as proto_experimentcalculator_service_pb from './service_pb';
+import * as proto_experimentcalculator_service_pb from '../../proto/experimentcalculator/service_pb';
 import { grpc } from '@improbable-eng/grpc-web';
 
 type ExperimentCalculatorServiceCalcExperiment = {

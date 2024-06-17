@@ -1,6 +1,6 @@
 import {
   ArrowNarrowLeftIcon,
-  ArrowNarrowRightIcon,
+  ArrowNarrowRightIcon
 } from '@heroicons/react/solid';
 import { FC, memo } from 'react';
 
@@ -64,8 +64,8 @@ export const Pagination: FC<PagingProps> = memo(
                   page == '...'
                     ? 'disabled:cursor-auto disabled:pointer-events-none'
                     : page == currentPage
-                    ? 'text-primary border-b-2 border-primary cursor-auto pointer-events-none'
-                    : 'text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 hover:border-b-2'
+                      ? 'text-primary border-b-2 border-primary cursor-auto pointer-events-none'
+                      : 'text-gray-500 border-b-2 border-transparent hover:text-gray-700 hover:border-gray-300 hover:border-b-2'
                 } pb-2 px-4 inline-flex items-center text-sm font-medium`}
                 disabled={page == '...'}
                 onClick={() => handleOnChange(page)}

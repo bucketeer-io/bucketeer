@@ -23,7 +23,7 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_environment_environment_pb = require('../environment/environment_pb.js');
+var proto_environment_environment_pb = require('../../proto/environment/environment_pb.js');
 goog.object.extend(proto, proto_environment_environment_pb);
 goog.exportSymbol('proto.bucketeer.account.APIKey', null, global);
 goog.exportSymbol('proto.bucketeer.account.APIKey.Role', null, global);
@@ -108,7 +108,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         role: jspb.Message.getFieldWithDefault(msg, 3, 0),
         disabled: jspb.Message.getBooleanFieldWithDefault(msg, 4, false),
         createdAt: jspb.Message.getFieldWithDefault(msg, 5, 0),
-        updatedAt: jspb.Message.getFieldWithDefault(msg, 6, 0),
+        updatedAt: jspb.Message.getFieldWithDefault(msg, 6, 0)
       };
 
     if (includeInstance) {
@@ -240,7 +240,7 @@ proto.bucketeer.account.APIKey.Role = {
   SDK_SERVER: 2,
   PUBLIC_API_READ_ONLY: 3,
   PUBLIC_API_WRITE: 4,
-  PUBLIC_API_ADMIN: 5,
+  PUBLIC_API_ADMIN: 5
 };
 
 /**
@@ -396,7 +396,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        projectUrlCode: jspb.Message.getFieldWithDefault(msg, 6, ''),
+        projectUrlCode: jspb.Message.getFieldWithDefault(msg, 6, '')
       };
 
     if (includeInstance) {

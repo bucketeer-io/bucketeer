@@ -23,11 +23,11 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_eventcounter_variation_count_pb = require('./variation_count_pb.js');
+var proto_eventcounter_variation_count_pb = require('../../proto/eventcounter/variation_count_pb.js');
 goog.object.extend(proto, proto_eventcounter_variation_count_pb);
-var proto_eventcounter_distribution_summary_pb = require('./distribution_summary_pb.js');
+var proto_eventcounter_distribution_summary_pb = require('../../proto/eventcounter/distribution_summary_pb.js');
 goog.object.extend(proto, proto_eventcounter_distribution_summary_pb);
-var proto_eventcounter_timeseries_pb = require('./timeseries_pb.js');
+var proto_eventcounter_timeseries_pb = require('../../proto/eventcounter/timeseries_pb.js');
 goog.object.extend(proto, proto_eventcounter_timeseries_pb);
 goog.exportSymbol('proto.bucketeer.eventcounter.VariationResult', null, global);
 /**
@@ -216,7 +216,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_eventcounter_timeseries_pb.Timeseries.toObject(
             includeInstance,
             f
-          ),
+          )
       };
 
     if (includeInstance) {

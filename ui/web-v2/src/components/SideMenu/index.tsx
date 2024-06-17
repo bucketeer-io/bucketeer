@@ -31,7 +31,7 @@ import {
   PAGE_PATH_ROOT,
   PAGE_PATH_AUDIT_LOGS,
   PAGE_PATH_DOCUMENTATION,
-  PAGE_PATH_SETTINGS,
+  PAGE_PATH_SETTINGS
 } from '../../constants/routing';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
@@ -64,7 +64,7 @@ const createMenuItems = (
     path: `/${environmentUrlCode}${PAGE_PATH_FEATURES}`,
     external: null,
     target: null,
-    iconElement: <MUToggleOnIcon />,
+    iconElement: <MUToggleOnIcon />
   });
   items.push({
     messageComponent: (
@@ -73,7 +73,7 @@ const createMenuItems = (
     path: `/${environmentUrlCode}${PAGE_PATH_GOALS}`,
     external: null,
     target: null,
-    iconElement: <MUFlagIcon />,
+    iconElement: <MUFlagIcon />
   });
   items.push({
     messageComponent: (
@@ -82,7 +82,7 @@ const createMenuItems = (
     path: `/${environmentUrlCode}${PAGE_PATH_EXPERIMENTS}`,
     external: null,
     target: null,
-    iconElement: <MUBarChart />,
+    iconElement: <MUBarChart />
   });
   items.push({
     messageComponent: (
@@ -91,7 +91,7 @@ const createMenuItems = (
     path: `/${environmentUrlCode}${PAGE_PATH_USER_SEGMENTS}`,
     external: null,
     target: null,
-    iconElement: <MUPeopleIcon />,
+    iconElement: <MUPeopleIcon />
   });
   // items.push({ TODO: User implementation
   //   messageComponent: <span>{intl.formatMessage(messages.sideMenu.user)}</span>,
@@ -107,7 +107,7 @@ const createMenuItems = (
     path: `/${environmentUrlCode}${PAGE_PATH_AUDIT_LOGS}`,
     external: null,
     target: null,
-    iconElement: <MUNotificationsIcon />,
+    iconElement: <MUNotificationsIcon />
   });
   items.push({ messageComponent: null });
   items.push({
@@ -117,7 +117,7 @@ const createMenuItems = (
     path: `/${environmentUrlCode}${PAGE_PATH_ACCOUNTS}`,
     external: null,
     target: null,
-    iconElement: <MUAccountCircleIcon />,
+    iconElement: <MUAccountCircleIcon />
   });
   items.push({
     messageComponent: (
@@ -126,7 +126,7 @@ const createMenuItems = (
     path: `/${environmentUrlCode}${PAGE_PATH_APIKEYS}`,
     external: null,
     target: null,
-    iconElement: <MUVpnKeyIcon />,
+    iconElement: <MUVpnKeyIcon />
   });
   items.push({
     messageComponent: (
@@ -138,7 +138,7 @@ const createMenuItems = (
     path: `${PAGE_PATH_DOCUMENTATION}`,
     external: true,
     target: '_blank',
-    iconElement: <MUSubjectIcon />,
+    iconElement: <MUSubjectIcon />
   });
   items.push({
     messageComponent: (
@@ -147,7 +147,7 @@ const createMenuItems = (
     path: `/${environmentUrlCode}${PAGE_PATH_SETTINGS}`,
     external: null,
     target: null,
-    iconElement: <MUSettingsIcon />,
+    iconElement: <MUSettingsIcon />
   });
   if (isAdmin) {
     items.push({
@@ -157,7 +157,7 @@ const createMenuItems = (
       path: PAGE_PATH_ADMIN,
       external: null,
       target: null,
-      iconElement: <MUSettingsApplications />,
+      iconElement: <MUSettingsApplications />
     });
   }
   return items;

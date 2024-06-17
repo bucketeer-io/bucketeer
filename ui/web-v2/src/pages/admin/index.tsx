@@ -5,7 +5,7 @@ import {
   Redirect,
   Route,
   Switch,
-  useRouteMatch,
+  useRouteMatch
 } from 'react-router-dom';
 
 import {
@@ -14,7 +14,7 @@ import {
   PAGE_PATH_AUDIT_LOGS,
   PAGE_PATH_ENVIRONMENTS,
   PAGE_PATH_NOTIFICATIONS,
-  PAGE_PATH_PROJECTS,
+  PAGE_PATH_PROJECTS
 } from '../../constants/routing';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
@@ -71,7 +71,7 @@ export const AdminIndexPage: FC = memo(() => {
             exact
             path={[
               `${url}${PAGE_PATH_PROJECTS}`,
-              `${url}${PAGE_PATH_PROJECTS}/:projectId`,
+              `${url}${PAGE_PATH_PROJECTS}/:projectId`
             ]}
           >
             <AdminProjectIndexPage />
@@ -80,7 +80,7 @@ export const AdminIndexPage: FC = memo(() => {
             exact
             path={[
               `${url}${PAGE_PATH_ENVIRONMENTS}`,
-              `${url}${PAGE_PATH_ENVIRONMENTS}/:environmentId`,
+              `${url}${PAGE_PATH_ENVIRONMENTS}/:environmentId`
             ]}
           >
             <AdminEnvironmentIndexPage />
@@ -89,7 +89,7 @@ export const AdminIndexPage: FC = memo(() => {
             exact
             path={[
               `${url}${PAGE_PATH_NOTIFICATIONS}`,
-              `${url}${PAGE_PATH_NOTIFICATIONS}/:notificationId`,
+              `${url}${PAGE_PATH_NOTIFICATIONS}/:notificationId`
             ]}
           >
             <AdminNotificationIndexPage />
@@ -112,19 +112,19 @@ const createTabs = (): Array<TabItem> => {
   return [
     {
       message: intl.formatMessage(messages.adminSettings.tab.projects),
-      to: PAGE_PATH_PROJECTS,
+      to: PAGE_PATH_PROJECTS
     },
     {
       message: intl.formatMessage(messages.adminSettings.tab.environments),
-      to: PAGE_PATH_ENVIRONMENTS,
+      to: PAGE_PATH_ENVIRONMENTS
     },
     {
       message: intl.formatMessage(messages.adminSettings.tab.notifications),
-      to: PAGE_PATH_NOTIFICATIONS,
+      to: PAGE_PATH_NOTIFICATIONS
     },
     {
       message: intl.formatMessage(messages.adminSettings.tab.auditLogs),
-      to: PAGE_PATH_AUDIT_LOGS,
-    },
+      to: PAGE_PATH_AUDIT_LOGS
+    }
   ];
 };

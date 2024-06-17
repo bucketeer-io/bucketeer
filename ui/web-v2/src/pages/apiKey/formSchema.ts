@@ -9,14 +9,14 @@ const nameSchema = yup.string().required().max(APIKEY_NAME_MAX_LENGTH);
 
 export const addApiKeyFormSchema = yup.object().shape({
   name: nameSchema,
-  role: yup.number().required(),
+  role: yup.number().required()
 });
 
 export interface AddApiKeyFormSchema
   extends yup.Asserts<typeof addApiKeyFormSchema> {}
 
 export const updateApiKeyFormSchema = yup.object().shape({
-  name: nameSchema,
+  name: nameSchema
 });
 export interface UpdateApiKeyFormSchema
   extends yup.Asserts<typeof updateApiKeyFormSchema> {}

@@ -25,11 +25,11 @@ import {
   UpdateExperimentRequest,
   UpdateExperimentResponse,
   UpdateGoalRequest,
-  UpdateGoalResponse,
+  UpdateGoalResponse
 } from '../proto/experiment/service_pb';
 import {
   ExperimentServiceClient,
-  ServiceError,
+  ServiceError
 } from '../proto/experiment/service_pb_service';
 
 import { extractErrorMessage } from './messages';

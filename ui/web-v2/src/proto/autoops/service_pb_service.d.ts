@@ -1,7 +1,7 @@
 // package: bucketeer.autoops
 // file: proto/autoops/service.proto
 
-import * as proto_autoops_service_pb from './service_pb';
+import * as proto_autoops_service_pb from '../../proto/autoops/service_pb';
 import { grpc } from '@improbable-eng/grpc-web';
 
 type AutoOpsServiceGetAutoOpsRule = {

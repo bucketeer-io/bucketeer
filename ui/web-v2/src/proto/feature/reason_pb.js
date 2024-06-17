@@ -14,12 +14,14 @@
 var jspb = require('google-protobuf');
 var goog = jspb;
 var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof window !== 'undefined' && window) ||
-    (typeof global !== 'undefined' && global) ||
-    (typeof self !== 'undefined' && self) ||
-    (function () { return this; }).call(null) ||
-    Function('return this')();
+  (typeof globalThis !== 'undefined' && globalThis) ||
+  (typeof window !== 'undefined' && window) ||
+  (typeof global !== 'undefined' && global) ||
+  (typeof self !== 'undefined' && self) ||
+  function () {
+    return this;
+  }.call(null) ||
+  Function('return this')();
 
 goog.exportSymbol('proto.bucketeer.feature.Reason', null, global);
 goog.exportSymbol('proto.bucketeer.feature.Reason.Type', null, global);
@@ -33,7 +35,7 @@ goog.exportSymbol('proto.bucketeer.feature.Reason.Type', null, global);
  * @extends {jspb.Message}
  * @constructor
  */
-proto.bucketeer.feature.Reason = function(opt_data) {
+proto.bucketeer.feature.Reason = function (opt_data) {
   jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
 goog.inherits(proto.bucketeer.feature.Reason, jspb.Message);
@@ -45,60 +47,61 @@ if (goog.DEBUG && !COMPILED) {
   proto.bucketeer.feature.Reason.displayName = 'proto.bucketeer.feature.Reason';
 }
 
-
-
 if (jspb.Message.GENERATE_TO_OBJECT) {
-/**
- * Creates an object representation of this proto.
- * Field names that are reserved in JavaScript and will be renamed to pb_name.
- * Optional fields that are not set will be set to undefined.
- * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
- * For the list of reserved names please see:
- *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
- * @param {boolean=} opt_includeInstance Deprecated. whether to include the
- *     JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @return {!Object}
- */
-proto.bucketeer.feature.Reason.prototype.toObject = function(opt_includeInstance) {
-  return proto.bucketeer.feature.Reason.toObject(opt_includeInstance, this);
-};
-
-
-/**
- * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Deprecated. Whether to include
- *     the JSPB instance for transitional soy proto support:
- *     http://goto/soy-param-migration
- * @param {!proto.bucketeer.feature.Reason} msg The msg instance to transform.
- * @return {!Object}
- * @suppress {unusedLocalVariables} f is only used for nested messages
- */
-proto.bucketeer.feature.Reason.toObject = function(includeInstance, msg) {
-  var f, obj = {
-    type: jspb.Message.getFieldWithDefault(msg, 1, 0),
-    ruleId: jspb.Message.getFieldWithDefault(msg, 2, "")
+  /**
+   * Creates an object representation of this proto.
+   * Field names that are reserved in JavaScript and will be renamed to pb_name.
+   * Optional fields that are not set will be set to undefined.
+   * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
+   * For the list of reserved names please see:
+   *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+   * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+   *     JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @return {!Object}
+   */
+  proto.bucketeer.feature.Reason.prototype.toObject = function (
+    opt_includeInstance
+  ) {
+    return proto.bucketeer.feature.Reason.toObject(opt_includeInstance, this);
   };
 
-  if (includeInstance) {
-    obj.$jspbMessageInstance = msg;
-  }
-  return obj;
-};
-}
+  /**
+   * Static version of the {@see toObject} method.
+   * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+   *     the JSPB instance for transitional soy proto support:
+   *     http://goto/soy-param-migration
+   * @param {!proto.bucketeer.feature.Reason} msg The msg instance to transform.
+   * @return {!Object}
+   * @suppress {unusedLocalVariables} f is only used for nested messages
+   */
+  proto.bucketeer.feature.Reason.toObject = function (includeInstance, msg) {
+    var f,
+      obj = {
+        type: jspb.Message.getFieldWithDefault(msg, 1, 0),
+        ruleId: jspb.Message.getFieldWithDefault(msg, 2, '')
+      };
 
+    if (includeInstance) {
+      obj.$jspbMessageInstance = msg;
+    }
+    return obj;
+  };
+}
 
 /**
  * Deserializes binary data (in protobuf wire format).
  * @param {jspb.ByteSource} bytes The bytes to deserialize.
  * @return {!proto.bucketeer.feature.Reason}
  */
-proto.bucketeer.feature.Reason.deserializeBinary = function(bytes) {
+proto.bucketeer.feature.Reason.deserializeBinary = function (bytes) {
   var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.bucketeer.feature.Reason;
-  return proto.bucketeer.feature.Reason.deserializeBinaryFromReader(msg, reader);
+  var msg = new proto.bucketeer.feature.Reason();
+  return proto.bucketeer.feature.Reason.deserializeBinaryFromReader(
+    msg,
+    reader
+  );
 };
-
 
 /**
  * Deserializes binary data (in protobuf wire format) from the
@@ -107,40 +110,43 @@ proto.bucketeer.feature.Reason.deserializeBinary = function(bytes) {
  * @param {!jspb.BinaryReader} reader The BinaryReader to use.
  * @return {!proto.bucketeer.feature.Reason}
  */
-proto.bucketeer.feature.Reason.deserializeBinaryFromReader = function(msg, reader) {
+proto.bucketeer.feature.Reason.deserializeBinaryFromReader = function (
+  msg,
+  reader
+) {
   while (reader.nextField()) {
     if (reader.isEndGroup()) {
       break;
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = /** @type {!proto.bucketeer.feature.Reason.Type} */ (reader.readEnum());
-      msg.setType(value);
-      break;
-    case 2:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setRuleId(value);
-      break;
-    default:
-      reader.skipField();
-      break;
+      case 1:
+        var value = /** @type {!proto.bucketeer.feature.Reason.Type} */ (
+          reader.readEnum()
+        );
+        msg.setType(value);
+        break;
+      case 2:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setRuleId(value);
+        break;
+      default:
+        reader.skipField();
+        break;
     }
   }
   return msg;
 };
 
-
 /**
  * Serializes the message to binary data (in protobuf wire format).
  * @return {!Uint8Array}
  */
-proto.bucketeer.feature.Reason.prototype.serializeBinary = function() {
+proto.bucketeer.feature.Reason.prototype.serializeBinary = function () {
   var writer = new jspb.BinaryWriter();
   proto.bucketeer.feature.Reason.serializeBinaryToWriter(this, writer);
   return writer.getResultBuffer();
 };
-
 
 /**
  * Serializes the given message to binary data (in protobuf wire
@@ -149,24 +155,20 @@ proto.bucketeer.feature.Reason.prototype.serializeBinary = function() {
  * @param {!jspb.BinaryWriter} writer
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.bucketeer.feature.Reason.serializeBinaryToWriter = function(message, writer) {
+proto.bucketeer.feature.Reason.serializeBinaryToWriter = function (
+  message,
+  writer
+) {
   var f = undefined;
   f = message.getType();
   if (f !== 0.0) {
-    writer.writeEnum(
-      1,
-      f
-    );
+    writer.writeEnum(1, f);
   }
   f = message.getRuleId();
   if (f.length > 0) {
-    writer.writeString(
-      2,
-      f
-    );
+    writer.writeString(2, f);
   }
 };
-
 
 /**
  * @enum {number}
@@ -184,36 +186,34 @@ proto.bucketeer.feature.Reason.Type = {
  * optional Type type = 1;
  * @return {!proto.bucketeer.feature.Reason.Type}
  */
-proto.bucketeer.feature.Reason.prototype.getType = function() {
-  return /** @type {!proto.bucketeer.feature.Reason.Type} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
+proto.bucketeer.feature.Reason.prototype.getType = function () {
+  return /** @type {!proto.bucketeer.feature.Reason.Type} */ (
+    jspb.Message.getFieldWithDefault(this, 1, 0)
+  );
 };
-
 
 /**
  * @param {!proto.bucketeer.feature.Reason.Type} value
  * @return {!proto.bucketeer.feature.Reason} returns this
  */
-proto.bucketeer.feature.Reason.prototype.setType = function(value) {
+proto.bucketeer.feature.Reason.prototype.setType = function (value) {
   return jspb.Message.setProto3EnumField(this, 1, value);
 };
-
 
 /**
  * optional string rule_id = 2;
  * @return {string}
  */
-proto.bucketeer.feature.Reason.prototype.getRuleId = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+proto.bucketeer.feature.Reason.prototype.getRuleId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ''));
 };
-
 
 /**
  * @param {string} value
  * @return {!proto.bucketeer.feature.Reason} returns this
  */
-proto.bucketeer.feature.Reason.prototype.setRuleId = function(value) {
+proto.bucketeer.feature.Reason.prototype.setRuleId = function (value) {
   return jspb.Message.setProto3StringField(this, 2, value);
 };
-
 
 goog.object.extend(exports, proto.bucketeer.feature);

@@ -23,7 +23,7 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_eventcounter_histogram_pb = require('./histogram_pb.js');
+var proto_eventcounter_histogram_pb = require('../../proto/eventcounter/histogram_pb.js');
 goog.object.extend(proto, proto_eventcounter_histogram_pb);
 goog.exportSymbol(
   'proto.bucketeer.eventcounter.DistributionSummary',
@@ -108,7 +108,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg,
           7,
           0.0
-        ),
+        )
       };
 
     if (includeInstance) {

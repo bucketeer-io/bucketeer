@@ -12,7 +12,7 @@ interface SegmentUploadingDialogProps {
 
 export const SegmentUploadingDialog: FC<SegmentUploadingDialogProps> = ({
   open,
-  onClose,
+  onClose
 }) => {
   const { formatMessage: f } = useIntl();
 

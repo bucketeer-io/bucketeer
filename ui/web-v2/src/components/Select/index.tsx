@@ -38,7 +38,7 @@ export const Select: FC<SelectProps> = memo(
     customControl,
     formatOptionLabel,
     styles,
-    closeMenuOnSelect,
+    closeMenuOnSelect
   }) => {
     const textColor = '#3F3F46';
     const textColorDisabled = '#6B7280';
@@ -54,14 +54,14 @@ export const Select: FC<SelectProps> = memo(
         backgroundColor: isDisabled ? backgroundColorDisabled : backgroundColor,
         borderColor: borderColor,
         '&:hover': {
-          borderColor: borderColor,
+          borderColor: borderColor
         },
         fontSize: fontSize,
         lineHeight: lineHeight,
         minHeight: minHeight,
         '*': {
-          boxShadow: 'none !important',
-        },
+          boxShadow: 'none !important'
+        }
       }),
       option: (styles, { isFocused, isSelected }) => {
         return {
@@ -69,32 +69,32 @@ export const Select: FC<SelectProps> = memo(
           backgroundColor: isFocused
             ? backgroundColorDisabled
             : isSelected
-            ? backgroundColor
-            : null,
+              ? backgroundColor
+              : null,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
           color: textColor,
           ':active': {
-            backgroundColor: backgroundColor,
-          },
+            backgroundColor: backgroundColor
+          }
         };
       },
       menu: (base) => ({
         ...base,
         fontSize: fontSize,
         lineHeight: lineHeight,
-        color: textColor,
+        color: textColor
       }),
       multiValueLabel: (base, { isDisabled }) => ({
         ...base,
-        color: isDisabled ? textColorDisabled : textColor,
+        color: isDisabled ? textColorDisabled : textColor
       }),
       singleValue: (base, { isDisabled }) => ({
         ...base,
-        color: isDisabled ? textColorDisabled : textColor,
+        color: isDisabled ? textColorDisabled : textColor
       }),
-      ...styles,
+      ...styles
     };
 
     if (customControl) {
@@ -105,7 +105,7 @@ export const Select: FC<SelectProps> = memo(
           classNamePrefix="react-select"
           styles={colourStyles}
           components={{
-            Control: customControl,
+            Control: customControl
           }}
           isDisabled={isLoading || disabled}
           isClearable={clearable}
@@ -129,7 +129,7 @@ export const Select: FC<SelectProps> = memo(
         components={
           disabled && {
             DropdownIndicator: () => null,
-            IndicatorSeparator: () => null,
+            IndicatorSeparator: () => null
           }
         }
         isDisabled={isLoading || disabled}

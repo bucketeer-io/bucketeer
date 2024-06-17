@@ -2,7 +2,7 @@
 // file: proto/experimentcalculator/service.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_experiment_experiment_pb from '../experiment/experiment_pb';
+import * as proto_experiment_experiment_pb from '../../proto/experiment/experiment_pb';
 
 export class BatchCalcRequest extends jspb.Message {
   getEnvironmentId(): string;

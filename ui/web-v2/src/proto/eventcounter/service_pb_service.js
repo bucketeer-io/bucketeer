@@ -1,7 +1,7 @@
 // package: bucketeer.eventcounter
 // file: proto/eventcounter/service.proto
 
-var proto_eventcounter_service_pb = require('./service_pb');
+var proto_eventcounter_service_pb = require('../../proto/eventcounter/service_pb');
 var grpc = require('@improbable-eng/grpc-web').grpc;
 
 var EventCounterService = (function () {
@@ -19,7 +19,7 @@ EventCounterService.GetExperimentEvaluationCount = {
   requestType:
     proto_eventcounter_service_pb.GetExperimentEvaluationCountRequest,
   responseType:
-    proto_eventcounter_service_pb.GetExperimentEvaluationCountResponse,
+    proto_eventcounter_service_pb.GetExperimentEvaluationCountResponse
 };
 
 EventCounterService.GetEvaluationTimeseriesCount = {
@@ -30,7 +30,7 @@ EventCounterService.GetEvaluationTimeseriesCount = {
   requestType:
     proto_eventcounter_service_pb.GetEvaluationTimeseriesCountRequest,
   responseType:
-    proto_eventcounter_service_pb.GetEvaluationTimeseriesCountResponse,
+    proto_eventcounter_service_pb.GetEvaluationTimeseriesCountResponse
 };
 
 EventCounterService.GetExperimentResult = {
@@ -39,7 +39,7 @@ EventCounterService.GetExperimentResult = {
   requestStream: false,
   responseStream: false,
   requestType: proto_eventcounter_service_pb.GetExperimentResultRequest,
-  responseType: proto_eventcounter_service_pb.GetExperimentResultResponse,
+  responseType: proto_eventcounter_service_pb.GetExperimentResultResponse
 };
 
 EventCounterService.ListExperimentResults = {
@@ -48,7 +48,7 @@ EventCounterService.ListExperimentResults = {
   requestStream: false,
   responseStream: false,
   requestType: proto_eventcounter_service_pb.ListExperimentResultsRequest,
-  responseType: proto_eventcounter_service_pb.ListExperimentResultsResponse,
+  responseType: proto_eventcounter_service_pb.ListExperimentResultsResponse
 };
 
 EventCounterService.GetExperimentGoalCount = {
@@ -57,7 +57,7 @@ EventCounterService.GetExperimentGoalCount = {
   requestStream: false,
   responseStream: false,
   requestType: proto_eventcounter_service_pb.GetExperimentGoalCountRequest,
-  responseType: proto_eventcounter_service_pb.GetExperimentGoalCountResponse,
+  responseType: proto_eventcounter_service_pb.GetExperimentGoalCountResponse
 };
 
 EventCounterService.GetMAUCount = {
@@ -66,7 +66,7 @@ EventCounterService.GetMAUCount = {
   requestStream: false,
   responseStream: false,
   requestType: proto_eventcounter_service_pb.GetMAUCountRequest,
-  responseType: proto_eventcounter_service_pb.GetMAUCountResponse,
+  responseType: proto_eventcounter_service_pb.GetMAUCountResponse
 };
 
 EventCounterService.SummarizeMAUCounts = {
@@ -75,7 +75,7 @@ EventCounterService.SummarizeMAUCounts = {
   requestStream: false,
   responseStream: false,
   requestType: proto_eventcounter_service_pb.SummarizeMAUCountsRequest,
-  responseType: proto_eventcounter_service_pb.SummarizeMAUCountsResponse,
+  responseType: proto_eventcounter_service_pb.SummarizeMAUCountsResponse
 };
 
 EventCounterService.GetOpsEvaluationUserCount = {
@@ -84,7 +84,7 @@ EventCounterService.GetOpsEvaluationUserCount = {
   requestStream: false,
   responseStream: false,
   requestType: proto_eventcounter_service_pb.GetOpsEvaluationUserCountRequest,
-  responseType: proto_eventcounter_service_pb.GetOpsEvaluationUserCountResponse,
+  responseType: proto_eventcounter_service_pb.GetOpsEvaluationUserCountResponse
 };
 
 EventCounterService.GetOpsGoalUserCount = {
@@ -93,7 +93,7 @@ EventCounterService.GetOpsGoalUserCount = {
   requestStream: false,
   responseStream: false,
   requestType: proto_eventcounter_service_pb.GetOpsGoalUserCountRequest,
-  responseType: proto_eventcounter_service_pb.GetOpsGoalUserCountResponse,
+  responseType: proto_eventcounter_service_pb.GetOpsGoalUserCountResponse
 };
 
 exports.EventCounterService = EventCounterService;
@@ -125,13 +125,13 @@ EventCounterServiceClient.prototype.getExperimentEvaluationCount =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -157,13 +157,13 @@ EventCounterServiceClient.prototype.getEvaluationTimeseriesCount =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -189,13 +189,13 @@ EventCounterServiceClient.prototype.getExperimentResult =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -221,13 +221,13 @@ EventCounterServiceClient.prototype.listExperimentResults =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -253,13 +253,13 @@ EventCounterServiceClient.prototype.getExperimentGoalCount =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -288,13 +288,13 @@ EventCounterServiceClient.prototype.getMAUCount = function getMAUCount(
           callback(null, response.message);
         }
       }
-    },
+    }
   });
   return {
     cancel: function () {
       callback = null;
       client.close();
-    },
+    }
   };
 };
 
@@ -320,13 +320,13 @@ EventCounterServiceClient.prototype.summarizeMAUCounts =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -352,13 +352,13 @@ EventCounterServiceClient.prototype.getOpsEvaluationUserCount =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 
@@ -384,13 +384,13 @@ EventCounterServiceClient.prototype.getOpsGoalUserCount =
             callback(null, response.message);
           }
         }
-      },
+      }
     });
     return {
       cancel: function () {
         callback = null;
         client.close();
-      },
+      }
     };
   };
 

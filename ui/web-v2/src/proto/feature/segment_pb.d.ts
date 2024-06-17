@@ -2,8 +2,8 @@
 // file: proto/feature/segment.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_feature_rule_pb from './rule_pb';
-import * as proto_feature_feature_pb from './feature_pb';
+import * as proto_feature_rule_pb from '../../proto/feature/rule_pb';
+import * as proto_feature_feature_pb from '../../proto/feature/feature_pb';
 
 export class Segment extends jspb.Message {
   getId(): string;

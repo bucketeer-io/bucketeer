@@ -1,14 +1,14 @@
 import {
   createSlice,
   createEntityAdapter,
-  createAsyncThunk,
+  createAsyncThunk
 } from '@reduxjs/toolkit';
 
 import * as autoOpsGrpc from '../grpc/autoops';
 import { OpsCount } from '../proto/autoops/ops_count_pb';
 import {
   ListOpsCountsRequest,
-  ListOpsCountsResponse,
+  ListOpsCountsResponse
 } from '../proto/autoops/service_pb';
 
 import { setupAuthToken } from './auth';
@@ -18,7 +18,7 @@ import { AppState } from '.';
 const MODULE_NAME = 'opsCounts';
 
 export const opsCountsAdapter = createEntityAdapter<OpsCount.AsObject>({
-  selectId: (opsCount) => opsCount.id,
+  selectId: (opsCount) => opsCount.id
 });
 
 export const { selectAll, selectById } = opsCountsAdapter.getSelectors();
@@ -44,7 +44,7 @@ export const listOpsCounts = createAsyncThunk<
 const initialState = opsCountsAdapter.getInitialState<{
   loading: boolean;
 }>({
-  loading: false,
+  loading: false
 });
 
 export type OpsCountsState = typeof initialState;
@@ -63,5 +63,5 @@ export const opsCountsSlice = createSlice({
         opsCountsAdapter.upsertMany(state, action.payload.opsCountsList);
         state.loading = false;
       });
-  },
+  }
 });

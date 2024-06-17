@@ -1,15 +1,3 @@
-import logo from '../assets/logo.png';
-import imgBlockLeft from '../assets/img-block_left.png';
-import imgBlockRight from '../assets/img-block_left.png';
-import { Select } from '../components/Select';
-import { GOOGLE_TAG_MANAGER_ID } from '../config';
-import { AppState } from '../modules';
-import { fetchMyOrganizations } from '../modules/myOrganization';
-import { Organization } from '../proto/environment/organization_pb';
-import {
-  getOrganizationId,
-  settOrganizationId,
-} from '../storage/organizationId';
 import React, { FC, useEffect, memo, useState, useCallback } from 'react';
 import TagManager from 'react-gtm-module';
 import { useDispatch, useSelector } from 'react-redux';
@@ -19,13 +7,18 @@ import {
   Redirect,
   useRouteMatch,
   useParams,
-  useHistory,
+  useHistory
 } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
 
+import imgBlockRight from '../assets/img-block_left.png';
+import imgBlockLeft from '../assets/img-block_left.png';
+import logo from '../assets/logo.png';
 import { NotFound } from '../components/NotFound';
+import { Select } from '../components/Select';
 import { SideMenu } from '../components/SideMenu';
 import { Toasts } from '../components/Toasts';
+import { GOOGLE_TAG_MANAGER_ID } from '../config';
 import {
   PAGE_PATH_ADMIN,
   PAGE_PATH_AUTH_CALLBACK,
@@ -40,16 +33,23 @@ import {
   PAGE_PATH_NEW,
   PAGE_PATH_ROOT,
   PAGE_PATH_ACCOUNTS,
-  PAGE_PATH_SETTINGS,
+  PAGE_PATH_SETTINGS
 } from '../constants/routing';
+import { AppState } from '../modules';
 import { hasToken, setupAuthToken } from '../modules/auth';
 import {
   fetchMe,
   setCurrentEnvironment,
   useCurrentEnvironment,
   useIsEditable,
-  useMe,
+  useMe
 } from '../modules/me';
+import { fetchMyOrganizations } from '../modules/myOrganization';
+import { Organization } from '../proto/environment/organization_pb';
+import {
+  getOrganizationId,
+  settOrganizationId
+} from '../storage/organizationId';
 import { AppDispatch } from '../store';
 
 import { AccountIndexPage } from './account';
@@ -72,7 +72,7 @@ export const App: FC = memo(() => {
       GOOGLE_TAG_MANAGER_ID.trim().length > 0
     ) {
       const tagManagerArgs = {
-        gtmId: GOOGLE_TAG_MANAGER_ID,
+        gtmId: GOOGLE_TAG_MANAGER_ID
       };
       TagManager.initialize(tagManagerArgs);
     }
@@ -186,7 +186,7 @@ export const Root: FC = memo(() => {
                       placeholder="Select your organization"
                       options={myOrganization.map((org) => ({
                         label: org.name,
-                        value: org.id,
+                        value: org.id
                       }))}
                       onChange={(o) => setSelectedOrganization(o)}
                     />
@@ -282,7 +282,7 @@ export const EnvironmentRoot: FC = memo(() => {
           path={[
             `${url}${PAGE_PATH_FEATURES}`,
             `${url}${PAGE_PATH_FEATURES}${PAGE_PATH_NEW}`,
-            `${url}${PAGE_PATH_FEATURES}${PAGE_PATH_FEATURE_CLONE}/:featureId`,
+            `${url}${PAGE_PATH_FEATURES}${PAGE_PATH_FEATURE_CLONE}/:featureId`
           ]}
         >
           <FeatureIndexPage />
@@ -294,7 +294,7 @@ export const EnvironmentRoot: FC = memo(() => {
           exact
           path={[
             `${url}${PAGE_PATH_EXPERIMENTS}`,
-            `${url}${PAGE_PATH_EXPERIMENTS}/:experimentId`,
+            `${url}${PAGE_PATH_EXPERIMENTS}/:experimentId`
           ]}
         >
           <ExperimentIndexPage />
@@ -303,7 +303,7 @@ export const EnvironmentRoot: FC = memo(() => {
           exact
           path={[
             `${url}${PAGE_PATH_GOALS}`,
-            `${url}${PAGE_PATH_GOALS}/:goalId`,
+            `${url}${PAGE_PATH_GOALS}/:goalId`
           ]}
         >
           <GoalIndexPage />
@@ -312,7 +312,7 @@ export const EnvironmentRoot: FC = memo(() => {
           exact
           path={[
             `${url}${PAGE_PATH_APIKEYS}`,
-            `${url}${PAGE_PATH_APIKEYS}/:apiKeyId`,
+            `${url}${PAGE_PATH_APIKEYS}/:apiKeyId`
           ]}
         >
           <APIKeyIndexPage />
@@ -321,7 +321,7 @@ export const EnvironmentRoot: FC = memo(() => {
           exact
           path={[
             `${url}${PAGE_PATH_USER_SEGMENTS}`,
-            `${url}${PAGE_PATH_USER_SEGMENTS}/:segmentId`,
+            `${url}${PAGE_PATH_USER_SEGMENTS}/:segmentId`
           ]}
         >
           <SegmentIndexPage />
@@ -338,7 +338,7 @@ export const EnvironmentRoot: FC = memo(() => {
           exact
           path={[
             `${url}${PAGE_PATH_ACCOUNTS}`,
-            `${url}${PAGE_PATH_ACCOUNTS}/:accountId`,
+            `${url}${PAGE_PATH_ACCOUNTS}/:accountId`
           ]}
         >
           <AccountIndexPage />

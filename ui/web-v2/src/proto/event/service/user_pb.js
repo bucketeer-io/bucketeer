@@ -23,7 +23,7 @@ var global =
   }.call(null) ||
   Function('return this')();
 
-var proto_event_client_event_pb = require('../client/event_pb.js');
+var proto_event_client_event_pb = require('../../../proto/event/client/event_pb.js');
 goog.object.extend(proto, proto_event_client_event_pb);
 goog.exportSymbol('proto.bucketeer.event.service.UserEvent', null, global);
 /**
@@ -94,7 +94,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         dataMap: (f = msg.getDataMap())
           ? f.toObject(includeInstance, undefined)
           : [],
-        sourceId: jspb.Message.getFieldWithDefault(msg, 9, 0),
+        sourceId: jspb.Message.getFieldWithDefault(msg, 9, 0)
       };
 
     if (includeInstance) {

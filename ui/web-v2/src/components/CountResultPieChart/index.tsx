@@ -13,26 +13,23 @@ interface CountResultPieChartProps {
 export const CountResultPieChart: FC<CountResultPieChartProps> = ({
   label,
   variationValues,
-  data,
+  data
 }) => {
   const chartData = {
     labels: variationValues,
     datasets: [
       {
         data: data,
-        backgroundColor: COLORS.slice(
-          0,
-          variationValues.length % COLORS.length
-        ),
-      },
-    ],
+        backgroundColor: COLORS.slice(0, variationValues.length % COLORS.length)
+      }
+    ]
   };
   const options = {
     title: {
       display: true,
       text: label,
-      fontStyle: 'normal',
-    },
+      fontStyle: 'normal'
+    }
   };
 
   return (

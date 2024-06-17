@@ -14,7 +14,7 @@ interface TriggerDeleteDialogProps {
 export const TriggerDeleteDialog: FC<TriggerDeleteDialogProps> = ({
   open,
   onConfirm,
-  onClose,
+  onClose
 }) => {
   const { formatMessage: f } = useIntl();
 

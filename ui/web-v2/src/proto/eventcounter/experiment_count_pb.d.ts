@@ -2,7 +2,7 @@
 // file: proto/eventcounter/experiment_count.proto
 
 import * as jspb from 'google-protobuf';
-import * as proto_eventcounter_variation_count_pb from './variation_count_pb';
+import * as proto_eventcounter_variation_count_pb from '../../proto/eventcounter/variation_count_pb';
 
 export class ExperimentCount extends jspb.Message {
   getId(): string;

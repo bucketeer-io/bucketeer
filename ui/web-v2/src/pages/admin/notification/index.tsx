@@ -15,7 +15,7 @@ import {
   ID_NEW,
   PAGE_PATH_ADMIN,
   PAGE_PATH_NOTIFICATIONS,
-  PAGE_PATH_NEW,
+  PAGE_PATH_NEW
 } from '../../../constants/routing';
 import { messages } from '../../../lang/messages';
 import { AppState } from '../../../modules';
@@ -29,24 +29,24 @@ import {
   OrderBy,
   OrderDirection,
   selectById as selectNotificationById,
-  updateNotification,
+  updateNotification
 } from '../../../modules/adminNotifications';
 import { ListAdminSubscriptionsRequest } from '../../../proto/notification/service_pb';
 import { Subscription } from '../../../proto/notification/subscription_pb';
 import { AppDispatch } from '../../../store';
 import {
   AdminNotificationSortOption,
-  isAdminNotificationSortOption,
+  isAdminNotificationSortOption
 } from '../../../types/adminNotification';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
   SORT_OPTIONS_NAME_ASC,
-  SORT_OPTIONS_NAME_DESC,
+  SORT_OPTIONS_NAME_DESC
 } from '../../../types/list';
 import {
   useSearchParams,
-  stringifySearchParams,
+  stringifySearchParams
 } from '../../../utils/search-params';
 
 import { addFormSchema, updateFormSchema } from './formSchema';
@@ -61,27 +61,27 @@ const createSort = (sortOption?: AdminNotificationSortOption): Sort => {
     case SORT_OPTIONS_CREATED_AT_ASC:
       return {
         orderBy: ListAdminSubscriptionsRequest.OrderBy.CREATED_AT,
-        orderDirection: ListAdminSubscriptionsRequest.OrderDirection.ASC,
+        orderDirection: ListAdminSubscriptionsRequest.OrderDirection.ASC
       };
     case SORT_OPTIONS_CREATED_AT_DESC:
       return {
         orderBy: ListAdminSubscriptionsRequest.OrderBy.CREATED_AT,
-        orderDirection: ListAdminSubscriptionsRequest.OrderDirection.DESC,
+        orderDirection: ListAdminSubscriptionsRequest.OrderDirection.DESC
       };
     case SORT_OPTIONS_NAME_ASC:
       return {
         orderBy: ListAdminSubscriptionsRequest.OrderBy.NAME,
-        orderDirection: ListAdminSubscriptionsRequest.OrderDirection.ASC,
+        orderDirection: ListAdminSubscriptionsRequest.OrderDirection.ASC
       };
     case SORT_OPTIONS_NAME_DESC:
       return {
         orderBy: ListAdminSubscriptionsRequest.OrderBy.NAME,
-        orderDirection: ListAdminSubscriptionsRequest.OrderDirection.DESC,
+        orderDirection: ListAdminSubscriptionsRequest.OrderDirection.DESC
       };
     default:
       return {
         orderBy: ListAdminSubscriptionsRequest.OrderBy.CREATED_AT,
-        orderDirection: ListAdminSubscriptionsRequest.OrderDirection.DESC,
+        orderDirection: ListAdminSubscriptionsRequest.OrderDirection.DESC
       };
   }
 };
@@ -122,7 +122,7 @@ export const AdminNotificationIndexPage: FC = memo(() => {
           searchKeyword: options && (options.q as string),
           orderBy: sort.orderBy,
           orderDirection: sort.orderDirection,
-          disabled: disabled,
+          disabled: disabled
         })
       );
     },
@@ -133,7 +133,7 @@ export const AdminNotificationIndexPage: FC = memo(() => {
     (options: Record<string, string | number | boolean | undefined>) => {
       history.replace(
         `${url}?${stringifySearchParams({
-          ...options,
+          ...options
         })}`
       );
     },
@@ -160,7 +160,7 @@ export const AdminNotificationIndexPage: FC = memo(() => {
     setOpen(true);
     history.push({
       pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_NOTIFICATIONS}${PAGE_PATH_NEW}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location]);
 
@@ -169,9 +169,9 @@ export const AdminNotificationIndexPage: FC = memo(() => {
     defaultValues: {
       name: '',
       webhookUrl: '',
-      sourceTypes: null,
+      sourceTypes: null
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
   const { handleSubmit: handleAddSubmit, reset: resetAdd } = addMethod;
 
@@ -181,7 +181,7 @@ export const AdminNotificationIndexPage: FC = memo(() => {
         createNotification({
           name: data.name,
           sourceTypes: data.sourceTypes,
-          webhookUrl: data.webhookUrl,
+          webhookUrl: data.webhookUrl
         })
       ).then(() => {
         setOpen(false);
@@ -199,11 +199,11 @@ export const AdminNotificationIndexPage: FC = memo(() => {
       resetUpdate({
         name: s.name,
         webhookUrl: s.recipient.slackChannelRecipient.webhookUrl,
-        sourceTypes: [...s.sourceTypesList].sort(),
+        sourceTypes: [...s.sourceTypesList].sort()
       });
       history.push({
         pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_NOTIFICATIONS}/${s.id}`,
-        search: location.search,
+        search: location.search
       });
     },
     [setOpen, history, notification, location]
@@ -211,13 +211,13 @@ export const AdminNotificationIndexPage: FC = memo(() => {
 
   const updateMethod = useForm({
     resolver: yupResolver(updateFormSchema),
-    mode: 'onChange',
+    mode: 'onChange'
   });
 
   const {
     handleSubmit: handleUpdateSubmit,
     formState: { dirtyFields },
-    reset: resetUpdate,
+    reset: resetUpdate
   } = updateMethod;
 
   const update = useCallback(
@@ -237,12 +237,12 @@ export const AdminNotificationIndexPage: FC = memo(() => {
           id: notificationId,
           name: name,
           currentSourceTypes: notification.sourceTypesList,
-          sourceTypes: sourceTypes,
+          sourceTypes: sourceTypes
         })
       ).then(() => {
         dispatch(
           getNotification({
-            id: notificationId,
+            id: notificationId
           })
         );
         handleOnClose();
@@ -256,15 +256,15 @@ export const AdminNotificationIndexPage: FC = memo(() => {
     setOpen(false);
     history.replace({
       pathname: `${PAGE_PATH_ADMIN}${PAGE_PATH_NOTIFICATIONS}`,
-      search: location.search,
+      search: location.search
     });
   }, [setOpen, history, location, resetAdd]);
 
   const switchMethod = useForm({
     defaultValues: {
-      notification: null,
+      notification: null
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
 
   const { handleSubmit: switchHandleSubmit, setValue: switchSetValue } =
@@ -283,10 +283,10 @@ export const AdminNotificationIndexPage: FC = memo(() => {
       dispatch(
         data.notification.disabled
           ? enableNotification({
-              id: data.notification.id,
+              id: data.notification.id
             })
           : disableNotification({
-              id: data.notification.id,
+              id: data.notification.id
             })
       ).then(() => {
         updateNotificationList(
@@ -301,9 +301,9 @@ export const AdminNotificationIndexPage: FC = memo(() => {
 
   const deleteMethod = useForm({
     defaultValues: {
-      notification: null,
+      notification: null
     },
-    mode: 'onChange',
+    mode: 'onChange'
   });
 
   const { handleSubmit: deleteHandleSubmit, setValue: deleteSetValue } =
@@ -321,7 +321,7 @@ export const AdminNotificationIndexPage: FC = memo(() => {
     (data) => {
       dispatch(
         deleteNotification({
-          id: data.notification.id,
+          id: data.notification.id
         })
       ).then(() => {
         updateNotificationList(
@@ -338,14 +338,14 @@ export const AdminNotificationIndexPage: FC = memo(() => {
     if (isUpdate) {
       dispatch(
         getNotification({
-          id: notificationId,
+          id: notificationId
         })
       ).then((e) => {
         const notification = e.payload as Subscription.AsObject;
         resetUpdate({
           name: notification.name,
           webhookUrl: notification.recipient.slackChannelRecipient.webhookUrl,
-          sourceTypes: [...notification.sourceTypesList].sort(),
+          sourceTypes: [...notification.sourceTypesList].sort()
         });
       });
     }
@@ -408,7 +408,7 @@ export const AdminNotificationIndexPage: FC = memo(() => {
         description={f(messages.notification.confirm.deleteDescription, {
           notificationName:
             deleteMethod.getValues().notification &&
-            deleteMethod.getValues().notification.name,
+            deleteMethod.getValues().notification.name
         })}
         onCloseButton={f(messages.button.cancel)}
         onConfirmButton={f(messages.button.submit)}
@@ -431,7 +431,7 @@ export const AdminNotificationIndexPage: FC = memo(() => {
           {
             notificationName:
               switchMethod.getValues().notification &&
-              switchMethod.getValues().notification.name,
+              switchMethod.getValues().notification.name
           }
         )}
         onCloseButton={f(messages.button.cancel)}

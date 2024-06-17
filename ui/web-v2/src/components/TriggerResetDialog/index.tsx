@@ -14,7 +14,7 @@ interface TriggerResetDialogProps {
 export const TriggerResetDialog: FC<TriggerResetDialogProps> = ({
   open,
   onConfirm,
-  onClose,
+  onClose
 }) => {
   const { formatMessage: f } = useIntl();
 
