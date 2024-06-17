@@ -2316,14 +2316,12 @@
               {
                 "id": 2,
                 "name": "progressive_rollout_manual_schedule_clause",
-                "type": "ProgressiveRolloutManualScheduleClause",
-                "optional": true
+                "type": "ProgressiveRolloutManualScheduleClause"
               },
               {
                 "id": 3,
                 "name": "progressive_rollout_template_schedule_clause",
-                "type": "ProgressiveRolloutTemplateScheduleClause",
-                "optional": true
+                "type": "ProgressiveRolloutTemplateScheduleClause"
               }
             ]
           },
@@ -2973,14 +2971,12 @@
               {
                 "id": 7,
                 "name": "status",
-                "type": "ProgressiveRollout.Status",
-                "optional": true
+                "type": "ProgressiveRollout.Status"
               },
               {
                 "id": 8,
                 "name": "type",
-                "type": "ProgressiveRollout.Type",
-                "optional": true
+                "type": "ProgressiveRollout.Type"
               }
             ]
           },
@@ -3122,117 +3118,6 @@
           {
             "name": "go_package",
             "value": "github.com/bucketeer-io/bucketeer/proto/autoops"
-          }
-        ]
-      }
-    },
-    {
-      "protopath": "backend:/:service.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "GetFeatureRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "environment_id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "id",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "GetFeatureResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "feature",
-                "type": "feature.Feature"
-              }
-            ]
-          },
-          {
-            "name": "UpdateFeatureRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "comment",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "environment_id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "feature",
-                "type": "feature.Feature"
-              }
-            ]
-          },
-          {
-            "name": "UpdateFeatureResponse"
-          }
-        ],
-        "services": [
-          {
-            "name": "PublicAPIService",
-            "rpcs": [
-              {
-                "name": "GetFeature",
-                "in_type": "GetFeatureRequest",
-                "out_type": "GetFeatureResponse",
-                "options": [
-                  {
-                    "name": "(google.api.http)",
-                    "aggregated": [
-                      {
-                        "name": "get",
-                        "value": "environment/{environment-id}/features/{feature-id}"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "UpdateFeature",
-                "in_type": "UpdateFeatureRequest",
-                "out_type": "UpdateFeatureResponse",
-                "options": [
-                  {
-                    "name": "(google.api.http)",
-                    "aggregated": [
-                      {
-                        "name": "patch",
-                        "value": "environment/{environment-id}/features/{feature-id}"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ],
-        "imports": [
-          {
-            "path": "google/api/annotations.proto"
-          },
-          {
-            "path": "proto/feature/feature.proto"
-          }
-        ],
-        "package": {
-          "name": "bucketeer.backend"
-        },
-        "options": [
-          {
-            "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/backend"
           }
         ]
       }
