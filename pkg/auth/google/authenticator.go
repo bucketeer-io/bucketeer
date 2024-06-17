@@ -78,7 +78,8 @@ func (a Authenticator) Login(
 	if err := a.validateRedirectURL(redirectURL); err != nil {
 		return "", err
 	}
-	return a.oauth2Config(defaultScopes, redirectURL).AuthCodeURL(state), nil
+	selectAccount := oauth2.SetAuthURLParam("prompt", "select_account")
+	return a.oauth2Config(defaultScopes, redirectURL).AuthCodeURL(state, selectAccount), nil
 }
 
 func (a Authenticator) Exchange(
