@@ -635,7 +635,6 @@ func newDateTimeClause(t *testing.T, c *autoopsproto.DatetimeClause) *autoopspro
 	clause, err := anypb.New(c)
 	require.NoError(t, err)
 	newClause := &autoopsproto.Clause{
-		Id:         "testClause",
 		Clause:     clause,
 		ActionType: c.ActionType,
 	}
@@ -646,7 +645,6 @@ func newEventRateClause(t *testing.T, c *autoopsproto.OpsEventRateClause) *autoo
 	clause, err := anypb.New(c)
 	require.NoError(t, err)
 	newClause := &autoopsproto.Clause{
-		Id:         "testClause",
 		Clause:     clause,
 		ActionType: c.ActionType,
 	}
