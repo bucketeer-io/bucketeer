@@ -114,19 +114,19 @@ func (a *AutoOpsRule) SetDeleted() {
 func (a *AutoOpsRule) SetTriggeredAt() {
 	now := time.Now().Unix()
 	a.AutoOpsRule.TriggeredAt = now
-	a.AutoOpsStatus = proto.AutoOpsStatus_COMPLETED
+	a.AutoOpsStatus = proto.AutoOpsStatus_FINISHED
 	a.AutoOpsRule.UpdatedAt = now
 }
 
-func (a *AutoOpsRule) SetCompleted() {
-	a.AutoOpsRule.AutoOpsStatus = proto.AutoOpsStatus_COMPLETED
+func (a *AutoOpsRule) SetFinished() {
+	a.AutoOpsRule.AutoOpsStatus = proto.AutoOpsStatus_FINISHED
 }
 
 func (a *AutoOpsRule) AlreadyTriggered() bool {
-	return a.TriggeredAt > 0 || a.AutoOpsStatus == proto.AutoOpsStatus_COMPLETED
+	return a.TriggeredAt > 0 || a.AutoOpsStatus == proto.AutoOpsStatus_FINISHED
 }
 
-func (a *AutoOpsRule) IsNotCompleted() bool {
+func (a *AutoOpsRule) IsNotFinished() bool {
 	return a.AutoOpsStatus == proto.AutoOpsStatus_WAITING || a.AutoOpsStatus == proto.AutoOpsStatus_RUNNING
 }
 

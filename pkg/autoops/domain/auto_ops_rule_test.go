@@ -223,7 +223,7 @@ func TestSetTriggeredAt(t *testing.T) {
 	aor := createAutoOpsRule(t)
 	aor.SetTriggeredAt()
 	assert.NotZero(t, aor.TriggeredAt)
-	assert.Equal(t, autoopsproto.AutoOpsStatus_COMPLETED, aor.AutoOpsStatus)
+	assert.Equal(t, autoopsproto.AutoOpsStatus_FINISHED, aor.AutoOpsStatus)
 }
 
 func TestAlreadyTriggeredAt(t *testing.T) {
@@ -498,30 +498,30 @@ func TestSetStopped(t *testing.T) {
 	assert.Equal(t, autoopsproto.AutoOpsStatus_STOPPED, aor.AutoOpsStatus)
 }
 
-func TestSetCompleted(t *testing.T) {
+func TestSetFinished(t *testing.T) {
 	t.Parallel()
 	aor := createAutoOpsRule(t)
-	assert.NotEqual(t, autoopsproto.AutoOpsStatus_COMPLETED, aor.AutoOpsStatus)
-	aor.SetCompleted()
+	assert.NotEqual(t, autoopsproto.AutoOpsStatus_FINISHED, aor.AutoOpsStatus)
+	aor.SetFinished()
 	assert.NotZero(t, aor.UpdatedAt)
-	assert.Equal(t, autoopsproto.AutoOpsStatus_COMPLETED, aor.AutoOpsStatus)
+	assert.Equal(t, autoopsproto.AutoOpsStatus_FINISHED, aor.AutoOpsStatus)
 }
 
-func TestIsNotCompleted(t *testing.T) {
+func TestIsNotFinished(t *testing.T) {
 	t.Parallel()
 	aor := createAutoOpsRule(t)
-	assert.True(t, aor.IsNotCompleted())
+	assert.True(t, aor.IsNotFinished())
 
-	aor.AutoOpsStatus = autoopsproto.AutoOpsStatus_COMPLETED
-	assert.False(t, aor.IsNotCompleted())
+	aor.AutoOpsStatus = autoopsproto.AutoOpsStatus_FINISHED
+	assert.False(t, aor.IsNotFinished())
 }
 
 func TestSetAutoOpsStatus(t *testing.T) {
 	t.Parallel()
 	aor := createAutoOpsRule(t)
-	assert.NotEqual(t, autoopsproto.AutoOpsStatus_COMPLETED, aor.AutoOpsStatus)
-	aor.SetAutoOpsStatus(autoopsproto.AutoOpsStatus_COMPLETED)
-	assert.Equal(t, autoopsproto.AutoOpsStatus_COMPLETED, aor.AutoOpsStatus)
+	assert.NotEqual(t, autoopsproto.AutoOpsStatus_FINISHED, aor.AutoOpsStatus)
+	aor.SetAutoOpsStatus(autoopsproto.AutoOpsStatus_FINISHED)
+	assert.Equal(t, autoopsproto.AutoOpsStatus_FINISHED, aor.AutoOpsStatus)
 }
 
 func TestHasEventRateOps(t *testing.T) {
