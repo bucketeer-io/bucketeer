@@ -39,7 +39,26 @@ go: remove-go
 		fi \
 	done
 
-.PHONY: go-check
+.PHONY: openapi-gen
+openapi-gen: openapi-rm
+	protoc \
+		--proto_path=${GIT_TOP_DIR} \
+		--proto_path=${PROTOBUF_INCLUDE_DIR} \
+		--proto_path=${GOOGLEAPIS} \
+		--openapiv2_out ./openapiv2 \
+		--include_imports \
+		--descriptor_set_out=${GIT_TOP_DIR}/proto/gateway/proto_descriptor.pb \
+		${GIT_TOP_DIR}/proto/gateway/*.proto; \
+
+.PHONY: openapi-rm
+openapi-rm:
+	rm -rf ./openapiv2
+	mkdir ./openapiv2
+
+.PHONY: openapi-ui
+openapi-ui:
+	docker run -p 80:8080 -e SWAGGER_JSON=/openapiv2/proto/gateway/service.swagger.json -v ${GIT_TOP_DIR}/proto/openapiv2/:/openapiv2 swaggerapi/swagger-ui
+
 go-check: go
 	test -z "$$(git diff --name-only | grep ".*\.pb.go\|.*\.pb")"
 

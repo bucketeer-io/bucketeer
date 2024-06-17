@@ -15394,6 +15394,11 @@
               },
               {
                 "id": 2,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 3,
                 "name": "feature",
                 "type": "feature.Feature"
               }
@@ -15553,7 +15558,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/features/{feature-id}"
+                        "value": "/v1/features/{id}"
                       }
                     ]
                   }
@@ -15569,7 +15574,7 @@
                     "aggregated": [
                       {
                         "name": "patch",
-                        "value": "/features/{feature-id}"
+                        "value": "/v1/features/{id}"
                       },
                       {
                         "name": "body",

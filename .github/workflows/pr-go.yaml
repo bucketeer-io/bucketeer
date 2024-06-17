@@ -18,6 +18,8 @@ env:
   GO_VERSION: 1.21.10
   PROTOLOCK_VERSION: v0.16.0
   PROTOC_GEN_GO_VERSION: v1.5.2
+  PROTOC_GEN_GRPC_GATEWAY: v2.20.0
+  PROTOC_GEN_OPENAPIV2: v2.20.0
   MOCKGEN_VERSION: v0.4.0
 
 jobs:
@@ -146,6 +148,29 @@ jobs:
         run: go install github.com/golang/protobuf/protoc-gen-go@${{ env.PROTOC_GEN_GO_VERSION }}
       - name: Check proto go files
         run: make proto-go-check
+
+  proto-openapi-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: Install Protoc
+        uses: arduino/setup-protoc@c65c819552d16ad3c9b72d9dfd5ba5237b9c906b # v3.0.0
+        with:
+          version: ${{ env.PROTOC_VERSION }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install protoc-gen-grpc-gateway
+        run: go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@${{ env.PROTOC_GEN_GRPC_GATEWAY }}
+      - name: Install protoc-gen-openapiv2
+        run: go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@${{ env.PROTOC_GEN_OPENAPIV2 }}
+      - name: Generate proto go files
+        run: make proto-openapi
+      - name: Check diff
+        run: make diff-check
+
 
   update-repos-check:
     runs-on: ubuntu-latest

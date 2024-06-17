@@ -1,0 +1,1118 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "proto/gateway/service.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "Gateway"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/get_evaluation": {
+      "post": {
+        "operationId": "Gateway_GetEvaluation",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gatewayGetEvaluationResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/gatewayGetEvaluationRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Gateway"
+        ]
+      }
+    },
+    "/get_evaluations": {
+      "post": {
+        "operationId": "Gateway_GetEvaluations",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gatewayGetEvaluationsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/gatewayGetEvaluationsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Gateway"
+        ]
+      }
+    },
+    "/get_feature_flags": {
+      "post": {
+        "operationId": "Gateway_GetFeatureFlags",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gatewayGetFeatureFlagsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/gatewayGetFeatureFlagsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Gateway"
+        ]
+      }
+    },
+    "/get_segment_users": {
+      "post": {
+        "operationId": "Gateway_GetSegmentUsers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gatewayGetSegmentUsersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/gatewayGetSegmentUsersRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Gateway"
+        ]
+      }
+    },
+    "/ping": {
+      "post": {
+        "operationId": "Gateway_Ping",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gatewayPingResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/gatewayPingRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Gateway"
+        ]
+      }
+    },
+    "/register_events": {
+      "post": {
+        "operationId": "Gateway_RegisterEvents",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gatewayRegisterEventsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/gatewayRegisterEventsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "Gateway"
+        ]
+      }
+    },
+    "/track": {
+      "get": {
+        "operationId": "Gateway_Track",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gatewayTrackResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "apikey",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "userid",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "goalid",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "value",
+            "in": "query",
+            "required": false,
+            "type": "number",
+            "format": "double"
+          }
+        ],
+        "tags": [
+          "Gateway"
+        ]
+      }
+    },
+    "/v1/features/{id}": {
+      "get": {
+        "operationId": "Gateway_GetFeature",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gatewayGetFeatureResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "Gateway"
+        ]
+      },
+      "patch": {
+        "operationId": "Gateway_UpdateFeature",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/gatewayUpdateFeatureResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/GatewayUpdateFeatureBody"
+            }
+          }
+        ],
+        "tags": [
+          "Gateway"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "ClauseOperator": {
+      "type": "string",
+      "enum": [
+        "EQUALS",
+        "IN",
+        "ENDS_WITH",
+        "STARTS_WITH",
+        "SEGMENT",
+        "GREATER",
+        "GREATER_OR_EQUAL",
+        "LESS",
+        "LESS_OR_EQUAL",
+        "BEFORE",
+        "AFTER",
+        "FEATURE_FLAG"
+      ],
+      "default": "EQUALS",
+      "description": " - FEATURE_FLAG: Attribute is feature ID, and value is variation ID."
+    },
+    "FeatureVariationType": {
+      "type": "string",
+      "enum": [
+        "STRING",
+        "BOOLEAN",
+        "NUMBER",
+        "JSON"
+      ],
+      "default": "STRING"
+    },
+    "GatewayUpdateFeatureBody": {
+      "type": "object",
+      "properties": {
+        "comment": {
+          "type": "string"
+        },
+        "feature": {
+          "$ref": "#/definitions/featureFeature"
+        }
+      }
+    },
+    "GetEvaluationsRequestUserEvaluationCondition": {
+      "type": "object",
+      "properties": {
+        "evaluatedAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "userAttributesUpdated": {
+          "type": "boolean"
+        }
+      }
+    },
+    "RegisterEventsResponseError": {
+      "type": "object",
+      "properties": {
+        "retriable": {
+          "type": "boolean"
+        },
+        "message": {
+          "type": "string"
+        }
+      }
+    },
+    "UserData": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "bucketeerfeatureVariation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "title": "this is called value because it could be a string,"
+        },
+        "name": {
+          "type": "string",
+          "title": "number or even json object"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "clientEvent": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "event": {
+          "$ref": "#/definitions/protobufAny"
+        },
+        "environmentNamespace": {
+          "type": "string",
+          "description": "SDK doens't need to set this field. It's set by gateway service."
+        }
+      }
+    },
+    "clientSourceId": {
+      "type": "string",
+      "enum": [
+        "UNKNOWN",
+        "ANDROID",
+        "IOS",
+        "WEB",
+        "GO_SERVER",
+        "NODE_SERVER",
+        "JAVASCRIPT"
+      ],
+      "default": "UNKNOWN"
+    },
+    "featureClause": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "attribute": {
+          "type": "string"
+        },
+        "operator": {
+          "$ref": "#/definitions/ClauseOperator"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "featureEvaluation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "featureId": {
+          "type": "string"
+        },
+        "featureVersion": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "variationId": {
+          "type": "string"
+        },
+        "variation": {
+          "$ref": "#/definitions/bucketeerfeatureVariation"
+        },
+        "reason": {
+          "$ref": "#/definitions/featureReason"
+        },
+        "variationValue": {
+          "type": "string"
+        },
+        "variationName": {
+          "type": "string"
+        }
+      }
+    },
+    "featureFeature": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "deleted": {
+          "type": "boolean"
+        },
+        "evaluationUndelayable": {
+          "type": "boolean"
+        },
+        "ttl": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "variations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/bucketeerfeatureVariation"
+          }
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/featureTarget"
+          }
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/featureRule"
+          }
+        },
+        "defaultStrategy": {
+          "$ref": "#/definitions/featureStrategy"
+        },
+        "offVariation": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "lastUsedInfo": {
+          "$ref": "#/definitions/featureFeatureLastUsedInfo"
+        },
+        "maintainer": {
+          "type": "string"
+        },
+        "variationType": {
+          "$ref": "#/definitions/FeatureVariationType"
+        },
+        "archived": {
+          "type": "boolean"
+        },
+        "prerequisites": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/featurePrerequisite"
+          }
+        },
+        "samplingSeed": {
+          "type": "string"
+        }
+      }
+    },
+    "featureFeatureLastUsedInfo": {
+      "type": "object",
+      "properties": {
+        "featureId": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "lastUsedAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "clientOldestVersion": {
+          "type": "string"
+        },
+        "clientLatestVersion": {
+          "type": "string"
+        }
+      }
+    },
+    "featureFixedStrategy": {
+      "type": "object",
+      "properties": {
+        "variation": {
+          "type": "string"
+        }
+      }
+    },
+    "featurePrerequisite": {
+      "type": "object",
+      "properties": {
+        "featureId": {
+          "type": "string"
+        },
+        "variationId": {
+          "type": "string"
+        }
+      }
+    },
+    "featureReason": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/featureReasonType"
+        },
+        "ruleId": {
+          "type": "string"
+        }
+      }
+    },
+    "featureReasonType": {
+      "type": "string",
+      "enum": [
+        "TARGET",
+        "RULE",
+        "DEFAULT",
+        "CLIENT",
+        "OFF_VARIATION",
+        "PREREQUISITE"
+      ],
+      "default": "TARGET"
+    },
+    "featureRolloutStrategy": {
+      "type": "object",
+      "properties": {
+        "variations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/featureRolloutStrategyVariation"
+          }
+        }
+      }
+    },
+    "featureRolloutStrategyVariation": {
+      "type": "object",
+      "properties": {
+        "variation": {
+          "type": "string"
+        },
+        "weight": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
+    "featureRule": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "strategy": {
+          "$ref": "#/definitions/featureStrategy"
+        },
+        "clauses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/featureClause"
+          }
+        }
+      }
+    },
+    "featureSegmentUser": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "segmentId": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/definitions/featureSegmentUserState"
+        },
+        "deleted": {
+          "type": "boolean"
+        }
+      }
+    },
+    "featureSegmentUserState": {
+      "type": "string",
+      "enum": [
+        "INCLUDED",
+        "EXCLUDED"
+      ],
+      "default": "INCLUDED"
+    },
+    "featureSegmentUsers": {
+      "type": "object",
+      "properties": {
+        "segmentId": {
+          "type": "string"
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/featureSegmentUser"
+          }
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "featureStrategy": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/featureStrategyType"
+        },
+        "fixedStrategy": {
+          "$ref": "#/definitions/featureFixedStrategy"
+        },
+        "rolloutStrategy": {
+          "$ref": "#/definitions/featureRolloutStrategy"
+        }
+      }
+    },
+    "featureStrategyType": {
+      "type": "string",
+      "enum": [
+        "FIXED",
+        "ROLLOUT"
+      ],
+      "default": "FIXED"
+    },
+    "featureTarget": {
+      "type": "object",
+      "properties": {
+        "variation": {
+          "type": "string"
+        },
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "featureUserEvaluations": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "evaluations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/featureEvaluation"
+          }
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "archivedFeatureIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "forceUpdate": {
+          "type": "boolean"
+        }
+      }
+    },
+    "featureUserEvaluationsState": {
+      "type": "string",
+      "enum": [
+        "QUEUED",
+        "PARTIAL",
+        "FULL"
+      ],
+      "default": "QUEUED"
+    },
+    "gatewayGetEvaluationRequest": {
+      "type": "object",
+      "properties": {
+        "tag": {
+          "type": "string"
+        },
+        "user": {
+          "$ref": "#/definitions/userUser"
+        },
+        "featureId": {
+          "type": "string"
+        },
+        "sourceId": {
+          "$ref": "#/definitions/clientSourceId"
+        },
+        "sdkVersion": {
+          "type": "string"
+        }
+      }
+    },
+    "gatewayGetEvaluationResponse": {
+      "type": "object",
+      "properties": {
+        "evaluation": {
+          "$ref": "#/definitions/featureEvaluation"
+        }
+      }
+    },
+    "gatewayGetEvaluationsRequest": {
+      "type": "object",
+      "properties": {
+        "tag": {
+          "type": "string"
+        },
+        "user": {
+          "$ref": "#/definitions/userUser"
+        },
+        "userEvaluationsId": {
+          "type": "string"
+        },
+        "featureId": {
+          "type": "string",
+          "title": "instead, use GetEvaluation API"
+        },
+        "sourceId": {
+          "$ref": "#/definitions/clientSourceId"
+        },
+        "userEvaluationCondition": {
+          "$ref": "#/definitions/GetEvaluationsRequestUserEvaluationCondition"
+        },
+        "sdkVersion": {
+          "type": "string"
+        }
+      }
+    },
+    "gatewayGetEvaluationsResponse": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "$ref": "#/definitions/featureUserEvaluationsState"
+        },
+        "evaluations": {
+          "$ref": "#/definitions/featureUserEvaluations"
+        },
+        "userEvaluationsId": {
+          "type": "string"
+        }
+      }
+    },
+    "gatewayGetFeatureFlagsRequest": {
+      "type": "object",
+      "properties": {
+        "tag": {
+          "type": "string"
+        },
+        "featureFlagsId": {
+          "type": "string"
+        },
+        "requestedAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "sourceId": {
+          "$ref": "#/definitions/clientSourceId"
+        },
+        "sdkVersion": {
+          "type": "string"
+        }
+      }
+    },
+    "gatewayGetFeatureFlagsResponse": {
+      "type": "object",
+      "properties": {
+        "featureFlagsId": {
+          "type": "string"
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/featureFeature"
+          }
+        },
+        "archivedFeatureFlagIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requestedAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "forceUpdate": {
+          "type": "boolean"
+        }
+      }
+    },
+    "gatewayGetFeatureResponse": {
+      "type": "object",
+      "properties": {
+        "feature": {
+          "$ref": "#/definitions/featureFeature"
+        }
+      }
+    },
+    "gatewayGetSegmentUsersRequest": {
+      "type": "object",
+      "properties": {
+        "segmentIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requestedAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "sourceId": {
+          "$ref": "#/definitions/clientSourceId"
+        },
+        "sdkVersion": {
+          "type": "string"
+        }
+      }
+    },
+    "gatewayGetSegmentUsersResponse": {
+      "type": "object",
+      "properties": {
+        "segmentUsers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/featureSegmentUsers"
+          }
+        },
+        "deletedSegmentIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "requestedAt": {
+          "type": "string",
+          "format": "int64"
+        },
+        "forceUpdate": {
+          "type": "boolean"
+        }
+      }
+    },
+    "gatewayPingRequest": {
+      "type": "object"
+    },
+    "gatewayPingResponse": {
+      "type": "object",
+      "properties": {
+        "time": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "gatewayRegisterEventsRequest": {
+      "type": "object",
+      "properties": {
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/clientEvent"
+          }
+        },
+        "sdkVersion": {
+          "type": "string"
+        },
+        "sourceId": {
+          "$ref": "#/definitions/clientSourceId"
+        }
+      }
+    },
+    "gatewayRegisterEventsResponse": {
+      "type": "object",
+      "properties": {
+        "errors": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/RegisterEventsResponseError"
+          }
+        }
+      }
+    },
+    "gatewayTrackResponse": {
+      "type": "object"
+    },
+    "gatewayUpdateFeatureResponse": {
+      "type": "object"
+    },
+    "googlerpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string",
+          "description": "A URL/resource name that uniquely identifies the type of the serialized\nprotocol buffer message. This string must contain at least\none \"/\" character. The last segment of the URL's path must represent\nthe fully qualified name of the type (as in\n`path/google.protobuf.Duration`). The name should be in a canonical form\n(e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they\nexpect it to use in the context of Any. However, for URLs which use the\nscheme `http`, `https`, or no scheme, one can optionally set up a type\nserver that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed.\n* An HTTP GET on the URL must yield a [google.protobuf.Type][]\n  value in binary format, or produce an error.\n* Applications are allowed to cache lookup results based on the\n  URL, or have them precompiled into a binary to avoid any\n  lookup. Therefore, binary compatibility needs to be preserved\n  on changes to types. (Use versioned type names to manage\n  breaking changes.)\n\nNote: this functionality is not currently available in the official\nprotobuf release, and it is not used for type URLs beginning with\ntype.googleapis.com.\n\nSchemes other than `http`, `https` (or the empty scheme) might be\nused with implementation specific semantics."
+        }
+      },
+      "additionalProperties": {},
+      "description": "`Any` contains an arbitrary serialized protocol buffer message along with a\nURL that describes the type of the serialized message.\n\nProtobuf library provides support to pack/unpack Any values in the form\nof utility functions or additional generated methods of the Any type.\n\nExample 1: Pack and unpack a message in C++.\n\n    Foo foo = ...;\n    Any any;\n    any.PackFrom(foo);\n    ...\n    if (any.UnpackTo(\u0026foo)) {\n      ...\n    }\n\nExample 2: Pack and unpack a message in Java.\n\n    Foo foo = ...;\n    Any any = Any.pack(foo);\n    ...\n    if (any.is(Foo.class)) {\n      foo = any.unpack(Foo.class);\n    }\n    // or ...\n    if (any.isSameTypeAs(Foo.getDefaultInstance())) {\n      foo = any.unpack(Foo.getDefaultInstance());\n    }\n\n Example 3: Pack and unpack a message in Python.\n\n    foo = Foo(...)\n    any = Any()\n    any.Pack(foo)\n    ...\n    if any.Is(Foo.DESCRIPTOR):\n      any.Unpack(foo)\n      ...\n\n Example 4: Pack and unpack a message in Go\n\n     foo := \u0026pb.Foo{...}\n     any, err := anypb.New(foo)\n     if err != nil {\n       ...\n     }\n     ...\n     foo := \u0026pb.Foo{}\n     if err := any.UnmarshalTo(foo); err != nil {\n       ...\n     }\n\nThe pack methods provided by protobuf library will by default use\n'type.googleapis.com/full.type.name' as the type URL and the unpack\nmethods only use the fully qualified type name after the last '/'\nin the type URL, for example \"foo.bar.com/x/y.z\" will yield type\nname \"y.z\".\n\nJSON\n====\nThe JSON representation of an `Any` value uses the regular\nrepresentation of the deserialized, embedded message, with an\nadditional field `@type` which contains the type URL. Example:\n\n    package google.profile;\n    message Person {\n      string first_name = 1;\n      string last_name = 2;\n    }\n\n    {\n      \"@type\": \"type.googleapis.com/google.profile.Person\",\n      \"firstName\": \u003cstring\u003e,\n      \"lastName\": \u003cstring\u003e\n    }\n\nIf the embedded message type is well-known and has a custom JSON\nrepresentation, that representation will be embedded adding a field\n`value` which holds the custom JSON in addition to the `@type`\nfield. Example (for message [google.protobuf.Duration][]):\n\n    {\n      \"@type\": \"type.googleapis.com/google.protobuf.Duration\",\n      \"value\": \"1.212s\"\n    }"
+    },
+    "userUser": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "used by the sdk client"
+        },
+        "taggedData": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/UserData"
+          }
+        },
+        "lastSeen": {
+          "type": "string",
+          "format": "int64"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    }
+  }
+}

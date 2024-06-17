@@ -128,7 +128,8 @@ message GetFeatureResponse {
 
 message UpdateFeatureRequest {
   string comment = 1;
-  feature.Feature feature = 2;
+  string id = 2;
+  feature.Feature feature = 3;
 }
 
 message UpdateFeatureResponse {}
@@ -178,12 +179,12 @@ service Gateway {
   }
   rpc GetFeature(GetFeatureRequest) returns (GetFeatureResponse) {
     option (google.api.http) = {
-      get: "/features/{feature-id}"
+      get: "/v1/features/{id}"
     };
   }
   rpc UpdateFeature(UpdateFeatureRequest) returns (UpdateFeatureResponse) {
     option (google.api.http) = {
-      patch: "/features/{feature-id}"
+      patch: "/v1/features/{id}"
       body: "*"
     };
   }
