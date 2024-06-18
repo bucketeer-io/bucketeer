@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths:
-      - ".github/.devcontainer"
+      - ".github/.devcontainer/**"
 
 jobs:
   build-and-push:
