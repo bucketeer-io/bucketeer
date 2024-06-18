@@ -35,10 +35,10 @@
       "version": "latest"
     },
     "ghcr.io/devcontainers/features/go:1": {
-      "version": "latest"
+      "version": "1.21.11"
     },
     "ghcr.io/devcontainers/features/node:1": {
-      "version": "latest"
+      "version": "18.20.3"
     },
     "./local-features/setup-user": "latest"
   },
