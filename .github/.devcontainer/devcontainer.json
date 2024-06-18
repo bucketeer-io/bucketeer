@@ -52,5 +52,5 @@
     "ghcr.io/devcontainers/features/kubectl-helm-minikube",
     "ghcr.io/devcontainers/features/go",
     "./local-features/setup-user"
-  ],
+  ]
 }
