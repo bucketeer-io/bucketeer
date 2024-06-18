@@ -16,6 +16,7 @@ package domain
 
 import (
 	"errors"
+	"sort"
 	"time"
 
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
@@ -57,14 +58,38 @@ func NewAutoOpsRule(
 		CreatedAt: now,
 		UpdatedAt: now,
 	}}
-	for _, c := range opsEventRateClauses {
-		if _, err := autoOpsRule.AddOpsEventRateClause(c); err != nil {
-			return nil, err
+	switch opsType {
+	case proto.OpsType_EVENT_RATE:
+		for _, c := range opsEventRateClauses {
+			if _, err := autoOpsRule.AddOpsEventRateClause(c); err != nil {
+				return nil, err
+			}
 		}
-	}
-	for _, c := range datetimeClauses {
-		if _, err := autoOpsRule.AddDatetimeClause(c); err != nil {
-			return nil, err
+	case proto.OpsType_SCHEDULE:
+		for _, c := range datetimeClauses {
+			if _, err := autoOpsRule.AddDatetimeClause(c); err != nil {
+				return nil, err
+			}
+		}
+	case proto.OpsType_ENABLE_FEATURE:
+		for _, c := range datetimeClauses {
+			c.ActionType = proto.ActionType_ENABLE
+			if _, err := autoOpsRule.AddDatetimeClause(c); err != nil {
+				return nil, err
+			}
+		}
+	case proto.OpsType_DISABLE_FEATURE:
+		for _, c := range opsEventRateClauses {
+			c.ActionType = proto.ActionType_DISABLE
+			if _, err := autoOpsRule.AddOpsEventRateClause(c); err != nil {
+				return nil, err
+			}
+		}
+		for _, c := range datetimeClauses {
+			c.ActionType = proto.ActionType_DISABLE
+			if _, err := autoOpsRule.AddDatetimeClause(c); err != nil {
+				return nil, err
+			}
 		}
 	}
 	if len(autoOpsRule.Clauses) == 0 {
@@ -74,19 +99,40 @@ func NewAutoOpsRule(
 
 }
 
+func (a *AutoOpsRule) SetStopped() {
+	a.SetAutoOpsStatus(proto.AutoOpsStatus_STOPPED)
+}
+
 func (a *AutoOpsRule) SetDeleted() {
 	a.AutoOpsRule.Deleted = true
 	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
 }
 
+// TODO: Remove this function after auto ops migration.
+// Deprecated
 func (a *AutoOpsRule) SetTriggeredAt() {
 	now := time.Now().Unix()
 	a.AutoOpsRule.TriggeredAt = now
+	a.AutoOpsStatus = proto.AutoOpsStatus_FINISHED
 	a.AutoOpsRule.UpdatedAt = now
 }
 
+func (a *AutoOpsRule) SetFinished() {
+	a.SetAutoOpsStatus(proto.AutoOpsStatus_FINISHED)
+}
+
+// TODO: Remove this function after auto ops migration.
+// Deprecated
 func (a *AutoOpsRule) AlreadyTriggered() bool {
-	return a.TriggeredAt > 0
+	return a.TriggeredAt > 0 || a.AutoOpsStatus == proto.AutoOpsStatus_FINISHED
+}
+
+func (a *AutoOpsRule) IsFinished() bool {
+	return a.AutoOpsStatus == proto.AutoOpsStatus_FINISHED
+}
+
+func (a *AutoOpsRule) IsStopped() bool {
+	return a.AutoOpsStatus == proto.AutoOpsStatus_STOPPED
 }
 
 func (a *AutoOpsRule) SetOpsType(opsType proto.OpsType) {
@@ -95,12 +141,23 @@ func (a *AutoOpsRule) SetOpsType(opsType proto.OpsType) {
 	a.AutoOpsRule.TriggeredAt = 0
 }
 
+func (a *AutoOpsRule) SetAutoOpsStatus(status proto.AutoOpsStatus) {
+	a.AutoOpsRule.AutoOpsStatus = status
+	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
+}
+
 func (a *AutoOpsRule) AddOpsEventRateClause(oerc *proto.OpsEventRateClause) (*proto.Clause, error) {
 	ac, err := ptypes.MarshalAny(oerc)
 	if err != nil {
 		return nil, err
 	}
-	return a.addClause(ac)
+	clause, err := a.addClause(ac, oerc.ActionType)
+	if err != nil {
+		return nil, err
+	}
+	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
+	a.AutoOpsRule.TriggeredAt = 0
+	return clause, nil
 }
 
 func (a *AutoOpsRule) AddDatetimeClause(dc *proto.DatetimeClause) (*proto.Clause, error) {
@@ -108,34 +165,81 @@ func (a *AutoOpsRule) AddDatetimeClause(dc *proto.DatetimeClause) (*proto.Clause
 	if err != nil {
 		return nil, err
 	}
-	return a.addClause(ac)
+	clause, err := a.addClause(ac, dc.ActionType)
+	a.sortDatetimeClause()
+
+	if err != nil {
+		return nil, err
+	}
+	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
+	return clause, nil
 }
 
-func (a *AutoOpsRule) addClause(ac *any.Any) (*proto.Clause, error) {
+func (a *AutoOpsRule) addClause(ac *any.Any, actionType proto.ActionType) (*proto.Clause, error) {
 	id, err := uuid.NewUUID()
 	if err != nil {
 		return nil, err
 	}
 	clause := &proto.Clause{
-		Id:     id.String(),
-		Clause: ac,
+		Id:         id.String(),
+		Clause:     ac,
+		ActionType: actionType,
 	}
 	a.AutoOpsRule.Clauses = append(a.AutoOpsRule.Clauses, clause)
-	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
-	a.AutoOpsRule.TriggeredAt = 0
 	return clause, nil
 }
 
+func (a *AutoOpsRule) sortDatetimeClause() {
+	type SortClause struct {
+		clause         *proto.Clause
+		dataTimeClause *proto.DatetimeClause
+	}
+	newClauses := []*proto.Clause{}
+	sortClauses := []*SortClause{}
+	for _, c := range a.Clauses {
+		datetimeClause, _ := a.unmarshalDatetimeClause(c)
+		if datetimeClause == nil {
+			newClauses = append(newClauses, c)
+			continue
+		}
+		s := &SortClause{
+			clause:         c,
+			dataTimeClause: datetimeClause,
+		}
+		sortClauses = append(sortClauses, s)
+	}
+
+	sort.Slice(sortClauses, func(i, j int) bool {
+		return sortClauses[i].dataTimeClause.Time < sortClauses[j].dataTimeClause.Time
+	})
+
+	for _, c := range sortClauses {
+		newClauses = append(newClauses, c.clause)
+	}
+	a.AutoOpsRule.Clauses = newClauses
+}
+
 func (a *AutoOpsRule) ChangeOpsEventRateClause(id string, oerc *proto.OpsEventRateClause) error {
-	return a.changeClause(id, oerc)
+	err := a.changeClause(id, oerc, oerc.ActionType)
+	if err != nil {
+		return err
+	}
+	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
+	return nil
 }
 
 func (a *AutoOpsRule) ChangeDatetimeClause(id string, dc *proto.DatetimeClause) error {
-	return a.changeClause(id, dc)
+	err := a.changeClause(id, dc, dc.ActionType)
+	a.sortDatetimeClause()
+	if err != nil {
+		return err
+	}
+	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
+	a.AutoOpsRule.TriggeredAt = 0
+	return nil
 }
 
-func (a *AutoOpsRule) changeClause(id string, mc pb.Message) error {
-	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
+func (a *AutoOpsRule) changeClause(id string, mc pb.Message, actionType proto.ActionType) error {
 	a.AutoOpsRule.TriggeredAt = 0
 	for _, c := range a.Clauses {
 		if c.Id == id {
@@ -144,6 +248,7 @@ func (a *AutoOpsRule) changeClause(id string, mc pb.Message) error {
 				return err
 			}
 			c.Clause = clause
+			c.ActionType = actionType
 			return nil
 		}
 	}
@@ -212,8 +317,8 @@ func (a *AutoOpsRule) HasScheduleOps() (bool, error) {
 	return len(clauses) > 0, nil
 }
 
-func (a *AutoOpsRule) ExtractDatetimeClauses() ([]*proto.DatetimeClause, error) {
-	datetimeClauses := []*proto.DatetimeClause{}
+func (a *AutoOpsRule) ExtractDatetimeClauses() (map[string]*proto.DatetimeClause, error) {
+	datetimeClauses := map[string]*proto.DatetimeClause{}
 	for _, c := range a.Clauses {
 		datetimeClause, err := a.unmarshalDatetimeClause(c)
 		if err != nil {
@@ -222,7 +327,7 @@ func (a *AutoOpsRule) ExtractDatetimeClauses() ([]*proto.DatetimeClause, error) 
 		if datetimeClause == nil {
 			continue
 		}
-		datetimeClauses = append(datetimeClauses, datetimeClause)
+		datetimeClauses[c.Id] = datetimeClause
 	}
 	return datetimeClauses, nil
 }
