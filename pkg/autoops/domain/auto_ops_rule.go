@@ -125,8 +125,12 @@ func (a *AutoOpsRule) AlreadyTriggered() bool {
 	return a.TriggeredAt > 0 || a.AutoOpsStatus == proto.AutoOpsStatus_FINISHED
 }
 
-func (a *AutoOpsRule) IsNotFinished() bool {
-	return a.AutoOpsStatus == proto.AutoOpsStatus_WAITING || a.AutoOpsStatus == proto.AutoOpsStatus_RUNNING
+func (a *AutoOpsRule) IsFinished() bool {
+	return a.AutoOpsStatus == proto.AutoOpsStatus_FINISHED
+}
+
+func (a *AutoOpsRule) IsStopped() bool {
+	return a.AutoOpsStatus == proto.AutoOpsStatus_STOPPED
 }
 
 func (a *AutoOpsRule) SetOpsType(opsType proto.OpsType) {
