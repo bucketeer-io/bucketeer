@@ -2,6 +2,11 @@ name: Bucketeer Dev Container Build and Push Image
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/.devcontainer"
 
 jobs:
   build-and-push:
