@@ -121,6 +121,8 @@ func (a *AutoOpsRule) SetFinished() {
 	a.SetAutoOpsStatus(proto.AutoOpsStatus_FINISHED)
 }
 
+// TODO: Remove this function after auto ops migration.
+// Deprecated
 func (a *AutoOpsRule) AlreadyTriggered() bool {
 	return a.TriggeredAt > 0 || a.AutoOpsStatus == proto.AutoOpsStatus_FINISHED
 }
