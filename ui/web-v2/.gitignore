@@ -41,3 +41,5 @@ Thumbs.db
 
 **/certs/tls.crt
 **/certs/tls.key
+
+.env

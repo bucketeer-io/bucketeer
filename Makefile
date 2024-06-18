@@ -164,18 +164,6 @@ stop-httpstan:
 	docker stop bucketeer-httpstan
 
 #############################
-# UI/WEB
-#############################
-
-.PHONY: build-ui-web-v2
-build-ui-web-v2:
-	make -C ui/web-v2 build
-
-.PHONY: build-ui-web-v2-prod
-build-ui-web-v2-prod:
-	RELEASE_CHANNEL=prod make -C ui/web-v2 build
-
-#############################
 # Charts
 #############################
 

@@ -7,7 +7,7 @@ RUN apk update \
 
 WORKDIR /etc/nginx
 
-COPY dist/apps/admin/ /var/www/
+COPY dist/ /var/www/
 
 CMD ["nginx", "-g", "daemon off;"]
 

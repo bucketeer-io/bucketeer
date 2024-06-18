@@ -19,11 +19,20 @@
         "go.lintFlags": [
           "--config=${workspaceFolder}/.golangci.yml",
           "--fast"
-        ]
+        ],
+        "[javascript][typescript][javascriptreact][typescriptreact]": {
+          "editor.codeActionsOnSave": {
+            "source.fixAll.eslint": "explicit"
+          },
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "eslint.useFlatConfig": true
       },
       // Add the IDs of extensions you want installed when the container is created.
       "extensions": [
-        "GitHub.vscode-pull-request-github"
+        "GitHub.vscode-pull-request-github",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint"
       ]
     }
   },

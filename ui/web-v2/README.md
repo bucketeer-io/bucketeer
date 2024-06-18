@@ -16,9 +16,19 @@ yarn install
 
 ### Set the API and Web endpoint
 
-```sh
-export NX_DEV_WEB_API_ENDPOINT=https://example.com
-export NX_DEV_AUTH_REDIRECT_ENDPOINT=http://localhost:8000
+If you want to connect to a real API server, additional settings on the `.env` file are needed.
+
+First, create your own `.env` file based on the `.env.example` file.
+
+```bash
+cp .env.example .env
+```
+
+Add your API endpoint to the `.env` file like this:
+
+```
+DEV_WEB_API_ENDPOINT=https://example.com
+DEV_AUTH_REDIRECT_ENDPOINT=http://localhost:8000
 ```
 
 ### Serve locally
@@ -41,10 +51,10 @@ yarn lint
 
 ### Internationalization
 
-You need to run the following command when [the message file](https://github.com/bucketeer-io/bucketeer/blob/master/ui/web-v2/apps/admin/src/lang/messages.ts) is modified.
+You need to run the following command when [the message file](https://github.com/bucketeer-io/bucketeer/blob/master/ui/web-v2/src/lang/messages.ts) is modified.
 
 ```sh
 yarn translate
 ```
 
-It will generate [en.json](https://github.com/bucketeer-io/bucketeer/blob/master/ui/web-v2/apps/admin/src/assets/lang/en.json). Then, you need manually do the same modifications on the other languages files, including the translation under the same directory.
+It will generate [en.json](https://github.com/bucketeer-io/bucketeer/blob/master/ui/web-v2/src/assets/lang/en.json). Then, you need manually do the same modifications on the other languages files, including the translation under the same directory.
