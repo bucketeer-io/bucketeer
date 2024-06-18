@@ -2,7 +2,7 @@ import { yupLocale } from '../../lang/yup';
 import * as yup from 'yup';
 
 import { APIKEY_NAME_MAX_LENGTH } from '../../constants/apiKey';
-import { APIKey } from '@/proto/account/api_key_pb';
+import { APIKey } from '../../proto/account/api_key_pb';
 
 yup.setLocale(yupLocale);
 
