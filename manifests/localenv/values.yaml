@@ -38,7 +38,7 @@ bq:
     type: NodePort
     httpNodePort: 31000
   image:
-    repository: ghcr.io/ubisoft-potato/bigquery-emulator
+    repository: ghcr.io/bucketeer-io/bigquery-emulator
     
 pubsub: 
   image: 
