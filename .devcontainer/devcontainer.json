@@ -1,7 +1,6 @@
 {
   "name": "bucketeer",
   "image": "ghcr.io/bucketeer-io/bucketeer-devcontainer:latest",
-  "forwardPorts": [8000],
   "customizations": {
     "codespaces": {
       "openFiles": [
