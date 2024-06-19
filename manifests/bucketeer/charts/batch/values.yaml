@@ -81,6 +81,13 @@ serviceToken:
   secret:
   token:
 
+oauth:
+  key:
+    secret:
+    public:
+  issuer:
+  clientId:
+
 service:
   type: ClusterIP
   clusterIP: None
