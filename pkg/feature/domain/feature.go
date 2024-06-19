@@ -22,6 +22,8 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 const (
@@ -30,6 +32,7 @@ const (
 )
 
 var (
+	errNameEmpty                     = errors.New("feature: name cannot be empty")
 	errClauseNotFound                = errors.New("feature: clause not found")
 	errClauseAttributeNotEmpty       = errors.New("feature: clause attribute must be empty")
 	errClauseAttributeEmpty          = errors.New("feature: clause attribute cannot be empty")
@@ -914,4 +917,45 @@ func updateStrategyVariationID(varID, uID string, s *feature.Strategy) error {
 		return errUnsupportedStrategy
 	}
 	return nil
+}
+
+func (f *Feature) UpdateName(name string) error {
+	if name == "" {
+		return errNameEmpty
+	}
+	f.Name = name
+	f.UpdatedAt = time.Now().Unix()
+	return nil
+
+}
+
+func (f *Feature) UpdateDescription(desc string) error {
+	f.Description = desc
+	f.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+// Update returns a new Feature with the updated values.
+func (f *Feature) Update(
+	name, description *wrapperspb.StringValue,
+) (*Feature, error) {
+	updated := &Feature{Feature: proto.Clone(f.Feature).(*feature.Feature)}
+	incVersion := false
+	if name != nil {
+		if err := updated.UpdateName(name.Value); err != nil {
+			return nil, err
+		}
+		incVersion = true
+	}
+	if name != nil {
+		if err := updated.UpdateDescription(name.Value); err != nil {
+			return nil, err
+		}
+	}
+	if incVersion {
+		if err := updated.IncrementVersion(); err != nil {
+			return nil, err
+		}
+	}
+	return updated, nil
 }

@@ -18,6 +18,7 @@ package bucketeer.gateway;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/gateway";
 
 import "google/api/annotations.proto";
+import "google/protobuf/wrappers.proto";
 
 import "proto/user/user.proto";
 import "proto/feature/evaluation.proto";
@@ -129,7 +130,8 @@ message GetFeatureResponse {
 message UpdateFeatureRequest {
   string comment = 1;
   string id = 2;
-  feature.Feature feature = 3;
+  google.protobuf.StringValue name = 3;
+  google.protobuf.StringValue description = 4;
 }
 
 message UpdateFeatureResponse {}

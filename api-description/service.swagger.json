@@ -373,8 +373,11 @@
         "comment": {
           "type": "string"
         },
-        "feature": {
-          "$ref": "#/definitions/featureFeature"
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
         }
       }
     },

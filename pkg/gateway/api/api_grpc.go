@@ -962,7 +962,29 @@ func (s *grpcGatewayService) UpdateFeature(
 	ctx context.Context,
 	req *gwproto.UpdateFeatureRequest,
 ) (*gwproto.UpdateFeatureResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method not implemented")
+	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
+		accountproto.APIKey_PUBLIC_API_WRITE,
+		accountproto.APIKey_PUBLIC_API_ADMIN,
+	})
+	if err != nil {
+		s.logger.Error("Failed to check GetFeature request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("featureId", req.Id),
+			)...,
+		)
+		return nil, err
+	}
+	if _, err := s.featureClient.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+		Comment:       req.Comment,
+		EnvironmentId: envAPIKey.Environment.Id,
+		Id:            req.Id,
+		Name:          req.Name,
+		Description:   req.Description,
+	}); err != nil {
+		return nil, err
+	}
+	return &gwproto.UpdateFeatureResponse{}, nil
 }
 
 func (s *grpcGatewayService) getTargetFeatures(fs []*featureproto.Feature, id string) ([]*featureproto.Feature, error) {

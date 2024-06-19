@@ -100,7 +100,9 @@ message CreateFeatureResponse {}
 message UpdateFeatureRequest {
   string comment = 1;
   string environment_id = 2;
-  Feature feature = 3;
+  string id = 3;
+  google.protobuf.StringValue name = 4;
+  google.protobuf.StringValue description = 5;
 }
 
 message UpdateFeatureResponse {}

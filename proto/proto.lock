@@ -13597,8 +13597,18 @@
               },
               {
                 "id": 3,
-                "name": "feature",
-                "type": "Feature"
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 5,
+                "name": "description",
+                "type": "google.protobuf.StringValue"
               }
             ]
           },
@@ -15399,8 +15409,13 @@
               },
               {
                 "id": 3,
-                "name": "feature",
-                "type": "feature.Feature"
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 4,
+                "name": "description",
+                "type": "google.protobuf.StringValue"
               }
             ]
           },
@@ -15590,6 +15605,9 @@
         "imports": [
           {
             "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "google/protobuf/wrappers.proto"
           },
           {
             "path": "proto/user/user.proto"

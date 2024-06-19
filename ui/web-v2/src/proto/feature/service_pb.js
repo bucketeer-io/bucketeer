@@ -4589,9 +4589,13 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         comment: jspb.Message.getFieldWithDefault(msg, 1, ''),
         environmentId: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        feature:
-          (f = msg.getFeature()) &&
-          proto_feature_feature_pb.Feature.toObject(includeInstance, f)
+        id: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        name:
+          (f = msg.getName()) &&
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
+        description:
+          (f = msg.getDescription()) &&
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -4641,12 +4645,24 @@ proto.bucketeer.feature.UpdateFeatureRequest.deserializeBinaryFromReader =
           msg.setEnvironmentId(value);
           break;
         case 3:
-          var value = new proto_feature_feature_pb.Feature();
+          var value = /** @type {string} */ (reader.readString());
+          msg.setId(value);
+          break;
+        case 4:
+          var value = new google_protobuf_wrappers_pb.StringValue();
           reader.readMessage(
             value,
-            proto_feature_feature_pb.Feature.deserializeBinaryFromReader
+            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
           );
-          msg.setFeature(value);
+          msg.setName(value);
+          break;
+        case 5:
+          var value = new google_protobuf_wrappers_pb.StringValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
+          );
+          msg.setDescription(value);
           break;
         default:
           reader.skipField();
@@ -4688,12 +4704,24 @@ proto.bucketeer.feature.UpdateFeatureRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(2, f);
     }
-    f = message.getFeature();
+    f = message.getId();
+    if (f.length > 0) {
+      writer.writeString(3, f);
+    }
+    f = message.getName();
     if (f != null) {
       writer.writeMessage(
-        3,
+        4,
         f,
-        proto_feature_feature_pb.Feature.serializeBinaryToWriter
+        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
+      );
+    }
+    f = message.getDescription();
+    if (f != null) {
+      writer.writeMessage(
+        5,
+        f,
+        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
       );
     }
   };
@@ -4740,42 +4768,103 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.setEnvironmentId =
   };
 
 /**
- * optional Feature feature = 3;
- * @return {?proto.bucketeer.feature.Feature}
+ * optional string id = 3;
+ * @return {string}
  */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.getFeature =
-  function () {
-    return /** @type{?proto.bucketeer.feature.Feature} */ (
-      jspb.Message.getWrapperField(this, proto_feature_feature_pb.Feature, 3)
-    );
-  };
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.getId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ''));
+};
 
 /**
- * @param {?proto.bucketeer.feature.Feature|undefined} value
+ * @param {string} value
  * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
  */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.setFeature = function (
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.setId = function (
   value
 ) {
-  return jspb.Message.setWrapperField(this, 3, value);
+  return jspb.Message.setProto3StringField(this, 3, value);
+};
+
+/**
+ * optional google.protobuf.StringValue name = 4;
+ * @return {?proto.google.protobuf.StringValue}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.getName = function () {
+  return /** @type{?proto.google.protobuf.StringValue} */ (
+    jspb.Message.getWrapperField(
+      this,
+      google_protobuf_wrappers_pb.StringValue,
+      4
+    )
+  );
+};
+
+/**
+ * @param {?proto.google.protobuf.StringValue|undefined} value
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.setName = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 4, value);
 };
 
 /**
  * Clears the message field making it undefined.
  * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
  */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearFeature =
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearName = function () {
+  return this.setName(undefined);
+};
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.hasName = function () {
+  return jspb.Message.getField(this, 4) != null;
+};
+
+/**
+ * optional google.protobuf.StringValue description = 5;
+ * @return {?proto.google.protobuf.StringValue}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.getDescription =
   function () {
-    return this.setFeature(undefined);
+    return /** @type{?proto.google.protobuf.StringValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.StringValue,
+        5
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.StringValue|undefined} value
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.setDescription =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 5, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearDescription =
+  function () {
+    return this.setDescription(undefined);
   };
 
 /**
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.bucketeer.feature.UpdateFeatureRequest.prototype.hasFeature =
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.hasDescription =
   function () {
-    return jspb.Message.getField(this, 3) != null;
+    return jspb.Message.getField(this, 5) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
