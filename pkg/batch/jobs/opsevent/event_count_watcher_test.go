@@ -255,13 +255,13 @@ func TestRunCountWatcher(t *testing.T) {
 							{
 								Id:          "id-0",
 								FeatureId:   "fid-0",
-								Clauses:     []*autoopsproto.Clause{{Clause: c1}},
+								Clauses:     []*autoopsproto.Clause{{Id: "c1", Clause: c1}},
 								TriggeredAt: 0,
 							},
 							{
 								Id:          "id-1",
 								FeatureId:   "fid-1",
-								Clauses:     []*autoopsproto.Clause{{Clause: c1}},
+								Clauses:     []*autoopsproto.Clause{{Id: "c1", Clause: c1}},
 								TriggeredAt: 1,
 							},
 						},
@@ -297,7 +297,7 @@ func TestRunCountWatcher(t *testing.T) {
 				)
 
 				w.autoOpsExecutor.(*executormock.MockAutoOpsExecutor).
-					EXPECT().Execute(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+					EXPECT().Execute(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
 			expectedErr: nil,
 		},

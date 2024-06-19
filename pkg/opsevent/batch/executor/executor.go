@@ -37,7 +37,7 @@ func WithLogger(l *zap.Logger) Option {
 }
 
 type AutoOpsExecutor interface {
-	Execute(ctx context.Context, environmentNamespace, ruleID string) error
+	Execute(ctx context.Context, environmentNamespace, ruleID, clauseId string) error
 }
 
 type autoOpsExecutor struct {
@@ -58,10 +58,11 @@ func NewAutoOpsExecutor(autoOpsClient autoopsclient.Client, opts ...Option) Auto
 	}
 }
 
-func (e *autoOpsExecutor) Execute(ctx context.Context, environmentNamespace, ruleID string) error {
+func (e *autoOpsExecutor) Execute(ctx context.Context, environmentNamespace, ruleID, clauseId string) error {
 	resp, err := e.autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
 		EnvironmentNamespace:                environmentNamespace,
 		Id:                                  ruleID,
+		ExecuteAutoOpsRuleCommand:           &autoopsproto.ExecuteAutoOpsRuleCommand{ClauseId: clauseId},
 		ChangeAutoOpsRuleTriggeredAtCommand: &autoopsproto.ChangeAutoOpsRuleTriggeredAtCommand{},
 	})
 	if err != nil {

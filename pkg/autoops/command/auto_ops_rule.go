@@ -57,6 +57,8 @@ func (h *autoOpsRuleCommandHandler) Handle(ctx context.Context, cmd Command) err
 		return h.delete(ctx, c)
 	case *proto.ChangeAutoOpsRuleTriggeredAtCommand:
 		return h.changeTriggeredAt(ctx, c)
+	case *proto.StopAutoOpsRuleCommand:
+		return h.stop(ctx, c)
 	case *proto.AddOpsEventRateClauseCommand:
 		return h.addOpsEventRateClause(ctx, c)
 	case *proto.ChangeOpsEventRateClauseCommand:
@@ -67,6 +69,8 @@ func (h *autoOpsRuleCommandHandler) Handle(ctx context.Context, cmd Command) err
 		return h.addDatetimeClause(ctx, c)
 	case *proto.ChangeDatetimeClauseCommand:
 		return h.changeDatetimeClause(ctx, c)
+	case *proto.ChangeAutoOpsStatusCommand:
+		return h.changeAutoOpsStatus(ctx, c)
 	}
 	return errUnknownCommand
 }
@@ -79,6 +83,7 @@ func (h *autoOpsRuleCommandHandler) create(ctx context.Context, cmd *proto.Creat
 		TriggeredAt: h.autoOpsRule.TriggeredAt,
 		CreatedAt:   h.autoOpsRule.CreatedAt,
 		UpdatedAt:   h.autoOpsRule.UpdatedAt,
+		OpsStatus:   h.autoOpsRule.AutoOpsStatus,
 	})
 }
 
@@ -92,11 +97,17 @@ func (h *autoOpsRuleCommandHandler) changeOpsType(
 	})
 }
 
+func (h *autoOpsRuleCommandHandler) stop(ctx context.Context, cmd *proto.StopAutoOpsRuleCommand) error {
+	h.autoOpsRule.SetStopped()
+	return h.send(ctx, eventproto.Event_AUTOOPS_RULE_STOPPED, &eventproto.AutoOpsRuleStopEvent{})
+}
+
 func (h *autoOpsRuleCommandHandler) delete(ctx context.Context, cmd *proto.DeleteAutoOpsRuleCommand) error {
 	h.autoOpsRule.SetDeleted()
 	return h.send(ctx, eventproto.Event_AUTOOPS_RULE_DELETED, &eventproto.AutoOpsRuleDeletedEvent{})
 }
 
+// Deprecated
 func (h *autoOpsRuleCommandHandler) changeTriggeredAt(
 	ctx context.Context,
 	cmd *proto.ChangeAutoOpsRuleTriggeredAtCommand,
@@ -106,6 +117,20 @@ func (h *autoOpsRuleCommandHandler) changeTriggeredAt(
 		ctx,
 		eventproto.Event_AUTOOPS_RULE_TRIGGERED_AT_CHANGED,
 		&eventproto.AutoOpsRuleTriggeredAtChangedEvent{},
+	)
+}
+
+func (h *autoOpsRuleCommandHandler) changeAutoOpsStatus(
+	ctx context.Context,
+	cmd *proto.ChangeAutoOpsStatusCommand,
+) error {
+	h.autoOpsRule.SetAutoOpsStatus(cmd.Status)
+	return h.send(
+		ctx,
+		eventproto.Event_AUTOOPS_RULE_OPS_STATUS_CHANGED,
+		&eventproto.AutoOpsRuleOpsStatusChangedEvent{
+			OpsStatus: cmd.Status,
+		},
 	)
 }
 

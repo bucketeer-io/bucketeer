@@ -242,6 +242,41 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: createError(statusDatetimeClauseInvalidTime, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time")),
 		},
 		{
+			desc: "err: ErrDatetimeClauseMustSpecified",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				Command: &autoopsproto.CreateAutoOpsRuleCommand{
+					FeatureId:       "fid",
+					OpsType:         autoopsproto.OpsType_SCHEDULE,
+					DatetimeClauses: []*autoopsproto.DatetimeClause{},
+					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
+						{
+							VariationId:     "vid",
+							GoalId:          "gid",
+							MinCount:        10,
+							ThreadsholdRate: 0.5,
+							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+							ActionType:      autoopsproto.ActionType_DISABLE,
+						},
+					},
+				},
+			},
+			expectedErr: createError(statusClauseRequiredForDateTime, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause")),
+		},
+		{
+			desc: "err: ErrDatetimeClauseMustSpecified",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				Command: &autoopsproto.CreateAutoOpsRuleCommand{
+					FeatureId: "fid",
+					OpsType:   autoopsproto.OpsType_EVENT_RATE,
+					DatetimeClauses: []*autoopsproto.DatetimeClause{
+						{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
+					},
+					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{},
+				},
+			},
+			expectedErr: createError(statusClauseRequiredForEventDate, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause")),
+		},
+		{
 			desc: "err: internal error",
 			setup: func(s *AutoOpsService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().GetGoal(
@@ -294,6 +329,56 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 					},
 					DatetimeClauses: []*autoopsproto.DatetimeClause{
 						{Time: time.Now().AddDate(0, 0, 1).Unix()},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success for DateTime",
+			setup: func(s *AutoOpsService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				Command: &autoopsproto.CreateAutoOpsRuleCommand{
+					FeatureId:           "fid",
+					OpsType:             autoopsproto.OpsType_SCHEDULE,
+					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{},
+					DatetimeClauses: []*autoopsproto.DatetimeClause{
+						{Time: time.Now().AddDate(0, 0, 1).Unix()},
+						{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_DISABLE},
+						{Time: time.Now().AddDate(0, 0, 2).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success for EventRate",
+			setup: func(s *AutoOpsService) {
+				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().GetGoal(
+					gomock.Any(), gomock.Any(),
+				).Return(&experimentproto.GetGoalResponse{}, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				Command: &autoopsproto.CreateAutoOpsRuleCommand{
+					FeatureId: "fid",
+					OpsType:   autoopsproto.OpsType_EVENT_RATE,
+					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
+						{
+							VariationId:     "vid",
+							GoalId:          "gid",
+							MinCount:        10,
+							ThreadsholdRate: 0.5,
+							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+						},
 					},
 				},
 			},
@@ -455,6 +540,71 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 				p.setup(s)
 			}
 			_, err := s.UpdateAutoOpsRule(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestStopAutoOpsRuleMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithTokenRoleOwner(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*AutoOpsService)
+		req         *autoopsproto.StopAutoOpsRuleRequest
+		expectedErr error
+	}{
+		{
+			desc:        "err: ErrIDRequired",
+			req:         &autoopsproto.StopAutoOpsRuleRequest{},
+			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+		},
+		{
+			desc: "err: ErrNoCommand",
+			req: &autoopsproto.StopAutoOpsRuleRequest{
+				Id: "aid1",
+			},
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+		},
+		{
+			desc: "success",
+			setup: func(s *AutoOpsService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &autoopsproto.StopAutoOpsRuleRequest{
+				Id:                   "aid1",
+				EnvironmentNamespace: "ns0",
+				Command:              &autoopsproto.StopAutoOpsRuleCommand{},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createAutoOpsService(mockController, nil)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			_, err := s.StopAutoOpsRule(ctx, p.req)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -805,6 +955,17 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
+			desc: "err: ErrNoExecuteAutoOpsRuleCommand_ClauseId",
+			req: &autoopsproto.ExecuteAutoOpsRequest{
+				Id:                   "aid1",
+				EnvironmentNamespace: "ns0",
+				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
+					ClauseId: "",
+				},
+			},
+			expectedErr: createError(statusClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id")),
+		},
+		{
 			desc: "err: ErrNotFound",
 			setup: func(s *AutoOpsService) {
 				row := mysqlmock.NewMockRow(mockController)
@@ -834,9 +995,11 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &autoopsproto.ExecuteAutoOpsRequest{
-				Id:                                  "aid1",
-				EnvironmentNamespace:                "ns0",
-				ChangeAutoOpsRuleTriggeredAtCommand: &autoopsproto.ChangeAutoOpsRuleTriggeredAtCommand{},
+				Id:                   "aid1",
+				EnvironmentNamespace: "ns0",
+				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
+					ClauseId: "testClauseId",
+				},
 			},
 			expectedErr: nil,
 		},

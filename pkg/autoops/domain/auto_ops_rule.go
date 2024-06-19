@@ -113,7 +113,6 @@ func (a *AutoOpsRule) SetDeleted() {
 func (a *AutoOpsRule) SetTriggeredAt() {
 	now := time.Now().Unix()
 	a.AutoOpsRule.TriggeredAt = now
-	a.AutoOpsStatus = proto.AutoOpsStatus_FINISHED
 	a.AutoOpsRule.UpdatedAt = now
 }
 
