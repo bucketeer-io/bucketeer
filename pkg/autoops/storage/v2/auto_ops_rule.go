@@ -79,6 +79,7 @@ func (s *autoOpsRuleStorage) CreateAutoOpsRule(
 		e.CreatedAt,
 		e.UpdatedAt,
 		e.Deleted,
+		int32(e.AutoOpsStatus),
 		environmentNamespace,
 	)
 	if err != nil {
@@ -105,6 +106,7 @@ func (s *autoOpsRuleStorage) UpdateAutoOpsRule(
 		e.CreatedAt,
 		e.UpdatedAt,
 		e.Deleted,
+		int32(e.AutoOpsStatus),
 		e.Id,
 		environmentNamespace,
 	)
@@ -141,6 +143,7 @@ func (s *autoOpsRuleStorage) GetAutoOpsRule(
 		&autoOpsRule.CreatedAt,
 		&autoOpsRule.UpdatedAt,
 		&autoOpsRule.Deleted,
+		&autoOpsRule.AutoOpsStatus,
 	)
 	if err != nil {
 		if err == mysql.ErrNoRows {
@@ -180,6 +183,7 @@ func (s *autoOpsRuleStorage) ListAutoOpsRules(
 			&autoOpsRule.CreatedAt,
 			&autoOpsRule.UpdatedAt,
 			&autoOpsRule.Deleted,
+			&autoOpsRule.AutoOpsStatus,
 		)
 		if err != nil {
 			return nil, 0, err
