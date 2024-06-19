@@ -48,6 +48,7 @@ jobs:
       IMAGE_TAG: ${{ steps.tag.outputs.value }}
       REF: ${{ steps.ref.outputs.value }}
       COMMIT_MESSAGE: ${{ steps.commit_message.outputs.value }}
+      MIGRATION_REQUIRED: ${{ steps.changes.outputs.migration }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -61,6 +62,13 @@ jobs:
       - name: Store the first line of commit message
         id: commit_message
         run: echo "value=$(echo "${{ github.event.head_commit.message }}" | head -n 1)" >> $GITHUB_OUTPUT
+      - name:  Store the migration_required value to output
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: changes
+        with:
+          filters: |
+            migration:
+              - 'migration/**'
 
   go:
     needs: setup
@@ -98,13 +106,17 @@ jobs:
             IMAGE=`./tools/build/show-image-name.sh $APP`
             docker build -f Dockerfile-app-$APP -t bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }} --load .
           done
+      - name: Build and push the Migration image
+        if: needs.setup.outputs.MIGRATION_REQUIRED == 'true'
+        run: |
+          docker build -f migration/Dockerfile -t bucketeer-image:${{ needs.setup.outputs.IMAGE_TAG }}
       - name: Login to GHCR
         uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         with:
           registry: ghcr.io
           username: ${{ secrets.GHCR_USER_NAME }}
           password: ${{ secrets.GHCR_PAT }}
-      - name: push go application images to GHCR
+      - name: Push go application images to GHCR
         run: |
           push_func(){
             IMAGE=`./tools/build/show-image-name.sh $1`
@@ -129,6 +141,11 @@ jobs:
             exit "$exit_code"
           fi
           done
+      - name: Push the Migration image to GHCR
+        if: needs.setup.outputs.MIGRATION_REQUIRED == 'true'
+        run: |
+          docker tag bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GHCR_REGISTRY }}/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
+          docker push ${{ env.GHCR_REGISTRY }}/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@71fee32a0bb7e97b4d33d548e7d957010649d8fa # v2.1.3
@@ -167,6 +184,11 @@ jobs:
             exit "$exit_code"
           fi
           done
+      - name: Push the Migration image to GAR
+        if: needs.setup.outputs.MIGRATION_REQUIRED == 'true'
+        run: |
+          docker tag bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GAR_REGISTRY }}/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
+          docker push ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
 
   web-v2:
     needs: setup
@@ -245,7 +267,7 @@ jobs:
           token: ${{ secrets.REPO_ACCESS_PAT }}
           workflow: dev-deploy.yaml
           ref: master
-          inputs: '{"ref": "${{ needs.setup.outputs.REF }}", "image_tag": "${{ needs.setup.outputs.IMAGE_TAG }}", "committer": "${{ github.event.head_commit.author.name }}", "commit_message": "${{ needs.setup.outputs.COMMIT_MESSAGE }}", "commit_url": "${{ github.event.head_commit.url }}", "skip_e2e": "${{ github.event.inputs.skip_e2e }}", "skip_sdk_e2e": "${{ github.event.inputs.skip_sdk_e2e }}", "skip_prd_pr": "${{ github.event.inputs.skip_prd_pr }}"}'
+          inputs: '{"ref": "${{ needs.setup.outputs.REF }}", "image_tag": "${{ needs.setup.outputs.IMAGE_TAG }}", "committer": "${{ github.event.head_commit.author.name }}", "commit_message": "${{ needs.setup.outputs.COMMIT_MESSAGE }}", "commit_url": "${{ github.event.head_commit.url }}", "skip_e2e": "${{ github.event.inputs.skip_e2e }}", "skip_sdk_e2e": "${{ github.event.inputs.skip_sdk_e2e }}", "skip_prd_pr": "${{ github.event.inputs.skip_prd_pr }}", "migration_required": "${{ needs.setup.outputs.MIGRATION_REQUIRED }}"}'
 
   notify-success-to-slack:
     needs: [setup, dispatch]
