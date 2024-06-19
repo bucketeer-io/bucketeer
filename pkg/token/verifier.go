@@ -20,14 +20,15 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"time"
 
 	jose "github.com/go-jose/go-jose/v4"
 )
 
 type Verifier interface {
-	Verify(string) (*IDToken, error)
+	VerifyAccessToken(string) (*AccessToken, error)
+	VerifyRefreshToken(string) (*RefreshToken, error)
 }
 
 type verifier struct {
@@ -38,7 +39,7 @@ type verifier struct {
 }
 
 func NewVerifier(keyPath, issuer, clientID string) (Verifier, error) {
-	data, err := ioutil.ReadFile(keyPath)
+	data, err := os.ReadFile(keyPath)
 	if err != nil {
 		return nil, err
 	}
@@ -54,8 +55,8 @@ func NewVerifier(keyPath, issuer, clientID string) (Verifier, error) {
 	}, nil
 }
 
-func (v *verifier) Verify(rawIDToken string) (*IDToken, error) {
-	jws, err := jose.ParseSigned(rawIDToken, []jose.SignatureAlgorithm{v.algorithm})
+func (v *verifier) VerifyAccessToken(rawAccessToken string) (*AccessToken, error) {
+	jws, err := jose.ParseSigned(rawAccessToken, []jose.SignatureAlgorithm{v.algorithm})
 	if err != nil {
 		return nil, fmt.Errorf("malformed jwt: %v", err)
 	}
@@ -63,7 +64,7 @@ func (v *verifier) Verify(rawIDToken string) (*IDToken, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid jwt: %v", err)
 	}
-	t := &IDToken{}
+	t := &AccessToken{}
 	if err := json.Unmarshal(payload, t); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal claims: %v", err)
 	}
@@ -77,6 +78,28 @@ func (v *verifier) Verify(rawIDToken string) (*IDToken, error) {
 	//if t.Audience != v.clientID {
 	//	return nil, fmt.Errorf("expected audience %q got %q", v.clientID, t.Audience)
 	//}
+	if t.Expiry.Before(time.Now()) {
+		return nil, fmt.Errorf("token is expired (Token Expiry: %v)", t.Expiry)
+	}
+	if t.Email == "" {
+		return nil, fmt.Errorf("email must be not empty")
+	}
+	return t, nil
+}
+
+func (v *verifier) VerifyRefreshToken(rawRefreshToken string) (*RefreshToken, error) {
+	jws, err := jose.ParseSigned(rawRefreshToken, []jose.SignatureAlgorithm{v.algorithm})
+	if err != nil {
+		return nil, fmt.Errorf("malformed jwt: %v", err)
+	}
+	payload, err := jws.Verify(v.pubKey)
+	if err != nil {
+		return nil, fmt.Errorf("invalid jwt: %v", err)
+	}
+	t := &RefreshToken{}
+	if err := json.Unmarshal(payload, t); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal claims: %v", err)
+	}
 	if t.Expiry.Before(time.Now()) {
 		return nil, fmt.Errorf("token is expired (Token Expiry: %v)", t.Expiry)
 	}

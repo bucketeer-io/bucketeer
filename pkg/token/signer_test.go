@@ -47,11 +47,11 @@ func TestSign(t *testing.T) {
 	verifier, err := NewVerifier("testdata/valid-public.pem", issuer, clientID)
 	require.NoError(t, err)
 	testcases := []struct {
-		token *IDToken
+		token *AccessToken
 		ok    bool
 	}{
 		{
-			&IDToken{
+			&AccessToken{
 				Issuer:   issuer,
 				Subject:  "subject",
 				Audience: clientID,
@@ -61,7 +61,7 @@ func TestSign(t *testing.T) {
 			true,
 		},
 		{
-			&IDToken{
+			&AccessToken{
 				Issuer:   issuer,
 				Subject:  "subject",
 				Audience: clientID,
@@ -70,7 +70,7 @@ func TestSign(t *testing.T) {
 			false,
 		},
 		{
-			&IDToken{
+			&AccessToken{
 				Issuer:   issuer,
 				Subject:  "subject",
 				Audience: clientID,
@@ -82,10 +82,10 @@ func TestSign(t *testing.T) {
 	}
 	for i, tc := range testcases {
 		des := fmt.Sprintf("index: %d", i)
-		signedToken, err := signer.Sign(tc.token)
+		signedToken, err := signer.SignAccessToken(tc.token)
 		require.NoError(t, err, des)
 		require.True(t, len(signedToken) > 0, des)
-		parsedToken, err := verifier.Verify(signedToken)
+		parsedToken, err := verifier.VerifyAccessToken(signedToken)
 		if tc.ok {
 			require.NoError(t, err, fmt.Sprintf("index: %d, error: %v", i, err))
 			require.Equal(t, tc.token.Issuer, parsedToken.Issuer, des)

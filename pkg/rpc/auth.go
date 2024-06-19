@@ -58,7 +58,7 @@ func AuthUnaryServerInterceptor(verifier token.Verifier) grpc.UnaryServerInterce
 		if len(subs) != 2 {
 			return nil, status.Error(codes.Unauthenticated, "token is malformed")
 		}
-		token, err := verifier.Verify(subs[1])
+		token, err := verifier.VerifyAccessToken(subs[1])
 		if err != nil {
 			return nil, status.Errorf(codes.Unauthenticated, "token is invalid: %s", err.Error())
 		}
@@ -67,7 +67,7 @@ func AuthUnaryServerInterceptor(verifier token.Verifier) grpc.UnaryServerInterce
 	}
 }
 
-func GetIDToken(ctx context.Context) (*token.IDToken, bool) {
-	t, ok := ctx.Value(Key).(*token.IDToken)
+func GetIDToken(ctx context.Context) (*token.AccessToken, bool) {
+	t, ok := ctx.Value(Key).(*token.AccessToken)
 	return t, ok
 }

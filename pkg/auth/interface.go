@@ -23,8 +23,16 @@ import (
 )
 
 type Authenticator interface {
-	Login(ctx context.Context, state, redirectURL string, localizer locale.Localizer) (string, error)
-	Exchange(ctx context.Context, code, redirectURL string, localizer locale.Localizer) (*authproto.Token, error)
+	Login(
+		ctx context.Context,
+		state, redirectURL string,
+		localizer locale.Localizer,
+	) (string, error)
+	Exchange(
+		ctx context.Context,
+		code, redirectURL string,
+		localizer locale.Localizer,
+	) (*authproto.Token, error)
 	Refresh(
 		ctx context.Context,
 		token, redirectURL string,

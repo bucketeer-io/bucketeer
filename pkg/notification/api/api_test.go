@@ -113,15 +113,15 @@ func newNotificationService(c *gomock.Controller, specifiedEnvironmentId *string
 	}
 }
 
-func createContextWithToken(t *testing.T, token *token.IDToken) context.Context {
+func createContextWithToken(t *testing.T, token *token.AccessToken) context.Context {
 	t.Helper()
 	ctx := context.TODO()
 	return context.WithValue(ctx, rpc.Key, token)
 }
 
-func createAdminToken(t *testing.T) *token.IDToken {
+func createAdminToken(t *testing.T) *token.AccessToken {
 	t.Helper()
-	return &token.IDToken{
+	return &token.AccessToken{
 		Issuer:   "issuer",
 		Subject:  "sub",
 		Audience: "audience",
@@ -131,9 +131,9 @@ func createAdminToken(t *testing.T) *token.IDToken {
 	}
 }
 
-func createOwnerToken(t *testing.T) *token.IDToken {
+func createOwnerToken(t *testing.T) *token.AccessToken {
 	t.Helper()
-	return &token.IDToken{
+	return &token.AccessToken{
 		Issuer:   "issuer",
 		Subject:  "sub",
 		Audience: "audience",

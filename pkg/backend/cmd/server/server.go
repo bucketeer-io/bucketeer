@@ -467,7 +467,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer autoOpsClient.Close()
 	// authService
-	authService, err := s.createAuthService(ctx, accountClient, oAuthConfig, logger)
+	authService, err := s.createAuthService(ctx, accountClient, verifier, oAuthConfig, logger)
 	if err != nil {
 		return err
 	}
@@ -748,6 +748,7 @@ func (s *server) readOAuthConfig(
 func (s *server) createAuthService(
 	ctx context.Context,
 	accountClient accountclient.Client,
+	verifier token.Verifier,
 	config *auth.OAuthConfig,
 	logger *zap.Logger,
 ) (rpc.Service, error) {
@@ -776,7 +777,7 @@ func (s *server) createAuthService(
 		}
 		serviceOptions = append(serviceOptions, authapi.WithEmailFilter(filter))
 	}
-	return authapi.NewAuthService(o, signer, accountClient, config, serviceOptions...), nil
+	return authapi.NewAuthService(o, signer, verifier, accountClient, config, serviceOptions...), nil
 }
 
 func (s *server) createFeatureService(

@@ -19,15 +19,14 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/auth"
-	"github.com/bucketeer-io/bucketeer/pkg/auth/google"
-
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/pkg/auth"
+	"github.com/bucketeer-io/bucketeer/pkg/auth/google"
 	"github.com/bucketeer-io/bucketeer/pkg/auth/oidc"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -81,6 +80,7 @@ type authService struct {
 func NewAuthService(
 	oidc *oidc.OIDC,
 	signer token.Signer,
+	verifier token.Verifier,
 	accountClient accountclient.Client,
 	config *auth.OAuthConfig,
 	opts ...Option,
@@ -94,7 +94,7 @@ func NewAuthService(
 		oidc:                oidc,
 		signer:              signer,
 		accountClient:       accountClient,
-		googleAuthenticator: google.NewAuthenticator(&config.GoogleConfig, accountClient, signer, logger),
+		googleAuthenticator: google.NewAuthenticator(&config.GoogleConfig, accountClient, signer, verifier, logger),
 		opts:                &options,
 		logger:              logger,
 	}
@@ -390,7 +390,7 @@ func (s *authService) generateToken(
 		}
 		return nil, dt.Err()
 	}
-	idToken := &token.IDToken{
+	idToken := &token.AccessToken{
 		Issuer:   claims.Iss,
 		Subject:  claims.Sub,
 		Audience: claims.Aud,
@@ -401,7 +401,7 @@ func (s *authService) generateToken(
 	if hasSystemAdminOrganization(resp.Organizations) {
 		idToken.IsSystemAdmin = true
 	}
-	signedIDToken, err := s.signer.Sign(idToken)
+	signedIDToken, err := s.signer.SignAccessToken(idToken)
 	if err != nil {
 		s.logger.Error(
 			"Failed to sign id token",

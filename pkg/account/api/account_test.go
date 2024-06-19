@@ -1249,7 +1249,7 @@ func TestListAccountsV2MySQL(t *testing.T) {
 }
 
 func setToken(ctx context.Context, isSystemAdmin bool) context.Context {
-	t := &token.IDToken{
+	t := &token.AccessToken{
 		Issuer:        "issuer",
 		Subject:       "sub",
 		Audience:      "audience",

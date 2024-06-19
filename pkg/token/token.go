@@ -15,15 +15,10 @@
 package token
 
 import (
-	"encoding/base64"
 	"time"
-
-	"github.com/golang/protobuf/proto" // nolint:staticcheck
-
-	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
 )
 
-type IDToken struct {
+type AccessToken struct {
 	Issuer        string    `json:"iss"`
 	Subject       string    `json:"sub"`
 	Audience      string    `json:"aud"`
@@ -33,17 +28,7 @@ type IDToken struct {
 	IsSystemAdmin bool      `json:"is_system_admin"`
 }
 
-func ExtractUserID(subject string) (string, error) {
-	tokenSubject := &authproto.IDTokenSubject{}
-	// Q: Why do we need to decode the sub string
-	// A: https://github.com/coreos/dex/blob/master/server/internal/codec.go#L20
-	data, err := base64.RawURLEncoding.DecodeString(subject)
-	if err != nil {
-		return "", err
-	}
-	err = proto.Unmarshal(data, tokenSubject)
-	if err != nil {
-		return "", err
-	}
-	return tokenSubject.UserId, nil
+type RefreshToken struct {
+	Email  string    `json:"email"`
+	Expiry time.Time `json:"exp"`
 }

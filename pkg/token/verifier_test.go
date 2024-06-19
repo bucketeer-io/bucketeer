@@ -48,7 +48,7 @@ func TestVerify(t *testing.T) {
 	clientID := "test_client_id"
 	signer, err := NewSigner("testdata/valid-private.pem")
 	require.NoError(t, err)
-	idToken := &IDToken{
+	idToken := &AccessToken{
 		Issuer:   issuer,
 		Subject:  "subject",
 		Audience: clientID,
@@ -80,7 +80,7 @@ func TestVerify(t *testing.T) {
 	require.NoError(t, err)
 	for _, p := range testcases {
 		t.Run(p.desc, func(t *testing.T) {
-			actualToken, err := verifier.Verify(p.rawIDToken)
+			actualToken, err := verifier.VerifyAccessToken(p.rawIDToken)
 			if p.valid {
 				assert.NotNil(t, actualToken)
 				assert.NoError(t, err)
@@ -92,16 +92,16 @@ func TestVerify(t *testing.T) {
 	}
 }
 
-func createValidRawIDToken(t *testing.T, signer Signer, idToken *IDToken) string {
+func createValidRawIDToken(t *testing.T, signer Signer, idToken *AccessToken) string {
 	t.Helper()
-	rawIDToken, err := signer.Sign(idToken)
+	rawIDToken, err := signer.SignAccessToken(idToken)
 	require.NoError(t, err)
 	return rawIDToken
 }
 
-func createInvalidRawIDToken(t *testing.T, signer Signer, idToken *IDToken) string {
+func createInvalidRawIDToken(t *testing.T, signer Signer, idToken *AccessToken) string {
 	t.Helper()
-	rawIDToken, err := signer.Sign(idToken)
+	rawIDToken, err := signer.SignAccessToken(idToken)
 	require.NoError(t, err)
 	parts := strings.Split(rawIDToken, ".")
 	invalidSignature := base64.RawURLEncoding.EncodeToString([]byte("invalid-signature"))

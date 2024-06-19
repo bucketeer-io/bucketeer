@@ -826,7 +826,7 @@ func TestListEnabledAdminSubscriptionsMySQL(t *testing.T) {
 
 func setToken(t *testing.T, ctx context.Context, isSystemAdmin bool) context.Context {
 	t.Helper()
-	tokenID := &token.IDToken{
+	tokenID := &token.AccessToken{
 		Issuer:        "issuer",
 		Subject:       "sub",
 		Audience:      "audience",

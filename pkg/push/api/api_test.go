@@ -619,7 +619,7 @@ func newPushService(c *gomock.Controller, specifiedEnvironmentId *string, specif
 
 func createContextWithToken(t *testing.T, isSystemAdmin bool) context.Context {
 	t.Helper()
-	token := &token.IDToken{
+	token := &token.AccessToken{
 		Issuer:        "issuer",
 		Subject:       "sub",
 		Audience:      "audience",

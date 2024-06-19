@@ -37,6 +37,11 @@ import (
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
+const (
+	day       = 24 * time.Hour
+	sevenDays = 7 * 24 * time.Hour
+)
+
 var (
 	ErrUnregisteredRedirectURL = errors.New("google: unregistered redirectURL")
 )
@@ -48,10 +53,17 @@ var (
 	}
 )
 
+type googleUserInfo struct {
+	Username      string `json:"name"`
+	Email         string `json:"email"`
+	EmailVerified bool   `json:"email_verified"`
+}
+
 type Authenticator struct {
 	config        *auth.GoogleConfig
 	accountClient accountclient.Client
 	signer        token.Signer
+	verifier      token.Verifier
 	emailFilter   *regexp.Regexp
 	logger        *zap.Logger
 }
@@ -60,12 +72,14 @@ func NewAuthenticator(
 	config *auth.GoogleConfig,
 	accountClient accountclient.Client,
 	signer token.Signer,
+	verifier token.Verifier,
 	logger *zap.Logger,
 ) *Authenticator {
 	return &Authenticator{
 		config:        config,
 		accountClient: accountClient,
 		signer:        signer,
+		verifier:      verifier,
 		logger:        logger.Named("google-authenticator"),
 	}
 }
@@ -96,7 +110,8 @@ func (a Authenticator) Exchange(
 		a.logger.Error("Google: failed to exchange token", zap.Error(err))
 		return nil, err
 	}
-	return a.generateToken(ctx, authToken, oauth2Config, localizer)
+	userInfo, err := a.getGoogleUserInfo(ctx, authToken, oauth2Config, localizer)
+	return a.generateToken(ctx, userInfo.Email, localizer)
 }
 
 func (a Authenticator) Refresh(
@@ -108,82 +123,37 @@ func (a Authenticator) Refresh(
 	if err := a.validateRedirectURL(redirectURL); err != nil {
 		return nil, err
 	}
-	t := &oauth2.Token{
-		RefreshToken: token,
-		Expiry:       time.Now().Add(expires),
-	}
-	oauth2Config := a.oauth2Config(defaultScopes, redirectURL)
-	newToken, err := oauth2Config.TokenSource(ctx, t).Token()
+	refreshToken, err := a.verifier.VerifyRefreshToken(token)
 	if err != nil {
-		a.logger.Error("Google: failed to refresh token", zap.Error(err))
+		a.logger.Error("google: refresh token is invalid", zap.String("refresh_token", token))
 		return nil, err
 	}
-	return a.generateToken(ctx, newToken, oauth2Config, localizer)
+	return a.generateToken(ctx, refreshToken.Email, localizer)
 }
 
 func (a Authenticator) generateToken(
 	ctx context.Context,
-	t *oauth2.Token,
-	config *oauth2.Config,
+	userEmail string,
 	localizer locale.Localizer,
 ) (*authproto.Token, error) {
-	client := config.Client(ctx, t)
-	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
-	if err != nil {
-		a.logger.Error("Google: failed to get user info", zap.Error(err))
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			a.logger.Error("Failed to close response body", zap.Error(err))
-		}
-	}(resp.Body)
-
-	var userInfo struct {
-		Username      string `json:"name"`
-		Email         string `json:"email"`
-		EmailVerified bool   `json:"email_verified"`
-	}
-	err = json.NewDecoder(resp.Body).Decode(&userInfo)
-	if err != nil {
-		a.logger.Error("Failed to decode user info", zap.Error(err))
-		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, auth.StatusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-
-	if err := a.maybeCheckEmail(ctx, userInfo.Email, localizer); err != nil {
+	if err := a.maybeCheckEmail(ctx, userEmail, localizer); err != nil {
 		a.logger.Info(
 			"Access denied email",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", userInfo.Email))...,
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", userEmail))...,
 		)
 		return nil, err
 	}
-
 	orgResp, err := a.accountClient.GetMyOrganizationsByEmail(
 		ctx,
 		&accountproto.GetMyOrganizationsByEmailRequest{
-			Email: userInfo.Email,
+			Email: userEmail,
 		},
 	)
 	if err != nil {
 		a.logger.Error(
 			"Failed to get account's organizations",
 			zap.Error(err),
-			zap.String("email", userInfo.Email),
+			zap.String("email", userEmail),
 		)
 		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -197,7 +167,7 @@ func (a Authenticator) generateToken(
 	if len(orgResp.Organizations) == 0 {
 		a.logger.Error(
 			"Unable to generate token for an unapproved account",
-			zap.String("email", userInfo.Email),
+			zap.String("email", userEmail),
 		)
 		dt, err := auth.StatusUnapprovedAccount.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -208,16 +178,37 @@ func (a Authenticator) generateToken(
 		}
 		return nil, dt.Err()
 	}
-
-	idToken := &token.IDToken{
-		Expiry:        t.Expiry,
-		Email:         userInfo.Email,
+	timeNow := time.Now()
+	accessTokenTTL := timeNow.Add(day)
+	accessToken := &token.AccessToken{
+		Expiry:        accessTokenTTL,
+		Email:         userEmail,
 		IsSystemAdmin: hasSystemAdminOrganization(orgResp.Organizations),
 	}
-	signedIDToken, err := a.signer.Sign(idToken)
+	signedAccessToken, err := a.signer.SignAccessToken(accessToken)
 	if err != nil {
 		a.logger.Error(
-			"Failed to sign id token",
+			"Failed to sign access token",
+			zap.Error(err),
+		)
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	refreshToken := &token.RefreshToken{
+		Email:  userEmail,
+		Expiry: timeNow.Add(sevenDays),
+	}
+	signRefreshToken, err := a.signer.SignRefreshToken(refreshToken)
+	if err != nil {
+		a.logger.Error(
+			"Failed to sign access token",
 			zap.Error(err),
 		)
 		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -231,12 +222,52 @@ func (a Authenticator) generateToken(
 	}
 
 	return &authproto.Token{
-		AccessToken:  t.AccessToken,
-		TokenType:    t.TokenType,
-		RefreshToken: t.RefreshToken,
-		Expiry:       t.Expiry.Unix(),
-		IdToken:      signedIDToken,
+		AccessToken:  signedAccessToken,
+		RefreshToken: signRefreshToken,
+		TokenType:    "Bearer",
+		Expiry:       accessTokenTTL.Unix(),
 	}, nil
+}
+
+func (a Authenticator) getGoogleUserInfo(
+	ctx context.Context,
+	t *oauth2.Token,
+	config *oauth2.Config,
+	localizer locale.Localizer,
+) (googleUserInfo, error) {
+	var userInfo googleUserInfo
+	client := config.Client(ctx, t)
+	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")
+	if err != nil {
+		a.logger.Error("Google: failed to get user info", zap.Error(err))
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return userInfo, auth.StatusInternal.Err()
+		}
+		return userInfo, dt.Err()
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			a.logger.Error("Failed to close response body", zap.Error(err))
+		}
+	}(resp.Body)
+	err = json.NewDecoder(resp.Body).Decode(&userInfo)
+	if err != nil {
+		a.logger.Error("Failed to decode user info", zap.Error(err))
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return userInfo, auth.StatusInternal.Err()
+		}
+		return userInfo, dt.Err()
+	}
+	return userInfo, nil
 }
 
 func (a Authenticator) validateRedirectURL(url string) error {
