@@ -20,6 +20,7 @@
           "--config=${workspaceFolder}/.golangci.yml",
           "--fast"
         ],
+        "go.formatTool": "goimports",
         "[javascript][typescript][javascriptreact][typescriptreact]": {
           "editor.codeActionsOnSave": {
             "source.fixAll.eslint": "explicit"
