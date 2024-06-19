@@ -103,7 +103,7 @@ jobs:
       - name:  Check proto format
         uses: jidicula/clang-format-action@c74383674bf5f7c69f60ce562019c1c94bc1421a # v4.13.0
         with:
-          clang-format-version: '18'
+          clang-format-version: '14'
           check-path: 'proto'
           exclude-regex: 'external' # googleapis proto files
       - name: Check proto lock
