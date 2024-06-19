@@ -660,7 +660,107 @@ func (s *FeatureService) UpdateFeature(
 	ctx context.Context,
 	req *featureproto.UpdateFeatureRequest,
 ) (*featureproto.UpdateFeatureResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method UpdateFeatureDetails not implemented")
+	localizer := locale.NewLocalizer(ctx)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentId, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if req.Id == "" {
+		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentId, localizer); err != nil {
+		return nil, err
+	}
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
+		return nil, err
+	}
+	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		featureStorage := v2fs.NewFeatureStorage(tx)
+		feature, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
+		if err != nil {
+			s.logger.Error(
+				"Failed to get feature",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return err
+		}
+		handler = command.NewFeatureCommandHandler(editor, feature, req.EnvironmentId, req.Comment)
+		err = handler.UpdateFeature(ctx, req)
+		if err != nil {
+			s.logger.Error(
+				"Failed to rename feature",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return err
+		}
+		err = featureStorage.UpdateFeature(ctx, feature, req.EnvironmentId)
+		if err != nil {
+			s.logger.Error(
+				"Failed to update feature",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
+		s.logger.Error(
+			"Failed to publish events",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Any("errors", errs),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	s.updateFeatureFlagCache(ctx)
+	return &featureproto.UpdateFeatureResponse{}, nil
 }
 
 func (s *FeatureService) UpdateFeatureDetails(
