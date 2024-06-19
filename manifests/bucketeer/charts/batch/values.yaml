@@ -80,6 +80,13 @@ tls:
 serviceToken:
   secret:
 
+oauth:
+  key:
+    secret:
+    public:
+  issuer:
+  clientId:
+
 service:
   type: ClusterIP
   clusterIP: None
