@@ -45,15 +45,13 @@ openapi-gen: openapi-rm
 		--proto_path=${GIT_TOP_DIR} \
 		--proto_path=${PROTOBUF_INCLUDE_DIR} \
 		--proto_path=${GOOGLEAPIS} \
-		--openapiv2_out ./openapiv2 \
-		--include_imports \
-		--descriptor_set_out=${GIT_TOP_DIR}/proto/gateway/proto_descriptor.pb \
+		--openapiv2_out ${GIT_TOP_DIR}/api-description \
 		${GIT_TOP_DIR}/proto/gateway/*.proto; \
+	mv ${GIT_TOP_DIR}/api-description/proto/gateway/service.swagger.json ${GIT_TOP_DIR}/api-description/service.swagger.json
 
 .PHONY: openapi-rm
 openapi-rm:
-	rm -rf ./openapiv2
-	mkdir ./openapiv2
+	rm -rf ${GIT_TOP_DIR}/api-description/*
 
 .PHONY: openapi-ui
 openapi-ui:
