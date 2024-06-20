@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
-import { createRoot } from 'react-dom/client';
+import { render } from 'react-dom';
 import { RawIntlProvider } from 'react-intl';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
@@ -17,17 +17,15 @@ dayjs.extend(isSameOrBefore);
 document.documentElement.setAttribute('lang', getSelectedLanguage());
 
 async function run() {
-  console.log('✅ run');
-  const container = document.getElementById('app');
-  const root = createRoot(container);
-  root.render(
+  render(
     <Provider store={store}>
       <RawIntlProvider value={intl}>
         <Router history={history}>
           <App />
         </Router>
       </RawIntlProvider>
-    </Provider>
+    </Provider>,
+    document.getElementById('app')
   );
 }
 
