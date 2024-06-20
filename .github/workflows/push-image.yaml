@@ -107,9 +107,9 @@ jobs:
             docker build -f Dockerfile-app-$APP -t bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }} --load .
           done
       - name: Build and push the Migration image
-        if: needs.setup.outputs.MIGRATION_REQUIRED == 'true'
+        if:  ${{ needs.setup.outputs.MIGRATION_REQUIRED == 'true' }}
         run: |
-          docker build -f migration/Dockerfile -t bucketeer-image:${{ needs.setup.outputs.IMAGE_TAG }}
+          docker build -f migration/Dockerfile -t bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
       - name: Login to GHCR
         uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         with:
@@ -142,7 +142,7 @@ jobs:
           fi
           done
       - name: Push the Migration image to GHCR
-        if: needs.setup.outputs.MIGRATION_REQUIRED == 'true'
+        if:  ${{ needs.setup.outputs.MIGRATION_REQUIRED == 'true' }}
         run: |
           docker tag bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GHCR_REGISTRY }}/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
           docker push ${{ env.GHCR_REGISTRY }}/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
@@ -185,7 +185,7 @@ jobs:
           fi
           done
       - name: Push the Migration image to GAR
-        if: needs.setup.outputs.MIGRATION_REQUIRED == 'true'
+        if:  ${{ needs.setup.outputs.MIGRATION_REQUIRED == 'true' }}
         run: |
           docker tag bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GAR_REGISTRY }}/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
           docker push ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
