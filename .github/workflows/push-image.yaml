@@ -23,6 +23,7 @@ on:
   push:
     branches:
       - main
+      - feat-migration-test
     tags:
         - "v*"
     paths-ignore:
@@ -106,16 +107,20 @@ jobs:
             IMAGE=`./tools/build/show-image-name.sh $APP`
             docker build -f Dockerfile-app-$APP -t bucketeer-$IMAGE:${{ needs.setup.outputs.IMAGE_TAG }} --load .
           done
-      - name: Build and push the Migration image
+      - name: Build migration image
         if:  ${{ needs.setup.outputs.MIGRATION_REQUIRED == 'true' }}
-        run: |
-          docker build -f migration/Dockerfile -t bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
+        run: docker build migration/ -t bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }} --load
       - name: Login to GHCR
         uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446 # v3.2.0
         with:
           registry: ghcr.io
           username: ${{ secrets.GHCR_USER_NAME }}
           password: ${{ secrets.GHCR_PAT }}
+      - name: Push migration image to GHCR
+        if:  ${{ needs.setup.outputs.MIGRATION_REQUIRED == 'true' }}
+        run: |
+          docker tag bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GHCR_REGISTRY }}/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
+          docker push ${{ env.GHCR_REGISTRY }}/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
       - name: Push go application images to GHCR
         run: |
           push_func(){
@@ -141,11 +146,6 @@ jobs:
             exit "$exit_code"
           fi
           done
-      - name: Push the Migration image to GHCR
-        if:  ${{ needs.setup.outputs.MIGRATION_REQUIRED == 'true' }}
-        run: |
-          docker tag bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GHCR_REGISTRY }}/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
-          docker push ${{ env.GHCR_REGISTRY }}/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@71fee32a0bb7e97b4d33d548e7d957010649d8fa # v2.1.3
@@ -159,7 +159,12 @@ jobs:
           registry: ${{ env.GAR_REGISTRY }}
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
-      - name: push go application images to GAR
+      - name: Push migration image to GAR
+        if:  ${{ needs.setup.outputs.MIGRATION_REQUIRED == 'true' }}
+        run: |
+          docker tag bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
+          docker push ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
+      - name: Push go application images to GAR
         run: |
           push_func(){
             IMAGE=`./tools/build/show-image-name.sh $1`
@@ -184,11 +189,6 @@ jobs:
             exit "$exit_code"
           fi
           done
-      - name: Push the Migration image to GAR
-        if:  ${{ needs.setup.outputs.MIGRATION_REQUIRED == 'true' }}
-        run: |
-          docker tag bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }} ${{ env.GAR_REGISTRY }}/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
-          docker push ${{ env.GAR_REGISTRY }}/${{ secrets.GAR_PROJECT }}/bucketeer/bucketeer-migration:${{ needs.setup.outputs.IMAGE_TAG }}
 
   web-v2:
     needs: setup
