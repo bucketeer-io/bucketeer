@@ -16,7 +16,7 @@ export const ConversionRateDistributionChart: FC<
   const variationValues = goalResult.variationResultsList.map((vr) => {
     return unwrapUndefinable(variations.get(vr.variationId)).value;
   });
-  let bins = Array<number>();
+  let bins = [];
   const hist = goalResult.variationResultsList.map((vr) => {
     const cvrProb = vr.cvrProb;
     if (!cvrProb) {

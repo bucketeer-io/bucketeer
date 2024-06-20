@@ -40,7 +40,6 @@ export const setupAuthToken = createAsyncThunk<void>(
   `${MODULE_NAME}/setupAuthToken`,
   async (_, thunkAPI) => {
     const token = getTokenFromStorage();
-    console.log(`setupAuthToken: token: ${JSON.stringify(token)}`);
     if (!token || !token.accessToken) {
       thunkAPI.dispatch(redirectToAuthUrl());
       throw new Error('token not found.');
@@ -62,7 +61,6 @@ export const redirectToAuthUrl = createAsyncThunk<void>(
   async (_, thunkAPI) => {
     const state = `${Date.now()}`;
     setState(state);
-    console.log(`redirectToAuthUrl: state: ${state}`);
     thunkAPI.dispatch(getAuthCodeURL({ state }));
   }
 );
@@ -77,9 +75,6 @@ export const getAuthCodeURL = createAsyncThunk<string, GetAuthCodeURLParams>(
     const request = new GetAuthCodeURLRequest();
     request.setState(params.state);
     request.setRedirectUrl(urls.AUTH_REDIRECT);
-    console.log(
-      `getAuthCodeURL: state: ${params.state}, redirectUrl: ${urls.AUTH_REDIRECT}`
-    );
     const result = await authGrpc.getAuthCodeURL(request);
     return result.response.getUrl();
   }

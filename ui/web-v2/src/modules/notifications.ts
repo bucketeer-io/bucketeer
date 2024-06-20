@@ -125,7 +125,7 @@ export const createNotification = createAsyncThunk<
 export interface UpdateNotificationParams {
   environmentNamespace: string;
   id: string;
-  name: String;
+  name: string;
   currentSourceTypes: Array<
     Subscription.SourceTypeMap[keyof Subscription.SourceTypeMap]
   >;

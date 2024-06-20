@@ -37,7 +37,7 @@ module.exports = {
             options: {
               postcssOptions: {
                 // This is necessary to import css from node_modules
-                config: './src/postcss.config.js'
+                config: './postcss.config.js'
               }
             }
           }

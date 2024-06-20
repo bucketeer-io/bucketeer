@@ -27,7 +27,7 @@ export const TimeseriesAreaLineChart: FC<TimeseriesAreaLineChartProps> = ({
   representatives,
   height
 }) => {
-  const datasets = Array<any>();
+  const datasets = [];
   dataLabels.forEach((l, i) => {
     const color = COLORS[i % COLORS.length];
     datasets.push({

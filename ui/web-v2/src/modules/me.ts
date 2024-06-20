@@ -62,7 +62,8 @@ export const meSlice = createSlice({
       .addCase(fetchMe.fulfilled, (_, action) => {
         // Since some old environments have empty id, so accept empty and reject only null or undefined
         const curEnvId =
-          getCurrentEnvironmentId() != (null || undefined)
+          getCurrentEnvironmentId() != null &&
+          getCurrentEnvironmentId() != undefined
             ? getCurrentEnvironmentId()
             : action.payload.consoleAccount.environmentRolesList[0].environment
                 .id;
@@ -84,7 +85,8 @@ const currentEnvironmentRole = (
   if ('consoleAccount' in state.me) {
     // Since some old environments have empty id, so accept empty and reject only null or undefined
     const curEnvId =
-      getCurrentEnvironmentId() != (null || undefined)
+      getCurrentEnvironmentId() != null &&
+      getCurrentEnvironmentId() != undefined
         ? getCurrentEnvironmentId()
         : state.me.consoleAccount.environmentRolesList[0].environment.id;
     let curEnvRole = state.me.consoleAccount.environmentRolesList.find(

@@ -1,4 +1,3 @@
-// @ts-ignore
 import Cookies from 'js-cookie';
 
 const STATE_AVAILABLE_DAY = 1 / 24;
