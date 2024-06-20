@@ -801,6 +801,7 @@ message AutoOpsRuleOpsTypeChangedEvent {
   bucketeer.autoops.OpsType ops_type = 1;
 }
 
+// TODO: Remove this function after auto ops migration.
 // Deprecated
 message AutoOpsRuleTriggeredAtChangedEvent {}
 

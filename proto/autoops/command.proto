@@ -28,6 +28,7 @@ message CreateAutoOpsRuleCommand {
   repeated DatetimeClause datetime_clauses = 4;
 }
 
+// TODO: Remove this function after auto ops migration.
 // Deprecated: Please update Clause.ActionType to update Enable or Disable.
 message ChangeAutoOpsRuleOpsTypeCommand {
   OpsType ops_type = 1;
@@ -37,6 +38,7 @@ message DeleteAutoOpsRuleCommand {}
 
 message StopAutoOpsRuleCommand {}
 
+// TODO: Remove this function after auto ops migration.
 // Deprecated
 message ChangeAutoOpsRuleTriggeredAtCommand {}
 

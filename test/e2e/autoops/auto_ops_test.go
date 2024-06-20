@@ -193,7 +193,7 @@ func TestCreateAndListAutoOpsRuleForMultiSchedule(t *testing.T) {
 		t.Fatalf("different dateClause1 action type, expected: %v, actual: %v", autoopsproto.ActionType_DISABLE, actualClause1.ActionType)
 	}
 
-	actualClause2 := actual.Clauses[0]
+	actualClause2 := actual.Clauses[1]
 	if actualClause2.ActionType != autoopsproto.ActionType_ENABLE {
 		t.Fatalf("different clause2 action type, expected: %v, actual: %v", autoopsproto.ActionType_ENABLE, actualClause2.ActionType)
 	}
@@ -429,8 +429,8 @@ func TestExecuteAutoOpsRuleForMultiSchedule(t *testing.T) {
 		t.Fatalf("failed to execute auto ops: %s", err.Error())
 	}
 	feature = getFeature(t, featureClient, featureID)
-	if feature.Enabled == false {
-		t.Fatalf("feature is disabled")
+	if feature.Enabled == true {
+		t.Fatalf("feature is enabled")
 	}
 	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if autoOpsRules[0].AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING {
@@ -775,7 +775,7 @@ func createDatetimeClausesWithActionType(t *testing.T, createCount int) []*autoo
 			at = autoopsproto.ActionType_ENABLE
 		}
 		dc := &autoopsproto.DatetimeClause{
-			Time:       time.Now().Add(time.Duration(i+1*5) * time.Second).Unix(),
+			Time:       time.Now().Add(time.Duration((i+1)*5) * time.Second).Unix(),
 			ActionType: at,
 		}
 		dcs = append(dcs, dc)
@@ -1333,8 +1333,8 @@ func checkIfAutoOpsRulesAreTriggered(t *testing.T, featureID string) {
 		}
 		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 		aor := autoOpsRules[0]
-		if aor.TriggeredAt == 0 || (aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING && aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_FINISHED) {
-			t.Fatalf("aut ops rule was not running.")
+		if !(aor.AutoOpsStatus == autoopsproto.AutoOpsStatus_RUNNING || aor.AutoOpsStatus == autoopsproto.AutoOpsStatus_FINISHED) {
+			t.Fatalf("auto ops rule was not running.")
 		}
 		break
 	}

@@ -224,6 +224,7 @@ func TestSetTriggeredAt(t *testing.T) {
 	aor := createAutoOpsRule(t)
 	aor.SetTriggeredAt()
 	assert.NotZero(t, aor.TriggeredAt)
+	assert.Equal(t, aor.AutoOpsStatus, autoopsproto.AutoOpsStatus_FINISHED)
 }
 
 func TestAlreadyTriggeredAt(t *testing.T) {
