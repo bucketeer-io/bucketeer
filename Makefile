@@ -37,6 +37,9 @@ docker-run:
 # Go
 #############################
 
+.PHONY: generate
+generate: proto-all mockgen
+
 .PHONY: check-all
 check-all: proto-check mockgen update-repos diff-check lint build-go test-go
 
