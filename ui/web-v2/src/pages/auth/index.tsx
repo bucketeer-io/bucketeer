@@ -7,7 +7,6 @@ import { exchangeTokenFromUrl, hasToken } from '../../modules/auth';
 import { AppDispatch } from '../../store';
 
 export const AuthCallbackPage: FC = memo(() => {
-  console.log(`AuthCallbackPage`);
   const history = useHistory();
   const dispatch = useDispatch<AppDispatch>();
   const location = useLocation();

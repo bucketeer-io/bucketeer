@@ -65,7 +65,6 @@ import { SegmentIndexPage } from './segment';
 import { SettingsIndexPage } from './settings';
 
 export const App: FC = memo(() => {
-  console.log(`App`);
   useEffect(() => {
     if (
       !window.location.href.includes('localhost') &&
@@ -91,7 +90,6 @@ export const App: FC = memo(() => {
 });
 
 export const Root: FC = memo(() => {
-  console.log('✅ Root');
   const dispatch = useDispatch<AppDispatch>();
   const [pageKey, setPageKey] = useState<string>(uuid());
   const me = useMe();
@@ -108,7 +106,6 @@ export const Root: FC = memo(() => {
 
   useEffect(() => {
     if (!token) {
-      console.log('Root: setupAuthToken');
       dispatch(setupAuthToken());
       return;
     }
@@ -135,7 +132,6 @@ export const Root: FC = memo(() => {
     );
   };
 
-  console.log(`Root: me.isLogin: ${me.isLogin}`);
   if (me.isLogin) {
     return (
       <div className="flex flex-row w-full h-full bg-gray-100">
@@ -158,7 +154,6 @@ export const Root: FC = memo(() => {
       </div>
     );
   }
-  console.log(`Root: token: ${token}`);
   if (token && myOrganization.length > 1) {
     return (
       <div className="flex flex-col items-center justify-center h-full bg-[#ece6fb]">

@@ -98,7 +98,7 @@ export const createPush = createAsyncThunk<
 export interface UpdatePushParams {
   environmentNamespace: string;
   id: string;
-  name: String;
+  name: string;
   currentTags: Array<string>;
   tags: Array<string>;
 }

@@ -348,7 +348,7 @@ export const SegmentIndexPage: FC = memo(() => {
   const update = useCallback(
     async (data) => {
       let name: string;
-      let description: String;
+      let description: string;
       let file: File;
 
       if (dirtyFields.name) {

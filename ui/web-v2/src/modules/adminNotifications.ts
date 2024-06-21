@@ -140,7 +140,7 @@ export const createNotification = createAsyncThunk<
 
 export interface UpdateAdminNotificationParams {
   id: string;
-  name: String;
+  name: string;
   currentSourceTypes: Array<
     Subscription.SourceTypeMap[keyof Subscription.SourceTypeMap]
   >;

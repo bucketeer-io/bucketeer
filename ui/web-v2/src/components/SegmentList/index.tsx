@@ -81,7 +81,7 @@ export const SegmentList: FC<SegmentListProps> = memo(
           );
       }
     };
-    const createMenuItems = (includedUserCount: Number): Array<MenuItem> => {
+    const createMenuItems = (includedUserCount: number): Array<MenuItem> => {
       const items: Array<MenuItem> = [];
       items.push({
         action: MenuActions.DOWNLOAD,

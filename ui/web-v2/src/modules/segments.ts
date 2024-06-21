@@ -172,7 +172,7 @@ export interface UpdateSegmentParams {
   environmentNamespace: string;
   id: string;
   name: string;
-  description: String;
+  description: string;
 }
 
 export const updateSegment = createAsyncThunk<
@@ -180,7 +180,7 @@ export const updateSegment = createAsyncThunk<
   UpdateSegmentParams | undefined,
   { state: AppState }
 >(`${MODULE_NAME}/update`, async (params) => {
-  const cmdList = new Array<Command>();
+  const cmdList = [];
   if (params.name) {
     const cmd = new ChangeSegmentNameCommand();
     cmd.setName(params.name);
