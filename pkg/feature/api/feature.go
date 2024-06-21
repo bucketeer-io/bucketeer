@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -29,6 +30,7 @@ import (
 	evaluation "github.com/bucketeer-io/bucketeer/evaluation"
 	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	v2ao "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2"
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	experimentdomain "github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
@@ -683,7 +685,6 @@ func (s *FeatureService) UpdateFeature(
 	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
 		return nil, err
 	}
-	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
 		s.logger.Error(
@@ -701,6 +702,7 @@ func (s *FeatureService) UpdateFeature(
 		}
 		return nil, dt.Err()
 	}
+	var event *eventproto.Event
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		featureStorage := v2fs.NewFeatureStorage(tx)
 		feature, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
@@ -714,19 +716,40 @@ func (s *FeatureService) UpdateFeature(
 			)
 			return err
 		}
-		handler = command.NewFeatureCommandHandler(editor, feature, req.EnvironmentId, req.Comment)
-		err = handler.UpdateFeature(ctx, req)
+		updated, err := feature.Update(
+			req.Name,
+			req.Description,
+		)
 		if err != nil {
-			s.logger.Error(
-				"Failed to rename feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-				)...,
-			)
 			return err
 		}
-		err = featureStorage.UpdateFeature(ctx, feature, req.EnvironmentId)
+		ub, err := json.MarshalIndent(updated.Feature, "", "  ")
+		if err != nil {
+			return err
+		}
+		fb, err := json.MarshalIndent(feature.Feature, "", "  ")
+		if err != nil {
+			return err
+		}
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_FEATURE,
+			feature.Id,
+			eventproto.Event_FEATURE_UPDATED,
+			&eventproto.FeatureUpdatedEvent{
+				Id:           req.Id,
+				Data:         string(ub),
+				PreviousData: string(fb),
+			},
+			req.EnvironmentId,
+			// check require comment.
+			domainevent.WithComment(req.Comment),
+			domainevent.WithNewVersion(feature.Version),
+		)
+		if err != nil {
+			return err
+		}
+		err = featureStorage.UpdateFeature(ctx, updated, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to update feature",
@@ -742,7 +765,7 @@ func (s *FeatureService) UpdateFeature(
 	if err != nil {
 		return nil, err
 	}
-	if errs := s.publishDomainEvents(ctx, handler.Events); len(errs) > 0 {
+	if errs := s.publishDomainEvents(ctx, []*eventproto.Event{event}); len(errs) > 0 {
 		s.logger.Error(
 			"Failed to publish events",
 			log.FieldsFromImcomingContext(ctx).AddFields(

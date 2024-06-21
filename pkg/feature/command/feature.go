@@ -16,7 +16,6 @@ package command
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
@@ -774,40 +773,6 @@ func (h *FeatureCommandHandler) ChangeVariationDescription(
 			FeatureId:   h.feature.Id,
 			Id:          cmd.Id,
 			Description: cmd.Description,
-		},
-	)
-	if err != nil {
-		return err
-	}
-	h.Events = append(h.Events, event)
-	return nil
-}
-
-func (h *FeatureCommandHandler) UpdateFeature(
-	ctx context.Context,
-	req *proto.UpdateFeatureRequest,
-) error {
-	updated, err := h.feature.Update(
-		req.Name,
-		req.Description,
-	)
-	if err != nil {
-		return err
-	}
-	ub, err := json.MarshalIndent(updated.Feature, "", "  ")
-	if err != nil {
-		return err
-	}
-	fb, err := json.MarshalIndent(h.feature.Feature, "", "  ")
-	if err != nil {
-		return err
-	}
-	event, err := h.eventFactory.CreateEvent(
-		eventproto.Event_FEATURE_UPDATED,
-		&eventproto.FeatureUpdatedEvent{
-			Id:           h.feature.Id,
-			Data:         string(ub),
-			PreviousData: string(fb),
 		},
 	)
 	if err != nil {
