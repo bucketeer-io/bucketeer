@@ -27,21 +27,25 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	acmock "github.com/bucketeer-io/bucketeer/pkg/autoops/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
 	btclientmock "github.com/bucketeer-io/bucketeer/pkg/batch/client/mock"
 	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
 	envclientmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
+	exprclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	aoproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	envproto "github.com/bucketeer-io/bucketeer/proto/environment"
+	exprproto "github.com/bucketeer-io/bucketeer/proto/experiment"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
@@ -4483,4 +4487,174 @@ func newUUID(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return id.String()
+}
+
+func TestUpdateFeature(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken()
+	localizer := locale.NewLocalizer(ctx)
+	unauthenticatedErr, _ := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+		Locale:  localizer.GetLocale(),
+		Message: localizer.MustLocalize(locale.UnauthenticatedError),
+	})
+	missingIDErr, _ := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
+		Locale:  localizer.GetLocale(),
+		Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+	})
+	internalErr, _ := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		Locale:  localizer.GetLocale(),
+		Message: localizer.MustLocalizeWithTemplate(locale.InternalServerError, "id"),
+	})
+
+	// ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+	// 	"accept-language": []string{"ja"},
+	// })
+	// createError := func(status *gstatus.Status, msg string) error {
+	// 	st, err := status.WithDetails(&errdetails.LocalizedMessage{
+	// 		Locale:  localizer.GetLocale(),
+	// 		Message: msg,
+	// 	})
+	// 	require.NoError(t, err)
+	// 	return st.Err()
+	// }
+
+	patterns := []*struct {
+		desc        string
+		ctx         context.Context
+		setup       func(*FeatureService)
+		input       *featureproto.UpdateFeatureRequest
+		expectedErr error
+	}{
+		{
+			desc:        "fail: checkEnvironmentRole",
+			ctx:         context.Background(),
+			input:       &featureproto.UpdateFeatureRequest{},
+			expectedErr: unauthenticatedErr.Err(),
+		},
+		{
+			desc: "fail: id is empty",
+			ctx:  createContextWithToken(),
+			input: &featureproto.UpdateFeatureRequest{
+				EnvironmentId: "eid",
+				Comment:       "comment",
+				Name:          wrapperspb.String("name"),
+				Description:   wrapperspb.String("desc"),
+			},
+			expectedErr: missingIDErr.Err(),
+		},
+		{
+			desc: "fail: validateFeatureStatus",
+			setup: func(s *FeatureService) {
+				s.experimentClient.(*exprclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					nil, errors.New("internal"),
+				)
+			},
+			ctx: createContextWithToken(),
+			input: &featureproto.UpdateFeatureRequest{
+				EnvironmentId: "eid",
+				Comment:       "comment",
+				Id:            "fid",
+				Name:          wrapperspb.String("name"),
+				Description:   wrapperspb.String("desc"),
+			},
+			expectedErr: internalErr.Err(),
+		},
+		{
+			desc: "fail: validateEnvironmentSettings",
+			setup: func(s *FeatureService) {
+				s.experimentClient.(*exprclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&exprproto.ListExperimentsResponse{}, nil,
+				)
+				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(
+					gomock.Any(),
+					&envproto.GetEnvironmentV2Request{Id: "eid"},
+				).Return(nil, errors.New("internal"))
+			},
+			ctx: createContextWithToken(),
+			input: &featureproto.UpdateFeatureRequest{
+				EnvironmentId: "eid",
+				Comment:       "comment",
+				Id:            "fid",
+				Name:          wrapperspb.String("name"),
+				Description:   wrapperspb.String("desc"),
+			},
+			expectedErr: internalErr.Err(),
+		},
+		{
+			desc: "fail: publish doman event",
+			setup: func(s *FeatureService) {
+				s.experimentClient.(*exprclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&exprproto.ListExperimentsResponse{},
+					nil,
+				)
+				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(
+					gomock.Any(),
+					&envproto.GetEnvironmentV2Request{Id: "eid"},
+				).Return(
+					&envproto.GetEnvironmentV2Response{Environment: &envproto.EnvironmentV2{RequireComment: true}},
+					nil,
+				)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
+					gomock.Any(), gomock.Any(),
+				).Return(map[string]error{"key": errors.New("internal")})
+			},
+			ctx: createContextWithToken(),
+			input: &featureproto.UpdateFeatureRequest{
+				EnvironmentId: "eid",
+				Comment:       "comment",
+				Id:            "fid",
+				Name:          wrapperspb.String("name"),
+				Description:   wrapperspb.String("desc"),
+			},
+			expectedErr: internalErr.Err(),
+		},
+		{
+			desc: "success",
+			setup: func(s *FeatureService) {
+				s.experimentClient.(*exprclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), gomock.Any()).Return(
+					&exprproto.ListExperimentsResponse{},
+					nil,
+				)
+				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(
+					gomock.Any(),
+					&envproto.GetEnvironmentV2Request{Id: "eid"},
+				).Return(
+					&envproto.GetEnvironmentV2Response{Environment: &envproto.EnvironmentV2{RequireComment: true}},
+					nil,
+				)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.domainPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.batchClient.(*btclientmock.MockClient).EXPECT().ExecuteBatchJob(gomock.Any(), gomock.Any())
+			},
+			ctx: createContextWithToken(),
+			input: &featureproto.UpdateFeatureRequest{
+				EnvironmentId: "eid",
+				Comment:       "comment",
+				Id:            "fid",
+				Name:          wrapperspb.String("name"),
+				Description:   wrapperspb.String("desc"),
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		service := createFeatureServiceNew(mockController)
+		if p.setup != nil {
+			p.setup(service)
+		}
+		_, err := service.UpdateFeature(p.ctx, p.input)
+		assert.Equal(t, p.expectedErr, err)
+	}
 }
