@@ -1,5 +1,6 @@
 const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 
 module.exports = {
   entry: './src/main.tsx',
@@ -63,6 +64,7 @@ module.exports = {
     extensions: ['.ts', '.tsx', '.js', '.json']
   },
   optimization: {
+    minimizer: [new CssMinimizerPlugin()],
     splitChunks: {
       chunks: 'all',
       maxInitialRequests: 20, // for HTTP2
