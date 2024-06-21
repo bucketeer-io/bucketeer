@@ -4,7 +4,7 @@ PROTO_WITHOUT_DESCRIPTOR_FOLDERS := $(filter-out $(PROTO_WITH_DESCRIPTOR_FOLDERS
 
 GIT_TOP_DIR := $(shell cd .. ; pwd)
 PROTOBUF_INCLUDE_DIR := ./external/protocolbuffers/protobuf/v23.4
-GOOGLEAPIS := ./external/googleapis/googleapis/83e756a66b80b072bd234abcfe89edf459090974
+GOOGLEAPIS := ./external/googleapis/googleapis/ae887c9d22926a147650a99f2ef1bb3cef218826
 
 .PHONY: go
 go: remove-go
@@ -46,6 +46,7 @@ openapi-gen: openapi-rm
 		--proto_path=${PROTOBUF_INCLUDE_DIR} \
 		--proto_path=${GOOGLEAPIS} \
 		--openapiv2_out ${GIT_TOP_DIR}/api-description \
+		--openapiv2_opt=visibility_restriction_selectors=PUBLIC \
 		${GIT_TOP_DIR}/proto/gateway/*.proto; \
 	mv ${GIT_TOP_DIR}/api-description/proto/gateway/service.swagger.json ${GIT_TOP_DIR}/api-description/service.swagger.json
 

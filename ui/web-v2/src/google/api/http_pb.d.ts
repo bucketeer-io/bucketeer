@@ -74,6 +74,9 @@ export class HttpRule extends jspb.Message {
   getBody(): string;
   setBody(value: string): void;
 
+  getResponseBody(): string;
+  setResponseBody(value: string): void;
+
   clearAdditionalBindingsList(): void;
   getAdditionalBindingsList(): Array<HttpRule>;
   setAdditionalBindingsList(value: Array<HttpRule>): void;
@@ -108,6 +111,7 @@ export namespace HttpRule {
     patch: string;
     custom?: CustomHttpPattern.AsObject;
     body: string;
+    responseBody: string;
     additionalBindingsList: Array<HttpRule.AsObject>;
   };
 

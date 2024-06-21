@@ -15433,6 +15433,10 @@
                 "out_type": "PingResponse",
                 "options": [
                   {
+                    "name": "(google.api.method_visibility).restriction",
+                    "value": "INTERNAL"
+                  },
+                  {
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
@@ -15452,6 +15456,10 @@
                 "in_type": "GetEvaluationsRequest",
                 "out_type": "GetEvaluationsResponse",
                 "options": [
+                  {
+                    "name": "(google.api.method_visibility).restriction",
+                    "value": "INTERNAL"
+                  },
                   {
                     "name": "(google.api.http)",
                     "aggregated": [
@@ -15473,6 +15481,10 @@
                 "out_type": "GetEvaluationResponse",
                 "options": [
                   {
+                    "name": "(google.api.method_visibility).restriction",
+                    "value": "INTERNAL"
+                  },
+                  {
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
@@ -15492,6 +15504,10 @@
                 "in_type": "GetFeatureFlagsRequest",
                 "out_type": "GetFeatureFlagsResponse",
                 "options": [
+                  {
+                    "name": "(google.api.method_visibility).restriction",
+                    "value": "INTERNAL"
+                  },
                   {
                     "name": "(google.api.http)",
                     "aggregated": [
@@ -15513,6 +15529,10 @@
                 "out_type": "GetSegmentUsersResponse",
                 "options": [
                   {
+                    "name": "(google.api.method_visibility).restriction",
+                    "value": "INTERNAL"
+                  },
+                  {
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
@@ -15532,6 +15552,10 @@
                 "in_type": "RegisterEventsRequest",
                 "out_type": "RegisterEventsResponse",
                 "options": [
+                  {
+                    "name": "(google.api.method_visibility).restriction",
+                    "value": "INTERNAL"
+                  },
                   {
                     "name": "(google.api.http)",
                     "aggregated": [
@@ -15553,6 +15577,10 @@
                 "out_type": "TrackResponse",
                 "options": [
                   {
+                    "name": "(google.api.method_visibility).restriction",
+                    "value": "INTERNAL"
+                  },
+                  {
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
@@ -15569,6 +15597,10 @@
                 "out_type": "GetFeatureResponse",
                 "options": [
                   {
+                    "name": "(google.api.method_visibility).restriction",
+                    "value": "PUBLIC"
+                  },
+                  {
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
@@ -15584,6 +15616,10 @@
                 "in_type": "UpdateFeatureRequest",
                 "out_type": "UpdateFeatureResponse",
                 "options": [
+                  {
+                    "name": "(google.api.method_visibility).restriction",
+                    "value": "PUBLIC"
+                  },
                   {
                     "name": "(google.api.http)",
                     "aggregated": [
@@ -15608,6 +15644,9 @@
           },
           {
             "path": "google/protobuf/wrappers.proto"
+          },
+          {
+            "path": "google/api/visibility.proto"
           },
           {
             "path": "proto/user/user.proto"

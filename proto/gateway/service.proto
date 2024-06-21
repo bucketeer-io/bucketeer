@@ -19,6 +19,7 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/gateway";
 
 import "google/api/annotations.proto";
 import "google/protobuf/wrappers.proto";
+import "google/api/visibility.proto";
 
 import "proto/user/user.proto";
 import "proto/feature/evaluation.proto";
@@ -137,18 +138,21 @@ message UpdateFeatureRequest {
 message UpdateFeatureResponse {}
 service Gateway {
   rpc Ping(PingRequest) returns (PingResponse) {
+    option (google.api.method_visibility).restriction = "INTERNAL";
     option (google.api.http) = {
       post: "/ping"
       body: "*"
     };
   }
   rpc GetEvaluations(GetEvaluationsRequest) returns (GetEvaluationsResponse) {
+    option (google.api.method_visibility).restriction = "INTERNAL";
     option (google.api.http) = {
       post: "/get_evaluations"
       body: "*"
     };
   }
   rpc GetEvaluation(GetEvaluationRequest) returns (GetEvaluationResponse) {
+    option (google.api.method_visibility).restriction = "INTERNAL";
     option (google.api.http) = {
       post: "/get_evaluation"
       body: "*"
@@ -156,6 +160,7 @@ service Gateway {
   }
   rpc GetFeatureFlags(GetFeatureFlagsRequest)
       returns (GetFeatureFlagsResponse) {
+    option (google.api.method_visibility).restriction = "INTERNAL";
     option (google.api.http) = {
       post: "/get_feature_flags"
       body: "*"
@@ -163,28 +168,33 @@ service Gateway {
   }
   rpc GetSegmentUsers(GetSegmentUsersRequest)
       returns (GetSegmentUsersResponse) {
+    option (google.api.method_visibility).restriction = "INTERNAL";
     option (google.api.http) = {
       post: "/get_segment_users"
       body: "*"
     };
   }
   rpc RegisterEvents(RegisterEventsRequest) returns (RegisterEventsResponse) {
+    option (google.api.method_visibility).restriction = "INTERNAL";
     option (google.api.http) = {
       post: "/register_events"
       body: "*"
     };
   }
   rpc Track(TrackRequest) returns (TrackResponse) {
+    option (google.api.method_visibility).restriction = "INTERNAL";
     option (google.api.http) = {
       get: "/track"
     };
   }
   rpc GetFeature(GetFeatureRequest) returns (GetFeatureResponse) {
+    option (google.api.method_visibility).restriction = "PUBLIC";
     option (google.api.http) = {
       get: "/v1/features/{id}"
     };
   }
   rpc UpdateFeature(UpdateFeatureRequest) returns (UpdateFeatureResponse) {
+    option (google.api.method_visibility).restriction = "PUBLIC";
     option (google.api.http) = {
       patch: "/v1/features/{id}"
       body: "*"

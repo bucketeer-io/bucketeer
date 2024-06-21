@@ -383,6 +383,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           (f = msg.getCustom()) &&
           proto.google.api.CustomHttpPattern.toObject(includeInstance, f),
         body: jspb.Message.getFieldWithDefault(msg, 7, ''),
+        responseBody: jspb.Message.getFieldWithDefault(msg, 12, ''),
         additionalBindingsList: jspb.Message.toObjectList(
           msg.getAdditionalBindingsList(),
           proto.google.api.HttpRule.toObject,
@@ -458,6 +459,10 @@ proto.google.api.HttpRule.deserializeBinaryFromReader = function (msg, reader) {
         var value = /** @type {string} */ (reader.readString());
         msg.setBody(value);
         break;
+      case 12:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setResponseBody(value);
+        break;
       case 11:
         var value = new proto.google.api.HttpRule();
         reader.readMessage(
@@ -528,6 +533,10 @@ proto.google.api.HttpRule.serializeBinaryToWriter = function (message, writer) {
   f = message.getBody();
   if (f.length > 0) {
     writer.writeString(7, f);
+  }
+  f = message.getResponseBody();
+  if (f.length > 0) {
+    writer.writeString(12, f);
   }
   f = message.getAdditionalBindingsList();
   if (f.length > 0) {
@@ -818,6 +827,22 @@ proto.google.api.HttpRule.prototype.getBody = function () {
  */
 proto.google.api.HttpRule.prototype.setBody = function (value) {
   return jspb.Message.setProto3StringField(this, 7, value);
+};
+
+/**
+ * optional string response_body = 12;
+ * @return {string}
+ */
+proto.google.api.HttpRule.prototype.getResponseBody = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 12, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.google.api.HttpRule} returns this
+ */
+proto.google.api.HttpRule.prototype.setResponseBody = function (value) {
+  return jspb.Message.setProto3StringField(this, 12, value);
 };
 
 /**

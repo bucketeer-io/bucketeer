@@ -1,4 +1,4 @@
-// source: google/rpc/error_details.proto
+// source: proto/external/googleapis/googleapis/ae887c9d22926a147650a99f2ef1bb3cef218826/google/rpc/error_details.proto
 /**
  * @fileoverview
  * @enhanceable
