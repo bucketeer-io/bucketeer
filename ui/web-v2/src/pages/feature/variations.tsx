@@ -133,8 +133,8 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
 );
 
 export function createVariationCommands(
-  orgVariations: any,
-  valVariations: any
+  orgVariations,
+  valVariations
 ): Array<Command> {
   const commands: Array<Command> = [];
   const orgVariationIds = orgVariations.map((v) => v.id);
@@ -176,8 +176,8 @@ export function createVariationCommands(
 }
 
 function createVariationValueCommands(
-  orgVariation: any,
-  valVariation: any
+  orgVariation,
+  valVariation
 ): Array<Command> {
   const commands: Array<Command> = [];
   if (orgVariation.value !== valVariation.value) {
@@ -192,8 +192,8 @@ function createVariationValueCommands(
 }
 
 function createVariationNameCommands(
-  orgVariation: any,
-  valVariation: any
+  orgVariation,
+  valVariation
 ): Array<Command> {
   const commands: Array<Command> = [];
   if (orgVariation.name !== valVariation.name) {
@@ -208,8 +208,8 @@ function createVariationNameCommands(
 }
 
 function createVariationDescriptionCommands(
-  orgVariation: any,
-  valVariation: any
+  orgVariation,
+  valVariation
 ): Array<Command> {
   const commands: Array<Command> = [];
   if (orgVariation.description !== valVariation.description) {

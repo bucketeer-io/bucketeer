@@ -81,7 +81,7 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
         const f = selectFeatureById(state.features, featureId);
         return f;
       },
-      (left: Feature.AsObject | undefined, right: any): boolean => {
+      (left: Feature.AsObject | undefined, right): boolean => {
         return JSON.stringify(left) === JSON.stringify(right);
       }
     );
@@ -343,7 +343,7 @@ const createClauseType = (
   }
 };
 
-export const createEnabledCommands = (org: any, val: any): Command[] => {
+export const createEnabledCommands = (org, val): Command[] => {
   const commands: Command[] = [];
   if (org.enabled != val.enabled) {
     if (val.enabled) {
@@ -361,10 +361,7 @@ export const createEnabledCommands = (org: any, val: any): Command[] => {
   return commands;
 };
 
-export const createTargetCommands = (
-  orgTargets: any,
-  valTargets: any
-): Command[] => {
+export const createTargetCommands = (orgTargets, valTargets): Command[] => {
   const commands: Command[] = [];
   orgTargets.forEach((org, idx) => {
     const val = valTargets[idx];
@@ -398,7 +395,7 @@ export const createTargetCommands = (
   return commands;
 };
 
-export function createRuleCommands(org: any, val: any): Command[] {
+export function createRuleCommands(org, val): Command[] {
   const commands: Array<Command> = [];
   const orgIds = org.map((r) => r.id);
   const valIds = val.map((r) => r.id);
@@ -475,7 +472,7 @@ const createChangeRulesOrderCommand = (valIds: string[]): Command => {
   });
 };
 
-const createRule = (rule: any): Rule => {
+const createRule = (rule): Rule => {
   const r = new Rule();
   r.setId(rule.id);
   r.setStrategy(createStrategy(rule.strategy));
@@ -574,8 +571,8 @@ export const createClauseCommands = (
 
 function createClauseAttributeCommands(
   ruleId: string,
-  orgClause: any,
-  valClause: any
+  orgClause,
+  valClause
 ): Command[] {
   const commands: Command[] = [];
   if (orgClause.attribute !== valClause.attribute) {
@@ -706,7 +703,7 @@ const createStrategyCommands = (
   return commands;
 };
 
-export function createDefaultStrategyCommands(org: any, val: any): Command[] {
+export function createDefaultStrategyCommands(org, val): Command[] {
   const commands: Command[] = [];
   if (!deepEqual(org, val)) {
     const command = new ChangeDefaultStrategyCommand();
@@ -718,7 +715,7 @@ export function createDefaultStrategyCommands(org: any, val: any): Command[] {
   return commands;
 }
 
-export function createOffVariationCommands(org: any, val: any): Command[] {
+export function createOffVariationCommands(org, val): Command[] {
   const commands: Command[] = [];
   if (org.value !== val.value) {
     const command = new ChangeOffVariationCommand();
@@ -730,7 +727,7 @@ export function createOffVariationCommands(org: any, val: any): Command[] {
   return commands;
 }
 
-export function createPrerequisitesCommands(org: any, val: any): Command[] {
+export function createPrerequisitesCommands(org, val): Command[] {
   const commands: Array<Command> = [];
 
   // handle remove feature

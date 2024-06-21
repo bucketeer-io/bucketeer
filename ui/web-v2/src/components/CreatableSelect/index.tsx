@@ -14,7 +14,7 @@ export interface CreatableSelectProps {
   closeMenuOnSelect?: boolean;
   className?: string;
   onChange: (options: Option[]) => void;
-  value?: any;
+  value?: Option;
   placeholder?: string;
 }
 

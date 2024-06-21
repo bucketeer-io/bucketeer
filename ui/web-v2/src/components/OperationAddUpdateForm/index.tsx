@@ -49,6 +49,7 @@ import {
 } from '../AddUpdateEventRateOperation';
 import { AddUpdateScheduleOperation } from '../AddUpdateScheduleOperation';
 import { ClauseType } from '../FeatureAutoOpsRulesForm';
+import { OperationForm } from '../../pages/feature/formSchema';
 
 export interface ProgressiveRolloutTypeTab {
   label: string;
@@ -113,7 +114,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
 
     const [radioList, setRadioList] = useState([]);
 
-    const methods = useFormContext<any>();
+    const methods = useFormContext<OperationForm>();
     const {
       handleSubmit,
       control,

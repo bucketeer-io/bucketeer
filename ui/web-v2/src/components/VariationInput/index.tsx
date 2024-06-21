@@ -11,6 +11,7 @@ import { useIsEditable } from '../../modules/me';
 import { Feature } from '../../proto/feature/feature_pb';
 import { HoverPopover } from '../HoverPopover';
 import { Option, Select } from '../Select';
+import { VariationForm } from '../../pages/feature/formSchema';
 
 const variationTypeOptionsBoolean: Option = {
   value: Feature.VariationType.BOOLEAN.toString(),
@@ -70,7 +71,7 @@ export const VariationInput: FC<VariationInputProps> = memo(
   }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsEditable();
-    const methods = useFormContext();
+    const methods = useFormContext<VariationForm>();
     const {
       register,
       control,
@@ -91,13 +92,13 @@ export const VariationInput: FC<VariationInputProps> = memo(
     });
     const variationType = watch('variationType');
     const disabledAddBtn =
-      variationType == Feature.VariationType.BOOLEAN.toString() ||
+      variationType == Feature.VariationType.BOOLEAN ||
       isProgressiveRolloutsRunning;
 
     const { onVariationId, onVariationIds, offVariationId } =
       rulesAppliedVariationList;
 
-    const handleChange = useCallback((type: string) => {
+    const handleChange = useCallback((type) => {
       const defaultVariationId1 = uuid();
       const defaultVariationId2 = uuid();
 
@@ -108,29 +109,25 @@ export const VariationInput: FC<VariationInputProps> = memo(
           variations: [
             {
               id: defaultVariationId1,
-              value:
-                type === Feature.VariationType.BOOLEAN.toString() ? 'true' : '',
+              value: type === Feature.VariationType.BOOLEAN ? 'true' : '',
               name: '',
               description: ''
             },
             {
               id: defaultVariationId2,
-              value:
-                type === Feature.VariationType.BOOLEAN.toString()
-                  ? 'false'
-                  : '',
+              value: type === Feature.VariationType.BOOLEAN ? 'false' : '',
               name: '',
               description: ''
             }
           ],
           onVariation: {
             id: defaultVariationId1,
-            value: 0,
+            value: '0',
             label: `${f(messages.feature.variation)} 1`
           },
           offVariation: {
             id: defaultVariationId2,
-            value: 1,
+            value: '1',
             label: `${f(messages.feature.variation)} 2`
           }
         },
@@ -197,7 +194,9 @@ export const VariationInput: FC<VariationInputProps> = memo(
           </span>
           {typeDisabled ? (
             <span className="text-sm text-gray-600">{`: ${
-              variationTypeOptions.find((o) => o.value === variationType).label
+              variationTypeOptions.find(
+                (o) => o.value === variationType.toString()
+              ).label
             }`}</span>
           ) : (
             <div>
@@ -209,7 +208,7 @@ export const VariationInput: FC<VariationInputProps> = memo(
                     options={variationTypeOptions}
                     disabled={!editable}
                     value={variationTypeOptions.find(
-                      (o) => o.value === variationType
+                      (o) => o.value === variationType.toString()
                     )}
                     onChange={(option: Option) => {
                       handleChange(option.value);
@@ -222,16 +221,17 @@ export const VariationInput: FC<VariationInputProps> = memo(
           )}
         </div>
         <div className="space-y-5 flex flex-col">
-          {variations.map((variation: any, idx) => {
+          {variations.map((variation, idx) => {
             const disableRemoveBtn =
-              variationType == Feature.VariationType.BOOLEAN.toString() ||
+              variationType.toString() ==
+                Feature.VariationType.BOOLEAN.toString() ||
               variation.id === onVariationId ||
               variation.id === offVariationId ||
               (typeDisabled && onVariationIds.includes(variation.id));
             return (
               <div key={idx} className="flex flex-row flex-wrap mb-2">
-                {getValues('variationType') ==
-                Feature.VariationType.BOOLEAN.toString() ? (
+                {getValues('variationType') ===
+                Feature.VariationType.BOOLEAN ? (
                   <div>
                     <label className="input-label" htmlFor="variation">
                       {`${f(messages.feature.variation)} ${idx + 1}`}
@@ -253,10 +253,8 @@ export const VariationInput: FC<VariationInputProps> = memo(
                     </p>
                   </div>
                 ) : null}
-                {getValues('variationType') ==
-                  Feature.VariationType.STRING.toString() ||
-                getValues('variationType') ==
-                  Feature.VariationType.NUMBER.toString() ? (
+                {getValues('variationType') === Feature.VariationType.STRING ||
+                getValues('variationType') === Feature.VariationType.NUMBER ? (
                   <div>
                     <label className="input-label" htmlFor="variation">
                       {`${f(messages.feature.variation)} ${idx + 1}`}
@@ -278,8 +276,7 @@ export const VariationInput: FC<VariationInputProps> = memo(
                     </p>
                   </div>
                 ) : null}
-                {getValues('variationType') ==
-                Feature.VariationType.JSON.toString() ? (
+                {getValues('variationType') === Feature.VariationType.JSON ? (
                   <div className="w-full">
                     <label className="input-label" htmlFor="variation">
                       {`${f(messages.feature.variation)} ${idx + 1}`}
@@ -307,7 +304,7 @@ export const VariationInput: FC<VariationInputProps> = memo(
                   </label>
                   <div className="w-full mt-1">
                     <input
-                      {...register(`variations[${idx}].name`)}
+                      {...register(`variations.${idx}.name`)}
                       type="text"
                       className="w-full input-text"
                       disabled={!editable}
@@ -333,7 +330,7 @@ export const VariationInput: FC<VariationInputProps> = memo(
                   </label>
                   <div className="w-full mt-1">
                     <input
-                      {...register(`variations[${idx}].description`)}
+                      {...register(`variations.${idx}.description`)}
                       type="text"
                       className="w-full input-text"
                       disabled={!editable}

@@ -46,19 +46,18 @@ export const addFormSchema = yup.object().shape({
     .test(
       'laterThanStartAt',
       intl.formatMessage(messages.input.error.notLaterThanStartAt),
-      function (value) {
-        const { from } = this as any;
-        return from[0].value.startAt.getTime() < value.getTime();
+      (value, context) => {
+        return context.from[0].value.startAt.getTime() < value.getTime();
       }
     )
     .test(
       'lessThanOrEquals30Days',
       intl.formatMessage(messages.input.error.notLessThanOrEquals30Days),
-      function (value) {
-        const { from } = this as any;
+      (value, context) => {
         const maxPeriodSeconds = 60 * 60 * 24 * 30;
         return (
-          value.getTime() / 1000 - from[0].value.startAt.getTime() / 1000 <=
+          value.getTime() / 1000 -
+            context.from[0].value.startAt.getTime() / 1000 <=
           maxPeriodSeconds
         );
       }

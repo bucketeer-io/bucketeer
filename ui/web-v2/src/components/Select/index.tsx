@@ -1,5 +1,5 @@
 import React, { FC, memo } from 'react';
-import ReactSelect from 'react-select';
+import ReactSelect, { Styles } from 'react-select';
 
 export interface Option {
   value: string;
@@ -19,7 +19,7 @@ export interface SelectProps {
   placeholder?: string;
   customControl?: React.ReactNode;
   formatOptionLabel?: (options: Option) => void;
-  styles?: any;
+  styles?: Styles;
   closeMenuOnSelect?: boolean;
 }
 
@@ -48,7 +48,7 @@ export const Select: FC<SelectProps> = memo(
     const fontSize = '0.875rem';
     const lineHeight = '1.25rem';
     const minHeight = '2.5rem';
-    const colourStyles = {
+    const colourStyles: Styles = {
       control: (styles, { isDisabled }) => ({
         ...styles,
         backgroundColor: isDisabled ? backgroundColorDisabled : backgroundColor,
