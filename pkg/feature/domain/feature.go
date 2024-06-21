@@ -948,8 +948,8 @@ func (f *Feature) Update(
 		}
 		incVersion = true
 	}
-	if name != nil {
-		if err := updated.UpdateDescription(name.Value); err != nil {
+	if description != nil {
+		if err := updated.UpdateDescription(description.Value); err != nil {
 			return nil, err
 		}
 	}
