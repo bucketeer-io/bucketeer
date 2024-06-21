@@ -958,6 +958,38 @@ func (s *grpcGatewayService) GetFeature(
 	}, nil
 }
 
+func (s *grpcGatewayService) ListFeatures(
+	ctx context.Context,
+	req *gwproto.ListFeaturesRequest,
+) (*gwproto.ListFeaturesResponse, error) {
+	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
+		accountproto.APIKey_PUBLIC_API_READ_ONLY,
+		accountproto.APIKey_PUBLIC_API_WRITE,
+		accountproto.APIKey_PUBLIC_API_ADMIN,
+	})
+	if err != nil {
+		s.logger.Error("Failed to check ListFeatures request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, err
+	}
+	resp, err := s.featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
+		EnvironmentNamespace: envAPIKey.Environment.Id,
+		PageSize:             req.PageSize,
+		Cursor:               req.Cursor,
+		OrderBy:              req.OrderBy,
+		OrderDirection:       req.OrderDirection,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &gwproto.ListFeaturesResponse{
+		Features: resp.Features,
+	}, nil
+}
+
 func (s *grpcGatewayService) UpdateFeature(
 	ctx context.Context,
 	req *gwproto.UpdateFeatureRequest,

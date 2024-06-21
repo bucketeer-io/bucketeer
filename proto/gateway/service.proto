@@ -22,6 +22,7 @@ import "google/api/annotations.proto";
 import "proto/user/user.proto";
 import "proto/feature/evaluation.proto";
 import "proto/feature/feature.proto";
+import "proto/feature/service.proto";
 import "proto/feature/segment.proto";
 import "proto/event/client/event.proto";
 
@@ -126,6 +127,17 @@ message GetFeatureResponse {
   feature.Feature feature = 1;
 }
 
+message ListFeaturesRequest {
+  int64 page_size = 1;
+  string cursor = 2;
+  feature.ListFeaturesRequest.OrderBy order_by = 3;
+  feature.ListFeaturesRequest.OrderDirection order_direction = 4;
+}
+
+message ListFeaturesResponse {
+  repeated feature.Feature features = 1;
+}
+
 message UpdateFeatureRequest {
   string comment = 1;
   string id = 2;
@@ -180,6 +192,11 @@ service Gateway {
   rpc GetFeature(GetFeatureRequest) returns (GetFeatureResponse) {
     option (google.api.http) = {
       get: "/v1/features/{id}"
+    };
+  }
+  rpc ListFeatures(ListFeaturesRequest) returns (ListFeaturesResponse) {
+    option (google.api.http) = {
+      get: "/v1/features"
     };
   }
   rpc UpdateFeature(UpdateFeatureRequest) returns (UpdateFeatureResponse) {

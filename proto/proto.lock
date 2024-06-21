@@ -15385,6 +15385,42 @@
             ]
           },
           {
+            "name": "ListFeaturesRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "order_by",
+                "type": "feature.ListFeaturesRequest.OrderBy"
+              },
+              {
+                "id": 4,
+                "name": "order_direction",
+                "type": "feature.ListFeaturesRequest.OrderDirection"
+              }
+            ]
+          },
+          {
+            "name": "ListFeaturesResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "features",
+                "type": "feature.Feature",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
             "name": "UpdateFeatureRequest",
             "fields": [
               {
@@ -15565,6 +15601,22 @@
                 ]
               },
               {
+                "name": "ListFeatures",
+                "in_type": "ListFeaturesRequest",
+                "out_type": "ListFeaturesResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/features"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
                 "name": "UpdateFeature",
                 "in_type": "UpdateFeatureRequest",
                 "out_type": "UpdateFeatureResponse",
@@ -15599,6 +15651,9 @@
           },
           {
             "path": "proto/feature/feature.proto"
+          },
+          {
+            "path": "proto/feature/service.proto"
           },
           {
             "path": "proto/feature/segment.proto"

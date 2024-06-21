@@ -270,6 +270,69 @@
         ]
       }
     },
+    "/v1/features": {
+      "get": {
+        "operationId": "Gateway_ListFeatures",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/bucketeergatewayListFeaturesResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/googlerpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "int64"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "orderBy",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "DEFAULT",
+              "NAME",
+              "CREATED_AT",
+              "UPDATED_AT",
+              "TAGS",
+              "ENABLED"
+            ],
+            "default": "DEFAULT"
+          },
+          {
+            "name": "orderDirection",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "ASC",
+              "DESC"
+            ],
+            "default": "ASC"
+          }
+        ],
+        "tags": [
+          "Gateway"
+        ]
+      }
+    },
     "/v1/features/{id}": {
       "get": {
         "operationId": "Gateway_GetFeature",
@@ -277,7 +340,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/gatewayGetFeatureResponse"
+              "$ref": "#/definitions/bucketeergatewayGetFeatureResponse"
             }
           },
           "default": {
@@ -305,7 +368,7 @@
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/gatewayUpdateFeatureResponse"
+              "$ref": "#/definitions/bucketeergatewayUpdateFeatureResponse"
             }
           },
           "default": {
@@ -430,6 +493,29 @@
           "type": "string"
         }
       }
+    },
+    "bucketeergatewayGetFeatureResponse": {
+      "type": "object",
+      "properties": {
+        "feature": {
+          "$ref": "#/definitions/featureFeature"
+        }
+      }
+    },
+    "bucketeergatewayListFeaturesResponse": {
+      "type": "object",
+      "properties": {
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/featureFeature"
+          }
+        }
+      }
+    },
+    "bucketeergatewayUpdateFeatureResponse": {
+      "type": "object"
     },
     "clientEvent": {
       "type": "object",
@@ -639,6 +725,26 @@
           "type": "string"
         }
       }
+    },
+    "featureListFeaturesRequestOrderBy": {
+      "type": "string",
+      "enum": [
+        "DEFAULT",
+        "NAME",
+        "CREATED_AT",
+        "UPDATED_AT",
+        "TAGS",
+        "ENABLED"
+      ],
+      "default": "DEFAULT"
+    },
+    "featureListFeaturesRequestOrderDirection": {
+      "type": "string",
+      "enum": [
+        "ASC",
+        "DESC"
+      ],
+      "default": "ASC"
     },
     "featurePrerequisite": {
       "type": "object",
@@ -954,14 +1060,6 @@
         }
       }
     },
-    "gatewayGetFeatureResponse": {
-      "type": "object",
-      "properties": {
-        "feature": {
-          "$ref": "#/definitions/featureFeature"
-        }
-      }
-    },
     "gatewayGetSegmentUsersRequest": {
       "type": "object",
       "properties": {
@@ -1050,9 +1148,6 @@
       }
     },
     "gatewayTrackResponse": {
-      "type": "object"
-    },
-    "gatewayUpdateFeatureResponse": {
       "type": "object"
     },
     "googlerpcStatus": {
