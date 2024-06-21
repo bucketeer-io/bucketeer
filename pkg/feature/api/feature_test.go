@@ -4509,18 +4509,6 @@ func TestUpdateFeature(t *testing.T) {
 		Message: localizer.MustLocalizeWithTemplate(locale.InternalServerError, "id"),
 	})
 
-	// ctx = metadata.NewIncomingContext(ctx, metadata.MD{
-	// 	"accept-language": []string{"ja"},
-	// })
-	// createError := func(status *gstatus.Status, msg string) error {
-	// 	st, err := status.WithDetails(&errdetails.LocalizedMessage{
-	// 		Locale:  localizer.GetLocale(),
-	// 		Message: msg,
-	// 	})
-	// 	require.NoError(t, err)
-	// 	return st.Err()
-	// }
-
 	patterns := []*struct {
 		desc        string
 		ctx         context.Context
