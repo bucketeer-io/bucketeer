@@ -8,7 +8,7 @@ import { ListProgressiveRolloutsResponse } from '../../proto/autoops/service_pb'
 import { Dialog } from '@headlessui/react';
 import { ExclamationIcon } from '@heroicons/react/outline';
 import { FC, memo, useCallback, useEffect, useState } from 'react';
-import { Controller, useFormContext, useController } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -92,20 +92,17 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
       Option[] | null
     >(featureId && createBaselineVariationOptions(features, featureId));
 
-    const handleOnChangeFeature = useCallback(
-      (featureId: string) => {
-        reset(
-          { ...getValues(), baselineVariation: null },
-          {
-            keepDirty: true,
-            keepErrors: true,
-            keepIsValid: true,
-            keepTouched: true
-          }
-        );
-      },
-      [features, setBaselineVariationOptions]
-    );
+    const handleOnChangeFeature = useCallback(() => {
+      reset(
+        { ...getValues(), baselineVariation: null },
+        {
+          keepDirty: true,
+          keepErrors: true,
+          keepIsValid: true,
+          keepTouched: true
+        }
+      );
+    }, [features, setBaselineVariationOptions]);
 
     useEffect(() => {
       dispatch(
@@ -253,7 +250,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
                           className="w-full"
                           onChange={(e: OptionFeatureFlag) => {
                             field.onChange(e.value);
-                            handleOnChangeFeature(e.value);
+                            handleOnChangeFeature();
                           }}
                           value={featureFlagOptions.find(
                             (o) => o.value === field.value

@@ -28,7 +28,6 @@ import {
   TrashIcon,
   PencilAltIcon,
   CheckCircleIcon,
-  XIcon,
   ClockIcon,
   InformationCircleIcon
 } from '@heroicons/react/outline';
@@ -508,8 +507,7 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
     const methods = useFormContext();
     const {
       control,
-      formState: { errors, isValid },
-      watch,
+      formState: { isValid },
       handleSubmit,
       register,
       reset,

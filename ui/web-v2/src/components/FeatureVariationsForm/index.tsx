@@ -41,11 +41,10 @@ export const FeatureVariationsForm: FC<FeatureVariationsFormProps> = memo(
     const { formatMessage: f } = useIntl();
     const methods = useFormContext();
     const {
-      control,
       formState: { errors, isDirty },
       watch
     } = methods;
-    const [feature, _] = useSelector<
+    const [feature] = useSelector<
       AppState,
       [Feature.AsObject | undefined, SerializedError | null]
     >((state) => [

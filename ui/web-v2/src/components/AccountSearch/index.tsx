@@ -1,14 +1,10 @@
 import { PlusIcon } from '@heroicons/react/solid';
-import { FC, memo, useCallback, useState } from 'react';
+import { FC, memo } from 'react';
 import { useIntl } from 'react-intl';
-import { shallowEqual, useSelector } from 'react-redux';
 
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
-import { AppState } from '../../modules';
-import { selectAll } from '../../modules/accounts';
 import { useIsOwner } from '../../modules/me';
-import { AccountV2 } from '../../proto/account/account_pb';
 import { AccountSearchOptions } from '../../types/account';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
@@ -18,7 +14,7 @@ import {
 } from '../../types/list';
 import { classNames } from '../../utils/css';
 import { FilterChip } from '../FilterChip';
-import { FilterPopover, Option } from '../FilterPopover';
+import { Option } from '../FilterPopover';
 import { FilterRemoveAllButtonProps } from '../FilterRemoveAllButton';
 import { SearchInput } from '../SearchInput';
 import { SortItem, SortSelect } from '../SortSelect';
@@ -94,29 +90,6 @@ export const AccountSearch: FC<AccountSearchProps> = memo(
   ({ options, onChange, onAdd }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsOwner();
-    const isLoading = useSelector<AppState, boolean>(
-      (state) => state.accounts.loading,
-      shallowEqual
-    );
-    const accounts = useSelector<AppState, AccountV2.AsObject[]>(
-      (state) => selectAll(state.accounts),
-      shallowEqual
-    );
-    const [filterValues, setFilterValues] = useState<Option[]>([]);
-
-    const handleFilterKeyChange = useCallback(
-      (key: string): void => {
-        switch (key) {
-          case FilterTypes.ROLE:
-            setFilterValues(roleOptions);
-            return;
-          case FilterTypes.ENABLED:
-            setFilterValues(enabledOptions);
-            return;
-        }
-      },
-      [setFilterValues, accounts]
-    );
 
     const handleUpdateOption = (
       optionPart: Partial<AccountSearchOptions>
@@ -124,20 +97,6 @@ export const AccountSearch: FC<AccountSearchProps> = memo(
       onChange({ ...options, ...optionPart });
     };
 
-    const handleFilterAdd = (key: string, value?: string): void => {
-      switch (key) {
-        case FilterTypes.ROLE:
-          handleUpdateOption({
-            role: value
-          });
-          return;
-        case FilterTypes.ENABLED:
-          handleUpdateOption({
-            enabled: value
-          });
-          return;
-      }
-    };
     return (
       <div
         className={classNames(

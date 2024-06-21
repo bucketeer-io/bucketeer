@@ -51,7 +51,6 @@ export const DateRangePopover: FC<DateRangePopoverProps> = memo(
   ({ options, onChange }) => {
     const { formatMessage: f } = useIntl();
     const referenceElement = useRef<HTMLButtonElement | null>(null);
-    const popperElement = useRef<HTMLDivElement | null>(null);
     const [ranges, setRanges] = useState([
       {
         startDate: new Date(),

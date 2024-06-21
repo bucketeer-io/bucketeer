@@ -20,7 +20,7 @@ export const CheckBoxList: FC<CheckBoxListProps> = memo(
     const [checkedItems] = useState(() => {
       const items = new Map();
       defaultValues &&
-        defaultValues.forEach((item, _) => {
+        defaultValues.forEach((item) => {
           items.set(item.value, item.value);
         });
       return items;
@@ -33,7 +33,7 @@ export const CheckBoxList: FC<CheckBoxListProps> = memo(
         checkedItems.delete(value);
       }
       const valueList = [];
-      checkedItems.forEach((v, _) => {
+      checkedItems.forEach((v) => {
         valueList.push(v);
       });
       onChange(valueList);

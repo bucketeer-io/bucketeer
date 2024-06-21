@@ -1,11 +1,5 @@
-import { css, jsx } from '@emotion/react';
-import { makeStyles, Theme, useTheme } from '@material-ui/core/styles';
-import MUExitToAppIcon from '@material-ui/icons/ExitToApp';
 import { SerializedError } from '@reduxjs/toolkit';
-import dayjs from 'dayjs';
-import { unwrapUndefinable } from 'option-t/lib/Undefinable/unwrap';
 import { FC, useEffect, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { useSelector, shallowEqual, useDispatch } from 'react-redux';
 
@@ -23,7 +17,7 @@ import { AppDispatch } from '../../store';
 import { classNames } from '../../utils/css';
 import { DetailSkeleton } from '../DetailSkeleton';
 import { GoalResultDetail } from '../GoalResultDetail';
-import { Option, Select } from '../Select';
+import { Select } from '../Select';
 
 interface ExperimentResultDetailProps {
   experimentId: string;
@@ -35,7 +29,7 @@ export const ExperimentResultDetail: FC<ExperimentResultDetailProps> = ({
   const { formatMessage: f } = useIntl();
   const dispatch = useDispatch<AppDispatch>();
   const currentEnvironment = useCurrentEnvironment();
-  const [experiment, getExperimentError] = useSelector<
+  const [experiment] = useSelector<
     AppState,
     [Experiment.AsObject | undefined, SerializedError | null]
   >(
@@ -45,7 +39,7 @@ export const ExperimentResultDetail: FC<ExperimentResultDetailProps> = ({
     ],
     shallowEqual
   );
-  const [experimentResult, getExperimentResultError] = useSelector<
+  const [experimentResult] = useSelector<
     AppState,
     [ExperimentResult.AsObject | undefined, SerializedError | null]
   >(

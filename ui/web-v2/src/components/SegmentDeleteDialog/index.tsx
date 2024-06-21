@@ -1,11 +1,8 @@
 import { PAGE_PATH_FEATURES, PAGE_PATH_ROOT } from '../../constants/routing';
 import { useCurrentEnvironment } from '../../modules/me';
-import { Dialog, Transition } from '@headlessui/react';
-import {
-  InformationCircleIcon,
-  ExclamationCircleIcon
-} from '@heroicons/react/solid';
-import { Fragment, FC } from 'react';
+import { Dialog } from '@headlessui/react';
+import { ExclamationCircleIcon } from '@heroicons/react/solid';
+import { FC } from 'react';
 import { useIntl } from 'react-intl';
 import { Link } from 'react-router-dom';
 

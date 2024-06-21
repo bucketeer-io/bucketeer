@@ -19,8 +19,7 @@ export const EnvironmentUpdateForm: FC<EnvironmentUpdateFormProps> = memo(
     const {
       register,
       getValues,
-      formState: { errors, isDirty, dirtyFields, isSubmitted, isValid },
-      control
+      formState: { errors, isDirty, isSubmitted, isValid }
     } = methods;
 
     return (

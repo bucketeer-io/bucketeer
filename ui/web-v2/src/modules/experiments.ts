@@ -263,8 +263,8 @@ export const experimentsSlice = createSlice({
       .addCase(getExperiment.rejected, (state, action) => {
         state.getExperimentError = action.error;
       })
-      .addCase(createExperiment.pending, (state) => {})
-      .addCase(createExperiment.fulfilled, (state, action) => {})
-      .addCase(createExperiment.rejected, (state, action) => {});
+      .addCase(createExperiment.pending, () => {})
+      .addCase(createExperiment.fulfilled, () => {})
+      .addCase(createExperiment.rejected, () => {});
   }
 });

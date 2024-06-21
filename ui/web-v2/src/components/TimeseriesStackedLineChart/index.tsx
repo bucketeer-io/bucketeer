@@ -1,4 +1,3 @@
-import { jsx } from '@emotion/react';
 import { ChartOptions } from 'chart.js';
 import { FC } from 'react';
 import { Line } from 'react-chartjs-2';

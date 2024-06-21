@@ -161,7 +161,7 @@ export const autoOpsRulesSlice = createSlice({
       .addCase(deleteAutoOpsRule.pending, (state) => {
         state.loading = true;
       })
-      .addCase(deleteAutoOpsRule.fulfilled, (state, action) => {
+      .addCase(deleteAutoOpsRule.fulfilled, (state) => {
         state.loading = false;
       })
       .addCase(deleteAutoOpsRule.rejected, (state) => {
@@ -170,7 +170,7 @@ export const autoOpsRulesSlice = createSlice({
       .addCase(updateAutoOpsRule.pending, (state) => {
         state.loading = true;
       })
-      .addCase(updateAutoOpsRule.fulfilled, (state, action) => {
+      .addCase(updateAutoOpsRule.fulfilled, (state) => {
         state.loading = false;
       })
       .addCase(updateAutoOpsRule.rejected, (state) => {

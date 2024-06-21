@@ -3,7 +3,7 @@ import MUArchiveIcon from '@material-ui/icons/Archive';
 import MUFileCopyIcon from '@material-ui/icons/FileCopy';
 import MUUnarchiveIcon from '@material-ui/icons/Unarchive';
 import dayjs from 'dayjs';
-import React, { FC, useState, memo, useCallback, useEffect } from 'react';
+import React, { FC, useState, memo, useCallback } from 'react';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -443,10 +443,6 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
   ({ options, onChange, onClear, onAdd }) => {
     const editable = useIsEditable();
     const { formatMessage: f } = useIntl();
-    const isAccountLoading = useSelector<AppState, boolean>(
-      (state) => state.accounts.loading,
-      shallowEqual
-    );
     const accounts = useSelector<AppState, AccountV2.AsObject[]>(
       (state) => selectAllAccounts(state.accounts),
       shallowEqual

@@ -40,7 +40,7 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
       (state) => state.features.loading
     );
     const currentEnvironment = useCurrentEnvironment();
-    const [feature, getFeatureError] = useSelector<
+    const [feature] = useSelector<
       AppState,
       [Feature.AsObject | undefined, SerializedError | null]
     >((state) => [

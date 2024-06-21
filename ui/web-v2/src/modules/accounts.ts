@@ -257,17 +257,17 @@ export const accountsSlice = createSlice({
       .addCase(getAccount.rejected, (state, action) => {
         state.getAccountError = action.error;
       })
-      .addCase(enableAccount.pending, (state) => {})
-      .addCase(enableAccount.fulfilled, (state, action) => {})
-      .addCase(enableAccount.rejected, (state, action) => {})
-      .addCase(disableAccount.pending, (state) => {})
-      .addCase(disableAccount.fulfilled, (state, action) => {})
-      .addCase(disableAccount.rejected, (state, action) => {})
-      .addCase(createAccount.pending, (state) => {})
-      .addCase(createAccount.fulfilled, (state, action) => {})
-      .addCase(createAccount.rejected, (state, action) => {})
-      .addCase(updateAccount.pending, (state) => {})
-      .addCase(updateAccount.fulfilled, (state, action) => {})
-      .addCase(updateAccount.rejected, (state, action) => {});
+      .addCase(enableAccount.pending, () => {})
+      .addCase(enableAccount.fulfilled, () => {})
+      .addCase(enableAccount.rejected, () => {})
+      .addCase(disableAccount.pending, () => {})
+      .addCase(disableAccount.fulfilled, () => {})
+      .addCase(disableAccount.rejected, () => {})
+      .addCase(createAccount.pending, () => {})
+      .addCase(createAccount.fulfilled, () => {})
+      .addCase(createAccount.rejected, () => {})
+      .addCase(updateAccount.pending, () => {})
+      .addCase(updateAccount.fulfilled, () => {})
+      .addCase(updateAccount.rejected, () => {});
   }
 });

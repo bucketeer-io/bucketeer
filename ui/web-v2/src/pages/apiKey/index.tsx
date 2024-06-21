@@ -97,7 +97,7 @@ export const APIKeyIndexPage: FC = memo(() => {
   const isNew = apiKeyId == ID_NEW;
   const isUpdate = apiKeyId ? apiKeyId != ID_NEW : false;
   const [open, setOpen] = useState(isNew || isUpdate);
-  const [apiKey, getAPIKeyError] = useSelector<
+  const [apiKey] = useSelector<
     AppState,
     [APIKey.AsObject | undefined, SerializedError | null]
   >(

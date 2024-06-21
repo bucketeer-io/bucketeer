@@ -10,7 +10,6 @@ import { messages } from '../../../lang/messages';
 
 yup.setLocale(yupLocale);
 
-const nameRegex = /^[a-zA-Z0-9][a-zA-Z0-9\s-]*$/;
 const urlCodeRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]*$/;
 
 const nameSchema = yup.string().max(ENVIRONMENT_NAME_MAX_LENGTH).required();

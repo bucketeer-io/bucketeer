@@ -73,7 +73,7 @@ export const SelectFeatureFlag: FC<SelectFeatureFlagProps> = memo(
       })
     };
 
-    const formatOptionLabel = ({ label, enabled, ...rest }) => {
+    const formatOptionLabel = ({ label, enabled }) => {
       return (
         <div className="flex justify-between space-x-4 pr-2">
           <span className="flex-1 truncate">{label}</span>

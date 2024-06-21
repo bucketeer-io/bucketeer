@@ -1,6 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { SerializedError } from '@reduxjs/toolkit';
-import React, { useCallback, useState, FC, memo, useEffect } from 'react';
+import React, { useCallback, useState, FC, memo } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
@@ -47,7 +47,7 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
     );
     const isLoading = isFeatureLoading || isSegmentLoading;
     const currentEnvironment = useCurrentEnvironment();
-    const [feature, getFeatureError] = useSelector<
+    const [feature] = useSelector<
       AppState,
       [Feature.AsObject | undefined, SerializedError | null]
     >(

@@ -5,7 +5,6 @@ import { intl } from '../../../lang';
 import { messages } from '../../../lang/messages';
 import { GoalResult } from '../../../proto/eventcounter/goal_result_pb';
 import { Variation } from '../../../proto/feature/variation_pb';
-import { classNames } from '../../../utils/css';
 import {
   HeaderCell,
   Table,

@@ -9,7 +9,6 @@ import {
 } from 'react-router-dom';
 
 import {
-  PAGE_PATH_ACCOUNTS,
   PAGE_PATH_ADMIN,
   PAGE_PATH_AUDIT_LOGS,
   PAGE_PATH_ENVIRONMENTS,

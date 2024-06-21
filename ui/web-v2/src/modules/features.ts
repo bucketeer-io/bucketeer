@@ -431,24 +431,24 @@ export const featuresSlice = createSlice({
         state.loading = false;
         state.getFeatureError = action.error;
       })
-      .addCase(updateFeatureDetails.pending, (state) => {})
-      .addCase(updateFeatureDetails.fulfilled, (state, action) => {})
-      .addCase(updateFeatureDetails.rejected, (state, action) => {})
-      .addCase(updateFeatureTargeting.pending, (state) => {})
-      .addCase(updateFeatureTargeting.fulfilled, (state, action) => {})
-      .addCase(updateFeatureTargeting.rejected, (state, action) => {})
-      .addCase(createFeature.pending, (state) => {})
-      .addCase(createFeature.fulfilled, (state, action) => {})
-      .addCase(createFeature.rejected, (state, action) => {})
-      .addCase(cloneFeature.pending, (state) => {})
-      .addCase(cloneFeature.fulfilled, (state, action) => {})
-      .addCase(cloneFeature.rejected, (state, action) => {})
-      .addCase(enableFeature.pending, (state) => {})
-      .addCase(enableFeature.fulfilled, (state, action) => {})
-      .addCase(enableFeature.rejected, (state, action) => {})
-      .addCase(disableFeature.pending, (state) => {})
-      .addCase(disableFeature.fulfilled, (state, action) => {})
-      .addCase(disableFeature.rejected, (state, action) => {});
+      .addCase(updateFeatureDetails.pending, () => {})
+      .addCase(updateFeatureDetails.fulfilled, () => {})
+      .addCase(updateFeatureDetails.rejected, () => {})
+      .addCase(updateFeatureTargeting.pending, () => {})
+      .addCase(updateFeatureTargeting.fulfilled, () => {})
+      .addCase(updateFeatureTargeting.rejected, () => {})
+      .addCase(createFeature.pending, () => {})
+      .addCase(createFeature.fulfilled, () => {})
+      .addCase(createFeature.rejected, () => {})
+      .addCase(cloneFeature.pending, () => {})
+      .addCase(cloneFeature.fulfilled, () => {})
+      .addCase(cloneFeature.rejected, () => {})
+      .addCase(enableFeature.pending, () => {})
+      .addCase(enableFeature.fulfilled, () => {})
+      .addCase(enableFeature.rejected, () => {})
+      .addCase(disableFeature.pending, () => {})
+      .addCase(disableFeature.fulfilled, () => {})
+      .addCase(disableFeature.rejected, () => {});
   }
 });
 

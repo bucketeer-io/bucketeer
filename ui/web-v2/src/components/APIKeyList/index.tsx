@@ -6,7 +6,7 @@ import { APIKEY_LIST_PAGE_SIZE } from '../../constants/apiKey';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import { selectAll } from '../../modules/apiKeys';
-import { useCurrentEnvironment, useIsOwner } from '../../modules/me';
+import { useIsOwner } from '../../modules/me';
 import { APIKey } from '../../proto/account/api_key_pb';
 import { APIKeySearchOptions } from '../../types/apiKey';
 import { classNames } from '../../utils/css';
@@ -41,7 +41,6 @@ export const APIKeyList: FC<APIKeyListProps> = memo(
   }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsOwner();
-    const currentEnvironment = useCurrentEnvironment();
     const apiKeys = useSelector<AppState, APIKey.AsObject[]>(
       (state) => selectAll(state.apiKeys),
       shallowEqual

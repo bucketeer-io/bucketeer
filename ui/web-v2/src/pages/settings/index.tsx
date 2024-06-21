@@ -13,7 +13,6 @@ import {
   PAGE_PATH_SETTINGS,
   PAGE_PATH_PUSHES,
   PAGE_PATH_NOTIFICATIONS,
-  PAGE_PATH_NEW,
   PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { intl } from '../../lang';

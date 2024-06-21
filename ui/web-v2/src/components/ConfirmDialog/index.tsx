@@ -1,6 +1,5 @@
-import { Dialog, Transition } from '@headlessui/react';
-import { Fragment, FC } from 'react';
-import { useIntl } from 'react-intl';
+import { Dialog } from '@headlessui/react';
+import { FC } from 'react';
 
 import { Modal } from '../Modal';
 

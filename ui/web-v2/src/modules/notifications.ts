@@ -244,17 +244,17 @@ export const notificationSlice = createSlice({
       .addCase(listNotification.rejected, (state) => {
         state.loading = false;
       })
-      .addCase(createNotification.pending, (state) => {})
-      .addCase(createNotification.fulfilled, (state, action) => {})
-      .addCase(createNotification.rejected, (state, action) => {})
-      .addCase(enableNotification.pending, (state) => {})
-      .addCase(enableNotification.fulfilled, (state, action) => {})
-      .addCase(enableNotification.rejected, (state, action) => {})
-      .addCase(disableNotification.pending, (state) => {})
-      .addCase(disableNotification.fulfilled, (state, action) => {})
-      .addCase(disableNotification.rejected, (state, action) => {})
-      .addCase(deleteNotification.pending, (state) => {})
-      .addCase(deleteNotification.fulfilled, (state, action) => {})
-      .addCase(deleteNotification.rejected, (state, action) => {});
+      .addCase(createNotification.pending, () => {})
+      .addCase(createNotification.fulfilled, () => {})
+      .addCase(createNotification.rejected, () => {})
+      .addCase(enableNotification.pending, () => {})
+      .addCase(enableNotification.fulfilled, () => {})
+      .addCase(enableNotification.rejected, () => {})
+      .addCase(disableNotification.pending, () => {})
+      .addCase(disableNotification.fulfilled, () => {})
+      .addCase(disableNotification.rejected, () => {})
+      .addCase(deleteNotification.pending, () => {})
+      .addCase(deleteNotification.fulfilled, () => {})
+      .addCase(deleteNotification.rejected, () => {});
   }
 });

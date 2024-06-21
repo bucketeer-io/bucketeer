@@ -1,21 +1,9 @@
-import { css, jsx } from '@emotion/react';
-import { Popover, Transition } from '@headlessui/react';
-import { HomeIcon, SearchIcon } from '@heroicons/react/solid';
-import { fade, Theme, useTheme } from '@material-ui/core/styles';
 import { SerializedError } from '@reduxjs/toolkit';
-import React, {
-  FC,
-  Fragment,
-  memo,
-  useCallback,
-  useEffect,
-  useRef,
-  useState
-} from 'react';
+import React, { FC, memo } from 'react';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useSelector } from 'react-redux';
-import { Link, NavLink, useLocation } from 'react-router-dom';
-import { register, format } from 'timeago.js';
+import { useLocation } from 'react-router-dom';
+import { register } from 'timeago.js';
 import ja from 'timeago.js/lib/lang/ja';
 
 import { PAGE_PATH_FEATURES, PAGE_PATH_ROOT } from '../../constants/routing';
@@ -25,10 +13,8 @@ import { AppState } from '../../modules';
 import { selectById as selectFeatureById } from '../../modules/features';
 import { useCurrentEnvironment } from '../../modules/me';
 import { Feature } from '../../proto/feature/feature_pb';
-import { classNames } from '../../utils/css';
 import { Breadcrumbs } from '../Breadcrumbs';
 import { FeatureIdChip } from '../FeatureIdChip';
-import { HoverPopover } from '../HoverPopover';
 import { RelativeDateText } from '../RelativeDateText';
 import { TagChips } from '../TagsChips';
 
@@ -45,7 +31,7 @@ export const FeatureHeader: FC<FeatureHeaderProps> = memo(({ featureId }) => {
   );
   const { formatMessage: f } = useIntl();
   const currentEnvironment = useCurrentEnvironment();
-  const [feature, getFeatureError] = useSelector<
+  const [feature] = useSelector<
     AppState,
     [Feature.AsObject | undefined, SerializedError | null]
   >(
@@ -54,15 +40,6 @@ export const FeatureHeader: FC<FeatureHeaderProps> = memo(({ featureId }) => {
       state.features.getFeatureError
     ],
     shallowEqual
-  );
-  const [featureIdClicked, setFeatureIdClicked] = useState<boolean>(false);
-
-  const handleFeatureIdClick = useCallback(
-    (featureId: string) => {
-      navigator.clipboard.writeText(featureId);
-      setFeatureIdClicked(true);
-    },
-    [setFeatureIdClicked]
   );
 
   if (!feature) {

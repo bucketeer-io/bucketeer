@@ -215,16 +215,16 @@ export const flagTriggersSlice = createSlice({
       .addCase(createFlagTrigger.pending, (state) => {
         state.loading = true;
       })
-      .addCase(createFlagTrigger.fulfilled, (state, action) => {
+      .addCase(createFlagTrigger.fulfilled, (state) => {
         state.loading = false;
       })
-      .addCase(createFlagTrigger.rejected, (state, action) => {
+      .addCase(createFlagTrigger.rejected, (state) => {
         state.loading = false;
       })
       .addCase(deleteFlagTrigger.pending, (state) => {
         state.loading = true;
       })
-      .addCase(deleteFlagTrigger.fulfilled, (state, action) => {
+      .addCase(deleteFlagTrigger.fulfilled, (state) => {
         state.loading = false;
       })
       .addCase(deleteFlagTrigger.rejected, (state) => {
@@ -233,7 +233,7 @@ export const flagTriggersSlice = createSlice({
       .addCase(updateFlagTrigger.pending, (state) => {
         state.loading = true;
       })
-      .addCase(updateFlagTrigger.fulfilled, (state, action) => {
+      .addCase(updateFlagTrigger.fulfilled, (state) => {
         state.loading = false;
       })
       .addCase(updateFlagTrigger.rejected, (state) => {
@@ -242,7 +242,7 @@ export const flagTriggersSlice = createSlice({
       .addCase(resetFlagTrigger.pending, (state) => {
         state.loading = true;
       })
-      .addCase(resetFlagTrigger.fulfilled, (state, action) => {
+      .addCase(resetFlagTrigger.fulfilled, (state) => {
         state.loading = false;
       })
       .addCase(resetFlagTrigger.rejected, (state) => {
@@ -251,7 +251,7 @@ export const flagTriggersSlice = createSlice({
       .addCase(disableFlagTrigger.pending, (state) => {
         state.loading = true;
       })
-      .addCase(disableFlagTrigger.fulfilled, (state, action) => {
+      .addCase(disableFlagTrigger.fulfilled, (state) => {
         state.loading = false;
       })
       .addCase(disableFlagTrigger.rejected, (state) => {

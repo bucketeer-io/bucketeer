@@ -121,7 +121,7 @@ export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    clearToken(state) {
+    clearToken() {
       clearTokenFromStorage();
       return initialState;
     }

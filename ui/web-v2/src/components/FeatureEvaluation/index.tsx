@@ -83,7 +83,7 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
       ],
       shallowEqual
     );
-    const [feature, _] = useSelector<
+    const [feature] = useSelector<
       AppState,
       [Feature.AsObject | undefined, SerializedError | null]
     >(
@@ -119,7 +119,7 @@ export const FeatureEvaluation: FC<FeatureEvaluationProps> = memo(
       return variationMap.get(vt.variationId)?.value || '';
     });
     const timeseries = variationTSs[0]?.timeseries?.timestampsList;
-    const data = variationTSs.map((vt, i) => {
+    const data = variationTSs.map((vt) => {
       return vt.timeseries?.valuesList?.map((v: number) => Math.round(v));
     });
 

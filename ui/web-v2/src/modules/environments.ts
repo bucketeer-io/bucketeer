@@ -180,11 +180,11 @@ export const environmentsSlice = createSlice({
       .addCase(getEnvironment.rejected, (state, action) => {
         state.getEnvironmentError = action.error;
       })
-      .addCase(createEnvironment.pending, (state) => {})
-      .addCase(createEnvironment.fulfilled, (state, action) => {})
-      .addCase(createEnvironment.rejected, (state, action) => {})
-      .addCase(updateEnvironment.pending, (state) => {})
-      .addCase(updateEnvironment.fulfilled, (state, action) => {})
-      .addCase(updateEnvironment.rejected, (state, action) => {});
+      .addCase(createEnvironment.pending, () => {})
+      .addCase(createEnvironment.fulfilled, () => {})
+      .addCase(createEnvironment.rejected, () => {})
+      .addCase(updateEnvironment.pending, () => {})
+      .addCase(updateEnvironment.fulfilled, () => {})
+      .addCase(updateEnvironment.rejected, () => {});
   }
 });

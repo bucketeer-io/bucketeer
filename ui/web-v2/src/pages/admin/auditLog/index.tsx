@@ -1,16 +1,14 @@
 import { Option } from '../../../components/Select';
 import { intl } from '../../../lang';
 import { Event } from '../../../proto/event/domain/event_pb';
-import React, { FC, memo, useCallback, useEffect, useState } from 'react';
+import React, { FC, memo, useCallback, useEffect } from 'react';
 import { useIntl } from 'react-intl';
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useHistory, useRouteMatch } from 'react-router-dom';
 
 import { AuditLogList } from '../../../components/AuditLogList';
-import { Header } from '../../../components/Header';
 import { AUDITLOG_LIST_PAGE_SIZE } from '../../../constants/auditLog';
 import { messages } from '../../../lang/messages';
-import { AppState } from '../../../modules';
 import {
   listAdminAuditLogs,
   AdminOrderBy,
@@ -70,10 +68,6 @@ export const AdminAuditLogIndexPage: FC = memo(() => {
   searchOptions.sort = searchOptions.sort ? searchOptions.sort : '-createdAt';
   const history = useHistory();
   const { url } = useRouteMatch();
-  const isLoading = useSelector<AppState, boolean>(
-    (state) => state.auditLog.loading,
-    shallowEqual
-  );
 
   const updateAuditLogList = useCallback(
     (options, page: number) => {

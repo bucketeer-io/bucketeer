@@ -5,14 +5,12 @@ import {
 } from '../../constants/routing';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
-import { selectAll as selectAllAutoOpsRules } from '../../modules/autoOpsRules';
 import {
   listExperiments,
   selectAll as selectAllExperiment
 } from '../../modules/experiments';
 import { useCurrentEnvironment, useIsEditable } from '../../modules/me';
 import { selectAll as selectAllProgressiveRollouts } from '../../modules/porgressiveRollout';
-import { AutoOpsRule } from '../../proto/autoops/auto_ops_rule_pb';
 import { ProgressiveRollout } from '../../proto/autoops/progressive_rollout_pb';
 import { Experiment } from '../../proto/experiment/experiment_pb';
 import { Feature } from '../../proto/feature/feature_pb';
@@ -109,14 +107,6 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
         selectFeatureById(state.features, featureId),
         state.features.getFeatureError
       ]);
-
-      const autoOpsRules = useSelector<AppState, AutoOpsRule.AsObject[]>(
-        (state) =>
-          selectAllAutoOpsRules(state.autoOpsRules).filter(
-            (rule) => rule.featureId === featureId
-          ),
-        shallowEqual
-      );
 
       const progressiveRolloutList = useSelector<
         AppState,

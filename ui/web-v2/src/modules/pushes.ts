@@ -176,11 +176,11 @@ export const pushSlice = createSlice({
       .addCase(listPushes.rejected, (state) => {
         state.loading = false;
       })
-      .addCase(createPush.pending, (state) => {})
-      .addCase(createPush.fulfilled, (state, action) => {})
-      .addCase(createPush.rejected, (state, action) => {})
-      .addCase(deletePush.pending, (state) => {})
-      .addCase(deletePush.fulfilled, (state, action) => {})
-      .addCase(deletePush.rejected, (state, action) => {});
+      .addCase(createPush.pending, () => {})
+      .addCase(createPush.fulfilled, () => {})
+      .addCase(createPush.rejected, () => {})
+      .addCase(deletePush.pending, () => {})
+      .addCase(deletePush.fulfilled, () => {})
+      .addCase(deletePush.rejected, () => {});
   }
 });

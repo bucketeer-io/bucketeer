@@ -112,7 +112,7 @@ export const ExperimentIndexPage: FC = memo(() => {
     useState(false);
   const [isStopConfirmDialogOpen, setIsStopConfirmDialogOpen] = useState(false);
   const [experimentIdForStop, setExperimentIdForStop] = useState<string>('');
-  const [experiment, getExperimentError] = useSelector<
+  const [experiment] = useSelector<
     AppState,
     [Experiment.AsObject | undefined, SerializedError | null]
   >(
@@ -235,7 +235,7 @@ export const ExperimentIndexPage: FC = memo(() => {
     setOpen(false);
     resetAdd(defaultValues);
     resetUpdate();
-    const { fid, ...opts } = searchParams;
+    const { ...opts } = searchParams;
     history.push({
       pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_EXPERIMENTS}`,
       search: stringifySearchParams(opts)

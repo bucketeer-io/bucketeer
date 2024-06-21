@@ -189,7 +189,7 @@ export const AccountIndexPage: FC = memo(() => {
   const isNew = accountId == ID_NEW;
   const isUpdate = accountId ? accountId != ID_NEW : false;
   const [open, setOpen] = useState(isNew || isUpdate);
-  const [account, getAccountError] = useSelector<
+  const [account] = useSelector<
     AppState,
     [AccountV2.AsObject | undefined, SerializedError | null]
   >(

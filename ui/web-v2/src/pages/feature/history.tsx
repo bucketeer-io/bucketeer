@@ -1,6 +1,6 @@
 import React, { FC, memo, useEffect, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
-import { useHistory, useRouteMatch, useParams } from 'react-router-dom';
+import { useHistory, useRouteMatch } from 'react-router-dom';
 
 import { AuditLogList } from '../../components/AuditLogList';
 import { AUDITLOG_LIST_PAGE_SIZE } from '../../constants/auditLog';

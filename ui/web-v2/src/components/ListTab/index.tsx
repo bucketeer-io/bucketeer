@@ -1,4 +1,4 @@
-import React, { FC, Fragment, useState, memo } from 'react';
+import React, { FC, useState, memo } from 'react';
 import { useIntl } from 'react-intl';
 
 import { messages } from '../../lang/messages';
@@ -7,7 +7,7 @@ import { classNames } from '../../utils/css';
 
 export const ListTab: FC = memo(() => {
   const { formatMessage: f } = useIntl();
-  const [tab, setTab] = useState<Tab>('active');
+  const [tab] = useState<Tab>('active');
   const tabs = [
     {
       id: 'active',

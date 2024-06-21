@@ -4,7 +4,6 @@ import { components } from 'react-select';
 
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
-import { AppState } from '../../modules';
 import { AuditLogSearchOptions } from '../../types/auditLog';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,

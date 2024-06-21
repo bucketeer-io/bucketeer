@@ -5,7 +5,7 @@ import { useFormContext, Controller } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 
 import { messages } from '../../lang/messages';
-import { useIsEditable, useIsOwner } from '../../modules/me';
+import { useIsOwner } from '../../modules/me';
 import { Option, Select } from '../Select';
 
 export interface AccountUpdateFormProps {
