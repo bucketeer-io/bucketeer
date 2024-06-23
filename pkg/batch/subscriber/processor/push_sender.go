@@ -248,7 +248,8 @@ func (p pushSender) extractFeatureID(event *domaineventproto.Event) (string, boo
 	if event.EntityType != domaineventproto.Event_FEATURE {
 		return "", false
 	}
-	if event.Type != domaineventproto.Event_FEATURE_VERSION_INCREMENTED {
+	if event.Type != domaineventproto.Event_FEATURE_VERSION_INCREMENTED &&
+		event.Type != domaineventproto.Event_FEATURE_UPDATED {
 		return "", false
 	}
 	return event.EntityId, true
