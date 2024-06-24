@@ -1,18 +1,10 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
-  name: {{ include "bucketeer-migration.fullname" . }}
-  labels:
-    {{- include "bucketeer-migration.labels" . | nindent 4 }}
+  name: "{{ include "bucketeer-migration.fullname" . }}-{{ now | unixEpoch }}"
 spec:
-  replicas: {{ .Values.replicaCount }}
-  selector:
-    matchLabels:
-      {{- include "bucketeer-migration.selectorLabels" . | nindent 6 }}
+  backoffLimit: 0
   template:
-    metadata:
-      labels:
-        {{- include "bucketeer-migration.labels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -29,3 +21,4 @@ spec:
             - "{{ .Values.dbBaseline }}"
             - -u
             - {{ .Values.dbUrl }}
+      restartPolicy: Never

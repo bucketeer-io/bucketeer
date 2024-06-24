@@ -1,5 +1,3 @@
-replicaCount: 1
-
 fullnameOverride: "bucketeer-migration"
 image:
   repository: ghcr.io/bucketeer-io/bucketeer-migration
