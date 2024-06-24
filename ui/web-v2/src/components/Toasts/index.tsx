@@ -4,7 +4,7 @@ import {
   ExclamationCircleIcon
 } from '@heroicons/react/outline';
 import { XIcon } from '@heroicons/react/solid';
-import React, { FC, Fragment, memo, SyntheticEvent } from 'react';
+import React, { FC, Fragment, memo } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -25,7 +25,7 @@ export const Toasts: FC = memo(function Toasts() {
   return (
     <>
       {toasts.map((item, idx) => {
-        const handleClose = (_: SyntheticEvent<unknown, Event>): void => {
+        const handleClose = (): void => {
           dispatch(removeToast({ id: item.id }));
         };
         if (item.severity !== 'error') {

@@ -1,11 +1,10 @@
 import { createVariationLabel } from '../../utils/variation';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { SerializedError } from '@reduxjs/toolkit';
 import deepEqual from 'deep-equal';
 import React, { useCallback, useState, FC, memo, useEffect } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useIntl } from 'react-intl';
-import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { FeatureConfirmDialog } from '../../components/FeatureConfirmDialog';
 import { FeatureTargetingForm } from '../../components/FeatureTargetingForm';
@@ -533,7 +532,7 @@ export const createClauseCommands = (
   const valRuleIds = valRules.filter((r) => r.id).map((r) => r.id);
   // Intersection of org and val rules.
   const rulesIds = orgRuleIds.filter((id) => valRuleIds.includes(id));
-  rulesIds.forEach((rid, idx) => {
+  rulesIds.forEach((rid) => {
     const orgRule = orgRules.find((r) => r.id === rid);
     const valRule = valRules.find((r) => r.id === rid);
     const orgClauseIds = orgRule.clauses.filter((c) => c.id).map((c) => c.id);
@@ -560,7 +559,7 @@ export const createClauseCommands = (
           createCommand({ message: command, name: 'AddClauseCommand' })
         );
       });
-    clauseIds.forEach((cid, cidx) => {
+    clauseIds.forEach((cid) => {
       const orgClause = orgRule.clauses.find((c) => c.id === cid);
       const valClause = valRule.clauses.find((c) => c.id === cid);
       commands.push(

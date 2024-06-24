@@ -13,7 +13,7 @@ import { VariationResult } from '../../proto/eventcounter/variation_result_pb';
 import { Experiment } from '../../proto/experiment/experiment_pb';
 import { Variation } from '../../proto/feature/variation_pb';
 import { classNames } from '../../utils/css';
-import { Option, Select } from '../Select';
+import { Select } from '../Select';
 
 import { ConversionRateDetail } from './ConversionRateDetail';
 import { ConversionRateTimeseriesChart } from './ConversionRateTimeseriesChart';
@@ -79,7 +79,7 @@ interface GoalResultDetailProps {
 
 export const GoalResultDetail: FC<GoalResultDetailProps> = memo(
   ({ experimentId, goalId }) => {
-    const [experiment, getExperimentError] = useSelector<
+    const [experiment] = useSelector<
       AppState,
       [Experiment.AsObject | undefined, SerializedError | null]
     >(
@@ -89,7 +89,7 @@ export const GoalResultDetail: FC<GoalResultDetailProps> = memo(
       ],
       shallowEqual
     );
-    const [experimentResult, getExperimentResultError] = useSelector<
+    const [experimentResult] = useSelector<
       AppState,
       [ExperimentResult.AsObject | undefined, SerializedError | null]
     >(

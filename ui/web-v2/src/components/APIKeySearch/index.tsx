@@ -74,10 +74,6 @@ export const APIKeySearch: FC<APIKeySearchProps> = memo(
   ({ options, onChange, onAdd }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsOwner();
-    const isLoading = useSelector<AppState, boolean>(
-      (state) => state.apiKeys.loading,
-      shallowEqual
-    );
     const apiKeys = useSelector<AppState, APIKey.AsObject[]>(
       (state) => selectAll(state.apiKeys),
       shallowEqual

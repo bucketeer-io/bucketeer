@@ -1,4 +1,4 @@
-import { FC, memo, useCallback, useState } from 'react';
+import { FC, memo } from 'react';
 
 import { classNames } from '../../utils/css';
 import { CopyChip } from '../CopyChip';

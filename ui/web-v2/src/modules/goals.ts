@@ -227,11 +227,11 @@ export const goalsSlice = createSlice({
       .addCase(getGoal.rejected, (state, action) => {
         state.getGoalError = action.error;
       })
-      .addCase(createGoal.pending, (state) => {})
-      .addCase(createGoal.fulfilled, (state, action) => {})
-      .addCase(createGoal.rejected, (state, action) => {})
-      .addCase(updateGoal.pending, (state) => {})
-      .addCase(updateGoal.fulfilled, (state, action) => {})
-      .addCase(updateGoal.rejected, (state, action) => {});
+      .addCase(createGoal.pending, () => {})
+      .addCase(createGoal.fulfilled, () => {})
+      .addCase(createGoal.rejected, () => {})
+      .addCase(updateGoal.pending, () => {})
+      .addCase(updateGoal.fulfilled, () => {})
+      .addCase(updateGoal.rejected, () => {});
   }
 });

@@ -6,11 +6,9 @@ import MUFlagIcon from '@material-ui/icons/Flag';
 import MUNotificationsIcon from '@material-ui/icons/Notifications';
 import MUOpenInNew from '@material-ui/icons/OpenInNew';
 import MUPeopleIcon from '@material-ui/icons/People';
-import MUPermIdentityIcon from '@material-ui/icons/PermIdentity';
 import MURemoveCircleIcon from '@material-ui/icons/RemoveCircle';
 import MUSettingsIcon from '@material-ui/icons/Settings';
 import MUSettingsApplications from '@material-ui/icons/SettingsApplications';
-import MUShowChartIcon from '@material-ui/icons/ShowChart';
 import MUSubjectIcon from '@material-ui/icons/Subject';
 import MUToggleOnIcon from '@material-ui/icons/ToggleOn';
 import MUVpnKeyIcon from '@material-ui/icons/VpnKey';
@@ -26,7 +24,6 @@ import {
   PAGE_PATH_GOALS,
   PAGE_PATH_APIKEYS,
   PAGE_PATH_USER_SEGMENTS,
-  PAGE_PATH_USERS,
   PAGE_PATH_ACCOUNTS,
   PAGE_PATH_ROOT,
   PAGE_PATH_AUDIT_LOGS,
@@ -235,7 +232,6 @@ interface SideMenuItemProps {
 }
 
 const SideMenuItem: FC<SideMenuItemProps> = ({ item, onClick }) => {
-  const history = useHistory();
   return item.external ? (
     <a href={item.path} target={item.target}>
       <div className="px-3">

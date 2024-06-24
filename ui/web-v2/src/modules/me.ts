@@ -49,7 +49,7 @@ export const meSlice = createSlice({
     consoleAccount: null
   } as MeState,
   reducers: {
-    clearMe(state) {
+    clearMe() {
       return { isAdmin: false, isLogin: false, consoleAccount: null };
     },
     setCurrentEnvironment(state, action: PayloadAction<string>) {

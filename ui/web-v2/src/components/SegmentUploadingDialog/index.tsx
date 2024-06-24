@@ -1,9 +1,9 @@
 import { Dialog } from '@headlessui/react';
-import { Fragment, FC } from 'react';
 import { useIntl } from 'react-intl';
 
 import { messages } from '../../lang/messages';
 import { Modal } from '../Modal';
+import { FC } from 'react';
 
 interface SegmentUploadingDialogProps {
   open: boolean;

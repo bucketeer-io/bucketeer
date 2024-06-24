@@ -74,10 +74,6 @@ export const SegmentSearch: FC<SegmentSearchProps> = memo(
   ({ options, onChange, onAdd }) => {
     const { formatMessage: f } = useIntl();
     const editable = useIsEditable();
-    const isLoading = useSelector<AppState, boolean>(
-      (state) => state.segments.loading,
-      shallowEqual
-    );
     const segments = useSelector<AppState, Segment.AsObject[]>(
       (state) => selectAll(state.segments),
       shallowEqual

@@ -60,7 +60,7 @@ export const FeatureDetailPage: FC = memo(() => {
   const { url } = useRouteMatch();
   const currentEnvironment = useCurrentEnvironment();
   const { featureId } = useParams<{ featureId: string }>();
-  const [feature, getFeatureError] = useSelector<
+  const [feature] = useSelector<
     AppState,
     [Feature.AsObject | undefined, SerializedError | null]
   >(

@@ -104,10 +104,6 @@ export const ExperimentSearch: FC<ExperimentSearchProps> = memo(
   ({ options, onChange, onAdd }) => {
     const editable = useIsEditable();
     const { formatMessage: f } = useIntl();
-    const isAccountLoading = useSelector<AppState, boolean>(
-      (state) => state.accounts.loading,
-      shallowEqual
-    );
     const accounts = useSelector<AppState, AccountV2.AsObject[]>(
       (state) => selectAllAccounts(state.accounts),
       shallowEqual

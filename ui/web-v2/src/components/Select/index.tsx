@@ -1,5 +1,5 @@
 import React, { FC, memo } from 'react';
-import ReactSelect, { components } from 'react-select';
+import ReactSelect from 'react-select';
 
 export interface Option {
   value: string;

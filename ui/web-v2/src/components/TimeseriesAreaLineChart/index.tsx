@@ -67,7 +67,7 @@ export const TimeseriesAreaLineChart: FC<TimeseriesAreaLineChartProps> = ({
     legend: {
       display: true,
       labels: {
-        filter: (legendItem: any, _: any) => {
+        filter: (legendItem: any) => {
           return !!legendItem.text;
         }
       },

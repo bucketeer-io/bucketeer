@@ -1,53 +1,35 @@
 import { isExperimentStatusWaitingRunnning } from '../../components/ExperimentList';
 import { formatDate } from '../../utils/date';
-import { Dialog, Transition } from '@headlessui/react';
 import { PlusIcon, SelectorIcon } from '@heroicons/react/solid';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { SerializedError, unwrapResult } from '@reduxjs/toolkit';
-import React, {
-  FC,
-  Fragment,
-  memo,
-  useCallback,
-  useEffect,
-  useState
-} from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
+import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
-import { useHistory, useRouteMatch } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { ExperimentAddForm } from '../../components/ExperimentAddForm';
 import { ExperimentResultDetail } from '../../components/ExperimentResultDetail';
 import { statusOptions } from '../../components/ExperimentSearch';
 import { HoverPopover } from '../../components/HoverPopover';
-import { Overlay } from '../../components/Overlay';
-import { Option, Select } from '../../components/Select';
 import {
   PAGE_PATH_EXPERIMENTS,
-  PAGE_PATH_FEATURES,
   PAGE_PATH_NEW,
   PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import {
-  createExperiment,
   getExperiment,
   listExperiments,
   selectAll as selectAllExperiment,
   stopExperiment
 } from '../../modules/experiments';
-import { selectById as selectFeatureById } from '../../modules/features';
 import { useCurrentEnvironment, useIsEditable } from '../../modules/me';
 import { Experiment } from '../../proto/experiment/experiment_pb';
 import { ListExperimentsRequest } from '../../proto/experiment/service_pb';
-import { Feature } from '../../proto/feature/feature_pb';
 import { AppDispatch } from '../../store';
 import { classNames } from '../../utils/css';
 import { useSearchParams } from '../../utils/search-params';
-import { addFormSchema, updateFormSchema } from '../experiment/formSchema';
+import { Select } from '../../components/Select';
 
 interface FeatureExperimentsPageProps {
   featureId: string;
@@ -60,16 +42,6 @@ export const FeatureExperimentsPage: FC<FeatureExperimentsPageProps> = memo(
     const dispatch = useDispatch<AppDispatch>();
     const searchOptions = useSearchParams();
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-    const [feature, getFeatureError] = useSelector<
-      AppState,
-      [Feature.AsObject | undefined, SerializedError | null]
-    >(
-      (state) => [
-        selectFeatureById(state.features, featureId),
-        state.features.getFeatureError
-      ],
-      shallowEqual
-    );
     const experiments = useSelector<AppState, Experiment.AsObject[]>(
       (state) => {
         const exprs = selectAllExperiment(state.experiments);
@@ -240,7 +212,7 @@ interface ExperimentDetailProps {
 
 export const ExperimentDetail: FC<ExperimentDetailProps> = memo(
   ({ experiment, onStopExperiment }) => {
-    const { formatMessage: f, formatTime } = useIntl();
+    const { formatMessage: f } = useIntl();
     const startAt = new Date(experiment.startAt * 1000);
     const endAt =
       experiment.status === Experiment.Status.FORCE_STOPPED

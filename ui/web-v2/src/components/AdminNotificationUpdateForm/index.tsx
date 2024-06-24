@@ -1,5 +1,5 @@
 import { Dialog } from '@headlessui/react';
-import { FC, memo, useState } from 'react';
+import { FC, memo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 

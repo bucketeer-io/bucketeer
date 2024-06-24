@@ -132,7 +132,7 @@ const schedulesListSchema = yup.array().of(
       .required()
       .min(1)
       .max(100)
-      .test('isAscending', '', function (value) {
+      .test('isAscending', '', function () {
         const { from } = this as any;
 
         if (from[3].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT) {

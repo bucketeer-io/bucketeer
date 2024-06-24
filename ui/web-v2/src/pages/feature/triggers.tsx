@@ -18,7 +18,7 @@ interface FeatureTriggerPageProps {
 
 export const FeatureTriggerPage: FC<FeatureTriggerPageProps> = memo(
   ({ featureId }) => {
-    const [feature, getFeatureError] = useSelector<
+    const [feature] = useSelector<
       AppState,
       [Feature.AsObject | undefined, SerializedError | null]
     >((state) => [

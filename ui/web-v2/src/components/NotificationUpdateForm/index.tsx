@@ -22,7 +22,6 @@ export const NotificationUpdateForm: FC<NotificationUpdateFormProps> = memo(
       register,
       control,
       getValues,
-      reset,
       formState: { errors, isValid, isDirty, isSubmitted }
     } = methods;
 

@@ -1,10 +1,6 @@
 import { intl } from '../../lang';
 import { AppState } from '../../modules';
-import { selectAll as selectAllAutoOpsRules } from '../../modules/autoOpsRules';
-import {
-  listExperiments,
-  selectAll as selectAllExperiment
-} from '../../modules/experiments';
+import { selectAll as selectAllExperiment } from '../../modules/experiments';
 import { useCurrentEnvironment } from '../../modules/me';
 import { selectAll as selectAllProgressiveRollouts } from '../../modules/porgressiveRollout';
 import { AutoOpsRule, OpsType } from '../../proto/autoops/auto_ops_rule_pb';
@@ -99,13 +95,6 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
       selectFeatureById(state.features, featureId),
       state.features.getFeatureError
     ]);
-    const autoOpsRules = useSelector<AppState, AutoOpsRule.AsObject[]>(
-      (state) =>
-        selectAllAutoOpsRules(state.autoOpsRules).filter(
-          (rule) => rule.featureId === featureId
-        ),
-      shallowEqual
-    );
     const experiments = useSelector<AppState, Experiment.AsObject[]>(
       (state) => selectAllExperiment(state.experiments),
       shallowEqual

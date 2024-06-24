@@ -139,7 +139,7 @@ export const progressiveRolloutSlice = createSlice({
       .addCase(deleteProgressiveRollout.pending, (state) => {
         state.loading = true;
       })
-      .addCase(deleteProgressiveRollout.fulfilled, (state, action) => {
+      .addCase(deleteProgressiveRollout.fulfilled, (state) => {
         state.loading = false;
       })
       .addCase(deleteProgressiveRollout.rejected, (state) => {

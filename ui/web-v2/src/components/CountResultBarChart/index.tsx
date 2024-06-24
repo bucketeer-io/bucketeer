@@ -1,4 +1,3 @@
-import { jsx } from '@emotion/react';
 import { FC } from 'react';
 import { Bar } from 'react-chartjs-2';
 

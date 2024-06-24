@@ -260,22 +260,22 @@ export const segmentsSlice = createSlice({
       .addCase(getSegment.rejected, (state, action) => {
         state.getSegmentError = action.error;
       })
-      .addCase(bulkDownloadSegmentUsers.pending, (state) => {})
-      .addCase(bulkDownloadSegmentUsers.fulfilled, (state) => {})
-      .addCase(bulkDownloadSegmentUsers.rejected, (state) => {})
-      .addCase(bulkUploadSegmentUsers.pending, (state) => {})
-      .addCase(bulkUploadSegmentUsers.fulfilled, (state) => {})
-      .addCase(bulkUploadSegmentUsers.rejected, (state) => {})
-      .addCase(createSegment.pending, (state) => {})
-      .addCase(createSegment.fulfilled, (state, action) => {})
-      .addCase(createSegment.rejected, (state) => {})
-      .addCase(updateSegment.pending, (state) => {})
-      .addCase(updateSegment.fulfilled, (state, action) => {})
-      .addCase(updateSegment.rejected, (state) => {})
-      .addCase(deleteSegmentUser.pending, (state) => {})
+      .addCase(bulkDownloadSegmentUsers.pending, () => {})
+      .addCase(bulkDownloadSegmentUsers.fulfilled, () => {})
+      .addCase(bulkDownloadSegmentUsers.rejected, () => {})
+      .addCase(bulkUploadSegmentUsers.pending, () => {})
+      .addCase(bulkUploadSegmentUsers.fulfilled, () => {})
+      .addCase(bulkUploadSegmentUsers.rejected, () => {})
+      .addCase(createSegment.pending, () => {})
+      .addCase(createSegment.fulfilled, () => {})
+      .addCase(createSegment.rejected, () => {})
+      .addCase(updateSegment.pending, () => {})
+      .addCase(updateSegment.fulfilled, () => {})
+      .addCase(updateSegment.rejected, () => {})
+      .addCase(deleteSegmentUser.pending, () => {})
       .addCase(deleteSegmentUser.fulfilled, (state, action) => {
         segmentsAdapter.removeOne(state, action.payload);
       })
-      .addCase(deleteSegmentUser.rejected, (state) => {});
+      .addCase(deleteSegmentUser.rejected, () => {});
   }
 });

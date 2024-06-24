@@ -225,14 +225,14 @@ export const projectsSlice = createSlice({
       .addCase(getProject.rejected, (state, action) => {
         state.getProjectError = action.error;
       })
-      .addCase(enableProject.pending, (state) => {})
-      .addCase(enableProject.fulfilled, (state, action) => {})
-      .addCase(enableProject.rejected, (state, action) => {})
-      .addCase(disableProject.pending, (state) => {})
-      .addCase(disableProject.fulfilled, (state, action) => {})
-      .addCase(disableProject.rejected, (state, action) => {})
-      .addCase(createProject.pending, (state) => {})
-      .addCase(createProject.fulfilled, (state, action) => {})
-      .addCase(createProject.rejected, (state, action) => {});
+      .addCase(enableProject.pending, () => {})
+      .addCase(enableProject.fulfilled, () => {})
+      .addCase(enableProject.rejected, () => {})
+      .addCase(disableProject.pending, () => {})
+      .addCase(disableProject.fulfilled, () => {})
+      .addCase(disableProject.rejected, () => {})
+      .addCase(createProject.pending, () => {})
+      .addCase(createProject.fulfilled, () => {})
+      .addCase(createProject.rejected, () => {});
   }
 });

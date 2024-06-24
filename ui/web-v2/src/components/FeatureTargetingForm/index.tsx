@@ -3,7 +3,6 @@ import {
   PAGE_PATH_FEATURE_AUTOOPS,
   PAGE_PATH_ROOT
 } from '../../constants/routing';
-import { isLanguageJapanese } from '../../lang/getSelectedLanguage';
 import { selectAll as selectAllProgressiveRollouts } from '../../modules/porgressiveRollout';
 import { ProgressiveRollout } from '../../proto/autoops/progressive_rollout_pb';
 import { ListFeaturesRequest } from '../../proto/feature/service_pb';
@@ -77,7 +76,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
     const methods = useFormContext<TargetingForm>();
     const {
       control,
-      formState: { errors, isDirty, dirtyFields },
+      formState: { errors, dirtyFields },
       watch
     } = methods;
     const history = useHistory();
@@ -87,7 +86,7 @@ export const FeatureTargetingForm: FC<FeatureTargetingFormProps> = memo(
     const rules = watch('rules');
     const targets = watch('targets');
 
-    const [feature, _] = useSelector<
+    const [feature] = useSelector<
       AppState,
       [Feature.AsObject | undefined, SerializedError | null]
     >((state) => [
@@ -564,10 +563,7 @@ export const PrerequisiteInput: FC<PrerequisiteInputProps> = memo(
     const methods = useFormContext<TargetingForm>();
     const currentEnvironment = useCurrentEnvironment();
 
-    const {
-      control,
-      formState: { errors }
-    } = methods;
+    const { control } = methods;
     const {
       fields: prerequisites,
       append: appendPrerequisite,
@@ -784,7 +780,7 @@ export const RuleInput: FC<RuleInputProps> = memo(({ feature }) => {
   });
 
   const newRolloutStrategy = [];
-  feature.variationsList.forEach((val, _) => {
+  feature.variationsList.forEach((val) => {
     newRolloutStrategy.push({
       id: val.id,
       percentage: 0
@@ -1488,12 +1484,7 @@ export const StrategyInput: FC<StrategyInputProps> = memo(
     const { formatMessage: f } = useIntl();
     const editable = useIsEditable();
     const methods = useFormContext<TargetingForm>();
-    const {
-      register,
-      control,
-      formState: { errors },
-      trigger
-    } = methods;
+    const { register, control, trigger } = methods;
     const selectedOption = useWatch({
       control,
       name: `${strategyName}.option`

@@ -207,17 +207,17 @@ export const apiKeySlice = createSlice({
       .addCase(getAPIKey.rejected, (state, action) => {
         state.getAPIKeyError = action.error;
       })
-      .addCase(enableAPIKey.pending, (state) => {})
-      .addCase(enableAPIKey.fulfilled, (state, action) => {})
-      .addCase(enableAPIKey.rejected, (state, action) => {})
-      .addCase(disableAPIKey.pending, (state) => {})
-      .addCase(disableAPIKey.fulfilled, (state, action) => {})
-      .addCase(disableAPIKey.rejected, (state, action) => {})
-      .addCase(createAPIKey.pending, (state) => {})
-      .addCase(createAPIKey.fulfilled, (state, action) => {})
-      .addCase(createAPIKey.rejected, (state, action) => {})
-      .addCase(updateAPIKey.pending, (state) => {})
-      .addCase(updateAPIKey.fulfilled, (state, action) => {})
-      .addCase(updateAPIKey.rejected, (state, action) => {});
+      .addCase(enableAPIKey.pending, () => {})
+      .addCase(enableAPIKey.fulfilled, () => {})
+      .addCase(enableAPIKey.rejected, () => {})
+      .addCase(disableAPIKey.pending, () => {})
+      .addCase(disableAPIKey.fulfilled, () => {})
+      .addCase(disableAPIKey.rejected, () => {})
+      .addCase(createAPIKey.pending, () => {})
+      .addCase(createAPIKey.fulfilled, () => {})
+      .addCase(createAPIKey.rejected, () => {})
+      .addCase(updateAPIKey.pending, () => {})
+      .addCase(updateAPIKey.fulfilled, () => {})
+      .addCase(updateAPIKey.rejected, () => {});
   }
 });

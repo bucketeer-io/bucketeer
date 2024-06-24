@@ -1,6 +1,5 @@
-import { Popover, Transition } from '@headlessui/react';
-import { SelectorIcon, XIcon } from '@heroicons/react/solid';
-import React, { FC, Fragment, memo, useEffect, useState } from 'react';
+import { XIcon } from '@heroicons/react/solid';
+import React, { FC, memo } from 'react';
 
 import { classNames } from '../../utils/css';
 

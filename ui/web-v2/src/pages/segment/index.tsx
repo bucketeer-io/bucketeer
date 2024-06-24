@@ -100,7 +100,7 @@ export const SegmentIndexPage: FC = memo(() => {
   const isUpdate = segmentId ? segmentId != ID_NEW : false;
   const [open, setOpen] = useState(isNew || isUpdate);
   const [isUploadingDialogOpen, setIsUploadingDialogOpen] = useState(false);
-  const [segment, getSegmentError] = useSelector<
+  const [segment] = useSelector<
     AppState,
     [Segment.AsObject | undefined, SerializedError | null]
   >(
