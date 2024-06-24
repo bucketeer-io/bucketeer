@@ -6775,6 +6775,7 @@ func (x *AutoOpsRuleOpsTypeChangedEvent) GetOpsType() autoops.OpsType {
 	return autoops.OpsType_ENABLE_FEATURE
 }
 
+// TODO: Remove this function after auto ops migration.
 // Deprecated
 type AutoOpsRuleTriggeredAtChangedEvent struct {
 	state         protoimpl.MessageState

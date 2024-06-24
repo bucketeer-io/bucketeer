@@ -105,6 +105,7 @@ func (x *CreateAutoOpsRuleCommand) GetDatetimeClauses() []*DatetimeClause {
 	return nil
 }
 
+// TODO: Remove this function after auto ops migration.
 // Deprecated: Please update Clause.ActionType to update Enable or Disable.
 type ChangeAutoOpsRuleOpsTypeCommand struct {
 	state         protoimpl.MessageState
@@ -229,6 +230,7 @@ func (*StopAutoOpsRuleCommand) Descriptor() ([]byte, []int) {
 	return file_proto_autoops_command_proto_rawDescGZIP(), []int{3}
 }
 
+// TODO: Remove this function after auto ops migration.
 // Deprecated
 type ChangeAutoOpsRuleTriggeredAtCommand struct {
 	state         protoimpl.MessageState
