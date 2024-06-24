@@ -655,7 +655,7 @@ func (s *FeatureService) CreateFeature(
 		return nil, dt.Err()
 	}
 	s.updateFeatureFlagCache(ctx)
-	return &featureproto.CreateFeatureResponse{}, nil
+	return &featureproto.CreateFeatureResponse{Feature: feature.Feature}, nil
 }
 
 func (s *FeatureService) UpdateFeature(

@@ -4137,6 +4137,91 @@ func TestGrpcGetFeature(t *testing.T) {
 	}
 }
 
+func TestGrpcCreateFeature(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		ctx         context.Context
+		setup       func(*grpcGatewayService)
+		req         *gwproto.CreateFeatureRequest
+		expected    *gwproto.CreateFeatureResponse
+		expectedErr error
+	}{
+		{
+			desc: "fails: bad role",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_SDK_SERVER,
+							Disabled: false,
+						},
+					}, nil)
+			},
+			expected:    nil,
+			expectedErr: ErrBadRole,
+		},
+		{
+			desc: "fail: create feature error",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().CreateFeature(gomock.Any(), gomock.Any()).Return(
+					nil, ErrInternal)
+			},
+			expected:    nil,
+			expectedErr: ErrInternal,
+		},
+		{
+			desc: "success",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
+							Disabled: false,
+						},
+					}, nil)
+				gs.featureClient.(*featureclientmock.MockClient).EXPECT().CreateFeature(gomock.Any(), gomock.Any()).Return(
+					&feature.CreateFeatureResponse{
+						Feature: &featureproto.Feature{Id: "id-0", Enabled: true},
+					},
+					nil)
+			},
+			expected: &gwproto.CreateFeatureResponse{
+				Feature: &featureproto.Feature{Id: "id-0", Enabled: true},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newGrpcGatewayServiceWithMock(t, mockController)
+			p.setup(gs)
+			ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
+				"authorization": []string{"test-key"},
+			})
+			actual, err := gs.CreateFeature(ctx, &gwproto.CreateFeatureRequest{})
+			assert.Equal(t, p.expected, actual, "%s", p.desc)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		})
+	}
+}
+
 func TestGrpcUpdateFeature(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)

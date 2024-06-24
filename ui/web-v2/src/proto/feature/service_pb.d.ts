@@ -426,6 +426,11 @@ export namespace CreateFeatureRequest {
 }
 
 export class CreateFeatureResponse extends jspb.Message {
+  hasFeature(): boolean;
+  clearFeature(): void;
+  getFeature(): proto_feature_feature_pb.Feature | undefined;
+  setFeature(value?: proto_feature_feature_pb.Feature): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateFeatureResponse.AsObject;
   static toObject(
@@ -448,7 +453,9 @@ export class CreateFeatureResponse extends jspb.Message {
 }
 
 export namespace CreateFeatureResponse {
-  export type AsObject = {};
+  export type AsObject = {
+    feature?: proto_feature_feature_pb.Feature.AsObject;
+  };
 }
 
 export class UpdateFeatureRequest extends jspb.Message {

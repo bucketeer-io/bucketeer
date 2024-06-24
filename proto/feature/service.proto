@@ -95,7 +95,9 @@ message CreateFeatureRequest {
   string environment_namespace = 2;
 }
 
-message CreateFeatureResponse {}
+message CreateFeatureResponse {
+  Feature feature = 1;
+}
 
 message UpdateFeatureRequest {
   string comment = 1;

@@ -24,6 +24,7 @@ import "proto/user/user.proto";
 import "proto/feature/evaluation.proto";
 import "proto/feature/feature.proto";
 import "proto/feature/service.proto";
+import "proto/feature/variation.proto";
 import "proto/feature/segment.proto";
 import "proto/event/client/event.proto";
 
@@ -120,6 +121,21 @@ message TrackRequest {
 
 message TrackResponse {}
 
+message CreateFeatureRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  feature.Feature.VariationType variation_type = 4;
+  repeated feature.Variation variations = 5;
+  repeated string tags = 6;
+  int32 on_variation_index = 7;
+  int32 off_variation_index = 8;
+}
+
+message CreateFeatureResponse {
+  feature.Feature feature = 1;
+}
+
 message GetFeatureRequest {
   string id = 1;
 }
@@ -192,6 +208,12 @@ service Gateway {
   rpc Track(TrackRequest) returns (TrackResponse) {
     option (google.api.http) = {
       get: "/track"
+    };
+  }
+  rpc CreateFeature(CreateFeatureRequest) returns (CreateFeatureResponse) {
+    option (google.api.http) = {
+      post: "/v1/features"
+      body: "*"
     };
   }
   rpc GetFeature(GetFeatureRequest) returns (GetFeatureResponse) {
