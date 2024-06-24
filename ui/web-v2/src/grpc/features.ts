@@ -8,8 +8,6 @@ import {
   CloneFeatureRequest,
   CloneFeatureResponse,
   CreateFeatureResponse,
-  DeleteFeatureRequest,
-  DeleteFeatureResponse,
   DisableFeatureRequest,
   DisableFeatureResponse,
   EnableFeatureRequest,
@@ -224,29 +222,6 @@ export function unarchiveFeature(
           }
         }
       );
-    }
-  );
-}
-
-export interface DeleteFeatureResult {
-  request: DeleteFeatureRequest;
-  response: DeleteFeatureResponse;
-}
-
-export function deleteFeature(
-  request: DeleteFeatureRequest
-): Promise<DeleteFeatureResult> {
-  return new Promise(
-    (resolve: (result: DeleteFeatureResult) => void, reject): void => {
-      client.deleteFeature(request, getMetaData(), (error, response): void => {
-        if (isNotNull(error) || isNull(response)) {
-          reject(
-            new FeatureServiceError(extractErrorMessage(error), request, error)
-          );
-        } else {
-          resolve({ request, response });
-        }
-      });
     }
   );
 }
