@@ -826,6 +826,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.AutoOperation),
 			),
 		}
+	case proto.Event_AUTOOPS_RULE_STOPPED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.StoppedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.AutoOperation),
+			),
+		}
 	case proto.Event_AUTOOPS_RULE_DELETED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),

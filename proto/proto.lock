@@ -2243,6 +2243,9 @@
             "name": "DeleteAutoOpsRuleCommand"
           },
           {
+            "name": "StopAutoOpsRuleCommand"
+          },
+          {
             "name": "ChangeAutoOpsRuleTriggeredAtCommand"
           },
           {
@@ -2692,6 +2695,29 @@
             ]
           },
           {
+            "name": "StopAutoOpsRuleRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "command",
+                "type": "StopAutoOpsRuleCommand"
+              }
+            ]
+          },
+          {
+            "name": "StopAutoOpsRuleResponse"
+          },
+          {
             "name": "DeleteAutoOpsRuleRequest",
             "fields": [
               {
@@ -3043,6 +3069,11 @@
                 "name": "CreateAutoOpsRule",
                 "in_type": "CreateAutoOpsRuleRequest",
                 "out_type": "CreateAutoOpsRuleResponse"
+              },
+              {
+                "name": "StopAutoOpsRule",
+                "in_type": "StopAutoOpsRuleRequest",
+                "out_type": "StopAutoOpsRuleResponse"
               },
               {
                 "name": "DeleteAutoOpsRule",
@@ -5886,6 +5917,10 @@
                 "integer": 808
               },
               {
+                "name": "AUTOOPS_RULE_STOPPED",
+                "integer": 809
+              },
+              {
                 "name": "PUSH_CREATED",
                 "integer": 900
               },
@@ -8004,6 +8039,9 @@
                 "type": "int64"
               }
             ]
+          },
+          {
+            "name": "AutoOpsRuleStoppedEvent"
           },
           {
             "name": "AutoOpsRuleDeletedEvent"

@@ -114,7 +114,7 @@ func TestCreateAndListAutoOpsRule(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_DISABLE_FEATURE, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -163,7 +163,7 @@ func TestGetAutoOpsRule(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_DISABLE_FEATURE, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -212,7 +212,7 @@ func TestDeleteAutoOpsRule(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_DISABLE_FEATURE, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -249,7 +249,7 @@ func TestExecuteAutoOpsRule(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_DISABLE_FEATURE, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -290,7 +290,7 @@ func TestOpsEventRateBatchWithoutTag(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_DISABLE_FEATURE, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -328,7 +328,7 @@ func TestGrpcOpsEventRateBatch(t *testing.T) {
 	feature := getFeature(t, featureClient, featureID)
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_DISABLE_FEATURE, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -389,7 +389,7 @@ func TestOpsEventRateBatch(t *testing.T) {
 
 	goalID := createGoal(ctx, t, experimentClient)
 	clause := createOpsEventRateClause(t, feature.Variations[0].Id, goalID)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, []*autoopsproto.OpsEventRateClause{clause}, nil)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_DISABLE_FEATURE, []*autoopsproto.OpsEventRateClause{clause}, nil)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -454,7 +454,7 @@ func TestDatetimeBatch(t *testing.T) {
 	}
 
 	clause := createDatetimeClause(t)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, nil, []*autoopsproto.DatetimeClause{clause})
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_DISABLE_FEATURE, nil, []*autoopsproto.DatetimeClause{clause})
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -536,18 +536,35 @@ func createDatetimeClause(t *testing.T) *autoopsproto.DatetimeClause {
 	}
 }
 
+func createDatetimeClausesWithActionType(t *testing.T, createCount int) []*autoopsproto.DatetimeClause {
+	var dcs []*autoopsproto.DatetimeClause
+	for i := 0; i < createCount; i++ {
+		at := autoopsproto.ActionType_DISABLE
+		if i%2 == 1 {
+			at = autoopsproto.ActionType_ENABLE
+		}
+		dc := &autoopsproto.DatetimeClause{
+			Time:       time.Now().Add(time.Duration((i+1)*5) * time.Second).Unix(),
+			ActionType: at,
+		}
+		dcs = append(dcs, dc)
+	}
+	return dcs
+}
+
 func createAutoOpsRule(
 	ctx context.Context,
 	t *testing.T,
 	client autoopsclient.Client,
 	featureID string,
+	opsType autoopsproto.OpsType,
 	oercs []*autoopsproto.OpsEventRateClause,
 	dcs []*autoopsproto.DatetimeClause,
 ) {
 	t.Helper()
 	cmd := &autoopsproto.CreateAutoOpsRuleCommand{
 		FeatureId:           featureID,
-		OpsType:             autoopsproto.OpsType_DISABLE_FEATURE,
+		OpsType:             opsType,
 		OpsEventRateClauses: oercs,
 		DatetimeClauses:     dcs,
 	}
@@ -756,6 +773,51 @@ func deleteAutoOpsRules(t *testing.T, client autoopsclient.Client, id string) {
 		EnvironmentNamespace: *environmentNamespace,
 		Id:                   id,
 		Command:              &autoopsproto.DeleteAutoOpsRuleCommand{},
+	})
+	if err != nil {
+		t.Fatal("failed to list auto ops rules", err)
+	}
+}
+
+func TestStopAutoOpsRule(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	autoOpsClient := newAutoOpsClient(t)
+	defer autoOpsClient.Close()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+
+	featureID := createFeatureID(t)
+	createFeature(ctx, t, featureClient, featureID)
+	clauses := createDatetimeClausesWithActionType(t, 4)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
+	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+	if len(autoOpsRules) != 1 {
+		t.Fatal("not enough rules")
+	}
+	stopAutoOpsRule(t, autoOpsClient, autoOpsRules[0].Id)
+	resp, err := autoOpsClient.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
+		EnvironmentNamespace: *environmentNamespace,
+		Id:                   autoOpsRules[0].Id,
+	})
+	if resp == nil {
+		t.Fatalf("failed to get AutoOpsRule, err %d", err)
+	}
+
+	if resp.AutoOpsRule.AutoOpsStatus != autoopsproto.AutoOpsStatus_STOPPED {
+		t.Fatalf("different auto ops status, expected: %v, actual: %v", autoopsproto.AutoOpsStatus_STOPPED, resp.AutoOpsRule.AutoOpsStatus)
+	}
+}
+
+func stopAutoOpsRule(t *testing.T, client autoopsclient.Client, id string) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	_, err := client.StopAutoOpsRule(ctx, &autoopsproto.StopAutoOpsRuleRequest{
+		EnvironmentNamespace: *environmentNamespace,
+		Id:                   id,
+		Command:              &autoopsproto.StopAutoOpsRuleCommand{},
 	})
 	if err != nil {
 		t.Fatal("failed to list auto ops rules", err)

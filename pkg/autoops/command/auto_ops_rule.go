@@ -61,6 +61,8 @@ func (h *autoOpsRuleCommandHandler) Handle(ctx context.Context, cmd Command) err
 		return h.addOpsEventRateClause(ctx, c)
 	case *proto.ChangeOpsEventRateClauseCommand:
 		return h.changeOpsEventRateClause(ctx, c)
+	case *proto.StopAutoOpsRuleCommand:
+		return h.stop(ctx, c)
 	case *proto.DeleteClauseCommand:
 		return h.deleteClause(ctx, c)
 	case *proto.AddDatetimeClauseCommand:
@@ -90,6 +92,11 @@ func (h *autoOpsRuleCommandHandler) changeOpsType(
 	return h.send(ctx, eventproto.Event_AUTOOPS_RULE_OPS_TYPE_CHANGED, &eventproto.AutoOpsRuleOpsTypeChangedEvent{
 		OpsType: h.autoOpsRule.OpsType,
 	})
+}
+
+func (h *autoOpsRuleCommandHandler) stop(ctx context.Context, cmd *proto.StopAutoOpsRuleCommand) error {
+	h.autoOpsRule.SetStopped()
+	return h.send(ctx, eventproto.Event_AUTOOPS_RULE_STOPPED, &eventproto.AutoOpsRuleStoppedEvent{})
 }
 
 func (h *autoOpsRuleCommandHandler) delete(ctx context.Context, cmd *proto.DeleteAutoOpsRuleCommand) error {

@@ -84,7 +84,7 @@ func (x ListProgressiveRolloutsRequest_OrderBy) Number() protoreflect.EnumNumber
 
 // Deprecated: Use ListProgressiveRolloutsRequest_OrderBy.Descriptor instead.
 func (ListProgressiveRolloutsRequest_OrderBy) EnumDescriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{22, 0}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{24, 0}
 }
 
 type ListProgressiveRolloutsRequest_OrderDirection int32
@@ -130,7 +130,7 @@ func (x ListProgressiveRolloutsRequest_OrderDirection) Number() protoreflect.Enu
 
 // Deprecated: Use ListProgressiveRolloutsRequest_OrderDirection.Descriptor instead.
 func (ListProgressiveRolloutsRequest_OrderDirection) EnumDescriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{22, 1}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{24, 1}
 }
 
 type GetAutoOpsRuleRequest struct {
@@ -454,6 +454,107 @@ func (x *ListAutoOpsRulesResponse) GetCursor() string {
 	return ""
 }
 
+type StopAutoOpsRuleRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	EnvironmentNamespace string                  `protobuf:"bytes,1,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
+	Id                   string                  `protobuf:"bytes,2,opt,name=id,proto3" json:"id"`
+	Command              *StopAutoOpsRuleCommand `protobuf:"bytes,3,opt,name=command,proto3" json:"command"`
+}
+
+func (x *StopAutoOpsRuleRequest) Reset() {
+	*x = StopAutoOpsRuleRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_autoops_service_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *StopAutoOpsRuleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StopAutoOpsRuleRequest) ProtoMessage() {}
+
+func (x *StopAutoOpsRuleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_autoops_service_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StopAutoOpsRuleRequest.ProtoReflect.Descriptor instead.
+func (*StopAutoOpsRuleRequest) Descriptor() ([]byte, []int) {
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *StopAutoOpsRuleRequest) GetEnvironmentNamespace() string {
+	if x != nil {
+		return x.EnvironmentNamespace
+	}
+	return ""
+}
+
+func (x *StopAutoOpsRuleRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *StopAutoOpsRuleRequest) GetCommand() *StopAutoOpsRuleCommand {
+	if x != nil {
+		return x.Command
+	}
+	return nil
+}
+
+type StopAutoOpsRuleResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *StopAutoOpsRuleResponse) Reset() {
+	*x = StopAutoOpsRuleResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_autoops_service_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *StopAutoOpsRuleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StopAutoOpsRuleResponse) ProtoMessage() {}
+
+func (x *StopAutoOpsRuleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_autoops_service_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StopAutoOpsRuleResponse.ProtoReflect.Descriptor instead.
+func (*StopAutoOpsRuleResponse) Descriptor() ([]byte, []int) {
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{7}
+}
+
 type DeleteAutoOpsRuleRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -467,7 +568,7 @@ type DeleteAutoOpsRuleRequest struct {
 func (x *DeleteAutoOpsRuleRequest) Reset() {
 	*x = DeleteAutoOpsRuleRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[6]
+		mi := &file_proto_autoops_service_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -480,7 +581,7 @@ func (x *DeleteAutoOpsRuleRequest) String() string {
 func (*DeleteAutoOpsRuleRequest) ProtoMessage() {}
 
 func (x *DeleteAutoOpsRuleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[6]
+	mi := &file_proto_autoops_service_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -493,7 +594,7 @@ func (x *DeleteAutoOpsRuleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAutoOpsRuleRequest.ProtoReflect.Descriptor instead.
 func (*DeleteAutoOpsRuleRequest) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{6}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *DeleteAutoOpsRuleRequest) GetEnvironmentNamespace() string {
@@ -526,7 +627,7 @@ type DeleteAutoOpsRuleResponse struct {
 func (x *DeleteAutoOpsRuleResponse) Reset() {
 	*x = DeleteAutoOpsRuleResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[7]
+		mi := &file_proto_autoops_service_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -539,7 +640,7 @@ func (x *DeleteAutoOpsRuleResponse) String() string {
 func (*DeleteAutoOpsRuleResponse) ProtoMessage() {}
 
 func (x *DeleteAutoOpsRuleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[7]
+	mi := &file_proto_autoops_service_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -552,7 +653,7 @@ func (x *DeleteAutoOpsRuleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAutoOpsRuleResponse.ProtoReflect.Descriptor instead.
 func (*DeleteAutoOpsRuleResponse) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{7}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{9}
 }
 
 type UpdateAutoOpsRuleRequest struct {
@@ -573,7 +674,7 @@ type UpdateAutoOpsRuleRequest struct {
 func (x *UpdateAutoOpsRuleRequest) Reset() {
 	*x = UpdateAutoOpsRuleRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[8]
+		mi := &file_proto_autoops_service_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -586,7 +687,7 @@ func (x *UpdateAutoOpsRuleRequest) String() string {
 func (*UpdateAutoOpsRuleRequest) ProtoMessage() {}
 
 func (x *UpdateAutoOpsRuleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[8]
+	mi := &file_proto_autoops_service_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -599,7 +700,7 @@ func (x *UpdateAutoOpsRuleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAutoOpsRuleRequest.ProtoReflect.Descriptor instead.
 func (*UpdateAutoOpsRuleRequest) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{8}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *UpdateAutoOpsRuleRequest) GetEnvironmentNamespace() string {
@@ -667,7 +768,7 @@ type UpdateAutoOpsRuleResponse struct {
 func (x *UpdateAutoOpsRuleResponse) Reset() {
 	*x = UpdateAutoOpsRuleResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[9]
+		mi := &file_proto_autoops_service_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -680,7 +781,7 @@ func (x *UpdateAutoOpsRuleResponse) String() string {
 func (*UpdateAutoOpsRuleResponse) ProtoMessage() {}
 
 func (x *UpdateAutoOpsRuleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[9]
+	mi := &file_proto_autoops_service_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -693,7 +794,7 @@ func (x *UpdateAutoOpsRuleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAutoOpsRuleResponse.ProtoReflect.Descriptor instead.
 func (*UpdateAutoOpsRuleResponse) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{9}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{11}
 }
 
 type ExecuteAutoOpsRequest struct {
@@ -709,7 +810,7 @@ type ExecuteAutoOpsRequest struct {
 func (x *ExecuteAutoOpsRequest) Reset() {
 	*x = ExecuteAutoOpsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[10]
+		mi := &file_proto_autoops_service_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -722,7 +823,7 @@ func (x *ExecuteAutoOpsRequest) String() string {
 func (*ExecuteAutoOpsRequest) ProtoMessage() {}
 
 func (x *ExecuteAutoOpsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[10]
+	mi := &file_proto_autoops_service_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -735,7 +836,7 @@ func (x *ExecuteAutoOpsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteAutoOpsRequest.ProtoReflect.Descriptor instead.
 func (*ExecuteAutoOpsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{10}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ExecuteAutoOpsRequest) GetEnvironmentNamespace() string {
@@ -770,7 +871,7 @@ type ExecuteAutoOpsResponse struct {
 func (x *ExecuteAutoOpsResponse) Reset() {
 	*x = ExecuteAutoOpsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[11]
+		mi := &file_proto_autoops_service_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -783,7 +884,7 @@ func (x *ExecuteAutoOpsResponse) String() string {
 func (*ExecuteAutoOpsResponse) ProtoMessage() {}
 
 func (x *ExecuteAutoOpsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[11]
+	mi := &file_proto_autoops_service_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -796,7 +897,7 @@ func (x *ExecuteAutoOpsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteAutoOpsResponse.ProtoReflect.Descriptor instead.
 func (*ExecuteAutoOpsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{11}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ExecuteAutoOpsResponse) GetAlreadyTriggered() bool {
@@ -821,7 +922,7 @@ type ListOpsCountsRequest struct {
 func (x *ListOpsCountsRequest) Reset() {
 	*x = ListOpsCountsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[12]
+		mi := &file_proto_autoops_service_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -834,7 +935,7 @@ func (x *ListOpsCountsRequest) String() string {
 func (*ListOpsCountsRequest) ProtoMessage() {}
 
 func (x *ListOpsCountsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[12]
+	mi := &file_proto_autoops_service_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -847,7 +948,7 @@ func (x *ListOpsCountsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListOpsCountsRequest.ProtoReflect.Descriptor instead.
 func (*ListOpsCountsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{12}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ListOpsCountsRequest) GetEnvironmentNamespace() string {
@@ -897,7 +998,7 @@ type ListOpsCountsResponse struct {
 func (x *ListOpsCountsResponse) Reset() {
 	*x = ListOpsCountsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[13]
+		mi := &file_proto_autoops_service_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -910,7 +1011,7 @@ func (x *ListOpsCountsResponse) String() string {
 func (*ListOpsCountsResponse) ProtoMessage() {}
 
 func (x *ListOpsCountsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[13]
+	mi := &file_proto_autoops_service_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -923,7 +1024,7 @@ func (x *ListOpsCountsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListOpsCountsResponse.ProtoReflect.Descriptor instead.
 func (*ListOpsCountsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{13}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ListOpsCountsResponse) GetCursor() string {
@@ -952,7 +1053,7 @@ type CreateProgressiveRolloutRequest struct {
 func (x *CreateProgressiveRolloutRequest) Reset() {
 	*x = CreateProgressiveRolloutRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[14]
+		mi := &file_proto_autoops_service_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -965,7 +1066,7 @@ func (x *CreateProgressiveRolloutRequest) String() string {
 func (*CreateProgressiveRolloutRequest) ProtoMessage() {}
 
 func (x *CreateProgressiveRolloutRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[14]
+	mi := &file_proto_autoops_service_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -978,7 +1079,7 @@ func (x *CreateProgressiveRolloutRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateProgressiveRolloutRequest.ProtoReflect.Descriptor instead.
 func (*CreateProgressiveRolloutRequest) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{14}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *CreateProgressiveRolloutRequest) GetEnvironmentNamespace() string {
@@ -1004,7 +1105,7 @@ type CreateProgressiveRolloutResponse struct {
 func (x *CreateProgressiveRolloutResponse) Reset() {
 	*x = CreateProgressiveRolloutResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[15]
+		mi := &file_proto_autoops_service_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1017,7 +1118,7 @@ func (x *CreateProgressiveRolloutResponse) String() string {
 func (*CreateProgressiveRolloutResponse) ProtoMessage() {}
 
 func (x *CreateProgressiveRolloutResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[15]
+	mi := &file_proto_autoops_service_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1030,7 +1131,7 @@ func (x *CreateProgressiveRolloutResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateProgressiveRolloutResponse.ProtoReflect.Descriptor instead.
 func (*CreateProgressiveRolloutResponse) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{15}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{17}
 }
 
 type GetProgressiveRolloutRequest struct {
@@ -1045,7 +1146,7 @@ type GetProgressiveRolloutRequest struct {
 func (x *GetProgressiveRolloutRequest) Reset() {
 	*x = GetProgressiveRolloutRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[16]
+		mi := &file_proto_autoops_service_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1058,7 +1159,7 @@ func (x *GetProgressiveRolloutRequest) String() string {
 func (*GetProgressiveRolloutRequest) ProtoMessage() {}
 
 func (x *GetProgressiveRolloutRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[16]
+	mi := &file_proto_autoops_service_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1071,7 +1172,7 @@ func (x *GetProgressiveRolloutRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProgressiveRolloutRequest.ProtoReflect.Descriptor instead.
 func (*GetProgressiveRolloutRequest) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{16}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *GetProgressiveRolloutRequest) GetEnvironmentNamespace() string {
@@ -1099,7 +1200,7 @@ type GetProgressiveRolloutResponse struct {
 func (x *GetProgressiveRolloutResponse) Reset() {
 	*x = GetProgressiveRolloutResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[17]
+		mi := &file_proto_autoops_service_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1112,7 +1213,7 @@ func (x *GetProgressiveRolloutResponse) String() string {
 func (*GetProgressiveRolloutResponse) ProtoMessage() {}
 
 func (x *GetProgressiveRolloutResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[17]
+	mi := &file_proto_autoops_service_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1125,7 +1226,7 @@ func (x *GetProgressiveRolloutResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetProgressiveRolloutResponse.ProtoReflect.Descriptor instead.
 func (*GetProgressiveRolloutResponse) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{17}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *GetProgressiveRolloutResponse) GetProgressiveRollout() *ProgressiveRollout {
@@ -1148,7 +1249,7 @@ type StopProgressiveRolloutRequest struct {
 func (x *StopProgressiveRolloutRequest) Reset() {
 	*x = StopProgressiveRolloutRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[18]
+		mi := &file_proto_autoops_service_proto_msgTypes[20]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1161,7 +1262,7 @@ func (x *StopProgressiveRolloutRequest) String() string {
 func (*StopProgressiveRolloutRequest) ProtoMessage() {}
 
 func (x *StopProgressiveRolloutRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[18]
+	mi := &file_proto_autoops_service_proto_msgTypes[20]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1174,7 +1275,7 @@ func (x *StopProgressiveRolloutRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopProgressiveRolloutRequest.ProtoReflect.Descriptor instead.
 func (*StopProgressiveRolloutRequest) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{18}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *StopProgressiveRolloutRequest) GetEnvironmentNamespace() string {
@@ -1207,7 +1308,7 @@ type StopProgressiveRolloutResponse struct {
 func (x *StopProgressiveRolloutResponse) Reset() {
 	*x = StopProgressiveRolloutResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[19]
+		mi := &file_proto_autoops_service_proto_msgTypes[21]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1220,7 +1321,7 @@ func (x *StopProgressiveRolloutResponse) String() string {
 func (*StopProgressiveRolloutResponse) ProtoMessage() {}
 
 func (x *StopProgressiveRolloutResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[19]
+	mi := &file_proto_autoops_service_proto_msgTypes[21]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1233,7 +1334,7 @@ func (x *StopProgressiveRolloutResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopProgressiveRolloutResponse.ProtoReflect.Descriptor instead.
 func (*StopProgressiveRolloutResponse) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{19}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{21}
 }
 
 type DeleteProgressiveRolloutRequest struct {
@@ -1249,7 +1350,7 @@ type DeleteProgressiveRolloutRequest struct {
 func (x *DeleteProgressiveRolloutRequest) Reset() {
 	*x = DeleteProgressiveRolloutRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[20]
+		mi := &file_proto_autoops_service_proto_msgTypes[22]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1262,7 +1363,7 @@ func (x *DeleteProgressiveRolloutRequest) String() string {
 func (*DeleteProgressiveRolloutRequest) ProtoMessage() {}
 
 func (x *DeleteProgressiveRolloutRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[20]
+	mi := &file_proto_autoops_service_proto_msgTypes[22]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1275,7 +1376,7 @@ func (x *DeleteProgressiveRolloutRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteProgressiveRolloutRequest.ProtoReflect.Descriptor instead.
 func (*DeleteProgressiveRolloutRequest) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{20}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *DeleteProgressiveRolloutRequest) GetEnvironmentNamespace() string {
@@ -1308,7 +1409,7 @@ type DeleteProgressiveRolloutResponse struct {
 func (x *DeleteProgressiveRolloutResponse) Reset() {
 	*x = DeleteProgressiveRolloutResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[21]
+		mi := &file_proto_autoops_service_proto_msgTypes[23]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1321,7 +1422,7 @@ func (x *DeleteProgressiveRolloutResponse) String() string {
 func (*DeleteProgressiveRolloutResponse) ProtoMessage() {}
 
 func (x *DeleteProgressiveRolloutResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[21]
+	mi := &file_proto_autoops_service_proto_msgTypes[23]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1334,7 +1435,7 @@ func (x *DeleteProgressiveRolloutResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteProgressiveRolloutResponse.ProtoReflect.Descriptor instead.
 func (*DeleteProgressiveRolloutResponse) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{21}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{23}
 }
 
 type ListProgressiveRolloutsRequest struct {
@@ -1355,7 +1456,7 @@ type ListProgressiveRolloutsRequest struct {
 func (x *ListProgressiveRolloutsRequest) Reset() {
 	*x = ListProgressiveRolloutsRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[22]
+		mi := &file_proto_autoops_service_proto_msgTypes[24]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1368,7 +1469,7 @@ func (x *ListProgressiveRolloutsRequest) String() string {
 func (*ListProgressiveRolloutsRequest) ProtoMessage() {}
 
 func (x *ListProgressiveRolloutsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[22]
+	mi := &file_proto_autoops_service_proto_msgTypes[24]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1381,7 +1482,7 @@ func (x *ListProgressiveRolloutsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListProgressiveRolloutsRequest.ProtoReflect.Descriptor instead.
 func (*ListProgressiveRolloutsRequest) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{22}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ListProgressiveRolloutsRequest) GetEnvironmentNamespace() string {
@@ -1453,7 +1554,7 @@ type ListProgressiveRolloutsResponse struct {
 func (x *ListProgressiveRolloutsResponse) Reset() {
 	*x = ListProgressiveRolloutsResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[23]
+		mi := &file_proto_autoops_service_proto_msgTypes[25]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1466,7 +1567,7 @@ func (x *ListProgressiveRolloutsResponse) String() string {
 func (*ListProgressiveRolloutsResponse) ProtoMessage() {}
 
 func (x *ListProgressiveRolloutsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[23]
+	mi := &file_proto_autoops_service_proto_msgTypes[25]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1479,7 +1580,7 @@ func (x *ListProgressiveRolloutsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListProgressiveRolloutsResponse.ProtoReflect.Descriptor instead.
 func (*ListProgressiveRolloutsResponse) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{23}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ListProgressiveRolloutsResponse) GetProgressiveRollouts() []*ProgressiveRollout {
@@ -1516,7 +1617,7 @@ type ExecuteProgressiveRolloutRequest struct {
 func (x *ExecuteProgressiveRolloutRequest) Reset() {
 	*x = ExecuteProgressiveRolloutRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[24]
+		mi := &file_proto_autoops_service_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1529,7 +1630,7 @@ func (x *ExecuteProgressiveRolloutRequest) String() string {
 func (*ExecuteProgressiveRolloutRequest) ProtoMessage() {}
 
 func (x *ExecuteProgressiveRolloutRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[24]
+	mi := &file_proto_autoops_service_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1542,7 +1643,7 @@ func (x *ExecuteProgressiveRolloutRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteProgressiveRolloutRequest.ProtoReflect.Descriptor instead.
 func (*ExecuteProgressiveRolloutRequest) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{24}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ExecuteProgressiveRolloutRequest) GetEnvironmentNamespace() string {
@@ -1575,7 +1676,7 @@ type ExecuteProgressiveRolloutResponse struct {
 func (x *ExecuteProgressiveRolloutResponse) Reset() {
 	*x = ExecuteProgressiveRolloutResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_autoops_service_proto_msgTypes[25]
+		mi := &file_proto_autoops_service_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1588,7 +1689,7 @@ func (x *ExecuteProgressiveRolloutResponse) String() string {
 func (*ExecuteProgressiveRolloutResponse) ProtoMessage() {}
 
 func (x *ExecuteProgressiveRolloutResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_autoops_service_proto_msgTypes[25]
+	mi := &file_proto_autoops_service_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1601,7 +1702,7 @@ func (x *ExecuteProgressiveRolloutResponse) ProtoReflect() protoreflect.Message 
 
 // Deprecated: Use ExecuteProgressiveRolloutResponse.ProtoReflect.Descriptor instead.
 func (*ExecuteProgressiveRolloutResponse) Descriptor() ([]byte, []int) {
-	return file_proto_autoops_service_proto_rawDescGZIP(), []int{25}
+	return file_proto_autoops_service_proto_rawDescGZIP(), []int{27}
 }
 
 var File_proto_autoops_service_proto protoreflect.FileDescriptor
@@ -1659,7 +1760,19 @@ var file_proto_autoops_service_proto_rawDesc = []byte{
 	0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70,
 	0x73, 0x52, 0x75, 0x6c, 0x65, 0x52, 0x0c, 0x61, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75,
 	0x6c, 0x65, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x63, 0x75, 0x72, 0x73, 0x6f, 0x72, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x06, 0x63, 0x75, 0x72, 0x73, 0x6f, 0x72, 0x22, 0xa6, 0x01, 0x0a, 0x18,
+	0x01, 0x28, 0x09, 0x52, 0x06, 0x63, 0x75, 0x72, 0x73, 0x6f, 0x72, 0x22, 0xa2, 0x01, 0x0a, 0x16,
+	0x53, 0x74, 0x6f, 0x70, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c, 0x65, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x33, 0x0a, 0x15, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f,
+	0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x18,
+	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x14, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65,
+	0x6e, 0x74, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x12, 0x0e, 0x0a, 0x02, 0x69,
+	0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x43, 0x0a, 0x07, 0x63,
+	0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x29, 0x2e, 0x62,
+	0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73,
+	0x2e, 0x53, 0x74, 0x6f, 0x70, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c, 0x65,
+	0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x52, 0x07, 0x63, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64,
+	0x22, 0x19, 0x0a, 0x17, 0x53, 0x74, 0x6f, 0x70, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52,
+	0x75, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0xa6, 0x01, 0x0a, 0x18,
 	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c,
 	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x33, 0x0a, 0x15, 0x65, 0x6e, 0x76, 0x69,
 	0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63,
@@ -1887,7 +2000,7 @@ var file_proto_autoops_service_proto_rawDesc = []byte{
 	0x75, 0x74, 0x54, 0x72, 0x69, 0x67, 0x67, 0x65, 0x72, 0x65, 0x64, 0x41, 0x74, 0x43, 0x6f, 0x6d,
 	0x6d, 0x61, 0x6e, 0x64, 0x22, 0x23, 0x0a, 0x21, 0x45, 0x78, 0x65, 0x63, 0x75, 0x74, 0x65, 0x50,
 	0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75,
-	0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0xac, 0x0c, 0x0a, 0x0e, 0x41, 0x75,
+	0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0x98, 0x0d, 0x0a, 0x0e, 0x41, 0x75,
 	0x74, 0x6f, 0x4f, 0x70, 0x73, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x67, 0x0a, 0x0e,
 	0x47, 0x65, 0x74, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c, 0x65, 0x12, 0x28,
 	0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f,
@@ -1909,88 +2022,94 @@ var file_proto_autoops_service_proto_rawDesc = []byte{
 	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2c, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65,
 	0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74,
 	0x65, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x70, 0x0a, 0x11, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
-	0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c, 0x65, 0x12, 0x2b, 0x2e, 0x62, 0x75,
-	0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e,
-	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c,
-	0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2c, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65,
-	0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x44, 0x65, 0x6c,
-	0x65, 0x74, 0x65, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c, 0x65, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x70, 0x0a, 0x11, 0x55, 0x70, 0x64, 0x61,
-	0x74, 0x65, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c, 0x65, 0x12, 0x2b, 0x2e,
-	0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70,
-	0x73, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52,
-	0x75, 0x6c, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2c, 0x2e, 0x62, 0x75, 0x63,
-	0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x55,
-	0x70, 0x64, 0x61, 0x74, 0x65, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c, 0x65,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x67, 0x0a, 0x0e, 0x45, 0x78,
-	0x65, 0x63, 0x75, 0x74, 0x65, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x12, 0x28, 0x2e, 0x62,
-	0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73,
-	0x2e, 0x45, 0x78, 0x65, 0x63, 0x75, 0x74, 0x65, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x29, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65,
-	0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x45, 0x78, 0x65, 0x63, 0x75,
-	0x74, 0x65, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x22, 0x00, 0x12, 0x64, 0x0a, 0x0d, 0x4c, 0x69, 0x73, 0x74, 0x4f, 0x70, 0x73, 0x43, 0x6f,
-	0x75, 0x6e, 0x74, 0x73, 0x12, 0x27, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72,
-	0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x4f, 0x70, 0x73,
-	0x43, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x28, 0x2e,
-	0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70,
-	0x73, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x4f, 0x70, 0x73, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x52,
-	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x85, 0x01, 0x0a, 0x18, 0x43, 0x72,
-	0x65, 0x61, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52,
-	0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x12, 0x32, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x6a, 0x0a, 0x0f, 0x53, 0x74, 0x6f, 0x70, 0x41, 0x75,
+	0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c, 0x65, 0x12, 0x29, 0x2e, 0x62, 0x75, 0x63, 0x6b,
+	0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x53, 0x74,
+	0x6f, 0x70, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c, 0x65, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x2a, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72,
+	0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x53, 0x74, 0x6f, 0x70, 0x41, 0x75, 0x74,
+	0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x22, 0x00, 0x12, 0x70, 0x0a, 0x11, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x41, 0x75, 0x74, 0x6f,
+	0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c, 0x65, 0x12, 0x2b, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
+	0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x44, 0x65, 0x6c, 0x65,
+	0x74, 0x65, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c, 0x65, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x2c, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72,
+	0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x41,
+	0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0x00, 0x12, 0x70, 0x0a, 0x11, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x41, 0x75,
+	0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c, 0x65, 0x12, 0x2b, 0x2e, 0x62, 0x75, 0x63, 0x6b,
+	0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x55, 0x70,
+	0x64, 0x61, 0x74, 0x65, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c, 0x65, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2c, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65,
+	0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74,
+	0x65, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x75, 0x6c, 0x65, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x67, 0x0a, 0x0e, 0x45, 0x78, 0x65, 0x63, 0x75, 0x74,
+	0x65, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x12, 0x28, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65,
+	0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x45, 0x78, 0x65,
+	0x63, 0x75, 0x74, 0x65, 0x41, 0x75, 0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x29, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61,
+	0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x45, 0x78, 0x65, 0x63, 0x75, 0x74, 0x65, 0x41, 0x75,
+	0x74, 0x6f, 0x4f, 0x70, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12,
+	0x64, 0x0a, 0x0d, 0x4c, 0x69, 0x73, 0x74, 0x4f, 0x70, 0x73, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x73,
+	0x12, 0x27, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74,
+	0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x4f, 0x70, 0x73, 0x43, 0x6f, 0x75, 0x6e,
+	0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x28, 0x2e, 0x62, 0x75, 0x63, 0x6b,
+	0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x4c, 0x69,
+	0x73, 0x74, 0x4f, 0x70, 0x73, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x85, 0x01, 0x0a, 0x18, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65,
+	0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f,
+	0x75, 0x74, 0x12, 0x32, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61,
+	0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x50, 0x72, 0x6f,
+	0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x33, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65,
 	0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74,
 	0x65, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c,
-	0x6f, 0x75, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x33, 0x2e, 0x62, 0x75, 0x63,
-	0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x43,
-	0x72, 0x65, 0x61, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65,
-	0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22,
-	0x00, 0x12, 0x7c, 0x0a, 0x15, 0x47, 0x65, 0x74, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73,
-	0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x12, 0x2f, 0x2e, 0x62, 0x75, 0x63,
-	0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x47,
-	0x65, 0x74, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c,
-	0x6c, 0x6f, 0x75, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x30, 0x2e, 0x62, 0x75,
-	0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e,
-	0x47, 0x65, 0x74, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f,
-	0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12,
-	0x7f, 0x0a, 0x16, 0x53, 0x74, 0x6f, 0x70, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69,
-	0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x12, 0x30, 0x2e, 0x62, 0x75, 0x63, 0x6b,
-	0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x53, 0x74,
-	0x6f, 0x70, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c,
-	0x6c, 0x6f, 0x75, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x31, 0x2e, 0x62, 0x75,
-	0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e,
-	0x53, 0x74, 0x6f, 0x70, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52,
-	0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00,
-	0x12, 0x85, 0x01, 0x0a, 0x18, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x67, 0x72,
-	0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x12, 0x32, 0x2e,
+	0x6f, 0x75, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x7c, 0x0a,
+	0x15, 0x47, 0x65, 0x74, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52,
+	0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x12, 0x2f, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65,
+	0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x47, 0x65, 0x74, 0x50, 0x72,
+	0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x30, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
+	0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x47, 0x65, 0x74, 0x50,
+	0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75,
+	0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x7f, 0x0a, 0x16, 0x53,
+	0x74, 0x6f, 0x70, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f,
+	0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x12, 0x30, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65,
+	0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x53, 0x74, 0x6f, 0x70, 0x50, 0x72,
+	0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x31, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
+	0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x53, 0x74, 0x6f, 0x70,
+	0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f,
+	0x75, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x85, 0x01, 0x0a,
+	0x18, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69,
+	0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x12, 0x32, 0x2e, 0x62, 0x75, 0x63, 0x6b,
+	0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x44, 0x65,
+	0x6c, 0x65, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52,
+	0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x33, 0x2e,
 	0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70,
 	0x73, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73,
-	0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x1a, 0x33, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75,
-	0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x67,
-	0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x82, 0x01, 0x0a, 0x17, 0x4c, 0x69, 0x73,
-	0x74, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c,
-	0x6f, 0x75, 0x74, 0x73, 0x12, 0x31, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72,
-	0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x72, 0x6f,
+	0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0x00, 0x12, 0x82, 0x01, 0x0a, 0x17, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x72, 0x6f,
 	0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x73,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x32, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
-	0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x4c, 0x69, 0x73, 0x74,
-	0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f,
-	0x75, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x88, 0x01,
-	0x0a, 0x19, 0x45, 0x78, 0x65, 0x63, 0x75, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73,
-	0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x12, 0x33, 0x2e, 0x62, 0x75,
-	0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e,
-	0x45, 0x78, 0x65, 0x63, 0x75, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69,
-	0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x1a, 0x34, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74,
-	0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x45, 0x78, 0x65, 0x63, 0x75, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x67,
-	0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x42, 0x31, 0x5a, 0x2f, 0x67, 0x69, 0x74, 0x68,
-	0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72,
-	0x2d, 0x69, 0x6f, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x2f, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x12, 0x31, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74,
+	0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73,
+	0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x1a, 0x32, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e,
+	0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x4c, 0x69, 0x73, 0x74, 0x50, 0x72, 0x6f, 0x67,
+	0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x73, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x00, 0x12, 0x88, 0x01, 0x0a, 0x19, 0x45, 0x78,
+	0x65, 0x63, 0x75, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65,
+	0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x12, 0x33, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
+	0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x2e, 0x45, 0x78, 0x65, 0x63,
+	0x75, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73, 0x69, 0x76, 0x65, 0x52, 0x6f,
+	0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x34, 0x2e, 0x62,
+	0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73,
+	0x2e, 0x45, 0x78, 0x65, 0x63, 0x75, 0x74, 0x65, 0x50, 0x72, 0x6f, 0x67, 0x72, 0x65, 0x73, 0x73,
+	0x69, 0x76, 0x65, 0x52, 0x6f, 0x6c, 0x6c, 0x6f, 0x75, 0x74, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x22, 0x00, 0x42, 0x31, 0x5a, 0x2f, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
+	0x6f, 0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f, 0x2f,
+	0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f,
+	0x61, 0x75, 0x74, 0x6f, 0x6f, 0x70, 0x73, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2006,7 +2125,7 @@ func file_proto_autoops_service_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_autoops_service_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_proto_autoops_service_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_proto_autoops_service_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_proto_autoops_service_proto_goTypes = []interface{}{
 	(ListProgressiveRolloutsRequest_OrderBy)(0),                // 0: bucketeer.autoops.ListProgressiveRolloutsRequest.OrderBy
 	(ListProgressiveRolloutsRequest_OrderDirection)(0),         // 1: bucketeer.autoops.ListProgressiveRolloutsRequest.OrderDirection
@@ -2016,99 +2135,105 @@ var file_proto_autoops_service_proto_goTypes = []interface{}{
 	(*CreateAutoOpsRuleResponse)(nil),                          // 5: bucketeer.autoops.CreateAutoOpsRuleResponse
 	(*ListAutoOpsRulesRequest)(nil),                            // 6: bucketeer.autoops.ListAutoOpsRulesRequest
 	(*ListAutoOpsRulesResponse)(nil),                           // 7: bucketeer.autoops.ListAutoOpsRulesResponse
-	(*DeleteAutoOpsRuleRequest)(nil),                           // 8: bucketeer.autoops.DeleteAutoOpsRuleRequest
-	(*DeleteAutoOpsRuleResponse)(nil),                          // 9: bucketeer.autoops.DeleteAutoOpsRuleResponse
-	(*UpdateAutoOpsRuleRequest)(nil),                           // 10: bucketeer.autoops.UpdateAutoOpsRuleRequest
-	(*UpdateAutoOpsRuleResponse)(nil),                          // 11: bucketeer.autoops.UpdateAutoOpsRuleResponse
-	(*ExecuteAutoOpsRequest)(nil),                              // 12: bucketeer.autoops.ExecuteAutoOpsRequest
-	(*ExecuteAutoOpsResponse)(nil),                             // 13: bucketeer.autoops.ExecuteAutoOpsResponse
-	(*ListOpsCountsRequest)(nil),                               // 14: bucketeer.autoops.ListOpsCountsRequest
-	(*ListOpsCountsResponse)(nil),                              // 15: bucketeer.autoops.ListOpsCountsResponse
-	(*CreateProgressiveRolloutRequest)(nil),                    // 16: bucketeer.autoops.CreateProgressiveRolloutRequest
-	(*CreateProgressiveRolloutResponse)(nil),                   // 17: bucketeer.autoops.CreateProgressiveRolloutResponse
-	(*GetProgressiveRolloutRequest)(nil),                       // 18: bucketeer.autoops.GetProgressiveRolloutRequest
-	(*GetProgressiveRolloutResponse)(nil),                      // 19: bucketeer.autoops.GetProgressiveRolloutResponse
-	(*StopProgressiveRolloutRequest)(nil),                      // 20: bucketeer.autoops.StopProgressiveRolloutRequest
-	(*StopProgressiveRolloutResponse)(nil),                     // 21: bucketeer.autoops.StopProgressiveRolloutResponse
-	(*DeleteProgressiveRolloutRequest)(nil),                    // 22: bucketeer.autoops.DeleteProgressiveRolloutRequest
-	(*DeleteProgressiveRolloutResponse)(nil),                   // 23: bucketeer.autoops.DeleteProgressiveRolloutResponse
-	(*ListProgressiveRolloutsRequest)(nil),                     // 24: bucketeer.autoops.ListProgressiveRolloutsRequest
-	(*ListProgressiveRolloutsResponse)(nil),                    // 25: bucketeer.autoops.ListProgressiveRolloutsResponse
-	(*ExecuteProgressiveRolloutRequest)(nil),                   // 26: bucketeer.autoops.ExecuteProgressiveRolloutRequest
-	(*ExecuteProgressiveRolloutResponse)(nil),                  // 27: bucketeer.autoops.ExecuteProgressiveRolloutResponse
-	(*AutoOpsRule)(nil),                                        // 28: bucketeer.autoops.AutoOpsRule
-	(*CreateAutoOpsRuleCommand)(nil),                           // 29: bucketeer.autoops.CreateAutoOpsRuleCommand
-	(*DeleteAutoOpsRuleCommand)(nil),                           // 30: bucketeer.autoops.DeleteAutoOpsRuleCommand
-	(*ChangeAutoOpsRuleOpsTypeCommand)(nil),                    // 31: bucketeer.autoops.ChangeAutoOpsRuleOpsTypeCommand
-	(*AddOpsEventRateClauseCommand)(nil),                       // 32: bucketeer.autoops.AddOpsEventRateClauseCommand
-	(*ChangeOpsEventRateClauseCommand)(nil),                    // 33: bucketeer.autoops.ChangeOpsEventRateClauseCommand
-	(*DeleteClauseCommand)(nil),                                // 34: bucketeer.autoops.DeleteClauseCommand
-	(*AddDatetimeClauseCommand)(nil),                           // 35: bucketeer.autoops.AddDatetimeClauseCommand
-	(*ChangeDatetimeClauseCommand)(nil),                        // 36: bucketeer.autoops.ChangeDatetimeClauseCommand
-	(*ChangeAutoOpsRuleTriggeredAtCommand)(nil),                // 37: bucketeer.autoops.ChangeAutoOpsRuleTriggeredAtCommand
-	(*OpsCount)(nil),                                           // 38: bucketeer.autoops.OpsCount
-	(*CreateProgressiveRolloutCommand)(nil),                    // 39: bucketeer.autoops.CreateProgressiveRolloutCommand
-	(*ProgressiveRollout)(nil),                                 // 40: bucketeer.autoops.ProgressiveRollout
-	(*StopProgressiveRolloutCommand)(nil),                      // 41: bucketeer.autoops.StopProgressiveRolloutCommand
-	(*DeleteProgressiveRolloutCommand)(nil),                    // 42: bucketeer.autoops.DeleteProgressiveRolloutCommand
-	(ProgressiveRollout_Status)(0),                             // 43: bucketeer.autoops.ProgressiveRollout.Status
-	(ProgressiveRollout_Type)(0),                               // 44: bucketeer.autoops.ProgressiveRollout.Type
-	(*ChangeProgressiveRolloutScheduleTriggeredAtCommand)(nil), // 45: bucketeer.autoops.ChangeProgressiveRolloutScheduleTriggeredAtCommand
+	(*StopAutoOpsRuleRequest)(nil),                             // 8: bucketeer.autoops.StopAutoOpsRuleRequest
+	(*StopAutoOpsRuleResponse)(nil),                            // 9: bucketeer.autoops.StopAutoOpsRuleResponse
+	(*DeleteAutoOpsRuleRequest)(nil),                           // 10: bucketeer.autoops.DeleteAutoOpsRuleRequest
+	(*DeleteAutoOpsRuleResponse)(nil),                          // 11: bucketeer.autoops.DeleteAutoOpsRuleResponse
+	(*UpdateAutoOpsRuleRequest)(nil),                           // 12: bucketeer.autoops.UpdateAutoOpsRuleRequest
+	(*UpdateAutoOpsRuleResponse)(nil),                          // 13: bucketeer.autoops.UpdateAutoOpsRuleResponse
+	(*ExecuteAutoOpsRequest)(nil),                              // 14: bucketeer.autoops.ExecuteAutoOpsRequest
+	(*ExecuteAutoOpsResponse)(nil),                             // 15: bucketeer.autoops.ExecuteAutoOpsResponse
+	(*ListOpsCountsRequest)(nil),                               // 16: bucketeer.autoops.ListOpsCountsRequest
+	(*ListOpsCountsResponse)(nil),                              // 17: bucketeer.autoops.ListOpsCountsResponse
+	(*CreateProgressiveRolloutRequest)(nil),                    // 18: bucketeer.autoops.CreateProgressiveRolloutRequest
+	(*CreateProgressiveRolloutResponse)(nil),                   // 19: bucketeer.autoops.CreateProgressiveRolloutResponse
+	(*GetProgressiveRolloutRequest)(nil),                       // 20: bucketeer.autoops.GetProgressiveRolloutRequest
+	(*GetProgressiveRolloutResponse)(nil),                      // 21: bucketeer.autoops.GetProgressiveRolloutResponse
+	(*StopProgressiveRolloutRequest)(nil),                      // 22: bucketeer.autoops.StopProgressiveRolloutRequest
+	(*StopProgressiveRolloutResponse)(nil),                     // 23: bucketeer.autoops.StopProgressiveRolloutResponse
+	(*DeleteProgressiveRolloutRequest)(nil),                    // 24: bucketeer.autoops.DeleteProgressiveRolloutRequest
+	(*DeleteProgressiveRolloutResponse)(nil),                   // 25: bucketeer.autoops.DeleteProgressiveRolloutResponse
+	(*ListProgressiveRolloutsRequest)(nil),                     // 26: bucketeer.autoops.ListProgressiveRolloutsRequest
+	(*ListProgressiveRolloutsResponse)(nil),                    // 27: bucketeer.autoops.ListProgressiveRolloutsResponse
+	(*ExecuteProgressiveRolloutRequest)(nil),                   // 28: bucketeer.autoops.ExecuteProgressiveRolloutRequest
+	(*ExecuteProgressiveRolloutResponse)(nil),                  // 29: bucketeer.autoops.ExecuteProgressiveRolloutResponse
+	(*AutoOpsRule)(nil),                                        // 30: bucketeer.autoops.AutoOpsRule
+	(*CreateAutoOpsRuleCommand)(nil),                           // 31: bucketeer.autoops.CreateAutoOpsRuleCommand
+	(*StopAutoOpsRuleCommand)(nil),                             // 32: bucketeer.autoops.StopAutoOpsRuleCommand
+	(*DeleteAutoOpsRuleCommand)(nil),                           // 33: bucketeer.autoops.DeleteAutoOpsRuleCommand
+	(*ChangeAutoOpsRuleOpsTypeCommand)(nil),                    // 34: bucketeer.autoops.ChangeAutoOpsRuleOpsTypeCommand
+	(*AddOpsEventRateClauseCommand)(nil),                       // 35: bucketeer.autoops.AddOpsEventRateClauseCommand
+	(*ChangeOpsEventRateClauseCommand)(nil),                    // 36: bucketeer.autoops.ChangeOpsEventRateClauseCommand
+	(*DeleteClauseCommand)(nil),                                // 37: bucketeer.autoops.DeleteClauseCommand
+	(*AddDatetimeClauseCommand)(nil),                           // 38: bucketeer.autoops.AddDatetimeClauseCommand
+	(*ChangeDatetimeClauseCommand)(nil),                        // 39: bucketeer.autoops.ChangeDatetimeClauseCommand
+	(*ChangeAutoOpsRuleTriggeredAtCommand)(nil),                // 40: bucketeer.autoops.ChangeAutoOpsRuleTriggeredAtCommand
+	(*OpsCount)(nil),                                           // 41: bucketeer.autoops.OpsCount
+	(*CreateProgressiveRolloutCommand)(nil),                    // 42: bucketeer.autoops.CreateProgressiveRolloutCommand
+	(*ProgressiveRollout)(nil),                                 // 43: bucketeer.autoops.ProgressiveRollout
+	(*StopProgressiveRolloutCommand)(nil),                      // 44: bucketeer.autoops.StopProgressiveRolloutCommand
+	(*DeleteProgressiveRolloutCommand)(nil),                    // 45: bucketeer.autoops.DeleteProgressiveRolloutCommand
+	(ProgressiveRollout_Status)(0),                             // 46: bucketeer.autoops.ProgressiveRollout.Status
+	(ProgressiveRollout_Type)(0),                               // 47: bucketeer.autoops.ProgressiveRollout.Type
+	(*ChangeProgressiveRolloutScheduleTriggeredAtCommand)(nil), // 48: bucketeer.autoops.ChangeProgressiveRolloutScheduleTriggeredAtCommand
 }
 var file_proto_autoops_service_proto_depIdxs = []int32{
-	28, // 0: bucketeer.autoops.GetAutoOpsRuleResponse.auto_ops_rule:type_name -> bucketeer.autoops.AutoOpsRule
-	29, // 1: bucketeer.autoops.CreateAutoOpsRuleRequest.command:type_name -> bucketeer.autoops.CreateAutoOpsRuleCommand
-	28, // 2: bucketeer.autoops.ListAutoOpsRulesResponse.auto_ops_rules:type_name -> bucketeer.autoops.AutoOpsRule
-	30, // 3: bucketeer.autoops.DeleteAutoOpsRuleRequest.command:type_name -> bucketeer.autoops.DeleteAutoOpsRuleCommand
-	31, // 4: bucketeer.autoops.UpdateAutoOpsRuleRequest.change_auto_ops_rule_ops_type_command:type_name -> bucketeer.autoops.ChangeAutoOpsRuleOpsTypeCommand
-	32, // 5: bucketeer.autoops.UpdateAutoOpsRuleRequest.add_ops_event_rate_clause_commands:type_name -> bucketeer.autoops.AddOpsEventRateClauseCommand
-	33, // 6: bucketeer.autoops.UpdateAutoOpsRuleRequest.change_ops_event_rate_clause_commands:type_name -> bucketeer.autoops.ChangeOpsEventRateClauseCommand
-	34, // 7: bucketeer.autoops.UpdateAutoOpsRuleRequest.delete_clause_commands:type_name -> bucketeer.autoops.DeleteClauseCommand
-	35, // 8: bucketeer.autoops.UpdateAutoOpsRuleRequest.add_datetime_clause_commands:type_name -> bucketeer.autoops.AddDatetimeClauseCommand
-	36, // 9: bucketeer.autoops.UpdateAutoOpsRuleRequest.change_datetime_clause_commands:type_name -> bucketeer.autoops.ChangeDatetimeClauseCommand
-	37, // 10: bucketeer.autoops.ExecuteAutoOpsRequest.change_auto_ops_rule_triggered_at_command:type_name -> bucketeer.autoops.ChangeAutoOpsRuleTriggeredAtCommand
-	38, // 11: bucketeer.autoops.ListOpsCountsResponse.ops_counts:type_name -> bucketeer.autoops.OpsCount
-	39, // 12: bucketeer.autoops.CreateProgressiveRolloutRequest.command:type_name -> bucketeer.autoops.CreateProgressiveRolloutCommand
-	40, // 13: bucketeer.autoops.GetProgressiveRolloutResponse.progressive_rollout:type_name -> bucketeer.autoops.ProgressiveRollout
-	41, // 14: bucketeer.autoops.StopProgressiveRolloutRequest.command:type_name -> bucketeer.autoops.StopProgressiveRolloutCommand
-	42, // 15: bucketeer.autoops.DeleteProgressiveRolloutRequest.command:type_name -> bucketeer.autoops.DeleteProgressiveRolloutCommand
-	0,  // 16: bucketeer.autoops.ListProgressiveRolloutsRequest.order_by:type_name -> bucketeer.autoops.ListProgressiveRolloutsRequest.OrderBy
-	1,  // 17: bucketeer.autoops.ListProgressiveRolloutsRequest.order_direction:type_name -> bucketeer.autoops.ListProgressiveRolloutsRequest.OrderDirection
-	43, // 18: bucketeer.autoops.ListProgressiveRolloutsRequest.status:type_name -> bucketeer.autoops.ProgressiveRollout.Status
-	44, // 19: bucketeer.autoops.ListProgressiveRolloutsRequest.type:type_name -> bucketeer.autoops.ProgressiveRollout.Type
-	40, // 20: bucketeer.autoops.ListProgressiveRolloutsResponse.progressive_rollouts:type_name -> bucketeer.autoops.ProgressiveRollout
-	45, // 21: bucketeer.autoops.ExecuteProgressiveRolloutRequest.change_progressive_rollout_triggered_at_command:type_name -> bucketeer.autoops.ChangeProgressiveRolloutScheduleTriggeredAtCommand
-	2,  // 22: bucketeer.autoops.AutoOpsService.GetAutoOpsRule:input_type -> bucketeer.autoops.GetAutoOpsRuleRequest
-	6,  // 23: bucketeer.autoops.AutoOpsService.ListAutoOpsRules:input_type -> bucketeer.autoops.ListAutoOpsRulesRequest
-	4,  // 24: bucketeer.autoops.AutoOpsService.CreateAutoOpsRule:input_type -> bucketeer.autoops.CreateAutoOpsRuleRequest
-	8,  // 25: bucketeer.autoops.AutoOpsService.DeleteAutoOpsRule:input_type -> bucketeer.autoops.DeleteAutoOpsRuleRequest
-	10, // 26: bucketeer.autoops.AutoOpsService.UpdateAutoOpsRule:input_type -> bucketeer.autoops.UpdateAutoOpsRuleRequest
-	12, // 27: bucketeer.autoops.AutoOpsService.ExecuteAutoOps:input_type -> bucketeer.autoops.ExecuteAutoOpsRequest
-	14, // 28: bucketeer.autoops.AutoOpsService.ListOpsCounts:input_type -> bucketeer.autoops.ListOpsCountsRequest
-	16, // 29: bucketeer.autoops.AutoOpsService.CreateProgressiveRollout:input_type -> bucketeer.autoops.CreateProgressiveRolloutRequest
-	18, // 30: bucketeer.autoops.AutoOpsService.GetProgressiveRollout:input_type -> bucketeer.autoops.GetProgressiveRolloutRequest
-	20, // 31: bucketeer.autoops.AutoOpsService.StopProgressiveRollout:input_type -> bucketeer.autoops.StopProgressiveRolloutRequest
-	22, // 32: bucketeer.autoops.AutoOpsService.DeleteProgressiveRollout:input_type -> bucketeer.autoops.DeleteProgressiveRolloutRequest
-	24, // 33: bucketeer.autoops.AutoOpsService.ListProgressiveRollouts:input_type -> bucketeer.autoops.ListProgressiveRolloutsRequest
-	26, // 34: bucketeer.autoops.AutoOpsService.ExecuteProgressiveRollout:input_type -> bucketeer.autoops.ExecuteProgressiveRolloutRequest
-	3,  // 35: bucketeer.autoops.AutoOpsService.GetAutoOpsRule:output_type -> bucketeer.autoops.GetAutoOpsRuleResponse
-	7,  // 36: bucketeer.autoops.AutoOpsService.ListAutoOpsRules:output_type -> bucketeer.autoops.ListAutoOpsRulesResponse
-	5,  // 37: bucketeer.autoops.AutoOpsService.CreateAutoOpsRule:output_type -> bucketeer.autoops.CreateAutoOpsRuleResponse
-	9,  // 38: bucketeer.autoops.AutoOpsService.DeleteAutoOpsRule:output_type -> bucketeer.autoops.DeleteAutoOpsRuleResponse
-	11, // 39: bucketeer.autoops.AutoOpsService.UpdateAutoOpsRule:output_type -> bucketeer.autoops.UpdateAutoOpsRuleResponse
-	13, // 40: bucketeer.autoops.AutoOpsService.ExecuteAutoOps:output_type -> bucketeer.autoops.ExecuteAutoOpsResponse
-	15, // 41: bucketeer.autoops.AutoOpsService.ListOpsCounts:output_type -> bucketeer.autoops.ListOpsCountsResponse
-	17, // 42: bucketeer.autoops.AutoOpsService.CreateProgressiveRollout:output_type -> bucketeer.autoops.CreateProgressiveRolloutResponse
-	19, // 43: bucketeer.autoops.AutoOpsService.GetProgressiveRollout:output_type -> bucketeer.autoops.GetProgressiveRolloutResponse
-	21, // 44: bucketeer.autoops.AutoOpsService.StopProgressiveRollout:output_type -> bucketeer.autoops.StopProgressiveRolloutResponse
-	23, // 45: bucketeer.autoops.AutoOpsService.DeleteProgressiveRollout:output_type -> bucketeer.autoops.DeleteProgressiveRolloutResponse
-	25, // 46: bucketeer.autoops.AutoOpsService.ListProgressiveRollouts:output_type -> bucketeer.autoops.ListProgressiveRolloutsResponse
-	27, // 47: bucketeer.autoops.AutoOpsService.ExecuteProgressiveRollout:output_type -> bucketeer.autoops.ExecuteProgressiveRolloutResponse
-	35, // [35:48] is the sub-list for method output_type
-	22, // [22:35] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	30, // 0: bucketeer.autoops.GetAutoOpsRuleResponse.auto_ops_rule:type_name -> bucketeer.autoops.AutoOpsRule
+	31, // 1: bucketeer.autoops.CreateAutoOpsRuleRequest.command:type_name -> bucketeer.autoops.CreateAutoOpsRuleCommand
+	30, // 2: bucketeer.autoops.ListAutoOpsRulesResponse.auto_ops_rules:type_name -> bucketeer.autoops.AutoOpsRule
+	32, // 3: bucketeer.autoops.StopAutoOpsRuleRequest.command:type_name -> bucketeer.autoops.StopAutoOpsRuleCommand
+	33, // 4: bucketeer.autoops.DeleteAutoOpsRuleRequest.command:type_name -> bucketeer.autoops.DeleteAutoOpsRuleCommand
+	34, // 5: bucketeer.autoops.UpdateAutoOpsRuleRequest.change_auto_ops_rule_ops_type_command:type_name -> bucketeer.autoops.ChangeAutoOpsRuleOpsTypeCommand
+	35, // 6: bucketeer.autoops.UpdateAutoOpsRuleRequest.add_ops_event_rate_clause_commands:type_name -> bucketeer.autoops.AddOpsEventRateClauseCommand
+	36, // 7: bucketeer.autoops.UpdateAutoOpsRuleRequest.change_ops_event_rate_clause_commands:type_name -> bucketeer.autoops.ChangeOpsEventRateClauseCommand
+	37, // 8: bucketeer.autoops.UpdateAutoOpsRuleRequest.delete_clause_commands:type_name -> bucketeer.autoops.DeleteClauseCommand
+	38, // 9: bucketeer.autoops.UpdateAutoOpsRuleRequest.add_datetime_clause_commands:type_name -> bucketeer.autoops.AddDatetimeClauseCommand
+	39, // 10: bucketeer.autoops.UpdateAutoOpsRuleRequest.change_datetime_clause_commands:type_name -> bucketeer.autoops.ChangeDatetimeClauseCommand
+	40, // 11: bucketeer.autoops.ExecuteAutoOpsRequest.change_auto_ops_rule_triggered_at_command:type_name -> bucketeer.autoops.ChangeAutoOpsRuleTriggeredAtCommand
+	41, // 12: bucketeer.autoops.ListOpsCountsResponse.ops_counts:type_name -> bucketeer.autoops.OpsCount
+	42, // 13: bucketeer.autoops.CreateProgressiveRolloutRequest.command:type_name -> bucketeer.autoops.CreateProgressiveRolloutCommand
+	43, // 14: bucketeer.autoops.GetProgressiveRolloutResponse.progressive_rollout:type_name -> bucketeer.autoops.ProgressiveRollout
+	44, // 15: bucketeer.autoops.StopProgressiveRolloutRequest.command:type_name -> bucketeer.autoops.StopProgressiveRolloutCommand
+	45, // 16: bucketeer.autoops.DeleteProgressiveRolloutRequest.command:type_name -> bucketeer.autoops.DeleteProgressiveRolloutCommand
+	0,  // 17: bucketeer.autoops.ListProgressiveRolloutsRequest.order_by:type_name -> bucketeer.autoops.ListProgressiveRolloutsRequest.OrderBy
+	1,  // 18: bucketeer.autoops.ListProgressiveRolloutsRequest.order_direction:type_name -> bucketeer.autoops.ListProgressiveRolloutsRequest.OrderDirection
+	46, // 19: bucketeer.autoops.ListProgressiveRolloutsRequest.status:type_name -> bucketeer.autoops.ProgressiveRollout.Status
+	47, // 20: bucketeer.autoops.ListProgressiveRolloutsRequest.type:type_name -> bucketeer.autoops.ProgressiveRollout.Type
+	43, // 21: bucketeer.autoops.ListProgressiveRolloutsResponse.progressive_rollouts:type_name -> bucketeer.autoops.ProgressiveRollout
+	48, // 22: bucketeer.autoops.ExecuteProgressiveRolloutRequest.change_progressive_rollout_triggered_at_command:type_name -> bucketeer.autoops.ChangeProgressiveRolloutScheduleTriggeredAtCommand
+	2,  // 23: bucketeer.autoops.AutoOpsService.GetAutoOpsRule:input_type -> bucketeer.autoops.GetAutoOpsRuleRequest
+	6,  // 24: bucketeer.autoops.AutoOpsService.ListAutoOpsRules:input_type -> bucketeer.autoops.ListAutoOpsRulesRequest
+	4,  // 25: bucketeer.autoops.AutoOpsService.CreateAutoOpsRule:input_type -> bucketeer.autoops.CreateAutoOpsRuleRequest
+	8,  // 26: bucketeer.autoops.AutoOpsService.StopAutoOpsRule:input_type -> bucketeer.autoops.StopAutoOpsRuleRequest
+	10, // 27: bucketeer.autoops.AutoOpsService.DeleteAutoOpsRule:input_type -> bucketeer.autoops.DeleteAutoOpsRuleRequest
+	12, // 28: bucketeer.autoops.AutoOpsService.UpdateAutoOpsRule:input_type -> bucketeer.autoops.UpdateAutoOpsRuleRequest
+	14, // 29: bucketeer.autoops.AutoOpsService.ExecuteAutoOps:input_type -> bucketeer.autoops.ExecuteAutoOpsRequest
+	16, // 30: bucketeer.autoops.AutoOpsService.ListOpsCounts:input_type -> bucketeer.autoops.ListOpsCountsRequest
+	18, // 31: bucketeer.autoops.AutoOpsService.CreateProgressiveRollout:input_type -> bucketeer.autoops.CreateProgressiveRolloutRequest
+	20, // 32: bucketeer.autoops.AutoOpsService.GetProgressiveRollout:input_type -> bucketeer.autoops.GetProgressiveRolloutRequest
+	22, // 33: bucketeer.autoops.AutoOpsService.StopProgressiveRollout:input_type -> bucketeer.autoops.StopProgressiveRolloutRequest
+	24, // 34: bucketeer.autoops.AutoOpsService.DeleteProgressiveRollout:input_type -> bucketeer.autoops.DeleteProgressiveRolloutRequest
+	26, // 35: bucketeer.autoops.AutoOpsService.ListProgressiveRollouts:input_type -> bucketeer.autoops.ListProgressiveRolloutsRequest
+	28, // 36: bucketeer.autoops.AutoOpsService.ExecuteProgressiveRollout:input_type -> bucketeer.autoops.ExecuteProgressiveRolloutRequest
+	3,  // 37: bucketeer.autoops.AutoOpsService.GetAutoOpsRule:output_type -> bucketeer.autoops.GetAutoOpsRuleResponse
+	7,  // 38: bucketeer.autoops.AutoOpsService.ListAutoOpsRules:output_type -> bucketeer.autoops.ListAutoOpsRulesResponse
+	5,  // 39: bucketeer.autoops.AutoOpsService.CreateAutoOpsRule:output_type -> bucketeer.autoops.CreateAutoOpsRuleResponse
+	9,  // 40: bucketeer.autoops.AutoOpsService.StopAutoOpsRule:output_type -> bucketeer.autoops.StopAutoOpsRuleResponse
+	11, // 41: bucketeer.autoops.AutoOpsService.DeleteAutoOpsRule:output_type -> bucketeer.autoops.DeleteAutoOpsRuleResponse
+	13, // 42: bucketeer.autoops.AutoOpsService.UpdateAutoOpsRule:output_type -> bucketeer.autoops.UpdateAutoOpsRuleResponse
+	15, // 43: bucketeer.autoops.AutoOpsService.ExecuteAutoOps:output_type -> bucketeer.autoops.ExecuteAutoOpsResponse
+	17, // 44: bucketeer.autoops.AutoOpsService.ListOpsCounts:output_type -> bucketeer.autoops.ListOpsCountsResponse
+	19, // 45: bucketeer.autoops.AutoOpsService.CreateProgressiveRollout:output_type -> bucketeer.autoops.CreateProgressiveRolloutResponse
+	21, // 46: bucketeer.autoops.AutoOpsService.GetProgressiveRollout:output_type -> bucketeer.autoops.GetProgressiveRolloutResponse
+	23, // 47: bucketeer.autoops.AutoOpsService.StopProgressiveRollout:output_type -> bucketeer.autoops.StopProgressiveRolloutResponse
+	25, // 48: bucketeer.autoops.AutoOpsService.DeleteProgressiveRollout:output_type -> bucketeer.autoops.DeleteProgressiveRolloutResponse
+	27, // 49: bucketeer.autoops.AutoOpsService.ListProgressiveRollouts:output_type -> bucketeer.autoops.ListProgressiveRolloutsResponse
+	29, // 50: bucketeer.autoops.AutoOpsService.ExecuteProgressiveRollout:output_type -> bucketeer.autoops.ExecuteProgressiveRolloutResponse
+	37, // [37:51] is the sub-list for method output_type
+	23, // [23:37] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_proto_autoops_service_proto_init() }
@@ -2194,7 +2319,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteAutoOpsRuleRequest); i {
+			switch v := v.(*StopAutoOpsRuleRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2206,7 +2331,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteAutoOpsRuleResponse); i {
+			switch v := v.(*StopAutoOpsRuleResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2218,7 +2343,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateAutoOpsRuleRequest); i {
+			switch v := v.(*DeleteAutoOpsRuleRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2230,7 +2355,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateAutoOpsRuleResponse); i {
+			switch v := v.(*DeleteAutoOpsRuleResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2242,7 +2367,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ExecuteAutoOpsRequest); i {
+			switch v := v.(*UpdateAutoOpsRuleRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2254,7 +2379,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ExecuteAutoOpsResponse); i {
+			switch v := v.(*UpdateAutoOpsRuleResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2266,7 +2391,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListOpsCountsRequest); i {
+			switch v := v.(*ExecuteAutoOpsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2278,7 +2403,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListOpsCountsResponse); i {
+			switch v := v.(*ExecuteAutoOpsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2290,7 +2415,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateProgressiveRolloutRequest); i {
+			switch v := v.(*ListOpsCountsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2302,7 +2427,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateProgressiveRolloutResponse); i {
+			switch v := v.(*ListOpsCountsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2314,7 +2439,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetProgressiveRolloutRequest); i {
+			switch v := v.(*CreateProgressiveRolloutRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2326,7 +2451,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetProgressiveRolloutResponse); i {
+			switch v := v.(*CreateProgressiveRolloutResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2338,7 +2463,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StopProgressiveRolloutRequest); i {
+			switch v := v.(*GetProgressiveRolloutRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2350,7 +2475,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*StopProgressiveRolloutResponse); i {
+			switch v := v.(*GetProgressiveRolloutResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2362,7 +2487,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[20].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteProgressiveRolloutRequest); i {
+			switch v := v.(*StopProgressiveRolloutRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2374,7 +2499,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[21].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteProgressiveRolloutResponse); i {
+			switch v := v.(*StopProgressiveRolloutResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2386,7 +2511,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListProgressiveRolloutsRequest); i {
+			switch v := v.(*DeleteProgressiveRolloutRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2398,7 +2523,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListProgressiveRolloutsResponse); i {
+			switch v := v.(*DeleteProgressiveRolloutResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2410,7 +2535,7 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ExecuteProgressiveRolloutRequest); i {
+			switch v := v.(*ListProgressiveRolloutsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2422,6 +2547,30 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 		file_proto_autoops_service_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListProgressiveRolloutsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_autoops_service_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ExecuteProgressiveRolloutRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_autoops_service_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ExecuteProgressiveRolloutResponse); i {
 			case 0:
 				return &v.state
@@ -2434,14 +2583,14 @@ func file_proto_autoops_service_proto_init() {
 			}
 		}
 	}
-	file_proto_autoops_service_proto_msgTypes[22].OneofWrappers = []interface{}{}
+	file_proto_autoops_service_proto_msgTypes[24].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_autoops_service_proto_rawDesc,
 			NumEnums:      2,
-			NumMessages:   26,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
@@ -2471,6 +2620,7 @@ type AutoOpsServiceClient interface {
 	GetAutoOpsRule(ctx context.Context, in *GetAutoOpsRuleRequest, opts ...grpc.CallOption) (*GetAutoOpsRuleResponse, error)
 	ListAutoOpsRules(ctx context.Context, in *ListAutoOpsRulesRequest, opts ...grpc.CallOption) (*ListAutoOpsRulesResponse, error)
 	CreateAutoOpsRule(ctx context.Context, in *CreateAutoOpsRuleRequest, opts ...grpc.CallOption) (*CreateAutoOpsRuleResponse, error)
+	StopAutoOpsRule(ctx context.Context, in *StopAutoOpsRuleRequest, opts ...grpc.CallOption) (*StopAutoOpsRuleResponse, error)
 	DeleteAutoOpsRule(ctx context.Context, in *DeleteAutoOpsRuleRequest, opts ...grpc.CallOption) (*DeleteAutoOpsRuleResponse, error)
 	UpdateAutoOpsRule(ctx context.Context, in *UpdateAutoOpsRuleRequest, opts ...grpc.CallOption) (*UpdateAutoOpsRuleResponse, error)
 	ExecuteAutoOps(ctx context.Context, in *ExecuteAutoOpsRequest, opts ...grpc.CallOption) (*ExecuteAutoOpsResponse, error)
@@ -2512,6 +2662,15 @@ func (c *autoOpsServiceClient) ListAutoOpsRules(ctx context.Context, in *ListAut
 func (c *autoOpsServiceClient) CreateAutoOpsRule(ctx context.Context, in *CreateAutoOpsRuleRequest, opts ...grpc.CallOption) (*CreateAutoOpsRuleResponse, error) {
 	out := new(CreateAutoOpsRuleResponse)
 	err := c.cc.Invoke(ctx, "/bucketeer.autoops.AutoOpsService/CreateAutoOpsRule", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *autoOpsServiceClient) StopAutoOpsRule(ctx context.Context, in *StopAutoOpsRuleRequest, opts ...grpc.CallOption) (*StopAutoOpsRuleResponse, error) {
+	out := new(StopAutoOpsRuleResponse)
+	err := c.cc.Invoke(ctx, "/bucketeer.autoops.AutoOpsService/StopAutoOpsRule", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -2613,6 +2772,7 @@ type AutoOpsServiceServer interface {
 	GetAutoOpsRule(context.Context, *GetAutoOpsRuleRequest) (*GetAutoOpsRuleResponse, error)
 	ListAutoOpsRules(context.Context, *ListAutoOpsRulesRequest) (*ListAutoOpsRulesResponse, error)
 	CreateAutoOpsRule(context.Context, *CreateAutoOpsRuleRequest) (*CreateAutoOpsRuleResponse, error)
+	StopAutoOpsRule(context.Context, *StopAutoOpsRuleRequest) (*StopAutoOpsRuleResponse, error)
 	DeleteAutoOpsRule(context.Context, *DeleteAutoOpsRuleRequest) (*DeleteAutoOpsRuleResponse, error)
 	UpdateAutoOpsRule(context.Context, *UpdateAutoOpsRuleRequest) (*UpdateAutoOpsRuleResponse, error)
 	ExecuteAutoOps(context.Context, *ExecuteAutoOpsRequest) (*ExecuteAutoOpsResponse, error)
@@ -2637,6 +2797,9 @@ func (*UnimplementedAutoOpsServiceServer) ListAutoOpsRules(context.Context, *Lis
 }
 func (*UnimplementedAutoOpsServiceServer) CreateAutoOpsRule(context.Context, *CreateAutoOpsRuleRequest) (*CreateAutoOpsRuleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateAutoOpsRule not implemented")
+}
+func (*UnimplementedAutoOpsServiceServer) StopAutoOpsRule(context.Context, *StopAutoOpsRuleRequest) (*StopAutoOpsRuleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method StopAutoOpsRule not implemented")
 }
 func (*UnimplementedAutoOpsServiceServer) DeleteAutoOpsRule(context.Context, *DeleteAutoOpsRuleRequest) (*DeleteAutoOpsRuleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteAutoOpsRule not implemented")
@@ -2723,6 +2886,24 @@ func _AutoOpsService_CreateAutoOpsRule_Handler(srv interface{}, ctx context.Cont
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AutoOpsServiceServer).CreateAutoOpsRule(ctx, req.(*CreateAutoOpsRuleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AutoOpsService_StopAutoOpsRule_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StopAutoOpsRuleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AutoOpsServiceServer).StopAutoOpsRule(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/bucketeer.autoops.AutoOpsService/StopAutoOpsRule",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AutoOpsServiceServer).StopAutoOpsRule(ctx, req.(*StopAutoOpsRuleRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -2922,6 +3103,10 @@ var _AutoOpsService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateAutoOpsRule",
 			Handler:    _AutoOpsService_CreateAutoOpsRule_Handler,
+		},
+		{
+			MethodName: "StopAutoOpsRule",
+			Handler:    _AutoOpsService_StopAutoOpsRule_Handler,
 		},
 		{
 			MethodName: "DeleteAutoOpsRule",

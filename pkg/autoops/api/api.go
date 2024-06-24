@@ -377,6 +377,92 @@ func (s *AutoOpsService) validateDatetimeClause(clause *autoopsproto.DatetimeCla
 	return nil
 }
 
+func (s *AutoOpsService) StopAutoOpsRule(
+	ctx context.Context,
+	req *autoopsproto.StopAutoOpsRuleRequest,
+) (*autoopsproto.StopAutoOpsRuleResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentNamespace, localizer)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := validateStopAutoOpsRuleRequest(req, localizer); err != nil {
+		return nil, err
+	}
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
+		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentNamespace)
+		if err != nil {
+			return err
+		}
+		if autoOpsRule.IsFinished() {
+			dt, err := statusAutoOpsRuleFinished.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InvalidArgumentError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+		if err := handler.Handle(ctx, req.Command); err != nil {
+			return err
+		}
+		return autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentNamespace)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return &autoopsproto.StopAutoOpsRuleResponse{}, nil
+}
+
+func validateStopAutoOpsRuleRequest(req *autoopsproto.StopAutoOpsRuleRequest, localizer locale.Localizer) error {
+	if req.Id == "" {
+		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.Command == nil {
+		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
+
 func (s *AutoOpsService) DeleteAutoOpsRule(
 	ctx context.Context,
 	req *autoopsproto.DeleteAutoOpsRuleRequest,
