@@ -1,4 +1,7 @@
 fullnameOverride: "bucketeer-migration"
+
+annotations: {}
+
 image:
   repository: ghcr.io/bucketeer-io/bucketeer-migration
   pullPolicy: IfNotPresent

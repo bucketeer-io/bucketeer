@@ -2,6 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ include "bucketeer-migration.fullname" . }}
+  annotations: {{ toYaml .Values.annotations | nindent 4 }}
 spec:
   backoffLimit: 0
   ttlSecondsAfterFinished: 86400
