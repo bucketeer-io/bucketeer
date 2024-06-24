@@ -22,6 +22,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/proto/feature"
 	proto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -1783,6 +1784,73 @@ func TestValidateClauses(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			assert.Equal(t, p.expected, validateClauses(p.clauses))
+		})
+	}
+}
+
+func TestUpdate(t *testing.T) {
+	patterns := []struct {
+		desc        string
+		feature     *Feature
+		name        *wrapperspb.StringValue
+		description *wrapperspb.StringValue
+		expected    *Feature
+		expectedErr error
+	}{
+		{
+			desc: "fail: name is empty",
+			feature: &Feature{
+				Feature: &proto.Feature{},
+			},
+			name:        &wrapperspb.StringValue{Value: ""},
+			description: &wrapperspb.StringValue{Value: "description"},
+			expected:    nil,
+			expectedErr: errNameEmpty,
+		},
+		{
+			desc: "success",
+			feature: &Feature{
+				Feature: &proto.Feature{},
+			},
+			name:        &wrapperspb.StringValue{Value: "name"},
+			description: &wrapperspb.StringValue{Value: "description"},
+			expected: &Feature{
+				Feature: &proto.Feature{
+					Name:        "name",
+					Description: "description",
+					UpdatedAt:   time.Now().Unix(),
+					Version:     1,
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: version not incremented",
+			feature: &Feature{
+				Feature: &proto.Feature{},
+			},
+			description: &wrapperspb.StringValue{Value: "description"},
+			expected: &Feature{
+				Feature: &proto.Feature{
+					Name:        "",
+					Description: "description",
+					UpdatedAt:   time.Now().Unix(),
+					Version:     0,
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual, err := p.feature.Update(p.name, p.description)
+			if p.expectedErr != nil && actual != nil {
+				assert.Equal(t, p.expected.Name, actual.Name, p.desc)
+				assert.Equal(t, p.expected.Description, actual.Description, p.desc)
+				assert.Equal(t, p.expected.Version, actual.Version, p.desc)
+				assert.LessOrEqual(t, p.expected.UpdatedAt, actual.UpdatedAt)
+			}
+			assert.Equal(t, p.expectedErr, err)
 		})
 	}
 }

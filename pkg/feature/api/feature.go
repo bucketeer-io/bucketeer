@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -29,6 +30,7 @@ import (
 	evaluation "github.com/bucketeer-io/bucketeer/evaluation"
 	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	v2ao "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2"
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	experimentdomain "github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
@@ -660,7 +662,128 @@ func (s *FeatureService) UpdateFeature(
 	ctx context.Context,
 	req *featureproto.UpdateFeatureRequest,
 ) (*featureproto.UpdateFeatureResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method UpdateFeatureDetails not implemented")
+	localizer := locale.NewLocalizer(ctx)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
+		req.EnvironmentId, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if req.Id == "" {
+		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentId, localizer); err != nil {
+		return nil, err
+	}
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
+		return nil, err
+	}
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	var event *eventproto.Event
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		featureStorage := v2fs.NewFeatureStorage(tx)
+		feature, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
+		if err != nil {
+			s.logger.Error(
+				"Failed to get feature",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return err
+		}
+		updated, err := feature.Update(
+			req.Name,
+			req.Description,
+		)
+		if err != nil {
+			return err
+		}
+		ub, err := json.MarshalIndent(updated.Feature, "", "  ")
+		if err != nil {
+			return err
+		}
+		fb, err := json.MarshalIndent(feature.Feature, "", "  ")
+		if err != nil {
+			return err
+		}
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_FEATURE,
+			feature.Id,
+			eventproto.Event_FEATURE_UPDATED,
+			&eventproto.FeatureUpdatedEvent{
+				Id:           req.Id,
+				Data:         string(ub),
+				PreviousData: string(fb),
+			},
+			req.EnvironmentId,
+			// check require comment.
+			domainevent.WithComment(req.Comment),
+			domainevent.WithNewVersion(feature.Version),
+		)
+		if err != nil {
+			return err
+		}
+		err = featureStorage.UpdateFeature(ctx, updated, req.EnvironmentId)
+		if err != nil {
+			s.logger.Error(
+				"Failed to update feature",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	if errs := s.publishDomainEvents(ctx, []*eventproto.Event{event}); len(errs) > 0 {
+		s.logger.Error(
+			"Failed to publish events",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Any("errors", errs),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	s.updateFeatureFlagCache(ctx)
+	return &featureproto.UpdateFeatureResponse{}, nil
 }
 
 func (s *FeatureService) UpdateFeatureDetails(

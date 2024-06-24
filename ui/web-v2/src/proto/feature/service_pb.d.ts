@@ -458,10 +458,18 @@ export class UpdateFeatureRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
-  hasFeature(): boolean;
-  clearFeature(): void;
-  getFeature(): proto_feature_feature_pb.Feature | undefined;
-  setFeature(value?: proto_feature_feature_pb.Feature): void;
+  getId(): string;
+  setId(value: string): void;
+
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateFeatureRequest.AsObject;
@@ -488,7 +496,9 @@ export namespace UpdateFeatureRequest {
   export type AsObject = {
     comment: string;
     environmentId: string;
-    feature?: proto_feature_feature_pb.Feature.AsObject;
+    id: string;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
   };
 }
 
