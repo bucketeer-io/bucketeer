@@ -1,9 +1,10 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "{{ include "bucketeer-migration.fullname" . }}-{{ now | unixEpoch }}"
+  name: {{ include "bucketeer-migration.fullname" . }}
 spec:
   backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
   template:
     spec:
       {{- with .Values.imagePullSecrets }}
@@ -11,7 +12,7 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: {{ include "bucketeer-migration.fullname" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:

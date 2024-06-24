@@ -1,20 +1,16 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "{{ .Release.Name }}-migrate-{{ now | unixEpoch }}"
+  name: "{{ .Release.Name }}-migrate"
   labels:
     helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
   template:
-    metadata:
-      name: "{{ .Release.Name }}-migration"
-      labels:
-        app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
-        app.kubernetes.io/instance: {{ .Release.Name | quote }}
-        helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     spec:
       {{- with .Values.migration.image.imagePullSecrets }}
       imagePullSecrets: {{- toYaml . | nindent 8 }}
