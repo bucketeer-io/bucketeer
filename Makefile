@@ -37,7 +37,7 @@ docker-run:
 # Go
 #############################
 
-.PHONY: generate
+.PHONY: generate-all
 generate: proto-all mockgen
 
 .PHONY: check-all
