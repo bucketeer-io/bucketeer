@@ -174,6 +174,12 @@ build-chart:
 	mkdir -p .artifacts
 	helm package manifests/bucketeer --version $(VERSION) --app-version $(VERSION) --dependency-update --destination .artifacts
 
+.PHONY: build-chart
+build-migration-chart: VERSION ?= $(shell git describe --tags --always --abbrev=7)
+build-migration-chart:
+	mkdir -p .artifacts
+	helm package manifests/bucketeer-migration --version $(VERSION) --app-version $(VERSION) --destination .artifacts
+
 #############################
 # E2E for backend
 #############################
@@ -259,7 +265,7 @@ create-migration:
 	atlas migrate diff ${NAME} \
 		--dir file://migration/mysql \
 		--to mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
-		--dev-url docker://mysql/8
+		--dev-url docker://mysql/8/${DB}
 
 .PHONY: atlas-set-version
 atlas-set-version:

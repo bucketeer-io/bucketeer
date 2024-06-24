@@ -26,5 +26,7 @@ spec:
           args:
             - migrate
             - apply
+            - --baseline
+            - "{{ .Values.migration.dbBaseline }}"
             - -u
             - {{ .Values.migration.dbUrl }}

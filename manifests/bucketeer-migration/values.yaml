@@ -1,0 +1,19 @@
+replicaCount: 1
+
+fullnameOverride: "bucketeer-migration"
+image:
+  repository: ghcr.io/bucketeer-io/bucketeer-migration
+  pullPolicy: IfNotPresent
+  tag: v0.4.5 # x-release-please-version
+
+imagePullSecrets: []
+
+# URL to access the DB to do the migration
+# E.g. mysql://user:password@host:port/db_name
+dbUrl:
+
+# The migration baseline
+# First revision
+dbBaseline: "20240624041010"
+
+resources: {}
