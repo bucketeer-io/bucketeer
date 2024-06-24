@@ -105,7 +105,9 @@ message UpdateFeatureRequest {
   google.protobuf.StringValue description = 5;
 }
 
-message UpdateFeatureResponse {}
+message UpdateFeatureResponse {
+  Feature feature = 1;
+}
 
 message EnableFeatureRequest {
   string id = 1;
