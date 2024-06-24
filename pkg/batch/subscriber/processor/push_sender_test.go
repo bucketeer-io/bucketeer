@@ -55,6 +55,16 @@ func TestExtractFeatureID(t *testing.T) {
 			input: &domaineventproto.Event{
 				EntityType: domaineventproto.Event_FEATURE,
 				EntityId:   "fid",
+				Type:       domaineventproto.Event_FEATURE_UPDATED,
+			},
+			expectedID:       "fid",
+			expectedIsTarget: true,
+		},
+		{
+			desc: "is target",
+			input: &domaineventproto.Event{
+				EntityType: domaineventproto.Event_FEATURE,
+				EntityId:   "fid",
 				Type:       domaineventproto.Event_FEATURE_VERSION_INCREMENTED,
 			},
 			expectedID:       "fid",
