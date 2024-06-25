@@ -74,11 +74,11 @@ Please note that you only need to create them once.
 ### Create API keys
 
 ```shell
-make create-api-key API_KEY_ROLE=SDK_CLIENT
+make create-api-key API_KEY_ROLE=SDK_CLIENT API_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_client
 ```
 
 ```shell
-make create-api-key API_KEY_ROLE=SDK_SERVER
+make create-api-key API_KEY_ROLE=SDK_SERVER API_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_server
 ```
 
 ### Run E2E tests
