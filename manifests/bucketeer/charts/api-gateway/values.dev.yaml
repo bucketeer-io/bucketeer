@@ -1,6 +1,6 @@
 global:
   image:
-    tag: test
+    tag: localenv
     imagePullSecrets:
 
 env:
@@ -23,14 +23,13 @@ tls:
   bucketeerJP:
     secrets:
       - hosts:
-          - api-gateway.bucketeer.org
+          - api-gateway.bucketeer.io
         secretName: bucketeer-service-cert
   service:
     secret: bucketeer-service-cert
     cert:
     key:
 serviceToken:
-  secret:
-  token: 
+  secret: bucketeer-service-token
 ingress:
-  host: api-gateway.bucketeer.org
+  host: api-gateway.bucketeer.io

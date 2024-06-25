@@ -70,7 +70,6 @@ tls:
 
 serviceToken:
   secret:
-  token:
 
 service:
   type: ClusterIP

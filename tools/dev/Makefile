@@ -2,10 +2,10 @@ NAMESPACE := default
 
 generate-tls-certificate:
 	mkdir -p $(CURDIR)/cert
-	openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+	openssl req -x509 -nodes -days 36500 -newkey rsa:2048 \
 		-keyout $(CURDIR)/cert/tls.key \
 		-out $(CURDIR)/cert/tls.crt \
-		-subj "/CN=*.bucketeer.org" \
+		-subj "/CN=*.bucketeer.io" \
 		-config service.config
 
 generate-oauth:
@@ -16,6 +16,10 @@ generate-oauth:
 service-cert-secret:
 	kubectl delete secret bucketeer-service-cert --namespace $(NAMESPACE) --ignore-not-found
 	kubectl create secret tls bucketeer-service-cert --key ${CURDIR}/cert/tls.key --cert ${CURDIR}/cert/tls.crt --namespace $(NAMESPACE)
+
+service-token-secret:
+	kubectl delete secret bucketeer-service-token --namespace $(NAMESPACE) --ignore-not-found
+	kubectl create secret generic bucketeer-service-token --from-file token=${CURDIR}/cert/service-token --namespace $(NAMESPACE)
 
 oauth-key-secret:
 	kubectl delete secret bucketeer-oauth-key --namespace $(NAMESPACE) --ignore-not-found

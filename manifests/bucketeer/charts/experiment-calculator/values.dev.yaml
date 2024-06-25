@@ -1,6 +1,6 @@
 global:
   image:
-    tag: test
+    tag: localenv
     imagePullSecrets:
 
 env:
@@ -30,5 +30,4 @@ tls:
     key:
 
 serviceToken:
-  secret:
-  token:
+  secret: bucketeer-service-token

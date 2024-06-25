@@ -21,6 +21,16 @@ LDFLAGS_VERSION := $(LDFLAGS_PACKAGE).Version
 LDFLAGS_HASH := $(LDFLAGS_PACKAGE).Hash
 LDFLAGS_BUILDDATE := $(LDFLAGS_PACKAGE).BuildDate
 
+# Default variables for dev container
+WEB_GATEWAY_URL := web-gateway.bucketeer.io
+GATEWAY_URL := api-gateway.bucketeer.io
+WEB_GATEWAY_CERT_PATH := /workspaces/bucketeer/tools/dev/cert/tls.crt
+GATEWAY_CERT_PATH := /workspaces/bucketeer/tools/dev/cert/tls.crt
+SERVICE_TOKEN_PATH := /workspaces/bucketeer/tools/dev/cert/service-token
+API_KEY_PATH := /workspaces/bucketeer/tools/dev/cert/api_key_client
+API_KEY_SERVER_PATH := /workspaces/bucketeer/tools/dev/cert/api_key_server
+ENVIRONMENT_NAMESPACE := e2e
+
 #############################
 # Run make commands on docker container
 #############################
@@ -283,8 +293,8 @@ start-minikube:
 # modify hosts file to access api-gateway and web-gateway
 modify-hosts:
 	$(eval MINIKUBE_IP := $(shell minikube ip))
-	echo "$(MINIKUBE_IP)   web-gateway.bucketeer.org" | sudo tee -a /etc/hosts
-	echo "$(MINIKUBE_IP)   api-gateway.bucketeer.org" | sudo tee -a /etc/hosts
+	echo "$(MINIKUBE_IP)   web-gateway.bucketeer.io" | sudo tee -a /etc/hosts
+	echo "$(MINIKUBE_IP)   api-gateway.bucketeer.io" | sudo tee -a /etc/hosts
 
 # enable vault transit secret engine
 enable-vault-transit:
@@ -305,26 +315,6 @@ setup-bigquery-vault:
 	make create-bigquery-emulator-tables
 	make enable-vault-transit
 
-# generate tls certificate
-generate-tls-certificate:
-	make -C tools/dev generate-tls-certificate
-
-# generate oauth key
-generate-oauth:
-	make -C tools/dev generate-oauth
-
-# create service cert secret in minikube
-service-cert-secret:
-	make -C tools/dev service-cert-secret
-
-# create oauth key secret in minikube
-oauth-key-secret:
-	make -C tools/dev oauth-key-secret
-
-# create github token secret in minikube
-generate-github-token:
-	make -C tools/dev generate-github-token
-
 
 # build go application docker image
 # please set the TAG env, eg: TAG=test make build-docker-images
@@ -335,7 +325,6 @@ build-docker-images:
 		docker build -f Dockerfile-app-$$APP -t ghcr.io/bucketeer-io/bucketeer-$$IMAGE:${TAG} .; \
 		rm Dockerfile-app-$$APP; \
 	done
-
 
 # copy go application docker image to minikube
 # please keep the same TAG env as used in build-docker-images, eg: TAG=test make minikube-load-images
@@ -358,25 +347,20 @@ deploy-service-to-minikube:
 
 # Delete all the services from Minikube
 delete-all-services-from-minikube:
-	$(foreach var,$(SERVICES),helm uninstall $(var);)
+	$(foreach var,$(SERVICES),helm uninstall $(var) --ignore-not-found;)
 
 # Deploy All the services to minikube
 deploy-all-services-to-minikube:
 	$(foreach var,$(SERVICES),SERVICE=$(var) make deploy-service-to-minikube;)
 
-# bucketeer deploy
-deploy-bucketeer:
-	make -C ./ generate-tls-certificate
-	make -C ./ generate-oauth
-	make -C ./ service-cert-secret
-	make -C ./ oauth-key-secret
-	GITHUB_TOKEN=$(GITHUB_TOKEN) make -C ./ generate-github-token
-	ISSUER=$(ISSUER) \
-	EMAIL=$(EMAIL) \
-	OAUTH_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/oauth-private.pem \
-	SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
-	make generate-service-token
+# Bucketeer deployment
+deploy-bucketeer: delete-all-services-from-minikube
+	make -C tools/dev service-cert-secret
+	make -C tools/dev service-token-secret
+	make -C tools/dev oauth-key-secret
+	GITHUB_TOKEN=$(GITHUB_TOKEN) make -C tools/dev generate-github-token
+
 	make -C ./ build-go
-	TAG=$(TAG) make -C ./ build-docker-images
-	TAG=$(TAG) make -C ./ minikube-load-images
+	TAG=localenv make -C ./ build-docker-images
+	TAG=localenv make -C ./ minikube-load-images
 	make -C ./ deploy-all-services-to-minikube

@@ -57,7 +57,7 @@ backend:
     redirectUrls: https://google.com
     issuer: https://accounts.google.com
   webhook:
-    baseURL: https://web-gateway.bucketeer.org
+    baseURL: https://web-gateway.bucketeer.io
     kmsResourceName: vault
 
 api-gateway:
@@ -81,7 +81,7 @@ api-gateway:
     bucketeerJP:
       secrets:
         - hosts:
-            - api-gateway.bucketeer.org
+            - api-gateway.bucketeer.io
           secretName: bucketeer-service-cert
     service:
       secret: bucketeer-service-cert
@@ -91,7 +91,7 @@ api-gateway:
     secret:
     token:
   ingress:
-    host: api-gateway.bucketeer.org
+    host: api-gateway.bucketeer.io
 
 web-gateway:
   env:
@@ -100,12 +100,12 @@ web-gateway:
     bucketeerJP:
       secrets:
         - hosts:
-            - web-gateway.bucketeer.org
+            - web-gateway.bucketeer.io
           secretName: bucketeer-service-cert
     service:
       secret: bucketeer-service-cert
   ingress:
-    host: web-gateway.bucketeer.org
+    host: web-gateway.bucketeer.io
 
 auditlog-persister:
   env:
