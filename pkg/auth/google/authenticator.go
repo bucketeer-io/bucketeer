@@ -111,6 +111,10 @@ func (a Authenticator) Exchange(
 		return nil, err
 	}
 	userInfo, err := a.getGoogleUserInfo(ctx, authToken, oauth2Config, localizer)
+	if err != nil {
+		a.logger.Error("google: query user info error", zap.Error(err))
+		return nil, err
+	}
 	return a.generateToken(ctx, userInfo.Email, localizer)
 }
 

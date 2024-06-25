@@ -75,6 +75,12 @@ func (v *dummyVerifier) VerifyAccessToken(rawIDToken string) (*token.AccessToken
 	}, nil
 }
 
+func (v *dummyVerifier) VerifyRefreshToken(s string) (*token.RefreshToken, error) {
+	return &token.RefreshToken{
+		Email: "test@email",
+	}, nil
+}
+
 type dummyPerRPCCredentials struct {
 	Metadata map[string]string
 }
