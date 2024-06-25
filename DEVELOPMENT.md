@@ -1,6 +1,6 @@
 # Set up the DEV Container
 
-It's recommended that the GitHub dev container be used to set up the development environment.
+It's recommended that Development Container (Dev Container) be used to set up the development environment.
 The dev container is based on Ubuntu 20.04 and contains all the necessary tools to build and run the project.
 It is also configured to use the latest version of the project.
 
@@ -74,39 +74,15 @@ Please note that you only need to create them once.
 ### Create API keys
 
 ```shell
-WEB_GATEWAY_URL=web-gateway.bucketeer.io \
-GATEWAY_URL=api-gateway.bucketeer.io \
-WEB_GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
-GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
-SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
-API_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_client \
-API_KEY_ROLE=SDK_CLIENT \
-ENVIRONMENT_NAMESPACE=e2e \
-make create-api-key
+make create-api-key API_KEY_ROLE=SDK_CLIENT
 ```
 
 ```shell
-WEB_GATEWAY_URL=web-gateway.bucketeer.io \
-GATEWAY_URL=api-gateway.bucketeer.io \
-WEB_GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
-GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
-SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
-API_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_server \
-API_KEY_ROLE=SDK_SERVER \
-ENVIRONMENT_NAMESPACE=e2e \
-make create-api-key
+make create-api-key API_KEY_ROLE=SDK_SERVER
 ```
 
 ### Run E2E tests
 
 ```shell
-WEB_GATEWAY_URL=web-gateway.bucketeer.io \
-GATEWAY_URL=api-gateway.bucketeer.io \
-WEB_GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
-GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
-SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
-API_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_client \
-API_KEY_SERVER_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_server \
-ENVIRONMENT_NAMESPACE=e2e \
 make e2e
 ```
