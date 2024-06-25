@@ -52,7 +52,7 @@ local-deps:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
 	go install go.uber.org/mock/mockgen@v0.4.0; \
 	go install github.com/golang/protobuf/protoc-gen-go@v1.5.2; \
-	go install github.com/google/gnostic/cmd/protoc-gen-openapi@latest; \
+	go install github.com/google/gnostic/cmd/protoc-gen-openapi@v0.7.0; \
 	go install github.com/nilslice/protolock/...@v0.15.0; \
 	go install github.com/mikefarah/yq/v4@v4.28.2
 
