@@ -13580,7 +13580,14 @@
             ]
           },
           {
-            "name": "CreateFeatureResponse"
+            "name": "CreateFeatureResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature",
+                "type": "Feature"
+              }
+            ]
           },
           {
             "name": "UpdateFeatureRequest",
@@ -15382,6 +15389,63 @@
             "name": "TrackResponse"
           },
           {
+            "name": "CreateFeatureRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "variation_type",
+                "type": "feature.Feature.VariationType"
+              },
+              {
+                "id": 5,
+                "name": "variations",
+                "type": "feature.Variation",
+                "is_repeated": true
+              },
+              {
+                "id": 6,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "on_variation_index",
+                "type": "int32"
+              },
+              {
+                "id": 8,
+                "name": "off_variation_index",
+                "type": "int32"
+              }
+            ]
+          },
+          {
+            "name": "CreateFeatureResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature",
+                "type": "feature.Feature"
+              }
+            ]
+          },
+          {
             "name": "GetFeatureRequest",
             "fields": [
               {
@@ -15614,6 +15678,26 @@
                 ]
               },
               {
+                "name": "CreateFeature",
+                "in_type": "CreateFeatureRequest",
+                "out_type": "CreateFeatureResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/features"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
                 "name": "GetFeature",
                 "in_type": "GetFeatureRequest",
                 "out_type": "GetFeatureResponse",
@@ -15686,6 +15770,9 @@
           },
           {
             "path": "proto/feature/service.proto"
+          },
+          {
+            "path": "proto/feature/variation.proto"
           },
           {
             "path": "proto/feature/segment.proto"

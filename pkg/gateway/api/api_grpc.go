@@ -26,6 +26,7 @@ import (
 	"google.golang.org/grpc/codes"
 	gmetadata "google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	evaluation "github.com/bucketeer-io/bucketeer/evaluation"
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
@@ -926,6 +927,42 @@ func (s *grpcGatewayService) emptyGetSegmentUsersResponse() (*gwproto.GetSegment
 		RequestedAt:       time.Now().Unix(),
 		ForceUpdate:       true,
 	}, nil
+}
+
+func (s *grpcGatewayService) CreateFeature(
+	ctx context.Context,
+	req *gwproto.CreateFeatureRequest,
+) (*gwproto.CreateFeatureResponse, error) {
+	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
+		accountproto.APIKey_PUBLIC_API_WRITE,
+		accountproto.APIKey_PUBLIC_API_ADMIN,
+	})
+	if err != nil {
+		s.logger.Error("Failed to check CreateFeature request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("featureId", req.Id),
+			)...,
+		)
+		return nil, err
+	}
+	res, err := s.featureClient.CreateFeature(ctx, &featureproto.CreateFeatureRequest{
+		EnvironmentNamespace: envAPIKey.Environment.Id,
+		Command: &featureproto.CreateFeatureCommand{
+			Id:                       req.Id,
+			Name:                     req.Name,
+			Description:              req.Description,
+			Variations:               req.Variations,
+			Tags:                     req.Tags,
+			DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: req.OnVariationIndex},
+			DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: req.OffVariationIndex},
+			VariationType:            req.VariationType,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &gwproto.CreateFeatureResponse{Feature: res.Feature}, nil
 }
 
 func (s *grpcGatewayService) GetFeature(

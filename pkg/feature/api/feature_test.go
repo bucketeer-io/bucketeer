@@ -561,7 +561,10 @@ func TestCreateFeatureMySQL(t *testing.T) {
 				},
 				EnvironmentNamespace: p.environmentNamespace,
 			}
-			_, err := service.CreateFeature(ctx, req)
+			actual, err := service.CreateFeature(ctx, req)
+			if p.expected == nil {
+				assert.NotNil(t, actual.Feature)
+			}
 			assert.Equal(t, p.expected, err)
 		})
 	}

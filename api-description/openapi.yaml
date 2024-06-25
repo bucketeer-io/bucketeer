@@ -231,6 +231,29 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/Status'
+        post:
+            tags:
+                - Gateway
+            operationId: Gateway_CreateFeature
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateFeatureRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/CreateFeatureResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
     /v1/features/{id}:
         get:
             tags:
@@ -300,6 +323,44 @@ components:
                     type: array
                     items:
                         type: string
+        CreateFeatureCommand:
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                description:
+                    type: string
+                variations:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Variation'
+                tags:
+                    type: array
+                    items:
+                        type: string
+                defaultOnVariationIndex:
+                    type: integer
+                    format: int32
+                defaultOffVariationIndex:
+                    type: integer
+                    format: int32
+                variationType:
+                    type: integer
+                    format: enum
+        CreateFeatureRequest:
+            type: object
+            properties:
+                command:
+                    $ref: '#/components/schemas/CreateFeatureCommand'
+                environmentNamespace:
+                    type: string
+        CreateFeatureResponse:
+            type: object
+            properties:
+                feature:
+                    $ref: '#/components/schemas/Feature'
         Evaluation:
             type: object
             properties:
