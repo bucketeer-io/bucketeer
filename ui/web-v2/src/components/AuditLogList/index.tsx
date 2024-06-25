@@ -170,6 +170,18 @@ export const DiffView: FC<DiffViewProps> = memo(function DiffView({
     <div>
       {Diff.createTwoFilesPatch('old version', 'new version', oldStr, newStr)
         .split('\n')
+        .filter((line) => {
+          if (line.startsWith('\\') || line.startsWith('=')) {
+            return false;
+          }
+          return true;
+        })
+        .map((line) => {
+          if (line.startsWith('@@')) {
+            return '...';
+          }
+          return line;
+        })
         .map((line, i) => {
           switch (line[0]) {
             case '+':
