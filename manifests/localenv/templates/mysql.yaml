@@ -213,35 +213,13 @@ data:
       `created_at` bigint NOT NULL,
       `updated_at` bigint NOT NULL,
       `deleted` tinyint(1) NOT NULL DEFAULT '0',
+      `status` int NOT NULL DEFAULT '0',
       `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
       PRIMARY KEY (`id`,`environment_namespace`),
       KEY `foreign_auto_ops_rule_feature_id_environment_namespace` (`feature_id`,`environment_namespace`),
       CONSTRAINT `foreign_auto_ops_rule_feature_id_environment_namespace` FOREIGN KEY (`feature_id`, `environment_namespace`) REFERENCES `feature` (`id`, `environment_namespace`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
-    --
-    -- Table structure for table `environment`
-    --
-
-    DROP TABLE IF EXISTS `environment`;
-    CREATE TABLE `environment` (
-      `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-      `namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-      `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-      `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-      `deleted` tinyint(1) NOT NULL DEFAULT '0',
-      `created_at` bigint NOT NULL,
-      `updated_at` bigint NOT NULL,
-      `project_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-      PRIMARY KEY (`id`),
-      UNIQUE KEY `unique_namespace` (`namespace`),
-      KEY `foreign_project_id` (`project_id`),
-      CONSTRAINT `foreign_project_id` FOREIGN KEY (`project_id`) REFERENCES `project` (`id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
-
-    --
-    -- Dumping data for table `environment`
-    --
 
     LOCK TABLES `environment` WRITE;
     INSERT INTO `environment` VALUES ('e2e','e2e','e2e','Description 1693543370',0,1570007450,1693543370,'default');
@@ -304,6 +282,7 @@ data:
       `project_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
       `organization_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
       `archived` tinyint(1) NOT NULL DEFAULT '0',
+      `require_comment` tinyint(1) NOT NULL DEFAULT '1',
       `created_at` bigint NOT NULL,
       `updated_at` bigint NOT NULL,
       PRIMARY KEY (`id`),
@@ -316,7 +295,7 @@ data:
     --
 
     LOCK TABLES `environment_v2` WRITE;
-    INSERT INTO `environment_v2` VALUES ('e2e','e2e','e2e','Description 1693543371','default','e2e',0,1570007450,1693543371);
+    INSERT INTO `environment_v2` VALUES ('e2e','e2e','e2e','Description 1693543371','default','e2e',0,0,1570007450,1693543371);
     UNLOCK TABLES;
 
     --
