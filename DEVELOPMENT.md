@@ -1,4 +1,4 @@
-# Set up development environment
+# Set up the DEV Container
 
 It's recommended that the GitHub dev container be used to set up the development environment.
 The dev container is based on Ubuntu 20.04 and contains all the necessary tools to build and run the project.
@@ -37,7 +37,7 @@ The following command will set up the Minikube and services that Bucketeer depen
 make start-minikube
 ```
 
-**Note:** When you restart the Minikube cluster, you must use `make start-minikube` to start the cluster. Do not use `minikube start` directly.
+**Note:** When you restart the Minikube cluster, you must use `make start-minikube` to start it. Do not use `minikube start` directly.
 
 It will add 2 hosts to `/etc/hosts` that point to the minikube IP address:
 
