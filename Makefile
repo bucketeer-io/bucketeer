@@ -21,16 +21,6 @@ LDFLAGS_VERSION := $(LDFLAGS_PACKAGE).Version
 LDFLAGS_HASH := $(LDFLAGS_PACKAGE).Hash
 LDFLAGS_BUILDDATE := $(LDFLAGS_PACKAGE).BuildDate
 
-# Default variables for dev container
-WEB_GATEWAY_URL := web-gateway.bucketeer.io
-GATEWAY_URL := api-gateway.bucketeer.io
-WEB_GATEWAY_CERT_PATH := /workspaces/bucketeer/tools/dev/cert/tls.crt
-GATEWAY_CERT_PATH := /workspaces/bucketeer/tools/dev/cert/tls.crt
-SERVICE_TOKEN_PATH := /workspaces/bucketeer/tools/dev/cert/service-token
-API_KEY_PATH := /workspaces/bucketeer/tools/dev/cert/api_key_client
-API_KEY_SERVER_PATH := /workspaces/bucketeer/tools/dev/cert/api_key_server
-ENVIRONMENT_NAMESPACE := e2e
-
 #############################
 # Run make commands on docker container
 #############################
