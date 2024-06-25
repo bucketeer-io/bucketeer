@@ -9,3 +9,5 @@ node_modules
 telepresence.log
 venv
 *.swp
+tools/dev/cert/api_key_client
+tools/dev/cert/api_key_server

@@ -316,7 +316,6 @@ build-docker-images:
 		rm Dockerfile-app-$$APP; \
 	done
 
-
 # copy go application docker image to minikube
 # please keep the same TAG env as used in build-docker-images, eg: TAG=test make minikube-load-images
 minikube-load-images:
@@ -338,13 +337,13 @@ deploy-service-to-minikube:
 
 # Delete all the services from Minikube
 delete-all-services-from-minikube:
-	$(foreach var,$(SERVICES),helm uninstall $(var);)
+	$(foreach var,$(SERVICES),helm uninstall $(var) --ignore-not-found;)
 
 # Deploy All the services to minikube
 deploy-all-services-to-minikube:
 	$(foreach var,$(SERVICES),SERVICE=$(var) make deploy-service-to-minikube;)
 
-# bucketeer deploy
+# Bucketeer deployment
 deploy-bucketeer: delete-all-services-from-minikube
 	make -C tools/dev service-cert-secret
 	make -C tools/dev service-token-secret
@@ -352,6 +351,6 @@ deploy-bucketeer: delete-all-services-from-minikube
 	GITHUB_TOKEN=$(GITHUB_TOKEN) make -C tools/dev generate-github-token
 
 	make -C ./ build-go
-	TAG=$(TAG) make -C ./ build-docker-images
-	TAG=$(TAG) make -C ./ minikube-load-images
+	TAG=localenv make -C ./ build-docker-images
+	TAG=localenv make -C ./ minikube-load-images
 	make -C ./ deploy-all-services-to-minikube
