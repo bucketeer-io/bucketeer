@@ -1,0 +1,763 @@
+# Generated with protoc-gen-openapi
+# https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi
+
+openapi: 3.0.3
+info:
+    title: Gateway API
+    version: 0.0.1
+paths:
+    /get_evaluation:
+        post:
+            tags:
+                - Gateway
+            operationId: Gateway_GetEvaluation
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/GetEvaluationRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetEvaluationResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /get_evaluations:
+        post:
+            tags:
+                - Gateway
+            operationId: Gateway_GetEvaluations
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/GetEvaluationsRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetEvaluationsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /get_feature_flags:
+        post:
+            tags:
+                - Gateway
+            operationId: Gateway_GetFeatureFlags
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/GetFeatureFlagsRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetFeatureFlagsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /get_segment_users:
+        post:
+            tags:
+                - Gateway
+            operationId: Gateway_GetSegmentUsers
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/GetSegmentUsersRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetSegmentUsersResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /ping:
+        post:
+            tags:
+                - Gateway
+            operationId: Gateway_Ping
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/PingRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PingResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /register_events:
+        post:
+            tags:
+                - Gateway
+            operationId: Gateway_RegisterEvents
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/RegisterEventsRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/RegisterEventsResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /track:
+        get:
+            tags:
+                - Gateway
+            operationId: Gateway_Track
+            parameters:
+                - name: apikey
+                  in: query
+                  schema:
+                    type: string
+                - name: userid
+                  in: query
+                  schema:
+                    type: string
+                - name: goalid
+                  in: query
+                  schema:
+                    type: string
+                - name: tag
+                  in: query
+                  schema:
+                    type: string
+                - name: timestamp
+                  in: query
+                  schema:
+                    type: string
+                - name: value
+                  in: query
+                  schema:
+                    type: number
+                    format: double
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/TrackResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /v1/features:
+        get:
+            tags:
+                - Gateway
+            operationId: Gateway_ListFeatures
+            parameters:
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: string
+                - name: cursor
+                  in: query
+                  schema:
+                    type: string
+                - name: orderBy
+                  in: query
+                  schema:
+                    type: integer
+                    format: enum
+                - name: orderDirection
+                  in: query
+                  schema:
+                    type: integer
+                    format: enum
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ListFeaturesResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+    /v1/features/{id}:
+        get:
+            tags:
+                - Gateway
+            operationId: Gateway_GetFeature
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GetFeatureResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+        patch:
+            tags:
+                - Gateway
+            operationId: Gateway_UpdateFeature
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                    type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UpdateFeatureRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UpdateFeatureResponse'
+                default:
+                    description: Default error response
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Status'
+components:
+    schemas:
+        Clause:
+            type: object
+            properties:
+                id:
+                    type: string
+                attribute:
+                    type: string
+                operator:
+                    type: integer
+                    format: enum
+                values:
+                    type: array
+                    items:
+                        type: string
+        Evaluation:
+            type: object
+            properties:
+                id:
+                    type: string
+                featureId:
+                    type: string
+                featureVersion:
+                    type: integer
+                    format: int32
+                userId:
+                    type: string
+                variationId:
+                    type: string
+                variation:
+                    $ref: '#/components/schemas/Variation'
+                reason:
+                    $ref: '#/components/schemas/Reason'
+                variationValue:
+                    type: string
+                variationName:
+                    type: string
+        Event:
+            type: object
+            properties:
+                id:
+                    type: string
+                event:
+                    $ref: '#/components/schemas/GoogleProtobufAny'
+                environmentNamespace:
+                    type: string
+        Feature:
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                description:
+                    type: string
+                enabled:
+                    type: boolean
+                deleted:
+                    type: boolean
+                evaluationUndelayable:
+                    type: boolean
+                ttl:
+                    type: integer
+                    format: int32
+                version:
+                    type: integer
+                    format: int32
+                createdAt:
+                    type: string
+                updatedAt:
+                    type: string
+                variations:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Variation'
+                targets:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Target'
+                rules:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Rule'
+                defaultStrategy:
+                    $ref: '#/components/schemas/Strategy'
+                offVariation:
+                    type: string
+                tags:
+                    type: array
+                    items:
+                        type: string
+                lastUsedInfo:
+                    $ref: '#/components/schemas/FeatureLastUsedInfo'
+                maintainer:
+                    type: string
+                variationType:
+                    type: integer
+                    format: enum
+                archived:
+                    type: boolean
+                prerequisites:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Prerequisite'
+                samplingSeed:
+                    type: string
+        FeatureLastUsedInfo:
+            type: object
+            properties:
+                featureId:
+                    type: string
+                version:
+                    type: integer
+                    format: int32
+                lastUsedAt:
+                    type: string
+                createdAt:
+                    type: string
+                clientOldestVersion:
+                    type: string
+                clientLatestVersion:
+                    type: string
+        FixedStrategy:
+            type: object
+            properties:
+                variation:
+                    type: string
+        GetEvaluationRequest:
+            type: object
+            properties:
+                tag:
+                    type: string
+                user:
+                    $ref: '#/components/schemas/User'
+                featureId:
+                    type: string
+                sourceId:
+                    type: integer
+                    format: enum
+                sdkVersion:
+                    type: string
+        GetEvaluationResponse:
+            type: object
+            properties:
+                evaluation:
+                    $ref: '#/components/schemas/Evaluation'
+        GetEvaluationsRequest:
+            type: object
+            properties:
+                tag:
+                    type: string
+                user:
+                    $ref: '#/components/schemas/User'
+                userEvaluationsId:
+                    type: string
+                featureId:
+                    type: string
+                sourceId:
+                    type: integer
+                    format: enum
+                userEvaluationCondition:
+                    $ref: '#/components/schemas/GetEvaluationsRequest_UserEvaluationCondition'
+                sdkVersion:
+                    type: string
+        GetEvaluationsRequest_UserEvaluationCondition:
+            type: object
+            properties:
+                evaluatedAt:
+                    type: string
+                userAttributesUpdated:
+                    type: boolean
+        GetEvaluationsResponse:
+            type: object
+            properties:
+                state:
+                    type: integer
+                    format: enum
+                evaluations:
+                    $ref: '#/components/schemas/UserEvaluations'
+                userEvaluationsId:
+                    type: string
+        GetFeatureFlagsRequest:
+            type: object
+            properties:
+                tag:
+                    type: string
+                featureFlagsId:
+                    type: string
+                requestedAt:
+                    type: string
+                sourceId:
+                    type: integer
+                    format: enum
+                sdkVersion:
+                    type: string
+        GetFeatureFlagsResponse:
+            type: object
+            properties:
+                featureFlagsId:
+                    type: string
+                features:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Feature'
+                archivedFeatureFlagIds:
+                    type: array
+                    items:
+                        type: string
+                requestedAt:
+                    type: string
+                forceUpdate:
+                    type: boolean
+        GetFeatureResponse:
+            type: object
+            properties:
+                feature:
+                    $ref: '#/components/schemas/Feature'
+        GetSegmentUsersRequest:
+            type: object
+            properties:
+                segmentIds:
+                    type: array
+                    items:
+                        type: string
+                requestedAt:
+                    type: string
+                sourceId:
+                    type: integer
+                    format: enum
+                sdkVersion:
+                    type: string
+        GetSegmentUsersResponse:
+            type: object
+            properties:
+                segmentUsers:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/SegmentUsers'
+                deletedSegmentIds:
+                    type: array
+                    items:
+                        type: string
+                requestedAt:
+                    type: string
+                forceUpdate:
+                    type: boolean
+        GoogleProtobufAny:
+            type: object
+            properties:
+                '@type':
+                    type: string
+                    description: The type of the serialized message.
+            additionalProperties: true
+            description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
+        ListFeaturesResponse:
+            type: object
+            properties:
+                features:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Feature'
+                cursor:
+                    type: string
+                totalCount:
+                    type: string
+        PingRequest:
+            type: object
+            properties: {}
+        PingResponse:
+            type: object
+            properties:
+                time:
+                    type: string
+        Prerequisite:
+            type: object
+            properties:
+                featureId:
+                    type: string
+                variationId:
+                    type: string
+        Reason:
+            type: object
+            properties:
+                type:
+                    type: integer
+                    format: enum
+                ruleId:
+                    type: string
+        RegisterEventsRequest:
+            type: object
+            properties:
+                events:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Event'
+                sdkVersion:
+                    type: string
+                sourceId:
+                    type: integer
+                    format: enum
+        RegisterEventsResponse:
+            type: object
+            properties:
+                errors:
+                    type: object
+                    additionalProperties:
+                        $ref: '#/components/schemas/RegisterEventsResponse_Error'
+        RegisterEventsResponse_Error:
+            type: object
+            properties:
+                retriable:
+                    type: boolean
+                message:
+                    type: string
+        RolloutStrategy:
+            type: object
+            properties:
+                variations:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/RolloutStrategy_Variation'
+        RolloutStrategy_Variation:
+            type: object
+            properties:
+                variation:
+                    type: string
+                weight:
+                    type: integer
+                    format: int32
+        Rule:
+            type: object
+            properties:
+                id:
+                    type: string
+                strategy:
+                    $ref: '#/components/schemas/Strategy'
+                clauses:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Clause'
+        SegmentUser:
+            type: object
+            properties:
+                id:
+                    type: string
+                segmentId:
+                    type: string
+                userId:
+                    type: string
+                state:
+                    type: integer
+                    format: enum
+                deleted:
+                    type: boolean
+        SegmentUsers:
+            type: object
+            properties:
+                segmentId:
+                    type: string
+                users:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/SegmentUser'
+                updatedAt:
+                    type: string
+        Status:
+            type: object
+            properties:
+                code:
+                    type: integer
+                    description: The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
+                    format: int32
+                message:
+                    type: string
+                    description: A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
+                details:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/GoogleProtobufAny'
+                    description: A list of messages that carry the error details.  There is a common set of message types for APIs to use.
+            description: 'The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by [gRPC](https://github.com/grpc). Each `Status` message contains three pieces of data: error code, error message, and error details. You can find out more about this error model and how to work with it in the [API Design Guide](https://cloud.google.com/apis/design/errors).'
+        Strategy:
+            type: object
+            properties:
+                type:
+                    type: integer
+                    format: enum
+                fixedStrategy:
+                    $ref: '#/components/schemas/FixedStrategy'
+                rolloutStrategy:
+                    $ref: '#/components/schemas/RolloutStrategy'
+        Target:
+            type: object
+            properties:
+                variation:
+                    type: string
+                users:
+                    type: array
+                    items:
+                        type: string
+        TrackResponse:
+            type: object
+            properties: {}
+        UpdateFeatureRequest:
+            type: object
+            properties:
+                comment:
+                    type: string
+                environmentId:
+                    type: string
+                id:
+                    type: string
+                name:
+                    type: string
+                description:
+                    type: string
+        UpdateFeatureResponse:
+            type: object
+            properties:
+                feature:
+                    $ref: '#/components/schemas/Feature'
+        User:
+            type: object
+            properties:
+                id:
+                    type: string
+                data:
+                    type: object
+                    additionalProperties:
+                        type: string
+                taggedData:
+                    type: object
+                    additionalProperties:
+                        $ref: '#/components/schemas/User_Data'
+                lastSeen:
+                    type: string
+                createdAt:
+                    type: string
+        UserEvaluations:
+            type: object
+            properties:
+                id:
+                    type: string
+                evaluations:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Evaluation'
+                createdAt:
+                    type: string
+                archivedFeatureIds:
+                    type: array
+                    items:
+                        type: string
+                forceUpdate:
+                    type: boolean
+        User_Data:
+            type: object
+            properties:
+                value:
+                    type: object
+                    additionalProperties:
+                        type: string
+        Variation:
+            type: object
+            properties:
+                id:
+                    type: string
+                value:
+                    type: string
+                name:
+                    type: string
+                    description: number or even json object
+                description:
+                    type: string
+tags:
+    - name: Gateway
