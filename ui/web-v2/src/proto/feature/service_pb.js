@@ -4903,7 +4903,11 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {};
+      obj = {
+        feature:
+          (f = msg.getFeature()) &&
+          proto_feature_feature_pb.Feature.toObject(includeInstance, f)
+      };
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -4943,6 +4947,14 @@ proto.bucketeer.feature.UpdateFeatureResponse.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
+        case 1:
+          var value = new proto_feature_feature_pb.Feature();
+          reader.readMessage(
+            value,
+            proto_feature_feature_pb.Feature.deserializeBinaryFromReader
+          );
+          msg.setFeature(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -4975,6 +4987,53 @@ proto.bucketeer.feature.UpdateFeatureResponse.prototype.serializeBinary =
 proto.bucketeer.feature.UpdateFeatureResponse.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
+    f = message.getFeature();
+    if (f != null) {
+      writer.writeMessage(
+        1,
+        f,
+        proto_feature_feature_pb.Feature.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional Feature feature = 1;
+ * @return {?proto.bucketeer.feature.Feature}
+ */
+proto.bucketeer.feature.UpdateFeatureResponse.prototype.getFeature =
+  function () {
+    return /** @type{?proto.bucketeer.feature.Feature} */ (
+      jspb.Message.getWrapperField(this, proto_feature_feature_pb.Feature, 1)
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.feature.Feature|undefined} value
+ * @return {!proto.bucketeer.feature.UpdateFeatureResponse} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureResponse.prototype.setFeature = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.UpdateFeatureResponse} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureResponse.prototype.clearFeature =
+  function () {
+    return this.setFeature(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.UpdateFeatureResponse.prototype.hasFeature =
+  function () {
+    return jspb.Message.getField(this, 1) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

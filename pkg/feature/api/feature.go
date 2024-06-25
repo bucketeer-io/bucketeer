@@ -703,6 +703,7 @@ func (s *FeatureService) UpdateFeature(
 		return nil, dt.Err()
 	}
 	var event *eventproto.Event
+	var updatedpb *featureproto.Feature
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		featureStorage := v2fs.NewFeatureStorage(tx)
 		feature, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
@@ -723,6 +724,7 @@ func (s *FeatureService) UpdateFeature(
 		if err != nil {
 			return err
 		}
+		updatedpb = updated.Feature
 		ub, err := json.MarshalIndent(updated.Feature, "", "  ")
 		if err != nil {
 			return err
@@ -783,7 +785,9 @@ func (s *FeatureService) UpdateFeature(
 		return nil, dt.Err()
 	}
 	s.updateFeatureFlagCache(ctx)
-	return &featureproto.UpdateFeatureResponse{}, nil
+	return &featureproto.UpdateFeatureResponse{
+		Feature: updatedpb,
+	}, nil
 }
 
 func (s *FeatureService) UpdateFeatureDetails(

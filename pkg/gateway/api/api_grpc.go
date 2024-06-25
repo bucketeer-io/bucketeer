@@ -1007,16 +1007,19 @@ func (s *grpcGatewayService) UpdateFeature(
 		)
 		return nil, err
 	}
-	if _, err := s.featureClient.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+	res, err := s.featureClient.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
 		Comment:       req.Comment,
 		EnvironmentId: envAPIKey.Environment.Id,
 		Id:            req.Id,
 		Name:          req.Name,
 		Description:   req.Description,
-	}); err != nil {
+	})
+	if err != nil {
 		return nil, err
 	}
-	return &gwproto.UpdateFeatureResponse{}, nil
+	return &gwproto.UpdateFeatureResponse{
+		Feature: res.Feature,
+	}, nil
 }
 
 func (s *grpcGatewayService) getTargetFeatures(fs []*featureproto.Feature, id string) ([]*featureproto.Feature, error) {

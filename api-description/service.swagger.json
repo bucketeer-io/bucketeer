@@ -518,7 +518,12 @@
       }
     },
     "bucketeergatewayUpdateFeatureResponse": {
-      "type": "object"
+      "type": "object",
+      "properties": {
+        "feature": {
+          "$ref": "#/definitions/featureFeature"
+        }
+      }
     },
     "clientEvent": {
       "type": "object",

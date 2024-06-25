@@ -13613,7 +13613,14 @@
             ]
           },
           {
-            "name": "UpdateFeatureResponse"
+            "name": "UpdateFeatureResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature",
+                "type": "Feature"
+              }
+            ]
           },
           {
             "name": "EnableFeatureRequest",
@@ -15456,7 +15463,14 @@
             ]
           },
           {
-            "name": "UpdateFeatureResponse"
+            "name": "UpdateFeatureResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature",
+                "type": "feature.Feature"
+              }
+            ]
           }
         ],
         "services": [

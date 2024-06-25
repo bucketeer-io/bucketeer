@@ -503,6 +503,11 @@ export namespace UpdateFeatureRequest {
 }
 
 export class UpdateFeatureResponse extends jspb.Message {
+  hasFeature(): boolean;
+  clearFeature(): void;
+  getFeature(): proto_feature_feature_pb.Feature | undefined;
+  setFeature(value?: proto_feature_feature_pb.Feature): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateFeatureResponse.AsObject;
   static toObject(
@@ -525,7 +530,9 @@ export class UpdateFeatureResponse extends jspb.Message {
 }
 
 export namespace UpdateFeatureResponse {
-  export type AsObject = {};
+  export type AsObject = {
+    feature?: proto_feature_feature_pb.Feature.AsObject;
+  };
 }
 
 export class EnableFeatureRequest extends jspb.Message {

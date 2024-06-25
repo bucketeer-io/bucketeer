@@ -4196,9 +4196,9 @@ func TestGrpcUpdateFeature(t *testing.T) {
 						},
 					}, nil)
 				gs.featureClient.(*featureclientmock.MockClient).EXPECT().UpdateFeature(gomock.Any(), gomock.Any()).Return(
-					&feature.UpdateFeatureResponse{}, nil)
+					&feature.UpdateFeatureResponse{Feature: &feature.Feature{Id: "fid"}}, nil)
 			},
-			expected:    &gwproto.UpdateFeatureResponse{},
+			expected:    &gwproto.UpdateFeatureResponse{Feature: &feature.Feature{Id: "fid"}},
 			expectedErr: nil,
 		},
 	}
