@@ -79,7 +79,6 @@ tls:
 
 serviceToken:
   secret:
-  token:
 
 oauth:
   key:
@@ -273,7 +272,6 @@ onDemandSubscribers:
     maxMps: 100
     workerNum: 1
     checkInterval: 10
-
 
 # This configuration is used for add custom params to Processors
 processors:

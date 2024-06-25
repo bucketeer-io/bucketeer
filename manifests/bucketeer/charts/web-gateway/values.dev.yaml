@@ -4,9 +4,9 @@ tls:
   bucketeerJP:
     secrets:
       - hosts:
-          - web-gateway.bucketeer.org
+          - web-gateway.bucketeer.io
         secretName: bucketeer-service-cert
   service:
     secret: bucketeer-service-cert
 ingress:
-  host: web-gateway.bucketeer.org
+  host: web-gateway.bucketeer.io

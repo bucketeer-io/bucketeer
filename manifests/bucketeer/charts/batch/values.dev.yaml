@@ -1,6 +1,6 @@
 global:
   image:
-    tag: test
+    tag: localenv
     imagePullSecrets:
 
 env:
@@ -50,7 +50,7 @@ tls:
     secret: bucketeer-service-cert
 
 serviceToken:
-  token:
+  secret: bucketeer-service-token
 
 oauth:
   key:
@@ -100,7 +100,6 @@ cronjob:
     - name: mau-partition-creator
       jobId: MauPartitionCreator
       schedule: "0 2 2 * *"
-
 
 subscribers:
   # This is the processor's name. It must match the same name defined in the
@@ -210,7 +209,6 @@ onDemandSubscribers:
     maxMps: 50
     workerNum: 1
     checkInterval: 5
-
 
 # This configuration is used for add custom params to Processors
 processors:

@@ -283,8 +283,8 @@ start-minikube:
 # modify hosts file to access api-gateway and web-gateway
 modify-hosts:
 	$(eval MINIKUBE_IP := $(shell minikube ip))
-	echo "$(MINIKUBE_IP)   web-gateway.bucketeer.org" | sudo tee -a /etc/hosts
-	echo "$(MINIKUBE_IP)   api-gateway.bucketeer.org" | sudo tee -a /etc/hosts
+	echo "$(MINIKUBE_IP)   web-gateway.bucketeer.io" | sudo tee -a /etc/hosts
+	echo "$(MINIKUBE_IP)   api-gateway.bucketeer.io" | sudo tee -a /etc/hosts
 
 # enable vault transit secret engine
 enable-vault-transit:
@@ -304,26 +304,6 @@ setup-bigquery-vault:
 	done; \
 	make create-bigquery-emulator-tables
 	make enable-vault-transit
-
-# generate tls certificate
-generate-tls-certificate:
-	make -C tools/dev generate-tls-certificate
-
-# generate oauth key
-generate-oauth:
-	make -C tools/dev generate-oauth
-
-# create service cert secret in minikube
-service-cert-secret:
-	make -C tools/dev service-cert-secret
-
-# create oauth key secret in minikube
-oauth-key-secret:
-	make -C tools/dev oauth-key-secret
-
-# create github token secret in minikube
-generate-github-token:
-	make -C tools/dev generate-github-token
 
 
 # build go application docker image
@@ -365,17 +345,12 @@ deploy-all-services-to-minikube:
 	$(foreach var,$(SERVICES),SERVICE=$(var) make deploy-service-to-minikube;)
 
 # bucketeer deploy
-deploy-bucketeer:
-	make -C ./ generate-tls-certificate
-	make -C ./ generate-oauth
-	make -C ./ service-cert-secret
-	make -C ./ oauth-key-secret
-	GITHUB_TOKEN=$(GITHUB_TOKEN) make -C ./ generate-github-token
-	ISSUER=$(ISSUER) \
-	EMAIL=$(EMAIL) \
-	OAUTH_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/oauth-private.pem \
-	SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
-	make generate-service-token
+deploy-bucketeer: delete-all-services-from-minikube
+	make -C tools/dev service-cert-secret
+	make -C tools/dev service-token-secret
+	make -C tools/dev oauth-key-secret
+	GITHUB_TOKEN=$(GITHUB_TOKEN) make -C tools/dev generate-github-token
+
 	make -C ./ build-go
 	TAG=$(TAG) make -C ./ build-docker-images
 	TAG=$(TAG) make -C ./ minikube-load-images

@@ -54,8 +54,8 @@ This command will set up minikube and services that Bucketeer depends on:
 
 It will add 2 hosts to `/etc/hosts` that point to the minikube IP address:
 
-* `api-gateway.bucketeer.org` for API Gateway Service
-* `web-gateway.bucketeer.org` for Web Gateway Service
+* `api-gateway.bucketeer.io` for API Gateway Service
+* `web-gateway.bucketeer.io` for Web Gateway Service
 
 Additionally, this command will:
 
@@ -72,7 +72,7 @@ make generate-tls-certificate generate-oauth service-cert-secret oauth-key-secre
 GITHUB_TOKEN="your token"  make generate-github-token
 # generate service token that gRPC service uses to authenticate
 ISSUER=https://accounts.google.com \
-EMAIL="your email" \
+EMAIL="localenv@bucketeer.io" \
 OAUTH_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/oauth-private.pem \
 SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
 make generate-service-token
@@ -142,8 +142,8 @@ make deploy-bucketeer
 * Create api key for e2e tests
 
 ```shell
-WEB_GATEWAY_URL=web-gateway.bucketeer.org \
-GATEWAY_URL=api-gateway.bucketeer.org \
+WEB_GATEWAY_URL=web-gateway.bucketeer.io \
+GATEWAY_URL=api-gateway.bucketeer.io \
 WEB_GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
 GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
@@ -156,8 +156,8 @@ make create-api-key
 * Run e2e tests
 
 ```shell
-WEB_GATEWAY_URL=web-gateway.bucketeer.org \
-GATEWAY_URL=api-gateway.bucketeer.org \
+WEB_GATEWAY_URL=web-gateway.bucketeer.io \
+GATEWAY_URL=api-gateway.bucketeer.io \
 WEB_GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
 GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \

@@ -1,6 +1,6 @@
 global:
   image:
-    tag: test
+    tag: localenv
     imagePullSecrets:
 
 env:
@@ -45,8 +45,7 @@ tls:
     secret: bucketeer-service-cert
     cert:
 serviceToken:
-  secret:
-  token: 
+  secret: bucketeer-service-token
 oauth:
   key:
     secret: bucketeer-oauth-key
@@ -56,5 +55,5 @@ oauth:
   redirectUrls: https://google.com
   issuer: https://accounts.google.com
 webhook:
-  baseURL: https://web-gateway.bucketeer.org
+  baseURL: https://web-gateway.bucketeer.io
   kmsResourceName: vault
