@@ -220,11 +220,6 @@ data:
       CONSTRAINT `foreign_auto_ops_rule_feature_id_environment_namespace` FOREIGN KEY (`feature_id`, `environment_namespace`) REFERENCES `feature` (`id`, `environment_namespace`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
-
-    LOCK TABLES `environment` WRITE;
-    INSERT INTO `environment` VALUES ('e2e','e2e','e2e','Description 1693543370',0,1570007450,1693543370,'default');
-    UNLOCK TABLES;
-
     --
     -- Table structure for table `organization`
     --
