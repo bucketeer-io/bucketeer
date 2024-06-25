@@ -45,6 +45,7 @@ Create chart name and version as used by the chart label.
 {{- else -}}
 {{ template "batch-server.fullname" . }}-service-token
 {{- end -}}
+{{- end -}}
 
 {{- define "oauth-key-secret" -}}
 {{- if .Values.oauth.key.secret }}
