@@ -12,11 +12,6 @@ export default [
   },
   ...tseslint.configs.recommended,
   {
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'warn'
-    }
-  },
-  {
     languageOptions: {
       parser: tsParser,
       parserOptions: {

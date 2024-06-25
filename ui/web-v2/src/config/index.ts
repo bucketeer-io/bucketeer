@@ -14,6 +14,7 @@ export const ENABLE_SETTINGS = true;
 declare global {
   interface Window {
     env: {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       [key: string]: any;
     };
   }
