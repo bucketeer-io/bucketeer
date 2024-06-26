@@ -6,8 +6,8 @@ enum Keys {
   STATE = 'state'
 }
 
-export const getState = (): string => {
-  return Cookies.get(Keys.STATE, '');
+export const getState = (): string | undefined => {
+  return Cookies.get(Keys.STATE);
 };
 
 export const setState = (state: string): void => {
