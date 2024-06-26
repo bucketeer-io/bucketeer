@@ -32,18 +32,6 @@ API_KEY_SERVER_PATH := /workspaces/bucketeer/tools/dev/cert/api_key_server
 ENVIRONMENT_NAMESPACE := e2e
 
 #############################
-# Run make commands on docker container
-#############################
-
-# E.g. make docker-run CMD=proto-go
-RUNNER_IMAGE = ghcr.io/bucketeer-io/bucketeer-runner:0.1.0
-DOCKER_REPO_PATH = /go/src/github.com/bucketeer-io/bucketeer
-DOCKER_RUN_CMD = docker run -it --rm -v ${PWD}:${DOCKER_REPO_PATH} -w ${DOCKER_REPO_PATH} ${RUNNER_IMAGE}
-.PHONY: docker-run
-docker-run:
-	eval ${DOCKER_RUN_CMD} make $$CMD
-
-#############################
 # Go
 #############################
 
