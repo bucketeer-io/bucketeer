@@ -318,9 +318,7 @@ export const addFormSchema = yup.object().shape({
 export type AddForm = yup.InferType<typeof addFormSchema>;
 
 export const variationsFormSchema = yup.object().shape({
-  variationType: yup
-    .mixed<Feature.VariationTypeMap[keyof Feature.VariationTypeMap]>()
-    .required(),
+  variationType: variationTypeSchema,
   onVariation: onVariationSchema,
   offVariation: onVariationSchema,
   variations: variationsSchema,

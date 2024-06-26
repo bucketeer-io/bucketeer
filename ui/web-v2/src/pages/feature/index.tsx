@@ -63,7 +63,8 @@ import {
   addFormSchema,
   cloneSchema,
   switchEnabledFormSchema,
-  archiveFormSchema
+  archiveFormSchema,
+  AddForm
 } from './formSchema';
 
 interface Sort {
@@ -114,7 +115,7 @@ export const FeatureIndexPage: FC = memo(() => {
 
   const defaultVariationId1 = uuid();
   const defaultVariationId2 = uuid();
-  const addMethod = useForm({
+  const addMethod = useForm<AddForm>({
     resolver: yupResolver(addFormSchema),
     defaultValues: {
       id: '',
