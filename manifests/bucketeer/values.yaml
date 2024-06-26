@@ -7,7 +7,11 @@ migration:
   image:
     repository: ghcr.io/bucketeer-io/bucketeer-migration
     tag: v0.4.5 # x-release-please-version
-    imagePullSecrets:
+
+  imagePullSecrets: []
+
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
 
   # URL to access the DB to do the migration
   # E.g. mysql://user:password@host:port/db_name

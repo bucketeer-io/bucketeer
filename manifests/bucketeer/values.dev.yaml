@@ -1,7 +1,25 @@
 global:
   image:
-    tag: test
+    tag: localenv
     imagePullSecrets:
+
+migration:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-migration
+    tag: localenv
+
+  imagePullSecrets: []
+
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 86400
+
+  # URL to access the DB to do the migration
+  # E.g. mysql://user:password@host:port/db_name
+  dbUrl: mysql://bucketeer:bucketeer@localenv-mysql.default.svc:3306/bucketeer
+
+  # The migration baseline
+  # First revision
+  dbBaseline: "20240626022133"
 
 backend:
   env:
@@ -224,7 +242,6 @@ experiment-calculator:
       key:
   serviceToken:
     secret: bucketeer-service-token
-
 
 web:
   tls:

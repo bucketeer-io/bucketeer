@@ -330,6 +330,7 @@ setup-bigquery-vault:
 # build go application docker image
 # please set the TAG env, eg: TAG=test make build-docker-images
 build-docker-images:
+	docker build migration/ -t ghcr.io/bucketeer-io/bucketeer-migration:${TAG}
 	for APP in `ls bin`; do \
 		./tools/build/show-dockerfile.sh bin $$APP > Dockerfile-app-$$APP; \
 		IMAGE=`./tools/build/show-image-name.sh $$APP`; \
@@ -340,9 +341,15 @@ build-docker-images:
 # copy go application docker image to minikube
 # please keep the same TAG env as used in build-docker-images, eg: TAG=test make minikube-load-images
 minikube-load-images:
+	docker save ghcr.io/bucketeer-io/bucketeer-migration:${TAG} -o bucketeer-migration.tar
+	docker cp bucketeer-migration.tar minikube:/home/docker
+	rm bucketeer-migration.tar
+	minikube ssh "docker load -i /home/docker/bucketeer-migration.tar"
+	minikube ssh "rm /home/docker/bucketeer-migration.tar"
+
 	for APP in `ls bin`; do \
 		IMAGE=`./tools/build/show-image-name.sh $$APP`; \
-		docker save  ghcr.io/bucketeer-io/bucketeer-$$IMAGE:${TAG} -o $$IMAGE.tar; \
+		docker save ghcr.io/bucketeer-io/bucketeer-$$IMAGE:${TAG} -o $$IMAGE.tar; \
 		docker cp $$IMAGE.tar minikube:/home/docker; \
 		rm $$IMAGE.tar; \
 		minikube ssh "docker load -i /home/docker/$$IMAGE.tar"; \
