@@ -50,8 +50,8 @@ func TestUpdateOrganization(t *testing.T) {
 	c := newEnvironmentClient(t)
 	defer c.Close()
 	id := defaultOrganizationID
-	newDesc := fmt.Sprintf("Description %v", time.Now().Unix())
-	newName := fmt.Sprintf("name-%v", time.Now().Unix())
+	newDesc := fmt.Sprintf("This organization is for organization e2e tests (Updated at %d)", time.Now().Unix())
+	newName := fmt.Sprintf("E2E organization (Updated at %d)", time.Now().Unix())
 	_, err := c.UpdateOrganization(ctx, &environmentproto.UpdateOrganizationRequest{
 		Id:                       id,
 		ChangeDescriptionCommand: &environmentproto.ChangeDescriptionOrganizationCommand{Description: newDesc},

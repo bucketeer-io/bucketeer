@@ -46,6 +46,10 @@ var (
 	testID               = flag.String("test-id", "", "test ID")
 )
 
+const (
+	environmentName = "E2E environment"
+)
+
 func TestGetEnvironmentV2(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -59,9 +63,8 @@ func TestGetEnvironmentV2(t *testing.T) {
 	if resp.Environment.Id != id {
 		t.Fatalf("different ids, expected: %v, actual: %v", id, resp.Environment.Id)
 	}
-	// TODO: replace namespace to name after migration to environment-v2 API
-	if resp.Environment.Name != *environmentNamespace {
-		t.Fatalf("different name, expected: %v, actual: %v", *environmentNamespace, resp.Environment.Name)
+	if resp.Environment.Name != environmentName {
+		t.Fatalf("different name, expected: %v, actual: %v", environmentName, resp.Environment.Name)
 	}
 }
 
@@ -106,7 +109,7 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 	c := newEnvironmentClient(t)
 	defer c.Close()
 	id := getEnvironmentID(t)
-	newDesc := fmt.Sprintf("Description %v", time.Now().Unix())
+	newDesc := fmt.Sprintf("This environment is for local development (Updated at %d)", time.Now().Unix())
 	_, err := c.UpdateEnvironmentV2(ctx, &environmentproto.UpdateEnvironmentV2Request{
 		Id:                       id,
 		ChangeDescriptionCommand: &environmentproto.ChangeDescriptionEnvironmentV2Command{Description: newDesc},
@@ -121,9 +124,8 @@ func TestUpdateEnvironmentV2(t *testing.T) {
 	if getResp.Environment.Id != id {
 		t.Fatalf("different ids, expected: %v, actual: %v", id, getResp.Environment.Id)
 	}
-	// TODO: replace namespace to name after migration to environment-v2 API
-	if getResp.Environment.Name != *environmentNamespace {
-		t.Fatalf("different name, expected: %v, actual: %v", *environmentNamespace, getResp.Environment.Name)
+	if getResp.Environment.Name != environmentName {
+		t.Fatalf("different name, expected: %v, actual: %v", environmentName, getResp.Environment.Name)
 	}
 	if getResp.Environment.Description != newDesc {
 		t.Fatalf("different descriptions, expected: %v, actual: %v", newDesc, getResp.Environment.Description)

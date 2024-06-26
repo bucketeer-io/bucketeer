@@ -43,6 +43,7 @@ local-deps:
 	go install github.com/google/gnostic/cmd/protoc-gen-openapi@v0.7.0; \
 	go install github.com/nilslice/protolock/...@v0.15.0; \
 	go install github.com/mikefarah/yq/v4@v4.28.2
+	curl -sSf https://atlasgo.sh | sh
 
 .PHONY: lint
 lint:
@@ -173,6 +174,12 @@ build-chart:
 	mkdir -p .artifacts
 	helm package manifests/bucketeer --version $(VERSION) --app-version $(VERSION) --dependency-update --destination .artifacts
 
+.PHONY: build-migration-chart
+build-migration-chart: VERSION ?= $(shell git describe --tags --always --abbrev=7)
+build-migration-chart:
+	mkdir -p .artifacts
+	helm package manifests/bucketeer-migration --version $(VERSION) --app-version $(VERSION) --destination .artifacts
+
 #############################
 # E2E for backend
 #############################
@@ -249,6 +256,32 @@ update-copyright:
 	./hack/update-copyright/update-copyright.sh
 
 
+###################
+# Database Migration
+###################
+.PHONY: create-migration
+create-migration:
+	# Example: make create-migration NAME=create_table_users USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
+	atlas migrate diff ${NAME} \
+		--dir file://migration/mysql \
+		--to mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
+		--dev-url docker://mysql/8/${DB}
+
+.PHONY: atlas-set-version
+atlas-set-version:
+	# Example: make atlas-set-version VERSION=20240311022556 USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
+	atlas migrate set ${VERSION} \
+		--dir file://migration/mysql \
+		--url mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB}
+
+.PHONY: apply-migration
+check-apply-migration:
+	# Example: make check-apply-migration USER=root PASS=password HOST=localhost PORT=3306 DB=bucketeer
+	atlas migrate apply \
+		--dir file://migration/mysql \
+		--url mysql://${USER}:${PASS}@${HOST}:${PORT}/${DB} \
+		--dry-run
+
 #############################
 # dev container
 #############################
@@ -303,13 +336,14 @@ build-docker-images:
 		docker build -f Dockerfile-app-$$APP -t ghcr.io/bucketeer-io/bucketeer-$$IMAGE:${TAG} .; \
 		rm Dockerfile-app-$$APP; \
 	done
+	docker build migration/ -t ghcr.io/bucketeer-io/bucketeer-migration:${TAG}
 
 # copy go application docker image to minikube
 # please keep the same TAG env as used in build-docker-images, eg: TAG=test make minikube-load-images
 minikube-load-images:
-	for APP in `ls bin`; do \
+	for APP in $$(ls bin) migration; do \
 		IMAGE=`./tools/build/show-image-name.sh $$APP`; \
-		docker save  ghcr.io/bucketeer-io/bucketeer-$$IMAGE:${TAG} -o $$IMAGE.tar; \
+		docker save ghcr.io/bucketeer-io/bucketeer-$$IMAGE:${TAG} -o $$IMAGE.tar; \
 		docker cp $$IMAGE.tar minikube:/home/docker; \
 		rm $$IMAGE.tar; \
 		minikube ssh "docker load -i /home/docker/$$IMAGE.tar"; \

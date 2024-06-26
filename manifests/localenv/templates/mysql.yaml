@@ -14,9 +14,99 @@ metadata:
   name: mysql-initdb
 data:
   mysql_dump.sql: |
+    --
+    -- Create the Database
+    --
+
     DROP DATABASE IF EXISTS {{ .Values.mysql.auth.database }};
-    CREATE DATABASE {{ .Values.mysql.auth.database }};;
-    USE {{ .Values.mysql.auth.database }}; 
+    CREATE DATABASE {{ .Values.mysql.auth.database }};
+    USE {{ .Values.mysql.auth.database }};
+
+    --
+    -- Alter Databse character and collate to support the dev container
+    --
+
+    ALTER DATABASE {{ .Values.mysql.auth.database }} CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+
+    --
+    -- Table structure for table `organization`
+    --
+
+    DROP TABLE IF EXISTS `organization`;
+    CREATE TABLE `organization` (
+      `id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+      `name` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+      `url_code` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+      `description` text COLLATE utf8mb4_bin NOT NULL,
+      `disabled` tinyint(1) NOT NULL DEFAULT '0',
+      `archived` tinyint(1) NOT NULL DEFAULT '0',
+      `trial` tinyint(1) NOT NULL DEFAULT '0',
+      `system_admin` tinyint(1) NOT NULL DEFAULT '0',
+      `created_at` bigint NOT NULL,
+      `updated_at` bigint NOT NULL,
+      PRIMARY KEY (`id`),
+      UNIQUE KEY `unique_url_code` (`url_code`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+    LOCK TABLES `organization` WRITE;
+    INSERT INTO `organization` VALUES ('default', 'Default organization', 'default', 'This organization is for local development', 0, 0, 0, 0, 1706092038, 1706092038);
+    INSERT INTO `organization` VALUES ('e2e', 'E2E organization', 'e2e', 'This organization is for organization e2e tests', 0, 0, 0, 0, 1706092038, 1706092038);
+    UNLOCK TABLES;
+
+    --
+    -- Table structure for table `project`
+    --
+
+    DROP TABLE IF EXISTS `project`;
+    CREATE TABLE `project` (
+      `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+      `name` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+      `url_code` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+      `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+      `disabled` tinyint(1) NOT NULL DEFAULT '0',
+      `trial` tinyint(1) NOT NULL DEFAULT '0',
+      `creator_email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+      `organization_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+      `created_at` bigint NOT NULL,
+      `updated_at` bigint NOT NULL,
+      PRIMARY KEY (`id`),
+      UNIQUE KEY `unique_url_code` (`url_code`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+    LOCK TABLES `project` WRITE;
+    INSERT INTO `project` VALUES ('default', 'Default project', 'default', 'This project is for local development', 0, 0, 'localenv@bucketeer.io', 'default', 1706092038, 1706092038);
+    UNLOCK TABLES;
+
+    --
+    -- Table structure for table `feature`
+    --
+
+    DROP TABLE IF EXISTS `feature`;
+    CREATE TABLE `feature` (
+      `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+      `name` varchar(511) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+      `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+      `enabled` tinyint(1) NOT NULL DEFAULT '0',
+      `archived` tinyint(1) NOT NULL DEFAULT '0',
+      `deleted` tinyint(1) NOT NULL DEFAULT '0',
+      `evaluation_undelayable` tinyint(1) NOT NULL DEFAULT '0',
+      `ttl` int NOT NULL,
+      `version` int NOT NULL,
+      `created_at` bigint NOT NULL,
+      `updated_at` bigint NOT NULL,
+      `variations` json NOT NULL,
+      `targets` json NOT NULL,
+      `rules` json NOT NULL,
+      `default_strategy` json NOT NULL,
+      `off_variation` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+      `tags` json NOT NULL,
+      `maintainer` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+      `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+      `variation_type` int NOT NULL,
+      `sampling_seed` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT '',
+      `prerequisites` json DEFAULT NULL,
+      PRIMARY KEY (`id`,`environment_namespace`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
     --
     -- Table structure for table `account`
@@ -38,6 +128,26 @@ data:
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
     --
+    -- Table structure for table `account_v2`
+    --
+
+    DROP TABLE IF EXISTS `account_v2`;
+    CREATE TABLE `account_v2` (
+      `email` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+      `name` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+      `avatar_image_url` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+      `organization_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+      `organization_role` int NOT NULL,
+      `environment_roles` json NOT NULL,
+      `disabled` tinyint(1) NOT NULL DEFAULT '0',
+      `created_at` bigint NOT NULL,
+      `updated_at` bigint NOT NULL,
+      PRIMARY KEY (`email`,`organization_id`),
+      KEY `account_v2_foreign_organization_id` (`organization_id`),
+      CONSTRAINT `account_v2_foreign_organization_id` FOREIGN KEY (`organization_id`) REFERENCES `organization` (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+    --
     -- Table structure for table `admin_account`
     --
 
@@ -54,15 +164,6 @@ data:
       PRIMARY KEY (`id`),
       UNIQUE KEY `unique_email` (`email`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
-
-
-    --
-    -- Dumping data for table `admin_account`
-    --
-
-    LOCK TABLES `admin_account` WRITE;
-    INSERT INTO `admin_account` VALUES ('okimoto_yuichi@cyberagent.co.jp','okimoto_yuichi@cyberagent.co.jp','',2,0,1571626380,1580870235,0),('tashiro_kazuhiro@cyberagent.co.jp','tashiro_kazuhiro@cyberagent.co.jp','',2,0,1664772882,1664772882,0),('1354250064mdzz@gmail.com','1354250064mdzz@gmail.com','',2,0,1664772882,1664772882,0);
-    UNLOCK TABLES;
 
     --
     -- Table structure for table `admin_audit_log`
@@ -115,14 +216,6 @@ data:
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
     --
-    -- Dumping data for table `api_key`
-    --
-
-    LOCK TABLES `api_key` WRITE;
-    INSERT INTO `api_key` VALUES ('002b81b411e6b77f9b95fff71a0cad8d5a27b87de67e98f6cee137dd1bb7dd28','1687830668',0,0,1687830670,1687830670,'e2e');
-    UNLOCK TABLES;
-
-    --
     -- Table structure for table `audit_log`
     --
 
@@ -141,63 +234,6 @@ data:
       KEY `idx_entity_type_entity_id` (`entity_type`,`entity_id`),
       KEY `idx_timestamp_desc` (`timestamp` DESC)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
-
-
-    --
-    -- Table structure for table `project`
-    --
-
-    DROP TABLE IF EXISTS `project`;
-    CREATE TABLE `project` (
-      `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-      `name` varchar(255) COLLATE utf8mb4_bin NOT NULL,
-      `url_code` varchar(255) COLLATE utf8mb4_bin NOT NULL,
-      `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-      `disabled` tinyint(1) NOT NULL DEFAULT '0',
-      `trial` tinyint(1) NOT NULL DEFAULT '0',
-      `organization_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
-      `creator_email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-      `created_at` bigint NOT NULL,
-      `updated_at` bigint NOT NULL,
-      PRIMARY KEY (`id`),
-      UNIQUE KEY `unique_url_code` (`url_code`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
-
-    LOCK TABLES `project` WRITE;
-    INSERT INTO `project` VALUES ('default','Project default','default','Project description',0,0,'e2e','okimoto_yuichi@cyberagent.co.jp',1602829513,1693543372);
-    UNLOCK TABLES;
-
-    --
-    -- Table structure for table `feature`
-    --
-
-    DROP TABLE IF EXISTS `feature`;
-    CREATE TABLE `feature` (
-      `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-      `name` varchar(511) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-      `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-      `enabled` tinyint(1) NOT NULL DEFAULT '0',
-      `archived` tinyint(1) NOT NULL DEFAULT '0',
-      `deleted` tinyint(1) NOT NULL DEFAULT '0',
-      `evaluation_undelayable` tinyint(1) NOT NULL DEFAULT '0',
-      `ttl` int NOT NULL,
-      `version` int NOT NULL,
-      `created_at` bigint NOT NULL,
-      `updated_at` bigint NOT NULL,
-      `variations` json NOT NULL,
-      `targets` json NOT NULL,
-      `rules` json NOT NULL,
-      `default_strategy` json NOT NULL,
-      `off_variation` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-      `tags` json NOT NULL,
-      `maintainer` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-      `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-      `variation_type` int NOT NULL,
-      `sampling_seed` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT '',
-      `prerequisites` json DEFAULT NULL,
-      PRIMARY KEY (`id`,`environment_namespace`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
-
 
     --
     -- Table structure for table `auto_ops_rule`
@@ -221,50 +257,6 @@ data:
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
     --
-    -- Table structure for table `organization`
-    --
-
-    DROP TABLE IF EXISTS `organization`;
-    CREATE TABLE IF NOT EXISTS `organization` (
-      `id`          VARCHAR(255) NOT NULL,
-      `name`        VARCHAR(255) NOT NULL,
-      `url_code`    VARCHAR(255) NOT NULL,
-      `description` TEXT         NOT NULL,
-      `disabled`    TINYINT(1)   NOT NULL DEFAULT '0',
-      `archived`    TINYINT(1)   NOT NULL DEFAULT '0',
-      `trial`       TINYINT(1)   NOT NULL DEFAULT '0',
-      `system_admin`  TINYINT(1)   NOT NULL DEFAULT '0',
-      `created_at`  BIGINT(20)   NOT NULL,
-      `updated_at`  BIGINT(20)   NOT NULL,
-      PRIMARY KEY (`id`),
-      UNIQUE KEY `unique_url_code` (`url_code`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
-
-    INSERT INTO `organization` VALUES ('e2e', 'e2e', 'e2e', 'e2e', 0, 0, 0, 0, 1706092038, 1706092038);
-
-    --
-    -- Table structure for table `account_v2`
-    --
-
-    CREATE TABLE IF NOT EXISTS `account_v2` (
-        `email` VARCHAR(255) NOT NULL,
-        `name` VARCHAR(255) NOT NULL,
-        `avatar_image_url` VARCHAR(255) NOT NULL,
-        `organization_id` VARCHAR(255) NOT NULL,
-        `organization_role` INT(11) NOT NULL,
-        `environment_roles` JSON NOT NULL,
-        `disabled` TINYINT(1) NOT NULL DEFAULT '0',
-        `created_at` BIGINT(20) NOT NULL,
-        `updated_at` BIGINT(20) NOT NULL,
-        PRIMARY KEY (`email`, `organization_id`),
-        CONSTRAINT `account_v2_foreign_organization_id`
-        FOREIGN KEY (`organization_id`)
-        REFERENCES `organization` (`id`)
-        ON DELETE NO ACTION
-        ON UPDATE NO ACTION
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
-
-    --
     -- Table structure for table `environment_v2`
     --
 
@@ -285,12 +277,8 @@ data:
       CONSTRAINT `environment_v2_foreign_project_id` FOREIGN KEY (`project_id`) REFERENCES `project` (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
-    --
-    -- Dumping data for table `environment_v2`
-    --
-
     LOCK TABLES `environment_v2` WRITE;
-    INSERT INTO `environment_v2` VALUES ('e2e','e2e','e2e','Description 1693543371','default','e2e',0,0,1570007450,1693543371);
+    INSERT INTO `environment_v2` VALUES ('e2e', 'E2E environment', 'e2e', 'This environment is for local development', 'default', 'default', 0, 0, 1706092038, 1706092038);
     UNLOCK TABLES;
 
     --
@@ -338,7 +326,6 @@ data:
       PRIMARY KEY (`id`,`environment_namespace`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
-
     --
     -- Table structure for table `feature_last_used_info`
     --
@@ -356,6 +343,28 @@ data:
       PRIMARY KEY (`id`,`environment_namespace`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
+    --
+    -- Table structure for table `flag_trigger`
+    --
+
+    DROP TABLE IF EXISTS `flag_trigger`;
+    CREATE TABLE `flag_trigger` (
+      `id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+      `feature_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+      `type` int NOT NULL,
+      `action` tinyint(1) NOT NULL,
+      `description` text COLLATE utf8mb4_bin NOT NULL,
+      `trigger_count` int NOT NULL,
+      `last_triggered_at` bigint NOT NULL,
+      `token` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+      `disabled` tinyint(1) NOT NULL DEFAULT '0',
+      `created_at` bigint NOT NULL,
+      `updated_at` bigint NOT NULL,
+      `environment_namespace` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+      PRIMARY KEY (`id`,`environment_namespace`),
+      KEY `foreign_flag_trigger_feature_id_environment_namespace` (`feature_id`,`environment_namespace`),
+      CONSTRAINT `foreign_flag_trigger_feature_id_environment_namespace` FOREIGN KEY (`feature_id`, `environment_namespace`) REFERENCES `feature` (`id`, `environment_namespace`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
     --
     -- Table structure for table `goal`
@@ -389,6 +398,27 @@ data:
       `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
       PRIMARY KEY (`environment_namespace`,`yearmonth`,`source_id`,`user_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+    --
+    -- Table structure for table `mau_summary`
+    --
+
+    DROP TABLE IF EXISTS `mau_summary`;
+    CREATE TABLE `mau_summary` (
+      `yearmonth` varchar(6) COLLATE utf8mb4_bin NOT NULL,
+      `source_id` varchar(30) COLLATE utf8mb4_bin NOT NULL,
+      `user_count` bigint NOT NULL,
+      `request_count` bigint NOT NULL,
+      `evaluation_count` bigint NOT NULL,
+      `goal_count` bigint NOT NULL,
+      `is_all` tinyint(1) NOT NULL DEFAULT '0',
+      `is_finished` tinyint(1) NOT NULL DEFAULT '0',
+      `created_at` bigint NOT NULL,
+      `updated_at` bigint NOT NULL,
+      `environment_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+      PRIMARY KEY (`environment_id`,`yearmonth`,`source_id`,`is_all`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
     --
     -- Table structure for table `ops_count`
     --
@@ -420,9 +450,9 @@ data:
       `feature_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
       `clause` json NOT NULL,
       `status` int NOT NULL,
-      `stopped_by` int NOT NULL,
+      `stopped_by` int NOT NULL DEFAULT '0',
       `type` int NOT NULL,
-      `stopped_at` bigint NOT NULL,
+      `stopped_at` bigint NOT NULL DEFAULT '0',
       `created_at` bigint NOT NULL,
       `updated_at` bigint NOT NULL,
       `environment_namespace` varchar(255) COLLATE utf8mb4_bin NOT NULL,
@@ -430,7 +460,6 @@ data:
       KEY `foreign_progressive_rollout_feature_id_environment_namespace` (`feature_id`,`environment_namespace`),
       CONSTRAINT `foreign_progressive_rollout_feature_id_environment_namespace` FOREIGN KEY (`feature_id`, `environment_namespace`) REFERENCES `feature` (`id`, `environment_namespace`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
-
 
     --
     -- Table structure for table `push`
@@ -527,46 +556,3 @@ data:
       `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
       PRIMARY KEY (`id`,`environment_namespace`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
-
-
-    --
-    -- Table structure for table `webhook`
-    --
-
-    DROP TABLE IF EXISTS `webhook`;
-    CREATE TABLE `webhook` (
-      `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-      `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-      `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-      `created_at` bigint NOT NULL,
-      `updated_at` bigint NOT NULL,
-      `environment_namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
-      PRIMARY KEY (`id`),
-      KEY `idx_environment_namespace` (`environment_namespace`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
-
-
-    --
-    -- Table structure for table `flag_trigger`
-    --
-
-    DROP TABLE IF EXISTS `flag_trigger`;
-    create table flag_trigger
-    (
-        id                    varchar(255)            not null,
-        feature_id            varchar(255)            not null,
-        environment_namespace varchar(255)            not null,
-        type                  int                     not null,
-        action                tinyint(1) not null,
-        description           text                    not null,
-        trigger_count         int                     not null,
-        last_triggered_at     bigint                  not null,
-        uuid                  varchar(512) default '' not null,
-        token                 varchar(512) default '' not null,
-        disabled              tinyint(1) default 0 not null,
-        created_at            bigint                  not null,
-        updated_at            bigint                  not null,
-        primary key (id, environment_namespace),
-        constraint foreign_flag_triggers_feature_id_environment_namespace
-            foreign key (feature_id, environment_namespace) references feature (id, environment_namespace)
-    ) collate = utf8mb4_bin;
