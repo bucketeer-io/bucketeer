@@ -28,7 +28,7 @@ import {
 import { Feature } from '../../proto/feature/feature_pb';
 import { AppDispatch } from '../../store';
 
-import { variationsFormSchema } from './formSchema';
+import { VariationForm, variationsFormSchema } from './formSchema';
 import { createResetSampleSeedCommand } from './targeting';
 
 interface FeatureVariationsPageProps {
@@ -57,17 +57,14 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
       ],
       shallowEqual
     );
-    const defaultValues = (feature, requireComment: boolean) => {
-      return {
+    const methods = useForm<VariationForm>({
+      resolver: yupResolver(variationsFormSchema),
+      defaultValues: {
         variationType: feature.variationType.toString(),
         variations: feature.variationsList,
-        requireComment: requireComment,
+        requireComment: currentEnvironment.requireComment,
         comment: ''
-      };
-    };
-    const methods = useForm({
-      resolver: yupResolver(variationsFormSchema),
-      defaultValues: defaultValues(feature, currentEnvironment.requireComment),
+      },
       mode: 'onChange'
     });
     const {
@@ -77,7 +74,7 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
     const handleUpdate = useCallback(
-      async (data) => {
+      async (data: VariationForm) => {
         const commands: Array<Command> = [];
         dirtyFields.variations &&
           commands.push(
