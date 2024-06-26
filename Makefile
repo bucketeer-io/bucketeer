@@ -320,8 +320,7 @@ SERVICES := api-gateway backend batch experiment-calculator web-gateway web dex
 
 # Deploy Bucketeer to minikube
 deploy-service-to-minikube:
-	helm install ${SERVICE} manifests/bucketeer/charts/${SERVICE}/ --values manifests/bucketeer/charts/${SERVICE}/values.dev.yaml \
-	--set serviceToken.token=$$(cat tools/dev/cert/service-token)
+	helm install ${SERVICE} manifests/bucketeer/charts/${SERVICE}/ --values manifests/bucketeer/charts/${SERVICE}/values.dev.yaml
 
 # Delete all the services from Minikube
 delete-all-services-from-minikube:
