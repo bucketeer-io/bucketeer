@@ -1,24 +1,69 @@
 import { Dialog } from '@headlessui/react';
-import React, { FC, memo } from 'react';
+import React, { FC, memo, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 
 import { messages } from '../../lang/messages';
+import { ApiKeyRole, AddApiKeyForm } from '../../pages/apiKey/formSchema';
+import { APIKey } from '../../proto/account/api_key_pb';
 
 export interface APIKeyAddFormProps {
   onSubmit: () => void;
   onCancel: () => void;
 }
 
+type Option = {
+  id: string;
+  label: string;
+  description: string;
+  value: ApiKeyRole;
+};
+
 export const APIKeyAddForm: FC<APIKeyAddFormProps> = memo(
   ({ onSubmit, onCancel }) => {
     const { formatMessage: f } = useIntl();
-    const methods = useFormContext();
+    const methods = useFormContext<AddApiKeyForm>();
     const {
       register,
       formState: { errors, isSubmitting, isValid },
       getValues
     } = methods;
+
+    const options: Option[] = useMemo(
+      () => [
+        {
+          id: 'client-sdk',
+          label: f(messages.apiKey.section.clientSdk),
+          description: f(messages.apiKey.section.clientSdkDescription),
+          value: APIKey.Role.SDK_CLIENT
+        },
+        {
+          id: 'server-sdk',
+          label: f(messages.apiKey.section.serverSdk),
+          description: f(messages.apiKey.section.serverSdkDescription),
+          value: APIKey.Role.SDK_SERVER
+        },
+        {
+          id: 'public-api-read-only',
+          label: f(messages.apiKey.section.publicApiReadOnly),
+          description: f(messages.apiKey.section.publicApiReadOnlyDescription),
+          value: APIKey.Role.PUBLIC_API_READ_ONLY
+        },
+        {
+          id: 'public-api-write',
+          label: f(messages.apiKey.section.publicApiWrite),
+          description: f(messages.apiKey.section.publicApiWriteDescription),
+          value: APIKey.Role.PUBLIC_API_WRITE
+        },
+        {
+          id: 'public-api-admin',
+          label: f(messages.apiKey.section.publicApiAdmin),
+          description: f(messages.apiKey.section.publicApiAdminDescription),
+          value: APIKey.Role.PUBLIC_API_ADMIN
+        }
+      ],
+      [messages, f]
+    );
 
     return (
       <div className="w-[500px]">
@@ -73,24 +118,7 @@ export const APIKeyAddForm: FC<APIKeyAddFormProps> = memo(
                     {f(messages.apiKey.section.title)}
                   </p>
                   <div className="divide-y">
-                    {[
-                      {
-                        id: 'client-sdk',
-                        label: f(messages.apiKey.section.clientSdk),
-                        description: f(
-                          messages.apiKey.section.clientSdkDescription
-                        ),
-                        value: 1
-                      },
-                      {
-                        id: 'server-sdk',
-                        label: f(messages.apiKey.section.serverSdk),
-                        description: f(
-                          messages.apiKey.section.serverSdkDescription
-                        ),
-                        value: 2
-                      }
-                    ].map(({ id, label, description, value }) => (
+                    {options.map(({ id, label, description, value }) => (
                       <div
                         key={id}
                         className="flex items-center py-4 space-x-5"

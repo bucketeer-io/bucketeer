@@ -1056,6 +1056,32 @@ export const messages = {
         id: 'apiKey.section.serverSdkDescription',
         defaultMessage:
           'This role allows the server SDK to evaluate end users locally within the SDK. To evaluate them on the Bucketeer server, use the client SDK key instead.'
+      }),
+      publicApiReadOnly: defineMessage({
+        id: 'apiKey.section.publicApiReadOnly',
+        defaultMessage: 'Public API (Read Only)'
+      }),
+      publicApiReadOnlyDescription: defineMessage({
+        id: 'apiKey.section.publicApiReadOnlyDescription',
+        defaultMessage: 'This role allows you to read the data in Bucketeer.'
+      }),
+      publicApiWrite: defineMessage({
+        id: 'apiKey.section.publicApiWrite',
+        defaultMessage: 'Public API (Read and Write)'
+      }),
+      publicApiWriteDescription: defineMessage({
+        id: 'apiKey.section.publicApiWriteDescription',
+        defaultMessage:
+          'This role allows you to read and write the data in Bucketeer.'
+      }),
+      publicApiAdmin: defineMessage({
+        id: 'apiKey.section.publicApiAdmin',
+        defaultMessage: 'Public API (Admin)'
+      }),
+      publicApiAdminDescription: defineMessage({
+        id: 'apiKey.section.publicApiAdminDescription',
+        defaultMessage:
+          'This role allows you to read and write the data including admin settings in Bucketeer.'
       })
     }
   },
