@@ -111,6 +111,7 @@ interface FeatureUpdatedAuditLogBoxProps {
 const FeatureUpdatedAuditLogBox: FC<FeatureUpdatedAuditLogBoxProps> = ({
   auditLog
 }) => {
+  const { formatMessage: f } = useIntl();
   const [showChanges, setShowChanges] = useState(false);
   const [showSnapshot, setShowSnapshot] = useState(false);
   const featureUpdatedEvent = deserializeEvent(auditLog.event!);
@@ -118,7 +119,9 @@ const FeatureUpdatedAuditLogBox: FC<FeatureUpdatedAuditLogBoxProps> = ({
     <div>
       <div className={classNames('text-primary text-xs')}>
         <button onClick={() => setShowChanges(!showChanges)}>
-          {showChanges ? 'HIDE CHANGES' : '> SHOW CHANGES'}
+          {showChanges
+            ? f(messages.auditLog.detail.hideChanges)
+            : `> ${f(messages.auditLog.detail.showChanges)}`}
         </button>
         {showChanges && (
           <div className={classNames('p-3')}>
@@ -134,7 +137,9 @@ const FeatureUpdatedAuditLogBox: FC<FeatureUpdatedAuditLogBoxProps> = ({
           onClick={() => setShowSnapshot(!showSnapshot)}
           className={classNames('text-primary text-xs')}
         >
-          {showSnapshot ? 'HIDE SNAPSHOT' : '> SHOW SNAPSHOT'}
+          {showSnapshot
+            ? f(messages.auditLog.detail.hideSnapshot)
+            : `> ${f(messages.auditLog.detail.showSnapshot)}`}
         </button>
         {showSnapshot && (
           <div className={classNames('p-3')}>
