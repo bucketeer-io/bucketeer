@@ -149,6 +149,12 @@ func (f *Feature) AddTag(tag string) error {
 	return nil
 }
 
+func (f *Feature) UpdateTags(tags []string) error {
+	f.Tags = tags
+	f.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
 func (f *Feature) RemoveTag(tag string) error {
 	if len(f.Tags) <= 1 {
 		return errTagsMustHaveAtLeastOneTag
@@ -939,6 +945,9 @@ func (f *Feature) UpdateDescription(desc string) error {
 // Update returns a new Feature with the updated values.
 func (f *Feature) Update(
 	name, description *wrapperspb.StringValue,
+	tags []string,
+	enabled *wrapperspb.BoolValue,
+	archived *wrapperspb.BoolValue,
 ) (*Feature, error) {
 	updated := &Feature{Feature: proto.Clone(f.Feature).(*feature.Feature)}
 	incVersion := false
@@ -951,6 +960,38 @@ func (f *Feature) Update(
 	if description != nil {
 		if err := updated.UpdateDescription(description.Value); err != nil {
 			return nil, err
+		}
+	}
+	if tags != nil {
+		if err := updated.UpdateTags(tags); err != nil {
+			return nil, err
+		}
+		incVersion = true
+	}
+	if enabled != nil {
+		if enabled.Value {
+			if err := updated.Enable(); err != nil {
+				return nil, err
+			}
+			incVersion = true
+		} else {
+			if err := updated.Disable(); err != nil {
+				return nil, err
+			}
+			incVersion = true
+		}
+	}
+	if archived != nil {
+		if archived.Value {
+			if err := updated.Archive(); err != nil {
+				return nil, err
+			}
+			incVersion = true
+		} else {
+			if err := updated.Unarchive(); err != nil {
+				return nil, err
+			}
+			incVersion = true
 		}
 	}
 	if incVersion {

@@ -762,6 +762,14 @@ components:
                     type: string
                 description:
                     type: string
+                tags:
+                    type: array
+                    items:
+                        type: string
+                enabled:
+                    type: boolean
+                archived:
+                    type: boolean
         UpdateFeatureResponse:
             type: object
             properties:

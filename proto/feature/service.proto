@@ -105,6 +105,9 @@ message UpdateFeatureRequest {
   string id = 3;
   google.protobuf.StringValue name = 4;
   google.protobuf.StringValue description = 5;
+  repeated string tags = 6;
+  google.protobuf.BoolValue enabled = 7;
+  google.protobuf.BoolValue archived = 8;
 }
 
 message UpdateFeatureResponse {

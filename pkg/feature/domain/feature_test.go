@@ -1794,6 +1794,9 @@ func TestUpdate(t *testing.T) {
 		feature     *Feature
 		name        *wrapperspb.StringValue
 		description *wrapperspb.StringValue
+		enabled     *wrapperspb.BoolValue
+		tags        []string
+		archived    *wrapperspb.BoolValue
 		expected    *Feature
 		expectedErr error
 	}{
@@ -1808,12 +1811,37 @@ func TestUpdate(t *testing.T) {
 			expectedErr: errNameEmpty,
 		},
 		{
+			desc: "fail: already enabled",
+			feature: &Feature{
+				Feature: &proto.Feature{
+					Enabled: true,
+				},
+			},
+			enabled:     &wrapperspb.BoolValue{Value: true},
+			expected:    nil,
+			expectedErr: ErrAlreadyEnabled,
+		},
+		{
+			desc: "fail: already disabled",
+			feature: &Feature{
+				Feature: &proto.Feature{
+					Enabled: false,
+				},
+			},
+			enabled:     &wrapperspb.BoolValue{Value: false},
+			expected:    nil,
+			expectedErr: ErrAlreadyDisabled,
+		},
+		{
 			desc: "success",
 			feature: &Feature{
 				Feature: &proto.Feature{},
 			},
 			name:        &wrapperspb.StringValue{Value: "name"},
 			description: &wrapperspb.StringValue{Value: "description"},
+			enabled:     &wrapperspb.BoolValue{Value: true},
+			archived:    &wrapperspb.BoolValue{Value: true},
+			tags:        []string{"tag1", "tag2"},
 			expected: &Feature{
 				Feature: &proto.Feature{
 					Name:        "name",
@@ -1843,7 +1871,10 @@ func TestUpdate(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual, err := p.feature.Update(p.name, p.description)
+			actual, err := p.feature.Update(
+				p.name, p.description,
+				p.tags, p.enabled, p.archived,
+			)
 			if p.expectedErr != nil && actual != nil {
 				assert.Equal(t, p.expected.Name, actual.Name, p.desc)
 				assert.Equal(t, p.expected.Description, actual.Description, p.desc)

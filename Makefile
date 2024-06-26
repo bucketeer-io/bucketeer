@@ -26,7 +26,7 @@ LDFLAGS_BUILDDATE := $(LDFLAGS_PACKAGE).BuildDate
 #############################
 
 .PHONY: generate-all
-generate: proto-all mockgen
+generate-all: proto-all mockgen
 
 .PHONY: check-all
 check-all: proto-check mockgen update-repos diff-check lint build-go test-go

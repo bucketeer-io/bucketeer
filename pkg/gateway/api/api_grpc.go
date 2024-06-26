@@ -1050,6 +1050,9 @@ func (s *grpcGatewayService) UpdateFeature(
 		Id:            req.Id,
 		Name:          req.Name,
 		Description:   req.Description,
+		Tags:          req.Tags,
+		Enabled:       req.Enabled,
+		Archived:      req.Archived,
 	})
 	if err != nil {
 		return nil, err

@@ -651,7 +651,14 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.bucketeer.feature.UpdateFeatureRequest = function (opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(
+    this,
+    opt_data,
+    0,
+    -1,
+    proto.bucketeer.feature.UpdateFeatureRequest.repeatedFields_,
+    null
+  );
 };
 goog.inherits(proto.bucketeer.feature.UpdateFeatureRequest, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -4609,6 +4616,13 @@ proto.bucketeer.feature.CreateFeatureResponse.prototype.hasFeature =
     return jspb.Message.getField(this, 1) != null;
   };
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.repeatedFields_ = [6];
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -4654,7 +4668,15 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
         description:
           (f = msg.getDescription()) &&
-          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f)
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
+        tagsList:
+          (f = jspb.Message.getRepeatedField(msg, 6)) == null ? undefined : f,
+        enabled:
+          (f = msg.getEnabled()) &&
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
+        archived:
+          (f = msg.getArchived()) &&
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -4723,6 +4745,26 @@ proto.bucketeer.feature.UpdateFeatureRequest.deserializeBinaryFromReader =
           );
           msg.setDescription(value);
           break;
+        case 6:
+          var value = /** @type {string} */ (reader.readString());
+          msg.addTags(value);
+          break;
+        case 7:
+          var value = new google_protobuf_wrappers_pb.BoolValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader
+          );
+          msg.setEnabled(value);
+          break;
+        case 8:
+          var value = new google_protobuf_wrappers_pb.BoolValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader
+          );
+          msg.setArchived(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -4781,6 +4823,26 @@ proto.bucketeer.feature.UpdateFeatureRequest.serializeBinaryToWriter =
         5,
         f,
         google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
+      );
+    }
+    f = message.getTagsList();
+    if (f.length > 0) {
+      writer.writeRepeatedString(6, f);
+    }
+    f = message.getEnabled();
+    if (f != null) {
+      writer.writeMessage(
+        7,
+        f,
+        google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
+      );
+    }
+    f = message.getArchived();
+    if (f != null) {
+      writer.writeMessage(
+        8,
+        f,
+        google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
       );
     }
   };
@@ -4924,6 +4986,134 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearDescription =
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.hasDescription =
   function () {
     return jspb.Message.getField(this, 5) != null;
+  };
+
+/**
+ * repeated string tags = 6;
+ * @return {!Array<string>}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.getTagsList =
+  function () {
+    return /** @type {!Array<string>} */ (
+      jspb.Message.getRepeatedField(this, 6)
+    );
+  };
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.setTagsList = function (
+  value
+) {
+  return jspb.Message.setField(this, 6, value || []);
+};
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.addTags = function (
+  value,
+  opt_index
+) {
+  return jspb.Message.addToRepeatedField(this, 6, value, opt_index);
+};
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearTagsList =
+  function () {
+    return this.setTagsList([]);
+  };
+
+/**
+ * optional google.protobuf.BoolValue enabled = 7;
+ * @return {?proto.google.protobuf.BoolValue}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.getEnabled =
+  function () {
+    return /** @type{?proto.google.protobuf.BoolValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.BoolValue,
+        7
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.BoolValue|undefined} value
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.setEnabled = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 7, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearEnabled =
+  function () {
+    return this.setEnabled(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.hasEnabled =
+  function () {
+    return jspb.Message.getField(this, 7) != null;
+  };
+
+/**
+ * optional google.protobuf.BoolValue archived = 8;
+ * @return {?proto.google.protobuf.BoolValue}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.getArchived =
+  function () {
+    return /** @type{?proto.google.protobuf.BoolValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.BoolValue,
+        8
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.BoolValue|undefined} value
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.setArchived = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 8, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearArchived =
+  function () {
+    return this.setArchived(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.hasArchived =
+  function () {
+    return jspb.Message.getField(this, 8) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

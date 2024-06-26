@@ -13616,6 +13616,22 @@
                 "id": 5,
                 "name": "description",
                 "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 6,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "enabled",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 8,
+                "name": "archived",
+                "type": "google.protobuf.BoolValue"
               }
             ]
           },
@@ -15523,6 +15539,22 @@
                 "id": 4,
                 "name": "description",
                 "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 5,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 6,
+                "name": "enabled",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 7,
+                "name": "archived",
+                "type": "google.protobuf.BoolValue"
               }
             ]
           },
