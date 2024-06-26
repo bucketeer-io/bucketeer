@@ -84,9 +84,6 @@ type server struct {
 	mysqlHost   *string
 	mysqlPort   *int
 	mysqlDBName *string
-	// MySQL for Migration
-	mysqlMigrationUser *string
-	mysqlMigrationPass *string
 	// Persistent Redis
 	persistentRedisServerName    *string
 	persistentRedisAddr          *string
@@ -112,7 +109,6 @@ type server struct {
 	eventCounterServicePort *int
 	experimentServicePort   *int
 	featureServicePort      *int
-	migrateMySQLServicePort *int
 	notificationServicePort *int
 	pushServicePort         *int
 	// Service
@@ -133,10 +129,6 @@ type server struct {
 	webhookBaseURL         *string
 	webhookKMSResourceName *string
 	cloudService           *string
-	// migration-mysql
-	githubUser                *string
-	githubAccessTokenPath     *string
-	githubMigrationSourcePath *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -223,10 +215,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"feature-service-port",
 			"Port to bind to feature service.",
 		).Default("9098").Int(),
-		migrateMySQLServicePort: cmd.Flag(
-			"migrate-mysql-service-port",
-			"Port to bind to migrate mysql service.",
-		).Default("9099").Int(),
 		notificationServicePort: cmd.Flag(
 			"notification-service-port",
 			"Port to bind to notification service.",
@@ -295,15 +283,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"Cloud KMS resource name to encrypt and decrypt webhook credentials.",
 		).Required().String(),
 		cloudService: cmd.Flag("cloud-service", "Cloud Service info").Default(gcp).String(),
-		// migration-mysql
-		githubUser:            cmd.Flag("github-user", "GitHub user.").Required().String(),
-		githubAccessTokenPath: cmd.Flag("github-access-token-path", "Path to GitHub access token.").Required().String(),
-		githubMigrationSourcePath: cmd.Flag(
-			"github-migration-source-path",
-			"Path to migration file in GitHub. (e.g. owner/repo/path#ref)",
-		).Required().String(),
-		mysqlMigrationUser: cmd.Flag("mysql-migration-user", "MySQL user for migration.").Required().String(),
-		mysqlMigrationPass: cmd.Flag("mysql-migration-pass", "MySQL password for migration.").Required().String(),
 	}
 	r.RegisterCommand(server)
 	return server

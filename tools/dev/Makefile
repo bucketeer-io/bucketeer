@@ -25,10 +25,6 @@ oauth-key-secret:
 	kubectl delete secret bucketeer-oauth-key --namespace $(NAMESPACE) --ignore-not-found
 	kubectl create secret generic bucketeer-oauth-key --from-file public.pem=${CURDIR}/cert/oauth-public.pem --from-file private.pem=${CURDIR}/cert/oauth-private.pem --namespace $(NAMESPACE)
 
-generate-github-token:
-	kubectl delete secret github-token --namespace ${NAMESPACE} --ignore-not-found
-	kubectl create secret generic github-token --from-literal bucketeer-bot-access-token=${GITHUB_TOKEN}
-
 setup-minikube:
 	minikube start --memory 6g
 	minikube addons enable ingress
