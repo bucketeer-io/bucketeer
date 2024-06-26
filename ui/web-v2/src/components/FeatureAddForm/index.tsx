@@ -25,14 +25,13 @@ export interface FeatureAddFormProps {
 export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
   ({ onSubmit, onCancel }) => {
     const { formatMessage: f } = useIntl();
-    const methods = useFormContext();
+    const methods = useFormContext<AddForm>();
     const {
       register,
       control,
       formState: { errors, isSubmitting, isDirty, isValid },
       getValues,
-      setValue,
-      watch
+      setValue
     } = methods;
     const tagsList = useSelector<AppState, Tag.AsObject[]>(
       (state) => selectAllTags(state.tags),
@@ -46,9 +45,6 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
         label: `${f(messages.feature.variation)} ${idx + 1}`
       };
     });
-
-    const onVariation = watch('onVariation');
-    const offVariation = watch('offVariation');
 
     return (
       <div className="w-[600px]">
@@ -169,12 +165,7 @@ export const FeatureAddForm: FC<FeatureAddFormProps> = memo(
                   </p>
                 </div>
                 <div className="">
-                  <VariationAddInput
-                    rulesAppliedVariationList={{
-                      onVariationId: onVariation.id,
-                      offVariationId: offVariation.id
-                    }}
-                  />
+                  <VariationAddInput />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -294,339 +285,310 @@ export const getVariationTypeOption = (
   }
 };
 
-type RulesAppliedVariationList = {
-  onVariationId?: string;
-  onVariationIds?: string[];
-  offVariationId: string;
-};
-export interface VariationAddInputProps {
-  isProgressiveRolloutsRunning?: boolean;
-  rulesAppliedVariationList?: RulesAppliedVariationList;
-}
+export interface VariationAddInputProps {}
 
-export const VariationAddInput: FC<VariationAddInputProps> = memo(
-  ({ rulesAppliedVariationList, isProgressiveRolloutsRunning }) => {
-    const { formatMessage: f } = useIntl();
-    const methods = useFormContext<AddForm>();
-    const {
-      register,
-      control,
-      getValues,
-      watch,
-      reset,
-      formState: { errors }
-    } = methods;
-    const {
-      fields: variations,
-      append,
-      remove
-    } = useFieldArray({
-      control,
-      name: 'variations',
-      keyName: 'key'
-    });
-    const variationType = watch('variationType');
-    const disabledAddBtn =
-      variationType === Feature.VariationType.BOOLEAN.toString() ||
-      isProgressiveRolloutsRunning;
+export const VariationAddInput: FC<VariationAddInputProps> = memo(({}) => {
+  const { formatMessage: f } = useIntl();
+  const methods = useFormContext<AddForm>();
+  const {
+    register,
+    control,
+    getValues,
+    watch,
+    reset,
+    formState: { errors }
+  } = methods;
+  const {
+    fields: variations,
+    append,
+    remove
+  } = useFieldArray({
+    control,
+    name: 'variations',
+    keyName: 'key'
+  });
+  const variationType = watch('variationType');
+  const disabledAddBtn =
+    variationType === Feature.VariationType.BOOLEAN.toString();
 
-    const { onVariationId, onVariationIds, offVariationId } =
-      rulesAppliedVariationList;
+  const { id: onVariationId } = getValues('onVariation');
+  const { id: offVariationId } = getValues('offVariation');
 
-    const handleChange = useCallback((type) => {
-      const defaultVariationId1 = uuid();
-      const defaultVariationId2 = uuid();
+  const handleChange = useCallback((type) => {
+    const defaultVariationId1 = uuid();
+    const defaultVariationId2 = uuid();
 
-      reset(
-        {
-          ...getValues(),
-          variationType: type,
-          variations: [
-            {
-              id: defaultVariationId1,
-              value: type === Feature.VariationType.BOOLEAN ? 'true' : '',
-              name: '',
-              description: ''
-            },
-            {
-              id: defaultVariationId2,
-              value: type === Feature.VariationType.BOOLEAN ? 'false' : '',
-              name: '',
-              description: ''
-            }
-          ],
-          onVariation: {
+    reset(
+      {
+        ...getValues(),
+        variationType: type,
+        variations: [
+          {
             id: defaultVariationId1,
-            value: '0',
-            label: `${f(messages.feature.variation)} 1`
+            value: type === Feature.VariationType.BOOLEAN ? 'true' : '',
+            name: '',
+            description: ''
           },
-          offVariation: {
+          {
             id: defaultVariationId2,
-            value: '1',
-            label: `${f(messages.feature.variation)} 2`
+            value: type === Feature.VariationType.BOOLEAN ? 'false' : '',
+            name: '',
+            description: ''
           }
+        ],
+        onVariation: {
+          id: defaultVariationId1,
+          value: '0',
+          label: `${f(messages.feature.variation)} 1`
         },
-        { keepDirty: true }
-      );
-    }, []);
-
-    const handleAddVariation = useCallback(() => {
-      append({
-        id: uuid(),
-        value: '',
-        name: '',
-        description: ''
-      });
-    }, []);
-
-    const handleRemoveVariation = useCallback((idx) => {
-      remove(idx);
-    }, []);
-
-    const getVariationMessage = useCallback(
-      (variationId) => {
-        // Use a switch statement to determine the message
-        switch (true) {
-          // Check if the variation is both on and off variations
-          case onVariationIds.includes(variationId) &&
-            offVariationId === variationId:
-            return f(messages.feature.variationSettings.bothVariations);
-
-          // Check if the variation is the on variation
-          case onVariationIds.includes(variationId):
-            return f(messages.feature.variationSettings.defaultStrategy);
-
-          // Check if the variation is the off variation
-          case variationId === offVariationId:
-            return f(messages.feature.variationSettings.offVariation);
-
-          // Check if the variation is both on and off variations
-          case onVariationId === variationId && offVariationId === variationId:
-            return f(messages.feature.variationSettings.bothVariations);
-
-          // Check if the variation is the on variation
-          case onVariationId === variationId:
-            return f(messages.feature.variationSettings.defaultStrategy);
-
-          // Check if the variation is the off variation
-          case offVariationId === variationId:
-            return f(messages.feature.variationSettings.offVariation);
-
-          // Return null if none of the conditions are met
-          default:
-            return null;
+        offVariation: {
+          id: defaultVariationId2,
+          value: '1',
+          label: `${f(messages.feature.variation)} 2`
         }
       },
-      [onVariationId, onVariationIds, offVariationId]
+      { keepDirty: true }
     );
+  }, []);
 
-    return (
-      <div className="space-y-4 flex flex-col">
-        <div className="mb-1">
-          <span className="input-label">
-            {f(messages.feature.variationType)}
-          </span>
-          <div>
-            <Controller
-              name="variationType"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  options={variationTypeOptions}
-                  disabled={false}
-                  value={variationTypeOptions.find(
-                    (o) => o.value === variationType.toString()
-                  )}
-                  onChange={(option: Option) => {
-                    handleChange(option.value);
-                    field.onChange(option.value);
-                  }}
-                />
-              )}
-            />
-          </div>
+  const handleAddVariation = useCallback(() => {
+    append({
+      id: uuid(),
+      value: '',
+      name: '',
+      description: ''
+    });
+  }, []);
+
+  const handleRemoveVariation = useCallback((idx) => {
+    remove(idx);
+  }, []);
+
+  const getVariationMessage = useCallback(
+    (variationId) => {
+      // Use a switch statement to determine the message
+      switch (true) {
+        // Check if the variation is both on and off variations
+        case onVariationId === variationId && offVariationId === variationId:
+          return f(messages.feature.variationSettings.bothVariations);
+
+        // Check if the variation is the on variation
+        case onVariationId === variationId:
+          return f(messages.feature.variationSettings.defaultStrategy);
+
+        // Check if the variation is the off variation
+        case offVariationId === variationId:
+          return f(messages.feature.variationSettings.offVariation);
+
+        // Return null if none of the conditions are met
+        default:
+          return null;
+      }
+    },
+    [onVariationId, offVariationId]
+  );
+
+  return (
+    <div className="space-y-4 flex flex-col">
+      <div className="mb-1">
+        <span className="input-label">{f(messages.feature.variationType)}</span>
+        <div>
+          <Controller
+            name="variationType"
+            control={control}
+            render={({ field }) => (
+              <Select
+                options={variationTypeOptions}
+                disabled={false}
+                value={variationTypeOptions.find(
+                  (o) => o.value === variationType.toString()
+                )}
+                onChange={(option: Option) => {
+                  handleChange(option.value);
+                  field.onChange(option.value);
+                }}
+              />
+            )}
+          />
         </div>
-        <div className="space-y-5 flex flex-col">
-          {variations.map((variation, idx) => {
-            const disableRemoveBtn =
-              variationType.toString() ==
-                Feature.VariationType.BOOLEAN.toString() ||
-              variation.id === onVariationId ||
-              variation.id === offVariationId ||
-              onVariationIds.includes(variation.id);
-            return (
-              <div key={idx} className="flex flex-row flex-wrap mb-2">
-                {getValues('variationType') ===
-                Feature.VariationType.BOOLEAN.toString() ? (
-                  <div>
-                    <label className="input-label" htmlFor="variation">
-                      {`${f(messages.feature.variation)} ${idx + 1}`}
-                    </label>
-                    <div className="mr-2 mt-1">
-                      <input
-                        {...register(`variations.${idx}.value`)}
-                        type="text"
-                        className="input-text"
-                        disabled={true}
-                      />
-                    </div>
-                    <p className="input-error">
-                      {errors.variations?.[idx]?.value?.message && (
-                        <span role="alert">
-                          {errors.variations[idx].value.message}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                ) : null}
-                {getValues('variationType') ===
-                  Feature.VariationType.STRING.toString() ||
-                getValues('variationType') ===
-                  Feature.VariationType.NUMBER.toString() ? (
-                  <div>
-                    <label className="input-label" htmlFor="variation">
-                      {`${f(messages.feature.variation)} ${idx + 1}`}
-                    </label>
-                    <div className="mr-2 mt-1">
-                      <input
-                        {...register(`variations.${idx}.value`)}
-                        type="text"
-                        className="input-text"
-                        disabled={false}
-                      />
-                    </div>
-                    <p className="input-error">
-                      {errors.variations?.[idx]?.value?.message && (
-                        <span role="alert">
-                          {errors.variations[idx].value.message}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                ) : null}
-                {getValues('variationType') ===
-                Feature.VariationType.JSON.toString() ? (
-                  <div className="w-full">
-                    <label className="input-label" htmlFor="variation">
-                      {`${f(messages.feature.variation)} ${idx + 1}`}
-                    </label>
-                    <div className="space-x-2 flex mt-1">
-                      <textarea
-                        {...register(`variations.${idx}.value`)}
-                        className="input-text w-full"
-                        disabled={false}
-                        rows={10}
-                      />
-                    </div>
-                    <p className="input-error">
-                      {errors.variations?.[idx]?.value?.message && (
-                        <span role="alert">
-                          {errors.variations[idx].value.message}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                ) : null}
-                <div className="mr-2 flex-grow">
-                  <label>
-                    <span className="input-label">{f(messages.name)}</span>
+      </div>
+      <div className="space-y-5 flex flex-col">
+        {variations.map((variation, idx) => {
+          const disableRemoveBtn =
+            variationType.toString() ==
+              Feature.VariationType.BOOLEAN.toString() ||
+            variation.id === onVariationId ||
+            variation.id === offVariationId;
+          return (
+            <div key={idx} className="flex flex-row flex-wrap mb-2">
+              {getValues('variationType') ===
+              Feature.VariationType.BOOLEAN.toString() ? (
+                <div>
+                  <label className="input-label" htmlFor="variation">
+                    {`${f(messages.feature.variation)} ${idx + 1}`}
                   </label>
-                  <div className="w-full mt-1">
+                  <div className="mr-2 mt-1">
                     <input
-                      {...register(`variations.${idx}.name`)}
+                      {...register(`variations.${idx}.value`)}
                       type="text"
-                      className="w-full input-text"
-                      disabled={false}
+                      className="input-text"
+                      disabled={true}
                     />
                   </div>
                   <p className="input-error">
-                    {errors.variations?.[idx]?.name?.message && (
+                    {errors.variations?.[idx]?.value?.message && (
                       <span role="alert">
-                        {errors.variations[idx].name.message}
+                        {errors.variations[idx].value.message}
                       </span>
                     )}
                   </p>
                 </div>
-                <div className="flex-grow">
-                  <label htmlFor="description">
-                    <span className="input-label">
-                      {f(messages.description)}
-                    </span>
-                    <span className="input-label-optional">
-                      {' '}
-                      {f(messages.input.optional)}
-                    </span>
+              ) : null}
+              {getValues('variationType') ===
+                Feature.VariationType.STRING.toString() ||
+              getValues('variationType') ===
+                Feature.VariationType.NUMBER.toString() ? (
+                <div>
+                  <label className="input-label" htmlFor="variation">
+                    {`${f(messages.feature.variation)} ${idx + 1}`}
                   </label>
-                  <div className="w-full mt-1">
+                  <div className="mr-2 mt-1">
                     <input
-                      {...register(`variations.${idx}.description`)}
+                      {...register(`variations.${idx}.value`)}
                       type="text"
-                      className="w-full input-text"
+                      className="input-text"
                       disabled={false}
                     />
                   </div>
                   <p className="input-error">
-                    {errors.variations?.[idx]?.description?.message && (
+                    {errors.variations?.[idx]?.value?.message && (
                       <span role="alert">
-                        {errors.variations[idx].description.message}
+                        {errors.variations[idx].value.message}
                       </span>
                     )}
                   </p>
                 </div>
-                {variations.length > 2 && (
-                  <div className="flex items-end py-3 ml-3">
-                    {disableRemoveBtn ? (
-                      <HoverPopover
-                        render={() => {
-                          const variationMessage = getVariationMessage(
-                            variation.id
-                          );
-                          return variationMessage ? (
-                            <div
-                              className={classNames(
-                                'bg-gray-900 text-white p-2 text-xs w-[350px]',
-                                'rounded cursor-pointer'
-                              )}
-                            >
-                              {variationMessage}
-                            </div>
-                          ) : null;
-                        }}
-                      >
-                        <button
-                          type="button"
-                          className="minus-circle-icon"
-                          disabled={disableRemoveBtn}
-                        >
-                          <MinusCircleIcon aria-hidden="true" />
-                        </button>
-                      </HoverPopover>
-                    ) : (
+              ) : null}
+              {getValues('variationType') ===
+              Feature.VariationType.JSON.toString() ? (
+                <div className="w-full">
+                  <label className="input-label" htmlFor="variation">
+                    {`${f(messages.feature.variation)} ${idx + 1}`}
+                  </label>
+                  <div className="space-x-2 flex mt-1">
+                    <textarea
+                      {...register(`variations.${idx}.value`)}
+                      className="input-text w-full"
+                      disabled={false}
+                      rows={10}
+                    />
+                  </div>
+                  <p className="input-error">
+                    {errors.variations?.[idx]?.value?.message && (
+                      <span role="alert">
+                        {errors.variations[idx].value.message}
+                      </span>
+                    )}
+                  </p>
+                </div>
+              ) : null}
+              <div className="mr-2 flex-grow">
+                <label>
+                  <span className="input-label">{f(messages.name)}</span>
+                </label>
+                <div className="w-full mt-1">
+                  <input
+                    {...register(`variations.${idx}.name`)}
+                    type="text"
+                    className="w-full input-text"
+                    disabled={false}
+                  />
+                </div>
+                <p className="input-error">
+                  {errors.variations?.[idx]?.name?.message && (
+                    <span role="alert">
+                      {errors.variations[idx].name.message}
+                    </span>
+                  )}
+                </p>
+              </div>
+              <div className="flex-grow">
+                <label htmlFor="description">
+                  <span className="input-label">{f(messages.description)}</span>
+                  <span className="input-label-optional">
+                    {' '}
+                    {f(messages.input.optional)}
+                  </span>
+                </label>
+                <div className="w-full mt-1">
+                  <input
+                    {...register(`variations.${idx}.description`)}
+                    type="text"
+                    className="w-full input-text"
+                    disabled={false}
+                  />
+                </div>
+                <p className="input-error">
+                  {errors.variations?.[idx]?.description?.message && (
+                    <span role="alert">
+                      {errors.variations[idx].description.message}
+                    </span>
+                  )}
+                </p>
+              </div>
+              {variations.length > 2 && (
+                <div className="flex items-end py-3 ml-3">
+                  {disableRemoveBtn ? (
+                    <HoverPopover
+                      render={() => {
+                        const variationMessage = getVariationMessage(
+                          variation.id
+                        );
+                        return variationMessage ? (
+                          <div
+                            className={classNames(
+                              'bg-gray-900 text-white p-2 text-xs w-[350px]',
+                              'rounded cursor-pointer'
+                            )}
+                          >
+                            {variationMessage}
+                          </div>
+                        ) : null;
+                      }}
+                    >
                       <button
                         type="button"
-                        onClick={() => handleRemoveVariation(idx)}
                         className="minus-circle-icon"
+                        disabled={disableRemoveBtn}
                       >
                         <MinusCircleIcon aria-hidden="true" />
                       </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-          <div className="py-4 flex">
-            <button
-              type="button"
-              className="btn-submit"
-              onClick={handleAddVariation}
-              disabled={disabledAddBtn}
-            >
-              {f(messages.button.addVariation)}
-            </button>
-          </div>
+                    </HoverPopover>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveVariation(idx)}
+                      className="minus-circle-icon"
+                    >
+                      <MinusCircleIcon aria-hidden="true" />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        <div className="py-4 flex">
+          <button
+            type="button"
+            className="btn-submit"
+            onClick={handleAddVariation}
+            disabled={disabledAddBtn}
+          >
+            {f(messages.button.addVariation)}
+          </button>
         </div>
       </div>
-    );
-  }
-);
+    </div>
+  );
+});
