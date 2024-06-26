@@ -10,8 +10,6 @@ env:
   bucketeerTestEnabled: true
   bigqueryEmulatorHost: http://localenv-bq.default.svc.cluster.local:9050
   pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
-  mysqlMigrationUser: bucketeer
-  mysqlMigrationPass: bucketeer
   project: bucketeer-test
   mysqlUser: bucketeer
   mysqlPass: bucketeer
@@ -33,8 +31,6 @@ env:
   domainTopic: domain
   bulkSegmentUsersReceivedTopic: bulk-segment-users-received
   timezone: UTC
-  githubUser: bucketeer
-  githubMigrationSourcePath: /tmp/migration
   logLevel: info
 tls:
   service:

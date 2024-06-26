@@ -54,7 +54,7 @@ Additionally, this command will:
 The following command will deploy all the Bucketeer services at once.
 
 ```shell
-GITHUB_TOKEN=token make deploy-bucketeer
+make deploy-bucketeer
 ```
 
 If you need to deploy a single service, you can do as follows.

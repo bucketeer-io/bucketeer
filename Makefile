@@ -369,8 +369,6 @@ deploy-bucketeer: delete-all-services-from-minikube
 	make -C tools/dev service-cert-secret
 	make -C tools/dev service-token-secret
 	make -C tools/dev oauth-key-secret
-	GITHUB_TOKEN=$(GITHUB_TOKEN) make -C tools/dev generate-github-token
-
 	make -C ./ build-go
 	TAG=localenv make -C ./ build-docker-images
 	TAG=localenv make -C ./ minikube-load-images
