@@ -15,4 +15,4 @@ migration:
 
   # The migration baseline
   # First revision
-  dbBaseline: "20240624041010"
+  dbBaseline: "20240626022133"
