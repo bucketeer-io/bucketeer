@@ -390,7 +390,7 @@ func (s *authService) generateToken(
 		}
 		return nil, dt.Err()
 	}
-	idToken := &token.AccessToken{
+	accessToken := &token.AccessToken{
 		Issuer:   claims.Iss,
 		Subject:  claims.Sub,
 		Audience: claims.Aud,
@@ -399,9 +399,9 @@ func (s *authService) generateToken(
 		Email:    claims.Email,
 	}
 	if hasSystemAdminOrganization(resp.Organizations) {
-		idToken.IsSystemAdmin = true
+		accessToken.IsSystemAdmin = true
 	}
-	signedIDToken, err := s.signer.SignAccessToken(idToken)
+	signAccessToken, err := s.signer.SignAccessToken(accessToken)
 	if err != nil {
 		s.logger.Error(
 			"Failed to sign id token",
@@ -421,7 +421,7 @@ func (s *authService) generateToken(
 		TokenType:    t.TokenType,
 		RefreshToken: t.RefreshToken,
 		Expiry:       t.Expiry.Unix(),
-		IdToken:      signedIDToken,
+		IdToken:      signAccessToken,
 	}, nil
 }
 

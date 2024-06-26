@@ -32,7 +32,7 @@ var (
 )
 
 func CheckSystemAdminRole(ctx context.Context) (*eventproto.Editor, error) {
-	token, ok := rpc.GetIDToken(ctx)
+	token, ok := rpc.GetAccessToken(ctx)
 	if !ok {
 		return nil, ErrUnauthenticated
 	}
@@ -51,7 +51,7 @@ func CheckEnvironmentRole(
 	environmentID string,
 	getAccountFunc func(email string) (*accountproto.AccountV2, error),
 ) (*eventproto.Editor, error) {
-	token, ok := rpc.GetIDToken(ctx)
+	token, ok := rpc.GetAccessToken(ctx)
 	if !ok {
 		return nil, ErrUnauthenticated
 	}
@@ -98,7 +98,7 @@ func CheckOrganizationRole(
 	requiredRole accountproto.AccountV2_Role_Organization,
 	getAccountFunc func(email string) (*accountproto.GetAccountV2Response, error),
 ) (*eventproto.Editor, error) {
-	token, ok := rpc.GetIDToken(ctx)
+	token, ok := rpc.GetAccessToken(ctx)
 	if !ok {
 		return nil, ErrUnauthenticated
 	}

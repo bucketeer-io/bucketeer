@@ -61,7 +61,7 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 		logger.Error("Failed to create signer", zap.Error(err))
 		return err
 	}
-	idToken := &token.AccessToken{
+	accessToken := &token.AccessToken{
 		Issuer:        *c.issuer,
 		Subject:       *c.sub,
 		Audience:      *c.audience,
@@ -70,12 +70,12 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 		Email:         *c.email,
 		IsSystemAdmin: true,
 	}
-	signedIDToken, err := signer.SignAccessToken(idToken)
+	signedAccessToken, err := signer.SignAccessToken(accessToken)
 	if err != nil {
 		logger.Error("Failed to sign token", zap.Error(err))
 		return err
 	}
-	if err := os.WriteFile(*c.output, []byte(signedIDToken), 0644); err != nil {
+	if err := os.WriteFile(*c.output, []byte(signedAccessToken), 0644); err != nil {
 		logger.Error("Failed to write token to file", zap.Error(err), zap.String("output", *c.output))
 		return err
 	}

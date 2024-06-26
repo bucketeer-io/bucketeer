@@ -48,7 +48,7 @@ func TestVerify(t *testing.T) {
 	clientID := "test_client_id"
 	signer, err := NewSigner("testdata/valid-private.pem")
 	require.NoError(t, err)
-	idToken := &AccessToken{
+	accessToken := &AccessToken{
 		Issuer:   issuer,
 		Subject:  "subject",
 		Audience: clientID,
@@ -56,31 +56,31 @@ func TestVerify(t *testing.T) {
 		Expiry:   time.Now().Add(time.Hour),
 	}
 	testcases := []struct {
-		desc       string
-		rawIDToken string
-		valid      bool
+		desc           string
+		rawAccessToken string
+		valid          bool
 	}{
 		{
-			desc:       "err: malformed jwt",
-			rawIDToken: "",
-			valid:      false,
+			desc:           "err: malformed jwt",
+			rawAccessToken: "",
+			valid:          false,
 		},
 		{
-			desc:       "err: invalid jwt",
-			rawIDToken: createInvalidRawIDToken(t, signer, idToken),
-			valid:      false,
+			desc:           "err: invalid jwt",
+			rawAccessToken: createInvalidRawIDToken(t, signer, accessToken),
+			valid:          false,
 		},
 		{
-			desc:       "success",
-			rawIDToken: createValidRawIDToken(t, signer, idToken),
-			valid:      true,
+			desc:           "success",
+			rawAccessToken: createValidRawIDToken(t, signer, accessToken),
+			valid:          true,
 		},
 	}
 	verifier, err := NewVerifier("testdata/valid-public.pem", issuer, clientID)
 	require.NoError(t, err)
 	for _, p := range testcases {
 		t.Run(p.desc, func(t *testing.T) {
-			actualToken, err := verifier.VerifyAccessToken(p.rawIDToken)
+			actualToken, err := verifier.VerifyAccessToken(p.rawAccessToken)
 			if p.valid {
 				assert.NotNil(t, actualToken)
 				assert.NoError(t, err)
@@ -92,16 +92,16 @@ func TestVerify(t *testing.T) {
 	}
 }
 
-func createValidRawIDToken(t *testing.T, signer Signer, idToken *AccessToken) string {
+func createValidRawIDToken(t *testing.T, signer Signer, accessToken *AccessToken) string {
 	t.Helper()
-	rawIDToken, err := signer.SignAccessToken(idToken)
+	rawIDToken, err := signer.SignAccessToken(accessToken)
 	require.NoError(t, err)
 	return rawIDToken
 }
 
-func createInvalidRawIDToken(t *testing.T, signer Signer, idToken *AccessToken) string {
+func createInvalidRawIDToken(t *testing.T, signer Signer, accessToken *AccessToken) string {
 	t.Helper()
-	rawIDToken, err := signer.SignAccessToken(idToken)
+	rawIDToken, err := signer.SignAccessToken(accessToken)
 	require.NoError(t, err)
 	parts := strings.Split(rawIDToken, ".")
 	invalidSignature := base64.RawURLEncoding.EncodeToString([]byte("invalid-signature"))

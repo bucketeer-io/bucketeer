@@ -67,7 +67,7 @@ func AuthUnaryServerInterceptor(verifier token.Verifier) grpc.UnaryServerInterce
 	}
 }
 
-func GetIDToken(ctx context.Context) (*token.AccessToken, bool) {
+func GetAccessToken(ctx context.Context) (*token.AccessToken, bool) {
 	t, ok := ctx.Value(Key).(*token.AccessToken)
 	return t, ok
 }
