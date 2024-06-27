@@ -22,4 +22,10 @@ message Token {
   string token_type = 2;
   string refresh_token = 3;
   int64 expiry = 4;
+  string id_token = 5;
+}
+
+message IDTokenSubject {
+  string user_id = 1;
+  string conn_id = 2;
 }
