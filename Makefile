@@ -290,12 +290,6 @@ check-apply-migration:
 build-devcontainer:
 	devcontainer build --workspace-folder=.github --push=false --image-name="ghcr.io/bucketeer-io/bucketeer-devcontainer:latest"
 
-.PHONY: push-devcontainer
-push-devcontainer:
-	@echo $(PAT) | docker login ghcr.io -u $(GITHUB_USER_NAME) --password-stdin
-	docker tag ghcr.io/bucketeer-io/bucketeer-devcontainer:latest ghcr.io/bucketeer-io/bucketeer-devcontainer:latest
-	docker push ghcr.io/bucketeer-io/bucketeer-devcontainer:latest
-
 # start minikube
 start-minikube:
 	if [ $$(minikube status | grep -c "minikube start") -eq 1 ]; then \
