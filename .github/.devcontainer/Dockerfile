@@ -90,3 +90,5 @@ RUN if [ -z $DeveloperBuild ]; then \
     else \
     curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg ; \
     fi
+# Install the Atlas for MySQL migration
+RUN curl -sSf https://atlasgo.sh | sh -s -- -y
