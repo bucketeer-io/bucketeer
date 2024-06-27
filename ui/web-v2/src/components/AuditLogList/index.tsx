@@ -1,12 +1,15 @@
-import { FC, memo } from 'react';
+import { FC, memo, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useSelector } from 'react-redux';
+import * as Diff from 'diff';
+import { Any } from 'google-protobuf/google/protobuf/any_pb';
 
 import { AUDITLOG_LIST_PAGE_SIZE } from '../../constants/auditLog';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import { selectAll } from '../../modules/auditLogs';
 import { AuditLog } from '../../proto/auditlog/auditlog_pb';
+import { Event, FeatureUpdatedEvent } from '../../proto/event/domain/event_pb';
 import { AuditLogSearchOptions } from '../../types/auditLog';
 import { classNames } from '../../utils/css';
 import { AuditLogSearch } from '../AuditLogSearch';
@@ -81,6 +84,9 @@ export const AuditLogList: FC<AuditLogListProps> = memo(
                           {nl2br(auditLog.options.comment)}
                         </div>
                       )}
+                      {auditLog.type === Event.Type.FEATURE_UPDATED && (
+                        <FeatureUpdatedAuditLogBox auditLog={auditLog} />
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -97,6 +103,118 @@ export const AuditLogList: FC<AuditLogListProps> = memo(
     );
   }
 );
+
+interface FeatureUpdatedAuditLogBoxProps {
+  auditLog: AuditLog.AsObject;
+}
+
+const FeatureUpdatedAuditLogBox: FC<FeatureUpdatedAuditLogBoxProps> = ({
+  auditLog
+}) => {
+  const { formatMessage: f } = useIntl();
+  const [showChanges, setShowChanges] = useState(false);
+  const [showSnapshot, setShowSnapshot] = useState(false);
+  const featureUpdatedEvent = deserializeEvent(auditLog.event!);
+  return (
+    <div>
+      <div className={classNames('text-primary text-xs')}>
+        <button onClick={() => setShowChanges(!showChanges)}>
+          {showChanges
+            ? f(messages.auditLog.detail.hideChanges)
+            : `> ${f(messages.auditLog.detail.showChanges)}`}
+        </button>
+        {showChanges && (
+          <div className={classNames('p-3')}>
+            <DiffView
+              oldStr={featureUpdatedEvent.previousData}
+              newStr={featureUpdatedEvent.data}
+            />
+          </div>
+        )}
+      </div>
+      <div>
+        <button
+          onClick={() => setShowSnapshot(!showSnapshot)}
+          className={classNames('text-primary text-xs')}
+        >
+          {showSnapshot
+            ? f(messages.auditLog.detail.hideSnapshot)
+            : `> ${f(messages.auditLog.detail.showSnapshot)}`}
+        </button>
+        {showSnapshot && (
+          <div className={classNames('p-3')}>
+            <p
+              className={classNames('bg-gray-100 whitespace-pre-wrap text-xs')}
+            >{`${featureUpdatedEvent.data}`}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+function deserializeEvent(
+  anyMessage: Any.AsObject
+): FeatureUpdatedEvent.AsObject {
+  const deserializedMessage = FeatureUpdatedEvent.deserializeBinary(
+    anyMessage.value
+  );
+  return deserializedMessage.toObject();
+}
+
+export interface DiffViewProps {
+  oldStr: string;
+  newStr: string;
+}
+
+export const DiffView: FC<DiffViewProps> = memo(function DiffView({
+  oldStr,
+  newStr
+}) {
+  return (
+    <div>
+      {Diff.createTwoFilesPatch('old version', 'new version', oldStr, newStr)
+        .split('\n')
+        .filter((line) => {
+          if (line.startsWith('\\') || line.startsWith('=')) {
+            return false;
+          }
+          return true;
+        })
+        .map((line) => {
+          if (line.startsWith('@@')) {
+            return '...';
+          }
+          return line;
+        })
+        .map((line, i) => {
+          switch (line[0]) {
+            case '+':
+              return (
+                <div
+                  key={i}
+                  className={classNames('bg-green-50 text-green-800')}
+                >
+                  <span key={i}>{line}</span>
+                </div>
+              );
+            case '-':
+              return (
+                <div
+                  key={i}
+                  className={classNames('bg-red-50 text-red-800')}
+                  data-testid="deleted-line"
+                >
+                  <span>{line}</span>
+                </div>
+              );
+            default:
+              return <div key={i}>{line}</div>;
+          }
+        })}
+    </div>
+  );
+});
 
 interface NoDataProps {
   searchOptions: AuditLogSearchOptions;

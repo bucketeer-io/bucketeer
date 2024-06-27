@@ -1149,6 +1149,24 @@ export const messages = {
         id: 'auditLog.sort.oldest',
         defaultMessage: 'Oldest'
       })
+    },
+    detail: {
+      showChanges: defineMessage({
+        id: 'auditLog.detail.showChanges',
+        defaultMessage: 'SHOW CHANGES'
+      }),
+      hideChanges: defineMessage({
+        id: 'auditLog.detail.hideChanges',
+        defaultMessage: 'HIDE CHANGES'
+      }),
+      showSnapshot: defineMessage({
+        id: 'auditLog.detail.showSnapshot',
+        defaultMessage: 'SHOW SNAPSHOT'
+      }),
+      hideSnapshot: defineMessage({
+        id: 'auditLog.detail.hideSnapshot',
+        defaultMessage: 'HIDE SNAPSHOT'
+      })
     }
   },
   goal: {
