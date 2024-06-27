@@ -1936,26 +1936,6 @@
                 "id": 4,
                 "name": "expiry",
                 "type": "int64"
-              },
-              {
-                "id": 5,
-                "name": "id_token",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "IDTokenSubject",
-            "fields": [
-              {
-                "id": 1,
-                "name": "user_id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "conn_id",
-                "type": "string"
               }
             ]
           }
