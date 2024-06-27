@@ -222,6 +222,7 @@ export namespace Event {
     OPS_EVENT_RATE_CLAUSE_CHANGED: 806;
     DATETIME_CLAUSE_ADDED: 807;
     DATETIME_CLAUSE_CHANGED: 808;
+    AUTOOPS_RULE_STOPPED: 809;
     PUSH_CREATED: 900;
     PUSH_DELETED: 901;
     PUSH_TAGS_ADDED: 902;
@@ -4096,6 +4097,32 @@ export namespace AutoOpsRuleCreatedEvent {
     createdAt: number;
     updatedAt: number;
   };
+}
+
+export class AutoOpsRuleStoppedEvent extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AutoOpsRuleStoppedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: AutoOpsRuleStoppedEvent
+  ): AutoOpsRuleStoppedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: AutoOpsRuleStoppedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): AutoOpsRuleStoppedEvent;
+  static deserializeBinaryFromReader(
+    message: AutoOpsRuleStoppedEvent,
+    reader: jspb.BinaryReader
+  ): AutoOpsRuleStoppedEvent;
+}
+
+export namespace AutoOpsRuleStoppedEvent {
+  export type AsObject = {};
 }
 
 export class AutoOpsRuleDeletedEvent extends jspb.Message {

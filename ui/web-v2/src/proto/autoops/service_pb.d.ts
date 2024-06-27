@@ -225,6 +225,73 @@ export namespace ListAutoOpsRulesResponse {
   };
 }
 
+export class StopAutoOpsRuleRequest extends jspb.Message {
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  getId(): string;
+  setId(value: string): void;
+
+  hasCommand(): boolean;
+  clearCommand(): void;
+  getCommand(): proto_autoops_command_pb.StopAutoOpsRuleCommand | undefined;
+  setCommand(value?: proto_autoops_command_pb.StopAutoOpsRuleCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): StopAutoOpsRuleRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: StopAutoOpsRuleRequest
+  ): StopAutoOpsRuleRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: StopAutoOpsRuleRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): StopAutoOpsRuleRequest;
+  static deserializeBinaryFromReader(
+    message: StopAutoOpsRuleRequest,
+    reader: jspb.BinaryReader
+  ): StopAutoOpsRuleRequest;
+}
+
+export namespace StopAutoOpsRuleRequest {
+  export type AsObject = {
+    environmentNamespace: string;
+    id: string;
+    command?: proto_autoops_command_pb.StopAutoOpsRuleCommand.AsObject;
+  };
+}
+
+export class StopAutoOpsRuleResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): StopAutoOpsRuleResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: StopAutoOpsRuleResponse
+  ): StopAutoOpsRuleResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: StopAutoOpsRuleResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): StopAutoOpsRuleResponse;
+  static deserializeBinaryFromReader(
+    message: StopAutoOpsRuleResponse,
+    reader: jspb.BinaryReader
+  ): StopAutoOpsRuleResponse;
+}
+
+export namespace StopAutoOpsRuleResponse {
+  export type AsObject = {};
+}
+
 export class DeleteAutoOpsRuleRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;

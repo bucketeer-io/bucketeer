@@ -124,6 +124,32 @@ export namespace DeleteAutoOpsRuleCommand {
   export type AsObject = {};
 }
 
+export class StopAutoOpsRuleCommand extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): StopAutoOpsRuleCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: StopAutoOpsRuleCommand
+  ): StopAutoOpsRuleCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: StopAutoOpsRuleCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): StopAutoOpsRuleCommand;
+  static deserializeBinaryFromReader(
+    message: StopAutoOpsRuleCommand,
+    reader: jspb.BinaryReader
+  ): StopAutoOpsRuleCommand;
+}
+
+export namespace StopAutoOpsRuleCommand {
+  export type AsObject = {};
+}
+
 export class ChangeAutoOpsRuleTriggeredAtCommand extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(
