@@ -241,11 +241,17 @@ export class AutoOpsServiceClient {
   stopAutoOpsRule(
     requestMessage: proto_autoops_service_pb.StopAutoOpsRuleRequest,
     metadata: grpc.Metadata,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.StopAutoOpsRuleResponse|null) => void
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_autoops_service_pb.StopAutoOpsRuleResponse | null
+    ) => void
   ): UnaryResponse;
   stopAutoOpsRule(
     requestMessage: proto_autoops_service_pb.StopAutoOpsRuleRequest,
-    callback: (error: ServiceError|null, responseMessage: proto_autoops_service_pb.StopAutoOpsRuleResponse|null) => void
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_autoops_service_pb.StopAutoOpsRuleResponse | null
+    ) => void
   ): UnaryResponse;
   deleteAutoOpsRule(
     requestMessage: proto_autoops_service_pb.DeleteAutoOpsRuleRequest,

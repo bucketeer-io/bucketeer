@@ -1,17 +1,17 @@
 // package: bucketeer.autoops
 // file: proto/autoops/service.proto
 
-var proto_autoops_service_pb = require("../../proto/autoops/service_pb");
-var grpc = require("@improbable-eng/grpc-web").grpc;
+var proto_autoops_service_pb = require('../../proto/autoops/service_pb');
+var grpc = require('@improbable-eng/grpc-web').grpc;
 
 var AutoOpsService = (function () {
   function AutoOpsService() {}
-  AutoOpsService.serviceName = "bucketeer.autoops.AutoOpsService";
+  AutoOpsService.serviceName = 'bucketeer.autoops.AutoOpsService';
   return AutoOpsService;
-}());
+})();
 
 AutoOpsService.GetAutoOpsRule = {
-  methodName: "GetAutoOpsRule",
+  methodName: 'GetAutoOpsRule',
   service: AutoOpsService,
   requestStream: false,
   responseStream: false,
@@ -20,7 +20,7 @@ AutoOpsService.GetAutoOpsRule = {
 };
 
 AutoOpsService.ListAutoOpsRules = {
-  methodName: "ListAutoOpsRules",
+  methodName: 'ListAutoOpsRules',
   service: AutoOpsService,
   requestStream: false,
   responseStream: false,
@@ -29,7 +29,7 @@ AutoOpsService.ListAutoOpsRules = {
 };
 
 AutoOpsService.CreateAutoOpsRule = {
-  methodName: "CreateAutoOpsRule",
+  methodName: 'CreateAutoOpsRule',
   service: AutoOpsService,
   requestStream: false,
   responseStream: false,
@@ -38,7 +38,7 @@ AutoOpsService.CreateAutoOpsRule = {
 };
 
 AutoOpsService.StopAutoOpsRule = {
-  methodName: "StopAutoOpsRule",
+  methodName: 'StopAutoOpsRule',
   service: AutoOpsService,
   requestStream: false,
   responseStream: false,
@@ -47,7 +47,7 @@ AutoOpsService.StopAutoOpsRule = {
 };
 
 AutoOpsService.DeleteAutoOpsRule = {
-  methodName: "DeleteAutoOpsRule",
+  methodName: 'DeleteAutoOpsRule',
   service: AutoOpsService,
   requestStream: false,
   responseStream: false,
@@ -56,7 +56,7 @@ AutoOpsService.DeleteAutoOpsRule = {
 };
 
 AutoOpsService.UpdateAutoOpsRule = {
-  methodName: "UpdateAutoOpsRule",
+  methodName: 'UpdateAutoOpsRule',
   service: AutoOpsService,
   requestStream: false,
   responseStream: false,
@@ -65,7 +65,7 @@ AutoOpsService.UpdateAutoOpsRule = {
 };
 
 AutoOpsService.ExecuteAutoOps = {
-  methodName: "ExecuteAutoOps",
+  methodName: 'ExecuteAutoOps',
   service: AutoOpsService,
   requestStream: false,
   responseStream: false,
@@ -74,7 +74,7 @@ AutoOpsService.ExecuteAutoOps = {
 };
 
 AutoOpsService.ListOpsCounts = {
-  methodName: "ListOpsCounts",
+  methodName: 'ListOpsCounts',
   service: AutoOpsService,
   requestStream: false,
   responseStream: false,
@@ -83,7 +83,7 @@ AutoOpsService.ListOpsCounts = {
 };
 
 AutoOpsService.CreateProgressiveRollout = {
-  methodName: "CreateProgressiveRollout",
+  methodName: 'CreateProgressiveRollout',
   service: AutoOpsService,
   requestStream: false,
   responseStream: false,
@@ -92,7 +92,7 @@ AutoOpsService.CreateProgressiveRollout = {
 };
 
 AutoOpsService.GetProgressiveRollout = {
-  methodName: "GetProgressiveRollout",
+  methodName: 'GetProgressiveRollout',
   service: AutoOpsService,
   requestStream: false,
   responseStream: false,
@@ -101,7 +101,7 @@ AutoOpsService.GetProgressiveRollout = {
 };
 
 AutoOpsService.StopProgressiveRollout = {
-  methodName: "StopProgressiveRollout",
+  methodName: 'StopProgressiveRollout',
   service: AutoOpsService,
   requestStream: false,
   responseStream: false,
@@ -110,7 +110,7 @@ AutoOpsService.StopProgressiveRollout = {
 };
 
 AutoOpsService.DeleteProgressiveRollout = {
-  methodName: "DeleteProgressiveRollout",
+  methodName: 'DeleteProgressiveRollout',
   service: AutoOpsService,
   requestStream: false,
   responseStream: false,
@@ -119,7 +119,7 @@ AutoOpsService.DeleteProgressiveRollout = {
 };
 
 AutoOpsService.ListProgressiveRollouts = {
-  methodName: "ListProgressiveRollouts",
+  methodName: 'ListProgressiveRollouts',
   service: AutoOpsService,
   requestStream: false,
   responseStream: false,
@@ -128,7 +128,7 @@ AutoOpsService.ListProgressiveRollouts = {
 };
 
 AutoOpsService.ExecuteProgressiveRollout = {
-  methodName: "ExecuteProgressiveRollout",
+  methodName: 'ExecuteProgressiveRollout',
   service: AutoOpsService,
   requestStream: false,
   responseStream: false,
@@ -143,7 +143,11 @@ function AutoOpsServiceClient(serviceHost, options) {
   this.options = options || {};
 }
 
-AutoOpsServiceClient.prototype.getAutoOpsRule = function getAutoOpsRule(requestMessage, metadata, callback) {
+AutoOpsServiceClient.prototype.getAutoOpsRule = function getAutoOpsRule(
+  requestMessage,
+  metadata,
+  callback
+) {
   if (arguments.length === 2) {
     callback = arguments[1];
   }
@@ -174,7 +178,11 @@ AutoOpsServiceClient.prototype.getAutoOpsRule = function getAutoOpsRule(requestM
   };
 };
 
-AutoOpsServiceClient.prototype.listAutoOpsRules = function listAutoOpsRules(requestMessage, metadata, callback) {
+AutoOpsServiceClient.prototype.listAutoOpsRules = function listAutoOpsRules(
+  requestMessage,
+  metadata,
+  callback
+) {
   if (arguments.length === 2) {
     callback = arguments[1];
   }
@@ -205,7 +213,11 @@ AutoOpsServiceClient.prototype.listAutoOpsRules = function listAutoOpsRules(requ
   };
 };
 
-AutoOpsServiceClient.prototype.createAutoOpsRule = function createAutoOpsRule(requestMessage, metadata, callback) {
+AutoOpsServiceClient.prototype.createAutoOpsRule = function createAutoOpsRule(
+  requestMessage,
+  metadata,
+  callback
+) {
   if (arguments.length === 2) {
     callback = arguments[1];
   }
@@ -236,7 +248,11 @@ AutoOpsServiceClient.prototype.createAutoOpsRule = function createAutoOpsRule(re
   };
 };
 
-AutoOpsServiceClient.prototype.stopAutoOpsRule = function stopAutoOpsRule(requestMessage, metadata, callback) {
+AutoOpsServiceClient.prototype.stopAutoOpsRule = function stopAutoOpsRule(
+  requestMessage,
+  metadata,
+  callback
+) {
   if (arguments.length === 2) {
     callback = arguments[1];
   }
@@ -267,7 +283,11 @@ AutoOpsServiceClient.prototype.stopAutoOpsRule = function stopAutoOpsRule(reques
   };
 };
 
-AutoOpsServiceClient.prototype.deleteAutoOpsRule = function deleteAutoOpsRule(requestMessage, metadata, callback) {
+AutoOpsServiceClient.prototype.deleteAutoOpsRule = function deleteAutoOpsRule(
+  requestMessage,
+  metadata,
+  callback
+) {
   if (arguments.length === 2) {
     callback = arguments[1];
   }
@@ -298,7 +318,11 @@ AutoOpsServiceClient.prototype.deleteAutoOpsRule = function deleteAutoOpsRule(re
   };
 };
 
-AutoOpsServiceClient.prototype.updateAutoOpsRule = function updateAutoOpsRule(requestMessage, metadata, callback) {
+AutoOpsServiceClient.prototype.updateAutoOpsRule = function updateAutoOpsRule(
+  requestMessage,
+  metadata,
+  callback
+) {
   if (arguments.length === 2) {
     callback = arguments[1];
   }
@@ -329,7 +353,11 @@ AutoOpsServiceClient.prototype.updateAutoOpsRule = function updateAutoOpsRule(re
   };
 };
 
-AutoOpsServiceClient.prototype.executeAutoOps = function executeAutoOps(requestMessage, metadata, callback) {
+AutoOpsServiceClient.prototype.executeAutoOps = function executeAutoOps(
+  requestMessage,
+  metadata,
+  callback
+) {
   if (arguments.length === 2) {
     callback = arguments[1];
   }
@@ -360,7 +388,11 @@ AutoOpsServiceClient.prototype.executeAutoOps = function executeAutoOps(requestM
   };
 };
 
-AutoOpsServiceClient.prototype.listOpsCounts = function listOpsCounts(requestMessage, metadata, callback) {
+AutoOpsServiceClient.prototype.listOpsCounts = function listOpsCounts(
+  requestMessage,
+  metadata,
+  callback
+) {
   if (arguments.length === 2) {
     callback = arguments[1];
   }
@@ -391,191 +423,196 @@ AutoOpsServiceClient.prototype.listOpsCounts = function listOpsCounts(requestMes
   };
 };
 
-AutoOpsServiceClient.prototype.createProgressiveRollout = function createProgressiveRollout(requestMessage, metadata, callback) {
-  if (arguments.length === 2) {
-    callback = arguments[1];
-  }
-  var client = grpc.unary(AutoOpsService.CreateProgressiveRollout, {
-    request: requestMessage,
-    host: this.serviceHost,
-    metadata: metadata,
-    transport: this.options.transport,
-    debug: this.options.debug,
-    onEnd: function (response) {
-      if (callback) {
-        if (response.status !== grpc.Code.OK) {
-          var err = new Error(response.statusMessage);
-          err.code = response.status;
-          err.metadata = response.trailers;
-          callback(err, null);
-        } else {
-          callback(null, response.message);
+AutoOpsServiceClient.prototype.createProgressiveRollout =
+  function createProgressiveRollout(requestMessage, metadata, callback) {
+    if (arguments.length === 2) {
+      callback = arguments[1];
+    }
+    var client = grpc.unary(AutoOpsService.CreateProgressiveRollout, {
+      request: requestMessage,
+      host: this.serviceHost,
+      metadata: metadata,
+      transport: this.options.transport,
+      debug: this.options.debug,
+      onEnd: function (response) {
+        if (callback) {
+          if (response.status !== grpc.Code.OK) {
+            var err = new Error(response.statusMessage);
+            err.code = response.status;
+            err.metadata = response.trailers;
+            callback(err, null);
+          } else {
+            callback(null, response.message);
+          }
         }
       }
-    }
-  });
-  return {
-    cancel: function () {
-      callback = null;
-      client.close();
-    }
+    });
+    return {
+      cancel: function () {
+        callback = null;
+        client.close();
+      }
+    };
   };
-};
 
-AutoOpsServiceClient.prototype.getProgressiveRollout = function getProgressiveRollout(requestMessage, metadata, callback) {
-  if (arguments.length === 2) {
-    callback = arguments[1];
-  }
-  var client = grpc.unary(AutoOpsService.GetProgressiveRollout, {
-    request: requestMessage,
-    host: this.serviceHost,
-    metadata: metadata,
-    transport: this.options.transport,
-    debug: this.options.debug,
-    onEnd: function (response) {
-      if (callback) {
-        if (response.status !== grpc.Code.OK) {
-          var err = new Error(response.statusMessage);
-          err.code = response.status;
-          err.metadata = response.trailers;
-          callback(err, null);
-        } else {
-          callback(null, response.message);
+AutoOpsServiceClient.prototype.getProgressiveRollout =
+  function getProgressiveRollout(requestMessage, metadata, callback) {
+    if (arguments.length === 2) {
+      callback = arguments[1];
+    }
+    var client = grpc.unary(AutoOpsService.GetProgressiveRollout, {
+      request: requestMessage,
+      host: this.serviceHost,
+      metadata: metadata,
+      transport: this.options.transport,
+      debug: this.options.debug,
+      onEnd: function (response) {
+        if (callback) {
+          if (response.status !== grpc.Code.OK) {
+            var err = new Error(response.statusMessage);
+            err.code = response.status;
+            err.metadata = response.trailers;
+            callback(err, null);
+          } else {
+            callback(null, response.message);
+          }
         }
       }
-    }
-  });
-  return {
-    cancel: function () {
-      callback = null;
-      client.close();
-    }
+    });
+    return {
+      cancel: function () {
+        callback = null;
+        client.close();
+      }
+    };
   };
-};
 
-AutoOpsServiceClient.prototype.stopProgressiveRollout = function stopProgressiveRollout(requestMessage, metadata, callback) {
-  if (arguments.length === 2) {
-    callback = arguments[1];
-  }
-  var client = grpc.unary(AutoOpsService.StopProgressiveRollout, {
-    request: requestMessage,
-    host: this.serviceHost,
-    metadata: metadata,
-    transport: this.options.transport,
-    debug: this.options.debug,
-    onEnd: function (response) {
-      if (callback) {
-        if (response.status !== grpc.Code.OK) {
-          var err = new Error(response.statusMessage);
-          err.code = response.status;
-          err.metadata = response.trailers;
-          callback(err, null);
-        } else {
-          callback(null, response.message);
+AutoOpsServiceClient.prototype.stopProgressiveRollout =
+  function stopProgressiveRollout(requestMessage, metadata, callback) {
+    if (arguments.length === 2) {
+      callback = arguments[1];
+    }
+    var client = grpc.unary(AutoOpsService.StopProgressiveRollout, {
+      request: requestMessage,
+      host: this.serviceHost,
+      metadata: metadata,
+      transport: this.options.transport,
+      debug: this.options.debug,
+      onEnd: function (response) {
+        if (callback) {
+          if (response.status !== grpc.Code.OK) {
+            var err = new Error(response.statusMessage);
+            err.code = response.status;
+            err.metadata = response.trailers;
+            callback(err, null);
+          } else {
+            callback(null, response.message);
+          }
         }
       }
-    }
-  });
-  return {
-    cancel: function () {
-      callback = null;
-      client.close();
-    }
+    });
+    return {
+      cancel: function () {
+        callback = null;
+        client.close();
+      }
+    };
   };
-};
 
-AutoOpsServiceClient.prototype.deleteProgressiveRollout = function deleteProgressiveRollout(requestMessage, metadata, callback) {
-  if (arguments.length === 2) {
-    callback = arguments[1];
-  }
-  var client = grpc.unary(AutoOpsService.DeleteProgressiveRollout, {
-    request: requestMessage,
-    host: this.serviceHost,
-    metadata: metadata,
-    transport: this.options.transport,
-    debug: this.options.debug,
-    onEnd: function (response) {
-      if (callback) {
-        if (response.status !== grpc.Code.OK) {
-          var err = new Error(response.statusMessage);
-          err.code = response.status;
-          err.metadata = response.trailers;
-          callback(err, null);
-        } else {
-          callback(null, response.message);
+AutoOpsServiceClient.prototype.deleteProgressiveRollout =
+  function deleteProgressiveRollout(requestMessage, metadata, callback) {
+    if (arguments.length === 2) {
+      callback = arguments[1];
+    }
+    var client = grpc.unary(AutoOpsService.DeleteProgressiveRollout, {
+      request: requestMessage,
+      host: this.serviceHost,
+      metadata: metadata,
+      transport: this.options.transport,
+      debug: this.options.debug,
+      onEnd: function (response) {
+        if (callback) {
+          if (response.status !== grpc.Code.OK) {
+            var err = new Error(response.statusMessage);
+            err.code = response.status;
+            err.metadata = response.trailers;
+            callback(err, null);
+          } else {
+            callback(null, response.message);
+          }
         }
       }
-    }
-  });
-  return {
-    cancel: function () {
-      callback = null;
-      client.close();
-    }
+    });
+    return {
+      cancel: function () {
+        callback = null;
+        client.close();
+      }
+    };
   };
-};
 
-AutoOpsServiceClient.prototype.listProgressiveRollouts = function listProgressiveRollouts(requestMessage, metadata, callback) {
-  if (arguments.length === 2) {
-    callback = arguments[1];
-  }
-  var client = grpc.unary(AutoOpsService.ListProgressiveRollouts, {
-    request: requestMessage,
-    host: this.serviceHost,
-    metadata: metadata,
-    transport: this.options.transport,
-    debug: this.options.debug,
-    onEnd: function (response) {
-      if (callback) {
-        if (response.status !== grpc.Code.OK) {
-          var err = new Error(response.statusMessage);
-          err.code = response.status;
-          err.metadata = response.trailers;
-          callback(err, null);
-        } else {
-          callback(null, response.message);
+AutoOpsServiceClient.prototype.listProgressiveRollouts =
+  function listProgressiveRollouts(requestMessage, metadata, callback) {
+    if (arguments.length === 2) {
+      callback = arguments[1];
+    }
+    var client = grpc.unary(AutoOpsService.ListProgressiveRollouts, {
+      request: requestMessage,
+      host: this.serviceHost,
+      metadata: metadata,
+      transport: this.options.transport,
+      debug: this.options.debug,
+      onEnd: function (response) {
+        if (callback) {
+          if (response.status !== grpc.Code.OK) {
+            var err = new Error(response.statusMessage);
+            err.code = response.status;
+            err.metadata = response.trailers;
+            callback(err, null);
+          } else {
+            callback(null, response.message);
+          }
         }
       }
-    }
-  });
-  return {
-    cancel: function () {
-      callback = null;
-      client.close();
-    }
+    });
+    return {
+      cancel: function () {
+        callback = null;
+        client.close();
+      }
+    };
   };
-};
 
-AutoOpsServiceClient.prototype.executeProgressiveRollout = function executeProgressiveRollout(requestMessage, metadata, callback) {
-  if (arguments.length === 2) {
-    callback = arguments[1];
-  }
-  var client = grpc.unary(AutoOpsService.ExecuteProgressiveRollout, {
-    request: requestMessage,
-    host: this.serviceHost,
-    metadata: metadata,
-    transport: this.options.transport,
-    debug: this.options.debug,
-    onEnd: function (response) {
-      if (callback) {
-        if (response.status !== grpc.Code.OK) {
-          var err = new Error(response.statusMessage);
-          err.code = response.status;
-          err.metadata = response.trailers;
-          callback(err, null);
-        } else {
-          callback(null, response.message);
+AutoOpsServiceClient.prototype.executeProgressiveRollout =
+  function executeProgressiveRollout(requestMessage, metadata, callback) {
+    if (arguments.length === 2) {
+      callback = arguments[1];
+    }
+    var client = grpc.unary(AutoOpsService.ExecuteProgressiveRollout, {
+      request: requestMessage,
+      host: this.serviceHost,
+      metadata: metadata,
+      transport: this.options.transport,
+      debug: this.options.debug,
+      onEnd: function (response) {
+        if (callback) {
+          if (response.status !== grpc.Code.OK) {
+            var err = new Error(response.statusMessage);
+            err.code = response.status;
+            err.metadata = response.trailers;
+            callback(err, null);
+          } else {
+            callback(null, response.message);
+          }
         }
       }
-    }
-  });
-  return {
-    cancel: function () {
-      callback = null;
-      client.close();
-    }
+    });
+    return {
+      cancel: function () {
+        callback = null;
+        client.close();
+      }
+    };
   };
-};
 
 exports.AutoOpsServiceClient = AutoOpsServiceClient;
-
