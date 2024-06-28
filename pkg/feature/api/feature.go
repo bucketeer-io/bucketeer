@@ -720,6 +720,9 @@ func (s *FeatureService) UpdateFeature(
 		updated, err := feature.Update(
 			req.Name,
 			req.Description,
+			req.Tags,
+			req.Enabled,
+			req.Archived,
 		)
 		if err != nil {
 			return err

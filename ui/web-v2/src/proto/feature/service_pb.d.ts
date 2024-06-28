@@ -478,6 +478,21 @@ export class UpdateFeatureRequest extends jspb.Message {
   getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
   setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
 
+  clearTagsList(): void;
+  getTagsList(): Array<string>;
+  setTagsList(value: Array<string>): void;
+  addTags(value: string, index?: number): string;
+
+  hasEnabled(): boolean;
+  clearEnabled(): void;
+  getEnabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setEnabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  hasArchived(): boolean;
+  clearArchived(): void;
+  getArchived(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setArchived(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateFeatureRequest.AsObject;
   static toObject(
@@ -506,6 +521,9 @@ export namespace UpdateFeatureRequest {
     id: string;
     name?: google_protobuf_wrappers_pb.StringValue.AsObject;
     description?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    tagsList: Array<string>;
+    enabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    archived?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 }
 
