@@ -129,48 +129,6 @@ func makeFeature(id string) *Feature {
 	}
 }
 
-/*
-func TestUserAssignment(t *testing.T) {
-	f := feature("test-feature")
-
-	fmt.Println(f.assignUser("user1"))
-	fmt.Println(f.assignUser("user2"))
-	fmt.Println(f.assignUser("user3"))
-
-	user1hash := f.Hash("user1")
-	user2hash := f.Hash("user2")
-	fmt.Println(hex.EncodeToString(user1hash[:8]))
-	fmt.Println(hex.EncodeToString(user2hash[:8]))
-
-	fmt.Println(f.Bucket("user1"))
-	fmt.Println(f.Bucket("user2"))
-func TestProportions(t *testing.T) {
-	f := feature("test-feature")
-	bucketA := 0
-	bucketB := 0
-	for i := 10000; i < 20000; i++ {
-		user := fmt.Sprintf("user-%d", i)
-		bucket := f.Bucket(user)
-		if bucket < 0.2 {
-			bucketA++
-		} else {
-			bucketB++
-		}
-	}
-	a := float64(bucketA) / 10000.0 // should be close to 0.2
-	b := float64(bucketB) / 10000.0 // should be close to 0.8
-	assert.InEpsilon(t, 0.2, a, 0.05)
-	assert.InEpsilon(t, 0.8, b, 0.05)
-}
-
-func TestCorrelation(t *testing.T) {
-	// create some hundred tests
-	// assign all people in each test
-	// compute mutual information between each test pair
-	// should be high with itself and else low
-}
-*/
-
 func TestNewFeature(t *testing.T) {
 	id := "id"
 	name := "name"
@@ -1883,5 +1841,298 @@ func TestUpdate(t *testing.T) {
 			}
 			assert.Equal(t, p.expectedErr, err)
 		})
+	}
+}
+
+func TestTopologicalSort(t *testing.T) {
+	t.Parallel()
+	makeFeature := func(id string) *proto.Feature {
+		return &proto.Feature{
+			Id:            id,
+			Name:          "test feature",
+			Version:       1,
+			Enabled:       true,
+			CreatedAt:     time.Now().Unix(),
+			VariationType: feature.Feature_STRING,
+			Variations: []*proto.Variation{
+				{
+					Id:          "variation-A",
+					Value:       "A",
+					Name:        "Variation A",
+					Description: "Thing does A",
+				},
+				{
+					Id:          "variation-B",
+					Value:       "B",
+					Name:        "Variation B",
+					Description: "Thing does B",
+				},
+				{
+					Id:          "variation-C",
+					Value:       "C",
+					Name:        "Variation C",
+					Description: "Thing does C",
+				},
+			},
+			Targets: []*proto.Target{
+				{
+					Variation: "variation-A",
+					Users: []string{
+						"user1",
+					},
+				},
+				{
+					Variation: "variation-B",
+					Users: []string{
+						"user2",
+					},
+				},
+				{
+					Variation: "variation-C",
+					Users: []string{
+						"user3",
+					},
+				},
+			},
+			Rules: []*proto.Rule{
+				{
+					Id: "rule-1",
+					Strategy: &proto.Strategy{
+						Type: proto.Strategy_FIXED,
+						FixedStrategy: &proto.FixedStrategy{
+							Variation: "variation-A",
+						},
+					},
+					Clauses: []*proto.Clause{
+						{
+							Id:        "clause-1",
+							Attribute: "name",
+							Operator:  proto.Clause_EQUALS,
+							Values: []string{
+								"user1",
+								"user2",
+							},
+						},
+					},
+				},
+				{
+					Id: "rule-2",
+					Strategy: &proto.Strategy{
+						Type: proto.Strategy_FIXED,
+						FixedStrategy: &proto.FixedStrategy{
+							Variation: "variation-B",
+						},
+					},
+					Clauses: []*proto.Clause{
+						{
+							Id:        "clause-2",
+							Attribute: "name",
+							Operator:  proto.Clause_EQUALS,
+							Values: []string{
+								"user3",
+								"user4",
+							},
+						},
+					},
+				},
+			},
+			DefaultStrategy: &proto.Strategy{
+				Type: proto.Strategy_FIXED,
+				FixedStrategy: &proto.FixedStrategy{
+					Variation: "variation-B",
+				},
+			},
+		}
+	}
+	f0 := makeFeature("fID0")
+	f1 := makeFeature("fID1")
+	f2 := makeFeature("fID2")
+	f3 := makeFeature("fID3")
+	f4 := makeFeature("fID4")
+	f5 := makeFeature("fID5")
+	patterns := []struct {
+		f0Prerequisite []*proto.Prerequisite
+		f1Prerequisite []*proto.Prerequisite
+		f2Prerequisite []*proto.Prerequisite
+		f3Prerequisite []*proto.Prerequisite
+		f4Prerequisite []*proto.Prerequisite
+		f5Prerequisite []*proto.Prerequisite
+		expected       []*proto.Feature
+		expectedError  error
+	}{
+		{
+			f0Prerequisite: []*proto.Prerequisite{},
+			f1Prerequisite: []*proto.Prerequisite{
+				{
+					FeatureId: f0.Id,
+				},
+			},
+			f2Prerequisite: []*proto.Prerequisite{
+				{
+					FeatureId: f1.Id,
+				},
+			},
+			f3Prerequisite: []*proto.Prerequisite{
+				{
+					FeatureId: f1.Id,
+				},
+				{
+					FeatureId: f2.Id,
+				},
+			},
+			f4Prerequisite: []*proto.Prerequisite{
+				{
+					FeatureId: f0.Id,
+				},
+				{
+					FeatureId: f3.Id,
+				},
+			},
+			f5Prerequisite: []*proto.Prerequisite{
+				{
+					FeatureId: f4.Id,
+				},
+				{
+					FeatureId: f3.Id,
+				},
+			},
+			expected: []*proto.Feature{
+				f0, f1, f2, f3, f4, f5,
+			},
+			expectedError: nil,
+		},
+		{
+			f0Prerequisite: []*proto.Prerequisite{},
+			f1Prerequisite: []*proto.Prerequisite{
+				{
+					FeatureId: f0.Id,
+				},
+			},
+			f2Prerequisite: []*proto.Prerequisite{
+				{
+					FeatureId: f1.Id,
+				},
+			},
+			f3Prerequisite: []*proto.Prerequisite{
+				{
+					FeatureId: f1.Id,
+				},
+				{
+					FeatureId: f2.Id,
+				},
+			},
+			f4Prerequisite: []*proto.Prerequisite{
+				{
+					FeatureId: f0.Id,
+				},
+				{
+					FeatureId: f3.Id,
+				},
+			},
+			f5Prerequisite: []*proto.Prerequisite{},
+			expected: []*proto.Feature{
+				f0, f1, f2, f5, f3, f4,
+			},
+			expectedError: nil,
+		},
+		{
+			f0Prerequisite: []*proto.Prerequisite{},
+			f1Prerequisite: []*proto.Prerequisite{
+				{
+					FeatureId: f0.Id,
+				},
+			},
+			f2Prerequisite: []*proto.Prerequisite{
+				{
+					FeatureId: f3.Id,
+				},
+			},
+			f3Prerequisite: []*proto.Prerequisite{
+				{
+					FeatureId: f2.Id,
+				},
+			},
+			f4Prerequisite: []*proto.Prerequisite{
+				{
+					FeatureId: f0.Id,
+				},
+				{
+					FeatureId: f3.Id,
+				},
+			},
+			f5Prerequisite: []*proto.Prerequisite{
+				{
+					FeatureId: f4.Id,
+				},
+				{
+					FeatureId: f3.Id,
+				},
+			},
+			expected:      nil,
+			expectedError: ErrCycleExists,
+		},
+		{
+			f0Prerequisite: []*proto.Prerequisite{},
+			f1Prerequisite: []*proto.Prerequisite{},
+			f2Prerequisite: []*proto.Prerequisite{},
+			f3Prerequisite: []*proto.Prerequisite{},
+			f4Prerequisite: []*proto.Prerequisite{},
+			f5Prerequisite: []*proto.Prerequisite{},
+			expected: []*proto.Feature{
+				f2, f0, f5, f3, f1, f4,
+			},
+			expectedError: nil,
+		},
+	}
+	for _, p := range patterns {
+		f0.Prerequisites = p.f0Prerequisite
+		f1.Prerequisites = p.f1Prerequisite
+		f2.Prerequisites = p.f2Prerequisite
+		f3.Prerequisites = p.f3Prerequisite
+		f4.Prerequisites = p.f4Prerequisite
+		f5.Prerequisites = p.f5Prerequisite
+		fs := []*proto.Feature{
+			f2, f0, f5, f3, f1, f4,
+		}
+		actual, err := TopologicalSort(fs)
+		assert.Equal(t, p.expectedError, err)
+		assert.Equal(t, p.expected, actual)
+	}
+}
+
+func TestHasFeaturesDependsOnTargets(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		targets  []*feature.Feature
+		all      []*feature.Feature
+		expected bool
+	}{
+		{
+			targets:  []*feature.Feature{},
+			all:      []*feature.Feature{},
+			expected: false,
+		},
+		{
+			targets: []*feature.Feature{
+				{Id: "1"},
+			},
+			all: []*feature.Feature{
+				{Id: "1"},
+			},
+			expected: false,
+		},
+		{
+			targets: []*feature.Feature{
+				{Id: "1"},
+			},
+			all: []*feature.Feature{
+				{Id: "1"},
+				{Id: "2", Prerequisites: []*feature.Prerequisite{{FeatureId: "1"}}},
+			},
+			expected: true,
+		},
+	}
+	for _, p := range patterns {
+		assert.Equal(t, p.expected, HasFeaturesDependsOnTargets(p.targets, p.all))
 	}
 }
