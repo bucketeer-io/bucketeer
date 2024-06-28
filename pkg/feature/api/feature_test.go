@@ -1930,12 +1930,6 @@ func TestDisableFeatureMySQL(t *testing.T) {
 
 func TestValidateArchiveFeature(t *testing.T) {
 	t.Parallel()
-	f0 := makeFeature("fID-0")
-	f1 := makeFeature("fID-1")
-	f2 := makeFeature("fID-2")
-	f3 := makeFeature("fID-3")
-	f4 := makeFeature("fID-4")
-	f5 := makeFeature("fID-5")
 	ctx := context.TODO()
 	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
 		"accept-language": []string{"ja"},
@@ -1952,14 +1946,12 @@ func TestValidateArchiveFeature(t *testing.T) {
 
 	patterns := []struct {
 		req         *featureproto.ArchiveFeatureRequest
-		fs          []*featureproto.Feature
 		expectedErr error
 	}{
 		{
 			req: &featureproto.ArchiveFeatureRequest{
 				EnvironmentNamespace: "ns0",
 			},
-			fs:          nil,
 			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
@@ -1967,7 +1959,6 @@ func TestValidateArchiveFeature(t *testing.T) {
 				Id:                   "id-0",
 				EnvironmentNamespace: "ns0",
 			},
-			fs:          nil,
 			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
@@ -1976,88 +1967,11 @@ func TestValidateArchiveFeature(t *testing.T) {
 				EnvironmentNamespace: "ns0",
 				Command:              &featureproto.ArchiveFeatureCommand{},
 			},
-			fs: []*featureproto.Feature{
-				{
-					Id: f0.Id,
-				},
-				{
-					Id: f1.Id,
-				},
-				{
-					Id: f2.Id,
-				},
-				{
-					Id: f3.Id,
-					Prerequisites: []*featureproto.Prerequisite{
-						{
-							FeatureId: f4.Id,
-						},
-						{
-							FeatureId: f5.Id,
-						},
-					},
-				},
-				{
-					Id: f4.Id,
-					Prerequisites: []*featureproto.Prerequisite{
-						{
-							FeatureId: f0.Id,
-						},
-						{
-							FeatureId: f2.Id,
-						},
-					},
-				},
-				{
-					Id: f5.Id,
-				},
-			},
-			expectedErr: createError(statusInvalidArchive, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "archive")),
-		},
-		{
-			req: &featureproto.ArchiveFeatureRequest{
-				Id:                   "fID-0",
-				EnvironmentNamespace: "ns0",
-				Command:              &featureproto.ArchiveFeatureCommand{},
-			},
-			fs: []*featureproto.Feature{
-				{
-					Id: f0.Id,
-				},
-				{
-					Id: f1.Id,
-				},
-				{
-					Id: f2.Id,
-				},
-				{
-					Id: f3.Id,
-					Prerequisites: []*featureproto.Prerequisite{
-						{
-							FeatureId: f2.Id,
-						},
-						{
-							FeatureId: f1.Id,
-						},
-					},
-				},
-				{
-					Id: f4.Id,
-					Prerequisites: []*featureproto.Prerequisite{
-						{
-							FeatureId: f5.Id,
-						},
-					},
-				},
-				{
-					Id: f5.Id,
-				},
-			},
 			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
-		err := validateArchiveFeatureRequest(p.req, p.fs, localizer)
+		err := validateArchiveFeatureRequest(p.req, localizer)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
@@ -3798,8 +3712,8 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 		if p.setup != nil {
 			p.setup(service)
 		}
-		err := service.validateFeatureVariationsCommand(ctx, p.fs, "envID", fID0, p.cmd, localizer)
-		assert.Equal(t, p.expectedErr, err)
+		err := service.validateFeatureVariationsCommand(ctx, p.fs, "envID", &featureproto.Feature{Id: fID0}, p.cmd, localizer)
+		assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 	}
 }
 
