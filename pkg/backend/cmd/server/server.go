@@ -457,11 +457,17 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	if err != nil {
 		return err
 	}
+	consoleHandler, err := ConsoleHandler()
+	if err != nil {
+		logger.Error("backend: initialize console handler error", zap.Error(err))
+		return err
+	}
 	authServer := rpc.NewServer(authService, *s.certPath, *s.keyPath,
 		"auth-server",
 		rpc.WithPort(*s.authServicePort),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithHandler("/", consoleHandler),
 	)
 	go authServer.Run()
 	// accountService
