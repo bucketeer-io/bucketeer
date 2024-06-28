@@ -141,7 +141,29 @@ message GetFeatureRequest {
 }
 
 message GetFeatureResponse {
-  feature.Feature feature = 1;
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  bool enabled = 4;
+  bool deleted = 5;
+  bool evaluation_undelayable = 6 [deprecated = true];
+  int32 version = 8;
+  int64 created_at = 9;
+  int64 updated_at = 10;
+  repeated Variation variations = 11;
+  repeated Target targets = 12;
+  repeated Rule rules = 13;
+  Strategy default_strategy = 14;
+  string off_variation = 15;
+  repeated string tags = 16;
+  FeatureLastUsedInfo last_used_info = 17;
+  string maintainer = 18;
+  VariationType variation_type = 19;
+  bool archived = 20;
+  repeated Prerequisite prerequisites = 21;
+
+  int64 event_count = 22;
+  int64 unique_count = 23;
 }
 
 message ListFeaturesRequest {
