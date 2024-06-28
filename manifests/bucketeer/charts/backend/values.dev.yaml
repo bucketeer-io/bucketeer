@@ -32,6 +32,7 @@ env:
   bulkSegmentUsersReceivedTopic: bulk-segment-users-received
   timezone: UTC
   logLevel: info
+  googleTagManagerId:
 tls:
   service:
     secret: bucketeer-service-cert

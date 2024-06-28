@@ -47,6 +47,9 @@ spec:
         - name: oauth-key-secret
           secret:
             secretName: {{ template "oauth-key-secret" . }}
+        - name: env-js
+          configMap:
+            name: {{ template "backend.name" . }}-env-js
       {{- if .Values.serviceAccount.annotations }}
       serviceAccountName: {{ template "backend.fullname" . }}
       {{- end }}
@@ -164,6 +167,8 @@ spec:
               value: "{{ .Values.webhook.baseURL }}"
             - name: BUCKETEER_BACKEND_WEBHOOK_KMS_RESOURCE_NAME
               value: "{{ .Values.webhook.kmsResourceName }}"
+            - name: BUCKETEER_BACKEND_CONSOLE_ENV_JS_PATH
+              value: /usr/local/static/js
           volumeMounts:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service
@@ -176,6 +181,9 @@ spec:
               readOnly: true
             - name: oauth-config
               mountPath: /usr/local/oauth-config
+              readOnly: true
+            - name: env-js
+              mountPath: /usr/local/static/js
               readOnly: true
           ports:
             - name: health-check

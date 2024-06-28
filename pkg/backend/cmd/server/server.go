@@ -18,11 +18,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"regexp"
 	"time"
-
-	"github.com/bucketeer-io/bucketeer/pkg/auth"
 
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -30,6 +29,7 @@ import (
 	accountapi "github.com/bucketeer-io/bucketeer/pkg/account/api"
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	auditlogapi "github.com/bucketeer-io/bucketeer/pkg/auditlog/api"
+	"github.com/bucketeer-io/bucketeer/pkg/auth"
 	authapi "github.com/bucketeer-io/bucketeer/pkg/auth/api"
 	authclient "github.com/bucketeer-io/bucketeer/pkg/auth/client"
 	autoopsapi "github.com/bucketeer-io/bucketeer/pkg/autoops/api"
@@ -128,6 +128,8 @@ type server struct {
 	webhookBaseURL         *string
 	webhookKMSResourceName *string
 	cloudService           *string
+	// console
+	consoleEnvJSPath *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -271,7 +273,8 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"webhook-kms-resource-name",
 			"Cloud KMS resource name to encrypt and decrypt webhook credentials.",
 		).Required().String(),
-		cloudService: cmd.Flag("cloud-service", "Cloud Service info").Default(gcp).String(),
+		cloudService:     cmd.Flag("cloud-service", "Cloud Service info").Default(gcp).String(),
+		consoleEnvJSPath: cmd.Flag("console-env-js-path", "console env js path").Required().String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -464,6 +467,11 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithPort(*s.authServicePort),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
+		rpc.WithHandler("/", consoleHandler()),
+		rpc.WithHandler(
+			"/static/js/",
+			http.StripPrefix("/static/js/", consoleEnvJSHandler(*s.consoleEnvJSPath)),
+		),
 	)
 	go authServer.Run()
 	// accountService

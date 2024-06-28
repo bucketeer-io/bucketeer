@@ -147,8 +147,18 @@ $(GO_APP_BUILD_TARGETS): build-%:
 		go build -ldflags "-s -w -X $(LDFLAGS_VERSION)=$(VERSION) -X $(LDFLAGS_HASH)=$(HASH) -X $(LDFLAGS_BUILDDATE)=$(BUILDDATE)" \
 		-o bin/$* -mod=vendor cmd/$*/$*.go
 
+.PHONY: clean-web
+clean-web:
+	rm -rf ui/web-v2/dist/*
+	touch ui/web-v2/dist/DONT-EDIT-FILES-IN-THIS-DIRECTORY
+
+.PHONY: build-web
+build-web:
+	rm -rf ui/web-v2/dist/*
+	make -C ui/web-v2 install build
+
 .PHONY: build-go
-build-go: $(GO_APP_BUILD_TARGETS)
+build-go: build-web $(GO_APP_BUILD_TARGETS) clean-web
 
 # Make sure bucketeer-httpstan is already running. If not, run "make start-httpstan".
 .PHONY: test-go
