@@ -985,13 +985,12 @@ func (f *Feature) Update(
 			if err := updated.Archive(); err != nil {
 				return nil, err
 			}
-			incVersion = true
 		} else {
 			if err := updated.Unarchive(); err != nil {
 				return nil, err
 			}
-			incVersion = true
 		}
+		incVersion = true
 	}
 	if incVersion {
 		if err := updated.IncrementVersion(); err != nil {
