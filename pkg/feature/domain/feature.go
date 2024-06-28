@@ -973,13 +973,12 @@ func (f *Feature) Update(
 			if err := updated.Enable(); err != nil {
 				return nil, err
 			}
-			incVersion = true
 		} else {
 			if err := updated.Disable(); err != nil {
 				return nil, err
 			}
-			incVersion = true
 		}
+		incVersion = true
 	}
 	if archived != nil {
 		if archived.Value {
