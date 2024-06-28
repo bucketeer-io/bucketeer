@@ -1190,12 +1190,14 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		if err != nil {
 			return err
 		}
-		dateClauses, err := autoOpsRule.ExtractDatetimeClauses()
-		if err != nil {
-			return err
+		var executeClause *autoopsproto.Clause = nil
+		for _, c := range autoOpsRule.Clauses {
+			if c.Id == req.ExecuteAutoOpsRuleCommand.ClauseId {
+				executeClause = c
+			}
 		}
-		executeClause, ok := dateClauses[req.ExecuteAutoOpsRuleCommand.ClauseId]
-		if !ok {
+
+		if executeClause == nil {
 			dt, err := statusClauseNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
