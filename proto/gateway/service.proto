@@ -140,7 +140,7 @@ message GetFeatureRequest {
   string id = 1;
 }
 
-message GetFeatureResponse {
+message Feature {
   string id = 1;
   string name = 2;
   string description = 3;
@@ -166,6 +166,10 @@ message GetFeatureResponse {
   int64 unique_count = 23;
 }
 
+message GetFeatureResponse {
+  Feature feature
+}
+
 message ListFeaturesRequest {
   int64 page_size = 1;
   string cursor = 2;
@@ -174,7 +178,7 @@ message ListFeaturesRequest {
 }
 
 message ListFeaturesResponse {
-  repeated feature.Feature features = 1;
+  repeated Feature features = 1;
 }
 
 message UpdateFeatureRequest {
