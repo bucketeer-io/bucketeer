@@ -20,11 +20,11 @@ import (
 	"strconv"
 	"time"
 
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
+	"github.com/jinzhu/copier"
 )
 
 const (
@@ -949,7 +949,8 @@ func (f *Feature) Update(
 	enabled *wrapperspb.BoolValue,
 	archived *wrapperspb.BoolValue,
 ) (*Feature, error) {
-	updated := &Feature{Feature: proto.Clone(f.Feature).(*feature.Feature)}
+	updated := &Feature{}
+	copier.Copy(updated, f)
 	incVersion := false
 	if name != nil {
 		if err := updated.UpdateName(name.Value); err != nil {

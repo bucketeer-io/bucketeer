@@ -1835,7 +1835,9 @@ func TestUpdate(t *testing.T) {
 		{
 			desc: "success",
 			feature: &Feature{
-				Feature: &proto.Feature{},
+				Feature: &proto.Feature{
+					Prerequisites: []*proto.Prerequisite{},
+				},
 			},
 			name:        &wrapperspb.StringValue{Value: "name"},
 			description: &wrapperspb.StringValue{Value: "description"},
@@ -1844,10 +1846,11 @@ func TestUpdate(t *testing.T) {
 			tags:        []string{"tag1", "tag2"},
 			expected: &Feature{
 				Feature: &proto.Feature{
-					Name:        "name",
-					Description: "description",
-					UpdatedAt:   time.Now().Unix(),
-					Version:     1,
+					Name:          "name",
+					Description:   "description",
+					UpdatedAt:     time.Now().Unix(),
+					Version:       1,
+					Prerequisites: []*proto.Prerequisite{},
 				},
 			},
 			expectedErr: nil,
@@ -1875,10 +1878,11 @@ func TestUpdate(t *testing.T) {
 				p.name, p.description,
 				p.tags, p.enabled, p.archived,
 			)
-			if p.expectedErr != nil && actual != nil {
+			if p.expected != nil || actual != nil {
 				assert.Equal(t, p.expected.Name, actual.Name, p.desc)
 				assert.Equal(t, p.expected.Description, actual.Description, p.desc)
 				assert.Equal(t, p.expected.Version, actual.Version, p.desc)
+				assert.Equal(t, p.expected.Prerequisites, actual.Prerequisites, p.desc)
 				assert.LessOrEqual(t, p.expected.UpdatedAt, actual.UpdatedAt)
 			}
 			assert.Equal(t, p.expectedErr, err)
