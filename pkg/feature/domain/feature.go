@@ -22,9 +22,10 @@ import (
 
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/jinzhu/copier"
+
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
-	"github.com/jinzhu/copier"
 )
 
 const (
@@ -950,7 +951,9 @@ func (f *Feature) Update(
 	archived *wrapperspb.BoolValue,
 ) (*Feature, error) {
 	updated := &Feature{}
-	copier.Copy(updated, f)
+	if err := copier.Copy(updated, f); err != nil {
+		return nil, err
+	}
 	incVersion := false
 	if name != nil {
 		if err := updated.UpdateName(name.Value); err != nil {
