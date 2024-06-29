@@ -706,12 +706,41 @@ func (s *FeatureService) UpdateFeature(
 	var updatedpb *featureproto.Feature
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		featureStorage := v2fs.NewFeatureStorage(tx)
-		feature, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
+		whereParts := []mysql.WherePart{
+			mysql.NewFilter("archived", "=", false),
+			mysql.NewFilter("deleted", "=", false),
+			mysql.NewFilter("environment_id", "=", req.EnvironmentId),
+		}
+		features, _, _, err := featureStorage.ListFeatures(
+			ctx,
+			whereParts,
+			nil,
+			mysql.QueryNoLimit,
+			mysql.QueryNoOffset,
+		)
 		if err != nil {
 			s.logger.Error(
-				"Failed to get feature",
+				"Failed to list features",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
+					zap.String("environmentId", req.EnvironmentId),
+				)...,
+			)
+			return err
+		}
+		var feature *domain.Feature
+		for _, f := range features {
+			if f.Id == req.Id {
+				feature = &domain.Feature{Feature: f}
+				break
+			}
+		}
+		if feature == nil {
+			s.logger.Error(
+				"Failed to find feature",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", req.Id),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
@@ -723,8 +752,27 @@ func (s *FeatureService) UpdateFeature(
 			req.Tags,
 			req.Enabled,
 			req.Archived,
+			req.Variations,
+			req.Prerequisites,
+			req.Targets,
+			req.Rules,
+			req.DefaultStrategy,
+			req.OffVariation,
 		)
 		if err != nil {
+			return err
+		}
+		// The feature is removed from the list to be evaluated, if it is
+		// archived or deleted. If it is disabled features are still evaluated.
+		if updated.Archived || updated.Deleted {
+			for i, f := range features {
+				if f.Id == updated.Id {
+					features = append(features[:i], features[i+1:]...)
+					break
+				}
+			}
+		}
+		if err := domain.ValidateFeatureDependencies(features); err != nil {
 			return err
 		}
 		updatedpb = updated.Feature

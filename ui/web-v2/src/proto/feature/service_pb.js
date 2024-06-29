@@ -39,6 +39,16 @@ var proto_feature_segment_pb = require('../../proto/feature/segment_pb.js');
 goog.object.extend(proto, proto_feature_segment_pb);
 var proto_feature_flag_trigger_pb = require('../../proto/feature/flag_trigger_pb.js');
 goog.object.extend(proto, proto_feature_flag_trigger_pb);
+var proto_feature_variation_pb = require('../../proto/feature/variation_pb.js');
+goog.object.extend(proto, proto_feature_variation_pb);
+var proto_feature_prerequisite_pb = require('../../proto/feature/prerequisite_pb.js');
+goog.object.extend(proto, proto_feature_prerequisite_pb);
+var proto_feature_rule_pb = require('../../proto/feature/rule_pb.js');
+goog.object.extend(proto, proto_feature_rule_pb);
+var proto_feature_strategy_pb = require('../../proto/feature/strategy_pb.js');
+goog.object.extend(proto, proto_feature_strategy_pb);
+var proto_feature_target_pb = require('../../proto/feature/target_pb.js');
+goog.object.extend(proto, proto_feature_target_pb);
 goog.exportSymbol(
   'proto.bucketeer.feature.AddSegmentUserRequest',
   null,
@@ -4621,7 +4631,9 @@ proto.bucketeer.feature.CreateFeatureResponse.prototype.hasFeature =
  * @private {!Array<number>}
  * @const
  */
-proto.bucketeer.feature.UpdateFeatureRequest.repeatedFields_ = [6];
+proto.bucketeer.feature.UpdateFeatureRequest.repeatedFields_ = [
+  6, 9, 10, 11, 12
+];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
@@ -4676,7 +4688,33 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
         archived:
           (f = msg.getArchived()) &&
-          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
+        variationsList: jspb.Message.toObjectList(
+          msg.getVariationsList(),
+          proto_feature_variation_pb.Variation.toObject,
+          includeInstance
+        ),
+        prerequisitesList: jspb.Message.toObjectList(
+          msg.getPrerequisitesList(),
+          proto_feature_prerequisite_pb.Prerequisite.toObject,
+          includeInstance
+        ),
+        targetsList: jspb.Message.toObjectList(
+          msg.getTargetsList(),
+          proto_feature_target_pb.Target.toObject,
+          includeInstance
+        ),
+        rulesList: jspb.Message.toObjectList(
+          msg.getRulesList(),
+          proto_feature_rule_pb.Rule.toObject,
+          includeInstance
+        ),
+        defaultStrategy:
+          (f = msg.getDefaultStrategy()) &&
+          proto_feature_strategy_pb.Strategy.toObject(includeInstance, f),
+        offVariation:
+          (f = msg.getOffVariation()) &&
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -4765,6 +4803,55 @@ proto.bucketeer.feature.UpdateFeatureRequest.deserializeBinaryFromReader =
           );
           msg.setArchived(value);
           break;
+        case 9:
+          var value = new proto_feature_variation_pb.Variation();
+          reader.readMessage(
+            value,
+            proto_feature_variation_pb.Variation.deserializeBinaryFromReader
+          );
+          msg.addVariations(value);
+          break;
+        case 10:
+          var value = new proto_feature_prerequisite_pb.Prerequisite();
+          reader.readMessage(
+            value,
+            proto_feature_prerequisite_pb.Prerequisite
+              .deserializeBinaryFromReader
+          );
+          msg.addPrerequisites(value);
+          break;
+        case 11:
+          var value = new proto_feature_target_pb.Target();
+          reader.readMessage(
+            value,
+            proto_feature_target_pb.Target.deserializeBinaryFromReader
+          );
+          msg.addTargets(value);
+          break;
+        case 12:
+          var value = new proto_feature_rule_pb.Rule();
+          reader.readMessage(
+            value,
+            proto_feature_rule_pb.Rule.deserializeBinaryFromReader
+          );
+          msg.addRules(value);
+          break;
+        case 13:
+          var value = new proto_feature_strategy_pb.Strategy();
+          reader.readMessage(
+            value,
+            proto_feature_strategy_pb.Strategy.deserializeBinaryFromReader
+          );
+          msg.setDefaultStrategy(value);
+          break;
+        case 14:
+          var value = new google_protobuf_wrappers_pb.StringValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
+          );
+          msg.setOffVariation(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -4843,6 +4930,54 @@ proto.bucketeer.feature.UpdateFeatureRequest.serializeBinaryToWriter =
         8,
         f,
         google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
+      );
+    }
+    f = message.getVariationsList();
+    if (f.length > 0) {
+      writer.writeRepeatedMessage(
+        9,
+        f,
+        proto_feature_variation_pb.Variation.serializeBinaryToWriter
+      );
+    }
+    f = message.getPrerequisitesList();
+    if (f.length > 0) {
+      writer.writeRepeatedMessage(
+        10,
+        f,
+        proto_feature_prerequisite_pb.Prerequisite.serializeBinaryToWriter
+      );
+    }
+    f = message.getTargetsList();
+    if (f.length > 0) {
+      writer.writeRepeatedMessage(
+        11,
+        f,
+        proto_feature_target_pb.Target.serializeBinaryToWriter
+      );
+    }
+    f = message.getRulesList();
+    if (f.length > 0) {
+      writer.writeRepeatedMessage(
+        12,
+        f,
+        proto_feature_rule_pb.Rule.serializeBinaryToWriter
+      );
+    }
+    f = message.getDefaultStrategy();
+    if (f != null) {
+      writer.writeMessage(
+        13,
+        f,
+        proto_feature_strategy_pb.Strategy.serializeBinaryToWriter
+      );
+    }
+    f = message.getOffVariation();
+    if (f != null) {
+      writer.writeMessage(
+        14,
+        f,
+        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
       );
     }
   };
@@ -5114,6 +5249,283 @@ proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearArchived =
 proto.bucketeer.feature.UpdateFeatureRequest.prototype.hasArchived =
   function () {
     return jspb.Message.getField(this, 8) != null;
+  };
+
+/**
+ * repeated Variation variations = 9;
+ * @return {!Array<!proto.bucketeer.feature.Variation>}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.getVariationsList =
+  function () {
+    return /** @type{!Array<!proto.bucketeer.feature.Variation>} */ (
+      jspb.Message.getRepeatedWrapperField(
+        this,
+        proto_feature_variation_pb.Variation,
+        9
+      )
+    );
+  };
+
+/**
+ * @param {!Array<!proto.bucketeer.feature.Variation>} value
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.setVariationsList =
+  function (value) {
+    return jspb.Message.setRepeatedWrapperField(this, 9, value);
+  };
+
+/**
+ * @param {!proto.bucketeer.feature.Variation=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.feature.Variation}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.addVariations =
+  function (opt_value, opt_index) {
+    return jspb.Message.addToRepeatedWrapperField(
+      this,
+      9,
+      opt_value,
+      proto.bucketeer.feature.Variation,
+      opt_index
+    );
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearVariationsList =
+  function () {
+    return this.setVariationsList([]);
+  };
+
+/**
+ * repeated Prerequisite prerequisites = 10;
+ * @return {!Array<!proto.bucketeer.feature.Prerequisite>}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.getPrerequisitesList =
+  function () {
+    return /** @type{!Array<!proto.bucketeer.feature.Prerequisite>} */ (
+      jspb.Message.getRepeatedWrapperField(
+        this,
+        proto_feature_prerequisite_pb.Prerequisite,
+        10
+      )
+    );
+  };
+
+/**
+ * @param {!Array<!proto.bucketeer.feature.Prerequisite>} value
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.setPrerequisitesList =
+  function (value) {
+    return jspb.Message.setRepeatedWrapperField(this, 10, value);
+  };
+
+/**
+ * @param {!proto.bucketeer.feature.Prerequisite=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.feature.Prerequisite}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.addPrerequisites =
+  function (opt_value, opt_index) {
+    return jspb.Message.addToRepeatedWrapperField(
+      this,
+      10,
+      opt_value,
+      proto.bucketeer.feature.Prerequisite,
+      opt_index
+    );
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearPrerequisitesList =
+  function () {
+    return this.setPrerequisitesList([]);
+  };
+
+/**
+ * repeated Target targets = 11;
+ * @return {!Array<!proto.bucketeer.feature.Target>}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.getTargetsList =
+  function () {
+    return /** @type{!Array<!proto.bucketeer.feature.Target>} */ (
+      jspb.Message.getRepeatedWrapperField(
+        this,
+        proto_feature_target_pb.Target,
+        11
+      )
+    );
+  };
+
+/**
+ * @param {!Array<!proto.bucketeer.feature.Target>} value
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.setTargetsList =
+  function (value) {
+    return jspb.Message.setRepeatedWrapperField(this, 11, value);
+  };
+
+/**
+ * @param {!proto.bucketeer.feature.Target=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.feature.Target}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.addTargets = function (
+  opt_value,
+  opt_index
+) {
+  return jspb.Message.addToRepeatedWrapperField(
+    this,
+    11,
+    opt_value,
+    proto.bucketeer.feature.Target,
+    opt_index
+  );
+};
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearTargetsList =
+  function () {
+    return this.setTargetsList([]);
+  };
+
+/**
+ * repeated Rule rules = 12;
+ * @return {!Array<!proto.bucketeer.feature.Rule>}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.getRulesList =
+  function () {
+    return /** @type{!Array<!proto.bucketeer.feature.Rule>} */ (
+      jspb.Message.getRepeatedWrapperField(this, proto_feature_rule_pb.Rule, 12)
+    );
+  };
+
+/**
+ * @param {!Array<!proto.bucketeer.feature.Rule>} value
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.setRulesList = function (
+  value
+) {
+  return jspb.Message.setRepeatedWrapperField(this, 12, value);
+};
+
+/**
+ * @param {!proto.bucketeer.feature.Rule=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.feature.Rule}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.addRules = function (
+  opt_value,
+  opt_index
+) {
+  return jspb.Message.addToRepeatedWrapperField(
+    this,
+    12,
+    opt_value,
+    proto.bucketeer.feature.Rule,
+    opt_index
+  );
+};
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearRulesList =
+  function () {
+    return this.setRulesList([]);
+  };
+
+/**
+ * optional Strategy default_strategy = 13;
+ * @return {?proto.bucketeer.feature.Strategy}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.getDefaultStrategy =
+  function () {
+    return /** @type{?proto.bucketeer.feature.Strategy} */ (
+      jspb.Message.getWrapperField(this, proto_feature_strategy_pb.Strategy, 13)
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.feature.Strategy|undefined} value
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.setDefaultStrategy =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 13, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearDefaultStrategy =
+  function () {
+    return this.setDefaultStrategy(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.hasDefaultStrategy =
+  function () {
+    return jspb.Message.getField(this, 13) != null;
+  };
+
+/**
+ * optional google.protobuf.StringValue off_variation = 14;
+ * @return {?proto.google.protobuf.StringValue}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.getOffVariation =
+  function () {
+    return /** @type{?proto.google.protobuf.StringValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.StringValue,
+        14
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.StringValue|undefined} value
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.setOffVariation =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 14, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.UpdateFeatureRequest} returns this
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.clearOffVariation =
+  function () {
+    return this.setOffVariation(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.UpdateFeatureRequest.prototype.hasOffVariation =
+  function () {
+    return jspb.Message.getField(this, 14) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

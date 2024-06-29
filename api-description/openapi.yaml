@@ -770,6 +770,26 @@ components:
                     type: boolean
                 archived:
                     type: boolean
+                variations:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Variation'
+                prerequisites:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Prerequisite'
+                targets:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Target'
+                rules:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/Rule'
+                defaultStrategy:
+                    $ref: '#/components/schemas/Strategy'
+                offVariation:
+                    type: string
         UpdateFeatureResponse:
             type: object
             properties:
