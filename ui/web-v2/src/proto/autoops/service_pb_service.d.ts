@@ -31,6 +31,15 @@ type AutoOpsServiceCreateAutoOpsRule = {
   readonly responseType: typeof proto_autoops_service_pb.CreateAutoOpsRuleResponse;
 };
 
+type AutoOpsServiceStopAutoOpsRule = {
+  readonly methodName: string;
+  readonly service: typeof AutoOpsService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_autoops_service_pb.StopAutoOpsRuleRequest;
+  readonly responseType: typeof proto_autoops_service_pb.StopAutoOpsRuleResponse;
+};
+
 type AutoOpsServiceDeleteAutoOpsRule = {
   readonly methodName: string;
   readonly service: typeof AutoOpsService;
@@ -126,6 +135,7 @@ export class AutoOpsService {
   static readonly GetAutoOpsRule: AutoOpsServiceGetAutoOpsRule;
   static readonly ListAutoOpsRules: AutoOpsServiceListAutoOpsRules;
   static readonly CreateAutoOpsRule: AutoOpsServiceCreateAutoOpsRule;
+  static readonly StopAutoOpsRule: AutoOpsServiceStopAutoOpsRule;
   static readonly DeleteAutoOpsRule: AutoOpsServiceDeleteAutoOpsRule;
   static readonly UpdateAutoOpsRule: AutoOpsServiceUpdateAutoOpsRule;
   static readonly ExecuteAutoOps: AutoOpsServiceExecuteAutoOps;
@@ -226,6 +236,21 @@ export class AutoOpsServiceClient {
     callback: (
       error: ServiceError | null,
       responseMessage: proto_autoops_service_pb.CreateAutoOpsRuleResponse | null
+    ) => void
+  ): UnaryResponse;
+  stopAutoOpsRule(
+    requestMessage: proto_autoops_service_pb.StopAutoOpsRuleRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_autoops_service_pb.StopAutoOpsRuleResponse | null
+    ) => void
+  ): UnaryResponse;
+  stopAutoOpsRule(
+    requestMessage: proto_autoops_service_pb.StopAutoOpsRuleRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_autoops_service_pb.StopAutoOpsRuleResponse | null
     ) => void
   ): UnaryResponse;
   deleteAutoOpsRule(

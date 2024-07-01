@@ -34,6 +34,8 @@ message ChangeAutoOpsRuleOpsTypeCommand {
 
 message DeleteAutoOpsRuleCommand {}
 
+message StopAutoOpsRuleCommand {}
+
 message ChangeAutoOpsRuleTriggeredAtCommand {}
 
 message AddOpsEventRateClauseCommand {

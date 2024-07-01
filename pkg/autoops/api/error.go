@@ -38,6 +38,7 @@ var (
 		codes.InvalidArgument,
 		"autoops: ops type is incompatible with ops event rate clause",
 	)
+	statusAutoOpsRuleFinished        = gstatus.New(codes.InvalidArgument, "autoops: auto ops rule is status of finished")
 	statusOpsEventRateClauseRequired = gstatus.New(
 		codes.InvalidArgument,
 		"autoops: ops event rate clause must be specified",

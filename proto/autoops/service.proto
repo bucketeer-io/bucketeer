@@ -50,6 +50,14 @@ message ListAutoOpsRulesResponse {
   string cursor = 2;
 }
 
+message StopAutoOpsRuleRequest {
+  string environment_namespace = 1;
+  string id = 2;
+  StopAutoOpsRuleCommand command = 3;
+}
+
+message StopAutoOpsRuleResponse {}
+
 message DeleteAutoOpsRuleRequest {
   string environment_namespace = 1;
   string id = 2;
@@ -169,6 +177,8 @@ service AutoOpsService {
       returns (ListAutoOpsRulesResponse) {}
   rpc CreateAutoOpsRule(CreateAutoOpsRuleRequest)
       returns (CreateAutoOpsRuleResponse) {}
+  rpc StopAutoOpsRule(StopAutoOpsRuleRequest)
+      returns (StopAutoOpsRuleResponse) {}
   rpc DeleteAutoOpsRule(DeleteAutoOpsRuleRequest)
       returns (DeleteAutoOpsRuleResponse) {}
   rpc UpdateAutoOpsRule(UpdateAutoOpsRuleRequest)

@@ -168,6 +168,7 @@ message Event {
     OPS_EVENT_RATE_CLAUSE_CHANGED = 806;
     DATETIME_CLAUSE_ADDED = 807;
     DATETIME_CLAUSE_CHANGED = 808;
+    AUTOOPS_RULE_STOPPED = 809;
     PUSH_CREATED = 900;
     PUSH_DELETED = 901;
     PUSH_TAGS_ADDED = 902;
@@ -789,6 +790,8 @@ message AutoOpsRuleCreatedEvent {
   int64 created_at = 5;
   int64 updated_at = 6;
 }
+
+message AutoOpsRuleStoppedEvent {}
 
 message AutoOpsRuleDeletedEvent {}
 

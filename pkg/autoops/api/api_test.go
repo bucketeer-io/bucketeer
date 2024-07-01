@@ -460,6 +460,71 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 	}
 }
 
+func TestStopAutoOpsRuleMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithTokenRoleOwner(t)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*AutoOpsService)
+		req         *autoopsproto.StopAutoOpsRuleRequest
+		expectedErr error
+	}{
+		{
+			desc:        "err: ErrIDRequired",
+			req:         &autoopsproto.StopAutoOpsRuleRequest{},
+			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+		},
+		{
+			desc: "err: ErrNoCommand",
+			req: &autoopsproto.StopAutoOpsRuleRequest{
+				Id: "aid1",
+			},
+			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+		},
+		{
+			desc: "success",
+			setup: func(s *AutoOpsService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &autoopsproto.StopAutoOpsRuleRequest{
+				Id:                   "aid1",
+				EnvironmentNamespace: "ns0",
+				Command:              &autoopsproto.StopAutoOpsRuleCommand{},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			s := createAutoOpsService(mockController, nil)
+			if p.setup != nil {
+				p.setup(s)
+			}
+			_, err := s.StopAutoOpsRule(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func TestDeleteAutoOpsRuleMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
