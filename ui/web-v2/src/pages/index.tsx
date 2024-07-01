@@ -63,6 +63,7 @@ import { FeatureDetailPage } from './feature/detail';
 import { GoalIndexPage } from './goal';
 import { SegmentIndexPage } from './segment';
 import { SettingsIndexPage } from './settings';
+import { getToken as getTokenFromStorage } from '../storage/token';
 
 export const App: FC = memo(() => {
   useEffect(() => {
@@ -100,16 +101,22 @@ export const Root: FC = memo(() => {
   const [selectedOrganization, setSelectedOrganization] = useState(null);
   const history = useHistory();
 
-  const token = hasToken();
+  const token = getTokenFromStorage();
 
-  const [isInitialLoading, setIsInitialLoading] = useState(token);
+  // const token = hasToken();
+  const hasToken = token?.accessToken ? true : false;
+
+  // console.log({ hasToken });
+  // console.log({ me });
+
+  const [isInitialLoading, setIsInitialLoading] = useState(hasToken);
 
   const handleChangePageKey = useCallback(() => {
     setPageKey(uuid());
   }, [setPageKey]);
 
   useEffect(() => {
-    if (token) {
+    if (hasToken) {
       const organizationId = getOrganizationId();
 
       if (organizationId) {
@@ -117,10 +124,12 @@ export const Root: FC = memo(() => {
           setIsInitialLoading(false)
         );
       } else {
-        dispatch(fetchMyOrganizations()).then(() => setIsInitialLoading(false));
+        dispatch(fetchMyOrganizations()).then(() => {
+          setIsInitialLoading(false);
+        });
       }
     }
-  }, [token]);
+  }, [hasToken]);
 
   useEffect(() => {
     if (myOrganization.length === 1) {
@@ -162,7 +171,7 @@ export const Root: FC = memo(() => {
       </div>
     );
   }
-  if (token && myOrganization.length > 1) {
+  if (hasToken && myOrganization.length > 1) {
     return (
       <SelectOrganization
         options={myOrganization.map((org) => ({

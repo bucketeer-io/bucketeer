@@ -7,6 +7,7 @@ import {
   LanguageTypes
 } from '../lang/getSelectedLanguage';
 import { getToken } from '../storage/token';
+import { TOKEN_IS_EXPIRED } from '../middlewares/thunkErrorHandler';
 
 type MetaData = {
   authorization: string;
@@ -35,4 +36,11 @@ export const getMetaDataForClient = (): BrowserHeaders => {
     authorization: `bearer ${token ? token.accessToken : ''}`,
     'accept-language': getSelectedLanguage()
   });
+};
+
+export const checkTokenExpired = (errorCode: grpc.Code, message: string) => {
+  return (
+    errorCode === grpc.Code.Unauthenticated &&
+    message.includes(TOKEN_IS_EXPIRED)
+  );
 };

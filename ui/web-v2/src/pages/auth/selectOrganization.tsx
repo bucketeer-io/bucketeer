@@ -14,14 +14,13 @@ const SelectOrganization: FC<SelectOrganizationProps> = memo(
   ({ options, onChange, onSubmit, isSubmitBtnDisabled }) => {
     return (
       <AuthWrapper>
-        <h2 className="font-bold text-xl mt-8">Select your Organization</h2>
+        <h2 className="font-bold text-xl mt-8">Organization</h2>
         <p className="mt-3 text-[#64738B]">
-          Select the organization you want to work for.
+          Select the organization you want to access.
         </p>
         <div className="mt-8">
-          <p className="text-[#64738B] text-sm mb-1">Organization</p>
           <Select
-            placeholder="Select your organization"
+            placeholder="Select organization"
             options={options}
             onChange={onChange}
           />
