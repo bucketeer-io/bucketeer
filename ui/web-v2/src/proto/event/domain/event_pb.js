@@ -24376,7 +24376,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         ),
         triggeredAt: jspb.Message.getFieldWithDefault(msg, 4, 0),
         createdAt: jspb.Message.getFieldWithDefault(msg, 5, 0),
-        updatedAt: jspb.Message.getFieldWithDefault(msg, 6, 0)
+        updatedAt: jspb.Message.getFieldWithDefault(msg, 6, 0),
+        opsStatus: jspb.Message.getFieldWithDefault(msg, 7, 0)
       };
 
     if (includeInstance) {
@@ -24446,6 +24447,12 @@ proto.bucketeer.event.domain.AutoOpsRuleCreatedEvent.deserializeBinaryFromReader
           var value = /** @type {number} */ (reader.readInt64());
           msg.setUpdatedAt(value);
           break;
+        case 7:
+          var value = /** @type {!proto.bucketeer.autoops.AutoOpsStatus} */ (
+            reader.readEnum()
+          );
+          msg.setOpsStatus(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -24505,6 +24512,10 @@ proto.bucketeer.event.domain.AutoOpsRuleCreatedEvent.serializeBinaryToWriter =
     f = message.getUpdatedAt();
     if (f !== 0) {
       writer.writeInt64(6, f);
+    }
+    f = message.getOpsStatus();
+    if (f !== 0.0) {
+      writer.writeEnum(7, f);
     }
   };
 
@@ -24649,6 +24660,26 @@ proto.bucketeer.event.domain.AutoOpsRuleCreatedEvent.prototype.getUpdatedAt =
 proto.bucketeer.event.domain.AutoOpsRuleCreatedEvent.prototype.setUpdatedAt =
   function (value) {
     return jspb.Message.setProto3IntField(this, 6, value);
+  };
+
+/**
+ * optional bucketeer.autoops.AutoOpsStatus ops_status = 7;
+ * @return {!proto.bucketeer.autoops.AutoOpsStatus}
+ */
+proto.bucketeer.event.domain.AutoOpsRuleCreatedEvent.prototype.getOpsStatus =
+  function () {
+    return /** @type {!proto.bucketeer.autoops.AutoOpsStatus} */ (
+      jspb.Message.getFieldWithDefault(this, 7, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.autoops.AutoOpsStatus} value
+ * @return {!proto.bucketeer.event.domain.AutoOpsRuleCreatedEvent} returns this
+ */
+proto.bucketeer.event.domain.AutoOpsRuleCreatedEvent.prototype.setOpsStatus =
+  function (value) {
+    return jspb.Message.setProto3EnumField(this, 7, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

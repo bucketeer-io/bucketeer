@@ -33,6 +33,14 @@ var (
 		codes.InvalidArgument,
 		"autoops: at least one clause must be specified",
 	)
+	statusClauseRequiredForDateTime = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: at least one date time clause must be specified",
+	)
+	statusClauseRequiredForEventDate = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: at least one event rate clause must be specified",
+	)
 	statusClauseIDRequired    = gstatus.New(codes.InvalidArgument, "autoops: clause id must be specified")
 	statusClauseNotFound      = gstatus.New(codes.NotFound, "autoops: clause not found")
 	statusIncompatibleOpsType = gstatus.New(

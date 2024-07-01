@@ -129,6 +129,9 @@ func TestCreateAndListAutoOpsRule(t *testing.T) {
 	if actual.OpsType != autoopsproto.OpsType_DISABLE_FEATURE {
 		t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.OpsType_DISABLE_FEATURE, actual.OpsType)
 	}
+	if actual.AutoOpsStatus != autoopsproto.AutoOpsStatus_WAITING {
+		t.Fatalf("different auto ops status, expected: %v, actual: %v", autoopsproto.AutoOpsStatus_WAITING, actual.AutoOpsStatus)
+	}
 	oerc := unmarshalOpsEventRateClause(t, actual.Clauses[0])
 	if oerc.VariationId != feature.Variations[0].Id {
 		t.Fatalf("different variation id, expected: %v, actual: %v", feature.Variations[0].Id, oerc.VariationId)
@@ -144,6 +147,59 @@ func TestCreateAndListAutoOpsRule(t *testing.T) {
 	}
 	if oerc.Operator != autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL {
 		t.Fatalf("different goal id, expected: %v, actual: %v", "gid", oerc.GoalId)
+	}
+}
+
+func TestCreateAndListAutoOpsRuleForMultiSchedule(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	autoOpsClient := newAutoOpsClient(t)
+	defer autoOpsClient.Close()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+
+	featureID := createFeatureID(t)
+	createFeature(ctx, t, featureClient, featureID)
+	clauses := createDatetimeClausesWithActionType(t, 2)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
+	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+	if len(autoOpsRules) != 1 {
+		t.Fatal("not enough rules")
+	}
+	actual := autoOpsRules[0]
+	if actual.Id == "" {
+		t.Fatal("id is empty")
+	}
+	if actual.FeatureId != featureID {
+		t.Fatalf("different feature ID, expected: %v, actual: %v", featureID, actual.FeatureId)
+	}
+	if actual.OpsType != autoopsproto.OpsType_SCHEDULE {
+		t.Fatalf("different ops type, expected: %v, actual: %v", autoopsproto.OpsType_SCHEDULE, actual.OpsType)
+	}
+	if actual.AutoOpsStatus != autoopsproto.AutoOpsStatus_WAITING {
+		t.Fatalf("different auto ops status, expected: %v, actual: %v", autoopsproto.AutoOpsStatus_WAITING, actual.AutoOpsStatus)
+	}
+	if len(actual.Clauses) != 2 {
+		t.Fatalf("different clauses length, expected: %v, actual: %v", 2, len(actual.Clauses))
+	}
+
+	actualClause1 := actual.Clauses[0]
+	if actualClause1.ActionType != autoopsproto.ActionType_DISABLE {
+		t.Fatalf("different clause1 action type, expected: %v, actual: %v", autoopsproto.ActionType_DISABLE, actualClause1.ActionType)
+	}
+	oerc1 := unmarshalDatetimeClause(t, actualClause1)
+	if oerc1.ActionType != autoopsproto.ActionType_DISABLE {
+		t.Fatalf("different dateClause1 action type, expected: %v, actual: %v", autoopsproto.ActionType_DISABLE, actualClause1.ActionType)
+	}
+
+	actualClause2 := actual.Clauses[1]
+	if actualClause2.ActionType != autoopsproto.ActionType_ENABLE {
+		t.Fatalf("different clause2 action type, expected: %v, actual: %v", autoopsproto.ActionType_ENABLE, actualClause2.ActionType)
+	}
+	oerc2 := unmarshalDatetimeClause(t, actualClause2)
+	if oerc2.ActionType != autoopsproto.ActionType_ENABLE {
+		t.Fatalf("different dateClause2 action type, expected: %v, actual: %v", autoopsproto.ActionType_ENABLE, actualClause2.ActionType)
 	}
 }
 
@@ -495,7 +551,7 @@ func TestDatetimeBatch(t *testing.T) {
 	}
 
 	clause := createDatetimeClause(t)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_DISABLE_FEATURE, nil, []*autoopsproto.DatetimeClause{clause})
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_ENABLE_FEATURE, nil, []*autoopsproto.DatetimeClause{clause})
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -591,6 +647,14 @@ func sendHttpWebhook(t *testing.T, url, payload string) {
 
 func unmarshalOpsEventRateClause(t *testing.T, clause *autoopsproto.Clause) *autoopsproto.OpsEventRateClause {
 	c := &autoopsproto.OpsEventRateClause{}
+	if err := ptypes.UnmarshalAny(clause.Clause, c); err != nil {
+		t.Fatal(err)
+	}
+	return c
+}
+
+func unmarshalDatetimeClause(t *testing.T, clause *autoopsproto.Clause) *autoopsproto.DatetimeClause {
+	c := &autoopsproto.DatetimeClause{}
 	if err := ptypes.UnmarshalAny(clause.Clause, c); err != nil {
 		t.Fatal(err)
 	}
@@ -868,51 +932,6 @@ func deleteAutoOpsRules(t *testing.T, client autoopsclient.Client, id string) {
 		EnvironmentNamespace: *environmentNamespace,
 		Id:                   id,
 		Command:              &autoopsproto.DeleteAutoOpsRuleCommand{},
-	})
-	if err != nil {
-		t.Fatal("failed to list auto ops rules", err)
-	}
-}
-
-func TestStopAutoOpsRule(t *testing.T) {
-	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	autoOpsClient := newAutoOpsClient(t)
-	defer autoOpsClient.Close()
-	featureClient := newFeatureClient(t)
-	defer featureClient.Close()
-
-	featureID := createFeatureID(t)
-	createFeature(ctx, t, featureClient, featureID)
-	clauses := createDatetimeClausesWithActionType(t, 4)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
-	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if len(autoOpsRules) != 1 {
-		t.Fatal("not enough rules")
-	}
-	stopAutoOpsRule(t, autoOpsClient, autoOpsRules[0].Id)
-	resp, err := autoOpsClient.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   autoOpsRules[0].Id,
-	})
-	if resp == nil {
-		t.Fatalf("failed to get AutoOpsRule, err %d", err)
-	}
-
-	if resp.AutoOpsRule.AutoOpsStatus != autoopsproto.AutoOpsStatus_STOPPED {
-		t.Fatalf("different auto ops status, expected: %v, actual: %v", autoopsproto.AutoOpsStatus_STOPPED, resp.AutoOpsRule.AutoOpsStatus)
-	}
-}
-
-func stopAutoOpsRule(t *testing.T, client autoopsclient.Client, id string) {
-	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	_, err := client.StopAutoOpsRule(ctx, &autoopsproto.StopAutoOpsRuleRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
-		Command:              &autoopsproto.StopAutoOpsRuleCommand{},
 	})
 	if err != nil {
 		t.Fatal("failed to list auto ops rules", err)

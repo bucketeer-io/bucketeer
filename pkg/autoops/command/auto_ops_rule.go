@@ -83,6 +83,7 @@ func (h *autoOpsRuleCommandHandler) create(ctx context.Context, cmd *proto.Creat
 		TriggeredAt: h.autoOpsRule.TriggeredAt,
 		CreatedAt:   h.autoOpsRule.CreatedAt,
 		UpdatedAt:   h.autoOpsRule.UpdatedAt,
+		OpsStatus:   h.autoOpsRule.AutoOpsStatus,
 	})
 }
 
