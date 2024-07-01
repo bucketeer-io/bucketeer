@@ -389,7 +389,7 @@ func createAuditLogs(t *testing.T) []*proto.AuditLog {
 
 func createContextWithToken(t *testing.T, isSystemAdmin bool) context.Context {
 	t.Helper()
-	token := &token.IDToken{
+	token := &token.AccessToken{
 		Email:         "test@example.com",
 		IsSystemAdmin: isSystemAdmin,
 	}
@@ -399,7 +399,7 @@ func createContextWithToken(t *testing.T, isSystemAdmin bool) context.Context {
 
 func createContextWithTokenRoleUnassigned(t *testing.T) context.Context {
 	t.Helper()
-	token := &token.IDToken{
+	token := &token.AccessToken{
 		Email: "test@example.com",
 	}
 	ctx := context.TODO()

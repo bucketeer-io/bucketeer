@@ -38,7 +38,7 @@ func (s *AccountService) GetMe(
 	req *accountproto.GetMeRequest,
 ) (*accountproto.GetMeResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	t, ok := rpc.GetIDToken(ctx)
+	t, ok := rpc.GetAccessToken(ctx)
 	if !ok {
 		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -214,7 +214,7 @@ func (s *AccountService) GetMyOrganizations(
 	_ *accountproto.GetMyOrganizationsRequest,
 ) (*accountproto.GetMyOrganizationsResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	t, ok := rpc.GetIDToken(ctx)
+	t, ok := rpc.GetAccessToken(ctx)
 	if !ok {
 		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

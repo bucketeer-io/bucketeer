@@ -38,6 +38,58 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type AuthType int32
+
+const (
+	AuthType_AUTH_TYPE_UNSPECIFIED   AuthType = 0
+	AuthType_AUTH_TYPE_USER_PASSWORD AuthType = 1
+	AuthType_AUTH_TYPE_GOOGLE        AuthType = 2
+	AuthType_AUTH_TYPE_GITHUB        AuthType = 3
+)
+
+// Enum value maps for AuthType.
+var (
+	AuthType_name = map[int32]string{
+		0: "AUTH_TYPE_UNSPECIFIED",
+		1: "AUTH_TYPE_USER_PASSWORD",
+		2: "AUTH_TYPE_GOOGLE",
+		3: "AUTH_TYPE_GITHUB",
+	}
+	AuthType_value = map[string]int32{
+		"AUTH_TYPE_UNSPECIFIED":   0,
+		"AUTH_TYPE_USER_PASSWORD": 1,
+		"AUTH_TYPE_GOOGLE":        2,
+		"AUTH_TYPE_GITHUB":        3,
+	}
+)
+
+func (x AuthType) Enum() *AuthType {
+	p := new(AuthType)
+	*p = x
+	return p
+}
+
+func (x AuthType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (AuthType) Descriptor() protoreflect.EnumDescriptor {
+	return file_proto_auth_service_proto_enumTypes[0].Descriptor()
+}
+
+func (AuthType) Type() protoreflect.EnumType {
+	return &file_proto_auth_service_proto_enumTypes[0]
+}
+
+func (x AuthType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use AuthType.Descriptor instead.
+func (AuthType) EnumDescriptor() ([]byte, []int) {
+	return file_proto_auth_service_proto_rawDescGZIP(), []int{0}
+}
+
 type GetAuthCodeURLRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -344,6 +396,336 @@ func (x *RefreshTokenResponse) GetToken() *Token {
 	return nil
 }
 
+type GetAuthenticationURLRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	State       string   `protobuf:"bytes,1,opt,name=state,proto3" json:"state"`
+	RedirectUrl string   `protobuf:"bytes,2,opt,name=redirect_url,json=redirectUrl,proto3" json:"redirect_url"`
+	Type        AuthType `protobuf:"varint,3,opt,name=type,proto3,enum=bucketeer.auth.AuthType" json:"type"`
+}
+
+func (x *GetAuthenticationURLRequest) Reset() {
+	*x = GetAuthenticationURLRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_auth_service_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetAuthenticationURLRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAuthenticationURLRequest) ProtoMessage() {}
+
+func (x *GetAuthenticationURLRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_auth_service_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAuthenticationURLRequest.ProtoReflect.Descriptor instead.
+func (*GetAuthenticationURLRequest) Descriptor() ([]byte, []int) {
+	return file_proto_auth_service_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *GetAuthenticationURLRequest) GetState() string {
+	if x != nil {
+		return x.State
+	}
+	return ""
+}
+
+func (x *GetAuthenticationURLRequest) GetRedirectUrl() string {
+	if x != nil {
+		return x.RedirectUrl
+	}
+	return ""
+}
+
+func (x *GetAuthenticationURLRequest) GetType() AuthType {
+	if x != nil {
+		return x.Type
+	}
+	return AuthType_AUTH_TYPE_UNSPECIFIED
+}
+
+type GetAuthenticationURLResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Url string `protobuf:"bytes,1,opt,name=url,proto3" json:"url"`
+}
+
+func (x *GetAuthenticationURLResponse) Reset() {
+	*x = GetAuthenticationURLResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_auth_service_proto_msgTypes[7]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetAuthenticationURLResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAuthenticationURLResponse) ProtoMessage() {}
+
+func (x *GetAuthenticationURLResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_auth_service_proto_msgTypes[7]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAuthenticationURLResponse.ProtoReflect.Descriptor instead.
+func (*GetAuthenticationURLResponse) Descriptor() ([]byte, []int) {
+	return file_proto_auth_service_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *GetAuthenticationURLResponse) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+type ExchangeBucketeerTokenRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Code        string   `protobuf:"bytes,1,opt,name=code,proto3" json:"code"`
+	RedirectUrl string   `protobuf:"bytes,2,opt,name=redirect_url,json=redirectUrl,proto3" json:"redirect_url"`
+	Type        AuthType `protobuf:"varint,3,opt,name=type,proto3,enum=bucketeer.auth.AuthType" json:"type"`
+}
+
+func (x *ExchangeBucketeerTokenRequest) Reset() {
+	*x = ExchangeBucketeerTokenRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_auth_service_proto_msgTypes[8]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ExchangeBucketeerTokenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExchangeBucketeerTokenRequest) ProtoMessage() {}
+
+func (x *ExchangeBucketeerTokenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_auth_service_proto_msgTypes[8]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExchangeBucketeerTokenRequest.ProtoReflect.Descriptor instead.
+func (*ExchangeBucketeerTokenRequest) Descriptor() ([]byte, []int) {
+	return file_proto_auth_service_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ExchangeBucketeerTokenRequest) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *ExchangeBucketeerTokenRequest) GetRedirectUrl() string {
+	if x != nil {
+		return x.RedirectUrl
+	}
+	return ""
+}
+
+func (x *ExchangeBucketeerTokenRequest) GetType() AuthType {
+	if x != nil {
+		return x.Type
+	}
+	return AuthType_AUTH_TYPE_UNSPECIFIED
+}
+
+type ExchangeBucketeerTokenResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Token *Token `protobuf:"bytes,1,opt,name=token,proto3" json:"token"`
+}
+
+func (x *ExchangeBucketeerTokenResponse) Reset() {
+	*x = ExchangeBucketeerTokenResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_auth_service_proto_msgTypes[9]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ExchangeBucketeerTokenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExchangeBucketeerTokenResponse) ProtoMessage() {}
+
+func (x *ExchangeBucketeerTokenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_auth_service_proto_msgTypes[9]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExchangeBucketeerTokenResponse.ProtoReflect.Descriptor instead.
+func (*ExchangeBucketeerTokenResponse) Descriptor() ([]byte, []int) {
+	return file_proto_auth_service_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ExchangeBucketeerTokenResponse) GetToken() *Token {
+	if x != nil {
+		return x.Token
+	}
+	return nil
+}
+
+type RefreshBucketeerTokenRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	RefreshToken string   `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token"`
+	RedirectUrl  string   `protobuf:"bytes,2,opt,name=redirect_url,json=redirectUrl,proto3" json:"redirect_url"`
+	Type         AuthType `protobuf:"varint,3,opt,name=type,proto3,enum=bucketeer.auth.AuthType" json:"type"`
+}
+
+func (x *RefreshBucketeerTokenRequest) Reset() {
+	*x = RefreshBucketeerTokenRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_auth_service_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RefreshBucketeerTokenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefreshBucketeerTokenRequest) ProtoMessage() {}
+
+func (x *RefreshBucketeerTokenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_auth_service_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefreshBucketeerTokenRequest.ProtoReflect.Descriptor instead.
+func (*RefreshBucketeerTokenRequest) Descriptor() ([]byte, []int) {
+	return file_proto_auth_service_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *RefreshBucketeerTokenRequest) GetRefreshToken() string {
+	if x != nil {
+		return x.RefreshToken
+	}
+	return ""
+}
+
+func (x *RefreshBucketeerTokenRequest) GetRedirectUrl() string {
+	if x != nil {
+		return x.RedirectUrl
+	}
+	return ""
+}
+
+func (x *RefreshBucketeerTokenRequest) GetType() AuthType {
+	if x != nil {
+		return x.Type
+	}
+	return AuthType_AUTH_TYPE_UNSPECIFIED
+}
+
+type RefreshBucketeerTokenResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Token *Token `protobuf:"bytes,1,opt,name=token,proto3" json:"token"`
+}
+
+func (x *RefreshBucketeerTokenResponse) Reset() {
+	*x = RefreshBucketeerTokenResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_auth_service_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *RefreshBucketeerTokenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefreshBucketeerTokenResponse) ProtoMessage() {}
+
+func (x *RefreshBucketeerTokenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_auth_service_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefreshBucketeerTokenResponse.ProtoReflect.Descriptor instead.
+func (*RefreshBucketeerTokenResponse) Descriptor() ([]byte, []int) {
+	return file_proto_auth_service_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *RefreshBucketeerTokenResponse) GetToken() *Token {
+	if x != nil {
+		return x.Token
+	}
+	return nil
+}
+
 var File_proto_auth_service_proto protoreflect.FileDescriptor
 
 var file_proto_auth_service_proto_rawDesc = []byte{
@@ -378,29 +760,98 @@ var file_proto_auth_service_proto_rawDesc = []byte{
 	0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2b, 0x0a, 0x05,
 	0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x62, 0x75,
 	0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x54, 0x6f, 0x6b,
-	0x65, 0x6e, 0x52, 0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x32, 0xa7, 0x02, 0x0a, 0x0b, 0x41, 0x75,
-	0x74, 0x68, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x5f, 0x0a, 0x0e, 0x47, 0x65, 0x74,
-	0x41, 0x75, 0x74, 0x68, 0x43, 0x6f, 0x64, 0x65, 0x55, 0x52, 0x4c, 0x12, 0x25, 0x2e, 0x62, 0x75,
-	0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x47, 0x65, 0x74,
-	0x41, 0x75, 0x74, 0x68, 0x43, 0x6f, 0x64, 0x65, 0x55, 0x52, 0x4c, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x1a, 0x26, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61,
-	0x75, 0x74, 0x68, 0x2e, 0x47, 0x65, 0x74, 0x41, 0x75, 0x74, 0x68, 0x43, 0x6f, 0x64, 0x65, 0x55,
-	0x52, 0x4c, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5c, 0x0a, 0x0d, 0x45, 0x78,
-	0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x24, 0x2e, 0x62, 0x75,
-	0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x45, 0x78, 0x63,
-	0x68, 0x61, 0x6e, 0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
-	0x74, 0x1a, 0x25, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75,
-	0x74, 0x68, 0x2e, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x59, 0x0a, 0x0c, 0x52, 0x65, 0x66, 0x72,
-	0x65, 0x73, 0x68, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x23, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65,
-	0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x52, 0x65, 0x66, 0x72, 0x65, 0x73,
-	0x68, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x24, 0x2e,
-	0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x52,
-	0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x42, 0x2e, 0x5a, 0x2c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
-	0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f, 0x2f, 0x62,
-	0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x61,
-	0x75, 0x74, 0x68, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x6e, 0x52, 0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x84, 0x01, 0x0a, 0x1b, 0x47, 0x65,
+	0x74, 0x41, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x55,
+	0x52, 0x4c, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x73, 0x74, 0x61,
+	0x74, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x73, 0x74, 0x61, 0x74, 0x65, 0x12,
+	0x21, 0x0a, 0x0c, 0x72, 0x65, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x5f, 0x75, 0x72, 0x6c, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x72, 0x65, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x55,
+	0x72, 0x6c, 0x12, 0x2c, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e,
+	0x32, 0x18, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74,
+	0x68, 0x2e, 0x41, 0x75, 0x74, 0x68, 0x54, 0x79, 0x70, 0x65, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65,
+	0x22, 0x30, 0x0a, 0x1c, 0x47, 0x65, 0x74, 0x41, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x55, 0x52, 0x4c, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x10, 0x0a, 0x03, 0x75, 0x72, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x75,
+	0x72, 0x6c, 0x22, 0x84, 0x01, 0x0a, 0x1d, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x42,
+	0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x63, 0x6f, 0x64, 0x65, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x04, 0x63, 0x6f, 0x64, 0x65, 0x12, 0x21, 0x0a, 0x0c, 0x72, 0x65, 0x64, 0x69,
+	0x72, 0x65, 0x63, 0x74, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b,
+	0x72, 0x65, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x55, 0x72, 0x6c, 0x12, 0x2c, 0x0a, 0x04, 0x74,
+	0x79, 0x70, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x18, 0x2e, 0x62, 0x75, 0x63, 0x6b,
+	0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x41, 0x75, 0x74, 0x68, 0x54,
+	0x79, 0x70, 0x65, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x22, 0x4d, 0x0a, 0x1e, 0x45, 0x78, 0x63,
+	0x68, 0x61, 0x6e, 0x67, 0x65, 0x42, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x54, 0x6f,
+	0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x2b, 0x0a, 0x05, 0x74,
+	0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x62, 0x75, 0x63,
+	0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x54, 0x6f, 0x6b, 0x65,
+	0x6e, 0x52, 0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x94, 0x01, 0x0a, 0x1c, 0x52, 0x65, 0x66,
+	0x72, 0x65, 0x73, 0x68, 0x42, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x54, 0x6f, 0x6b,
+	0x65, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x72, 0x65, 0x66,
+	0x72, 0x65, 0x73, 0x68, 0x5f, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x0c, 0x72, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x21,
+	0x0a, 0x0c, 0x72, 0x65, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x02,
+	0x20, 0x01, 0x28, 0x09, 0x52, 0x0b, 0x72, 0x65, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x55, 0x72,
+	0x6c, 0x12, 0x2c, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e, 0x32,
+	0x18, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x68,
+	0x2e, 0x41, 0x75, 0x74, 0x68, 0x54, 0x79, 0x70, 0x65, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x22,
+	0x4c, 0x0a, 0x1d, 0x52, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x42, 0x75, 0x63, 0x6b, 0x65, 0x74,
+	0x65, 0x65, 0x72, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x2b, 0x0a, 0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x15, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x68,
+	0x2e, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x2a, 0x6e, 0x0a,
+	0x08, 0x41, 0x75, 0x74, 0x68, 0x54, 0x79, 0x70, 0x65, 0x12, 0x19, 0x0a, 0x15, 0x41, 0x55, 0x54,
+	0x48, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49,
+	0x45, 0x44, 0x10, 0x00, 0x12, 0x1b, 0x0a, 0x17, 0x41, 0x55, 0x54, 0x48, 0x5f, 0x54, 0x59, 0x50,
+	0x45, 0x5f, 0x55, 0x53, 0x45, 0x52, 0x5f, 0x50, 0x41, 0x53, 0x53, 0x57, 0x4f, 0x52, 0x44, 0x10,
+	0x01, 0x12, 0x14, 0x0a, 0x10, 0x41, 0x55, 0x54, 0x48, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x47,
+	0x4f, 0x4f, 0x47, 0x4c, 0x45, 0x10, 0x02, 0x12, 0x14, 0x0a, 0x10, 0x41, 0x55, 0x54, 0x48, 0x5f,
+	0x54, 0x59, 0x50, 0x45, 0x5f, 0x47, 0x49, 0x54, 0x48, 0x55, 0x42, 0x10, 0x03, 0x32, 0x89, 0x05,
+	0x0a, 0x0b, 0x41, 0x75, 0x74, 0x68, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x5f, 0x0a,
+	0x0e, 0x47, 0x65, 0x74, 0x41, 0x75, 0x74, 0x68, 0x43, 0x6f, 0x64, 0x65, 0x55, 0x52, 0x4c, 0x12,
+	0x25, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x68,
+	0x2e, 0x47, 0x65, 0x74, 0x41, 0x75, 0x74, 0x68, 0x43, 0x6f, 0x64, 0x65, 0x55, 0x52, 0x4c, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x26, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65,
+	0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x47, 0x65, 0x74, 0x41, 0x75, 0x74, 0x68, 0x43,
+	0x6f, 0x64, 0x65, 0x55, 0x52, 0x4c, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5c,
+	0x0a, 0x0d, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12,
+	0x24, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x68,
+	0x2e, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x25, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65,
+	0x72, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x54,
+	0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x59, 0x0a, 0x0c,
+	0x52, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x23, 0x2e, 0x62,
+	0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x52, 0x65,
+	0x66, 0x72, 0x65, 0x73, 0x68, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x1a, 0x24, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75,
+	0x74, 0x68, 0x2e, 0x52, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52,
+	0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x71, 0x0a, 0x14, 0x47, 0x65, 0x74, 0x41, 0x75,
+	0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x55, 0x52, 0x4c, 0x12,
+	0x2b, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x68,
+	0x2e, 0x47, 0x65, 0x74, 0x41, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63, 0x61, 0x74, 0x69,
+	0x6f, 0x6e, 0x55, 0x52, 0x4c, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2c, 0x2e, 0x62,
+	0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x47, 0x65,
+	0x74, 0x41, 0x75, 0x74, 0x68, 0x65, 0x6e, 0x74, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x55,
+	0x52, 0x4c, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x77, 0x0a, 0x16, 0x45, 0x78,
+	0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x42, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x54,
+	0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x2d, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72,
+	0x2e, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x42, 0x75,
+	0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x1a, 0x2e, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e,
+	0x61, 0x75, 0x74, 0x68, 0x2e, 0x45, 0x78, 0x63, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x42, 0x75, 0x63,
+	0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x74, 0x0a, 0x15, 0x52, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x42, 0x75,
+	0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x12, 0x2c, 0x2e, 0x62,
+	0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x52, 0x65,
+	0x66, 0x72, 0x65, 0x73, 0x68, 0x42, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x54, 0x6f,
+	0x6b, 0x65, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2d, 0x2e, 0x62, 0x75, 0x63,
+	0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x75, 0x74, 0x68, 0x2e, 0x52, 0x65, 0x66, 0x72,
+	0x65, 0x73, 0x68, 0x42, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x54, 0x6f, 0x6b, 0x65,
+	0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x2e, 0x5a, 0x2c, 0x67, 0x69, 0x74,
+	0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65,
+	0x72, 0x2d, 0x69, 0x6f, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x61, 0x75, 0x74, 0x68, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x33,
 }
 
 var (
@@ -415,30 +866,49 @@ func file_proto_auth_service_proto_rawDescGZIP() []byte {
 	return file_proto_auth_service_proto_rawDescData
 }
 
-var file_proto_auth_service_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_proto_auth_service_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_proto_auth_service_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_proto_auth_service_proto_goTypes = []interface{}{
-	(*GetAuthCodeURLRequest)(nil),  // 0: bucketeer.auth.GetAuthCodeURLRequest
-	(*GetAuthCodeURLResponse)(nil), // 1: bucketeer.auth.GetAuthCodeURLResponse
-	(*ExchangeTokenRequest)(nil),   // 2: bucketeer.auth.ExchangeTokenRequest
-	(*ExchangeTokenResponse)(nil),  // 3: bucketeer.auth.ExchangeTokenResponse
-	(*RefreshTokenRequest)(nil),    // 4: bucketeer.auth.RefreshTokenRequest
-	(*RefreshTokenResponse)(nil),   // 5: bucketeer.auth.RefreshTokenResponse
-	(*Token)(nil),                  // 6: bucketeer.auth.Token
+	(AuthType)(0),                          // 0: bucketeer.auth.AuthType
+	(*GetAuthCodeURLRequest)(nil),          // 1: bucketeer.auth.GetAuthCodeURLRequest
+	(*GetAuthCodeURLResponse)(nil),         // 2: bucketeer.auth.GetAuthCodeURLResponse
+	(*ExchangeTokenRequest)(nil),           // 3: bucketeer.auth.ExchangeTokenRequest
+	(*ExchangeTokenResponse)(nil),          // 4: bucketeer.auth.ExchangeTokenResponse
+	(*RefreshTokenRequest)(nil),            // 5: bucketeer.auth.RefreshTokenRequest
+	(*RefreshTokenResponse)(nil),           // 6: bucketeer.auth.RefreshTokenResponse
+	(*GetAuthenticationURLRequest)(nil),    // 7: bucketeer.auth.GetAuthenticationURLRequest
+	(*GetAuthenticationURLResponse)(nil),   // 8: bucketeer.auth.GetAuthenticationURLResponse
+	(*ExchangeBucketeerTokenRequest)(nil),  // 9: bucketeer.auth.ExchangeBucketeerTokenRequest
+	(*ExchangeBucketeerTokenResponse)(nil), // 10: bucketeer.auth.ExchangeBucketeerTokenResponse
+	(*RefreshBucketeerTokenRequest)(nil),   // 11: bucketeer.auth.RefreshBucketeerTokenRequest
+	(*RefreshBucketeerTokenResponse)(nil),  // 12: bucketeer.auth.RefreshBucketeerTokenResponse
+	(*Token)(nil),                          // 13: bucketeer.auth.Token
 }
 var file_proto_auth_service_proto_depIdxs = []int32{
-	6, // 0: bucketeer.auth.ExchangeTokenResponse.token:type_name -> bucketeer.auth.Token
-	6, // 1: bucketeer.auth.RefreshTokenResponse.token:type_name -> bucketeer.auth.Token
-	0, // 2: bucketeer.auth.AuthService.GetAuthCodeURL:input_type -> bucketeer.auth.GetAuthCodeURLRequest
-	2, // 3: bucketeer.auth.AuthService.ExchangeToken:input_type -> bucketeer.auth.ExchangeTokenRequest
-	4, // 4: bucketeer.auth.AuthService.RefreshToken:input_type -> bucketeer.auth.RefreshTokenRequest
-	1, // 5: bucketeer.auth.AuthService.GetAuthCodeURL:output_type -> bucketeer.auth.GetAuthCodeURLResponse
-	3, // 6: bucketeer.auth.AuthService.ExchangeToken:output_type -> bucketeer.auth.ExchangeTokenResponse
-	5, // 7: bucketeer.auth.AuthService.RefreshToken:output_type -> bucketeer.auth.RefreshTokenResponse
-	5, // [5:8] is the sub-list for method output_type
-	2, // [2:5] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	13, // 0: bucketeer.auth.ExchangeTokenResponse.token:type_name -> bucketeer.auth.Token
+	13, // 1: bucketeer.auth.RefreshTokenResponse.token:type_name -> bucketeer.auth.Token
+	0,  // 2: bucketeer.auth.GetAuthenticationURLRequest.type:type_name -> bucketeer.auth.AuthType
+	0,  // 3: bucketeer.auth.ExchangeBucketeerTokenRequest.type:type_name -> bucketeer.auth.AuthType
+	13, // 4: bucketeer.auth.ExchangeBucketeerTokenResponse.token:type_name -> bucketeer.auth.Token
+	0,  // 5: bucketeer.auth.RefreshBucketeerTokenRequest.type:type_name -> bucketeer.auth.AuthType
+	13, // 6: bucketeer.auth.RefreshBucketeerTokenResponse.token:type_name -> bucketeer.auth.Token
+	1,  // 7: bucketeer.auth.AuthService.GetAuthCodeURL:input_type -> bucketeer.auth.GetAuthCodeURLRequest
+	3,  // 8: bucketeer.auth.AuthService.ExchangeToken:input_type -> bucketeer.auth.ExchangeTokenRequest
+	5,  // 9: bucketeer.auth.AuthService.RefreshToken:input_type -> bucketeer.auth.RefreshTokenRequest
+	7,  // 10: bucketeer.auth.AuthService.GetAuthenticationURL:input_type -> bucketeer.auth.GetAuthenticationURLRequest
+	9,  // 11: bucketeer.auth.AuthService.ExchangeBucketeerToken:input_type -> bucketeer.auth.ExchangeBucketeerTokenRequest
+	11, // 12: bucketeer.auth.AuthService.RefreshBucketeerToken:input_type -> bucketeer.auth.RefreshBucketeerTokenRequest
+	2,  // 13: bucketeer.auth.AuthService.GetAuthCodeURL:output_type -> bucketeer.auth.GetAuthCodeURLResponse
+	4,  // 14: bucketeer.auth.AuthService.ExchangeToken:output_type -> bucketeer.auth.ExchangeTokenResponse
+	6,  // 15: bucketeer.auth.AuthService.RefreshToken:output_type -> bucketeer.auth.RefreshTokenResponse
+	8,  // 16: bucketeer.auth.AuthService.GetAuthenticationURL:output_type -> bucketeer.auth.GetAuthenticationURLResponse
+	10, // 17: bucketeer.auth.AuthService.ExchangeBucketeerToken:output_type -> bucketeer.auth.ExchangeBucketeerTokenResponse
+	12, // 18: bucketeer.auth.AuthService.RefreshBucketeerToken:output_type -> bucketeer.auth.RefreshBucketeerTokenResponse
+	13, // [13:19] is the sub-list for method output_type
+	7,  // [7:13] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_proto_auth_service_proto_init() }
@@ -520,19 +990,92 @@ func file_proto_auth_service_proto_init() {
 				return nil
 			}
 		}
+		file_proto_auth_service_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetAuthenticationURLRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_auth_service_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetAuthenticationURLResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_auth_service_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ExchangeBucketeerTokenRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_auth_service_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ExchangeBucketeerTokenResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_auth_service_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RefreshBucketeerTokenRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_auth_service_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*RefreshBucketeerTokenResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_auth_service_proto_rawDesc,
-			NumEnums:      0,
-			NumMessages:   6,
+			NumEnums:      1,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_proto_auth_service_proto_goTypes,
 		DependencyIndexes: file_proto_auth_service_proto_depIdxs,
+		EnumInfos:         file_proto_auth_service_proto_enumTypes,
 		MessageInfos:      file_proto_auth_service_proto_msgTypes,
 	}.Build()
 	File_proto_auth_service_proto = out.File
@@ -556,6 +1099,9 @@ type AuthServiceClient interface {
 	GetAuthCodeURL(ctx context.Context, in *GetAuthCodeURLRequest, opts ...grpc.CallOption) (*GetAuthCodeURLResponse, error)
 	ExchangeToken(ctx context.Context, in *ExchangeTokenRequest, opts ...grpc.CallOption) (*ExchangeTokenResponse, error)
 	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error)
+	GetAuthenticationURL(ctx context.Context, in *GetAuthenticationURLRequest, opts ...grpc.CallOption) (*GetAuthenticationURLResponse, error)
+	ExchangeBucketeerToken(ctx context.Context, in *ExchangeBucketeerTokenRequest, opts ...grpc.CallOption) (*ExchangeBucketeerTokenResponse, error)
+	RefreshBucketeerToken(ctx context.Context, in *RefreshBucketeerTokenRequest, opts ...grpc.CallOption) (*RefreshBucketeerTokenResponse, error)
 }
 
 type authServiceClient struct {
@@ -593,11 +1139,41 @@ func (c *authServiceClient) RefreshToken(ctx context.Context, in *RefreshTokenRe
 	return out, nil
 }
 
+func (c *authServiceClient) GetAuthenticationURL(ctx context.Context, in *GetAuthenticationURLRequest, opts ...grpc.CallOption) (*GetAuthenticationURLResponse, error) {
+	out := new(GetAuthenticationURLResponse)
+	err := c.cc.Invoke(ctx, "/bucketeer.auth.AuthService/GetAuthenticationURL", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) ExchangeBucketeerToken(ctx context.Context, in *ExchangeBucketeerTokenRequest, opts ...grpc.CallOption) (*ExchangeBucketeerTokenResponse, error) {
+	out := new(ExchangeBucketeerTokenResponse)
+	err := c.cc.Invoke(ctx, "/bucketeer.auth.AuthService/ExchangeBucketeerToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *authServiceClient) RefreshBucketeerToken(ctx context.Context, in *RefreshBucketeerTokenRequest, opts ...grpc.CallOption) (*RefreshBucketeerTokenResponse, error) {
+	out := new(RefreshBucketeerTokenResponse)
+	err := c.cc.Invoke(ctx, "/bucketeer.auth.AuthService/RefreshBucketeerToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 type AuthServiceServer interface {
 	GetAuthCodeURL(context.Context, *GetAuthCodeURLRequest) (*GetAuthCodeURLResponse, error)
 	ExchangeToken(context.Context, *ExchangeTokenRequest) (*ExchangeTokenResponse, error)
 	RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error)
+	GetAuthenticationURL(context.Context, *GetAuthenticationURLRequest) (*GetAuthenticationURLResponse, error)
+	ExchangeBucketeerToken(context.Context, *ExchangeBucketeerTokenRequest) (*ExchangeBucketeerTokenResponse, error)
+	RefreshBucketeerToken(context.Context, *RefreshBucketeerTokenRequest) (*RefreshBucketeerTokenResponse, error)
 }
 
 // UnimplementedAuthServiceServer can be embedded to have forward compatible implementations.
@@ -612,6 +1188,15 @@ func (*UnimplementedAuthServiceServer) ExchangeToken(context.Context, *ExchangeT
 }
 func (*UnimplementedAuthServiceServer) RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RefreshToken not implemented")
+}
+func (*UnimplementedAuthServiceServer) GetAuthenticationURL(context.Context, *GetAuthenticationURLRequest) (*GetAuthenticationURLResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetAuthenticationURL not implemented")
+}
+func (*UnimplementedAuthServiceServer) ExchangeBucketeerToken(context.Context, *ExchangeBucketeerTokenRequest) (*ExchangeBucketeerTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExchangeBucketeerToken not implemented")
+}
+func (*UnimplementedAuthServiceServer) RefreshBucketeerToken(context.Context, *RefreshBucketeerTokenRequest) (*RefreshBucketeerTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RefreshBucketeerToken not implemented")
 }
 
 func RegisterAuthServiceServer(s *grpc.Server, srv AuthServiceServer) {
@@ -672,6 +1257,60 @@ func _AuthService_RefreshToken_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_GetAuthenticationURL_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetAuthenticationURLRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).GetAuthenticationURL(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/bucketeer.auth.AuthService/GetAuthenticationURL",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).GetAuthenticationURL(ctx, req.(*GetAuthenticationURLRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_ExchangeBucketeerToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExchangeBucketeerTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).ExchangeBucketeerToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/bucketeer.auth.AuthService/ExchangeBucketeerToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).ExchangeBucketeerToken(ctx, req.(*ExchangeBucketeerTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AuthService_RefreshBucketeerToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RefreshBucketeerTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).RefreshBucketeerToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/bucketeer.auth.AuthService/RefreshBucketeerToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).RefreshBucketeerToken(ctx, req.(*RefreshBucketeerTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _AuthService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "bucketeer.auth.AuthService",
 	HandlerType: (*AuthServiceServer)(nil),
@@ -687,6 +1326,18 @@ var _AuthService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RefreshToken",
 			Handler:    _AuthService_RefreshToken_Handler,
+		},
+		{
+			MethodName: "GetAuthenticationURL",
+			Handler:    _AuthService_GetAuthenticationURL_Handler,
+		},
+		{
+			MethodName: "ExchangeBucketeerToken",
+			Handler:    _AuthService_ExchangeBucketeerToken_Handler,
+		},
+		{
+			MethodName: "RefreshBucketeerToken",
+			Handler:    _AuthService_RefreshBucketeerToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

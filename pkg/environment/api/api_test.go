@@ -48,7 +48,7 @@ func TestNewEnvironmentService(t *testing.T) {
 
 func createContextWithToken(t *testing.T) context.Context {
 	t.Helper()
-	token := &token.IDToken{
+	token := &token.AccessToken{
 		Issuer:        "issuer",
 		Subject:       "sub",
 		Audience:      "audience",
@@ -63,7 +63,7 @@ func createContextWithToken(t *testing.T) context.Context {
 
 func createContextWithTokenRoleUnassigned(t *testing.T) context.Context {
 	t.Helper()
-	token := &token.IDToken{
+	token := &token.AccessToken{
 		Issuer:   "issuer",
 		Subject:  "sub",
 		Audience: "audience",

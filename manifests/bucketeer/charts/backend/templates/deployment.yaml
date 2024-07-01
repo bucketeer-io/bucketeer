@@ -32,6 +32,9 @@ spec:
         - name: envoy-config
           configMap:
             name: {{ template "backend.fullname" . }}-envoy-config
+        - name: oauth-config
+          configMap:
+            name: {{ template "backend.fullname" . }}-oauth-config
         - name: service-cert-secret
           secret:
             secretName: {{ template "service-cert-secret" . }}
@@ -145,6 +148,8 @@ spec:
               value: "{{ .Values.env.logLevel }}"
             - name: BUCKETEER_BACKEND_OAUTH_CLIENT_ID
               value: "{{ .Values.oauth.clientId }}"
+            - name: BUCKETEER_BACKEND_OAUTH_CONFIG_PATH
+              value: /usr/local/oauth-config/oauth-config.json
             - name: BUCKETEER_BACKEND_OAUTH_CLIENT_SECRET
               value: "{{ .Values.oauth.clientSecret }}"
             - name: BUCKETEER_BACKEND_OAUTH_ISSUER
@@ -181,6 +186,9 @@ spec:
               readOnly: true
             - name: oauth-key-secret
               mountPath: /usr/local/oauth-key
+              readOnly: true
+            - name: oauth-config
+              mountPath: /usr/local/oauth-config
               readOnly: true
           ports:
             - name: health-check

@@ -17,7 +17,7 @@ package client
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"google.golang.org/grpc/credentials"
@@ -28,7 +28,7 @@ type perRPCCredentials struct {
 }
 
 func NewPerRPCCredentials(tokenPath string) (credentials.PerRPCCredentials, error) {
-	data, err := ioutil.ReadFile(tokenPath)
+	data, err := os.ReadFile(tokenPath)
 	if err != nil {
 		return nil, err
 	}

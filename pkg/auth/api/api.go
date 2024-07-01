@@ -25,6 +25,8 @@ import (
 	"google.golang.org/grpc"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/pkg/auth"
+	"github.com/bucketeer-io/bucketeer/pkg/auth/google"
 	"github.com/bucketeer-io/bucketeer/pkg/auth/oidc"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -67,29 +69,34 @@ func WithLogger(logger *zap.Logger) Option {
 }
 
 type authService struct {
-	oidc          *oidc.OIDC
-	signer        token.Signer
-	accountClient accountclient.Client
-	opts          *options
-	logger        *zap.Logger
+	oidc                *oidc.OIDC
+	signer              token.Signer
+	accountClient       accountclient.Client
+	googleAuthenticator auth.Authenticator
+	opts                *options
+	logger              *zap.Logger
 }
 
 func NewAuthService(
 	oidc *oidc.OIDC,
 	signer token.Signer,
+	verifier token.Verifier,
 	accountClient accountclient.Client,
+	config *auth.OAuthConfig,
 	opts ...Option,
 ) rpc.Service {
 	options := defaultOptions
 	for _, opt := range opts {
 		opt(&options)
 	}
+	logger := options.logger.Named("api")
 	return &authService{
-		oidc:          oidc,
-		signer:        signer,
-		accountClient: accountClient,
-		opts:          &options,
-		logger:        options.logger.Named("api"),
+		oidc:                oidc,
+		signer:              signer,
+		accountClient:       accountClient,
+		googleAuthenticator: google.NewAuthenticator(&config.GoogleConfig, accountClient, signer, verifier, logger),
+		opts:                &options,
+		logger:              logger,
 	}
 }
 
@@ -383,7 +390,7 @@ func (s *authService) generateToken(
 		}
 		return nil, dt.Err()
 	}
-	idToken := &token.IDToken{
+	accessToken := &token.AccessToken{
 		Issuer:   claims.Iss,
 		Subject:  claims.Sub,
 		Audience: claims.Aud,
@@ -392,9 +399,9 @@ func (s *authService) generateToken(
 		Email:    claims.Email,
 	}
 	if hasSystemAdminOrganization(resp.Organizations) {
-		idToken.IsSystemAdmin = true
+		accessToken.IsSystemAdmin = true
 	}
-	signedIDToken, err := s.signer.Sign(idToken)
+	signAccessToken, err := s.signer.SignAccessToken(accessToken)
 	if err != nil {
 		s.logger.Error(
 			"Failed to sign id token",
@@ -414,7 +421,7 @@ func (s *authService) generateToken(
 		TokenType:    t.TokenType,
 		RefreshToken: t.RefreshToken,
 		Expiry:       t.Expiry.Unix(),
-		IdToken:      signedIDToken,
+		IdToken:      signAccessToken,
 	}, nil
 }
 

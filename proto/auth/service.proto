@@ -19,6 +19,13 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/auth";
 
 import "proto/auth/token.proto";
 
+enum AuthType {
+  AUTH_TYPE_UNSPECIFIED = 0;
+  AUTH_TYPE_USER_PASSWORD = 1;
+  AUTH_TYPE_GOOGLE = 2;
+  AUTH_TYPE_GITHUB = 3;
+}
+
 message GetAuthCodeURLRequest {
   string state = 1;
   string redirect_url = 2;
@@ -46,8 +53,45 @@ message RefreshTokenResponse {
   Token token = 1;
 }
 
+message GetAuthenticationURLRequest {
+  string state = 1;
+  string redirect_url = 2;
+  AuthType type = 3;
+}
+
+message GetAuthenticationURLResponse {
+  string url = 1;
+}
+
+message ExchangeBucketeerTokenRequest {
+  string code = 1;
+  string redirect_url = 2;
+  AuthType type = 3;
+}
+
+message ExchangeBucketeerTokenResponse {
+  Token token = 1;
+}
+
+message RefreshBucketeerTokenRequest {
+  string refresh_token = 1;
+  string redirect_url = 2;
+  AuthType type = 3;
+}
+
+message RefreshBucketeerTokenResponse {
+  Token token = 1;
+}
+
 service AuthService {
   rpc GetAuthCodeURL(GetAuthCodeURLRequest) returns (GetAuthCodeURLResponse);
   rpc ExchangeToken(ExchangeTokenRequest) returns (ExchangeTokenResponse);
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+
+  rpc GetAuthenticationURL(GetAuthenticationURLRequest)
+      returns (GetAuthenticationURLResponse);
+  rpc ExchangeBucketeerToken(ExchangeBucketeerTokenRequest)
+      returns (ExchangeBucketeerTokenResponse);
+  rpc RefreshBucketeerToken(RefreshBucketeerTokenRequest)
+      returns (RefreshBucketeerTokenResponse);
 }

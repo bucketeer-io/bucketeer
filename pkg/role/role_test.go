@@ -42,12 +42,12 @@ func TestCheckSystemAdminRole(t *testing.T) {
 			expectedErr: ErrUnauthenticated,
 		},
 		{
-			inputCtx:    getContextWithToken(t, &token.IDToken{Email: "test@example.com", IsSystemAdmin: false}),
+			inputCtx:    getContextWithToken(t, &token.AccessToken{Email: "test@example.com", IsSystemAdmin: false}),
 			expected:    nil,
 			expectedErr: ErrPermissionDenied,
 		},
 		{
-			inputCtx:    getContextWithToken(t, &token.IDToken{Email: "test@example.com", IsSystemAdmin: true}),
+			inputCtx:    getContextWithToken(t, &token.AccessToken{Email: "test@example.com", IsSystemAdmin: true}),
 			expected:    &eventproto.Editor{Email: "test@example.com", IsAdmin: true},
 			expectedErr: nil,
 		},
@@ -82,7 +82,7 @@ func TestCheckRole(t *testing.T) {
 		},
 		{
 			desc:              "unauthenticated: account not found",
-			inputCtx:          getContextWithToken(t, &token.IDToken{Email: "test@example.com"}),
+			inputCtx:          getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
 			inputRequiredRole: accountproto.AccountV2_Role_Environment_EDITOR,
 			inputGetAccountFunc: func(email string) (*accountproto.AccountV2, error) {
 				return nil, status.Error(codes.NotFound, "")
@@ -92,7 +92,7 @@ func TestCheckRole(t *testing.T) {
 		},
 		{
 			desc:              "internalError",
-			inputCtx:          getContextWithToken(t, &token.IDToken{Email: "test@example.com"}),
+			inputCtx:          getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
 			inputRequiredRole: accountproto.AccountV2_Role_Environment_EDITOR,
 			inputGetAccountFunc: func(email string) (*accountproto.AccountV2, error) {
 				return nil, status.Error(codes.Internal, "")
@@ -102,7 +102,7 @@ func TestCheckRole(t *testing.T) {
 		},
 		{
 			desc:              "permissionDenied",
-			inputCtx:          getContextWithToken(t, &token.IDToken{Email: "test@example.com"}),
+			inputCtx:          getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
 			inputRequiredRole: accountproto.AccountV2_Role_Environment_EDITOR,
 			inputGetAccountFunc: func(email string) (*accountproto.AccountV2, error) {
 				resp := &accountproto.GetAccountV2ByEnvironmentIDResponse{
@@ -124,7 +124,7 @@ func TestCheckRole(t *testing.T) {
 		},
 		{
 			desc:              "success",
-			inputCtx:          getContextWithToken(t, &token.IDToken{Email: "test@example.com"}),
+			inputCtx:          getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
 			inputRequiredRole: accountproto.AccountV2_Role_Environment_EDITOR,
 			inputGetAccountFunc: func(email string) (*accountproto.AccountV2, error) {
 				resp := &accountproto.GetAccountV2ByEnvironmentIDResponse{
@@ -176,7 +176,7 @@ func TestCheckOrganizationRole(t *testing.T) {
 		},
 		{
 			desc:              "unauthenticated: account not found",
-			inputCtx:          getContextWithToken(t, &token.IDToken{Email: "test@example.com"}),
+			inputCtx:          getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
 			inputRequiredRole: accountproto.AccountV2_Role_Organization_MEMBER,
 			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
 				return nil, status.Error(codes.NotFound, "")
@@ -186,7 +186,7 @@ func TestCheckOrganizationRole(t *testing.T) {
 		},
 		{
 			desc:              "internalError",
-			inputCtx:          getContextWithToken(t, &token.IDToken{Email: "test@example.com"}),
+			inputCtx:          getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
 			inputRequiredRole: accountproto.AccountV2_Role_Organization_MEMBER,
 			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
 				return nil, status.Error(codes.Internal, "")
@@ -196,7 +196,7 @@ func TestCheckOrganizationRole(t *testing.T) {
 		},
 		{
 			desc:              "permissionDenied",
-			inputCtx:          getContextWithToken(t, &token.IDToken{Email: "test@example.com"}),
+			inputCtx:          getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
 			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
 			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
 				return &accountproto.GetAccountV2Response{
@@ -208,7 +208,7 @@ func TestCheckOrganizationRole(t *testing.T) {
 		},
 		{
 			desc:              "success",
-			inputCtx:          getContextWithToken(t, &token.IDToken{Email: "test@example.com"}),
+			inputCtx:          getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
 			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
 			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
 				return &accountproto.GetAccountV2Response{
@@ -228,7 +228,7 @@ func TestCheckOrganizationRole(t *testing.T) {
 	}
 }
 
-func getContextWithToken(t *testing.T, token *token.IDToken) context.Context {
+func getContextWithToken(t *testing.T, token *token.AccessToken) context.Context {
 	t.Helper()
 	return context.WithValue(context.Background(), rpc.Key, token)
 }

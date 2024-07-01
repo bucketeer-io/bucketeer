@@ -1928,7 +1928,7 @@ func newEventCounterService(t *testing.T, mockController *gomock.Controller, spe
 
 func createContextWithToken(t *testing.T, isSystemAdmin bool) context.Context {
 	t.Helper()
-	token := &token.IDToken{
+	token := &token.AccessToken{
 		Email:         "test@example.com",
 		IsSystemAdmin: isSystemAdmin,
 	}

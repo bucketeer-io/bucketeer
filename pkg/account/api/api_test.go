@@ -76,7 +76,7 @@ func createContextWithEmailToken(t *testing.T, email string, isSystemAdmin bool)
 	}
 	data, err := proto.Marshal(sub)
 	require.NoError(t, err)
-	token := &token.IDToken{
+	token := &token.AccessToken{
 		Issuer:        "issuer",
 		Subject:       base64.RawURLEncoding.EncodeToString([]byte(data)),
 		Audience:      "audience",
@@ -97,7 +97,7 @@ func createContextWithInvalidEmailToken(t *testing.T) context.Context {
 	}
 	data, err := proto.Marshal(sub)
 	require.NoError(t, err)
-	token := &token.IDToken{
+	token := &token.AccessToken{
 		Issuer:   "issuer",
 		Subject:  base64.RawURLEncoding.EncodeToString([]byte(data)),
 		Audience: "audience",

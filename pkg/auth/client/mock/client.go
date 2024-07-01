@@ -54,6 +54,26 @@ func (mr *MockClientMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockClient)(nil).Close))
 }
 
+// ExchangeBucketeerToken mocks base method.
+func (m *MockClient) ExchangeBucketeerToken(ctx context.Context, in *auth.ExchangeBucketeerTokenRequest, opts ...grpc.CallOption) (*auth.ExchangeBucketeerTokenResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ExchangeBucketeerToken", varargs...)
+	ret0, _ := ret[0].(*auth.ExchangeBucketeerTokenResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExchangeBucketeerToken indicates an expected call of ExchangeBucketeerToken.
+func (mr *MockClientMockRecorder) ExchangeBucketeerToken(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExchangeBucketeerToken", reflect.TypeOf((*MockClient)(nil).ExchangeBucketeerToken), varargs...)
+}
+
 // ExchangeToken mocks base method.
 func (m *MockClient) ExchangeToken(ctx context.Context, in *auth.ExchangeTokenRequest, opts ...grpc.CallOption) (*auth.ExchangeTokenResponse, error) {
 	m.ctrl.T.Helper()
@@ -92,6 +112,46 @@ func (mr *MockClientMockRecorder) GetAuthCodeURL(ctx, in any, opts ...any) *gomo
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthCodeURL", reflect.TypeOf((*MockClient)(nil).GetAuthCodeURL), varargs...)
+}
+
+// GetAuthenticationURL mocks base method.
+func (m *MockClient) GetAuthenticationURL(ctx context.Context, in *auth.GetAuthenticationURLRequest, opts ...grpc.CallOption) (*auth.GetAuthenticationURLResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetAuthenticationURL", varargs...)
+	ret0, _ := ret[0].(*auth.GetAuthenticationURLResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAuthenticationURL indicates an expected call of GetAuthenticationURL.
+func (mr *MockClientMockRecorder) GetAuthenticationURL(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthenticationURL", reflect.TypeOf((*MockClient)(nil).GetAuthenticationURL), varargs...)
+}
+
+// RefreshBucketeerToken mocks base method.
+func (m *MockClient) RefreshBucketeerToken(ctx context.Context, in *auth.RefreshBucketeerTokenRequest, opts ...grpc.CallOption) (*auth.RefreshBucketeerTokenResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "RefreshBucketeerToken", varargs...)
+	ret0, _ := ret[0].(*auth.RefreshBucketeerTokenResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RefreshBucketeerToken indicates an expected call of RefreshBucketeerToken.
+func (mr *MockClientMockRecorder) RefreshBucketeerToken(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshBucketeerToken", reflect.TypeOf((*MockClient)(nil).RefreshBucketeerToken), varargs...)
 }
 
 // RefreshToken mocks base method.

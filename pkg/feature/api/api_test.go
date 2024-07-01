@@ -66,7 +66,7 @@ func (u *dummyWebhookCryptoUtil) Decrypt(ctx context.Context, data []byte) ([]by
 }
 
 func createContextWithToken() context.Context {
-	token := &token.IDToken{
+	token := &token.AccessToken{
 		Issuer:        "issuer",
 		Subject:       "sub",
 		Audience:      "audience",
@@ -80,7 +80,7 @@ func createContextWithToken() context.Context {
 }
 
 func createContextWithTokenRoleUnassigned() context.Context {
-	token := &token.IDToken{
+	token := &token.AccessToken{
 		Issuer:   "issuer",
 		Subject:  "sub",
 		Audience: "audience",

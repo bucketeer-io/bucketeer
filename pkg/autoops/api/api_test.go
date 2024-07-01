@@ -1041,7 +1041,7 @@ func createServiceWithGetAccountByEnvironmentMock(c *gomock.Controller, ro accou
 
 func createContextWithTokenRoleUnassigned(t *testing.T) context.Context {
 	t.Helper()
-	token := &token.IDToken{
+	token := &token.AccessToken{
 		Issuer:   "issuer",
 		Subject:  "sub",
 		Audience: "audience",
@@ -1055,7 +1055,7 @@ func createContextWithTokenRoleUnassigned(t *testing.T) context.Context {
 
 func createContextWithTokenRoleOwner(t *testing.T) context.Context {
 	t.Helper()
-	token := &token.IDToken{
+	token := &token.AccessToken{
 		Issuer:        "issuer",
 		Subject:       "sub",
 		Audience:      "audience",

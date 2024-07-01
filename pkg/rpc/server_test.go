@@ -69,8 +69,14 @@ func (s *dummyRegisterer) Unregister(prometheus.Collector) bool {
 type dummyVerifier struct {
 }
 
-func (v *dummyVerifier) Verify(rawIDToken string) (*token.IDToken, error) {
-	return &token.IDToken{
+func (v *dummyVerifier) VerifyAccessToken(rawAccessToken string) (*token.AccessToken, error) {
+	return &token.AccessToken{
+		Email: "test@email",
+	}, nil
+}
+
+func (v *dummyVerifier) VerifyRefreshToken(rawRefreshToken string) (*token.RefreshToken, error) {
+	return &token.RefreshToken{
 		Email: "test@email",
 	}, nil
 }

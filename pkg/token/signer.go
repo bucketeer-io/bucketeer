@@ -19,14 +19,15 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	jose "github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
 )
 
 type Signer interface {
-	Sign(*IDToken) (string, error)
+	SignAccessToken(*AccessToken) (string, error)
+	SignRefreshToken(*RefreshToken) (string, error)
 }
 
 type signer struct {
@@ -34,7 +35,7 @@ type signer struct {
 }
 
 func NewSigner(keyPath string) (Signer, error) {
-	data, err := ioutil.ReadFile(keyPath)
+	data, err := os.ReadFile(keyPath)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +61,11 @@ func NewSignerWithPrivateKey(privateKey *rsa.PrivateKey) (Signer, error) {
 	return &signer{sig: sig}, nil
 }
 
-func (s *signer) Sign(token *IDToken) (string, error) {
+func (s *signer) SignAccessToken(token *AccessToken) (string, error) {
+	return jwt.Signed(s.sig).Claims(token).Serialize()
+}
+
+func (s *signer) SignRefreshToken(token *RefreshToken) (string, error) {
 	return jwt.Signed(s.sig).Claims(token).Serialize()
 }
 
