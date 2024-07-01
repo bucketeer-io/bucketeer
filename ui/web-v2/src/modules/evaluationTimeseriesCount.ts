@@ -7,8 +7,6 @@ import {
 } from '../proto/eventcounter/service_pb';
 import { VariationTimeseries } from '../proto/eventcounter/timeseries_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'evaluationTimeseriesCount';
@@ -35,7 +33,6 @@ export const getEvaluationTimeseriesCount = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setFeatureId(params.featureId);
   request.setTimeRange(params.timeRange);
-  await setupAuthToken();
   const result = await grpc.getEvaluationTimeseriesCount(request);
   return result.response.toObject();
 });

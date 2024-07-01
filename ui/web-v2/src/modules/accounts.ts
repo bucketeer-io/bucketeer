@@ -25,8 +25,6 @@ import {
   UpdateAccountV2Request
 } from '../proto/account/service_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'accounts';
@@ -79,7 +77,6 @@ export const listAccounts = createAsyncThunk<
   request.setSearchKeyword(params.searchKeyword);
   params.disabled != null &&
     request.setDisabled(new BoolValue().setValue(params.disabled));
-  await setupAuthToken();
   const result = await accountGrpc.listAccounts(request);
   return result.response.toObject();
 });
@@ -97,7 +94,6 @@ export const getAccount = createAsyncThunk<
   const request = new GetAccountV2Request();
   request.setOrganizationId(params.organizationId);
   request.setEmail(params.email);
-  await setupAuthToken();
   const result = await accountGrpc.getAccount(request);
   return result.response.toObject().account;
 });
@@ -126,7 +122,6 @@ export const enableAccount = createAsyncThunk<
   request.setChangeEnvironmentRolesCommand(command);
   request.setOrganizationId(params.organizationId);
   request.setEmail(params.email);
-  await setupAuthToken();
   await accountGrpc.updateAccount(request);
 });
 
@@ -154,7 +149,6 @@ export const disableAccount = createAsyncThunk<
   request.setChangeEnvironmentRolesCommand(cmd);
   request.setOrganizationId(params.organizationId);
   request.setEmail(params.email);
-  await setupAuthToken();
   await accountGrpc.updateAccount(request);
 });
 
@@ -183,7 +177,6 @@ export const createAccount = createAsyncThunk<
   cmd.setOrganizationRole(params.organizationRole);
   request.setCommand(cmd);
   request.setOrganizationId(params.organizationId);
-  await setupAuthToken();
   await accountGrpc.createAccount(request);
 });
 
@@ -221,7 +214,6 @@ export const updateAccount = createAsyncThunk<
   }
   request.setEmail(params.email);
   request.setOrganizationId(params.organizationId);
-  await setupAuthToken();
   await accountGrpc.updateAccount(request);
 });
 

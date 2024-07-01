@@ -16,8 +16,6 @@ import {
   ListFeatureHistoryResponse
 } from '../proto/auditlog/service_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'auditLogs';
@@ -67,7 +65,6 @@ export const listAdminAuditLogs = createAsyncThunk<
     request.setEntityType(new Int32Value().setValue(params.resource));
   params.entityType != null &&
     request.setEntityType(new Int32Value().setValue(params.entityType));
-  await setupAuthToken();
   const result = await auditLogGrpc.listAdminAuditLogs(request);
   return result.response.toObject();
 });
@@ -100,7 +97,6 @@ export const listAuditLogs = createAsyncThunk<
   request.setTo(params.to);
   params.entityType != null &&
     request.setEntityType(new Int32Value().setValue(params.entityType));
-  await setupAuthToken();
   const result = await auditLogGrpc.listAuditLogs(request);
   return result.response.toObject();
 });
@@ -132,7 +128,6 @@ export const listFeatureHistory = createAsyncThunk<
   request.setSearchKeyword(params.searchKeyword);
   request.setFrom(params.from);
   request.setTo(params.to);
-  await setupAuthToken();
   const result = await auditLogGrpc.listFeatureHistory(request);
   return result.response.toObject();
 });

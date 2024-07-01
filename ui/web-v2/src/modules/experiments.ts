@@ -29,8 +29,6 @@ import {
   UpdateExperimentRequest
 } from '../proto/experiment/service_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'experiments';
@@ -66,7 +64,6 @@ export const getExperiment = createAsyncThunk<
   const request = new GetExperimentRequest();
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
-  await setupAuthToken();
   const result = await grpc.getExperiment(request);
   return result.response.getExperiment().toObject();
 });
@@ -128,7 +125,6 @@ export const listExperiments = createAsyncThunk<
   if (params.stopUntil) {
     request.setTo(params.stopUntil);
   }
-  await setupAuthToken();
   const result = await grpc.listExperiments(request);
   return result.response.toObject();
 });
@@ -163,7 +159,6 @@ export const createExperiment = createAsyncThunk<
   request.setCommand(command);
   request.setEnvironmentNamespace(params.environmentNamespace);
 
-  await setupAuthToken();
   const result = await grpc.createExperiment(request);
   return result.response.toObject().experiment;
 });
@@ -193,7 +188,6 @@ export const updateExperiment = createAsyncThunk<
   if (params.changePeriodCommand) {
     request.setChangeExperimentPeriodCommand(params.changePeriodCommand);
   }
-  await setupAuthToken();
   await grpc.updateExperiment(request);
 });
 
@@ -211,7 +205,6 @@ export const archiveExperiment = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
   request.setCommand(new ArchiveExperimentCommand());
-  await setupAuthToken();
   await grpc.archiveExperiment(request);
 });
 
@@ -229,7 +222,6 @@ export const stopExperiment = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.experimentId);
   request.setCommand(new StopExperimentCommand());
-  await setupAuthToken();
   await grpc.stopExperiment(request);
 });
 

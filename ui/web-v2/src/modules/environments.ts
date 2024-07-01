@@ -21,8 +21,6 @@ import {
   UpdateEnvironmentV2Request
 } from '../proto/environment/service_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'environments';
@@ -69,7 +67,6 @@ export const listEnvironments = createAsyncThunk<
   request.setOrderDirection(params.orderDirection);
   request.setSearchKeyword(params.searchKeyword);
   request.setProjectId(params.projectId);
-  await setupAuthToken();
   const result = await grpc.listEnvironments(request);
   return result.response.toObject();
 });
@@ -85,7 +82,6 @@ export const getEnvironment = createAsyncThunk<
 >(`${MODULE_NAME}/get`, async (params) => {
   const request = new GetEnvironmentV2Request();
   request.setId(params.id);
-  await setupAuthToken();
   const result = await grpc.getEnvironment(request);
   return result.response.toObject().environment;
 });
@@ -111,7 +107,6 @@ export const createEnvironment = createAsyncThunk<
   command.setProjectId(params.projectId);
   command.setRequireComment(params.requireComment);
   request.setCommand(command);
-  await setupAuthToken();
   await grpc.createEnvironment(request);
 });
 
@@ -144,7 +139,6 @@ export const updateEnvironment = createAsyncThunk<
     changeRequireCommand.setRequireComment(params.requireComment);
     request.setChangeRequireCommentCommand(changeRequireCommand);
   }
-  await setupAuthToken();
   await grpc.updateEnvironment(request);
 });
 

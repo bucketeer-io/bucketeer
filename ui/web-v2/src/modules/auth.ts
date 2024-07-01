@@ -12,7 +12,6 @@ import {
 import { Token } from '../proto/auth/token_pb';
 import {
   clearToken as clearTokenFromStorage,
-  getToken,
   setToken
 } from '../storage/token';
 
@@ -36,27 +35,6 @@ export const exchangeBucketeerTokenFromUrl = createAsyncThunk<
   }
   throw new Error('exchange token failed.');
 });
-
-export const setupAuthToken = createAsyncThunk<void>(
-  `${MODULE_NAME}/setupAuthToken`,
-  async (_, thunkAPI) => {
-    const token = getToken();
-    if (!token || !token.accessToken) {
-      thunkAPI.dispatch(redirectToAuthUrl());
-      throw new Error('token not found.');
-    }
-
-    if (isExpiredToken(token.expiry)) {
-      thunkAPI.dispatch(
-        refreshBucketeerToken({
-          token: token.refreshToken
-        })
-      );
-      return;
-    }
-    return;
-  }
-);
 
 export const redirectToAuthUrl = createAsyncThunk<void>(
   `${MODULE_NAME}/redirecttoAuthUrl`,
@@ -98,11 +76,6 @@ export const refreshBucketeerToken = createAsyncThunk<
   const result = await authGrpc.refreshBucketeerToken(request);
   return result.response.getToken().toObject();
 });
-
-const isExpiredToken = (expiry: number): boolean => {
-  const now = Number(Date.now() / 1000);
-  return now > expiry;
-};
 
 const initialState = {
   loading: false

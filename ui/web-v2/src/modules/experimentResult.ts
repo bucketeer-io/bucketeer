@@ -12,8 +12,6 @@ import {
   GetExperimentResultResponse
 } from '../proto/eventcounter/service_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'experimentResult';
@@ -49,7 +47,6 @@ export const getExperimentResult = createAsyncThunk<
   const request = new GetExperimentResultRequest();
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setExperimentId(params.experimentId);
-  await setupAuthToken();
   const result = await grpc.getExperimentResult(request);
   return result.response.toObject();
 });

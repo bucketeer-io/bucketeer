@@ -26,8 +26,6 @@ import {
   UpdateGoalRequest
 } from '../proto/experiment/service_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'goals';
@@ -51,7 +49,6 @@ export const getGoal = createAsyncThunk<
   const request = new GetGoalRequest();
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
-  await setupAuthToken();
   const result = await grpc.getGoal(request);
   return result.response.toObject();
 });
@@ -92,7 +89,6 @@ export const listGoals = createAsyncThunk<
   const boolValue = new BoolValue();
   boolValue.setValue(params.archived);
   request.setArchived(boolValue);
-  await setupAuthToken();
   const result = await grpc.listGoals(request);
   return result.response.toObject();
 });
@@ -116,7 +112,6 @@ export const createGoal = createAsyncThunk<
   command.setName(params.name);
   command.setDescription(params.description);
   request.setCommand(command);
-  await setupAuthToken();
   await grpc.createGoal(request);
 });
 
@@ -134,7 +129,6 @@ export const deleteGoal = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
   request.setCommand(new DeleteGoalCommand());
-  await setupAuthToken();
   await grpc.deleteGoal(request);
 });
 
@@ -163,7 +157,6 @@ export const updateGoal = createAsyncThunk<
     changeDescCommand.setDescription(params.description);
     request.setChangeDescriptionCommand(changeDescCommand);
   }
-  await setupAuthToken();
   await grpc.updateGoal(request);
 });
 
@@ -181,7 +174,6 @@ export const archiveGoal = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
   request.setCommand(new ArchiveGoalCommand());
-  await setupAuthToken();
   await grpc.archiveGoal(request);
 });
 
