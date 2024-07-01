@@ -247,7 +247,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId:       "fid",
 					OpsType:         autoopsproto.OpsType_SCHEDULE,
-					DatetimeClauses: []*autoopsproto.DatetimeClause{},
+					DatetimeClauses: nil,
 					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
 						{
 							VariationId:     "vid",
@@ -267,14 +267,60 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
+					OpsType:   autoopsproto.OpsType_SCHEDULE,
+					DatetimeClauses: []*autoopsproto.DatetimeClause{
+						{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
+					},
+					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
+						{
+							VariationId:     "vid",
+							GoalId:          "gid",
+							MinCount:        10,
+							ThreadsholdRate: 0.5,
+							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+							ActionType:      autoopsproto.ActionType_DISABLE,
+						},
+					},
+				},
+			},
+			expectedErr: createError(statusIncompatibleOpsType, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type")),
+		},
+		{
+			desc: "err: ErrOpsEventRateClauseMustSpecified",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				Command: &autoopsproto.CreateAutoOpsRuleCommand{
+					FeatureId: "fid",
 					OpsType:   autoopsproto.OpsType_EVENT_RATE,
 					DatetimeClauses: []*autoopsproto.DatetimeClause{
 						{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
 					},
-					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{},
+					OpsEventRateClauses: nil,
 				},
 			},
 			expectedErr: createError(statusClauseRequiredForEventDate, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "clause")),
+		},
+		{
+			desc: "err: ErrDatetimeClauseMustNotBeSpecified",
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				Command: &autoopsproto.CreateAutoOpsRuleCommand{
+					FeatureId: "fid",
+					OpsType:   autoopsproto.OpsType_EVENT_RATE,
+					DatetimeClauses: []*autoopsproto.DatetimeClause{
+						{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
+					},
+					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
+						{
+							VariationId:     "vid",
+							GoalId:          "gid",
+							MinCount:        10,
+							ThreadsholdRate: 0.5,
+							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+							ActionType:      autoopsproto.ActionType_DISABLE,
+						},
+					},
+				},
+			},
+			expectedErr: createError(statusIncompatibleOpsType, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type")),
 		},
 		{
 			desc: "err: internal error",
