@@ -12,7 +12,7 @@ import {
 import { Token } from '../proto/auth/token_pb';
 import {
   clearToken as clearTokenFromStorage,
-  getToken as getTokenFromStorage,
+  getToken,
   setToken
 } from '../storage/token';
 
@@ -40,7 +40,7 @@ export const exchangeBucketeerTokenFromUrl = createAsyncThunk<
 export const setupAuthToken = createAsyncThunk<void>(
   `${MODULE_NAME}/setupAuthToken`,
   async (_, thunkAPI) => {
-    const token = getTokenFromStorage();
+    const token = getToken();
     if (!token || !token.accessToken) {
       thunkAPI.dispatch(redirectToAuthUrl());
       throw new Error('token not found.');
@@ -102,18 +102,6 @@ export const refreshBucketeerToken = createAsyncThunk<
 const isExpiredToken = (expiry: number): boolean => {
   const now = Number(Date.now() / 1000);
   return now > expiry;
-};
-
-export const hasToken = (): boolean => {
-  const token = getTokenFromStorage();
-
-  if (!token || !token.accessToken) {
-    return false;
-  }
-  if (isExpiredToken(token.expiry)) {
-    return false;
-  }
-  return true;
 };
 
 const initialState = {

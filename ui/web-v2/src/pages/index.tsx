@@ -33,7 +33,6 @@ import {
   PAGE_PATH_AUTH_LOGIN
 } from '../constants/routing';
 import { AppState } from '../modules';
-import { hasToken } from '../modules/auth';
 import {
   fetchMe,
   setCurrentEnvironment,
@@ -63,7 +62,7 @@ import { FeatureDetailPage } from './feature/detail';
 import { GoalIndexPage } from './goal';
 import { SegmentIndexPage } from './segment';
 import { SettingsIndexPage } from './settings';
-import { getToken as getTokenFromStorage } from '../storage/token';
+import { getToken } from '../storage/token';
 
 export const App: FC = memo(() => {
   useEffect(() => {
@@ -101,13 +100,9 @@ export const Root: FC = memo(() => {
   const [selectedOrganization, setSelectedOrganization] = useState(null);
   const history = useHistory();
 
-  const token = getTokenFromStorage();
+  const token = getToken();
 
-  // const token = hasToken();
   const hasToken = token?.accessToken ? true : false;
-
-  // console.log({ hasToken });
-  // console.log({ me });
 
   const [isInitialLoading, setIsInitialLoading] = useState(hasToken);
 

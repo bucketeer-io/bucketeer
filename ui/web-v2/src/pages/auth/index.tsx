@@ -3,8 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useHistory } from 'react-router-dom';
 
 import { AppState } from '../../modules';
-import { exchangeBucketeerTokenFromUrl, hasToken } from '../../modules/auth';
+import { exchangeBucketeerTokenFromUrl } from '../../modules/auth';
 import { AppDispatch } from '../../store';
+import { getToken } from '../../storage/token';
 
 export const AuthCallbackPage: FC = memo(() => {
   const history = useHistory();
@@ -18,7 +19,9 @@ export const AuthCallbackPage: FC = memo(() => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (hasToken()) {
+    const token = getToken();
+
+    if (token?.accessToken) {
       history.push('/');
     }
   }, [loading]);
