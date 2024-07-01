@@ -938,6 +938,51 @@ func deleteAutoOpsRules(t *testing.T, client autoopsclient.Client, id string) {
 	}
 }
 
+func TestStopAutoOpsRule(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	autoOpsClient := newAutoOpsClient(t)
+	defer autoOpsClient.Close()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+
+	featureID := createFeatureID(t)
+	createFeature(ctx, t, featureClient, featureID)
+	clauses := createDatetimeClausesWithActionType(t, 4)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
+	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+	if len(autoOpsRules) != 1 {
+		t.Fatal("not enough rules")
+	}
+	stopAutoOpsRule(t, autoOpsClient, autoOpsRules[0].Id)
+	resp, err := autoOpsClient.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
+		EnvironmentNamespace: *environmentNamespace,
+		Id:                   autoOpsRules[0].Id,
+	})
+	if resp == nil {
+		t.Fatalf("failed to get AutoOpsRule, err %d", err)
+	}
+
+	if resp.AutoOpsRule.AutoOpsStatus != autoopsproto.AutoOpsStatus_STOPPED {
+		t.Fatalf("different auto ops status, expected: %v, actual: %v", autoopsproto.AutoOpsStatus_STOPPED, resp.AutoOpsRule.AutoOpsStatus)
+	}
+}
+
+func stopAutoOpsRule(t *testing.T, client autoopsclient.Client, id string) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	_, err := client.StopAutoOpsRule(ctx, &autoopsproto.StopAutoOpsRuleRequest{
+		EnvironmentNamespace: *environmentNamespace,
+		Id:                   id,
+		Command:              &autoopsproto.StopAutoOpsRuleCommand{},
+	})
+	if err != nil {
+		t.Fatal("failed to list auto ops rules", err)
+	}
+}
+
 // Test for old SDK client
 // Evaluation field in the GoalEvent is deprecated.
 func registerGoalEventWithEvaluations(
