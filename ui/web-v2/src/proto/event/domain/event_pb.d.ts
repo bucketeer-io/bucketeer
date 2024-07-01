@@ -4067,6 +4067,11 @@ export class AutoOpsRuleCreatedEvent extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getOpsStatus(): proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap];
+  setOpsStatus(
+    value: proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap]
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AutoOpsRuleCreatedEvent.AsObject;
   static toObject(
@@ -4096,6 +4101,7 @@ export namespace AutoOpsRuleCreatedEvent {
     triggeredAt: number;
     createdAt: number;
     updatedAt: number;
+    opsStatus: proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap];
   };
 }
 
