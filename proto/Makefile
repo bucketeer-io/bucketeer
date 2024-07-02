@@ -5,6 +5,7 @@ PROTO_WITHOUT_DESCRIPTOR_FOLDERS := $(filter-out $(PROTO_WITH_DESCRIPTOR_FOLDERS
 GIT_TOP_DIR := $(shell cd .. ; pwd)
 PROTOBUF_INCLUDE_DIR := ./external/protocolbuffers/protobuf/v23.4
 GOOGLEAPIS := ./external/googleapis/googleapis/83e756a66b80b072bd234abcfe89edf459090974
+OPENAPI := ./external/openapiv2
 
 .PHONY: go
 go: remove-go
@@ -13,6 +14,7 @@ go: remove-go
 			--proto_path=${GIT_TOP_DIR} \
 			--proto_path=${PROTOBUF_INCLUDE_DIR} \
 			--proto_path=${GOOGLEAPIS} \
+			--proto_path=${OPENAPI} \
 			--go_out=plugins=grpc:${GIT_TOP_DIR} \
 			--go_opt=paths=source_relative \
 			${GIT_TOP_DIR}/proto/$$f/*.proto; \
@@ -22,6 +24,7 @@ go: remove-go
 			--proto_path=${GIT_TOP_DIR} \
 			--proto_path=${PROTOBUF_INCLUDE_DIR} \
 			--proto_path=${GOOGLEAPIS} \
+			--proto_path=${OPENAPI} \
 			--go_out=plugins=grpc:${GIT_TOP_DIR} \
 			--go_opt=paths=source_relative \
 			--include_imports \
@@ -45,8 +48,11 @@ openapi-gen: openapi-rm
 		--proto_path=${GIT_TOP_DIR} \
 		--proto_path=${PROTOBUF_INCLUDE_DIR} \
 		--proto_path=${GOOGLEAPIS} \
+		--proto_path=${OPENAPI} \
 		--proto_path=${PROTOC_GEN_OPENAPIV2} \
-		--openapi_out=${GIT_TOP_DIR}/api-description \
+		--openapiv2_out=${GIT_TOP_DIR}/api-description \
+		--openapiv2_opt output_format=yaml \
+		--openapiv2_opt allow_merge=true \
 		${GIT_TOP_DIR}/proto/gateway/*.proto; \
 
 .PHONY: openapi-rm
@@ -55,7 +61,7 @@ openapi-rm:
 
 .PHONY: openapi-ui
 openapi-ui:
-	docker run -p 80:8080 -e SWAGGER_JSON=/openapi/openapi.yaml -v ${GIT_TOP_DIR}/api-description/:/openapi swaggerapi/swagger-ui
+	docker run -p 80:8080 -e SWAGGER_JSON=/openapi/apidocs.swagger.yaml -v ${GIT_TOP_DIR}/api-description/:/openapi swaggerapi/swagger-ui
 
 go-check: go
 	test -z "$$(git diff --name-only | grep ".*\.pb.go\|.*\.pb")"

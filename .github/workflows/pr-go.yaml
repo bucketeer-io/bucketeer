@@ -18,7 +18,7 @@ env:
   GO_VERSION: 1.21.10
   PROTOLOCK_VERSION: v0.16.0
   PROTOC_GEN_GO_VERSION: v1.5.2
-  PROTOC_GEN_OPENAPI: v0.7.0
+  PROTOC_GEN_OPENAPI_V2: v2.20.0
   MOCKGEN_VERSION: v0.4.0
 
 jobs:
@@ -162,7 +162,7 @@ jobs:
           version: ${{ env.PROTOC_VERSION }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install protoc-gen-openapi
-        run: go install github.com/google/gnostic/cmd/protoc-gen-openapi@${{ env.PROTOC_GEN_OPENAPI }}
+        run: go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@${{ env.PROTOC_GEN_OPENAPI_V2 }}
       - name: Generate proto go files
         run: make proto-openapi-gen
       - name: Check diff
