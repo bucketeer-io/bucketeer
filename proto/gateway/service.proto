@@ -19,6 +19,7 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/gateway";
 
 import "google/api/annotations.proto";
 import "google/protobuf/wrappers.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 import "proto/user/user.proto";
 import "proto/feature/evaluation.proto";
@@ -175,6 +176,12 @@ service Gateway {
       post: "/ping"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Ping the server to check availability",
+      description: "This API allows you to ping the server to ensure it is available.",
+      tags: "Utility",
+      operation_id: "Gateway_Ping"
+    };
   }
   rpc GetEvaluations(GetEvaluationsRequest) returns (GetEvaluationsResponse) {
     option (google.api.http) = {
@@ -218,21 +225,45 @@ service Gateway {
       post: "/v1/features"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create",
+      description: "Create a new Feature Flag. To call this API it needs `WRITE` or `ADMIN` API Key roles.",
+      tags: "Features",
+      operation_id: "Features_Create"
+    };
   }
   rpc GetFeature(GetFeatureRequest) returns (GetFeatureResponse) {
     option (google.api.http) = {
       get: "/v1/features/{id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get a Feature Flag. To call this API it needs `READ` API Key roles.",
+      tags: "Features",
+      operation_id: "Features_Get"
     };
   }
   rpc ListFeatures(ListFeaturesRequest) returns (ListFeaturesResponse) {
     option (google.api.http) = {
       get: "/v1/features"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List",
+      description: "List Feature Flags. To call this API it needs `READ` API Key roles.",
+      tags: "Features",
+      operation_id: "Features_List"
+    };
   }
   rpc UpdateFeature(UpdateFeatureRequest) returns (UpdateFeatureResponse) {
     option (google.api.http) = {
       patch: "/v1/features/{id}"
       body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update",
+      description: "Update a Feature Flag. To call this API it needs `WRITE` or `ADMIN` API Key roles.",
+      tags: "Features",
+      operation_id: "Features_Update"
     };
   }
 }

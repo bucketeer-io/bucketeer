@@ -15755,6 +15755,27 @@
                         "value": "*"
                       }
                     ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Ping the server to check availability"
+                      },
+                      {
+                        "name": "description",
+                        "value": "This API allows you to ping the server to ensure it is available."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Utility"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "Gateway_Ping"
+                      }
+                    ]
                   }
                 ]
               },
@@ -15891,6 +15912,27 @@
                         "value": "*"
                       }
                     ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a new Feature Flag. To call this API it needs `WRITE` or `ADMIN` API Key roles."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Features"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "Features_Create"
+                      }
+                    ]
                   }
                 ]
               },
@@ -15907,6 +15949,27 @@
                         "value": "/v1/features/{id}"
                       }
                     ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get a Feature Flag. To call this API it needs `READ` API Key roles."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Features"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "Features_Get"
+                      }
+                    ]
                   }
                 ]
               },
@@ -15921,6 +15984,27 @@
                       {
                         "name": "get",
                         "value": "/v1/features"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List Feature Flags. To call this API it needs `READ` API Key roles."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Features"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "Features_List"
                       }
                     ]
                   }
@@ -15943,6 +16027,27 @@
                         "value": "*"
                       }
                     ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update a Feature Flag. To call this API it needs `WRITE` or `ADMIN` API Key roles."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Features"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "Features_Update"
+                      }
+                    ]
                   }
                 ]
               }
@@ -15955,6 +16060,9 @@
           },
           {
             "path": "google/protobuf/wrappers.proto"
+          },
+          {
+            "path": "protoc-gen-openapiv2/options/annotations.proto"
           },
           {
             "path": "proto/user/user.proto"
