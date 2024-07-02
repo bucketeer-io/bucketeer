@@ -1,5 +1,69 @@
 # Changelog
 
+## [0.4.6](https://github.com/bucketeer-io/bucketeer/compare/v0.4.5...v0.4.6) (2024-07-02)
+
+
+### Features
+
+* add create features to public api ([#1055](https://github.com/bucketeer-io/bucketeer/issues/1055)) ([a9bb720](https://github.com/bucketeer-io/bucketeer/commit/a9bb720c3d130fa1824d69c3744949486ee83d12))
+* add get feature to public API ([#1012](https://github.com/bucketeer-io/bucketeer/issues/1012)) ([92537f5](https://github.com/bucketeer-io/bucketeer/commit/92537f5dec86b3d5819edc61edf59569996e23e3))
+* add list features to public api  ([#1041](https://github.com/bucketeer-io/bucketeer/issues/1041)) ([d2ad23f](https://github.com/bucketeer-io/bucketeer/commit/d2ad23fc20c6246c912f150cc0224bdb6ef45504))
+* add stop Api for AutoOps ([#1058](https://github.com/bucketeer-io/bucketeer/issues/1058)) ([e5e0d3e](https://github.com/bucketeer-io/bucketeer/commit/e5e0d3e69b844de044ae3bf8f842be32ec65c3c9))
+* automate db migration ([#1060](https://github.com/bucketeer-io/bucketeer/issues/1060)) ([b2056f8](https://github.com/bucketeer-io/bucketeer/commit/b2056f8eb29b93b8e46adf2b8d190db621c3a9fc))
+* implement new auth architecture ([#924](https://github.com/bucketeer-io/bucketeer/issues/924)) ([0d64251](https://github.com/bucketeer-io/bucketeer/commit/0d64251c8648bb7301d6e476aa57da3cf6cb0cee))
+* implement update feature api ([#1036](https://github.com/bucketeer-io/bucketeer/issues/1036)) ([11ebd16](https://github.com/bucketeer-io/bucketeer/commit/11ebd161313f706d2919a8aa8d4149b979257801))
+* move metrics event to batch service ([#1020](https://github.com/bucketeer-io/bucketeer/issues/1020)) ([55c76a7](https://github.com/bucketeer-io/bucketeer/commit/55c76a707a2425acdf1a319d179a45a0df57a09e))
+* **ui:** add api key options of public api to form pages ([#1027](https://github.com/bucketeer-io/bucketeer/issues/1027)) ([1ac2f76](https://github.com/bucketeer-io/bucketeer/commit/1ac2f7616faecb42798c3b8a20081c7f0478a8b4))
+* **ui:** add auditlog feature detail to auditlog page ([#1043](https://github.com/bucketeer-io/bucketeer/issues/1043)) ([2ecd42e](https://github.com/bucketeer-io/bucketeer/commit/2ecd42e77fb50f31ceab8c05d4f3d42df0783f2c))
+* update storage for multi-schedule ([#1019](https://github.com/bucketeer-io/bucketeer/issues/1019)) ([b03796a](https://github.com/bucketeer-io/bucketeer/commit/b03796a2d1f2e7dac693c7ce0cc69643939eab9c))
+
+
+### Bug Fixes
+
+* envoy cannot register descriptor ([#1024](https://github.com/bucketeer-io/bucketeer/issues/1024)) ([c4b3004](https://github.com/bucketeer-io/bucketeer/commit/c4b300452a5c0c6a7295bb5684020eab75f9f84d))
+* proto clone changs empty slice to nil ([#1080](https://github.com/bucketeer-io/bucketeer/issues/1080)) ([fad28c0](https://github.com/bucketeer-io/bucketeer/commit/fad28c029ce09d0fcd90e8f304d833a388cbee90))
+* remove envirnment table insert sql ([#1063](https://github.com/bucketeer-io/bucketeer/issues/1063)) ([e771d88](https://github.com/bucketeer-io/bucketeer/commit/e771d8883081e94010ccd0773551aca57a4038f6))
+* **ui:** can't create an auto operation ([#1088](https://github.com/bucketeer-io/bucketeer/issues/1088)) ([e6220ec](https://github.com/bucketeer-io/bucketeer/commit/e6220ec896682ffa16a03247846a0c2298b0803e))
+* **ui:** incorrect and unmet peer dependency warnings ([#1039](https://github.com/bucketeer-io/bucketeer/issues/1039)) ([102c665](https://github.com/bucketeer-io/bucketeer/commit/102c6656887805ef28133cbe4efb024ac241564f))
+* **ui:** stop button translation ([#1021](https://github.com/bucketeer-io/bucketeer/issues/1021)) ([799e7fe](https://github.com/bucketeer-io/bucketeer/commit/799e7fed5658e62f574323d808cc203864c06203))
+* variation value input is now shown in add page ([#1072](https://github.com/bucketeer-io/bucketeer/issues/1072)) ([0ee8a6a](https://github.com/bucketeer-io/bucketeer/commit/0ee8a6ae9a12634cac8a1484ee79b34dd1a9aec2))
+
+
+### Miscellaneous
+
+* add generate all command to makefile ([#1047](https://github.com/bucketeer-io/bucketeer/issues/1047)) ([7e9100f](https://github.com/bucketeer-io/bucketeer/commit/7e9100f168c24e5eabc9494803e590c79ebd7af3))
+* add tags,enabled,archived to update feature api ([#1074](https://github.com/bucketeer-io/bucketeer/issues/1074)) ([544985d](https://github.com/bucketeer-io/bucketeer/commit/544985db104e18de7906f7abf8714872d94f5952))
+* bigquery emulator support arm cpu ([#1033](https://github.com/bucketeer-io/bucketeer/issues/1033)) ([20a2b8f](https://github.com/bucketeer-io/bucketeer/commit/20a2b8f26a295ad3a731d49dcaf38676bac65270))
+* change auto ops rule domain to support multi scheduling ([#994](https://github.com/bucketeer-io/bucketeer/issues/994)) ([8e112ee](https://github.com/bucketeer-io/bucketeer/commit/8e112ee0cecaff7e3dbca0c72039f13ee014b758))
+* change bigquery emulator image to bucketeer ([#1034](https://github.com/bucketeer-io/bucketeer/issues/1034)) ([f657def](https://github.com/bucketeer-io/bucketeer/commit/f657def7b3ff66579b0883944ce4d9419e0a9ca7))
+* enable eslint recommended plugins ([#1045](https://github.com/bucketeer-io/bucketeer/issues/1045)) ([f4e18ac](https://github.com/bucketeer-io/bucketeer/commit/f4e18ac36b3714d2074ac4af2c4ad6454543257a))
+* enable typescript-eslint/no-explicit-any ([#1053](https://github.com/bucketeer-io/bucketeer/issues/1053)) ([c1b6a92](https://github.com/bucketeer-io/bucketeer/commit/c1b6a920d658da73e8162724381542f7a50c5be7))
+* enable typescript-eslint/no-unused-vars ([#1051](https://github.com/bucketeer-io/bucketeer/issues/1051)) ([aee163c](https://github.com/bucketeer-io/bucketeer/commit/aee163c91f44879a87f7bba9a36337051c5a0795))
+* generate open api spec from gateway proto ([#1030](https://github.com/bucketeer-io/bucketeer/issues/1030)) ([9cc2bec](https://github.com/bucketeer-io/bucketeer/commit/9cc2becb6b9a09a59ed61dc2ea114948a4d80d13))
+* improve deployment in dev container ([#1061](https://github.com/bucketeer-io/bucketeer/issues/1061)) ([eff43ca](https://github.com/bucketeer-io/bucketeer/commit/eff43caf4b36c341f65a0de9d1b585207f6ec7b8))
+* move atlas installation to dockerfile ([#1075](https://github.com/bucketeer-io/bucketeer/issues/1075)) ([183b566](https://github.com/bucketeer-io/bucketeer/commit/183b566aa63b516d0ccd52333e82cbe146298409))
+* reformat AutoOpsStatus ([#1029](https://github.com/bucketeer-io/bucketeer/issues/1029)) ([c2b837f](https://github.com/bucketeer-io/bucketeer/commit/c2b837f3c873ced51d04e30b977fa703ea7d3424))
+* remove github token ([#1071](https://github.com/bucketeer-io/bucketeer/issues/1071)) ([c09ec8d](https://github.com/bucketeer-io/bucketeer/commit/c09ec8db8a27b16e972bf7c34db5582ffbca0b3f))
+* remove unused files ([#1068](https://github.com/bucketeer-io/bucketeer/issues/1068)) ([383366b](https://github.com/bucketeer-io/bucketeer/commit/383366b1ba3852cf2aa4cfa6d4825fd100dbe1d6))
+* run push sender when feature updated event is created ([#1054](https://github.com/bucketeer-io/bucketeer/issues/1054)) ([fae4909](https://github.com/bucketeer-io/bucketeer/commit/fae49098414b23c4c94f0aff7cad17caa48ec921))
+* set go format settings to devcontainer ([#1037](https://github.com/bucketeer-io/bucketeer/issues/1037)) ([879a818](https://github.com/bucketeer-io/bucketeer/commit/879a8187faf99c562891fd25d423e2b8a99a485c))
+* update dev container values.dev.yaml ([#1069](https://github.com/bucketeer-io/bucketeer/issues/1069)) ([07a10d0](https://github.com/bucketeer-io/bucketeer/commit/07a10d0ebada2ecdceb929dcfa4f7e908ae66083))
+* update feature returns updated object ([#1059](https://github.com/bucketeer-io/bucketeer/issues/1059)) ([ae97b4c](https://github.com/bucketeer-io/bucketeer/commit/ae97b4c8eafe0c6ef11bcdd543d231c3652c2afe))
+* update mysql version to 8.0 ([#1052](https://github.com/bucketeer-io/bucketeer/issues/1052)) ([1fde203](https://github.com/bucketeer-io/bucketeer/commit/1fde203021f4424fbe540a40992c5d65f82e6e64))
+
+
+### Reverts
+
+* default vars for dev container ([#1064](https://github.com/bucketeer-io/bucketeer/issues/1064)) ([39e5586](https://github.com/bucketeer-io/bucketeer/commit/39e5586df65b5167a2a8215a34484cc0a752a7b3))
+
+
+### Build System
+
+* **deps:** bump amannn/action-semantic-pull-request ([#1081](https://github.com/bucketeer-io/bucketeer/issues/1081)) ([bd1d960](https://github.com/bucketeer-io/bucketeer/commit/bd1d9604b73862e9f97b8ba9012a3de42611051f))
+* **deps:** bump googleapis/release-please-action ([#1048](https://github.com/bucketeer-io/bucketeer/issues/1048)) ([48dd57d](https://github.com/bucketeer-io/bucketeer/commit/48dd57dfe86c35f12fa9b3ae7362e0da0cec8833))
+* **deps:** bump the dependencies group with 12 updates ([#1049](https://github.com/bucketeer-io/bucketeer/issues/1049)) ([442b4b0](https://github.com/bucketeer-io/bucketeer/commit/442b4b0761627cb36d2b1c7bd502ac5f0d691eba))
+* **deps:** bump the dependencies group with 8 updates ([#1082](https://github.com/bucketeer-io/bucketeer/issues/1082)) ([f6cf901](https://github.com/bucketeer-io/bucketeer/commit/f6cf901ad5b619d43b783a5ece1a360d89e3a9b3))
+
 ## [0.4.5](https://github.com/bucketeer-io/bucketeer/compare/v0.4.4...v0.4.5) (2024-06-13)
 
 
