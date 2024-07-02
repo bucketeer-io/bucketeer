@@ -29,6 +29,7 @@ ROOT_DIR := $(CURDIR)/../..
 SRC_DIR := $(CURDIR)/src
 PROTOBUF_INCLUDE_DIR := $(ROOT_DIR)/proto/external/protocolbuffers/protobuf/v23.4
 GOOGLEAPIS := $(ROOT_DIR)/proto/external/googleapis/googleapis/83e756a66b80b072bd234abcfe89edf459090974
+OPENAPI := $(ROOT_DIR)/proto/external/openapi/protoc-gen-openapiv2/options
 NPM_BIN_DIR := $(CURDIR)/node_modules/.bin
 
 .PHONY: gen_proto
@@ -41,7 +42,8 @@ gen_proto: clean_proto gen_google_api
 	-I $(ROOT_DIR) \
 	-I $(PROTOBUF_INCLUDE_DIR) \
 	-I $(GOOGLEAPIS) \
-	$(shell find $(ROOT_DIR)/proto -type f -name "*.proto" -not -path "**/gateway/*.proto" -not -path "**/google/protobuf/*.proto" -not -path "**/google/api/*.proto")
+	-I $(OPENAPI) \
+	$(shell find $(ROOT_DIR)/proto -type f -name "*.proto" -not -path "**/gateway/*.proto" -not -path "**/google/protobuf/*.proto" -not -path "**/google/api/*.proto" -not -path "**/protoc-gen-openapiv2/options/*.proto")
 	yarn lintfix
 
 .PHONY: gen_google_api
@@ -53,6 +55,7 @@ gen_google_api:
 	--ts_out=service=grpc-web:$(SRC_DIR) \
 	-I $(PROTOBUF_INCLUDE_DIR) \
 	-I $(GOOGLEAPIS) \
+	-I $(OPENAPI) \
 	$(shell find $(GOOGLEAPIS) -type f -name "*.proto")
 
 .PHONY: clean_proto

@@ -15755,6 +15755,23 @@
                         "value": "*"
                       }
                     ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Ping the server to check availability"
+                      },
+                      {
+                        "name": "description",
+                        "value": "This endpoint allows you to ping the server to ensure it is available."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Utility"
+                      }
+                    ]
                   }
                 ]
               },
@@ -15955,6 +15972,9 @@
           },
           {
             "path": "google/protobuf/wrappers.proto"
+          },
+          {
+            "path": "protoc-gen-openapiv2/options/annotations.proto"
           },
           {
             "path": "proto/user/user.proto"

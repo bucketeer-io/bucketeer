@@ -24,6 +24,7 @@ require (
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/google/go-cmp v0.6.0
 	github.com/googleapis/gax-go/v2 v2.12.5
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.3
 	github.com/hashicorp/vault/api v1.14.0
 	github.com/jinzhu/copier v0.4.0
 	github.com/lib/pq v1.10.9
