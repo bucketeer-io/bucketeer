@@ -1,6 +1,6 @@
-# Database Migration
+# Database Schema Migration
 
-For migration, we use the [Atlas tool](https://github.com/ariga/atlas).
+For the database schema migration, we use the [Atlas tool](https://github.com/ariga/atlas).
 
 When you install the Bucketeer Helm application, the migration runs automatically before the Bucketeer application is installed.
 If the migration fails, it won't install the application.
@@ -9,7 +9,7 @@ If the migration fails, it won't install the application.
 
 Ensure that you have started the Minikube in the dev container and that the `localenv-mysql-0` pod is running without errors.
 
-## Connecting to MySQL
+## 1- Connecting to MySQL
 
 To connect to MySQL, you must enter the `localenv-mysql-0` pod and then connect to MySQL.
 
@@ -20,7 +20,7 @@ mysql -h localhost -u bucketeer -p bucketeer
 
 Once you are logged in, you can make your changes in the Database.
 
-## Creating Migration
+## 2- Creating Migration File
 
 To create the migration file, you must port-forward the `localenv-mysql` service before creating it.
 
@@ -42,6 +42,6 @@ For the migration file name, please use one of the following prefixes.
 
 After creating it, ensure you see the new file in the `migration/mysql` directory.
 
-## Pushing the migration file
+## 3- Pushing Migration File
 
 Create a Pull Request to push the file so that the Bucketeer helm chart can migrate it when installed.
