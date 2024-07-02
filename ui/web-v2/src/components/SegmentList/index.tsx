@@ -61,7 +61,7 @@ export const SegmentList: FC<SegmentListProps> = memo(
         case Segment.Status.UPLOADING:
           return (
             <div className="flex items-center mt-2">
-              <div className="w-6 h-6 border-4 border-t-primary rounded-full animate-spin"></div>
+              <div className="spinner"></div>
               <span className={classNames('text-xs text-gray-700 ml-2')}>
                 {f(messages.segment.status.uploading)}
               </span>

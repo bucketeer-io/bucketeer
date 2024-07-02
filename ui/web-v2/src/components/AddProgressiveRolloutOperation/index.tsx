@@ -141,9 +141,7 @@ export const AddProgressiveRolloutOperation: FC<AddProgressiveRolloutOperationPr
         ProgressiveRollout.Type.TEMPLATE_SCHEDULE;
 
       if (isLoading) {
-        return (
-          <div className="w-6 h-6 mt-2 mx-auto border-4 border-t-primary rounded-full animate-spin"></div>
-        );
+        return <div className="spinner mt-2 mx-auto"></div>;
       }
 
       if (

@@ -30,8 +30,6 @@ import {
 } from '../proto/notification/service_pb';
 import { Subscription } from '../proto/notification/subscription_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'notifications';
@@ -79,7 +77,6 @@ export const listNotification = createAsyncThunk<
   request.setSearchKeyword(params.searchKeyword);
   params.disabled != null &&
     request.setDisabled(new BoolValue().setValue(params.disabled));
-  await setupAuthToken();
   const result = await subscriptionGrpc.listSubscriptions(request);
   return result.response.toObject();
 });
@@ -118,7 +115,6 @@ export const createNotification = createAsyncThunk<
   const request = new CreateSubscriptionRequest();
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setCommand(cmd);
-  await setupAuthToken();
   await subscriptionGrpc.createSubscription(request);
 });
 
@@ -168,7 +164,6 @@ export const updateNotification = createAsyncThunk<
     }
   }
 
-  await setupAuthToken();
   await subscriptionGrpc.updateSubscription(request);
 });
 
@@ -186,7 +181,6 @@ export const enableNotification = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
   request.setCommand(new EnableSubscriptionCommand());
-  await setupAuthToken();
   await subscriptionGrpc.enableSubscription(request);
 });
 
@@ -204,7 +198,6 @@ export const disableNotification = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
   request.setCommand(new DisableSubscriptionCommand());
-  await setupAuthToken();
   await subscriptionGrpc.disableSubscription(request);
 });
 
@@ -222,7 +215,6 @@ export const deleteNotification = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
   request.setCommand(new DeleteSubscriptionCommand());
-  await setupAuthToken();
   await subscriptionGrpc.deleteSubscription(request);
 });
 

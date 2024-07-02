@@ -32,8 +32,6 @@ import {
 } from '../proto/notification/service_pb';
 import { Subscription } from '../proto/notification/subscription_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'notifications';
@@ -81,7 +79,6 @@ export const listNotification = createAsyncThunk<
   request.setSearchKeyword(params.searchKeyword);
   params.disabled != null &&
     request.setDisabled(new BoolValue().setValue(params.disabled));
-  await setupAuthToken();
   const result = await grpc.listSubscriptions(request);
   return result.response.toObject();
 });
@@ -97,7 +94,6 @@ export const getNotification = createAsyncThunk<
 >(`${MODULE_NAME}/get`, async (params) => {
   const request = new GetAdminSubscriptionRequest();
   request.setId(params.id);
-  await setupAuthToken();
   const result = await grpc.getSubscription(request);
   return result.response.toObject().subscription;
 });
@@ -134,7 +130,6 @@ export const createNotification = createAsyncThunk<
 
   const request = new CreateAdminSubscriptionRequest();
   request.setCommand(cmd);
-  await setupAuthToken();
   await grpc.createSubscription(request);
 });
 
@@ -182,7 +177,6 @@ export const updateNotification = createAsyncThunk<
     }
   }
 
-  await setupAuthToken();
   await grpc.updateSubscription(request);
 });
 
@@ -198,7 +192,6 @@ export const enableNotification = createAsyncThunk<
   const request = new EnableAdminSubscriptionRequest();
   request.setId(params.id);
   request.setCommand(new EnableAdminSubscriptionCommand());
-  await setupAuthToken();
   await grpc.enableSubscription(request);
 });
 
@@ -214,7 +207,6 @@ export const disableNotification = createAsyncThunk<
   const request = new DisableAdminSubscriptionRequest();
   request.setId(params.id);
   request.setCommand(new DisableAdminSubscriptionCommand());
-  await setupAuthToken();
   await grpc.disableSubscription(request);
 });
 
@@ -230,7 +222,6 @@ export const deleteNotification = createAsyncThunk<
   const request = new DeleteAdminSubscriptionRequest();
   request.setId(params.id);
   request.setCommand(new DeleteAdminSubscriptionCommand());
-  await setupAuthToken();
   await grpc.deleteSubscription(request);
 });
 

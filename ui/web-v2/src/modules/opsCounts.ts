@@ -11,8 +11,6 @@ import {
   ListOpsCountsResponse
 } from '../proto/autoops/service_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'opsCounts';
@@ -36,7 +34,6 @@ export const listOpsCounts = createAsyncThunk<
   const request = new ListOpsCountsRequest();
   request.setAutoOpsRuleIdsList(params.ids);
   request.setEnvironmentNamespace(params.environmentNamespace);
-  await setupAuthToken();
   const result = await autoOpsGrpc.listOpsCounts(request);
   return result.response.toObject();
 });

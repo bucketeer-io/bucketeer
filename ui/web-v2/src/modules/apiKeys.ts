@@ -24,8 +24,6 @@ import {
   ChangeAPIKeyNameRequest
 } from '../proto/account/service_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'apiKeys';
@@ -51,7 +49,6 @@ export const listAPIKeys = createAsyncThunk<
   params.disabled != null &&
     request.setDisabled(new BoolValue().setValue(params.disabled));
 
-  await setupAuthToken();
   const result = await grpc.listAPIKeys(request);
   return result.response.toObject();
 });
@@ -84,7 +81,6 @@ export const getAPIKey = createAsyncThunk<
   const request = new GetAPIKeyRequest();
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
-  await setupAuthToken();
   const result = await grpc.getAPIKey(request);
   return result.response.toObject().apiKey;
 });
@@ -103,7 +99,6 @@ export const enableAPIKey = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
   request.setCommand(new EnableAPIKeyCommand());
-  await setupAuthToken();
   await grpc.enableAPIKey(request);
 });
 
@@ -121,7 +116,6 @@ export const disableAPIKey = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
   request.setCommand(new DisableAPIKeyCommand());
-  await setupAuthToken();
   await grpc.disableAPIKey(request);
 });
 
@@ -142,7 +136,6 @@ export const createAPIKey = createAsyncThunk<
   cmd.setRole(params.role);
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setCommand(cmd);
-  await setupAuthToken();
   await grpc.createAPIKey(request);
 });
 
@@ -163,7 +156,6 @@ export const updateAPIKey = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
   request.setCommand(cmd);
-  await setupAuthToken();
   await grpc.changeAPIKeyName(request);
 });
 

@@ -44,8 +44,6 @@ import {
 } from '../proto/feature/service_pb';
 import { Variation } from '../proto/feature/variation_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'features';
@@ -108,7 +106,6 @@ export const createFeature = createAsyncThunk<
     cmd.setDefaultOffVariationIndex(int32Value);
   }
   request.setCommand(cmd);
-  await setupAuthToken();
   await featureGrpc.createFeature(request);
   return params.id;
 });
@@ -130,7 +127,6 @@ export const cloneFeature = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
   request.setCommand(cmd);
-  await setupAuthToken();
   await featureGrpc.cloneFeature(request);
   return params.id;
 });
@@ -179,7 +175,6 @@ export const listFeatures = createAsyncThunk<
       new BoolValue().setValue(params.hasPrerequisites)
     );
   request.setMaintainer(params.maintainerId);
-  await setupAuthToken();
   const result = await featureGrpc.listFeatures(request);
   return result.response.toObject();
 });
@@ -190,7 +185,6 @@ export const listTags = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/listTags`, async () => {
   const request = new ListTagsRequest();
-  await setupAuthToken();
   const result = await featureGrpc.listTags(request);
   return result.response.toObject();
 });
@@ -208,7 +202,6 @@ export const getFeature = createAsyncThunk<
   const request = new GetFeatureRequest();
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
-  await setupAuthToken();
   const result = await featureGrpc.getFeature(request);
   return result.response.toObject().feature;
 });
@@ -267,7 +260,6 @@ export const updateFeatureDetails = createAsyncThunk<
     request.setRemoveTagCommandsList(removeTagCommands);
   }
 
-  await setupAuthToken();
   await featureGrpc.updateFeatureDetails(request);
 });
 
@@ -289,7 +281,6 @@ export const updateFeatureTargeting = createAsyncThunk<
   request.setComment(params.comment);
   request.setCommandsList(params.commands);
   request.setFrom(UpdateFeatureTargetingRequest.From.USER);
-  await setupAuthToken();
   await featureGrpc.updateFeatureTargeting(request);
 });
 
@@ -310,7 +301,6 @@ export const updateFeatureVariations = createAsyncThunk<
   request.setId(params.id);
   request.setComment(params.comment);
   request.setCommandsList(params.commands);
-  await setupAuthToken();
   await featureGrpc.updateFeatureVariations(request);
 });
 
@@ -330,7 +320,6 @@ export const enableFeature = createAsyncThunk<
   request.setId(params.id);
   request.setComment(params.comment);
   request.setCommand(new EnableFeatureCommand());
-  await setupAuthToken();
   await featureGrpc.enableFeature(request);
 });
 
@@ -352,7 +341,6 @@ export const disableFeature = createAsyncThunk<
     request.setComment(params.comment);
   }
   request.setCommand(new DisableFeatureCommand());
-  await setupAuthToken();
   await featureGrpc.disableFeature(request);
 });
 
@@ -372,7 +360,6 @@ export const archiveFeature = createAsyncThunk<
   request.setId(params.id);
   request.setComment(params.comment);
   request.setCommand(new ArchiveFeatureCommand());
-  await setupAuthToken();
   await featureGrpc.archiveFeature(request);
 });
 
@@ -392,7 +379,6 @@ export const unarchiveFeature = createAsyncThunk<
   request.setId(params.id);
   request.setComment(params.comment);
   request.setCommand(new UnarchiveFeatureCommand());
-  await setupAuthToken();
   await featureGrpc.unarchiveFeature(request);
 });
 

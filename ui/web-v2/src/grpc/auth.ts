@@ -2,12 +2,12 @@ import { Nullable, isNotNull, isNull } from 'option-t/lib/Nullable/Nullable';
 
 import { urls } from '../config';
 import {
-  ExchangeTokenRequest,
-  ExchangeTokenResponse,
-  GetAuthCodeURLRequest,
-  GetAuthCodeURLResponse,
-  RefreshTokenRequest,
-  RefreshTokenResponse
+  GetAuthenticationURLRequest,
+  GetAuthenticationURLResponse,
+  ExchangeBucketeerTokenRequest,
+  ExchangeBucketeerTokenResponse,
+  RefreshBucketeerTokenRequest,
+  RefreshBucketeerTokenResponse
 } from '../proto/auth/service_pb';
 import {
   AuthServiceClient,
@@ -39,71 +39,83 @@ export class AuthServiceError<Request> extends Error {
 
 const client = new AuthServiceClient(urls.GRPC);
 
-export interface GetAuthCodeURLResult {
-  request: GetAuthCodeURLRequest;
-  response: GetAuthCodeURLResponse;
+export interface GetAuthenticationResult {
+  request: GetAuthenticationURLRequest;
+  response: GetAuthenticationURLResponse;
 }
 
-export function getAuthCodeURL(
-  request: GetAuthCodeURLRequest
-): Promise<GetAuthCodeURLResult> {
+export function getAuthenticationURL(
+  request: GetAuthenticationURLRequest
+): Promise<GetAuthenticationResult> {
   return new Promise(
-    (resolve: (result: GetAuthCodeURLResult) => void, reject): void => {
-      client.getAuthCodeURL(request, getMetaData(), (error, response): void => {
-        if (isNotNull(error) || isNull(response)) {
-          reject(
-            new AuthServiceError(extractErrorMessage(error), request, error)
-          );
-        } else {
-          resolve({ request, response });
+    (resolve: (result: GetAuthenticationResult) => void, reject): void => {
+      client.getAuthenticationURL(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new AuthServiceError(extractErrorMessage(error), request, error)
+            );
+          } else {
+            resolve({ request, response });
+          }
         }
-      });
+      );
     }
   );
 }
 
-export interface ExchangeTokenResult {
-  request: ExchangeTokenRequest;
-  response: ExchangeTokenResponse;
+export interface ExchangeBucketeerTokenResult {
+  request: ExchangeBucketeerTokenRequest;
+  response: ExchangeBucketeerTokenResponse;
 }
 
-export function exchangeToken(
-  request: ExchangeTokenRequest
-): Promise<ExchangeTokenResult> {
+export function exchangeBucketeerToken(
+  request: ExchangeBucketeerTokenRequest
+): Promise<ExchangeBucketeerTokenResult> {
   return new Promise(
-    (resolve: (result: ExchangeTokenResult) => void, reject): void => {
-      client.exchangeToken(request, getMetaData(), (error, response): void => {
-        if (isNotNull(error) || isNull(response)) {
-          reject(
-            new AuthServiceError(extractErrorMessage(error), request, error)
-          );
-        } else {
-          resolve({ request, response });
+    (resolve: (result: ExchangeBucketeerTokenResult) => void, reject): void => {
+      client.exchangeBucketeerToken(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new AuthServiceError(extractErrorMessage(error), request, error)
+            );
+          } else {
+            resolve({ request, response });
+          }
         }
-      });
+      );
     }
   );
 }
 
-export interface RefreshTokenResult {
-  request: RefreshTokenRequest;
-  response: RefreshTokenResponse;
+export interface RefreshBucketeerTokenResult {
+  request: RefreshBucketeerTokenRequest;
+  response: RefreshBucketeerTokenResponse;
 }
 
-export function refreshToken(
-  request: RefreshTokenRequest
-): Promise<RefreshTokenResult> {
+export function refreshBucketeerToken(
+  request: RefreshBucketeerTokenRequest
+): Promise<RefreshBucketeerTokenResult> {
   return new Promise(
-    (resolve: (result: RefreshTokenResult) => void, reject): void => {
-      client.refreshToken(request, getMetaData(), (error, response): void => {
-        if (isNotNull(error) || isNull(response)) {
-          reject(
-            new AuthServiceError(extractErrorMessage(error), request, error)
-          );
-        } else {
-          resolve({ request, response });
+    (resolve: (result: RefreshBucketeerTokenResult) => void, reject): void => {
+      client.refreshBucketeerToken(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new AuthServiceError(extractErrorMessage(error), request, error)
+            );
+          } else {
+            resolve({ request, response });
+          }
         }
-      });
+      );
     }
   );
 }

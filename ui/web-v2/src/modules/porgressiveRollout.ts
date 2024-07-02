@@ -19,8 +19,6 @@ import {
   StopProgressiveRolloutRequest
 } from '../proto/autoops/service_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'progressiveRollout';
@@ -47,7 +45,6 @@ export const createProgressiveRollout = createAsyncThunk<
 
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setCommand(params.command);
-  await setupAuthToken();
   await progressiveRolloutGrpc.createProgressiveRollout(request);
 });
 
@@ -64,7 +61,6 @@ export const listProgressiveRollout = createAsyncThunk<
   const request = new ListProgressiveRolloutsRequest();
   request.setFeatureIdsList([params.featureId]);
   request.setEnvironmentNamespace(params.environmentNamespace);
-  await setupAuthToken();
   const result = await progressiveRolloutGrpc.listProgressiveRollouts(request);
   return result.response.toObject();
 });
@@ -84,7 +80,6 @@ export const deleteProgressiveRollout = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   const command = new DeleteProgressiveRolloutCommand();
   request.setCommand(command);
-  await setupAuthToken();
   await progressiveRolloutGrpc.deleteProgressiveRollout(request);
 });
 
@@ -104,7 +99,6 @@ export const stopProgressiveRollout = createAsyncThunk<
   const command = new StopProgressiveRolloutCommand();
   command.setStoppedBy(ProgressiveRollout.StoppedBy.USER);
   request.setCommand(command);
-  await setupAuthToken();
   await progressiveRolloutGrpc.stopProgressiveRollout(request);
 });
 

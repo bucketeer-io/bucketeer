@@ -9,7 +9,7 @@ export const getOrganizationId = () => {
   return null;
 };
 
-export const settOrganizationId = (organizationId): void => {
+export const setOrganizationId = (organizationId): void => {
   try {
     window.localStorage.setItem(KEY, organizationId);
   } catch (error) {

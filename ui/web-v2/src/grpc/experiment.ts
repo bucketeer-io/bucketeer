@@ -33,7 +33,11 @@ import {
 } from '../proto/experiment/service_pb_service';
 
 import { extractErrorMessage } from './messages';
-import { getMetaDataForClient as getMetaData } from './utils';
+import {
+  checkTokenExpired,
+  getMetaDataForClient as getMetaData
+} from './utils';
+import { TOKEN_IS_EXPIRED } from '../middlewares/thunkErrorHandler';
 
 export class ExperimentServiceError<Request> extends Error {
   request: Request;
@@ -45,7 +49,11 @@ export class ExperimentServiceError<Request> extends Error {
     request: Request,
     error: Nullable<ServiceError>
   ) {
-    super(message);
+    if (checkTokenExpired(error.code, message)) {
+      super(TOKEN_IS_EXPIRED);
+    } else {
+      super(message);
+    }
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, ExperimentServiceError);
     }

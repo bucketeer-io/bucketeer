@@ -40,7 +40,7 @@ export const FeatureEvaluationPage: FC<FeatureEvaluationPageProps> = memo(
     if (isLoading) {
       return (
         <div className="flex pt-60 justify-center bg-gray-100">
-          <div className="w-6 h-6 border-4 border-t-primary rounded-full animate-spin"></div>
+          <div className="spinner"></div>
         </div>
       );
     }
