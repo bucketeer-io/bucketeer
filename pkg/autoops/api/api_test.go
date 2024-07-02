@@ -870,6 +870,17 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
+			desc: "err: ErrNoExecuteAutoOpsRuleCommand_ClauseId",
+			req: &autoopsproto.ExecuteAutoOpsRequest{
+				Id:                   "aid1",
+				EnvironmentNamespace: "ns0",
+				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
+					ClauseId: "",
+				},
+			},
+			expectedErr: createError(statusClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id")),
+		},
+		{
 			desc: "err: ErrNotFound",
 			setup: func(s *AutoOpsService) {
 				row := mysqlmock.NewMockRow(mockController)
@@ -902,6 +913,28 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 				Id:                                  "aid1",
 				EnvironmentNamespace:                "ns0",
 				ChangeAutoOpsRuleTriggeredAtCommand: &autoopsproto.ChangeAutoOpsRuleTriggeredAtCommand{},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success with ExecuteAutoOpsRuleCommand",
+			setup: func(s *AutoOpsService) {
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil).AnyTimes()
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &autoopsproto.ExecuteAutoOpsRequest{
+				Id:                   "aid1",
+				EnvironmentNamespace: "ns0",
+				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
+					ClauseId: "testClauseId",
+				},
 			},
 			expectedErr: nil,
 		},

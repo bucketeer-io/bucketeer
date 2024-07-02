@@ -40,15 +40,15 @@ func (m *MockAutoOpsExecutor) EXPECT() *MockAutoOpsExecutorMockRecorder {
 }
 
 // Execute mocks base method.
-func (m *MockAutoOpsExecutor) Execute(ctx context.Context, environmentNamespace, ruleID string) error {
+func (m *MockAutoOpsExecutor) Execute(ctx context.Context, environmentNamespace, ruleID, clauseId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Execute", ctx, environmentNamespace, ruleID)
+	ret := m.ctrl.Call(m, "Execute", ctx, environmentNamespace, ruleID, clauseId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Execute indicates an expected call of Execute.
-func (mr *MockAutoOpsExecutorMockRecorder) Execute(ctx, environmentNamespace, ruleID any) *gomock.Call {
+func (mr *MockAutoOpsExecutorMockRecorder) Execute(ctx, environmentNamespace, ruleID, clauseId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockAutoOpsExecutor)(nil).Execute), ctx, environmentNamespace, ruleID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockAutoOpsExecutor)(nil).Execute), ctx, environmentNamespace, ruleID, clauseId)
 }

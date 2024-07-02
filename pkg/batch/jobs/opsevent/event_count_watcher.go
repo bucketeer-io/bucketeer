@@ -92,17 +92,17 @@ func (w *eventCountWatcher) Run(ctx context.Context) (lastErr error) {
 		}
 		for _, a := range autoOpsRules {
 			aor := &autoopsdomain.AutoOpsRule{AutoOpsRule: a}
-			if aor.AlreadyTriggered() {
+			if aor.AlreadyTriggered() || aor.IsFinished() || aor.IsStopped() {
 				continue
 			}
-			asmt, err := w.assessAutoOpsRule(ctx, env.Id, aor)
+			executeId, err := w.getExecuteClauseId(ctx, env.Id, aor)
 			if err != nil {
 				lastErr = err
 			}
-			if !asmt {
+			if executeId == "" {
 				continue
 			}
-			if err = w.autoOpsExecutor.Execute(ctx, env.Id, a.Id); err != nil {
+			if err = w.autoOpsExecutor.Execute(ctx, env.Id, a.Id, executeId); err != nil {
 				lastErr = err
 			}
 		}
@@ -135,11 +135,11 @@ func (w *eventCountWatcher) listAutoOpsRules(
 	return resp.AutoOpsRules, nil
 }
 
-func (w *eventCountWatcher) assessAutoOpsRule(
+func (w *eventCountWatcher) getExecuteClauseId(
 	ctx context.Context,
 	environmentNamespace string,
 	a *autoopsdomain.AutoOpsRule,
-) (bool, error) {
+) (string, error) {
 	opsEventRateClauses, err := a.ExtractOpsEventRateClauses()
 	if err != nil {
 		w.logger.Error("Failed to extract ops event rate clauses", zap.Error(err),
@@ -147,7 +147,7 @@ func (w *eventCountWatcher) assessAutoOpsRule(
 			zap.String("featureId", a.FeatureId),
 			zap.String("autoOpsRuleId", a.Id),
 		)
-		return false, err
+		return "", err
 	}
 	featureVersion, err := w.getLatestFeatureVersion(ctx, a.FeatureId, environmentNamespace)
 	if err != nil {
@@ -156,7 +156,7 @@ func (w *eventCountWatcher) assessAutoOpsRule(
 			zap.String("featureId", a.FeatureId),
 			zap.String("autoOpsRuleId", a.Id),
 		)
-		return false, err
+		return "", err
 	}
 	var lastErr error
 	for id, c := range opsEventRateClauses {
@@ -213,10 +213,10 @@ func (w *eventCountWatcher) assessAutoOpsRule(
 				zap.String("autoOpsRuleId", a.Id),
 				zap.Any("opsEventRateClause", c),
 			)
-			return true, nil
+			return id, nil
 		}
 	}
-	return false, lastErr
+	return "", lastErr
 }
 
 func (w *eventCountWatcher) getLatestFeatureVersion(

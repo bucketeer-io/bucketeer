@@ -47,6 +47,7 @@ const (
 	AutoOperation                = "AutoOperation"
 	AutoOperationType            = "AutoOperationType"
 	AutoOperationExecutionTime   = "AutoOperationExecutionTime"
+	AutoOperationStatus          = "AutoOperationStatus"
 	APIKey                       = "APIKey"
 	Datetime                     = "Datetime"
 	DefaultStrategy              = "DefaultStrategy"

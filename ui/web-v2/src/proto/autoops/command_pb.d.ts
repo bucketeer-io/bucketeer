@@ -180,6 +180,70 @@ export namespace ChangeAutoOpsRuleTriggeredAtCommand {
   export type AsObject = {};
 }
 
+export class ChangeAutoOpsStatusCommand extends jspb.Message {
+  getStatus(): proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap];
+  setStatus(
+    value: proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap]
+  ): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ChangeAutoOpsStatusCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ChangeAutoOpsStatusCommand
+  ): ChangeAutoOpsStatusCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ChangeAutoOpsStatusCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ChangeAutoOpsStatusCommand;
+  static deserializeBinaryFromReader(
+    message: ChangeAutoOpsStatusCommand,
+    reader: jspb.BinaryReader
+  ): ChangeAutoOpsStatusCommand;
+}
+
+export namespace ChangeAutoOpsStatusCommand {
+  export type AsObject = {
+    status: proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap];
+  };
+}
+
+export class ExecuteAutoOpsRuleCommand extends jspb.Message {
+  getClauseId(): string;
+  setClauseId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ExecuteAutoOpsRuleCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ExecuteAutoOpsRuleCommand
+  ): ExecuteAutoOpsRuleCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ExecuteAutoOpsRuleCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ExecuteAutoOpsRuleCommand;
+  static deserializeBinaryFromReader(
+    message: ExecuteAutoOpsRuleCommand,
+    reader: jspb.BinaryReader
+  ): ExecuteAutoOpsRuleCommand;
+}
+
+export namespace ExecuteAutoOpsRuleCommand {
+  export type AsObject = {
+    clauseId: string;
+  };
+}
+
 export class AddOpsEventRateClauseCommand extends jspb.Message {
   hasOpsEventRateClause(): boolean;
   clearOpsEventRateClause(): void;

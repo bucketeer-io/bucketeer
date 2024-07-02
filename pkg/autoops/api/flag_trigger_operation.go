@@ -31,15 +31,15 @@ func executeAutoOpsRuleOperation(
 	ctx context.Context,
 	ftStorage ftstorage.FeatureStorage,
 	environmentNamespace string,
-	autoOpsRuleType autoopsproto.OpsType,
+	actionType autoopsproto.ActionType,
 	feature *ftdomain.Feature,
 	logger *zap.Logger,
 	localizer locale.Localizer,
 ) error {
-	switch autoOpsRuleType {
-	case autoopsproto.OpsType_ENABLE_FEATURE:
+	switch actionType {
+	case autoopsproto.ActionType_ENABLE:
 		return enableFeature(ctx, ftStorage, environmentNamespace, feature, logger)
-	case autoopsproto.OpsType_DISABLE_FEATURE:
+	case autoopsproto.ActionType_DISABLE:
 		return disableFeature(ctx, ftStorage, environmentNamespace, feature, logger)
 	}
 	dt, err := statusUnknownOpsType.WithDetails(&errdetails.LocalizedMessage{

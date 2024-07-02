@@ -305,7 +305,7 @@ func TestDatetimeWatcher(t *testing.T) {
 			nil,
 		)
 		mockAutoOpsExecutor.EXPECT().
-			Execute(gomock.Any(), gomock.Any(), gomock.Any()).
+			Execute(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			Times(1).
 			Return(nil)
 	}
@@ -405,7 +405,7 @@ func TestEventCountWatcher(t *testing.T) {
 			Times(2).
 			Return(nil, nil)
 		mockAutoOpsExecutor.EXPECT().
-			Execute(gomock.Any(), gomock.Any(), gomock.Any()).
+			Execute(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 			Times(2).
 			Return(nil)
 

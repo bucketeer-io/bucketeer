@@ -36,7 +36,17 @@ message DeleteAutoOpsRuleCommand {}
 
 message StopAutoOpsRuleCommand {}
 
+// TODO: Remove this function after auto ops migration.
+// Deprecated
 message ChangeAutoOpsRuleTriggeredAtCommand {}
+
+message ChangeAutoOpsStatusCommand {
+  AutoOpsStatus status = 1;
+}
+
+message ExecuteAutoOpsRuleCommand {
+  string clause_id = 1;
+}
 
 message AddOpsEventRateClauseCommand {
   OpsEventRateClause ops_event_rate_clause = 1;

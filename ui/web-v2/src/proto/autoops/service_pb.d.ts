@@ -501,6 +501,15 @@ export class ExecuteAutoOpsRequest extends jspb.Message {
     value?: proto_autoops_command_pb.ChangeAutoOpsRuleTriggeredAtCommand
   ): void;
 
+  hasExecuteAutoOpsRuleCommand(): boolean;
+  clearExecuteAutoOpsRuleCommand(): void;
+  getExecuteAutoOpsRuleCommand():
+    | proto_autoops_command_pb.ExecuteAutoOpsRuleCommand
+    | undefined;
+  setExecuteAutoOpsRuleCommand(
+    value?: proto_autoops_command_pb.ExecuteAutoOpsRuleCommand
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ExecuteAutoOpsRequest.AsObject;
   static toObject(
@@ -527,6 +536,7 @@ export namespace ExecuteAutoOpsRequest {
     environmentNamespace: string;
     id: string;
     changeAutoOpsRuleTriggeredAtCommand?: proto_autoops_command_pb.ChangeAutoOpsRuleTriggeredAtCommand.AsObject;
+    executeAutoOpsRuleCommand?: proto_autoops_command_pb.ExecuteAutoOpsRuleCommand.AsObject;
   };
 }
 

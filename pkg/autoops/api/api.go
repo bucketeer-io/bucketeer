@@ -1051,32 +1051,33 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		if err != nil {
 			return err
 		}
+
+		var executeClause *autoopsproto.Clause = nil
+		for _, c := range autoOpsRule.Clauses {
+			if c.Id == req.ExecuteAutoOpsRuleCommand.ClauseId {
+				executeClause = c
+			}
+		}
+
+		if executeClause == nil {
+			dt, err := statusClauseNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+
 		ftStorage := ftstorage.NewFeatureStorage(tx)
 		feature, err := ftStorage.GetFeature(ctx, autoOpsRule.FeatureId, req.EnvironmentNamespace)
 		if err != nil {
 			return err
 		}
 		prStorage := v2as.NewProgressiveRolloutStorage(tx)
-		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
-		if err := handler.Handle(ctx, req.ChangeAutoOpsRuleTriggeredAtCommand); err != nil {
-			return err
-		}
-		if err = autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentNamespace); err != nil {
-			if err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
-				s.logger.Warn(
-					"No rows were affected",
-					log.FieldsFromImcomingContext(ctx).AddFields(
-						zap.Error(err),
-						zap.String("id", req.Id),
-						zap.String("environmentNamespace", req.EnvironmentNamespace),
-					)...,
-				)
-				return nil
-			}
-			return err
-		}
 		// Stop the running progressive rollout if the operation type is disable
-		if autoOpsRule.OpsType == autoopsproto.OpsType_DISABLE_FEATURE {
+		if autoOpsRule.OpsType == autoopsproto.OpsType_DISABLE_FEATURE || executeClause.ActionType == autoopsproto.ActionType_DISABLE {
 			if err := s.stopProgressiveRollout(
 				ctx,
 				req.EnvironmentNamespace,
@@ -1091,7 +1092,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			ctx,
 			ftStorage,
 			req.EnvironmentNamespace,
-			autoOpsRule.OpsType,
+			executeClause.ActionType,
 			feature,
 			s.logger,
 			localizer,
@@ -1105,6 +1106,33 @@ func (s *AutoOpsService) ExecuteAutoOps(
 					zap.String("featureId", autoOpsRule.FeatureId),
 				)...,
 			)
+			return err
+		}
+		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+		if err := handler.Handle(ctx, req.ChangeAutoOpsRuleTriggeredAtCommand); err != nil {
+			return err
+		}
+
+		opsStatus := autoopsproto.AutoOpsStatus_RUNNING
+		if autoOpsRule.Clauses[len(autoOpsRule.Clauses)-1].Id == req.ExecuteAutoOpsRuleCommand.ClauseId {
+			opsStatus = autoopsproto.AutoOpsStatus_FINISHED
+		}
+		if err := handler.Handle(ctx, &autoopsproto.ChangeAutoOpsStatusCommand{Status: opsStatus}); err != nil {
+			return err
+		}
+
+		if err = autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentNamespace); err != nil {
+			if err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
+				s.logger.Warn(
+					"No rows were affected",
+					log.FieldsFromImcomingContext(ctx).AddFields(
+						zap.Error(err),
+						zap.String("id", req.Id),
+						zap.String("environmentNamespace", req.EnvironmentNamespace),
+					)...,
+				)
+				return nil
+			}
 			return err
 		}
 		return nil
@@ -1224,10 +1252,20 @@ func (s *AutoOpsService) validateExecuteAutoOpsRequest(
 		}
 		return dt.Err()
 	}
-	if req.ChangeAutoOpsRuleTriggeredAtCommand == nil {
+	if req.ChangeAutoOpsRuleTriggeredAtCommand == nil && req.ExecuteAutoOpsRuleCommand == nil {
 		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.ExecuteAutoOpsRuleCommand != nil && req.ExecuteAutoOpsRuleCommand.ClauseId == "" {
+		dt, err := statusClauseRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id"),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -1280,7 +1318,7 @@ func (s *AutoOpsService) checkIfHasAlreadyTriggered(
 		}
 		return false, dt.Err()
 	}
-	if autoOpsRule.AlreadyTriggered() {
+	if autoOpsRule.AlreadyTriggered() || autoOpsRule.IsFinished() || autoOpsRule.IsStopped() || autoOpsRule.Deleted {
 		s.logger.Warn(
 			"Auto Ops Rule already triggered",
 			log.FieldsFromImcomingContext(ctx).AddFields(
