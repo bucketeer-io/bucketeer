@@ -353,7 +353,7 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
           ProgressiveRollout.Type.TEMPLATE_SCHEDULE &&
         Number(increments) > 0
       ) {
-        const scheduleList = Array(Math.ceil(100 / increments))
+        const newScheduleList = Array(Math.ceil(100 / increments))
           .fill('')
           .map((_, index) => {
             // increment each schedule by {interval}
@@ -370,9 +370,15 @@ const TemplateProgressiveRollout: FC<TemplateProgressiveRolloutProps> = memo(
               weight: weight > 100 ? 100 : Math.round(weight * 100) / 100
             };
           });
-        setValue('progressiveRollout.template.schedulesList', scheduleList);
+        // Only update the value if different
+        if (JSON.stringify(schedulesList) !== JSON.stringify(newScheduleList)) {
+          setValue(
+            'progressiveRollout.template.schedulesList',
+            newScheduleList
+          );
+        }
       }
-    }, [datetime.time, interval, increments]);
+    }, [datetime.time, interval, increments, setValue]);
 
     const intervalOptions = [
       {

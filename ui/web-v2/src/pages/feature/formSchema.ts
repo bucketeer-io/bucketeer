@@ -185,7 +185,6 @@ const schedulesListSchema = yup.array().of(
 );
 
 export const operationFormSchema = yup.object().shape({
-  foo: yup.string().required(),
   opsType: yup.mixed<OpsTypeMap[keyof OpsTypeMap]>().required(),
   clauseType: yup.string().required(),
   datetime: yup.object().shape({
