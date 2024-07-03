@@ -16,6 +16,7 @@ const nameSchema = yup.string().required().max(SEGMENT_NAME_MAX_LENGTH);
 const descriptionSchema = yup.string().max(SEGMENT_DESCRIPTION_MAX_LENGTH);
 const fileSchema = yup
   .mixed()
+  .nullable()
   .test(
     'fileSize',
     intl.formatMessage(messages.segment.fileUpload.fileMaxSize),
