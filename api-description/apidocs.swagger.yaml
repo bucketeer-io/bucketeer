@@ -1,9 +1,12 @@
 swagger: "2.0"
 info:
-  title: proto/gateway/service.proto
-  version: version not set
+  title: Bucketeer Gateway Service
+  version: "1.0"
 tags:
   - name: Gateway
+host: ENDPOINT
+schemes:
+  - https
 consumes:
   - application/json
 produces:
@@ -11,12 +14,41 @@ produces:
 paths:
   /get_evaluation:
     post:
-      operationId: Gateway_GetEvaluation
+      summary: Get Evaluation
+      description: Gets a single evaluation for a specific user. To call this API, you need a `CLIENT` API Key role.
+      operationId: api.gateway.get_evaluation
       responses:
         "200":
           description: A successful response.
           schema:
             $ref: '#/definitions/gatewayGetEvaluationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
         default:
           description: An unexpected error response.
           schema:
@@ -27,16 +59,50 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/gatewayGetEvaluationRequest'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
       tags:
-        - Gateway
+        - Client and Server SDKs
   /get_evaluations:
     post:
-      operationId: Gateway_GetEvaluations
+      summary: Get Evaluations
+      description: Gets all the evaluations for a specific user. To call this API, you need a `CLIENT` API Key role.
+      operationId: api.gateway.get_evaluations
       responses:
         "200":
           description: A successful response.
           schema:
             $ref: '#/definitions/gatewayGetEvaluationsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
         default:
           description: An unexpected error response.
           schema:
@@ -47,16 +113,50 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/gatewayGetEvaluationsRequest'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
       tags:
-        - Gateway
+        - Client and Server SDKs
   /get_feature_flags:
     post:
-      operationId: Gateway_GetFeatureFlags
+      summary: Get Feature Flags
+      description: Gets all the feature flag in an environment. To call this API, it needs `SERVER` API Key role.
+      operationId: api.gateway.get_feature_flags
       responses:
         "200":
           description: A successful response.
           schema:
             $ref: '#/definitions/gatewayGetFeatureFlagsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
         default:
           description: An unexpected error response.
           schema:
@@ -67,16 +167,50 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/gatewayGetFeatureFlagsRequest'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
       tags:
-        - Gateway
+        - Client and Server SDKs
   /get_segment_users:
     post:
-      operationId: Gateway_GetSegmentUsers
+      summary: Get Segment Users
+      description: Gets all the segment users in an environment. To call this API, it needs `SERVER` API Key role.
+      operationId: api.gateway.get_segment_users
       responses:
         "200":
           description: A successful response.
           schema:
             $ref: '#/definitions/gatewayGetSegmentUsersResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
         default:
           description: An unexpected error response.
           schema:
@@ -87,38 +221,100 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/gatewayGetSegmentUsersRequest'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
       tags:
-        - Gateway
+        - Client and Server SDKs
   /ping:
-    post:
-      summary: Ping the server to check availability
-      description: This API allows you to ping the server to ensure it is available.
-      operationId: Gateway_Ping
+    get:
+      summary: Ping
+      description: Ping the server to check its availability.
+      operationId: api.gateway.ping
       responses:
         "200":
           description: A successful response.
           schema:
             $ref: '#/definitions/gatewayPingResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
         default:
           description: An unexpected error response.
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
-        - name: body
-          in: body
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
           required: true
-          schema:
-            $ref: '#/definitions/gatewayPingRequest'
+          type: string
       tags:
         - Utility
+      security: []
   /register_events:
     post:
-      operationId: Gateway_RegisterEvents
+      summary: Register Events
+      description: This API is for reporting Goal events. To call this API, it needs a `CLIENT` or `SERVER` API Key role.
+      operationId: api.gateway.register_events
       responses:
         "200":
           description: A successful response.
           schema:
             $ref: '#/definitions/gatewayRegisterEventsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
         default:
           description: An unexpected error response.
           schema:
@@ -129,16 +325,50 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/gatewayRegisterEventsRequest'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
       tags:
-        - Gateway
+        - Client and Server SDKs
   /track:
     get:
-      operationId: Gateway_Track
+      summary: Track
+      description: This API is an integration for Google Tab Manager to report Goal events. To call this API, you need a `CLIENT` API Key role.
+      operationId: api.gateway.track
       responses:
         "200":
           description: A successful response.
           schema:
             $ref: '#/definitions/gatewayTrackResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
         default:
           description: An unexpected error response.
           schema:
@@ -171,17 +401,44 @@ paths:
           type: number
           format: double
       tags:
-        - Gateway
+        - Client and Server SDKs
   /v1/features:
     get:
       summary: List
-      description: List Feature Flags. To call this API it needs `READ` API Key roles.
-      operationId: Features_List
+      description: List Feature Flags. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.features.list
       responses:
         "200":
           description: A successful response.
           schema:
             $ref: '#/definitions/bucketeergatewayListFeaturesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
         default:
           description: An unexpected error response.
           schema:
@@ -216,17 +473,49 @@ paths:
             - ASC
             - DESC
           default: ASC
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
       tags:
-        - Features
+        - Feature Flags
     post:
       summary: Create
-      description: Create a new Feature Flag. To call this API it needs `WRITE` or `ADMIN` API Key roles.
-      operationId: Features_Create
+      description: Create a new Feature Flag. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.features.create
       responses:
         "200":
           description: A successful response.
           schema:
             $ref: '#/definitions/bucketeergatewayCreateFeatureResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
         default:
           description: An unexpected error response.
           schema:
@@ -237,18 +526,50 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/bucketeergatewayCreateFeatureRequest'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
       tags:
-        - Features
+        - Feature Flags
   /v1/features/{id}:
     get:
       summary: Get
-      description: Get a Feature Flag. To call this API it needs `READ` API Key roles.
-      operationId: Features_Get
+      description: Get a Feature Flag. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.features.get
       responses:
         "200":
           description: A successful response.
           schema:
             $ref: '#/definitions/bucketeergatewayGetFeatureResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
         default:
           description: An unexpected error response.
           schema:
@@ -258,17 +579,49 @@ paths:
           in: path
           required: true
           type: string
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
       tags:
-        - Features
+        - Feature Flags
     patch:
       summary: Update
-      description: Update a Feature Flag. To call this API it needs `WRITE` or `ADMIN` API Key roles.
-      operationId: Features_Update
+      description: Update a Feature Flag. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.features.update
       responses:
         "200":
           description: A successful response.
           schema:
             $ref: '#/definitions/bucketeergatewayUpdateFeatureResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
         default:
           description: An unexpected error response.
           schema:
@@ -283,8 +636,13 @@ paths:
           required: true
           schema:
             $ref: '#/definitions/GatewayUpdateFeatureBody'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
       tags:
-        - Features
+        - Feature Flags
 definitions:
   ClauseOperator:
     type: string
@@ -815,8 +1173,6 @@ definitions:
         format: int64
       forceUpdate:
         type: boolean
-  gatewayPingRequest:
-    type: object
   gatewayPingResponse:
     type: object
     properties:
@@ -997,3 +1353,11 @@ definitions:
       createdAt:
         type: string
         format: int64
+securityDefinitions:
+  ApiKeyAuth:
+    type: apiKey
+    description: The API Key generated on the Admin Console.
+    name: authorization
+    in: header
+security:
+  - ApiKeyAuth: []

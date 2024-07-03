@@ -15739,47 +15739,6 @@
             "name": "Gateway",
             "rpcs": [
               {
-                "name": "Ping",
-                "in_type": "PingRequest",
-                "out_type": "PingResponse",
-                "options": [
-                  {
-                    "name": "(google.api.http)",
-                    "aggregated": [
-                      {
-                        "name": "post",
-                        "value": "/ping"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
-                      }
-                    ]
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
-                    "aggregated": [
-                      {
-                        "name": "summary",
-                        "value": "Ping the server to check availability"
-                      },
-                      {
-                        "name": "description",
-                        "value": "This API allows you to ping the server to ensure it is available."
-                      },
-                      {
-                        "name": "tags",
-                        "value": "Utility"
-                      },
-                      {
-                        "name": "operation_id",
-                        "value": "Gateway_Ping"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
                 "name": "GetEvaluations",
                 "in_type": "GetEvaluationsRequest",
                 "out_type": "GetEvaluationsResponse",
@@ -15794,6 +15753,53 @@
                       {
                         "name": "body",
                         "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Evaluations"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Gets all the evaluations for a specific user. To call this API, you need a `CLIENT` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Client and Server SDKs"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.get_evaluations"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
                       }
                     ]
                   }
@@ -15816,6 +15822,53 @@
                         "value": "*"
                       }
                     ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Evaluation"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Gets a single evaluation for a specific user. To call this API, you need a `CLIENT` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Client and Server SDKs"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.get_evaluation"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ]
               },
@@ -15834,6 +15887,53 @@
                       {
                         "name": "body",
                         "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Feature Flags"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Gets all the feature flag in an environment. To call this API, it needs `SERVER` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Client and Server SDKs"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.get_feature_flags"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
                       }
                     ]
                   }
@@ -15856,6 +15956,53 @@
                         "value": "*"
                       }
                     ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Segment Users"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Gets all the segment users in an environment. To call this API, it needs `SERVER` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Client and Server SDKs"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.get_segment_users"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ]
               },
@@ -15876,6 +16023,53 @@
                         "value": "*"
                       }
                     ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Register Events"
+                      },
+                      {
+                        "name": "description",
+                        "value": "This API is for reporting Goal events. To call this API, it needs a `CLIENT` or `SERVER` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Client and Server SDKs"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.register_events"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ]
               },
@@ -15890,6 +16084,27 @@
                       {
                         "name": "get",
                         "value": "/track"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Track"
+                      },
+                      {
+                        "name": "description",
+                        "value": "This API is an integration for Google Tab Manager to report Goal events. To call this API, you need a `CLIENT` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Client and Server SDKs"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.track"
                       }
                     ]
                   }
@@ -15922,15 +16137,41 @@
                       },
                       {
                         "name": "description",
-                        "value": "Create a new Feature Flag. To call this API it needs `WRITE` or `ADMIN` API Key roles."
+                        "value": "Create a new Feature Flag. To call this API, you need a `WRITE` or `ADMIN` API Key role."
                       },
                       {
                         "name": "tags",
-                        "value": "Features"
+                        "value": "Feature Flags"
                       },
                       {
                         "name": "operation_id",
-                        "value": "Features_Create"
+                        "value": "api.gateway.v1.features.create"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
                       }
                     ]
                   }
@@ -15959,15 +16200,41 @@
                       },
                       {
                         "name": "description",
-                        "value": "Get a Feature Flag. To call this API it needs `READ` API Key roles."
+                        "value": "Get a Feature Flag. To call this API, you need a `READ` API Key role."
                       },
                       {
                         "name": "tags",
-                        "value": "Features"
+                        "value": "Feature Flags"
                       },
                       {
                         "name": "operation_id",
-                        "value": "Features_Get"
+                        "value": "api.gateway.v1.features.get"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
                       }
                     ]
                   }
@@ -15996,15 +16263,41 @@
                       },
                       {
                         "name": "description",
-                        "value": "List Feature Flags. To call this API it needs `READ` API Key roles."
+                        "value": "List Feature Flags. To call this API, you need a `READ` API Key role."
                       },
                       {
                         "name": "tags",
-                        "value": "Features"
+                        "value": "Feature Flags"
                       },
                       {
                         "name": "operation_id",
-                        "value": "Features_List"
+                        "value": "api.gateway.v1.features.list"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
                       }
                     ]
                   }
@@ -16037,15 +16330,107 @@
                       },
                       {
                         "name": "description",
-                        "value": "Update a Feature Flag. To call this API it needs `WRITE` or `ADMIN` API Key roles."
+                        "value": "Update a Feature Flag. To call this API, you need a `WRITE` or `ADMIN` API Key role."
                       },
                       {
                         "name": "tags",
-                        "value": "Features"
+                        "value": "Feature Flags"
                       },
                       {
                         "name": "operation_id",
-                        "value": "Features_Update"
+                        "value": "api.gateway.v1.features.update"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "Ping",
+                "in_type": "PingRequest",
+                "out_type": "PingResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/ping"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Ping"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Ping the server to check its availability."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Utility"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.ping"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "security"
                       }
                     ]
                   }
@@ -16093,6 +16478,227 @@
           {
             "name": "go_package",
             "value": "github.com/bucketeer-io/bucketeer/proto/gateway"
+          },
+          {
+            "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger)",
+            "aggregated": [
+              {
+                "name": "info",
+                "aggregated": [
+                  {
+                    "name": "title",
+                    "value": "Bucketeer Gateway Service"
+                  },
+                  {
+                    "name": "version",
+                    "value": "1.0"
+                  }
+                ]
+              },
+              {
+                "name": "schemes",
+                "value": "HTTPS"
+              },
+              {
+                "name": "host",
+                "value": "ENDPOINT"
+              },
+              {
+                "name": "consumes",
+                "value": "application/json"
+              },
+              {
+                "name": "produces",
+                "value": "application/json"
+              },
+              {
+                "name": "security_definitions",
+                "aggregated": [
+                  {
+                    "name": "security",
+                    "aggregated": [
+                      {
+                        "name": "key",
+                        "value": "ApiKeyAuth"
+                      },
+                      {
+                        "name": "value",
+                        "aggregated": [
+                          {
+                            "name": "type",
+                            "value": "TYPE_API_KEY"
+                          },
+                          {
+                            "name": "in",
+                            "value": "IN_HEADER"
+                          },
+                          {
+                            "name": "name",
+                            "value": "authorization"
+                          },
+                          {
+                            "name": "description",
+                            "value": "The API Key generated on the Admin Console."
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "security",
+                "aggregated": [
+                  {
+                    "name": "security_requirement",
+                    "aggregated": [
+                      {
+                        "name": "key",
+                        "value": "ApiKeyAuth"
+                      },
+                      {
+                        "name": "value"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "responses",
+                "aggregated": [
+                  {
+                    "name": "key",
+                    "value": "400"
+                  },
+                  {
+                    "name": "value",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "Returned for bad requests that may have failed validation."
+                      },
+                      {
+                        "name": "schema",
+                        "aggregated": [
+                          {
+                            "name": "json_schema",
+                            "aggregated": [
+                              {
+                                "name": "ref",
+                                "value": ".google.rpc.Status"
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "examples",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "application/json"
+                          },
+                          {
+                            "name": "value",
+                            "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "responses",
+                "aggregated": [
+                  {
+                    "name": "key",
+                    "value": "401"
+                  },
+                  {
+                    "name": "value",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "Request could not be authenticated (authentication required)."
+                      },
+                      {
+                        "name": "schema",
+                        "aggregated": [
+                          {
+                            "name": "json_schema",
+                            "aggregated": [
+                              {
+                                "name": "ref",
+                                "value": ".google.rpc.Status"
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "examples",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "application/json"
+                          },
+                          {
+                            "name": "value",
+                            "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "responses",
+                "aggregated": [
+                  {
+                    "name": "key",
+                    "value": "403"
+                  },
+                  {
+                    "name": "value",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "Request does not have permission to access the resource."
+                      },
+                      {
+                        "name": "schema",
+                        "aggregated": [
+                          {
+                            "name": "json_schema",
+                            "aggregated": [
+                              {
+                                "name": "ref",
+                                "value": ".google.rpc.Status"
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "examples",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "application/json"
+                          },
+                          {
+                            "name": "value",
+                            "value": "{\"code\":7,\"message\":\"not authorized\",\"details\":[]}"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       }
