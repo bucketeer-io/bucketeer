@@ -1077,7 +1077,8 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		}
 		prStorage := v2as.NewProgressiveRolloutStorage(tx)
 		// Stop the running progressive rollout if the operation type is disable
-		if autoOpsRule.OpsType == autoopsproto.OpsType_DISABLE_FEATURE || executeClause.ActionType == autoopsproto.ActionType_DISABLE {
+		if autoOpsRule.OpsType == autoopsproto.OpsType_DISABLE_FEATURE ||
+			executeClause.ActionType == autoopsproto.ActionType_DISABLE {
 			if err := s.stopProgressiveRollout(
 				ctx,
 				req.EnvironmentNamespace,
