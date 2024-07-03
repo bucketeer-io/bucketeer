@@ -4,6 +4,7 @@ import { isNotNull, isNull } from 'option-t/lib/Nullable/Nullable';
 
 import { LocalizedMessage } from '../proto/external/googleapis/googleapis/83e756a66b80b072bd234abcfe89edf459090974/google/rpc/error_details_pb';
 import { Status } from '../proto/external/googleapis/googleapis/83e756a66b80b072bd234abcfe89edf459090974/google/rpc/status_pb';
+import { TOKEN_IS_EXPIRED } from '../middlewares/thunkErrorHandler';
 
 export const DEFAULT_ERROR = 'unknown error';
 
@@ -12,19 +13,28 @@ export const STATUS_DETAILS_BIN_KEY = 'grpc-status-details-bin';
 export const LOCALIZED_MESSAGE_TYPE = 'google.rpc.LocalizedMessage';
 
 export interface ServiceError {
+  message: string;
   metadata: BrowserHeaders;
 }
 
 export const extractErrorMessage = (error: Nullable<ServiceError>): string => {
+  const { message, metadata } = error;
+
+  if (message?.includes(TOKEN_IS_EXPIRED)) {
+    return TOKEN_IS_EXPIRED;
+  }
+
   if (isNull(error)) {
     return DEFAULT_ERROR;
   }
 
-  const status = deserializeStatus(error.metadata);
+  const status = deserializeStatus(metadata);
+
   if (isNull(status)) {
     return DEFAULT_ERROR;
   }
   const localizedMessage = deserializeLocalizedMessage(status);
+
   if (isNull(localizedMessage)) {
     return DEFAULT_ERROR;
   }

@@ -36,10 +36,11 @@ export const thunkErrorHandler: Middleware =
         if (action.error.message === TOKEN_IS_EXPIRED) {
           const token = getToken();
           dispatch(refreshBucketeerToken({ token: token.refreshToken }));
+        } else {
+          dispatch(
+            addToast({ message: action.error.message, severity: 'error' })
+          );
         }
-        dispatch(
-          addToast({ message: action.error.message, severity: 'error' })
-        );
       }
     }
 
