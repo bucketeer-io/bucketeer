@@ -143,7 +143,7 @@ export const ExperimentList: FC<ExperimentListProps> = memo(
                   {f(messages.experiment.list.noData.description)}
                 </p>
                 <a
-                  href="https://bucketeer.io/docs#/running-abn-tests?id=running-abn-tests"
+                  href="https://docs.bucketeer.io/feature-flags/testing-with-flags"
                   target="_blank"
                   rel="noreferrer"
                   className="link"

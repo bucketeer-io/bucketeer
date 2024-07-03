@@ -263,7 +263,7 @@ const NoData: FC<NoDataProps> = ({ searchOptions }) => {
           </h1>
           <p className="mt-5">{f(messages.auditLog.list.noData.description)}</p>
           <a
-            href="https://bucketeer.io/docs#/audit-logs?id=environment-audit-logs"
+            href="https://docs.bucketeer.io/feature-flags/audit-logs"
             target="_blank"
             rel="noreferrer"
             className="link"

@@ -330,7 +330,7 @@ export const FeatureList: FC<FeatureListProps> = memo(
                   {f(messages.feature.list.noData.description)}
                 </p>
                 <a
-                  href="https://bucketeer.io/docs#/creating-a-feature-flag?id=create-a-feature-flag"
+                  href="https://docs.bucketeer.io/feature-flags/creating-feature-flags/create-feature-flag"
                   target="_blank"
                   rel="noreferrer"
                   className="link"
