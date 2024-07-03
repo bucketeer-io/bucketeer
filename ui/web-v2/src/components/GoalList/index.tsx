@@ -119,7 +119,7 @@ export const GoalList: FC<GoalListProps> = memo(
                   {f(messages.goal.list.noData.description)}
                 </p>
                 <a
-                  href="https://bucketeer.io/docs#/running-abn-tests?id=create-goals"
+                  href="https://docs.bucketeer.io/feature-flags/testing-with-flags/goals"
                   target="_blank"
                   rel="noreferrer"
                   className="link"

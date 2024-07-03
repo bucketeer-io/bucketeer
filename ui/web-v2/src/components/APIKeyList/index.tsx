@@ -99,7 +99,7 @@ export const APIKeyList: FC<APIKeyListProps> = memo(
                   {f(messages.apiKey.list.noData.description)}
                 </p>
                 <a
-                  href="https://bucketeer.io/docs#/tutorial-top?id=create-your-api-key"
+                  href="https://docs.bucketeer.io/feature-flags/api-keys"
                   target="_blank"
                   rel="noreferrer"
                   className="link"

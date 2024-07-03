@@ -142,7 +142,7 @@ export const AdminAuditLogIndexPage: FC = memo(() => {
         <a
           className="link"
           target="_blank"
-          href="https://bucketeer.io/docs/#/audit-logs"
+          href="https://docs.bucketeer.io/feature-flags/audit-logs"
           rel="noreferrer"
         >
           {f(messages.readMore)}

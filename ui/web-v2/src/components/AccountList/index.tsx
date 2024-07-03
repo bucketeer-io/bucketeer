@@ -96,7 +96,7 @@ export const AccountList: FC<AccountListProps> = memo(
                   {f(messages.account.list.noData.description)}
                 </p>
                 <a
-                  href="https://bucketeer.io/docs#/managing-teams?id=environment-account"
+                  href="https://docs.bucketeer.io/getting-started/create-an-account"
                   target="_blank"
                   rel="noreferrer"
                   className="link"
