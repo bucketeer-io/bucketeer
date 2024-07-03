@@ -3,13 +3,12 @@ import { Middleware, AnyAction, MiddlewareAPI } from 'redux';
 import { AppThunk } from '../modules';
 import { addToast } from '../modules/toasts';
 import { AppDispatch } from '../store';
-import { getToken } from '../storage/token';
-import { clearToken, refreshBucketeerToken } from '../modules/auth';
+import { clearToken } from '../modules/auth';
 import { clearOrganizationId } from '../storage/organizationId';
 import { clearMe } from '../modules/me';
 import { PAGE_PATH_ROOT } from '../constants/routing';
 
-export const TOKEN_IS_EXPIRED = 'token is expired';
+export const UNAUTHENTICATED_ERROR = 'UNAUTHENTICATED_ERROR';
 
 function isPlainAction(action: AppThunk | AnyAction): action is AnyAction {
   return typeof action !== 'function';
@@ -36,11 +35,11 @@ export const thunkErrorHandler: Middleware =
 
     if (isPlainAction(action)) {
       if (action.type.includes('rejected')) {
-        if (action.error.message === TOKEN_IS_EXPIRED) {
-          clearOrganizationId();
-          dispatch(clearMe());
-          dispatch(clearToken());
+        if (action.error.message === UNAUTHENTICATED_ERROR) {
           window.location.href = PAGE_PATH_ROOT;
+          dispatch(clearToken());
+          dispatch(clearMe());
+          clearOrganizationId();
         } else {
           dispatch(
             addToast({ message: action.error.message, severity: 'error' })

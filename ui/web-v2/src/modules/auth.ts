@@ -14,6 +14,7 @@ import {
   clearToken as clearTokenFromStorage,
   setToken
 } from '../storage/token';
+import { PAGE_PATH_ROOT } from '../constants/routing';
 
 const MODULE_NAME = 'auth';
 
@@ -109,7 +110,7 @@ export const authSlice = createSlice({
       .addCase(refreshBucketeerToken.rejected, (state) => {
         state.loading = false;
         clearTokenFromStorage();
-        location.reload();
+        window.location.href = PAGE_PATH_ROOT;
       })
       .addCase(refreshBucketeerToken.pending, (state) => {
         state.loading = true;
@@ -117,7 +118,6 @@ export const authSlice = createSlice({
       .addCase(refreshBucketeerToken.fulfilled, (state, action) => {
         setToken(action.payload);
         state.loading = false;
-        location.reload();
       })
       .addCase(exchangeBucketeerTokenFromUrl.rejected, (state) => {
         state.loading = false;

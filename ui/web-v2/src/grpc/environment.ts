@@ -22,10 +22,10 @@ import {
 
 import { extractErrorMessage } from './messages';
 import {
-  checkTokenExpired,
+  checkUnauthenticatedError,
   getMetaDataForClient as getMetaData
 } from './utils';
-import { TOKEN_IS_EXPIRED } from '../middlewares/thunkErrorHandler';
+import { UNAUTHENTICATED_ERROR } from '../middlewares/thunkErrorHandler';
 
 export class EnvironmentServiceError<Request> extends Error {
   request: Request;
@@ -37,8 +37,8 @@ export class EnvironmentServiceError<Request> extends Error {
     request: Request,
     error: Nullable<ServiceError>
   ) {
-    if (checkTokenExpired(error.code, message)) {
-      super(TOKEN_IS_EXPIRED);
+    if (checkUnauthenticatedError(error.code)) {
+      super(UNAUTHENTICATED_ERROR);
     } else {
       super(message);
     }
