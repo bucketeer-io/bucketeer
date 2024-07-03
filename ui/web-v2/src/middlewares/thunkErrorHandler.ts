@@ -4,7 +4,10 @@ import { AppThunk } from '../modules';
 import { addToast } from '../modules/toasts';
 import { AppDispatch } from '../store';
 import { getToken } from '../storage/token';
-import { refreshBucketeerToken } from '../modules/auth';
+import { clearToken, refreshBucketeerToken } from '../modules/auth';
+import { clearOrganizationId } from '../storage/organizationId';
+import { clearMe } from '../modules/me';
+import { PAGE_PATH_ROOT } from '../constants/routing';
 
 export const TOKEN_IS_EXPIRED = 'token is expired';
 
@@ -34,8 +37,10 @@ export const thunkErrorHandler: Middleware =
     if (isPlainAction(action)) {
       if (action.type.includes('rejected')) {
         if (action.error.message === TOKEN_IS_EXPIRED) {
-          const token = getToken();
-          dispatch(refreshBucketeerToken({ token: token.refreshToken }));
+          clearOrganizationId();
+          dispatch(clearMe());
+          dispatch(clearToken());
+          window.location.href = PAGE_PATH_ROOT;
         } else {
           dispatch(
             addToast({ message: action.error.message, severity: 'error' })
