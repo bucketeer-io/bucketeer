@@ -1108,15 +1108,11 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			)
 			return err
 		}
-		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
-		if err := handler.Handle(ctx, req.ChangeAutoOpsRuleTriggeredAtCommand); err != nil {
-			return err
-		}
-
 		opsStatus := autoopsproto.AutoOpsStatus_RUNNING
 		if autoOpsRule.Clauses[len(autoOpsRule.Clauses)-1].Id == req.ExecuteAutoOpsRuleCommand.ClauseId {
 			opsStatus = autoopsproto.AutoOpsStatus_FINISHED
 		}
+		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
 		if err := handler.Handle(ctx, &autoopsproto.ChangeAutoOpsStatusCommand{Status: opsStatus}); err != nil {
 			return err
 		}
@@ -1252,7 +1248,7 @@ func (s *AutoOpsService) validateExecuteAutoOpsRequest(
 		}
 		return dt.Err()
 	}
-	if req.ChangeAutoOpsRuleTriggeredAtCommand == nil && req.ExecuteAutoOpsRuleCommand == nil {
+	if req.ExecuteAutoOpsRuleCommand == nil {
 		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),

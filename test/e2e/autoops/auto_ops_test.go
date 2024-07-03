@@ -255,9 +255,11 @@ func TestExecuteAutoOpsRule(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 	_, err := autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
-		EnvironmentNamespace:                *environmentNamespace,
-		Id:                                  autoOpsRules[0].Id,
-		ChangeAutoOpsRuleTriggeredAtCommand: &autoopsproto.ChangeAutoOpsRuleTriggeredAtCommand{},
+		EnvironmentNamespace: *environmentNamespace,
+		Id:                   autoOpsRules[0].Id,
+		ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
+			ClauseId: autoOpsRules[0].Clauses[0].Id,
+		},
 	})
 	if err != nil {
 		t.Fatalf("failed to execute auto ops: %s", err.Error())
@@ -267,8 +269,9 @@ func TestExecuteAutoOpsRule(t *testing.T) {
 		t.Fatalf("feature is enabled")
 	}
 	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if autoOpsRules[0].TriggeredAt == 0 {
-		t.Fatalf("triggered at is empty")
+	aor := autoOpsRules[0]
+	if aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING && aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_FINISHED {
+		t.Fatalf("The operation has been executed, but there is a problem with the status. Status: %v", aor.AutoOpsStatus)
 	}
 }
 
@@ -456,7 +459,7 @@ func TestOpsEventRateBatch(t *testing.T) {
 	}
 }
 
-func TestDatetimeBatchKAKI(t *testing.T) {
+func TestDatetimeBatch(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1209,7 +1212,7 @@ func checkIfAutoOpsRulesAreTriggered(t *testing.T, featureID string) {
 		}
 		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 		aor := autoOpsRules[0]
-		if aor.TriggeredAt == 0 || !(aor.AutoOpsStatus == autoopsproto.AutoOpsStatus_RUNNING || aor.AutoOpsStatus == autoopsproto.AutoOpsStatus_FINISHED) {
+		if aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING && aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_FINISHED {
 			t.Fatalf("The operation has been executed, but there is a problem with the status. Status: %v", aor.AutoOpsStatus)
 		}
 		break
