@@ -11,6 +11,10 @@ import {
 } from '../storage/environment';
 
 import { AppState } from '.';
+import { RefreshBucketeerTokenRequest } from '../proto/auth/service_pb';
+import { getToken, setToken } from '../storage/token';
+import { urls } from '../config';
+import * as authGrpc from '../grpc/auth';
 
 const MODULE_NAME = 'me';
 
@@ -31,9 +35,17 @@ export const fetchMe = createAsyncThunk<
   FetchMeParams | undefined,
   { state: AppState }
 >('me/fetch', async (params) => {
-  const request = new GetMeRequest();
-  request.setOrganizationId(params.organizationId);
-  const res = await getMe(request);
+  const token = getToken();
+  const request = new RefreshBucketeerTokenRequest();
+  request.setRefreshToken(token.refreshToken);
+  request.setRedirectUrl(urls.AUTH_REDIRECT);
+  request.setType(2);
+  const result = await authGrpc.refreshBucketeerToken(request);
+  setToken(result.response.getToken().toObject());
+
+  const getMeRequest = new GetMeRequest();
+  getMeRequest.setOrganizationId(params.organizationId);
+  const res = await getMe(getMeRequest);
   return {
     isAdmin: res.response.toObject().account.isSystemAdmin,
     isLogin: true,
