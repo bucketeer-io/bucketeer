@@ -142,7 +142,7 @@ export const SegmentList: FC<SegmentListProps> = memo(
                   {f(messages.segment.list.noData.description)}
                 </p>
                 <a
-                  href="https://docs.bucketeer.io/feature-flags/creating-feature-flags/targeting#user-segments"
+                  href="https://docs.bucketeer.io/feature-flags/segments"
                   target="_blank"
                   rel="noreferrer"
                   className="link"
