@@ -3,6 +3,12 @@ import { Middleware, AnyAction, MiddlewareAPI } from 'redux';
 import { AppThunk } from '../modules';
 import { addToast } from '../modules/toasts';
 import { AppDispatch } from '../store';
+import { clearToken } from '../modules/auth';
+import { clearOrganizationId } from '../storage/organizationId';
+import { clearMe } from '../modules/me';
+import { PAGE_PATH_ROOT } from '../constants/routing';
+
+export const UNAUTHENTICATED_ERROR = 'UNAUTHENTICATED_ERROR';
 
 function isPlainAction(action: AppThunk | AnyAction): action is AnyAction {
   return typeof action !== 'function';
@@ -29,9 +35,16 @@ export const thunkErrorHandler: Middleware =
 
     if (isPlainAction(action)) {
       if (action.type.includes('rejected')) {
-        dispatch(
-          addToast({ message: action.error.message, severity: 'error' })
-        );
+        if (action.error.message === UNAUTHENTICATED_ERROR) {
+          window.location.href = PAGE_PATH_ROOT;
+          dispatch(clearToken());
+          dispatch(clearMe());
+          clearOrganizationId();
+        } else {
+          dispatch(
+            addToast({ message: action.error.message, severity: 'error' })
+          );
+        }
       }
     }
 

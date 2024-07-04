@@ -16,7 +16,11 @@ import {
 } from '../proto/eventcounter/service_pb_service';
 
 import { deserializeStatus, extractErrorMessage } from './messages';
-import { getMetaDataForClient as getMetaData } from './utils';
+import {
+  checkUnauthenticatedError,
+  getMetaDataForClient as getMetaData
+} from './utils';
+import { UNAUTHENTICATED_ERROR } from '../middlewares/thunkErrorHandler';
 
 export class EventCounterServiceError<Request> extends Error {
   request: Request;
@@ -28,7 +32,11 @@ export class EventCounterServiceError<Request> extends Error {
     request: Request,
     error: Nullable<ServiceError>
   ) {
-    super(message);
+    if (checkUnauthenticatedError(error.code)) {
+      super(UNAUTHENTICATED_ERROR);
+    } else {
+      super(message);
+    }
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, EventCounterServiceError);
     }

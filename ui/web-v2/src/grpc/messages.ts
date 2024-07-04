@@ -21,10 +21,12 @@ export const extractErrorMessage = (error: Nullable<ServiceError>): string => {
   }
 
   const status = deserializeStatus(error.metadata);
+
   if (isNull(status)) {
     return DEFAULT_ERROR;
   }
   const localizedMessage = deserializeLocalizedMessage(status);
+
   if (isNull(localizedMessage)) {
     return DEFAULT_ERROR;
   }

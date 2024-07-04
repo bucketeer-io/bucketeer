@@ -24,8 +24,6 @@ import {
   UpdateAutoOpsRuleRequest
 } from '../proto/autoops/service_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'autoOpsRules';
@@ -49,7 +47,6 @@ export const createAutoOpsRule = createAsyncThunk<
   const request = new CreateAutoOpsRuleRequest();
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setCommand(params.command);
-  await setupAuthToken();
   await autoOpsGrpc.createAutoOpsRule(request);
 });
 
@@ -66,7 +63,6 @@ export const listAutoOpsRules = createAsyncThunk<
   const request = new ListAutoOpsRulesRequest();
   request.setFeatureIdsList([params.featureId]);
   request.setEnvironmentNamespace(params.environmentNamespace);
-  await setupAuthToken();
   const result = await autoOpsGrpc.listAutoOpsRules(request);
   return result.response.toObject();
 });
@@ -110,7 +106,6 @@ export const updateAutoOpsRule = createAsyncThunk<
     );
   params.deleteClauseCommands?.length > 0 &&
     request.setDeleteClauseCommandsList(params.deleteClauseCommands);
-  await setupAuthToken();
   await autoOpsGrpc.updateAutoOpsRule(request);
 });
 
@@ -129,7 +124,6 @@ export const deleteAutoOpsRule = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   const command = new DeleteAutoOpsRuleCommand();
   request.setCommand(command);
-  await setupAuthToken();
   await autoOpsGrpc.deleteAutoOpsRule(request);
 });
 

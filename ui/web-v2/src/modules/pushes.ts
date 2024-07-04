@@ -21,8 +21,6 @@ import {
   ListPushesResponse
 } from '../proto/push/service_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'pushes';
@@ -67,7 +65,6 @@ export const listPushes = createAsyncThunk<
   request.setOrderBy(params.orderBy);
   request.setOrderDirection(params.orderDirection);
   request.setSearchKeyword(params.searchKeyword);
-  await setupAuthToken();
   const result = await pushGrpc.listPushes(request);
   return result.response.toObject();
 });
@@ -91,7 +88,6 @@ export const createPush = createAsyncThunk<
   const request = new CreatePushRequest();
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setCommand(cmd);
-  await setupAuthToken();
   await pushGrpc.createPush(request);
 });
 
@@ -134,7 +130,6 @@ export const updatePush = createAsyncThunk<
   }
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
-  await setupAuthToken();
   await pushGrpc.updatePush(request);
 });
 
@@ -152,7 +147,6 @@ export const deletePush = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
   request.setCommand(new DeletePushCommand());
-  await setupAuthToken();
   await pushGrpc.deletePush(request);
 });
 

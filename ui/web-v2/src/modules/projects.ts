@@ -27,8 +27,6 @@ import {
   UpdateProjectRequest
 } from '../proto/environment/service_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'projects';
@@ -76,7 +74,6 @@ export const listProjects = createAsyncThunk<
   request.setSearchKeyword(params.searchKeyword);
   params.disabled != null &&
     request.setDisabled(new BoolValue().setValue(params.disabled));
-  await setupAuthToken();
   const result = await grpc.listProjects(request);
   return result.response.toObject();
 });
@@ -92,7 +89,6 @@ export const getProject = createAsyncThunk<
 >(`${MODULE_NAME}/get`, async (params) => {
   const request = new GetProjectRequest();
   request.setId(params.id);
-  await setupAuthToken();
   const result = await grpc.getProject(request);
   return result.response.toObject().project;
 });
@@ -109,7 +105,6 @@ export const convertProject = createAsyncThunk<
   const request = new ConvertTrialProjectRequest();
   request.setId(params.id);
   request.setCommand(new ConvertTrialProjectCommand());
-  await setupAuthToken();
   await grpc.convertTrialProject(request);
 });
 
@@ -125,7 +120,6 @@ export const enableProject = createAsyncThunk<
   const request = new EnableProjectRequest();
   request.setId(params.id);
   request.setCommand(new EnableProjectCommand());
-  await setupAuthToken();
   await grpc.enableProject(request);
 });
 
@@ -141,7 +135,6 @@ export const disableProject = createAsyncThunk<
   const request = new DisableProjectRequest();
   request.setId(params.id);
   request.setCommand(new DisableProjectCommand());
-  await setupAuthToken();
   await grpc.disableProject(request);
 });
 
@@ -162,7 +155,6 @@ export const createProject = createAsyncThunk<
   command.setUrlCode(params.urlCode);
   command.setDescription(params.description);
   request.setCommand(command);
-  await setupAuthToken();
   await grpc.createProject(request);
 });
 
@@ -189,7 +181,6 @@ export const updateProject = createAsyncThunk<
     changeDescCommand.setDescription(params.description);
     request.setChangeDescriptionCommand(changeDescCommand);
   }
-  await setupAuthToken();
   await grpc.updateProject(request);
 });
 

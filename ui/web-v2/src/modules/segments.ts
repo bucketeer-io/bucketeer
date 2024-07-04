@@ -29,8 +29,6 @@ import {
   ListSegmentsResponse
 } from '../proto/feature/service_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'segments';
@@ -72,7 +70,6 @@ export const listSegments = createAsyncThunk<
   request.setSearchKeyword(params.searchKeyword);
   params.inUse != null &&
     request.setIsInUseStatus(new BoolValue().setValue(params.inUse));
-  await setupAuthToken();
   const result = await segmentGrpc.listSegments(request);
   return result.response.toObject();
 });
@@ -90,7 +87,6 @@ export const getSegment = createAsyncThunk<
   const request = new GetSegmentRequest();
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
-  await setupAuthToken();
   const result = await segmentGrpc.getSegment(request);
   return result.response.toObject().segment;
 });
@@ -108,7 +104,6 @@ export const bulkDownloadSegmentUsers = createAsyncThunk<
   const request = new BulkDownloadSegmentUsersRequest();
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setSegmentId(params.segmentId);
-  await setupAuthToken();
   const result = await segmentGrpc.bulkDownloadSegmentUsers(request);
   return result.response.toObject().data;
 });
@@ -130,7 +125,6 @@ export const bulkUploadSegmentUsers = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setSegmentId(params.segmentId);
   request.setCommand(cmd);
-  await setupAuthToken();
   await segmentGrpc.bulkUploadSegmentUsers(request);
 });
 
@@ -148,7 +142,6 @@ export const createSegment = createAsyncThunk<
   const cmd = new CreateSegmentCommand();
   cmd.setName(params.name);
   cmd.setDescription(params.description);
-  await setupAuthToken();
   const request = new CreateSegmentRequest();
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setCommand(cmd);
@@ -191,7 +184,6 @@ export const updateSegment = createAsyncThunk<
     cmd.setDescription(params.description.toString());
     cmdList.push(convertCommandToAny(cmd, 'ChangeSegmentDescriptionCommand'));
   }
-  await setupAuthToken();
   const request = new UpdateSegmentRequest();
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
@@ -213,7 +205,6 @@ export const deleteSegmentUser = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
   request.setCommand(new DeleteSegmentCommand());
-  await setupAuthToken();
   await segmentGrpc.deleteSegment(request);
   return params.id;
 });

@@ -12,8 +12,6 @@ import { Command } from '../proto/feature/command_pb';
 import { Tag } from '../proto/feature/feature_pb';
 import { ListTagsRequest, ListTagsResponse } from '../proto/feature/service_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'tags';
@@ -51,7 +49,6 @@ export const listTags = createAsyncThunk<
   request.setOrderDirection(params.orderDirection);
   request.setSearchKeyword(params.searchKeyword);
 
-  await setupAuthToken();
   const result = await featureGrpc.listTags(request);
   return result.response.toObject();
 });

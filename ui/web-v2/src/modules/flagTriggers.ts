@@ -27,8 +27,6 @@ import {
   ResetFlagTriggerResponse
 } from '../proto/feature/service_pb';
 
-import { setupAuthToken } from './auth';
-
 import { AppState } from '.';
 
 const MODULE_NAME = 'flagTriggers';
@@ -63,7 +61,6 @@ export const createFlagTrigger = createAsyncThunk<
   command.setDescription(params.description);
 
   request.setCreateFlagTriggerCommand(command);
-  await setupAuthToken();
   const result = await flagTriggersGrpc.createFlagTrigger(request);
   return result.response.toObject();
 });
@@ -82,7 +79,6 @@ export const listFlagTriggers = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setFeatureId(params.featureId);
   request.setOrderDirection(ListFlagTriggersRequest.OrderDirection.DESC);
-  await setupAuthToken();
   const result = await flagTriggersGrpc.listFlagTriggers(request);
   return result.response.toObject();
 });
@@ -106,7 +102,6 @@ export const updateFlagTrigger = createAsyncThunk<
   request.setId(params.id);
   request.setChangeFlagTriggerDescriptionCommand(command);
 
-  await setupAuthToken();
   await flagTriggersGrpc.updateFlagTrigger(request);
 });
 
@@ -125,7 +120,6 @@ export const deleteFlagTrigger = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   const command = new DeleteFlagTriggerCommand();
   request.setDeleteFlagTriggerCommand(command);
-  await setupAuthToken();
   await flagTriggersGrpc.deleteFlagTrigger(request);
 });
 
@@ -144,7 +138,6 @@ export const resetFlagTrigger = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   const command = new ResetFlagTriggerCommand();
   request.setResetFlagTriggerCommand(command);
-  await setupAuthToken();
   const result = await flagTriggersGrpc.resetFlagTrigger(request);
   return result.response.toObject();
 });
@@ -164,7 +157,6 @@ export const enableFlagTrigger = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   const command = new EnableFlagTriggerCommand();
   request.setEnableFlagTriggerCommand(command);
-  await setupAuthToken();
   await flagTriggersGrpc.enableFlagTrigger(request);
 });
 
@@ -183,7 +175,6 @@ export const disableFlagTrigger = createAsyncThunk<
   request.setEnvironmentNamespace(params.environmentNamespace);
   const command = new DisableFlagTriggerCommand();
   request.setDisableFlagTriggerCommand(command);
-  await setupAuthToken();
   await flagTriggersGrpc.disableFlagTrigger(request);
 });
 

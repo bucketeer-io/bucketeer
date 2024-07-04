@@ -21,7 +21,11 @@ import {
 } from '../proto/environment/service_pb_service';
 
 import { extractErrorMessage } from './messages';
-import { getMetaDataForClient as getMetaData } from './utils';
+import {
+  checkUnauthenticatedError,
+  getMetaDataForClient as getMetaData
+} from './utils';
+import { UNAUTHENTICATED_ERROR } from '../middlewares/thunkErrorHandler';
 
 export class EnvironmentServiceError<Request> extends Error {
   request: Request;
@@ -33,7 +37,11 @@ export class EnvironmentServiceError<Request> extends Error {
     request: Request,
     error: Nullable<ServiceError>
   ) {
-    super(message);
+    if (checkUnauthenticatedError(error.code)) {
+      super(UNAUTHENTICATED_ERROR);
+    } else {
+      super(message);
+    }
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, EnvironmentServiceError);
     }

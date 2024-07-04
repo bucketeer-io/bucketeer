@@ -5,111 +5,78 @@ import { urls } from '../config';
 import { getState, setState } from '../cookie';
 import * as authGrpc from '../grpc/auth';
 import {
-  ExchangeTokenRequest,
-  GetAuthCodeURLRequest,
-  RefreshTokenRequest
+  GetAuthenticationURLRequest,
+  ExchangeBucketeerTokenRequest,
+  RefreshBucketeerTokenRequest
 } from '../proto/auth/service_pb';
 import { Token } from '../proto/auth/token_pb';
 import {
   clearToken as clearTokenFromStorage,
-  getToken as getTokenFromStorage,
   setToken
 } from '../storage/token';
+import { PAGE_PATH_ROOT } from '../constants/routing';
 
 const MODULE_NAME = 'auth';
 
-export const exchangeTokenFromUrl = createAsyncThunk<Token.AsObject, string>(
-  `${MODULE_NAME}/exchangeTokenFromUrl`,
-  async (query) => {
-    const { code, state } = parse(query);
-    const stateFromCookie = getState();
-    if (!!code && state === stateFromCookie) {
-      if (typeof code === 'string') {
-        const request = new ExchangeTokenRequest();
-        request.setCode(code);
-        request.setRedirectUrl(urls.AUTH_REDIRECT);
-        const result = await authGrpc.exchangeToken(request);
-        return result.response.getToken().toObject();
-      }
+export const exchangeBucketeerTokenFromUrl = createAsyncThunk<
+  Token.AsObject,
+  string
+>(`${MODULE_NAME}/exchangeBucketeerTokenFromUrl`, async (query) => {
+  const { code, state } = parse(query);
+  const stateFromCookie = getState();
+  if (!!code && state === stateFromCookie) {
+    if (typeof code === 'string') {
+      const request = new ExchangeBucketeerTokenRequest();
+      request.setCode(code);
+      request.setRedirectUrl(urls.AUTH_REDIRECT);
+      request.setType(2);
+      const result = await authGrpc.exchangeBucketeerToken(request);
+      return result.response.getToken().toObject();
     }
-    throw new Error('exchange token failed.');
   }
-);
-
-export const setupAuthToken = createAsyncThunk<void>(
-  `${MODULE_NAME}/setupAuthToken`,
-  async (_, thunkAPI) => {
-    const token = getTokenFromStorage();
-    if (!token || !token.accessToken) {
-      thunkAPI.dispatch(redirectToAuthUrl());
-      throw new Error('token not found.');
-    }
-    if (isExpiredToken(token.expiry)) {
-      thunkAPI.dispatch(
-        refreshToken({
-          token: token.refreshToken
-        })
-      );
-      return;
-    }
-    return;
-  }
-);
+  throw new Error('exchange token failed.');
+});
 
 export const redirectToAuthUrl = createAsyncThunk<void>(
   `${MODULE_NAME}/redirecttoAuthUrl`,
   async (_, thunkAPI) => {
     const state = `${Date.now()}`;
     setState(state);
-    thunkAPI.dispatch(getAuthCodeURL({ state }));
+    thunkAPI.dispatch(getAuthenticationURL({ state }));
   }
 );
 
-interface GetAuthCodeURLParams {
+interface GetAuthenticationURLParams {
   state: string;
 }
 
-export const getAuthCodeURL = createAsyncThunk<string, GetAuthCodeURLParams>(
-  `${MODULE_NAME}/getAuthCodeURL`,
-  async (params) => {
-    const request = new GetAuthCodeURLRequest();
-    request.setState(params.state);
-    request.setRedirectUrl(urls.AUTH_REDIRECT);
-    const result = await authGrpc.getAuthCodeURL(request);
-    return result.response.getUrl();
-  }
-);
+export const getAuthenticationURL = createAsyncThunk<
+  string,
+  GetAuthenticationURLParams
+>(`${MODULE_NAME}/getAuthenticationURL`, async (params) => {
+  const request = new GetAuthenticationURLRequest();
+  request.setState(params.state);
+  request.setRedirectUrl(urls.AUTH_REDIRECT);
+  request.setType(2); // google auth type
+  const result = await authGrpc.getAuthenticationURL(request);
+  return result.response.getUrl();
+});
 
-interface RefreshTokenParams {
+interface RefreshBucketeerTokenParams {
   token: string;
 }
 
-export const refreshToken = createAsyncThunk<
+export const refreshBucketeerToken = createAsyncThunk<
   Token.AsObject,
-  RefreshTokenParams
->(`${MODULE_NAME}/refreshToken`, async (params) => {
-  const request = new RefreshTokenRequest();
+  RefreshBucketeerTokenParams
+>(`${MODULE_NAME}/refreshBucketeerToken`, async (params) => {
+  const request = new RefreshBucketeerTokenRequest();
   request.setRefreshToken(params.token);
   request.setRedirectUrl(urls.AUTH_REDIRECT);
-  const result = await authGrpc.refreshToken(request);
+  request.setType(2);
+  const result = await authGrpc.refreshBucketeerToken(request);
   return result.response.getToken().toObject();
 });
-
-const isExpiredToken = (expiry: number): boolean => {
-  const now = Number(Date.now() / 1000);
-  return now > expiry;
-};
-
-export const hasToken = (): boolean => {
-  const token = getTokenFromStorage();
-  if (!token || !token.accessToken) {
-    return false;
-  }
-  if (isExpiredToken(token.expiry)) {
-    return false;
-  }
-  return true;
-};
 
 const initialState = {
   loading: false
@@ -128,38 +95,37 @@ export const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(getAuthCodeURL.rejected, (state) => {
+      .addCase(getAuthenticationURL.rejected, (state) => {
         state.loading = false;
         // retry
         location.reload();
       })
-      .addCase(getAuthCodeURL.pending, (state) => {
+      .addCase(getAuthenticationURL.pending, (state) => {
         state.loading = true;
       })
-      .addCase(getAuthCodeURL.fulfilled, (state, action) => {
+      .addCase(getAuthenticationURL.fulfilled, (state, action) => {
         window.location.href = action.payload;
         state.loading = false;
       })
-      .addCase(refreshToken.rejected, (state) => {
+      .addCase(refreshBucketeerToken.rejected, (state) => {
         state.loading = false;
         clearTokenFromStorage();
-        location.reload();
+        window.location.href = PAGE_PATH_ROOT;
       })
-      .addCase(refreshToken.pending, (state) => {
+      .addCase(refreshBucketeerToken.pending, (state) => {
         state.loading = true;
       })
-      .addCase(refreshToken.fulfilled, (state, action) => {
+      .addCase(refreshBucketeerToken.fulfilled, (state, action) => {
         setToken(action.payload);
         state.loading = false;
-        location.reload();
       })
-      .addCase(exchangeTokenFromUrl.rejected, (state) => {
+      .addCase(exchangeBucketeerTokenFromUrl.rejected, (state) => {
         state.loading = false;
       })
-      .addCase(exchangeTokenFromUrl.pending, (state) => {
+      .addCase(exchangeBucketeerTokenFromUrl.pending, (state) => {
         state.loading = true;
       })
-      .addCase(exchangeTokenFromUrl.fulfilled, (state, action) => {
+      .addCase(exchangeBucketeerTokenFromUrl.fulfilled, (state, action) => {
         setToken(action.payload);
         state.loading = false;
       });

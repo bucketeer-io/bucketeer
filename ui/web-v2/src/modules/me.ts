@@ -11,6 +11,8 @@ import {
 } from '../storage/environment';
 
 import { AppState } from '.';
+import { getToken } from '../storage/token';
+import { refreshBucketeerToken } from './auth';
 
 const MODULE_NAME = 'me';
 
@@ -30,10 +32,13 @@ export const fetchMe = createAsyncThunk<
   Me,
   FetchMeParams | undefined,
   { state: AppState }
->('me/fetch', async (params) => {
-  const request = new GetMeRequest();
-  request.setOrganizationId(params.organizationId);
-  const res = await getMe(request);
+>('me/fetch', async (params, { dispatch }) => {
+  const token = getToken();
+  await dispatch(refreshBucketeerToken({ token: token.refreshToken }));
+
+  const getMeRequest = new GetMeRequest();
+  getMeRequest.setOrganizationId(params.organizationId);
+  const res = await getMe(getMeRequest);
   return {
     isAdmin: res.response.toObject().account.isSystemAdmin,
     isLogin: true,
