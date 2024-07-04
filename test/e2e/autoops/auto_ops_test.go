@@ -289,6 +289,45 @@ func TestDeleteAutoOpsRule(t *testing.T) {
 	}
 }
 
+func TestUpdateAutoOpsRule(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	autoOpsClient := newAutoOpsClient(t)
+	defer autoOpsClient.Close()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+
+	featureID := createFeatureID(t)
+	createFeature(ctx, t, featureClient, featureID)
+	clauses := createDatetimeClausesWithActionType(t, 1)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
+	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+	if len(autoOpsRules) != 1 {
+		t.Fatal("not enough rules")
+	}
+	addClause := autoopsproto.DatetimeClause{
+		Time:       time.Now().Unix() + 1000,
+		ActionType: autoopsproto.ActionType_DISABLE,
+	}
+	updateAutoOpsRules(t, autoOpsClient, autoOpsRules[0].Id, &addClause)
+	resp, err := autoOpsClient.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
+		EnvironmentNamespace: *environmentNamespace,
+		Id:                   autoOpsRules[0].Id,
+	})
+	if resp == nil {
+		t.Fatalf("failed to get AutoOpsRule, err %d", err)
+	}
+
+	odc := unmarshalDatetimeClause(t, resp.AutoOpsRule.Clauses[1])
+	if odc.Time != addClause.Time {
+		t.Fatalf("added DateTime is different, expected: %v, actual: %v", addClause.Time, odc.Time)
+	}
+	if odc.ActionType != addClause.ActionType {
+		t.Fatalf("added ActionType is different, expected: %v, actual: %v", addClause.ActionType, odc.ActionType)
+	}
+}
+
 func TestExecuteAutoOpsRule(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -979,7 +1018,23 @@ func stopAutoOpsRule(t *testing.T, client autoopsclient.Client, id string) {
 		Command:              &autoopsproto.StopAutoOpsRuleCommand{},
 	})
 	if err != nil {
-		t.Fatal("failed to list auto ops rules", err)
+		t.Fatal("failed to stop auto ops rules", err)
+	}
+}
+
+func updateAutoOpsRules(t *testing.T, client autoopsclient.Client, id string, dateClause *autoopsproto.DatetimeClause) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	_, err := client.UpdateAutoOpsRule(ctx, &autoopsproto.UpdateAutoOpsRuleRequest{
+		EnvironmentNamespace: *environmentNamespace,
+		Id:                   id,
+		AddDatetimeClauseCommands: []*autoopsproto.AddDatetimeClauseCommand{
+			{DatetimeClause: dateClause},
+		},
+	})
+	if err != nil {
+		t.Fatal("failed to update auto ops rules", err)
 	}
 }
 

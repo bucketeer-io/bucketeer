@@ -69,7 +69,9 @@ message DeleteAutoOpsRuleResponse {}
 message UpdateAutoOpsRuleRequest {
   string environment_namespace = 1;
   string id = 2;
-  ChangeAutoOpsRuleOpsTypeCommand change_auto_ops_rule_ops_type_command = 3;
+  ChangeAutoOpsRuleOpsTypeCommand change_auto_ops_rule_ops_type_command = 3
+      [deprecated = true];
+  ;
   repeated AddOpsEventRateClauseCommand add_ops_event_rate_clause_commands = 4;
   repeated ChangeOpsEventRateClauseCommand
       change_ops_event_rate_clause_commands = 5;
