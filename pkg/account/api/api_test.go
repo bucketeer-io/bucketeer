@@ -16,11 +16,9 @@ package api
 
 import (
 	"context"
-	"encoding/base64"
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -33,7 +31,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
-	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
 )
 
 func TestWithLogger(t *testing.T) {
@@ -70,15 +67,9 @@ func createContextWithDefaultToken(t *testing.T, isSystemAdmin bool) context.Con
 
 func createContextWithEmailToken(t *testing.T, email string, isSystemAdmin bool) context.Context {
 	t.Helper()
-	sub := &authproto.IDTokenSubject{
-		UserId: email,
-		ConnId: "test-connector-id",
-	}
-	data, err := proto.Marshal(sub)
-	require.NoError(t, err)
 	token := &token.AccessToken{
 		Issuer:        "issuer",
-		Subject:       base64.RawURLEncoding.EncodeToString([]byte(data)),
+		Subject:       "bucketeer@example.com",
 		Audience:      "audience",
 		Expiry:        time.Now().AddDate(100, 0, 0),
 		IssuedAt:      time.Now(),
@@ -91,15 +82,9 @@ func createContextWithEmailToken(t *testing.T, email string, isSystemAdmin bool)
 
 func createContextWithInvalidEmailToken(t *testing.T) context.Context {
 	t.Helper()
-	sub := &authproto.IDTokenSubject{
-		UserId: "bucketeer@example.com",
-		ConnId: "test-connector-id",
-	}
-	data, err := proto.Marshal(sub)
-	require.NoError(t, err)
 	token := &token.AccessToken{
 		Issuer:   "issuer",
-		Subject:  base64.RawURLEncoding.EncodeToString([]byte(data)),
+		Subject:  "bucketeer@example.com",
 		Audience: "audience",
 		Expiry:   time.Now().AddDate(100, 0, 0),
 		IssuedAt: time.Now(),
