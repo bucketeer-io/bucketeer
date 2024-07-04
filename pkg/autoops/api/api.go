@@ -1056,6 +1056,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		for _, c := range autoOpsRule.Clauses {
 			if c.Id == req.ExecuteAutoOpsRuleCommand.ClauseId {
 				executeClause = c
+				break
 			}
 		}
 
