@@ -31,7 +31,7 @@ const Login: FC = memo(() => {
         <br />
         Password: demo
       </p> */}
-      <h3 className="font-semibold text-xl">Sign In</h3>
+      <h3 className="font-semibold text-xl">Sign in to Bucketeer</h3>
       <div className="mt-6 space-y-4">
         {/* <Link to={PAGE_PATH_AUTH_LOGIN}>
           <button className="flex h-10 justify-center border items-center rounded w-full space-x-2 hover:border-gray-500 hover:bg-gray-50 transition-all duration-300">
@@ -53,7 +53,7 @@ const Login: FC = memo(() => {
           ) : (
             <>
               <GoogleIconSvg />
-              <span className="text-sm text-gray-600">Log in With Google</span>
+              <span className="text-sm text-gray-600">Sign in with Google</span>
             </>
           )}
         </button>
