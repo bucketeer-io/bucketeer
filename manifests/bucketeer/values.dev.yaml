@@ -243,12 +243,6 @@ web:
   tls:
     secret: bucketeer-service-cert
 
-dex:
-  tls:
-    secret: bucketeer-service-cert
-    cert:
-    key:
-
   config:
     issuer: http://localhost:8000/dex
     client:
