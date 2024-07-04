@@ -34,7 +34,7 @@ export const fetchMe = createAsyncThunk<
   { state: AppState }
 >('me/fetch', async (params, { dispatch }) => {
   const token = getToken();
-  dispatch(refreshBucketeerToken({ token: token.refreshToken }));
+  await dispatch(refreshBucketeerToken({ token: token.refreshToken }));
 
   const getMeRequest = new GetMeRequest();
   getMeRequest.setOrganizationId(params.organizationId);
