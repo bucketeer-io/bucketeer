@@ -85,14 +85,6 @@ serviceToken:
   secret:
 
 oauth:
-  key:
-    secret:
-    public:
-  clientId:
-  clientSecret:
-  redirectUrls:
-  issuer:
-  # oauth: google authentication
   google:
     issuer:
     clientId:

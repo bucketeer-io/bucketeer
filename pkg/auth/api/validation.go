@@ -59,8 +59,8 @@ func validateGetAuthenticationURLRequest(
 	return nil
 }
 
-func validateExchangeBucketeerTokenRequest(
-	req *authproto.ExchangeBucketeerTokenRequest,
+func validateExchangeTokenRequest(
+	req *authproto.ExchangeTokenRequest,
 	localizer locale.Localizer,
 ) error {
 	if req.Type == authproto.AuthType_AUTH_TYPE_UNSPECIFIED {
@@ -96,8 +96,8 @@ func validateExchangeBucketeerTokenRequest(
 	return nil
 }
 
-func validateRefreshBucketeerTokenRequest(
-	req *authproto.RefreshBucketeerTokenRequest,
+func validateRefreshTokenRequest(
+	req *authproto.RefreshTokenRequest,
 	localizer locale.Localizer,
 ) error {
 	if req.Type == authproto.AuthType_AUTH_TYPE_UNSPECIFIED {

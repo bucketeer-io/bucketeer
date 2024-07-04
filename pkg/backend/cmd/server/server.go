@@ -32,7 +32,6 @@ import (
 	auditlogapi "github.com/bucketeer-io/bucketeer/pkg/auditlog/api"
 	authapi "github.com/bucketeer-io/bucketeer/pkg/auth/api"
 	authclient "github.com/bucketeer-io/bucketeer/pkg/auth/client"
-	"github.com/bucketeer-io/bucketeer/pkg/auth/oidc"
 	autoopsapi "github.com/bucketeer-io/bucketeer/pkg/autoops/api"
 	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
@@ -74,14 +73,11 @@ const (
 type server struct {
 	*kingpin.CmdClause
 	// Common
-	project            *string
-	timezone           *string
-	certPath           *string
-	keyPath            *string
-	serviceTokenPath   *string
-	oauthPublicKeyPath *string
-	oauthClientID      *string
-	oauthIssuer        *string
+	project          *string
+	timezone         *string
+	certPath         *string
+	keyPath          *string
+	serviceTokenPath *string
 	// MySQL
 	mysqlUser   *string
 	mysqlPass   *string
@@ -124,11 +120,9 @@ type server struct {
 	featureService     *string
 	autoOpsService     *string
 	// auth
-	oauthIssuerCertPath *string
 	emailFilter         *string
 	oauthConfigPath     *string
-	oauthRedirectURLs   *[]string
-	oauthClientSecret   *string
+	oauthPublicKeyPath  *string
 	oauthPrivateKeyPath *string
 	// autoOps
 	webhookBaseURL         *string
@@ -264,20 +258,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"oauth-public-key",
 			"Path to public key used to verify oauth token.",
 		).Required().String(),
-		oauthClientID: cmd.Flag(
-			"oauth-client-id",
-			"The oauth clientID registered at dex.",
-		).Required().String(),
-		oauthIssuer: cmd.Flag("oauth-issuer", "The url of dex issuer.").Required().String(),
 		// auth
-		oauthIssuerCertPath: cmd.Flag("oauth-issuer-cert", "Path to TLS certificate of issuer.").Required().String(),
-		emailFilter:         cmd.Flag("email-filter", "Regexp pattern for filtering email.").String(),
-		oauthConfigPath:     cmd.Flag("oauth-config-path", "Path to oauth config.").Required().String(),
-		oauthRedirectURLs:   cmd.Flag("oauth-redirect-urls", "The redirect urls registered at Dex.").Required().Strings(),
-		oauthClientSecret: cmd.Flag(
-			"oauth-client-secret",
-			"The oauth client secret registered at Dex.",
-		).Required().String(),
+		emailFilter:     cmd.Flag("email-filter", "Regexp pattern for filtering email.").String(),
+		oauthConfigPath: cmd.Flag("oauth-config-path", "Path to oauth config.").Required().String(),
 		oauthPrivateKeyPath: cmd.Flag(
 			"oauth-private-key",
 			"Path to private key for signing oauth token.",
@@ -305,7 +288,12 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 
 	// verifier
-	verifier, err := token.NewVerifier(*s.oauthPublicKeyPath, *s.oauthIssuer, *s.oauthClientID)
+	// TODO: refactor to support multiple issuers
+	verifier, err := token.NewVerifier(
+		*s.oauthPublicKeyPath,
+		oAuthConfig.GoogleConfig.Issuer,
+		oAuthConfig.GoogleConfig.ClientID,
+	)
 	if err != nil {
 		return err
 	}
@@ -752,17 +740,6 @@ func (s *server) createAuthService(
 	config *auth.OAuthConfig,
 	logger *zap.Logger,
 ) (rpc.Service, error) {
-	o, err := oidc.NewOIDC(
-		ctx,
-		*s.oauthIssuer,
-		*s.oauthIssuerCertPath,
-		*s.oauthClientID,
-		*s.oauthClientSecret,
-		*s.oauthRedirectURLs,
-		oidc.WithLogger(logger))
-	if err != nil {
-		return nil, err
-	}
 	signer, err := token.NewSigner(*s.oauthPrivateKeyPath)
 	if err != nil {
 		return nil, err
@@ -777,7 +754,7 @@ func (s *server) createAuthService(
 		}
 		serviceOptions = append(serviceOptions, authapi.WithEmailFilter(filter))
 	}
-	return authapi.NewAuthService(o, signer, verifier, accountClient, config, serviceOptions...), nil
+	return authapi.NewAuthService(signer, verifier, accountClient, config, serviceOptions...), nil
 }
 
 func (s *server) createFeatureService(
