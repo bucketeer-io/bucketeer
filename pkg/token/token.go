@@ -20,7 +20,6 @@ import (
 
 type AccessToken struct {
 	Issuer        string    `json:"iss"`
-	Subject       string    `json:"sub"`
 	Audience      string    `json:"aud"`
 	Expiry        time.Time `json:"exp"`
 	IssuedAt      time.Time `json:"iat"`

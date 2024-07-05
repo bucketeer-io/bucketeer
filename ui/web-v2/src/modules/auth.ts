@@ -72,8 +72,6 @@ export const refreshToken = createAsyncThunk<
 >(`${MODULE_NAME}/refreshToken`, async (params) => {
   const request = new RefreshTokenRequest();
   request.setRefreshToken(params.token);
-  request.setRedirectUrl(urls.AUTH_REDIRECT);
-  request.setType(2);
   const result = await authGrpc.refreshToken(request);
   return result.response.getToken().toObject();
 });

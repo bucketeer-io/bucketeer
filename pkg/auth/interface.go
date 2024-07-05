@@ -16,29 +16,24 @@ package auth
 
 import (
 	"context"
-	"time"
-
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
 )
 
 type Authenticator interface {
 	Login(
 		ctx context.Context,
 		state, redirectURL string,
-		localizer locale.Localizer,
 	) (string, error)
 	Exchange(
 		ctx context.Context,
 		code, redirectURL string,
-		localizer locale.Localizer,
-	) (*authproto.Token, error)
-	Refresh(
-		ctx context.Context,
-		token, redirectURL string,
-		expires time.Duration,
-		localizer locale.Localizer,
-	) (*authproto.Token, error)
+	) (*UserInfo, error)
+}
+
+type UserInfo struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Avatar    string `json:"avatar"`
+	Email     string `json:"email"`
 }
 
 type GoogleConfig struct {
@@ -49,5 +44,7 @@ type GoogleConfig struct {
 }
 
 type OAuthConfig struct {
+	Issuer       string       `json:"issuer"`
+	Audience     string       `json:"audience"`
 	GoogleConfig GoogleConfig `json:"google"`
 }

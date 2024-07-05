@@ -27,9 +27,17 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/pkg/auth/google"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
+	acproto "github.com/bucketeer-io/bucketeer/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
+	envproto "github.com/bucketeer-io/bucketeer/proto/environment"
+)
+
+const (
+	day       = 24 * time.Hour
+	sevenDays = 7 * 24 * time.Hour
 )
 
 type options struct {
@@ -64,14 +72,19 @@ func WithLogger(logger *zap.Logger) Option {
 }
 
 type authService struct {
+	issuer              string
+	audience            string
 	signer              token.Signer
 	accountClient       accountclient.Client
+	verifier            token.Verifier
 	googleAuthenticator auth.Authenticator
 	opts                *options
 	logger              *zap.Logger
 }
 
 func NewAuthService(
+	issuer string,
+	audience string,
 	signer token.Signer,
 	verifier token.Verifier,
 	accountClient accountclient.Client,
@@ -86,8 +99,9 @@ func NewAuthService(
 	return &authService{
 		signer:        signer,
 		accountClient: accountClient,
+		verifier:      verifier,
 		googleAuthenticator: google.NewAuthenticator(
-			&config.GoogleConfig, accountClient, signer, verifier, logger,
+			&config.GoogleConfig, signer, logger,
 		),
 		opts:   &options,
 		logger: logger,
@@ -112,18 +126,32 @@ func (s *authService) GetAuthenticationURL(
 	if err := validateGetAuthenticationURLRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	authenticator, err := s.getAuthenticator(ctx, req.Type, localizer)
+	authenticator, err := s.getAuthenticator(req.Type, localizer)
 	if err != nil {
-		return nil, err
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
-	loginURL, err := authenticator.Login(ctx, req.State, req.RedirectUrl, localizer)
+	loginURL, err := authenticator.Login(ctx, req.State, req.RedirectUrl)
 	if err != nil {
 		s.logger.Error(
-			"Get authentication url failed",
+			"Failed to get authentication",
 			zap.Error(err),
-			zap.String("redirectURL", req.RedirectUrl),
+			zap.String("redirect_url", req.RedirectUrl),
 		)
-		return &authproto.GetAuthenticationURLResponse{}, err
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
 	return &authproto.GetAuthenticationURLResponse{Url: loginURL}, nil
 }
@@ -136,20 +164,33 @@ func (s *authService) ExchangeToken(
 	if err := validateExchangeTokenRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	authenticator, err := s.getAuthenticator(ctx, req.Type, localizer)
+	authenticator, err := s.getAuthenticator(req.Type, localizer)
+	if err != nil {
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	userInfo, err := authenticator.Exchange(ctx, req.Code, req.RedirectUrl)
+	if err != nil {
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	token, err := s.generateToken(ctx, userInfo.Email, localizer)
 	if err != nil {
 		return nil, err
 	}
-	authToken, err := authenticator.Exchange(ctx, req.Code, req.RedirectUrl, localizer)
-	if err != nil {
-		s.logger.Error(
-			"Failed to exchange token",
-			zap.Error(err),
-			zap.String("auth_type", req.Type.String()),
-		)
-		return nil, err
-	}
-	return &authproto.ExchangeTokenResponse{Token: authToken}, nil
+	return &authproto.ExchangeTokenResponse{Token: token}, nil
 }
 
 func (s *authService) RefreshToken(
@@ -160,16 +201,24 @@ func (s *authService) RefreshToken(
 	if err := validateRefreshTokenRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	authenticator, err := s.getAuthenticator(ctx, req.Type, localizer)
+	refreshToken, err := s.verifier.VerifyRefreshToken(req.RefreshToken)
 	if err != nil {
-		return nil, err
+		s.logger.Error("Refresh token is invalid", zap.Any("refresh_token", refreshToken))
+		dt, err := auth.StatusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.UnauthenticatedError),
+		})
+		if err != nil {
+			return nil, err
+		}
+		return nil, dt.Err()
 	}
-	newToken, err := authenticator.Refresh(ctx, req.RefreshToken, req.RedirectUrl, s.opts.refreshTokenTTL, localizer)
+	newToken, err := s.generateToken(ctx, refreshToken.Email, localizer)
 	if err != nil {
 		s.logger.Error(
-			"Failed to refresh token",
+			"Failed to generate token",
 			zap.Error(err),
-			zap.String("auth_type", req.Type.String()),
+			zap.Any("refresh_token", refreshToken),
 		)
 		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -184,7 +233,6 @@ func (s *authService) RefreshToken(
 }
 
 func (s *authService) getAuthenticator(
-	ctx context.Context,
 	authType authproto.AuthType,
 	localizer locale.Localizer,
 ) (auth.Authenticator, error) {
@@ -208,4 +256,133 @@ func (s *authService) getAuthenticator(
 		return nil, dt.Err()
 	}
 	return authenticator, nil
+}
+
+func (s *authService) generateToken(
+	ctx context.Context,
+	userEmail string,
+	localizer locale.Localizer,
+) (*authproto.Token, error) {
+	if err := s.checkEmail(userEmail, localizer); err != nil {
+		s.logger.Error(
+			"Access denied email",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.String("email", userEmail))...,
+		)
+		return nil, err
+	}
+	orgResp, err := s.accountClient.GetMyOrganizationsByEmail(
+		ctx,
+		&acproto.GetMyOrganizationsByEmailRequest{
+			Email: userEmail,
+		},
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to get account's organizations",
+			zap.Error(err),
+			zap.String("email", userEmail),
+		)
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	if len(orgResp.Organizations) == 0 {
+		s.logger.Error(
+			"Unable to generate token for an unapproved account",
+			zap.String("email", userEmail),
+		)
+		dt, err := auth.StatusUnapprovedAccount.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	timeNow := time.Now()
+	accessTokenTTL := timeNow.Add(day)
+	accessToken := &token.AccessToken{
+		Issuer:        s.issuer,
+		Audience:      s.audience,
+		Expiry:        accessTokenTTL,
+		Email:         userEmail,
+		IsSystemAdmin: s.hasSystemAdminOrganization(orgResp.Organizations),
+	}
+	signedAccessToken, err := s.signer.SignAccessToken(accessToken)
+	if err != nil {
+		s.logger.Error(
+			"Failed to sign access token",
+			zap.Error(err),
+		)
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	refreshToken := &token.RefreshToken{
+		Email:  userEmail,
+		Expiry: timeNow.Add(sevenDays),
+	}
+	signRefreshToken, err := s.signer.SignRefreshToken(refreshToken)
+	if err != nil {
+		s.logger.Error(
+			"Failed to sign access token",
+			zap.Error(err),
+		)
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	return &authproto.Token{
+		AccessToken:  signedAccessToken,
+		RefreshToken: signRefreshToken,
+		TokenType:    "Bearer",
+		Expiry:       accessTokenTTL.Unix(),
+	}, nil
+}
+
+func (s *authService) checkEmail(
+	email string,
+	localizer locale.Localizer,
+) error {
+	if s.opts.emailFilter == nil {
+		return nil
+	}
+	if s.opts.emailFilter.MatchString(email) {
+		return nil
+	}
+	dt, err := auth.StatusAccessDeniedEmail.WithDetails(&errdetails.LocalizedMessage{
+		Locale:  localizer.GetLocale(),
+		Message: localizer.MustLocalize(locale.PermissionDenied),
+	})
+	if err != nil {
+		return auth.StatusInternal.Err()
+	}
+	return dt.Err()
+}
+
+func (s *authService) hasSystemAdminOrganization(orgs []*envproto.Organization) bool {
+	for _, org := range orgs {
+		if org.SystemAdmin {
+			return true
+		}
+	}
+	return false
 }

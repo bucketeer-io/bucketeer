@@ -2,9 +2,8 @@
 
 ```
 go run ./hack/generate-service-token generate \
-  --issuer=dex-issuer \
-  --sub=sub \
-  --audience=client-id-set-in-dex-config \
+  --issuer=issuer \
+  --audience=audience \
   --email=email \
   --role=role \
   --key=full-path-to-private-key \

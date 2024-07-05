@@ -43,9 +43,11 @@ tls:
 serviceToken:
   secret: bucketeer-service-token
 oauth:
+  issuer:
+  audience: bucketeer
   google:
-    issuer: https://accounts.google.com
-    clientId: bucketeer
+    issuer:
+    clientId:
     clientSecret:
     redirectUrls:
 

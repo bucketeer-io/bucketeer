@@ -85,6 +85,8 @@ serviceToken:
   secret:
 
 oauth:
+  issuer:
+  audience: bucketeer
   google:
     issuer:
     clientId:
