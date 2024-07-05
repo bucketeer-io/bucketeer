@@ -19,6 +19,7 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/gateway";
 
 import "google/api/annotations.proto";
 import "google/protobuf/wrappers.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 import "proto/user/user.proto";
 import "proto/feature/evaluation.proto";
@@ -169,23 +170,103 @@ message UpdateFeatureResponse {
   feature.Feature feature = 1;
 }
 
-service Gateway {
-  rpc Ping(PingRequest) returns (PingResponse) {
-    option (google.api.http) = {
-      post: "/ping"
-      body: "*"
-    };
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: { title: "Bucketeer Gateway Service" version: "1.0" }
+  schemes: HTTPS
+  host: "ENDPOINT"
+  consumes: "application/json"
+  produces: "application/json"
+  security_definitions: {
+    security: {
+      key: "ApiKeyAuth"
+      value: {
+        type: TYPE_API_KEY
+        in: IN_HEADER
+        name: "authorization"
+        description: "The API Key generated on the Admin Console."
+      }
+    }
   }
+  security: {
+    security_requirement: {
+      key: "ApiKeyAuth"
+      value: {}
+    }
+  }
+  responses: {
+    key: "400"
+    value: {
+      description: "Returned for bad requests that may have failed validation."
+      schema: { json_schema: { ref: ".google.rpc.Status" } }
+      examples: {
+        key: "application/json"
+        value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+      }
+    }
+  }
+  responses: {
+    key: "401"
+    value: {
+      description: "Request could not be authenticated (authentication required)."
+      schema: { json_schema: { ref: ".google.rpc.Status" } }
+      examples: {
+        key: "application/json"
+        value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+      }
+    }
+  }
+  responses: {
+    key: "403"
+    value: {
+      description: "Request does not have permission to access the resource."
+      schema: { json_schema: { ref: ".google.rpc.Status" } }
+      examples: {
+        key: "application/json"
+        value: '{ "code": 7, "message": "not authorized", "details": [] }'
+      }
+    }
+  }
+};
+
+service Gateway {
   rpc GetEvaluations(GetEvaluationsRequest) returns (GetEvaluationsResponse) {
     option (google.api.http) = {
       post: "/get_evaluations"
       body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Evaluations",
+      description: "Gets all the evaluations for a specific user. To call this API, you need a `CLIENT` API Key role.",
+      tags: "Client and Server SDKs",
+      operation_id: "api.gateway.get_evaluations",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
     };
   }
   rpc GetEvaluation(GetEvaluationRequest) returns (GetEvaluationResponse) {
     option (google.api.http) = {
       post: "/get_evaluation"
       body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Evaluation",
+      description: "Gets a single evaluation for a specific user. To call this API, you need a `CLIENT` API Key role.",
+      tags: "Client and Server SDKs",
+      operation_id: "api.gateway.get_evaluation",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
     };
   }
   rpc GetFeatureFlags(GetFeatureFlagsRequest)
@@ -194,6 +275,20 @@ service Gateway {
       post: "/get_feature_flags"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Feature Flags",
+      description: "Gets all the feature flag in an environment. To call this API, it needs `SERVER` API Key role.",
+      tags: "Client and Server SDKs",
+      operation_id: "api.gateway.get_feature_flags",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
   }
   rpc GetSegmentUsers(GetSegmentUsersRequest)
       returns (GetSegmentUsersResponse) {
@@ -201,16 +296,50 @@ service Gateway {
       post: "/get_segment_users"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Segment Users",
+      description: "Gets all the segment users in an environment. To call this API, it needs `SERVER` API Key role.",
+      tags: "Client and Server SDKs",
+      operation_id: "api.gateway.get_segment_users",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
   }
   rpc RegisterEvents(RegisterEventsRequest) returns (RegisterEventsResponse) {
     option (google.api.http) = {
       post: "/register_events"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Register Events",
+      description: "This API is for reporting Goal events. To call this API, it needs a `CLIENT` or `SERVER` API Key role.",
+      tags: "Client and Server SDKs",
+      operation_id: "api.gateway.register_events",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
   }
   rpc Track(TrackRequest) returns (TrackResponse) {
     option (google.api.http) = {
       get: "/track"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Track",
+      description: "This API is an integration for Google Tab Manager to report Goal events. To call this API, you need a `CLIENT` API Key role.",
+      tags: "Client and Server SDKs",
+      operation_id: "api.gateway.track"
     };
   }
   rpc CreateFeature(CreateFeatureRequest) returns (CreateFeatureResponse) {
@@ -218,15 +347,57 @@ service Gateway {
       post: "/v1/features"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create",
+      description: "Create a new Feature Flag. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Feature Flags",
+      operation_id: "api.gateway.v1.features.create",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
   }
   rpc GetFeature(GetFeatureRequest) returns (GetFeatureResponse) {
     option (google.api.http) = {
       get: "/v1/features/{id}"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get a Feature Flag. To call this API, you need a `READ` API Key role.",
+      tags: "Feature Flags",
+      operation_id: "api.gateway.v1.features.get",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
   }
   rpc ListFeatures(ListFeaturesRequest) returns (ListFeaturesResponse) {
     option (google.api.http) = {
       get: "/v1/features"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List",
+      description: "List Feature Flags. To call this API, you need a `READ` API Key role.",
+      tags: "Feature Flags",
+      operation_id: "api.gateway.v1.features.list",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
     };
   }
   rpc UpdateFeature(UpdateFeatureRequest) returns (UpdateFeatureResponse) {
@@ -234,5 +405,39 @@ service Gateway {
       patch: "/v1/features/{id}"
       body: "*"
     };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update",
+      description: "Update a Feature Flag. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Feature Flags",
+      operation_id: "api.gateway.v1.features.update",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
   }
+  rpc Ping(PingRequest) returns (PingResponse) {
+    option (google.api.http) = {
+      get: "/ping"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Ping",
+      description: "Ping the server to check its availability.",
+      tags: "Utility",
+      operation_id: "api.gateway.ping",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      },
+      security: {},
+    };
+  };
 }
