@@ -43,6 +43,8 @@ tls:
 serviceToken:
   secret: bucketeer-service-token
 oauth:
+  key:
+    secret: bucketeer-oauth-key
   issuer:
   audience: bucketeer
   google:
