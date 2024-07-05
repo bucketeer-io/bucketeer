@@ -1758,16 +1758,6 @@
                 "id": 1,
                 "name": "refresh_token",
                 "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "redirect_url",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "type",
-                "type": "AuthType"
               }
             ]
           },

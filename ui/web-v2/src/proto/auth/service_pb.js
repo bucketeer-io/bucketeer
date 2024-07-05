@@ -914,9 +914,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        refreshToken: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        redirectUrl: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        type: jspb.Message.getFieldWithDefault(msg, 3, 0)
+        refreshToken: jspb.Message.getFieldWithDefault(msg, 1, '')
       };
 
     if (includeInstance) {
@@ -959,16 +957,6 @@ proto.bucketeer.auth.RefreshTokenRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setRefreshToken(value);
           break;
-        case 2:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setRedirectUrl(value);
-          break;
-        case 3:
-          var value = /** @type {!proto.bucketeer.auth.AuthType} */ (
-            reader.readEnum()
-          );
-          msg.setType(value);
-          break;
         default:
           reader.skipField();
           break;
@@ -1007,14 +995,6 @@ proto.bucketeer.auth.RefreshTokenRequest.serializeBinaryToWriter = function (
   if (f.length > 0) {
     writer.writeString(1, f);
   }
-  f = message.getRedirectUrl();
-  if (f.length > 0) {
-    writer.writeString(2, f);
-  }
-  f = message.getType();
-  if (f !== 0.0) {
-    writer.writeEnum(3, f);
-  }
 };
 
 /**
@@ -1036,45 +1016,6 @@ proto.bucketeer.auth.RefreshTokenRequest.prototype.setRefreshToken = function (
   value
 ) {
   return jspb.Message.setProto3StringField(this, 1, value);
-};
-
-/**
- * optional string redirect_url = 2;
- * @return {string}
- */
-proto.bucketeer.auth.RefreshTokenRequest.prototype.getRedirectUrl =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 2, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.auth.RefreshTokenRequest} returns this
- */
-proto.bucketeer.auth.RefreshTokenRequest.prototype.setRedirectUrl = function (
-  value
-) {
-  return jspb.Message.setProto3StringField(this, 2, value);
-};
-
-/**
- * optional AuthType type = 3;
- * @return {!proto.bucketeer.auth.AuthType}
- */
-proto.bucketeer.auth.RefreshTokenRequest.prototype.getType = function () {
-  return /** @type {!proto.bucketeer.auth.AuthType} */ (
-    jspb.Message.getFieldWithDefault(this, 3, 0)
-  );
-};
-
-/**
- * @param {!proto.bucketeer.auth.AuthType} value
- * @return {!proto.bucketeer.auth.RefreshTokenRequest} returns this
- */
-proto.bucketeer.auth.RefreshTokenRequest.prototype.setType = function (value) {
-  return jspb.Message.setProto3EnumField(this, 3, value);
 };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

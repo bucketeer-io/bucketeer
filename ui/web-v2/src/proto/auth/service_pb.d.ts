@@ -150,12 +150,6 @@ export class RefreshTokenRequest extends jspb.Message {
   getRefreshToken(): string;
   setRefreshToken(value: string): void;
 
-  getRedirectUrl(): string;
-  setRedirectUrl(value: string): void;
-
-  getType(): AuthTypeMap[keyof AuthTypeMap];
-  setType(value: AuthTypeMap[keyof AuthTypeMap]): void;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): RefreshTokenRequest.AsObject;
   static toObject(
@@ -180,8 +174,6 @@ export class RefreshTokenRequest extends jspb.Message {
 export namespace RefreshTokenRequest {
   export type AsObject = {
     refreshToken: string;
-    redirectUrl: string;
-    type: AuthTypeMap[keyof AuthTypeMap];
   };
 }
 

@@ -48,8 +48,6 @@ message ExchangeTokenResponse {
 
 message RefreshTokenRequest {
   string refresh_token = 1;
-  string redirect_url = 2;
-  AuthType type = 3;
 }
 
 message RefreshTokenResponse {
