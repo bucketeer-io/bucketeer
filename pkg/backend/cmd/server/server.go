@@ -291,8 +291,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	// TODO: refactor to support multiple issuers
 	verifier, err := token.NewVerifier(
 		*s.oauthPublicKeyPath,
-		oAuthConfig.GoogleConfig.Issuer,
-		oAuthConfig.GoogleConfig.ClientID,
+		oAuthConfig.Issuer,
+		oAuthConfig.Audience,
 	)
 	if err != nil {
 		return err

@@ -79,7 +79,7 @@ type server struct {
 	refreshInterval    *time.Duration
 	webURL             *string
 	oauthPublicKeyPath *string
-	oauthClientID      *string
+	oauthAudience      *string
 	oauthIssuer        *string
 	// MySQL
 	mysqlUser        *string
@@ -135,9 +135,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"oauth-public-key",
 			"Path to public key used to verify oauth token.",
 		).Required().String(),
-		oauthClientID: cmd.Flag(
-			"oauth-client-id",
-			"The oauth clientID registered at dex.",
+		oauthAudience: cmd.Flag(
+			"oauth-audience",
+			"The oauth audience registered in the token",
 		).Required().String(),
 		oauthIssuer:      cmd.Flag("oauth-issuer", "The url of dex issuer.").Required().String(),
 		mysqlUser:        cmd.Flag("mysql-user", "MySQL user.").Required().String(),
@@ -246,7 +246,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 
 	registerer := metrics.DefaultRegisterer()
 
-	verifier, err := token.NewVerifier(*s.oauthPublicKeyPath, *s.oauthIssuer, *s.oauthClientID)
+	verifier, err := token.NewVerifier(*s.oauthPublicKeyPath, *s.oauthIssuer, *s.oauthAudience)
 	if err != nil {
 		return err
 	}
