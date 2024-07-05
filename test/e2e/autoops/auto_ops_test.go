@@ -255,9 +255,11 @@ func TestExecuteAutoOpsRule(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 	_, err := autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
-		EnvironmentNamespace:                *environmentNamespace,
-		Id:                                  autoOpsRules[0].Id,
-		ChangeAutoOpsRuleTriggeredAtCommand: &autoopsproto.ChangeAutoOpsRuleTriggeredAtCommand{},
+		EnvironmentNamespace: *environmentNamespace,
+		Id:                   autoOpsRules[0].Id,
+		ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
+			ClauseId: autoOpsRules[0].Clauses[0].Id,
+		},
 	})
 	if err != nil {
 		t.Fatalf("failed to execute auto ops: %s", err.Error())
@@ -267,8 +269,47 @@ func TestExecuteAutoOpsRule(t *testing.T) {
 		t.Fatalf("feature is enabled")
 	}
 	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-	if autoOpsRules[0].TriggeredAt == 0 {
-		t.Fatalf("triggered at is empty")
+	aor := autoOpsRules[0]
+	if aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING && aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_FINISHED {
+		t.Fatalf("The operation has been executed, but there is a problem with the status. Status: %v", aor.AutoOpsStatus)
+	}
+}
+
+func TestExecuteAutoOpsRuleForMultiSchedule(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	autoOpsClient := newAutoOpsClient(t)
+	defer autoOpsClient.Close()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+
+	featureID := createFeatureID(t)
+	createFeature(ctx, t, featureClient, featureID)
+	feature := getFeature(t, featureClient, featureID)
+	clauses := createDatetimeClausesWithActionType(t, 2)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
+	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+	if len(autoOpsRules) != 1 {
+		t.Fatal("not enough rules")
+	}
+	_, err := autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
+		EnvironmentNamespace: *environmentNamespace,
+		Id:                   autoOpsRules[0].Id,
+		ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
+			ClauseId: autoOpsRules[0].Clauses[0].Id,
+		},
+	})
+	if err != nil {
+		t.Fatalf("failed to execute auto ops: %s", err.Error())
+	}
+	feature = getFeature(t, featureClient, featureID)
+	if feature.Enabled == true {
+		t.Fatalf("feature is enabled")
+	}
+	autoOpsRules = listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+	if autoOpsRules[0].AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING {
+		t.Fatalf("status is not running")
 	}
 }
 
@@ -467,6 +508,60 @@ func TestDatetimeBatch(t *testing.T) {
 
 	checkIfAutoOpsRulesAreTriggered(t, featureID)
 
+	// As a requirement, when disabling a flag using an auto operation,
+	// It must stop the progressive rollout if it is running
+	pr := getProgressiveRollout(t, progressiveRollouts[0].Id)
+	if pr.Status != autoopsproto.ProgressiveRollout_STOPPED {
+		t.Fatalf("Progressive rollout must be stopped. Current status: %v", pr.Status)
+	}
+}
+
+func TestDatetimeBatchForMultiSchedule(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	autoOpsClient := newAutoOpsClient(t)
+	defer autoOpsClient.Close()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+
+	featureID := createFeatureID(t)
+	createFeature(ctx, t, featureClient, featureID)
+	feature := getFeature(t, featureClient, featureID)
+	now := time.Now()
+	schedules := []*autoopsproto.ProgressiveRolloutSchedule{
+		{
+			Weight:    20000,
+			ExecuteAt: now.Add(10 * time.Minute).Unix(),
+		},
+	}
+	createProgressiveRollout(
+		ctx,
+		t,
+		autoOpsClient,
+		featureID,
+		&autoopsproto.ProgressiveRolloutManualScheduleClause{
+			Schedules:   schedules,
+			VariationId: feature.Variations[0].Id,
+		},
+		nil,
+	)
+	progressiveRollouts := listProgressiveRollouts(t, autoOpsClient, featureID)
+	if len(progressiveRollouts) != 1 {
+		t.Fatal("Progressive rollout list shouldn't be empty")
+	}
+
+	clauses := createDatetimeClausesWithActionType(t, 2)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_DISABLE_FEATURE, nil, clauses)
+	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
+	if len(autoOpsRules) != 1 {
+		t.Fatal("not enough rules")
+	}
+	// Wait for the event-persister-ops subscribe to the pubsub
+	// The batch runs every minute, so we give a extra 10 seconds
+	// to ensure that it will subscribe correctly.
+	time.Sleep(70 * time.Second)
+	checkIfAutoOpsRulesAreTriggered(t, featureID)
 	// As a requirement, when disabling a flag using an auto operation,
 	// It must stop the progressive rollout if it is running
 	pr := getProgressiveRollout(t, progressiveRollouts[0].Id)
@@ -1116,8 +1211,9 @@ func checkIfAutoOpsRulesAreTriggered(t *testing.T, featureID string) {
 			continue
 		}
 		autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
-		if autoOpsRules[0].TriggeredAt == 0 {
-			t.Fatalf("triggered at must not be zero")
+		aor := autoOpsRules[0]
+		if aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_RUNNING && aor.AutoOpsStatus != autoopsproto.AutoOpsStatus_FINISHED {
+			t.Fatalf("The operation has been executed, but there is a problem with the status. Status: %v", aor.AutoOpsStatus)
 		}
 		break
 	}

@@ -870,6 +870,17 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
+			desc: "err: ErrNoExecuteAutoOpsRuleCommand_ClauseId",
+			req: &autoopsproto.ExecuteAutoOpsRequest{
+				Id:                   "aid1",
+				EnvironmentNamespace: "ns0",
+				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
+					ClauseId: "",
+				},
+			},
+			expectedErr: createError(statusClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id")),
+		},
+		{
 			desc: "err: ErrNotFound",
 			setup: func(s *AutoOpsService) {
 				row := mysqlmock.NewMockRow(mockController)
@@ -879,9 +890,11 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 				).Return(row)
 			},
 			req: &autoopsproto.ExecuteAutoOpsRequest{
-				Id:                                  "aid1",
-				EnvironmentNamespace:                "ns0",
-				ChangeAutoOpsRuleTriggeredAtCommand: &autoopsproto.ChangeAutoOpsRuleTriggeredAtCommand{},
+				Id:                   "aid1",
+				EnvironmentNamespace: "ns0",
+				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
+					ClauseId: "id",
+				},
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -899,9 +912,11 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &autoopsproto.ExecuteAutoOpsRequest{
-				Id:                                  "aid1",
-				EnvironmentNamespace:                "ns0",
-				ChangeAutoOpsRuleTriggeredAtCommand: &autoopsproto.ChangeAutoOpsRuleTriggeredAtCommand{},
+				Id:                   "aid1",
+				EnvironmentNamespace: "ns0",
+				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
+					ClauseId: "testClauseId",
+				},
 			},
 			expectedErr: nil,
 		},

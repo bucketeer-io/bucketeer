@@ -101,6 +101,31 @@ func TestChangeTriggeredAt(t *testing.T) {
 	}
 }
 
+func TestChangeAutoOpsStatus(t *testing.T) {
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	patterns := []*struct {
+		expected error
+	}{
+		{
+			expected: nil,
+		},
+	}
+	for _, p := range patterns {
+		m := publishermock.NewMockPublisher(mockController)
+		a := newAutoOpsRule(t)
+		h := newAutoOpsRuleCommandHandler(m, a)
+		if p.expected == nil {
+			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+		}
+		cmd := &proto.ChangeAutoOpsStatusCommand{
+			Status: proto.AutoOpsStatus_FINISHED,
+		}
+		err := h.Handle(context.Background(), cmd)
+		assert.Equal(t, p.expected, err)
+	}
+}
+
 func TestAddOpsEventRateClause(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()

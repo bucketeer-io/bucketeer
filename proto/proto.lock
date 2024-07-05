@@ -2376,6 +2376,26 @@
             "name": "ChangeAutoOpsRuleTriggeredAtCommand"
           },
           {
+            "name": "ChangeAutoOpsStatusCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "status",
+                "type": "AutoOpsStatus"
+              }
+            ]
+          },
+          {
+            "name": "ExecuteAutoOpsRuleCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "clause_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
             "name": "AddOpsEventRateClauseCommand",
             "fields": [
               {
@@ -2936,7 +2956,18 @@
               {
                 "id": 3,
                 "name": "change_auto_ops_rule_triggered_at_command",
-                "type": "ChangeAutoOpsRuleTriggeredAtCommand"
+                "type": "ChangeAutoOpsRuleTriggeredAtCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "execute_auto_ops_rule_command",
+                "type": "ExecuteAutoOpsRuleCommand"
               }
             ]
           },
@@ -6025,7 +6056,13 @@
               },
               {
                 "name": "AUTOOPS_RULE_TRIGGERED_AT_CHANGED",
-                "integer": 804
+                "integer": 804,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "OPS_EVENT_RATE_CLAUSE_ADDED",
@@ -6046,6 +6083,10 @@
               {
                 "name": "AUTOOPS_RULE_STOPPED",
                 "integer": 809
+              },
+              {
+                "name": "AUTOOPS_RULE_OPS_STATUS_CHANGED",
+                "integer": 810
               },
               {
                 "name": "PUSH_CREATED",
@@ -8185,6 +8226,16 @@
           },
           {
             "name": "AutoOpsRuleTriggeredAtChangedEvent"
+          },
+          {
+            "name": "AutoOpsRuleOpsStatusChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "ops_status",
+                "type": "bucketeer.autoops.AutoOpsStatus"
+              }
+            ]
           },
           {
             "name": "OpsEventRateClauseAddedEvent",

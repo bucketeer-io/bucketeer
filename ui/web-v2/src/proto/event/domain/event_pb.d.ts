@@ -223,6 +223,7 @@ export namespace Event {
     DATETIME_CLAUSE_ADDED: 807;
     DATETIME_CLAUSE_CHANGED: 808;
     AUTOOPS_RULE_STOPPED: 809;
+    AUTOOPS_RULE_OPS_STATUS_CHANGED: 810;
     PUSH_CREATED: 900;
     PUSH_DELETED: 901;
     PUSH_TAGS_ADDED: 902;
@@ -4212,6 +4213,41 @@ export class AutoOpsRuleTriggeredAtChangedEvent extends jspb.Message {
 
 export namespace AutoOpsRuleTriggeredAtChangedEvent {
   export type AsObject = {};
+}
+
+export class AutoOpsRuleOpsStatusChangedEvent extends jspb.Message {
+  getOpsStatus(): proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap];
+  setOpsStatus(
+    value: proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap]
+  ): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): AutoOpsRuleOpsStatusChangedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: AutoOpsRuleOpsStatusChangedEvent
+  ): AutoOpsRuleOpsStatusChangedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: AutoOpsRuleOpsStatusChangedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): AutoOpsRuleOpsStatusChangedEvent;
+  static deserializeBinaryFromReader(
+    message: AutoOpsRuleOpsStatusChangedEvent,
+    reader: jspb.BinaryReader
+  ): AutoOpsRuleOpsStatusChangedEvent;
+}
+
+export namespace AutoOpsRuleOpsStatusChangedEvent {
+  export type AsObject = {
+    opsStatus: proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap];
+  };
 }
 
 export class OpsEventRateClauseAddedEvent extends jspb.Message {

@@ -3447,6 +3447,12 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_command_pb.ChangeAutoOpsRuleTriggeredAtCommand.toObject(
             includeInstance,
             f
+          ),
+        executeAutoOpsRuleCommand:
+          (f = msg.getExecuteAutoOpsRuleCommand()) &&
+          proto_autoops_command_pb.ExecuteAutoOpsRuleCommand.toObject(
+            includeInstance,
+            f
           )
       };
 
@@ -3506,6 +3512,15 @@ proto.bucketeer.autoops.ExecuteAutoOpsRequest.deserializeBinaryFromReader =
           );
           msg.setChangeAutoOpsRuleTriggeredAtCommand(value);
           break;
+        case 4:
+          var value = new proto_autoops_command_pb.ExecuteAutoOpsRuleCommand();
+          reader.readMessage(
+            value,
+            proto_autoops_command_pb.ExecuteAutoOpsRuleCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setExecuteAutoOpsRuleCommand(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -3552,6 +3567,15 @@ proto.bucketeer.autoops.ExecuteAutoOpsRequest.serializeBinaryToWriter =
         3,
         f,
         proto_autoops_command_pb.ChangeAutoOpsRuleTriggeredAtCommand
+          .serializeBinaryToWriter
+      );
+    }
+    f = message.getExecuteAutoOpsRuleCommand();
+    if (f != null) {
+      writer.writeMessage(
+        4,
+        f,
+        proto_autoops_command_pb.ExecuteAutoOpsRuleCommand
           .serializeBinaryToWriter
       );
     }
@@ -3635,6 +3659,48 @@ proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.clearChangeAutoOpsRuleTr
 proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.hasChangeAutoOpsRuleTriggeredAtCommand =
   function () {
     return jspb.Message.getField(this, 3) != null;
+  };
+
+/**
+ * optional ExecuteAutoOpsRuleCommand execute_auto_ops_rule_command = 4;
+ * @return {?proto.bucketeer.autoops.ExecuteAutoOpsRuleCommand}
+ */
+proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.getExecuteAutoOpsRuleCommand =
+  function () {
+    return /** @type{?proto.bucketeer.autoops.ExecuteAutoOpsRuleCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_autoops_command_pb.ExecuteAutoOpsRuleCommand,
+        4
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.autoops.ExecuteAutoOpsRuleCommand|undefined} value
+ * @return {!proto.bucketeer.autoops.ExecuteAutoOpsRequest} returns this
+ */
+proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.setExecuteAutoOpsRuleCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 4, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.autoops.ExecuteAutoOpsRequest} returns this
+ */
+proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.clearExecuteAutoOpsRuleCommand =
+  function () {
+    return this.setExecuteAutoOpsRuleCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.hasExecuteAutoOpsRuleCommand =
+  function () {
+    return jspb.Message.getField(this, 4) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

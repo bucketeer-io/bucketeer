@@ -69,6 +69,8 @@ func (h *autoOpsRuleCommandHandler) Handle(ctx context.Context, cmd Command) err
 		return h.addDatetimeClause(ctx, c)
 	case *proto.ChangeDatetimeClauseCommand:
 		return h.changeDatetimeClause(ctx, c)
+	case *proto.ChangeAutoOpsStatusCommand:
+		return h.changeAutoOpsStatus(ctx, c)
 	}
 	return errUnknownCommand
 }
@@ -113,6 +115,20 @@ func (h *autoOpsRuleCommandHandler) changeTriggeredAt(
 		ctx,
 		eventproto.Event_AUTOOPS_RULE_TRIGGERED_AT_CHANGED,
 		&eventproto.AutoOpsRuleTriggeredAtChangedEvent{},
+	)
+}
+
+func (h *autoOpsRuleCommandHandler) changeAutoOpsStatus(
+	ctx context.Context,
+	cmd *proto.ChangeAutoOpsStatusCommand,
+) error {
+	h.autoOpsRule.SetAutoOpsStatus(cmd.Status)
+	return h.send(
+		ctx,
+		eventproto.Event_AUTOOPS_RULE_OPS_STATUS_CHANGED,
+		&eventproto.AutoOpsRuleOpsStatusChangedEvent{
+			OpsStatus: cmd.Status,
+		},
 	)
 }
 
