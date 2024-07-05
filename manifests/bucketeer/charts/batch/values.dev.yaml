@@ -56,7 +56,7 @@ oauth:
   key:
     secret: bucketeer-oauth-key
     public:
-  issuer: https://accounts.google.com
+  issuer:
   audience: bucketeer
   clientId: bucketeer # TODO: remove after releasing
 
