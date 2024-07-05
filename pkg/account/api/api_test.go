@@ -69,7 +69,6 @@ func createContextWithEmailToken(t *testing.T, email string, isSystemAdmin bool)
 	t.Helper()
 	token := &token.AccessToken{
 		Issuer:        "issuer",
-		Subject:       "bucketeer@example.com",
 		Audience:      "audience",
 		Expiry:        time.Now().AddDate(100, 0, 0),
 		IssuedAt:      time.Now(),
@@ -84,7 +83,6 @@ func createContextWithInvalidEmailToken(t *testing.T) context.Context {
 	t.Helper()
 	token := &token.AccessToken{
 		Issuer:   "issuer",
-		Subject:  "bucketeer@example.com",
 		Audience: "audience",
 		Expiry:   time.Now().AddDate(100, 0, 0),
 		IssuedAt: time.Now(),

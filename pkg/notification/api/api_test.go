@@ -123,7 +123,6 @@ func createAdminToken(t *testing.T) *token.AccessToken {
 	t.Helper()
 	return &token.AccessToken{
 		Issuer:   "issuer",
-		Subject:  "sub",
 		Audience: "audience",
 		Expiry:   time.Now().AddDate(100, 0, 0),
 		IssuedAt: time.Now(),
@@ -135,7 +134,6 @@ func createOwnerToken(t *testing.T) *token.AccessToken {
 	t.Helper()
 	return &token.AccessToken{
 		Issuer:   "issuer",
-		Subject:  "sub",
 		Audience: "audience",
 		Expiry:   time.Now().AddDate(100, 0, 0),
 		IssuedAt: time.Now(),

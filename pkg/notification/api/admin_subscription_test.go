@@ -828,7 +828,6 @@ func setToken(t *testing.T, ctx context.Context, isSystemAdmin bool) context.Con
 	t.Helper()
 	tokenID := &token.AccessToken{
 		Issuer:        "issuer",
-		Subject:       "sub",
 		Audience:      "audience",
 		Expiry:        time.Now().AddDate(100, 0, 0),
 		IssuedAt:      time.Now(),

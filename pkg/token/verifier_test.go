@@ -45,13 +45,12 @@ func TestNewVerifier(t *testing.T) {
 func TestVerify(t *testing.T) {
 	t.Parallel()
 	issuer := "test_issuer"
-	clientID := "test_client_id"
+	audience := "test_audience"
 	signer, err := NewSigner("testdata/valid-private.pem")
 	require.NoError(t, err)
 	accessToken := &AccessToken{
 		Issuer:   issuer,
-		Subject:  "subject",
-		Audience: clientID,
+		Audience: audience,
 		Email:    "test@email",
 		Expiry:   time.Now().Add(time.Hour),
 	}
@@ -76,7 +75,7 @@ func TestVerify(t *testing.T) {
 			valid:          true,
 		},
 	}
-	verifier, err := NewVerifier("testdata/valid-public.pem", issuer, clientID)
+	verifier, err := NewVerifier("testdata/valid-public.pem", issuer, audience)
 	require.NoError(t, err)
 	for _, p := range testcases {
 		t.Run(p.desc, func(t *testing.T) {

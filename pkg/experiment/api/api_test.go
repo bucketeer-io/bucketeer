@@ -118,7 +118,6 @@ func createContextWithToken() context.Context {
 func createContextWithTokenAndMetadata(metadata map[string][]string) context.Context {
 	token := &token.AccessToken{
 		Issuer:   "issuer",
-		Subject:  "sub",
 		Audience: "audience",
 		Expiry:   time.Now().AddDate(100, 0, 0),
 		IssuedAt: time.Now(),
@@ -134,7 +133,6 @@ func createContextWithTokenAndMetadata(metadata map[string][]string) context.Con
 func createContextWithTokenRoleUnassigned() context.Context {
 	token := &token.AccessToken{
 		Issuer:   "issuer",
-		Subject:  "sub",
 		Audience: "audience",
 		Expiry:   time.Now().AddDate(100, 0, 0),
 		IssuedAt: time.Now(),
