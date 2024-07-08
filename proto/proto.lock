@@ -13771,6 +13771,40 @@
                 "id": 8,
                 "name": "archived",
                 "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 9,
+                "name": "variations",
+                "type": "Variation",
+                "is_repeated": true
+              },
+              {
+                "id": 10,
+                "name": "prerequisites",
+                "type": "Prerequisite",
+                "is_repeated": true
+              },
+              {
+                "id": 11,
+                "name": "targets",
+                "type": "Target",
+                "is_repeated": true
+              },
+              {
+                "id": 12,
+                "name": "rules",
+                "type": "Rule",
+                "is_repeated": true
+              },
+              {
+                "id": 13,
+                "name": "default_strategy",
+                "type": "Strategy"
+              },
+              {
+                "id": 14,
+                "name": "off_variation",
+                "type": "google.protobuf.StringValue"
               }
             ]
           },
@@ -15025,6 +15059,21 @@
           },
           {
             "path": "proto/feature/flag_trigger.proto"
+          },
+          {
+            "path": "proto/feature/variation.proto"
+          },
+          {
+            "path": "proto/feature/prerequisite.proto"
+          },
+          {
+            "path": "proto/feature/rule.proto"
+          },
+          {
+            "path": "proto/feature/strategy.proto"
+          },
+          {
+            "path": "proto/feature/target.proto"
           }
         ],
         "package": {
@@ -15694,6 +15743,40 @@
                 "id": 7,
                 "name": "archived",
                 "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 8,
+                "name": "variations",
+                "type": "feature.Variation",
+                "is_repeated": true
+              },
+              {
+                "id": 9,
+                "name": "prerequisites",
+                "type": "feature.Prerequisite",
+                "is_repeated": true
+              },
+              {
+                "id": 10,
+                "name": "targets",
+                "type": "feature.Target",
+                "is_repeated": true
+              },
+              {
+                "id": 11,
+                "name": "rules",
+                "type": "feature.Rule",
+                "is_repeated": true
+              },
+              {
+                "id": 12,
+                "name": "default_strategy",
+                "type": "feature.Strategy"
+              },
+              {
+                "id": 13,
+                "name": "off_variation",
+                "type": "google.protobuf.StringValue"
               }
             ]
           },
@@ -16437,6 +16520,18 @@
           },
           {
             "path": "proto/feature/variation.proto"
+          },
+          {
+            "path": "proto/feature/prerequisite.proto"
+          },
+          {
+            "path": "proto/feature/rule.proto"
+          },
+          {
+            "path": "proto/feature/strategy.proto"
+          },
+          {
+            "path": "proto/feature/target.proto"
           },
           {
             "path": "proto/feature/segment.proto"

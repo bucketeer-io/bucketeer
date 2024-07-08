@@ -15,6 +15,7 @@
 package domain
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"testing"
@@ -24,6 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
+	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
 	proto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
@@ -447,114 +449,159 @@ func TestRemoveUserFromVariation(t *testing.T) {
 
 func TestAddFixedStrategyRule(t *testing.T) {
 	f := makeFeature("test-feature")
-	varitions := f.Variations
+	id1, _ := uuid.NewUUID()
 	patterns := []struct {
-		id       string
-		strategy *proto.Strategy
-		expected error
+		desc        string
+		id          string
+		strategy    *proto.Strategy
+		clauses     []*feature.Clause
+		expectedErr bool
 	}{
 		{
+			desc:     "fail: add rule with nil strategy",
 			id:       "rule-2",
 			strategy: nil,
-			expected: errRuleAlreadyExists,
+			clauses: []*feature.Clause{
+				{
+					Id:        id1.String(),
+					Attribute: "name",
+					Operator:  feature.Clause_EQUALS,
+					Values: []string{
+						"user1",
+					},
+				},
+			},
+			expectedErr: true,
 		},
 		{
-			id: "rule-3",
+			desc: "fail: add rule with nil clauses",
+			id:   "rule-3",
 			strategy: &proto.Strategy{
 				Type:          proto.Strategy_FIXED,
 				FixedStrategy: &proto.FixedStrategy{Variation: ""},
 			},
-			expected: errVariationNotFound,
+			clauses: []*feature.Clause{
+				{
+					Id:        id1.String(),
+					Attribute: "name",
+					Operator:  feature.Clause_EQUALS,
+					Values: []string{
+						"user1",
+					},
+				},
+			},
+			expectedErr: true,
 		},
 		{
-			id: "rule-3",
+			desc: "success",
+			id:   "rule-3",
 			strategy: &proto.Strategy{
 				Type:          proto.Strategy_FIXED,
-				FixedStrategy: &proto.FixedStrategy{Variation: varitions[0].Id},
+				FixedStrategy: &proto.FixedStrategy{Variation: f.Variations[0].Id},
 			},
-			expected: nil,
+			clauses: []*feature.Clause{
+				{
+					Id:        id1.String(),
+					Attribute: "name",
+					Operator:  feature.Clause_EQUALS,
+					Values: []string{
+						"user1",
+					},
+				},
+			},
+			expectedErr: false,
 		},
 	}
 	for _, p := range patterns {
 		rule := &proto.Rule{
 			Id:       p.id,
 			Strategy: p.strategy,
+			Clauses:  p.clauses,
 		}
 		err := f.AddRule(rule)
-		assert.Equal(t, p.expected, err)
+		assert.Equal(t, p.expectedErr, err != nil, "%s", p.desc)
+		if !p.expectedErr {
+			assert.Equal(t, rule, f.Rules[2], "%s", p.desc)
+		}
 	}
-	rule := &proto.Rule{
-		Id:       patterns[2].id,
-		Strategy: patterns[2].strategy,
-	}
-	assert.Equal(t, rule, f.Rules[2])
 }
 
 func TestAddRolloutStrategyRule(t *testing.T) {
 	f := makeFeature("test-feature")
-	varitions := f.Variations
+	id1, _ := uuid.NewUUID()
 	patterns := []struct {
-		id       string
-		strategy *proto.Strategy
-		expected error
+		desc        string
+		rule        *proto.Rule
+		expectedErr bool
 	}{
 		{
-			id:       "rule-2",
-			strategy: nil,
-			expected: errRuleAlreadyExists,
+			desc: "fail: rule already exists",
+			rule: &feature.Rule{
+				Id:       "rule-2",
+				Strategy: nil,
+			},
+			expectedErr: true,
 		},
 		{
-			id: "rule-3",
-			strategy: &proto.Strategy{
-				Type: proto.Strategy_ROLLOUT,
-				RolloutStrategy: &proto.RolloutStrategy{
-					Variations: []*proto.RolloutStrategy_Variation{
-						{
-							Variation: varitions[0].Id,
-							Weight:    30000,
-						},
-						{
-							Variation: "",
-							Weight:    70000,
+			desc: "fail: variation not found",
+			rule: &feature.Rule{
+				Id: "rule-3",
+				Strategy: &proto.Strategy{
+					Type: proto.Strategy_ROLLOUT,
+					RolloutStrategy: &proto.RolloutStrategy{
+						Variations: []*proto.RolloutStrategy_Variation{
+							{
+								Variation: f.Variations[0].Id,
+								Weight:    30000,
+							},
+							{
+								Variation: "",
+								Weight:    70000,
+							},
 						},
 					},
 				},
 			},
-			expected: errVariationNotFound,
+			expectedErr: true,
 		},
 		{
-			id: "rule-3",
-			strategy: &proto.Strategy{
-				Type: proto.Strategy_ROLLOUT,
-				RolloutStrategy: &proto.RolloutStrategy{
-					Variations: []*proto.RolloutStrategy_Variation{
-						{
-							Variation: varitions[0].Id,
-							Weight:    30000,
-						},
-						{
-							Variation: varitions[1].Id,
-							Weight:    70000,
+			desc: "success",
+			rule: &feature.Rule{
+				Id: "rule-3",
+				Strategy: &proto.Strategy{
+					Type: proto.Strategy_ROLLOUT,
+					RolloutStrategy: &proto.RolloutStrategy{
+						Variations: []*proto.RolloutStrategy_Variation{
+							{
+								Variation: f.Variations[0].Id,
+								Weight:    30000,
+							},
+							{
+								Variation: f.Variations[1].Id,
+								Weight:    70000,
+							},
 						},
 					},
 				},
+				Clauses: []*proto.Clause{{
+					Id:        id1.String(),
+					Attribute: "name",
+					Operator:  proto.Clause_EQUALS,
+					Values: []string{
+						"user1",
+					},
+				}},
 			},
-			expected: nil,
+			expectedErr: false,
 		},
 	}
 	for _, p := range patterns {
-		rule := &proto.Rule{
-			Id:       p.id,
-			Strategy: p.strategy,
+		err := f.AddRule(p.rule)
+		assert.Equal(t, p.expectedErr, err != nil, "%s", p.desc)
+		if !p.expectedErr {
+			assert.Equal(t, p.rule, f.Rules[2], "%s", p.desc)
 		}
-		err := f.AddRule(rule)
-		assert.Equal(t, p.expected, err)
 	}
-	rule := &proto.Rule{
-		Id:       patterns[2].id,
-		Strategy: patterns[2].strategy,
-	}
-	assert.Equal(t, rule, f.Rules[2])
 }
 
 func TestChangeRuleStrategyToFixed(t *testing.T) {
@@ -1308,7 +1355,88 @@ func TestIsStale(t *testing.T) {
 	}
 }
 
-func TestValidateVariation(t *testing.T) {
+func TestValidateVariations(t *testing.T) {
+	t.Parallel()
+	id1, _ := uuid.NewUUID()
+	id2, _ := uuid.NewUUID()
+	patterns := []struct {
+		desc          string
+		variationType feature.Feature_VariationType
+		variations    []*feature.Variation
+		expectedErr   bool
+	}{
+		{
+			desc:          "fail: only one variation",
+			variationType: feature.Feature_BOOLEAN,
+			variations: []*feature.Variation{
+				{Id: id1.String(), Name: "v1", Value: "true"},
+			},
+			expectedErr: true,
+		},
+		{
+			desc:          "fail: empty id",
+			variationType: feature.Feature_BOOLEAN,
+			variations: []*feature.Variation{
+				{Id: "", Name: "v1", Value: "true"},
+				{Id: id2.String(), Name: "v2", Value: "false"},
+			},
+			expectedErr: true,
+		},
+		{
+			desc:          "fail: empty name",
+			variationType: feature.Feature_BOOLEAN,
+			variations: []*feature.Variation{
+				{Id: id1.String(), Name: "", Value: "true"},
+				{Id: id2.String(), Name: "v2", Value: "false"},
+			},
+			expectedErr: true,
+		},
+		{
+			desc:          "fail: invalid value",
+			variationType: feature.Feature_BOOLEAN,
+			variations: []*feature.Variation{
+				{Id: id1.String(), Name: "v1", Value: "foo"},
+				{Id: id2.String(), Name: "v2", Value: "false"},
+			},
+			expectedErr: true,
+		},
+		{
+			desc:          "fail: id is duplicated",
+			variationType: feature.Feature_BOOLEAN,
+			variations: []*feature.Variation{
+				{Id: id1.String(), Name: "v1", Value: "true"},
+				{Id: id1.String(), Name: "v2", Value: "false"},
+			},
+			expectedErr: true,
+		},
+		{
+			desc:          "fail: invalid id",
+			variationType: feature.Feature_BOOLEAN,
+			variations: []*feature.Variation{
+				{Id: "v1", Name: "", Value: "true"},
+				{Id: id2.String(), Name: "v2", Value: "false"},
+			},
+			expectedErr: true,
+		},
+		{
+			desc:          "success",
+			variationType: feature.Feature_BOOLEAN,
+			variations: []*feature.Variation{
+				{Id: id1.String(), Name: "v1", Value: "true"},
+				{Id: id2.String(), Name: "v2", Value: "false"},
+			},
+			expectedErr: false,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			err := validateVariations(p.variationType, p.variations)
+			assert.Equal(t, p.expectedErr, err != nil)
+		})
+	}
+}
+
+func TestValidateVariationValue(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
 		desc          string
@@ -1321,6 +1449,12 @@ func TestValidateVariation(t *testing.T) {
 			variationType: feature.Feature_BOOLEAN,
 			value:         "hoge",
 			expected:      errVariationTypeUnmatched,
+		},
+		{
+			desc:          "empty string",
+			variationType: feature.Feature_JSON,
+			value:         "",
+			expected:      errors.New("feature: variation value cannot be empty"),
 		},
 		{
 			desc:          "invalid number",
@@ -1373,7 +1507,7 @@ func TestValidateVariation(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			assert.Equal(t, p.expected, validateVariation(p.variationType, p.value))
+			assert.Equal(t, p.expected, validateVariationValue(p.variationType, p.value))
 		})
 	}
 }
@@ -1633,6 +1767,9 @@ func TestFeatureIDsDependsOn(t *testing.T) {
 }
 
 func TestValidateClauses(t *testing.T) {
+	id1, _ := uuid.NewUUID()
+	id2, _ := uuid.NewUUID()
+	id3, _ := uuid.NewUUID()
 	patterns := []struct {
 		desc     string
 		clauses  []*proto.Clause
@@ -1642,7 +1779,7 @@ func TestValidateClauses(t *testing.T) {
 			desc: "success: 2 clauses",
 			clauses: []*proto.Clause{
 				{
-					Id:        "clause-1",
+					Id:        id1.String(),
 					Attribute: "name",
 					Operator:  proto.Clause_EQUALS,
 					Values: []string{
@@ -1651,14 +1788,14 @@ func TestValidateClauses(t *testing.T) {
 					},
 				},
 				{
-					Id:       "clause-2",
+					Id:       id2.String(),
 					Operator: proto.Clause_SEGMENT,
 					Values: []string{
 						"value",
 					},
 				},
 				{
-					Id:        "clause-3",
+					Id:        id3.String(),
 					Operator:  proto.Clause_FEATURE_FLAG,
 					Attribute: "feature-1",
 					Values: []string{
@@ -1669,10 +1806,27 @@ func TestValidateClauses(t *testing.T) {
 			expected: nil,
 		},
 		{
+			desc:     "err: zero clause",
+			clauses:  []*proto.Clause{},
+			expected: fmt.Errorf("feature: rule must have at least one clause"),
+		},
+		{
+			desc: "err: id is empty",
+			clauses: []*proto.Clause{
+				{
+					Id:        "",
+					Attribute: "name",
+					Operator:  proto.Clause_EQUALS,
+					Values:    []string{"user1"},
+				},
+			},
+			expected: errors.New("feature: clause id cannot be empty"),
+		},
+		{
 			desc: "err: compare missing attribute",
 			clauses: []*proto.Clause{
 				{
-					Id:       "clause-1",
+					Id:       id1.String(),
 					Operator: proto.Clause_EQUALS,
 					Values: []string{
 						"user1",
@@ -1686,7 +1840,7 @@ func TestValidateClauses(t *testing.T) {
 			desc: "err: compare missing values",
 			clauses: []*proto.Clause{
 				{
-					Id:        "clause-1",
+					Id:        id1.String(),
 					Operator:  proto.Clause_EQUALS,
 					Attribute: "name",
 				},
@@ -1697,7 +1851,7 @@ func TestValidateClauses(t *testing.T) {
 			desc: "err: segment attribute not empty",
 			clauses: []*proto.Clause{
 				{
-					Id:        "clause-1",
+					Id:        id1.String(),
 					Operator:  proto.Clause_SEGMENT,
 					Attribute: "name",
 					Values: []string{
@@ -1711,7 +1865,7 @@ func TestValidateClauses(t *testing.T) {
 			desc: "err: segment value empty",
 			clauses: []*proto.Clause{
 				{
-					Id:       "clause-1",
+					Id:       id1.String(),
 					Operator: proto.Clause_SEGMENT,
 				},
 			},
@@ -1721,7 +1875,7 @@ func TestValidateClauses(t *testing.T) {
 			desc: "err: feature flag attribute empty",
 			clauses: []*proto.Clause{
 				{
-					Id:       "clause-1",
+					Id:       id1.String(),
 					Operator: proto.Clause_FEATURE_FLAG,
 				},
 			},
@@ -1731,7 +1885,7 @@ func TestValidateClauses(t *testing.T) {
 			desc: "err: feature flag values empty",
 			clauses: []*proto.Clause{
 				{
-					Id:        "clause-1",
+					Id:        id1.String(),
 					Operator:  proto.Clause_FEATURE_FLAG,
 					Attribute: "feature-1",
 				},
@@ -1747,101 +1901,215 @@ func TestValidateClauses(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
+	id1, _ := uuid.NewUUID()
+	id2, _ := uuid.NewUUID()
+	id3, _ := uuid.NewUUID()
+	genF := func() *Feature {
+		return &Feature{
+			Feature: &proto.Feature{
+				Id:            "i",
+				Name:          "n",
+				Description:   "d",
+				Archived:      false,
+				Enabled:       false,
+				Tags:          []string{"t1", "t2"},
+				VariationType: feature.Feature_BOOLEAN,
+				Variations: []*proto.Variation{
+					{Id: id1.String(), Value: "true", Name: "n1", Description: "d1"},
+					{Id: id2.String(), Value: "false", Name: "n2", Description: "d2"},
+				},
+				Prerequisites: []*proto.Prerequisite{},
+				Targets: []*proto.Target{
+					{Variation: id1.String()},
+					{Variation: id2.String()},
+				},
+				Rules: []*proto.Rule{},
+				DefaultStrategy: &proto.Strategy{
+					Type:          proto.Strategy_FIXED,
+					FixedStrategy: &proto.FixedStrategy{Variation: id1.String()},
+				},
+				OffVariation: id1.String(),
+			},
+		}
+	}
 	patterns := []struct {
-		desc        string
-		feature     *Feature
-		name        *wrapperspb.StringValue
-		description *wrapperspb.StringValue
-		enabled     *wrapperspb.BoolValue
-		tags        []string
-		archived    *wrapperspb.BoolValue
-		expected    *Feature
-		expectedErr error
+		desc            string
+		inputFunc       func() *Feature
+		name            *wrapperspb.StringValue
+		description     *wrapperspb.StringValue
+		enabled         *wrapperspb.BoolValue
+		tags            []string
+		archived        *wrapperspb.BoolValue
+		variations      []*proto.Variation
+		prerequisites   []*proto.Prerequisite
+		targets         []*proto.Target
+		rules           []*proto.Rule
+		defaultStrategy *proto.Strategy
+		offVariation    *wrapperspb.StringValue
+		expectedFunc    func() *Feature
+		expectedErr     error
 	}{
 		{
 			desc: "fail: name is empty",
-			feature: &Feature{
-				Feature: &proto.Feature{},
+			inputFunc: func() *Feature {
+				return genF()
 			},
-			name:        &wrapperspb.StringValue{Value: ""},
-			description: &wrapperspb.StringValue{Value: "description"},
-			expected:    nil,
-			expectedErr: errNameEmpty,
+			name:         &wrapperspb.StringValue{Value: ""},
+			description:  &wrapperspb.StringValue{Value: "description"},
+			expectedFunc: func() *Feature { return nil },
+			expectedErr:  errNameEmpty,
 		},
 		{
 			desc: "fail: already enabled",
-			feature: &Feature{
-				Feature: &proto.Feature{
-					Enabled: true,
-				},
+			inputFunc: func() *Feature {
+				f := genF()
+				f.Enabled = true
+				return f
 			},
-			enabled:     &wrapperspb.BoolValue{Value: true},
-			expected:    nil,
-			expectedErr: ErrAlreadyEnabled,
+			enabled:      &wrapperspb.BoolValue{Value: true},
+			expectedFunc: func() *Feature { return nil },
+			expectedErr:  ErrAlreadyEnabled,
 		},
 		{
 			desc: "fail: already disabled",
-			feature: &Feature{
-				Feature: &proto.Feature{
-					Enabled: false,
-				},
+			inputFunc: func() *Feature {
+				f := genF()
+				f.Enabled = false
+				return f
 			},
-			enabled:     &wrapperspb.BoolValue{Value: false},
-			expected:    nil,
-			expectedErr: ErrAlreadyDisabled,
+			enabled:      &wrapperspb.BoolValue{Value: false},
+			expectedFunc: func() *Feature { return nil },
+			expectedErr:  ErrAlreadyDisabled,
 		},
 		{
-			desc: "success",
-			feature: &Feature{
-				Feature: &proto.Feature{
-					Prerequisites: []*proto.Prerequisite{},
-				},
+			desc: "success: version incremented",
+			inputFunc: func() *Feature {
+				f := genF()
+				return f
 			},
-			name:        &wrapperspb.StringValue{Value: "name"},
-			description: &wrapperspb.StringValue{Value: "description"},
+			name:        &wrapperspb.StringValue{Value: "n2"},
+			description: &wrapperspb.StringValue{Value: "d2"},
 			enabled:     &wrapperspb.BoolValue{Value: true},
 			archived:    &wrapperspb.BoolValue{Value: true},
-			tags:        []string{"tag1", "tag2"},
-			expected: &Feature{
-				Feature: &proto.Feature{
-					Name:          "name",
-					Description:   "description",
-					UpdatedAt:     time.Now().Unix(),
-					Version:       1,
-					Prerequisites: []*proto.Prerequisite{},
+			tags:        []string{"t3"},
+			variations: []*feature.Variation{
+				{Id: id1.String(), Value: "true", Name: "n3"},
+				{Id: id2.String(), Value: "false", Name: "n4"},
+			},
+			prerequisites: []*feature.Prerequisite{{FeatureId: "f1", VariationId: "v1"}},
+			targets: []*feature.Target{
+				{Variation: id1.String(), Users: []string{"uid1"}},
+				{Variation: id2.String(), Users: []string{"uid2"}},
+			},
+			rules: []*feature.Rule{
+				{
+					Id: id3.String(),
+					Strategy: &feature.Strategy{
+						Type:          feature.Strategy_FIXED,
+						FixedStrategy: &feature.FixedStrategy{Variation: id1.String()},
+					},
+					Clauses: []*feature.Clause{
+						{
+							Id:        id1.String(),
+							Attribute: "name",
+							Operator:  feature.Clause_EQUALS,
+							Values:    []string{"user1", "user2"},
+						},
+					},
 				},
+			},
+			defaultStrategy: &feature.Strategy{
+				Type: feature.Strategy_ROLLOUT,
+				RolloutStrategy: &feature.RolloutStrategy{
+					Variations: []*feature.RolloutStrategy_Variation{{Variation: id1.String(), Weight: 100}},
+				},
+			},
+			offVariation: &wrapperspb.StringValue{Value: id1.String()},
+			expectedFunc: func() *Feature {
+				f := genF()
+				f.Name = "n2"
+				f.Description = "d2"
+				f.Archived = true
+				f.Enabled = true
+				f.Tags = []string{"t3"}
+				f.UpdatedAt = time.Now().Unix()
+				f.Version = 1
+				f.Variations = []*feature.Variation{
+					{Id: id1.String(), Value: "true", Name: "n3"},
+					{Id: id2.String(), Value: "false", Name: "n4"},
+				}
+				f.Prerequisites = []*feature.Prerequisite{{FeatureId: "f1", VariationId: "v1"}}
+				f.Targets =
+					[]*feature.Target{
+						{Variation: id1.String(), Users: []string{"uid1"}},
+						{Variation: id2.String(), Users: []string{"uid2"}},
+					}
+				f.Rules = []*feature.Rule{
+					{
+						Id: id3.String(),
+						Strategy: &feature.Strategy{
+							Type:          feature.Strategy_FIXED,
+							FixedStrategy: &feature.FixedStrategy{Variation: id1.String()},
+						},
+						Clauses: []*feature.Clause{
+							{
+								Id:        id1.String(),
+								Attribute: "name",
+								Operator:  feature.Clause_EQUALS,
+								Values:    []string{"user1", "user2"},
+							},
+						},
+					},
+				}
+				f.DefaultStrategy = &feature.Strategy{
+					Type: feature.Strategy_ROLLOUT,
+					RolloutStrategy: &feature.RolloutStrategy{
+						Variations: []*feature.RolloutStrategy_Variation{{Variation: id1.String(), Weight: 100}},
+					},
+				}
+				f.OffVariation = id1.String()
+				return f
 			},
 			expectedErr: nil,
 		},
 		{
 			desc: "success: version not incremented",
-			feature: &Feature{
-				Feature: &proto.Feature{},
+			inputFunc: func() *Feature {
+				return genF()
 			},
-			description: &wrapperspb.StringValue{Value: "description"},
-			expected: &Feature{
-				Feature: &proto.Feature{
-					Name:        "",
-					Description: "description",
-					UpdatedAt:   time.Now().Unix(),
-					Version:     0,
-				},
+			description: &wrapperspb.StringValue{Value: "d2"},
+			expectedFunc: func() *Feature {
+				f := genF()
+				f.Description = "d2"
+				f.Version = 0
+				return f
 			},
 			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual, err := p.feature.Update(
+			actual, err := p.inputFunc().Update(
 				p.name, p.description,
 				p.tags, p.enabled, p.archived,
+				p.variations, p.prerequisites,
+				p.targets, p.rules, p.defaultStrategy,
+				p.offVariation,
 			)
-			if p.expected != nil || actual != nil {
-				assert.Equal(t, p.expected.Name, actual.Name, p.desc)
-				assert.Equal(t, p.expected.Description, actual.Description, p.desc)
-				assert.Equal(t, p.expected.Version, actual.Version, p.desc)
-				assert.Equal(t, p.expected.Prerequisites, actual.Prerequisites, p.desc)
-				assert.LessOrEqual(t, p.expected.UpdatedAt, actual.UpdatedAt)
+			if p.expectedErr == nil && actual != nil {
+				assert.Equal(t, p.expectedFunc().Version, actual.Version, p.desc)
+				assert.Equal(t, p.expectedFunc().Name, actual.Name, p.desc)
+				assert.Equal(t, p.expectedFunc().Description, actual.Description, p.desc)
+				assert.Equal(t, p.expectedFunc().Enabled, actual.Enabled, p.desc)
+				assert.Equal(t, p.expectedFunc().Tags, actual.Tags, p.desc)
+				assert.Equal(t, p.expectedFunc().Archived, actual.Archived, p.desc)
+				assert.Equal(t, p.expectedFunc().Variations, actual.Variations, p.desc)
+				assert.Equal(t, p.expectedFunc().Prerequisites, actual.Prerequisites, p.desc)
+				assert.Equal(t, p.expectedFunc().Targets, actual.Targets, p.desc)
+				assert.Equal(t, p.expectedFunc().Rules, actual.Rules, p.desc)
+				assert.Equal(t, p.expectedFunc().DefaultStrategy, actual.DefaultStrategy, p.desc)
+				assert.Equal(t, p.expectedFunc().OffVariation, actual.OffVariation, p.desc)
+				assert.LessOrEqual(t, p.expectedFunc().UpdatedAt, actual.UpdatedAt)
 			}
 			assert.Equal(t, p.expectedErr, err)
 		})
@@ -2138,5 +2406,263 @@ func TestHasFeaturesDependsOnTargets(t *testing.T) {
 	}
 	for _, p := range patterns {
 		assert.Equal(t, p.expected, HasFeaturesDependsOnTargets(p.targets, p.all))
+	}
+}
+
+func TestValidateOffVariation(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc        string
+		id          string
+		variations  []*feature.Variation
+		expectedErr bool
+	}{
+		{
+			desc: "fails: id is empty",
+			id:   "",
+			variations: []*feature.Variation{
+				{Id: "v1"},
+				{Id: "v2"},
+			},
+			expectedErr: true,
+		},
+		{
+			desc: "fails: id not found",
+			id:   "v1",
+			variations: []*feature.Variation{
+				{Id: "v2"},
+				{Id: "v3"},
+			},
+			expectedErr: true,
+		},
+		{
+			desc: "success",
+			id:   "v1",
+			variations: []*feature.Variation{
+				{Id: "v1"},
+				{Id: "v2"},
+			},
+			expectedErr: false,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			assert.Equal(t, p.expectedErr, validateOffVariation(p.id, p.variations) != nil)
+		})
+	}
+}
+
+func TestValidateTargets(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc        string
+		targets     []*feature.Target
+		variations  []*feature.Variation
+		expectedErr bool
+	}{
+		{
+			desc: "fail: variation not found",
+			targets: []*feature.Target{
+				{Variation: "v1"},
+				{Variation: "v3"},
+			},
+			variations: []*feature.Variation{
+				{Id: "v1"},
+				{Id: "v2"},
+			},
+			expectedErr: true,
+		},
+		{
+			desc: "success",
+			targets: []*feature.Target{
+				{Variation: "v1"},
+				{Variation: "v2"},
+			},
+			variations: []*feature.Variation{
+				{Id: "v1"},
+				{Id: "v2"},
+			},
+			expectedErr: false,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			assert.Equal(t, p.expectedErr, validateTargets(p.targets, p.variations) != nil)
+		})
+	}
+}
+
+func TestValidatePrerequisites(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc          string
+		prerequisites []*feature.Prerequisite
+		expectedErr   bool
+	}{
+		{
+			desc: "fail: feature id is empty",
+			prerequisites: []*feature.Prerequisite{
+				{FeatureId: "", VariationId: "v1"},
+			},
+			expectedErr: true,
+		},
+		{
+			desc: "fail: variation id is empty",
+			prerequisites: []*feature.Prerequisite{
+				{FeatureId: "f1", VariationId: ""},
+			},
+			expectedErr: true,
+		},
+		{
+			desc: "success",
+			prerequisites: []*feature.Prerequisite{
+				{FeatureId: "f1", VariationId: "v1"},
+			},
+			expectedErr: false,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			assert.Equal(t, p.expectedErr, validatePrerequisites(p.prerequisites) != nil)
+		})
+	}
+}
+
+func TestValidateRules(t *testing.T) {
+	id1, _ := uuid.NewUUID()
+	id2, _ := uuid.NewUUID()
+	t.Parallel()
+	patterns := []struct {
+		desc        string
+		rules       []*feature.Rule
+		variations  []*feature.Variation
+		expectedErr bool
+	}{
+		{
+			desc:        "fail: rule id is empty",
+			rules:       []*feature.Rule{{Id: ""}},
+			expectedErr: true,
+		},
+		{
+			desc:        "fail: rule id is not uuid",
+			rules:       []*feature.Rule{{Id: "r1"}},
+			expectedErr: true,
+		},
+		{
+			desc: "fail: rule id is duplicated",
+			rules: []*feature.Rule{
+				{Id: id1.String()},
+				{Id: id1.String()},
+			},
+			expectedErr: true,
+		},
+		{
+			desc: "fail: rule id is duplicated",
+			rules: []*feature.Rule{
+				{
+					Id: id1.String(),
+					Strategy: &feature.Strategy{
+						Type: feature.Strategy_FIXED,
+						FixedStrategy: &feature.FixedStrategy{
+							Variation: "v1",
+						},
+					},
+					Clauses: []*feature.Clause{
+						{
+							Id:        id2.String(),
+							Attribute: "name",
+							Operator:  feature.Clause_EQUALS,
+							Values: []string{
+								"user1",
+								"user2",
+							},
+						},
+					},
+				},
+				{
+					Id: id1.String(),
+					Strategy: &feature.Strategy{
+						Type: feature.Strategy_FIXED,
+						FixedStrategy: &feature.FixedStrategy{
+							Variation: "v1",
+						},
+					},
+					Clauses: []*feature.Clause{
+						{
+							Id:        id2.String(),
+							Attribute: "name",
+							Operator:  feature.Clause_EQUALS,
+							Values: []string{
+								"user1",
+								"user2",
+							},
+						},
+					},
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			desc: "fail: invalid strategy",
+			rules: []*feature.Rule{
+				{
+					Id: id1.String(),
+					Strategy: &feature.Strategy{
+						Type: feature.Strategy_FIXED,
+					},
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			desc: "fail: invalid clause",
+			rules: []*feature.Rule{
+				{
+					Id: id1.String(),
+					Strategy: &feature.Strategy{
+						Type: feature.Strategy_FIXED,
+						FixedStrategy: &feature.FixedStrategy{
+							Variation: "v1",
+						},
+					},
+				},
+			},
+			expectedErr: true,
+		},
+		{
+			desc: "success",
+			rules: []*feature.Rule{
+				{
+					Id: id1.String(),
+					Strategy: &feature.Strategy{
+						Type: feature.Strategy_FIXED,
+						FixedStrategy: &feature.FixedStrategy{
+							Variation: "v1",
+						},
+					},
+					Clauses: []*feature.Clause{
+						{
+							Id:        id2.String(),
+							Attribute: "name",
+							Operator:  feature.Clause_EQUALS,
+							Values: []string{
+								"user1",
+								"user2",
+							},
+						},
+					},
+				},
+			},
+			variations: []*feature.Variation{
+				{Id: "v1"},
+				{Id: "v2"},
+			},
+			expectedErr: false,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			assert.Equal(t, p.expectedErr, validateRules(p.rules, p.variations) != nil)
+		})
 	}
 }
