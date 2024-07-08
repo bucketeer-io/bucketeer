@@ -8,7 +8,7 @@ SELECT
     editor,
     options,
     entity_data,
-    previous_entity_data,
+    previous_entity_data
 FROM
     audit_log
     %s %s %s
