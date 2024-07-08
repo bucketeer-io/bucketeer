@@ -42,8 +42,8 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 	command := &command{
 		CmdClause: cmd,
 		keyPath:   cmd.Flag("key", "Path to the private keys.").Required().String(),
-		issuer:    cmd.Flag("issuer", "Issuer url set in dex config.").Required().String(),
-		audience:  cmd.Flag("audience", "Client id set in dex config.").Required().String(),
+		issuer:    cmd.Flag("issuer", " The issuer url").Required().String(),
+		audience:  cmd.Flag("audience", "The oauth audience registered in the token").Required().String(),
 		email:     cmd.Flag("email", "Email will be set in token.").Required().String(),
 		// FIXME: This should be removed in the future
 		role:   cmd.Flag("role", "Role will be set in token.").Default("VIEWER").Enum("VIEWER", "EDITOR", "OWNER"),
