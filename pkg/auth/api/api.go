@@ -97,6 +97,8 @@ func NewAuthService(
 	}
 	logger := options.logger.Named("api")
 	return &authService{
+		issuer:        issuer,
+		audience:      audience,
 		signer:        signer,
 		accountClient: accountClient,
 		verifier:      verifier,
