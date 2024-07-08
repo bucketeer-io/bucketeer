@@ -1311,6 +1311,16 @@
                 "id": 9,
                 "name": "localized_message",
                 "type": "bucketeer.event.domain.LocalizedMessage"
+              },
+              {
+                "id": 10,
+                "name": "entity_data",
+                "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "previous_entity_data",
+                "type": "string"
               }
             ]
           }
@@ -6332,6 +6342,16 @@
                 "id": 10,
                 "name": "options",
                 "type": "Options"
+              },
+              {
+                "id": 11,
+                "name": "entity_data",
+                "type": "string"
+              },
+              {
+                "id": 12,
+                "name": "previous_entity_data",
+                "type": "string"
               }
             ]
           },
@@ -6449,12 +6469,24 @@
               {
                 "id": 2,
                 "name": "data",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "previous_data",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               }
             ]
           },

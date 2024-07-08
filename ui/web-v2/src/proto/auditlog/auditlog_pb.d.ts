@@ -50,6 +50,12 @@ export class AuditLog extends jspb.Message {
     value?: proto_event_domain_localized_message_pb.LocalizedMessage
   ): void;
 
+  getEntityData(): string;
+  setEntityData(value: string): void;
+
+  getPreviousEntityData(): string;
+  setPreviousEntityData(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AuditLog.AsObject;
   static toObject(includeInstance: boolean, msg: AuditLog): AuditLog.AsObject;
@@ -79,5 +85,7 @@ export namespace AuditLog {
     editor?: proto_event_domain_event_pb.Editor.AsObject;
     options?: proto_event_domain_event_pb.Options.AsObject;
     localizedMessage?: proto_event_domain_localized_message_pb.LocalizedMessage.AsObject;
+    entityData: string;
+    previousEntityData: string;
   };
 }

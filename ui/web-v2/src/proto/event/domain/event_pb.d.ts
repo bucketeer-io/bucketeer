@@ -58,6 +58,12 @@ export class Event extends jspb.Message {
   getOptions(): Options | undefined;
   setOptions(value?: Options): void;
 
+  getEntityData(): string;
+  setEntityData(value: string): void;
+
+  getPreviousEntityData(): string;
+  setPreviousEntityData(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Event.AsObject;
   static toObject(includeInstance: boolean, msg: Event): Event.AsObject;
@@ -88,6 +94,8 @@ export namespace Event {
     environmentNamespace: string;
     isAdminEvent: boolean;
     options?: Options.AsObject;
+    entityData: string;
+    previousEntityData: string;
   };
 
   export interface EntityTypeMap {

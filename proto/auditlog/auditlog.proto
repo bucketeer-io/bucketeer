@@ -32,4 +32,6 @@ message AuditLog {
   bucketeer.event.domain.Editor editor = 7;
   bucketeer.event.domain.Options options = 8;
   bucketeer.event.domain.LocalizedMessage localized_message = 9;
+  string entity_data = 10;           // JSON string of the entity data
+  string previous_entity_data = 11;  // JSON string of the previous entity data
 }

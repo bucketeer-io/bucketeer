@@ -4819,7 +4819,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         isAdminEvent: jspb.Message.getBooleanFieldWithDefault(msg, 9, false),
         options:
           (f = msg.getOptions()) &&
-          proto.bucketeer.event.domain.Options.toObject(includeInstance, f)
+          proto.bucketeer.event.domain.Options.toObject(includeInstance, f),
+        entityData: jspb.Message.getFieldWithDefault(msg, 11, ''),
+        previousEntityData: jspb.Message.getFieldWithDefault(msg, 12, '')
       };
 
     if (includeInstance) {
@@ -4917,6 +4919,14 @@ proto.bucketeer.event.domain.Event.deserializeBinaryFromReader = function (
         );
         msg.setOptions(value);
         break;
+      case 11:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setEntityData(value);
+        break;
+      case 12:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setPreviousEntityData(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -4998,6 +5008,14 @@ proto.bucketeer.event.domain.Event.serializeBinaryToWriter = function (
       f,
       proto.bucketeer.event.domain.Options.serializeBinaryToWriter
     );
+  }
+  f = message.getEntityData();
+  if (f.length > 0) {
+    writer.writeString(11, f);
+  }
+  f = message.getPreviousEntityData();
+  if (f.length > 0) {
+    writer.writeString(12, f);
   }
 };
 
@@ -5410,6 +5428,43 @@ proto.bucketeer.event.domain.Event.prototype.clearOptions = function () {
  */
 proto.bucketeer.event.domain.Event.prototype.hasOptions = function () {
   return jspb.Message.getField(this, 10) != null;
+};
+
+/**
+ * optional string entity_data = 11;
+ * @return {string}
+ */
+proto.bucketeer.event.domain.Event.prototype.getEntityData = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 11, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.event.domain.Event} returns this
+ */
+proto.bucketeer.event.domain.Event.prototype.setEntityData = function (value) {
+  return jspb.Message.setProto3StringField(this, 11, value);
+};
+
+/**
+ * optional string previous_entity_data = 12;
+ * @return {string}
+ */
+proto.bucketeer.event.domain.Event.prototype.getPreviousEntityData =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 12, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.event.domain.Event} returns this
+ */
+proto.bucketeer.event.domain.Event.prototype.setPreviousEntityData = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 12, value);
 };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
