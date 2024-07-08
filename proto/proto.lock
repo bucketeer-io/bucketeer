@@ -16678,58 +16678,6 @@
       }
     },
     {
-      "protopath": "migration:/:mysql_service.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "MigrateAllMasterSchemaRequest"
-          },
-          {
-            "name": "MigrateAllMasterSchemaResponse"
-          },
-          {
-            "name": "RollbackMasterSchemaRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "step",
-                "type": "int64"
-              }
-            ]
-          },
-          {
-            "name": "RollbackMasterSchemaResponse"
-          }
-        ],
-        "services": [
-          {
-            "name": "MigrationMySQLService",
-            "rpcs": [
-              {
-                "name": "MigrateAllMasterSchema",
-                "in_type": "MigrateAllMasterSchemaRequest",
-                "out_type": "MigrateAllMasterSchemaResponse"
-              },
-              {
-                "name": "RollbackMasterSchema",
-                "in_type": "RollbackMasterSchemaRequest",
-                "out_type": "RollbackMasterSchemaResponse"
-              }
-            ]
-          }
-        ],
-        "package": {
-          "name": "bucketeer.migration"
-        },
-        "options": [
-          {
-            "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/migration"
-          }
-        ]
-      }
-    },
-    {
       "protopath": "notification:/:command.proto",
       "def": {
         "messages": [
