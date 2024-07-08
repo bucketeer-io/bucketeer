@@ -28,6 +28,7 @@ type AccessToken struct {
 }
 
 type RefreshToken struct {
-	Email  string    `json:"email"`
-	Expiry time.Time `json:"exp"`
+	Email    string    `json:"email"`
+	Expiry   time.Time `json:"exp"`
+	IssuedAt time.Time `json:"iat"`
 }

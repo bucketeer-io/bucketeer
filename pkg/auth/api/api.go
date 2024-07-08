@@ -313,6 +313,7 @@ func (s *authService) generateToken(
 		Issuer:        s.issuer,
 		Audience:      s.audience,
 		Expiry:        accessTokenTTL,
+		IssuedAt:      timeNow,
 		Email:         userEmail,
 		IsSystemAdmin: s.hasSystemAdminOrganization(orgResp.Organizations),
 	}
@@ -333,8 +334,9 @@ func (s *authService) generateToken(
 	}
 
 	refreshToken := &token.RefreshToken{
-		Email:  userEmail,
-		Expiry: timeNow.Add(sevenDays),
+		Email:    userEmail,
+		Expiry:   timeNow.Add(sevenDays),
+		IssuedAt: timeNow,
 	}
 	signRefreshToken, err := s.signer.SignRefreshToken(refreshToken)
 	if err != nil {
