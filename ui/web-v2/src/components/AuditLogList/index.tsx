@@ -2,14 +2,12 @@ import { FC, memo, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useSelector } from 'react-redux';
 import * as Diff from 'diff';
-import { Any } from 'google-protobuf/google/protobuf/any_pb';
 
 import { AUDITLOG_LIST_PAGE_SIZE } from '../../constants/auditLog';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import { selectAll } from '../../modules/auditLogs';
 import { AuditLog } from '../../proto/auditlog/auditlog_pb';
-import { Event, FeatureUpdatedEvent } from '../../proto/event/domain/event_pb';
 import { AuditLogSearchOptions } from '../../types/auditLog';
 import { classNames } from '../../utils/css';
 import { AuditLogSearch } from '../AuditLogSearch';
@@ -84,8 +82,8 @@ export const AuditLogList: FC<AuditLogListProps> = memo(
                           {nl2br(auditLog.options.comment)}
                         </div>
                       )}
-                      {auditLog.type === Event.Type.FEATURE_UPDATED && (
-                        <FeatureUpdatedAuditLogBox auditLog={auditLog} />
+                      {auditLog.entityData && (
+                        <AuditLogDetail auditLog={auditLog} />
                       )}
                     </td>
                   </tr>
@@ -104,17 +102,14 @@ export const AuditLogList: FC<AuditLogListProps> = memo(
   }
 );
 
-interface FeatureUpdatedAuditLogBoxProps {
+interface AuditLogDetailProps {
   auditLog: AuditLog.AsObject;
 }
 
-const FeatureUpdatedAuditLogBox: FC<FeatureUpdatedAuditLogBoxProps> = ({
-  auditLog
-}) => {
+const AuditLogDetail: FC<AuditLogDetailProps> = ({ auditLog }) => {
   const { formatMessage: f } = useIntl();
   const [showChanges, setShowChanges] = useState(false);
   const [showSnapshot, setShowSnapshot] = useState(false);
-  const featureUpdatedEvent = deserializeEvent(auditLog.event!);
   return (
     <div>
       <div className={classNames('text-primary text-xs')}>
@@ -126,8 +121,8 @@ const FeatureUpdatedAuditLogBox: FC<FeatureUpdatedAuditLogBoxProps> = ({
         {showChanges && (
           <div className={classNames('p-3')}>
             <DiffView
-              oldStr={featureUpdatedEvent.previousData}
-              newStr={featureUpdatedEvent.data}
+              oldStr={auditLog.previousEntityData}
+              newStr={auditLog.entityData}
             />
           </div>
         )}
@@ -145,22 +140,13 @@ const FeatureUpdatedAuditLogBox: FC<FeatureUpdatedAuditLogBoxProps> = ({
           <div className={classNames('p-3')}>
             <p
               className={classNames('bg-gray-100 whitespace-pre-wrap text-xs')}
-            >{`${featureUpdatedEvent.data}`}</p>
+            >{`${auditLog.entityData}`}</p>
           </div>
         )}
       </div>
     </div>
   );
 };
-
-function deserializeEvent(
-  anyMessage: Any.AsObject
-): FeatureUpdatedEvent.AsObject {
-  const deserializedMessage = FeatureUpdatedEvent.deserializeBinary(
-    anyMessage.value
-  );
-  return deserializedMessage.toObject();
-}
 
 export interface DiffViewProps {
   oldStr: string;
