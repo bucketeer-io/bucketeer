@@ -16,12 +16,25 @@ package server
 
 import (
 	"net/http"
+	"os"
 
 	webv2 "github.com/bucketeer-io/bucketeer/ui/web-v2"
 )
 
+type spaFileSystem struct {
+	root http.FileSystem
+}
+
+func (fs *spaFileSystem) Open(name string) (http.File, error) {
+	f, err := fs.root.Open(name)
+	if os.IsNotExist(err) {
+		return fs.root.Open("index.html")
+	}
+	return f, err
+}
+
 func consoleHandler() http.Handler {
-	return http.FileServer(http.FS(webv2.FS))
+	return http.FileServer(&spaFileSystem{http.FS(webv2.FS)})
 }
 
 func consoleEnvJSHandler(path string) http.Handler {
