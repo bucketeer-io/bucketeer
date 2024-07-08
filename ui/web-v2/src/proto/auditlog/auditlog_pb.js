@@ -106,7 +106,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_event_domain_localized_message_pb.LocalizedMessage.toObject(
             includeInstance,
             f
-          )
+          ),
+        entityData: jspb.Message.getFieldWithDefault(msg, 10, ''),
+        previousEntityData: jspb.Message.getFieldWithDefault(msg, 11, '')
       };
 
     if (includeInstance) {
@@ -206,6 +208,14 @@ proto.bucketeer.auditlog.AuditLog.deserializeBinaryFromReader = function (
         );
         msg.setLocalizedMessage(value);
         break;
+      case 10:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setEntityData(value);
+        break;
+      case 11:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setPreviousEntityData(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -288,6 +298,14 @@ proto.bucketeer.auditlog.AuditLog.serializeBinaryToWriter = function (
       proto_event_domain_localized_message_pb.LocalizedMessage
         .serializeBinaryToWriter
     );
+  }
+  f = message.getEntityData();
+  if (f.length > 0) {
+    writer.writeString(10, f);
+  }
+  f = message.getPreviousEntityData();
+  if (f.length > 0) {
+    writer.writeString(11, f);
   }
 };
 
@@ -516,6 +534,43 @@ proto.bucketeer.auditlog.AuditLog.prototype.clearLocalizedMessage =
  */
 proto.bucketeer.auditlog.AuditLog.prototype.hasLocalizedMessage = function () {
   return jspb.Message.getField(this, 9) != null;
+};
+
+/**
+ * optional string entity_data = 10;
+ * @return {string}
+ */
+proto.bucketeer.auditlog.AuditLog.prototype.getEntityData = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 10, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.auditlog.AuditLog} returns this
+ */
+proto.bucketeer.auditlog.AuditLog.prototype.setEntityData = function (value) {
+  return jspb.Message.setProto3StringField(this, 10, value);
+};
+
+/**
+ * optional string previous_entity_data = 11;
+ * @return {string}
+ */
+proto.bucketeer.auditlog.AuditLog.prototype.getPreviousEntityData =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 11, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.auditlog.AuditLog} returns this
+ */
+proto.bucketeer.auditlog.AuditLog.prototype.setPreviousEntityData = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 11, value);
 };
 
 goog.object.extend(exports, proto.bucketeer.auditlog);

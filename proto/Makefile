@@ -43,7 +43,7 @@ go: remove-go
 	done
 
 .PHONY: openapi-gen
-openapi-gen: openapi-rm
+openapi-gen:
 	protoc \
 		--proto_path=${GIT_TOP_DIR} \
 		--proto_path=${PROTOBUF_INCLUDE_DIR} \
@@ -54,10 +54,6 @@ openapi-gen: openapi-rm
 		--openapiv2_opt output_format=yaml \
 		--openapiv2_opt allow_merge=true \
 		${GIT_TOP_DIR}/proto/gateway/*.proto; \
-
-.PHONY: openapi-rm
-openapi-rm:
-	rm -rf ${GIT_TOP_DIR}/api-description/*
 
 .PHONY: openapi-ui
 openapi-ui:
