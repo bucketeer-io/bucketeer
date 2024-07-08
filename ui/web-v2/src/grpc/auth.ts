@@ -4,10 +4,10 @@ import { urls } from '../config';
 import {
   GetAuthenticationURLRequest,
   GetAuthenticationURLResponse,
-  ExchangeBucketeerTokenRequest,
-  ExchangeBucketeerTokenResponse,
-  RefreshBucketeerTokenRequest,
-  RefreshBucketeerTokenResponse
+  ExchangeTokenRequest,
+  ExchangeTokenResponse,
+  RefreshTokenRequest,
+  RefreshTokenResponse
 } from '../proto/auth/service_pb';
 import {
   AuthServiceClient,
@@ -66,56 +66,48 @@ export function getAuthenticationURL(
   );
 }
 
-export interface ExchangeBucketeerTokenResult {
-  request: ExchangeBucketeerTokenRequest;
-  response: ExchangeBucketeerTokenResponse;
+export interface ExchangeTokenResult {
+  request: ExchangeTokenRequest;
+  response: ExchangeTokenResponse;
 }
 
-export function exchangeBucketeerToken(
-  request: ExchangeBucketeerTokenRequest
-): Promise<ExchangeBucketeerTokenResult> {
+export function exchangeToken(
+  request: ExchangeTokenRequest
+): Promise<ExchangeTokenResult> {
   return new Promise(
-    (resolve: (result: ExchangeBucketeerTokenResult) => void, reject): void => {
-      client.exchangeBucketeerToken(
-        request,
-        getMetaData(),
-        (error, response): void => {
-          if (isNotNull(error) || isNull(response)) {
-            reject(
-              new AuthServiceError(extractErrorMessage(error), request, error)
-            );
-          } else {
-            resolve({ request, response });
-          }
+    (resolve: (result: ExchangeTokenResult) => void, reject): void => {
+      client.exchangeToken(request, getMetaData(), (error, response): void => {
+        if (isNotNull(error) || isNull(response)) {
+          reject(
+            new AuthServiceError(extractErrorMessage(error), request, error)
+          );
+        } else {
+          resolve({ request, response });
         }
-      );
+      });
     }
   );
 }
 
-export interface RefreshBucketeerTokenResult {
-  request: RefreshBucketeerTokenRequest;
-  response: RefreshBucketeerTokenResponse;
+export interface RefreshTokenResult {
+  request: RefreshTokenRequest;
+  response: RefreshTokenResponse;
 }
 
-export function refreshBucketeerToken(
-  request: RefreshBucketeerTokenRequest
-): Promise<RefreshBucketeerTokenResult> {
+export function refreshToken(
+  request: RefreshTokenRequest
+): Promise<RefreshTokenResult> {
   return new Promise(
-    (resolve: (result: RefreshBucketeerTokenResult) => void, reject): void => {
-      client.refreshBucketeerToken(
-        request,
-        getMetaData(),
-        (error, response): void => {
-          if (isNotNull(error) || isNull(response)) {
-            reject(
-              new AuthServiceError(extractErrorMessage(error), request, error)
-            );
-          } else {
-            resolve({ request, response });
-          }
+    (resolve: (result: RefreshTokenResult) => void, reject): void => {
+      client.refreshToken(request, getMetaData(), (error, response): void => {
+        if (isNotNull(error) || isNull(response)) {
+          reject(
+            new AuthServiceError(extractErrorMessage(error), request, error)
+          );
+        } else {
+          resolve({ request, response });
         }
-      );
+      });
     }
   );
 }

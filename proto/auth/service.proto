@@ -26,33 +26,6 @@ enum AuthType {
   AUTH_TYPE_GITHUB = 3;
 }
 
-message GetAuthCodeURLRequest {
-  string state = 1;
-  string redirect_url = 2;
-}
-
-message GetAuthCodeURLResponse {
-  string url = 1;
-}
-
-message ExchangeTokenRequest {
-  string code = 1;
-  string redirect_url = 2;
-}
-
-message ExchangeTokenResponse {
-  Token token = 1;
-}
-
-message RefreshTokenRequest {
-  string refresh_token = 1;
-  string redirect_url = 2;
-}
-
-message RefreshTokenResponse {
-  Token token = 1;
-}
-
 message GetAuthenticationURLRequest {
   string state = 1;
   string redirect_url = 2;
@@ -63,35 +36,27 @@ message GetAuthenticationURLResponse {
   string url = 1;
 }
 
-message ExchangeBucketeerTokenRequest {
+message ExchangeTokenRequest {
   string code = 1;
   string redirect_url = 2;
   AuthType type = 3;
 }
 
-message ExchangeBucketeerTokenResponse {
+message ExchangeTokenResponse {
   Token token = 1;
 }
 
-message RefreshBucketeerTokenRequest {
+message RefreshTokenRequest {
   string refresh_token = 1;
-  string redirect_url = 2;
-  AuthType type = 3;
 }
 
-message RefreshBucketeerTokenResponse {
+message RefreshTokenResponse {
   Token token = 1;
 }
 
 service AuthService {
-  rpc GetAuthCodeURL(GetAuthCodeURLRequest) returns (GetAuthCodeURLResponse);
-  rpc ExchangeToken(ExchangeTokenRequest) returns (ExchangeTokenResponse);
-  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
-
   rpc GetAuthenticationURL(GetAuthenticationURLRequest)
       returns (GetAuthenticationURLResponse);
-  rpc ExchangeBucketeerToken(ExchangeBucketeerTokenRequest)
-      returns (ExchangeBucketeerTokenResponse);
-  rpc RefreshBucketeerToken(RefreshBucketeerTokenRequest)
-      returns (RefreshBucketeerTokenResponse);
+  rpc ExchangeToken(ExchangeTokenRequest) returns (ExchangeTokenResponse);
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
 }

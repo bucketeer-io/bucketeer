@@ -535,7 +535,6 @@ func TestListSegmentsMySQL(t *testing.T) {
 func setToken(ctx context.Context) context.Context {
 	t := &token.AccessToken{
 		Issuer:   "issuer",
-		Subject:  "sub",
 		Audience: "audience",
 		Expiry:   time.Now().AddDate(100, 0, 0),
 		IssuedAt: time.Now(),

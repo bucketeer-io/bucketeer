@@ -41,10 +41,10 @@ func TestNewSigner(t *testing.T) {
 
 func TestSign(t *testing.T) {
 	issuer := "test_issuer"
-	clientID := "test_client_id"
+	audience := "test_client_id"
 	signer, err := NewSigner("testdata/valid-private.pem")
 	require.NoError(t, err)
-	verifier, err := NewVerifier("testdata/valid-public.pem", issuer, clientID)
+	verifier, err := NewVerifier("testdata/valid-public.pem", issuer, audience)
 	require.NoError(t, err)
 	testcases := []struct {
 		token *AccessToken
@@ -53,8 +53,7 @@ func TestSign(t *testing.T) {
 		{
 			&AccessToken{
 				Issuer:   issuer,
-				Subject:  "subject",
-				Audience: clientID,
+				Audience: audience,
 				Email:    "test@email",
 				Expiry:   time.Now().Add(time.Hour),
 			},
@@ -63,8 +62,7 @@ func TestSign(t *testing.T) {
 		{
 			&AccessToken{
 				Issuer:   issuer,
-				Subject:  "subject",
-				Audience: clientID,
+				Audience: audience,
 				Expiry:   time.Now().Add(time.Hour),
 			},
 			false,
@@ -72,8 +70,7 @@ func TestSign(t *testing.T) {
 		{
 			&AccessToken{
 				Issuer:   issuer,
-				Subject:  "subject",
-				Audience: clientID,
+				Audience: audience,
 				Email:    "test@email",
 				Expiry:   time.Now().Add(-time.Hour),
 			},
@@ -89,7 +86,6 @@ func TestSign(t *testing.T) {
 		if tc.ok {
 			require.NoError(t, err, fmt.Sprintf("index: %d, error: %v", i, err))
 			require.Equal(t, tc.token.Issuer, parsedToken.Issuer, des)
-			require.Equal(t, tc.token.Subject, parsedToken.Subject, des)
 			require.Equal(t, tc.token.Audience, parsedToken.Audience, des)
 			require.True(t, tc.token.Expiry.Equal(parsedToken.Expiry), des)
 			require.True(t, tc.token.IssuedAt.Equal(parsedToken.IssuedAt), des)

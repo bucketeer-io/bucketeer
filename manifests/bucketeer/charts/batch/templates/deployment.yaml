@@ -131,7 +131,9 @@ spec:
               value: /usr/local/oauth-key/public.pem
             - name: BUCKETEER_BATCH_OAUTH_ISSUER
               value: "{{ .Values.oauth.issuer }}"
-            - name: BUCKETEER_BATCH_OAUTH_CLIENT_ID
+            - name: BUCKETEER_BATCH_OAUTH_AUDIENCE
+              value: "{{ .Values.oauth.audience }}"
+            - name: BUCKETEER_BATCH_OAUTH_CLIENT_ID # TODO: remove after releasing
               value: "{{ .Values.oauth.clientId }}"
             - name: BUCKETEER_BATCH_TIMEZONE
               value: "{{ .Values.env.timezone }}"

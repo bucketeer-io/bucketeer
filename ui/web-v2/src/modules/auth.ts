@@ -6,8 +6,8 @@ import { getState, setState } from '../cookie';
 import * as authGrpc from '../grpc/auth';
 import {
   GetAuthenticationURLRequest,
-  ExchangeBucketeerTokenRequest,
-  RefreshBucketeerTokenRequest
+  ExchangeTokenRequest,
+  RefreshTokenRequest
 } from '../proto/auth/service_pb';
 import { Token } from '../proto/auth/token_pb';
 import {
@@ -18,24 +18,24 @@ import { PAGE_PATH_ROOT } from '../constants/routing';
 
 const MODULE_NAME = 'auth';
 
-export const exchangeBucketeerTokenFromUrl = createAsyncThunk<
-  Token.AsObject,
-  string
->(`${MODULE_NAME}/exchangeBucketeerTokenFromUrl`, async (query) => {
-  const { code, state } = parse(query);
-  const stateFromCookie = getState();
-  if (!!code && state === stateFromCookie) {
-    if (typeof code === 'string') {
-      const request = new ExchangeBucketeerTokenRequest();
-      request.setCode(code);
-      request.setRedirectUrl(urls.AUTH_REDIRECT);
-      request.setType(2);
-      const result = await authGrpc.exchangeBucketeerToken(request);
-      return result.response.getToken().toObject();
+export const exchangeTokenFromUrl = createAsyncThunk<Token.AsObject, string>(
+  `${MODULE_NAME}/exchangeTokenFromUrl`,
+  async (query) => {
+    const { code, state } = parse(query);
+    const stateFromCookie = getState();
+    if (!!code && state === stateFromCookie) {
+      if (typeof code === 'string') {
+        const request = new ExchangeTokenRequest();
+        request.setCode(code);
+        request.setRedirectUrl(urls.AUTH_REDIRECT);
+        request.setType(2);
+        const result = await authGrpc.exchangeToken(request);
+        return result.response.getToken().toObject();
+      }
     }
+    throw new Error('exchange token failed.');
   }
-  throw new Error('exchange token failed.');
-});
+);
 
 export const redirectToAuthUrl = createAsyncThunk<void>(
   `${MODULE_NAME}/redirecttoAuthUrl`,
@@ -62,19 +62,17 @@ export const getAuthenticationURL = createAsyncThunk<
   return result.response.getUrl();
 });
 
-interface RefreshBucketeerTokenParams {
+interface RefreshTokenParams {
   token: string;
 }
 
-export const refreshBucketeerToken = createAsyncThunk<
+export const refreshToken = createAsyncThunk<
   Token.AsObject,
-  RefreshBucketeerTokenParams
->(`${MODULE_NAME}/refreshBucketeerToken`, async (params) => {
-  const request = new RefreshBucketeerTokenRequest();
+  RefreshTokenParams
+>(`${MODULE_NAME}/refreshToken`, async (params) => {
+  const request = new RefreshTokenRequest();
   request.setRefreshToken(params.token);
-  request.setRedirectUrl(urls.AUTH_REDIRECT);
-  request.setType(2);
-  const result = await authGrpc.refreshBucketeerToken(request);
+  const result = await authGrpc.refreshToken(request);
   return result.response.getToken().toObject();
 });
 
@@ -107,25 +105,25 @@ export const authSlice = createSlice({
         window.location.href = action.payload;
         state.loading = false;
       })
-      .addCase(refreshBucketeerToken.rejected, (state) => {
+      .addCase(refreshToken.rejected, (state) => {
         state.loading = false;
         clearTokenFromStorage();
         window.location.href = PAGE_PATH_ROOT;
       })
-      .addCase(refreshBucketeerToken.pending, (state) => {
+      .addCase(refreshToken.pending, (state) => {
         state.loading = true;
       })
-      .addCase(refreshBucketeerToken.fulfilled, (state, action) => {
+      .addCase(refreshToken.fulfilled, (state, action) => {
         setToken(action.payload);
         state.loading = false;
       })
-      .addCase(exchangeBucketeerTokenFromUrl.rejected, (state) => {
+      .addCase(exchangeTokenFromUrl.rejected, (state) => {
         state.loading = false;
       })
-      .addCase(exchangeBucketeerTokenFromUrl.pending, (state) => {
+      .addCase(exchangeTokenFromUrl.pending, (state) => {
         state.loading = true;
       })
-      .addCase(exchangeBucketeerTokenFromUrl.fulfilled, (state, action) => {
+      .addCase(exchangeTokenFromUrl.fulfilled, (state, action) => {
         setToken(action.payload);
         state.loading = false;
       });

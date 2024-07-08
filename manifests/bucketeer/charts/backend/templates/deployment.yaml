@@ -146,14 +146,6 @@ spec:
               value: "{{ .Values.env.metricsPort }}"
             - name: BUCKETEER_BACKEND_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
-            - name: BUCKETEER_BACKEND_OAUTH_CLIENT_ID
-              value: "{{ .Values.oauth.clientId }}"
-            - name: BUCKETEER_BACKEND_OAUTH_CONFIG_PATH
-              value: /usr/local/oauth-config/oauth-config.json
-            - name: BUCKETEER_BACKEND_OAUTH_CLIENT_SECRET
-              value: "{{ .Values.oauth.clientSecret }}"
-            - name: BUCKETEER_BACKEND_OAUTH_ISSUER
-              value: "{{ .Values.oauth.issuer }}"
             - name: BUCKETEER_BACKEND_OAUTH_PUBLIC_KEY
               value: /usr/local/oauth-key/public.pem
             - name: BUCKETEER_BACKEND_OAUTH_PRIVATE_KEY
@@ -162,22 +154,17 @@ spec:
               value: /usr/local/certs/service/tls.crt
             - name: BUCKETEER_BACKEND_KEY
               value: /usr/local/certs/service/tls.key
-            - name: BUCKETEER_BACKEND_OAUTH_ISSUER_CERT
-              value: /usr/local/certs/issuer/tls.crt
+            - name: BUCKETEER_BACKEND_OAUTH_CONFIG_PATH
+              value: /usr/local/oauth-config/oauth-config.json
             - name: BUCKETEER_BACKEND_SERVICE_TOKEN
               value: /usr/local/service-token/token
             - name: BUCKETEER_BACKEND_EMAIL_FILTER
               value: "{{ .Values.env.emailFilter }}"
-            - name: BUCKETEER_BACKEND_OAUTH_REDIRECT_URLS
-              value: {{- toYaml .Values.oauth.redirectUrls | nindent 16 }}
             - name: BUCKETEER_BACKEND_WEBHOOK_BASE_URL
               value: "{{ .Values.webhook.baseURL }}"
             - name: BUCKETEER_BACKEND_WEBHOOK_KMS_RESOURCE_NAME
               value: "{{ .Values.webhook.kmsResourceName }}"
           volumeMounts:
-            - name: issuer-cert-secret
-              mountPath: /usr/local/certs/issuer
-              readOnly: true
             - name: service-cert-secret
               mountPath: /usr/local/certs/service
               readOnly: true

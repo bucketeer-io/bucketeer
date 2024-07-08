@@ -32,4 +32,5 @@ var (
 	StatusInvalidRefreshToken     = gstatus.New(codes.InvalidArgument, "auth: invalid refresh token")
 	StatusUnapprovedAccount       = gstatus.New(codes.PermissionDenied, "auth: unapproved account")
 	StatusAccessDeniedEmail       = gstatus.New(codes.PermissionDenied, "auth: access denied email")
+	StatusUnauthenticated         = gstatus.New(codes.Unauthenticated, "auth: not authenticated")
 )

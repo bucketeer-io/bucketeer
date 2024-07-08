@@ -31,7 +31,6 @@ type command struct {
 	*kingpin.CmdClause
 	keyPath  *string
 	issuer   *string
-	sub      *string
 	audience *string
 	email    *string
 	role     *string
@@ -44,7 +43,6 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		CmdClause: cmd,
 		keyPath:   cmd.Flag("key", "Path to the private keys.").Required().String(),
 		issuer:    cmd.Flag("issuer", "Issuer url set in dex config.").Required().String(),
-		sub:       cmd.Flag("sub", "Subject id.").Required().String(),
 		audience:  cmd.Flag("audience", "Client id set in dex config.").Required().String(),
 		email:     cmd.Flag("email", "Email will be set in token.").Required().String(),
 		// FIXME: This should be removed in the future
@@ -63,7 +61,6 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	}
 	accessToken := &token.AccessToken{
 		Issuer:        *c.issuer,
-		Subject:       *c.sub,
 		Audience:      *c.audience,
 		Expiry:        time.Now().AddDate(100, 0, 0),
 		IssuedAt:      time.Now(),

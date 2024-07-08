@@ -12,7 +12,7 @@ import {
 
 import { AppState } from '.';
 import { getToken } from '../storage/token';
-import { refreshBucketeerToken } from './auth';
+import { refreshToken } from './auth';
 
 const MODULE_NAME = 'me';
 
@@ -34,7 +34,7 @@ export const fetchMe = createAsyncThunk<
   { state: AppState }
 >('me/fetch', async (params, { dispatch }) => {
   const token = getToken();
-  await dispatch(refreshBucketeerToken({ token: token.refreshToken }));
+  await dispatch(refreshToken({ token: token.refreshToken }));
 
   const getMeRequest = new GetMeRequest();
   getMeRequest.setOrganizationId(params.organizationId);

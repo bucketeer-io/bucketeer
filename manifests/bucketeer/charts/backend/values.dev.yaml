@@ -45,15 +45,11 @@ serviceToken:
 oauth:
   key:
     secret: bucketeer-oauth-key
-    public:
-  clientId: bucketeer
-  clientSecret: oauth-client-secret
-  redirectUrls: https://google.com
-  issuer: https://accounts.google.com
-  # oauth: google authentication
+  issuer:
+  audience: bucketeer
   google:
-    issuer: https://accounts.google.com
-    clientId: bucketeer
+    issuer:
+    clientId:
     clientSecret:
     redirectUrls:
 

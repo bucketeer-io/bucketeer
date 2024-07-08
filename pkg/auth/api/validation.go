@@ -59,8 +59,8 @@ func validateGetAuthenticationURLRequest(
 	return nil
 }
 
-func validateExchangeBucketeerTokenRequest(
-	req *authproto.ExchangeBucketeerTokenRequest,
+func validateExchangeTokenRequest(
+	req *authproto.ExchangeTokenRequest,
 	localizer locale.Localizer,
 ) error {
 	if req.Type == authproto.AuthType_AUTH_TYPE_UNSPECIFIED {
@@ -96,34 +96,14 @@ func validateExchangeBucketeerTokenRequest(
 	return nil
 }
 
-func validateRefreshBucketeerTokenRequest(
-	req *authproto.RefreshBucketeerTokenRequest,
+func validateRefreshTokenRequest(
+	req *authproto.RefreshTokenRequest,
 	localizer locale.Localizer,
 ) error {
-	if req.Type == authproto.AuthType_AUTH_TYPE_UNSPECIFIED {
-		dt, err := auth.StatusMissingAuthType.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "auth_type"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
-	}
 	if req.RefreshToken == "" {
 		dt, err := auth.StatusMissingRefreshToken.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "refresh_token"),
-		})
-		if err != nil {
-			return auth.StatusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.RedirectUrl == "" {
-		dt, err := auth.StatusMissingRedirectURL.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "redirect_url"),
 		})
 		if err != nil {
 			return auth.StatusInternal.Err()

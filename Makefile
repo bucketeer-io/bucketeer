@@ -199,7 +199,6 @@ delete-e2e-data-mysql:
 generate-service-token:
 	go run ./hack/generate-service-token generate \
 		--issuer=${ISSUER} \
-		--sub=service \
 		--audience=bucketeer \
 		--email=${EMAIL} \
 		--role=OWNER \

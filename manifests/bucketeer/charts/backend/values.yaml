@@ -87,12 +87,8 @@ serviceToken:
 oauth:
   key:
     secret:
-    public:
-  clientId:
-  clientSecret:
-  redirectUrls:
   issuer:
-  # oauth: google authentication
+  audience: bucketeer
   google:
     issuer:
     clientId:

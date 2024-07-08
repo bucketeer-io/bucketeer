@@ -56,8 +56,9 @@ oauth:
   key:
     secret: bucketeer-oauth-key
     public:
-  issuer: https://accounts.google.com
-  clientId: bucketeer
+  issuer:
+  audience: bucketeer
+  clientId: bucketeer # TODO: remove after releasing
 
 cronjob:
   successfulJobsHistoryLimit: 1

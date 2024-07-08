@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useHistory } from 'react-router-dom';
 
 import { AppState } from '../../modules';
-import { exchangeBucketeerTokenFromUrl } from '../../modules/auth';
+import { exchangeTokenFromUrl } from '../../modules/auth';
 import { AppDispatch } from '../../store';
 import { getToken } from '../../storage/token';
 
@@ -15,7 +15,7 @@ export const AuthCallbackPage: FC = memo(() => {
 
   useEffect(() => {
     const query = location.search;
-    dispatch(exchangeBucketeerTokenFromUrl(query));
+    dispatch(exchangeTokenFromUrl(query));
   }, [dispatch]);
 
   useEffect(() => {
