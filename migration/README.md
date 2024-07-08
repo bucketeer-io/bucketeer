@@ -7,7 +7,7 @@ If the migration fails, it won't install the application.
 
 ## Prerequisite
 
-Ensure that you have started the Minikube in the dev container and that the `localenv-mysql-0` pod is running without errors.
+Ensure that you have [started the Minikube](https://github.com/bucketeer-io/bucketeer/blob/main/DEVELOPMENT.md#set-up-minikube-and-services-that-bucketeer-depends-on) in the dev container and that the `localenv-mysql-0` pod is running without errors.
 
 ## 1- Connecting to MySQL
 
