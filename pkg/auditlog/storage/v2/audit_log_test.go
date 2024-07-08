@@ -87,8 +87,8 @@ func TestCreateAuditLogs(t *testing.T) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
-					id0, int64(1), int32(2), "e0", int32(3), gomock.Any(), gomock.Any(), gomock.Any(), "ns0",
-					id1, int64(10), int32(3), "e2", int32(4), gomock.Any(), gomock.Any(), gomock.Any(), "ns1",
+					id0, int64(1), int32(2), "e0", int32(3), gomock.Any(), gomock.Any(), gomock.Any(), "ns0", gomock.Any(), gomock.Any(),
+					id1, int64(10), int32(3), "e2", int32(4), gomock.Any(), gomock.Any(), gomock.Any(), "ns1", gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
 			},
 			input: []*domain.AuditLog{

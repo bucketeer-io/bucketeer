@@ -8,4 +8,6 @@ INSERT INTO audit_log (
     editor,
     options,
     environment_namespace
+    entity_data,
+    previous_entity_data,
 ) VALUES
