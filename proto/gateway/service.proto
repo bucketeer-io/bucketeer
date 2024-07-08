@@ -26,6 +26,10 @@ import "proto/feature/evaluation.proto";
 import "proto/feature/feature.proto";
 import "proto/feature/service.proto";
 import "proto/feature/variation.proto";
+import "proto/feature/prerequisite.proto";
+import "proto/feature/rule.proto";
+import "proto/feature/strategy.proto";
+import "proto/feature/target.proto";
 import "proto/feature/segment.proto";
 import "proto/event/client/event.proto";
 
@@ -164,6 +168,12 @@ message UpdateFeatureRequest {
   repeated string tags = 5;
   google.protobuf.BoolValue enabled = 6;
   google.protobuf.BoolValue archived = 7;
+  repeated feature.Variation variations = 8;
+  repeated feature.Prerequisite prerequisites = 9;
+  repeated feature.Target targets = 10;
+  repeated feature.Rule rules = 11;
+  feature.Strategy default_strategy = 12;
+  google.protobuf.StringValue off_variation = 13;
 }
 
 message UpdateFeatureResponse {

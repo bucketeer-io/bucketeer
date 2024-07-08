@@ -686,6 +686,30 @@ definitions:
         type: boolean
       archived:
         type: boolean
+      variations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerfeatureVariation'
+      prerequisites:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featurePrerequisite'
+      targets:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureTarget'
+      rules:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureRule'
+      defaultStrategy:
+        $ref: '#/definitions/featureStrategy'
+      offVariation:
+        type: string
   GetEvaluationsRequestUserEvaluationCondition:
     type: object
     properties:

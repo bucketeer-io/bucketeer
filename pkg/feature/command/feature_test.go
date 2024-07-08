@@ -37,17 +37,27 @@ func TestAddFixedStrategyRule(t *testing.T) {
 	vID := f.Variations[0].Id
 	expected := &proto.Rule{
 		Id: rID,
+		Clauses: []*proto.Clause{
+			{
+				Id:        id.String(),
+				Attribute: "name",
+				Operator:  proto.Clause_EQUALS,
+				Values: []string{
+					"user1",
+				},
+			},
+		},
 		Strategy: &proto.Strategy{
 			Type:          proto.Strategy_FIXED,
 			FixedStrategy: &proto.FixedStrategy{Variation: vID},
 		},
 	}
 	patterns := []*struct {
-		rule     *proto.Rule
+		cmd      *proto.AddRuleCommand
 		expected error
 	}{
 		{
-			rule:     expected,
+			cmd:      &proto.AddRuleCommand{Rule: expected},
 			expected: nil,
 		},
 	}
@@ -56,8 +66,7 @@ func TestAddFixedStrategyRule(t *testing.T) {
 		eventFactory: makeEventFactory(f),
 	}
 	for i, p := range patterns {
-		cmd := &proto.AddRuleCommand{Rule: p.rule}
-		err := targetingCmd.Handle(context.Background(), cmd)
+		err := targetingCmd.Handle(context.Background(), p.cmd)
 		des := fmt.Sprintf("index: %d", i)
 		assert.Equal(t, p.expected, err, des)
 	}
@@ -74,6 +83,16 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 	vID2 := f.Variations[1].Id
 	expected := &proto.Rule{
 		Id: rID,
+		Clauses: []*proto.Clause{
+			{
+				Id:        id.String(),
+				Attribute: "name",
+				Operator:  proto.Clause_EQUALS,
+				Values: []string{
+					"user1",
+				},
+			},
+		},
 		Strategy: &proto.Strategy{
 			Type: proto.Strategy_ROLLOUT,
 			RolloutStrategy: &proto.RolloutStrategy{

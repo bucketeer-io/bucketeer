@@ -17,12 +17,12 @@ package domain
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
-	"google.golang.org/protobuf/types/known/wrapperspb"
-
 	"github.com/jinzhu/copier"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
@@ -160,12 +160,6 @@ func (f *Feature) AddTag(tag string) error {
 	return nil
 }
 
-func (f *Feature) UpdateTags(tags []string) error {
-	f.Tags = tags
-	f.UpdatedAt = time.Now().Unix()
-	return nil
-}
-
 func (f *Feature) RemoveTag(tag string) error {
 	if len(f.Tags) <= 1 {
 		return errTagsMustHaveAtLeastOneTag
@@ -252,9 +246,6 @@ func (f *Feature) AddRule(rule *feature.Rule) error {
 	if err := validateStrategy(rule.Strategy, f.Variations); err != nil {
 		return err
 	}
-	// TODO: rule validation needed?
-	// - maybe check if 2 rules are the same (not id but logic)
-	// - check if two rules are the same but have different targets
 	f.Rules = append(f.Rules, rule)
 	f.UpdatedAt = time.Now().Unix()
 	return nil
@@ -305,15 +296,32 @@ func (f *Feature) getRule(id string) (*feature.Rule, error) {
 }
 
 func validateClauses(clauses []*feature.Clause) error {
+	if len(clauses) == 0 {
+		return fmt.Errorf("feature: rule must have at least one clause")
+	}
+	ids := make(map[string]struct{}, len(clauses))
 	for _, c := range clauses {
-		if err := validateClause(c); err != nil {
+		if c.Id == "" {
+			return errors.New("feature: clause id cannot be empty")
+		}
+		if err := uuid.ValidateUUID(c.Id); err != nil {
+			return fmt.Errorf("feature: clause %s is invalid: %w", c.Id, err)
+		}
+		if _, ok := ids[c.Id]; ok {
+			return fmt.Errorf("feature: clause %s already exists", c.Id)
+		}
+		ids[c.Id] = struct{}{}
+		if err := validateClauseValues(c); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func validateClause(c *feature.Clause) error {
+// validateClauseValues checks if attribute and values are valid according to type.
+// WARNING: This function does not check if the feature id and variation id are valid,
+// Call ValidateFeatureDependencies to check if they are so.
+func validateClauseValues(c *feature.Clause) error {
 	switch c.Operator {
 	case feature.Clause_SEGMENT:
 		if c.Attribute != "" {
@@ -336,8 +344,14 @@ func validateClause(c *feature.Clause) error {
 func validateStrategy(strategy *feature.Strategy, variations []*feature.Variation) error {
 	switch strategy.Type {
 	case feature.Strategy_FIXED:
+		if strategy.FixedStrategy == nil {
+			return errors.New("feature: rule strategy cannot be empty")
+		}
 		return validateFixedStrategy(strategy.FixedStrategy, variations)
 	case feature.Strategy_ROLLOUT:
+		if strategy.RolloutStrategy == nil {
+			return errors.New("feature: rule strategy cannot be empty")
+		}
 		return validateRolloutStrategy(strategy.RolloutStrategy, variations)
 	default:
 		return errUnsupportedStrategy
@@ -371,7 +385,7 @@ func (f *Feature) DeleteRule(rule string) error {
 }
 
 func (f *Feature) AddClause(rule string, clause *feature.Clause) error {
-	if err := validateClause(clause); err != nil {
+	if err := validateClauseValues(clause); err != nil {
 		return err
 	}
 	// TODO: do same validation as in addrule?
@@ -476,7 +490,7 @@ func (f *Feature) RemoveClauseValue(rule string, clause string, value string) er
 }
 
 func (f *Feature) AddVariation(id string, value string, name string, description string) error {
-	if err := validateVariation(f.VariationType, value); err != nil {
+	if err := validateVariationValue(f.VariationType, value); err != nil {
 		return err
 	}
 	variation := &feature.Variation{
@@ -493,7 +507,10 @@ func (f *Feature) AddVariation(id string, value string, name string, description
 	return nil
 }
 
-func validateVariation(variationType feature.Feature_VariationType, value string) error {
+func validateVariationValue(variationType feature.Feature_VariationType, value string) error {
+	if value == "" {
+		return errors.New("feature: variation value cannot be empty")
+	}
 	switch variationType {
 	case feature.Feature_BOOLEAN:
 		if value != "true" && value != "false" {
@@ -937,27 +954,18 @@ func updateStrategyVariationID(varID, uID string, s *feature.Strategy) error {
 	return nil
 }
 
-func (f *Feature) UpdateName(name string) error {
-	if name == "" {
-		return errNameEmpty
-	}
-	f.Name = name
-	f.UpdatedAt = time.Now().Unix()
-	return nil
-}
-
-func (f *Feature) UpdateDescription(desc string) error {
-	f.Description = desc
-	f.UpdatedAt = time.Now().Unix()
-	return nil
-}
-
 // Update returns a new Feature with the updated values.
 func (f *Feature) Update(
 	name, description *wrapperspb.StringValue,
 	tags []string,
 	enabled *wrapperspb.BoolValue,
 	archived *wrapperspb.BoolValue,
+	variations []*feature.Variation,
+	prerequisites []*feature.Prerequisite,
+	targets []*feature.Target,
+	rules []*feature.Rule,
+	defaultStrategy *feature.Strategy,
+	offVariation *wrapperspb.StringValue,
 ) (*Feature, error) {
 	updated := &Feature{}
 	if err := copier.Copy(updated, f); err != nil {
@@ -965,20 +973,13 @@ func (f *Feature) Update(
 	}
 	incVersion := false
 	if name != nil {
-		if err := updated.UpdateName(name.Value); err != nil {
-			return nil, err
-		}
-		incVersion = true
+		updated.Name = name.Value
 	}
 	if description != nil {
-		if err := updated.UpdateDescription(description.Value); err != nil {
-			return nil, err
-		}
+		updated.Description = description.Value
 	}
 	if tags != nil {
-		if err := updated.UpdateTags(tags); err != nil {
-			return nil, err
-		}
+		updated.Tags = tags
 		incVersion = true
 	}
 	if enabled != nil {
@@ -1005,12 +1006,138 @@ func (f *Feature) Update(
 		}
 		incVersion = true
 	}
+	if variations != nil {
+		updated.Variations = variations
+		incVersion = true
+	}
+	if prerequisites != nil {
+		updated.Prerequisites = prerequisites
+		incVersion = true
+	}
+	if targets != nil {
+		updated.Targets = targets
+		incVersion = true
+	}
+	if rules != nil {
+		updated.Rules = rules
+		incVersion = true
+	}
+	if defaultStrategy != nil {
+		updated.DefaultStrategy = defaultStrategy
+		incVersion = true
+	}
+	if offVariation != nil {
+		updated.OffVariation = offVariation.Value
+		incVersion = true
+	}
 	if incVersion {
 		if err := updated.IncrementVersion(); err != nil {
 			return nil, err
 		}
 	}
+	updated.UpdatedAt = time.Now().Unix()
+	if err := validate(updated.Feature); err != nil {
+		return nil, err
+	}
 	return updated, nil
+}
+
+func validateVariations(variationType feature.Feature_VariationType, variations []*feature.Variation) error {
+	if len(variations) < 2 {
+		return errors.New("feature: variations must have at least two variations")
+	}
+	ids := make(map[string]struct{}, len(variations))
+	for _, v := range variations {
+		if v.Id == "" {
+			return errValueNotFound
+		}
+		if err := uuid.ValidateUUID(v.Id); err != nil {
+			return fmt.Errorf("feature: clause %s is invalid: %w", v.Id, err)
+		}
+		if _, ok := ids[v.Id]; ok {
+			return errors.New("feature: variation id already exists")
+		}
+		ids[v.Id] = struct{}{}
+		if v.Name == "" {
+			return errors.New("feature: variation name cannot be empty")
+		}
+		if err := validateVariationValue(variationType, v.Value); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// validatePrerequisites checks if the prerequisites are valid.
+// WARNING: This function does not check if the feature id and variation id are valid,
+// Call ValidateFeatureDependencies to check if they are so.
+func validatePrerequisites(prerequisite []*feature.Prerequisite) error {
+	for _, p := range prerequisite {
+		if p.FeatureId == "" {
+			return errors.New("feature: prerequisite id cannot be empty")
+		}
+		if p.VariationId == "" {
+			return errors.New("feature: prerequisite variation id cannot be empty")
+		}
+	}
+	return nil
+}
+
+func validateRules(rules []*feature.Rule, variations []*feature.Variation) error {
+	ids := make(map[string]struct{}, len(variations))
+	for _, r := range rules {
+		if r.Id == "" {
+			return errors.New("feature: rule id cannot be empty")
+		}
+		if err := uuid.ValidateUUID(r.Id); err != nil {
+			return fmt.Errorf("feature: clause %s is invalid: %w", r.Id, err)
+		}
+		if _, ok := ids[r.Id]; ok {
+			return errRuleAlreadyExists
+		}
+		ids[r.Id] = struct{}{}
+		if r.Strategy == nil {
+			return errors.New("feature: rule strategy cannot be empty")
+		}
+		if err := validateStrategy(r.Strategy, variations); err != nil {
+			return err
+		}
+		if err := validateClauses(r.Clauses); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// validate checks if the feature is valid.
+// WARNING: This function does not check if the prerequisites are valid,
+// because the feature is not aware of the other features.
+func validate(f *feature.Feature) error {
+	if f.Name == "" {
+		return errNameEmpty
+	}
+	if len(f.Tags) == 0 {
+		return errTagsMustHaveAtLeastOneTag
+	}
+	if err := validateVariations(f.VariationType, f.Variations); err != nil {
+		return err
+	}
+	if err := validatePrerequisites(f.Prerequisites); err != nil {
+		return err
+	}
+	if err := validateTargets(f.Targets, f.Variations); err != nil {
+		return err
+	}
+	if err := validateRules(f.Rules, f.Variations); err != nil {
+		return err
+	}
+	if err := validateStrategy(f.DefaultStrategy, f.Variations); err != nil {
+		return err
+	}
+	if err := validateOffVariation(f.OffVariation, f.Variations); err != nil {
+		return err
+	}
+	return nil
 }
 
 func ValidateFeatureDependencies(fs []*feature.Feature) error {
@@ -1129,4 +1256,23 @@ func HasFeaturesDependsOnTargets(
 		delete(deps, tgt.Id)
 	}
 	return len(deps) > 0
+}
+
+func validateOffVariation(id string, variations []*feature.Variation) error {
+	if id == "" {
+		return errors.New("feature: off variation cannot be empty")
+	}
+	if _, err := findVariation(id, variations); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateTargets(targets []*feature.Target, variations []*feature.Variation) error {
+	for _, t := range targets {
+		if _, err := findVariation(t.Variation, variations); err != nil {
+			return errors.New("feature: target variation not found")
+		}
+	}
+	return nil
 }
