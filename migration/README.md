@@ -12,6 +12,8 @@ Ensure that you have started the Minikube in the dev container and that the `loc
 ## 1- Connecting to MySQL
 
 To connect to MySQL, you must enter the `localenv-mysql-0` pod and then connect to MySQL.
+The password can be found in the [values.dev.yaml](https://github.com/bucketeer-io/bucketeer/blob/main/manifests/bucketeer/values.dev.yaml) in the field `mysqlPass`.<br />
+In case you changed the default value, then use the password you set.
 
 ```shell
 kubectl exec -it localenv-mysql-0 -- /bin/sh
