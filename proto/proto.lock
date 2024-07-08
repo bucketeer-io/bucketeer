@@ -8194,7 +8194,13 @@
               {
                 "id": 4,
                 "name": "triggered_at",
-                "type": "int64"
+                "type": "int64",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 5,
@@ -8205,6 +8211,11 @@
                 "id": 6,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "ops_status",
+                "type": "bucketeer.autoops.AutoOpsStatus"
               }
             ]
           },
