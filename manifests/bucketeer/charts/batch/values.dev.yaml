@@ -56,9 +56,8 @@ oauth:
   key:
     secret: bucketeer-oauth-key
     public:
-  issuer:
+  issuer: https://localhost
   audience: bucketeer
-  clientId: bucketeer # TODO: remove after releasing
 
 cronjob:
   successfulJobsHistoryLimit: 1
