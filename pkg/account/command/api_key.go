@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
+	"github.com/jinzhu/copier"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
@@ -29,6 +30,7 @@ import (
 type apiKeyCommandHandler struct {
 	editor               *eventproto.Editor
 	apiKey               *domain.APIKey
+	previousAPIKey       *domain.APIKey
 	publisher            publisher.Publisher
 	environmentNamespace string
 }
@@ -38,13 +40,18 @@ func NewAPIKeyCommandHandler(
 	apiKey *domain.APIKey,
 	p publisher.Publisher,
 	environmentNamespace string,
-) Handler {
+) (Handler, error) {
+	prev := &domain.APIKey{}
+	if err := copier.Copy(prev, apiKey); err != nil {
+		return nil, err
+	}
 	return &apiKeyCommandHandler{
 		editor:               editor,
 		apiKey:               apiKey,
+		previousAPIKey:       prev,
 		publisher:            p,
 		environmentNamespace: environmentNamespace,
-	}
+	}, nil
 }
 
 func (h *apiKeyCommandHandler) Handle(ctx context.Context, cmd Command) error {
@@ -102,6 +109,10 @@ func (h *apiKeyCommandHandler) disable(ctx context.Context, cmd *accountproto.Di
 }
 
 func (h *apiKeyCommandHandler) send(ctx context.Context, eventType eventproto.Event_Type, event proto.Message) error {
+	var prev *accountproto.APIKey
+	if h.previousAPIKey != nil && h.previousAPIKey.APIKey != nil {
+		prev = h.previousAPIKey.APIKey
+	}
 	e, err := domainevent.NewEvent(
 		h.editor,
 		eventproto.Event_APIKEY,
@@ -109,6 +120,8 @@ func (h *apiKeyCommandHandler) send(ctx context.Context, eventType eventproto.Ev
 		eventType,
 		event,
 		h.environmentNamespace,
+		h.apiKey.APIKey,
+		prev,
 	)
 	if err != nil {
 		return err

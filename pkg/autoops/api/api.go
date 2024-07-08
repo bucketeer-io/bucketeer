@@ -201,7 +201,10 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
-		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
@@ -480,7 +483,10 @@ func (s *AutoOpsService) StopAutoOpsRule(
 			}
 			return dt.Err()
 		}
-		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
@@ -554,7 +560,10 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 		if err != nil {
 			return err
 		}
-		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
@@ -708,7 +717,10 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 			}
 			return dt.Err()
 		}
-		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+		if err != nil {
+			return err
+		}
 		for _, command := range commands {
 			if err := handler.Handle(ctx, command); err != nil {
 				return err
@@ -1168,7 +1180,10 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		if autoOpsRule.Clauses[len(autoOpsRule.Clauses)-1].Id == req.ExecuteAutoOpsRuleCommand.ClauseId {
 			opsStatus = autoopsproto.AutoOpsStatus_FINISHED
 		}
-		handler := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, &autoopsproto.ChangeAutoOpsStatusCommand{Status: opsStatus}); err != nil {
 			return err
 		}

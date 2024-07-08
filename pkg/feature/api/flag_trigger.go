@@ -94,12 +94,15 @@ func (s *FeatureService) CreateFlagTrigger(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		storage := v2fs.NewFlagTriggerStorage(tx)
-		handler := command.NewFlagTriggerCommandHandler(
+		handler, err := command.NewFlagTriggerCommandHandler(
 			editor,
 			flagTrigger,
 			s.domainPublisher,
 			request.EnvironmentNamespace,
 		)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, request.CreateFlagTriggerCommand); err != nil {
 			s.logger.Error(
 				"Failed to create flag trigger",
@@ -198,12 +201,15 @@ func (s *FeatureService) UpdateFlagTrigger(
 			)
 			return err
 		}
-		handler := command.NewFlagTriggerCommandHandler(
+		handler, err := command.NewFlagTriggerCommandHandler(
 			editor,
 			flagTrigger,
 			s.domainPublisher,
 			request.EnvironmentNamespace,
 		)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, request.ChangeFlagTriggerDescriptionCommand); err != nil {
 			s.logger.Error(
 				"Failed to update flag trigger",
@@ -300,12 +306,15 @@ func (s *FeatureService) EnableFlagTrigger(
 			)
 			return err
 		}
-		handler := command.NewFlagTriggerCommandHandler(
+		handler, err := command.NewFlagTriggerCommandHandler(
 			editor,
 			flagTrigger,
 			s.domainPublisher,
 			request.EnvironmentNamespace,
 		)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, request.EnableFlagTriggerCommand); err != nil {
 			s.logger.Error(
 				"Failed to enable flag trigger",
@@ -402,12 +411,15 @@ func (s *FeatureService) DisableFlagTrigger(
 			)
 			return err
 		}
-		handler := command.NewFlagTriggerCommandHandler(
+		handler, err := command.NewFlagTriggerCommandHandler(
 			editor,
 			flagTrigger,
 			s.domainPublisher,
 			request.EnvironmentNamespace,
 		)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, request.DisableFlagTriggerCommand); err != nil {
 			s.logger.Error(
 				"Failed to enable flag trigger",
@@ -498,12 +510,15 @@ func (s *FeatureService) ResetFlagTrigger(
 		return nil, err
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		handler := command.NewFlagTriggerCommandHandler(
+		handler, err := command.NewFlagTriggerCommandHandler(
 			editor,
 			trigger,
 			s.domainPublisher,
 			request.EnvironmentNamespace,
 		)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, request.ResetFlagTriggerCommand); err != nil {
 			s.logger.Error(
 				"Failed to reset flag trigger",
@@ -511,7 +526,7 @@ func (s *FeatureService) ResetFlagTrigger(
 			)
 			return err
 		}
-		err := v2fs.NewFlagTriggerStorage(tx).UpdateFlagTrigger(ctx, trigger)
+		err = v2fs.NewFlagTriggerStorage(tx).UpdateFlagTrigger(ctx, trigger)
 		if err != nil {
 			s.logger.Error(
 				"Failed to reset flag trigger",
@@ -598,12 +613,15 @@ func (s *FeatureService) DeleteFlagTrigger(
 			)
 			return err
 		}
-		handler := command.NewFlagTriggerCommandHandler(
+		handler, err := command.NewFlagTriggerCommandHandler(
 			editor,
 			flagTrigger,
 			s.domainPublisher,
 			request.EnvironmentNamespace,
 		)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, request.DeleteFlagTriggerCommand); err != nil {
 			s.logger.Error(
 				"Failed to delete flag trigger",
@@ -951,13 +969,16 @@ func (s *FeatureService) updateTriggerUsageInfo(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		storage := v2fs.NewFlagTriggerStorage(tx)
-		handler := command.NewFlagTriggerCommandHandler(
+		handler, err := command.NewFlagTriggerCommandHandler(
 			editor,
 			flagTrigger,
 			s.domainPublisher,
 			flagTrigger.EnvironmentNamespace,
 		)
-		err := handler.Handle(ctx, &featureproto.UpdateFlagTriggerUsageCommand{})
+		if err != nil {
+			return err
+		}
+		err = handler.Handle(ctx, &featureproto.UpdateFlagTriggerUsageCommand{})
 		if err != nil {
 			s.logger.Error(
 				"Failed to update flag trigger usage",

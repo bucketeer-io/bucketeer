@@ -42,6 +42,8 @@ func TestExtractAuditLogs(t *testing.T) {
 		eventproto.Event_FEATURE_CREATED,
 		&eventproto.FeatureCreatedEvent{Id: "fId-0"},
 		"ns0",
+		"{\"id\": \"curr\"}",
+		"{\"id\": \"prev\"}",
 	)
 	assert.NoError(t, err)
 	event1, err := domainevent.NewEvent(
@@ -51,6 +53,8 @@ func TestExtractAuditLogs(t *testing.T) {
 		eventproto.Event_FEATURE_CREATED,
 		&eventproto.FeatureCreatedEvent{Id: "fId-1"},
 		"ns0",
+		"{\"id\": \"curr\"}",
+		"{\"id\": \"prev\"}",
 	)
 	assert.NoError(t, err)
 	adninEvent0, err := domainevent.NewAdminEvent(
@@ -59,6 +63,8 @@ func TestExtractAuditLogs(t *testing.T) {
 		"fId-2",
 		eventproto.Event_FEATURE_CREATED,
 		&eventproto.FeatureCreatedEvent{Id: "fId-2"},
+		"{\"id\": \"curr\"}",
+		"{\"id\": \"prev\"}",
 	)
 	assert.NoError(t, err)
 	chunk := createChunk(t, []*domain.Event{event0, event1, adninEvent0})

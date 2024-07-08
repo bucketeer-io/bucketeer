@@ -373,7 +373,10 @@ func (s *EnvironmentService) createProject(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		projectStorage := v2es.NewProjectStorage(tx)
-		handler := command.NewProjectCommandHandler(editor, project, s.publisher)
+		handler, err := command.NewProjectCommandHandler(editor, project, s.publisher)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
 		}
@@ -752,7 +755,10 @@ func (s *EnvironmentService) updateProject(
 		if err != nil {
 			return err
 		}
-		handler := command.NewProjectCommandHandler(editor, project, s.publisher)
+		handler, err := command.NewProjectCommandHandler(editor, project, s.publisher)
+		if err != nil {
+			return err
+		}
 		for _, command := range commands {
 			if err := handler.Handle(ctx, command); err != nil {
 				return err

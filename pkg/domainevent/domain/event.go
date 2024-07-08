@@ -15,6 +15,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"time"
 
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
@@ -46,9 +47,12 @@ func NewEvent(
 	eventType domain.Event_Type,
 	event pb.Message,
 	environmentNamespace string,
+	entityData, previousEntityData interface{},
 	opts ...Option,
 ) (*domain.Event, error) {
-	return newEvent(editor, entityType, entityID, eventType, event, environmentNamespace, false, opts...)
+	return newEvent(
+		editor, entityType, entityID, eventType, event,
+		environmentNamespace, false, entityData, previousEntityData, opts...)
 }
 
 func NewAdminEvent(
@@ -57,9 +61,12 @@ func NewAdminEvent(
 	entityID string,
 	eventType domain.Event_Type,
 	event pb.Message,
+	entityData, previousEntityData interface{},
 	opts ...Option,
 ) (*domain.Event, error) {
-	return newEvent(editor, entityType, entityID, eventType, event, storage.AdminEnvironmentNamespace, true, opts...)
+	return newEvent(
+		editor, entityType, entityID, eventType, event,
+		storage.AdminEnvironmentNamespace, true, entityData, previousEntityData, opts...)
 }
 
 func newEvent(
@@ -70,6 +77,7 @@ func newEvent(
 	event pb.Message,
 	environmentNamespace string,
 	isAdminEvent bool,
+	entity, previousEntity interface{},
 	opts ...Option,
 ) (*domain.Event, error) {
 	options := domain.Options{
@@ -87,6 +95,19 @@ func newEvent(
 	if err != nil {
 		return nil, err
 	}
+	var entityData, prevEntityData []byte
+	if entity != nil {
+		entityData, err = json.MarshalIndent(entity, "", "  ")
+		if err != nil {
+			return nil, err
+		}
+	}
+	if previousEntity != nil {
+		prevEntityData, err = json.MarshalIndent(previousEntity, "", "  ")
+		if err != nil {
+			return nil, err
+		}
+	}
 	return &domain.Event{
 		Id:                   id.String(),
 		Timestamp:            time.Now().Unix(),
@@ -97,6 +118,8 @@ func newEvent(
 		Data:                 buf,
 		EnvironmentNamespace: environmentNamespace,
 		IsAdminEvent:         isAdminEvent,
+		EntityData:           string(entityData),
+		PreviousEntityData:   string(prevEntityData),
 		Options:              &options,
 	}, nil
 }

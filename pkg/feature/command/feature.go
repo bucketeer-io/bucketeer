@@ -18,6 +18,8 @@ import (
 	"context"
 	"strings"
 
+	"github.com/jinzhu/copier"
+
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
@@ -35,17 +37,22 @@ func NewFeatureCommandHandler(
 	feature *domain.Feature,
 	environmentNamespace string,
 	comment string,
-) *FeatureCommandHandler {
+) (*FeatureCommandHandler, error) {
+	prev := &domain.Feature{}
+	if err := copier.Copy(prev, feature); err != nil {
+		return nil, err
+	}
 	return &FeatureCommandHandler{
 		feature: feature,
 		eventFactory: &FeatureEventFactory{
 			editor:               editor,
 			feature:              feature,
+			previousFeature:      prev,
 			environmentNamespace: environmentNamespace,
 			comment:              comment,
 		},
 		Events: []*eventproto.Event{},
-	}
+	}, nil
 }
 
 // for unit test

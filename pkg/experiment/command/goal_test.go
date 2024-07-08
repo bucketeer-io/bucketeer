@@ -96,7 +96,7 @@ func TestHandleDeleteGoalCommand(t *testing.T) {
 
 func newGoalCommandHandler(t *testing.T, publisher publisher.Publisher, goal *domain.Goal) Handler {
 	t.Helper()
-	return NewGoalCommandHandler(
+	h, err := NewGoalCommandHandler(
 		&eventproto.Editor{
 			Email: "email",
 		},
@@ -104,4 +104,8 @@ func newGoalCommandHandler(t *testing.T, publisher publisher.Publisher, goal *do
 		publisher,
 		"ns0",
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return h
 }

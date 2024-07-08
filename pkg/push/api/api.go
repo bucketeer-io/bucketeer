@@ -203,7 +203,10 @@ func (s *PushService) CreatePush(
 		if err := pushStorage.CreatePush(ctx, push, req.EnvironmentNamespace); err != nil {
 			return err
 		}
-		handler := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentNamespace)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
@@ -322,7 +325,10 @@ func (s *PushService) UpdatePush(
 		if err != nil {
 			return err
 		}
-		handler := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentNamespace)
+		if err != nil {
+			return err
+		}
 		for _, command := range commands {
 			if err := handler.Handle(ctx, command); err != nil {
 				return err
@@ -517,7 +523,10 @@ func (s *PushService) DeletePush(
 		if err != nil {
 			return err
 		}
-		handler := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentNamespace)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}

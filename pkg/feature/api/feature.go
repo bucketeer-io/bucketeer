@@ -16,7 +16,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -597,7 +596,10 @@ func (s *FeatureService) CreateFeature(
 			)
 			return err
 		}
-		handler = command.NewFeatureCommandHandler(editor, feature, req.EnvironmentNamespace, "")
+		handler, err = command.NewFeatureCommandHandler(editor, feature, req.EnvironmentNamespace, "")
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			s.logger.Error(
 				"Failed to create feature",
@@ -776,25 +778,17 @@ func (s *FeatureService) UpdateFeature(
 			return err
 		}
 		updatedpb = updated.Feature
-		ub, err := json.MarshalIndent(updated.Feature, "", "  ")
-		if err != nil {
-			return err
-		}
-		fb, err := json.MarshalIndent(feature.Feature, "", "  ")
-		if err != nil {
-			return err
-		}
 		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_FEATURE,
 			feature.Id,
 			eventproto.Event_FEATURE_UPDATED,
 			&eventproto.FeatureUpdatedEvent{
-				Id:           req.Id,
-				Data:         string(ub),
-				PreviousData: string(fb),
+				Id: req.Id,
 			},
 			req.EnvironmentId,
+			updated.Feature,
+			feature.Feature,
 			// check require comment.
 			domainevent.WithComment(req.Comment),
 			domainevent.WithNewVersion(feature.Version),
@@ -899,7 +893,10 @@ func (s *FeatureService) UpdateFeatureDetails(
 			)
 			return err
 		}
-		handler = command.NewFeatureCommandHandler(editor, feature, req.EnvironmentNamespace, req.Comment)
+		handler, err = command.NewFeatureCommandHandler(editor, feature, req.EnvironmentNamespace, req.Comment)
+		if err != nil {
+			return err
+		}
 		err = handler.Handle(ctx, &featureproto.IncrementFeatureVersionCommand{})
 		if err != nil {
 			s.logger.Error(
@@ -1418,7 +1415,10 @@ func (s *FeatureService) updateFeature(
 			)
 			return err
 		}
-		handler = command.NewFeatureCommandHandler(editor, feature, environmentNamespace, comment)
+		handler, err = command.NewFeatureCommandHandler(editor, feature, environmentNamespace, comment)
+		if err != nil {
+			return err
+		}
 		err = handler.Handle(ctx, &featureproto.IncrementFeatureVersionCommand{})
 		if err != nil {
 			s.logger.Error(
@@ -1640,7 +1640,10 @@ func (s *FeatureService) UpdateFeatureVariations(
 				return err
 			}
 		}
-		handler = command.NewFeatureCommandHandler(editor, feature, req.EnvironmentNamespace, req.Comment)
+		handler, err = command.NewFeatureCommandHandler(editor, feature, req.EnvironmentNamespace, req.Comment)
+		if err != nil {
+			return err
+		}
 		err = handler.Handle(ctx, &featureproto.IncrementFeatureVersionCommand{})
 		if err != nil {
 			s.logger.Error(
@@ -1825,12 +1828,15 @@ func (s *FeatureService) UpdateFeatureTargeting(
 			}
 		}
 		feature := &domain.Feature{Feature: f}
-		handler = command.NewFeatureCommandHandler(
+		handler, err = command.NewFeatureCommandHandler(
 			editor,
 			feature,
 			req.EnvironmentNamespace,
 			req.Comment,
 		)
+		if err != nil {
+			return err
+		}
 		err = handler.Handle(ctx, &featureproto.IncrementFeatureVersionCommand{})
 		if err != nil {
 			s.logger.Error(
@@ -2418,7 +2424,10 @@ func (s *FeatureService) CloneFeature(
 			)
 			return err
 		}
-		handler = command.NewFeatureCommandHandler(editor, feature, req.Command.EnvironmentNamespace, "")
+		handler, err = command.NewFeatureCommandHandler(editor, feature, req.Command.EnvironmentNamespace, "")
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			s.logger.Error(
 				"Failed to clone feature",

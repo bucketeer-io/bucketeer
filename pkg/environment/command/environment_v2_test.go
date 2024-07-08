@@ -153,11 +153,15 @@ func TestHandleArchiveAndUnarchiveEnvironmentV2Command(t *testing.T) {
 
 func newEnvironmentV2CommandHandler(t *testing.T, publisher publisher.Publisher, env *domain.EnvironmentV2) Handler {
 	t.Helper()
-	return NewEnvironmentV2CommandHandler(
+	h, err := NewEnvironmentV2CommandHandler(
 		&eventproto.Editor{
 			Email: "email",
 		},
 		env,
 		publisher,
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return h
 }

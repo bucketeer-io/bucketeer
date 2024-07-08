@@ -18,6 +18,7 @@ import (
 	"context"
 
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
+	"github.com/jinzhu/copier"
 
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
@@ -29,6 +30,7 @@ import (
 type pushCommandHandler struct {
 	editor               *eventproto.Editor
 	push                 *domain.Push
+	previousPush         *domain.Push
 	publisher            publisher.Publisher
 	environmentNamespace string
 }
@@ -38,13 +40,18 @@ func NewPushCommandHandler(
 	push *domain.Push,
 	p publisher.Publisher,
 	environmentNamespace string,
-) Handler {
+) (Handler, error) {
+	prev := &domain.Push{}
+	if err := copier.Copy(prev, push); err != nil {
+		return nil, err
+	}
 	return &pushCommandHandler{
 		editor:               editor,
 		push:                 push,
+		previousPush:         prev,
 		publisher:            p,
 		environmentNamespace: environmentNamespace,
-	}
+	}, nil
 }
 
 func (h *pushCommandHandler) Handle(ctx context.Context, cmd Command) error {
@@ -106,7 +113,20 @@ func (h pushCommandHandler) rename(ctx context.Context, cmd *proto.RenamePushCom
 }
 
 func (h *pushCommandHandler) send(ctx context.Context, eventType eventproto.Event_Type, event pb.Message) error {
-	e, err := domainevent.NewEvent(h.editor, eventproto.Event_PUSH, h.push.Id, eventType, event, h.environmentNamespace)
+	var prev *proto.Push
+	if h.previousPush != nil && h.previousPush.Push != nil {
+		prev = h.previousPush.Push
+	}
+	e, err := domainevent.NewEvent(
+		h.editor,
+		eventproto.Event_PUSH,
+		h.push.Id,
+		eventType,
+		event,
+		h.environmentNamespace,
+		h.push.Push,
+		prev,
+	)
 	if err != nil {
 		return err
 	}

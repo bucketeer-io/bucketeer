@@ -261,7 +261,10 @@ func (s *experimentService) CreateGoal(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		goalStorage := v2es.NewGoalStorage(tx)
-		handler := command.NewGoalCommandHandler(editor, goal, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewGoalCommandHandler(editor, goal, s.publisher, req.EnvironmentNamespace)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
@@ -534,7 +537,10 @@ func (s *experimentService) updateGoal(
 		if err != nil {
 			return err
 		}
-		handler := command.NewGoalCommandHandler(editor, goal, s.publisher, environmentNamespace)
+		handler, err := command.NewGoalCommandHandler(editor, goal, s.publisher, environmentNamespace)
+		if err != nil {
+			return err
+		}
 		for _, command := range commands {
 			if err := handler.Handle(ctx, command); err != nil {
 				return err

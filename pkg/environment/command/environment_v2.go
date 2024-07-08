@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	pb "github.com/golang/protobuf/proto"
+	"github.com/jinzhu/copier"
 
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
@@ -28,21 +29,27 @@ import (
 )
 
 type environmentV2CommandHandler struct {
-	editor      *eventproto.Editor
-	environment *domain.EnvironmentV2
-	publisher   publisher.Publisher
+	editor              *eventproto.Editor
+	environment         *domain.EnvironmentV2
+	previousEnvironment *domain.EnvironmentV2
+	publisher           publisher.Publisher
 }
 
 func NewEnvironmentV2CommandHandler(
 	editor *eventproto.Editor,
 	environment *domain.EnvironmentV2,
 	p publisher.Publisher,
-) Handler {
-	return &environmentV2CommandHandler{
-		editor:      editor,
-		environment: environment,
-		publisher:   p,
+) (Handler, error) {
+	prev := &domain.EnvironmentV2{}
+	if err := copier.Copy(prev, environment); err != nil {
+		return nil, err
 	}
+	return &environmentV2CommandHandler{
+		editor:              editor,
+		environment:         environment,
+		previousEnvironment: prev,
+		publisher:           p,
+	}, nil
 }
 
 func (h *environmentV2CommandHandler) Handle(ctx context.Context, cmd Command) error {
@@ -147,7 +154,19 @@ func (h *environmentV2CommandHandler) send(
 	eventType eventproto.Event_Type,
 	event pb.Message,
 ) error {
-	e, err := domainevent.NewAdminEvent(h.editor, eventproto.Event_ENVIRONMENT, h.environment.Id, eventType, event)
+	var prev *proto.EnvironmentV2
+	if h.previousEnvironment != nil && h.previousEnvironment.EnvironmentV2 != nil {
+		prev = h.previousEnvironment.EnvironmentV2
+	}
+	e, err := domainevent.NewAdminEvent(
+		h.editor,
+		eventproto.Event_ENVIRONMENT,
+		h.environment.Id,
+		eventType,
+		event,
+		h.environment.EnvironmentV2,
+		prev,
+	)
 	if err != nil {
 		return err
 	}

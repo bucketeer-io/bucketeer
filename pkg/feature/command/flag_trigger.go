@@ -19,6 +19,7 @@ import (
 	"context"
 
 	pb "github.com/golang/protobuf/proto"
+	"github.com/jinzhu/copier"
 
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
@@ -30,6 +31,7 @@ import (
 type flagTriggerCommandHandler struct {
 	editor               *eventproto.Editor
 	flagTrigger          *domain.FlagTrigger
+	previousFlagTrigger  *domain.FlagTrigger
 	publisher            publisher.Publisher
 	environmentNamespace string
 }
@@ -39,13 +41,18 @@ func NewFlagTriggerCommandHandler(
 	flagTrigger *domain.FlagTrigger,
 	publisher publisher.Publisher,
 	environmentNamespace string,
-) Handler {
+) (Handler, error) {
+	prev := &domain.FlagTrigger{}
+	if err := copier.Copy(prev, flagTrigger); err != nil {
+		return nil, err
+	}
 	return &flagTriggerCommandHandler{
 		editor:               editor,
 		flagTrigger:          flagTrigger,
+		previousFlagTrigger:  prev,
 		publisher:            publisher,
 		environmentNamespace: environmentNamespace,
-	}
+	}, nil
 }
 
 func (f *flagTriggerCommandHandler) Handle(
@@ -175,6 +182,10 @@ func (f *flagTriggerCommandHandler) send(
 	eventType eventproto.Event_Type,
 	event pb.Message,
 ) error {
+	var prev *proto.FlagTrigger
+	if f.previousFlagTrigger != nil && f.previousFlagTrigger.FlagTrigger != nil {
+		prev = f.previousFlagTrigger.FlagTrigger
+	}
 	e, err := domainevent.NewEvent(
 		f.editor,
 		eventproto.Event_FLAG_TRIGGER,
@@ -182,6 +193,8 @@ func (f *flagTriggerCommandHandler) send(
 		eventType,
 		event,
 		f.environmentNamespace,
+		f.flagTrigger.FlagTrigger,
+		prev,
 	)
 	if err != nil {
 		return err

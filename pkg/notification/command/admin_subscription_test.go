@@ -181,11 +181,15 @@ func TestAdminRename(t *testing.T) {
 
 func newAdminSubscriptionCommandHandler(t *testing.T, subscription *domain.Subscription) Handler {
 	t.Helper()
-	return NewAdminSubscriptionCommandHandler(
+	h, err := NewAdminSubscriptionCommandHandler(
 		&eventproto.Editor{
 			Email:   "email",
 			IsAdmin: true,
 		},
 		subscription,
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return h
 }

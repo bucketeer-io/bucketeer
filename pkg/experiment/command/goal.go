@@ -18,6 +18,7 @@ import (
 	"context"
 
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
+	"github.com/jinzhu/copier"
 
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
@@ -29,6 +30,7 @@ import (
 type goalCommandHandler struct {
 	editor               *eventproto.Editor
 	goal                 *domain.Goal
+	previousGoal         *domain.Goal
 	publisher            publisher.Publisher
 	environmentNamespace string
 }
@@ -38,13 +40,18 @@ func NewGoalCommandHandler(
 	goal *domain.Goal,
 	p publisher.Publisher,
 	environmentNamespace string,
-) Handler {
+) (Handler, error) {
+	prev := &domain.Goal{}
+	if err := copier.Copy(prev, goal); err != nil {
+		return nil, err
+	}
 	return &goalCommandHandler{
 		editor:               editor,
 		goal:                 goal,
+		previousGoal:         goal,
 		publisher:            p,
 		environmentNamespace: environmentNamespace,
-	}
+	}, nil
 }
 
 func (h *goalCommandHandler) Handle(ctx context.Context, cmd Command) error {
@@ -114,7 +121,20 @@ func (h *goalCommandHandler) delete(ctx context.Context, cmd *proto.DeleteGoalCo
 }
 
 func (h *goalCommandHandler) send(ctx context.Context, eventType eventproto.Event_Type, event pb.Message) error {
-	e, err := domainevent.NewEvent(h.editor, eventproto.Event_GOAL, h.goal.Id, eventType, event, h.environmentNamespace)
+	var prev *proto.Goal
+	if h.previousGoal != nil && h.previousGoal.Goal != nil {
+		prev = h.previousGoal.Goal
+	}
+	e, err := domainevent.NewEvent(
+		h.editor,
+		eventproto.Event_GOAL,
+		h.goal.Id,
+		eventType,
+		event,
+		h.environmentNamespace,
+		h.goal.Goal,
+		prev,
+	)
 	if err != nil {
 		return err
 	}

@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
+	"github.com/jinzhu/copier"
 
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
@@ -28,21 +29,27 @@ import (
 )
 
 type organizationCommandHandler struct {
-	editor       *eventproto.Editor
-	organization *domain.Organization
-	publisher    publisher.Publisher
+	editor               *eventproto.Editor
+	organization         *domain.Organization
+	previousOrganization *domain.Organization
+	publisher            publisher.Publisher
 }
 
 func NewOrganizationCommandHandler(
 	editor *eventproto.Editor,
 	organization *domain.Organization,
 	p publisher.Publisher,
-) Handler {
-	return &organizationCommandHandler{
-		editor:       editor,
-		organization: organization,
-		publisher:    p,
+) (Handler, error) {
+	prev := &domain.Organization{}
+	if err := copier.Copy(prev, organization); err != nil {
+		return nil, err
 	}
+	return &organizationCommandHandler{
+		editor:               editor,
+		organization:         organization,
+		previousOrganization: prev,
+		publisher:            p,
+	}, nil
 }
 
 func (h *organizationCommandHandler) Handle(ctx context.Context, cmd Command) error {
@@ -149,7 +156,19 @@ func (h *organizationCommandHandler) send(
 	eventType eventproto.Event_Type,
 	event pb.Message,
 ) error {
-	e, err := domainevent.NewAdminEvent(h.editor, eventproto.Event_ORGANIZATION, h.organization.Id, eventType, event)
+	var prev *proto.Organization
+	if h.previousOrganization != nil && h.previousOrganization.Organization != nil {
+		prev = h.previousOrganization.Organization
+	}
+	e, err := domainevent.NewAdminEvent(
+		h.editor,
+		eventproto.Event_ORGANIZATION,
+		h.organization.Id,
+		eventType,
+		event,
+		h.organization.Organization,
+		prev,
+	)
 	if err != nil {
 		return err
 	}

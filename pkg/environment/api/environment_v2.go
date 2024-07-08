@@ -346,7 +346,10 @@ func (s *EnvironmentService) createEnvironmentV2(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		environmentStorage := v2es.NewEnvironmentStorage(tx)
-		handler := command.NewEnvironmentV2CommandHandler(editor, environment, s.publisher)
+		handler, err := command.NewEnvironmentV2CommandHandler(editor, environment, s.publisher)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
 		}
@@ -428,7 +431,10 @@ func (s *EnvironmentService) updateEnvironmentV2(
 		if err != nil {
 			return err
 		}
-		handler := command.NewEnvironmentV2CommandHandler(editor, environment, s.publisher)
+		handler, err := command.NewEnvironmentV2CommandHandler(editor, environment, s.publisher)
+		if err != nil {
+			return err
+		}
 		for _, c := range commands {
 			if err := handler.Handle(ctx, c); err != nil {
 				return err
@@ -552,7 +558,10 @@ func (s *EnvironmentService) ArchiveEnvironmentV2(
 		if err != nil {
 			return err
 		}
-		handler := command.NewEnvironmentV2CommandHandler(editor, environment, s.publisher)
+		handler, err := command.NewEnvironmentV2CommandHandler(editor, environment, s.publisher)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
@@ -638,7 +647,10 @@ func (s *EnvironmentService) UnarchiveEnvironmentV2(
 		if err != nil {
 			return err
 		}
-		handler := command.NewEnvironmentV2CommandHandler(editor, environment, s.publisher)
+		handler, err := command.NewEnvironmentV2CommandHandler(editor, environment, s.publisher)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}

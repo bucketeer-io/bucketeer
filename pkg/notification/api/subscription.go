@@ -92,7 +92,10 @@ func (s *NotificationService) CreateSubscription(
 		if err := subscriptionStorage.CreateSubscription(ctx, subscription, req.EnvironmentNamespace); err != nil {
 			return err
 		}
-		handler = command.NewSubscriptionCommandHandler(editor, subscription, req.EnvironmentNamespace)
+		handler, err = command.NewSubscriptionCommandHandler(editor, subscription, req.EnvironmentNamespace)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
@@ -430,7 +433,10 @@ func (s *NotificationService) updateSubscription(
 		if err != nil {
 			return err
 		}
-		handler = command.NewSubscriptionCommandHandler(editor, subscription, environmentNamespace)
+		handler, err = command.NewSubscriptionCommandHandler(editor, subscription, environmentNamespace)
+		if err != nil {
+			return err
+		}
 		for _, command := range commands {
 			if err := handler.Handle(ctx, command); err != nil {
 				return err
@@ -591,7 +597,10 @@ func (s *NotificationService) DeleteSubscription(
 		if err != nil {
 			return err
 		}
-		handler = command.NewSubscriptionCommandHandler(editor, subscription, req.EnvironmentNamespace)
+		handler, err = command.NewSubscriptionCommandHandler(editor, subscription, req.EnvironmentNamespace)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}

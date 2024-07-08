@@ -87,7 +87,10 @@ func (s *NotificationService) CreateAdminSubscription(
 		if err := adminSubscriptionStorage.CreateAdminSubscription(ctx, subscription); err != nil {
 			return err
 		}
-		handler = command.NewAdminSubscriptionCommandHandler(editor, subscription)
+		handler, err = command.NewAdminSubscriptionCommandHandler(editor, subscription)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
@@ -408,7 +411,10 @@ func (s *NotificationService) updateAdminSubscription(
 		if err != nil {
 			return err
 		}
-		handler = command.NewAdminSubscriptionCommandHandler(editor, subscription)
+		handler, err = command.NewAdminSubscriptionCommandHandler(editor, subscription)
+		if err != nil {
+			return err
+		}
 		for _, command := range commands {
 			if err := handler.Handle(ctx, command); err != nil {
 				return err
@@ -502,7 +508,10 @@ func (s *NotificationService) DeleteAdminSubscription(
 		if err != nil {
 			return err
 		}
-		handler = command.NewAdminSubscriptionCommandHandler(editor, subscription)
+		handler, err = command.NewAdminSubscriptionCommandHandler(editor, subscription)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}

@@ -18,7 +18,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/jinzhu/copier"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
@@ -28,8 +30,9 @@ import (
 
 func TestNewAccountV2CommandHandler(t *testing.T) {
 	t.Parallel()
-	a := NewAccountV2CommandHandler(nil, nil, nil, "")
+	a, err := NewAccountV2CommandHandler(nil, &domain.AccountV2{}, nil, "")
 	assert.IsType(t, &accountV2CommandHandler{}, a)
+	assert.NoError(t, err)
 }
 
 func TestHandleV2(t *testing.T) {
@@ -55,6 +58,10 @@ func TestHandleV2(t *testing.T) {
 					[]*accountproto.AccountV2_EnvironmentRole{},
 				)
 				h.account = a
+				prev := &domain.AccountV2{}
+				err := copier.Copy(prev, a)
+				require.NoError(t, err)
+				h.previousAccount = prev
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input:       &accountproto.CreateAccountV2Command{},
@@ -72,6 +79,10 @@ func TestHandleV2(t *testing.T) {
 					[]*accountproto.AccountV2_EnvironmentRole{},
 				)
 				h.account = a
+				prev := &domain.AccountV2{}
+				err := copier.Copy(prev, a)
+				require.NoError(t, err)
+				h.previousAccount = prev
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input:       &accountproto.ChangeAccountV2NameCommand{},
@@ -89,6 +100,10 @@ func TestHandleV2(t *testing.T) {
 					[]*accountproto.AccountV2_EnvironmentRole{},
 				)
 				h.account = a
+				prev := &domain.AccountV2{}
+				err := copier.Copy(prev, a)
+				require.NoError(t, err)
+				h.previousAccount = prev
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input:       &accountproto.ChangeAccountV2AvatarImageUrlCommand{},
@@ -106,6 +121,10 @@ func TestHandleV2(t *testing.T) {
 					[]*accountproto.AccountV2_EnvironmentRole{},
 				)
 				h.account = a
+				prev := &domain.AccountV2{}
+				err := copier.Copy(prev, a)
+				require.NoError(t, err)
+				h.previousAccount = prev
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input:       &accountproto.ChangeAccountV2OrganizationRoleCommand{},
@@ -128,6 +147,10 @@ func TestHandleV2(t *testing.T) {
 					},
 				)
 				h.account = a
+				prev := &domain.AccountV2{}
+				err := copier.Copy(prev, a)
+				require.NoError(t, err)
+				h.previousAccount = prev
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input: &accountproto.ChangeAccountV2EnvironmentRolesCommand{
@@ -158,6 +181,10 @@ func TestHandleV2(t *testing.T) {
 					},
 				)
 				h.account = a
+				prev := &domain.AccountV2{}
+				err := copier.Copy(prev, a)
+				require.NoError(t, err)
+				h.previousAccount = prev
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input: &accountproto.ChangeAccountV2EnvironmentRolesCommand{
@@ -183,6 +210,10 @@ func TestHandleV2(t *testing.T) {
 					[]*accountproto.AccountV2_EnvironmentRole{},
 				)
 				h.account = a
+				prev := &domain.AccountV2{}
+				err := copier.Copy(prev, a)
+				require.NoError(t, err)
+				h.previousAccount = prev
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input:       &accountproto.ChangeAccountV2NameCommand{},
@@ -200,6 +231,10 @@ func TestHandleV2(t *testing.T) {
 					[]*accountproto.AccountV2_EnvironmentRole{},
 				)
 				h.account = a
+				prev := &domain.AccountV2{}
+				err := copier.Copy(prev, a)
+				require.NoError(t, err)
+				h.previousAccount = prev
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input:       &accountproto.EnableAccountV2Command{},
@@ -217,6 +252,10 @@ func TestHandleV2(t *testing.T) {
 					[]*accountproto.AccountV2_EnvironmentRole{},
 				)
 				h.account = a
+				prev := &domain.AccountV2{}
+				err := copier.Copy(prev, a)
+				require.NoError(t, err)
+				h.previousAccount = prev
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input:       &accountproto.DisableAccountV2Command{},
@@ -234,6 +273,10 @@ func TestHandleV2(t *testing.T) {
 					[]*accountproto.AccountV2_EnvironmentRole{},
 				)
 				h.account = a
+				prev := &domain.AccountV2{}
+				err := copier.Copy(prev, a)
+				require.NoError(t, err)
+				h.previousAccount = prev
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input:       &accountproto.DeleteAccountV2Command{},

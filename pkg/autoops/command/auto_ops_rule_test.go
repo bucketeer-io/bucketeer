@@ -44,7 +44,7 @@ func TestChangeOpsType(t *testing.T) {
 	for _, p := range patterns {
 		m := publishermock.NewMockPublisher(mockController)
 		a := newAutoOpsRule(t)
-		h := newAutoOpsRuleCommandHandler(m, a)
+		h := newAutoOpsRuleCommandHandler(t, m, a)
 		if p.expected == nil {
 			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 		}
@@ -68,7 +68,7 @@ func TestDelete(t *testing.T) {
 	for _, p := range patterns {
 		m := publishermock.NewMockPublisher(mockController)
 		a := newAutoOpsRule(t)
-		h := newAutoOpsRuleCommandHandler(m, a)
+		h := newAutoOpsRuleCommandHandler(t, m, a)
 		if p.expected == nil {
 			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 		}
@@ -91,7 +91,7 @@ func TestChangeTriggeredAt(t *testing.T) {
 	for _, p := range patterns {
 		m := publishermock.NewMockPublisher(mockController)
 		a := newAutoOpsRule(t)
-		h := newAutoOpsRuleCommandHandler(m, a)
+		h := newAutoOpsRuleCommandHandler(t, m, a)
 		if p.expected == nil {
 			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 		}
@@ -114,7 +114,7 @@ func TestChangeAutoOpsStatus(t *testing.T) {
 	for _, p := range patterns {
 		m := publishermock.NewMockPublisher(mockController)
 		a := newAutoOpsRule(t)
-		h := newAutoOpsRuleCommandHandler(m, a)
+		h := newAutoOpsRuleCommandHandler(t, m, a)
 		if p.expected == nil {
 			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 		}
@@ -142,7 +142,7 @@ func TestAddOpsEventRateClause(t *testing.T) {
 		m := publishermock.NewMockPublisher(mockController)
 		a := newAutoOpsRule(t)
 		l := len(a.Clauses)
-		h := newAutoOpsRuleCommandHandler(m, a)
+		h := newAutoOpsRuleCommandHandler(t, m, a)
 		if p.expected == nil {
 			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 		}
@@ -168,7 +168,7 @@ func TestChangeOpsEventRateClause(t *testing.T) {
 	for _, p := range patterns {
 		m := publishermock.NewMockPublisher(mockController)
 		a := newAutoOpsRule(t)
-		h := newAutoOpsRuleCommandHandler(m, a)
+		h := newAutoOpsRuleCommandHandler(t, m, a)
 		if p.expected == nil {
 			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 		}
@@ -192,7 +192,7 @@ func TestDeleteClause(t *testing.T) {
 		m := publishermock.NewMockPublisher(mockController)
 		a := newAutoOpsRule(t)
 		l := len(a.Clauses)
-		h := newAutoOpsRuleCommandHandler(m, a)
+		h := newAutoOpsRuleCommandHandler(t, m, a)
 		if p.expected == nil {
 			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 		}
@@ -219,7 +219,7 @@ func TestAddDatetimeClause(t *testing.T) {
 		m := publishermock.NewMockPublisher(mockController)
 		a := newAutoOpsRule(t)
 		l := len(a.Clauses)
-		h := newAutoOpsRuleCommandHandler(m, a)
+		h := newAutoOpsRuleCommandHandler(t, m, a)
 		if p.expected == nil {
 			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 		}
@@ -245,7 +245,7 @@ func TestChangeDatetimeClause(t *testing.T) {
 	for _, p := range patterns {
 		m := publishermock.NewMockPublisher(mockController)
 		a := newAutoOpsRule(t)
-		h := newAutoOpsRuleCommandHandler(m, a)
+		h := newAutoOpsRuleCommandHandler(t, m, a)
 		if p.expected == nil {
 			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 		}
@@ -279,8 +279,9 @@ func newAutoOpsRule(t *testing.T) *domain.AutoOpsRule {
 	return aor
 }
 
-func newAutoOpsRuleCommandHandler(publisher publisher.Publisher, autoOpsRule *domain.AutoOpsRule) Handler {
-	return NewAutoOpsCommandHandler(
+func newAutoOpsRuleCommandHandler(t *testing.T, publisher publisher.Publisher, autoOpsRule *domain.AutoOpsRule) Handler {
+	t.Helper()
+	h, err := NewAutoOpsCommandHandler(
 		&eventproto.Editor{
 			Email: "email",
 		},
@@ -288,4 +289,8 @@ func newAutoOpsRuleCommandHandler(publisher publisher.Publisher, autoOpsRule *do
 		publisher,
 		"ns0",
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return h
 }

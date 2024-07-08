@@ -189,11 +189,15 @@ func TestHandleConvertTrialProjectCommand(t *testing.T) {
 
 func newProjectCommandHandler(t *testing.T, publisher publisher.Publisher, project *domain.Project) Handler {
 	t.Helper()
-	return NewProjectCommandHandler(
+	h, err := NewProjectCommandHandler(
 		&eventproto.Editor{
 			Email: "email",
 		},
 		project,
 		publisher,
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return h
 }

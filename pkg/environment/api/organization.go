@@ -340,7 +340,10 @@ func (s *EnvironmentService) createOrganization(
 				return v2es.ErrOrganizationAlreadyExists
 			}
 		}
-		handler := command.NewOrganizationCommandHandler(editor, organization, s.publisher)
+		handler, err := command.NewOrganizationCommandHandler(editor, organization, s.publisher)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
 		}
@@ -490,7 +493,10 @@ func (s *EnvironmentService) updateOrganization(
 		if err != nil {
 			return err
 		}
-		handler := command.NewOrganizationCommandHandler(editor, organization, s.publisher)
+		handler, err := command.NewOrganizationCommandHandler(editor, organization, s.publisher)
+		if err != nil {
+			return err
+		}
 		for _, c := range commands {
 			if err := handler.Handle(ctx, c); err != nil {
 				return err
