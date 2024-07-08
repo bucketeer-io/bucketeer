@@ -21,17 +21,9 @@ import (
 
 	"golang.org/x/exp/maps"
 
-	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
+	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
-)
-
-type Mark int
-
-const (
-	unvisited Mark = iota
-	temporary
-	permanently
 )
 
 const (
@@ -40,7 +32,6 @@ const (
 )
 
 var (
-	ErrCycleExists                   = errors.New("evaluator: cycle exists in features")
 	ErrDefaultStrategyNotFound       = errors.New("evaluator: default strategy not found")
 	ErrFeatureNotFound               = errors.New("evaluator: feature not found")
 	ErrPrerequisiteVariationNotFound = errors.New("evaluator: prerequisite variation not found")
@@ -120,7 +111,7 @@ func (e *evaluator) evaluate(
 
 	flagVariations := map[string]string{}
 	// fs need to be sorted in order from upstream to downstream.
-	sortedFs, err := e.TopologicalSort(fs)
+	sortedFs, err := ftdomain.TopologicalSort(fs)
 	if err != nil {
 		return nil, err
 	}
@@ -181,50 +172,6 @@ func tagExist(tags []string, target string) bool {
 		}
 	}
 	return false
-}
-
-// This logic is based on https://en.wikipedia.org/wiki/Topological_sorting.
-// Note: This algorithm is not an exact topological sort because the order is reversed (=from upstream to downstream).
-func (e *evaluator) TopologicalSort(features []*ftproto.Feature) ([]*ftproto.Feature, error) {
-	marks := map[string]Mark{}
-	mapFeatures := map[string]*ftproto.Feature{}
-	for _, f := range features {
-		marks[f.Id] = unvisited
-		mapFeatures[f.Id] = f
-	}
-	var sortedFeatures []*ftproto.Feature
-	var sort func(f *ftproto.Feature) error
-	sort = func(f *ftproto.Feature) error {
-		if marks[f.Id] == permanently {
-			return nil
-		}
-		if marks[f.Id] == temporary {
-			return ErrCycleExists
-		}
-		marks[f.Id] = temporary
-		df := &domain.Feature{Feature: f}
-		for _, fid := range df.FeatureIDsDependsOn() {
-			pf, ok := mapFeatures[fid]
-			if !ok {
-				return ErrFeatureNotFound
-			}
-			if err := sort(pf); err != nil {
-				return err
-			}
-		}
-		marks[f.Id] = permanently
-		sortedFeatures = append(sortedFeatures, f)
-		return nil
-	}
-	for _, f := range features {
-		if marks[f.Id] != unvisited {
-			continue
-		}
-		if err := sort(f); err != nil {
-			return nil, err
-		}
-	}
-	return sortedFeatures, nil
 }
 
 /*
@@ -331,7 +278,7 @@ func (e *evaluator) GetPrerequisiteDownwards(
 	for _, f := range allFeatures {
 		allFeaturesMap[f.Id] = f
 	}
-	return maps.Values(e.getFeaturesDependedOnTargets(targetFeatures, allFeaturesMap)), nil
+	return maps.Values(ftdomain.GetFeaturesDependedOnTargets(targetFeatures, allFeaturesMap)), nil
 }
 
 func (e *evaluator) getEvalFeatures(
@@ -342,62 +289,10 @@ func (e *evaluator) getEvalFeatures(
 		all[f.Id] = f
 	}
 
-	evals1 := e.getFeaturesDependedOnTargets(targetFeatures, all)
-	evals2 := e.getFeaturesDependsOnTargets(targetFeatures, all)
+	evals1 := ftdomain.GetFeaturesDependedOnTargets(targetFeatures, all)
+	evals2 := ftdomain.GetFeaturesDependsOnTargets(targetFeatures, all)
 	evals := e.mapMerge(evals1, evals2)
 	return maps.Values(evals), nil
-}
-
-// getFeaturesDependedOnTargets returns the features that are depended on the target features.
-// targetFeatures are included in the result.
-func (e *evaluator) getFeaturesDependedOnTargets(
-	targets []*ftproto.Feature, all map[string]*ftproto.Feature,
-) map[string]*ftproto.Feature {
-	evals := make(map[string]*ftproto.Feature)
-	var dfs func(f *ftproto.Feature)
-	dfs = func(f *ftproto.Feature) {
-		if _, ok := evals[f.Id]; ok {
-			return
-		}
-		evals[f.Id] = f
-		dmn := &domain.Feature{Feature: f}
-		for _, fid := range dmn.FeatureIDsDependsOn() {
-			dfs(all[fid])
-		}
-	}
-	for _, f := range targets {
-		dfs(f)
-	}
-	return evals
-}
-
-// getFeaturesDependsOnTargets returns the features that depend on the target features.
-// targetFeatures are included in the result.
-func (e *evaluator) getFeaturesDependsOnTargets(
-	targets []*ftproto.Feature, all map[string]*ftproto.Feature,
-) map[string]*ftproto.Feature {
-	evals := make(map[string]*ftproto.Feature)
-	for _, f := range targets {
-		evals[f.Id] = f
-	}
-	var dfs func(f *ftproto.Feature) bool
-	dfs = func(f *ftproto.Feature) bool {
-		if _, ok := evals[f.Id]; ok {
-			return true
-		}
-		dmn := &domain.Feature{Feature: f}
-		for _, fid := range dmn.FeatureIDsDependsOn() {
-			if dfs(all[fid]) {
-				evals[f.Id] = f
-				return true
-			}
-		}
-		return false
-	}
-	for _, f := range all {
-		dfs(f)
-	}
-	return evals
 }
 
 func (e *evaluator) mapMerge(m1, m2 map[string]*ftproto.Feature) map[string]*ftproto.Feature {

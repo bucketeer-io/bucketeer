@@ -1139,6 +1139,9 @@ func (s *FeatureService) ArchiveFeature(
 	req *featureproto.ArchiveFeatureRequest,
 ) (*featureproto.ArchiveFeatureResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
+	if err := validateArchiveFeatureRequest(req, localizer); err != nil {
+		return nil, err
+	}
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("archived", "=", false),
 		mysql.NewFilter("deleted", "=", false),
@@ -1162,9 +1165,41 @@ func (s *FeatureService) ArchiveFeature(
 		)
 		return nil, err
 	}
-	if err := validateArchiveFeatureRequest(req, features, localizer); err != nil {
-		return nil, err
+	var tgtF *domain.Feature
+	for _, f := range features {
+		if f.Id == req.Id {
+			tgtF = &domain.Feature{Feature: f}
+			break
+		}
 	}
+	if tgtF == nil {
+		s.logger.Error(
+			"Feature not found",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+			)...,
+		)
+		dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.NotFoundError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	if domain.HasFeaturesDependsOnTargets([]*featureproto.Feature{tgtF.Feature}, features) {
+		dt, err := statusInvalidArchive.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "archive"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
 		req.EnvironmentNamespace, localizer)
@@ -1526,12 +1561,24 @@ func (s *FeatureService) UpdateFeatureVariations(
 			)
 			return err
 		}
+		f, err := findFeature(features, req.Id, localizer)
+		if err != nil {
+			s.logger.Error(
+				"Failed to find feature",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("environmentNamespace", req.EnvironmentNamespace),
+				)...,
+			)
+			return err
+		}
+		feature := &domain.Feature{Feature: f}
 		for _, cmd := range commands {
 			if err := s.validateFeatureVariationsCommand(
 				ctx,
 				features,
 				req.EnvironmentNamespace,
-				req.Id,
+				f,
 				cmd,
 				localizer,
 			); err != nil {
@@ -1545,18 +1592,6 @@ func (s *FeatureService) UpdateFeatureVariations(
 				return err
 			}
 		}
-		f, err := findFeature(features, req.Id, localizer)
-		if err != nil {
-			s.logger.Error(
-				"Failed to find feature",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
-				)...,
-			)
-			return err
-		}
-		feature := &domain.Feature{Feature: f}
 		handler = command.NewFeatureCommandHandler(editor, feature, req.EnvironmentNamespace, req.Comment)
 		err = handler.Handle(ctx, &featureproto.IncrementFeatureVersionCommand{})
 		if err != nil {

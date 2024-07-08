@@ -21,8 +21,9 @@ import (
 
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	"github.com/bucketeer-io/bucketeer/evaluation"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
+	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
+	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	envproto "github.com/bucketeer-io/bucketeer/proto/environment"
@@ -909,23 +910,24 @@ func validateDeleteFeatureRequest(req *featureproto.DeleteFeatureRequest, locali
 func (s *FeatureService) validateFeatureVariationsCommand(
 	ctx context.Context,
 	fs []*featureproto.Feature,
-	environmentID, featureID string,
+	environmentID string,
+	f *featureproto.Feature,
 	cmd command.Command,
 	localizer locale.Localizer,
 ) error {
-	switch c := cmd.(type) {
+	switch cmd.(type) {
 	case *featureproto.AddVariationCommand:
-		if err := s.checkProgressiveRolloutInProgress(ctx, environmentID, featureID, localizer); err != nil {
+		if err := s.checkProgressiveRolloutInProgress(ctx, environmentID, f.Id, localizer); err != nil {
 			return err
 		}
 		return nil
 	case *featureproto.RemoveVariationCommand:
-		if err := s.checkProgressiveRolloutInProgress(ctx, environmentID, featureID, localizer); err != nil {
+		if err := s.checkProgressiveRolloutInProgress(ctx, environmentID, f.Id, localizer); err != nil {
 			return err
 		}
-		return validateVariationCommand(fs, c.Id, localizer)
+		return validateVariationCommand(fs, f, localizer)
 	case *featureproto.ChangeVariationValueCommand:
-		return validateVariationCommand(fs, c.Id, localizer)
+		return validateVariationCommand(fs, f, localizer)
 	default:
 		return nil
 	}
@@ -962,7 +964,6 @@ func (s *FeatureService) checkProgressiveRolloutInProgress(
 
 func validateArchiveFeatureRequest(
 	req *featureproto.ArchiveFeatureRequest,
-	fs []*featureproto.Feature,
 	localizer locale.Localizer,
 ) error {
 	if req.Id == "" {
@@ -985,37 +986,19 @@ func validateArchiveFeatureRequest(
 		}
 		return dt.Err()
 	}
-	for _, f := range fs {
-		for _, p := range f.Prerequisites {
-			if p.FeatureId == req.Id {
-				dt, err := statusInvalidArchive.WithDetails(&errdetails.LocalizedMessage{
-					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "archive"),
-				})
-				if err != nil {
-					return statusInternal.Err()
-				}
-				return dt.Err()
-			}
-		}
-	}
 	return nil
 }
 
-func validateVariationCommand(fs []*featureproto.Feature, vID string, localizer locale.Localizer) error {
-	for _, f := range fs {
-		for _, p := range f.Prerequisites {
-			if p.VariationId == vID {
-				dt, err := statusInvalidChangingVariation.WithDetails(&errdetails.LocalizedMessage{
-					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation"),
-				})
-				if err != nil {
-					return statusInternal.Err()
-				}
-				return dt.Err()
-			}
+func validateVariationCommand(fs []*featureproto.Feature, tgt *featureproto.Feature, localizer locale.Localizer) error {
+	if domain.HasFeaturesDependsOnTargets([]*featureproto.Feature{tgt}, fs) {
+		dt, err := statusInvalidChangingVariation.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "variation"),
+		})
+		if err != nil {
+			return statusInternal.Err()
 		}
+		return dt.Err()
 	}
 	return nil
 }
@@ -1162,8 +1145,8 @@ func validateRule(
 	// Check dependency.
 	tarF.Rules = append(tarF.Rules, rule)
 	defer func() { tarF.Rules = tarF.Rules[:len(tarF.Rules)-1] }()
-	if err := validateFeatureDependencies(fs); err != nil {
-		if errors.Is(err, evaluation.ErrCycleExists) {
+	if err := featuredomain.ValidateFeatureDependencies(fs); err != nil {
+		if errors.Is(err, featuredomain.ErrCycleExists) {
 			dt, err := statusCycleExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "rule"),
@@ -1183,11 +1166,6 @@ func validateRule(
 		return dt.Err()
 	}
 	return validateStrategy(tarF.Variations, rule.Strategy, localizer)
-}
-
-func validateFeatureDependencies(fs []*featureproto.Feature) error {
-	_, err := evaluation.NewEvaluator().TopologicalSort(fs)
-	return err
 }
 
 func validateChangeRuleStrategy(
@@ -1421,8 +1399,8 @@ func validateAddPrerequisite(
 	prevPrerequisites := tarF.Prerequisites
 	tarF.Prerequisites = append(tarF.Prerequisites, p)
 	defer func() { tarF.Prerequisites = prevPrerequisites }()
-	if err := validateFeatureDependencies(fs); err != nil {
-		if err == evaluation.ErrCycleExists {
+	if err := featuredomain.ValidateFeatureDependencies(fs); err != nil {
+		if err == featuredomain.ErrCycleExists {
 			dt, err := statusCycleExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "prerequisite"),

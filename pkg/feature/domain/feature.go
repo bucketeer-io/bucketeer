@@ -28,6 +28,14 @@ import (
 	"github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
+type Mark int
+
+const (
+	unvisited Mark = iota
+	temporary
+	permanently
+)
+
 const (
 	SecondsToStale         = 90 * 24 * 60 * 60 // 90 days
 	secondsToReEvaluateAll = 30 * 24 * 60 * 60 // 30 days
@@ -57,6 +65,8 @@ var (
 	ErrLastUsedInfoNotFound          = errors.New("feature: last used info not found")
 	errRulesOrderSizeNotEqual        = errors.New("feature: rules order size not equal")
 	errRulesOrderDuplicateIDs        = errors.New("feature: rules order contains duplicate ids")
+	ErrCycleExists                   = errors.New("feature: cycle exists in features")
+	ErrFeatureNotFound               = errors.New("feature: feature not found")
 )
 
 // TODO: think about splitting out ruleset / variation
@@ -934,7 +944,6 @@ func (f *Feature) UpdateName(name string) error {
 	f.Name = name
 	f.UpdatedAt = time.Now().Unix()
 	return nil
-
 }
 
 func (f *Feature) UpdateDescription(desc string) error {
@@ -1002,4 +1011,122 @@ func (f *Feature) Update(
 		}
 	}
 	return updated, nil
+}
+
+func ValidateFeatureDependencies(fs []*feature.Feature) error {
+	_, err := TopologicalSort(fs)
+	return err
+}
+
+// This logic is based on https://en.wikipedia.org/wiki/Topological_sorting.
+// Note: This algorithm is not an exact topological sort because the order is reversed (=from upstream to downstream).
+func TopologicalSort(features []*feature.Feature) ([]*feature.Feature, error) {
+	marks := map[string]Mark{}
+	mapFeatures := map[string]*feature.Feature{}
+	for _, f := range features {
+		marks[f.Id] = unvisited
+		mapFeatures[f.Id] = f
+	}
+	var sortedFeatures []*feature.Feature
+	var sort func(f *feature.Feature) error
+	sort = func(f *feature.Feature) error {
+		if marks[f.Id] == permanently {
+			return nil
+		}
+		if marks[f.Id] == temporary {
+			return ErrCycleExists
+		}
+		marks[f.Id] = temporary
+		df := &Feature{Feature: f}
+		for _, fid := range df.FeatureIDsDependsOn() {
+			pf, ok := mapFeatures[fid]
+			if !ok {
+				return ErrFeatureNotFound
+			}
+			if err := sort(pf); err != nil {
+				return err
+			}
+		}
+		marks[f.Id] = permanently
+		sortedFeatures = append(sortedFeatures, f)
+		return nil
+	}
+	for _, f := range features {
+		if marks[f.Id] != unvisited {
+			continue
+		}
+		if err := sort(f); err != nil {
+			return nil, err
+		}
+	}
+	return sortedFeatures, nil
+}
+
+// getFeaturesDependedOnTargets returns the features that are depended on the target features.
+// targetFeatures are included in the result.
+func GetFeaturesDependedOnTargets(
+	targets []*feature.Feature, all map[string]*feature.Feature,
+) map[string]*feature.Feature {
+	evals := make(map[string]*feature.Feature)
+	var dfs func(f *feature.Feature)
+	dfs = func(f *feature.Feature) {
+		if _, ok := evals[f.Id]; ok {
+			return
+		}
+		evals[f.Id] = f
+		dmn := &Feature{Feature: f}
+		for _, fid := range dmn.FeatureIDsDependsOn() {
+			dfs(all[fid])
+		}
+	}
+	for _, f := range targets {
+		dfs(f)
+	}
+	return evals
+}
+
+// getFeaturesDependsOnTargets returns the features that depend on the target features.
+// targetFeatures are included in the result.
+func GetFeaturesDependsOnTargets(
+	targets []*feature.Feature, all map[string]*feature.Feature,
+) map[string]*feature.Feature {
+	evals := make(map[string]*feature.Feature)
+	for _, f := range targets {
+		evals[f.Id] = f
+	}
+	var dfs func(f *feature.Feature) bool
+	dfs = func(f *feature.Feature) bool {
+		if _, ok := evals[f.Id]; ok {
+			return true
+		}
+		dmn := &Feature{Feature: f}
+		for _, fid := range dmn.FeatureIDsDependsOn() {
+			if dfs(all[fid]) {
+				evals[f.Id] = f
+				return true
+			}
+		}
+		return false
+	}
+	for _, f := range all {
+		// Skip if the f is target feature.
+		dfs(f)
+	}
+	return evals
+}
+
+// HasFeaturesDependsOnTargets returns true if there are features that depend on the target features.
+// This is a thin wrapper of GetFeaturesDependsOnTargets.
+func HasFeaturesDependsOnTargets(
+	targets []*feature.Feature, all []*feature.Feature,
+) bool {
+	allfs := make(map[string]*feature.Feature, len(all))
+	for _, f := range all {
+		allfs[f.Id] = f
+	}
+	deps := GetFeaturesDependsOnTargets(targets, allfs)
+	for _, tgt := range targets {
+		delete(deps, tgt.Id)
+	}
+	return len(deps) > 0
 }
