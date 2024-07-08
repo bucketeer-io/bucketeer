@@ -1171,6 +1171,8 @@ func (s *FeatureService) ArchiveFeature(
 			tgtF = &domain.Feature{Feature: f}
 			break
 		}
+	}
+	if tgtF == nil {
 		s.logger.Error(
 			"Feature not found",
 			log.FieldsFromImcomingContext(ctx).AddFields(
