@@ -139,7 +139,7 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"oauth-audience",
 			"The oauth audience registered in the token",
 		).Required().String(),
-		oauthIssuer:      cmd.Flag("oauth-issuer", "The url of dex issuer.").Required().String(),
+		oauthIssuer:      cmd.Flag("oauth-issuer", "The issuer url").Required().String(),
 		mysqlUser:        cmd.Flag("mysql-user", "MySQL user.").Required().String(),
 		mysqlPass:        cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
 		mysqlHost:        cmd.Flag("mysql-host", "MySQL host.").Required().String(),
