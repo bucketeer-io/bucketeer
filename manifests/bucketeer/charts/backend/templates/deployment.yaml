@@ -129,6 +129,8 @@ spec:
               value: "{{ .Values.env.notificationServicePort }}"
             - name: BUCKETEER_BACKEND_PUSH_SERVICE_PORT
               value: "{{ .Values.env.pushServicePort }}"
+            - name: BUCKETEER_BACKEND_CONSOLE_SERVICE_PORT
+              value: "{{ .Values.env.consoleServicePort }}"
             - name: BUCKETEER_BACKEND_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_BACKEND_AUTH_SERVICE

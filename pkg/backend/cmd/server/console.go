@@ -40,3 +40,17 @@ func consoleHandler() http.Handler {
 func consoleEnvJSHandler(path string) http.Handler {
 	return http.FileServer(http.Dir(path))
 }
+
+type ConsoleService struct {
+	consoleEnvJSPath string
+}
+
+func NewConsoleService(consoleEnvJSPath string) ConsoleService {
+	return ConsoleService{consoleEnvJSPath: consoleEnvJSPath}
+}
+
+func (c ConsoleService) Register(mux *http.ServeMux) {
+	mux.HandleFunc("/", consoleHandler().ServeHTTP)
+	mux.HandleFunc("/static/js/",
+		http.StripPrefix("/static/js/", consoleEnvJSHandler(c.consoleEnvJSPath)).ServeHTTP)
+}

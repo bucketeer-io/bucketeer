@@ -18,7 +18,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"regexp"
 	"time"
@@ -111,6 +110,7 @@ type server struct {
 	featureServicePort      *int
 	notificationServicePort *int
 	pushServicePort         *int
+	consoleServicePort      *int
 	// Service
 	accountService     *string
 	authService        *string
@@ -224,6 +224,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"push-service-port",
 			"Port to bind to push service.",
 		).Default("9101").Int(),
+		consoleServicePort: cmd.Flag(
+			"console-service-port",
+			"Port to bind to console service.",
+		).Default("9102").Int(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -467,11 +471,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithPort(*s.authServicePort),
 		rpc.WithMetrics(registerer),
 		rpc.WithLogger(logger),
-		rpc.WithHandler("/", consoleHandler()),
-		rpc.WithHandler(
-			"/static/js/",
-			http.StripPrefix("/static/js/", consoleEnvJSHandler(*s.consoleEnvJSPath)),
-		),
 	)
 	go authServer.Run()
 	// accountService
@@ -633,6 +632,14 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go pushServer.Run()
+	consoleServer := rest.NewServer(
+		*s.certPath, *s.keyPath,
+		rest.WithLogger(logger),
+		rest.WithPort(*s.consoleServicePort),
+		rest.WithService(NewConsoleService(*s.consoleEnvJSPath)),
+		rest.WithMetrics(registerer),
+	)
+	go consoleServer.Run()
 	// To detach this pod from Kubernetes Service before the app servers stop, we stop the health check service first.
 	// Then, after 10 seconds of sleep, the app servers can be shut down, as no new requests are expected to be sent.
 	// In this case, the Readiness prove must fail within 10 seconds and the pod must be detached.
@@ -649,6 +656,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go featureServer.Stop(serverShutDownTimeout)
 		go notificationServer.Stop(serverShutDownTimeout)
 		go pushServer.Stop(serverShutDownTimeout)
+		go consoleServer.Stop(serverShutDownTimeout)
 		go mysqlClient.Close()
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()

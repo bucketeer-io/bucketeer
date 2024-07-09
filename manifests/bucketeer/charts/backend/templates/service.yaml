@@ -24,9 +24,6 @@ spec:
     - name: admin
       port: {{ .Values.envoy.adminPort }}
       protocol: TCP
-    - name: auth
-      port: {{ .Values.env.authServicePort }}
-      protocol: TCP
   selector:
     app: {{ template "backend.name" . }}
     release: {{ template "backend.fullname" . }}
