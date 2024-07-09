@@ -86,7 +86,6 @@ oauth:
     public:
   issuer:
   audience:
-  clientId: # TODO: remove after releasing
 
 service:
   type: ClusterIP
