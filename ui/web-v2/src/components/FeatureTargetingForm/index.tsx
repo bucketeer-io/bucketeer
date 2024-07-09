@@ -1392,7 +1392,7 @@ export const ClausesInput: FC<ClausesInputProps> = memo(
                                 value={featureOptions.find(
                                   (o) => o.value === field.value
                                 )}
-                                isSearchable={false}
+                                isSearchable={true}
                               />
                             );
                           }}
