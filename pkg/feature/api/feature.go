@@ -709,7 +709,7 @@ func (s *FeatureService) UpdateFeature(
 		whereParts := []mysql.WherePart{
 			mysql.NewFilter("archived", "=", false),
 			mysql.NewFilter("deleted", "=", false),
-			mysql.NewFilter("environment_id", "=", req.EnvironmentId),
+			mysql.NewFilter("environment_namespace", "=", req.EnvironmentId),
 		}
 		features, _, _, err := featureStorage.ListFeatures(
 			ctx,
