@@ -129,8 +129,8 @@ spec:
               value: "{{ .Values.env.notificationServicePort }}"
             - name: BUCKETEER_BACKEND_PUSH_SERVICE_PORT
               value: "{{ .Values.env.pushServicePort }}"
-            - name: BUCKETEER_BACKEND_CONSOLE_SERVICE_PORT
-              value: "{{ .Values.env.consoleServicePort }}"
+            - name: BUCKETEER_BACKEND_WEB_CONSOLE_SERVICE_PORT
+              value: "{{ .Values.env.webConsoleServicePort }}"
             - name: BUCKETEER_BACKEND_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_BACKEND_AUTH_SERVICE
@@ -169,7 +169,7 @@ spec:
               value: "{{ .Values.webhook.baseURL }}"
             - name: BUCKETEER_BACKEND_WEBHOOK_KMS_RESOURCE_NAME
               value: "{{ .Values.webhook.kmsResourceName }}"
-            - name: BUCKETEER_BACKEND_CONSOLE_ENV_JS_PATH
+            - name: BUCKETEER_BACKEND_WEB_CONSOLE_ENV_JS_PATH
               value: /usr/local/static/js
           volumeMounts:
             - name: service-cert-secret

@@ -33,24 +33,24 @@ func (fs *spaFileSystem) Open(name string) (http.File, error) {
 	return f, err
 }
 
-func consoleHandler() http.Handler {
+func webConsoleHandler() http.Handler {
 	return http.FileServer(&spaFileSystem{http.FS(webv2.FS)})
 }
 
-func consoleEnvJSHandler(path string) http.Handler {
+func webConsoleEnvJSHandler(path string) http.Handler {
 	return http.FileServer(http.Dir(path))
 }
 
-type ConsoleService struct {
+type WebConsoleService struct {
 	consoleEnvJSPath string
 }
 
-func NewConsoleService(consoleEnvJSPath string) ConsoleService {
-	return ConsoleService{consoleEnvJSPath: consoleEnvJSPath}
+func NewWebConsoleService(consoleEnvJSPath string) WebConsoleService {
+	return WebConsoleService{consoleEnvJSPath: consoleEnvJSPath}
 }
 
-func (c ConsoleService) Register(mux *http.ServeMux) {
-	mux.HandleFunc("/", consoleHandler().ServeHTTP)
+func (c WebConsoleService) Register(mux *http.ServeMux) {
+	mux.HandleFunc("/", webConsoleHandler().ServeHTTP)
 	mux.HandleFunc("/static/js/",
-		http.StripPrefix("/static/js/", consoleEnvJSHandler(c.consoleEnvJSPath)).ServeHTTP)
+		http.StripPrefix("/static/js/", webConsoleEnvJSHandler(c.consoleEnvJSPath)).ServeHTTP)
 }

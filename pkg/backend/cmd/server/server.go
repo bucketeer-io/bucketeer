@@ -110,7 +110,7 @@ type server struct {
 	featureServicePort      *int
 	notificationServicePort *int
 	pushServicePort         *int
-	consoleServicePort      *int
+	webConsoleServicePort   *int
 	// Service
 	accountService     *string
 	authService        *string
@@ -128,8 +128,8 @@ type server struct {
 	webhookBaseURL         *string
 	webhookKMSResourceName *string
 	cloudService           *string
-	// console
-	consoleEnvJSPath *string
+	// web console
+	webConsoleEnvJSPath *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -224,8 +224,8 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"push-service-port",
 			"Port to bind to push service.",
 		).Default("9101").Int(),
-		consoleServicePort: cmd.Flag(
-			"console-service-port",
+		webConsoleServicePort: cmd.Flag(
+			"web-console-service-port",
 			"Port to bind to console service.",
 		).Default("9102").Int(),
 		accountService: cmd.Flag(
@@ -277,8 +277,8 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"webhook-kms-resource-name",
 			"Cloud KMS resource name to encrypt and decrypt webhook credentials.",
 		).Required().String(),
-		cloudService:     cmd.Flag("cloud-service", "Cloud Service info").Default(gcp).String(),
-		consoleEnvJSPath: cmd.Flag("console-env-js-path", "console env js path").Required().String(),
+		cloudService:        cmd.Flag("cloud-service", "Cloud Service info").Default(gcp).String(),
+		webConsoleEnvJSPath: cmd.Flag("web-console-env-js-path", "console env js path").Required().String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -632,14 +632,14 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go pushServer.Run()
-	consoleServer := rest.NewServer(
+	webConsoleServer := rest.NewServer(
 		*s.certPath, *s.keyPath,
 		rest.WithLogger(logger),
-		rest.WithPort(*s.consoleServicePort),
-		rest.WithService(NewConsoleService(*s.consoleEnvJSPath)),
+		rest.WithPort(*s.webConsoleServicePort),
+		rest.WithService(NewWebConsoleService(*s.webConsoleEnvJSPath)),
 		rest.WithMetrics(registerer),
 	)
-	go consoleServer.Run()
+	go webConsoleServer.Run()
 	// To detach this pod from Kubernetes Service before the app servers stop, we stop the health check service first.
 	// Then, after 10 seconds of sleep, the app servers can be shut down, as no new requests are expected to be sent.
 	// In this case, the Readiness prove must fail within 10 seconds and the pod must be detached.
@@ -656,7 +656,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go featureServer.Stop(serverShutDownTimeout)
 		go notificationServer.Stop(serverShutDownTimeout)
 		go pushServer.Stop(serverShutDownTimeout)
-		go consoleServer.Stop(serverShutDownTimeout)
+		go webConsoleServer.Stop(serverShutDownTimeout)
 		go mysqlClient.Close()
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()

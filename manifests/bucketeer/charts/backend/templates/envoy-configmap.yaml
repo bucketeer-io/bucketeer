@@ -435,13 +435,13 @@ data:
               explicit_http_config:
                 http2_protocol_options: {}
           ignore_health_on_host_removal: true
-        - name: console
+        - name: web_console
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
           lb_policy: round_robin
           load_assignment:
-            cluster_name: console
+            cluster_name: web_console
             endpoints:
               - lb_endpoints:
                   - endpoint:
@@ -630,7 +630,7 @@ data:
                             - match:
                                 prefix: /
                               route:
-                                cluster: console
+                                cluster: web_console
                                 timeout: 15s
                                 retry_policy:
                                   retry_on: 5xx
