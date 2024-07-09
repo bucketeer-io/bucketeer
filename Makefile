@@ -147,8 +147,21 @@ $(GO_APP_BUILD_TARGETS): build-%:
 		go build -ldflags "-s -w -X $(LDFLAGS_VERSION)=$(VERSION) -X $(LDFLAGS_HASH)=$(HASH) -X $(LDFLAGS_BUILDDATE)=$(BUILDDATE)" \
 		-o bin/$* -mod=vendor cmd/$*/$*.go
 
+.PHONY: clean-web
+clean-web:
+	rm -rf ui/web-v2/dist/*
+	touch ui/web-v2/dist/DONT-EDIT-FILES-IN-THIS-DIRECTORY
+
+.PHONY: build-web
+build-web:
+	rm -rf ui/web-v2/dist/*
+	make -C ui/web-v2 install build
+
 .PHONY: build-go
 build-go: $(GO_APP_BUILD_TARGETS)
+
+.PHONY: build-go-embed
+build-go-embed: build-web $(GO_APP_BUILD_TARGETS) clean-web
 
 # Make sure bucketeer-httpstan is already running. If not, run "make start-httpstan".
 .PHONY: test-go
@@ -349,7 +362,7 @@ minikube-load-images:
 		minikube ssh "rm /home/docker/$$IMAGE.tar"; \
 	done
 
-SERVICES := api-gateway backend batch experiment-calculator web-gateway web
+SERVICES := api-gateway backend batch experiment-calculator web-gateway
 
 # Deploy Bucketeer to minikube
 deploy-service-to-minikube:
@@ -368,7 +381,7 @@ deploy-bucketeer: delete-all-services-from-minikube
 	make -C tools/dev service-cert-secret
 	make -C tools/dev service-token-secret
 	make -C tools/dev oauth-key-secret
-	make -C ./ build-go
+	make -C ./ build-go-embed
 	TAG=localenv make -C ./ build-docker-images
 	TAG=localenv make -C ./ minikube-load-images
 	make -C ./ deploy-all-services-to-minikube

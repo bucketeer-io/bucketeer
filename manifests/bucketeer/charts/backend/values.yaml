@@ -51,10 +51,12 @@ env:
   featureServicePort: 9098
   notificationServicePort: 9100
   pushServicePort: 9101
+  webConsoleServicePort: 9102
   metricsPort: 9002
   timezone: UTC
   emailFilter:
   logLevel: info
+  googleTagManagerId:
 
 affinity: {}
 

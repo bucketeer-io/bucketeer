@@ -444,7 +444,7 @@ data:
                           - match:
                               prefix: /
                             route:
-                              cluster: web
+                              cluster: backend
                               timeout: 15s
                               retry_policy:
                                 retry_on: 5xx

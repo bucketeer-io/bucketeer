@@ -22,14 +22,13 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/bucketeer-io/bucketeer/pkg/auth"
-
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	accountapi "github.com/bucketeer-io/bucketeer/pkg/account/api"
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	auditlogapi "github.com/bucketeer-io/bucketeer/pkg/auditlog/api"
+	"github.com/bucketeer-io/bucketeer/pkg/auth"
 	authapi "github.com/bucketeer-io/bucketeer/pkg/auth/api"
 	authclient "github.com/bucketeer-io/bucketeer/pkg/auth/client"
 	autoopsapi "github.com/bucketeer-io/bucketeer/pkg/autoops/api"
@@ -111,6 +110,7 @@ type server struct {
 	featureServicePort      *int
 	notificationServicePort *int
 	pushServicePort         *int
+	webConsoleServicePort   *int
 	// Service
 	accountService     *string
 	authService        *string
@@ -128,6 +128,8 @@ type server struct {
 	webhookBaseURL         *string
 	webhookKMSResourceName *string
 	cloudService           *string
+	// web console
+	webConsoleEnvJSPath *string
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -222,6 +224,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"push-service-port",
 			"Port to bind to push service.",
 		).Default("9101").Int(),
+		webConsoleServicePort: cmd.Flag(
+			"web-console-service-port",
+			"Port to bind to console service.",
+		).Default("9102").Int(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -271,7 +277,8 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"webhook-kms-resource-name",
 			"Cloud KMS resource name to encrypt and decrypt webhook credentials.",
 		).Required().String(),
-		cloudService: cmd.Flag("cloud-service", "Cloud Service info").Default(gcp).String(),
+		cloudService:        cmd.Flag("cloud-service", "Cloud Service info").Default(gcp).String(),
+		webConsoleEnvJSPath: cmd.Flag("web-console-env-js-path", "console env js path").Required().String(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -625,6 +632,14 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rpc.WithLogger(logger),
 	)
 	go pushServer.Run()
+	webConsoleServer := rest.NewServer(
+		*s.certPath, *s.keyPath,
+		rest.WithLogger(logger),
+		rest.WithPort(*s.webConsoleServicePort),
+		rest.WithService(NewWebConsoleService(*s.webConsoleEnvJSPath)),
+		rest.WithMetrics(registerer),
+	)
+	go webConsoleServer.Run()
 	// To detach this pod from Kubernetes Service before the app servers stop, we stop the health check service first.
 	// Then, after 10 seconds of sleep, the app servers can be shut down, as no new requests are expected to be sent.
 	// In this case, the Readiness prove must fail within 10 seconds and the pod must be detached.
@@ -641,6 +656,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		go featureServer.Stop(serverShutDownTimeout)
 		go notificationServer.Stop(serverShutDownTimeout)
 		go pushServer.Stop(serverShutDownTimeout)
+		go webConsoleServer.Stop(serverShutDownTimeout)
 		go mysqlClient.Close()
 		go persistentRedisClient.Close()
 		go nonPersistentRedisClient.Close()
