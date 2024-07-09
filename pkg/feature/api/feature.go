@@ -707,7 +707,6 @@ func (s *FeatureService) UpdateFeature(
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		featureStorage := v2fs.NewFeatureStorage(tx)
 		whereParts := []mysql.WherePart{
-			mysql.NewFilter("archived", "=", false),
 			mysql.NewFilter("deleted", "=", false),
 			mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 		}
@@ -762,17 +761,16 @@ func (s *FeatureService) UpdateFeature(
 		if err != nil {
 			return err
 		}
-		// The feature is removed from the list to be evaluated, if it is
+		// The feature is removed from the list to be evaluated if it is
 		// archived or deleted. If it is disabled features are still evaluated.
-		if updated.Archived || updated.Deleted {
-			for i, f := range features {
-				if f.Id == updated.Id {
-					features = append(features[:i], features[i+1:]...)
-					break
-				}
+		evaluateds := []*featureproto.Feature{}
+		for _, f := range features {
+			if f.Archived || f.Deleted {
+				continue
 			}
+			evaluateds = append(evaluateds, f)
 		}
-		if err := domain.ValidateFeatureDependencies(features); err != nil {
+		if err := domain.ValidateFeatureDependencies(evaluateds); err != nil {
 			return err
 		}
 		updatedpb = updated.Feature
