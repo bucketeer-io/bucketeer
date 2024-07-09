@@ -21,6 +21,7 @@ import (
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
@@ -458,10 +459,12 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 			return nil
 		}
 		// Enable the flag if it is disabled and it is the first rollout execution
+		var enabled *wrapperspb.BoolValue
 		if !feature.Enabled && progressiveRollout.IsWaiting() {
 			if err := feature.Enable(); err != nil {
 				return err
 			}
+			enabled = &wrapperspb.BoolValue{Value: true}
 		}
 		handler, err := command.NewProgressiveRolloutCommandHandler(
 			editor,
@@ -487,7 +490,13 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		); err != nil {
 			return err
 		}
-		if err := ftStorage.UpdateFeature(ctx, feature, req.EnvironmentNamespace); err != nil {
+		if _, err := s.featureClient.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
+			Comment:         "Progressive rollout executed",
+			EnvironmentId:   req.EnvironmentNamespace,
+			Id:              feature.Id,
+			Enabled:         enabled,
+			DefaultStrategy: feature.DefaultStrategy,
+		}); err != nil {
 			s.logger.Error(
 				"Failed to update feature flag",
 				log.FieldsFromImcomingContext(ctx).AddFields(
