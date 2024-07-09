@@ -158,7 +158,10 @@ build-web:
 	make -C ui/web-v2 install build
 
 .PHONY: build-go
-build-go: build-web $(GO_APP_BUILD_TARGETS) clean-web
+build-go: $(GO_APP_BUILD_TARGETS)
+
+.PHONY: build-go-embed
+build-go-embed: build-web $(GO_APP_BUILD_TARGETS) clean-web
 
 # Make sure bucketeer-httpstan is already running. If not, run "make start-httpstan".
 .PHONY: test-go
@@ -378,7 +381,7 @@ deploy-bucketeer: delete-all-services-from-minikube
 	make -C tools/dev service-cert-secret
 	make -C tools/dev service-token-secret
 	make -C tools/dev oauth-key-secret
-	make -C ./ build-go
+	make -C ./ build-go-embed
 	TAG=localenv make -C ./ build-docker-images
 	TAG=localenv make -C ./ minikube-load-images
 	make -C ./ deploy-all-services-to-minikube

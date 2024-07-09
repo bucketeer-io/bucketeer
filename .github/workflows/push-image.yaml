@@ -39,7 +39,7 @@ env:
   GO_VERSION: 1.21.10
   NODE_VERSION: 18
   WEB_PATH: ./ui/web-v2
-  GO_BUILD_CONCURRENCY: 1 # Set the same number of apps to build.
+  GO_BUILD_CONCURRENCY: 4 # Set the same number of apps to build.
 
 jobs:
   setup:
@@ -85,8 +85,11 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
       - name: Install go dependencies
         run: make vendor
-      - name: Build go applications
-        run: make build-go -j ${{ env.GO_BUILD_CONCURRENCY }}
+      - name: Build web and go applications
+        run: |
+          make build-web
+          make build-go -j ${{ env.GO_BUILD_CONCURRENCY }}
+          make clean-web
       - name: Add executable permission to go binary files
         run: chmod +x bin/*
       - name: Set up docker
