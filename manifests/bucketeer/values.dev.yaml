@@ -65,11 +65,14 @@ backend:
   oauth:
     key:
       secret: bucketeer-oauth-key
-      public:
-    clientId: bucketeer
-    clientSecret: oauth-client-secret
-    redirectUrls: https://google.com
-    issuer: https://accounts.google.com
+    issuer: https://localhost
+    audience: bucketeer
+    google:
+      issuer:
+      clientId:
+      clientSecret:
+      redirectUrls:
+        - https://localhost:9000/auth/callback
   webhook:
     baseURL: https://web-gateway.bucketeer.io
     kmsResourceName: vault
@@ -170,6 +173,13 @@ batch-server:
   serviceToken:
     secret: bucketeer-service-token
 
+  oauth:
+    key:
+      secret: bucketeer-oauth-key
+      public:
+    issuer: https://localhost
+    audience: bucketeer
+
   cronjob:
     successfulJobsHistoryLimit: 1
     failedJobsHistoryLimit: 1
@@ -239,7 +249,3 @@ experiment-calculator:
       key:
   serviceToken:
     secret: bucketeer-service-token
-
-web:
-  tls:
-    secret: bucketeer-service-cert

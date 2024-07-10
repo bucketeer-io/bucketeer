@@ -292,15 +292,6 @@ data:
                       typed_config:
                         "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
                         auto_mapping: true
-                        proto_descriptor: /usr/local/migration-secret/migration_proto_descriptor.pb
-                        services:
-                          - bucketeer.migration.MigrationMySQLService
-                        print_options:
-                          always_print_primitive_fields: true
-                    - name: envoy.filters.http.grpc_json_transcoder
-                      typed_config:
-                        "@type": type.googleapis.com/envoy.extensions.filters.http.grpc_json_transcoder.v3.GrpcJsonTranscoder
-                        auto_mapping: true
                         proto_descriptor: /usr/local/batch-secret/batch_proto_descriptor.pb
                         services:
                           - bucketeer.batch.BatchService
@@ -430,14 +421,6 @@ data:
                             route:
                               cluster: backend
                               timeout: 15s
-                              retry_policy:
-                                retry_on: 5xx
-                                num_retries: 3
-                          - match:
-                              prefix: /bucketeer.migration.MigrationMySQLService
-                            route:
-                              cluster: backend
-                              timeout: 600s
                               retry_policy:
                                 retry_on: 5xx
                                 num_retries: 3
