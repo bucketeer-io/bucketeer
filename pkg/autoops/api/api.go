@@ -395,6 +395,7 @@ func (s *AutoOpsService) validateOpsEventRateClause(
 		}
 		return dt.Err()
 	}
+	// ToDo: After the web console supports ActionType, it returns an error when ActionType_UNKNOWN
 	if clause.ActionType == autoopsproto.ActionType_ENABLE {
 		dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -431,6 +432,7 @@ func (s *AutoOpsService) validateDatetimeClause(clause *autoopsproto.DatetimeCla
 		}
 		return dt.Err()
 	}
+	// ToDo: After the web console supports ActionType, it returns an error when ActionType_UNKNOWN
 	return nil
 }
 
@@ -966,49 +968,37 @@ func (s *AutoOpsService) createUpdateAutoOpsRuleCommands(req *autoopsproto.Updat
 	// So ActionType is not set and you need to update ActionType according to OpsType.
 	// ToDo: If ChangeAutoOpsRuleOpsTypeCommand is no longer used in the web console,
 	// the following code is no longer needed and should be removed.
-	var opsType *autoopsproto.OpsType = nil
+	actionType := autoopsproto.ActionType_UNKNOWN
 	if req.ChangeAutoOpsRuleOpsTypeCommand != nil {
 		commands = append(commands, req.ChangeAutoOpsRuleOpsTypeCommand)
-		opsType = &req.ChangeAutoOpsRuleOpsTypeCommand.OpsType
+		if req.ChangeAutoOpsRuleOpsTypeCommand.OpsType == autoopsproto.OpsType_DISABLE_FEATURE {
+			actionType = autoopsproto.ActionType_DISABLE
+		} else if req.ChangeAutoOpsRuleOpsTypeCommand.OpsType == autoopsproto.OpsType_ENABLE_FEATURE {
+			actionType = autoopsproto.ActionType_DISABLE
+		}
 	}
 
 	for _, c := range req.AddOpsEventRateClauseCommands {
 		if c.OpsEventRateClause.ActionType == autoopsproto.ActionType_UNKNOWN {
-			if opsType != nil && *opsType == autoopsproto.OpsType_DISABLE_FEATURE {
-				c.OpsEventRateClause.ActionType = autoopsproto.ActionType_DISABLE
-			}
+			c.OpsEventRateClause.ActionType = actionType
 		}
 		commands = append(commands, c)
 	}
 	for _, c := range req.ChangeOpsEventRateClauseCommands {
 		if c.OpsEventRateClause.ActionType == autoopsproto.ActionType_UNKNOWN {
-			if opsType != nil && *opsType == autoopsproto.OpsType_DISABLE_FEATURE {
-				c.OpsEventRateClause.ActionType = autoopsproto.ActionType_DISABLE
-			}
+			c.OpsEventRateClause.ActionType = actionType
 		}
 		commands = append(commands, c)
 	}
 	for _, c := range req.AddDatetimeClauseCommands {
 		if c.DatetimeClause.ActionType == autoopsproto.ActionType_UNKNOWN {
-			if opsType != nil {
-				if *opsType == autoopsproto.OpsType_DISABLE_FEATURE {
-					c.DatetimeClause.ActionType = autoopsproto.ActionType_DISABLE
-				} else if *opsType == autoopsproto.OpsType_ENABLE_FEATURE {
-					c.DatetimeClause.ActionType = autoopsproto.ActionType_ENABLE
-				}
-			}
+			c.DatetimeClause.ActionType = actionType
 			commands = append(commands, c)
 		}
 	}
 	for _, c := range req.ChangeDatetimeClauseCommands {
 		if c.DatetimeClause.ActionType == autoopsproto.ActionType_UNKNOWN {
-			if opsType != nil {
-				if *opsType == autoopsproto.OpsType_DISABLE_FEATURE {
-					c.DatetimeClause.ActionType = autoopsproto.ActionType_DISABLE
-				} else if *opsType == autoopsproto.OpsType_ENABLE_FEATURE {
-					c.DatetimeClause.ActionType = autoopsproto.ActionType_ENABLE
-				}
-			}
+			c.DatetimeClause.ActionType = actionType
 		}
 		commands = append(commands, c)
 	}
