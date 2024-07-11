@@ -304,7 +304,10 @@ build-devcontainer:
 
 # start minikube
 start-minikube:
-	if [ $$(minikube status | grep -c "minikube start") -eq 1 ]; then \
+	if [ $$(minikube status | grep -c "kubelet: Running") -eq 1 ]; then \
+		echo "minikube is already running"; \
+		exit 1; \
+	elif [ $$(minikube status | grep -c "minikube start") -eq 1 ]; then \
 		make -C tools/dev setup-minikube; \
 	elif [ $$(minikube status | grep -c "Stopped") -gt 1 ]; then \
 		make -C tools/dev start-minikube; \
