@@ -765,6 +765,9 @@ func (s *FeatureService) UpdateFeature(
 		// archived or deleted. If it is disabled features are still evaluated.
 		evaluateds := []*featureproto.Feature{}
 		for _, f := range features {
+			if f.Id == updated.Id {
+				f = updated.Feature
+			}
 			if f.Archived || f.Deleted {
 				continue
 			}
