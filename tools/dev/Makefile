@@ -26,7 +26,7 @@ oauth-key-secret:
 	kubectl create secret generic bucketeer-oauth-key --from-file public.pem=${CURDIR}/cert/oauth-public.pem --from-file private.pem=${CURDIR}/cert/oauth-private.pem --namespace $(NAMESPACE)
 
 setup-minikube:
-	minikube start --memory 6g
+	minikube start --memory max --cpus max
 	minikube addons enable ingress
 	kubectl patch deployment -n ingress-nginx ingress-nginx-controller --type='json' -p='[{"op": "add", "path": "/spec/template/spec/containers/0/args/-", "value":"--enable-ssl-passthrough"}]'
 	helm install localenv ../../manifests/localenv
