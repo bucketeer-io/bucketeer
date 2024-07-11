@@ -67,7 +67,10 @@ func (s *AccountService) CreateAPIKey(
 		return nil, dt.Err()
 	}
 	err = s.accountStorage.RunInTransaction(ctx, func() error {
-		handler := command.NewAPIKeyCommandHandler(editor, key, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewAPIKeyCommandHandler(editor, key, s.publisher, req.EnvironmentNamespace)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
@@ -282,7 +285,10 @@ func (s *AccountService) updateAPIKeyMySQL(
 		if err != nil {
 			return err
 		}
-		handler := command.NewAPIKeyCommandHandler(editor, apiKey, s.publisher, environmentNamespace)
+		handler, err := command.NewAPIKeyCommandHandler(editor, apiKey, s.publisher, environmentNamespace)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
 		}

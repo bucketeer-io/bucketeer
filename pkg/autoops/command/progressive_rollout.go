@@ -18,6 +18,7 @@ import (
 	"context"
 
 	pb "github.com/golang/protobuf/proto"
+	"github.com/jinzhu/copier"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
@@ -27,10 +28,11 @@ import (
 )
 
 type progressiveRolloutCommandHandler struct {
-	editor               *eventproto.Editor
-	progressiveRollout   *domain.ProgressiveRollout
-	publisher            publisher.Publisher
-	environmentNamespace string
+	editor                     *eventproto.Editor
+	progressiveRollout         *domain.ProgressiveRollout
+	previousProgressiveRollout *domain.ProgressiveRollout
+	publisher                  publisher.Publisher
+	environmentNamespace       string
 }
 
 func NewProgressiveRolloutCommandHandler(
@@ -38,13 +40,18 @@ func NewProgressiveRolloutCommandHandler(
 	progressiveRollout *domain.ProgressiveRollout,
 	publisher publisher.Publisher,
 	environmentNamespace string,
-) Handler {
-	return &progressiveRolloutCommandHandler{
-		editor:               editor,
-		progressiveRollout:   progressiveRollout,
-		publisher:            publisher,
-		environmentNamespace: environmentNamespace,
+) (Handler, error) {
+	prev := &domain.ProgressiveRollout{}
+	if err := copier.Copy(prev, progressiveRollout); err != nil {
+		return nil, err
 	}
+	return &progressiveRolloutCommandHandler{
+		editor:                     editor,
+		progressiveRollout:         progressiveRollout,
+		previousProgressiveRollout: prev,
+		publisher:                  publisher,
+		environmentNamespace:       environmentNamespace,
+	}, nil
 }
 
 func (h *progressiveRolloutCommandHandler) Handle(
@@ -135,6 +142,10 @@ func (h *progressiveRolloutCommandHandler) send(
 	eventType eventproto.Event_Type,
 	event pb.Message,
 ) error {
+	var prev *autoopsproto.ProgressiveRollout
+	if h.previousProgressiveRollout != nil && h.previousProgressiveRollout.ProgressiveRollout != nil {
+		prev = h.previousProgressiveRollout.ProgressiveRollout
+	}
 	e, err := domainevent.NewEvent(
 		h.editor,
 		eventproto.Event_AUTOOPS_RULE,
@@ -142,6 +153,8 @@ func (h *progressiveRolloutCommandHandler) send(
 		eventType,
 		event,
 		h.environmentNamespace,
+		h.progressiveRollout.ProgressiveRollout,
+		prev,
 	)
 	if err != nil {
 		return err

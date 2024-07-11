@@ -106,12 +106,15 @@ func (s *FeatureService) CreateSegment(
 			)
 			return err
 		}
-		handler := command.NewSegmentCommandHandler(
+		handler, err := command.NewSegmentCommandHandler(
 			editor,
 			segment,
 			s.domainPublisher,
 			req.EnvironmentNamespace,
 		)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			s.logger.Error(
 				"Failed to handle command",
@@ -357,12 +360,15 @@ func (s *FeatureService) updateSegment(
 			)
 			return err
 		}
-		handler := command.NewSegmentCommandHandler(
+		handler, err := command.NewSegmentCommandHandler(
 			editor,
 			segment,
 			s.domainPublisher,
 			environmentNamespace,
 		)
+		if err != nil {
+			return err
+		}
 		for _, cmd := range commands {
 			if err := handler.Handle(ctx, cmd); err != nil {
 				s.logger.Error(

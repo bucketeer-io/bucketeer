@@ -74,12 +74,16 @@ func TestChangeBulkUploadSegmentUsersStatus(t *testing.T) {
 
 func newMockSegmentCommandHandler(t *testing.T, mockController *gomock.Controller, segment *domain.Segment) *segmentCommandHandler {
 	t.Helper()
-	return &segmentCommandHandler{
+	h, err := NewSegmentCommandHandler(
 		&eventproto.Editor{
 			Email: "email",
 		},
 		segment,
 		publishermock.NewMockPublisher(mockController),
 		"bucketeer-environment-space",
+	)
+	if err != nil {
+		t.Fatal(err)
 	}
+	return h.(*segmentCommandHandler)
 }

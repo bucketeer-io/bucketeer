@@ -81,12 +81,15 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 			return err
 		}
 		storage := v2as.NewProgressiveRolloutStorage(tx)
-		handler := command.NewProgressiveRolloutCommandHandler(
+		handler, err := command.NewProgressiveRolloutCommandHandler(
 			editor,
 			progressiveRollout,
 			s.publisher,
 			req.EnvironmentNamespace,
 		)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
@@ -230,12 +233,15 @@ func (s *AutoOpsService) updateProgressiveRollout(
 		if err != nil {
 			return err
 		}
-		handler := command.NewProgressiveRolloutCommandHandler(
+		handler, err := command.NewProgressiveRolloutCommandHandler(
 			editor,
 			progressiveRollout,
 			s.publisher,
 			environmentNamespace,
 		)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
 		}
@@ -309,12 +315,15 @@ func (s *AutoOpsService) DeleteProgressiveRollout(
 		if err != nil {
 			return err
 		}
-		handler := command.NewProgressiveRolloutCommandHandler(
+		handler, err := command.NewProgressiveRolloutCommandHandler(
 			editor,
 			progressiveRollout,
 			s.publisher,
 			req.EnvironmentNamespace,
 		)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
@@ -454,12 +463,15 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 				return err
 			}
 		}
-		handler := command.NewProgressiveRolloutCommandHandler(
+		handler, err := command.NewProgressiveRolloutCommandHandler(
 			editor,
 			progressiveRollout,
 			s.publisher,
 			req.EnvironmentNamespace,
 		)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.ChangeProgressiveRolloutTriggeredAtCommand); err != nil {
 			return err
 		}

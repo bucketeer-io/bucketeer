@@ -343,12 +343,15 @@ func (s *experimentService) CreateExperiment(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		experimentStorage := v2es.NewExperimentStorage(tx)
-		handler := command.NewExperimentCommandHandler(
+		handler, err := command.NewExperimentCommandHandler(
 			editor,
 			experiment,
 			s.publisher,
 			req.EnvironmentNamespace,
 		)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
@@ -488,12 +491,15 @@ func (s *experimentService) UpdateExperiment(
 		if err != nil {
 			return err
 		}
-		handler := command.NewExperimentCommandHandler(
+		handler, err := command.NewExperimentCommandHandler(
 			editor,
 			experiment,
 			s.publisher,
 			req.EnvironmentNamespace,
 		)
+		if err != nil {
+			return err
+		}
 		if req.ChangeExperimentPeriodCommand != nil {
 			if err = handler.Handle(ctx, req.ChangeExperimentPeriodCommand); err != nil {
 				s.logger.Error(
@@ -851,7 +857,10 @@ func (s *experimentService) updateExperiment(
 			)
 			return err
 		}
-		handler := command.NewExperimentCommandHandler(editor, experiment, s.publisher, environmentNamespace)
+		handler, err := command.NewExperimentCommandHandler(editor, experiment, s.publisher, environmentNamespace)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, cmd); err != nil {
 			s.logger.Error(
 				"Failed to handle command",

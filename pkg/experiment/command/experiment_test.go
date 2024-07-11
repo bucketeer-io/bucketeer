@@ -165,7 +165,7 @@ func newExperiment(startAt int64, stopAt int64) *experimentdomain.Experiment {
 
 func newExperimentCommandHandler(t *testing.T, publisher publisher.Publisher, experiment *experimentdomain.Experiment) Handler {
 	t.Helper()
-	return NewExperimentCommandHandler(
+	h, err := NewExperimentCommandHandler(
 		&eventproto.Editor{
 			Email: "email",
 		},
@@ -173,4 +173,8 @@ func newExperimentCommandHandler(t *testing.T, publisher publisher.Publisher, ex
 		publisher,
 		"ns0",
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return h
 }

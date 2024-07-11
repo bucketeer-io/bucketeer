@@ -22,6 +22,7 @@ import (
 	"time"
 
 	protobuf "github.com/golang/protobuf/proto"
+	"github.com/jinzhu/copier"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
@@ -63,7 +64,7 @@ func TestAddFixedStrategyRule(t *testing.T) {
 	}
 	targetingCmd := &FeatureCommandHandler{
 		feature:      f,
-		eventFactory: makeEventFactory(f),
+		eventFactory: makeEventFactory(t, f),
 	}
 	for i, p := range patterns {
 		err := targetingCmd.Handle(context.Background(), p.cmd)
@@ -120,7 +121,7 @@ func TestAddRolloutStrategyRule(t *testing.T) {
 	}
 	targetingCmd := &FeatureCommandHandler{
 		feature:      f,
-		eventFactory: makeEventFactory(f),
+		eventFactory: makeEventFactory(t, f),
 	}
 	for i, p := range patterns {
 		cmd := &proto.AddRuleCommand{Rule: p.rule}
@@ -155,7 +156,7 @@ func TestChangeRuleToFixedStrategy(t *testing.T) {
 	}
 	targetingCmd := &FeatureCommandHandler{
 		feature:      f,
-		eventFactory: makeEventFactory(f),
+		eventFactory: makeEventFactory(t, f),
 	}
 	for _, p := range patterns {
 		cmd := &proto.ChangeRuleStrategyCommand{
@@ -206,7 +207,7 @@ func TestChangeRuleToRolloutStrategy(t *testing.T) {
 	}
 	targetingCmd := &FeatureCommandHandler{
 		feature:      f,
-		eventFactory: makeEventFactory(f),
+		eventFactory: makeEventFactory(t, f),
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -241,7 +242,7 @@ func TestChangeFixedStrategy(t *testing.T) {
 	}
 	targetingCmd := &FeatureCommandHandler{
 		feature:      f,
-		eventFactory: makeEventFactory(f),
+		eventFactory: makeEventFactory(t, f),
 	}
 	for _, p := range patterns {
 		cmd := &proto.ChangeFixedStrategyCommand{
@@ -285,7 +286,7 @@ func TestChangeRolloutStrategy(t *testing.T) {
 	}
 	targetingCmd := &FeatureCommandHandler{
 		feature:      f,
-		eventFactory: makeEventFactory(f),
+		eventFactory: makeEventFactory(t, f),
 	}
 	for _, p := range patterns {
 		cmd := &proto.ChangeRolloutStrategyCommand{
@@ -331,7 +332,7 @@ func TestChangeDefaultStrategy(t *testing.T) {
 			f := makeFeature("feature-id")
 			targetingCmd := &FeatureCommandHandler{
 				feature:      f,
-				eventFactory: makeEventFactory(f),
+				eventFactory: makeEventFactory(t, f),
 			}
 			cmd := &proto.ChangeDefaultStrategyCommand{
 				Strategy: p.strategy,
@@ -364,7 +365,7 @@ func TestEnableFeature(t *testing.T) {
 		f := makeFeature("feature-id")
 		cmd := &FeatureCommandHandler{
 			feature:      f,
-			eventFactory: makeEventFactory(f),
+			eventFactory: makeEventFactory(t, f),
 		}
 		err := cmd.Handle(ctx, p.cmd)
 		assert.Equal(t, p.expected, err, p.desc)
@@ -391,7 +392,7 @@ func TestDisableFeature(t *testing.T) {
 		f.Feature.Enabled = true
 		cmd := &FeatureCommandHandler{
 			feature:      f,
-			eventFactory: makeEventFactory(f),
+			eventFactory: makeEventFactory(t, f),
 		}
 		err := cmd.Handle(ctx, p.cmd)
 		assert.Equal(t, p.expected, err, p.desc)
@@ -419,7 +420,7 @@ func TestResetSamplingSeed(t *testing.T) {
 			assert.Empty(t, f.Feature.SamplingSeed)
 			cmd := &FeatureCommandHandler{
 				feature:      f,
-				eventFactory: makeEventFactory(f),
+				eventFactory: makeEventFactory(t, f),
 			}
 			err := cmd.Handle(ctx, p.cmd)
 			assert.Equal(t, p.expected, err)
@@ -453,7 +454,7 @@ func TestAddPrerequisite(t *testing.T) {
 			assert.Empty(t, f.Feature.Prerequisites)
 			cmd := &FeatureCommandHandler{
 				feature:      f,
-				eventFactory: makeEventFactory(f),
+				eventFactory: makeEventFactory(t, f),
 			}
 			err := cmd.Handle(ctx, p.cmd)
 			assert.Equal(t, p.expected, err)
@@ -493,7 +494,7 @@ func TestRemovePrerequisite(t *testing.T) {
 			assert.NotEmpty(t, f.Feature.Prerequisites)
 			cmd := &FeatureCommandHandler{
 				feature:      f,
-				eventFactory: makeEventFactory(f),
+				eventFactory: makeEventFactory(t, f),
 			}
 			err := cmd.Handle(ctx, p.cmd)
 			assert.Equal(t, p.expected, err)
@@ -537,7 +538,7 @@ func TestChangePrerequisiteVariation(t *testing.T) {
 			assert.NotEmpty(t, f.Feature.Prerequisites)
 			cmd := &FeatureCommandHandler{
 				feature:      f,
-				eventFactory: makeEventFactory(f),
+				eventFactory: makeEventFactory(t, f),
 			}
 			err := cmd.Handle(ctx, p.cmd)
 			assert.Equal(t, p.expectedErr, err)
@@ -607,12 +608,18 @@ func makeFeature(id string) *domain.Feature {
 	}
 }
 
-func makeEventFactory(feature *domain.Feature) *FeatureEventFactory {
+func makeEventFactory(t *testing.T, feature *domain.Feature) *FeatureEventFactory {
+	prev := &domain.Feature{}
+	err := copier.Copy(prev, feature)
+	if err != nil {
+		t.Fatal(err)
+	}
 	return &FeatureEventFactory{
 		editor: &eventproto.Editor{
 			Email: "email",
 		},
 		feature:              feature,
+		previousFeature:      prev,
 		environmentNamespace: "ns0",
 	}
 }

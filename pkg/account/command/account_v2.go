@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/jinzhu/copier"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
@@ -27,10 +28,11 @@ import (
 )
 
 type accountV2CommandHandler struct {
-	editor         *eventproto.Editor
-	account        *domain.AccountV2
-	publisher      publisher.Publisher
-	organizationID string
+	editor          *eventproto.Editor
+	account         *domain.AccountV2
+	previousAccount *domain.AccountV2
+	publisher       publisher.Publisher
+	organizationID  string
 }
 
 func NewAccountV2CommandHandler(
@@ -38,13 +40,18 @@ func NewAccountV2CommandHandler(
 	account *domain.AccountV2,
 	p publisher.Publisher,
 	organizationID string,
-) Handler {
-	return &accountV2CommandHandler{
-		editor:         editor,
-		account:        account,
-		publisher:      p,
-		organizationID: organizationID,
+) (Handler, error) {
+	prev := &domain.AccountV2{}
+	if err := copier.Copy(prev, account); err != nil {
+		return nil, err
 	}
+	return &accountV2CommandHandler{
+		editor:          editor,
+		account:         account,
+		previousAccount: prev,
+		publisher:       p,
+		organizationID:  organizationID,
+	}, nil
 }
 
 func (h *accountV2CommandHandler) Handle(ctx context.Context, cmd Command) error {
@@ -180,12 +187,18 @@ func (h *accountV2CommandHandler) send(
 	eventType eventproto.Event_Type,
 	event proto.Message,
 ) error {
+	var prev *accountproto.AccountV2
+	if h.previousAccount != nil && h.previousAccount.AccountV2 != nil {
+		prev = h.previousAccount.AccountV2
+	}
 	e, err := domainevent.NewAdminEvent(
 		h.editor,
 		eventproto.Event_ACCOUNT,
 		h.account.Email,
 		eventType,
 		event,
+		h.account.AccountV2,
+		prev,
 	)
 	if err != nil {
 		return err

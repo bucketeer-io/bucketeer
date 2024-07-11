@@ -43,7 +43,7 @@ func TestProgressiveRolloutDelete(t *testing.T) {
 	for _, p := range patterns {
 		m := publishermock.NewMockPublisher(mockController)
 		a := createProgressiveRollout(t)
-		h := newProgressiveRolloutCommandHandler(m, a)
+		h := newProgressiveRolloutCommandHandler(t, m, a)
 		if p.expected == nil {
 			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 		}
@@ -99,8 +99,9 @@ func createProgressiveRollout(t *testing.T) *domain.ProgressiveRollout {
 	return p
 }
 
-func newProgressiveRolloutCommandHandler(publisher publisher.Publisher, progressiveRollout *domain.ProgressiveRollout) Handler {
-	return NewProgressiveRolloutCommandHandler(
+func newProgressiveRolloutCommandHandler(t *testing.T, publisher publisher.Publisher, progressiveRollout *domain.ProgressiveRollout) Handler {
+	t.Helper()
+	h, err := NewProgressiveRolloutCommandHandler(
 		&eventproto.Editor{
 			Email: "email",
 		},
@@ -108,4 +109,8 @@ func newProgressiveRolloutCommandHandler(publisher publisher.Publisher, progress
 		publisher,
 		"ns0",
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return h
 }

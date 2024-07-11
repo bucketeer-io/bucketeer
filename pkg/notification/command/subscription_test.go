@@ -197,11 +197,15 @@ func newSubscription(t *testing.T, disabled bool) *domain.Subscription {
 
 func newSubscriptionCommandHandler(t *testing.T, subscription *domain.Subscription) Handler {
 	t.Helper()
-	return NewSubscriptionCommandHandler(
+	h, err := NewSubscriptionCommandHandler(
 		&eventproto.Editor{
 			Email: "email",
 		},
 		subscription,
 		"ns0",
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return h
 }

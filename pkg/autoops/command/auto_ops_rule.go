@@ -18,6 +18,7 @@ import (
 	"context"
 
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
+	"github.com/jinzhu/copier"
 
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
@@ -29,6 +30,7 @@ import (
 type autoOpsRuleCommandHandler struct {
 	editor               *eventproto.Editor
 	autoOpsRule          *domain.AutoOpsRule
+	previousAutoOpsRule  *domain.AutoOpsRule
 	publisher            publisher.Publisher
 	environmentNamespace string
 }
@@ -38,13 +40,18 @@ func NewAutoOpsCommandHandler(
 	autoOpsRule *domain.AutoOpsRule,
 	p publisher.Publisher,
 	environmentNamespace string,
-) Handler {
+) (Handler, error) {
+	prev := &domain.AutoOpsRule{}
+	if err := copier.Copy(prev, autoOpsRule); err != nil {
+		return nil, err
+	}
 	return &autoOpsRuleCommandHandler{
 		editor:               editor,
 		autoOpsRule:          autoOpsRule,
+		previousAutoOpsRule:  prev,
 		publisher:            p,
 		environmentNamespace: environmentNamespace,
-	}
+	}, nil
 }
 
 func (h *autoOpsRuleCommandHandler) Handle(ctx context.Context, cmd Command) error {
@@ -194,6 +201,10 @@ func (h *autoOpsRuleCommandHandler) changeDatetimeClause(
 }
 
 func (h *autoOpsRuleCommandHandler) send(ctx context.Context, eventType eventproto.Event_Type, event pb.Message) error {
+	var prev *proto.AutoOpsRule
+	if h.previousAutoOpsRule != nil && h.previousAutoOpsRule.AutoOpsRule != nil {
+		prev = h.previousAutoOpsRule.AutoOpsRule
+	}
 	e, err := domainevent.NewEvent(
 		h.editor,
 		eventproto.Event_AUTOOPS_RULE,
@@ -201,6 +212,8 @@ func (h *autoOpsRuleCommandHandler) send(ctx context.Context, eventType eventpro
 		eventType,
 		event,
 		h.environmentNamespace,
+		h.autoOpsRule.AutoOpsRule,
+		prev,
 	)
 	if err != nil {
 		return err

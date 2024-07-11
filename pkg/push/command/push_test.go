@@ -152,7 +152,7 @@ func newPush(t *testing.T) *domain.Push {
 
 func newPushCommandHandler(t *testing.T, publisher publisher.Publisher, push *domain.Push) Handler {
 	t.Helper()
-	return NewPushCommandHandler(
+	h, err := NewPushCommandHandler(
 		&eventproto.Editor{
 			Email: "email",
 		},
@@ -160,4 +160,8 @@ func newPushCommandHandler(t *testing.T, publisher publisher.Publisher, push *do
 		publisher,
 		"ns0",
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return h
 }

@@ -18,6 +18,7 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
+	"github.com/jinzhu/copier"
 
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
@@ -30,6 +31,7 @@ import (
 type segmentCommandHandler struct {
 	editor               *eventproto.Editor
 	segment              *domain.Segment
+	previousSegment      *domain.Segment
 	publisher            publisher.Publisher
 	environmentNamespace string
 }
@@ -39,13 +41,18 @@ func NewSegmentCommandHandler(
 	segment *domain.Segment,
 	publisher publisher.Publisher,
 	environmentNamespace string,
-) Handler {
+) (Handler, error) {
+	prev := &domain.Segment{}
+	if err := copier.Copy(prev, segment); err != nil {
+		return nil, err
+	}
 	return &segmentCommandHandler{
 		editor:               editor,
 		segment:              segment,
+		previousSegment:      prev,
 		publisher:            publisher,
 		environmentNamespace: environmentNamespace,
-	}
+	}, nil
 }
 
 func (h *segmentCommandHandler) Handle(ctx context.Context, cmd Command) error {
@@ -301,6 +308,10 @@ func (h *segmentCommandHandler) ChangeBulkUploadSegmentUsersStatus(
 }
 
 func (h *segmentCommandHandler) send(ctx context.Context, eventType eventproto.Event_Type, event proto.Message) error {
+	var prev *featureproto.Segment
+	if h.previousSegment != nil && h.previousSegment.Segment != nil {
+		prev = h.previousSegment.Segment
+	}
 	e, err := domainevent.NewEvent(
 		h.editor,
 		eventproto.Event_SEGMENT,
@@ -308,6 +319,8 @@ func (h *segmentCommandHandler) send(ctx context.Context, eventType eventproto.E
 		eventType,
 		event,
 		h.environmentNamespace,
+		h.segment.Segment,
+		prev,
 	)
 	if err != nil {
 		return err

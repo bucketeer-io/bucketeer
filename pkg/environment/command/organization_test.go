@@ -147,11 +147,15 @@ func TestHandleConvertTrialOrganizationCommand(t *testing.T) {
 
 func newOrganizationCommandHandler(t *testing.T, publisher publisher.Publisher, organization *domain.Organization) Handler {
 	t.Helper()
-	return NewOrganizationCommandHandler(
+	h, err := NewOrganizationCommandHandler(
 		&eventproto.Editor{
 			Email: "email",
 		},
 		organization,
 		publisher,
 	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return h
 }

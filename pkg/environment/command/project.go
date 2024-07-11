@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
+	"github.com/jinzhu/copier"
 
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
@@ -28,21 +29,27 @@ import (
 )
 
 type projectCommandHandler struct {
-	editor    *eventproto.Editor
-	project   *domain.Project
-	publisher publisher.Publisher
+	editor          *eventproto.Editor
+	project         *domain.Project
+	previousProject *domain.Project
+	publisher       publisher.Publisher
 }
 
 func NewProjectCommandHandler(
 	editor *eventproto.Editor,
 	project *domain.Project,
 	p publisher.Publisher,
-) Handler {
-	return &projectCommandHandler{
-		editor:    editor,
-		project:   project,
-		publisher: p,
+) (Handler, error) {
+	prev := &domain.Project{}
+	if err := copier.Copy(prev, project); err != nil {
+		return nil, err
 	}
+	return &projectCommandHandler{
+		editor:          editor,
+		project:         project,
+		previousProject: prev,
+		publisher:       p,
+	}, nil
 }
 
 func (h *projectCommandHandler) Handle(ctx context.Context, cmd Command) error {
@@ -136,7 +143,19 @@ func (h *projectCommandHandler) convertTrial(ctx context.Context, cmd *proto.Con
 }
 
 func (h *projectCommandHandler) send(ctx context.Context, eventType eventproto.Event_Type, event pb.Message) error {
-	e, err := domainevent.NewAdminEvent(h.editor, eventproto.Event_PROJECT, h.project.Id, eventType, event)
+	var prev *proto.Project
+	if h.previousProject != nil && h.previousProject.Project != nil {
+		prev = h.previousProject.Project
+	}
+	e, err := domainevent.NewAdminEvent(
+		h.editor,
+		eventproto.Event_PROJECT,
+		h.project.Id,
+		eventType,
+		event,
+		h.project.Project,
+		prev,
+	)
 	if err != nil {
 		return err
 	}

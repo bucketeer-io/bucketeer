@@ -18,6 +18,7 @@ import (
 	"context"
 
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
+	"github.com/jinzhu/copier"
 
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
@@ -28,6 +29,7 @@ import (
 type subscriptionCommandHandler struct {
 	editor               *eventproto.Editor
 	subscription         *domain.Subscription
+	previousSubscription *domain.Subscription
 	environmentNamespace string
 	events               []*eventproto.Event
 }
@@ -35,13 +37,19 @@ type subscriptionCommandHandler struct {
 func NewSubscriptionCommandHandler(
 	editor *eventproto.Editor,
 	subscription *domain.Subscription,
-	environmentNamespace string) Handler {
+	environmentNamespace string,
+) (Handler, error) {
+	prev := &domain.Subscription{}
+	if err := copier.Copy(prev, subscription); err != nil {
+		return nil, err
+	}
 	return &subscriptionCommandHandler{
 		editor:               editor,
 		subscription:         subscription,
+		previousSubscription: prev,
 		environmentNamespace: environmentNamespace,
 		events:               []*eventproto.Event{},
-	}
+	}, nil
 }
 
 // for unit test
@@ -137,6 +145,10 @@ func (h *subscriptionCommandHandler) createEvent(
 	eventType eventproto.Event_Type,
 	event pb.Message,
 ) error {
+	var prev *proto.Subscription
+	if h.previousSubscription != nil && h.previousSubscription.Subscription != nil {
+		prev = h.previousSubscription.Subscription
+	}
 	e, err := domainevent.NewEvent(
 		h.editor,
 		eventproto.Event_SUBSCRIPTION,
@@ -144,6 +156,8 @@ func (h *subscriptionCommandHandler) createEvent(
 		eventType,
 		event,
 		h.environmentNamespace,
+		h.subscription.Subscription,
+		prev,
 	)
 	if err != nil {
 		return err

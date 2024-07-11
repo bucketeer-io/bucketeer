@@ -18,6 +18,7 @@ import (
 	"context"
 
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
+	"github.com/jinzhu/copier"
 
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/domain"
@@ -26,19 +27,26 @@ import (
 )
 
 type adminSubscriptionCommandHandler struct {
-	editor       *eventproto.Editor
-	subscription *domain.Subscription
-	events       []*eventproto.Event
+	editor               *eventproto.Editor
+	subscription         *domain.Subscription
+	previousSubscription *domain.Subscription
+	events               []*eventproto.Event
 }
 
 func NewAdminSubscriptionCommandHandler(
 	editor *eventproto.Editor,
-	subscription *domain.Subscription) Handler {
-	return &adminSubscriptionCommandHandler{
-		editor:       editor,
-		subscription: subscription,
-		events:       []*eventproto.Event{},
+	subscription *domain.Subscription,
+) (Handler, error) {
+	prev := &domain.Subscription{}
+	if err := copier.Copy(prev, subscription); err != nil {
+		return nil, err
 	}
+	return &adminSubscriptionCommandHandler{
+		editor:               editor,
+		subscription:         subscription,
+		previousSubscription: prev,
+		events:               []*eventproto.Event{},
+	}, nil
 }
 
 // for unit test
@@ -147,7 +155,19 @@ func (h *adminSubscriptionCommandHandler) createEvent(
 	eventType eventproto.Event_Type,
 	event pb.Message,
 ) error {
-	e, err := domainevent.NewAdminEvent(h.editor, eventproto.Event_ADMIN_SUBSCRIPTION, h.subscription.Id, eventType, event)
+	var prev *proto.Subscription
+	if h.previousSubscription != nil && h.previousSubscription.Subscription != nil {
+		prev = h.previousSubscription.Subscription
+	}
+	e, err := domainevent.NewAdminEvent(
+		h.editor,
+		eventproto.Event_ADMIN_SUBSCRIPTION,
+		h.subscription.Id,
+		eventType,
+		event,
+		h.subscription.Subscription,
+		prev,
+	)
 	if err != nil {
 		return err
 	}

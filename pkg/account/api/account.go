@@ -68,7 +68,10 @@ func (s *AccountService) CreateAccountV2(
 			return err
 		}
 		if exist != nil {
-			handler := command.NewAccountV2CommandHandler(editor, exist, s.publisher, req.OrganizationId)
+			handler, err := command.NewAccountV2CommandHandler(editor, exist, s.publisher, req.OrganizationId)
+			if err != nil {
+				return err
+			}
 			cmd := &accountproto.ChangeAccountV2EnvironmentRolesCommand{
 				Roles:     account.EnvironmentRoles,
 				WriteType: accountproto.ChangeAccountV2EnvironmentRolesCommand_WriteType_PATCH,
@@ -79,7 +82,10 @@ func (s *AccountService) CreateAccountV2(
 			return s.accountStorage.UpdateAccountV2(ctx, exist)
 		}
 		// TODO: temporary implementation end ---
-		handler := command.NewAccountV2CommandHandler(editor, account, s.publisher, req.OrganizationId)
+		handler, err := command.NewAccountV2CommandHandler(editor, account, s.publisher, req.OrganizationId)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
@@ -326,7 +332,10 @@ func (s *AccountService) updateAccountV2MySQL(
 		if err != nil {
 			return err
 		}
-		handler := command.NewAccountV2CommandHandler(editor, account, s.publisher, organizationID)
+		handler, err := command.NewAccountV2CommandHandler(editor, account, s.publisher, organizationID)
+		if err != nil {
+			return err
+		}
 		for _, c := range commands {
 			if err := handler.Handle(ctx, c); err != nil {
 				return err
@@ -366,7 +375,10 @@ func (s *AccountService) DeleteAccountV2(
 		if err != nil {
 			return err
 		}
-		handler := command.NewAccountV2CommandHandler(editor, account, s.publisher, req.OrganizationId)
+		handler, err := command.NewAccountV2CommandHandler(editor, account, s.publisher, req.OrganizationId)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}

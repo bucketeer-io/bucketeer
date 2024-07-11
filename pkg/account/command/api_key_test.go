@@ -18,6 +18,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/jinzhu/copier"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -29,8 +30,9 @@ import (
 
 func TestNewAPIKeyCommandHandler(t *testing.T) {
 	t.Parallel()
-	a := NewAPIKeyCommandHandler(nil, nil, nil, "")
+	a, err := NewAPIKeyCommandHandler(nil, &domain.APIKey{}, nil, "")
 	assert.IsType(t, &apiKeyCommandHandler{}, a)
+	assert.NoError(t, err)
 }
 
 func newAPIKeyCommandHandlerWithMock(t *testing.T, mockController *gomock.Controller) *apiKeyCommandHandler {
@@ -56,6 +58,10 @@ func TestAPIKeyHandle(t *testing.T) {
 				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK_CLIENT)
 				require.NoError(t, err)
 				h.apiKey = a
+				prev := &domain.APIKey{}
+				err = copier.Copy(prev, a)
+				require.NoError(t, err)
+				h.previousAPIKey = prev
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input:       &accountproto.CreateAPIKeyCommand{},
@@ -67,6 +73,10 @@ func TestAPIKeyHandle(t *testing.T) {
 				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK_CLIENT)
 				require.NoError(t, err)
 				h.apiKey = a
+				prev := &domain.APIKey{}
+				err = copier.Copy(prev, a)
+				require.NoError(t, err)
+				h.previousAPIKey = prev
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input:       &accountproto.ChangeAPIKeyNameCommand{},
@@ -78,6 +88,10 @@ func TestAPIKeyHandle(t *testing.T) {
 				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK_CLIENT)
 				require.NoError(t, err)
 				h.apiKey = a
+				prev := &domain.APIKey{}
+				err = copier.Copy(prev, a)
+				require.NoError(t, err)
+				h.previousAPIKey = prev
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input:       &accountproto.EnableAPIKeyCommand{},
@@ -89,6 +103,10 @@ func TestAPIKeyHandle(t *testing.T) {
 				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK_CLIENT)
 				require.NoError(t, err)
 				h.apiKey = a
+				prev := &domain.APIKey{}
+				err = copier.Copy(prev, a)
+				require.NoError(t, err)
+				h.previousAPIKey = prev
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input:       &accountproto.DisableAPIKeyCommand{},

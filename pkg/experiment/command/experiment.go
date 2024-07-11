@@ -18,6 +18,7 @@ import (
 	"context"
 
 	pb "github.com/golang/protobuf/proto" // nolint:staticcheck
+	"github.com/jinzhu/copier"
 
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/experiment/domain"
@@ -29,6 +30,7 @@ import (
 type experimentCommandHandler struct {
 	editor               *eventproto.Editor
 	experiment           *domain.Experiment
+	previousExperiment   *domain.Experiment
 	publisher            publisher.Publisher
 	environmentNamespace string
 }
@@ -38,13 +40,18 @@ func NewExperimentCommandHandler(
 	experiment *domain.Experiment,
 	p publisher.Publisher,
 	environmentNamespace string,
-) Handler {
+) (Handler, error) {
+	prev := &domain.Experiment{}
+	if err := copier.Copy(prev, experiment); err != nil {
+		return nil, err
+	}
 	return &experimentCommandHandler{
 		editor:               editor,
 		experiment:           experiment,
+		previousExperiment:   prev,
 		publisher:            p,
 		environmentNamespace: environmentNamespace,
-	}
+	}, nil
 }
 
 func (h *experimentCommandHandler) Handle(ctx context.Context, cmd Command) error {
@@ -155,6 +162,10 @@ func (h *experimentCommandHandler) delete(ctx context.Context, cmd *proto.Delete
 }
 
 func (h *experimentCommandHandler) send(ctx context.Context, eventType eventproto.Event_Type, event pb.Message) error {
+	var prev *proto.Experiment
+	if h.previousExperiment != nil && h.previousExperiment.Experiment != nil {
+		prev = h.previousExperiment.Experiment
+	}
 	e, err := domainevent.NewEvent(
 		h.editor,
 		eventproto.Event_EXPERIMENT,
@@ -162,6 +173,8 @@ func (h *experimentCommandHandler) send(ctx context.Context, eventType eventprot
 		eventType,
 		event,
 		h.environmentNamespace,
+		h.experiment.Experiment,
+		prev,
 	)
 	if err != nil {
 		return err

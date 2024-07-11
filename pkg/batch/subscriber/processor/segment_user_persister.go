@@ -382,7 +382,10 @@ func (p *segmentUserPersister) updateSegmentStatus(
 			State:  state,
 			Count:  cnt,
 		}
-		handler := command.NewSegmentCommandHandler(editor, segment, p.domainPublisher, environmentNamespace)
+		handler, err := command.NewSegmentCommandHandler(editor, segment, p.domainPublisher, environmentNamespace)
+		if err != nil {
+			return err
+		}
 		if err := handler.Handle(ctx, changeCmd); err != nil {
 			return err
 		}
