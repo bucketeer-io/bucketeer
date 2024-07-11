@@ -5,7 +5,9 @@ metadata:
   annotations: {{ toYaml .Values.annotations | nindent 4 }}
 spec:
   backoffLimit: {{ .Values.backoffLimit }}
-  ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+  {{- with .Values.ttlSecondsAfterFinished }}
+  ttlSecondsAfterFinished: {{ . }}
+  {{- end }}
   template:
     spec:
       {{- with .Values.imagePullSecrets }}

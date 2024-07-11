@@ -8,8 +8,10 @@ metadata:
     "helm.sh/hook": pre-install,pre-upgrade
 
 spec:
-  backoffLimit: {{ .Values.backoffLimit }}
-  ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+  backoffLimit: {{ .Values.migration.backoffLimit }}
+  {{- with .Values.migration.ttlSecondsAfterFinished }}
+  ttlSecondsAfterFinished: {{ . }}
+  {{- end }}
   template:
     spec:
       {{- with .Values.migration.imagePullSecrets }}
