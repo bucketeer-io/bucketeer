@@ -65,11 +65,14 @@ backend:
   oauth:
     key:
       secret: bucketeer-oauth-key
-      public:
-    clientId: bucketeer
-    clientSecret: oauth-client-secret
-    redirectUrls: https://google.com
-    issuer: https://accounts.google.com
+    issuer: https://localhost
+    audience: bucketeer
+    google:
+      issuer:
+      clientId:
+      clientSecret:
+      redirectUrls:
+        - https://localhost:9000/auth/callback
   webhook:
     baseURL: https://web-gateway.bucketeer.io
     kmsResourceName: vault
@@ -170,6 +173,13 @@ batch-server:
   serviceToken:
     secret: bucketeer-service-token
 
+  oauth:
+    key:
+      secret: bucketeer-oauth-key
+      public:
+    issuer: https://localhost
+    audience: bucketeer
+
   cronjob:
     successfulJobsHistoryLimit: 1
     failedJobsHistoryLimit: 1
@@ -211,6 +221,162 @@ batch-server:
       - name: mau-partition-creator
         jobId: MauPartitionCreator
         schedule: "0 2 2 * *"
+  subscribers:
+    # This is the processor's name. It must match the same name defined in the
+    # pkg/batch/subscriber/processor/processors.go
+    auditLogPersister:
+      project: bucketeer-test
+      topic: domain
+      subscription: auditlog-persister
+      pullerNumGoroutines: 5
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+    domainEventInformer:
+      project: bucketeer-test
+      topic: domain
+      subscription: domain-subscription
+      pullerNumGoroutines: 5
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+    evaluationCountEventPersister:
+      project: bucketeer-test
+      topic: evaluation
+      subscription: evaluation-count-sub
+      pullerNumGoroutines: 5
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+    metricsEventPersister:
+      project: bucketeer-test
+      topic: metrics
+      subscription: metrics-sub
+      pullerNumGoroutines: 5
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+    pushSender:
+      project: bucketeer-test
+      topic: domain
+      subscription: push-sender-domain-sub
+      pullerNumGoroutines: 5
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+    segmentUserPersister:
+      project: bucketeer-test
+      topic: bulk-segment-users-received
+      subscription: bulk-segment-users-received-subscription
+      pullerNumGoroutines: 5
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+    userEventPersister:
+      project: bucketeer-test
+      topic: user
+      subscription: user-sub
+      pullerNumGoroutines: 5
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+
+  onDemandSubscribers:
+    evaluationCountEventDWHPersister:
+      project: bucketeer-test
+      topic: evaluation
+      subscription: evaluation-dwh-sub
+      pullerNumGoroutines: 1
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+      checkInterval: 5
+    evaluationCountEventOPSPersister:
+      project: bucketeer-test
+      topic: evaluation
+      subscription: evaluation-ops-sub
+      pullerNumGoroutines: 1
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+      checkInterval: 5
+    goalCountEventDWHPersister:
+      project: bucketeer-test
+      topic: goal
+      subscription: goal-dwh-sub
+      pullerNumGoroutines: 1
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+      checkInterval: 5
+    goalCountEventOPSPersister:
+      project: bucketeer-test
+      topic: goal
+      subscription: goal-ops-sub
+      pullerNumGoroutines: 1
+      pullerMaxOutstandingMessages: 1000
+      pullerMaxOutstandingBytes: 1000000000
+      maxMps: 50
+      workerNum: 1
+      checkInterval: 5
+
+  # This configuration is used for add custom params to Processors
+  processors:
+    # This is the processor's name. It must match the same name defined in the
+    # pkg/batch/subscriber/processor/processors.go
+    auditLogPersister:
+      flushSize: 100
+      flushInterval: 10
+      flushTimeout: 10
+    evaluationCountEventPersister:
+      flushSize: 100
+      flushInterval: 10
+      writeCacheInterval: 10
+    segmentUserPersister:
+      domainEventProject: bucketeer-test
+      domainEventTopic: domain
+      flushSize: 100
+      flushInterval: 10
+    userEventPersister:
+      flushSize: 100
+      flushInterval: 10
+
+  onDemandProcessors:
+    evaluationCountEventDWHPersister:
+      flushSize: 100
+      flushInterval: 10
+      flushTimeout: 10
+      project: bucketeer-test
+      bigQueryDataSet: bucketeer
+      bigQueryBatchSize: 10
+      timezone: UTC
+    evaluationCountEventOPSPersister:
+      flushSize: 100
+      flushInterval: 10
+      flushTimeout: 10
+    goalCountEventDWHPersister:
+      flushSize: 100
+      flushInterval: 10
+      flushTimeout: 10
+      project: bucketeer-test
+      bigQueryDataSet: bucketeer
+      bigQueryBatchSize: 10
+      timezone: UTC
+    goalCountEventOPSPersister:
+      flushSize: 100
+      flushInterval: 10
+      flushTimeout: 10
+
 
 experiment-calculator:
   env:
@@ -239,7 +405,3 @@ experiment-calculator:
       key:
   serviceToken:
     secret: bucketeer-service-token
-
-web:
-  tls:
-    secret: bucketeer-service-cert

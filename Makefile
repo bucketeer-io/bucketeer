@@ -365,26 +365,15 @@ minikube-load-images:
 		minikube ssh "rm /home/docker/$$IMAGE.tar"; \
 	done
 
-SERVICES := api-gateway backend batch experiment-calculator web-gateway
-
-# Deploy Bucketeer to minikube
-deploy-service-to-minikube:
-	helm install ${SERVICE} manifests/bucketeer/charts/${SERVICE}/ --values manifests/bucketeer/charts/${SERVICE}/values.dev.yaml
-
-# Delete all the services from Minikube
-delete-all-services-from-minikube:
-	$(foreach var,$(SERVICES),helm uninstall $(var) --ignore-not-found;)
-
-# Deploy All the services to minikube
-deploy-all-services-to-minikube:
-	$(foreach var,$(SERVICES),SERVICE=$(var) make deploy-service-to-minikube;)
+delete-bucketeer-from-minikube:
+	helm uninstall bucketeer --ignore-not-found
 
 # Bucketeer deployment
-deploy-bucketeer: delete-all-services-from-minikube
+deploy-bucketeer: delete-bucketeer-from-minikube
 	make -C tools/dev service-cert-secret
 	make -C tools/dev service-token-secret
 	make -C tools/dev oauth-key-secret
 	make -C ./ build-go-embed
 	TAG=localenv make -C ./ build-docker-images
 	TAG=localenv make -C ./ minikube-load-images
-	make -C ./ deploy-all-services-to-minikube
+	helm install bucketeer manifests/bucketeer/ --values manifests/bucketeer/values.dev.yaml

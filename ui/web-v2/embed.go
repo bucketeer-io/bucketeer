@@ -22,5 +22,5 @@ import (
 //go:embed dist
 var assets embed.FS
 
-// FS contains the web UI assets.
+// FS contains the web console assets.
 var FS, _ = fs.Sub(assets, "dist")
