@@ -10,7 +10,7 @@ image:
 imagePullSecrets: []
 
 backoffLimit: 0
-ttlSecondsAfterFinished: 86400
+ttlSecondsAfterFinished:
 
 # URL to access the DB to do the migration
 # E.g. mysql://user:password@host:port/db_name
