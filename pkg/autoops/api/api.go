@@ -993,8 +993,8 @@ func (s *AutoOpsService) createUpdateAutoOpsRuleCommands(req *autoopsproto.Updat
 	for _, c := range req.AddDatetimeClauseCommands {
 		if c.DatetimeClause.ActionType == autoopsproto.ActionType_UNKNOWN {
 			c.DatetimeClause.ActionType = actionType
-			commands = append(commands, c)
 		}
+		commands = append(commands, c)
 	}
 	for _, c := range req.ChangeDatetimeClauseCommands {
 		if c.DatetimeClause.ActionType == autoopsproto.ActionType_UNKNOWN {
