@@ -1045,14 +1045,20 @@ func (s *grpcGatewayService) UpdateFeature(
 		return nil, err
 	}
 	res, err := s.featureClient.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
-		Comment:       req.Comment,
-		EnvironmentId: envAPIKey.Environment.Id,
-		Id:            req.Id,
-		Name:          req.Name,
-		Description:   req.Description,
-		Tags:          req.Tags,
-		Enabled:       req.Enabled,
-		Archived:      req.Archived,
+		Comment:         req.Comment,
+		EnvironmentId:   envAPIKey.Environment.Id,
+		Id:              req.Id,
+		Name:            req.Name,
+		Description:     req.Description,
+		Tags:            req.Tags,
+		Enabled:         req.Enabled,
+		Archived:        req.Archived,
+		Variations:      req.Variations,
+		Prerequisites:   req.Prerequisites,
+		Targets:         req.Targets,
+		Rules:           req.Rules,
+		DefaultStrategy: req.DefaultStrategy,
+		OffVariation:    req.OffVariation,
 	})
 	if err != nil {
 		return nil, err
