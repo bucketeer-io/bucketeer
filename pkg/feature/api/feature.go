@@ -761,9 +761,9 @@ func (s *FeatureService) UpdateFeature(
 		if err != nil {
 			return err
 		}
-		// The feature is removed from the list to be evaluated if it is
-		// archived or deleted. If it is disabled features are still evaluated.
-		evaluateds := []*featureproto.Feature{}
+		// To check if the flag to be updated is a dependency of other flags, we must validate it before updating.
+		// Exclude all the archived and deleted flags from the list.
+		tgts := []*featureproto.Feature{}
 		for _, f := range features {
 			if f.Id == updated.Id {
 				f = updated.Feature
@@ -771,9 +771,9 @@ func (s *FeatureService) UpdateFeature(
 			if f.Archived || f.Deleted {
 				continue
 			}
-			evaluateds = append(evaluateds, f)
+			tgts = append(tgts, f)
 		}
-		if err := domain.ValidateFeatureDependencies(evaluateds); err != nil {
+		if err := domain.ValidateFeatureDependencies(tgts); err != nil {
 			return err
 		}
 		updatedpb = updated.Feature
