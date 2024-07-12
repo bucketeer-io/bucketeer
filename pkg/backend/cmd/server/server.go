@@ -462,7 +462,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer autoOpsClient.Close()
 	// authService
-	authService, err := s.createAuthService(accountClient, verifier, oAuthConfig, logger)
+	authService, err := s.createAuthService(mysqlClient, accountClient, verifier, oAuthConfig, logger)
 	if err != nil {
 		return err
 	}
@@ -750,6 +750,7 @@ func (s *server) readOAuthConfig(
 }
 
 func (s *server) createAuthService(
+	mysqlClient mysql.Client,
 	accountClient accountclient.Client,
 	verifier token.Verifier,
 	config *auth.OAuthConfig,
@@ -774,6 +775,7 @@ func (s *server) createAuthService(
 		config.Audience,
 		signer,
 		verifier,
+		mysqlClient,
 		accountClient,
 		config,
 		serviceOptions...,

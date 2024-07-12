@@ -43,8 +43,17 @@ type GoogleConfig struct {
 	RedirectURLs []string `json:"redirectUrls"`
 }
 
+type PasswordConfig struct {
+	Username     string `json:"username"`
+	Password     string `json:"password"`
+	Organization string `json:"organization"`
+	Project      string `json:"project"`
+	Environment  string `json:"environment"`
+}
+
 type OAuthConfig struct {
-	Issuer       string       `json:"issuer"`
-	Audience     string       `json:"audience"`
-	GoogleConfig GoogleConfig `json:"google"`
+	Issuer         string         `json:"issuer"`
+	Audience       string         `json:"audience"`
+	GoogleConfig   GoogleConfig   `json:"google"`
+	PasswordConfig PasswordConfig `json:"password"`
 }

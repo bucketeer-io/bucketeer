@@ -96,6 +96,12 @@ oauth:
     clientId:
     clientSecret:
     redirectUrls:
+  password:
+    username:
+    password:
+    organization:
+    project:
+    environment:
 
 webhook:
   baseURL:

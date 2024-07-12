@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"regexp"
 	"time"
 
@@ -26,9 +27,12 @@ import (
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/pkg/auth/google"
+	envdomain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
+	envstotage "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	acproto "github.com/bucketeer-io/bucketeer/proto/account"
 	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
@@ -75,6 +79,8 @@ type authService struct {
 	issuer              string
 	audience            string
 	signer              token.Signer
+	config              *auth.OAuthConfig
+	mysqlClient         mysql.Client
 	accountClient       accountclient.Client
 	verifier            token.Verifier
 	googleAuthenticator auth.Authenticator
@@ -87,6 +93,7 @@ func NewAuthService(
 	audience string,
 	signer token.Signer,
 	verifier token.Verifier,
+	mysqlClient mysql.Client,
 	accountClient accountclient.Client,
 	config *auth.OAuthConfig,
 	opts ...Option,
@@ -96,10 +103,12 @@ func NewAuthService(
 		opt(&options)
 	}
 	logger := options.logger.Named("api")
-	return &authService{
+	service := &authService{
 		issuer:        issuer,
 		audience:      audience,
 		signer:        signer,
+		config:        config,
+		mysqlClient:   mysqlClient,
 		accountClient: accountClient,
 		verifier:      verifier,
 		googleAuthenticator: google.NewAuthenticator(
@@ -108,6 +117,8 @@ func NewAuthService(
 		opts:   &options,
 		logger: logger,
 	}
+	service.PrepareDemoUser()
+	return service
 }
 
 func (s *authService) Register(server *grpc.Server) {
@@ -240,8 +251,6 @@ func (s *authService) getAuthenticator(
 ) (auth.Authenticator, error) {
 	var authenticator auth.Authenticator
 	switch authType {
-	case authproto.AuthType_AUTH_TYPE_USER_PASSWORD:
-
 	case authproto.AuthType_AUTH_TYPE_GOOGLE:
 		authenticator = s.googleAuthenticator
 	case authproto.AuthType_AUTH_TYPE_GITHUB:
@@ -389,4 +398,112 @@ func (s *authService) hasSystemAdminOrganization(orgs []*envproto.Organization) 
 		}
 	}
 	return false
+}
+
+func (s *authService) PrepareDemoUser() {
+	if s.config.PasswordConfig.Username == "" ||
+		s.config.PasswordConfig.Password == "" ||
+		s.config.PasswordConfig.Organization == "" ||
+		s.config.PasswordConfig.Project == "" ||
+		s.config.PasswordConfig.Environment == "" {
+		s.logger.Info("Skip preparing demo user, password login config is not completed")
+	}
+	ctx := context.Background()
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error("create mysql tx error", zap.Error(err))
+		return
+	}
+	now := time.Now()
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		organizationStorage := envstotage.NewOrganizationStorage(tx)
+		_, err = organizationStorage.GetOrganization(ctx, s.config.PasswordConfig.Organization)
+		if err != nil && errors.Is(err, envstotage.ErrOrganizationNotFound) {
+			err = organizationStorage.CreateOrganization(ctx, &envdomain.Organization{
+				Organization: &envproto.Organization{
+					Id:          s.config.PasswordConfig.Organization,
+					Name:        "demo organization",
+					UrlCode:     "demo",
+					Description: "This organization is for demo user",
+					Disabled:    false,
+					Archived:    false,
+					Trial:       false,
+					CreatedAt:   now.Unix(),
+					UpdatedAt:   now.Unix(),
+					SystemAdmin: false,
+				}})
+			if err != nil {
+				return err
+			}
+		}
+		projectStorage := envstotage.NewProjectStorage(tx)
+		_, err = projectStorage.GetProject(ctx, s.config.PasswordConfig.Project)
+		if err != nil && errors.Is(err, envstotage.ErrProjectNotFound) {
+			err = projectStorage.CreateProject(ctx, &envdomain.Project{
+				Project: &envproto.Project{
+					Id:             s.config.PasswordConfig.Project,
+					Description:    "This project is for demo user",
+					Disabled:       false,
+					Trial:          false,
+					CreatorEmail:   demoUserEmail,
+					CreatedAt:      now.Unix(),
+					UpdatedAt:      now.Unix(),
+					Name:           "demo",
+					UrlCode:        "demo",
+					OrganizationId: s.config.PasswordConfig.Organization,
+				}})
+			if err != nil {
+				return err
+			}
+		}
+		environmentStorage := envstotage.NewEnvironmentStorage(tx)
+		_, err = environmentStorage.GetEnvironmentV2(ctx, s.config.PasswordConfig.Environment)
+		if err != nil && errors.Is(err, envstotage.ErrEnvironmentNotFound) {
+			err = environmentStorage.CreateEnvironmentV2(ctx, &envdomain.EnvironmentV2{
+				EnvironmentV2: &envproto.EnvironmentV2{
+					Id:             s.config.PasswordConfig.Environment,
+					Name:           "demo",
+					UrlCode:        "demo",
+					Description:    "This environment is for demo user",
+					ProjectId:      s.config.PasswordConfig.Project,
+					Archived:       false,
+					CreatedAt:      now.Unix(),
+					UpdatedAt:      now.Unix(),
+					OrganizationId: s.config.PasswordConfig.Organization,
+					RequireComment: false,
+				}})
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		s.logger.Error("prepare demo user organization, project and environment error", zap.Error(err))
+		return
+	}
+	_, err = s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
+		Email:          demoUserEmail,
+		OrganizationId: s.config.PasswordConfig.Organization,
+	})
+	if err == nil {
+		_, err = s.accountClient.CreateAccountV2(ctx, &acproto.CreateAccountV2Request{
+			OrganizationId: s.config.PasswordConfig.Organization,
+			Command: &acproto.CreateAccountV2Command{
+				Email:            demoUserEmail,
+				Name:             "demo",
+				OrganizationRole: acproto.AccountV2_Role_Organization_ADMIN,
+				EnvironmentRoles: []*acproto.AccountV2_EnvironmentRole{
+					{
+						EnvironmentId: s.config.PasswordConfig.Environment,
+						Role:          acproto.AccountV2_Role_Environment_EDITOR,
+					},
+				},
+			},
+		})
+		if err != nil {
+			s.logger.Error("prepare demo user account error", zap.Error(err))
+		}
+	}
 }

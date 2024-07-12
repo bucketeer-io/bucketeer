@@ -1687,7 +1687,13 @@
               },
               {
                 "name": "AUTH_TYPE_USER_PASSWORD",
-                "integer": 1
+                "integer": 1,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "name": "AUTH_TYPE_GOOGLE",
@@ -1780,6 +1786,31 @@
                 "type": "Token"
               }
             ]
+          },
+          {
+            "name": "PasswordLoginRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "username",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "password",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "PasswordLoginResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "token",
+                "type": "Token"
+              }
+            ]
           }
         ],
         "services": [
@@ -1795,6 +1826,11 @@
                 "name": "ExchangeToken",
                 "in_type": "ExchangeTokenRequest",
                 "out_type": "ExchangeTokenResponse"
+              },
+              {
+                "name": "PasswordLogin",
+                "in_type": "PasswordLoginRequest",
+                "out_type": "PasswordLoginResponse"
               },
               {
                 "name": "RefreshToken",

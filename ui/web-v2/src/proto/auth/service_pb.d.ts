@@ -210,6 +210,74 @@ export namespace RefreshTokenResponse {
   };
 }
 
+export class PasswordLoginRequest extends jspb.Message {
+  getUsername(): string;
+  setUsername(value: string): void;
+
+  getPassword(): string;
+  setPassword(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): PasswordLoginRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: PasswordLoginRequest
+  ): PasswordLoginRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: PasswordLoginRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): PasswordLoginRequest;
+  static deserializeBinaryFromReader(
+    message: PasswordLoginRequest,
+    reader: jspb.BinaryReader
+  ): PasswordLoginRequest;
+}
+
+export namespace PasswordLoginRequest {
+  export type AsObject = {
+    username: string;
+    password: string;
+  };
+}
+
+export class PasswordLoginResponse extends jspb.Message {
+  hasToken(): boolean;
+  clearToken(): void;
+  getToken(): proto_auth_token_pb.Token | undefined;
+  setToken(value?: proto_auth_token_pb.Token): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): PasswordLoginResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: PasswordLoginResponse
+  ): PasswordLoginResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: PasswordLoginResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): PasswordLoginResponse;
+  static deserializeBinaryFromReader(
+    message: PasswordLoginResponse,
+    reader: jspb.BinaryReader
+  ): PasswordLoginResponse;
+}
+
+export namespace PasswordLoginResponse {
+  export type AsObject = {
+    token?: proto_auth_token_pb.Token.AsObject;
+  };
+}
+
 export interface AuthTypeMap {
   AUTH_TYPE_UNSPECIFIED: 0;
   AUTH_TYPE_USER_PASSWORD: 1;
