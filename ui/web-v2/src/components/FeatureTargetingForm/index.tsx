@@ -56,7 +56,7 @@ import { Feature } from '../../proto/feature/feature_pb';
 import { Strategy } from '../../proto/feature/strategy_pb';
 import { AppDispatch } from '../../store';
 import { classNames } from '../../utils/css';
-import { isProgressiveRolloutsRunningWaiting } from '../AddProgressiveRolloutOperation';
+import { isProgressiveRolloutsRunningWaiting } from '../ProgressiveRolloutAddForm';
 import { CopyChip } from '../CopyChip';
 import { colourStyles, CreatableSelect } from '../CreatableSelect';
 import { Option, Select } from '../Select';

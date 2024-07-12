@@ -113,6 +113,7 @@
   "autoOps.completed": "完了",
   "autoOps.condition": "条件",
   "autoOps.createAnOperation": "オペレーションの追加",
+  "autoOps.created": "作成",
   "autoOps.currentEventRate": "現在のイベントレート",
   "autoOps.daily": "日",
   "autoOps.dateIncreasingOrder": "日付は昇順で設定する必要があります。",

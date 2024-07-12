@@ -17,7 +17,7 @@ import { selectById as selectFeatureById } from '../../modules/features';
 import { useCurrentEnvironment, useIsEditable } from '../../modules/me';
 import { Feature } from '../../proto/feature/feature_pb';
 import { Strategy } from '../../proto/feature/strategy_pb';
-import { isProgressiveRolloutsRunningWaiting } from '../AddProgressiveRolloutOperation';
+import { isProgressiveRolloutsRunningWaiting } from '../ProgressiveRolloutAddForm';
 import { classNames } from '../../utils/css';
 import { MinusCircleIcon } from '@heroicons/react/solid';
 import { useFieldArray, useFormContext } from 'react-hook-form';

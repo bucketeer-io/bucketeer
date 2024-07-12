@@ -196,7 +196,7 @@ export const FeatureDetailPage: FC = memo(() => {
           exact
           path={[
             `${url}${PAGE_PATH_FEATURE_AUTOOPS}`,
-            `${url}${PAGE_PATH_FEATURE_AUTOOPS}/:operationId`
+            `${url}${PAGE_PATH_FEATURE_AUTOOPS}/:operationType`
           ]}
         >
           <FeatureAutoOpsPage featureId={featureId} />

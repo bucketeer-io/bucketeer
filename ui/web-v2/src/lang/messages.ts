@@ -537,6 +537,26 @@ export const messages = {
       id: 'autoOps.stoppedBySchedule',
       defaultMessage:
         '{clockIcon} Stopped {relativeDate} by {stoppedByIcon} Schedule'
+    }),
+    created: defineMessage({
+      id: 'autoOps.created',
+      defaultMessage: 'Created'
+    }),
+    scheduleOperation: defineMessage({
+      id: 'autoOps.scheduleOperation',
+      defaultMessage: 'Schedule Operation'
+    }),
+    eventRateOperation: defineMessage({
+      id: 'autoOps.eventRateOperation',
+      defaultMessage: 'Event Rate Operation'
+    }),
+    currentFlagState: defineMessage({
+      id: 'autoOps.currentFlagState',
+      defaultMessage: 'Current Flag State'
+    }),
+    state: defineMessage({
+      id: 'autoOps.state',
+      defaultMessage: 'State'
     })
   },
   trigger: {
@@ -1759,7 +1779,7 @@ export const messages = {
     }),
     variation: defineMessage({
       id: 'feature.variation',
-      defaultMessage: 'variation'
+      defaultMessage: 'Variation'
     }),
     defaultStrategy: defineMessage({
       id: 'feature.defaultStrategy',

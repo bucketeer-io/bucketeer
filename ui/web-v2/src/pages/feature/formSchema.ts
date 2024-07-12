@@ -3,7 +3,6 @@ import { isArraySorted } from '../../utils/isArraySorted';
 import { isIntervals5MinutesApart } from '../../utils/isIntervals5MinutesApart';
 import * as yup from 'yup';
 
-import { ClauseType } from '../../components/FeatureAutoOpsRulesForm';
 import { AUTOOPS_MAX_MIN_COUNT } from '../../constants/autoops';
 import {
   FEATURE_DESCRIPTION_MAX_LENGTH,
@@ -22,8 +21,12 @@ import { messages } from '../../lang/messages';
 import { Feature } from '../../proto/feature/feature_pb';
 import { Strategy } from '../../proto/feature/strategy_pb';
 import { isJsonString } from '../../utils/validate';
-import { ProgressiveRolloutTemplateScheduleClause } from '../../proto/autoops/clause_pb';
-import { OpsTypeMap } from '../../proto/autoops/auto_ops_rule_pb';
+import {
+  ActionTypeMap,
+  ProgressiveRolloutTemplateScheduleClause
+} from '../../proto/autoops/clause_pb';
+import { OpsType, OpsTypeMap } from '../../proto/autoops/auto_ops_rule_pb';
+import { ProgressiveRollout } from '../../proto/autoops/progressive_rollout_pb';
 
 yup.setLocale(yupLocale);
 
@@ -130,7 +133,8 @@ const schedulesListSchema = yup.array().of(
       .max(100)
       .test('isAscending', '', (_, context) => {
         if (
-          context.from[3].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT
+          context.from[3].value.progressiveRolloutType ===
+          ProgressiveRollout.Type.MANUAL_SCHEDULE
         ) {
           return isArraySorted(
             context.from[3].value.progressiveRollout.manual.schedulesList.map(
@@ -148,8 +152,8 @@ const schedulesListSchema = yup.array().of(
           intl.formatMessage(messages.input.error.notLaterThanCurrentTime),
           (value, context) => {
             if (
-              context.from[4].value.clauseType ===
-              ClauseType.PROGRESSIVE_ROLLOUT
+              context.from[4].value.progressiveRolloutType ===
+              ProgressiveRollout.Type.MANUAL_SCHEDULE
             ) {
               return value.getTime() > new Date().getTime();
             }
@@ -158,7 +162,8 @@ const schedulesListSchema = yup.array().of(
         )
         .test('isAscending', '', (_, context) => {
           if (
-            context.from[4].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT
+            context.from[4].value.progressiveRolloutType ===
+            ProgressiveRollout.Type.MANUAL_SCHEDULE
           ) {
             return isArraySorted(
               context.from[4].value.progressiveRollout.manual.schedulesList.map(
@@ -170,7 +175,8 @@ const schedulesListSchema = yup.array().of(
         })
         .test('timeIntervals', '', (_, context) => {
           if (
-            context.from[4].value.clauseType === ClauseType.PROGRESSIVE_ROLLOUT
+            context.from[4].value.progressiveRolloutType ===
+            ProgressiveRollout.Type.MANUAL_SCHEDULE
           ) {
             return isIntervals5MinutesApart(
               context.from[4].value.progressiveRollout.manual.schedulesList.map(
@@ -186,21 +192,13 @@ const schedulesListSchema = yup.array().of(
 
 export const operationFormSchema = yup.object().shape({
   opsType: yup.mixed<OpsTypeMap[keyof OpsTypeMap]>().required(),
-  clauseType: yup.string().required(),
-  datetime: yup.object().shape({
-    time: yup
-      .date()
-      .test(
-        'isLaterThanNow',
-        intl.formatMessage(messages.input.error.notLaterThanCurrentTime),
-        (value, context) => {
-          if (context.from[1].value.clauseType === ClauseType.DATETIME) {
-            return value.getTime() > new Date().getTime();
-          }
-          return true;
-        }
-      )
-  }),
+  datetimeClausesList: yup.array().of(
+    yup.object().shape({
+      id: yup.string(),
+      actionType: yup.mixed<ActionTypeMap[keyof ActionTypeMap]>().required(),
+      time: yup.date()
+    })
+  ),
   eventRate: yup.object().shape({
     variation: yup.string(),
     goal: yup
@@ -210,7 +208,7 @@ export const operationFormSchema = yup.object().shape({
         'required',
         intl.formatMessage(messages.input.error.required),
         (value, context) => {
-          if (context.from[1].value.clauseType == ClauseType.EVENT_RATE) {
+          if (context.from[1].value.opsType === OpsType.EVENT_RATE) {
             return value != null;
           }
           return true;
@@ -230,6 +228,9 @@ export const operationFormSchema = yup.object().shape({
       .max(100),
     operator: yup.string()
   }),
+  progressiveRolloutType: yup
+    .mixed<ProgressiveRollout.TypeMap[keyof ProgressiveRollout.TypeMap]>()
+    .required(),
   progressiveRollout: yup.object().shape({
     template: yup.object().shape({
       variationId: yup.string().required(),
@@ -247,8 +248,8 @@ export const operationFormSchema = yup.object().shape({
             intl.formatMessage(messages.input.error.notLaterThanCurrentTime),
             (value, context) => {
               if (
-                context.from[3].value.clauseType ===
-                ClauseType.PROGRESSIVE_ROLLOUT
+                context.from[3].value.progressiveRolloutType ===
+                ProgressiveRollout.Type.TEMPLATE_SCHEDULE
               ) {
                 return value.getTime() > new Date().getTime();
               }

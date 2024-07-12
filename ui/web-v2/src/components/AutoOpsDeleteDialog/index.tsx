@@ -3,7 +3,7 @@ import { FC } from 'react';
 import { useIntl } from 'react-intl';
 
 import { messages } from '../../lang/messages';
-import { SelectedOperation } from '../FeatureAutoOpsRulesForm';
+import { OperationType, SelectedOperation } from '../FeatureAutoOpsRulesForm';
 import { Modal } from '../Modal';
 
 interface AutoOpsDeleteDialogProps {
@@ -27,20 +27,20 @@ export const AutoOpsDeleteDialog: FC<AutoOpsDeleteDialogProps> = ({
         as="h3"
         className="text-lg font-medium leading-6 text-gray-700"
       >
-        {selectedOperation.type === 'DATETIME' &&
+        {selectedOperation.type === OperationType.SCHEDULE &&
           f(messages.autoOps.deleteSchedule)}
-        {selectedOperation.type === 'EVENT_RATE' &&
+        {selectedOperation.type === OperationType.EVENT_RATE &&
           f(messages.autoOps.deleteKillSwitch)}
-        {selectedOperation.type === 'PROGRESSIVE_ROLLOUT' &&
+        {selectedOperation.type === OperationType.PROGRESSIVE_ROLLOUT &&
           f(messages.autoOps.deleteProgressiveRollout)}
       </Dialog.Title>
       <div className="mt-2">
         <p className="text-sm text-red-500">
-          {selectedOperation.type === 'DATETIME' &&
+          {selectedOperation.type === OperationType.SCHEDULE &&
             f(messages.autoOps.deleteScheduleDescription)}
-          {selectedOperation.type === 'EVENT_RATE' &&
+          {selectedOperation.type === OperationType.EVENT_RATE &&
             f(messages.autoOps.deleteKillSwitchDescription)}
-          {selectedOperation.type === 'PROGRESSIVE_ROLLOUT' &&
+          {selectedOperation.type === OperationType.PROGRESSIVE_ROLLOUT &&
             f(messages.autoOps.deleteProgressiveRolloutDescription)}
         </p>
       </div>
