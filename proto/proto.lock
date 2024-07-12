@@ -2829,7 +2829,13 @@
               {
                 "id": 3,
                 "name": "change_auto_ops_rule_ops_type_command",
-                "type": "ChangeAutoOpsRuleOpsTypeCommand"
+                "type": "ChangeAutoOpsRuleOpsTypeCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 4,
