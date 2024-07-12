@@ -45,8 +45,17 @@ var (
 	statusClauseNotFound      = gstatus.New(codes.NotFound, "autoops: clause not found")
 	statusIncompatibleOpsType = gstatus.New(
 		codes.InvalidArgument,
-		"autoops: ops type is incompatible with ops event rate clause",
+		"autoops: ops type is incompatible with ops clause",
 	)
+	statusDeprecatedChangedOpsType = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: changing OpsType is deprecated",
+	)
+	statusShouldAddMoreClauses = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: if existing clauses are deleted all, should add one or more clauses.",
+	)
+	statusAutoOpsRuleCompleted       = gstatus.New(codes.InvalidArgument, "autoops: auto ops rule is status of complete")
 	statusAutoOpsRuleFinished        = gstatus.New(codes.InvalidArgument, "autoops: auto ops rule is status of finished")
 	statusOpsEventRateClauseRequired = gstatus.New(
 		codes.InvalidArgument,
