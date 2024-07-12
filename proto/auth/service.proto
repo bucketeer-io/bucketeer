@@ -54,12 +54,12 @@ message RefreshTokenResponse {
   Token token = 1;
 }
 
-message PasswordLoginRequest {
+message SignInRequest {
   string username = 1;
   string password = 2;
 }
 
-message PasswordLoginResponse {
+message SignInResponse {
   Token token = 1;
 }
 
@@ -67,6 +67,6 @@ service AuthService {
   rpc GetAuthenticationURL(GetAuthenticationURLRequest)
       returns (GetAuthenticationURLResponse);
   rpc ExchangeToken(ExchangeTokenRequest) returns (ExchangeTokenResponse);
-  rpc PasswordLogin(PasswordLoginRequest) returns (PasswordLoginResponse);
+  rpc SignIn(SignInRequest) returns (SignInResponse);
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
 }

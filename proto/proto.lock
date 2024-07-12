@@ -1788,7 +1788,7 @@
             ]
           },
           {
-            "name": "PasswordLoginRequest",
+            "name": "SignInRequest",
             "fields": [
               {
                 "id": 1,
@@ -1803,7 +1803,7 @@
             ]
           },
           {
-            "name": "PasswordLoginResponse",
+            "name": "SignInResponse",
             "fields": [
               {
                 "id": 1,
@@ -1829,8 +1829,8 @@
               },
               {
                 "name": "PasswordLogin",
-                "in_type": "PasswordLoginRequest",
-                "out_type": "PasswordLoginResponse"
+                "in_type": "SignInRequest",
+                "out_type": "SignInResponse"
               },
               {
                 "name": "RefreshToken",

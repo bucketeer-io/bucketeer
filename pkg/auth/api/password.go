@@ -18,7 +18,6 @@ import (
 	"context"
 
 	"go.uber.org/zap"
-
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
@@ -26,22 +25,20 @@ import (
 	authproto "github.com/bucketeer-io/bucketeer/proto/auth"
 )
 
-const demoUserEmail = "demo@bucketeer.org"
-
-func (s *authService) PasswordLogin(
+func (s *authService) SignIn(
 	ctx context.Context,
-	request *authproto.PasswordLoginRequest,
-) (*authproto.PasswordLoginResponse, error) {
+	request *authproto.SignInRequest,
+) (*authproto.SignInResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
 	err := validatePasswordLoginRequest(request, localizer)
 	if err != nil {
 		return nil, err
 	}
-	if request.Username != s.config.PasswordConfig.Username &&
-		request.Password != s.config.PasswordConfig.Password {
+	if request.Username != s.config.DemoSignInConfig.Username &&
+		request.Password != s.config.DemoSignInConfig.Password {
 		s.logger.Error(
 			"Password login failed",
-			zap.String("user", request.Username),
+			zap.String("username", request.Username),
 			zap.String("password", request.Password),
 		)
 		dt, err := auth.StatusPasswordAccessDenied.WithDetails(&errdetails.LocalizedMessage{
@@ -53,9 +50,9 @@ func (s *authService) PasswordLogin(
 		}
 		return nil, dt.Err()
 	}
-	token, err := s.generateToken(ctx, demoUserEmail, localizer)
+	token, err := s.generateToken(ctx, s.config.DemoSignInConfig.Email, localizer)
 	if err != nil {
 		return nil, err
 	}
-	return &authproto.PasswordLoginResponse{Token: token}, nil
+	return &authproto.SignInResponse{Token: token}, nil
 }

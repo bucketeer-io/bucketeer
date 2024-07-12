@@ -17,6 +17,8 @@ package api
 import (
 	"context"
 	"errors"
+	gcodes "google.golang.org/grpc/codes"
+	gstatus "google.golang.org/grpc/status"
 	"regexp"
 	"time"
 
@@ -401,11 +403,11 @@ func (s *authService) hasSystemAdminOrganization(orgs []*envproto.Organization) 
 }
 
 func (s *authService) PrepareDemoUser() {
-	if s.config.PasswordConfig.Username == "" ||
-		s.config.PasswordConfig.Password == "" ||
-		s.config.PasswordConfig.Organization == "" ||
-		s.config.PasswordConfig.Project == "" ||
-		s.config.PasswordConfig.Environment == "" {
+	if s.config.DemoSignInConfig.Username == "" ||
+		s.config.DemoSignInConfig.Password == "" ||
+		s.config.DemoSignInConfig.Organization == "" ||
+		s.config.DemoSignInConfig.Project == "" ||
+		s.config.DemoSignInConfig.Environment == "" {
 		s.logger.Info("Skip preparing demo user, password login config is not completed")
 	}
 	ctx := context.Background()
@@ -417,14 +419,14 @@ func (s *authService) PrepareDemoUser() {
 	now := time.Now()
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		organizationStorage := envstotage.NewOrganizationStorage(tx)
-		_, err = organizationStorage.GetOrganization(ctx, s.config.PasswordConfig.Organization)
+		_, err = organizationStorage.GetOrganization(ctx, s.config.DemoSignInConfig.Organization)
 		if err != nil && errors.Is(err, envstotage.ErrOrganizationNotFound) {
 			err = organizationStorage.CreateOrganization(ctx, &envdomain.Organization{
 				Organization: &envproto.Organization{
-					Id:          s.config.PasswordConfig.Organization,
-					Name:        "demo organization",
+					Id:          s.config.DemoSignInConfig.Organization,
+					Name:        "Demo organization",
 					UrlCode:     "demo",
-					Description: "This organization is for demo user",
+					Description: "This organization is for demo users",
 					Disabled:    false,
 					Archived:    false,
 					Trial:       false,
@@ -437,39 +439,39 @@ func (s *authService) PrepareDemoUser() {
 			}
 		}
 		projectStorage := envstotage.NewProjectStorage(tx)
-		_, err = projectStorage.GetProject(ctx, s.config.PasswordConfig.Project)
+		_, err = projectStorage.GetProject(ctx, s.config.DemoSignInConfig.Project)
 		if err != nil && errors.Is(err, envstotage.ErrProjectNotFound) {
 			err = projectStorage.CreateProject(ctx, &envdomain.Project{
 				Project: &envproto.Project{
-					Id:             s.config.PasswordConfig.Project,
-					Description:    "This project is for demo user",
+					Id:             s.config.DemoSignInConfig.Project,
+					Description:    "This project is for demo users",
 					Disabled:       false,
 					Trial:          false,
-					CreatorEmail:   demoUserEmail,
+					CreatorEmail:   s.config.DemoSignInConfig.Email,
 					CreatedAt:      now.Unix(),
 					UpdatedAt:      now.Unix(),
-					Name:           "demo",
+					Name:           "Demo",
 					UrlCode:        "demo",
-					OrganizationId: s.config.PasswordConfig.Organization,
+					OrganizationId: s.config.DemoSignInConfig.Organization,
 				}})
 			if err != nil {
 				return err
 			}
 		}
 		environmentStorage := envstotage.NewEnvironmentStorage(tx)
-		_, err = environmentStorage.GetEnvironmentV2(ctx, s.config.PasswordConfig.Environment)
+		_, err = environmentStorage.GetEnvironmentV2(ctx, s.config.DemoSignInConfig.Environment)
 		if err != nil && errors.Is(err, envstotage.ErrEnvironmentNotFound) {
 			err = environmentStorage.CreateEnvironmentV2(ctx, &envdomain.EnvironmentV2{
 				EnvironmentV2: &envproto.EnvironmentV2{
-					Id:             s.config.PasswordConfig.Environment,
-					Name:           "demo",
+					Id:             s.config.DemoSignInConfig.Environment,
+					Name:           "Demo",
 					UrlCode:        "demo",
-					Description:    "This environment is for demo user",
-					ProjectId:      s.config.PasswordConfig.Project,
+					Description:    "This environment is for demo users",
+					ProjectId:      s.config.DemoSignInConfig.Project,
 					Archived:       false,
 					CreatedAt:      now.Unix(),
 					UpdatedAt:      now.Unix(),
-					OrganizationId: s.config.PasswordConfig.Organization,
+					OrganizationId: s.config.DemoSignInConfig.Organization,
 					RequireComment: false,
 				}})
 			if err != nil {
@@ -484,26 +486,28 @@ func (s *authService) PrepareDemoUser() {
 		return
 	}
 	_, err = s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
-		Email:          demoUserEmail,
-		OrganizationId: s.config.PasswordConfig.Organization,
+		Email:          s.config.DemoSignInConfig.Email,
+		OrganizationId: s.config.DemoSignInConfig.Organization,
 	})
-	if err == nil {
-		_, err = s.accountClient.CreateAccountV2(ctx, &acproto.CreateAccountV2Request{
-			OrganizationId: s.config.PasswordConfig.Organization,
-			Command: &acproto.CreateAccountV2Command{
-				Email:            demoUserEmail,
-				Name:             "demo",
-				OrganizationRole: acproto.AccountV2_Role_Organization_ADMIN,
-				EnvironmentRoles: []*acproto.AccountV2_EnvironmentRole{
-					{
-						EnvironmentId: s.config.PasswordConfig.Environment,
-						Role:          acproto.AccountV2_Role_Environment_EDITOR,
+	if err != nil {
+		if code := gstatus.Code(err); code == gcodes.NotFound {
+			_, err = s.accountClient.CreateAccountV2(ctx, &acproto.CreateAccountV2Request{
+				OrganizationId: s.config.DemoSignInConfig.Organization,
+				Command: &acproto.CreateAccountV2Command{
+					Email:            s.config.DemoSignInConfig.Email,
+					Name:             "demo",
+					OrganizationRole: acproto.AccountV2_Role_Organization_ADMIN,
+					EnvironmentRoles: []*acproto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: s.config.DemoSignInConfig.Environment,
+							Role:          acproto.AccountV2_Role_Environment_EDITOR,
+						},
 					},
 				},
-			},
-		})
-		if err != nil {
-			s.logger.Error("prepare demo user account error", zap.Error(err))
+			})
+			if err != nil {
+				s.logger.Error("prepare demo user account error", zap.Error(err))
+			}
 		}
 	}
 }
