@@ -27,14 +27,16 @@ type AuditLog struct {
 func NewAuditLog(event *domainevent.Event, envirronmentNamespace string) *AuditLog {
 	return &AuditLog{
 		AuditLog: &proto.AuditLog{
-			Id:         event.Id,
-			Timestamp:  event.Timestamp,
-			EntityType: event.EntityType,
-			EntityId:   event.EntityId,
-			Type:       event.Type,
-			Event:      event.Data,
-			Editor:     event.Editor,
-			Options:    event.Options,
+			Id:                 event.Id,
+			Timestamp:          event.Timestamp,
+			EntityType:         event.EntityType,
+			EntityId:           event.EntityId,
+			Type:               event.Type,
+			Event:              event.Data,
+			Editor:             event.Editor,
+			EntityData:         event.EntityData,
+			PreviousEntityData: event.PreviousEntityData,
+			Options:            event.Options,
 		},
 		EnvironmentNamespace: envirronmentNamespace,
 	}
