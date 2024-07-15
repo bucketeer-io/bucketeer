@@ -20,14 +20,13 @@ import (
 	"regexp"
 	"time"
 
-	gcodes "google.golang.org/grpc/codes"
-	gstatus "google.golang.org/grpc/status"
-
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
+	accountstotage "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/pkg/auth/google"
 	envdomain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
@@ -479,36 +478,36 @@ func (s *authService) PrepareDemoUser() {
 				return err
 			}
 		}
-
 		return nil
 	})
 	if err != nil {
 		s.logger.Error("prepare demo user organization, project and environment error", zap.Error(err))
 		return
 	}
-	_, err = s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
-		Email:          s.config.DemoSignInConfig.Email,
-		OrganizationId: s.config.DemoSignInConfig.Organization,
-	})
-	if err != nil {
-		if code := gstatus.Code(err); code == gcodes.NotFound {
-			_, err = s.accountClient.CreateAccountV2(ctx, &acproto.CreateAccountV2Request{
-				OrganizationId: s.config.DemoSignInConfig.Organization,
-				Command: &acproto.CreateAccountV2Command{
-					Email:            s.config.DemoSignInConfig.Email,
-					Name:             "demo",
-					OrganizationRole: acproto.AccountV2_Role_Organization_ADMIN,
-					EnvironmentRoles: []*acproto.AccountV2_EnvironmentRole{
-						{
-							EnvironmentId: s.config.DemoSignInConfig.Environment,
-							Role:          acproto.AccountV2_Role_Environment_EDITOR,
-						},
+
+	accountStorage := accountstotage.NewAccountStorage(s.mysqlClient)
+	_, err = accountStorage.GetAccountV2(
+		ctx,
+		s.config.DemoSignInConfig.Email,
+		s.config.DemoSignInConfig.Organization,
+	)
+	if err != nil && errors.Is(err, accountstotage.ErrAccountNotFound) {
+		err = accountStorage.CreateAccountV2(ctx, &domain.AccountV2{
+			AccountV2: &acproto.AccountV2{
+				OrganizationId:   s.config.DemoSignInConfig.Organization,
+				Email:            s.config.DemoSignInConfig.Email,
+				Name:             "demo",
+				OrganizationRole: acproto.AccountV2_Role_Organization_ADMIN,
+				EnvironmentRoles: []*acproto.AccountV2_EnvironmentRole{
+					{
+						EnvironmentId: s.config.DemoSignInConfig.Environment,
+						Role:          acproto.AccountV2_Role_Environment_EDITOR,
 					},
 				},
-			})
-			if err != nil {
-				s.logger.Error("prepare demo user account error", zap.Error(err))
-			}
+			},
+		})
+		if err != nil {
+			s.logger.Error("prepare demo user account error", zap.Error(err))
 		}
 	}
 }
