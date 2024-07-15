@@ -28,13 +28,13 @@ AuthService.ExchangeToken = {
   responseType: proto_auth_service_pb.ExchangeTokenResponse
 };
 
-AuthService.PasswordLogin = {
-  methodName: 'PasswordLogin',
+AuthService.SignIn = {
+  methodName: 'SignIn',
   service: AuthService,
   requestStream: false,
   responseStream: false,
-  requestType: proto_auth_service_pb.PasswordLoginRequest,
-  responseType: proto_auth_service_pb.PasswordLoginResponse
+  requestType: proto_auth_service_pb.SignInRequest,
+  responseType: proto_auth_service_pb.SignInResponse
 };
 
 AuthService.RefreshToken = {
@@ -120,7 +120,7 @@ AuthServiceClient.prototype.exchangeToken = function exchangeToken(
   };
 };
 
-AuthServiceClient.prototype.passwordLogin = function passwordLogin(
+AuthServiceClient.prototype.signIn = function signIn(
   requestMessage,
   metadata,
   callback
@@ -128,7 +128,7 @@ AuthServiceClient.prototype.passwordLogin = function passwordLogin(
   if (arguments.length === 2) {
     callback = arguments[1];
   }
-  var client = grpc.unary(AuthService.PasswordLogin, {
+  var client = grpc.unary(AuthService.SignIn, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,

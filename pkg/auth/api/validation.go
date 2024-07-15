@@ -113,8 +113,8 @@ func validateRefreshTokenRequest(
 	return nil
 }
 
-func validatePasswordLoginRequest(
-	req *authproto.PasswordLoginRequest,
+func validateSignInRequest(
+	req *authproto.SignInRequest,
 	localizer locale.Localizer,
 ) error {
 	if req.Username == "" {

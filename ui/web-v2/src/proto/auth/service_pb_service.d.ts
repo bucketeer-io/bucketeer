@@ -22,13 +22,13 @@ type AuthServiceExchangeToken = {
   readonly responseType: typeof proto_auth_service_pb.ExchangeTokenResponse;
 };
 
-type AuthServicePasswordLogin = {
+type AuthServiceSignIn = {
   readonly methodName: string;
   readonly service: typeof AuthService;
   readonly requestStream: false;
   readonly responseStream: false;
-  readonly requestType: typeof proto_auth_service_pb.PasswordLoginRequest;
-  readonly responseType: typeof proto_auth_service_pb.PasswordLoginResponse;
+  readonly requestType: typeof proto_auth_service_pb.SignInRequest;
+  readonly responseType: typeof proto_auth_service_pb.SignInResponse;
 };
 
 type AuthServiceRefreshToken = {
@@ -44,7 +44,7 @@ export class AuthService {
   static readonly serviceName: string;
   static readonly GetAuthenticationURL: AuthServiceGetAuthenticationURL;
   static readonly ExchangeToken: AuthServiceExchangeToken;
-  static readonly PasswordLogin: AuthServicePasswordLogin;
+  static readonly SignIn: AuthServiceSignIn;
   static readonly RefreshToken: AuthServiceRefreshToken;
 }
 
@@ -123,19 +123,19 @@ export class AuthServiceClient {
       responseMessage: proto_auth_service_pb.ExchangeTokenResponse | null
     ) => void
   ): UnaryResponse;
-  passwordLogin(
-    requestMessage: proto_auth_service_pb.PasswordLoginRequest,
+  signIn(
+    requestMessage: proto_auth_service_pb.SignInRequest,
     metadata: grpc.Metadata,
     callback: (
       error: ServiceError | null,
-      responseMessage: proto_auth_service_pb.PasswordLoginResponse | null
+      responseMessage: proto_auth_service_pb.SignInResponse | null
     ) => void
   ): UnaryResponse;
-  passwordLogin(
-    requestMessage: proto_auth_service_pb.PasswordLoginRequest,
+  signIn(
+    requestMessage: proto_auth_service_pb.SignInRequest,
     callback: (
       error: ServiceError | null,
-      responseMessage: proto_auth_service_pb.PasswordLoginResponse | null
+      responseMessage: proto_auth_service_pb.SignInResponse | null
     ) => void
   ): UnaryResponse;
   refreshToken(

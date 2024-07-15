@@ -1828,7 +1828,7 @@
                 "out_type": "ExchangeTokenResponse"
               },
               {
-                "name": "PasswordLogin",
+                "name": "SignIn",
                 "in_type": "SignInRequest",
                 "out_type": "SignInResponse"
               },

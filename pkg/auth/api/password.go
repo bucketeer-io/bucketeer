@@ -30,7 +30,7 @@ func (s *authService) SignIn(
 	request *authproto.SignInRequest,
 ) (*authproto.SignInResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	err := validatePasswordLoginRequest(request, localizer)
+	err := validateSignInRequest(request, localizer)
 	if err != nil {
 		return nil, err
 	}
