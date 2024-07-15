@@ -1,0 +1,22 @@
+{
+  "plugins": ["prettier-plugin-tailwindcss"],
+  "trailingComma": "none",
+  "arrowParens": "avoid",
+  "singleQuote": true,
+  "useTabs": false,
+  "tabWidth": 2,
+  "semi": true,
+  "importOrder": [
+    "^react",
+    "^clsx$",
+    "^tailwind(.*)$",
+    "^@types$",
+    "^app(.*)$",
+    "^pages(.*)$",
+    "^@radix",
+    "^components(.*)$",
+    "^elements(.*)$",
+    "^[./]"
+  ],
+  "importOrderSeparation": false
+}
