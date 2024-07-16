@@ -55,7 +55,7 @@ message RefreshTokenResponse {
 }
 
 message SignInRequest {
-  string username = 1;
+  string email = 1;
   string password = 2;
 }
 

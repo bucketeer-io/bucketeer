@@ -211,8 +211,8 @@ export namespace RefreshTokenResponse {
 }
 
 export class SignInRequest extends jspb.Message {
-  getUsername(): string;
-  setUsername(value: string): void;
+  getEmail(): string;
+  setEmail(value: string): void;
 
   getPassword(): string;
   setPassword(value: string): void;
@@ -240,7 +240,7 @@ export class SignInRequest extends jspb.Message {
 
 export namespace SignInRequest {
   export type AsObject = {
-    username: string;
+    email: string;
     password: string;
   };
 }

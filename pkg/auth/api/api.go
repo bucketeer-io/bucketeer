@@ -403,7 +403,7 @@ func (s *authService) hasSystemAdminOrganization(orgs []*envproto.Organization) 
 }
 
 func (s *authService) PrepareDemoUser() {
-	if s.config.DemoSignInConfig.Username == "" ||
+	if s.config.DemoSignInConfig.Email == "" ||
 		s.config.DemoSignInConfig.Password == "" ||
 		s.config.DemoSignInConfig.Organization == "" ||
 		s.config.DemoSignInConfig.Project == "" ||

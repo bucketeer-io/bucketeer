@@ -1792,7 +1792,7 @@
             "fields": [
               {
                 "id": 1,
-                "name": "username",
+                "name": "email",
                 "type": "string"
               },
               {

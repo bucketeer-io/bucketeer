@@ -97,9 +97,8 @@ oauth:
     clientSecret:
     redirectUrls:
   demoSignInConfig:
-    username:
-    password:
     email:
+    password:
     organization:
     project:
     environment:

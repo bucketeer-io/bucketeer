@@ -34,11 +34,11 @@ func (s *authService) SignIn(
 	if err != nil {
 		return nil, err
 	}
-	if request.Username != s.config.DemoSignInConfig.Username &&
+	if request.Email != s.config.DemoSignInConfig.Email &&
 		request.Password != s.config.DemoSignInConfig.Password {
 		s.logger.Error(
 			"Password login failed",
-			zap.String("username", request.Username),
+			zap.String("email", request.Email),
 			zap.String("password", request.Password),
 		)
 		dt, err := auth.StatusPasswordAccessDenied.WithDetails(&errdetails.LocalizedMessage{

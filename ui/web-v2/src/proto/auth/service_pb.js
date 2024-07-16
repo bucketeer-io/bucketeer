@@ -1267,7 +1267,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        username: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        email: jspb.Message.getFieldWithDefault(msg, 1, ''),
         password: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
@@ -1311,7 +1311,7 @@ proto.bucketeer.auth.SignInRequest.deserializeBinaryFromReader = function (
     switch (field) {
       case 1:
         var value = /** @type {string} */ (reader.readString());
-        msg.setUsername(value);
+        msg.setEmail(value);
         break;
       case 2:
         var value = /** @type {string} */ (reader.readString());
@@ -1347,7 +1347,7 @@ proto.bucketeer.auth.SignInRequest.serializeBinaryToWriter = function (
   writer
 ) {
   var f = undefined;
-  f = message.getUsername();
+  f = message.getEmail();
   if (f.length > 0) {
     writer.writeString(1, f);
   }
@@ -1358,10 +1358,10 @@ proto.bucketeer.auth.SignInRequest.serializeBinaryToWriter = function (
 };
 
 /**
- * optional string username = 1;
+ * optional string email = 1;
  * @return {string}
  */
-proto.bucketeer.auth.SignInRequest.prototype.getUsername = function () {
+proto.bucketeer.auth.SignInRequest.prototype.getEmail = function () {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ''));
 };
 
@@ -1369,7 +1369,7 @@ proto.bucketeer.auth.SignInRequest.prototype.getUsername = function () {
  * @param {string} value
  * @return {!proto.bucketeer.auth.SignInRequest} returns this
  */
-proto.bucketeer.auth.SignInRequest.prototype.setUsername = function (value) {
+proto.bucketeer.auth.SignInRequest.prototype.setEmail = function (value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
 

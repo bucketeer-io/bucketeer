@@ -74,9 +74,8 @@ backend:
       redirectUrls:
         - https://localhost:9000/auth/callback
     demoSignInConfig:
-      username: demo
-      password: demo
       email: demo@bucketeer.io
+      password: demo
       organization: demo
       project: default
       environment: default
