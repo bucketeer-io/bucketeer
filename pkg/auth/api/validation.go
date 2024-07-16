@@ -117,7 +117,7 @@ func validateSignInRequest(
 	req *authproto.SignInRequest,
 	localizer locale.Localizer,
 ) error {
-	if req.Username == "" {
+	if req.Email == "" {
 		dt, err := auth.StateMissingUsername.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "username"),
