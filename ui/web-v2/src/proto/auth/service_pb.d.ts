@@ -210,6 +210,74 @@ export namespace RefreshTokenResponse {
   };
 }
 
+export class SignInRequest extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getPassword(): string;
+  setPassword(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SignInRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: SignInRequest
+  ): SignInRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: SignInRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): SignInRequest;
+  static deserializeBinaryFromReader(
+    message: SignInRequest,
+    reader: jspb.BinaryReader
+  ): SignInRequest;
+}
+
+export namespace SignInRequest {
+  export type AsObject = {
+    email: string;
+    password: string;
+  };
+}
+
+export class SignInResponse extends jspb.Message {
+  hasToken(): boolean;
+  clearToken(): void;
+  getToken(): proto_auth_token_pb.Token | undefined;
+  setToken(value?: proto_auth_token_pb.Token): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SignInResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: SignInResponse
+  ): SignInResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: SignInResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): SignInResponse;
+  static deserializeBinaryFromReader(
+    message: SignInResponse,
+    reader: jspb.BinaryReader
+  ): SignInResponse;
+}
+
+export namespace SignInResponse {
+  export type AsObject = {
+    token?: proto_auth_token_pb.Token.AsObject;
+  };
+}
+
 export interface AuthTypeMap {
   AUTH_TYPE_UNSPECIFIED: 0;
   AUTH_TYPE_USER_PASSWORD: 1;

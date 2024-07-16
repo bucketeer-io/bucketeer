@@ -73,6 +73,13 @@ backend:
       clientSecret:
       redirectUrls:
         - https://localhost:9000/auth/callback
+    demoSignInConfig:
+      email: demo@bucketeer.io
+      password: demo
+      organizationId: demo
+      projectId: demo
+      environmentId: demo
+      isSystemAdmin: true
   webhook:
     baseURL: https://web-gateway.bucketeer.io
     kmsResourceName: vault

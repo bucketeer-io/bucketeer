@@ -96,6 +96,13 @@ oauth:
     clientId:
     clientSecret:
     redirectUrls:
+  demoSignInConfig:
+    email:
+    password:
+    organizationId:
+    projectId:
+    environmentId:
+    isSystemAdmin:
 
 webhook:
   baseURL:

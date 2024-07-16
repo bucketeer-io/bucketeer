@@ -43,8 +43,18 @@ type GoogleConfig struct {
 	RedirectURLs []string `json:"redirectUrls"`
 }
 
+type DemoSignInConfig struct {
+	Password       string `json:"password"`
+	Email          string `json:"email"`
+	OrganizationId string `json:"organizationId"`
+	ProjectId      string `json:"projectId"`
+	EnvironmentId  string `json:"environmentId"`
+	IsSystemAdmin  bool   `json:"isSystemAdmin"`
+}
+
 type OAuthConfig struct {
-	Issuer       string       `json:"issuer"`
-	Audience     string       `json:"audience"`
-	GoogleConfig GoogleConfig `json:"google"`
+	Issuer           string           `json:"issuer"`
+	Audience         string           `json:"audience"`
+	GoogleConfig     GoogleConfig     `json:"google"`
+	DemoSignInConfig DemoSignInConfig `json:"demoSignInConfig"`
 }

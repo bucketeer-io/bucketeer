@@ -113,3 +113,23 @@ func (mr *MockClientMockRecorder) RefreshToken(ctx, in any, opts ...any) *gomock
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshToken", reflect.TypeOf((*MockClient)(nil).RefreshToken), varargs...)
 }
+
+// SignIn mocks base method.
+func (m *MockClient) SignIn(ctx context.Context, in *auth.SignInRequest, opts ...grpc.CallOption) (*auth.SignInResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "SignIn", varargs...)
+	ret0, _ := ret[0].(*auth.SignInResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SignIn indicates an expected call of SignIn.
+func (mr *MockClientMockRecorder) SignIn(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignIn", reflect.TypeOf((*MockClient)(nil).SignIn), varargs...)
+}

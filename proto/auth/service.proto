@@ -21,7 +21,7 @@ import "proto/auth/token.proto";
 
 enum AuthType {
   AUTH_TYPE_UNSPECIFIED = 0;
-  AUTH_TYPE_USER_PASSWORD = 1;
+  AUTH_TYPE_USER_PASSWORD = 1 [deprecated = true];
   AUTH_TYPE_GOOGLE = 2;
   AUTH_TYPE_GITHUB = 3;
 }
@@ -54,9 +54,19 @@ message RefreshTokenResponse {
   Token token = 1;
 }
 
+message SignInRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message SignInResponse {
+  Token token = 1;
+}
+
 service AuthService {
   rpc GetAuthenticationURL(GetAuthenticationURLRequest)
       returns (GetAuthenticationURLResponse);
   rpc ExchangeToken(ExchangeTokenRequest) returns (ExchangeTokenResponse);
+  rpc SignIn(SignInRequest) returns (SignInResponse);
   rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
 }

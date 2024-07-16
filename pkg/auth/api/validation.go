@@ -112,3 +112,30 @@ func validateRefreshTokenRequest(
 	}
 	return nil
 }
+
+func validateSignInRequest(
+	req *authproto.SignInRequest,
+	localizer locale.Localizer,
+) error {
+	if req.Email == "" {
+		dt, err := auth.StateMissingUsername.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "username"),
+		})
+		if err != nil {
+			return auth.StatusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.Password == "" {
+		dt, err := auth.StateMissingPassword.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "password"),
+		})
+		if err != nil {
+			return auth.StatusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}

@@ -33,4 +33,7 @@ var (
 	StatusUnapprovedAccount       = gstatus.New(codes.PermissionDenied, "auth: unapproved account")
 	StatusAccessDeniedEmail       = gstatus.New(codes.PermissionDenied, "auth: access denied email")
 	StatusUnauthenticated         = gstatus.New(codes.Unauthenticated, "auth: not authenticated")
+	StateMissingUsername          = gstatus.New(codes.InvalidArgument, "auth: missing username")
+	StateMissingPassword          = gstatus.New(codes.InvalidArgument, "auth: missing password")
+	StatusAccessDenied            = gstatus.New(codes.PermissionDenied, "auth: access denied")
 )
