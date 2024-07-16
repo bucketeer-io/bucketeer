@@ -26,9 +26,11 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2"
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
@@ -417,6 +419,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		}
 		return nil, dt.Err()
 	}
+	var event *eventproto.Event
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		storage := v2as.NewProgressiveRolloutStorage(tx)
 		progressiveRollout, err := storage.GetProgressiveRollout(ctx, req.Id, req.EnvironmentNamespace)
@@ -490,13 +493,17 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		); err != nil {
 			return err
 		}
-		if _, err := s.featureClient.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
-			Comment:         "Progressive rollout executed",
-			EnvironmentId:   req.EnvironmentNamespace,
-			Id:              feature.Id,
-			Enabled:         enabled,
-			DefaultStrategy: feature.DefaultStrategy,
-		}); err != nil {
+		updated, err := feature.Update(
+			nil, nil, nil,
+			enabled,
+			nil, nil, nil, nil, nil,
+			feature.DefaultStrategy,
+			nil,
+		)
+		if err != nil {
+			return err
+		}
+		if err := ftStorage.UpdateFeature(ctx, updated, req.EnvironmentNamespace); err != nil {
 			s.logger.Error(
 				"Failed to update feature flag",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -506,6 +513,23 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 					zap.String("featureId", progressiveRollout.FeatureId),
 				)...,
 			)
+			return err
+		}
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_FEATURE,
+			feature.Id,
+			eventproto.Event_FEATURE_UPDATED,
+			&eventproto.FeatureUpdatedEvent{
+				Id: req.Id,
+			},
+			req.EnvironmentNamespace,
+			updated.Feature,
+			feature.Feature,
+			domainevent.WithComment("Progressive rollout executed"),
+			domainevent.WithNewVersion(updated.Version),
+		)
+		if err != nil {
 			return err
 		}
 		return nil
@@ -534,6 +558,23 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		})
 		if err != nil {
 			return nil, statusProgressiveRolloutInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	if errs := s.publisher.PublishMulti(ctx, []publisher.Message{event}); len(errs) > 0 {
+		s.logger.Error(
+			"Failed to publish events",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Any("errors", errs),
+				zap.String("environmentId", req.EnvironmentNamespace),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
 		}
 		return nil, dt.Err()
 	}
