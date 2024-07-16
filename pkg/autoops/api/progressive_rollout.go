@@ -515,10 +515,10 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		event, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_FEATURE,
-			feature.Id,
+			updated.Id,
 			eventproto.Event_FEATURE_UPDATED,
 			&eventproto.FeatureUpdatedEvent{
-				Id: req.Id,
+				Id: updated.Id,
 			},
 			req.EnvironmentNamespace,
 			updated.Feature,
