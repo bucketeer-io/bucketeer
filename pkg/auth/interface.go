@@ -44,11 +44,12 @@ type GoogleConfig struct {
 }
 
 type DemoSignInConfig struct {
-	Password     string `json:"password"`
-	Email        string `json:"email"`
-	Organization string `json:"organization"`
-	Project      string `json:"project"`
-	Environment  string `json:"environment"`
+	Password      string `json:"password"`
+	Email         string `json:"email"`
+	Organization  string `json:"organization"`
+	Project       string `json:"project"`
+	Environment   string `json:"environment"`
+	IsSystemAdmin bool   `json:"isSystemAdmin"`
 }
 
 type OAuthConfig struct {

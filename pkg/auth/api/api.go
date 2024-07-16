@@ -432,7 +432,7 @@ func (s *authService) PrepareDemoUser() {
 					Trial:       false,
 					CreatedAt:   now.Unix(),
 					UpdatedAt:   now.Unix(),
-					SystemAdmin: false,
+					SystemAdmin: s.config.DemoSignInConfig.IsSystemAdmin,
 				}})
 			if err != nil {
 				return err

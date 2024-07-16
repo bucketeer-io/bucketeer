@@ -77,8 +77,9 @@ backend:
       email: demo@bucketeer.io
       password: demo
       organization: demo
-      project: default
-      environment: default
+      project: demo
+      environment: demo
+      isSystemAdmin: true
   webhook:
     baseURL: https://web-gateway.bucketeer.io
     kmsResourceName: vault

@@ -102,6 +102,7 @@ oauth:
     organization:
     project:
     environment:
+    isSystemAdmin:
 
 webhook:
   baseURL:
