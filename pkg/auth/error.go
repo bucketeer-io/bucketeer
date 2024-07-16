@@ -35,5 +35,5 @@ var (
 	StatusUnauthenticated         = gstatus.New(codes.Unauthenticated, "auth: not authenticated")
 	StateMissingUsername          = gstatus.New(codes.InvalidArgument, "auth: missing username")
 	StateMissingPassword          = gstatus.New(codes.InvalidArgument, "auth: missing password")
-	StatusPasswordAccessDenied    = gstatus.New(codes.PermissionDenied, "auth: password access denied")
+	StatusAccessDenied            = gstatus.New(codes.PermissionDenied, "auth: access denied")
 )
