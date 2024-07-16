@@ -29,4 +29,4 @@ export const PAGE_PATH_FEATURE_TRIGGER = '/trigger';
 export const PAGE_PATH_FEATURE_HISTORY = '/history';
 
 export const PAGE_PATH_AUTH_CALLBACK = '/auth/callback';
-export const PAGE_PATH_AUTH_LOGIN = '/auth/login';
+export const PAGE_PATH_AUTH_SIGNIN = '/auth/signin';

@@ -8,13 +8,24 @@ import { Link } from 'react-router-dom';
 
 import AuthWrapper from './authWrapper';
 import { loginSchema } from './formSchema';
+import { signIn } from '../../modules/auth';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { AppDispatch } from '../../store';
+import { getToken } from '../../storage/token';
+import { useHistory } from 'react-router-dom';
+import { AppState } from '../../modules';
+import {
+  DEMO_SIGN_IN_ENABLED,
+  DEMO_SIGN_IN_EMAIL,
+  DEMO_SIGN_IN_PASSWORD
+} from '../../config';
 
 type Inputs = {
   email: string;
   password: string;
 };
 
-const Password: FC = memo(() => {
+const SignIn: FC = memo(() => {
   const methods = useForm({
     resolver: yupResolver(loginSchema),
     defaultValues: {
@@ -29,7 +40,29 @@ const Password: FC = memo(() => {
     formState: { errors, isDirty }
   } = methods;
 
-  const onSubmit: SubmitHandler<Inputs> = (data) => console.log(data);
+  const history = useHistory();
+  const dispatch = useDispatch<AppDispatch>();
+  const isLoading = useSelector<AppState, boolean>(
+    (state) => state.auth.loading,
+    shallowEqual
+  );
+
+  const onSubmit: SubmitHandler<Inputs> = (data) => {
+    if (!DEMO_SIGN_IN_ENABLED) {
+      return;
+    }
+    dispatch(
+      signIn({
+        email: data.email,
+        password: data.password
+      })
+    ).then(() => {
+      const token = getToken();
+      if (token?.accessToken) {
+        history.push('/');
+      }
+    });
+  };
 
   return (
     <AuthWrapper>
@@ -38,14 +71,14 @@ const Password: FC = memo(() => {
           <ArrowNarrowLeftIcon width={16} />
         </button>
       </Link>
-      <h2 className="font-bold text-xl mt-8">Log In</h2>
+      <h2 className="font-bold text-xl mt-8">Sign In</h2>
       <p className="mt-3 text-[#64738B] w-[90%]">
-        To access our Demo site, please log in using the following information.
+        To access our Demo site, please sign in using the following information.
       </p>
       <p className="mt-6 text-[#64738B]">
-        Email: demo@bucketeer.io
+        Email: {DEMO_SIGN_IN_EMAIL}
         <br />
-        Password: demo
+        Password: {DEMO_SIGN_IN_PASSWORD}
       </p>
       {/* <div className="rounded-xl bg-red-50 p-4 mt-8">
         <div className="flex items-center">
@@ -115,7 +148,7 @@ const Password: FC = memo(() => {
         <button
           type="submit"
           className="btn btn-submit mt-8 w-full"
-          disabled={!isDirty || Object.keys(errors).length > 0}
+          disabled={!isDirty || Object.keys(errors).length > 0 || isLoading}
         >
           Log In
         </button>
@@ -124,4 +157,4 @@ const Password: FC = memo(() => {
   );
 });
 
-export default Password;
+export default SignIn;

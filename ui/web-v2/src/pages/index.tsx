@@ -30,7 +30,7 @@ import {
   PAGE_PATH_ROOT,
   PAGE_PATH_ACCOUNTS,
   PAGE_PATH_SETTINGS,
-  PAGE_PATH_AUTH_LOGIN
+  PAGE_PATH_AUTH_SIGNIN
 } from '../constants/routing';
 import { AppState } from '../modules';
 import {
@@ -53,8 +53,8 @@ import { AdminIndexPage } from './admin';
 import { APIKeyIndexPage } from './apiKey';
 import { AuditLogIndexPage } from './auditLog';
 import { AuthCallbackPage } from './auth';
-import Login from './auth/login';
-import Password from './auth/password';
+import Login from './auth/signin';
+import SignIn from './auth/email';
 import SelectOrganization from './auth/selectOrganization';
 import { ExperimentIndexPage } from './experiment';
 import { FeatureIndexPage } from './feature';
@@ -84,7 +84,7 @@ export const App: FC = memo(() => {
         path={PAGE_PATH_AUTH_CALLBACK}
         component={AuthCallbackPage}
       />
-      <Route exact path={PAGE_PATH_AUTH_LOGIN} component={Password} />
+      <Route exact path={PAGE_PATH_AUTH_SIGNIN} component={SignIn} />
       <Route path={PAGE_PATH_ROOT} component={Root} />
     </Switch>
   );

@@ -7,7 +7,9 @@ import {
   ExchangeTokenRequest,
   ExchangeTokenResponse,
   RefreshTokenRequest,
-  RefreshTokenResponse
+  RefreshTokenResponse,
+  SignInRequest,
+  SignInResponse
 } from '../proto/auth/service_pb';
 import {
   AuthServiceClient,
@@ -38,6 +40,27 @@ export class AuthServiceError<Request> extends Error {
 }
 
 const client = new AuthServiceClient(urls.GRPC);
+
+export interface SignInResult {
+  request: SignInRequest;
+  response: SignInResponse;
+}
+
+export function signIn(request: SignInRequest): Promise<SignInResult> {
+  return new Promise(
+    (resolve: (result: SignInResult) => void, reject): void => {
+      client.signIn(request, getMetaData(), (error, response): void => {
+        if (isNotNull(error) || isNull(response)) {
+          reject(
+            new AuthServiceError(extractErrorMessage(error), request, error)
+          );
+        } else {
+          resolve({ request, response });
+        }
+      });
+    }
+  );
+}
 
 export interface GetAuthenticationResult {
   request: GetAuthenticationURLRequest;

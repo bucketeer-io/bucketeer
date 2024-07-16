@@ -7,7 +7,8 @@ import * as authGrpc from '../grpc/auth';
 import {
   GetAuthenticationURLRequest,
   ExchangeTokenRequest,
-  RefreshTokenRequest
+  RefreshTokenRequest,
+  SignInRequest
 } from '../proto/auth/service_pb';
 import { Token } from '../proto/auth/token_pb';
 import {
@@ -76,6 +77,22 @@ export const refreshToken = createAsyncThunk<
   return result.response.getToken().toObject();
 });
 
+interface SignInParams {
+  email: string;
+  password: string;
+}
+
+export const signIn = createAsyncThunk<Token.AsObject, SignInParams>(
+  `${MODULE_NAME}/signIn`,
+  async (params) => {
+    const request = new SignInRequest();
+    request.setEmail(params.email);
+    request.setPassword(params.password);
+    const result = await authGrpc.signIn(request);
+    return result.response.getToken().toObject();
+  }
+);
+
 const initialState = {
   loading: false
 };
@@ -124,6 +141,17 @@ export const authSlice = createSlice({
         state.loading = true;
       })
       .addCase(exchangeTokenFromUrl.fulfilled, (state, action) => {
+        setToken(action.payload);
+        state.loading = false;
+      })
+      .addCase(signIn.rejected, (state) => {
+        state.loading = false;
+        clearTokenFromStorage();
+      })
+      .addCase(signIn.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(signIn.fulfilled, (state, action) => {
         setToken(action.payload);
         state.loading = false;
       });
