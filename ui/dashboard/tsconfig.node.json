@@ -9,6 +9,5 @@
     "strict": true,
     "noEmit": true
   },
-  "include": ["vite.config.ts", "src/**/*"],
-  "exclude": ["node_modules"]
+  "include": ["vite.config.ts", "./.eslintrc.cjs"]
 }
