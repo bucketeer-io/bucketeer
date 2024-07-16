@@ -37,7 +37,7 @@ func (s *authService) SignIn(
 	if request.Email != s.config.DemoSignInConfig.Email &&
 		request.Password != s.config.DemoSignInConfig.Password {
 		s.logger.Error(
-			"Password login failed",
+			"Sign in failed",
 			zap.String("email", request.Email),
 			zap.String("password", request.Password),
 		)
