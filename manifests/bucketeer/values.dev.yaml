@@ -76,9 +76,9 @@ backend:
     demoSignInConfig:
       email: demo@bucketeer.io
       password: demo
-      organization: demo
-      project: demo
-      environment: demo
+      organizationId: demo
+      projectId: demo
+      environmentId: demo
       isSystemAdmin: true
   webhook:
     baseURL: https://web-gateway.bucketeer.io

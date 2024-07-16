@@ -99,9 +99,9 @@ oauth:
   demoSignInConfig:
     email:
     password:
-    organization:
-    project:
-    environment:
+    organizationId:
+    projectId:
+    environmentId:
     isSystemAdmin:
 
 webhook:

@@ -405,9 +405,9 @@ func (s *authService) hasSystemAdminOrganization(orgs []*envproto.Organization) 
 func (s *authService) PrepareDemoUser() {
 	if s.config.DemoSignInConfig.Email == "" ||
 		s.config.DemoSignInConfig.Password == "" ||
-		s.config.DemoSignInConfig.Organization == "" ||
-		s.config.DemoSignInConfig.Project == "" ||
-		s.config.DemoSignInConfig.Environment == "" {
+		s.config.DemoSignInConfig.OrganizationId == "" ||
+		s.config.DemoSignInConfig.ProjectId == "" ||
+		s.config.DemoSignInConfig.EnvironmentId == "" {
 		s.logger.Info("Skip preparing demo user, password login config is not completed")
 	}
 	ctx := context.Background()
@@ -419,11 +419,11 @@ func (s *authService) PrepareDemoUser() {
 	now := time.Now()
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		organizationStorage := envstotage.NewOrganizationStorage(tx)
-		_, err = organizationStorage.GetOrganization(ctx, s.config.DemoSignInConfig.Organization)
+		_, err = organizationStorage.GetOrganization(ctx, s.config.DemoSignInConfig.OrganizationId)
 		if err != nil && errors.Is(err, envstotage.ErrOrganizationNotFound) {
 			err = organizationStorage.CreateOrganization(ctx, &envdomain.Organization{
 				Organization: &envproto.Organization{
-					Id:          s.config.DemoSignInConfig.Organization,
+					Id:          s.config.DemoSignInConfig.OrganizationId,
 					Name:        "Demo organization",
 					UrlCode:     "demo",
 					Description: "This organization is for demo users",
@@ -439,11 +439,11 @@ func (s *authService) PrepareDemoUser() {
 			}
 		}
 		projectStorage := envstotage.NewProjectStorage(tx)
-		_, err = projectStorage.GetProject(ctx, s.config.DemoSignInConfig.Project)
+		_, err = projectStorage.GetProject(ctx, s.config.DemoSignInConfig.ProjectId)
 		if err != nil && errors.Is(err, envstotage.ErrProjectNotFound) {
 			err = projectStorage.CreateProject(ctx, &envdomain.Project{
 				Project: &envproto.Project{
-					Id:             s.config.DemoSignInConfig.Project,
+					Id:             s.config.DemoSignInConfig.ProjectId,
 					Description:    "This project is for demo users",
 					Disabled:       false,
 					Trial:          false,
@@ -452,26 +452,26 @@ func (s *authService) PrepareDemoUser() {
 					UpdatedAt:      now.Unix(),
 					Name:           "Demo",
 					UrlCode:        "demo",
-					OrganizationId: s.config.DemoSignInConfig.Organization,
+					OrganizationId: s.config.DemoSignInConfig.OrganizationId,
 				}})
 			if err != nil {
 				return err
 			}
 		}
 		environmentStorage := envstotage.NewEnvironmentStorage(tx)
-		_, err = environmentStorage.GetEnvironmentV2(ctx, s.config.DemoSignInConfig.Environment)
+		_, err = environmentStorage.GetEnvironmentV2(ctx, s.config.DemoSignInConfig.EnvironmentId)
 		if err != nil && errors.Is(err, envstotage.ErrEnvironmentNotFound) {
 			err = environmentStorage.CreateEnvironmentV2(ctx, &envdomain.EnvironmentV2{
 				EnvironmentV2: &envproto.EnvironmentV2{
-					Id:             s.config.DemoSignInConfig.Environment,
+					Id:             s.config.DemoSignInConfig.EnvironmentId,
 					Name:           "Demo",
 					UrlCode:        "demo",
 					Description:    "This environment is for demo users",
-					ProjectId:      s.config.DemoSignInConfig.Project,
+					ProjectId:      s.config.DemoSignInConfig.ProjectId,
 					Archived:       false,
 					CreatedAt:      now.Unix(),
 					UpdatedAt:      now.Unix(),
-					OrganizationId: s.config.DemoSignInConfig.Organization,
+					OrganizationId: s.config.DemoSignInConfig.OrganizationId,
 					RequireComment: false,
 				}})
 			if err != nil {
@@ -489,18 +489,18 @@ func (s *authService) PrepareDemoUser() {
 	_, err = accountStorage.GetAccountV2(
 		ctx,
 		s.config.DemoSignInConfig.Email,
-		s.config.DemoSignInConfig.Organization,
+		s.config.DemoSignInConfig.OrganizationId,
 	)
 	if err != nil && errors.Is(err, accountstotage.ErrAccountNotFound) {
 		err = accountStorage.CreateAccountV2(ctx, &domain.AccountV2{
 			AccountV2: &acproto.AccountV2{
-				OrganizationId:   s.config.DemoSignInConfig.Organization,
+				OrganizationId:   s.config.DemoSignInConfig.OrganizationId,
 				Email:            s.config.DemoSignInConfig.Email,
 				Name:             "demo",
 				OrganizationRole: acproto.AccountV2_Role_Organization_ADMIN,
 				EnvironmentRoles: []*acproto.AccountV2_EnvironmentRole{
 					{
-						EnvironmentId: s.config.DemoSignInConfig.Environment,
+						EnvironmentId: s.config.DemoSignInConfig.EnvironmentId,
 						Role:          acproto.AccountV2_Role_Environment_EDITOR,
 					},
 				},
