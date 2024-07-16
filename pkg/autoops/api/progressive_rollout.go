@@ -464,9 +464,6 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		// Enable the flag if it is disabled and it is the first rollout execution
 		var enabled *wrapperspb.BoolValue
 		if !feature.Enabled && progressiveRollout.IsWaiting() {
-			if err := feature.Enable(); err != nil {
-				return err
-			}
 			enabled = &wrapperspb.BoolValue{Value: true}
 		}
 		handler, err := command.NewProgressiveRolloutCommandHandler(
@@ -484,20 +481,20 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		if err := storage.UpdateProgressiveRollout(ctx, progressiveRollout, req.EnvironmentNamespace); err != nil {
 			return err
 		}
-		if err := ExecuteProgressiveRolloutOperation(
-			ctx,
+		defaultStrategy, err := ExecuteProgressiveRolloutOperation(
 			progressiveRollout,
 			feature,
 			req.ChangeProgressiveRolloutTriggeredAtCommand.ScheduleId,
 			req.EnvironmentNamespace,
-		); err != nil {
+		)
+		if err != nil {
 			return err
 		}
 		updated, err := feature.Update(
 			nil, nil, nil,
 			enabled,
 			nil, nil, nil, nil, nil,
-			feature.DefaultStrategy,
+			defaultStrategy,
 			nil,
 		)
 		if err != nil {
