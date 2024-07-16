@@ -48,7 +48,7 @@ func NewGoalCommandHandler(
 	return &goalCommandHandler{
 		editor:               editor,
 		goal:                 goal,
-		previousGoal:         goal,
+		previousGoal:         prev,
 		publisher:            p,
 		environmentNamespace: environmentNamespace,
 	}, nil
