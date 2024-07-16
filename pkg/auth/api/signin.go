@@ -34,8 +34,9 @@ func (s *authService) SignIn(
 	if err != nil {
 		return nil, err
 	}
-	if request.Email != s.config.DemoSignInConfig.Email &&
-		request.Password != s.config.DemoSignInConfig.Password {
+	config := s.config.DemoSignIn
+	if request.Email != config.Email ||
+		request.Password != config.Password {
 		s.logger.Error(
 			"Sign in failed",
 			zap.String("email", request.Email),
@@ -50,7 +51,7 @@ func (s *authService) SignIn(
 		}
 		return nil, dt.Err()
 	}
-	token, err := s.generateToken(ctx, s.config.DemoSignInConfig.Email, localizer)
+	token, err := s.generateToken(ctx, config.Email, localizer)
 	if err != nil {
 		return nil, err
 	}
