@@ -44,6 +44,7 @@ type GoogleConfig struct {
 }
 
 type DemoSignInConfig struct {
+	Enabled        bool   `json:"enabled"`
 	Password       string `json:"password"`
 	Email          string `json:"email"`
 	OrganizationId string `json:"organizationId"`
@@ -53,8 +54,8 @@ type DemoSignInConfig struct {
 }
 
 type OAuthConfig struct {
-	Issuer           string           `json:"issuer"`
-	Audience         string           `json:"audience"`
-	GoogleConfig     GoogleConfig     `json:"google"`
-	DemoSignInConfig DemoSignInConfig `json:"demoSignInConfig"`
+	Issuer       string           `json:"issuer"`
+	Audience     string           `json:"audience"`
+	GoogleConfig GoogleConfig     `json:"google"`
+	DemoSignIn   DemoSignInConfig `json:"demoSignIn"`
 }

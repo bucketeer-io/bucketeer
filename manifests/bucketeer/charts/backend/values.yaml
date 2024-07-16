@@ -96,7 +96,8 @@ oauth:
     clientId:
     clientSecret:
     redirectUrls:
-  demoSignInConfig:
+  demoSignIn:
+    enabled:
     email:
     password:
     organizationId:
