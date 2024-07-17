@@ -413,7 +413,7 @@ func (s *authService) PrepareDemoUser() {
 		config.OrganizationId == "" ||
 		config.ProjectId == "" ||
 		config.EnvironmentId == "" {
-		s.logger.Error("One or more Demo Sign In configuration are missing")
+		s.logger.Error("One or more demo sign-in configuration are missing")
 		return
 	}
 	ctx, cancel := context.WithCancel(context.Background())
@@ -421,7 +421,7 @@ func (s *authService) PrepareDemoUser() {
 
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
-		s.logger.Error("create mysql tx error", zap.Error(err))
+		s.logger.Error("Create mysql tx error", zap.Error(err))
 		return
 	}
 	now := time.Now()
@@ -429,64 +429,73 @@ func (s *authService) PrepareDemoUser() {
 		// Create a demo organization if not exists
 		organizationStorage := envstotage.NewOrganizationStorage(tx)
 		_, err = organizationStorage.GetOrganization(ctx, config.OrganizationId)
-		if err != nil && errors.Is(err, envstotage.ErrOrganizationNotFound) {
-			err = organizationStorage.CreateOrganization(ctx, &envdomain.Organization{
-				Organization: &envproto.Organization{
-					Id:          config.OrganizationId,
-					Name:        "Demo organization",
-					UrlCode:     "demo",
-					Description: "This organization is for demo users",
-					Disabled:    false,
-					Archived:    false,
-					Trial:       false,
-					CreatedAt:   now.Unix(),
-					UpdatedAt:   now.Unix(),
-					SystemAdmin: config.IsSystemAdmin,
-				}})
-			if err != nil {
+		if err != nil {
+			if errors.Is(err, envstotage.ErrOrganizationNotFound) {
+				err = organizationStorage.CreateOrganization(ctx, &envdomain.Organization{
+					Organization: &envproto.Organization{
+						Id:          config.OrganizationId,
+						Name:        "Demo organization",
+						UrlCode:     "demo",
+						Description: "This organization is for demo users",
+						Disabled:    false,
+						Archived:    false,
+						Trial:       false,
+						CreatedAt:   now.Unix(),
+						UpdatedAt:   now.Unix(),
+						SystemAdmin: config.IsSystemAdmin,
+					},
+				})
+			}
+			if !errors.Is(err, envstotage.ErrOrganizationAlreadyExists) {
 				return err
 			}
 		}
 		// Create a demo project if not exists
 		projectStorage := envstotage.NewProjectStorage(tx)
 		_, err = projectStorage.GetProject(ctx, config.ProjectId)
-		if err != nil && errors.Is(err, envstotage.ErrProjectNotFound) {
-			err = projectStorage.CreateProject(ctx, &envdomain.Project{
-				Project: &envproto.Project{
-					Id:             config.ProjectId,
-					Description:    "This project is for demo users",
-					Disabled:       false,
-					Trial:          false,
-					CreatorEmail:   config.Email,
-					CreatedAt:      now.Unix(),
-					UpdatedAt:      now.Unix(),
-					Name:           "Demo",
-					UrlCode:        "demo",
-					OrganizationId: config.OrganizationId,
-				}})
-			if err != nil {
-				return err
+		if err != nil {
+			if errors.Is(err, envstotage.ErrProjectNotFound) {
+				err = projectStorage.CreateProject(ctx, &envdomain.Project{
+					Project: &envproto.Project{
+						Id:             config.ProjectId,
+						Description:    "This project is for demo users",
+						Disabled:       false,
+						Trial:          false,
+						CreatorEmail:   config.Email,
+						CreatedAt:      now.Unix(),
+						UpdatedAt:      now.Unix(),
+						Name:           "Demo",
+						UrlCode:        "demo",
+						OrganizationId: config.OrganizationId,
+					},
+				})
+				if !errors.Is(err, envstotage.ErrProjectAlreadyExists) {
+					return err
+				}
 			}
 		}
 		// Create a demo environment if not exists
 		environmentStorage := envstotage.NewEnvironmentStorage(tx)
 		_, err = environmentStorage.GetEnvironmentV2(ctx, config.EnvironmentId)
-		if err != nil && errors.Is(err, envstotage.ErrEnvironmentNotFound) {
-			err = environmentStorage.CreateEnvironmentV2(ctx, &envdomain.EnvironmentV2{
-				EnvironmentV2: &envproto.EnvironmentV2{
-					Id:             config.EnvironmentId,
-					Name:           "Demo",
-					UrlCode:        "demo",
-					Description:    "This environment is for demo users",
-					ProjectId:      config.ProjectId,
-					Archived:       false,
-					CreatedAt:      now.Unix(),
-					UpdatedAt:      now.Unix(),
-					OrganizationId: config.OrganizationId,
-					RequireComment: false,
-				}})
-			if err != nil {
-				return err
+		if err != nil {
+			if errors.Is(err, envstotage.ErrEnvironmentNotFound) {
+				err := environmentStorage.CreateEnvironmentV2(ctx, &envdomain.EnvironmentV2{
+					EnvironmentV2: &envproto.EnvironmentV2{
+						Id:             config.EnvironmentId,
+						Name:           "Demo",
+						UrlCode:        "demo",
+						Description:    "This environment is for demo users",
+						ProjectId:      config.ProjectId,
+						Archived:       false,
+						CreatedAt:      now.Unix(),
+						UpdatedAt:      now.Unix(),
+						OrganizationId: config.OrganizationId,
+						RequireComment: false,
+					},
+				})
+				if !errors.Is(err, envstotage.ErrEnvironmentAlreadyExists) {
+					return err
+				}
 			}
 		}
 		// Create a demo account if not exists
@@ -496,27 +505,34 @@ func (s *authService) PrepareDemoUser() {
 			config.Email,
 			config.OrganizationId,
 		)
-		if err != nil && errors.Is(err, accountstotage.ErrAccountNotFound) {
-			err = accountStorage.CreateAccountV2(ctx, &domain.AccountV2{
-				AccountV2: &acproto.AccountV2{
-					OrganizationId:   config.OrganizationId,
-					Email:            config.Email,
-					Name:             "Demo Account",
-					OrganizationRole: acproto.AccountV2_Role_Organization_ADMIN,
-					EnvironmentRoles: []*acproto.AccountV2_EnvironmentRole{
-						{
-							EnvironmentId: config.EnvironmentId,
-							Role:          acproto.AccountV2_Role_Environment_EDITOR,
+		if err != nil {
+			if errors.Is(err, accountstotage.ErrAccountNotFound) {
+				err = accountStorage.CreateAccountV2(ctx, &domain.AccountV2{
+					AccountV2: &acproto.AccountV2{
+						OrganizationId:   config.OrganizationId,
+						Email:            config.Email,
+						Name:             "Demo Account",
+						OrganizationRole: acproto.AccountV2_Role_Organization_ADMIN,
+						EnvironmentRoles: []*acproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: config.EnvironmentId,
+								Role:          acproto.AccountV2_Role_Environment_EDITOR,
+							},
 						},
+						CreatedAt: now.Unix(),
+						UpdatedAt: now.Unix(),
 					},
-					CreatedAt: now.Unix(),
-					UpdatedAt: now.Unix(),
-				},
-			})
+				})
+				if !errors.Is(err, accountstotage.ErrAccountAlreadyExists) {
+					return err
+				}
+			}
 		}
 		return nil
 	})
 	if err != nil {
 		s.logger.Error("Failed to prepare demo environment", zap.Error(err))
+		return
 	}
+	s.logger.Info("Demo environment prepared successfully")
 }
