@@ -30,7 +30,6 @@ import (
 	experimentclientmock "github.com/bucketeer-io/bucketeer/pkg/experiment/client/mock"
 	featureclientmock "github.com/bucketeer-io/bucketeer/pkg/feature/client/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
@@ -1333,34 +1332,11 @@ func TestExecuteProgressiveRolloutMySQL(t *testing.T) {
 			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
-			desc: "err: publish an event fails",
-			setup: func(s *AutoOpsService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
-				s.publisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
-					gomock.Any(), gomock.Any(),
-				).Return(map[string]error{"key": errors.New("internal")})
-			},
-			req: &autoopsproto.ExecuteProgressiveRolloutRequest{
-				Id:                   "aid1",
-				EnvironmentNamespace: "ns0",
-				ChangeProgressiveRolloutTriggeredAtCommand: &autoopsproto.ChangeProgressiveRolloutScheduleTriggeredAtCommand{
-					ScheduleId: "sid1",
-				},
-			},
-			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
-		},
-		{
 			desc: "success",
 			setup: func(s *AutoOpsService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
-				s.publisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
-					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req: &autoopsproto.ExecuteProgressiveRolloutRequest{
