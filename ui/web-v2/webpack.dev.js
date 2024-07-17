@@ -22,7 +22,10 @@ module.exports = merge(common, {
     new webpack.EnvironmentPlugin({
       RELEASE_CHANNEL: 'dev',
       DEV_WEB_API_ENDPOINT: process.env.DEV_WEB_API_ENDPOINT,
-      DEV_AUTH_REDIRECT_ENDPOINT: process.env.DEV_AUTH_REDIRECT_ENDPOINT
+      DEV_AUTH_REDIRECT_ENDPOINT: process.env.DEV_AUTH_REDIRECT_ENDPOINT,
+      DEMO_SIGN_IN_ENABLED: process.env.DEMO_SIGN_IN_ENABLED,
+      DEMO_SIGN_IN_EMAIL: process.env.DEMO_SIGN_IN_EMAIL,
+      DEMO_SIGN_IN_PASSWORD: process.env.DEMO_SIGN_IN_PASSWORD
     })
   ]
 });

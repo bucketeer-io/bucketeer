@@ -21,6 +21,18 @@ declare global {
 }
 
 export const GOOGLE_TAG_MANAGER_ID = window.env?.GOOGLE_TAG_MANAGER_ID || '';
-export const DEMO_SIGN_IN_ENABLED = window.env?.DEMO_SIGN_IN_ENABLED || false;
-export const DEMO_SIGN_IN_EMAIL = window.env?.DEMO_SIGN_IN_EMAIL || '';
-export const DEMO_SIGN_IN_PASSWORD = window.env?.DEMO_SIGN_IN_PASSWORD || '';
+
+export const DEMO_SIGN_IN_ENABLED =
+  process.env.RELEASE_CHANNEL !== 'prod'
+    ? process.env.DEMO_SIGN_IN_ENABLED
+    : window.env?.DEMO_SIGN_IN_ENABLED;
+
+export const DEMO_SIGN_IN_EMAIL =
+  process.env.RELEASE_CHANNEL !== 'prod'
+    ? process.env.DEMO_SIGN_IN_EMAIL
+    : window.env?.DEMO_SIGN_IN_EMAIL;
+
+export const DEMO_SIGN_IN_PASSWORD =
+  process.env.RELEASE_CHANNEL !== 'prod'
+    ? process.env.DEMO_SIGN_IN_PASSWORD
+    : window.env?.DEMO_SIGN_IN_PASSWORD;
