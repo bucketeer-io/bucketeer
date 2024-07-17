@@ -35,10 +35,12 @@ func (s *authService) SignIn(
 		return nil, err
 	}
 	config := s.config.DemoSignIn
-	if request.Email != config.Email ||
+	if !config.Enabled ||
+		request.Email != config.Email ||
 		request.Password != config.Password {
 		s.logger.Error(
 			"Sign in failed",
+			zap.Bool("enabled", config.Enabled),
 			zap.String("email", request.Email),
 			zap.String("password", request.Password),
 		)
