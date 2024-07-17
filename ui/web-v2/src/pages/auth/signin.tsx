@@ -12,7 +12,7 @@ import { redirectToAuthUrl } from '../../modules/auth';
 import { AppDispatch } from '../../store';
 import { DEMO_SIGN_IN_ENABLED } from '../../config';
 
-const Login: FC = memo(() => {
+const SignIn: FC = memo(() => {
   const dispatch = useDispatch<AppDispatch>();
   const isLoading = useSelector<AppState, boolean>(
     (state) => state.auth.loading,
@@ -62,4 +62,4 @@ const Login: FC = memo(() => {
   );
 });
 
-export default Login;
+export default SignIn;

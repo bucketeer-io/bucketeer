@@ -1,8 +1,12 @@
 import { PAGE_PATH_ROOT } from '../../constants/routing';
 import { classNames } from '../../utils/css';
-import { ArrowNarrowLeftIcon, EyeIcon } from '@heroicons/react/outline';
+import {
+  ArrowNarrowLeftIcon,
+  EyeIcon,
+  EyeOffIcon
+} from '@heroicons/react/outline';
 import { yupResolver } from '@hookform/resolvers/yup';
-import React, { memo, FC } from 'react';
+import React, { memo, FC, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
@@ -25,7 +29,7 @@ type Inputs = {
   password: string;
 };
 
-const SignIn: FC = memo(() => {
+const Email: FC = memo(() => {
   const methods = useForm({
     resolver: yupResolver(loginSchema),
     defaultValues: {
@@ -39,6 +43,8 @@ const SignIn: FC = memo(() => {
     handleSubmit,
     formState: { errors, isDirty }
   } = methods;
+
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   const history = useHistory();
   const dispatch = useDispatch<AppDispatch>();
@@ -126,17 +132,25 @@ const SignIn: FC = memo(() => {
                   'border border-gray-300 w-full',
                   errors.password ? 'input-text-error' : 'input-text'
                 )}
-                type="password"
+                type={isPasswordVisible ? 'text' : 'password'}
               />
-              <button className="absolute right-2 inset-y-0 p-[2px]">
-                <EyeIcon width={16} />
+              <button
+                type="button"
+                className="absolute right-2 inset-y-0 p-[2px]"
+                onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+              >
+                {isPasswordVisible ? (
+                  <EyeOffIcon width={16} />
+                ) : (
+                  <EyeIcon width={16} />
+                )}
               </button>
             </div>
-            <p className="input-error">
+            {/* <p className="input-error">
               {errors.password && (
                 <span role="alert">{errors.password.message}</span>
               )}
-            </p>
+            </p> */}
             {/* <p className="text-red-600 text-sm mt-1">
               Wrong email or password. Try again or{' '}
               <strong className="underline cursor-pointer">
@@ -157,4 +171,4 @@ const SignIn: FC = memo(() => {
   );
 });
 
-export default SignIn;
+export default Email;
