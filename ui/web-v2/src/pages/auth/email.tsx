@@ -146,11 +146,11 @@ const Email: FC = memo(() => {
                 )}
               </button>
             </div>
-            {/* <p className="input-error">
+            <p className="input-error">
               {errors.password && (
                 <span role="alert">{errors.password.message}</span>
               )}
-            </p> */}
+            </p>
             {/* <p className="text-red-600 text-sm mt-1">
               Wrong email or password. Try again or{' '}
               <strong className="underline cursor-pointer">
