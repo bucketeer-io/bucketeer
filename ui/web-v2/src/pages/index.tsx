@@ -30,7 +30,7 @@ import {
   PAGE_PATH_ROOT,
   PAGE_PATH_ACCOUNTS,
   PAGE_PATH_SETTINGS,
-  PAGE_PATH_AUTH_LOGIN
+  PAGE_PATH_AUTH_SIGNIN
 } from '../constants/routing';
 import { AppState } from '../modules';
 import {
@@ -53,8 +53,8 @@ import { AdminIndexPage } from './admin';
 import { APIKeyIndexPage } from './apiKey';
 import { AuditLogIndexPage } from './auditLog';
 import { AuthCallbackPage } from './auth';
-import Login from './auth/login';
-import Password from './auth/password';
+import Login from './auth/signin';
+import SignIn from './auth/email';
 import SelectOrganization from './auth/selectOrganization';
 import { ExperimentIndexPage } from './experiment';
 import { FeatureIndexPage } from './feature';
@@ -78,15 +78,18 @@ export const App: FC = memo(() => {
   }, []);
 
   return (
-    <Switch>
-      <Route
-        exact
-        path={PAGE_PATH_AUTH_CALLBACK}
-        component={AuthCallbackPage}
-      />
-      <Route exact path={PAGE_PATH_AUTH_LOGIN} component={Password} />
-      <Route path={PAGE_PATH_ROOT} component={Root} />
-    </Switch>
+    <>
+      <Switch>
+        <Route
+          exact
+          path={PAGE_PATH_AUTH_CALLBACK}
+          component={AuthCallbackPage}
+        />
+        <Route exact path={PAGE_PATH_AUTH_SIGNIN} component={SignIn} />
+        <Route path={PAGE_PATH_ROOT} component={Root} />
+      </Switch>
+      <Toasts />
+    </>
   );
 });
 
@@ -230,87 +233,81 @@ export const EnvironmentRoot: FC = memo(() => {
   dispatch(setCurrentEnvironment(environmentRole.environment.id));
 
   return (
-    <>
-      <Switch>
-        {!editable && (
-          <Route exact path={[`${url}/:any${PAGE_PATH_NEW}`]}>
-            <h3>403 Access denied</h3>
-          </Route>
-        )}
-        <Route
-          exact
-          path={[
-            `${url}${PAGE_PATH_FEATURES}`,
-            `${url}${PAGE_PATH_FEATURES}${PAGE_PATH_NEW}`,
-            `${url}${PAGE_PATH_FEATURES}${PAGE_PATH_FEATURE_CLONE}/:featureId`
-          ]}
-        >
-          <FeatureIndexPage />
+    <Switch>
+      {!editable && (
+        <Route exact path={[`${url}/:any${PAGE_PATH_NEW}`]}>
+          <h3>403 Access denied</h3>
         </Route>
-        <Route path={`${url}${PAGE_PATH_FEATURES}/:featureId`}>
-          <FeatureDetailPage />
-        </Route>
-        <Route
-          exact
-          path={[
-            `${url}${PAGE_PATH_EXPERIMENTS}`,
-            `${url}${PAGE_PATH_EXPERIMENTS}/:experimentId`
-          ]}
-        >
-          <ExperimentIndexPage />
-        </Route>
-        <Route
-          exact
-          path={[
-            `${url}${PAGE_PATH_GOALS}`,
-            `${url}${PAGE_PATH_GOALS}/:goalId`
-          ]}
-        >
-          <GoalIndexPage />
-        </Route>
-        <Route
-          exact
-          path={[
-            `${url}${PAGE_PATH_APIKEYS}`,
-            `${url}${PAGE_PATH_APIKEYS}/:apiKeyId`
-          ]}
-        >
-          <APIKeyIndexPage />
-        </Route>
-        <Route
-          exact
-          path={[
-            `${url}${PAGE_PATH_USER_SEGMENTS}`,
-            `${url}${PAGE_PATH_USER_SEGMENTS}/:segmentId`
-          ]}
-        >
-          <SegmentIndexPage />
-        </Route>
-        <Route exact path={[`${url}${PAGE_PATH_USERS}`]}>
-          <div>
-            <h3>Users</h3>
-          </div>
-        </Route>
-        <Route exact path={[`${url}${PAGE_PATH_AUDIT_LOGS}`]}>
-          <AuditLogIndexPage />
-        </Route>
-        <Route
-          exact
-          path={[
-            `${url}${PAGE_PATH_ACCOUNTS}`,
-            `${url}${PAGE_PATH_ACCOUNTS}/:accountId`
-          ]}
-        >
-          <AccountIndexPage />
-        </Route>
-        <Route path={`${url}${PAGE_PATH_SETTINGS}`}>
-          <SettingsIndexPage />
-        </Route>
-        <Route path="*">
-          <NotFound />
-        </Route>
-      </Switch>
-      <Toasts />
-    </>
+      )}
+      <Route
+        exact
+        path={[
+          `${url}${PAGE_PATH_FEATURES}`,
+          `${url}${PAGE_PATH_FEATURES}${PAGE_PATH_NEW}`,
+          `${url}${PAGE_PATH_FEATURES}${PAGE_PATH_FEATURE_CLONE}/:featureId`
+        ]}
+      >
+        <FeatureIndexPage />
+      </Route>
+      <Route path={`${url}${PAGE_PATH_FEATURES}/:featureId`}>
+        <FeatureDetailPage />
+      </Route>
+      <Route
+        exact
+        path={[
+          `${url}${PAGE_PATH_EXPERIMENTS}`,
+          `${url}${PAGE_PATH_EXPERIMENTS}/:experimentId`
+        ]}
+      >
+        <ExperimentIndexPage />
+      </Route>
+      <Route
+        exact
+        path={[`${url}${PAGE_PATH_GOALS}`, `${url}${PAGE_PATH_GOALS}/:goalId`]}
+      >
+        <GoalIndexPage />
+      </Route>
+      <Route
+        exact
+        path={[
+          `${url}${PAGE_PATH_APIKEYS}`,
+          `${url}${PAGE_PATH_APIKEYS}/:apiKeyId`
+        ]}
+      >
+        <APIKeyIndexPage />
+      </Route>
+      <Route
+        exact
+        path={[
+          `${url}${PAGE_PATH_USER_SEGMENTS}`,
+          `${url}${PAGE_PATH_USER_SEGMENTS}/:segmentId`
+        ]}
+      >
+        <SegmentIndexPage />
+      </Route>
+      <Route exact path={[`${url}${PAGE_PATH_USERS}`]}>
+        <div>
+          <h3>Users</h3>
+        </div>
+      </Route>
+      <Route exact path={[`${url}${PAGE_PATH_AUDIT_LOGS}`]}>
+        <AuditLogIndexPage />
+      </Route>
+      <Route
+        exact
+        path={[
+          `${url}${PAGE_PATH_ACCOUNTS}`,
+          `${url}${PAGE_PATH_ACCOUNTS}/:accountId`
+        ]}
+      >
+        <AccountIndexPage />
+      </Route>
+      <Route path={`${url}${PAGE_PATH_SETTINGS}`}>
+        <SettingsIndexPage />
+      </Route>
+      <Route path="*">
+        <NotFound />
+      </Route>
+    </Switch>
   );
 });
