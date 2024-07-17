@@ -15,7 +15,6 @@
 package api
 
 import (
-	"context"
 	"errors"
 
 	"github.com/golang/protobuf/ptypes"
@@ -31,50 +30,43 @@ var errVariationNotFound = errors.New("autoops: a variation for a progressive ro
 const totalVariationWeight = int32(100000)
 
 func ExecuteProgressiveRolloutOperation(
-	ctx context.Context,
 	progressiveRollout *domain.ProgressiveRollout,
 	feature *ftdomain.Feature,
 	scheduleID, environmentNamespace string,
-) error {
+) (*featureproto.Strategy, error) {
 	var variationID string
 	var weight int32
 	switch progressiveRollout.Type {
 	case autoopsproto.ProgressiveRollout_MANUAL_SCHEDULE:
 		c := &autoopsproto.ProgressiveRolloutManualScheduleClause{}
 		if err := ptypes.UnmarshalAny(progressiveRollout.Clause, c); err != nil {
-			return err
+			return nil, err
 		}
 		variationID = c.VariationId
 		var err error
 		weight, err = getTargetWeight(c.Schedules, scheduleID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	case autoopsproto.ProgressiveRollout_TEMPLATE_SCHEDULE:
 		c := &autoopsproto.ProgressiveRolloutTemplateScheduleClause{}
 		if err := ptypes.UnmarshalAny(progressiveRollout.Clause, c); err != nil {
-			return err
+			return nil, err
 		}
 		variationID = c.VariationId
 		var err error
 		weight, err = getTargetWeight(c.Schedules, scheduleID)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	default:
-		return domain.ErrProgressiveRolloutInvalidType
+		return nil, domain.ErrProgressiveRolloutInvalidType
 	}
-	if err := updateRolloutStrategy(
-		ctx,
+	return newRolloutStrategy(
 		weight,
 		feature,
 		variationID,
-		progressiveRollout.FeatureId,
-		environmentNamespace,
-	); err != nil {
-		return err
-	}
-	return nil
+	)
 }
 
 func getTargetWeight(
@@ -89,15 +81,14 @@ func getTargetWeight(
 	return 0, domain.ErrProgressiveRolloutScheduleNotFound
 }
 
-func updateRolloutStrategy(
-	ctx context.Context,
+func newRolloutStrategy(
 	weight int32,
 	feature *ftdomain.Feature,
-	targetVariationID, featureID, environmentNamespace string,
-) error {
+	targetVariationID string,
+) (*featureproto.Strategy, error) {
 	variations, err := getRolloutStrategyVariations(feature, weight, targetVariationID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	strategy := &featureproto.Strategy{
 		Type: featureproto.Strategy_ROLLOUT,
@@ -105,10 +96,7 @@ func updateRolloutStrategy(
 			Variations: variations,
 		},
 	}
-	if err := feature.ChangeDefaultStrategy(strategy); err != nil {
-		return err
-	}
-	return nil
+	return strategy, nil
 }
 
 func getRolloutStrategyVariations(
