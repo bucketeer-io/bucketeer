@@ -558,22 +558,24 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		}
 		return nil, dt.Err()
 	}
-	if errs := s.publisher.PublishMulti(ctx, []publisher.Message{event}); len(errs) > 0 {
-		s.logger.Error(
-			"Failed to publish events",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Any("errors", errs),
-				zap.String("environmentId", req.EnvironmentNamespace),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
+	if event != nil {
+		if errs := s.publisher.PublishMulti(ctx, []publisher.Message{event}); len(errs) > 0 {
+			s.logger.Error(
+				"Failed to publish events",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Any("errors", errs),
+					zap.String("environmentId", req.EnvironmentNamespace),
+				)...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
 		}
-		return nil, dt.Err()
 	}
 	return &autoopsproto.ExecuteProgressiveRolloutResponse{}, nil
 }
