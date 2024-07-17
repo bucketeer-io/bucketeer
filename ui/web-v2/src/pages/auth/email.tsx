@@ -23,6 +23,7 @@ import {
   DEMO_SIGN_IN_EMAIL,
   DEMO_SIGN_IN_PASSWORD
 } from '../../config';
+import { IToast, removeToast, selectAll } from '../../modules/toasts';
 
 type Inputs = {
   email: string;
@@ -52,6 +53,9 @@ const Email: FC = memo(() => {
     (state) => state.auth.loading,
     shallowEqual
   );
+  const toasts = useSelector<AppState, IToast[]>((state) =>
+    selectAll(state.toasts)
+  );
 
   const onSubmit: SubmitHandler<Inputs> = (data) => {
     if (!DEMO_SIGN_IN_ENABLED) {
@@ -64,7 +68,16 @@ const Email: FC = memo(() => {
       })
     ).then(() => {
       const token = getToken();
+
       if (token?.accessToken) {
+        // Remove all toasts
+        toasts.forEach((toast) => {
+          dispatch(
+            removeToast({
+              id: toast.id
+            })
+          );
+        });
         history.push('/');
       }
     });
