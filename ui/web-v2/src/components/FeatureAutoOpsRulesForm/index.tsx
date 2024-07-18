@@ -894,14 +894,15 @@ const DateTimeOperation = memo(
       'YYYY/MM/DD HH:mm'
     );
 
-    const updatedTime =
+    const displayTime =
       rule.createdAt >= rule.updatedAt ? rule.createdAt : rule.updatedAt;
 
-    const createdAt = dayjs(new Date(updatedTime * 1000)).format(
+    const displayDatetime = dayjs(new Date(displayTime * 1000)).format(
       'YYYY/MM/DD HH:mm'
     );
 
-    const label = rule.createdAt === rule.updatedAt ? 'Created' : 'Updated';
+    const displayLabel =
+      rule.createdAt === rule.updatedAt ? 'Created' : 'Updated';
 
     return (
       <div>
@@ -922,19 +923,19 @@ const DateTimeOperation = memo(
         <div className="flex justify-between mt-2">
           {rule.opsType === OpsType.ENABLE_FEATURE && (
             <>
-              <span>{label}</span>
+              <span>{displayLabel}</span>
               <span>On</span>
             </>
           )}
           {rule.opsType === OpsType.DISABLE_FEATURE && (
             <>
-              <span>{label}</span>
+              <span>{displayLabel}</span>
               <span>Off</span>
             </>
           )}
         </div>
         <div className="flex justify-between mt-1">
-          <span className="text-xs text-gray-400">{createdAt}</span>
+          <span className="text-xs text-gray-400">{displayDatetime}</span>
           <span className="text-xs text-gray-400">{datetime}</span>
         </div>
       </div>
