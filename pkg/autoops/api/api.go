@@ -737,7 +737,9 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 		// ToDo: If ChangeAutoOpsRuleOpsTypeCommand is no longer used in the web console,
 		// changes must be made to validate the use of ChangeAutoOpsRuleOpsTypeCommand itself.
 		if req.ChangeAutoOpsRuleOpsTypeCommand != nil &&
-			req.ChangeAutoOpsRuleOpsTypeCommand.OpsType != autoOpsRule.OpsType {
+			req.ChangeAutoOpsRuleOpsTypeCommand.OpsType != autoOpsRule.OpsType &&
+			!(req.ChangeAutoOpsRuleOpsTypeCommand.OpsType == autoopsproto.OpsType_ENABLE_FEATURE ||
+				req.ChangeAutoOpsRuleOpsTypeCommand.OpsType == autoopsproto.OpsType_DISABLE_FEATURE) {
 			dt, err := statusDeprecatedChangedOpsType.WithDetails(&errdetails.LocalizedMessage{
 				Locale: localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(
