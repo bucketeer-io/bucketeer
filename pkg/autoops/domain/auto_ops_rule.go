@@ -142,8 +142,13 @@ func (a *AutoOpsRule) SetOpsType(opsType proto.OpsType) {
 }
 
 func (a *AutoOpsRule) SetAutoOpsStatus(status proto.AutoOpsStatus) {
+	now := time.Now().Unix()
 	a.AutoOpsRule.AutoOpsStatus = status
-	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
+	a.AutoOpsRule.UpdatedAt = now
+	// TODO: Remove this function after auto ops migration.
+	if status == proto.AutoOpsStatus_FINISHED {
+		a.AutoOpsRule.TriggeredAt = now
+	}
 }
 
 func (a *AutoOpsRule) AddOpsEventRateClause(oerc *proto.OpsEventRateClause) (*proto.Clause, error) {
