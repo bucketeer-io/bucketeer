@@ -895,7 +895,7 @@ const DateTimeOperation = memo(
     );
 
     const updatedTime =
-      rule.createdAt === rule.updatedAt ? rule.createdAt : rule.updatedAt;
+      rule.createdAt >= rule.updatedAt ? rule.createdAt : rule.updatedAt;
 
     const createdAt = dayjs(new Date(updatedTime * 1000)).format(
       'YYYY/MM/DD HH:mm'
