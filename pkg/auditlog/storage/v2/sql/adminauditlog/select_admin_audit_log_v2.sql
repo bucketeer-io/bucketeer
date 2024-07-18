@@ -6,7 +6,9 @@ SELECT
     type,
     event,
     editor,
-    options
+    options,
+    entity_data,
+    previous_entity_data
 FROM
     admin_audit_log
     %s %s %s

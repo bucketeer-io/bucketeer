@@ -69,7 +69,7 @@ func (s *adminAuditLogStorage) CreateAdminAuditLogs(ctx context.Context, auditLo
 		} else {
 			query.WriteString(insertAdminAuditLogV2SQL)
 		}
-		query.WriteString(" (?, ?, ?, ?, ?, ?, ?, ?)")
+		query.WriteString(" (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 		args = append(
 			args,
 			al.Id,
@@ -80,6 +80,8 @@ func (s *adminAuditLogStorage) CreateAdminAuditLogs(ctx context.Context, auditLo
 			mysql.JSONObject{Val: al.Event},
 			mysql.JSONObject{Val: al.Editor},
 			mysql.JSONObject{Val: al.Options},
+			al.EntityData,
+			al.PreviousEntityData,
 		)
 	}
 	_, err := s.qe.ExecContext(ctx, query.String(), args...)
@@ -121,6 +123,8 @@ func (s *adminAuditLogStorage) ListAdminAuditLogs(
 			&mysql.JSONObject{Val: &auditLog.Event},
 			&mysql.JSONObject{Val: &auditLog.Editor},
 			&mysql.JSONObject{Val: &auditLog.Options},
+			&auditLog.EntityData,
+			&auditLog.PreviousEntityData,
 		)
 		if err != nil {
 			return nil, 0, 0, err

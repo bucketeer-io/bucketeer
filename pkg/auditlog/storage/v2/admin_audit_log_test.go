@@ -87,13 +87,13 @@ func TestCreateAdminAuditLogs(t *testing.T) {
 				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
-					id0, int64(1), int32(2), "e0", int32(3), gomock.Any(), gomock.Any(), gomock.Any(),
-					id1, int64(10), int32(3), "e2", int32(4), gomock.Any(), gomock.Any(), gomock.Any(),
+					id0, int64(1), int32(2), "e0", int32(3), gomock.Any(), gomock.Any(), gomock.Any(), "ed", "ped",
+					id1, int64(10), int32(3), "e2", int32(4), gomock.Any(), gomock.Any(), gomock.Any(), "ed", "ped",
 				).Return(nil, nil)
 			},
 			input: []*domain.AuditLog{
-				{AuditLog: &proto.AuditLog{Id: id0, Timestamp: 1, EntityType: 2, EntityId: "e0", Type: 3}, EnvironmentNamespace: "ns0"},
-				{AuditLog: &proto.AuditLog{Id: id1, Timestamp: 10, EntityType: 3, EntityId: "e2", Type: 4}, EnvironmentNamespace: "ns1"},
+				{AuditLog: &proto.AuditLog{Id: id0, Timestamp: 1, EntityType: 2, EntityId: "e0", Type: 3, EntityData: "ed", PreviousEntityData: "ped"}, EnvironmentNamespace: "ns0"},
+				{AuditLog: &proto.AuditLog{Id: id1, Timestamp: 10, EntityType: 3, EntityId: "e2", Type: 4, EntityData: "ed", PreviousEntityData: "ped"}, EnvironmentNamespace: "ns1"},
 			},
 			expectedErr: nil,
 		},
