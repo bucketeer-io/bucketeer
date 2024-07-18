@@ -6,5 +6,7 @@ INSERT INTO admin_audit_log (
     type,
     event,
     editor,
-    options
+    options,
+    entity_data,
+    previous_entity_data
 ) VALUES
