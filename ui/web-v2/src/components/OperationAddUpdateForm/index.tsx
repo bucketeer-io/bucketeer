@@ -252,7 +252,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
           const changeAutoOpsRuleOpsTypeCommand =
             new ChangeAutoOpsRuleOpsTypeCommand();
 
-          data.opsType === OpsType.ENABLE_FEATURE.toString()
+          data.opsType === OpsType.ENABLE_FEATURE
             ? changeAutoOpsRuleOpsTypeCommand.setOpsType(OpsType.ENABLE_FEATURE)
             : changeAutoOpsRuleOpsTypeCommand.setOpsType(
                 OpsType.DISABLE_FEATURE
@@ -297,7 +297,7 @@ export const OperationAddUpdateForm: FC<OperationAddUpdateFormProps> = memo(
             const command = new CreateAutoOpsRuleCommand();
             command.setFeatureId(featureId);
 
-            data.opsType === OpsType.ENABLE_FEATURE.toString()
+            data.opsType === OpsType.ENABLE_FEATURE
               ? command.setOpsType(OpsType.ENABLE_FEATURE)
               : command.setOpsType(OpsType.DISABLE_FEATURE);
 
