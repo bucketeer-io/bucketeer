@@ -128,6 +128,7 @@ func (c *apiKeyCacher) listEnvAPIKeys(
 			ApiKey:              key,
 			EnvironmentDisabled: proj.Disabled,
 			ProjectId:           environment.ProjectId,
+			ProjectUrlCode:      proj.UrlCode,
 			Environment:         environment,
 		}
 		envAPIKeys = append(envAPIKeys, envAPIKey)
