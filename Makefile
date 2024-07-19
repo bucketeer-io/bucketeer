@@ -341,6 +341,24 @@ setup-bigquery-vault:
 	make create-bigquery-emulator-tables
 	make enable-vault-transit
 
+IMAGES := gcr.io/distroless/base docker.io/arigaio/atlas:latest
+pull-images:
+	@echo "Checking and pulling images..."
+	@for image in $(IMAGES); do \
+		if docker image inspect $$image >/dev/null 2>&1; then \
+			echo "Image $$image already exists. Skipping..."; \
+		else \
+			echo "Pulling $$image"; \
+			docker pull $$image; \
+		fi; \
+	done
+
+force-pull-images:
+	@echo "Force pulling all images..."
+	@for image in $(IMAGES); do \
+		echo "Pulling $$image"; \
+		docker pull $$image; \
+	done
 
 # build go application docker image
 # please set the TAG env, eg: TAG=test make build-docker-images
@@ -374,6 +392,7 @@ deploy-bucketeer: delete-bucketeer-from-minikube
 	make -C tools/dev service-token-secret
 	make -C tools/dev oauth-key-secret
 	make -C ./ build-go-embed
+	make -C ./ pull-images
 	TAG=localenv make -C ./ build-docker-images
 	TAG=localenv make -C ./ minikube-load-images
 	helm install bucketeer manifests/bucketeer/ --values manifests/bucketeer/values.dev.yaml
