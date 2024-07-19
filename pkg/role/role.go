@@ -118,6 +118,9 @@ func CheckOrganizationRole(
 		}
 		return nil, ErrInternal
 	}
+	if resp.Account.Disabled {
+		return nil, ErrUnauthenticated
+	}
 	if resp.Account.OrganizationRole < requiredRole {
 		return nil, ErrPermissionDenied
 	}

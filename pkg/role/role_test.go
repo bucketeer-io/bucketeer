@@ -195,6 +195,22 @@ func TestCheckOrganizationRole(t *testing.T) {
 			expectedErr: ErrInternal,
 		},
 		{
+			desc:              "unauthenticated: account disabled",
+			inputCtx:          getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
+			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				return &accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						Email:            "test@example.com",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						Disabled:         true,
+					},
+				}, nil
+			},
+			expected:    nil,
+			expectedErr: ErrUnauthenticated,
+		},
+		{
 			desc:              "permissionDenied",
 			inputCtx:          getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
 			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
