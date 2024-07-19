@@ -63,6 +63,13 @@ func (s *AccountService) GetMe(
 		}
 		return nil, dt.Err()
 	}
+	if err := s.checkAccountStatus(ctx, t.Email, req.OrganizationId, localizer); err != nil {
+		s.logger.Error("Account not found",
+			zap.String("email", t.Email),
+			zap.String("organizationId", req.OrganizationId),
+		)
+		return nil, err
+	}
 	projects, err := s.listProjectsByOrganizationID(ctx, req.OrganizationId)
 	if err != nil {
 		s.logger.Error(
@@ -157,6 +164,51 @@ func (s *AccountService) GetMe(
 		OrganizationRole: account.OrganizationRole,
 		EnvironmentRoles: envRoles,
 	}}, nil
+}
+
+// Check if the user account is enabled
+func (s *AccountService) checkAccountStatus(
+	ctx context.Context,
+	email string,
+	organizationID string,
+	localizer locale.Localizer,
+) error {
+	account, err := s.accountStorage.GetAccountV2(ctx, email, organizationID)
+	if err != nil {
+		if errors.Is(err, v2as.ErrAccountNotFound) {
+			s.logger.Error("Account not found",
+				zap.String("email", email),
+				zap.String("organizationId", organizationID),
+			)
+			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.UnauthenticatedError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if account.Disabled {
+		dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.UnauthenticatedError),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
 }
 
 func (s *AccountService) getAdminConsoleAccountEnvironmentRoles(

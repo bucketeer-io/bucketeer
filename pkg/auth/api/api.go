@@ -318,6 +318,13 @@ func (s *authService) generateToken(
 		}
 		return nil, dt.Err()
 	}
+
+	// Check if the user has at least one account enabled in any Organization
+	if err := s.checkAccountStatus(ctx, userEmail, orgResp.Organizations, localizer); err != nil {
+		s.logger.Error("Failed to check account", zap.String("email", userEmail))
+		return nil, err
+	}
+
 	timeNow := time.Now()
 	accessTokenTTL := timeNow.Add(day)
 	accessToken := &token.AccessToken{
@@ -389,6 +396,52 @@ func (s *authService) checkEmail(
 	})
 	if err != nil {
 		return auth.StatusInternal.Err()
+	}
+	return dt.Err()
+}
+
+// Check if the user has at least one account enabled in any Organization
+func (s *authService) checkAccountStatus(
+	ctx context.Context,
+	email string,
+	organizations []*envproto.Organization,
+	localizer locale.Localizer,
+) error {
+	for _, org := range organizations {
+		resp, err := s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
+			Email:          email,
+			OrganizationId: org.Id,
+		})
+		if err != nil {
+			if errors.Is(err, accountstotage.ErrAccountNotFound) {
+				s.logger.Error("Account not found",
+					zap.Error(err),
+					zap.String("email", email),
+					zap.String("organizationId", org.Id),
+				)
+				continue
+			}
+			dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return auth.StatusInternal.Err()
+			}
+			return dt.Err()
+		}
+		if !resp.Account.Disabled {
+			// The user must have at least one account enabled
+			return nil
+		}
+	}
+	// The user wasn't found or doesn't have any account enabled
+	dt, err := auth.StatusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+		Locale:  localizer.GetLocale(),
+		Message: localizer.MustLocalize(locale.UnauthenticatedError),
+	})
+	if err != nil {
+		return err
 	}
 	return dt.Err()
 }
