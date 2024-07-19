@@ -66,6 +66,9 @@ func CheckEnvironmentRole(
 		}
 		return nil, ErrInternal
 	}
+	if account.Disabled {
+		return nil, ErrUnauthenticated
+	}
 	accountEnvRole := getRole(account.EnvironmentRoles, environmentID)
 	return checkRole(account.Email, accountEnvRole, requiredRole, false)
 }
