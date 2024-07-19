@@ -23,25 +23,10 @@ button.btn-secondary {
   @apply shadow-border-brand-500;
 }
 button.btn-secondary:hover {
-  @apply text-brand-600;
+  @apply text-brand-700;
   @apply shadow-border-brand-600;
 }
 button.btn-secondary:disabled {
-  @apply text-gray-500;
-  @apply shadow-border-gray-500;
-}
-
-button.btn-brand-2 {
-  @apply text-brand-500;
-  @apply rounded-lg;
-  @apply px-6 py-2;
-  @apply shadow-border-brand-500;
-}
-button.btn-brand-2:hover {
-  @apply text-brand-600;
-  @apply shadow-border-brand-600;
-}
-button.btn-brand-2:disabled {
   @apply text-gray-500;
   @apply shadow-border-gray-500;
 }
@@ -70,16 +55,16 @@ button.btn-text:disabled {
 /* Size */
 
 button.size-lg {
-  @apply typo-body-big h-14;
+  @apply typo-para-big h-14;
 }
 button.size-md {
-  @apply typo-body-medium h-12;
+  @apply typo-para-medium h-12;
 }
 button.size-sm {
-  @apply typo-body-small h-10;
+  @apply typo-para-small h-10;
 }
 button.size-xs {
-  @apply typo-body-tiny h-8;
+  @apply typo-para-tiny h-8;
 }
 
 /* Fluid */

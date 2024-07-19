@@ -29,6 +29,20 @@ const DashboardPage = () => {
           {`Text button`}
         </Button>
       </div>
+
+      <div className="mt-8 flex items-center gap-6">
+        <div className="typo-head-bold-huge">Heading H1</div>
+        <div className="typo-head-bold-big">Heading H2</div>
+        <div className="typo-head-bold-medium">Heading H3</div>
+        <div className="typo-head-bold-small">Heading H4</div>
+      </div>
+
+      <div className="mt-4 flex items-center gap-6">
+        <div className="typo-para-big">Paragraph LG</div>
+        <div className="typo-para-medium">Paragraph MD</div>
+        <div className="typo-para-small">Paragraph SM</div>
+        <div className="typo-para-tiny">Paragraph XS</div>
+      </div>
     </div>
   );
 };

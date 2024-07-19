@@ -198,37 +198,97 @@ const container = plugin(({ addComponents }) => {
 
 const typography = plugin(({ addComponents }) => {
   const components = {
-    '.typo-display': {
+    '.typo-head-bold-huge': {
       fontWeight: '700',
-      fontSize: '48px',
-      lineHeight: '80px',
-      letterSpacing: '0.01em'
-    },
-    '.typo-body-huge': {
-      fontWeight: '400',
-      fontSize: '20px',
+      fontSize: '24px',
       lineHeight: '32px',
       letterSpacing: '0.01em'
     },
-    '.typo-body-big': {
+    '.typo-head-semi-huge': {
+      fontWeight: '600',
+      fontSize: '24px',
+      lineHeight: '32px',
+      letterSpacing: '0.01em'
+    },
+    '.typo-head-light-huge': {
+      fontWeight: '500',
+      fontSize: '24px',
+      lineHeight: '32px',
+      letterSpacing: '0.01em'
+    },
+    '.typo-head-bold-big': {
+      fontWeight: '700',
+      fontSize: '20px',
+      lineHeight: '28px',
+      letterSpacing: '0.01em'
+    },
+    '.typo-head-semi-big': {
+      fontWeight: '600',
+      fontSize: '20px',
+      lineHeight: '28px',
+      letterSpacing: '0.01em'
+    },
+    '.typo-head-light-big': {
+      fontWeight: '500',
+      fontSize: '20px',
+      lineHeight: '24px',
+      letterSpacing: '0.01em'
+    },
+    '.typo-head-bold-medium': {
+      fontWeight: '700',
+      fontSize: '18px',
+      lineHeight: '24px',
+      letterSpacing: '0.01em'
+    },
+    '.typo-head-semi-medium': {
+      fontWeight: '600',
+      fontSize: '18px',
+      lineHeight: '24px',
+      letterSpacing: '0.01em'
+    },
+    '.typo-head-light-medium': {
+      fontWeight: '500',
+      fontSize: '18px',
+      lineHeight: '24px',
+      letterSpacing: '0.01em'
+    },
+    '.typo-head-bold-small': {
+      fontWeight: '700',
+      fontSize: '16px',
+      lineHeight: '20px',
+      letterSpacing: '0.01em'
+    },
+    '.typo-head-semi-small': {
+      fontWeight: '600',
+      fontSize: '16px',
+      lineHeight: '20px',
+      letterSpacing: '0.01em'
+    },
+    '.typo-head-light-small': {
+      fontWeight: '500',
+      fontSize: '16px',
+      lineHeight: '20px',
+      letterSpacing: '0.01em'
+    },
+    '.typo-para-big': {
       fontWeight: '400',
       fontSize: '18px',
       lineHeight: '28px',
       letterSpacing: '0.01em'
     },
-    '.typo-body-medium': {
+    '.typo-para-medium': {
       fontWeight: '400',
       fontSize: '16px',
       lineHeight: '24px',
       letterSpacing: '0.01em'
     },
-    '.typo-body-small': {
+    '.typo-para-small': {
       fontWeight: '400',
       fontSize: '14px',
       lineHeight: '20px',
       letterSpacing: '0.01em'
     },
-    '.typo-body-tiny': {
+    '.typo-para-tiny': {
       fontWeight: '400',
       fontSize: '12px',
       lineHeight: '16px',
@@ -266,21 +326,6 @@ const iconSize = plugin(({ addComponents }) => {
       height: '28px',
       fontSize: '28px'
     },
-    '.icon-size-xl': {
-      width: '32px',
-      height: '32px',
-      fontSize: '32px'
-    },
-    '.icon-size-2xl': {
-      width: '40px',
-      height: '40px',
-      fontSize: '40px'
-    },
-    '.icon-size-3xl': {
-      width: '60px',
-      height: '60px',
-      fontSize: '60px'
-    }
   };
 
   addComponents(components);
