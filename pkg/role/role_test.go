@@ -195,6 +195,22 @@ func TestCheckOrganizationRole(t *testing.T) {
 			expectedErr: ErrInternal,
 		},
 		{
+			desc:              "unauthenticated: account disabled",
+			inputCtx:          getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
+			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
+			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
+				return &accountproto.GetAccountV2Response{
+					Account: &accountproto.AccountV2{
+						Email:            "test@example.com",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						Disabled:         true,
+					},
+				}, nil
+			},
+			expected:    nil,
+			expectedErr: ErrUnauthenticated,
+		},
+		{
 			desc:              "permissionDenied",
 			inputCtx:          getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
 			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
@@ -231,4 +247,73 @@ func TestCheckOrganizationRole(t *testing.T) {
 func getContextWithToken(t *testing.T, token *token.AccessToken) context.Context {
 	t.Helper()
 	return context.WithValue(context.Background(), rpc.Key, token)
+}
+
+func TestCheckEnvironmentRole(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc           string
+		ctx            context.Context
+		requiredRole   accountproto.AccountV2_Role_Environment
+		environmentID  string
+		getAccountFunc func(email string) (*accountproto.AccountV2, error)
+		expected       *eventproto.Editor
+		expectedErr    error
+	}{
+		{
+			desc:          "err: account not found",
+			ctx:           getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
+			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				return nil, status.Error(codes.NotFound, "")
+			},
+			expected:    nil,
+			expectedErr: ErrUnauthenticated,
+		},
+		{
+			desc:          "err: account disabled",
+			ctx:           getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
+			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				return &accountproto.AccountV2{
+					Disabled: true,
+				}, nil
+			},
+			expected:    nil,
+			expectedErr: ErrUnauthenticated,
+		},
+		{
+			desc:          "success",
+			ctx:           getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
+			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				return &accountproto.AccountV2{
+					Email: "test@example.com",
+					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+						{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
+					},
+					Disabled: false,
+				}, nil
+			},
+			expected:    &eventproto.Editor{Email: "test@example.com"},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			editor, err := CheckEnvironmentRole(
+				p.ctx,
+				p.requiredRole,
+				p.environmentID,
+				p.getAccountFunc)
+			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expected, editor)
+		})
+	}
 }
