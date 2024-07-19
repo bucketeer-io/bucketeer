@@ -8,7 +8,7 @@ export type ButtonProps = Omit<
   'className'
 > & {
   variant?:
-    | 'primary'
+    | 'brand'
     | 'secondary'
     | 'secondary-2'
     | 'negative'
@@ -27,7 +27,7 @@ type ButtonRef = Ref<HTMLButtonElement>;
 const Button = forwardRef(
   (
     {
-      variant = 'primary',
+      variant = 'brand',
       size = 'md',
       icon: SvgIcon,
       iconSlot = 'right',

@@ -11,51 +11,110 @@ const screens = {
   lg: '1200px',
   xl: '1440px'
 };
-
+ 
 const colors = {
   transparent: 'transparent',
   white: '#FFFFFF',
   overlay: 'rgba(18, 18, 18, 0.25)',
-  primary: {
-    600: '#492F7A',
+  brand: {
+    900: '#292C4C',
+    800: '#352F5E',
+    700: '#40316F',
+    600: '#4C3481',
     500: '#573792',
-    300: '#5F4295',
-    200: '#E4CBE4',
-    100: '#F3E8F3',
-    50: '#F9F4F9'
+    400: '#6746A4',
+    300: '#9A87BE',
+    200: '#BCAFD3',
+    100: '#E8E4F1',
+    50: '#F9F8FB'
   },
-  secondary: {
-    600: '#568A7E',
-    500: '#6BAD9E',
-    300: '#A7CEC5',
-    200: '#CAE1DC',
-    100: '#E8F2F0',
-    50: '#F3F9F7'
-  },
-  red: {
-    600: '#BF3E3A',
-    500: '#EB1726',
-    300: '#F59592',
-    200: '#F9BFBD',
-    100: '#FCE3E2',
-    50: '#FEF1F1'
-  },
-  light: {
-    600: '#A1A7B4',
-    500: '#B8BDC6',
-    300: '#D5D7DD',
-    200: '#EDEEF0',
-    100: '#F6F6F8',
+  gray: {
+    900: '#1E293B',
+    800: '#334155',
+    700: '#475569',
+    600: '#64748B',
+    500: '#94A3B8',
+    400: '#6BAD9E',
+    300: '#E2E8F0',
+    200: '#F1F5F9',
+    100: '#FAFAFC',
     50: '#FFFFFF'
   },
-  dark: {
-    600: '#121212',
-    500: '#292A2D',
-    300: '#42454D',
-    200: '#525660',
-    100: '#6E7481',
-    50: '#8A91A1'
+  accent: {
+    pink: {
+      900: '#463154',
+      800: '#6F396D',
+      700: '#974285',
+      600: '#C04A9E',
+      500: '#E439AC',
+      400: '#E961BD',
+      300: '#EF88CD',
+      200: '#F4B0DE',
+      100: '#FAD7EE',
+      50: '#FDECF7'
+    },
+    green: {
+      900: '#25473C',
+      800: '#2C653E',
+      700: '#32833F',
+      600: '#39A141',
+      500: '#40BF42',
+      400: '#66CC68',
+      300: '#8CD98E',
+      200: '#B3E5B3',
+      100: '#D9F2D9',
+      50: '#ECF9ED'
+    },
+    red: {
+      900: '#472537',
+      800: '#702233',
+      700: '#991E2E',
+      600: '#C21B2A',
+      500: '#EB1726',
+      400: '#EF4551',
+      300: '#F3747D',
+      200: '#F7A2A8',
+      100: '#FBD1D4',
+      50: '#FEF0F2'
+    },
+    blue: {
+      900: '#23405D',
+      800: '#29577F',
+      700: '#2E6EA0',
+      600: '#3485C2',
+      500: '#399CE4',
+      400: '#61B0E9',
+      300: '#88C4EF',
+      200: '#B0D7F4',
+      100: '#D7EBFA',
+      50: '#ECF6FD'
+    },
+    orange: {
+      900: '#4A403F',
+      800: '#765743',
+      700: '#A26D46',
+      600: '#CE844A',
+      500: '#FA9B4E',
+      400: '#FBAF71',
+      300: '#FCC395',
+      200: '#FDD7B8',
+      100: '#FEEBDC',
+      50: '#FFF6EE'
+    },
+    yellow: {
+      900: '#725201',
+      800: '#A17401',
+      700: '#C68F02',
+      600: '#E4A502',
+      500: '#FFB802',
+      400: '#FFE072',
+      300: '#FFEBA1',
+      200: '#FFF3C6',
+      100: '#FFFAD6',
+      50: '#FDFBE8'
+    },
   }
+  
 };
 
 const theme = {
@@ -63,11 +122,11 @@ const theme = {
   colors,
   boxShadow: {
     DEFAULT: '0px 2px 2px rgba(136, 135, 135, 0.25)',
-    'border-primary-500': `inset 0 0 0 1px ${colors.primary[500]}`,
-    'border-primary-600': `inset 0 0 0 1px ${colors.primary[600]}`,
-    'border-red-500': `inset 0 0 0 1px ${colors.red[500]}`,
-    'border-light-500': `inset 0 0 0 1px ${colors.light[500]}`,
-    'border-dark-200': `inset 0 0 0 1px ${colors.dark[200]}`,
+    'border-brand-500': `inset 0 0 0 1px ${colors.brand[500]}`,
+    'border-brand-600': `inset 0 0 0 1px ${colors.brand[600]}`,
+    'border-gray-200': `inset 0 0 0 1px ${colors.brand[200]}`,
+    'border-gray-500': `inset 0 0 0 1px ${colors.brand[500]}`,
+    'border-accent-red-500': `inset 0 0 0 1px ${colors.accent.red[500]}`,
     none: 'none'
   },
   fontFamily: {
@@ -228,6 +287,7 @@ const iconSize = plugin(({ addComponents }) => {
 });
 
 export default {
+  mode: 'jit',
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
   theme,
   plugins: [tailwindCssForm, container, typography, iconSize],
