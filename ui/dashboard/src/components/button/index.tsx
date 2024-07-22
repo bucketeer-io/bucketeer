@@ -7,13 +7,7 @@ export type ButtonProps = Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
   'className'
 > & {
-  variant?:
-    | 'brand'
-    | 'secondary'
-    | 'secondary-2'
-    | 'negative'
-    | 'grey'
-    | 'text';
+  variant?: 'primary' | 'secondary' | 'negative' | 'grey' | 'text';
   size?: 'xs' | 'sm' | 'md' | 'lg';
   icon?: FunctionComponent;
   iconSlot?: 'left' | 'right';
@@ -27,7 +21,7 @@ type ButtonRef = Ref<HTMLButtonElement>;
 const Button = forwardRef(
   (
     {
-      variant = 'brand',
+      variant = 'primary',
       size = 'md',
       icon: SvgIcon,
       iconSlot = 'right',

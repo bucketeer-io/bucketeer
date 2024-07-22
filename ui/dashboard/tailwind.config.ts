@@ -11,12 +11,12 @@ const screens = {
   lg: '1200px',
   xl: '1440px'
 };
- 
+
 const colors = {
   transparent: 'transparent',
   white: '#FFFFFF',
   overlay: 'rgba(18, 18, 18, 0.25)',
-  brand: {
+  primary: {
     900: '#292C4C',
     800: '#352F5E',
     700: '#40316F',
@@ -112,9 +112,8 @@ const colors = {
       200: '#FFF3C6',
       100: '#FFFAD6',
       50: '#FDFBE8'
-    },
+    }
   }
-  
 };
 
 const theme = {
@@ -122,10 +121,10 @@ const theme = {
   colors,
   boxShadow: {
     DEFAULT: '0px 2px 2px rgba(136, 135, 135, 0.25)',
-    'border-brand-500': `inset 0 0 0 1px ${colors.brand[500]}`,
-    'border-brand-600': `inset 0 0 0 1px ${colors.brand[600]}`,
-    'border-gray-200': `inset 0 0 0 1px ${colors.brand[200]}`,
-    'border-gray-500': `inset 0 0 0 1px ${colors.brand[500]}`,
+    'border-primary-500': `inset 0 0 0 1px ${colors.primary[500]}`,
+    'border-primary-600': `inset 0 0 0 1px ${colors.primary[600]}`,
+    'border-gray-200': `inset 0 0 0 1px ${colors.gray[200]}`,
+    'border-gray-500': `inset 0 0 0 1px ${colors.gray[500]}`,
     'border-accent-red-500': `inset 0 0 0 1px ${colors.accent.red[500]}`,
     none: 'none'
   },
@@ -325,7 +324,7 @@ const iconSize = plugin(({ addComponents }) => {
       width: '28px',
       height: '28px',
       fontSize: '28px'
-    },
+    }
   };
 
   addComponents(components);

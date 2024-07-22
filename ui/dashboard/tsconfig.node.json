@@ -9,5 +9,5 @@
     "strict": true,
     "noEmit": true
   },
-  "include": ["vite.config.ts", "./.eslintrc.cjs"]
+  "include": ["vite.config.ts", ".eslintrc.cjs", "svgo.config.cjs"]
 }

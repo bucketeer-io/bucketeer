@@ -4,27 +4,27 @@ button.btn {
 
 /* Variant */
 
-button.btn-brand {
-  @apply bg-brand-500 text-gray-50;
+button.btn-primary {
+  @apply bg-primary-500 text-gray-50;
   @apply rounded-lg;
   @apply px-6 py-2;
 }
-button.btn-brand:hover {
-  @apply bg-brand-700;
+button.btn-primary:hover {
+  @apply bg-primary-700;
 }
-button.btn-brand:disabled {
-  @apply bg-brand-100 text-brand-50;
+button.btn-primary:disabled {
+  @apply bg-primary-100 text-primary-50;
 }
 
 button.btn-secondary {
-  @apply text-brand-500;
+  @apply text-primary-500;
   @apply rounded-lg;
   @apply px-6 py-2;
-  @apply shadow-border-brand-500;
+  @apply shadow-border-primary-500;
 }
 button.btn-secondary:hover {
-  @apply text-brand-700;
-  @apply shadow-border-brand-600;
+  @apply text-primary-700;
+  @apply shadow-border-primary-600;
 }
 button.btn-secondary:disabled {
   @apply text-gray-500;
@@ -43,10 +43,10 @@ button.btn-negative:hover {
 }
 
 button.btn-text {
-  @apply text-brand-500;
+  @apply text-primary-500;
 }
 button.btn-text:hover {
-  @apply text-brand-600;
+  @apply text-primary-600;
 }
 button.btn-text:disabled {
   @apply text-gray-500;

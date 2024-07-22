@@ -11,9 +11,9 @@
     "^clsx$",
     "^tailwind(.*)$",
     "^@types$",
+    "^@icons$",
     "^app(.*)$",
     "^pages(.*)$",
-    "^@radix",
     "^components(.*)$",
     "^elements(.*)$",
     "^[./]"

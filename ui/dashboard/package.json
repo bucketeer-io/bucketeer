@@ -11,6 +11,7 @@
     "style:lint": "tsc && eslint '**/src/**/*.{js,jsx,ts,tsx}' --fix",
     "style:prettier": "prettier --check '**/*.{js,jsx,ts,tsx}'",
     "make-pretty": "prettier --write '**/*.{js,jsx,ts,tsx}'",
+    "svgo": "npx svgo -f src/@icons/filled -o src/@icons/filled & npx svgo -f src/@icons/outlined -o src/@icons/outlined",
     "prepare": "husky install"
   },
   "lint-staged": {
@@ -21,13 +22,11 @@
     "@tailwindcss/forms": "^0.5.7",
     "@testing-library/jest-dom": "^6.4.6",
     "clsx": "^2.1.1",
-    "lint-staged": "^15.2.7",
     "prettier": "^3.3.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons-material-design": "^1.0.4",
     "react-router-dom": "^6.24.1",
-    "vite-tsconfig-paths": "^4.3.2",
     "web-vitals": "^4.2.1"
   },
   "devDependencies": {
@@ -45,16 +44,21 @@
     "eslint-config-airbnb-typescript": "^18.0.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
-    "eslint-plugin-prettier": "^5.1.3",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "^4.6.2",
-    "eslint-plugin-react-refresh": "^0.4.7",
+    "eslint-plugin-react-refresh": "^0.4.8",
     "eslint-plugin-tailwindcss": "^3.17.4",
     "eslint-plugin-unused-imports": "^4.0.0",
     "husky": "^9.0.11",
+    "lint-staged": "^15.2.7",
     "postcss": "^8.4.39",
     "prettier-plugin-tailwindcss": "^0.6.5",
-    "tailwindcss": "^3.4.4",
+    "svgo": "^3.3.2",
+    "tailwindcss": "^3.4.6",
     "typescript": "^5.2.2",
-    "vite": "^5.3.1"
+    "vite": "^5.3.4",
+    "vite-plugin-svgr": "^4.2.0",
+    "vite-tsconfig-paths": "^4.3.2"
   }
 }

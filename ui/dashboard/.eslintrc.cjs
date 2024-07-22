@@ -3,59 +3,33 @@ module.exports = {
   env: { browser: true, es2020: true },
   extends: [
     'eslint:recommended',
-    'plugin:@typescript-eslint/recommended',
-    'plugin:react-hooks/recommended'
+    'plugin:react/recommended',
+    'plugin:react/jsx-runtime',
+    'plugin:@typescript-eslint/recommended-type-checked',
+    'plugin:react-hooks/recommended',
+    'plugin:prettier/recommended'
   ],
+  ignorePatterns: ['dist', '.eslintrc.cjs'],
+  parser: '@typescript-eslint/parser',
+  plugins: ['react-refresh'],
   rules: {
     'react-refresh/only-export-components': [
       'warn',
       { allowConstantExport: true }
-    ]
+    ],
+    'react/jsx-uses-react': 'error',
+    'react/jsx-uses-vars': 'error',
+    'react/display-name': 'off'
   },
-  ignorePatterns: ['dist', '.eslintrc.cjs'],
-  parser: '@typescript-eslint/parser',
-  plugins: ['react-refresh'],
-  overrides: [
-    // Configuration for TypeScript files
-    {
-      files: ['**/*.ts', '**/*.tsx'],
-      plugins: ['@typescript-eslint', 'tailwindcss', 'unused-imports'],
-      extends: [
-        'airbnb-typescript',
-        'plugin:prettier/recommended',
-        'plugin:tailwindcss/recommended'
-      ],
-      parser: '@typescript-eslint/parser',
-      parserOptions: {
-        project: ['./tsconfig.app.json', './tsconfig.node.json'],
-        tsconfigRootDir: __dirname,
-        sourceType: 'module'
-      },
-      rules: {
-        'no-plusplus': [2, { allowForLoopAfterthoughts: true }],
-        'react/destructuring-assignment': 'off',
-        'react/require-default-props': 'off',
-        'react/jsx-props-no-spreading': 'off',
-        'react-hooks/exhaustive-deps': 'off',
-        'react/jsx-filename-extension': 'off',
-        '@typescript-eslint/comma-dangle': 'off',
-        '@typescript-eslint/no-unused-vars': 'off',
-        '@typescript-eslint/naming-convention': [
-          'error',
-          {
-            selector: 'interface',
-            format: ['PascalCase']
-          }
-        ],
-        'import/prefer-default-export': 'off',
-        'import/extensions': 'off',
-        'class-methods-use-this': 'off',
-        'import/no-extraneous-dependencies': 'off',
-        'import/order': 'off',
-        'unused-imports/no-unused-imports': 'warn',
-        'unused-imports/no-unused-vars': 'warn',
-        'no-nested-ternary': 'off'
-      }
+  settings: {
+    react: {
+      version: 'detect'
     }
-  ]
+  },
+  parserOptions: {
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+    project: ['./tsconfig.json', './tsconfig.node.json', './tsconfig.app.json'],
+    tsconfigRootDir: __dirname
+  }
 };
