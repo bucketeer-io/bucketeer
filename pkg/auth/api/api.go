@@ -503,7 +503,7 @@ func (s *authService) PrepareDemoUser() {
 					},
 				})
 			}
-			if !errors.Is(err, envstotage.ErrOrganizationAlreadyExists) {
+			if err != nil && !errors.Is(err, envstotage.ErrOrganizationAlreadyExists) {
 				return err
 			}
 		}
@@ -526,7 +526,7 @@ func (s *authService) PrepareDemoUser() {
 						OrganizationId: config.OrganizationId,
 					},
 				})
-				if !errors.Is(err, envstotage.ErrProjectAlreadyExists) {
+				if err != nil && !errors.Is(err, envstotage.ErrProjectAlreadyExists) {
 					return err
 				}
 			}
@@ -536,7 +536,7 @@ func (s *authService) PrepareDemoUser() {
 		_, err = environmentStorage.GetEnvironmentV2(ctx, config.EnvironmentId)
 		if err != nil {
 			if errors.Is(err, envstotage.ErrEnvironmentNotFound) {
-				err := environmentStorage.CreateEnvironmentV2(ctx, &envdomain.EnvironmentV2{
+				err = environmentStorage.CreateEnvironmentV2(ctx, &envdomain.EnvironmentV2{
 					EnvironmentV2: &envproto.EnvironmentV2{
 						Id:             config.EnvironmentId,
 						Name:           "Demo",
@@ -550,37 +550,7 @@ func (s *authService) PrepareDemoUser() {
 						RequireComment: false,
 					},
 				})
-				if !errors.Is(err, envstotage.ErrEnvironmentAlreadyExists) {
-					return err
-				}
-			}
-		}
-		// Create a demo account if not exists
-		accountStorage := accountstotage.NewAccountStorage(s.mysqlClient)
-		_, err = accountStorage.GetAccountV2(
-			ctx,
-			config.Email,
-			config.OrganizationId,
-		)
-		if err != nil {
-			if errors.Is(err, accountstotage.ErrAccountNotFound) {
-				err = accountStorage.CreateAccountV2(ctx, &domain.AccountV2{
-					AccountV2: &acproto.AccountV2{
-						OrganizationId:   config.OrganizationId,
-						Email:            config.Email,
-						Name:             "Demo Account",
-						OrganizationRole: acproto.AccountV2_Role_Organization_ADMIN,
-						EnvironmentRoles: []*acproto.AccountV2_EnvironmentRole{
-							{
-								EnvironmentId: config.EnvironmentId,
-								Role:          acproto.AccountV2_Role_Environment_EDITOR,
-							},
-						},
-						CreatedAt: now.Unix(),
-						UpdatedAt: now.Unix(),
-					},
-				})
-				if !errors.Is(err, accountstotage.ErrAccountAlreadyExists) {
+				if err != nil && !errors.Is(err, envstotage.ErrEnvironmentAlreadyExists) {
 					return err
 				}
 			}
@@ -590,6 +560,36 @@ func (s *authService) PrepareDemoUser() {
 	if err != nil {
 		s.logger.Error("Failed to prepare demo environment", zap.Error(err))
 		return
+	}
+	// Create a demo account if not exists
+	accountStorage := accountstotage.NewAccountStorage(s.mysqlClient)
+	_, err = accountStorage.GetAccountV2(
+		ctx,
+		config.Email,
+		config.OrganizationId,
+	)
+	if err != nil {
+		if errors.Is(err, accountstotage.ErrAccountNotFound) {
+			err = accountStorage.CreateAccountV2(ctx, &domain.AccountV2{
+				AccountV2: &acproto.AccountV2{
+					OrganizationId:   config.OrganizationId,
+					Email:            config.Email,
+					Name:             "Demo Account",
+					OrganizationRole: acproto.AccountV2_Role_Organization_ADMIN,
+					EnvironmentRoles: []*acproto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: config.EnvironmentId,
+							Role:          acproto.AccountV2_Role_Environment_EDITOR,
+						},
+					},
+					CreatedAt: now.Unix(),
+					UpdatedAt: now.Unix(),
+				},
+			})
+			if err != nil && !errors.Is(err, accountstotage.ErrAccountAlreadyExists) {
+				s.logger.Error("Create account for demo user error", zap.Error(err))
+			}
+		}
 	}
 	s.logger.Info("Demo environment prepared successfully")
 }
