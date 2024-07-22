@@ -83,51 +83,9 @@ func TestGetMeMySQL(t *testing.T) {
 			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
 		},
 		{
-			desc: "err: account not found",
-			ctx:  createContextWithDefaultToken(t, true),
-			setup: func(s *AccountService) {
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).Return(
-					nil,
-					v2.ErrAccountNotFound,
-				)
-			},
-			input:       &accountproto.GetMeRequest{},
-			expected:    nil,
-			expectedErr: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
-		},
-		{
-			desc: "err: account is disabled",
-			ctx:  createContextWithDefaultToken(t, true),
-			setup: func(s *AccountService) {
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).Return(
-					&domain.AccountV2{AccountV2: &accountproto.AccountV2{Disabled: true}},
-					nil,
-				)
-			},
-			input:       &accountproto.GetMeRequest{},
-			expected:    nil,
-			expectedErr: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
-		},
-		{
 			desc: "errInternal",
 			ctx:  createContextWithDefaultToken(t, true),
 			setup: func(s *AccountService) {
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).Return(
-					&domain.AccountV2{AccountV2: &accountproto.AccountV2{Disabled: false}},
-					nil,
-				)
 				s.environmentClient.(*ecmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(),
 					gomock.Any(),
@@ -141,17 +99,114 @@ func TestGetMeMySQL(t *testing.T) {
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
-			desc: "success",
+			desc: "err: account is disabled",
 			ctx:  createContextWithDefaultToken(t, true),
 			setup: func(s *AccountService) {
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(),
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(),
 					gomock.Any(),
 				).Return(
-					&domain.AccountV2{AccountV2: &accountproto.AccountV2{Disabled: false}},
+					&environmentproto.ListProjectsResponse{
+						Projects: getProjects(t),
+						Cursor:   "",
+					},
 					nil,
 				)
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(),
+					gomock.Any(),
+				).Return(
+					&environmentproto.ListEnvironmentsV2Response{
+						Environments: getEnvironments(t),
+						Cursor:       "",
+					},
+					nil,
+				)
+				s.environmentClient.(*ecmock.MockClient).EXPECT().GetOrganization(
+					gomock.Any(), gomock.Any(),
+				).Return(
+					&environmentproto.GetOrganizationResponse{
+						Organization: &org,
+					},
+					nil,
+				)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetSystemAdminAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						AvatarImageUrl:   "",
+						OrganizationId:   "org0",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "ns0",
+								Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+							},
+						},
+						Disabled: true,
+					},
+				}, nil)
+			},
+			input: &accountproto.GetMeRequest{
+				OrganizationId: "org0",
+			},
+			expected:    nil,
+			expectedErr: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
+		},
+		{
+			desc: "err: account not found",
+			ctx:  createContextWithDefaultToken(t, true),
+			setup: func(s *AccountService) {
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListProjects(
+					gomock.Any(),
+					gomock.Any(),
+				).Return(
+					&environmentproto.ListProjectsResponse{
+						Projects: getProjects(t),
+						Cursor:   "",
+					},
+					nil,
+				)
+				s.environmentClient.(*ecmock.MockClient).EXPECT().ListEnvironmentsV2(
+					gomock.Any(),
+					gomock.Any(),
+				).Return(
+					&environmentproto.ListEnvironmentsV2Response{
+						Environments: getEnvironments(t),
+						Cursor:       "",
+					},
+					nil,
+				)
+				s.environmentClient.(*ecmock.MockClient).EXPECT().GetOrganization(
+					gomock.Any(), gomock.Any(),
+				).Return(
+					&environmentproto.GetOrganizationResponse{
+						Organization: &org,
+					},
+					nil,
+				)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetSystemAdminAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, v2.ErrAccountNotFound)
+			},
+			input: &accountproto.GetMeRequest{
+				OrganizationId: "org0",
+			},
+			expected:    nil,
+			expectedErr: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
+		},
+		{
+			desc: "success",
+			ctx:  createContextWithDefaultToken(t, true),
+			setup: func(s *AccountService) {
 				s.environmentClient.(*ecmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(),
 					gomock.Any(),

@@ -362,8 +362,10 @@ func (s *AccountService) getMyOrganizations(
 		// TODO: Remove this loop after the web console 3.0 is ready
 		// If the account is enabled in any environment in this organization,
 		// we append the organization.
-		// Note: When we disable an account on the web console, we are updating the role to UNASSIGNED.
-		// When the new console is ready, we will use the DisableAccount API instead.
+		// Note: When we disable an account on the web console,
+		// we are updating the role to UNASSIGNED, not the `disabled` column.
+		// When the new console is ready, we will use the DisableAccount API instead,
+		// which will update the `disabled` column in the DB.
 		var enabled bool
 		for _, role := range accWithOrg.AccountV2.EnvironmentRoles {
 			if role.Role != accountproto.AccountV2_Role_Environment_UNASSIGNED {
