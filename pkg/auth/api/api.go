@@ -17,6 +17,8 @@ package api
 import (
 	"context"
 	"errors"
+	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
+	accountstotage "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"regexp"
 	"time"
 
@@ -27,8 +29,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
-	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	accountstotage "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/pkg/auth/google"
 	envdomain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
@@ -557,41 +557,41 @@ func (s *authService) PrepareDemoUser() {
 				}
 			}
 		}
-		// Create a demo account if not exists
-		accountStorage := accountstotage.NewAccountStorage(s.mysqlClient)
-		_, err = accountStorage.GetAccountV2(
-			ctx,
-			config.Email,
-			config.OrganizationId,
-		)
-		if err != nil {
-			if errors.Is(err, accountstotage.ErrAccountNotFound) {
-				err = accountStorage.CreateAccountV2(ctx, &domain.AccountV2{
-					AccountV2: &acproto.AccountV2{
-						OrganizationId:   config.OrganizationId,
-						Email:            config.Email,
-						Name:             "Demo Account",
-						OrganizationRole: acproto.AccountV2_Role_Organization_ADMIN,
-						EnvironmentRoles: []*acproto.AccountV2_EnvironmentRole{
-							{
-								EnvironmentId: config.EnvironmentId,
-								Role:          acproto.AccountV2_Role_Environment_EDITOR,
-							},
-						},
-						CreatedAt: now.Unix(),
-						UpdatedAt: now.Unix(),
-					},
-				})
-				if err != nil && !errors.Is(err, accountstotage.ErrAccountAlreadyExists) {
-					return err
-				}
-			}
-		}
 		return nil
 	})
 	if err != nil {
 		s.logger.Error("Failed to prepare demo environment", zap.Error(err))
 		return
+	}
+	// Create a demo account if not exists
+	accountStorage := accountstotage.NewAccountStorage(s.mysqlClient)
+	_, err = accountStorage.GetAccountV2(
+		ctx,
+		config.Email,
+		config.OrganizationId,
+	)
+	if err != nil {
+		if errors.Is(err, accountstotage.ErrAccountNotFound) {
+			err = accountStorage.CreateAccountV2(ctx, &domain.AccountV2{
+				AccountV2: &acproto.AccountV2{
+					OrganizationId:   config.OrganizationId,
+					Email:            config.Email,
+					Name:             "Demo Account",
+					OrganizationRole: acproto.AccountV2_Role_Organization_ADMIN,
+					EnvironmentRoles: []*acproto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: config.EnvironmentId,
+							Role:          acproto.AccountV2_Role_Environment_EDITOR,
+						},
+					},
+					CreatedAt: now.Unix(),
+					UpdatedAt: now.Unix(),
+				},
+			})
+			if err != nil && !errors.Is(err, accountstotage.ErrAccountAlreadyExists) {
+				s.logger.Error("Create account for demo user error", zap.Error(err))
+			}
+		}
 	}
 	s.logger.Info("Demo environment prepared successfully")
 }
