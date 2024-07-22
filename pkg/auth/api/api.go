@@ -17,8 +17,6 @@ package api
 import (
 	"context"
 	"errors"
-	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	accountstotage "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"regexp"
 	"time"
 
@@ -29,6 +27,8 @@ import (
 	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
+	accountstotage "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/auth"
 	"github.com/bucketeer-io/bucketeer/pkg/auth/google"
 	envdomain "github.com/bucketeer-io/bucketeer/pkg/environment/domain"
