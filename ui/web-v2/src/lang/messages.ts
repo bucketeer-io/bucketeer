@@ -550,6 +550,10 @@ export const messages = {
       id: 'autoOps.eventRateOperation',
       defaultMessage: 'Event Rate Operation'
     }),
+    progressiveRolloutOperation: defineMessage({
+      id: 'autoOps.progressiveRolloutOperation',
+      defaultMessage: 'Progressive RolloutOperation Operation'
+    }),
     currentFlagState: defineMessage({
       id: 'autoOps.currentFlagState',
       defaultMessage: 'Current Flag State'

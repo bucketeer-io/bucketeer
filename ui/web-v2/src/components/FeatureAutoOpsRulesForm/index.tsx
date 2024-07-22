@@ -1239,7 +1239,7 @@ const ProgressiveRolloutComponent = memo(
       <div className="rounded-xl shadow px-6 py-4 bg-white">
         <div className="flex justify-between py-4 border-b">
           <h3 className="font-bold text-xl">
-            {f(messages.autoOps.enableOperation)}
+            {f(messages.autoOps.progressiveRolloutOperation)}
           </h3>
           <div className="flex space-x-2 items-center">
             <div className="py-[2px] px-2 bg-[#FFF7EE] rounded text-[#CE844A] text-sm">
