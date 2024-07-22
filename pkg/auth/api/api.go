@@ -505,7 +505,7 @@ func (s *authService) PrepareDemoUser() {
 					},
 				})
 			}
-			if !errors.Is(err, envstotage.ErrOrganizationAlreadyExists) {
+			if err != nil && !errors.Is(err, envstotage.ErrOrganizationAlreadyExists) {
 				return err
 			}
 		}
@@ -528,7 +528,7 @@ func (s *authService) PrepareDemoUser() {
 						OrganizationId: config.OrganizationId,
 					},
 				})
-				if !errors.Is(err, envstotage.ErrProjectAlreadyExists) {
+				if err != nil && !errors.Is(err, envstotage.ErrProjectAlreadyExists) {
 					return err
 				}
 			}
@@ -538,7 +538,7 @@ func (s *authService) PrepareDemoUser() {
 		_, err = environmentStorage.GetEnvironmentV2(ctx, config.EnvironmentId)
 		if err != nil {
 			if errors.Is(err, envstotage.ErrEnvironmentNotFound) {
-				err := environmentStorage.CreateEnvironmentV2(ctx, &envdomain.EnvironmentV2{
+				err = environmentStorage.CreateEnvironmentV2(ctx, &envdomain.EnvironmentV2{
 					EnvironmentV2: &envproto.EnvironmentV2{
 						Id:             config.EnvironmentId,
 						Name:           "Demo",
@@ -552,7 +552,7 @@ func (s *authService) PrepareDemoUser() {
 						RequireComment: false,
 					},
 				})
-				if !errors.Is(err, envstotage.ErrEnvironmentAlreadyExists) {
+				if err != nil && !errors.Is(err, envstotage.ErrEnvironmentAlreadyExists) {
 					return err
 				}
 			}
@@ -582,7 +582,7 @@ func (s *authService) PrepareDemoUser() {
 						UpdatedAt: now.Unix(),
 					},
 				})
-				if !errors.Is(err, accountstotage.ErrAccountAlreadyExists) {
+				if err != nil && !errors.Is(err, accountstotage.ErrAccountAlreadyExists) {
 					return err
 				}
 			}
