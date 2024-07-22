@@ -23,6 +23,8 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
@@ -306,7 +308,7 @@ func (s *authService) generateToken(
 	}
 	if len(orgResp.Organizations) == 0 {
 		s.logger.Error(
-			"Unable to generate token for an unapproved account",
+			"The account is not registered in any organization",
 			zap.String("email", userEmail),
 		)
 		dt, err := auth.StatusUnapprovedAccount.WithDetails(&errdetails.LocalizedMessage{
@@ -321,7 +323,11 @@ func (s *authService) generateToken(
 
 	// Check if the user has at least one account enabled in any Organization
 	if err := s.checkAccountStatus(ctx, userEmail, orgResp.Organizations, localizer); err != nil {
-		s.logger.Error("Failed to check account", zap.String("email", userEmail))
+		s.logger.Error("Failed to check account",
+			zap.Error(err),
+			zap.String("email", userEmail),
+			zap.Any("organizations", orgResp.Organizations),
+		)
 		return nil, err
 	}
 
@@ -413,7 +419,7 @@ func (s *authService) checkAccountStatus(
 			OrganizationId: org.Id,
 		})
 		if err != nil {
-			if errors.Is(err, accountstotage.ErrAccountNotFound) {
+			if status.Code(err) == codes.NotFound {
 				s.logger.Error("Account not found",
 					zap.Error(err),
 					zap.String("email", email),
