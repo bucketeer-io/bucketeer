@@ -29,12 +29,23 @@ export const toastsSlice = createSlice({
         to?: string;
       }>
     ) {
-      toastsAdapter.addOne(state, {
-        id: `${Date.now()}`,
-        message: action.payload.message,
-        severity: action.payload.severity,
-        to: action.payload.to
-      });
+      const allToasts = selectAll(state);
+
+      // Prevent duplicate error toasts
+      const isDuplicate = allToasts.some(
+        (toast) =>
+          action.payload.severity === 'error' &&
+          toast.message === action.payload.message
+      );
+
+      if (!isDuplicate) {
+        toastsAdapter.addOne(state, {
+          id: `${Date.now()}`,
+          message: action.payload.message,
+          severity: action.payload.severity,
+          to: action.payload.to
+        });
+      }
     },
     removeToast(state, action: PayloadAction<{ id: string }>) {
       toastsAdapter.removeOne(state, action.payload.id);
