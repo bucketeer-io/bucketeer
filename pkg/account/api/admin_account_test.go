@@ -28,6 +28,7 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 
+	v2 "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
 	ecmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
@@ -82,9 +83,51 @@ func TestGetMeMySQL(t *testing.T) {
 			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
 		},
 		{
+			desc: "err: account not found",
+			ctx:  createContextWithDefaultToken(t, true),
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).Return(
+					nil,
+					v2.ErrAccountNotFound,
+				)
+			},
+			input:       &accountproto.GetMeRequest{},
+			expected:    nil,
+			expectedErr: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
+		},
+		{
+			desc: "err: account is disabled",
+			ctx:  createContextWithDefaultToken(t, true),
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).Return(
+					&domain.AccountV2{AccountV2: &accountproto.AccountV2{Disabled: true}},
+					nil,
+				)
+			},
+			input:       &accountproto.GetMeRequest{},
+			expected:    nil,
+			expectedErr: createError(statusUnauthenticated, localizer.MustLocalize(locale.UnauthenticatedError)),
+		},
+		{
 			desc: "errInternal",
 			ctx:  createContextWithDefaultToken(t, true),
 			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).Return(
+					&domain.AccountV2{AccountV2: &accountproto.AccountV2{Disabled: false}},
+					nil,
+				)
 				s.environmentClient.(*ecmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(),
 					gomock.Any(),
@@ -101,7 +144,14 @@ func TestGetMeMySQL(t *testing.T) {
 			desc: "success",
 			ctx:  createContextWithDefaultToken(t, true),
 			setup: func(s *AccountService) {
-
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).Return(
+					&domain.AccountV2{AccountV2: &accountproto.AccountV2{Disabled: false}},
+					nil,
+				)
 				s.environmentClient.(*ecmock.MockClient).EXPECT().ListProjects(
 					gomock.Any(),
 					gomock.Any(),
