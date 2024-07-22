@@ -136,6 +136,8 @@ export const authSlice = createSlice({
       })
       .addCase(exchangeTokenFromUrl.rejected, (state) => {
         state.loading = false;
+        clearTokenFromStorage();
+        window.location.href = PAGE_PATH_ROOT;
       })
       .addCase(exchangeTokenFromUrl.pending, (state) => {
         state.loading = true;
