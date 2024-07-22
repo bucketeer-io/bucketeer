@@ -420,11 +420,9 @@ func (s *authService) checkAccountStatus(
 		})
 		if err != nil {
 			if status.Code(err) == codes.NotFound {
-				s.logger.Error("Account not found",
-					zap.Error(err),
-					zap.String("email", email),
-					zap.String("organizationId", org.Id),
-				)
+				// System admin accounts have access to all organizations,
+				// but they are registered only in the system admin organization.
+				// So, to avoid false errors, we ignore them if the account wasn't found in non-system admin organizations.
 				continue
 			}
 			dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -437,11 +435,11 @@ func (s *authService) checkAccountStatus(
 			return dt.Err()
 		}
 		if !resp.Account.Disabled {
-			// The user must have at least one account enabled
+			// The account must have at least one account enabled
 			return nil
 		}
 	}
-	// The user wasn't found or doesn't have any account enabled
+	// The account wasn't found or doesn't belong to any organization
 	dt, err := auth.StatusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
 		Locale:  localizer.GetLocale(),
 		Message: localizer.MustLocalize(locale.UnauthenticatedError),
