@@ -359,6 +359,20 @@ func (s *AccountService) getMyOrganizations(
 		if accWithOrg.AccountV2.Disabled || accWithOrg.Organization.Disabled || accWithOrg.Organization.Archived {
 			continue
 		}
+		// TODO: Remove this loop after the web console 3.0 is ready
+		// If the account is enabled in any environment in this organization,
+		// we append the organization.
+		// Note: When we disable an account on the web console, we are updating the role to UNASSIGNED.
+		// When the new console is ready, we will use the DisableAccount API instead.
+		var enabled bool
+		for _, role := range accWithOrg.AccountV2.EnvironmentRoles {
+			if role.Role != accountproto.AccountV2_Role_Environment_UNASSIGNED {
+				enabled = true
+			}
+		}
+		if !enabled {
+			continue
+		}
 		myOrgs = append(myOrgs, accWithOrg.Organization)
 	}
 	return myOrgs, nil
