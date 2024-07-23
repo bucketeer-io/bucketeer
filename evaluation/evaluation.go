@@ -141,10 +141,6 @@ func (e *evaluator) evaluate(
 		if targetTag != "" && !tagExist(feature.Tags, targetTag) {
 			continue
 		}
-		// FIXME: Remove the next line when the Variation
-		// no longer is being used
-		// For security reasons, it removes the variation description
-		variation.Description = ""
 		evaluationID := EvaluationID(feature.Id, feature.Version, user.Id)
 		evaluation := &ftproto.Evaluation{
 			Id:             evaluationID,
@@ -154,8 +150,17 @@ func (e *evaluator) evaluate(
 			VariationId:    variation.Id,
 			VariationName:  variation.Name,
 			VariationValue: variation.Value,
-			Variation:      variation, // deprecated
-			Reason:         reason,
+			// Deprecated
+			// FIXME: Remove the Variation when is no longer being used.
+			// For security reasons, we should remove the variation description.
+			// We copy the variation object to avoid race conditions when removing
+			// the description directly from the `variation`
+			Variation: &ftproto.Variation{
+				Id:    variation.Id,
+				Name:  variation.Name,
+				Value: variation.Value,
+			},
+			Reason: reason,
 		}
 		evaluations = append(evaluations, evaluation)
 	}
