@@ -249,6 +249,16 @@ func (s *AccountService) getConsoleAccountEnvironmentRoles(
 		if !ok || project.Disabled {
 			continue
 		}
+		// TODO: Remove this checking after the web console 3.0 is ready
+		// If the account is enabled in any environment in this organization,
+		// we append the organization.
+		// Note: When we disable an account on the web console,
+		// we are updating the role to UNASSIGNED, not the `disabled` column.
+		// When the new console is ready, we will use the DisableAccount API instead,
+		// which will update the `disabled` column in the DB.
+		if r.Role == accountproto.AccountV2_Role_Environment_UNASSIGNED {
+			continue
+		}
 		environmentRoles = append(environmentRoles, &accountproto.ConsoleAccount_EnvironmentRole{
 			Environment: env,
 			Role:        r.Role,
