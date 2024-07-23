@@ -27,7 +27,7 @@ data:
           connect_timeout: 5s
           ignore_health_on_host_removal: true
           type: strict_dns
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           typed_extension_protocol_options:
             envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
               '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
@@ -59,7 +59,7 @@ data:
           connect_timeout: 5s
           ignore_health_on_host_removal: true
           type: strict_dns
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           typed_extension_protocol_options:
             envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
               '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
@@ -100,7 +100,7 @@ data:
           connect_timeout: 5s
           ignore_health_on_host_removal: true
           type: strict_dns
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           typed_extension_protocol_options:
             envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
               '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
@@ -132,7 +132,7 @@ data:
           connect_timeout: 5s
           ignore_health_on_host_removal: true
           type: strict_dns
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           typed_extension_protocol_options:
             envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
               '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions

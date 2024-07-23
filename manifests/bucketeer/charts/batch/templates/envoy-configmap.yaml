@@ -24,7 +24,7 @@ data:
       clusters:
         - name: batch
           type: strict_dns
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
           load_assignment:
@@ -65,7 +65,7 @@ data:
 
         - name: backend
           type: strict_dns
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
           load_assignment:
@@ -101,7 +101,7 @@ data:
           connect_timeout: 5s
           ignore_health_on_host_removal: true
           type: strict_dns
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           typed_extension_protocol_options:
             envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
               '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
