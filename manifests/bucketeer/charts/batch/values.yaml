@@ -66,6 +66,7 @@ envoy:
     repository: ghcr.io/bucketeer-io/bucketeer-envoy
     tag: v1.26.2
     pullPolicy: IfNotPresent
+  lbPolicy: LEAST_REQUEST
   config:
   port: 9000
   adminPort: 8001

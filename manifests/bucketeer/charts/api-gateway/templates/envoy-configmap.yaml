@@ -42,7 +42,7 @@ data:
                         address: localhost
                         port_value: 9090
           dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           typed_extension_protocol_options:
             envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
               '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
@@ -80,7 +80,7 @@ data:
                         address: localhost
                         port_value: 8000
           dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           typed_extension_protocol_options:
             envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
               '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
@@ -118,7 +118,7 @@ data:
                         address: backend.{{ .Values.namespace }}.svc.cluster.local
                         port_value: 9000
           dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           typed_extension_protocol_options:
             envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
               '@type': type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions

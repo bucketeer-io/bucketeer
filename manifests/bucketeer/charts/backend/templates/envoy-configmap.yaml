@@ -26,7 +26,7 @@ data:
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           load_assignment:
             cluster_name: healthcheck
             endpoints:
@@ -57,7 +57,7 @@ data:
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           load_assignment:
             cluster_name: account
             endpoints:
@@ -88,7 +88,7 @@ data:
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           load_assignment:
             cluster_name: auth
             endpoints:
@@ -119,7 +119,7 @@ data:
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           load_assignment:
             cluster_name: auditlog
             endpoints:
@@ -151,7 +151,7 @@ data:
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           load_assignment:
             cluster_name: autoops
             endpoints:
@@ -183,7 +183,7 @@ data:
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           load_assignment:
             cluster_name: batch
             endpoints:
@@ -215,7 +215,7 @@ data:
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           load_assignment:
             cluster_name: environment
             endpoints:
@@ -247,7 +247,7 @@ data:
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           load_assignment:
             cluster_name: eventcounter
             endpoints:
@@ -279,7 +279,7 @@ data:
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           load_assignment:
             cluster_name: experiment
             endpoints:
@@ -311,7 +311,7 @@ data:
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           load_assignment:
             cluster_name: feature
             endpoints:
@@ -343,7 +343,7 @@ data:
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           load_assignment:
             cluster_name: notification
             endpoints:
@@ -375,7 +375,7 @@ data:
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           load_assignment:
             cluster_name: push
             endpoints:
@@ -407,7 +407,7 @@ data:
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           load_assignment:
             cluster_name: web_console
             endpoints:

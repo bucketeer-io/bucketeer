@@ -26,7 +26,7 @@ data:
           type: strict_dns
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           load_assignment:
             cluster_name: calculator
             endpoints:
@@ -59,7 +59,7 @@ data:
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
           ignore_health_on_host_removal: true
-          lb_policy: round_robin
+          lb_policy: {{ .Values.envoy.lbPolicy }}
           load_assignment:
             cluster_name: backend
             endpoints:
