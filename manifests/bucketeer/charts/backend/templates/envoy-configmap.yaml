@@ -735,3 +735,10 @@ data:
                         private_key:
                           filename: /usr/local/certs/service/tls.key
                   require_client_certificate: true
+    overload_manager:
+      resource_monitors:
+        - name: 'envoy.resource_monitors.global_downstream_max_connections'
+          typed_config:
+            '@type': type.googleapis.com/envoy.extensions.resource_monitors.downstream_connections.v3.DownstreamConnectionsConfig
+            # We want disable the warning without setting a limit. So, we set a large number.
+            max_active_downstream_connections: 100000
