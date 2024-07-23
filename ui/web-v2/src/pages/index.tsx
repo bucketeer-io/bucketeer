@@ -122,19 +122,23 @@ export const Root: FC = memo(() => {
           setIsInitialLoading(false)
         );
       } else {
-        dispatch(fetchMyOrganizations()).then(() => {
-          setIsInitialLoading(false);
+        dispatch(fetchMyOrganizations()).then((res) => {
+          const organizationList = res.payload as Organization.AsObject[];
+          // if there is only one organization, set it as the default organization
+          if (organizationList.length === 1) {
+            setOrganizationId(organizationList[0].id);
+            dispatch(fetchMe({ organizationId: organizationList[0].id })).then(
+              () => {
+                setIsInitialLoading(false);
+              }
+            );
+          } else {
+            setIsInitialLoading(false);
+          }
         });
       }
     }
   }, [hasToken]);
-
-  useEffect(() => {
-    if (myOrganization.length === 1) {
-      setOrganizationId(myOrganization[0].id);
-      dispatch(fetchMe({ organizationId: myOrganization[0].id }));
-    }
-  }, [myOrganization]);
 
   const handleSubmit = () => {
     setOrganizationId(selectedOrganization.value);
