@@ -467,6 +467,7 @@ const AddGoalSelect: FC<AddGoalSelectProps> = memo(
 const CustomOption = ({ children, ...props }) => {
   const isLastOption =
     props.options[props.options.length - 1]?.value === props.data.value;
+  const { formatMessage: f } = useIntl();
 
   if (isLastOption) {
     return (
@@ -483,7 +484,7 @@ const CustomOption = ({ children, ...props }) => {
           className="py-[10px] space-x-2 cursor-pointer border-t hover:bg-[#F3F4F6] text-primary flex items-center justify-center"
         >
           <PlusIcon width={16} />
-          <span>Add New Goal</span>
+          <span>{f(messages.goal.addNewGoal)}</span>
         </div>
       </div>
     );
@@ -576,7 +577,9 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
             >
               <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all w-[542px]">
                 <div className="flex items-center justify-between px-4 py-5 border-b">
-                  <p className="text-xl font-medium">New Goal</p>
+                  <p className="text-xl font-medium">
+                    {f(messages.goal.newGoal)}
+                  </p>
                   <XIcon
                     width={20}
                     className="text-gray-400 cursor-pointer"
@@ -584,7 +587,7 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
                   />
                 </div>
                 <div className="p-4 space-y-4">
-                  <p className="font-bold">General Information</p>
+                  <p className="font-bold">{f(messages.generalInformation)}</p>
                   <div className="space-y-1">
                     <label htmlFor="name" className="flex items-center">
                       <span className="input-label">{f({ id: 'name' })}</span>
@@ -604,7 +607,9 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
                   </div>
                   <div className="space-y-1">
                     <label htmlFor="id" className="flex items-center">
-                      <span className="input-label">Goal ID</span>
+                      <span className="input-label">
+                        {f(messages.goal.goalId)}
+                      </span>
                     </label>
                     <input
                       {...register('id')}
@@ -634,7 +639,6 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
                       name="description"
                       rows={5}
                       className="input-text w-full break-all"
-                      placeholder="Enter description"
                     />
                     <p className="input-error">
                       {errors.description && (
@@ -658,7 +662,7 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
                     disabled={!isValid || isSubmitting}
                     onClick={handleSubmit(handleCreateGoal)}
                   >
-                    Create Goal
+                    {f(messages.goal.createGoal)}
                   </button>
                 </div>
               </div>

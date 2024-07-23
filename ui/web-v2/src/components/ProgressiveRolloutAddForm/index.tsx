@@ -346,7 +346,11 @@ export const ProgressiveRolloutAddForm: FC<ProgressiveRolloutAddFormProps> =
                           </div>
                           <div className="ml-3 flex-1">
                             <p className="text-sm text-blue-700">
-                              It will enable the flag when it starts
+                              {f(
+                                messages.autoOps
+                                  .progressiveRolloutWarningMessages
+                                  .enableFlagWhenStarts
+                              )}
                             </p>
                           </div>
                         </div>

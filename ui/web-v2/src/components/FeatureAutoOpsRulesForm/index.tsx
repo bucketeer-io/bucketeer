@@ -26,8 +26,6 @@ import {
   PencilIcon,
   TrashIcon,
   InformationCircleIcon,
-  ArrowNarrowLeftIcon,
-  ArrowNarrowRightIcon,
   BanIcon,
   ClockIcon,
   CalendarIcon,
@@ -68,7 +66,6 @@ import {
   OpsType
 } from '../../proto/autoops/auto_ops_rule_pb';
 import {
-  DatetimeClause,
   OpsEventRateClause,
   ProgressiveRolloutManualScheduleClause,
   ProgressiveRolloutSchedule,
@@ -436,14 +433,14 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
           >
             <OpenInNewSvg className="mt-[2px]" />
             <span className="underline">
-              {intl.formatMessage(messages.sideMenu.documentation)}
+              {f(messages.sideMenu.documentation)}
             </span>
           </a>
           <Popover className="relative flex">
             <Popover.Button>
               <div className="btn-submit space-x-2 items-center">
                 <PlusIcon width={16} />
-                <span>New Operation</span>
+                <span>{f(messages.autoOps.newOperation)}</span>
                 <ChevronDownIcon width={16} />
               </div>
             </Popover.Button>
@@ -964,7 +961,7 @@ const DateTimeOperation = memo(({ rule }: DateTimeOperationProps) => {
     displayLabel =
       rule.createdAt === rule.updatedAt
         ? f(messages.autoOps.created)
-        : 'Updated';
+        : f(messages.autoOps.updated);
   } else {
     const clause = rule.clausesList[page * 10 - 1];
     displayTime = getDatetimeClause(clause.clause.value).time;

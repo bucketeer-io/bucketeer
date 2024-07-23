@@ -521,6 +521,10 @@ export const messages = {
       moreInformation: defineMessage({
         id: 'progressiveRolloutWarningMessages.moreInformation',
         defaultMessage: 'For more information, please see the {link}.'
+      }),
+      enableFlagWhenStarts: defineMessage({
+        id: 'progressiveRolloutWarningMessages.enableFlagWhenStarts',
+        defaultMessage: 'It will enable the flag when it starts.'
       })
     },
     stoppedByUser: defineMessage({
@@ -542,6 +546,10 @@ export const messages = {
       id: 'autoOps.created',
       defaultMessage: 'Created'
     }),
+    updated: defineMessage({
+      id: 'autoOps.updated',
+      defaultMessage: 'Updated'
+    }),
     scheduleOperation: defineMessage({
       id: 'autoOps.scheduleOperation',
       defaultMessage: 'Schedule Operation'
@@ -561,6 +569,10 @@ export const messages = {
     state: defineMessage({
       id: 'autoOps.state',
       defaultMessage: 'State'
+    }),
+    newOperation: defineMessage({
+      id: 'autoOps.newOperation',
+      defaultMessage: 'New Operation'
     })
   },
   trigger: {
@@ -736,6 +748,10 @@ export const messages = {
   description: defineMessage({
     id: 'description',
     defaultMessage: 'Description'
+  }),
+  generalInformation: defineMessage({
+    id: 'generalInformation',
+    defaultMessage: 'General Information'
   }),
   yes: defineMessage({
     id: 'yes',
@@ -1286,7 +1302,23 @@ export const messages = {
         id: 'goal.status.notInUse',
         defaultMessage: 'not in use'
       })
-    }
+    },
+    addNewGoal: defineMessage({
+      id: 'goal.addNewGoal',
+      defaultMessage: 'Add New Goal'
+    }),
+    newGoal: defineMessage({
+      id: 'goal.newGoal',
+      defaultMessage: 'New Goal'
+    }),
+    goalId: defineMessage({
+      id: 'goal.goalId',
+      defaultMessage: 'Goal ID'
+    }),
+    createGoal: defineMessage({
+      id: 'goal.createGoal',
+      defaultMessage: 'Create Goal'
+    })
   },
   experiment: {
     action: {
