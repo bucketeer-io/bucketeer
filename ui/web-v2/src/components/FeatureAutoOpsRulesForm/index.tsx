@@ -92,6 +92,8 @@ import { RelativeDateText } from '../RelativeDateText';
 import { Option } from '../Select';
 import { isLanguageJapanese } from '../../lang/getSelectedLanguage';
 import { createVariationLabel } from '../../utils/variation';
+import { getDatetimeClause } from '../../utils/getDatetimeClause';
+import OperationPagination from '../OperationPagination';
 
 enum SORT_TYPE {
   ASC = 'ASC',
@@ -106,7 +108,7 @@ export enum OperationType {
 
 const extractDatetimeFromAutoOps = (autoOps: AutoOpsRule.AsObject) => {
   const { value } = autoOps.clausesList[0].clause;
-  return DatetimeClause.deserializeBinary(value as Uint8Array).toObject().time;
+  return getDatetimeClause(value).time;
 };
 
 const extractDatetimeFromProgressiveRollout = (
@@ -929,10 +931,16 @@ interface DateTimeOperationProps {
 const DateTimeOperation = memo(({ rule }: DateTimeOperationProps) => {
   const { formatMessage: f } = useIntl();
 
+  const [page, setPage] = useState(0);
+  const count = Math.ceil(rule.clausesList.length / 10);
+
+  const paginatedClausesList = rule.clausesList.slice(
+    page * 10,
+    (page + 1) * 10
+  );
+
   const _datetimeClause = (value) => {
-    const datetimeClause = DatetimeClause.deserializeBinary(
-      value as Uint8Array
-    ).toObject();
+    const datetimeClause = getDatetimeClause(value);
 
     const date = dayjs(new Date(datetimeClause.time * 1000)).format(
       'YYYY/MM/DD'
@@ -944,85 +952,99 @@ const DateTimeOperation = memo(({ rule }: DateTimeOperationProps) => {
     };
   };
 
-  const _getFirstClauseDate = () => {
-    const { value } = rule.clausesList[0].clause;
-    const datetimeClause = DatetimeClause.deserializeBinary(
-      value as Uint8Array
-    ).toObject();
-    return new Date(datetimeClause.time * 1000);
-  };
-
   const _isSameOrBeforeCurrentDate = (date) => {
     return dayjs(date).isSameOrBefore(new Date());
   };
 
-  const displayTime =
-    rule.updatedAt > rule.createdAt ? rule.updatedAt : rule.createdAt;
+  let displayTime;
+  let displayLabel;
+  if (page === 0) {
+    displayTime =
+      rule.updatedAt > rule.createdAt ? rule.updatedAt : rule.createdAt;
+    displayLabel =
+      rule.createdAt === rule.updatedAt
+        ? f(messages.autoOps.created)
+        : 'Updated';
+  } else {
+    const clause = rule.clausesList[page * 10 - 1];
+    displayTime = getDatetimeClause(clause.clause.value).time;
+    displayLabel = actionTypesOptions.find(
+      (o) => o.value === clause.actionType.toString()
+    ).label;
+  }
 
-  const displayLabel =
-    rule.createdAt === rule.updatedAt ? f(messages.autoOps.created) : 'Updated';
+  const handlePageChange = (page) => {
+    setPage(page);
+  };
 
   return (
-    <div className="px-12 pb-16 pt-14">
-      <div className="flex relative h-[4px]">
-        <div className="flex items-center">
-          <div
-            className={classNames(
-              'w-[9px] h-[9px] relative rounded-full border',
-              _isSameOrBeforeCurrentDate(_getFirstClauseDate())
-                ? 'bg-pink-500 border-pink-500'
-                : 'bg-white border-gray-400'
-            )}
-          >
-            <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
-              {displayLabel}
-            </span>
-            <div className="text-xs text-gray-400 absolute space-y-[2px] left-1/2 -translate-x-1/2 whitespace-nowrap text-center top-[18px]">
-              <p>{dayjs(new Date(displayTime * 1000)).format('HH:mm')}</p>
-              <p>{dayjs(new Date(displayTime * 1000)).format('YYYY/MM/DD')}</p>
-            </div>
-          </div>
-        </div>
-        {rule.clausesList.slice(0, rule.clausesList.length).map((clause) => {
-          const time = DatetimeClause.deserializeBinary(
-            clause.clause.value as Uint8Array
-          ).toObject().time;
-
-          return (
+    <div>
+      <div className="px-12 pb-16 pt-14">
+        <div className="flex relative h-[4px]">
+          <div className="flex items-center">
             <div
-              key={clause.id}
               className={classNames(
-                'flex flex-1 justify-end items-center relative',
-                _isSameOrBeforeCurrentDate(time * 1000)
+                'w-[9px] h-[9px] relative rounded-full border',
+                _isSameOrBeforeCurrentDate(new Date(displayTime * 1000))
                   ? 'bg-pink-500 border-pink-500'
-                  : 'bg-gray-200'
+                  : 'bg-white border-gray-400'
               )}
             >
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                {displayLabel}
+              </span>
+              <div className="text-xs text-gray-400 absolute space-y-[2px] left-1/2 -translate-x-1/2 whitespace-nowrap text-center top-[18px]">
+                <p>{dayjs(new Date(displayTime * 1000)).format('HH:mm')}</p>
+                <p>
+                  {dayjs(new Date(displayTime * 1000)).format('YYYY/MM/DD')}
+                </p>
+              </div>
+            </div>
+          </div>
+          {paginatedClausesList.map((clause) => {
+            const time = getDatetimeClause(clause.clause.value).time;
+
+            return (
               <div
                 key={clause.id}
                 className={classNames(
-                  'w-[9px] h-[9px] relative rounded-full border',
-                  _isSameOrBeforeCurrentDate(new Date(time * 1000))
+                  'flex flex-1 justify-end items-center relative',
+                  _isSameOrBeforeCurrentDate(time * 1000)
                     ? 'bg-pink-500 border-pink-500'
-                    : 'bg-white border-gray-400'
+                    : 'bg-gray-200'
                 )}
               >
-                <span className="absolute -top-8 left-1/2 -translate-x-1/2">
-                  {
-                    actionTypesOptions.find(
-                      (o) => o.value === clause.actionType.toString()
-                    ).label
-                  }
-                </span>
-                <div className="text-xs text-gray-400 absolute space-y-[2px] left-1/2 -translate-x-1/2 whitespace-nowrap text-center top-[18px]">
-                  <p>{_datetimeClause(clause.clause.value).time}</p>
-                  <p>{_datetimeClause(clause.clause.value).date}</p>
+                <div
+                  key={clause.id}
+                  className={classNames(
+                    'w-[9px] h-[9px] relative rounded-full border',
+                    _isSameOrBeforeCurrentDate(new Date(time * 1000))
+                      ? 'bg-pink-500 border-pink-500'
+                      : 'bg-white border-gray-400'
+                  )}
+                >
+                  <span className="absolute -top-8 left-1/2 -translate-x-1/2">
+                    {
+                      actionTypesOptions.find(
+                        (o) => o.value === clause.actionType.toString()
+                      ).label
+                    }
+                  </span>
+                  <div className="text-xs text-gray-400 absolute space-y-[2px] left-1/2 -translate-x-1/2 whitespace-nowrap text-center top-[18px]">
+                    <p>{_datetimeClause(clause.clause.value).time}</p>
+                    <p>{_datetimeClause(clause.clause.value).date}</p>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
+      <OperationPagination
+        page={page}
+        count={count}
+        onPageChange={handlePageChange}
+      />
     </div>
   );
 });
@@ -1191,7 +1213,7 @@ const ProgressiveRolloutComponent = memo(
   }: ProgressiveRolloutTemplateScheduleProps) => {
     const { formatMessage: f } = useIntl();
 
-    const [selectedPagination, setSelectedPagination] = useState(0);
+    const [page, setPage] = useState(0);
 
     const getFrequency = (frequency) => {
       if (frequency === 1) {
@@ -1217,22 +1239,22 @@ const ProgressiveRolloutComponent = memo(
       }
       return false;
     };
-    const totalNumberOfPages = Math.ceil(schedulesList.length / 10);
+
+    const handlePageChange = (page) => {
+      setPage(page);
+    };
+
+    const count = Math.ceil(schedulesList.length / 10);
 
     const paginatedScheduleList = schedulesList.slice(
-      selectedPagination * 10,
-      (selectedPagination + 1) * 10
+      page * 10,
+      (page + 1) * 10
     );
 
     const firstSchedule = {
-      weight:
-        selectedPagination === 0
-          ? 0
-          : schedulesList[selectedPagination * 10 - 1].weight / 1000,
+      weight: page === 0 ? 0 : schedulesList[page * 10 - 1].weight / 1000,
       executeAt:
-        selectedPagination === 0
-          ? rule.createdAt
-          : schedulesList[selectedPagination * 10 - 1].executeAt
+        page === 0 ? rule.createdAt : schedulesList[page * 10 - 1].executeAt
     };
 
     return (
@@ -1466,48 +1488,11 @@ const ProgressiveRolloutComponent = memo(
               ))}
             </div>
           </div>
-          {totalNumberOfPages > 1 && (
-            <div className="mt-4 flex justify-between items-center">
-              <button
-                className={classNames(
-                  'p-1.5 rounded border',
-                  selectedPagination === 0 && 'opacity-50 cursor-not-allowed'
-                )}
-                disabled={selectedPagination === 0}
-                onClick={() => setSelectedPagination(selectedPagination - 1)}
-              >
-                <ArrowNarrowLeftIcon width={16} className="text-gray-400" />
-              </button>
-              <div className="flex space-x-2">
-                {Array(totalNumberOfPages)
-                  .fill('')
-                  .map((_, i) =>
-                    selectedPagination === i ? (
-                      <div
-                        key={i}
-                        className="w-[24px] h-[8px] rounded-full bg-gray-400"
-                      />
-                    ) : (
-                      <div
-                        key={i}
-                        className="w-[8px] h-[8px] rounded-full bg-gray-200"
-                      />
-                    )
-                  )}
-              </div>
-              <button
-                className={classNames(
-                  'p-1.5 rounded border',
-                  selectedPagination === totalNumberOfPages - 1 &&
-                    'opacity-50 cursor-not-allowed'
-                )}
-                disabled={selectedPagination === totalNumberOfPages - 1}
-                onClick={() => setSelectedPagination(selectedPagination + 1)}
-              >
-                <ArrowNarrowRightIcon width={16} className="text-gray-400" />
-              </button>
-            </div>
-          )}
+          <OperationPagination
+            page={page}
+            count={count}
+            onPageChange={handlePageChange}
+          />
         </div>
       </div>
     );

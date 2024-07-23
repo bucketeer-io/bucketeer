@@ -30,6 +30,7 @@ import {
 import { v4 as uuid } from 'uuid';
 import dayjs from 'dayjs';
 import { isArraySorted } from '../../utils/isArraySorted';
+import { getDatetimeClause } from '../../utils/getDatetimeClause';
 
 export const actionTypesOptions = [
   { value: ActionType.ENABLE.toString(), label: 'On' },
@@ -99,9 +100,7 @@ export const ScheduleAddUpdateForm: FC<ScheduleAddUpdateFormProps> = memo(
     useEffect(() => {
       if (autoOpsRule) {
         const datetimeClausesList = autoOpsRule.clausesList.map((clause) => {
-          const datetime = DatetimeClause.deserializeBinary(
-            clause.clause.value as Uint8Array
-          ).toObject();
+          const datetime = getDatetimeClause(clause.clause.value);
           return {
             id: clause.id,
             actionType: clause.actionType,
@@ -154,9 +153,9 @@ export const ScheduleAddUpdateForm: FC<ScheduleAddUpdateFormProps> = memo(
             );
 
             if (orgClause && valClause) {
-              const orgDatetime = DatetimeClause.deserializeBinary(
-                orgClause.clause.value as Uint8Array
-              ).toObject().time;
+              const orgDatetime = getDatetimeClause(
+                orgClause.clause.value
+              ).time;
               const valDatetime = Math.round(valClause.time.getTime() / 1000);
 
               if (
@@ -221,7 +220,7 @@ export const ScheduleAddUpdateForm: FC<ScheduleAddUpdateFormProps> = memo(
       const lastDatetimeClause =
         watchDatetimeClausesList[watchDatetimeClausesList.length - 1];
 
-      const time = dayjs(lastDatetimeClause.time).add(1, 'day').toDate();
+      const time = dayjs(lastDatetimeClause.time).add(1, 'hour').toDate();
 
       appendDatetimeClause({
         id: uuid(),
@@ -304,90 +303,96 @@ export const ScheduleAddUpdateForm: FC<ScheduleAddUpdateFormProps> = memo(
               )}
               <div className="py-6 h-full flex flex-col overflow-hidden space-y-4 px-1">
                 <p className="font-bold">{f(messages.autoOps.schedule)}</p>
-                {datetimeClausesList.map((datetimeClause, idx) => (
-                  <div key={datetimeClause.id} className="flex space-x-4">
-                    <div className="w-32 space-y-1">
-                      <span className="input-label">
-                        {f(messages.autoOps.state)}
-                      </span>
-                      <Controller
-                        name={`datetimeClausesList.${idx}.actionType`}
-                        control={control}
-                        render={({ field }) => (
-                          <Select
-                            {...field}
-                            disabled={
-                              isSeeDetailsSelected ||
-                              isDisabled(datetimeClause.id)
-                            }
-                            isSearchable={false}
-                            value={actionTypesOptions.find(
-                              (o) => o.value === field.value.toString()
-                            )}
-                            options={actionTypesOptions}
-                            onChange={(option) => field.onChange(option.value)}
-                          />
-                        )}
-                      />
-                    </div>
-                    <div className="w-full space-y-1">
-                      <span className="input-label">
-                        {f(messages.autoOps.startDate)}
-                      </span>
-                      <DatetimePicker
-                        name={`datetimeClausesList.${idx}.time`}
-                        dateFormat="yyyy/MM/dd HH:mm"
-                        disabled={
-                          isSeeDetailsSelected || isDisabled(datetimeClause.id)
-                        }
-                      />
-                      {!isDisabled(datetimeClause.id) &&
-                        isSameOrBeforeNow(
-                          watchDatetimeClausesList[idx]?.time
-                        ) && (
-                          <p className="input-error">
-                            <span role="alert">
-                              {f(messages.input.error.notLaterThanCurrentTime)}
-                              {/* {errors.datetimeClausesList[idx].time.message} */}
-                            </span>
-                          </p>
-                        )}
-                    </div>
-                    {!isSeeDetailsSelected && (
-                      <div>
-                        <button
-                          className="py-[11px] mt-6 text-gray-400 hover:text-gray-500 disabled:opacity-60 disabled:hover:text-gray-400 disabled:cursor-not-allowed"
-                          type="button"
-                          onClick={() => handleDelete(idx)}
+                <div className="h-full overflow-y-auto space-y-2">
+                  {datetimeClausesList.map((datetimeClause, idx) => (
+                    <div
+                      key={datetimeClause.id}
+                      className="flex space-x-4 pl-[2px]"
+                    >
+                      <div className="w-32 space-y-1">
+                        <span className="input-label">
+                          {f(messages.autoOps.state)}
+                        </span>
+                        <Controller
+                          name={`datetimeClausesList.${idx}.actionType`}
+                          control={control}
+                          render={({ field }) => (
+                            <Select
+                              {...field}
+                              disabled={
+                                isSeeDetailsSelected ||
+                                isDisabled(datetimeClause.id)
+                              }
+                              isSearchable={false}
+                              value={actionTypesOptions.find(
+                                (o) => o.value === field.value.toString()
+                              )}
+                              options={actionTypesOptions}
+                              onChange={(option) =>
+                                field.onChange(option.value)
+                              }
+                            />
+                          )}
+                        />
+                      </div>
+                      <div className="w-full space-y-1">
+                        <span className="input-label">
+                          {f(messages.autoOps.startDate)}
+                        </span>
+                        <DatetimePicker
+                          name={`datetimeClausesList.${idx}.time`}
+                          dateFormat="yyyy/MM/dd HH:mm"
                           disabled={
-                            datetimeClausesList.length === 1 ||
+                            isSeeDetailsSelected ||
                             isDisabled(datetimeClause.id)
                           }
-                        >
-                          <TrashIcon width={18} />
-                        </button>
+                        />
+                        {!isDisabled(datetimeClause.id) &&
+                          isSameOrBeforeNow(
+                            watchDatetimeClausesList[idx]?.time
+                          ) && (
+                            <p className="input-error">
+                              <span role="alert">
+                                {f(
+                                  messages.input.error.notLaterThanCurrentTime
+                                )}
+                              </span>
+                            </p>
+                          )}
                       </div>
-                    )}
-                  </div>
-                ))}
-                {!isDatesSorted && (
-                  <div className="pl-28">
-                    <p className="input-error">
-                      <span role="alert">
-                        {f(messages.autoOps.dateIncreasingOrder)}
-                      </span>
-                    </p>
-                  </div>
-                )}
-                {!isSeeDetailsSelected && (
-                  <button
-                    className="flex whitespace-nowrap space-x-2 text-primary max-w-min py-2 items-center"
-                    type="button"
-                    onClick={handleAddDatetimeClause}
-                  >
-                    <PlusIcon width={18} className="" />
-                    <span>{f(messages.feature.clause.type.date)}</span>
-                  </button>
+                      {!isSeeDetailsSelected && (
+                        <div>
+                          <button
+                            className="py-[11px] mt-6 text-gray-400 hover:text-gray-500 disabled:opacity-60 disabled:hover:text-gray-400 disabled:cursor-not-allowed"
+                            type="button"
+                            onClick={() => handleDelete(idx)}
+                            disabled={
+                              datetimeClausesList.length === 1 ||
+                              isDisabled(datetimeClause.id)
+                            }
+                          >
+                            <TrashIcon width={18} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {!isSeeDetailsSelected && (
+                    <button
+                      className="flex whitespace-nowrap space-x-2 text-primary max-w-min py-2 items-center"
+                      type="button"
+                      onClick={handleAddDatetimeClause}
+                    >
+                      <PlusIcon width={18} />
+                      <span>{f(messages.feature.clause.type.date)}</span>
+                    </button>
+                  )}
+                  {watchDatetimeClausesList.length <= 10 && (
+                    <ErrorMessage isDatesSorted={isDatesSorted} />
+                  )}
+                </div>
+                {watchDatetimeClausesList.length > 10 && (
+                  <ErrorMessage isDatesSorted={isDatesSorted} />
                 )}
               </div>
             </div>
@@ -423,3 +428,28 @@ export const ScheduleAddUpdateForm: FC<ScheduleAddUpdateFormProps> = memo(
     );
   }
 );
+
+interface ErrorMessageProps {
+  isDatesSorted: boolean;
+}
+
+const ErrorMessage: FC<ErrorMessageProps> = memo(({ isDatesSorted }) => {
+  const { formatMessage: f } = useIntl();
+
+  if (isDatesSorted) {
+    return null;
+  }
+
+  return (
+    <div className="flex space-x-2">
+      <div className="w-32" />
+      <div className="w-full">
+        {!isDatesSorted && (
+          <p className="input-error">
+            <span role="alert">{f(messages.autoOps.dateIncreasingOrder)}</span>
+          </p>
+        )}
+      </div>
+    </div>
+  );
+});

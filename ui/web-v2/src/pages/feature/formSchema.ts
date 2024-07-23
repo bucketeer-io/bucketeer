@@ -1,6 +1,6 @@
 import { yupLocale } from '../../lang/yup';
 import { isArraySorted } from '../../utils/isArraySorted';
-import { isIntervals5MinutesApart } from '../../utils/isIntervals5MinutesApart';
+import { areIntervalsApart } from '../../utils/areIntervalsApart';
 import * as yup from 'yup';
 
 import { AUTOOPS_MAX_MIN_COUNT } from '../../constants/autoops';
@@ -178,10 +178,11 @@ const schedulesListSchema = yup.array().of(
             context.from[4].value.progressiveRolloutType ===
             ProgressiveRollout.Type.MANUAL_SCHEDULE
           ) {
-            return isIntervals5MinutesApart(
+            return areIntervalsApart(
               context.from[4].value.progressiveRollout.manual.schedulesList.map(
                 (d) => d.executeAt.time.getTime()
-              )
+              ),
+              5
             );
           }
           return true;

@@ -48,7 +48,7 @@ import { classNames } from '../../utils/css';
 import dayjs from 'dayjs';
 import { getIntervalForDayjs } from '../FeatureAutoOpsRulesForm';
 import { isArraySorted } from '../../utils/isArraySorted';
-import { isIntervals5MinutesApart } from '../../utils/isIntervals5MinutesApart';
+import { areIntervalsApart } from '../../utils/areIntervalsApart';
 import { CreateProgressiveRolloutCommand } from '../../proto/autoops/command_pb';
 import {
   ProgressiveRolloutManualScheduleClause,
@@ -813,8 +813,9 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
     const isDatesSorted = isArraySorted(
       watchManualSchedulesList.map((d) => d.executeAt.time.getTime())
     );
-    const isDatetime5MinutesApart = isIntervals5MinutesApart(
-      watchManualSchedulesList.map((d) => d.executeAt.time.getTime())
+    const isDatetime5MinutesApart = areIntervalsApart(
+      watchManualSchedulesList.map((d) => d.executeAt.time.getTime()),
+      5
     );
 
     return (
@@ -875,12 +876,26 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
                     )}
                   </p>
                 </div>
-                <div className="w-1/2 flex">
-                  <DatetimePicker
-                    name={`progressiveRollout.manual.schedulesList.${index}.executeAt.time`}
-                    dateFormat="yyyy/MM/dd HH:mm"
-                    disabled={isDisabled}
-                  />
+                <div className="w-1/2">
+                  <div className="flex">
+                    <DatetimePicker
+                      name={`progressiveRollout.manual.schedulesList.${index}.executeAt.time`}
+                      dateFormat="yyyy/MM/dd HH:mm"
+                      disabled={isDisabled}
+                    />
+                    {editable && !isDisabled && (
+                      <div className="flex items-center ml-2">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveTrigger(index)}
+                          className="minus-circle-icon"
+                          disabled={manualSchedulesList.length === 1}
+                        >
+                          <MinusCircleIcon aria-hidden="true" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <p className="input-error">
                     {errors.progressiveRollout?.manual?.schedulesList[index]
                       ?.executeAt?.time?.message && (
@@ -893,18 +908,6 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
                       </span>
                     )}
                   </p>
-                  {editable && !isDisabled && (
-                    <div className="flex items-center ml-2">
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveTrigger(index)}
-                        className="minus-circle-icon"
-                        disabled={manualSchedulesList.length === 1}
-                      >
-                        <MinusCircleIcon aria-hidden="true" />
-                      </button>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
@@ -984,13 +987,11 @@ const ErrorMessage: FC<ErrorMessageProps> = memo(
               </span>
             </p>
           ) : !isDatetime5MinutesApart ? (
-            !isDatetime5MinutesApart && (
-              <p className="input-error">
-                <span role="alert">
-                  {f(messages.autoOps.timeInterval5MinutesApart)}
-                </span>
-              </p>
-            )
+            <p className="input-error">
+              <span role="alert">
+                {f(messages.autoOps.timeInterval5MinutesApart)}
+              </span>
+            </p>
           ) : null}
         </div>
       </div>

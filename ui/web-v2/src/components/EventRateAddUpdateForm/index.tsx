@@ -625,8 +625,7 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
                         {f(messages.description)}
                       </span>
                       <span className="input-label-optional">
-                        {' '}
-                        ({f(messages.input.optional)})
+                        {f(messages.input.optional)}
                       </span>
                     </label>
                     <textarea

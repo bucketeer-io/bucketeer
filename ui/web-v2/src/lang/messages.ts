@@ -552,7 +552,7 @@ export const messages = {
     }),
     progressiveRolloutOperation: defineMessage({
       id: 'autoOps.progressiveRolloutOperation',
-      defaultMessage: 'Progressive RolloutOperation Operation'
+      defaultMessage: 'Progressive Rollout Operation'
     }),
     currentFlagState: defineMessage({
       id: 'autoOps.currentFlagState',
