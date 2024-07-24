@@ -34,7 +34,7 @@ const colors = {
     700: '#475569',
     600: '#64748B',
     500: '#94A3B8',
-    400: '#6BAD9E',
+    400: '#CBD5E1',
     300: '#E2E8F0',
     200: '#F1F5F9',
     100: '#FAFAFC',
@@ -121,6 +121,7 @@ const theme = {
   colors,
   boxShadow: {
     DEFAULT: '0px 2px 2px rgba(136, 135, 135, 0.25)',
+    menu: '0px 8px 12px rgba(0, 0, 0, 0.08)',
     'border-primary-500': `inset 0 0 0 1px ${colors.primary[500]}`,
     'border-primary-600': `inset 0 0 0 1px ${colors.primary[600]}`,
     'border-gray-200': `inset 0 0 0 1px ${colors.gray[200]}`,
@@ -324,6 +325,21 @@ const iconSize = plugin(({ addComponents }) => {
       width: '28px',
       height: '28px',
       fontSize: '28px'
+    },
+    '.icon-size-xl': {
+      width: '32px',
+      height: '32px',
+      fontSize: '32px'
+    },
+    '.icon-size-2xl': {
+      width: '36px',
+      height: '36px',
+      fontSize: '36px'
+    },
+    '.icon-size-3xl': {
+      width: '60px',
+      height: '60px',
+      fontSize: '60px'
     }
   };
 

@@ -1,6 +1,6 @@
-import { IconInfoFilled } from '@icons';
 import Button from 'components/button';
-import { IconAddRound } from 'react-icons-material-design';
+import IconButton from 'components/icon-button';
+import { IconAddRound, IconEditOutlined } from 'react-icons-material-design';
 
 const DashboardPage = () => {
   return (
@@ -25,7 +25,7 @@ const DashboardPage = () => {
 
       <div className="mt-6 py-2">{`Button icons`}</div>
       <div className="flex items-center gap-6">
-        <Button icon={IconInfoFilled} iconSlot="left">{`Button 1`}</Button>
+        <Button icon={IconAddRound} iconSlot="left">{`Button 1`}</Button>
         <Button variant="text" icon={IconAddRound} iconSlot="left">
           {`Text button`}
         </Button>
@@ -43,6 +43,14 @@ const DashboardPage = () => {
         <div className="typo-para-medium">{`Paragraph MD`}</div>
         <div className="typo-para-small">{`Paragraph SM`}</div>
         <div className="typo-para-tiny">{`Paragraph XS`}</div>
+      </div>
+
+      <div className="mt-6 flex items-center gap-6">
+        <IconButton icon={IconEditOutlined} />
+        <IconButton variant="secondary" icon={IconEditOutlined} />
+        <IconButton variant="gray" icon={IconEditOutlined} />
+        <IconButton variant="icon" size="sm" icon={IconEditOutlined} />
+        <IconButton variant="icon-2" size="sm" icon={IconEditOutlined} />
       </div>
     </div>
   );

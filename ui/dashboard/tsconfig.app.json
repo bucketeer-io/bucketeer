@@ -27,6 +27,6 @@
 
     "baseUrl": "src"
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "*.js"],
   "exclude": ["node_modules"]
 }
