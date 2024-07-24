@@ -337,6 +337,21 @@ func (a *AutoOpsRule) ExtractDatetimeClauses() (map[string]*proto.DatetimeClause
 	return datetimeClauses, nil
 }
 
+func (a *AutoOpsRule) ExtractDatetimeClause(clauseId string) (*proto.DatetimeClause, error) {
+	datetimeClauses, err := a.ExtractDatetimeClauses()
+	var datetimeClause *proto.DatetimeClause = nil
+	if err != nil {
+		return nil, err
+	}
+	for id, c := range datetimeClauses {
+		if id == clauseId {
+			datetimeClause = c
+			break
+		}
+	}
+	return datetimeClause, nil
+}
+
 func (a *AutoOpsRule) unmarshalDatetimeClause(clause *proto.Clause) (*proto.DatetimeClause, error) {
 	if ptypes.Is(clause.Clause, DatetimeClause) {
 		c := &proto.DatetimeClause{}

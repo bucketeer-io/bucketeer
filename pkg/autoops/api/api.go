@@ -19,12 +19,6 @@ import (
 	"strconv"
 	"time"
 
-	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	authclient "github.com/bucketeer-io/bucketeer/pkg/auth/client"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
@@ -44,6 +38,11 @@ import (
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
+	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type options struct {
@@ -413,14 +412,29 @@ func (s *AutoOpsService) validateDatetimeClauses(
 	localizer locale.Localizer,
 ) error {
 	for _, c := range clauses {
-		if err := s.validateDatetimeClause(c, localizer); err != nil {
+		if err := s.validateDatetimeClause(c, clauses, localizer); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (s *AutoOpsService) validateDatetimeClause(clause *autoopsproto.DatetimeClause, localizer locale.Localizer) error {
+func (s *AutoOpsService) validateDatetimeClause(
+	clause *autoopsproto.DatetimeClause,
+	dateTimeClauses []*autoopsproto.DatetimeClause,
+	localizer locale.Localizer) error {
+	for _, c := range dateTimeClauses {
+		if c.Time == clause.Time {
+			dt, err := statusDatetimeClauseDuplicateTime.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+	}
 	if clause.Time <= time.Now().Unix() {
 		dt, err := statusDatetimeClauseInvalidTime.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -727,6 +741,52 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 				}
 				return dt.Err()
 			}
+
+			// Extract each schedule time (however, omit the time scheduled for deletion)
+			var scheduleTimes []int64
+			dateTimeClause, _ := autoOpsRule.ExtractDatetimeClauses()
+			for _, c := range dateTimeClause {
+				isAddScheduleTime := true
+				for _, deleteDateTime := range req.DeleteClauseCommands {
+					deleteClause, _ := autoOpsRule.ExtractDatetimeClause(deleteDateTime.Id)
+					if deleteClause != nil && deleteClause.Time == c.Time {
+						isAddScheduleTime = false
+					}
+				}
+				if isAddScheduleTime {
+					scheduleTimes = append(scheduleTimes, c.Time)
+				}
+			}
+
+			// Check if there is a schedule with the same date and time.
+			for _, c := range req.AddDatetimeClauseCommands {
+				for _, scheduleTime := range scheduleTimes {
+					if c.DatetimeClause.Time == scheduleTime {
+						dt, err := statusDatetimeClauseDuplicateTime.WithDetails(&errdetails.LocalizedMessage{
+							Locale:  localizer.GetLocale(),
+							Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
+						})
+						if err != nil {
+							return statusInternal.Err()
+						}
+						return dt.Err()
+					}
+				}
+			}
+			for _, c := range req.ChangeDatetimeClauseCommands {
+				for _, scheduleTime := range scheduleTimes {
+					if c.DatetimeClause.Time == scheduleTime {
+						dt, err := statusDatetimeClauseDuplicateTime.WithDetails(&errdetails.LocalizedMessage{
+							Locale:  localizer.GetLocale(),
+							Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
+						})
+						if err != nil {
+							return statusInternal.Err()
+						}
+						return dt.Err()
+					}
+				}
+			}
 		}
 		if autoOpsRule.OpsType == autoopsproto.OpsType_EVENT_RATE {
 			if len(req.AddDatetimeClauseCommands) > 0 || len(req.ChangeDatetimeClauseCommands) > 0 {
@@ -919,6 +979,8 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
 			return dt.Err()
 		}
 	}
+
+	var tmpDatetimeClauses []*autoopsproto.DatetimeClause
 	for _, c := range req.AddDatetimeClauseCommands {
 		if c.DatetimeClause == nil {
 			dt, err := statusDatetimeClauseRequired.WithDetails(&errdetails.LocalizedMessage{
@@ -930,10 +992,13 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
 			}
 			return dt.Err()
 		}
-		if err := s.validateDatetimeClause(c.DatetimeClause, localizer); err != nil {
+		tmpDatetimeClauses = append(tmpDatetimeClauses, c.DatetimeClause)
+		if err := s.validateDatetimeClause(c.DatetimeClause, tmpDatetimeClauses, localizer); err != nil {
 			return err
 		}
 	}
+
+	tmpDatetimeClauses = []*autoopsproto.DatetimeClause{}
 	for _, c := range req.ChangeDatetimeClauseCommands {
 		if c.Id == "" {
 			dt, err := statusClauseIDRequired.WithDetails(&errdetails.LocalizedMessage{
@@ -955,7 +1020,8 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
 			}
 			return dt.Err()
 		}
-		if err := s.validateDatetimeClause(c.DatetimeClause, localizer); err != nil {
+		tmpDatetimeClauses = append(tmpDatetimeClauses, c.DatetimeClause)
+		if err := s.validateDatetimeClause(c.DatetimeClause, tmpDatetimeClauses, localizer); err != nil {
 			return err
 		}
 	}
