@@ -55,7 +55,7 @@ httpstan:
 envoy:
   image:
     repository: ghcr.io/bucketeer-io/bucketeer-envoy
-    tag: v1.26.2
+    tag: v1.31.0
     pullPolicy: IfNotPresent
   lbPolicy: LEAST_REQUEST
   config:

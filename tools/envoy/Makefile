@@ -1,4 +1,4 @@
-TAG := v1.26.2
+TAG := v1.31.0
 
 .PHONY: docker-build
 docker-build:
