@@ -17,6 +17,7 @@ package calculator
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"go.uber.org/zap"
@@ -29,20 +30,25 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/experimentcalc"
 	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/stan"
+	"github.com/bucketeer-io/bucketeer/pkg/lock"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
+	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/proto/environment"
 	"github.com/bucketeer-io/bucketeer/proto/experiment"
 )
 
 const (
-	day = 24 * 60 * 60
+	day        = 24 * 60 * 60
+	lockTTL    = time.Minute
+	lockPrefix = "experiment-calculate:"
 )
 
 type experimentCalculate struct {
 	environmentClient environmentclient.Client
 	experimentClient  experimentclient.Client
 	calculator        *experimentcalc.ExperimentCalculator
+	redisClient       redisv3.Client
 	location          *time.Location
 	opts              *jobs.Options
 	logger            *zap.Logger
@@ -54,6 +60,7 @@ func NewExperimentCalculate(
 	experimentClient experimentclient.Client,
 	ecClient ecclient.Client,
 	mysqlClient mysql.Client,
+	redisClient redisv3.Client,
 	location *time.Location,
 	opts ...jobs.Option,
 ) jobs.Job {
@@ -81,6 +88,7 @@ func NewExperimentCalculate(
 		location:          location,
 		opts:              dopts,
 		logger:            dopts.Logger.Named("experiment-calculate"),
+		redisClient:       redisClient,
 	}
 }
 
@@ -113,7 +121,7 @@ func (e *experimentCalculate) Run(ctx context.Context) error {
 				// we still calculate the results for two days after it stopped.
 				continue
 			}
-			calculateErr := e.calculateExperiment(ctx, env, ex)
+			calculateErr := e.calculateExperimentWithLock(ctx, env, ex)
 			if calculateErr != nil {
 				e.logger.Error("Failed to calculate experiment",
 					log.FieldsFromImcomingContext(ctx).AddFields(
@@ -133,6 +141,45 @@ func (e *experimentCalculate) Run(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
+	env *environment.EnvironmentV2,
+	experiment *experiment.Experiment,
+) error {
+	lockKey := fmt.Sprintf("%s%s:%s", lockPrefix, env.Id, experiment.Id)
+	dl := lock.NewDistributedLock(e.redisClient, lockKey, lockTTL)
+
+	locked, err := dl.Lock(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to acquire lock: %w", err)
+	}
+	if !locked {
+		e.logger.Info("Experiment is being calculated by another instance",
+			zap.String("environmentNamespace", env.Id),
+			zap.String("experimentId", experiment.Id),
+		)
+		return nil
+	}
+
+	defer func() {
+		unlocked, unlockErr := dl.Unlock(ctx)
+		if unlockErr != nil {
+			e.logger.Error("Failed to release lock",
+				zap.Error(unlockErr),
+				zap.String("environmentNamespace", env.Id),
+				zap.String("experimentId", experiment.Id),
+			)
+		}
+		if !unlocked {
+			e.logger.Warn("Lock was not released, possibly expired",
+				zap.String("environmentNamespace", env.Id),
+				zap.String("experimentId", experiment.Id),
+			)
+		}
+	}()
+
+	return e.calculateExperiment(ctx, env, experiment)
 }
 
 func (e *experimentCalculate) calculateExperiment(ctx context.Context,
