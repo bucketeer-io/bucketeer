@@ -369,62 +369,76 @@ export const messages = {
       id: 'autoOps.deleteSchedule',
       defaultMessage: 'Delete Schedule'
     }),
-    deleteScheduleDescription: defineMessage({
-      id: 'trigger.deleteScheduleDescription',
-      defaultMessage: 'The schedule will be deleted permanently.'
-    }),
     deleteKillSwitch: defineMessage({
       id: 'autoOps.deleteKillSwitch',
       defaultMessage: 'Delete Kill Switch'
-    }),
-    deleteKillSwitchDescription: defineMessage({
-      id: 'trigger.deleteKillSwitchDescription',
-      defaultMessage: 'The kill switch will be deleted permanently.'
     }),
     deleteProgressiveRollout: defineMessage({
       id: 'autoOps.deleteProgressiveRollout',
       defaultMessage: 'Delete Progressive Rollout'
     }),
-    deleteProgressiveRolloutDescription: defineMessage({
-      id: 'trigger.deleteProgressiveRolloutDescription',
-      defaultMessage: 'The progressive rollout will be deleted permanently.'
-    }),
     stopSchedule: defineMessage({
       id: 'autoOps.stopSchedule',
       defaultMessage: 'Stop Schedule'
-    }),
-    stopScheduleDialogTitle: defineMessage({
-      id: 'autoOps.stopScheduleDialogTitle',
-      defaultMessage: 'Stop Schedule'
-    }),
-    stopScheduleDialogDescription: defineMessage({
-      id: 'autoOps.stopScheduleDialogDescription',
-      defaultMessage: 'The schedule will be stopped.'
     }),
     stopKillSwitch: defineMessage({
       id: 'autoOps.stopKillSwitch',
       defaultMessage: 'Stop Kill Switch'
     }),
-    stopKillSwitchDialogTitle: defineMessage({
-      id: 'autoOps.stopKillSwitchDialogTitle',
-      defaultMessage: 'Stop Kill Switch'
-    }),
-    stopKillSwitchDialogDescription: defineMessage({
-      id: 'autoOps.stopKillSwitchDialogDescription',
-      defaultMessage: 'The kill switch will be stopped.'
-    }),
     stopProgressiveRollout: defineMessage({
       id: 'autoOps.stopProgressiveRollout',
       defaultMessage: 'Stop Progressive Rollout'
     }),
-    stopProgressiveRolloutDialogTitle: defineMessage({
-      id: 'autoOps.stopProgressiveRolloutDialogTitle',
-      defaultMessage: 'Stop Progressive Rollout'
-    }),
-    stopProgressiveRolloutDialogDescription: defineMessage({
-      id: 'autoOps.stopProgressiveRolloutDialogDescription',
-      defaultMessage: 'The progressive rollout will be stopped.'
-    }),
+    dialog: {
+      deleteScheduleTitle: defineMessage({
+        id: 'autoOps.dialog.deleteScheduleTitle',
+        defaultMessage: 'Delete Schedule'
+      }),
+      deleteScheduleDescription: defineMessage({
+        id: 'autoOps.dialog.deleteScheduleDescription',
+        defaultMessage: 'The schedule will be deleted permanently.'
+      }),
+      deleteKillSwitchTitle: defineMessage({
+        id: 'autoOps.dialog.deleteKillSwitchTitle',
+        defaultMessage: 'Delete Kill Switch'
+      }),
+      deleteKillSwitchDescription: defineMessage({
+        id: 'autoOps.dialog.deleteKillSwitchDescription',
+        defaultMessage: 'The kill switch will be deleted permanently.'
+      }),
+      deleteProgressiveRolloutTitle: defineMessage({
+        id: 'autoOps.dialog.deleteProgressiveRolloutTitle',
+        defaultMessage: 'Delete Progressive Rollout'
+      }),
+      deleteProgressiveRolloutDescription: defineMessage({
+        id: 'autoOps.dialog.deleteProgressiveRolloutDescription',
+        defaultMessage: 'The progressive rollout will be deleted permanently.'
+      }),
+      stopScheduleTitle: defineMessage({
+        id: 'autoOps.dialog.stopScheduleTitle',
+        defaultMessage: 'Stop Schedule'
+      }),
+      stopScheduleDescription: defineMessage({
+        id: 'autoOps.dialog.stopScheduleDescription',
+        defaultMessage: 'The schedule will be stopped.'
+      }),
+      stopKillSwitchTitle: defineMessage({
+        id: 'autoOps.dialog.stopKillSwitchTitle',
+        defaultMessage: 'Stop Kill Switch'
+      }),
+      stopKillSwitchDescription: defineMessage({
+        id: 'autoOps.dialog.stopKillSwitchDescription',
+        defaultMessage: 'The kill switch will be stopped.'
+      }),
+      stopProgressiveRolloutTitle: defineMessage({
+        id: 'autoOps.dialog.stopProgressiveRolloutTitle',
+        defaultMessage: 'Stop Progressive Rollout'
+      }),
+      stopProgressiveRolloutDescription: defineMessage({
+        id: 'autoOps.dialog.stopProgressiveRolloutDescription',
+        defaultMessage: 'The progressive rollout will be stopped.'
+      })
+    },
     createOperation: defineMessage({
       id: 'autoOps.createOperation',
       defaultMessage: 'Create Operation'

@@ -28,20 +28,20 @@ export const AutoOpsStopDialog: FC<AutoOpsStopDialogProps> = ({
         className="text-lg font-medium leading-6 text-gray-700"
       >
         {selectedOperation.type === OperationType.SCHEDULE &&
-          f(messages.autoOps.stopScheduleDialogTitle)}
+          f(messages.autoOps.dialog.stopScheduleTitle)}
         {selectedOperation.type === OperationType.EVENT_RATE &&
-          f(messages.autoOps.stopKillSwitchDialogTitle)}
+          f(messages.autoOps.dialog.stopKillSwitchTitle)}
         {selectedOperation.type === OperationType.PROGRESSIVE_ROLLOUT &&
-          f(messages.autoOps.stopProgressiveRolloutDialogTitle)}
+          f(messages.autoOps.dialog.stopProgressiveRolloutTitle)}
       </Dialog.Title>
       <div className="mt-2">
         <p className="text-sm text-red-500">
           {selectedOperation.type === OperationType.SCHEDULE &&
-            f(messages.autoOps.stopScheduleDialogDescription)}
+            f(messages.autoOps.dialog.stopScheduleDescription)}
           {selectedOperation.type === OperationType.EVENT_RATE &&
-            f(messages.autoOps.stopKillSwitchDialogDescription)}
+            f(messages.autoOps.dialog.stopKillSwitchDescription)}
           {selectedOperation.type === OperationType.PROGRESSIVE_ROLLOUT &&
-            f(messages.autoOps.stopProgressiveRolloutDialogDescription)}
+            f(messages.autoOps.dialog.stopProgressiveRolloutDescription)}
         </p>
       </div>
       <div className="pt-5">

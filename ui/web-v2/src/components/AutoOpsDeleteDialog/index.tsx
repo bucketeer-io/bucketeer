@@ -28,20 +28,20 @@ export const AutoOpsDeleteDialog: FC<AutoOpsDeleteDialogProps> = ({
         className="text-lg font-medium leading-6 text-gray-700"
       >
         {selectedOperation.type === OperationType.SCHEDULE &&
-          f(messages.autoOps.deleteSchedule)}
+          f(messages.autoOps.dialog.deleteScheduleTitle)}
         {selectedOperation.type === OperationType.EVENT_RATE &&
-          f(messages.autoOps.deleteKillSwitch)}
+          f(messages.autoOps.dialog.deleteKillSwitchTitle)}
         {selectedOperation.type === OperationType.PROGRESSIVE_ROLLOUT &&
-          f(messages.autoOps.deleteProgressiveRollout)}
+          f(messages.autoOps.dialog.deleteProgressiveRolloutTitle)}
       </Dialog.Title>
       <div className="mt-2">
         <p className="text-sm text-red-500">
           {selectedOperation.type === OperationType.SCHEDULE &&
-            f(messages.autoOps.deleteScheduleDescription)}
+            f(messages.autoOps.dialog.deleteScheduleDescription)}
           {selectedOperation.type === OperationType.EVENT_RATE &&
-            f(messages.autoOps.deleteKillSwitchDescription)}
+            f(messages.autoOps.dialog.deleteKillSwitchDescription)}
           {selectedOperation.type === OperationType.PROGRESSIVE_ROLLOUT &&
-            f(messages.autoOps.deleteProgressiveRolloutDescription)}
+            f(messages.autoOps.dialog.deleteProgressiveRolloutDescription)}
         </p>
       </div>
       <div className="pt-5">
