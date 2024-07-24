@@ -17,3 +17,17 @@ export const isTimestampArraySorted = (arr: number[]) => {
   }
   return true;
 };
+
+export const hasDuplicateTimestamps = (arr: number[]) => {
+  const convertToMinutes = (timestamp: number) => Math.floor(timestamp / 60000);
+  const seenTimestamps = new Set<number>();
+
+  for (const timestamp of arr) {
+    const minutes = convertToMinutes(timestamp);
+    if (seenTimestamps.has(minutes)) {
+      return true;
+    }
+    seenTimestamps.add(minutes);
+  }
+  return false;
+};

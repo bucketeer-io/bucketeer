@@ -123,6 +123,7 @@
   "autoOps.deleteProgressiveRollout": "プログレッシブロールアウトを削除",
   "autoOps.deleteSchedule": "スケジュールを削除",
   "autoOps.disableFeatureType": "フィーチャーフラグ無効化",
+  "autoOps.duplicateDates": "同じ日時で複数のスケジュールはできません。",
   "autoOps.editKillSwitch": "キルスイッチを編集",
   "autoOps.editSchedule": "スケジュールを編集",
   "autoOps.enable": "有効",

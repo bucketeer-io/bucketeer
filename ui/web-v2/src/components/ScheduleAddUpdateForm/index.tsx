@@ -29,7 +29,10 @@ import {
 } from '../../modules/autoOpsRules';
 import { v4 as uuid } from 'uuid';
 import dayjs from 'dayjs';
-import { isTimestampArraySorted } from '../../utils/isArraySorted';
+import {
+  isTimestampArraySorted,
+  hasDuplicateTimestamps
+} from '../../utils/isArraySorted';
 import { getDatetimeClause } from '../../utils/getDatetimeClause';
 
 export const actionTypesOptions = [
@@ -258,6 +261,10 @@ export const ScheduleAddUpdateForm: FC<ScheduleAddUpdateFormProps> = memo(
       watchDatetimeClausesList.map((d) => d.time.getTime())
     );
 
+    const hasDuplicates = hasDuplicateTimestamps(
+      watchDatetimeClausesList.map((d) => d.time.getTime())
+    );
+
     const _checkInvalidDatetime = () => {
       let list = watchDatetimeClausesList;
       if (autoOpsRule) {
@@ -377,6 +384,12 @@ export const ScheduleAddUpdateForm: FC<ScheduleAddUpdateFormProps> = memo(
                       )}
                     </div>
                   ))}
+                  {watchDatetimeClausesList.length <= 10 && (
+                    <ErrorMessage
+                      isDatesSorted={isDatesSorted}
+                      hasDuplicates={hasDuplicates}
+                    />
+                  )}
                   {!isSeeDetailsSelected && (
                     <button
                       className="flex whitespace-nowrap space-x-2 text-primary max-w-min py-2 items-center"
@@ -387,12 +400,12 @@ export const ScheduleAddUpdateForm: FC<ScheduleAddUpdateFormProps> = memo(
                       <span>{f(messages.button.addSchedule)}</span>
                     </button>
                   )}
-                  {watchDatetimeClausesList.length <= 10 && (
-                    <ErrorMessage isDatesSorted={isDatesSorted} />
-                  )}
                 </div>
                 {watchDatetimeClausesList.length > 10 && (
-                  <ErrorMessage isDatesSorted={isDatesSorted} />
+                  <ErrorMessage
+                    isDatesSorted={isDatesSorted}
+                    hasDuplicates={hasDuplicates}
+                  />
                 )}
               </div>
             </div>
@@ -416,7 +429,8 @@ export const ScheduleAddUpdateForm: FC<ScheduleAddUpdateFormProps> = memo(
                 isSubmitting ||
                 isSeeDetailsSelected ||
                 _checkInvalidDatetime() ||
-                !isDatesSorted
+                !isDatesSorted ||
+                hasDuplicates
               }
               onClick={handleSubmit(handleOnSubmit)}
             >
@@ -431,25 +445,34 @@ export const ScheduleAddUpdateForm: FC<ScheduleAddUpdateFormProps> = memo(
 
 interface ErrorMessageProps {
   isDatesSorted: boolean;
+  hasDuplicates: boolean;
 }
 
-const ErrorMessage: FC<ErrorMessageProps> = memo(({ isDatesSorted }) => {
-  const { formatMessage: f } = useIntl();
+const ErrorMessage: FC<ErrorMessageProps> = memo(
+  ({ isDatesSorted, hasDuplicates }) => {
+    const { formatMessage: f } = useIntl();
 
-  if (isDatesSorted) {
-    return null;
-  }
+    if (isDatesSorted && !hasDuplicates) {
+      return null;
+    }
 
-  return (
-    <div className="flex space-x-2">
-      <div className="w-32" />
-      <div className="w-full">
-        {!isDatesSorted && (
-          <p className="input-error">
-            <span role="alert">{f(messages.autoOps.dateIncreasingOrder)}</span>
-          </p>
-        )}
+    return (
+      <div className="flex space-x-2">
+        <div className="w-32" />
+        <div className="w-full">
+          {hasDuplicates ? (
+            <p className="input-error">
+              <span role="alert">{f(messages.autoOps.duplicateDates)}</span>
+            </p>
+          ) : !isDatesSorted ? (
+            <p className="input-error">
+              <span role="alert">
+                {f(messages.autoOps.dateIncreasingOrder)}
+              </span>
+            </p>
+          ) : null}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);

@@ -49,7 +49,8 @@ import dayjs from 'dayjs';
 import { getIntervalForDayjs } from '../FeatureAutoOpsRulesForm';
 import {
   isArraySorted,
-  isTimestampArraySorted
+  isTimestampArraySorted,
+  hasDuplicateTimestamps
 } from '../../utils/isArraySorted';
 import { areIntervalsApart } from '../../utils/areIntervalsApart';
 import { CreateProgressiveRolloutCommand } from '../../proto/autoops/command_pb';
@@ -824,6 +825,9 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
     const isDatesSorted = isTimestampArraySorted(
       watchManualSchedulesList.map((d) => d.executeAt.time.getTime())
     );
+    const hasDuplicate = hasDuplicateTimestamps(
+      watchManualSchedulesList.map((d) => d.executeAt.time.getTime())
+    );
     const isDatetime5MinutesApart = areIntervalsApart(
       watchManualSchedulesList.map((d) => d.executeAt.time.getTime()),
       5
@@ -927,6 +931,7 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
             <ErrorMessage
               isWeightsSorted={isWeightsSorted}
               isDatesSorted={isDatesSorted}
+              hasDuplicate={hasDuplicate}
               isDatetime5MinutesApart={isDatetime5MinutesApart}
             />
           )}
@@ -938,11 +943,15 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
                   'text-primary space-x-2 flex items-center self-start',
                   (isLastScheduleWeight100 ||
                     !isWeightsSorted ||
-                    !isDatesSorted) &&
+                    !isDatesSorted ||
+                    hasDuplicate) &&
                     'opacity-50 cursor-not-allowed'
                 )}
                 disabled={
-                  isLastScheduleWeight100 || !isWeightsSorted || !isDatesSorted
+                  isLastScheduleWeight100 ||
+                  !isWeightsSorted ||
+                  !isDatesSorted ||
+                  hasDuplicate
                 }
               >
                 <PlusIcon width={16} />
@@ -957,6 +966,7 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
           <ErrorMessage
             isWeightsSorted={isWeightsSorted}
             isDatesSorted={isDatesSorted}
+            hasDuplicate={hasDuplicate}
             isDatetime5MinutesApart={isDatetime5MinutesApart}
           />
         )}
@@ -969,10 +979,16 @@ interface ErrorMessageProps {
   isWeightsSorted: boolean;
   isDatesSorted: boolean;
   isDatetime5MinutesApart: boolean;
+  hasDuplicate: boolean;
 }
 
 const ErrorMessage: FC<ErrorMessageProps> = memo(
-  ({ isWeightsSorted, isDatesSorted, isDatetime5MinutesApart }) => {
+  ({
+    isWeightsSorted,
+    isDatesSorted,
+    isDatetime5MinutesApart,
+    hasDuplicate
+  }) => {
     const { formatMessage: f } = useIntl();
 
     if (isWeightsSorted && isDatesSorted && isDatetime5MinutesApart) {
@@ -991,7 +1007,11 @@ const ErrorMessage: FC<ErrorMessageProps> = memo(
           )}
         </div>
         <div className="flex-1">
-          {!isDatesSorted ? (
+          {hasDuplicate ? (
+            <p className="input-error">
+              <span role="alert">{f(messages.autoOps.duplicateDates)}</span>
+            </p>
+          ) : !isDatesSorted ? (
             <p className="input-error">
               <span role="alert">
                 {f(messages.autoOps.dateIncreasingOrder)}

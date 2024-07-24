@@ -123,6 +123,7 @@
   "autoOps.deleteProgressiveRollout": "Delete Progressive Rollout",
   "autoOps.deleteSchedule": "Delete Schedule",
   "autoOps.disableFeatureType": "Disable feature",
+  "autoOps.duplicateDates": "You cannot have multiple schedules at the same date and time.",
   "autoOps.editKillSwitch": "Edit Kill Switch",
   "autoOps.editSchedule": "Edit Schedule",
   "autoOps.enable": "Enable",

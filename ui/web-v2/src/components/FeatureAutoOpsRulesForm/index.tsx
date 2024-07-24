@@ -263,6 +263,15 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
     const { formatMessage: f } = useIntl();
 
     useEffect(() => {
+      let initialTab = TabLabel.ACTIVE;
+
+      if (tabs.length > 0) {
+        initialTab =
+          tabs.find((tab) => tab.selected)?.label === TabLabel.ACTIVE
+            ? TabLabel.ACTIVE
+            : TabLabel.FINISHED;
+      }
+
       setTabs([
         {
           label: TabLabel.ACTIVE,
@@ -277,7 +286,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
             ),
             SORT_TYPE.ASC
           ),
-          selected: true
+          selected: initialTab === TabLabel.ACTIVE
         },
         {
           label: TabLabel.FINISHED,
@@ -292,7 +301,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
             ),
             SORT_TYPE.DESC
           ),
-          selected: false
+          selected: initialTab === TabLabel.FINISHED
         }
       ]);
     }, [autoOpsRules, progressiveRollout, setTabs]);
@@ -911,30 +920,6 @@ const Operation: FC<OperationProps> = memo(
                           f(messages.autoOps.stopKillSwitch)}
                       </span>
                     </button>
-                    <button
-                      onClick={() => {
-                        if (opsType === OpsType.SCHEDULE) {
-                          handleDelete({
-                            type: OperationType.SCHEDULE,
-                            id: rule.id
-                          });
-                        } else if (opsType === OpsType.EVENT_RATE) {
-                          handleDelete({
-                            type: OperationType.EVENT_RATE,
-                            id: rule.id
-                          });
-                        }
-                      }}
-                      className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
-                    >
-                      <TrashIcon width={18} className="text-red-500" />
-                      <span className="text-red-500 text-sm">
-                        {opsType === OpsType.SCHEDULE &&
-                          f(messages.autoOps.deleteSchedule)}
-                        {opsType === OpsType.EVENT_RATE &&
-                          f(messages.autoOps.deleteKillSwitch)}
-                      </span>
-                    </button>
                   </>
                 ) : (
                   <button
@@ -947,6 +932,30 @@ const Operation: FC<OperationProps> = memo(
                     </span>
                   </button>
                 )}
+                <button
+                  onClick={() => {
+                    if (opsType === OpsType.SCHEDULE) {
+                      handleDelete({
+                        type: OperationType.SCHEDULE,
+                        id: rule.id
+                      });
+                    } else if (opsType === OpsType.EVENT_RATE) {
+                      handleDelete({
+                        type: OperationType.EVENT_RATE,
+                        id: rule.id
+                      });
+                    }
+                  }}
+                  className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
+                >
+                  <TrashIcon width={18} className="text-red-500" />
+                  <span className="text-red-500 text-sm">
+                    {opsType === OpsType.SCHEDULE &&
+                      f(messages.autoOps.deleteSchedule)}
+                    {opsType === OpsType.EVENT_RATE &&
+                      f(messages.autoOps.deleteKillSwitch)}
+                  </span>
+                </button>
               </Popover.Panel>
             </Popover>
           </div>
@@ -1315,14 +1324,14 @@ const ProgressiveRolloutComponent = memo(
             <div className="py-[2px] px-2 bg-[#FFF7EE] rounded text-[#CE844A] text-sm">
               {f(messages.autoOps.progressiveRollout)}
             </div>
-            {isActiveTabSelected && (
-              <Popover className="relative flex">
-                <Popover.Button>
-                  <div className="pl-2 flex items-center cursor-pointer">
-                    <DotsHorizontalIcon width={20} />
-                  </div>
-                </Popover.Button>
-                <Popover.Panel className="absolute z-10 bg-white right-0 rounded-lg p-1 whitespace-nowrap shadow-md">
+            <Popover className="relative flex">
+              <Popover.Button>
+                <div className="pl-2 flex items-center cursor-pointer">
+                  <DotsHorizontalIcon width={20} />
+                </div>
+              </Popover.Button>
+              <Popover.Panel className="absolute z-10 bg-white right-0 rounded-lg p-1 whitespace-nowrap shadow-md">
+                {isActiveTabSelected && (
                   <button
                     onClick={stopRule}
                     className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
@@ -1332,18 +1341,18 @@ const ProgressiveRolloutComponent = memo(
                       {f(messages.autoOps.stopProgressiveRollout)}
                     </span>
                   </button>
-                  <button
-                    onClick={deleteRule}
-                    className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
-                  >
-                    <TrashIcon width={18} className="text-red-500" />
-                    <span className="text-red-500 text-sm">
-                      {f(messages.autoOps.deleteProgressiveRollout)}
-                    </span>
-                  </button>
-                </Popover.Panel>
-              </Popover>
-            )}
+                )}
+                <button
+                  onClick={deleteRule}
+                  className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
+                >
+                  <TrashIcon width={18} className="text-red-500" />
+                  <span className="text-red-500 text-sm">
+                    {f(messages.autoOps.deleteProgressiveRollout)}
+                  </span>
+                </button>
+              </Popover.Panel>
+            </Popover>
           </div>
         </div>
         <div className="mt-4">

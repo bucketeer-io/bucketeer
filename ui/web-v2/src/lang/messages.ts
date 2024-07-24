@@ -517,6 +517,11 @@ export const messages = {
       id: 'autoOps.dateIncreasingOrder',
       defaultMessage: 'The date must be in increasing order.'
     }),
+    duplicateDates: defineMessage({
+      id: 'autoOps.duplicateDates',
+      defaultMessage:
+        'You cannot have multiple schedules at the same date and time.'
+    }),
     timeInterval5MinutesApart: defineMessage({
       id: 'autoOps.timeInterval5MinutesApart',
       defaultMessage:
