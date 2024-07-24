@@ -12,7 +12,8 @@ import {
 } from '../../modules/porgressiveRollout';
 import {
   AutoOpsRule,
-  AutoOpsStatus
+  AutoOpsStatus,
+  OpsType
 } from '../../proto/autoops/auto_ops_rule_pb';
 import { ListFlagTriggersResponse } from '../../proto/feature/service_pb';
 import { SerializedError } from '@reduxjs/toolkit';
@@ -146,8 +147,10 @@ export const FeatureDetailPage: FC = memo(() => {
                 length = [
                   ...autoOpsRules.filter(
                     (rule) =>
-                      rule.autoOpsStatus === AutoOpsStatus.RUNNING ||
-                      rule.autoOpsStatus === AutoOpsStatus.WAITING
+                      (rule.autoOpsStatus === AutoOpsStatus.RUNNING ||
+                        rule.autoOpsStatus === AutoOpsStatus.WAITING) &&
+                      (rule.opsType === OpsType.SCHEDULE ||
+                        rule.opsType === OpsType.EVENT_RATE)
                   ),
                   ...progressiveRollout.filter((p) =>
                     isProgressiveRolloutsRunningWaiting(p.status)
