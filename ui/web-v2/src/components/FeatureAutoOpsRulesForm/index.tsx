@@ -5,7 +5,8 @@ import {
 } from '../../constants/routing';
 import {
   deleteAutoOpsRule,
-  selectAll as selectAllAutoOpsRules
+  selectAll as selectAllAutoOpsRules,
+  stopAutoOpsRule
 } from '../../modules/autoOpsRules';
 import {
   listOpsCounts,
@@ -84,7 +85,7 @@ import {
 import { EventRateAddUpdateForm } from '../EventRateAddUpdateForm';
 import { ProgressiveRolloutAddForm } from '../ProgressiveRolloutAddForm';
 import { Overlay } from '../Overlay';
-import { ProgressiveRolloutStopDialog } from '../ProgressiveRolloutStopDialog';
+import { AutoOpsStopDialog } from '../AutoOpsStopDialog';
 import { RelativeDateText } from '../RelativeDateText';
 import { Option } from '../Select';
 import { isLanguageJapanese } from '../../lang/getSelectedLanguage';
@@ -282,7 +283,9 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
           label: TabLabel.FINISHED,
           value: sortOperations(
             autoOpsRules.filter(
-              (rule) => rule.autoOpsStatus === AutoOpsStatus.FINISHED
+              (rule) =>
+                rule.autoOpsStatus === AutoOpsStatus.FINISHED ||
+                rule.autoOpsStatus === AutoOpsStatus.STOPPED
             ),
             progressiveRollout.filter(
               (p) => !isProgressiveRolloutsRunningWaiting(p.status)
@@ -399,18 +402,32 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       setSelectedOperation(operation);
     };
 
-    const handleStopConfirm = () => {
+    const handleStopConfirm = useCallback(() => {
       setIsStopConfirmDialogOpen(false);
 
-      dispatch(
-        stopProgressiveRollout({
-          environmentNamespace: currentEnvironment.id,
-          id: selectedOperation.id
-        })
-      ).then(() => {
-        refetchProgressiveRollouts();
-      });
-    };
+      if (
+        selectedOperation.type === OperationType.SCHEDULE ||
+        selectedOperation.type === OperationType.EVENT_RATE
+      ) {
+        dispatch(
+          stopAutoOpsRule({
+            environmentNamespace: currentEnvironment.id,
+            id: selectedOperation.id
+          })
+        ).then(() => {
+          refetchAutoOpsRules();
+        });
+      } else if (selectedOperation.type === OperationType.PROGRESSIVE_ROLLOUT) {
+        dispatch(
+          stopProgressiveRollout({
+            environmentNamespace: currentEnvironment.id,
+            id: selectedOperation.id
+          })
+        ).then(() => {
+          refetchProgressiveRollouts();
+        });
+      }
+    }, [selectedOperation]);
 
     const variationOptions = feature.variationsList.map((v) => {
       return {
@@ -500,6 +517,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
                       isActiveTabSelected={isActiveTabSelected}
                       handleOpenUpdate={handleOpenUpdate}
                       handleDelete={handleDelete}
+                      handleStop={handleStop}
                     />
                   );
                 } else if (
@@ -578,7 +596,8 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
           />
         )}
         {isStopConfirmDialogOpen && (
-          <ProgressiveRolloutStopDialog
+          <AutoOpsStopDialog
+            selectedOperation={selectedOperation}
             open={isStopConfirmDialogOpen}
             onConfirm={handleStopConfirm}
             onClose={() => {
@@ -809,10 +828,17 @@ interface OperationProps {
   isActiveTabSelected: boolean;
   handleOpenUpdate: (arg) => void;
   handleDelete: (arg: SelectedOperation) => void;
+  handleStop: (arg: SelectedOperation) => void;
 }
 
 const Operation: FC<OperationProps> = memo(
-  ({ rule, isActiveTabSelected, handleOpenUpdate, handleDelete }) => {
+  ({
+    rule,
+    isActiveTabSelected,
+    handleOpenUpdate,
+    handleDelete,
+    handleStop
+  }) => {
     const { formatMessage: f } = useIntl();
     const opsCounts = useSelector<AppState, OpsCount.AsObject[]>(
       (state) => selectAllOpsCounts(state.opsCounts),
@@ -827,7 +853,7 @@ const Operation: FC<OperationProps> = memo(
             {rule.opsType === OpsType.SCHEDULE &&
               f(messages.autoOps.scheduleOperation)}
             {rule.opsType === OpsType.EVENT_RATE &&
-              f(messages.autoOps.eventRateOperation)}
+              f(messages.autoOps.killSwitchOperation)}
           </h3>
           <div className="flex space-x-2 items-center">
             <div
@@ -859,6 +885,30 @@ const Operation: FC<OperationProps> = memo(
                           f(messages.autoOps.editSchedule)}
                         {opsType === OpsType.EVENT_RATE &&
                           f(messages.autoOps.editKillSwitch)}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (rule.opsType === OpsType.SCHEDULE) {
+                          handleStop({
+                            type: OperationType.SCHEDULE,
+                            id: rule.id
+                          });
+                        } else if (rule.opsType === OpsType.EVENT_RATE) {
+                          handleStop({
+                            type: OperationType.EVENT_RATE,
+                            id: rule.id
+                          });
+                        }
+                      }}
+                      className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
+                    >
+                      <BanIcon width={18} className="" />
+                      <span className="text-sm">
+                        {rule.opsType === OpsType.SCHEDULE &&
+                          f(messages.autoOps.stopSchedule)}
+                        {rule.opsType === OpsType.EVENT_RATE &&
+                          f(messages.autoOps.stopKillSwitch)}
                       </span>
                     </button>
                     <button
@@ -902,18 +952,23 @@ const Operation: FC<OperationProps> = memo(
           </div>
         </div>
         <div className="mt-4">
-          <p className="font-bold text-lg text-gray-600">
-            {f(messages.autoOps.progressInformation)}
-          </p>
+          <div className="flex justify-between">
+            <p className="font-bold text-lg text-gray-600">
+              {f(messages.autoOps.progressInformation)}
+            </p>
+            {rule.autoOpsStatus === AutoOpsStatus.STOPPED && (
+              <div className="flex items-center text-gray-500 space-x-[6px]">
+                <ClockIcon width={18} className="" />
+                <span>{f(messages.experiment.status.forceStopped)}</span>
+                <RelativeDateText date={new Date(rule.updatedAt * 1000)} />
+              </div>
+            )}
+          </div>
           {rule.opsType === OpsType.SCHEDULE && (
             <DateTimeOperation rule={rule} />
           )}
           {rule.opsType === OpsType.EVENT_RATE && (
-            <EventRateOperation
-              rule={rule}
-              opsCounts={opsCounts}
-              isActiveTabSelected={isActiveTabSelected}
-            />
+            <EventRateOperation rule={rule} opsCounts={opsCounts} />
           )}
         </div>
       </div>
@@ -1049,11 +1104,10 @@ const DateTimeOperation = memo(({ rule }: DateTimeOperationProps) => {
 interface EventRateOperationProps {
   rule: AutoOpsRule.AsObject;
   opsCounts: OpsCount.AsObject[];
-  isActiveTabSelected: boolean;
 }
 
 const EventRateOperation = memo(
-  ({ rule, opsCounts, isActiveTabSelected }: EventRateOperationProps) => {
+  ({ rule, opsCounts }: EventRateOperationProps) => {
     const { value } = rule.clausesList[0].clause;
     const { formatMessage: f } = useIntl();
 
@@ -1082,9 +1136,7 @@ const EventRateOperation = memo(
       Math.round(step + index * step)
     );
 
-    const barWidth = isActiveTabSelected
-      ? (currentEventRate / (threadsholdRate * 100)) * 100
-      : 100;
+    const barWidth = (currentEventRate / (threadsholdRate * 100)) * 100;
 
     return (
       <div>
@@ -1140,7 +1192,7 @@ const EventRateOperation = memo(
               <div
                 className={classNames(
                   'w-[9px] h-[9px] rounded-full relative',
-                  currentEventRate > 0 || !isActiveTabSelected
+                  currentEventRate > 0
                     ? 'bg-pink-500'
                     : 'border border-gray-400 bg-gray-50'
                 )}
@@ -1151,9 +1203,8 @@ const EventRateOperation = memo(
               </div>
             </div>
             {stepArray.map((percentage) => {
-              const isActive = isActiveTabSelected
-                ? percentage <= currentEventRate && currentEventRate !== 0
-                : true;
+              const isActive =
+                percentage <= currentEventRate && currentEventRate !== 0;
 
               return (
                 <div
@@ -1258,7 +1309,7 @@ const ProgressiveRolloutComponent = memo(
       <div className="rounded-xl shadow px-6 py-4 bg-white">
         <div className="flex justify-between py-4 border-b">
           <h3 className="font-bold text-xl">
-            {f(messages.autoOps.progressiveRolloutOperation)}
+            {f(messages.autoOps.enableOperation)}
           </h3>
           <div className="flex space-x-2 items-center">
             <div className="py-[2px] px-2 bg-[#FFF7EE] rounded text-[#CE844A] text-sm">
@@ -1273,21 +1324,21 @@ const ProgressiveRolloutComponent = memo(
                 </Popover.Button>
                 <Popover.Panel className="absolute z-10 bg-white right-0 rounded-lg p-1 whitespace-nowrap shadow-md">
                   <button
-                    onClick={deleteRule}
-                    className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
-                  >
-                    <TrashIcon width={18} className="text-red-500" />
-                    <span className="text-red-500 text-sm">
-                      {f(messages.autoOps.deleteProgressiveRollout)}
-                    </span>
-                  </button>
-                  <button
                     onClick={stopRule}
                     className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
                   >
                     <BanIcon width={18} className="" />
                     <span className="text-sm">
                       {f(messages.autoOps.stopProgressiveRollout)}
+                    </span>
+                  </button>
+                  <button
+                    onClick={deleteRule}
+                    className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
+                  >
+                    <TrashIcon width={18} className="text-red-500" />
+                    <span className="text-red-500 text-sm">
+                      {f(messages.autoOps.deleteProgressiveRollout)}
                     </span>
                   </button>
                 </Popover.Panel>

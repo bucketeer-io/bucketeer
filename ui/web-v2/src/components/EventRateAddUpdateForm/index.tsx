@@ -82,8 +82,8 @@ export const EventRateAddUpdateForm: FC<EventRateAddUpdateFormProps> = memo(
         return f(messages.autoOps.operationDetails);
       } else {
         return autoOpsRule
-          ? f(messages.autoOps.updateAnOperation)
-          : f(messages.autoOps.createAnOperation);
+          ? f(messages.autoOps.updateOperation)
+          : f(messages.autoOps.createOperation);
       }
     };
 
@@ -206,6 +206,7 @@ export const EventRateAddUpdateForm: FC<EventRateAddUpdateFormProps> = memo(
                         control={control}
                         render={({ field }) => (
                           <Select
+                            isSearchable={false}
                             onChange={(o: Option) => {
                               field.onChange(o.value);
                             }}
@@ -448,6 +449,9 @@ const AddGoalSelect: FC<AddGoalSelectProps> = memo(
         components={{
           Option: (props) => (
             <CustomOption {...props} openAddGoalModal={openAddGoalModal} />
+          ),
+          NoOptionsMessage: () => (
+            <AddNewGoalOption openAddGoalModal={openAddGoalModal} />
           )
         }}
         isDisabled={isLoading || disabled}
@@ -467,7 +471,6 @@ const AddGoalSelect: FC<AddGoalSelectProps> = memo(
 const CustomOption = ({ children, ...props }) => {
   const isLastOption =
     props.options[props.options.length - 1]?.value === props.data.value;
-  const { formatMessage: f } = useIntl();
 
   if (isLastOption) {
     return (
@@ -479,18 +482,25 @@ const CustomOption = ({ children, ...props }) => {
         >
           {children}
         </div>
-        <div
-          onClick={props.openAddGoalModal}
-          className="py-[10px] space-x-2 cursor-pointer border-t hover:bg-[#F3F4F6] text-primary flex items-center justify-center"
-        >
-          <PlusIcon width={16} />
-          <span>{f(messages.goal.addNewGoal)}</span>
-        </div>
+        <AddNewGoalOption openAddGoalModal={props.openAddGoalModal} />
       </div>
     );
   }
 
   return <components.Option {...props}>{children}</components.Option>;
+};
+
+const AddNewGoalOption = ({ openAddGoalModal }) => {
+  const { formatMessage: f } = useIntl();
+  return (
+    <div
+      onClick={openAddGoalModal}
+      className="py-[10px] space-x-2 cursor-pointer border-t hover:bg-[#F3F4F6] text-primary flex items-center justify-center"
+    >
+      <PlusIcon width={16} />
+      <span>{f(messages.goal.addNewGoal)}</span>
+    </div>
+  );
 };
 
 interface AddGoalModalProps {
@@ -504,7 +514,7 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
   const currentEnvironment = useCurrentEnvironment();
   const methods = useFormContext();
 
-  const { setValue } = methods;
+  const { setValue, trigger } = methods;
 
   const {
     register,
@@ -545,6 +555,7 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
           })
         );
         setValue('eventRate.goal', data.id);
+        trigger('eventRate.goal');
       });
     },
     [dispatch]

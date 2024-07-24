@@ -29,7 +29,7 @@ import {
 } from '../../modules/autoOpsRules';
 import { v4 as uuid } from 'uuid';
 import dayjs from 'dayjs';
-import { isArraySorted } from '../../utils/isArraySorted';
+import { isTimestampArraySorted } from '../../utils/isArraySorted';
 import { getDatetimeClause } from '../../utils/getDatetimeClause';
 
 export const actionTypesOptions = [
@@ -242,8 +242,8 @@ export const ScheduleAddUpdateForm: FC<ScheduleAddUpdateFormProps> = memo(
         return f(messages.autoOps.operationDetails);
       } else {
         return autoOpsRule
-          ? f(messages.autoOps.updateAnOperation)
-          : f(messages.autoOps.createAnOperation);
+          ? f(messages.autoOps.updateOperation)
+          : f(messages.autoOps.createOperation);
       }
     };
 
@@ -254,7 +254,7 @@ export const ScheduleAddUpdateForm: FC<ScheduleAddUpdateFormProps> = memo(
       return false;
     };
 
-    const isDatesSorted = isArraySorted(
+    const isDatesSorted = isTimestampArraySorted(
       watchDatetimeClausesList.map((d) => d.time.getTime())
     );
 
@@ -384,7 +384,7 @@ export const ScheduleAddUpdateForm: FC<ScheduleAddUpdateFormProps> = memo(
                       onClick={handleAddDatetimeClause}
                     >
                       <PlusIcon width={18} />
-                      <span>{f(messages.feature.clause.type.date)}</span>
+                      <span>{f(messages.button.addSchedule)}</span>
                     </button>
                   )}
                   {watchDatetimeClausesList.length <= 10 && (

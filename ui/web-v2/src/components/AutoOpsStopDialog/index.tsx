@@ -4,16 +4,21 @@ import { useIntl } from 'react-intl';
 
 import { messages } from '../../lang/messages';
 import { Modal } from '../Modal';
+import { OperationType, SelectedOperation } from '../FeatureAutoOpsRulesForm';
 
-interface ProgressiveRolloutStopDialogProps {
+interface AutoOpsStopDialogProps {
+  selectedOperation: SelectedOperation;
   open: boolean;
   onConfirm: () => void;
   onClose: () => void;
 }
 
-export const ProgressiveRolloutStopDialog: FC<
-  ProgressiveRolloutStopDialogProps
-> = ({ open, onConfirm, onClose }) => {
+export const AutoOpsStopDialog: FC<AutoOpsStopDialogProps> = ({
+  selectedOperation,
+  open,
+  onConfirm,
+  onClose
+}) => {
   const { formatMessage: f } = useIntl();
 
   return (
@@ -22,11 +27,21 @@ export const ProgressiveRolloutStopDialog: FC<
         as="h3"
         className="text-lg font-medium leading-6 text-gray-700"
       >
-        {f(messages.autoOps.stopProgressiveRollout)}
+        {selectedOperation.type === OperationType.SCHEDULE &&
+          f(messages.autoOps.stopSchedule)}
+        {selectedOperation.type === OperationType.EVENT_RATE &&
+          f(messages.autoOps.killSwitch)}
+        {selectedOperation.type === OperationType.PROGRESSIVE_ROLLOUT &&
+          f(messages.autoOps.stopProgressiveRollout)}
       </Dialog.Title>
       <div className="mt-2">
         <p className="text-sm text-red-500">
-          {f(messages.autoOps.stopProgressiveRolloutDescription)}
+          {selectedOperation.type === OperationType.SCHEDULE &&
+            f(messages.autoOps.stopScheduleDescription)}
+          {selectedOperation.type === OperationType.EVENT_RATE &&
+            f(messages.autoOps.stopKillSwitchDescription)}
+          {selectedOperation.type === OperationType.PROGRESSIVE_ROLLOUT &&
+            f(messages.autoOps.stopProgressiveRolloutDescription)}
         </p>
       </div>
       <div className="pt-5">

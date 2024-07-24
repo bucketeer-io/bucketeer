@@ -1,5 +1,8 @@
 import { yupLocale } from '../../lang/yup';
-import { isArraySorted } from '../../utils/isArraySorted';
+import {
+  isArraySorted,
+  isTimestampArraySorted
+} from '../../utils/isArraySorted';
 import { areIntervalsApart } from '../../utils/areIntervalsApart';
 import * as yup from 'yup';
 
@@ -165,7 +168,7 @@ const schedulesListSchema = yup.array().of(
             context.from[4].value.progressiveRolloutType ===
             ProgressiveRollout.Type.MANUAL_SCHEDULE
           ) {
-            return isArraySorted(
+            return isTimestampArraySorted(
               context.from[4].value.progressiveRollout.manual.schedulesList.map(
                 (d) => d.executeAt.time.getTime()
               )

@@ -47,7 +47,10 @@ import {
 import { classNames } from '../../utils/css';
 import dayjs from 'dayjs';
 import { getIntervalForDayjs } from '../FeatureAutoOpsRulesForm';
-import { isArraySorted } from '../../utils/isArraySorted';
+import {
+  isArraySorted,
+  isTimestampArraySorted
+} from '../../utils/isArraySorted';
 import { areIntervalsApart } from '../../utils/areIntervalsApart';
 import { CreateProgressiveRolloutCommand } from '../../proto/autoops/command_pb';
 import {
@@ -298,8 +301,8 @@ export const ProgressiveRolloutAddForm: FC<ProgressiveRolloutAddFormProps> =
           return f(messages.autoOps.operationDetails);
         } else {
           return autoOpsRule
-            ? f(messages.autoOps.updateAnOperation)
-            : f(messages.autoOps.createAnOperation);
+            ? f(messages.autoOps.updateOperation)
+            : f(messages.autoOps.createOperation);
         }
       };
 
@@ -335,27 +338,132 @@ export const ProgressiveRolloutAddForm: FC<ProgressiveRolloutAddFormProps> =
                     <p className="font-bold mb-6">
                       {f(messages.autoOps.progressiveRollout)}
                     </p>
-                    {!feature.enabled && (
-                      <div className="bg-blue-50 p-4 border-l-4 border-blue-400 mb-7">
-                        <div className="flex">
-                          <div className="flex-shrink-0">
-                            <InformationCircleIcon
-                              className="h-5 w-5 text-blue-400"
-                              aria-hidden="true"
-                            />
-                          </div>
-                          <div className="ml-3 flex-1">
-                            <p className="text-sm text-blue-700">
-                              {f(
-                                messages.autoOps
-                                  .progressiveRolloutWarningMessages
-                                  .enableFlagWhenStarts
-                              )}
-                            </p>
+                    {isProgressiveRolloutsWarningsExists && (
+                      <div className="pb-4">
+                        <div className="rounded-md bg-yellow-50 p-4">
+                          <div className="flex">
+                            <div className="flex-shrink-0">
+                              <ExclamationCircleIcon
+                                className="h-5 w-5 text-yellow-400"
+                                aria-hidden="true"
+                              />
+                            </div>
+                            <div className="ml-3 flex-1">
+                              <p className="text-sm text-yellow-700 font-semibold">
+                                {f(
+                                  messages.autoOps
+                                    .progressiveRolloutWarningMessages.title
+                                )}
+                              </p>
+                              <div className="mt-2 text-sm text-yellow-700">
+                                <ul className="list-disc space-y-1 pl-5">
+                                  {feature.variationsList.length !== 2 ? (
+                                    <li>
+                                      <p>
+                                        {f(
+                                          messages.autoOps
+                                            .progressiveRolloutWarningMessages
+                                            .variations
+                                        )}
+                                      </p>
+                                    </li>
+                                  ) : null}
+                                  {experiments.find((e) =>
+                                    isExperimentStatusWaitingRunnning(e.status)
+                                  ) ? (
+                                    <li>
+                                      <p>
+                                        {f(
+                                          messages.autoOps
+                                            .progressiveRolloutWarningMessages
+                                            .experimentOnProgress,
+                                          {
+                                            link: (
+                                              <span
+                                                onClick={() => {
+                                                  history.push(
+                                                    `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_EXPERIMENTS}`
+                                                  );
+                                                }}
+                                                className="underline text-primary cursor-pointer ml-1"
+                                              >
+                                                <span>
+                                                  {f(
+                                                    messages.sourceType
+                                                      .experiment
+                                                  )}
+                                                </span>
+                                              </span>
+                                            )
+                                          }
+                                        )}
+                                      </p>
+                                    </li>
+                                  ) : null}
+                                  {progressiveRolloutList.length > 0 &&
+                                  progressiveRolloutList.find((p) =>
+                                    isProgressiveRolloutsRunningWaiting(
+                                      p.status
+                                    )
+                                  ) ? (
+                                    <li>
+                                      <p>
+                                        {f(
+                                          messages.autoOps
+                                            .progressiveRolloutWarningMessages
+                                            .alreadyProgressiveRollout
+                                        )}
+                                      </p>
+                                    </li>
+                                  ) : null}
+                                </ul>
+                              </div>
+                              <p className="text-yellow-700 text-sm mt-4">
+                                {f(
+                                  messages.autoOps
+                                    .progressiveRolloutWarningMessages
+                                    .moreInformation,
+                                  {
+                                    link: (
+                                      <a
+                                        href="https://docs.bucketeer.io/feature-flags/creating-feature-flags/auto-operation/rollout"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="underline text-primary"
+                                      >
+                                        {f(messages.feature.documentation)}
+                                      </a>
+                                    )
+                                  }
+                                )}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
                     )}
+                    {!feature.enabled &&
+                      !isProgressiveRolloutsWarningsExists && (
+                        <div className="bg-blue-50 p-4 border-l-4 border-blue-400 mb-7">
+                          <div className="flex">
+                            <div className="flex-shrink-0">
+                              <InformationCircleIcon
+                                className="h-5 w-5 text-blue-400"
+                                aria-hidden="true"
+                              />
+                            </div>
+                            <div className="ml-3 flex-1">
+                              <p className="text-sm text-blue-700">
+                                {f(
+                                  messages.autoOps
+                                    .progressiveRolloutWarningMessages
+                                    .enableFlagWhenStarts
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     <div className="flex">
                       {[
                         {
@@ -422,107 +530,6 @@ export const ProgressiveRolloutAddForm: FC<ProgressiveRolloutAddFormProps> =
                       <ManualProgressiveRollout isDisabled={isDisabled} />
                     )}
                   </div>
-                  {isProgressiveRolloutsWarningsExists && (
-                    <div className="px-4 py-4">
-                      <div className="rounded-md bg-yellow-50 p-4 mt-2">
-                        <div className="flex">
-                          <div className="flex-shrink-0">
-                            <ExclamationCircleIcon
-                              className="h-5 w-5 text-yellow-400"
-                              aria-hidden="true"
-                            />
-                          </div>
-                          <div className="ml-3 flex-1">
-                            <p className="text-sm text-yellow-700 font-semibold">
-                              {f(
-                                messages.autoOps
-                                  .progressiveRolloutWarningMessages.title
-                              )}
-                            </p>
-                            <div className="mt-2 text-sm text-yellow-700">
-                              <ul className="list-disc space-y-1 pl-5">
-                                {feature.variationsList.length !== 2 ? (
-                                  <li>
-                                    <p>
-                                      {f(
-                                        messages.autoOps
-                                          .progressiveRolloutWarningMessages
-                                          .variations
-                                      )}
-                                    </p>
-                                  </li>
-                                ) : null}
-                                {experiments.find((e) =>
-                                  isExperimentStatusWaitingRunnning(e.status)
-                                ) ? (
-                                  <li>
-                                    <p>
-                                      {f(
-                                        messages.autoOps
-                                          .progressiveRolloutWarningMessages
-                                          .experimentOnProgress,
-                                        {
-                                          link: (
-                                            <span
-                                              onClick={() => {
-                                                history.push(
-                                                  `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_EXPERIMENTS}`
-                                                );
-                                              }}
-                                              className="underline text-primary cursor-pointer ml-1"
-                                            >
-                                              <span>
-                                                {f(
-                                                  messages.sourceType.experiment
-                                                )}
-                                              </span>
-                                            </span>
-                                          )
-                                        }
-                                      )}
-                                    </p>
-                                  </li>
-                                ) : null}
-                                {progressiveRolloutList.length > 0 &&
-                                progressiveRolloutList.find((p) =>
-                                  isProgressiveRolloutsRunningWaiting(p.status)
-                                ) ? (
-                                  <li>
-                                    <p>
-                                      {f(
-                                        messages.autoOps
-                                          .progressiveRolloutWarningMessages
-                                          .alreadyProgressiveRollout
-                                      )}
-                                    </p>
-                                  </li>
-                                ) : null}
-                              </ul>
-                            </div>
-                            <p className="text-yellow-700 text-sm mt-4">
-                              {f(
-                                messages.autoOps
-                                  .progressiveRolloutWarningMessages
-                                  .moreInformation,
-                                {
-                                  link: (
-                                    <a
-                                      href="https://docs.bucketeer.io/feature-flags/creating-feature-flags/auto-operation/rollout"
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      className="underline text-primary"
-                                    >
-                                      {f(messages.feature.documentation)}
-                                    </a>
-                                  )
-                                }
-                              )}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </>
               )}
             </div>
@@ -814,7 +821,7 @@ const ManualProgressiveRollout: FC<ManualProgressiveRolloutProps> = memo(
     const isWeightsSorted = isArraySorted(
       watchManualSchedulesList.map((d) => Number(d.weight))
     );
-    const isDatesSorted = isArraySorted(
+    const isDatesSorted = isTimestampArraySorted(
       watchManualSchedulesList.map((d) => d.executeAt.time.getTime())
     );
     const isDatetime5MinutesApart = areIntervalsApart(

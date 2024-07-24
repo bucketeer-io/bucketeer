@@ -6,8 +6,14 @@ import {
   listFlagTriggers,
   selectAll as selectAllFlagTriggers
 } from '../../modules/flagTriggers';
-import { listProgressiveRollout } from '../../modules/porgressiveRollout';
-import { AutoOpsRule } from '../../proto/autoops/auto_ops_rule_pb';
+import {
+  listProgressiveRollout,
+  selectAll as selectAllProgressiveRollouts
+} from '../../modules/porgressiveRollout';
+import {
+  AutoOpsRule,
+  AutoOpsStatus
+} from '../../proto/autoops/auto_ops_rule_pb';
 import { ListFlagTriggersResponse } from '../../proto/feature/service_pb';
 import { SerializedError } from '@reduxjs/toolkit';
 import { FC, memo, useEffect } from 'react';
@@ -54,6 +60,8 @@ import { FeatureSettingsPage } from './settings';
 import { FeatureTargetingPage } from './targeting';
 import { FeatureTriggerPage } from './triggers';
 import { FeatureVariationsPage } from './variations';
+import { ProgressiveRollout } from '../../proto/autoops/progressive_rollout_pb';
+import { isProgressiveRolloutsRunningWaiting } from '../../components/ProgressiveRolloutAddForm';
 
 export const FeatureDetailPage: FC = memo(() => {
   const dispatch = useDispatch<AppDispatch>();
@@ -82,7 +90,16 @@ export const FeatureDetailPage: FC = memo(() => {
     AppState,
     ListFlagTriggersResponse.FlagTriggerWithUrl.AsObject[]
   >((state) => selectAllFlagTriggers(state.flagTriggers), shallowEqual);
-
+  const progressiveRollout = useSelector<
+    AppState,
+    ProgressiveRollout.AsObject[]
+  >(
+    (state) =>
+      selectAllProgressiveRollouts(state.progressiveRollout).filter(
+        (rule) => rule.featureId === featureId
+      ),
+    shallowEqual
+  );
   useEffect(() => {
     if (featureId) {
       dispatch(
@@ -126,9 +143,16 @@ export const FeatureDetailPage: FC = memo(() => {
               let length;
 
               if (tab.to === PAGE_PATH_FEATURE_AUTOOPS) {
-                length = autoOpsRules.filter(
-                  (rule) => !rule.triggeredAt
-                ).length;
+                length = [
+                  ...autoOpsRules.filter(
+                    (rule) =>
+                      rule.autoOpsStatus === AutoOpsStatus.RUNNING ||
+                      rule.autoOpsStatus === AutoOpsStatus.WAITING
+                  ),
+                  ...progressiveRollout.filter((p) =>
+                    isProgressiveRolloutsRunningWaiting(p.status)
+                  )
+                ].length;
               } else if (tab.to === PAGE_PATH_FEATURE_TRIGGER) {
                 length = flagTriggers.length;
               }
