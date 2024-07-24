@@ -88,6 +88,17 @@ oauth:
   issuer:
   audience:
 
+
+httpstan:
+  image:
+    repository: ghcr.io/bucketeer-io/bucketeer-httpstan
+    tag: 0.0.1
+    pullPolicy: IfNotPresent
+  config:
+  port: 8080
+  healthPath: v1/health
+  resources: {}
+
 service:
   type: ClusterIP
   clusterIP: None

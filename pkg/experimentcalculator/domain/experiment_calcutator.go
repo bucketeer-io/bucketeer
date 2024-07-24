@@ -11,32 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
 
-package main
+package domain
 
-import (
-	"log"
+import "github.com/bucketeer-io/bucketeer/proto/experiment"
 
-	"github.com/bucketeer-io/bucketeer/pkg/cli"
-	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/cmd/server"
-)
-
-var (
-	name    = "bucketeer-experiment-calculator"
-	version = ""
-	build   = ""
-)
-
-func main() {
-	app := cli.NewApp(name, "A/B Testing Microservice", version, build)
-	registerCommands(app)
-	err := app.Run()
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-func registerCommands(app *cli.App) {
-	server.RegisterCommand(app, app)
+type ExperimentCalculatorReq struct {
+	EnvironmentId string
+	Experiment    *experiment.Experiment
 }
