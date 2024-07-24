@@ -1,13 +1,12 @@
 import {
-  ID_NEW,
   PAGE_PATH_FEATURES,
   PAGE_PATH_FEATURE_AUTOOPS,
-  PAGE_PATH_NEW,
   PAGE_PATH_ROOT
 } from '../../constants/routing';
 import {
   deleteAutoOpsRule,
-  selectAll as selectAllAutoOpsRules
+  selectAll as selectAllAutoOpsRules,
+  stopAutoOpsRule
 } from '../../modules/autoOpsRules';
 import {
   listOpsCounts,
@@ -28,11 +27,10 @@ import {
   PencilIcon,
   TrashIcon,
   InformationCircleIcon,
-  ArrowNarrowLeftIcon,
-  ArrowNarrowRightIcon,
   BanIcon,
   ClockIcon,
-  CalendarIcon
+  CalendarIcon,
+  ChevronDownIcon
 } from '@heroicons/react/outline';
 import { SerializedError } from '@reduxjs/toolkit';
 import dayjs from 'dayjs';
@@ -49,13 +47,13 @@ import { useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { useSelector, shallowEqual, useDispatch } from 'react-redux';
 import { useParams, useHistory } from 'react-router-dom';
-import { v4 as uuid } from 'uuid';
-
 import ArrowTrendingUp from '../../assets/svg/arrow-trending-up.svg';
+import ArrowTrendingUpGray from '../../assets/svg/arrow-trending-up-gray.svg';
 import CalendarSvg from '../../assets/svg/calendar.svg';
 import CrossSvg from '../../assets/svg/cross.svg';
 import OpenInNewSvg from '../../assets/svg/open-new-tab.svg';
 import RefreshSvg from '../../assets/svg/refresh.svg';
+import RefreshPinkSvg from '../../assets/svg/refresh-pink.svg';
 import SeeDetailsSvg from '../../assets/svg/see-details.svg';
 import UserSvg from '../../assets/svg/user.svg';
 import { intl } from '../../lang';
@@ -63,9 +61,12 @@ import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
 import { selectById as selectFeatureById } from '../../modules/features';
 import { useCurrentEnvironment } from '../../modules/me';
-import { AutoOpsRule, OpsType } from '../../proto/autoops/auto_ops_rule_pb';
 import {
-  DatetimeClause,
+  AutoOpsRule,
+  AutoOpsStatus,
+  OpsType
+} from '../../proto/autoops/auto_ops_rule_pb';
+import {
   OpsEventRateClause,
   ProgressiveRolloutManualScheduleClause,
   ProgressiveRolloutSchedule,
@@ -73,41 +74,39 @@ import {
 } from '../../proto/autoops/clause_pb';
 import { Feature } from '../../proto/feature/feature_pb';
 import { classNames } from '../../utils/css';
-import { isProgressiveRolloutsRunningWaiting } from '../AddProgressiveRolloutOperation';
+import { isProgressiveRolloutsRunningWaiting } from '../ProgressiveRolloutAddForm';
 import { AutoOpsDeleteDialog } from '../AutoOpsDeleteDialog';
 import { DetailSkeleton } from '../DetailSkeleton';
 import { HoverPopover } from '../HoverPopover';
-import { OperationAddUpdateForm } from '../OperationAddUpdateForm';
+import {
+  actionTypesOptions,
+  ScheduleAddUpdateForm
+} from '../ScheduleAddUpdateForm';
+import { EventRateAddUpdateForm } from '../EventRateAddUpdateForm';
+import { ProgressiveRolloutAddForm } from '../ProgressiveRolloutAddForm';
 import { Overlay } from '../Overlay';
-import { ProgressiveRolloutStopDialog } from '../ProgressiveRolloutStopDialog';
+import { AutoOpsStopDialog } from '../AutoOpsStopDialog';
 import { RelativeDateText } from '../RelativeDateText';
 import { Option } from '../Select';
 import { isLanguageJapanese } from '../../lang/getSelectedLanguage';
+import { createVariationLabel } from '../../utils/variation';
+import { getDatetimeClause } from '../../utils/getDatetimeClause';
+import OperationPagination from '../OperationPagination';
 
 enum SORT_TYPE {
   ASC = 'ASC',
   DESC = 'DESC'
 }
 
-enum OperationType {
-  AutoOps = 'AutoOps',
-  Progressive = 'Progressive'
-}
-interface ProgressiveRolloutWithType extends ProgressiveRollout.AsObject {
-  operationType: OperationType;
+export enum OperationType {
+  SCHEDULE = 'schedule',
+  EVENT_RATE = 'event_rate',
+  PROGRESSIVE_ROLLOUT = 'progressive_rollout'
 }
 
-interface AutoOpsRuleWithType extends AutoOpsRule.AsObject {
-  operationType: OperationType;
-}
-
-const extractClauseType = (typeUrl: string) => {
-  return typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
-};
-
-const extractDatetimeFromAutoOps = (autoOps: AutoOpsRuleWithType) => {
+const extractDatetimeFromAutoOps = (autoOps: AutoOpsRule.AsObject) => {
   const { value } = autoOps.clausesList[0].clause;
-  return DatetimeClause.deserializeBinary(value as Uint8Array).toObject().time;
+  return getDatetimeClause(value).time;
 };
 
 const extractDatetimeFromProgressiveRollout = (
@@ -128,36 +127,33 @@ const extractDatetimeFromProgressiveRollout = (
 };
 
 const sortOperations = (
-  rules: AutoOpsRuleWithType[],
-  rollouts: ProgressiveRolloutWithType[],
+  rules: AutoOpsRule.AsObject[],
+  rollouts: ProgressiveRollout.AsObject[],
   sortType: SORT_TYPE
 ) => {
   const eventRateOperations = rules.filter(
-    (r) =>
-      extractClauseType(r.clausesList[0].clause.typeUrl) ===
-      ClauseType.EVENT_RATE
+    (r) => r.opsType === OpsType.EVENT_RATE
   );
 
   const dateTimeOperations = rules.filter(
-    (r) =>
-      extractClauseType(r.clausesList[0].clause.typeUrl) !==
-      ClauseType.EVENT_RATE
+    (r) => r.opsType === OpsType.SCHEDULE
   );
 
-  const sortedList = [...dateTimeOperations, ...rollouts].sort((a, b) => {
+  const mergedArray = [...dateTimeOperations, ...rollouts];
+
+  const sortedList = mergedArray.sort((a, b) => {
+    const a2 = a as AutoOpsRule.AsObject & ProgressiveRollout.AsObject;
+    const b2 = b as AutoOpsRule.AsObject & ProgressiveRollout.AsObject;
+
     const aDatetime =
-      a.operationType === OperationType.AutoOps
-        ? extractDatetimeFromAutoOps(a as AutoOpsRuleWithType)
-        : extractDatetimeFromProgressiveRollout(
-            a as ProgressiveRolloutWithType
-          );
+      a2.opsType === OpsType.SCHEDULE || a2.opsType === OpsType.EVENT_RATE
+        ? extractDatetimeFromAutoOps(a2)
+        : extractDatetimeFromProgressiveRollout(a2);
 
     const bDatetime =
-      b.operationType === OperationType.AutoOps
-        ? extractDatetimeFromAutoOps(b as AutoOpsRuleWithType)
-        : extractDatetimeFromProgressiveRollout(
-            b as ProgressiveRolloutWithType
-          );
+      b2.opsType === OpsType.SCHEDULE || b2.opsType === OpsType.EVENT_RATE
+        ? extractDatetimeFromAutoOps(b2)
+        : extractDatetimeFromProgressiveRollout(b2);
 
     return sortType === SORT_TYPE.ASC
       ? aDatetime - bDatetime
@@ -172,21 +168,9 @@ const TabLabel = {
   FINISHED: intl.formatMessage(messages.autoOps.finished)
 };
 
-export interface ClauseTypeMap {
-  EVENT_RATE: 'bucketeer.autoops.OpsEventRateClause';
-  DATETIME: 'bucketeer.autoops.DatetimeClause';
-  PROGRESSIVE_ROLLOUT: 'bucketeer.autoops.ProgressiveRolloutClause';
-}
-
-export const ClauseType: ClauseTypeMap = {
-  EVENT_RATE: 'bucketeer.autoops.OpsEventRateClause',
-  DATETIME: 'bucketeer.autoops.DatetimeClause',
-  PROGRESSIVE_ROLLOUT: 'bucketeer.autoops.ProgressiveRolloutClause'
-};
-
 interface Tab {
   label: string;
-  value: (AutoOpsRuleWithType | ProgressiveRolloutWithType)[];
+  value: (AutoOpsRule.AsObject | ProgressiveRollout.AsObject)[];
   selected: boolean;
 }
 
@@ -203,8 +187,8 @@ export const getIntervalForDayjs = (
 };
 
 export interface SelectedOperation {
-  type: keyof typeof ClauseType;
   id: string;
+  type: OperationType;
 }
 
 interface FeatureAutoOpsRulesFormProps {
@@ -216,9 +200,14 @@ interface FeatureAutoOpsRulesFormProps {
 
 export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
   ({ featureId, refetchAutoOpsRules, refetchProgressiveRollouts, reset }) => {
-    const { operationId } = useParams<{ operationId: string }>();
-    const isNew = operationId === ID_NEW;
+    const { operationType } = useParams<{
+      operationType: OperationType;
+    }>();
     const dispatch = useDispatch<AppDispatch>();
+
+    const [selectedOperationType, setSelectedOperationType] = useState<
+      OperationType | undefined
+    >(operationType);
 
     const [selectedAutoOpsRule, setSelectedAutoOpsRule] =
       useState<AutoOpsRule.AsObject | null>(null);
@@ -229,6 +218,13 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
     const [selectedOperation, setSelectedOperation] =
       useState<SelectedOperation>(null);
 
+    const [feature] = useSelector<
+      AppState,
+      [Feature.AsObject | undefined, SerializedError | null]
+    >((state) => [
+      selectFeatureById(state.features, featureId),
+      state.features.getFeatureError
+    ]);
     const autoOpsRules = useSelector<AppState, AutoOpsRule.AsObject[]>(
       (state) =>
         selectAllAutoOpsRules(state.autoOpsRules).filter(
@@ -256,52 +252,56 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       shallowEqual
     );
 
-    const [open, setOpen] = useState(isNew);
-    const [isKillSwitchSelected, setIsKillSwitchSelected] = useState(false);
-    const [isProgressiveRolloutSelected, setIsProgressiveRolloutSelected] =
-      useState(false);
-
     const history = useHistory();
     const currentEnvironment = useCurrentEnvironment();
 
     const methods = useFormContext();
 
-    const { handleSubmit } = methods;
+    const { handleSubmit, setValue } = methods;
 
     const [tabs, setTabs] = useState<Tab[]>([]);
+    const { formatMessage: f } = useIntl();
 
     useEffect(() => {
-      const rules = autoOpsRules.map((r) => ({
-        ...r,
-        operationType: OperationType.AutoOps
-      }));
-      const rollouts = progressiveRollout.map((r) => ({
-        ...r,
-        operationType: OperationType.Progressive
-      }));
+      let initialTab = TabLabel.ACTIVE;
+
+      if (tabs.length > 0) {
+        initialTab =
+          tabs.find((tab) => tab.selected)?.label === TabLabel.ACTIVE
+            ? TabLabel.ACTIVE
+            : TabLabel.FINISHED;
+      }
 
       setTabs([
         {
           label: TabLabel.ACTIVE,
           value: sortOperations(
-            rules.filter((rule) => !rule.triggeredAt),
-            rollouts.filter((p) =>
+            autoOpsRules.filter(
+              (rule) =>
+                rule.autoOpsStatus === AutoOpsStatus.RUNNING ||
+                rule.autoOpsStatus === AutoOpsStatus.WAITING
+            ),
+            progressiveRollout.filter((p) =>
               isProgressiveRolloutsRunningWaiting(p.status)
             ),
             SORT_TYPE.ASC
           ),
-          selected: true
+          selected: initialTab === TabLabel.ACTIVE
         },
         {
           label: TabLabel.FINISHED,
           value: sortOperations(
-            rules.filter((rule) => rule.triggeredAt),
-            rollouts.filter(
+            autoOpsRules.filter(
+              (rule) =>
+                rule.autoOpsStatus === AutoOpsStatus.FINISHED ||
+                rule.autoOpsStatus === AutoOpsStatus.STOPPED
+            ),
+            progressiveRollout.filter(
               (p) => !isProgressiveRolloutsRunningWaiting(p.status)
             ),
             SORT_TYPE.DESC
           ),
-          selected: false
+          selected: initialTab === TabLabel.FINISHED
         }
       ]);
     }, [autoOpsRules, progressiveRollout, setTabs]);
@@ -310,9 +310,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       if (autoOpsRules?.length > 0) {
         const ids = autoOpsRules
           .filter((rule) => {
-            const { typeUrl } = rule.clausesList[0].clause;
-            const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
-            return type === ClauseType.EVENT_RATE && !rule.triggeredAt;
+            return rule.opsType === OpsType.EVENT_RATE && !rule.triggeredAt;
           })
           .map((rule) => rule.id);
 
@@ -327,36 +325,53 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       }
     }, [autoOpsRules]);
 
-    const handleClose = useCallback(() => {
+    const handleCloseAutoOps = useCallback(() => {
       reset();
       history.replace({
         pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_AUTOOPS}`,
         search: location.search
       });
-      setOpen(false);
-      setIsKillSwitchSelected(false);
-    }, [setOpen, history, location, reset]);
+      setSelectedAutoOpsRule(null);
+      setSelectedOperationType(undefined);
+    }, [history, location, reset]);
 
-    const handleOpen = useCallback(() => {
-      setOpen(true);
-      history.push({
-        pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_AUTOOPS}${PAGE_PATH_NEW}`,
-        search: location.search
-      });
-    }, [setOpen, history, location]);
+    const handleOpenAuto = useCallback(
+      (operationType: OperationType) => {
+        if (operationType === OperationType.SCHEDULE) {
+          setValue('opsType', OpsType.SCHEDULE);
+        } else if (operationType === OperationType.EVENT_RATE) {
+          setValue('opsType', OpsType.EVENT_RATE);
+        } else if (operationType === OperationType.PROGRESSIVE_ROLLOUT) {
+          setValue(
+            'progressiveRolloutType',
+            ProgressiveRollout.Type.TEMPLATE_SCHEDULE
+          );
+        }
+        setSelectedOperationType(operationType);
+        history.push({
+          pathname: `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_AUTOOPS}/${operationType}`,
+          search: location.search
+        });
+      },
+      [history, location, setSelectedOperationType]
+    );
 
     const handleOpenUpdate = useCallback((rule: AutoOpsRule.AsObject) => {
       setSelectedAutoOpsRule(rule);
-      handleOpen();
+      if (rule.opsType === OpsType.SCHEDULE) {
+        handleOpenAuto(OperationType.SCHEDULE);
+      } else if (rule.opsType === OpsType.EVENT_RATE) {
+        handleOpenAuto(OperationType.EVENT_RATE);
+      }
     }, []);
 
     const handleOnSubmit = useCallback(() => {
-      handleClose();
+      handleCloseAutoOps();
       refetchAutoOpsRules();
     }, []);
 
     const handleOnSubmitProgressiveRollout = useCallback(() => {
-      handleClose();
+      handleCloseAutoOps();
       refetchProgressiveRollouts();
     }, []);
 
@@ -368,8 +383,8 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
     const handleDeleteConfirm = () => {
       setIsDeleteConfirmDialogOpen(false);
       if (
-        selectedOperation.type === 'DATETIME' ||
-        selectedOperation.type === 'EVENT_RATE'
+        selectedOperation.type === OperationType.SCHEDULE ||
+        selectedOperation.type === OperationType.EVENT_RATE
       ) {
         dispatch(
           deleteAutoOpsRule({
@@ -379,7 +394,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
         ).then(() => {
           refetchAutoOpsRules();
         });
-      } else if (selectedOperation.type === 'PROGRESSIVE_ROLLOUT') {
+      } else if (selectedOperation.type === OperationType.PROGRESSIVE_ROLLOUT) {
         dispatch(
           deleteProgressiveRollout({
             environmentNamespace: currentEnvironment.id,
@@ -396,18 +411,39 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       setSelectedOperation(operation);
     };
 
-    const handleStopConfirm = () => {
+    const handleStopConfirm = useCallback(() => {
       setIsStopConfirmDialogOpen(false);
 
-      dispatch(
-        stopProgressiveRollout({
-          environmentNamespace: currentEnvironment.id,
-          id: selectedOperation.id
-        })
-      ).then(() => {
-        refetchProgressiveRollouts();
-      });
-    };
+      if (
+        selectedOperation.type === OperationType.SCHEDULE ||
+        selectedOperation.type === OperationType.EVENT_RATE
+      ) {
+        dispatch(
+          stopAutoOpsRule({
+            environmentNamespace: currentEnvironment.id,
+            id: selectedOperation.id
+          })
+        ).then(() => {
+          refetchAutoOpsRules();
+        });
+      } else if (selectedOperation.type === OperationType.PROGRESSIVE_ROLLOUT) {
+        dispatch(
+          stopProgressiveRollout({
+            environmentNamespace: currentEnvironment.id,
+            id: selectedOperation.id
+          })
+        ).then(() => {
+          refetchProgressiveRollouts();
+        });
+      }
+    }, [selectedOperation]);
+
+    const variationOptions = feature.variationsList.map((v) => {
+      return {
+        value: v.id,
+        label: createVariationLabel(v)
+      };
+    });
 
     const isActiveTabSelected =
       tabs.find((tab) => tab.selected)?.label === TabLabel.ACTIVE;
@@ -423,64 +459,87 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
           >
             <OpenInNewSvg className="mt-[2px]" />
             <span className="underline">
-              {intl.formatMessage(messages.sideMenu.documentation)}
+              {f(messages.sideMenu.documentation)}
             </span>
           </a>
-          <button
-            onClick={() => {
-              setSelectedAutoOpsRule(null);
-              handleOpen();
-            }}
-            className="btn-submit space-x-2"
-          >
-            <PlusIcon width={18} />
-            <span>{intl.formatMessage(messages.button.add)}</span>
-          </button>
+          <Popover className="relative flex">
+            <Popover.Button>
+              <div className="btn-submit space-x-2 items-center">
+                <PlusIcon width={16} />
+                <span>{f(messages.autoOps.newOperation)}</span>
+                <ChevronDownIcon width={16} />
+              </div>
+            </Popover.Button>
+            <Popover.Panel className="absolute min-w-max top-10 z-10 bg-white right-0 rounded-lg p-1 whitespace-nowrap shadow-md">
+              <button
+                onClick={() => handleOpenAuto(OperationType.SCHEDULE)}
+                className="flex w-full space-x-2 px-3 py-1.5 items-center hover:bg-gray-100"
+              >
+                <CalendarIcon width={16} color="#94A3B8" />
+                <span className="text-sm text-gray-500">
+                  {f(messages.autoOps.schedule)}
+                </span>
+              </button>
+              <button
+                onClick={() => handleOpenAuto(OperationType.EVENT_RATE)}
+                className="flex w-full space-x-2 px-3 py-1.5 items-center hover:bg-gray-100"
+              >
+                <RefreshSvg />
+                <span className="text-sm text-gray-500">
+                  {f(messages.autoOps.eventRate)}
+                </span>
+              </button>
+              <button
+                onClick={() =>
+                  handleOpenAuto(OperationType.PROGRESSIVE_ROLLOUT)
+                }
+                className="flex w-full space-x-2 px-3 py-1.5 items-center hover:bg-gray-100"
+              >
+                <ArrowTrendingUpGray color="#94A3B8" />
+                <span className="text-sm text-gray-500">
+                  {f(messages.autoOps.progressiveRollout)}
+                </span>
+              </button>
+            </Popover.Panel>
+          </Popover>
         </div>
         <ActiveCompletedTabs tabs={tabs} setTabs={setTabs} />
-        <AutoOpsInfos
-          openAddOperation={handleOpen}
-          activateSchedule={() => {
-            setIsKillSwitchSelected(false);
-            setIsProgressiveRolloutSelected(false);
-          }}
-          activateKillSwitch={() => {
-            setIsProgressiveRolloutSelected(false);
-            setIsKillSwitchSelected(true);
-          }}
-          activateProgressiveRollout={() => {
-            setIsKillSwitchSelected(false);
-            setIsProgressiveRolloutSelected(true);
-          }}
-        />
+        <AutoOpsInfos openAddOperation={handleOpenAuto} />
         {isAutoOpsRuleLoading || isProgressiveRolloutsLoading ? (
           <DetailSkeleton />
         ) : (
           <div className="space-y-6 py-6">
             {tabs
               .find((tab) => tab.selected)
-              ?.value.map((operation) => {
-                if (operation.operationType === OperationType.AutoOps) {
+              ?.value.map((op) => {
+                const operation = op as AutoOpsRule.AsObject &
+                  ProgressiveRollout.AsObject;
+
+                if (
+                  operation.opsType === OpsType.SCHEDULE ||
+                  operation.opsType === OpsType.EVENT_RATE
+                ) {
                   return (
                     <Operation
                       key={operation.id}
-                      rule={operation as AutoOpsRule.AsObject}
+                      rule={operation}
                       isActiveTabSelected={isActiveTabSelected}
                       handleOpenUpdate={handleOpenUpdate}
                       handleDelete={handleDelete}
+                      handleStop={handleStop}
                     />
                   );
                 } else if (
-                  operation.operationType === OperationType.Progressive
+                  operation.type ===
+                    ProgressiveRollout.Type.TEMPLATE_SCHEDULE ||
+                  operation.type === ProgressiveRollout.Type.MANUAL_SCHEDULE
                 ) {
                   return (
                     <ProgressiveRolloutOperation
                       key={operation.id}
                       featureId={featureId}
                       isActiveTabSelected={isActiveTabSelected}
-                      progressiveRollout={
-                        operation as ProgressiveRollout.AsObject
-                      }
+                      progressiveRollout={operation}
                       handleDelete={handleDelete}
                       handleStop={handleStop}
                     />
@@ -489,17 +548,48 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
               })}
           </div>
         )}
-        {open && (
-          <Overlay open={open} onClose={handleClose}>
-            <OperationAddUpdateForm
+        {selectedOperationType === OperationType.SCHEDULE && (
+          <Overlay
+            open={selectedOperationType === OperationType.SCHEDULE}
+            onClose={handleCloseAutoOps}
+          >
+            <ScheduleAddUpdateForm
+              featureId={featureId}
+              currentFlagStatus={feature.enabled}
               onSubmit={handleSubmit(handleOnSubmit)}
-              onSubmitProgressiveRollout={handleOnSubmitProgressiveRollout}
-              onCancel={handleClose}
+              onCancel={handleCloseAutoOps}
+              autoOpsRule={selectedAutoOpsRule}
+              isActiveTabSelected={isActiveTabSelected}
+            />
+          </Overlay>
+        )}
+        {selectedOperationType === OperationType.EVENT_RATE && (
+          <Overlay
+            open={selectedOperationType === OperationType.EVENT_RATE}
+            onClose={handleCloseAutoOps}
+          >
+            <EventRateAddUpdateForm
+              onCancel={handleCloseAutoOps}
               featureId={featureId}
               autoOpsRule={selectedAutoOpsRule}
-              isKillSwitchSelected={isKillSwitchSelected}
               isActiveTabSelected={isActiveTabSelected}
-              isProgressiveRolloutSelected={isProgressiveRolloutSelected}
+              variationOptions={variationOptions}
+              onSubmit={handleSubmit(handleOnSubmit)}
+            />
+          </Overlay>
+        )}
+        {selectedOperationType === OperationType.PROGRESSIVE_ROLLOUT && (
+          <Overlay
+            open={selectedOperationType === OperationType.PROGRESSIVE_ROLLOUT}
+            onClose={handleCloseAutoOps}
+          >
+            <ProgressiveRolloutAddForm
+              featureId={featureId}
+              onCancel={handleCloseAutoOps}
+              autoOpsRule={selectedAutoOpsRule}
+              isActiveTabSelected={isActiveTabSelected}
+              variationOptions={variationOptions}
+              onSubmitProgressiveRollout={handleOnSubmitProgressiveRollout}
             />
           </Overlay>
         )}
@@ -515,7 +605,8 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
           />
         )}
         {isStopConfirmDialogOpen && (
-          <ProgressiveRolloutStopDialog
+          <AutoOpsStopDialog
+            selectedOperation={selectedOperation}
             open={isStopConfirmDialogOpen}
             onConfirm={handleStopConfirm}
             onClose={() => {
@@ -569,93 +660,78 @@ const ActiveCompletedTabs: FC<ActiveCompletedTabsProps> = memo(
 );
 
 interface AutoOpsInfosProps {
-  openAddOperation: () => void;
-  activateSchedule: () => void;
-  activateKillSwitch: () => void;
-  activateProgressiveRollout: () => void;
+  openAddOperation: (operationType: OperationType) => void;
 }
 
-const AutoOpsInfos: FC<AutoOpsInfosProps> = memo(
-  ({
-    openAddOperation,
-    activateSchedule,
-    activateKillSwitch,
-    activateProgressiveRollout
-  }) => (
-    <div className="py-6">
-      <p className="text-xl font-bold">
-        {intl.formatMessage(messages.autoOps.infoBlocks.title)}
-      </p>
-      <div className="flex space-x-6 mt-6">
-        {[
-          {
-            id: 1,
-            title: intl.formatMessage(messages.autoOps.schedule),
-            detail: intl.formatMessage(
-              messages.autoOps.infoBlocks.scheduleInfo
-            ),
-            bgColor: 'bg-purple-50',
-            icon: <CalendarSvg />,
-            onClick: () => {
-              activateSchedule();
-              openAddOperation();
-            }
-          },
-          {
-            id: 2,
-            title: intl.formatMessage(messages.autoOps.killSwitch),
-            detail: intl.formatMessage(
-              messages.autoOps.infoBlocks.killSwitchInfo
-            ),
-            bgColor: 'bg-pink-50',
-            icon: (
-              <div className="relative">
-                <RefreshSvg />
-                <CrossSvg className="absolute right-[2px] bottom-[1px]" />
-              </div>
-            ),
-            onClick: () => {
-              activateKillSwitch();
-              openAddOperation();
-            }
-          },
-          {
-            id: 3,
-            title: intl.formatMessage(messages.autoOps.progressiveRollout),
-            detail: intl.formatMessage(
-              messages.autoOps.infoBlocks.progressiveRolloutInfo
-            ),
-            bgColor: 'bg-blue-50',
-            icon: <ArrowTrendingUp />,
-            onClick: () => {
-              activateProgressiveRollout();
-              openAddOperation();
-            }
+const AutoOpsInfos: FC<AutoOpsInfosProps> = memo(({ openAddOperation }) => (
+  <div className="py-6">
+    <p className="text-xl font-bold">
+      {intl.formatMessage(messages.autoOps.infoBlocks.title)}
+    </p>
+    <div className="flex space-x-6 mt-6">
+      {[
+        {
+          id: 1,
+          title: intl.formatMessage(messages.autoOps.schedule),
+          detail: intl.formatMessage(messages.autoOps.infoBlocks.scheduleInfo),
+          bgColor: 'bg-purple-50',
+          icon: <CalendarSvg />,
+          onClick: () => {
+            openAddOperation(OperationType.SCHEDULE);
           }
-        ].map(({ id, title, detail, bgColor, icon, onClick }) => (
+        },
+        {
+          id: 2,
+          title: intl.formatMessage(messages.autoOps.killSwitch),
+          detail: intl.formatMessage(
+            messages.autoOps.infoBlocks.killSwitchInfo
+          ),
+          bgColor: 'bg-pink-50',
+          icon: (
+            <div className="relative">
+              <RefreshPinkSvg />
+              <CrossSvg className="absolute right-[2px] bottom-[1px]" />
+            </div>
+          ),
+          onClick: () => {
+            openAddOperation(OperationType.EVENT_RATE);
+          }
+        },
+        {
+          id: 3,
+          title: intl.formatMessage(messages.autoOps.progressiveRollout),
+          detail: intl.formatMessage(
+            messages.autoOps.infoBlocks.progressiveRolloutInfo
+          ),
+          bgColor: 'bg-blue-50',
+          icon: <ArrowTrendingUp />,
+          onClick: () => {
+            openAddOperation(OperationType.PROGRESSIVE_ROLLOUT);
+          }
+        }
+      ].map(({ id, title, detail, bgColor, icon, onClick }) => (
+        <div
+          key={id}
+          className="flex flex-1 space-x-4 p-4 rounded-md shadow-md cursor-pointer"
+          onClick={onClick}
+        >
           <div
-            key={id}
-            className="flex flex-1 space-x-4 p-4 rounded-md shadow-md cursor-pointer"
-            onClick={onClick}
+            className={classNames(
+              'w-16 h-16 rounded-lg flex justify-center items-center',
+              bgColor
+            )}
           >
-            <div
-              className={classNames(
-                'w-16 h-16 rounded-lg flex justify-center items-center',
-                bgColor
-              )}
-            >
-              {icon}
-            </div>
-            <div className="flex-1">
-              <p className="text-lg font-bold">{title}</p>
-              <p className="">{detail}</p>
-            </div>
+            {icon}
           </div>
-        ))}
-      </div>
+          <div className="flex-1">
+            <p className="text-lg font-bold">{title}</p>
+            <p className="">{detail}</p>
+          </div>
+        </div>
+      ))}
     </div>
-  )
-);
+  </div>
+));
 
 interface ProgressiveRolloutProps {
   featureId: string;
@@ -703,13 +779,13 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
           rule={progressiveRollout}
           deleteRule={() =>
             handleDelete({
-              type: 'PROGRESSIVE_ROLLOUT',
+              type: OperationType.PROGRESSIVE_ROLLOUT,
               id: progressiveRollout.id
             })
           }
           stopRule={() =>
             handleStop({
-              type: 'PROGRESSIVE_ROLLOUT',
+              type: OperationType.PROGRESSIVE_ROLLOUT,
               id: progressiveRollout.id
             })
           }
@@ -736,13 +812,13 @@ const ProgressiveRolloutOperation: FC<ProgressiveRolloutProps> = memo(
           rule={progressiveRollout}
           deleteRule={() =>
             handleDelete({
-              type: 'PROGRESSIVE_ROLLOUT',
+              type: OperationType.PROGRESSIVE_ROLLOUT,
               id: progressiveRollout.id
             })
           }
           stopRule={() =>
             handleStop({
-              type: 'PROGRESSIVE_ROLLOUT',
+              type: OperationType.PROGRESSIVE_ROLLOUT,
               id: progressiveRollout.id
             })
           }
@@ -761,37 +837,43 @@ interface OperationProps {
   isActiveTabSelected: boolean;
   handleOpenUpdate: (arg) => void;
   handleDelete: (arg: SelectedOperation) => void;
+  handleStop: (arg: SelectedOperation) => void;
 }
 
 const Operation: FC<OperationProps> = memo(
-  ({ rule, isActiveTabSelected, handleOpenUpdate, handleDelete }) => {
+  ({
+    rule,
+    isActiveTabSelected,
+    handleOpenUpdate,
+    handleDelete,
+    handleStop
+  }) => {
     const { formatMessage: f } = useIntl();
     const opsCounts = useSelector<AppState, OpsCount.AsObject[]>(
       (state) => selectAllOpsCounts(state.opsCounts),
       shallowEqual
     );
 
-    const { typeUrl } = rule.clausesList[0].clause;
-    const type = typeUrl.substring(typeUrl.lastIndexOf('/') + 1);
-
+    const { opsType } = rule;
     return (
       <div className="rounded-xl shadow px-6 py-4 bg-white">
         <div className="flex justify-between py-4 border-b">
           <h3 className="font-bold text-xl text-gray-600">
-            {rule.opsType === OpsType.ENABLE_FEATURE
-              ? f(messages.autoOps.enableOperation)
-              : f(messages.autoOps.killSwitchOperation)}
+            {rule.opsType === OpsType.SCHEDULE &&
+              f(messages.autoOps.scheduleOperation)}
+            {rule.opsType === OpsType.EVENT_RATE &&
+              f(messages.autoOps.killSwitchOperation)}
           </h3>
           <div className="flex space-x-2 items-center">
             <div
               className={classNames(
                 'py-[2px] px-2 rounded text-sm',
-                type === ClauseType.DATETIME && 'bg-[#EBF9ED] text-green-700',
-                type === ClauseType.EVENT_RATE && 'bg-[#EFECF5] text-primary'
+                opsType === OpsType.SCHEDULE && 'bg-[#EBF9ED] text-green-700',
+                opsType === OpsType.EVENT_RATE && 'bg-[#EFECF5] text-primary'
               )}
             >
-              {type === ClauseType.DATETIME && f(messages.autoOps.schedule)}
-              {type === ClauseType.EVENT_RATE && f(messages.autoOps.eventRate)}
+              {opsType === OpsType.SCHEDULE && f(messages.autoOps.schedule)}
+              {opsType === OpsType.EVENT_RATE && f(messages.autoOps.eventRate)}
             </div>
             <Popover className="relative flex">
               <Popover.Button>
@@ -808,34 +890,34 @@ const Operation: FC<OperationProps> = memo(
                     >
                       <PencilIcon width={18} />
                       <span className="text-sm">
-                        {type === ClauseType.DATETIME &&
+                        {opsType === OpsType.SCHEDULE &&
                           f(messages.autoOps.editSchedule)}
-                        {type === ClauseType.EVENT_RATE &&
+                        {opsType === OpsType.EVENT_RATE &&
                           f(messages.autoOps.editKillSwitch)}
                       </span>
                     </button>
                     <button
                       onClick={() => {
-                        if (type === ClauseType.DATETIME) {
-                          handleDelete({
-                            type: 'DATETIME',
+                        if (rule.opsType === OpsType.SCHEDULE) {
+                          handleStop({
+                            type: OperationType.SCHEDULE,
                             id: rule.id
                           });
-                        } else if (type === ClauseType.EVENT_RATE) {
-                          handleDelete({
-                            type: 'EVENT_RATE',
+                        } else if (rule.opsType === OpsType.EVENT_RATE) {
+                          handleStop({
+                            type: OperationType.EVENT_RATE,
                             id: rule.id
                           });
                         }
                       }}
                       className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
                     >
-                      <TrashIcon width={18} className="text-red-500" />
-                      <span className="text-red-500 text-sm">
-                        {type === ClauseType.DATETIME &&
-                          f(messages.autoOps.deleteSchedule)}
-                        {type === ClauseType.EVENT_RATE &&
-                          f(messages.autoOps.deleteKillSwitch)}
+                      <BanIcon width={18} className="" />
+                      <span className="text-sm">
+                        {rule.opsType === OpsType.SCHEDULE &&
+                          f(messages.autoOps.stopSchedule)}
+                        {rule.opsType === OpsType.EVENT_RATE &&
+                          f(messages.autoOps.stopKillSwitch)}
                       </span>
                     </button>
                   </>
@@ -850,26 +932,52 @@ const Operation: FC<OperationProps> = memo(
                     </span>
                   </button>
                 )}
+                <button
+                  onClick={() => {
+                    if (opsType === OpsType.SCHEDULE) {
+                      handleDelete({
+                        type: OperationType.SCHEDULE,
+                        id: rule.id
+                      });
+                    } else if (opsType === OpsType.EVENT_RATE) {
+                      handleDelete({
+                        type: OperationType.EVENT_RATE,
+                        id: rule.id
+                      });
+                    }
+                  }}
+                  className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
+                >
+                  <TrashIcon width={18} className="text-red-500" />
+                  <span className="text-red-500 text-sm">
+                    {opsType === OpsType.SCHEDULE &&
+                      f(messages.autoOps.deleteSchedule)}
+                    {opsType === OpsType.EVENT_RATE &&
+                      f(messages.autoOps.deleteKillSwitch)}
+                  </span>
+                </button>
               </Popover.Panel>
             </Popover>
           </div>
         </div>
         <div className="mt-4">
-          <p className="font-bold text-lg text-gray-600">
-            {f(messages.autoOps.progressInformation)}
-          </p>
-          {type === ClauseType.DATETIME && (
-            <DateTimeOperation
-              rule={rule}
-              isActiveTabSelected={isActiveTabSelected}
-            />
+          <div className="flex justify-between">
+            <p className="font-bold text-lg text-gray-600">
+              {f(messages.autoOps.progressInformation)}
+            </p>
+            {rule.autoOpsStatus === AutoOpsStatus.STOPPED && (
+              <div className="flex items-center text-gray-500 space-x-[6px]">
+                <ClockIcon width={18} className="" />
+                <span>{f(messages.experiment.status.forceStopped)}</span>
+                <RelativeDateText date={new Date(rule.updatedAt * 1000)} />
+              </div>
+            )}
+          </div>
+          {rule.opsType === OpsType.SCHEDULE && (
+            <DateTimeOperation rule={rule} />
           )}
-          {type === ClauseType.EVENT_RATE && (
-            <EventRateOperation
-              rule={rule}
-              opsCounts={opsCounts}
-              isActiveTabSelected={isActiveTabSelected}
-            />
+          {rule.opsType === OpsType.EVENT_RATE && (
+            <EventRateOperation rule={rule} opsCounts={opsCounts} />
           )}
         </div>
       </div>
@@ -879,78 +987,136 @@ const Operation: FC<OperationProps> = memo(
 
 interface DateTimeOperationProps {
   rule: AutoOpsRule.AsObject;
-  isActiveTabSelected: boolean;
 }
 
-const DateTimeOperation = memo(
-  ({ rule, isActiveTabSelected }: DateTimeOperationProps) => {
-    const { value } = rule.clausesList[0].clause;
+const DateTimeOperation = memo(({ rule }: DateTimeOperationProps) => {
+  const { formatMessage: f } = useIntl();
 
-    const datetimeClause = DatetimeClause.deserializeBinary(
-      value as Uint8Array
-    ).toObject();
+  const [page, setPage] = useState(0);
+  const count = Math.ceil(rule.clausesList.length / 10);
 
-    const datetime = dayjs(new Date(datetimeClause.time * 1000)).format(
-      'YYYY/MM/DD HH:mm'
+  const paginatedClausesList = rule.clausesList.slice(
+    page * 10,
+    (page + 1) * 10
+  );
+
+  const _datetimeClause = (value) => {
+    const datetimeClause = getDatetimeClause(value);
+
+    const date = dayjs(new Date(datetimeClause.time * 1000)).format(
+      'YYYY/MM/DD'
     );
+    const time = dayjs(new Date(datetimeClause.time * 1000)).format('HH:mm');
+    return {
+      date,
+      time
+    };
+  };
 
-    const displayTime =
-      rule.createdAt >= rule.updatedAt ? rule.createdAt : rule.updatedAt;
+  const _isSameOrBeforeCurrentDate = (date) => {
+    return dayjs(date).isSameOrBefore(new Date());
+  };
 
-    const displayDatetime = dayjs(new Date(displayTime * 1000)).format(
-      'YYYY/MM/DD HH:mm'
-    );
+  let displayTime;
+  let displayLabel;
+  if (page === 0) {
+    displayTime =
+      rule.updatedAt > rule.createdAt ? rule.updatedAt : rule.createdAt;
+    displayLabel =
+      rule.createdAt === rule.updatedAt
+        ? f(messages.autoOps.created)
+        : f(messages.autoOps.updated);
+  } else {
+    const clause = rule.clausesList[page * 10 - 1];
+    displayTime = getDatetimeClause(clause.clause.value).time;
+    displayLabel = actionTypesOptions.find(
+      (o) => o.value === clause.actionType.toString()
+    ).label;
+  }
 
-    const displayLabel =
-      rule.createdAt === rule.updatedAt ? 'Created' : 'Updated';
+  const handlePageChange = (page) => {
+    setPage(page);
+  };
 
-    return (
-      <div>
-        <div
-          className={classNames(
-            'mt-6 h-2  flex justify-between relative mx-1',
-            isActiveTabSelected ? 'bg-gray-200' : 'bg-pink-500'
-          )}
-        >
-          <div className="w-[14px] h-[14px] absolute top-1/2 -translate-y-1/2 rounded-full -left-1 bg-pink-500 border border-pink-100" />
-          <div
-            className={classNames(
-              'w-[14px] h-[14px] absolute top-1/2 -translate-y-1/2 rounded-full -right-1 bg-gray-300 border',
-              isActiveTabSelected ? 'bg-gray-200' : 'bg-pink-500'
-            )}
-          />
-        </div>
-        <div className="flex justify-between mt-2">
-          {rule.opsType === OpsType.ENABLE_FEATURE && (
-            <>
-              <span>{displayLabel}</span>
-              <span>On</span>
-            </>
-          )}
-          {rule.opsType === OpsType.DISABLE_FEATURE && (
-            <>
-              <span>{displayLabel}</span>
-              <span>Off</span>
-            </>
-          )}
-        </div>
-        <div className="flex justify-between mt-1">
-          <span className="text-xs text-gray-400">{displayDatetime}</span>
-          <span className="text-xs text-gray-400">{datetime}</span>
+  return (
+    <div>
+      <div className="px-12 pb-16 pt-14">
+        <div className="flex relative h-[4px]">
+          <div className="flex items-center">
+            <div
+              className={classNames(
+                'w-[9px] h-[9px] relative rounded-full border',
+                _isSameOrBeforeCurrentDate(new Date(displayTime * 1000))
+                  ? 'bg-pink-500 border-pink-500'
+                  : 'bg-white border-gray-400'
+              )}
+            >
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                {displayLabel}
+              </span>
+              <div className="text-xs text-gray-400 absolute space-y-[2px] left-1/2 -translate-x-1/2 whitespace-nowrap text-center top-[18px]">
+                <p>{dayjs(new Date(displayTime * 1000)).format('HH:mm')}</p>
+                <p>
+                  {dayjs(new Date(displayTime * 1000)).format('YYYY/MM/DD')}
+                </p>
+              </div>
+            </div>
+          </div>
+          {paginatedClausesList.map((clause) => {
+            const time = getDatetimeClause(clause.clause.value).time;
+
+            return (
+              <div
+                key={clause.id}
+                className={classNames(
+                  'flex flex-1 justify-end items-center relative',
+                  _isSameOrBeforeCurrentDate(time * 1000)
+                    ? 'bg-pink-500 border-pink-500'
+                    : 'bg-gray-200'
+                )}
+              >
+                <div
+                  key={clause.id}
+                  className={classNames(
+                    'w-[9px] h-[9px] relative rounded-full border',
+                    _isSameOrBeforeCurrentDate(new Date(time * 1000))
+                      ? 'bg-pink-500 border-pink-500'
+                      : 'bg-white border-gray-400'
+                  )}
+                >
+                  <span className="absolute -top-8 left-1/2 -translate-x-1/2">
+                    {
+                      actionTypesOptions.find(
+                        (o) => o.value === clause.actionType.toString()
+                      ).label
+                    }
+                  </span>
+                  <div className="text-xs text-gray-400 absolute space-y-[2px] left-1/2 -translate-x-1/2 whitespace-nowrap text-center top-[18px]">
+                    <p>{_datetimeClause(clause.clause.value).time}</p>
+                    <p>{_datetimeClause(clause.clause.value).date}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
-    );
-  }
-);
+      <OperationPagination
+        page={page}
+        count={count}
+        onPageChange={handlePageChange}
+      />
+    </div>
+  );
+});
 
 interface EventRateOperationProps {
   rule: AutoOpsRule.AsObject;
   opsCounts: OpsCount.AsObject[];
-  isActiveTabSelected: boolean;
 }
 
 const EventRateOperation = memo(
-  ({ rule, opsCounts, isActiveTabSelected }: EventRateOperationProps) => {
+  ({ rule, opsCounts }: EventRateOperationProps) => {
     const { value } = rule.clausesList[0].clause;
     const { formatMessage: f } = useIntl();
 
@@ -979,9 +1145,7 @@ const EventRateOperation = memo(
       Math.round(step + index * step)
     );
 
-    const barWidth = isActiveTabSelected
-      ? (currentEventRate / (threadsholdRate * 100)) * 100
-      : 100;
+    const barWidth = (currentEventRate / (threadsholdRate * 100)) * 100;
 
     return (
       <div>
@@ -1037,7 +1201,7 @@ const EventRateOperation = memo(
               <div
                 className={classNames(
                   'w-[9px] h-[9px] rounded-full relative',
-                  currentEventRate > 0 || !isActiveTabSelected
+                  currentEventRate > 0
                     ? 'bg-pink-500'
                     : 'border border-gray-400 bg-gray-50'
                 )}
@@ -1048,9 +1212,8 @@ const EventRateOperation = memo(
               </div>
             </div>
             {stepArray.map((percentage) => {
-              const isActive = isActiveTabSelected
-                ? percentage <= currentEventRate && currentEventRate !== 0
-                : true;
+              const isActive =
+                percentage <= currentEventRate && currentEventRate !== 0;
 
               return (
                 <div
@@ -1107,7 +1270,7 @@ const ProgressiveRolloutComponent = memo(
   }: ProgressiveRolloutTemplateScheduleProps) => {
     const { formatMessage: f } = useIntl();
 
-    const [selectedPagination, setSelectedPagination] = useState(0);
+    const [page, setPage] = useState(0);
 
     const getFrequency = (frequency) => {
       if (frequency === 1) {
@@ -1133,22 +1296,22 @@ const ProgressiveRolloutComponent = memo(
       }
       return false;
     };
-    const totalNumberOfPages = Math.ceil(schedulesList.length / 10);
+
+    const handlePageChange = (page) => {
+      setPage(page);
+    };
+
+    const count = Math.ceil(schedulesList.length / 10);
 
     const paginatedScheduleList = schedulesList.slice(
-      selectedPagination * 10,
-      (selectedPagination + 1) * 10
+      page * 10,
+      (page + 1) * 10
     );
 
     const firstSchedule = {
-      weight:
-        selectedPagination === 0
-          ? 0
-          : schedulesList[selectedPagination * 10 - 1].weight / 1000,
+      weight: page === 0 ? 0 : schedulesList[page * 10 - 1].weight / 1000,
       executeAt:
-        selectedPagination === 0
-          ? rule.createdAt
-          : schedulesList[selectedPagination * 10 - 1].executeAt
+        page === 0 ? rule.createdAt : schedulesList[page * 10 - 1].executeAt
     };
 
     return (
@@ -1161,23 +1324,14 @@ const ProgressiveRolloutComponent = memo(
             <div className="py-[2px] px-2 bg-[#FFF7EE] rounded text-[#CE844A] text-sm">
               {f(messages.autoOps.progressiveRollout)}
             </div>
-            {isActiveTabSelected && (
-              <Popover className="relative flex">
-                <Popover.Button>
-                  <div className="pl-2 flex items-center cursor-pointer">
-                    <DotsHorizontalIcon width={20} />
-                  </div>
-                </Popover.Button>
-                <Popover.Panel className="absolute z-10 bg-white right-0 rounded-lg p-1 whitespace-nowrap shadow-md">
-                  <button
-                    onClick={deleteRule}
-                    className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
-                  >
-                    <TrashIcon width={18} className="text-red-500" />
-                    <span className="text-red-500 text-sm">
-                      {f(messages.autoOps.deleteProgressiveRollout)}
-                    </span>
-                  </button>
+            <Popover className="relative flex">
+              <Popover.Button>
+                <div className="pl-2 flex items-center cursor-pointer">
+                  <DotsHorizontalIcon width={20} />
+                </div>
+              </Popover.Button>
+              <Popover.Panel className="absolute z-10 bg-white right-0 rounded-lg p-1 whitespace-nowrap shadow-md">
+                {isActiveTabSelected && (
                   <button
                     onClick={stopRule}
                     className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
@@ -1187,9 +1341,18 @@ const ProgressiveRolloutComponent = memo(
                       {f(messages.autoOps.stopProgressiveRollout)}
                     </span>
                   </button>
-                </Popover.Panel>
-              </Popover>
-            )}
+                )}
+                <button
+                  onClick={deleteRule}
+                  className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
+                >
+                  <TrashIcon width={18} className="text-red-500" />
+                  <span className="text-red-500 text-sm">
+                    {f(messages.autoOps.deleteProgressiveRollout)}
+                  </span>
+                </button>
+              </Popover.Panel>
+            </Popover>
           </div>
         </div>
         <div className="mt-4">
@@ -1284,7 +1447,7 @@ const ProgressiveRolloutComponent = memo(
                       ),
                       stoppedByIcon: (
                         <div className="relative px-[6px]">
-                          <RefreshSvg width={22} />
+                          <RefreshPinkSvg width={22} />
                           <CrossSvg
                             width={12}
                             className="absolute right-[6px] bottom-[3px]"
@@ -1382,136 +1545,13 @@ const ProgressiveRolloutComponent = memo(
               ))}
             </div>
           </div>
-          {totalNumberOfPages > 1 && (
-            <div className="mt-4 flex justify-between items-center">
-              <button
-                className={classNames(
-                  'p-1.5 rounded border',
-                  selectedPagination === 0 && 'opacity-50 cursor-not-allowed'
-                )}
-                disabled={selectedPagination === 0}
-                onClick={() => setSelectedPagination(selectedPagination - 1)}
-              >
-                <ArrowNarrowLeftIcon width={16} className="text-gray-400" />
-              </button>
-              <div className="flex space-x-2">
-                {Array(totalNumberOfPages)
-                  .fill('')
-                  .map((_, i) =>
-                    selectedPagination === i ? (
-                      <div
-                        key={i}
-                        className="w-[24px] h-[8px] rounded-full bg-gray-400"
-                      />
-                    ) : (
-                      <div
-                        key={i}
-                        className="w-[8px] h-[8px] rounded-full bg-gray-200"
-                      />
-                    )
-                  )}
-              </div>
-              <button
-                className={classNames(
-                  'p-1.5 rounded border',
-                  selectedPagination === totalNumberOfPages - 1 &&
-                    'opacity-50 cursor-not-allowed'
-                )}
-                disabled={selectedPagination === totalNumberOfPages - 1}
-                onClick={() => setSelectedPagination(selectedPagination + 1)}
-              >
-                <ArrowNarrowRightIcon width={16} className="text-gray-400" />
-              </button>
-            </div>
-          )}
+          <OperationPagination
+            page={page}
+            count={count}
+            onPageChange={handlePageChange}
+          />
         </div>
       </div>
     );
   }
 );
-
-export const opsTypeOptions = [
-  {
-    value: OpsType.ENABLE_FEATURE.toString(),
-    label: intl.formatMessage(messages.autoOps.enableFeatureType)
-  },
-  {
-    value: OpsType.DISABLE_FEATURE.toString(),
-    label: intl.formatMessage(messages.autoOps.disableFeatureType)
-  }
-];
-
-export const createInitialAutoOpsRule = (feature: Feature.AsObject) => {
-  return {
-    id: uuid(),
-    featureId: feature.id,
-    triggeredAt: 0,
-    opsType: opsTypeOptions[0].value,
-    clauses: [createInitialClause(feature)]
-  };
-};
-
-export const createInitialOpsEventRateClause = (feature: Feature.AsObject) => {
-  return {
-    variation: feature.variationsList[0].id,
-    goal: null,
-    minCount: 50,
-    threadsholdRate: 50,
-    operator: operatorOptions[0].value
-  };
-};
-
-export const createInitialDatetimeClause = () => {
-  return {
-    time: dayjs().add(1, 'hour').toDate()
-  };
-};
-
-export const createInitialClause = (feature: Feature.AsObject) => {
-  return {
-    id: uuid(),
-    clauseType: ClauseType.DATETIME.toString(),
-    datetimeClause: createInitialDatetimeClause(),
-    opsEventRateClause: createInitialOpsEventRateClause(feature)
-  };
-};
-
-export const clauseTypeOptionEventRate = {
-  value: ClauseType.EVENT_RATE.toString(),
-  label: intl.formatMessage(messages.autoOps.eventRateClauseType)
-};
-
-export const clauseTypeOptionDatetime = {
-  value: ClauseType.DATETIME.toString(),
-  label: intl.formatMessage(messages.autoOps.datetimeClauseType)
-};
-
-export const clauseTypeOptions = [
-  clauseTypeOptionEventRate,
-  clauseTypeOptionDatetime
-];
-
-export const createClauseTypeOption = (
-  clauseType: ClauseTypeMap[keyof ClauseTypeMap]
-) => {
-  return clauseTypeOptions.find(
-    (option) => clauseType.toString() == option.value
-  );
-};
-
-export const operatorOptions = [
-  {
-    value: OpsEventRateClause.Operator.GREATER_OR_EQUAL.toString(),
-    label: intl.formatMessage(messages.feature.clause.operator.greaterOrEqual)
-  },
-  {
-    value: OpsEventRateClause.Operator.LESS_OR_EQUAL.toString(),
-    label: intl.formatMessage(messages.feature.clause.operator.lessOrEqual)
-  }
-];
-
-export const createOperatorOption = (
-  operator: OpsEventRateClause.OperatorMap[keyof OpsEventRateClause.OperatorMap]
-) => {
-  return operatorOptions.find((option) => option.value === operator.toString());
-};

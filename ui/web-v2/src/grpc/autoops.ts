@@ -11,7 +11,9 @@ import {
   ListOpsCountsRequest,
   ListOpsCountsResponse,
   UpdateAutoOpsRuleRequest,
-  UpdateAutoOpsRuleResponse
+  UpdateAutoOpsRuleResponse,
+  StopAutoOpsRuleRequest,
+  StopAutoOpsRuleResponse
 } from '../proto/autoops/service_pb';
 import {
   AutoOpsServiceClient,
@@ -155,6 +157,37 @@ export function deleteAutoOpsRule(
   return new Promise(
     (resolve: (result: DeleteAutoOpsRuleResult) => void, reject): void => {
       client.deleteAutoOpsRule(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new AutoOpsServiceError(
+                extractErrorMessage(error),
+                request,
+                error
+              )
+            );
+          } else {
+            resolve({ request, response });
+          }
+        }
+      );
+    }
+  );
+}
+
+export interface StopAutoOpsRuleResult {
+  request: StopAutoOpsRuleRequest;
+  response: StopAutoOpsRuleResponse;
+}
+
+export function stopAutoOpsRule(
+  request: StopAutoOpsRuleRequest
+): Promise<StopAutoOpsRuleResult> {
+  return new Promise(
+    (resolve: (result: StopAutoOpsRuleResult) => void, reject): void => {
+      client.stopAutoOpsRule(
         request,
         getMetaData(),
         (error, response): void => {

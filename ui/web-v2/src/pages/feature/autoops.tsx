@@ -5,22 +5,21 @@ import { SerializedError } from '@reduxjs/toolkit';
 import React, { FC, memo, useCallback, useEffect } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
-
 import { DetailSkeleton } from '../../components/DetailSkeleton';
-import {
-  ClauseType,
-  createInitialDatetimeClause,
-  createInitialOpsEventRateClause,
-  FeatureAutoOpsRulesForm
-} from '../../components/FeatureAutoOpsRulesForm';
+import { FeatureAutoOpsRulesForm } from '../../components/FeatureAutoOpsRulesForm';
 import { AppState } from '../../modules';
 import { listAutoOpsRules } from '../../modules/autoOpsRules';
 import { selectById as selectFeatureById } from '../../modules/features';
 import { useCurrentEnvironment } from '../../modules/me';
 import { OpsType } from '../../proto/autoops/auto_ops_rule_pb';
+import { ProgressiveRollout } from '../../proto/autoops/progressive_rollout_pb';
 import { AppDispatch } from '../../store';
-
+import dayjs from 'dayjs';
 import { operationFormSchema } from './formSchema';
+import { v4 as uuid } from 'uuid';
+import { ActionType, OpsEventRateClause } from '../../proto/autoops/clause_pb';
+import { intl } from '../../lang';
+import { messages } from '../../lang/messages';
 
 interface FeatureAutoOpsPageProps {
   featureId: string;
@@ -43,10 +42,10 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
     ]);
 
     const defaultValues = {
-      opsType: OpsType.ENABLE_FEATURE,
-      clauseType: ClauseType.DATETIME,
-      datetime: createInitialDatetimeClause(),
+      opsType: OpsType.SCHEDULE,
+      datetimeClausesList: createInitialDatetimeClausesList(),
       eventRate: createInitialOpsEventRateClause(feature),
+      progressiveRolloutType: ProgressiveRollout.Type.TEMPLATE_SCHEDULE,
       progressiveRollout: {
         template: {
           datetime: createInitialDatetimeClause(),
@@ -126,3 +125,40 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
     );
   }
 );
+
+const createInitialOpsEventRateClause = (feature: Feature.AsObject) => {
+  return {
+    variation: feature.variationsList[0].id,
+    goal: null,
+    minCount: 50,
+    threadsholdRate: 50,
+    operator: operatorOptions[0].value
+  };
+};
+
+const createInitialDatetimeClause = () => {
+  return {
+    time: dayjs().add(1, 'hour').toDate()
+  };
+};
+
+const createInitialDatetimeClausesList = () => {
+  return [
+    {
+      id: uuid(),
+      actionType: ActionType.ENABLE,
+      time: dayjs().add(1, 'hour').toDate()
+    }
+  ];
+};
+
+export const operatorOptions = [
+  {
+    value: OpsEventRateClause.Operator.GREATER_OR_EQUAL.toString(),
+    label: intl.formatMessage(messages.feature.clause.operator.greaterOrEqual)
+  },
+  {
+    value: OpsEventRateClause.Operator.LESS_OR_EQUAL.toString(),
+    label: intl.formatMessage(messages.feature.clause.operator.lessOrEqual)
+  }
+];

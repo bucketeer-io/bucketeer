@@ -26,7 +26,7 @@ import { ListGoalsRequest } from '../../proto/experiment/service_pb';
 import { Feature } from '../../proto/feature/feature_pb';
 import { ListFeaturesRequest } from '../../proto/feature/service_pb';
 import { AppDispatch } from '../../store';
-import { isProgressiveRolloutsRunningWaiting } from '../AddProgressiveRolloutOperation';
+import { isProgressiveRolloutsRunningWaiting } from '../ProgressiveRolloutAddForm';
 import { DatetimePicker } from '../DatetimePicker';
 import { DetailSkeleton } from '../DetailSkeleton';
 import { Option, Select } from '../Select';

@@ -14,13 +14,15 @@ import {
   ChangeOpsEventRateClauseCommand,
   CreateAutoOpsRuleCommand,
   DeleteAutoOpsRuleCommand,
-  DeleteClauseCommand
+  DeleteClauseCommand,
+  StopAutoOpsRuleCommand
 } from '../proto/autoops/command_pb';
 import {
   CreateAutoOpsRuleRequest,
   DeleteAutoOpsRuleRequest,
   ListAutoOpsRulesRequest,
   ListAutoOpsRulesResponse,
+  StopAutoOpsRuleRequest,
   UpdateAutoOpsRuleRequest
 } from '../proto/autoops/service_pb';
 
@@ -127,6 +129,24 @@ export const deleteAutoOpsRule = createAsyncThunk<
   await autoOpsGrpc.deleteAutoOpsRule(request);
 });
 
+export interface StopAutoOpsRuleParams {
+  environmentNamespace: string;
+  id: string;
+}
+
+export const stopAutoOpsRule = createAsyncThunk<
+  void,
+  StopAutoOpsRuleParams | undefined,
+  { state: AppState }
+>(`${MODULE_NAME}/stop`, async (params) => {
+  const request = new StopAutoOpsRuleRequest();
+  request.setId(params.id);
+  request.setEnvironmentNamespace(params.environmentNamespace);
+  const command = new StopAutoOpsRuleCommand();
+  request.setCommand(command);
+  await autoOpsGrpc.stopAutoOpsRule(request);
+});
+
 const initialState = autoOpsRulesAdapter.getInitialState<{
   loading: boolean;
 }>({
@@ -168,6 +188,15 @@ export const autoOpsRulesSlice = createSlice({
         state.loading = false;
       })
       .addCase(updateAutoOpsRule.rejected, (state) => {
+        state.loading = false;
+      })
+      .addCase(stopAutoOpsRule.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(stopAutoOpsRule.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(stopAutoOpsRule.rejected, (state) => {
         state.loading = false;
       });
   }

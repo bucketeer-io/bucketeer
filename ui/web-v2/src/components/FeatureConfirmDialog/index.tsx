@@ -40,7 +40,7 @@ import { FEATURE_UPDATE_COMMENT_MAX_LENGTH } from '../../constants/feature';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
 import { classNames } from '../../utils/css';
-import { isProgressiveRolloutsRunningWaiting } from '../AddProgressiveRolloutOperation';
+import { isProgressiveRolloutsRunningWaiting } from '../ProgressiveRolloutAddForm';
 import { CheckBox } from '../CheckBox';
 import { getFlagStatus, FlagStatus } from '../FeatureList';
 import { Modal } from '../Modal';

@@ -369,41 +369,83 @@ export const messages = {
       id: 'autoOps.deleteSchedule',
       defaultMessage: 'Delete Schedule'
     }),
-    deleteScheduleDescription: defineMessage({
-      id: 'trigger.deleteScheduleDescription',
-      defaultMessage: 'The schedule will be deleted permanently.'
-    }),
     deleteKillSwitch: defineMessage({
       id: 'autoOps.deleteKillSwitch',
       defaultMessage: 'Delete Kill Switch'
-    }),
-    deleteKillSwitchDescription: defineMessage({
-      id: 'trigger.deleteKillSwitchDescription',
-      defaultMessage: 'The kill switch will be deleted permanently.'
     }),
     deleteProgressiveRollout: defineMessage({
       id: 'autoOps.deleteProgressiveRollout',
       defaultMessage: 'Delete Progressive Rollout'
     }),
-    deleteProgressiveRolloutDescription: defineMessage({
-      id: 'trigger.deleteProgressiveRolloutDescription',
-      defaultMessage: 'The progressive rollout will be deleted permanently.'
+    stopSchedule: defineMessage({
+      id: 'autoOps.stopSchedule',
+      defaultMessage: 'Stop Schedule'
+    }),
+    stopKillSwitch: defineMessage({
+      id: 'autoOps.stopKillSwitch',
+      defaultMessage: 'Stop Kill Switch'
     }),
     stopProgressiveRollout: defineMessage({
       id: 'autoOps.stopProgressiveRollout',
       defaultMessage: 'Stop Progressive Rollout'
     }),
-    stopProgressiveRolloutDescription: defineMessage({
-      id: 'trigger.stopProgressiveRolloutDescription',
-      defaultMessage: 'The progressive rollout will be stopped.'
+    dialog: {
+      deleteScheduleTitle: defineMessage({
+        id: 'autoOps.dialog.deleteScheduleTitle',
+        defaultMessage: 'Delete Schedule'
+      }),
+      deleteScheduleDescription: defineMessage({
+        id: 'autoOps.dialog.deleteScheduleDescription',
+        defaultMessage: 'The schedule will be deleted permanently.'
+      }),
+      deleteKillSwitchTitle: defineMessage({
+        id: 'autoOps.dialog.deleteKillSwitchTitle',
+        defaultMessage: 'Delete Kill Switch'
+      }),
+      deleteKillSwitchDescription: defineMessage({
+        id: 'autoOps.dialog.deleteKillSwitchDescription',
+        defaultMessage: 'The kill switch will be deleted permanently.'
+      }),
+      deleteProgressiveRolloutTitle: defineMessage({
+        id: 'autoOps.dialog.deleteProgressiveRolloutTitle',
+        defaultMessage: 'Delete Progressive Rollout'
+      }),
+      deleteProgressiveRolloutDescription: defineMessage({
+        id: 'autoOps.dialog.deleteProgressiveRolloutDescription',
+        defaultMessage: 'The progressive rollout will be deleted permanently.'
+      }),
+      stopScheduleTitle: defineMessage({
+        id: 'autoOps.dialog.stopScheduleTitle',
+        defaultMessage: 'Stop Schedule'
+      }),
+      stopScheduleDescription: defineMessage({
+        id: 'autoOps.dialog.stopScheduleDescription',
+        defaultMessage: 'The schedule will be stopped.'
+      }),
+      stopKillSwitchTitle: defineMessage({
+        id: 'autoOps.dialog.stopKillSwitchTitle',
+        defaultMessage: 'Stop Kill Switch'
+      }),
+      stopKillSwitchDescription: defineMessage({
+        id: 'autoOps.dialog.stopKillSwitchDescription',
+        defaultMessage: 'The kill switch will be stopped.'
+      }),
+      stopProgressiveRolloutTitle: defineMessage({
+        id: 'autoOps.dialog.stopProgressiveRolloutTitle',
+        defaultMessage: 'Stop Progressive Rollout'
+      }),
+      stopProgressiveRolloutDescription: defineMessage({
+        id: 'autoOps.dialog.stopProgressiveRolloutDescription',
+        defaultMessage: 'The progressive rollout will be stopped.'
+      })
+    },
+    createOperation: defineMessage({
+      id: 'autoOps.createOperation',
+      defaultMessage: 'Create Operation'
     }),
-    createAnOperation: defineMessage({
-      id: 'autoOps.createAnOperation',
-      defaultMessage: 'Create An Operation'
-    }),
-    updateAnOperation: defineMessage({
-      id: 'autoOps.updateAnOperation',
-      defaultMessage: 'Update An Operation'
+    updateOperation: defineMessage({
+      id: 'autoOps.updateOperation',
+      defaultMessage: 'Update Operation'
     }),
     minimumGoalCount: defineMessage({
       id: 'autoOps.minimumGoalCount',
@@ -489,6 +531,11 @@ export const messages = {
       id: 'autoOps.dateIncreasingOrder',
       defaultMessage: 'The date must be in increasing order.'
     }),
+    duplicateDates: defineMessage({
+      id: 'autoOps.duplicateDates',
+      defaultMessage:
+        'You cannot have multiple schedules at the same date and time.'
+    }),
     timeInterval5MinutesApart: defineMessage({
       id: 'autoOps.timeInterval5MinutesApart',
       defaultMessage:
@@ -521,6 +568,10 @@ export const messages = {
       moreInformation: defineMessage({
         id: 'progressiveRolloutWarningMessages.moreInformation',
         defaultMessage: 'For more information, please see the {link}.'
+      }),
+      enableFlagWhenStarts: defineMessage({
+        id: 'progressiveRolloutWarningMessages.enableFlagWhenStarts',
+        defaultMessage: 'It will enable the flag when it starts.'
       })
     },
     stoppedByUser: defineMessage({
@@ -537,6 +588,38 @@ export const messages = {
       id: 'autoOps.stoppedBySchedule',
       defaultMessage:
         '{clockIcon} Stopped {relativeDate} by {stoppedByIcon} Schedule'
+    }),
+    created: defineMessage({
+      id: 'autoOps.created',
+      defaultMessage: 'Created'
+    }),
+    updated: defineMessage({
+      id: 'autoOps.updated',
+      defaultMessage: 'Updated'
+    }),
+    scheduleOperation: defineMessage({
+      id: 'autoOps.scheduleOperation',
+      defaultMessage: 'Schedule Operation'
+    }),
+    eventRateOperation: defineMessage({
+      id: 'autoOps.eventRateOperation',
+      defaultMessage: 'Event Rate Operation'
+    }),
+    progressiveRolloutOperation: defineMessage({
+      id: 'autoOps.progressiveRolloutOperation',
+      defaultMessage: 'Progressive Rollout Operation'
+    }),
+    currentFlagState: defineMessage({
+      id: 'autoOps.currentFlagState',
+      defaultMessage: 'Current Flag State'
+    }),
+    state: defineMessage({
+      id: 'autoOps.state',
+      defaultMessage: 'State'
+    }),
+    newOperation: defineMessage({
+      id: 'autoOps.newOperation',
+      defaultMessage: 'New Operation'
     })
   },
   trigger: {
@@ -713,6 +796,10 @@ export const messages = {
     id: 'description',
     defaultMessage: 'Description'
   }),
+  generalInformation: defineMessage({
+    id: 'generalInformation',
+    defaultMessage: 'General Information'
+  }),
   yes: defineMessage({
     id: 'yes',
     defaultMessage: 'Yes'
@@ -829,6 +916,10 @@ export const messages = {
     schedule: defineMessage({
       id: 'button.schedule',
       defaultMessage: 'Schedule'
+    }),
+    addSchedule: defineMessage({
+      id: 'button.addSchedule',
+      defaultMessage: 'Add Schedule'
     })
   },
   account: {
@@ -1262,7 +1353,23 @@ export const messages = {
         id: 'goal.status.notInUse',
         defaultMessage: 'not in use'
       })
-    }
+    },
+    addNewGoal: defineMessage({
+      id: 'goal.addNewGoal',
+      defaultMessage: 'Add New Goal'
+    }),
+    newGoal: defineMessage({
+      id: 'goal.newGoal',
+      defaultMessage: 'New Goal'
+    }),
+    goalId: defineMessage({
+      id: 'goal.goalId',
+      defaultMessage: 'Goal ID'
+    }),
+    createGoal: defineMessage({
+      id: 'goal.createGoal',
+      defaultMessage: 'Create Goal'
+    })
   },
   experiment: {
     action: {
@@ -1759,7 +1866,7 @@ export const messages = {
     }),
     variation: defineMessage({
       id: 'feature.variation',
-      defaultMessage: 'variation'
+      defaultMessage: 'Variation'
     }),
     defaultStrategy: defineMessage({
       id: 'feature.defaultStrategy',

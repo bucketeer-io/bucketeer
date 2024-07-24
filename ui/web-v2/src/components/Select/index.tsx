@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { FC, forwardRef } from 'react';
 import ReactSelect, { Styles } from 'react-select';
 
 export interface Option {
@@ -23,23 +23,26 @@ export interface SelectProps {
   closeMenuOnSelect?: boolean;
 }
 
-export const Select: FC<SelectProps> = memo(
-  ({
-    disabled,
-    className,
-    clearable,
-    isLoading,
-    isMulti,
-    isSearchable,
-    onChange,
-    options,
-    value,
-    placeholder,
-    customControl,
-    formatOptionLabel,
-    styles,
-    closeMenuOnSelect
-  }) => {
+export const Select: FC<SelectProps> = forwardRef(
+  (
+    {
+      disabled,
+      className,
+      clearable,
+      isLoading,
+      isMulti,
+      isSearchable,
+      onChange,
+      options,
+      value,
+      placeholder,
+      customControl,
+      formatOptionLabel,
+      styles,
+      closeMenuOnSelect
+    },
+    ref
+  ) => {
     const textColor = '#3F3F46';
     const textColorDisabled = '#6B7280';
     const backgroundColor = 'white';
@@ -100,6 +103,7 @@ export const Select: FC<SelectProps> = memo(
     if (customControl) {
       return (
         <ReactSelect
+          ref={ref}
           options={options}
           className={className}
           classNamePrefix="react-select"
@@ -122,6 +126,7 @@ export const Select: FC<SelectProps> = memo(
 
     return (
       <ReactSelect
+        ref={ref}
         options={options}
         className={className}
         classNamePrefix="react-select"

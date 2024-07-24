@@ -3,21 +3,21 @@ import { FC } from 'react';
 import { useIntl } from 'react-intl';
 
 import { messages } from '../../lang/messages';
-import { OperationType, SelectedOperation } from '../FeatureAutoOpsRulesForm';
 import { Modal } from '../Modal';
+import { OperationType, SelectedOperation } from '../FeatureAutoOpsRulesForm';
 
-interface AutoOpsDeleteDialogProps {
+interface AutoOpsStopDialogProps {
+  selectedOperation: SelectedOperation;
   open: boolean;
   onConfirm: () => void;
   onClose: () => void;
-  selectedOperation: SelectedOperation;
 }
 
-export const AutoOpsDeleteDialog: FC<AutoOpsDeleteDialogProps> = ({
+export const AutoOpsStopDialog: FC<AutoOpsStopDialogProps> = ({
+  selectedOperation,
   open,
   onConfirm,
-  onClose,
-  selectedOperation
+  onClose
 }) => {
   const { formatMessage: f } = useIntl();
 
@@ -28,20 +28,20 @@ export const AutoOpsDeleteDialog: FC<AutoOpsDeleteDialogProps> = ({
         className="text-lg font-medium leading-6 text-gray-700"
       >
         {selectedOperation.type === OperationType.SCHEDULE &&
-          f(messages.autoOps.dialog.deleteScheduleTitle)}
+          f(messages.autoOps.dialog.stopScheduleTitle)}
         {selectedOperation.type === OperationType.EVENT_RATE &&
-          f(messages.autoOps.dialog.deleteKillSwitchTitle)}
+          f(messages.autoOps.dialog.stopKillSwitchTitle)}
         {selectedOperation.type === OperationType.PROGRESSIVE_ROLLOUT &&
-          f(messages.autoOps.dialog.deleteProgressiveRolloutTitle)}
+          f(messages.autoOps.dialog.stopProgressiveRolloutTitle)}
       </Dialog.Title>
       <div className="mt-2">
         <p className="text-sm text-red-500">
           {selectedOperation.type === OperationType.SCHEDULE &&
-            f(messages.autoOps.dialog.deleteScheduleDescription)}
+            f(messages.autoOps.dialog.stopScheduleDescription)}
           {selectedOperation.type === OperationType.EVENT_RATE &&
-            f(messages.autoOps.dialog.deleteKillSwitchDescription)}
+            f(messages.autoOps.dialog.stopKillSwitchDescription)}
           {selectedOperation.type === OperationType.PROGRESSIVE_ROLLOUT &&
-            f(messages.autoOps.dialog.deleteProgressiveRolloutDescription)}
+            f(messages.autoOps.dialog.stopProgressiveRolloutDescription)}
         </p>
       </div>
       <div className="pt-5">
@@ -55,7 +55,7 @@ export const AutoOpsDeleteDialog: FC<AutoOpsDeleteDialogProps> = ({
             {f(messages.button.cancel)}
           </button>
           <button type="button" className="btn-submit" onClick={onConfirm}>
-            {f(messages.button.delete)}
+            {f(messages.button.stop)}
           </button>
         </div>
       </div>
