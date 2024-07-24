@@ -393,24 +393,36 @@ export const messages = {
       id: 'autoOps.stopSchedule',
       defaultMessage: 'Stop Schedule'
     }),
-    stopScheduleDescription: defineMessage({
-      id: 'autoOps.stopScheduleDescription',
+    stopScheduleDialogTitle: defineMessage({
+      id: 'autoOps.stopScheduleDialogTitle',
+      defaultMessage: 'Stop Schedule'
+    }),
+    stopScheduleDialogDescription: defineMessage({
+      id: 'autoOps.stopScheduleDialogDescription',
       defaultMessage: 'The schedule will be stopped.'
     }),
     stopKillSwitch: defineMessage({
       id: 'autoOps.stopKillSwitch',
       defaultMessage: 'Stop Kill Switch'
     }),
-    stopKillSwitchDescription: defineMessage({
-      id: 'autoOps.stopKillSwitchDescription',
+    stopKillSwitchDialogTitle: defineMessage({
+      id: 'autoOps.stopKillSwitchDialogTitle',
+      defaultMessage: 'Stop Kill Switch'
+    }),
+    stopKillSwitchDialogDescription: defineMessage({
+      id: 'autoOps.stopKillSwitchDialogDescription',
       defaultMessage: 'The kill switch will be stopped.'
     }),
     stopProgressiveRollout: defineMessage({
       id: 'autoOps.stopProgressiveRollout',
       defaultMessage: 'Stop Progressive Rollout'
     }),
-    stopProgressiveRolloutDescription: defineMessage({
-      id: 'trigger.stopProgressiveRolloutDescription',
+    stopProgressiveRolloutDialogTitle: defineMessage({
+      id: 'autoOps.stopProgressiveRolloutDialogTitle',
+      defaultMessage: 'Stop Progressive Rollout'
+    }),
+    stopProgressiveRolloutDialogDescription: defineMessage({
+      id: 'autoOps.stopProgressiveRolloutDialogDescription',
       defaultMessage: 'The progressive rollout will be stopped.'
     }),
     createOperation: defineMessage({
