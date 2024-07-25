@@ -395,8 +395,7 @@ func (s *AutoOpsService) validateOpsEventRateClause(
 		}
 		return dt.Err()
 	}
-	// ToDo: After the web console supports ActionType, it returns an error when ActionType_UNKNOWN
-	if clause.ActionType == autoopsproto.ActionType_ENABLE {
+	if clause.ActionType == autoopsproto.ActionType_UNKNOWN || clause.ActionType == autoopsproto.ActionType_ENABLE {
 		dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "action_type"),
@@ -432,7 +431,16 @@ func (s *AutoOpsService) validateDatetimeClause(clause *autoopsproto.DatetimeCla
 		}
 		return dt.Err()
 	}
-	// ToDo: After the web console supports ActionType, it returns an error when ActionType_UNKNOWN
+	if clause.ActionType == autoopsproto.ActionType_UNKNOWN {
+		dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "action_type"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
 	return nil
 }
 
