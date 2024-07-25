@@ -30,25 +30,21 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/experimentcalc"
 	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/stan"
-	"github.com/bucketeer-io/bucketeer/pkg/lock"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
-	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/proto/environment"
 	"github.com/bucketeer-io/bucketeer/proto/experiment"
 )
 
 const (
-	day        = 24 * 60 * 60
-	lockTTL    = time.Minute
-	lockPrefix = "experiment-calculate:"
+	day = 24 * 60 * 60
 )
 
 type experimentCalculate struct {
 	environmentClient environmentclient.Client
 	experimentClient  experimentclient.Client
 	calculator        *experimentcalc.ExperimentCalculator
-	redisClient       redisv3.Client
+	experimentLock    *ExperimentLock
 	location          *time.Location
 	opts              *jobs.Options
 	logger            *zap.Logger
@@ -60,7 +56,7 @@ func NewExperimentCalculate(
 	experimentClient experimentclient.Client,
 	ecClient ecclient.Client,
 	mysqlClient mysql.Client,
-	redisClient redisv3.Client,
+	experimentLock *ExperimentLock,
 	location *time.Location,
 	opts ...jobs.Option,
 ) jobs.Job {
@@ -85,10 +81,10 @@ func NewExperimentCalculate(
 		environmentClient: environmentClient,
 		experimentClient:  experimentClient,
 		calculator:        calculator,
+		experimentLock:    experimentLock,
 		location:          location,
 		opts:              dopts,
 		logger:            dopts.Logger.Named("experiment-calculate"),
-		redisClient:       redisClient,
 	}
 }
 
@@ -147,10 +143,7 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 	env *environment.EnvironmentV2,
 	experiment *experiment.Experiment,
 ) error {
-	lockKey := fmt.Sprintf("%s%s:%s", lockPrefix, env.Id, experiment.Id)
-	dl := lock.NewDistributedLock(e.redisClient, lockKey, lockTTL)
-
-	locked, err := dl.Lock(ctx)
+	locked, lockValue, err := e.experimentLock.Lock(ctx, env.Id, experiment.Id)
 	if err != nil {
 		return fmt.Errorf("failed to acquire lock: %w", err)
 	}
@@ -163,7 +156,7 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 	}
 
 	defer func() {
-		unlocked, unlockErr := dl.Unlock(ctx)
+		unlocked, unlockErr := e.experimentLock.Unlock(ctx, env.Id, experiment.Id, lockValue)
 		if unlockErr != nil {
 			e.logger.Error("Failed to release lock",
 				zap.Error(unlockErr),

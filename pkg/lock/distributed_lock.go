@@ -36,29 +36,27 @@ const (
 // DistributedLock represents a distributed lock
 type DistributedLock struct {
 	client     redisv3.Client
-	key        string
-	value      string
 	expiration time.Duration
 }
 
 // NewDistributedLock creates a new DistributedLock
-func NewDistributedLock(client redisv3.Client, key string, expiration time.Duration) *DistributedLock {
+func NewDistributedLock(client redisv3.Client, expiration time.Duration) *DistributedLock {
 	return &DistributedLock{
 		client:     client,
-		key:        key,
-		value:      uuid.New().String(),
 		expiration: expiration,
 	}
 }
 
 // Lock attempts to acquire the lock
-func (dl *DistributedLock) Lock(ctx context.Context) (bool, error) {
-	return dl.client.SetNX(ctx, dl.key, dl.value, dl.expiration)
+func (dl *DistributedLock) Lock(ctx context.Context, key string) (bool, string, error) {
+	value := uuid.New().String()
+	locked, err := dl.client.SetNX(ctx, key, value, dl.expiration)
+	return locked, value, err
 }
 
 // Unlock releases the lock
-func (dl *DistributedLock) Unlock(ctx context.Context) (bool, error) {
-	cmd := dl.client.Eval(ctx, unlockScript, []string{dl.key}, dl.value)
+func (dl *DistributedLock) Unlock(ctx context.Context, key string, value string) (bool, error) {
+	cmd := dl.client.Eval(ctx, unlockScript, []string{key}, value)
 	res, err := cmd.Int()
 	if err != nil {
 		return false, err
