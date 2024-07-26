@@ -39,17 +39,17 @@ func (m *MockAutoOpsRuleStorage) EXPECT() *MockAutoOpsRuleStorageMockRecorder {
 	return m.recorder
 }
 
-// CountNotTriggeredAutoOpsRules mocks base method.
-func (m *MockAutoOpsRuleStorage) CountNotTriggeredAutoOpsRules(ctx context.Context) (int, error) {
+// CountOpsEventRate mocks base method.
+func (m *MockAutoOpsRuleStorage) CountOpsEventRate(ctx context.Context) (int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CountNotTriggeredAutoOpsRules", ctx)
+	ret := m.ctrl.Call(m, "CountOpsEventRate", ctx)
 	ret0, _ := ret[0].(int)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CountNotTriggeredAutoOpsRules indicates an expected call of CountNotTriggeredAutoOpsRules.
-func (mr *MockAutoOpsRuleStorageMockRecorder) CountNotTriggeredAutoOpsRules(ctx any) *gomock.Call {
+// CountOpsEventRate indicates an expected call of CountOpsEventRate.
+func (mr *MockAutoOpsRuleStorageMockRecorder) CountOpsEventRate(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountNotTriggeredAutoOpsRules", reflect.TypeOf((*MockAutoOpsRuleStorage)(nil).CountNotTriggeredAutoOpsRules), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountOpsEventRate", reflect.TypeOf((*MockAutoOpsRuleStorage)(nil).CountOpsEventRate), ctx)
 }

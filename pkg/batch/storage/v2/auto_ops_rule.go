@@ -28,7 +28,7 @@ var (
 )
 
 type AutoOpsRuleStorage interface {
-	CountNotTriggeredAutoOpsRules(ctx context.Context) (int, error)
+	CountOpsEventRate(ctx context.Context) (int, error)
 }
 
 type autoOpsRuleStorage struct {
@@ -39,7 +39,7 @@ func NewAutoOpsRuleStorage(qe mysql.QueryExecer) AutoOpsRuleStorage {
 	return &autoOpsRuleStorage{qe: qe}
 }
 
-func (s autoOpsRuleStorage) CountNotTriggeredAutoOpsRules(ctx context.Context) (int, error) {
+func (s autoOpsRuleStorage) CountOpsEventRate(ctx context.Context) (int, error) {
 	var count int
 	err := s.qe.QueryRowContext(ctx, countAutoOpsRulesSql).Scan(&count)
 	if err != nil {
