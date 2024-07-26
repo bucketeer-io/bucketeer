@@ -725,12 +725,14 @@ func createOpsEventRateClause(t *testing.T, variationID, goalID string) *autoops
 		MinCount:        int64(5),
 		ThreadsholdRate: float64(0.5),
 		Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+		ActionType:      autoopsproto.ActionType_DISABLE,
 	}
 }
 
 func createDatetimeClause(t *testing.T) *autoopsproto.DatetimeClause {
 	return &autoopsproto.DatetimeClause{
-		Time: time.Now().Add(5 * time.Second).Unix(),
+		Time:       time.Now().Add(5 * time.Second).Unix(),
+		ActionType: autoopsproto.ActionType_DISABLE,
 	}
 }
 
