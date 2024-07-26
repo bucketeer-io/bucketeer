@@ -4,6 +4,7 @@
   "license": "MIT",
   "scripts": {
     "build": "webpack --mode production --config ./webpack.config.js",
+    "postbuild": "touch ./dist/DONT-EDIT-FILES-IN-THIS-DIRECTORY",
     "start": "TAILWIND_MODE=watch webpack-cli serve --mode development --config webpack.dev.js",
     "lint": "yarn tsc:strict && yarn eslint && yarn prettier",
     "lintfix": "yarn eslintfix && yarn prettierfix",
