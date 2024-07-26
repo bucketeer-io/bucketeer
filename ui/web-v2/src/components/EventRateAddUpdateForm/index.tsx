@@ -29,7 +29,7 @@ import { classNames } from '../../utils/css';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { addFormSchema } from '../../pages/goal/formSchema';
 import { Dialog, Transition } from '@headlessui/react';
-import { OpsEventRateClause } from '../../proto/autoops/clause_pb';
+import { OpsEventRateClause, ActionType } from '../../proto/autoops/clause_pb';
 import ReactSelect, { components } from 'react-select';
 import {
   CreateAutoOpsRuleCommand,
@@ -702,6 +702,7 @@ export function createOpsEventRateClause(
   clause.setMinCount(oerc.minCount);
   clause.setThreadsholdRate(oerc.threadsholdRate / 100);
   clause.setOperator(createOpsEventRateOperator(oerc.operator));
+  clause.setActionType(ActionType.DISABLE);
   return clause;
 }
 

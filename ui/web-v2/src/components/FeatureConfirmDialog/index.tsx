@@ -16,7 +16,7 @@ import {
 } from '../../modules/porgressiveRollout';
 import { addToast } from '../../modules/toasts';
 import { OpsType } from '../../proto/autoops/auto_ops_rule_pb';
-import { DatetimeClause } from '../../proto/autoops/clause_pb';
+import { ActionType, DatetimeClause } from '../../proto/autoops/clause_pb';
 import { CreateAutoOpsRuleCommand } from '../../proto/autoops/command_pb';
 import { ProgressiveRollout } from '../../proto/autoops/progressive_rollout_pb';
 import { Feature } from '../../proto/feature/feature_pb';
@@ -205,12 +205,13 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   const handleScheduleSubmit = () => {
     const command = new CreateAutoOpsRuleCommand();
     command.setFeatureId(featureId);
-    if (isEnabled) {
-      command.setOpsType(OpsType.DISABLE_FEATURE);
-    } else {
-      command.setOpsType(OpsType.ENABLE_FEATURE);
-    }
     const clause = new DatetimeClause();
+    command.setOpsType(OpsType.SCHEDULE);
+    if (isEnabled) {
+      clause.setActionType(ActionType.DISABLE);
+    } else {
+      clause.setActionType(ActionType.ENABLE);
+    }
     clause.setTime(Math.round(datetime.getTime() / 1000));
     command.setDatetimeClausesList([clause]);
     dispatch(
