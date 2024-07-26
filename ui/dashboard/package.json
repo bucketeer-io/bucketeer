@@ -11,7 +11,7 @@
     "style:lint": "tsc && eslint '**/src/**/*.{js,jsx,ts,tsx}' --fix",
     "style:prettier": "prettier --check '**/*.{js,jsx,ts,tsx}'",
     "make-pretty": "prettier --write '**/*.{js,jsx,ts,tsx}'",
-    "svgo": "npx svgo -f src/@icons/filled -o src/@icons/filled & npx svgo -f src/@icons/outlined -o src/@icons/outlined",
+    "svgo": "npx svgo -f src/@icons/customized-icons -o src/@icons/customized-icons",
     "prepare": "husky install"
   },
   "lint-staged": {

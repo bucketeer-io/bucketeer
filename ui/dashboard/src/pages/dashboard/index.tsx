@@ -1,3 +1,4 @@
+import { AvatarImage } from 'components/avatar';
 import Button from 'components/button';
 import IconButton from 'components/icon-button';
 import { IconAddRound, IconEditOutlined } from 'react-icons-material-design';
@@ -51,6 +52,24 @@ const DashboardPage = () => {
         <IconButton variant="gray" icon={IconEditOutlined} />
         <IconButton variant="icon" size="sm" icon={IconEditOutlined} />
         <IconButton variant="icon-2" size="sm" icon={IconEditOutlined} />
+      </div>
+
+      <div className="mt-10 flex items-center gap-6">
+        <AvatarImage
+          size="xl"
+          rounded="full"
+          image="./assets/avatars/primary.svg"
+        />
+        <AvatarImage
+          size="sm"
+          rounded="full"
+          image="./assets/avatars/primary.svg"
+        />
+        <AvatarImage
+          size="xs"
+          rounded="full"
+          image="./assets/avatars/primary.svg"
+        />
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-import IconInfoFilled from './filled/info.svg?react';
-import IconInfoOutlined from './outlined/info.svg?react';
+import IconInfoOutlined from './customized-icons/info.svg?react';
 
-export { IconInfoFilled, IconInfoOutlined };
+export { IconInfoOutlined };
