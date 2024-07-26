@@ -324,6 +324,7 @@ modify-hosts:
 
 # enable vault transit secret engine
 enable-vault-transit:
+	kubectl config use-context minikube
 	kubectl exec localenv-vault-0 -- vault secrets enable transit
 
 # create bigquery-emulator tables
@@ -334,6 +335,7 @@ create-bigquery-emulator-tables:
 		--no-profile
 
 setup-bigquery-vault:
+	kubectl config use-context minikube
 	while [ "$$(kubectl get pods | grep localenv-bq | awk '{print $$3}')" != "Running" ] || [ "$$(kubectl get pods | grep localenv-vault-0 | awk '{print $$3}')" != "Running" ]; \
 	do \
 		sleep 5; \
