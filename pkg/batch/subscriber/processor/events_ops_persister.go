@@ -153,7 +153,7 @@ func (e eventsOPSPersister) Process(ctx context.Context, msgChan <-chan *puller.
 
 func (e eventsOPSPersister) Switch(ctx context.Context) (bool, error) {
 	autoOpsRuleStorage := storage.NewAutoOpsRuleStorage(e.mysqlClient)
-	autoOpsRuleCount, err := autoOpsRuleStorage.CountNotTriggeredAutoOpsRules(ctx)
+	autoOpsRuleCount, err := autoOpsRuleStorage.CountOpsEventRate(ctx)
 	if err != nil {
 		return false, err
 	}
