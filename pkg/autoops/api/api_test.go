@@ -340,10 +340,14 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 							MinCount:        10,
 							ThreadsholdRate: 0.5,
 							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+							ActionType:      autoopsproto.ActionType_DISABLE,
 						},
 					},
 					DatetimeClauses: []*autoopsproto.DatetimeClause{
-						{Time: time.Now().AddDate(0, 0, 1).Unix()},
+						{
+							Time:       time.Now().AddDate(0, 0, 1).Unix(),
+							ActionType: autoopsproto.ActionType_ENABLE,
+						},
 					},
 				},
 			},
@@ -371,10 +375,14 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 							MinCount:        10,
 							ThreadsholdRate: 0.5,
 							Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+							ActionType:      autoopsproto.ActionType_DISABLE,
 						},
 					},
 					DatetimeClauses: []*autoopsproto.DatetimeClause{
-						{Time: time.Now().AddDate(0, 0, 1).Unix()},
+						{
+							Time:       time.Now().AddDate(0, 0, 1).Unix(),
+							ActionType: autoopsproto.ActionType_ENABLE,
+						},
 					},
 				},
 			},
@@ -514,6 +522,7 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 						MinCount:        10,
 						ThreadsholdRate: 0.5,
 						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+						ActionType:      autoopsproto.ActionType_DISABLE,
 					},
 				}},
 				DeleteClauseCommands: []*autoopsproto.DeleteClauseCommand{{
@@ -521,7 +530,8 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 				}},
 				AddDatetimeClauseCommands: []*autoopsproto.AddDatetimeClauseCommand{{
 					DatetimeClause: &autoopsproto.DatetimeClause{
-						Time: time.Now().AddDate(0, 0, 1).Unix(),
+						ActionType: autoopsproto.ActionType_ENABLE,
+						Time:       time.Now().AddDate(0, 0, 1).Unix(),
 					},
 				}},
 			},
