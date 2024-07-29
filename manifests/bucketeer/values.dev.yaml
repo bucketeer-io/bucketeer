@@ -21,7 +21,7 @@ migration:
   # First revision
   dbBaseline: "20240626022133"
 
-backend:
+web:
   env:
     gcpEnabled: false
     cloudService: hcv
@@ -60,6 +60,17 @@ backend:
     issuer:
       secret: bucketeer-service-cert
       cert:
+    bucketeerJP:
+      secrets:
+        - hosts:
+            - web-gateway.bucketeer.io
+          secretName: bucketeer-service-cert
+      service:
+        secret: bucketeer-service-cert
+
+  ingress:
+    host: web-gateway.bucketeer.io
+
   serviceToken:
     secret: bucketeer-service-token
   oauth:
@@ -116,20 +127,6 @@ api-gateway:
     secret: bucketeer-service-token
   ingress:
     host: api-gateway.bucketeer.io
-
-web-gateway:
-  env:
-    gcpEnabled: false
-  tls:
-    bucketeerJP:
-      secrets:
-        - hosts:
-            - web-gateway.bucketeer.io
-          secretName: bucketeer-service-cert
-    service:
-      secret: bucketeer-service-cert
-  ingress:
-    host: web-gateway.bucketeer.io
 
 
 batch-server:
