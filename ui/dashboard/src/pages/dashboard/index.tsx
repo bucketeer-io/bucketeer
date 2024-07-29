@@ -1,4 +1,5 @@
 import { AvatarImage } from 'components/avatar';
+import { Badge } from 'components/badge';
 import Button from 'components/button';
 import IconButton from 'components/icon-button';
 import { IconAddRound, IconEditOutlined } from 'react-icons-material-design';
@@ -70,6 +71,9 @@ const DashboardPage = () => {
           rounded="full"
           image="./assets/avatars/primary.svg"
         />
+
+        <Badge>{'1'}</Badge>
+        <Badge variant="secondary">{'1'}</Badge>
       </div>
     </div>
   );
