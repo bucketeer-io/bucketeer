@@ -11,42 +11,42 @@ packageName: savefilter
 ### Create
 Receives and saves requests for filter titles, query strings, and default settings flags.
 * Request
-  * Name: Filter Name Stirng
-  * Query: Query Parameters Stirng
+  * Name: Filter Name String
+  * Query: Query Parameters String
   * DefaultFlag: Filter flags to set by default
   * TargetType: Target feature type to filter (FeatureFlag, Goal, etc.)
 * Request Validation
-  * Name: empty string(Same name is allowed)
-  * Query: empty string(Same guary is allowed)
-  * DefaultFlag: Noting
-  * TargetType: Unknown Type
+  * Name: Reject empty string(Same name is allowed)
+  * Query: Reject empty string(Same query is allowed)
+  * DefaultFlag: ー
+  * TargetType: Reject Unknown Type
 
 ### Update
 Receives and updates requests for filter titles, query strings, and default settings flags.
 * Request
   * ID: Filter ID
-  * Name: Filter Name Stirng
-  * Query: Query Parameters Stirng
+  * Name: Filter Name String
+  * Query: Query Parameters String
   * DefaultFlag: Filter flags to set by default
 * Request Validation
   * ID: ID that does not exist
-  * Name: empty string(Same name is allowed)
-  * Query: empty string(Same name is allowed)
-  * DefaultFlag: Noting
+  * Name: Reject empty string(Same name is allowed)
+  * Query: Reject empty string(Same name is allowed)
+  * DefaultFlag: ー
 
 ### Delete
 Receives a request for the FilterID to be deleted and deletes the corresponding filter.
 * Request
   * ID: Filter ID
 * Request Validation
-  * ID: ID that does not exist
+  * ID: Reject ID that does not exist
 
 ### List
 A list is retrieved for each filter target(FeatureFlag, Goal, etc.).
 * Request
   * TargetType: Target feature type to filter (FeatureFlag, Goal, etc.)
 * Request Validation
-  * TargetType: Unknown Type
+  * TargetType: Reject Unknown Type
 
 ## Implementation
 
