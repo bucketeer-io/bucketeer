@@ -1,65 +1,94 @@
 import type { FunctionComponent } from 'react';
-import clsx from 'clsx';
-import type { AvatarColor, Color } from '@types';
+import { cva, type VariantProps } from 'class-variance-authority';
+import type { Color } from '@types';
+import { cn } from 'utils/style';
 import { BG_COLOR_MAPPING, COLOR_MAPPING } from 'app/constants';
-import styles from './styles.module.css';
 
-export type AvatarSize = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+// Avatar icon
+const AvatarIconVariants = cva(['flex items-center justify-center'], {
+  variants: {
+    size: {
+      lg: 'size-16 text-3xl',
+      md: 'size-10 text-xl',
+      sm: 'size-8 text-lg',
+      xs: 'size-6 text-md'
+    },
+    rounded: {
+      md: 'rounded-md',
+      full: 'rounded-full'
+    }
+  },
+  defaultVariants: {
+    size: 'md',
+    rounded: 'md'
+  }
+});
 
-export interface AvatarBaseProps {
-  size?: AvatarSize;
-  rounded?: 'medium' | 'full';
-}
-
-export interface AvatarIconProps extends AvatarBaseProps {
+export interface AvatarIconProps
+  extends VariantProps<typeof AvatarIconVariants> {
+  className?: string;
   icon: FunctionComponent;
   color?: Color;
   bgColor?: Color;
 }
 
-export const AvatarIcon = ({
-  size = 'md',
-  rounded = 'medium',
-  icon: Icon,
+const AvatarIcon = ({
+  className,
+  size,
   color = 'gray-500',
-  bgColor = 'gray-100'
+  bgColor = 'gray-100',
+  icon: Icon,
+  ...props
 }: AvatarIconProps) => {
   return (
     <div
-      className={clsx(
-        'flex items-center justify-center',
-        styles[`size-${size}`],
+      className={cn(
+        AvatarIconVariants({ size }),
         COLOR_MAPPING[color],
         BG_COLOR_MAPPING[bgColor],
-        rounded === 'full' && 'rounded-full'
+        className
       )}
+      {...props}
     >
       <Icon />
     </div>
   );
 };
 
-export interface AvatarImageProps extends AvatarBaseProps {
+// Avatar image
+const AvatarImageVariants = cva(['rounded-full object-cover'], {
+  variants: {
+    size: {
+      xl: 'size-120',
+      lg: 'size-15',
+      md: 'size-8',
+      sm: 'size-6'
+    }
+  },
+  defaultVariants: {
+    size: 'md'
+  }
+});
+
+export interface AvatarImageProps
+  extends VariantProps<typeof AvatarImageVariants> {
+  className?: string;
   image: string;
 }
 
-export const AvatarImage = ({
-  size = 'md',
-  rounded = 'medium',
-  image
+const AvatarImage = ({
+  className,
+  size,
+  image,
+  ...props
 }: AvatarImageProps) => {
   return (
     <img
-      className={clsx(
-        styles[`size-${size}`],
-        'object-cover',
-        rounded === 'full' && 'rounded-full'
-      )}
       src={image}
+      className={cn(AvatarImageVariants({ size }), className)}
+      {...props}
     />
   );
 };
 
-export interface AvatarPlaceholderProps extends AvatarBaseProps {
-  color?: AvatarColor;
-}
+export { AvatarImage, AvatarIcon };

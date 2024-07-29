@@ -190,6 +190,10 @@ const container = plugin(({ addComponents }) => {
       paddingRight: 'unset',
       marginLeft: 'unset',
       marginRight: 'unset'
+    },
+    'size-120': {
+      width: '120px',
+      height: '120px'
     }
   };
 

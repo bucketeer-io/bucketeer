@@ -1,8 +1,12 @@
-import { AvatarImage } from 'components/avatar';
+import {
+  IconAddRound,
+  IconEditOutlined,
+  IconPersonRound
+} from 'react-icons-material-design';
+import { AvatarIcon, AvatarImage } from 'components/avatar';
 import { Badge } from 'components/badge';
 import Button from 'components/button';
 import IconButton from 'components/icon-button';
-import { IconAddRound, IconEditOutlined } from 'react-icons-material-design';
 
 const DashboardPage = () => {
   return (
@@ -56,21 +60,10 @@ const DashboardPage = () => {
       </div>
 
       <div className="mt-10 flex items-center gap-6">
-        <AvatarImage
-          size="xl"
-          rounded="full"
-          image="./assets/avatars/primary.svg"
-        />
-        <AvatarImage
-          size="sm"
-          rounded="full"
-          image="./assets/avatars/primary.svg"
-        />
-        <AvatarImage
-          size="xs"
-          rounded="full"
-          image="./assets/avatars/primary.svg"
-        />
+        <AvatarImage size="xl" image="./assets/avatars/primary.svg" />
+        <AvatarImage size="md" image="./assets/avatars/primary.svg" />
+        <AvatarImage size="sm" image="./assets/avatars/primary.svg" />
+        <AvatarIcon icon={IconPersonRound} size="md" />
 
         <Badge>{'1'}</Badge>
         <Badge variant="secondary">{'1'}</Badge>

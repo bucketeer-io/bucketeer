@@ -1,5 +1,8 @@
 {
-  "plugins": ["prettier-plugin-tailwindcss"],
+  "plugins": [
+    "prettier-plugin-tailwindcss",
+    "@trivago/prettier-plugin-sort-imports"
+  ],
   "trailingComma": "none",
   "arrowParens": "avoid",
   "singleQuote": true,
@@ -9,8 +12,10 @@
   "importOrder": [
     "^react",
     "^clsx$",
+    "<THIRD_PARTY_MODULES>",
     "^tailwind(.*)$",
     "^@types$",
+    "^utils(.*)$",
     "^@icons$",
     "^app(.*)$",
     "^pages(.*)$",
