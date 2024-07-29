@@ -5,8 +5,8 @@ import {
 } from 'react-icons-material-design';
 import { AvatarIcon, AvatarImage } from 'components/avatar';
 import { Badge } from 'components/badge';
-import Button from 'components/button';
-import IconButton from 'components/icon-button';
+import { Button } from 'components/button';
+import Icon from 'components/icon';
 
 const DashboardPage = () => {
   return (
@@ -31,9 +31,11 @@ const DashboardPage = () => {
 
       <div className="mt-6 py-2">{`Button icons`}</div>
       <div className="flex items-center gap-6">
-        <Button icon={IconAddRound} iconSlot="left">{`Button 1`}</Button>
-        <Button variant="text" icon={IconAddRound} iconSlot="left">
-          {`Text button`}
+        <Button>
+          <Icon icon={IconAddRound} /> {`Button 1`}
+        </Button>
+        <Button variant="text">
+          <Icon icon={IconAddRound} /> {`Text button`}
         </Button>
       </div>
 
@@ -52,11 +54,21 @@ const DashboardPage = () => {
       </div>
 
       <div className="mt-6 flex items-center gap-6">
-        <IconButton icon={IconEditOutlined} />
-        <IconButton variant="secondary" icon={IconEditOutlined} />
-        <IconButton variant="gray" icon={IconEditOutlined} />
-        <IconButton variant="icon" size="sm" icon={IconEditOutlined} />
-        <IconButton variant="icon-2" size="sm" icon={IconEditOutlined} />
+        <Button size="icon">
+          <Icon icon={IconEditOutlined} />
+        </Button>
+        <Button variant="secondary" size="icon">
+          <Icon icon={IconEditOutlined} />
+        </Button>
+        <Button variant="grey" size="icon">
+          <Icon icon={IconEditOutlined} />
+        </Button>
+        <Button variant="secondary" size="icon-sm">
+          <Icon icon={IconEditOutlined} size="sm" />
+        </Button>
+        <Button variant="grey" size="icon-sm">
+          <Icon icon={IconEditOutlined} size="sm" />
+        </Button>
       </div>
 
       <div className="mt-10 flex items-center gap-6">
