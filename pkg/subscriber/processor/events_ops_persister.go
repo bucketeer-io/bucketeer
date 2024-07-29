@@ -23,117 +23,91 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
 
-	storage "github.com/bucketeer-io/bucketeer/pkg/batch/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber"
+	autoopsclient "github.com/bucketeer-io/bucketeer/pkg/autoops/client"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
+	storage "github.com/bucketeer-io/bucketeer/pkg/subscriber/storage/v2"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 
-type eventsDWHPersisterConfig struct {
-	FlushInterval     int    `json:"flushInterval"`
-	FlushTimeout      int    `json:"flushTimeout"`
-	FlushSize         int    `json:"flushSize"`
-	Project           string `json:"project"`
-	BigQueryDataSet   string `json:"bigQueryDataSet"`
-	BigQueryBatchSize int    `json:"bigQueryBatchSize"`
-	Timezone          string `json:"timezone"`
+type eventsOPSPersisterConfig struct {
+	FlushInterval int `json:"flushInterval"`
+	FlushTimeout  int `json:"flushTimeout"`
+	FlushSize     int `json:"flushSize"`
 }
 
-type eventsDWHPersister struct {
-	eventsDWHPersisterConfig eventsDWHPersisterConfig
+type eventsOPSPersister struct {
+	eventsOPSPersisterConfig eventsOPSPersisterConfig
 	mysqlClient              mysql.Client
-	writer                   Writer
+	updater                  Updater
 	subscriberType           string
 	logger                   *zap.Logger
 }
 
-func NewEventsDWHPersister(
+func NewEventsOPSPersister(
 	ctx context.Context,
 	config interface{},
 	mysqlClient mysql.Client,
 	redisClient redisv3.Client,
-	exClient experimentclient.Client,
+	opsClient autoopsclient.Client,
 	ftClient featureclient.Client,
 	persisterName string,
 	logger *zap.Logger,
 ) (subscriber.Processor, error) {
 	jsonConfig, ok := config.(map[string]interface{})
 	if !ok {
-		logger.Error("eventsDWHPersister: invalid config")
-		return nil, ErrEventsDWHPersisterInvalidConfig
+		logger.Error("eventsOPSPersister: invalid config")
+		return nil, ErrEventsOPSPersisterInvalidConfig
 	}
 	configBytes, err := json.Marshal(jsonConfig)
 	if err != nil {
-		logger.Error("eventsDWHPersister: failed to marshal config", zap.Error(err))
+		logger.Error("eventsOPSPersister: failed to marshal config", zap.Error(err))
 		return nil, err
 	}
-	var persisterConfig eventsDWHPersisterConfig
+	var persisterConfig eventsOPSPersisterConfig
 	err = json.Unmarshal(configBytes, &persisterConfig)
 	if err != nil {
-		logger.Error("eventsDWHPersister: failed to unmarshal config", zap.Error(err))
+		logger.Error("eventsOPSPersister: failed to unmarshal config", zap.Error(err))
 		return nil, err
 	}
-	e := &eventsDWHPersister{
-		eventsDWHPersisterConfig: persisterConfig,
+	e := &eventsOPSPersister{
+		eventsOPSPersisterConfig: persisterConfig,
 		mysqlClient:              mysqlClient,
 		logger:                   logger,
 	}
-	experimentsCache := cachev3.NewExperimentsCache(cachev3.NewRedisCache(redisClient))
-	location, err := locale.GetLocation(e.eventsDWHPersisterConfig.Timezone)
-	if err != nil {
-		return nil, err
-	}
 	switch persisterName {
-	case EvaluationCountEventDWHPersisterName:
-		e.subscriberType = subscriberEvaluationEventDWH
-		evalEventWriter, err := NewEvalEventWriter(
+	case EvaluationCountEventOPSPersisterName:
+		e.subscriberType = subscriberEvaluationEventOPS
+		e.updater = NewEvalUserCountUpdater(
 			ctx,
-			logger,
-			exClient,
-			experimentsCache,
-			e.eventsDWHPersisterConfig.Project,
-			e.eventsDWHPersisterConfig.BigQueryDataSet,
-			e.eventsDWHPersisterConfig.BigQueryBatchSize,
-			location,
-		)
-		if err != nil {
-			return nil, err
-		}
-		e.writer = evalEventWriter
-	case GoalCountEventDWHPersisterName:
-		e.subscriberType = subscriberGoalEventDWH
-		goalEventWriter, err := NewGoalEventWriter(
-			ctx,
-			logger,
-			exClient,
 			ftClient,
-			experimentsCache,
-			e.eventsDWHPersisterConfig.Project,
-			e.eventsDWHPersisterConfig.BigQueryDataSet,
-			e.eventsDWHPersisterConfig.BigQueryBatchSize,
-			location,
+			opsClient,
+			cachev3.NewEventCountCache(cachev3.NewRedisCache(redisClient)),
+			cachev3.NewAutoOpsRulesCache(cachev3.NewRedisCache(redisClient)),
+			logger,
 		)
-		if err != nil {
-			return nil, err
-		}
-		e.writer = goalEventWriter
+	case GoalCountEventOPSPersisterName:
+		e.subscriberType = subscriberGoalEventOPS
+		e.updater = NewGoalUserCountUpdater(
+			ctx,
+			ftClient,
+			opsClient,
+			cachev3.NewEventCountCache(cachev3.NewRedisCache(redisClient)),
+			cachev3.NewAutoOpsRulesCache(cachev3.NewRedisCache(redisClient)),
+			logger,
+		)
 	}
 	return e, nil
 }
 
-func (e *eventsDWHPersister) Process(
-	ctx context.Context,
-	msgChan <-chan *puller.Message,
-) error {
+func (e eventsOPSPersister) Process(ctx context.Context, msgChan <-chan *puller.Message) error {
 	batch := make(map[string]*puller.Message)
-	ticker := time.NewTicker(time.Duration(e.eventsDWHPersisterConfig.FlushInterval) * time.Second)
+	ticker := time.NewTicker(time.Duration(e.eventsOPSPersisterConfig.FlushInterval) * time.Second)
 	defer ticker.Stop()
 	for {
 		select {
@@ -155,7 +129,7 @@ func (e *eventsDWHPersister) Process(
 				subscriberHandledCounter.WithLabelValues(e.subscriberType, codes.DuplicateID.String()).Inc()
 			}
 			batch[id] = msg
-			if len(batch) < e.eventsDWHPersisterConfig.FlushSize {
+			if len(batch) < e.eventsOPSPersisterConfig.FlushSize {
 				continue
 			}
 			e.send(batch)
@@ -170,51 +144,42 @@ func (e *eventsDWHPersister) Process(
 			e.logger.Info("Context is done", zap.Int("batchSize", batchSize))
 			if len(batch) > 0 {
 				e.send(batch)
-				e.logger.Info(
-					"All the left messages are processed successfully",
-					zap.Int("batchSize", batchSize),
-				)
+				e.logger.Info("All the left messages are processed successfully", zap.Int("batchSize", batchSize))
 			}
 			return nil
 		}
 	}
 }
 
-func (e *eventsDWHPersister) Switch(ctx context.Context) (bool, error) {
-	experimentStorage := storage.NewExperimentStorage(e.mysqlClient)
-	count, err := experimentStorage.CountRunningExperiments(ctx)
+func (e eventsOPSPersister) Switch(ctx context.Context) (bool, error) {
+	autoOpsRuleStorage := storage.NewAutoOpsRuleStorage(e.mysqlClient)
+	autoOpsRuleCount, err := autoOpsRuleStorage.CountOpsEventRate(ctx)
 	if err != nil {
 		return false, err
 	}
-	return count > 0, nil
+	return autoOpsRuleCount > 0, nil
 }
 
-func (e *eventsDWHPersister) send(messages map[string]*puller.Message) {
+func (e eventsOPSPersister) send(messages map[string]*puller.Message) {
 	ctx, cancel := context.WithTimeout(
 		context.Background(),
-		time.Duration(e.eventsDWHPersisterConfig.FlushTimeout)*time.Second,
+		time.Duration(e.eventsOPSPersisterConfig.FlushTimeout)*time.Second,
 	)
 	defer cancel()
 	envEvents := e.extractEvents(messages)
 	if len(envEvents) == 0 {
-		e.logger.Error("all messages were bad")
+		e.logger.Error("All messages were bad")
 		return
 	}
-	fails := e.writer.Write(ctx, envEvents)
+	fails := e.updater.UpdateUserCounts(ctx, envEvents)
 	for id, m := range messages {
 		if repeatable, ok := fails[id]; ok {
 			if repeatable {
 				m.Nack()
-				subscriberHandledCounter.WithLabelValues(
-					e.subscriberType,
-					codes.RepeatableError.String(),
-				).Inc()
+				subscriberHandledCounter.WithLabelValues(e.subscriberType, codes.RepeatableError.String()).Inc()
 			} else {
 				m.Ack()
-				subscriberHandledCounter.WithLabelValues(
-					e.subscriberType,
-					codes.NonRepeatableError.String(),
-				).Inc()
+				subscriberHandledCounter.WithLabelValues(e.subscriberType, codes.NonRepeatableError.String()).Inc()
 			}
 			continue
 		}
@@ -222,11 +187,12 @@ func (e *eventsDWHPersister) send(messages map[string]*puller.Message) {
 		subscriberHandledCounter.WithLabelValues(e.subscriberType, codes.OK.String()).Inc()
 	}
 }
-func (e *eventsDWHPersister) extractEvents(messages map[string]*puller.Message) environmentEventDWHMap {
-	envEvents := environmentEventDWHMap{}
+
+func (e eventsOPSPersister) extractEvents(messages map[string]*puller.Message) environmentEventOPSMap {
+	envEvents := environmentEventOPSMap{}
 	handleBadMessage := func(m *puller.Message, err error) {
 		m.Ack()
-		e.logger.Error("bad message", zap.Error(err), zap.Any("msg", m))
+		e.logger.Error("Bad message", zap.Error(err), zap.Any("msg", m))
 		subscriberHandledCounter.WithLabelValues(e.subscriberType, codes.BadMessage.String()).Inc()
 	}
 	for _, m := range messages {
@@ -244,7 +210,7 @@ func (e *eventsDWHPersister) extractEvents(messages map[string]*puller.Message) 
 			innerEvents[event.Id] = innerEvent.Message
 			continue
 		}
-		envEvents[event.EnvironmentNamespace] = eventDWHMap{event.Id: innerEvent.Message}
+		envEvents[event.EnvironmentNamespace] = eventOPSMap{event.Id: innerEvent.Message}
 	}
 	return envEvents
 }

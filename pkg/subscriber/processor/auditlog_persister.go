@@ -24,11 +24,11 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/auditlog/domain"
 	v2als "github.com/bucketeer-io/bucketeer/pkg/auditlog/storage/v2"
-	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
 	domainevent "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 

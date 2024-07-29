@@ -22,11 +22,11 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/storage"
-	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
+	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
+	"github.com/bucketeer-io/bucketeer/pkg/subscriber/storage"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 

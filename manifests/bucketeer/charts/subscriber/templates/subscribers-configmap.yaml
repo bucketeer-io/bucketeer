@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "batch-server.fullname" . }}-subscribers-config
+  name: {{ template "subscriber.fullname" . }}-subscribers-config
   namespace: {{ .Values.namespace }}
   labels:
-    app: {{ template "batch-server.name" . }}
-    chart: {{ template "batch-server.chart" . }}
-    release: {{ template "batch-server.fullname" . }}
+    app: {{ template "subscriber.name" . }}
+    chart: {{ template "subscriber.chart" . }}
+    release: {{ template "subscriber.fullname" . }}
     heritage: {{ .Release.Service }}
 data:
   subscribers.json: |-

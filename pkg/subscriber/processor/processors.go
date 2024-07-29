@@ -17,8 +17,8 @@ package processor
 import (
 	"errors"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
 )
 
 const (

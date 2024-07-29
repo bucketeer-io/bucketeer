@@ -25,7 +25,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
-	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
@@ -35,6 +34,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
 	btproto "github.com/bucketeer-io/bucketeer/proto/batch"
 	domainproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	serviceevent "github.com/bucketeer-io/bucketeer/proto/event/service"

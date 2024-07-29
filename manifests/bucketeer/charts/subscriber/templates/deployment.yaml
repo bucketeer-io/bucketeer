@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "batch-server.fullname" . }}
+  name: {{ template "subscriber.fullname" . }}
   namespace: {{ .Values.namespace }}
   labels:
-    app: {{ template "batch-server.name" . }}
-    chart: {{ template "batch-server.chart" . }}
-    release: {{ template "batch-server.fullname" . }}
+    app: {{ template "subscriber.name" . }}
+    chart: {{ template "subscriber.chart" . }}
+    release: {{ template "subscriber.fullname" . }}
     heritage: {{ .Release.Service }}
 spec:
   selector:
     matchLabels:
-      app: {{ template "batch-server.name" . }}
-      release: {{ template "batch-server.fullname" . }}
+      app: {{ template "subscriber.name" . }}
+      release: {{ template "subscriber.fullname" . }}
   template:
     metadata:
       labels:
-        app: {{ template "batch-server.name" . }}
-        release: {{ template "batch-server.fullname" . }}
+        app: {{ template "subscriber.name" . }}
+        release: {{ template "subscriber.fullname" . }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
     spec:
@@ -31,18 +31,18 @@ spec:
       volumes:
         - name: envoy-config
           configMap:
-            name: {{ template "batch-server.fullname" . }}-envoy-config
+            name: {{ template "subscriber.fullname" . }}-envoy-config
         - name: service-cert-secret
           secret:
             secretName: {{ template "service-cert-secret" . }}
         - name: service-token-secret
           secret:
             secretName: {{ template "service-token-secret" . }}
-        - name: oauth-key-secret
-          secret:
-            secretName: {{ template "oauth-key-secret" . }}
+        - name: subscriber-config
+          configMap:
+            name: {{ template "subscriber.fullname" . }}-subscribers-config
       {{- if .Values.serviceAccount.annotations }}
-      serviceAccountName: {{ template "batch-server.fullname" . }}
+      serviceAccountName: {{ template "subscriber.fullname" . }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
@@ -52,95 +52,83 @@ spec:
           env:
             - name: BIGQUERY_EMULATOR_HOST
               value: "{{.Values.env.bigqueryEmulatorHost}}"
-            - name: BUCKETEER_BATCH_PROJECT
+            - name: BUCKETEER_SUBSCRIBER_PROJECT
               value: "{{ .Values.env.project }}"
-            - name: BUCKETEER_BATCH_PROFILE
+            - name: BUCKETEER_SUBSCRIBER_PROFILE
               value: "{{.Values.env.profile}}"
-            - name: BUCKETEER_BATCH_GCP_TRACE_ENABLED
+            - name: BUCKETEER_SUBSCRIBER_GCP_TRACE_ENABLED
               value: "{{.Values.env.gcpEnabled}}"
             - name: PUBSUB_EMULATOR_HOST
               value: "{{.Values.env.pubsubEmulatorHost}}"
-            - name: BUCKETEER_BATCH_ACCOUNT_SERVICE
-              value: "{{ .Values.env.accountService }}"
-            - name: BUCKETEER_BATCH_NOTIFICATION_SERVICE
+            - name: BUCKETEER_SUBSCRIBER_NOTIFICATION_SERVICE
               value: "{{ .Values.env.notificationService }}"
-            - name: BUCKETEER_BATCH_ENVIRONMENT_SERVICE
+            - name: BUCKETEER_SUBSCRIBER_ENVIRONMENT_SERVICE
               value: "{{ .Values.env.environmentService }}"
-            - name: BUCKETEER_BATCH_PUSH_SERVICE
+            - name: BUCKETEER_SUBSCRIBER_PUSH_SERVICE
               value: "{{ .Values.env.pushService }}"
-            - name: BUCKETEER_BATCH_AUTO_OPS_SERVICE
+            - name: BUCKETEER_SUBSCRIBER_AUTO_OPS_SERVICE
               value: "{{ .Values.env.autoOpsService }}"
-            - name: BUCKETEER_BATCH_EXPERIMENT_SERVICE
+            - name: BUCKETEER_SUBSCRIBER_EXPERIMENT_SERVICE
               value: "{{ .Values.env.experimentService }}"
-            - name: BUCKETEER_BATCH_EVENT_COUNTER_SERVICE
-              value: "{{ .Values.env.eventCounterService }}"
-            - name: BUCKETEER_BATCH_FEATURE_SERVICE
+            - name: BUCKETEER_SUBSCRIBER_FEATURE_SERVICE
               value: "{{ .Values.env.featureService }}"
-            - name: BUCKETEER_BATCH_EXPERIMENT_CALCULATOR_SERVICE
-              value: "{{ .Values.env.experimentCalculatorService }}"
-            - name: BUCKETEER_BATCH_BATCH_SERVICE
+            - name: BUCKETEER_SUBSCRIBER_BATCH_SERVICE
               value: "{{ .Values.env.batchService }}"
-            - name: BUCKETEER_BATCH_EVENT_SCHEDULE_COUNT_WATCHER
-              value: "{{ .Values.env.scheduleCountWatcher }}"
-            - name: BUCKETEER_BATCH_EVENT_SCHEDULE_DATETIME_WATCHER
-              value: "{{ .Values.env.scheduleDatetimeWatcher }}"
-            - name: BUCKETEER_BATCH_EVENT_SCHEDULE_PROGRESSIVE_ROLLOUT_WATCHER
-              value: "{{ .Values.env.scheduleProgressiveRolloutWatcher }}"
-            - name: BUCKETEER_BATCH_EVENT_REFRESH_INTERVAL
+            - name: BUCKETEER_SUBSCRIBER_EVENT_REFRESH_INTERVAL
               value: "{{ .Values.env.refreshInterval }}"
-            - name: BUCKETEER_BATCH_MYSQL_USER
+            - name: BUCKETEER_SUBSCRIBER_MYSQL_USER
               value: "{{ .Values.env.mysqlUser }}"
-            - name: BUCKETEER_BATCH_MYSQL_PASS
+            - name: BUCKETEER_SUBSCRIBER_MYSQL_PASS
               value: "{{ .Values.env.mysqlPass }}"
-            - name: BUCKETEER_BATCH_MYSQL_HOST
+            - name: BUCKETEER_SUBSCRIBER_MYSQL_HOST
               value: "{{ .Values.env.mysqlHost }}"
-            - name: BUCKETEER_BATCH_MYSQL_PORT
+            - name: BUCKETEER_SUBSCRIBER_MYSQL_PORT
               value: "{{ .Values.env.mysqlPort }}"
-            - name: BUCKETEER_BATCH_MYSQL_DB_NAME
+            - name: BUCKETEER_SUBSCRIBER_MYSQL_DB_NAME
               value: "{{ .Values.env.mysqlDbName }}"
-            - name: BUCKETEER_BATCH_MYSQL_DB_OPEN_CONNS
+            - name: BUCKETEER_SUBSCRIBER_MYSQL_DB_OPEN_CONNS
               value: "{{ .Values.env.mysqlDbOpenConns }}"
-            - name: BUCKETEER_BATCH_WEB_URL
+            - name: BUCKETEER_SUBSCRIBER_WEB_URL
               value: "{{ .Values.env.webURL }}"
-            - name: BUCKETEER_BATCH_LOG_LEVEL
+            - name: BUCKETEER_SUBSCRIBER_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
-            - name: BUCKETEER_BATCH_REFRESH_INTERVAL
+            - name: BUCKETEER_SUBSCRIBER_REFRESH_INTERVAL
               value: "{{ .Values.env.refreshInterval }}"
-            - name: BUCKETEER_BATCH_PORT
+            - name: BUCKETEER_SUBSCRIBER_PORT
               value: "{{ .Values.env.port }}"
-            - name: BUCKETEER_BATCH_METRICS_PORT
+            - name: BUCKETEER_SUBSCRIBER_METRICS_PORT
               value: "{{ .Values.env.metricsPort }}"
-            - name: BUCKETEER_BATCH_SERVICE_TOKEN
+            - name: BUCKETEER_SUBSCRIBER_SERVICE_TOKEN
               value: /usr/local/service-token/token
-            - name: BUCKETEER_BATCH_CERT
+            - name: BUCKETEER_SUBSCRIBER_CERT
               value: /usr/local/certs/service/tls.crt
-            - name: BUCKETEER_BATCH_KEY
+            - name : BUCKETEER_SUBSCRIBER_SUBSCRIBER_CONFIG
+              value: /usr/local/conf/subscribers.json
+            - name: BUCKETEER_SUBSCRIBER_ON_DEMAND_SUBSCRIBER_CONFIG
+              value: /usr/local/conf/onDemandSubscribers.json
+            - name: BUCKETEER_SUBSCRIBER_PROCESSORS_CONFIG
+              value: /usr/local/conf/processors.json
+            - name: BUCKETEER_SUBSCRIBER_ON_DEMAND_PROCESSORS_CONFIG
+              value: /usr/local/conf/onDemandProcessors.json
+            - name: BUCKETEER_SUBSCRIBER_KEY
               value: /usr/local/certs/service/tls.key
-            - name: BUCKETEER_BATCH_OAUTH_PUBLIC_KEY
+            - name: BUCKETEER_SUBSCRIBER_OAUTH_PUBLIC_KEY
               value: /usr/local/oauth-key/public.pem
-            - name: BUCKETEER_BATCH_OAUTH_ISSUER
-              value: "{{ .Values.oauth.issuer }}"
-            - name: BUCKETEER_BATCH_OAUTH_AUDIENCE
-              value: "{{ .Values.oauth.audience }}"
-            - name: BUCKETEER_BATCH_OAUTH_CLIENT_ID # TODO: remove after releasing
-              value: "{{ .Values.oauth.clientId }}"
-            - name: BUCKETEER_BATCH_TIMEZONE
-              value: "{{ .Values.env.timezone }}"
-            - name: BUCKETEER_BATCH_PERSISTENT_REDIS_SERVER_NAME
+            - name: BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_SERVER_NAME
               value: "{{ .Values.env.persistentRedis.serverName }}"
-            - name: BUCKETEER_BATCH_PERSISTENT_REDIS_ADDR
+            - name: BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_ADDR
               value: "{{ .Values.env.persistentRedis.addr }}"
-            - name: BUCKETEER_BATCH_PERSISTENT_REDIS_POOL_MAX_IDLE
+            - name: BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_POOL_MAX_IDLE
               value: "{{ .Values.env.persistentRedis.poolMaxIdle }}"
-            - name: BUCKETEER_BATCH_PERSISTENT_REDIS_POOL_MAX_ACTIVE
+            - name: BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_POOL_MAX_ACTIVE
               value: "{{ .Values.env.persistentRedis.poolMaxActive }}"
-            - name: BUCKETEER_BATCH_NON_PERSISTENT_REDIS_SERVER_NAME
+            - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_SERVER_NAME
               value: "{{ .Values.env.nonPersistentRedis.serverName }}"
-            - name: BUCKETEER_BATCH_NON_PERSISTENT_REDIS_ADDR
+            - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_ADDR
               value: "{{ .Values.env.nonPersistentRedis.addr }}"
-            - name: BUCKETEER_BATCH_NON_PERSISTENT_REDIS_POOL_MAX_IDLE
+            - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_POOL_MAX_IDLE
               value: "{{ .Values.env.nonPersistentRedis.poolMaxIdle }}"
-            - name: BUCKETEER_BATCH_NON_PERSISTENT_REDIS_POOL_MAX_ACTIVE
+            - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_POOL_MAX_ACTIVE
               value: "{{ .Values.env.nonPersistentRedis.poolMaxActive }}"
 
           volumeMounts:
@@ -150,8 +138,8 @@ spec:
             - name: service-token-secret
               mountPath: /usr/local/service-token
               readOnly: true
-            - name: oauth-key-secret
-              mountPath: /usr/local/oauth-key
+            - name: subscriber-config
+              mountPath: /usr/local/conf
               readOnly: true
           ports:
             - name: service
@@ -203,8 +191,6 @@ spec:
               mountPath: /usr/local/certs/service
               readOnly: true
           ports:
-            - name: envoy
-              containerPort: {{ .Values.envoy.port }}
             - name: admin
               containerPort: {{ .Values.envoy.adminPort }}
           livenessProbe:
