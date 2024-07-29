@@ -61,6 +61,7 @@ A list is retrieved for each filter target(FeatureFlag, Goal, etc.).
         `query` sting NOT NULL,
         `target_type` int NOT NULL,
         `default` tinyint(1) NOT NULL DEFAULT '0',
+        `environment_namespace` sting NOT NULL,
         `created_at` bigint NOT NULL,
         `updated_at` bigint NOT NULL,
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
