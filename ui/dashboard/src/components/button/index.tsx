@@ -31,7 +31,7 @@ const buttonVariants = cva(
           'disabled:text-gray-500'
         ],
         grey: [
-          'text-gray-600 rounded-lg outline outline-1 outline-transparent',
+          'text-gray-600 rounded-lg',
           'hover:text-gray-700',
           'disabled:text-gray-400'
         ]

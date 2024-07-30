@@ -15,7 +15,7 @@ const screens = {
 const colors = {
   transparent: 'transparent',
   white: '#FFFFFF',
-  overlay: 'rgba(18, 18, 18, 0.25)',
+  overlay: 'rgba(0, 0, 0, 0.8)',
   primary: {
     900: '#292C4C',
     800: '#352F5E',

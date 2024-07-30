@@ -1,19 +1,24 @@
+import { useState } from 'react';
 import {
   IconAddRound,
   IconEditOutlined,
   IconPersonRound
 } from 'react-icons-material-design';
+import { IconGoal } from '@icons';
 import { AvatarIcon, AvatarImage } from 'components/avatar';
 import { Badge } from 'components/badge';
 import { Button } from 'components/button';
+import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
+import DialogModal from 'components/modal/dialog';
 
 const DashboardPage = () => {
+  const [open, setOpen] = useState(false);
+
   return (
     <div className="container p-10">
       <div className="pb-4 text-3xl font-bold">{`Design systems`}</div>
-
       <div className="py-2">{`Button types`}</div>
       <div className="flex items-center gap-6">
         <Button>{`Primary`}</Button>
@@ -83,6 +88,41 @@ const DashboardPage = () => {
       </div>
       <div className="mt-8 flex flex-col gap-6">
         <Divider />
+
+        <div className="flex">
+          <Button
+            onClick={() => setOpen(true)}
+            variant="secondary"
+          >{`Modal`}</Button>
+        </div>
+
+        <DialogModal
+          title={'Goals Connected'}
+          isOpen={open}
+          onClose={() => setOpen(false)}
+        >
+          <div className="py-8 px-5 flex flex-col gap-6 items-center justify-center">
+            <IconGoal />
+            <div className="typo-para-big text-gray-700 px-20 text-center">
+              {`This experiment has the following goals connected to it:`}
+            </div>
+            <div className="w-full rounded px-4 py-3 bg-gray-100">
+              <div className="typo-para-medium">
+                <span className="text-gray-700 mr-2">{`1.`}</span>
+                <span className="text-primary-500 underline">
+                  {`This is a big name for the first goal name`}
+                </span>
+              </div>
+              <div className="typo-para-medium mt-3">
+                <span className="text-gray-700 mr-2">{`2.`}</span>
+                <span className="text-primary-500 underline">
+                  {`This is a big name for the second goal name`}
+                </span>
+              </div>
+            </div>
+          </div>
+          <ButtonBar primaryButton={<Button>{`Close`}</Button>} />
+        </DialogModal>
       </div>
     </div>
   );
