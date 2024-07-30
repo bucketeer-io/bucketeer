@@ -411,10 +411,12 @@ func (s *AutoOpsService) validateDatetimeClauses(
 	clauses []*autoopsproto.DatetimeClause,
 	localizer locale.Localizer,
 ) error {
+	var checkClauses []*autoopsproto.DatetimeClause
 	for _, c := range clauses {
-		if err := s.validateDatetimeClause(c, clauses, localizer); err != nil {
+		if err := s.validateDatetimeClause(c, checkClauses, localizer); err != nil {
 			return err
 		}
+		checkClauses = append(checkClauses, c)
 	}
 	return nil
 }
@@ -980,7 +982,7 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
 		}
 	}
 
-	var tmpDatetimeClauses []*autoopsproto.DatetimeClause
+	var checkDatetimeClauses []*autoopsproto.DatetimeClause
 	for _, c := range req.AddDatetimeClauseCommands {
 		if c.DatetimeClause == nil {
 			dt, err := statusDatetimeClauseRequired.WithDetails(&errdetails.LocalizedMessage{
@@ -992,13 +994,12 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
 			}
 			return dt.Err()
 		}
-		tmpDatetimeClauses = append(tmpDatetimeClauses, c.DatetimeClause)
-		if err := s.validateDatetimeClause(c.DatetimeClause, tmpDatetimeClauses, localizer); err != nil {
+		if err := s.validateDatetimeClause(c.DatetimeClause, checkDatetimeClauses, localizer); err != nil {
 			return err
 		}
+		checkDatetimeClauses = append(checkDatetimeClauses, c.DatetimeClause)
 	}
 
-	tmpDatetimeClauses = []*autoopsproto.DatetimeClause{}
 	for _, c := range req.ChangeDatetimeClauseCommands {
 		if c.Id == "" {
 			dt, err := statusClauseIDRequired.WithDetails(&errdetails.LocalizedMessage{
@@ -1020,10 +1021,10 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
 			}
 			return dt.Err()
 		}
-		tmpDatetimeClauses = append(tmpDatetimeClauses, c.DatetimeClause)
-		if err := s.validateDatetimeClause(c.DatetimeClause, tmpDatetimeClauses, localizer); err != nil {
+		if err := s.validateDatetimeClause(c.DatetimeClause, checkDatetimeClauses, localizer); err != nil {
 			return err
 		}
+		checkDatetimeClauses = append(checkDatetimeClauses, c.DatetimeClause)
 	}
 	return nil
 }
