@@ -1,13 +1,21 @@
 # Save Filters Summary
 
 "Save Filters" saves the filters set for each feature list in the console.
+
 This feature allows you to give default settings to saved filters.
+
 This feature should be designed to store filter information for the various information displayed in the console.
 
 ## package
 packageName: savefilter
 
 ## Function
+Filter and search information is based on the string in the query part of the URL.
+
+ex) https://dev.bucketeer.jp/default/features?page=1&q=test&sort=-createdAt&tagIds=iOS
+
+Filter and Search Info: ```q=test&sort=-createdAt&tagIds=iOS```
+
 ### Create
 Receives and saves requests for filter titles, query strings, and default settings flags.
 * Request
