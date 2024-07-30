@@ -17,6 +17,7 @@ package processor
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -170,7 +171,11 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 					zap.String("id", id),
 					zap.String("environmentNamespace", environmentNamespace),
 				)
-				fails[id] = true
+				if errors.Is(err, ErrReasonNil) {
+					fails[id] = false
+				} else {
+					fails[id] = true
+				}
 			}
 		}
 	}
