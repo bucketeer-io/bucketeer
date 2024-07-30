@@ -1,0 +1,295 @@
+swagger: "2.0"
+info:
+  title: Bucketeer Web Service
+  version: "1.0"
+tags:
+  - name: Authentication
+host: ENDPOINT
+schemes:
+  - https
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /v1/auth/authentication_url:
+    post:
+      summary: Get Authentication URL
+      description: |-
+        The OAuth credentials must be configured on the server to call this API. It will return the Authentication URL.
+        Currently, we only support Google.
+      operationId: web.v1.auth.authentication_url
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/authGetAuthenticationURLResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/authGetAuthenticationURLRequest'
+      tags:
+        - Authentication
+  /v1/auth/exchange_token:
+    post:
+      summary: Exchange Token
+      description: |-
+        Exchange the token from the OAuth provider to the Bucketeer token.
+        Currently, we only support Google.
+      operationId: web.v1.auth.exchange_token
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/authExchangeTokenResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/authExchangeTokenRequest'
+      tags:
+        - Authentication
+  /v1/auth/refresh_token:
+    post:
+      summary: Refresh Token
+      description: Refresh the Bucketeer token maintained by the web console.
+      operationId: web.v1.auth.refresh_token
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/authRefreshTokenResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/authRefreshTokenRequest'
+      tags:
+        - Authentication
+  /v1/auth/signin:
+    post:
+      summary: Sign In
+      description: Sign in on the web console using an email and password.
+      operationId: web.v1.auth.signin
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/authSignInResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/authSignInRequest'
+      tags:
+        - Authentication
+definitions:
+  authAuthType:
+    type: string
+    enum:
+      - AUTH_TYPE_UNSPECIFIED
+      - AUTH_TYPE_USER_PASSWORD
+      - AUTH_TYPE_GOOGLE
+      - AUTH_TYPE_GITHUB
+    default: AUTH_TYPE_UNSPECIFIED
+  authExchangeTokenRequest:
+    type: object
+    properties:
+      code:
+        type: string
+      redirectUrl:
+        type: string
+      type:
+        $ref: '#/definitions/authAuthType'
+  authExchangeTokenResponse:
+    type: object
+    properties:
+      token:
+        $ref: '#/definitions/authToken'
+  authGetAuthenticationURLRequest:
+    type: object
+    properties:
+      state:
+        type: string
+      redirectUrl:
+        type: string
+      type:
+        $ref: '#/definitions/authAuthType'
+  authGetAuthenticationURLResponse:
+    type: object
+    properties:
+      url:
+        type: string
+  authRefreshTokenRequest:
+    type: object
+    properties:
+      refreshToken:
+        type: string
+  authRefreshTokenResponse:
+    type: object
+    properties:
+      token:
+        $ref: '#/definitions/authToken'
+  authSignInRequest:
+    type: object
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+  authSignInResponse:
+    type: object
+    properties:
+      token:
+        $ref: '#/definitions/authToken'
+  authToken:
+    type: object
+    properties:
+      accessToken:
+        type: string
+      tokenType:
+        type: string
+      refreshToken:
+        type: string
+      expiry:
+        type: string
+        format: int64
+  protobufAny:
+    type: object
+    properties:
+      '@type':
+        type: string
+    additionalProperties: {}
+  rpcStatus:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      details:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/protobufAny'

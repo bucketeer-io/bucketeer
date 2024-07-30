@@ -2,6 +2,8 @@
 // file: proto/auth/service.proto
 
 import * as jspb from 'google-protobuf';
+import * as google_api_annotations_pb from '../../google/api/annotations_pb';
+import * as protoc_gen_openapiv2_options_annotations_pb from '../../protoc-gen-openapiv2/options/annotations_pb';
 import * as proto_auth_token_pb from '../../proto/auth/token_pb';
 
 export class GetAuthenticationURLRequest extends jspb.Message {

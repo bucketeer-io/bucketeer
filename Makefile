@@ -106,6 +106,7 @@ proto-go-descriptor-check:
 .PHONY: proto-openapi-gen
 proto-openapi-gen:
 	make -C proto openapi-gen
+	make -C proto openapi-web-gen
 
 .PHONY: openapi-ui
 proto-openapi-ui:

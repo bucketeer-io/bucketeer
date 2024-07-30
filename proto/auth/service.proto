@@ -17,6 +17,9 @@ syntax = "proto3";
 package bucketeer.auth;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/auth";
 
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
 import "proto/auth/token.proto";
 
 enum AuthType {
@@ -63,10 +66,152 @@ message SignInResponse {
   Token token = 1;
 }
 
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: { title: "Bucketeer Web Service" version: "1.0" }
+  schemes: HTTPS
+  host: "ENDPOINT"
+  consumes: "application/json"
+  produces: "application/json"
+  tags: [ { name: "Authentication" } ]
+  responses: {
+    key: "503"
+    value: {
+      description: "Returned for internal errors."
+      schema: { json_schema: { ref: ".google.rpc.Status" } }
+      examples: {
+        key: "application/json"
+        value: '{ "code": 13, "message": "internal", "details": [] }'
+      }
+    }
+  }
+};
+
 service AuthService {
+  rpc ExchangeToken(ExchangeTokenRequest) returns (ExchangeTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/exchange_token"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Exchange Token",
+      description: "Exchange the token from the OAuth provider to the Bucketeer token.\nCurrently, we only support Google.",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.exchange_token",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc GetAuthenticationURL(GetAuthenticationURLRequest)
-      returns (GetAuthenticationURLResponse);
-  rpc ExchangeToken(ExchangeTokenRequest) returns (ExchangeTokenResponse);
-  rpc SignIn(SignInRequest) returns (SignInResponse);
-  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+      returns (GetAuthenticationURLResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/authentication_url"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Authentication URL",
+      description: "The OAuth credentials must be configured on the server to call this API. It will return the Authentication URL.\nCurrently, we only support Google.",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.authentication_url",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/refresh_token"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Refresh Token",
+      description: "Refresh the Bucketeer token maintained by the web console.",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.refresh_token",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc SignIn(SignInRequest) returns (SignInResponse) {
+    option (google.api.http) = {
+      post: "/v1/auth/signin"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Sign In",
+      description: "Sign in on the web console using an email and password.",
+      tags: "Authentication",
+      operation_id: "web.v1.auth.signin",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 }
