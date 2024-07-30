@@ -6,6 +6,7 @@ import {
 import { AvatarIcon, AvatarImage } from 'components/avatar';
 import { Badge } from 'components/badge';
 import { Button } from 'components/button';
+import Divider from 'components/divider';
 import Icon from 'components/icon';
 
 const DashboardPage = () => {
@@ -79,6 +80,9 @@ const DashboardPage = () => {
 
         <Badge>{'1'}</Badge>
         <Badge variant="secondary">{'1'}</Badge>
+      </div>
+      <div className="mt-8 flex flex-col gap-6">
+        <Divider />
       </div>
     </div>
   );

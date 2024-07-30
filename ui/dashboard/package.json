@@ -19,6 +19,7 @@
     "src/**/*.{js,jsx,ts,tsx,css}": "prettier --write --ignore-unknown"
   },
   "dependencies": {
+    "@radix-ui/react-scroll-area": "^1.1.0",
     "@tailwindcss/forms": "^0.5.7",
     "@testing-library/jest-dom": "^6.4.6",
     "class-variance-authority": "^0.7.0",
