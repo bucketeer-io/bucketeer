@@ -19,6 +19,12 @@ import (
 	"strconv"
 	"time"
 
+	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	authclient "github.com/bucketeer-io/bucketeer/pkg/auth/client"
 	"github.com/bucketeer-io/bucketeer/pkg/autoops/command"
@@ -38,11 +44,6 @@ import (
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	experimentproto "github.com/bucketeer-io/bucketeer/proto/experiment"
-	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type options struct {
