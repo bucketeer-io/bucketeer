@@ -189,8 +189,10 @@ func (u *evalEvtUpdater) linkOpsRulesByFeatureID(
 ) []*aoproto.AutoOpsRule {
 	var rules []*aoproto.AutoOpsRule
 	for _, aor := range listAutoOpsRules {
+		r := &aodomain.AutoOpsRule{AutoOpsRule: aor}
 		// Ignore already triggered ops rules
-		if aor.FeatureId == featureID && aor.TriggeredAt == 0 {
+		if aor.FeatureId == featureID &&
+			!(r.IsFinished() || r.IsStopped()) {
 			rules = append(rules, aor)
 		}
 	}

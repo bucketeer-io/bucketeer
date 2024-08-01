@@ -36,10 +36,6 @@ message DeleteAutoOpsRuleCommand {}
 
 message StopAutoOpsRuleCommand {}
 
-// TODO: Remove this function after auto ops migration.
-// Deprecated
-message ChangeAutoOpsRuleTriggeredAtCommand {}
-
 message ChangeAutoOpsStatusCommand {
   AutoOpsStatus status = 1;
 }
