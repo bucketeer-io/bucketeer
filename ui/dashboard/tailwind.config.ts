@@ -135,7 +135,11 @@ const theme = {
   extend: {
     animation: {
       fade: '150ms cubic-bezier(0.16, 1, 0.3, 1) 0s 1 normal none running fade',
-      zoom: '150ms cubic-bezier(0.16, 1, 0.3, 1) 0s 1 normal none running zoom'
+      zoom: '150ms cubic-bezier(0.16, 1, 0.3, 1) 0s 1 normal none running zoom',
+      'slide-left':
+        '150ms cubic-bezier(0.16, 1, 0.3, 1) 0s 1 normal none running slide-left',
+      'slide-up':
+        '150ms cubic-bezier(0.16, 1, 0.3, 1) 0s 1 normal none running slide-up'
     },
     keyframes: {
       fade: {
@@ -144,6 +148,38 @@ const theme = {
         },
         '100%': {
           opacity: '1'
+        }
+      },
+      zoom: {
+        '0%': {
+          opacity: '0',
+          transform: 'scale(0.96)'
+        },
+        '100%': {
+          opacity: '1',
+          transform: 'scale(1)'
+        }
+      },
+      'slide-left': {
+        '0%': {
+          opacity: '0',
+          right: '-100%'
+        },
+        '100%': {
+          opacity: '1',
+          right: '0',
+          transform: 'scale(1)'
+        }
+      },
+      'slide-up': {
+        '0%': {
+          opacity: '0',
+          bottom: '-100%'
+        },
+        '100%': {
+          opacity: '1',
+          bottom: '0',
+          transform: 'scale(1)'
         }
       }
     },

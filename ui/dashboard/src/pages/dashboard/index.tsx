@@ -1,9 +1,9 @@
-import { useState } from 'react';
 import {
   IconAddRound,
   IconEditOutlined,
   IconPersonRound
 } from 'react-icons-material-design';
+import { useToggleOpen } from 'hooks';
 import { IconGoal } from '@icons';
 import { AvatarIcon, AvatarImage } from 'components/avatar';
 import { Badge } from 'components/badge';
@@ -12,9 +12,11 @@ import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
+import SlideModal from 'components/modal/slide';
 
 const DashboardPage = () => {
-  const [open, setOpen] = useState(false);
+  const [openModal, onOpenModal, onCloseModal] = useToggleOpen(false);
+  const [openSlider, onOpenSlider, onCloseSlider] = useToggleOpen(false);
 
   return (
     <div className="container p-10">
@@ -89,17 +91,35 @@ const DashboardPage = () => {
       <div className="mt-8 flex flex-col gap-6">
         <Divider />
 
-        <div className="flex">
-          <Button
-            onClick={() => setOpen(true)}
-            variant="secondary"
-          >{`Modal`}</Button>
+        <div className="flex gap-6">
+          <Button onClick={onOpenModal} variant="secondary">{`Modal`}</Button>
+          <Button onClick={onOpenSlider} variant="secondary">{`Slider`}</Button>
         </div>
+
+        <SlideModal
+          title={'New Environment'}
+          isOpen={openSlider}
+          onClose={onCloseSlider}
+          shouldCloseOnOverlayClick={false}
+        >
+          <div className="py-8 px-5 flex flex-col gap-6 items-center justify-center">
+            <div className="typo-para-big text-gray-700 px-20 text-center">
+              {`This experiment has the following goals connected to it`}
+            </div>
+          </div>
+
+          <div className="absolute bottom-0 bg-gray-50 w-full rounded-b-lg">
+            <ButtonBar
+              primaryButton={<Button variant="secondary">{`Cancel`}</Button>}
+              secondaryButton={<Button>{`Create Goal`}</Button>}
+            />
+          </div>
+        </SlideModal>
 
         <DialogModal
           title={'Goals Connected'}
-          isOpen={open}
-          onClose={() => setOpen(false)}
+          isOpen={openModal}
+          onClose={onCloseModal}
         >
           <div className="py-8 px-5 flex flex-col gap-6 items-center justify-center">
             <IconGoal />

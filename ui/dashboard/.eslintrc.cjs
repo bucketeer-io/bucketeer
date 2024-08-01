@@ -17,6 +17,7 @@ module.exports = {
       'warn',
       { allowConstantExport: true }
     ],
+    'react-hooks/exhaustive-deps': 'off',
     'react/jsx-uses-react': 'error',
     'react/jsx-uses-vars': 'error',
     'react/display-name': 'off'

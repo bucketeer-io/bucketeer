@@ -56,7 +56,9 @@ const DialogModal = ({
               <div
                 className={cn('flex items-center justify-between px-4 py-3.5')}
               >
-                <h1 className="typo-head-bold-huge">{title}</h1>
+                <Dialog.Title className="typo-head-bold-huge">
+                  {title}
+                </Dialog.Title>
                 <Dialog.Close asChild>
                   <Button size="icon-sm" variant="grey" onClick={onClose}>
                     <Icon icon={IconCloseRound} />

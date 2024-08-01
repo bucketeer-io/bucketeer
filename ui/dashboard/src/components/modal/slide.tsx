@@ -3,15 +3,8 @@ import { IconCloseRound } from 'react-icons-material-design';
 import * as Dialog from '@radix-ui/react-dialog';
 import { cn } from 'utils/style';
 import { Button } from 'components/button';
+import Divider from 'components/divider';
 import Icon from 'components/icon';
-
-export type SlideModalHeaderSize = 'xs' | 'sm' | 'md';
-
-const headerSizes = {
-  xs: 'md:py-2',
-  sm: 'md:py-4',
-  md: 'md:py-4 lg:py-6'
-};
 
 const SlideModal = ({
   direction = 'slide-left',
@@ -19,7 +12,6 @@ const SlideModal = ({
   isOpen,
   onClose,
   children,
-  header = 'md',
   shouldCloseOnOverlayClick = true
 }: {
   direction?: 'slide-up' | 'slide-left';
@@ -27,7 +19,6 @@ const SlideModal = ({
   isOpen: boolean;
   onClose: () => void;
   children: ReactNode;
-  header?: SlideModalHeaderSize;
   shouldCloseOnOverlayClick?: boolean;
 }) => {
   const onOpenChange = useCallback((v: boolean) => {
@@ -41,25 +32,26 @@ const SlideModal = ({
         <Dialog.Content>
           <div
             className={cn(
-              'fixed flex h-full w-full flex-col overflow-y-hidden bg-light-50 lg:w-2/3 lg:max-w-[808px]',
+              'fixed flex h-full w-full flex-col rounded-l-lg bg-gray-50 max-w-[542px]',
               direction === 'slide-left' && 'right-0 top-0 animate-slide-left',
               direction === 'slide-up' && 'bottom-0 left-0 animate-slide-up'
             )}
           >
-            <div className="z-10 flex-initial px-4 shadow-header">
+            <div className="z-10 flex-initial shadow-header">
               <div
-                className={cn(
-                  'flex items-center justify-between px-2 py-3',
-                  headerSizes[header]
-                )}
+                className={cn('flex items-center justify-between px-4 py-3.5')}
               >
-                <h2 className="typo-label-big">{title}</h2>
-                <Button size="icon-sm" variant="grey" onClick={onClose}>
-                  <Icon icon={IconCloseRound} />
-                </Button>
+                <Dialog.Title className="typo-head-bold-huge">
+                  {title}
+                </Dialog.Title>
+                <Dialog.Close asChild>
+                  <Button size="icon-sm" variant="grey" onClick={onClose}>
+                    <Icon icon={IconCloseRound} />
+                  </Button>
+                </Dialog.Close>
               </div>
             </div>
-
+            <Divider />
             <div className="flex-1 overflow-hidden">{children}</div>
           </div>
         </Dialog.Content>
