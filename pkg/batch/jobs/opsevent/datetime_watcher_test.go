@@ -93,16 +93,16 @@ func TestRunDatetimeWatcher(t *testing.T) {
 					&autoopsproto.ListAutoOpsRulesResponse{
 						AutoOpsRules: []*autoopsproto.AutoOpsRule{
 							{
-								Id:          "id-0",
-								FeatureId:   "fid-0",
-								Clauses:     []*autoopsproto.Clause{{Clause: c}},
-								TriggeredAt: 0,
+								Id:            "id-0",
+								FeatureId:     "fid-0",
+								Clauses:       []*autoopsproto.Clause{{Clause: c}},
+								AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
 							},
 							{
-								Id:          "id-1",
-								FeatureId:   "fid-1",
-								Clauses:     []*autoopsproto.Clause{{Clause: c}},
-								TriggeredAt: 1,
+								Id:            "id-1",
+								FeatureId:     "fid-1",
+								Clauses:       []*autoopsproto.Clause{{Clause: c}},
+								AutoOpsStatus: autoopsproto.AutoOpsStatus_FINISHED,
 							},
 						},
 					},
@@ -141,16 +141,16 @@ func TestRunDatetimeWatcher(t *testing.T) {
 					&autoopsproto.ListAutoOpsRulesResponse{
 						AutoOpsRules: []*autoopsproto.AutoOpsRule{
 							{
-								Id:          "id-0",
-								FeatureId:   "fid-0",
-								Clauses:     []*autoopsproto.Clause{{Id: "clause-id-0", Clause: c}},
-								TriggeredAt: 0,
+								Id:            "id-0",
+								FeatureId:     "fid-0",
+								Clauses:       []*autoopsproto.Clause{{Id: "clause-id-0", Clause: c}},
+								AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
 							},
 							{
-								Id:          "id-1",
-								FeatureId:   "fid-1",
-								Clauses:     []*autoopsproto.Clause{{Id: "clause-id-1", Clause: c}},
-								TriggeredAt: 1,
+								Id:            "id-1",
+								FeatureId:     "fid-1",
+								Clauses:       []*autoopsproto.Clause{{Id: "clause-id-1", Clause: c}},
+								AutoOpsStatus: autoopsproto.AutoOpsStatus_FINISHED,
 							},
 						},
 					},
