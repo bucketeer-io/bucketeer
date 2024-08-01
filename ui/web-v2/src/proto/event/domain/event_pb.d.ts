@@ -4067,9 +4067,6 @@ export class AutoOpsRuleCreatedEvent extends jspb.Message {
     index?: number
   ): proto_autoops_clause_pb.Clause;
 
-  getTriggeredAt(): number;
-  setTriggeredAt(value: number): void;
-
   getCreatedAt(): number;
   setCreatedAt(value: number): void;
 
@@ -4107,7 +4104,6 @@ export namespace AutoOpsRuleCreatedEvent {
     featureId: string;
     opsType: proto_autoops_auto_ops_rule_pb.OpsTypeMap[keyof proto_autoops_auto_ops_rule_pb.OpsTypeMap];
     clausesList: Array<proto_autoops_clause_pb.Clause.AsObject>;
-    triggeredAt: number;
     createdAt: number;
     updatedAt: number;
     opsStatus: proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap];
