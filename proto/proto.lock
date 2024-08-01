@@ -1980,17 +1980,6 @@
                 "is_repeated": true
               },
               {
-                "id": 6,
-                "name": "triggered_at",
-                "type": "int64",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "id": 7,
                 "name": "created_at",
                 "type": "int64"
@@ -2010,6 +1999,9 @@
                 "name": "auto_ops_status",
                 "type": "AutoOpsStatus"
               }
+            ],
+            "reserved_ids": [
+              6
             ]
           },
           {
@@ -2297,9 +2289,6 @@
           },
           {
             "name": "StopAutoOpsRuleCommand"
-          },
-          {
-            "name": "ChangeAutoOpsRuleTriggeredAtCommand"
           },
           {
             "name": "ChangeAutoOpsStatusCommand",
@@ -2886,21 +2875,13 @@
                 "type": "string"
               },
               {
-                "id": 3,
-                "name": "change_auto_ops_rule_triggered_at_command",
-                "type": "ChangeAutoOpsRuleTriggeredAtCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "id": 4,
                 "name": "execute_auto_ops_rule_command",
                 "type": "ExecuteAutoOpsRuleCommand"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -8146,17 +8127,6 @@
                 "is_repeated": true
               },
               {
-                "id": 4,
-                "name": "triggered_at",
-                "type": "int64",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "id": 5,
                 "name": "created_at",
                 "type": "int64"
@@ -8171,6 +8141,9 @@
                 "name": "ops_status",
                 "type": "bucketeer.autoops.AutoOpsStatus"
               }
+            ],
+            "reserved_ids": [
+              4
             ]
           },
           {
