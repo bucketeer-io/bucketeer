@@ -22,9 +22,6 @@ export class AutoOpsRule extends jspb.Message {
     index?: number
   ): proto_autoops_clause_pb.Clause;
 
-  getTriggeredAt(): number;
-  setTriggeredAt(value: number): void;
-
   getCreatedAt(): number;
   setCreatedAt(value: number): void;
 
@@ -64,7 +61,6 @@ export namespace AutoOpsRule {
     featureId: string;
     opsType: OpsTypeMap[keyof OpsTypeMap];
     clausesList: Array<proto_autoops_clause_pb.Clause.AsObject>;
-    triggeredAt: number;
     createdAt: number;
     updatedAt: number;
     deleted: boolean;
