@@ -78,29 +78,6 @@ func TestDelete(t *testing.T) {
 	}
 }
 
-func TestChangeTriggeredAt(t *testing.T) {
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	patterns := []*struct {
-		expected error
-	}{
-		{
-			expected: nil,
-		},
-	}
-	for _, p := range patterns {
-		m := publishermock.NewMockPublisher(mockController)
-		a := newAutoOpsRule(t)
-		h := newAutoOpsRuleCommandHandler(t, m, a)
-		if p.expected == nil {
-			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-		}
-		cmd := &proto.ChangeAutoOpsRuleTriggeredAtCommand{}
-		err := h.Handle(context.Background(), cmd)
-		assert.Equal(t, p.expected, err)
-	}
-}
-
 func TestChangeAutoOpsStatus(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()

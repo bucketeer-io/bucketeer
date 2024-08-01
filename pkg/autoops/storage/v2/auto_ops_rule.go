@@ -75,7 +75,7 @@ func (s *autoOpsRuleStorage) CreateAutoOpsRule(
 		e.FeatureId,
 		int32(e.OpsType),
 		mysql.JSONObject{Val: e.Clauses},
-		e.TriggeredAt,
+		0, // ToDo: TriggeredAt is deprecated. Remove this line after migration.
 		e.CreatedAt,
 		e.UpdatedAt,
 		e.Deleted,
@@ -102,7 +102,7 @@ func (s *autoOpsRuleStorage) UpdateAutoOpsRule(
 		e.FeatureId,
 		int32(e.OpsType),
 		mysql.JSONObject{Val: e.Clauses},
-		e.TriggeredAt,
+		0, // ToDo: TriggeredAt is deprecated. Remove this line after migration.
 		e.CreatedAt,
 		e.UpdatedAt,
 		e.Deleted,
@@ -139,7 +139,7 @@ func (s *autoOpsRuleStorage) GetAutoOpsRule(
 		&autoOpsRule.FeatureId,
 		&opsType,
 		&mysql.JSONObject{Val: &autoOpsRule.Clauses},
-		&autoOpsRule.TriggeredAt,
+		nil, // ToDo: TriggeredAt is deprecated. Remove this line after migration.
 		&autoOpsRule.CreatedAt,
 		&autoOpsRule.UpdatedAt,
 		&autoOpsRule.Deleted,
@@ -179,7 +179,7 @@ func (s *autoOpsRuleStorage) ListAutoOpsRules(
 			&autoOpsRule.FeatureId,
 			&opsType,
 			&mysql.JSONObject{Val: &autoOpsRule.Clauses},
-			&autoOpsRule.TriggeredAt,
+			nil, // ToDo: TriggeredAt is deprecated. Remove this line after migration.
 			&autoOpsRule.CreatedAt,
 			&autoOpsRule.UpdatedAt,
 			&autoOpsRule.Deleted,

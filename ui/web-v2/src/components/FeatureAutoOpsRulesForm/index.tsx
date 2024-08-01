@@ -310,7 +310,11 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       if (autoOpsRules?.length > 0) {
         const ids = autoOpsRules
           .filter((rule) => {
-            return rule.opsType === OpsType.EVENT_RATE && !rule.triggeredAt;
+            return (
+              rule.opsType === OpsType.EVENT_RATE &&
+              (rule.autoOpsStatus === AutoOpsStatus.WAITING ||
+                rule.autoOpsStatus === AutoOpsStatus.RUNNING)
+            );
           })
           .map((rule) => rule.id);
 
