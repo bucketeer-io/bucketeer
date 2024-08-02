@@ -31,10 +31,11 @@ import { AppState } from '.';
 
 const MODULE_NAME = 'flagTriggers';
 
-export const flagTriggersAdapter =
-  createEntityAdapter<ListFlagTriggersResponse.FlagTriggerWithUrl.AsObject>({
-    selectId: (flagTriggerWithUrl) => flagTriggerWithUrl.flagTrigger.id
-  });
+export const flagTriggersAdapter = createEntityAdapter({
+  selectId: (
+    flagTriggerWithUrl: ListFlagTriggersResponse.FlagTriggerWithUrl.AsObject
+  ) => flagTriggerWithUrl.flagTrigger.id
+});
 
 export const { selectAll, selectById } = flagTriggersAdapter.getSelectors();
 

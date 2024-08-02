@@ -28,8 +28,8 @@ import { AppState } from '.';
 
 const MODULE_NAME = 'apiKeys';
 
-export const apiKeysAdapter = createEntityAdapter<APIKey.AsObject>({
-  selectId: (apykey) => apykey.id
+export const apiKeysAdapter = createEntityAdapter({
+  selectId: (apykey: APIKey.AsObject) => apykey.id
 });
 
 export const { selectAll, selectById } = apiKeysAdapter.getSelectors();

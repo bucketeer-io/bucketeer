@@ -30,8 +30,8 @@ import { AppState } from '.';
 
 const MODULE_NAME = 'goals';
 
-export const goalsAdapter = createEntityAdapter<Goal.AsObject>({
-  selectId: (goal) => goal.id
+export const goalsAdapter = createEntityAdapter({
+  selectId: (goal: Goal.AsObject) => goal.id
 });
 
 export const { selectAll, selectById } = goalsAdapter.getSelectors();

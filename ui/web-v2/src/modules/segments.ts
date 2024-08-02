@@ -33,8 +33,8 @@ import { AppState } from '.';
 
 const MODULE_NAME = 'segments';
 
-export const segmentsAdapter = createEntityAdapter<Segment.AsObject>({
-  selectId: (segment) => segment.id
+export const segmentsAdapter = createEntityAdapter({
+  selectId: (segment: Segment.AsObject) => segment.id
 });
 
 export const { selectAll, selectById } = segmentsAdapter.getSelectors();

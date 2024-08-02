@@ -48,8 +48,8 @@ import { AppState } from '.';
 
 const MODULE_NAME = 'features';
 
-export const featuresAdapter = createEntityAdapter<Feature.AsObject>({
-  selectId: (feature) => feature.id
+export const featuresAdapter = createEntityAdapter({
+  selectId: (feature: Feature.AsObject) => feature.id
 });
 
 export const { selectAll, selectById } = featuresAdapter.getSelectors();
