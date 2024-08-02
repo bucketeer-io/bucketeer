@@ -412,22 +412,9 @@ func (s *AutoOpsService) validateDatetimeClauses(
 	clauses []*autoopsproto.DatetimeClause,
 	localizer locale.Localizer,
 ) error {
-	var checkClauses []*autoopsproto.DatetimeClause
+	checkTimes := make(map[int64]bool)
 	for _, c := range clauses {
-		if err := s.validateDatetimeClause(c, checkClauses, localizer); err != nil {
-			return err
-		}
-		checkClauses = append(checkClauses, c)
-	}
-	return nil
-}
-
-func (s *AutoOpsService) validateDatetimeClause(
-	clause *autoopsproto.DatetimeClause,
-	dateTimeClauses []*autoopsproto.DatetimeClause,
-	localizer locale.Localizer) error {
-	for _, c := range dateTimeClauses {
-		if c.Time == clause.Time {
+		if checkTimes[c.Time] {
 			dt, err := statusDatetimeClauseDuplicateTime.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
@@ -437,7 +424,17 @@ func (s *AutoOpsService) validateDatetimeClause(
 			}
 			return dt.Err()
 		}
+		if err := s.validateDatetimeClause(c, localizer); err != nil {
+			return err
+		}
+		checkTimes[c.Time] = true
 	}
+	return nil
+}
+
+func (s *AutoOpsService) validateDatetimeClause(
+	clause *autoopsproto.DatetimeClause,
+	localizer locale.Localizer) error {
 	if clause.Time <= time.Now().Unix() {
 		dt, err := statusDatetimeClauseInvalidTime.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -745,26 +742,16 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 				return dt.Err()
 			}
 
-			// Extract each schedule time (however, omit the time scheduled for deletion)
-			var scheduleTimes []int64
-			dateTimeClause, _ := autoOpsRule.ExtractDatetimeClauses()
-			for _, c := range dateTimeClause {
-				isAddScheduleTime := true
-				for _, deleteDateTime := range req.DeleteClauseCommands {
-					deleteClause, _ := autoOpsRule.ExtractDatetimeClause(deleteDateTime.Id)
-					if deleteClause != nil && deleteClause.Time == c.Time {
-						isAddScheduleTime = false
-					}
-				}
-				if isAddScheduleTime {
-					scheduleTimes = append(scheduleTimes, c.Time)
-				}
+			// Delete a deletion schedule from the currently held schedules
+			extractDateTimeClauses, _ := autoOpsRule.ExtractDatetimeClauses()
+			for _, deleteClause := range req.DeleteClauseCommands {
+				delete(extractDateTimeClauses, deleteClause.Id)
 			}
 
 			// Check if there is a schedule with the same date and time.
 			for _, c := range req.AddDatetimeClauseCommands {
-				for _, scheduleTime := range scheduleTimes {
-					if c.DatetimeClause.Time == scheduleTime {
+				for _, extractDateTimeClause := range extractDateTimeClauses {
+					if c.DatetimeClause.Time == extractDateTimeClause.Time {
 						dt, err := statusDatetimeClauseDuplicateTime.WithDetails(&errdetails.LocalizedMessage{
 							Locale:  localizer.GetLocale(),
 							Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
@@ -777,8 +764,8 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 				}
 			}
 			for _, c := range req.ChangeDatetimeClauseCommands {
-				for _, scheduleTime := range scheduleTimes {
-					if c.DatetimeClause.Time == scheduleTime {
+				for _, extractDateTimeClause := range extractDateTimeClauses {
+					if c.DatetimeClause.Time == extractDateTimeClause.Time {
 						dt, err := statusDatetimeClauseDuplicateTime.WithDetails(&errdetails.LocalizedMessage{
 							Locale:  localizer.GetLocale(),
 							Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
@@ -995,10 +982,10 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
 			}
 			return dt.Err()
 		}
-		if err := s.validateDatetimeClause(c.DatetimeClause, checkDatetimeClauses, localizer); err != nil {
-			return err
-		}
 		checkDatetimeClauses = append(checkDatetimeClauses, c.DatetimeClause)
+	}
+	if err := s.validateDatetimeClauses(checkDatetimeClauses, localizer); err != nil {
+		return err
 	}
 
 	for _, c := range req.ChangeDatetimeClauseCommands {
@@ -1022,11 +1009,12 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
 			}
 			return dt.Err()
 		}
-		if err := s.validateDatetimeClause(c.DatetimeClause, checkDatetimeClauses, localizer); err != nil {
-			return err
-		}
 		checkDatetimeClauses = append(checkDatetimeClauses, c.DatetimeClause)
 	}
+	if err := s.validateDatetimeClauses(checkDatetimeClauses, localizer); err != nil {
+		return err
+	}
+
 	return nil
 }
 
