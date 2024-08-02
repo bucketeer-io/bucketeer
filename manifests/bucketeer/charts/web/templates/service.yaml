@@ -3,6 +3,10 @@ kind: Service
 metadata:
   name: {{ template "web.fullname" . }}
   namespace: {{ .Values.namespace }}
+  annotations:
+    cloud.google.com/backend-config: '{"default": "{{ template "web.fullname" . }}"}'
+    cloud.google.com/neg: '{"ingress": true}'
+    cloud.google.com/app-protocols: '{"service":"HTTP2"}'
   labels:
     app: {{ template "web.name" . }}
     chart: {{ template "web.chart" . }}
@@ -12,7 +16,6 @@ metadata:
     metrics: "true"
 spec:
   type: {{ .Values.service.type }}
-  clusterIP: {{ .Values.service.clusterIP }}
   ports:
     - name: grpc-service
       port: {{ .Values.service.grpcPort }}
