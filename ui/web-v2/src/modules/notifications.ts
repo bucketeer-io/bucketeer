@@ -34,8 +34,8 @@ import { AppState } from '.';
 
 const MODULE_NAME = 'notifications';
 
-export const notificationAdapter = createEntityAdapter<Subscription.AsObject>({
-  selectId: (notification) => notification.id
+export const notificationAdapter = createEntityAdapter({
+  selectId: (notification: Subscription.AsObject) => notification.id
 });
 
 export const { selectAll, selectById } = notificationAdapter.getSelectors();

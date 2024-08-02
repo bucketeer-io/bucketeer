@@ -29,8 +29,8 @@ import { AppState } from '.';
 
 const MODULE_NAME = 'accounts';
 
-export const accountsAdapter = createEntityAdapter<AccountV2.AsObject>({
-  selectId: (segment) => segment.email
+export const accountsAdapter = createEntityAdapter({
+  selectId: (segment: AccountV2.AsObject) => segment.email
 });
 
 export const { selectAll, selectById } = accountsAdapter.getSelectors();

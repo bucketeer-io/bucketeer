@@ -30,8 +30,8 @@ import { AppState } from '.';
 
 const MODULE_NAME = 'autoOpsRules';
 
-export const autoOpsRulesAdapter = createEntityAdapter<AutoOpsRule.AsObject>({
-  selectId: (autoOpsRule) => autoOpsRule.id
+export const autoOpsRulesAdapter = createEntityAdapter({
+  selectId: (autoOpsRule: AutoOpsRule.AsObject) => autoOpsRule.id
 });
 
 export const { selectAll, selectById } = autoOpsRulesAdapter.getSelectors();

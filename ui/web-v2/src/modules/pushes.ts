@@ -25,8 +25,8 @@ import { AppState } from '.';
 
 const MODULE_NAME = 'pushes';
 
-export const pushAdapter = createEntityAdapter<Push.AsObject>({
-  selectId: (push) => push.id
+export const pushAdapter = createEntityAdapter({
+  selectId: (push: Push.AsObject) => push.id
 });
 
 export const { selectAll, selectById } = pushAdapter.getSelectors();

@@ -23,10 +23,10 @@ import { AppState } from '.';
 
 const MODULE_NAME = 'progressiveRollout';
 
-export const progressiveRolloutAdapter =
-  createEntityAdapter<ProgressiveRollout.AsObject>({
-    selectId: (progressiveRollout) => progressiveRollout.id
-  });
+export const progressiveRolloutAdapter = createEntityAdapter({
+  selectId: (progressiveRollout: ProgressiveRollout.AsObject) =>
+    progressiveRollout.id
+});
 
 export const { selectAll, selectById } =
   progressiveRolloutAdapter.getSelectors();

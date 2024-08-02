@@ -20,8 +20,8 @@ import { AppState } from '.';
 
 const MODULE_NAME = 'auditLogs';
 
-export const auditLogsAdapter = createEntityAdapter<AuditLog.AsObject>({
-  selectId: (auditLog) => auditLog.id
+export const auditLogsAdapter = createEntityAdapter({
+  selectId: (auditLog: AuditLog.AsObject) => auditLog.id
 });
 
 export const { selectAll, selectById } = auditLogsAdapter.getSelectors();

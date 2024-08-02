@@ -16,8 +16,8 @@ import { AppState } from '.';
 
 const MODULE_NAME = 'tags';
 
-export const tagsAdapter = createEntityAdapter<Tag.AsObject>({
-  selectId: (tag) => tag.id
+export const tagsAdapter = createEntityAdapter({
+  selectId: (tag: Tag.AsObject) => tag.id
 });
 
 export const { selectAll, selectById } = tagsAdapter.getSelectors();

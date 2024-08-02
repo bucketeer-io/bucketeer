@@ -15,8 +15,8 @@ import { AppState } from '.';
 
 const MODULE_NAME = 'opsCounts';
 
-export const opsCountsAdapter = createEntityAdapter<OpsCount.AsObject>({
-  selectId: (opsCount) => opsCount.id
+export const opsCountsAdapter = createEntityAdapter({
+  selectId: (opsCount: OpsCount.AsObject) => opsCount.id
 });
 
 export const { selectAll, selectById } = opsCountsAdapter.getSelectors();

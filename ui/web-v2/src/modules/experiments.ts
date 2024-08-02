@@ -33,8 +33,8 @@ import { AppState } from '.';
 
 const MODULE_NAME = 'experiments';
 
-export const experimentsAdapter = createEntityAdapter<Experiment.AsObject>({
-  selectId: (experiment) => experiment.id
+export const experimentsAdapter = createEntityAdapter({
+  selectId: (experiment: Experiment.AsObject) => experiment.id
 });
 
 export const { selectAll, selectById } = experimentsAdapter.getSelectors();

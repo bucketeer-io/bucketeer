@@ -25,8 +25,8 @@ import { AppState } from '.';
 
 const MODULE_NAME = 'environments';
 
-export const environmentAdapter = createEntityAdapter<EnvironmentV2.AsObject>({
-  selectId: (e) => e.id
+export const environmentAdapter = createEntityAdapter({
+  selectId: (e: EnvironmentV2.AsObject) => e.id
 });
 
 export const { selectAll, selectById } = environmentAdapter.getSelectors();
