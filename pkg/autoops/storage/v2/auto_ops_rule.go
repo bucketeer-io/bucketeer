@@ -75,7 +75,6 @@ func (s *autoOpsRuleStorage) CreateAutoOpsRule(
 		e.FeatureId,
 		int32(e.OpsType),
 		mysql.JSONObject{Val: e.Clauses},
-		0, // ToDo: TriggeredAt is deprecated. Remove this line after migration.
 		e.CreatedAt,
 		e.UpdatedAt,
 		e.Deleted,
@@ -102,7 +101,6 @@ func (s *autoOpsRuleStorage) UpdateAutoOpsRule(
 		e.FeatureId,
 		int32(e.OpsType),
 		mysql.JSONObject{Val: e.Clauses},
-		0, // ToDo: TriggeredAt is deprecated. Remove this line after migration.
 		e.CreatedAt,
 		e.UpdatedAt,
 		e.Deleted,
@@ -129,8 +127,6 @@ func (s *autoOpsRuleStorage) GetAutoOpsRule(
 ) (*domain.AutoOpsRule, error) {
 	autoOpsRule := proto.AutoOpsRule{}
 	var opsType int32
-	var tmpTriggeredAt = 0
-
 	err := s.qe.QueryRowContext(
 		ctx,
 		selectAutoOpsRuleSQL,
@@ -141,7 +137,6 @@ func (s *autoOpsRuleStorage) GetAutoOpsRule(
 		&autoOpsRule.FeatureId,
 		&opsType,
 		&mysql.JSONObject{Val: &autoOpsRule.Clauses},
-		&tmpTriggeredAt, // ToDo: TriggeredAt is deprecated. Remove this line after migration.
 		&autoOpsRule.CreatedAt,
 		&autoOpsRule.UpdatedAt,
 		&autoOpsRule.Deleted,
@@ -173,7 +168,6 @@ func (s *autoOpsRuleStorage) ListAutoOpsRules(
 	}
 	defer rows.Close()
 	autoOpsRules := make([]*proto.AutoOpsRule, 0, limit)
-	var tmpTriggeredAt = 0
 	for rows.Next() {
 		autoOpsRule := proto.AutoOpsRule{}
 		var opsType int32
@@ -182,7 +176,6 @@ func (s *autoOpsRuleStorage) ListAutoOpsRules(
 			&autoOpsRule.FeatureId,
 			&opsType,
 			&mysql.JSONObject{Val: &autoOpsRule.Clauses},
-			&tmpTriggeredAt, // ToDo: TriggeredAt is deprecated. Remove this line after migration.
 			&autoOpsRule.CreatedAt,
 			&autoOpsRule.UpdatedAt,
 			&autoOpsRule.Deleted,
