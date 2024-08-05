@@ -747,34 +747,34 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 			for _, deleteClause := range req.DeleteClauseCommands {
 				delete(extractDateTimeClauses, deleteClause.Id)
 			}
+			checkTimes := make(map[int64]bool)
+			for _, c := range extractDateTimeClauses {
+				checkTimes[c.Time] = true
+			}
 
 			// Check if there is a schedule with the same date and time.
 			for _, c := range req.AddDatetimeClauseCommands {
-				for _, extractDateTimeClause := range extractDateTimeClauses {
-					if c.DatetimeClause.Time == extractDateTimeClause.Time {
-						dt, err := statusDatetimeClauseDuplicateTime.WithDetails(&errdetails.LocalizedMessage{
-							Locale:  localizer.GetLocale(),
-							Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
-						})
-						if err != nil {
-							return statusInternal.Err()
-						}
-						return dt.Err()
+				if checkTimes[c.DatetimeClause.Time] {
+					dt, err := statusDatetimeClauseDuplicateTime.WithDetails(&errdetails.LocalizedMessage{
+						Locale:  localizer.GetLocale(),
+						Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
+					})
+					if err != nil {
+						return statusInternal.Err()
 					}
+					return dt.Err()
 				}
 			}
 			for _, c := range req.ChangeDatetimeClauseCommands {
-				for _, extractDateTimeClause := range extractDateTimeClauses {
-					if c.DatetimeClause.Time == extractDateTimeClause.Time {
-						dt, err := statusDatetimeClauseDuplicateTime.WithDetails(&errdetails.LocalizedMessage{
-							Locale:  localizer.GetLocale(),
-							Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
-						})
-						if err != nil {
-							return statusInternal.Err()
-						}
-						return dt.Err()
+				if checkTimes[c.DatetimeClause.Time] {
+					dt, err := statusDatetimeClauseDuplicateTime.WithDetails(&errdetails.LocalizedMessage{
+						Locale:  localizer.GetLocale(),
+						Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
+					})
+					if err != nil {
+						return statusInternal.Err()
 					}
+					return dt.Err()
 				}
 			}
 		}
