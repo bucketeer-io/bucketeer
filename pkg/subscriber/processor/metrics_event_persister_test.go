@@ -25,9 +25,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	storagemock "github.com/bucketeer-io/bucketeer/pkg/batch/storage/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
+	storagemock "github.com/bucketeer-io/bucketeer/pkg/subscriber/storage/mock"
 	clientevent "github.com/bucketeer-io/bucketeer/proto/event/client"
 )
 

@@ -26,12 +26,12 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
-	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
 	pushdomain "github.com/bucketeer-io/bucketeer/pkg/push/domain"
+	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
 	btproto "github.com/bucketeer-io/bucketeer/proto/batch"
 	domaineventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"

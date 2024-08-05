@@ -24,10 +24,10 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/singleflight"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/storage"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	ec "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/bigquery/writer"
+	"github.com/bucketeer-io/bucketeer/pkg/subscriber/storage"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	epproto "github.com/bucketeer-io/bucketeer/proto/eventpersisterdwh"
 	exproto "github.com/bucketeer-io/bucketeer/proto/experiment"

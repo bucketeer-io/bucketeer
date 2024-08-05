@@ -58,7 +58,7 @@ var (
 	subscriberReceivedCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
-			Subsystem: "batch_server",
+			Subsystem: "subscriber",
 			Name:      "subscriber_received_event_total",
 			Help:      "Total number of received messages",
 		}, []string{"subscriber"})
@@ -66,7 +66,7 @@ var (
 	subscriberHandledCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
-			Subsystem: "batch_server",
+			Subsystem: "subscriber",
 			Name:      "subscriber_handled_event_total",
 			Help:      "Total number of handled messages",
 		}, []string{"subscriber", "code"})
@@ -74,7 +74,7 @@ var (
 	subscriberHandledHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "bucketeer",
-			Subsystem: "batch_server",
+			Subsystem: "subscriber",
 			Name:      "subscriber_handled_seconds",
 			Help:      "Histogram of message handling duration (seconds)",
 			Buckets:   prometheus.DefBuckets,

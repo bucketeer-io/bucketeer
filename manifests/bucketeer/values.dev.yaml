@@ -229,9 +229,52 @@ batch-server:
       - name: mau-partition-creator
         jobId: MauPartitionCreator
         schedule: "0 2 2 * *"
+
+
+subscriber:
+  env:
+    project: bucketeer-test
+    profile: false
+    gcpEnabled: false
+    mysqlUser: bucketeer
+    mysqlPass: bucketeer
+    mysqlHost: localenv-mysql-headless.default.svc.cluster.local
+    mysqlPort: 3306
+    mysqlDbName: bucketeer
+    bigqueryEmulatorHost: localenv-bq.default.svc.cluster.local:9060
+    pubsubEmulatorHost: localenv-pubsub.default.svc.cluster.local:8089
+    notificationService: localhost:9001
+    environmentService: localhost:9001
+    autoOpsService: localhost:9001
+    experimentService: localhost:9001
+    featureService: localhost:9001
+    webURL: http://localhost:3000
+    logLevel: debug
+    port: 9090
+    metricsPort: 9002
+    refreshInterval: 10m
+    # redis settings
+    persistentRedis:
+      serverName: batch-peristent-redis
+      addr: localenv-redis-headless.default.svc.cluster.local:6379
+      poolMaxIdle: 25
+      poolMaxActive: 25
+    nonPersistentRedis:
+      serverName: batch-non-peristent-redis
+      addr: localenv-redis-headless.default.svc.cluster.local:6379
+      poolMaxIdle: 25
+      poolMaxActive: 25
+
+  tls:
+    service:
+      secret: bucketeer-service-cert
+
+  serviceToken:
+    secret: bucketeer-service-token
+
   subscribers:
     # This is the processor's name. It must match the same name defined in the
-    # pkg/batch/subscriber/processor/processors.go
+    # pkg/subscriber/processor/processors.go
     auditLogPersister:
       project: bucketeer-test
       topic: domain
@@ -341,7 +384,7 @@ batch-server:
   # This configuration is used for add custom params to Processors
   processors:
     # This is the processor's name. It must match the same name defined in the
-    # pkg/batch/subscriber/processor/processors.go
+    # pkg/subscriber/processor/processors.go
     auditLogPersister:
       flushSize: 100
       flushInterval: 10

@@ -26,13 +26,13 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"go.uber.org/zap"
 
-	"github.com/bucketeer-io/bucketeer/pkg/batch/subscriber"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
