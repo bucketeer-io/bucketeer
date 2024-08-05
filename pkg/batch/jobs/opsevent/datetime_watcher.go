@@ -76,7 +76,7 @@ func (w *datetimeWatcher) Run(ctx context.Context) (lastErr error) {
 		}
 		for _, a := range autoOpsRules {
 			aor := &autoopsdomain.AutoOpsRule{AutoOpsRule: a}
-			if aor.IsStopped() || aor.IsFinished() {
+			if aor.IsCompleted() {
 				continue
 			}
 			executeClauseID, err := w.getExecuteClauseId(ctx, env.Id, aor)

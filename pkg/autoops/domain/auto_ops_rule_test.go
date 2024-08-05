@@ -495,6 +495,18 @@ func TestIsStopped(t *testing.T) {
 	assert.True(t, aor.IsStopped())
 }
 
+func TestIsCompleted(t *testing.T) {
+	t.Parallel()
+	aor := createAutoOpsRule(t)
+	assert.False(t, aor.IsCompleted())
+
+	aor.AutoOpsStatus = autoopsproto.AutoOpsStatus_STOPPED
+	assert.True(t, aor.IsCompleted())
+
+	aor.AutoOpsStatus = autoopsproto.AutoOpsStatus_FINISHED
+	assert.True(t, aor.IsCompleted())
+}
+
 func TestSetAutoOpsStatus(t *testing.T) {
 	t.Parallel()
 	aor := createAutoOpsRule(t)
