@@ -4,7 +4,6 @@ SET
     feature_id = ?,
     ops_type = ?,
     clauses = ?,
-    triggered_at = 0,
     created_at = ?,
     updated_at = ?,
     deleted = ?,
