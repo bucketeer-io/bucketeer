@@ -310,6 +310,12 @@ const typography = plugin(({ addComponents }) => {
       lineHeight: '20px',
       letterSpacing: '0.01em'
     },
+    '.typo-head-bold-tiny': {
+      fontWeight: '800',
+      fontSize: '10px',
+      lineHeight: '10px',
+      letterSpacing: '0.01em'
+    },
     '.typo-para-big': {
       fontWeight: '400',
       fontSize: '18px',

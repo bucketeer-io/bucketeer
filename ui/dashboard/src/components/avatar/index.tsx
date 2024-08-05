@@ -1,8 +1,8 @@
 import type { FunctionComponent } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { BG_COLOR_MAPPING, COLOR_MAPPING } from 'constants/styles';
 import type { Color } from '@types';
 import { cn } from 'utils/style';
-import { BG_COLOR_MAPPING, COLOR_MAPPING } from 'app/constants';
 
 // Avatar icon
 const AvatarIconVariants = cva(['flex items-center justify-center'], {

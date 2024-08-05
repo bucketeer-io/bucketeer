@@ -15,6 +15,7 @@
     "<THIRD_PARTY_MODULES>",
     "^tailwind(.*)$",
     "^@types$",
+    "^@constants$",
     "^utils(.*)$",
     "^@icons$",
     "^app(.*)$",

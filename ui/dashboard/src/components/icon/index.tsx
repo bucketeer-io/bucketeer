@@ -1,7 +1,7 @@
 import type { FunctionComponent } from 'react';
 import clsx from 'clsx';
+import { COLOR_MAPPING, ICON_SIZE_MAPPING } from 'constants/styles';
 import type { Color, IconSize } from '@types';
-import { COLOR_MAPPING, ICON_SIZE_MAPPING } from 'app/constants';
 
 export interface IconProps {
   color?: Color;
