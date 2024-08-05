@@ -720,7 +720,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 			return err
 		}
 
-		if autoOpsRule.IsFinished() || autoOpsRule.IsStopped() {
+		if autoOpsRule.IsCompleted() {
 			dt, err := statusAutoOpsRuleCompleted.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.InvalidArgumentError),
@@ -1549,7 +1549,7 @@ func (s *AutoOpsService) checkIfHasAlreadyTriggered(
 		}
 		return false, dt.Err()
 	}
-	if autoOpsRule.IsFinished() || autoOpsRule.IsStopped() || autoOpsRule.Deleted {
+	if autoOpsRule.IsCompleted() || autoOpsRule.Deleted {
 		s.logger.Warn(
 			"Auto Ops Rule already triggered",
 			log.FieldsFromImcomingContext(ctx).AddFields(
