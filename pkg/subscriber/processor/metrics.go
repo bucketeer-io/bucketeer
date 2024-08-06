@@ -59,7 +59,7 @@ var (
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
 			Subsystem: "subscriber",
-			Name:      "subscriber_received_event_total",
+			Name:      "received_total",
 			Help:      "Total number of received messages",
 		}, []string{"subscriber"})
 
@@ -67,7 +67,7 @@ var (
 		prometheus.CounterOpts{
 			Namespace: "bucketeer",
 			Subsystem: "subscriber",
-			Name:      "subscriber_handled_event_total",
+			Name:      "handled_total",
 			Help:      "Total number of handled messages",
 		}, []string{"subscriber", "code"})
 
@@ -75,7 +75,7 @@ var (
 		prometheus.HistogramOpts{
 			Namespace: "bucketeer",
 			Subsystem: "subscriber",
-			Name:      "subscriber_handled_seconds",
+			Name:      "handled_seconds",
 			Help:      "Histogram of message handling duration (seconds)",
 			Buckets:   prometheus.DefBuckets,
 		}, []string{"subscriber", "code"})
