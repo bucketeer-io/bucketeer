@@ -218,7 +218,8 @@ proto.bucketeer.feature.Clause.Operator = {
   LESS_OR_EQUAL: 8,
   BEFORE: 9,
   AFTER: 10,
-  FEATURE_FLAG: 11
+  FEATURE_FLAG: 11,
+  PARTIALLY_MATCH: 12
 };
 
 /**
