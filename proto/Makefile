@@ -42,8 +42,8 @@ go: remove-go
 		fi \
 	done
 
-.PHONY: openapi-gen
-openapi-gen:
+.PHONY: openapi-api-gen
+openapi-api-gen:
 	protoc \
 		--proto_path=${GIT_TOP_DIR} \
 		--proto_path=${PROTOBUF_INCLUDE_DIR} \
@@ -53,10 +53,27 @@ openapi-gen:
 		--openapiv2_out=${GIT_TOP_DIR}/api-description \
 		--openapiv2_opt output_format=yaml \
 		--openapiv2_opt allow_merge=true \
+		--openapiv2_opt=disable_service_tags=true \
 		${GIT_TOP_DIR}/proto/gateway/*.proto; \
 
+PROTO_OPENAPI_WEB_TARGETS := ${GIT_TOP_DIR}/proto/auth/service.proto
+.PHONY: openapi-web-gen
+openapi-web-gen:
+	protoc \
+		--proto_path=${GIT_TOP_DIR} \
+		--proto_path=${PROTOBUF_INCLUDE_DIR} \
+		--proto_path=${GOOGLEAPIS} \
+		--proto_path=${OPENAPI} \
+		--proto_path=${PROTOC_GEN_OPENAPIV2} \
+		--openapiv2_out=${GIT_TOP_DIR}/api-description \
+		--openapiv2_opt output_format=yaml \
+		--openapiv2_opt allow_merge=true \
+		--openapiv2_opt merge_file_name=web-api \
+		--openapiv2_opt=disable_service_tags=true \
+		${PROTO_OPENAPI_WEB_TARGETS};
+
 .PHONY: openapi-ui
-openapi-ui:
+openapi-api-ui:
 	docker run -p 80:8080 -e SWAGGER_JSON=/openapi/apidocs.swagger.yaml -v ${GIT_TOP_DIR}/api-description/:/openapi swaggerapi/swagger-ui
 
 go-check: go

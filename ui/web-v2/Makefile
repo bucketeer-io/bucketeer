@@ -29,11 +29,11 @@ ROOT_DIR := $(CURDIR)/../..
 SRC_DIR := $(CURDIR)/src
 PROTOBUF_INCLUDE_DIR := $(ROOT_DIR)/proto/external/protocolbuffers/protobuf/v23.4
 GOOGLEAPIS := $(ROOT_DIR)/proto/external/googleapis/googleapis/83e756a66b80b072bd234abcfe89edf459090974
-OPENAPI := $(ROOT_DIR)/proto/external/openapiv2/protoc-gen-openapiv2/options
+OPENAPI := $(ROOT_DIR)/proto/external/openapiv2
 NPM_BIN_DIR := $(CURDIR)/node_modules/.bin
 
 .PHONY: gen_proto
-gen_proto: clean_proto gen_google_api
+gen_proto: clean_proto gen_proto_external_api
 	protoc \
 	--plugin=protoc-gen-ts=$(NPM_BIN_DIR)/protoc-gen-ts \
 	--plugin=protoc-gen-js=$(NPM_BIN_DIR)/protoc-gen-js \
@@ -46,8 +46,8 @@ gen_proto: clean_proto gen_google_api
 	$(shell find $(ROOT_DIR)/proto -type f -name "*.proto" -not -path "**/gateway/*.proto" -not -path "**/google/protobuf/*.proto" -not -path "**/google/api/*.proto" -not -path "**/protoc-gen-openapiv2/options/*.proto")
 	yarn lintfix
 
-.PHONY: gen_google_api
-gen_google_api:
+.PHONY: gen_proto_external_api
+gen_proto_external_api:
 	protoc \
 	--plugin=protoc-gen-ts=$(NPM_BIN_DIR)/protoc-gen-ts \
 	--plugin=protoc-gen-js=$(NPM_BIN_DIR)/protoc-gen-js \
@@ -56,7 +56,7 @@ gen_google_api:
 	-I $(PROTOBUF_INCLUDE_DIR) \
 	-I $(GOOGLEAPIS) \
 	-I $(OPENAPI) \
-	$(shell find $(GOOGLEAPIS) -type f -name "*.proto")
+	$(shell find $(GOOGLEAPIS) -type f -name "*.proto") $(shell find $(OPENAPI) -type f -name "*.proto")
 
 .PHONY: clean_proto
 clean_proto:

@@ -2,8 +2,6 @@ swagger: "2.0"
 info:
   title: Bucketeer Gateway Service
   version: "1.0"
-tags:
-  - name: Gateway
 host: ENDPOINT
 schemes:
   - https

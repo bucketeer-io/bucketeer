@@ -4,15 +4,6 @@
 import * as proto_auth_service_pb from '../../proto/auth/service_pb';
 import { grpc } from '@improbable-eng/grpc-web';
 
-type AuthServiceGetAuthenticationURL = {
-  readonly methodName: string;
-  readonly service: typeof AuthService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_auth_service_pb.GetAuthenticationURLRequest;
-  readonly responseType: typeof proto_auth_service_pb.GetAuthenticationURLResponse;
-};
-
 type AuthServiceExchangeToken = {
   readonly methodName: string;
   readonly service: typeof AuthService;
@@ -22,13 +13,13 @@ type AuthServiceExchangeToken = {
   readonly responseType: typeof proto_auth_service_pb.ExchangeTokenResponse;
 };
 
-type AuthServiceSignIn = {
+type AuthServiceGetAuthenticationURL = {
   readonly methodName: string;
   readonly service: typeof AuthService;
   readonly requestStream: false;
   readonly responseStream: false;
-  readonly requestType: typeof proto_auth_service_pb.SignInRequest;
-  readonly responseType: typeof proto_auth_service_pb.SignInResponse;
+  readonly requestType: typeof proto_auth_service_pb.GetAuthenticationURLRequest;
+  readonly responseType: typeof proto_auth_service_pb.GetAuthenticationURLResponse;
 };
 
 type AuthServiceRefreshToken = {
@@ -40,12 +31,21 @@ type AuthServiceRefreshToken = {
   readonly responseType: typeof proto_auth_service_pb.RefreshTokenResponse;
 };
 
+type AuthServiceSignIn = {
+  readonly methodName: string;
+  readonly service: typeof AuthService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_auth_service_pb.SignInRequest;
+  readonly responseType: typeof proto_auth_service_pb.SignInResponse;
+};
+
 export class AuthService {
   static readonly serviceName: string;
-  static readonly GetAuthenticationURL: AuthServiceGetAuthenticationURL;
   static readonly ExchangeToken: AuthServiceExchangeToken;
-  static readonly SignIn: AuthServiceSignIn;
+  static readonly GetAuthenticationURL: AuthServiceGetAuthenticationURL;
   static readonly RefreshToken: AuthServiceRefreshToken;
+  static readonly SignIn: AuthServiceSignIn;
 }
 
 export type ServiceError = {
@@ -93,21 +93,6 @@ export class AuthServiceClient {
   readonly serviceHost: string;
 
   constructor(serviceHost: string, options?: grpc.RpcOptions);
-  getAuthenticationURL(
-    requestMessage: proto_auth_service_pb.GetAuthenticationURLRequest,
-    metadata: grpc.Metadata,
-    callback: (
-      error: ServiceError | null,
-      responseMessage: proto_auth_service_pb.GetAuthenticationURLResponse | null
-    ) => void
-  ): UnaryResponse;
-  getAuthenticationURL(
-    requestMessage: proto_auth_service_pb.GetAuthenticationURLRequest,
-    callback: (
-      error: ServiceError | null,
-      responseMessage: proto_auth_service_pb.GetAuthenticationURLResponse | null
-    ) => void
-  ): UnaryResponse;
   exchangeToken(
     requestMessage: proto_auth_service_pb.ExchangeTokenRequest,
     metadata: grpc.Metadata,
@@ -123,19 +108,19 @@ export class AuthServiceClient {
       responseMessage: proto_auth_service_pb.ExchangeTokenResponse | null
     ) => void
   ): UnaryResponse;
-  signIn(
-    requestMessage: proto_auth_service_pb.SignInRequest,
+  getAuthenticationURL(
+    requestMessage: proto_auth_service_pb.GetAuthenticationURLRequest,
     metadata: grpc.Metadata,
     callback: (
       error: ServiceError | null,
-      responseMessage: proto_auth_service_pb.SignInResponse | null
+      responseMessage: proto_auth_service_pb.GetAuthenticationURLResponse | null
     ) => void
   ): UnaryResponse;
-  signIn(
-    requestMessage: proto_auth_service_pb.SignInRequest,
+  getAuthenticationURL(
+    requestMessage: proto_auth_service_pb.GetAuthenticationURLRequest,
     callback: (
       error: ServiceError | null,
-      responseMessage: proto_auth_service_pb.SignInResponse | null
+      responseMessage: proto_auth_service_pb.GetAuthenticationURLResponse | null
     ) => void
   ): UnaryResponse;
   refreshToken(
@@ -151,6 +136,21 @@ export class AuthServiceClient {
     callback: (
       error: ServiceError | null,
       responseMessage: proto_auth_service_pb.RefreshTokenResponse | null
+    ) => void
+  ): UnaryResponse;
+  signIn(
+    requestMessage: proto_auth_service_pb.SignInRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auth_service_pb.SignInResponse | null
+    ) => void
+  ): UnaryResponse;
+  signIn(
+    requestMessage: proto_auth_service_pb.SignInRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_auth_service_pb.SignInResponse | null
     ) => void
   ): UnaryResponse;
 }

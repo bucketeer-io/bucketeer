@@ -10,15 +10,6 @@ var AuthService = (function () {
   return AuthService;
 })();
 
-AuthService.GetAuthenticationURL = {
-  methodName: 'GetAuthenticationURL',
-  service: AuthService,
-  requestStream: false,
-  responseStream: false,
-  requestType: proto_auth_service_pb.GetAuthenticationURLRequest,
-  responseType: proto_auth_service_pb.GetAuthenticationURLResponse
-};
-
 AuthService.ExchangeToken = {
   methodName: 'ExchangeToken',
   service: AuthService,
@@ -28,13 +19,13 @@ AuthService.ExchangeToken = {
   responseType: proto_auth_service_pb.ExchangeTokenResponse
 };
 
-AuthService.SignIn = {
-  methodName: 'SignIn',
+AuthService.GetAuthenticationURL = {
+  methodName: 'GetAuthenticationURL',
   service: AuthService,
   requestStream: false,
   responseStream: false,
-  requestType: proto_auth_service_pb.SignInRequest,
-  responseType: proto_auth_service_pb.SignInResponse
+  requestType: proto_auth_service_pb.GetAuthenticationURLRequest,
+  responseType: proto_auth_service_pb.GetAuthenticationURLResponse
 };
 
 AuthService.RefreshToken = {
@@ -46,44 +37,21 @@ AuthService.RefreshToken = {
   responseType: proto_auth_service_pb.RefreshTokenResponse
 };
 
+AuthService.SignIn = {
+  methodName: 'SignIn',
+  service: AuthService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_auth_service_pb.SignInRequest,
+  responseType: proto_auth_service_pb.SignInResponse
+};
+
 exports.AuthService = AuthService;
 
 function AuthServiceClient(serviceHost, options) {
   this.serviceHost = serviceHost;
   this.options = options || {};
 }
-
-AuthServiceClient.prototype.getAuthenticationURL =
-  function getAuthenticationURL(requestMessage, metadata, callback) {
-    if (arguments.length === 2) {
-      callback = arguments[1];
-    }
-    var client = grpc.unary(AuthService.GetAuthenticationURL, {
-      request: requestMessage,
-      host: this.serviceHost,
-      metadata: metadata,
-      transport: this.options.transport,
-      debug: this.options.debug,
-      onEnd: function (response) {
-        if (callback) {
-          if (response.status !== grpc.Code.OK) {
-            var err = new Error(response.statusMessage);
-            err.code = response.status;
-            err.metadata = response.trailers;
-            callback(err, null);
-          } else {
-            callback(null, response.message);
-          }
-        }
-      }
-    });
-    return {
-      cancel: function () {
-        callback = null;
-        client.close();
-      }
-    };
-  };
 
 AuthServiceClient.prototype.exchangeToken = function exchangeToken(
   requestMessage,
@@ -120,7 +88,39 @@ AuthServiceClient.prototype.exchangeToken = function exchangeToken(
   };
 };
 
-AuthServiceClient.prototype.signIn = function signIn(
+AuthServiceClient.prototype.getAuthenticationURL =
+  function getAuthenticationURL(requestMessage, metadata, callback) {
+    if (arguments.length === 2) {
+      callback = arguments[1];
+    }
+    var client = grpc.unary(AuthService.GetAuthenticationURL, {
+      request: requestMessage,
+      host: this.serviceHost,
+      metadata: metadata,
+      transport: this.options.transport,
+      debug: this.options.debug,
+      onEnd: function (response) {
+        if (callback) {
+          if (response.status !== grpc.Code.OK) {
+            var err = new Error(response.statusMessage);
+            err.code = response.status;
+            err.metadata = response.trailers;
+            callback(err, null);
+          } else {
+            callback(null, response.message);
+          }
+        }
+      }
+    });
+    return {
+      cancel: function () {
+        callback = null;
+        client.close();
+      }
+    };
+  };
+
+AuthServiceClient.prototype.refreshToken = function refreshToken(
   requestMessage,
   metadata,
   callback
@@ -128,7 +128,7 @@ AuthServiceClient.prototype.signIn = function signIn(
   if (arguments.length === 2) {
     callback = arguments[1];
   }
-  var client = grpc.unary(AuthService.SignIn, {
+  var client = grpc.unary(AuthService.RefreshToken, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,
@@ -155,7 +155,7 @@ AuthServiceClient.prototype.signIn = function signIn(
   };
 };
 
-AuthServiceClient.prototype.refreshToken = function refreshToken(
+AuthServiceClient.prototype.signIn = function signIn(
   requestMessage,
   metadata,
   callback
@@ -163,7 +163,7 @@ AuthServiceClient.prototype.refreshToken = function refreshToken(
   if (arguments.length === 2) {
     callback = arguments[1];
   }
-  var client = grpc.unary(AuthService.RefreshToken, {
+  var client = grpc.unary(AuthService.SignIn, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,

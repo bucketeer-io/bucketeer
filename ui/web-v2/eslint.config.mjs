@@ -8,7 +8,7 @@ export default [
     files: ['src/**/*.ts', 'src/**/*.tsx']
   },
   {
-    ignores: ['src/google/', 'src/proto/']
+    ignores: ['src/google/', 'src/protoc-gen-openapiv2/', 'src/proto/']
   },
   ...tseslint.configs.recommended,
   {
