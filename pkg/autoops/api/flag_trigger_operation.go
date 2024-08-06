@@ -23,7 +23,6 @@ import (
 	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	"github.com/bucketeer-io/bucketeer/pkg/log"
 	autoopsproto "github.com/bucketeer-io/bucketeer/proto/autoops"
 )
 
@@ -63,14 +62,7 @@ func enableFeature(
 	logger *zap.Logger,
 ) error {
 	if err := feature.Enable(); err != nil {
-		logger.Error(
-			"Failed to enable feature flag",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("featureId", feature.Id),
-				zap.String("environmentNamespace", environmentNamespace),
-			)...,
-		)
+		// If the flag is already disabled, we skip the updating
 		return nil
 	}
 	if err := ftStorage.UpdateFeature(ctx, feature, environmentNamespace); err != nil {
@@ -90,14 +82,7 @@ func disableFeature(
 	logger *zap.Logger,
 ) error {
 	if err := feature.Disable(); err != nil {
-		logger.Error(
-			"Failed to disable feature flag",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("featureId", feature.Id),
-				zap.String("environmentNamespace", environmentNamespace),
-			)...,
-		)
+		// If the flag is already disabled, we skip the updating
 		return nil
 	}
 	if err := ftStorage.UpdateFeature(ctx, feature, environmentNamespace); err != nil {

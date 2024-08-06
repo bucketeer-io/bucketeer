@@ -16,6 +16,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -309,15 +310,17 @@ func (s *grpcGatewayService) GetEvaluations(
 	defer span.End()
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT})
 	if err != nil {
-		s.logger.Error("Failed to check GetEvaluations request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("tag", req.Tag),
-				zap.Any("user", req.User),
-				zap.Any("sourceId", req.SourceId),
-				zap.String("sdkVersion", req.SdkVersion),
-			)...,
-		)
+		if !errors.Is(err, context.Canceled) {
+			s.logger.Error("Failed to check GetEvaluations request",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("tag", req.Tag),
+					zap.Any("user", req.User),
+					zap.Any("sourceId", req.SourceId),
+					zap.String("sdkVersion", req.SdkVersion),
+				)...,
+			)
+		}
 		return nil, err
 	}
 	projectID := envAPIKey.ProjectId
@@ -500,16 +503,18 @@ func (s *grpcGatewayService) GetEvaluation(
 	defer span.End()
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT})
 	if err != nil {
-		s.logger.Error("Failed to check GetEvaluation request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("tag", req.Tag),
-				zap.Any("user", req.User),
-				zap.String("featureId", req.FeatureId),
-				zap.Any("sourceId", req.SourceId),
-				zap.String("sdkVersion", req.SdkVersion),
-			)...,
-		)
+		if !errors.Is(err, context.Canceled) {
+			s.logger.Error("Failed to check GetEvaluation request",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("tag", req.Tag),
+					zap.Any("user", req.User),
+					zap.String("featureId", req.FeatureId),
+					zap.Any("sourceId", req.SourceId),
+					zap.String("sdkVersion", req.SdkVersion),
+				)...,
+			)
+		}
 		return nil, err
 	}
 	requestTotal.WithLabelValues(
@@ -611,15 +616,17 @@ func (s *grpcGatewayService) GetFeatureFlags(
 	defer span.End()
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_SERVER})
 	if err != nil {
-		s.logger.Error("Failed to check GetFeatureFlags request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("tag", req.Tag),
-				zap.String("featureFlagsId", req.FeatureFlagsId),
-				zap.Any("sourceId", req.SourceId),
-				zap.String("sdkVersion", req.SdkVersion),
-			)...,
-		)
+		if !errors.Is(err, context.Canceled) {
+			s.logger.Error("Failed to check GetFeatureFlags request",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("tag", req.Tag),
+					zap.String("featureFlagsId", req.FeatureFlagsId),
+					zap.Any("sourceId", req.SourceId),
+					zap.String("sdkVersion", req.SdkVersion),
+				)...,
+			)
+		}
 		return nil, err
 	}
 	projectID := envAPIKey.ProjectId
@@ -769,14 +776,16 @@ func (s *grpcGatewayService) GetSegmentUsers(
 	defer span.End()
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{accountproto.APIKey_SDK_SERVER})
 	if err != nil {
-		s.logger.Error("Failed to check GetSegmentUsers request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.Strings("segmentIds", req.SegmentIds),
-				zap.Any("sourceId", req.SourceId),
-				zap.String("sdkVersion", req.SdkVersion),
-			)...,
-		)
+		if !errors.Is(err, context.Canceled) {
+			s.logger.Error("Failed to check GetSegmentUsers request",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.Strings("segmentIds", req.SegmentIds),
+					zap.Any("sourceId", req.SourceId),
+					zap.String("sdkVersion", req.SdkVersion),
+				)...,
+			)
+		}
 		return nil, err
 	}
 	projectID := envAPIKey.ProjectId
@@ -1408,24 +1417,27 @@ func (s *grpcGatewayService) RegisterEvents(
 		typ string,
 	) map[string]*gwproto.RegisterEventsResponse_Error {
 		errs := make(map[string]*gwproto.RegisterEventsResponse_Error)
-		errors := p.PublishMulti(ctx, messages)
+		multiErrs := p.PublishMulti(ctx, messages)
 		var repeatableErrors, nonRepeateableErrors float64
-		for id, err := range errors {
+		for id, err := range multiErrs {
 			retriable := err != publisher.ErrBadMessage
 			if retriable {
 				repeatableErrors++
 			} else {
 				nonRepeateableErrors++
 			}
-			s.logger.Error(
-				"Failed to publish event",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentID", envAPIKey.Environment.Id),
-					zap.String("eventType", typ),
-					zap.String("id", id),
-				)...,
-			)
+			if !errors.Is(err, context.Canceled) {
+				s.logger.Error(
+					"Failed to publish event",
+					log.FieldsFromImcomingContext(ctx).AddFields(
+						zap.Error(err),
+						zap.String("environmentID", envAPIKey.Environment.Id),
+						zap.String("eventType", typ),
+						zap.String("id", id),
+						zap.Any("sourceId", req.SourceId),
+					)...,
+				)
+			}
 			errs[id] = &gwproto.RegisterEventsResponse_Error{
 				Retriable: retriable,
 				Message:   "Failed to publish event",
@@ -1433,7 +1445,7 @@ func (s *grpcGatewayService) RegisterEvents(
 		}
 		eventCounter.WithLabelValues(callerGatewayService, typ, codeNonRepeatableError).Add(nonRepeateableErrors)
 		eventCounter.WithLabelValues(callerGatewayService, typ, codeRepeatableError).Add(repeatableErrors)
-		eventCounter.WithLabelValues(callerGatewayService, typ, codeOK).Add(float64(len(messages) - len(errors)))
+		eventCounter.WithLabelValues(callerGatewayService, typ, codeOK).Add(float64(len(messages) - len(multiErrs)))
 		return errs
 	}
 	for i, event := range req.Events {
@@ -1454,6 +1466,7 @@ func (s *grpcGatewayService) RegisterEvents(
 				zap.String("eventID", event.Id),
 				zap.String("environmentNamespace", event.EnvironmentNamespace),
 				zap.Any("event", event.Event),
+				zap.Any("sourceId", req.SourceId),
 			)
 			continue
 		}
