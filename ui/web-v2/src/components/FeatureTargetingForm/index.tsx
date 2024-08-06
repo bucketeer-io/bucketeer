@@ -940,6 +940,10 @@ export const clauseCompareOperatorOptions: Option[] = [
     label: intl.formatMessage(messages.feature.clause.operator.in)
   },
   {
+    value: Clause.Operator.PARTIALLY_MATCH.toString(),
+    label: intl.formatMessage(messages.feature.clause.operator.partiallyMatch)
+  },
+  {
     value: Clause.Operator.STARTS_WITH.toString(),
     label: intl.formatMessage(messages.feature.clause.operator.startWith)
   },

@@ -57,6 +57,7 @@ export namespace Clause {
     BEFORE: 9;
     AFTER: 10;
     FEATURE_FLAG: 11;
+    PARTIALLY_MATCH: 12;
   }
 
   export const Operator: OperatorMap;
