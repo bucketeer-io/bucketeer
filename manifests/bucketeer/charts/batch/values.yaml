@@ -44,6 +44,7 @@ env:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
+  experimentLockTTL: 10m
 
 affinity: {}
 

@@ -24,8 +24,7 @@ import (
 )
 
 const (
-	experimentLockPrefix = "experiment-calculate:"
-	experimentLockTTL    = time.Minute
+	experimentLockKind = "experiment_lock"
 )
 
 // ExperimentLock represents a distributed lock for experiments
@@ -34,25 +33,25 @@ type ExperimentLock struct {
 }
 
 // NewExperimentLock creates a new ExperimentLock
-func NewExperimentLock(client redisv3.Client) *ExperimentLock {
+func NewExperimentLock(client redisv3.Client, lockTTL time.Duration) *ExperimentLock {
 	return &ExperimentLock{
-		lock: lock.NewDistributedLock(client, experimentLockTTL),
+		lock: lock.NewDistributedLock(client, lockTTL),
 	}
 }
 
 // Lock attempts to acquire the lock for a specific experiment
 func (el *ExperimentLock) Lock(ctx context.Context, environmentID, experimentID string) (bool, string, error) {
-	lockKey := el.getLockKey(environmentID, experimentID)
+	lockKey := el.newLockKey(environmentID, experimentID)
 	return el.lock.Lock(ctx, lockKey)
 }
 
 // Unlock releases the lock for a specific experiment
 func (el *ExperimentLock) Unlock(ctx context.Context, environmentID, experimentID, value string) (bool, error) {
-	lockKey := el.getLockKey(environmentID, experimentID)
+	lockKey := el.newLockKey(environmentID, experimentID)
 	return el.lock.Unlock(ctx, lockKey, value)
 }
 
-// getLockKey generates the lock key for a specific experiment
-func (el *ExperimentLock) getLockKey(environmentID, experimentID string) string {
-	return fmt.Sprintf("%s%s:%s", experimentLockPrefix, environmentID, experimentID)
+// newLockKey generates the lock key for a specific experiment
+func (el *ExperimentLock) newLockKey(environmentID, experimentID string) string {
+	return fmt.Sprintf("%s:%s:%s", environmentID, experimentLockKind, experimentID)
 }

@@ -73,6 +73,7 @@ type server struct {
 	serviceTokenPath   *string
 	timezone           *string
 	refreshInterval    *time.Duration
+	experimentLockTTL  *time.Duration
 	webURL             *string
 	oauthPublicKeyPath *string
 	oauthAudience      *string
@@ -213,6 +214,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"non-persistent-redis-pool-max-active",
 			"Maximum number of connections allocated by the non-persistent redis connections pool at a given time.",
 		).Default("10").Int(),
+		experimentLockTTL: cmd.Flag("experiment-lock-ttl",
+			"The ttl for experiment calculator lock").
+			Default("10m").Duration(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -456,7 +460,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			experimentClient,
 			eventCounterClient,
 			mysqlClient,
-			calculator.NewExperimentLock(nonPersistentRedisClient),
+			calculator.NewExperimentLock(nonPersistentRedisClient, *s.experimentLockTTL),
 			location,
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
