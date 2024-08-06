@@ -92,7 +92,7 @@ func (w *eventCountWatcher) Run(ctx context.Context) (lastErr error) {
 		}
 		for _, a := range autoOpsRules {
 			aor := &autoopsdomain.AutoOpsRule{AutoOpsRule: a}
-			if aor.IsCompleted() {
+			if aor.IsFinished() || aor.IsStopped() {
 				continue
 			}
 			executeId, err := w.getExecuteClauseId(ctx, env.Id, aor)
