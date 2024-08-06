@@ -87,6 +87,25 @@ func (mr *MockClientMockRecorder) Del(key any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Del", reflect.TypeOf((*MockClient)(nil).Del), key)
 }
 
+// Eval mocks base method.
+func (m *MockClient) Eval(ctx context.Context, script string, keys []string, args ...any) *redis0.Cmd {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, script, keys}
+	for _, a := range args {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Eval", varargs...)
+	ret0, _ := ret[0].(*redis0.Cmd)
+	return ret0
+}
+
+// Eval indicates an expected call of Eval.
+func (mr *MockClientMockRecorder) Eval(ctx, script, keys any, args ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, script, keys}, args...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Eval", reflect.TypeOf((*MockClient)(nil).Eval), varargs...)
+}
+
 // Expire mocks base method.
 func (m *MockClient) Expire(key string, expiration time.Duration) (bool, error) {
 	m.ctrl.T.Helper()
@@ -262,6 +281,21 @@ func (m *MockClient) Set(key string, val any, expiration time.Duration) error {
 func (mr *MockClientMockRecorder) Set(key, val, expiration any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockClient)(nil).Set), key, val, expiration)
+}
+
+// SetNX mocks base method.
+func (m *MockClient) SetNX(ctx context.Context, key string, value any, expiration time.Duration) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetNX", ctx, key, value, expiration)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SetNX indicates an expected call of SetNX.
+func (mr *MockClientMockRecorder) SetNX(ctx, key, value, expiration any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetNX", reflect.TypeOf((*MockClient)(nil).SetNX), ctx, key, value, expiration)
 }
 
 // Stats mocks base method.

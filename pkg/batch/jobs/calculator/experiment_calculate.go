@@ -17,6 +17,7 @@ package calculator
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"go.uber.org/zap"
@@ -24,12 +25,15 @@ import (
 
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
+	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	experimentcalculatorclient "github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/client"
+	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/domain"
+	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/experimentcalc"
+	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/stan"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/proto/environment"
 	"github.com/bucketeer-io/bucketeer/proto/experiment"
-	"github.com/bucketeer-io/bucketeer/proto/experimentcalculator"
 )
 
 const (
@@ -37,18 +41,22 @@ const (
 )
 
 type experimentCalculate struct {
-	environmentClient          environmentclient.Client
-	experimentClient           experimentclient.Client
-	experimentCalculatorClient experimentcalculatorclient.Client
-	location                   *time.Location
-	opts                       *jobs.Options
-	logger                     *zap.Logger
+	environmentClient environmentclient.Client
+	experimentClient  experimentclient.Client
+	calculator        *experimentcalc.ExperimentCalculator
+	experimentLock    *ExperimentLock
+	location          *time.Location
+	opts              *jobs.Options
+	logger            *zap.Logger
 }
 
 func NewExperimentCalculate(
+	httpStan *stan.Stan,
 	environmentClient environmentclient.Client,
 	experimentClient experimentclient.Client,
-	experimentCalculatorClient experimentcalculatorclient.Client,
+	ecClient ecclient.Client,
+	mysqlClient mysql.Client,
+	experimentLock *ExperimentLock,
 	location *time.Location,
 	opts ...jobs.Option,
 ) jobs.Job {
@@ -59,13 +67,24 @@ func NewExperimentCalculate(
 	for _, opt := range opts {
 		opt(dopts)
 	}
+	calculator := experimentcalc.NewExperimentCalculator(
+		httpStan,
+		environmentClient,
+		ecClient,
+		experimentClient,
+		mysqlClient,
+		dopts.Metrics,
+		location,
+		dopts.Logger,
+	)
 	return &experimentCalculate{
-		environmentClient:          environmentClient,
-		experimentClient:           experimentClient,
-		experimentCalculatorClient: experimentCalculatorClient,
-		location:                   location,
-		opts:                       dopts,
-		logger:                     dopts.Logger.Named("experiment-calculate"),
+		environmentClient: environmentClient,
+		experimentClient:  experimentClient,
+		calculator:        calculator,
+		experimentLock:    experimentLock,
+		location:          location,
+		opts:              dopts,
+		logger:            dopts.Logger.Named("experiment-calculate"),
 	}
 }
 
@@ -98,7 +117,7 @@ func (e *experimentCalculate) Run(ctx context.Context) error {
 				// we still calculate the results for two days after it stopped.
 				continue
 			}
-			calculateErr := e.calculateExperiment(ctx, env, ex)
+			calculateErr := e.calculateExperimentWithLock(ctx, env, ex)
 			if calculateErr != nil {
 				e.logger.Error("Failed to calculate experiment",
 					log.FieldsFromImcomingContext(ctx).AddFields(
@@ -120,15 +139,50 @@ func (e *experimentCalculate) Run(ctx context.Context) error {
 	return nil
 }
 
+func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
+	env *environment.EnvironmentV2,
+	experiment *experiment.Experiment,
+) error {
+	locked, lockValue, err := e.experimentLock.Lock(ctx, env.Id, experiment.Id)
+	if err != nil {
+		return fmt.Errorf("failed to acquire lock: %w", err)
+	}
+	if !locked {
+		e.logger.Info("Experiment is being calculated by another instance",
+			zap.String("environmentNamespace", env.Id),
+			zap.String("experimentId", experiment.Id),
+		)
+		return nil
+	}
+
+	defer func() {
+		unlocked, unlockErr := e.experimentLock.Unlock(ctx, env.Id, experiment.Id, lockValue)
+		if unlockErr != nil {
+			e.logger.Error("Failed to release lock",
+				zap.Error(unlockErr),
+				zap.String("environmentNamespace", env.Id),
+				zap.String("experimentId", experiment.Id),
+			)
+		}
+		if !unlocked {
+			e.logger.Warn("Lock was not released, possibly expired",
+				zap.String("environmentNamespace", env.Id),
+				zap.String("experimentId", experiment.Id),
+			)
+		}
+	}()
+
+	return e.calculateExperiment(ctx, env, experiment)
+}
+
 func (e *experimentCalculate) calculateExperiment(ctx context.Context,
 	env *environment.EnvironmentV2,
 	experiment *experiment.Experiment,
 ) error {
-	calculateRequest := &experimentcalculator.BatchCalcRequest{
+	err := e.calculator.Run(ctx, &domain.ExperimentCalculatorReq{
 		EnvironmentId: env.Id,
 		Experiment:    experiment,
-	}
-	_, err := e.experimentCalculatorClient.CalcExperiment(ctx, calculateRequest)
+	})
 	if err != nil {
 		e.logger.Error("ExperimentCalculator failed to calculate",
 			log.FieldsFromImcomingContext(ctx).AddFields(

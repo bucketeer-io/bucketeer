@@ -36,7 +36,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/proto/eventcounter"
 	"github.com/bucketeer-io/bucketeer/proto/experiment"
-	calculator "github.com/bucketeer-io/bucketeer/proto/experimentcalculator"
 )
 
 var (
@@ -104,7 +103,7 @@ func NewExperimentCalculator(
 	}
 }
 
-func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.BatchCalcRequest) {
+func (e ExperimentCalculator) Run(ctx context.Context, request *domain.ExperimentCalculatorReq) error {
 	startTime := time.Now()
 	experimentResult, calculationErr := e.createExperimentResult(ctx, request.EnvironmentId, request.Experiment)
 	if calculationErr != nil {
@@ -115,7 +114,7 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.Batch
 				zap.Error(calculationErr),
 			)...,
 		)
-		return
+		return calculationErr
 	}
 	if err := v2es.NewExperimentResultStorage(e.mysqlClient).
 		UpdateExperimentResult(ctx, request.EnvironmentId, &domain.ExperimentResult{
@@ -128,7 +127,7 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.Batch
 				zap.Error(err),
 			)...,
 		)
-		return
+		return err
 	}
 	e.logger.Info("ExperimentCalculator calculated successfully",
 		log.FieldsFromImcomingContext(ctx).AddFields(
@@ -137,6 +136,7 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *calculator.Batch
 			zap.Duration("elapsedTime", time.Since(startTime)),
 		)...,
 	)
+	return nil
 }
 
 func (e ExperimentCalculator) createExperimentResult(

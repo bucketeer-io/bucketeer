@@ -142,6 +142,8 @@ spec:
               value: "{{ .Values.env.nonPersistentRedis.poolMaxIdle }}"
             - name: BUCKETEER_BATCH_NON_PERSISTENT_REDIS_POOL_MAX_ACTIVE
               value: "{{ .Values.env.nonPersistentRedis.poolMaxActive }}"
+            - name: BUCKETEER_BATCH_EXPERIMENT_LOCK_TTL
+              value: "{{ .Values.env.experimentLockTTL }}"
 
           volumeMounts:
             - name: service-cert-secret
@@ -225,5 +227,27 @@ spec:
               scheme: HTTP
           resources:
 {{ toYaml .Values.envoy.resources | indent 12 }}
+        - name: httpstan
+          image: "{{ .Values.httpstan.image.repository }}:{{ .Values.httpstan.image.tag }}"
+          imagePullPolicy: {{ .Values.httpstan.image.pullPolicy }}
+          ports:
+            - name: httpstan
+              containerPort: {{ .Values.httpstan.port }}
+          livenessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            periodSeconds: {{ .Values.health.periodSeconds }}
+            failureThreshold: {{ .Values.health.failureThreshold }}
+            httpGet:
+              path: {{ .Values.httpstan.healthPath }}
+              port: {{ .Values.httpstan.port }}
+              scheme: HTTP
+          readinessProbe:
+            initialDelaySeconds: {{ .Values.health.initialDelaySeconds }}
+            httpGet:
+              path: {{ .Values.httpstan.healthPath }}
+              port: {{ .Values.httpstan.port }}
+              scheme: HTTP
+          resources:
+{{ toYaml .Values.httpstan.resources | indent 12 }}
   strategy:
     type: RollingUpdate

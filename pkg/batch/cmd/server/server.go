@@ -39,7 +39,7 @@ import (
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
 	ecclient "github.com/bucketeer-io/bucketeer/pkg/eventcounter/client"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
-	experimentcalculatorclient "github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/client"
+	"github.com/bucketeer-io/bucketeer/pkg/experimentcalculator/stan"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -73,10 +73,13 @@ type server struct {
 	serviceTokenPath   *string
 	timezone           *string
 	refreshInterval    *time.Duration
+	experimentLockTTL  *time.Duration
 	webURL             *string
 	oauthPublicKeyPath *string
 	oauthAudience      *string
 	oauthIssuer        *string
+	stanHost           *string
+	stanPort           *string
 	// MySQL
 	mysqlUser        *string
 	mysqlPass        *string
@@ -131,6 +134,8 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"The oauth audience registered in the token",
 		).Required().String(),
 		oauthIssuer:      cmd.Flag("oauth-issuer", "The issuer url").Required().String(),
+		stanHost:         cmd.Flag("stan-host", "httpstan host.").Default("localhost").String(),
+		stanPort:         cmd.Flag("stan-port", "httpstan port.").Default("8080").String(),
 		mysqlUser:        cmd.Flag("mysql-user", "MySQL user.").Required().String(),
 		mysqlPass:        cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
 		mysqlHost:        cmd.Flag("mysql-host", "MySQL host.").Required().String(),
@@ -209,6 +214,9 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"non-persistent-redis-pool-max-active",
 			"Maximum number of connections allocated by the non-persistent redis connections pool at a given time.",
 		).Default("10").Int(),
+		experimentLockTTL: cmd.Flag("experiment-lock-ttl",
+			"The ttl for experiment calculator lock").
+			Default("10m").Duration(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -335,17 +343,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		executor.WithLogger(logger),
 	)
 
-	experimentCalculatorClient, err := experimentcalculatorclient.NewClient(*s.experimentCalculatorService, *s.certPath,
-		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
-		client.WithBlock(),
-		client.WithMetrics(registerer),
-		client.WithLogger(logger),
-	)
-	if err != nil {
-		return err
-	}
-
 	slackNotifier := notifier.NewSlackNotifier(*s.webURL)
 
 	notificationSender := notificationsender.NewSender(
@@ -458,12 +455,16 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithLogger(logger),
 		),
 		calculator.NewExperimentCalculate(
+			stan.NewStan(*s.stanHost, *s.stanPort),
 			environmentClient,
 			experimentClient,
-			experimentCalculatorClient,
+			eventCounterClient,
+			mysqlClient,
+			calculator.NewExperimentLock(nonPersistentRedisClient, *s.experimentLockTTL),
 			location,
 			jobs.WithTimeout(5*time.Minute),
 			jobs.WithLogger(logger),
+			jobs.WithMetrics(registerer),
 		),
 		mau.NewMAUSummarizer(
 			mysqlClient,
@@ -547,7 +548,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		eventCounterClient.Close()
 		featureClient.Close()
 		autoOpsClient.Close()
-		experimentCalculatorClient.Close()
 		mysqlClient.Close()
 	}()
 

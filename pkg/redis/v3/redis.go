@@ -45,6 +45,7 @@ const (
 	expireCmdName       = "EXPIRE"
 	pipelineExecCmdName = "PIPELINE_EXEC"
 	ttlCmdName          = "TTL"
+	SetNXCmdName        = "SETNX"
 )
 
 var (
@@ -78,6 +79,8 @@ type Client interface {
 	Incr(key string) (int64, error)
 	Pipeline() PipeClient
 	Expire(key string, expiration time.Duration) (bool, error)
+	SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) (bool, error)
+	Eval(ctx context.Context, script string, keys []string, args ...interface{}) *goredis.Cmd
 }
 
 type client struct {
@@ -425,6 +428,28 @@ func (c *client) Expire(key string, expiration time.Duration) (bool, error) {
 	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, expireCmdName, code).Observe(
 		time.Since(startTime).Seconds())
 	return v, err
+}
+
+func (c *client) SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) (bool, error) {
+	startTime := time.Now()
+	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, SetNXCmdName).Inc()
+
+	result, err := c.rc.SetNX(key, value, expiration).Result()
+
+	code := redis.CodeFail
+	if err == nil {
+		code = redis.CodeSuccess
+	}
+
+	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, SetNXCmdName, code).Inc()
+	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, SetNXCmdName, code).Observe(
+		time.Since(startTime).Seconds())
+
+	return result, err
+}
+
+func (c *client) Eval(ctx context.Context, script string, keys []string, args ...interface{}) *goredis.Cmd {
+	return c.rc.Eval(script, keys, args...)
 }
 
 func (c *client) Pipeline() PipeClient {
