@@ -61,6 +61,8 @@ func (c *clauseEvaluator) Evaluate(
 		return c.after(targetValue, clause.Values), nil
 	case featureproto.Clause_FEATURE_FLAG:
 		return c.dependencyEvaluator.Evaluate(clause.Attribute, clause.Values, flagVariations)
+	case featureproto.Clause_PARTIALLY_MATCH:
+		return c.partiallyMatches(targetValue, clause.Values), nil
 	}
 	return false, nil
 }
@@ -68,6 +70,15 @@ func (c *clauseEvaluator) Evaluate(
 func (c *clauseEvaluator) equals(targetValue string, values []string) bool {
 	for i := range values {
 		if targetValue == values[i] {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *clauseEvaluator) partiallyMatches(targetValue string, values []string) bool {
+	for i := range values {
+		if strings.Contains(targetValue, values[i]) {
 			return true
 		}
 	}
