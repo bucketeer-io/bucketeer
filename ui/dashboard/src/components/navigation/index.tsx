@@ -18,12 +18,10 @@ import {
   IconBackspaceOutlined,
   IconBuildingOutlined
 } from '@icons';
-import { AvatarImage } from 'components/avatar';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
 import SectionMenu from './menu-section';
-import NavigationBottomAction from './navigation-bottom-action';
-import NavigationUserMenu from './navigation-user-menu';
+import UserMenu from './user-menu';
 
 // import ProjectList from './project-list';
 
@@ -147,17 +145,14 @@ const Navigation = () => {
         <Divider className="mb-3 bg-primary-50 opacity-10" />
 
         <div className="flex items-center justify-between">
-          <AvatarImage size="sm" image="./assets/avatars/primary.svg" />
+          <UserMenu />
           <button onClick={onShowSetting}>
-            <Icon icon={IconSettingOutlined} />
+            <Icon icon={IconSettingOutlined} color="primary-50" />
           </button>
         </div>
       </div>
     </div>
   );
 };
-
-Navigation.BottomAction = NavigationBottomAction;
-Navigation.UserMenu = NavigationUserMenu;
 
 export default Navigation;
