@@ -412,15 +412,29 @@ func (s *AutoOpsService) validateDatetimeClauses(
 	clauses []*autoopsproto.DatetimeClause,
 	localizer locale.Localizer,
 ) error {
+	checkTimes := make(map[int64]bool)
 	for _, c := range clauses {
+		if checkTimes[c.Time] {
+			dt, err := statusDatetimeClauseDuplicateTime.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
 		if err := s.validateDatetimeClause(c, localizer); err != nil {
 			return err
 		}
+		checkTimes[c.Time] = true
 	}
 	return nil
 }
 
-func (s *AutoOpsService) validateDatetimeClause(clause *autoopsproto.DatetimeClause, localizer locale.Localizer) error {
+func (s *AutoOpsService) validateDatetimeClause(
+	clause *autoopsproto.DatetimeClause,
+	localizer locale.Localizer) error {
 	if clause.Time <= time.Now().Unix() {
 		dt, err := statusDatetimeClauseInvalidTime.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -727,6 +741,42 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 				}
 				return dt.Err()
 			}
+
+			// Delete a deletion schedule from the currently held schedules
+			extractDateTimeClauses, _ := autoOpsRule.ExtractDatetimeClauses()
+			for _, deleteClause := range req.DeleteClauseCommands {
+				delete(extractDateTimeClauses, deleteClause.Id)
+			}
+			checkTimes := make(map[int64]bool)
+			for _, c := range extractDateTimeClauses {
+				checkTimes[c.Time] = true
+			}
+
+			// Check if there is a schedule with the same date and time.
+			for _, c := range req.AddDatetimeClauseCommands {
+				if checkTimes[c.DatetimeClause.Time] {
+					dt, err := statusDatetimeClauseDuplicateTime.WithDetails(&errdetails.LocalizedMessage{
+						Locale:  localizer.GetLocale(),
+						Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
+					})
+					if err != nil {
+						return statusInternal.Err()
+					}
+					return dt.Err()
+				}
+			}
+			for _, c := range req.ChangeDatetimeClauseCommands {
+				if checkTimes[c.DatetimeClause.Time] {
+					dt, err := statusDatetimeClauseDuplicateTime.WithDetails(&errdetails.LocalizedMessage{
+						Locale:  localizer.GetLocale(),
+						Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
+					})
+					if err != nil {
+						return statusInternal.Err()
+					}
+					return dt.Err()
+				}
+			}
 		}
 		if autoOpsRule.OpsType == autoopsproto.OpsType_EVENT_RATE {
 			if len(req.AddDatetimeClauseCommands) > 0 || len(req.ChangeDatetimeClauseCommands) > 0 {
@@ -919,6 +969,8 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
 			return dt.Err()
 		}
 	}
+
+	var checkDatetimeClauses []*autoopsproto.DatetimeClause
 	for _, c := range req.AddDatetimeClauseCommands {
 		if c.DatetimeClause == nil {
 			dt, err := statusDatetimeClauseRequired.WithDetails(&errdetails.LocalizedMessage{
@@ -930,10 +982,12 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
 			}
 			return dt.Err()
 		}
-		if err := s.validateDatetimeClause(c.DatetimeClause, localizer); err != nil {
-			return err
-		}
+		checkDatetimeClauses = append(checkDatetimeClauses, c.DatetimeClause)
 	}
+	if err := s.validateDatetimeClauses(checkDatetimeClauses, localizer); err != nil {
+		return err
+	}
+
 	for _, c := range req.ChangeDatetimeClauseCommands {
 		if c.Id == "" {
 			dt, err := statusClauseIDRequired.WithDetails(&errdetails.LocalizedMessage{
@@ -955,10 +1009,12 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
 			}
 			return dt.Err()
 		}
-		if err := s.validateDatetimeClause(c.DatetimeClause, localizer); err != nil {
-			return err
-		}
+		checkDatetimeClauses = append(checkDatetimeClauses, c.DatetimeClause)
 	}
+	if err := s.validateDatetimeClauses(checkDatetimeClauses, localizer); err != nil {
+		return err
+	}
+
 	return nil
 }
 

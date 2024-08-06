@@ -82,6 +82,10 @@ var (
 		codes.InvalidArgument,
 		"autoops: datetime clause time must be after now timestamp",
 	)
+	statusDatetimeClauseDuplicateTime = gstatus.New(
+		codes.InvalidArgument,
+		"autoops: datetime clause time must be unique",
+	)
 	statusNotFound                       = gstatus.New(codes.NotFound, "autoops: not found")
 	statusAlreadyDeleted                 = gstatus.New(codes.NotFound, "autoops: already deleted")
 	statusOpsEventRateClauseGoalNotFound = gstatus.New(
