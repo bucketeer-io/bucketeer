@@ -214,13 +214,6 @@ func TestSetDeleted(t *testing.T) {
 	assert.Equal(t, true, aor.Deleted)
 }
 
-func TestSetOpsType(t *testing.T) {
-	t.Parallel()
-	aor := createAutoOpsRule(t)
-	aor.SetOpsType(autoopsproto.OpsType_DISABLE_FEATURE)
-	assert.Equal(t, autoopsproto.OpsType_DISABLE_FEATURE, aor.OpsType)
-}
-
 func TestAddOpsEventRateClause(t *testing.T) {
 	t.Parallel()
 	aor := createAutoOpsRule(t)

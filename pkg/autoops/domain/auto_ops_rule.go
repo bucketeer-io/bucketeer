@@ -120,11 +120,6 @@ func (a *AutoOpsRule) IsStopped() bool {
 	return a.AutoOpsStatus == proto.AutoOpsStatus_STOPPED
 }
 
-func (a *AutoOpsRule) SetOpsType(opsType proto.OpsType) {
-	a.AutoOpsRule.OpsType = opsType
-	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
-}
-
 func (a *AutoOpsRule) SetAutoOpsStatus(status proto.AutoOpsStatus) {
 	now := time.Now().Unix()
 	a.AutoOpsRule.AutoOpsStatus = status
