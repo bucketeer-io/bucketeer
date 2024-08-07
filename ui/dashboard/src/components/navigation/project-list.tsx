@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
+import { IconCloseRound } from 'react-icons-material-design';
 import { Popover, Separator } from '@radix-ui/themes';
-import { IconCloseFilled } from '@icons';
 import List from 'components/list';
 import { ListItemProps } from 'components/list/list-item';
 import Search from 'components/search';
@@ -45,7 +45,7 @@ const MyProject = () => {
         <h1 className="typo-head-bold-huge text-gray-900">My Projects</h1>
         <Popover.Close>
           <button className="hover:cursor-pointer">
-            <IconCloseFilled />
+            <IconCloseRound />
           </button>
         </Popover.Close>
       </div>

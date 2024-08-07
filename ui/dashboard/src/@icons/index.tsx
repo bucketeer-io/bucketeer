@@ -1,46 +1,44 @@
-import IconBuildingOutlined from './customized-icons/building.svg?react';
-import IconChevronRightOutlined from './customized-icons/chevron-right.svg?react';
-import IconDebuggerOutlined from './customized-icons/debugger.svg?react';
-import IconGoal from './customized-icons/goal.svg?react';
-import IconInfoOutlined from './customized-icons/info.svg?react';
-import IconIntegrationOutlined from './customized-icons/integration.svg?react';
-import IconKeyOutlined from './customized-icons/key.svg?react';
-import IconLogoutOutlined from './customized-icons/logout.svg?react';
-import IconLogsOutlined from './customized-icons/logs.svg?react';
-import IconMemberOutlined from './customized-icons/member.svg?react';
-import IconNoteOutlined from './customized-icons/note.svg?react';
-import IconProtonOutlined from './customized-icons/proton.svg?react';
-import IconSearchOutlined from './customized-icons/search.svg?react';
-import IconSettingOutlined from './customized-icons/setting.svg?react';
-import IconSwitchOutlined from './customized-icons/switch.svg?react';
-import IconUsageOutlined from './customized-icons/usage.svg?react';
-import IconUserOutlined from './customized-icons/user.svg?react';
-import IconCloseFilled from './filled/close.svg?react';
-import IconBackspaceOutlined from './sidebar-icons/backspace.svg?react';
-import IconFolderOutlined from './sidebar-icons/folder.svg?react';
+import IconBackspace from './customized-icons/backspace.svg?react';
+import IconChevronRight from './customized-icons/chevron-right.svg?react';
+import IconInfo from './customized-icons/info.svg?react';
+import IconSearch from './customized-icons/search.svg?react';
+import IconBuilding from './sidebar-icons/building.svg?react';
+import IconDebugger from './sidebar-icons/debugger.svg?react';
+import IconFolder from './sidebar-icons/folder.svg?react';
+import IconIntegration from './sidebar-icons/integration.svg?react';
+import IconKey from './sidebar-icons/key.svg?react';
+import IconLogout from './sidebar-icons/logout.svg?react';
+import IconLogs from './sidebar-icons/logs.svg?react';
+import IconMember from './sidebar-icons/member.svg?react';
+import IconNote from './sidebar-icons/note.svg?react';
+import IconProton from './sidebar-icons/proton.svg?react';
+import IconSetting from './sidebar-icons/setting.svg?react';
+import IconSwitch from './sidebar-icons/switch.svg?react';
+import IconUsage from './sidebar-icons/usage.svg?react';
+import IconUser from './sidebar-icons/user.svg?react';
+import IconGoal from './special-icons/goal.svg?react';
 
 export {
-  // filled
-  IconCloseFilled,
-  IconGoal,
-
-  // outlined
-  IconInfoOutlined,
-  IconFolderOutlined,
-  IconLogsOutlined,
-  IconChevronRightOutlined,
-  IconSwitchOutlined,
-  IconUserOutlined,
-  IconDebuggerOutlined,
-  IconNoteOutlined,
-  IconProtonOutlined,
-  IconKeyOutlined,
-  IconMemberOutlined,
-  IconUsageOutlined,
-  IconIntegrationOutlined,
-  IconSettingOutlined,
-  IconLogoutOutlined,
-  IconBuildingOutlined,
-  IconSearchOutlined,
-  IconBackspaceOutlined
+  // Sidebar icons
+  IconFolder,
+  IconLogs,
+  IconSwitch,
+  IconUser,
+  IconDebugger,
+  IconNote,
+  IconProton,
+  IconKey,
+  IconMember,
+  IconUsage,
+  IconIntegration,
+  IconSetting,
+  IconLogout,
+  IconBuilding,
+  // Customized icons
+  IconBackspace,
+  IconSearch,
+  IconChevronRight,
+  IconInfo,
+  // Special icons
+  IconGoal
 };

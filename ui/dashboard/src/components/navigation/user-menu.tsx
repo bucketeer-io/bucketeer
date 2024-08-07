@@ -1,10 +1,5 @@
 import * as Popover from '@radix-ui/react-popover';
-import {
-  IconBuildingOutlined,
-  IconChevronRightOutlined,
-  IconLogoutOutlined,
-  IconUserOutlined
-} from '@icons';
+import { IconBuilding, IconChevronRight, IconLogout, IconUser } from '@icons';
 import { AvatarImage } from 'components/avatar';
 import MenuItemComponent from './menu-item';
 
@@ -12,18 +7,18 @@ const UserMenu = () => {
   const menuItems = [
     {
       label: 'User Profile',
-      icon: IconUserOutlined,
+      icon: IconUser,
       onClick: () => {}
     },
     {
       label: 'Polaris Edge',
-      icon: IconBuildingOutlined,
-      actIcon: IconChevronRightOutlined,
+      icon: IconBuilding,
+      actIcon: IconChevronRight,
       onClick: () => {}
     },
     {
       label: 'Logout',
-      icon: IconLogoutOutlined,
+      icon: IconLogout,
       onClick: () => {}
     }
   ];

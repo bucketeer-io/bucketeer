@@ -1,23 +1,7 @@
 import { Link } from 'react-router-dom';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToggleOpen } from 'hooks';
-import {
-  IconChevronRightOutlined,
-  IconDebuggerOutlined,
-  IconUsageOutlined,
-  IconFolderOutlined,
-  IconIntegrationOutlined,
-  IconKeyOutlined,
-  IconLogsOutlined,
-  IconMemberOutlined,
-  IconNoteOutlined,
-  IconProtonOutlined,
-  IconSwitchOutlined,
-  IconUserOutlined,
-  IconSettingOutlined,
-  IconBackspaceOutlined,
-  IconBuildingOutlined
-} from '@icons';
+import * as IconSystem from '@icons';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
 import SectionMenu from './menu-section';
@@ -41,28 +25,27 @@ const Navigation = () => {
               onClick={onCloseSetting}
               className="flex items-center gap-x-2 text-primary-50"
             >
-              <Icon icon={IconBackspaceOutlined} />
+              <Icon icon={IconSystem.IconBackspace} />
               <span>{`Back to Main`}</span>
             </button>
-
             <Divider className="my-5 bg-primary-50 opacity-10" />
             <SectionMenu
               title="General"
               items={[
-                { label: 'Projects', icon: IconFolderOutlined, href: '/' },
+                { label: 'Projects', icon: IconSystem.IconFolder, href: '/' },
                 {
                   label: 'Organizations',
-                  icon: IconBuildingOutlined,
+                  icon: IconSystem.IconBuilding,
                   href: '/'
                 },
                 {
                   label: 'Members',
-                  icon: IconMemberOutlined,
+                  icon: IconSystem.IconMember,
                   href: '/'
                 },
                 {
                   label: 'Usage',
-                  icon: IconUsageOutlined,
+                  icon: IconSystem.IconUsage,
                   href: '/'
                 }
               ]}
@@ -73,12 +56,12 @@ const Navigation = () => {
               items={[
                 {
                   label: 'Integrations',
-                  icon: IconIntegrationOutlined,
+                  icon: IconSystem.IconIntegration,
                   href: '/'
                 },
                 {
                   label: 'API Keys',
-                  icon: IconKeyOutlined,
+                  icon: IconSystem.IconKey,
                   href: '/'
                 }
               ]}
@@ -90,36 +73,35 @@ const Navigation = () => {
               title={`Environment`}
               items={[
                 {
-                  icon: IconFolderOutlined,
-                  actIcon: IconChevronRightOutlined,
+                  icon: IconSystem.IconFolder,
+                  actIcon: IconSystem.IconChevronRight,
                   label: `Abematv`,
                   onClick: () => {}
                 }
               ]}
             />
             <Divider className="my-5 bg-primary-50 opacity-10" />
-
             <SectionMenu
               title={`Management`}
               items={[
                 {
                   label: 'Audit Logs',
-                  icon: IconLogsOutlined,
+                  icon: IconSystem.IconLogs,
                   href: '/'
                 },
                 {
                   label: 'Feature Flags',
-                  icon: IconSwitchOutlined,
+                  icon: IconSystem.IconSwitch,
                   href: '/'
                 },
                 {
                   label: 'User Segment',
-                  icon: IconUserOutlined,
+                  icon: IconSystem.IconUser,
                   href: '/'
                 },
                 {
                   label: 'Debugger',
-                  icon: IconDebuggerOutlined,
+                  icon: IconSystem.IconDebugger,
                   href: '/'
                 }
               ]}
@@ -130,12 +112,12 @@ const Navigation = () => {
               items={[
                 {
                   label: 'Goals',
-                  icon: IconNoteOutlined,
+                  icon: IconSystem.IconNote,
                   href: '/'
                 },
                 {
                   label: 'Experiments',
-                  icon: IconProtonOutlined,
+                  icon: IconSystem.IconProton,
                   href: '/'
                 }
               ]}
@@ -147,7 +129,7 @@ const Navigation = () => {
         <div className="flex items-center justify-between">
           <UserMenu />
           <button onClick={onShowSetting}>
-            <Icon icon={IconSettingOutlined} color="primary-50" />
+            <Icon icon={IconSystem.IconSetting} color="primary-50" />
           </button>
         </div>
       </div>
