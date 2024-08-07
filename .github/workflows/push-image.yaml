@@ -85,9 +85,9 @@ jobs:
         run: make vendor
       - name: Build web and go applications
         run: |
-          make build-web
+          make build-web-console
           make build-go -j ${{ env.GO_BUILD_CONCURRENCY }}
-          make clean-web
+          make clean-web-console
       - name: Add executable permission to go binary files
         run: chmod +x bin/*
       - name: Set up docker
