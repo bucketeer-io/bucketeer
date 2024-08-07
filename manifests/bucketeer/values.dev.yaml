@@ -62,6 +62,7 @@ web:
           secretName: bucketeer-service-cert
 
   ingress:
+    name: web
     host: web-gateway.bucketeer.io
 
   serviceToken:

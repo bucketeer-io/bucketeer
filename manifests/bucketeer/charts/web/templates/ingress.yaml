@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ template "web.fullname" . }}
+  name: {{ .Values.ingress.name }}
   namespace: {{ .Values.namespace }}
   labels:
     app: {{ template "web.name" . }}
