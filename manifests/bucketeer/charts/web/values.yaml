@@ -134,7 +134,8 @@ resources: {}
 serviceAccount:
   annotations: {}
 ingress:
-  name:
+  name: web
   host:
   staticIPName:
-backendConfigName:
+backendConfig:
+  name: web
