@@ -2,7 +2,7 @@
 apiVersion: cloud.google.com/v1beta1
 kind: BackendConfig
 metadata:
-  name: {{ template "api-gateway.fullname" . }}
+  name: {{ template "api.fullname" . }}
   namespace: {{ .Values.namespace }}
 spec:
   timeoutSec: 40

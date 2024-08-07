@@ -1,12 +1,12 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ template "api-gateway.fullname" . }}
+  name: {{ template "api.fullname" . }}
   namespace: {{ .Values.namespace }}
   labels:
-    app: {{ template "api-gateway.name" . }}
-    chart: {{ template "api-gateway.chart" . }}
-    release: {{ template "api-gateway.fullname" . }}
+    app: {{ template "api.name" . }}
+    chart: {{ template "api.chart" . }}
+    release: {{ template "api.fullname" . }}
     heritage: {{ .Release.Service }}
   annotations:
     {{- if .Values.env.gcpEnabled }}
@@ -27,6 +27,6 @@ spec:
           - pathType: ImplementationSpecific
             backend:
               service:
-                name: {{ template "api-gateway.fullname" . }}
+                name: {{ template "api.fullname" . }}
                 port:
                   number: {{ .Values.service.externalPort }}

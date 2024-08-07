@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	name    = "bucketeer-gateway"
+	name    = "bucketeer-api"
 	version = ""
 	build   = ""
 )

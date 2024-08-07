@@ -89,7 +89,7 @@ web:
     baseURL: https://web-gateway.bucketeer.io
     kmsResourceName: vault
 
-api-gateway:
+api:
   env:
     gcpEnabled: false
     profile: false
