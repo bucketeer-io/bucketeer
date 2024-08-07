@@ -44,8 +44,6 @@ tls:
     secrets:
   service:
     secret:
-    cert:
-    key:
 serviceToken:
   secret:
 envoy:
