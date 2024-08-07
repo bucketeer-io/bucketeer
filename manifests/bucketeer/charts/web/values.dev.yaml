@@ -36,8 +36,6 @@ env:
 tls:
   service:
     secret: bucketeer-service-cert
-    cert:
-    key:
 serviceToken:
   secret: bucketeer-service-token
 oauth:

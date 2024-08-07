@@ -69,12 +69,8 @@ hpa:
 tls:
   service:
     secret:
-    cert:
-    key:
   bucketeerJP:
     secrets:
-    cert:
-    key:
 serviceToken:
   secret:
 oauth:
