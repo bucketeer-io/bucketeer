@@ -1,16 +1,16 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "api-gateway.fullname" . }}
+  name: {{ template "api.fullname" . }}
   namespace: {{ .Values.namespace }}
   annotations:
     cloud.google.com/app-protocols: '{"service":"HTTP2"}'
     cloud.google.com/neg: '{"ingress": true}'
-    beta.cloud.google.com/backend-config: '{"default": "{{ template "api-gateway.fullname" . }}"}'
+    beta.cloud.google.com/backend-config: '{"default": "{{ template "api.fullname" . }}"}'
   labels:
-    app: {{ template "api-gateway.name" . }}
-    chart: {{ template "api-gateway.chart" . }}
-    release: {{ template "api-gateway.fullname" . }}
+    app: {{ template "api.name" . }}
+    chart: {{ template "api.chart" . }}
+    release: {{ template "api.fullname" . }}
     heritage: {{ .Release.Service }}
     envoy: "true"
     metrics: "true"
@@ -28,5 +28,5 @@ spec:
       port: {{ .Values.envoy.adminPort }}
       protocol: TCP
   selector:
-    app: {{ template "api-gateway.name" . }}
-    release: {{ template "api-gateway.fullname" . }}
+    app: {{ template "api.name" . }}
+    release: {{ template "api.fullname" . }}
