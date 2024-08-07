@@ -747,14 +747,14 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 			for _, deleteClause := range req.DeleteClauseCommands {
 				delete(extractDateTimeClauses, deleteClause.Id)
 			}
-			checkTimes := make(map[int64]bool)
+			checkTimes := make(map[int64]autoopsproto.ActionType)
 			for _, c := range extractDateTimeClauses {
-				checkTimes[c.Time] = true
+				checkTimes[c.Time] = c.ActionType
 			}
 
 			// Check if there is a schedule with the same date and time.
 			for _, c := range req.AddDatetimeClauseCommands {
-				if checkTimes[c.DatetimeClause.Time] {
+				if actionType, hasSameTime := checkTimes[c.DatetimeClause.Time]; hasSameTime && actionType == c.DatetimeClause.ActionType {
 					dt, err := statusDatetimeClauseDuplicateTime.WithDetails(&errdetails.LocalizedMessage{
 						Locale:  localizer.GetLocale(),
 						Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
@@ -766,7 +766,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 				}
 			}
 			for _, c := range req.ChangeDatetimeClauseCommands {
-				if checkTimes[c.DatetimeClause.Time] {
+				if actionType, hasSameTime := checkTimes[c.DatetimeClause.Time]; hasSameTime && actionType == c.DatetimeClause.ActionType {
 					dt, err := statusDatetimeClauseDuplicateTime.WithDetails(&errdetails.LocalizedMessage{
 						Locale:  localizer.GetLocale(),
 						Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time"),
