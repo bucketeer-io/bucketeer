@@ -1,6 +1,6 @@
 import { TextField } from '@radix-ui/themes';
 import { Responsive } from '@radix-ui/themes/props';
-import { IconSearchOutlined } from '@icons';
+import { IconSearch } from '@icons';
 
 export type SearchProps = TextField.RootProps & {
   size?: Responsive<'1' | '2' | '3'> | undefined;
@@ -15,7 +15,7 @@ const Search = ({ size = '2', className, ...props }: SearchProps) => {
       {...props}
     >
       <TextField.Slot>
-        <IconSearchOutlined />
+        <IconSearch />
       </TextField.Slot>
     </TextField.Root>
   );

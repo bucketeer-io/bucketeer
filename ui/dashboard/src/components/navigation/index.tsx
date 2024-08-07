@@ -5,12 +5,12 @@ import * as IconSystem from '@icons';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
 import SectionMenu from './menu-section';
+import ProjectList from './project-list';
 import UserMenu from './user-menu';
-
-// import ProjectList from './project-list';
 
 const Navigation = () => {
   const [isShowSetting, onShowSetting, onCloseSetting] = useToggleOpen(false);
+  const [isShowProjects, , onCloseProjects] = useToggleOpen(false);
 
   return (
     <div className="fixed h-screen w-[248px] bg-primary-500 py-8 px-6">
@@ -80,6 +80,7 @@ const Navigation = () => {
                 }
               ]}
             />
+            <ProjectList isOpen={isShowProjects} onClose={onCloseProjects} />
             <Divider className="my-5 bg-primary-50 opacity-10" />
             <SectionMenu
               title={`Management`}

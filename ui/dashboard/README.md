@@ -14,10 +14,6 @@ This version is renew design and structures
 - **RadixUI**
 - **React-i18next**
 
-## Design
-
-- **Design System:** [Figma Design System](https://www.figma.com/design/l2PTKKlDALLW3tHVB065zq/Bucketeer---Design?node-id=3092-101487&t=YEfNm5JTWyvCRX1a-0)
-
 ## How to Install and Run
 
 1. Clone the repository locally.
