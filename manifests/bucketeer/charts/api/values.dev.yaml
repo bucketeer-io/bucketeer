@@ -27,8 +27,6 @@ tls:
         secretName: bucketeer-service-cert
   service:
     secret: bucketeer-service-cert
-    cert:
-    key:
 serviceToken:
   secret: bucketeer-service-token
 ingress:
