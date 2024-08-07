@@ -39,14 +39,6 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 {{- end -}}
 
-{{- define "issuer-cert-secret" -}}
-{{- if .Values.tls.issuer.secret }}
-{{- printf "%s" .Values.tls.issuer.secret -}}
-{{- else -}}
-{{ template "web.fullname" . }}-issuer-cert
-{{- end -}}
-{{- end -}}
-
 {{- define "oauth-key-secret" -}}
 {{- if .Values.oauth.key.secret }}
 {{- printf "%s" .Values.oauth.key.secret -}}

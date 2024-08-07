@@ -38,9 +38,6 @@ tls:
     secret: bucketeer-service-cert
     cert:
     key:
-  issuer:
-    secret: bucketeer-service-cert
-    cert:
 serviceToken:
   secret: bucketeer-service-token
 oauth:

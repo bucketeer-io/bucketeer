@@ -57,9 +57,6 @@ web:
       secret: bucketeer-service-cert
       cert:
       key:
-    issuer:
-      secret: bucketeer-service-cert
-      cert:
     bucketeerJP:
       secrets:
         - hosts:

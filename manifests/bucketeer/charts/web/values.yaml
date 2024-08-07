@@ -71,9 +71,6 @@ tls:
     secret:
     cert:
     key:
-  issuer:
-    secret:
-    cert:
   bucketeerJP:
     secrets:
     cert:

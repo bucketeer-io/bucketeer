@@ -38,9 +38,6 @@ spec:
         - name: service-cert-secret
           secret:
             secretName: {{ template "service-cert-secret" . }}
-        - name: issuer-cert-secret
-          secret:
-            secretName: {{ template "issuer-cert-secret" . }}
         - name: service-token-secret
           secret:
             secretName: {{ template "service-token-secret" . }}
