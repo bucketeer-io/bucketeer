@@ -17,7 +17,7 @@ export interface InputProps
 
 const inputVariants = cva(
   [
-    'typo-para-medium border-gray-400 text-gray-700',
+    'typo-para-medium border-gray-400 text-gray-700 w-full',
     'disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-200'
   ],
   {

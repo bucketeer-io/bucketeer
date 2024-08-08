@@ -1,33 +1,34 @@
 import { FunctionComponent } from 'react';
 import { cn } from 'utils/style';
-import { IconChevronRight } from '@icons';
+import Icon from 'components/icon';
 
 export type ListItemProps = {
-  text: string;
+  label: string;
   icon?: FunctionComponent;
+  className?: string;
   selected?: boolean;
-  type?: 'text' | 'icon';
   onClick?: () => void;
 };
 
 const ListItem = ({
-  text,
-  icon: SvgIcon,
+  label,
+  icon,
   selected,
-  type,
+  className,
   onClick
 }: ListItemProps) => {
   return (
     <li
       className={cn(
-        'flex h-10 min-w-[200px] cursor-pointer items-center justify-between',
+        'flex items-center justify-between cursor-default',
         'rounded-lg bg-white px-3 py-2 text-gray-700',
-        selected && 'bg-gray-100'
+        selected && 'bg-gray-100',
+        className
       )}
       onClick={onClick}
     >
-      <p className="typo-para-medium">{text}</p>
-      {type === 'icon' && (SvgIcon ? <SvgIcon /> : <IconChevronRight />)}
+      <p className="typo-para-medium">{label}</p>
+      {icon && <Icon icon={icon} size="sm" />}
     </li>
   );
 };

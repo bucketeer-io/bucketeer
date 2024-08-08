@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { IconCloseRound } from 'react-icons-material-design';
 import * as Popover from '@radix-ui/react-popover';
 import { cn } from 'utils/style';
@@ -9,41 +9,33 @@ import Input from 'components/input';
 import InputGroup from 'components/input-group';
 import List from 'components/list';
 import { ListItemProps } from 'components/list/list-item';
-
-type ListOption = ListItemProps & {
-  id: string;
-};
+import SearchInput from 'components/search-input';
 
 const ProjectList = () => {
   const [isShowProjectsList, setIsShowProjectsList] = useState(false);
-  const [selectedProject, setSelectedProject] = useState('');
-  const [projects] = useState<ListOption[]>([
+  const [searchValue, setSearchValue] = useState('');
+  const [projects] = useState<ListItemProps[]>([
     {
-      id: '1',
-      text: 'Default Project',
-      type: 'icon'
+      label: 'Default Project',
+      icon: IconChevronRight,
+      selected: true
     },
     {
-      id: '2',
-      text: 'Bucketeer demo application'
+      label: 'Bucketeer demo application'
     },
     {
-      id: '3',
-      text: 'Yuichi'
+      label: 'Yuichi'
     }
   ]);
-
-  const handleSelectedProject = (value: string) => {
-    setSelectedProject(value);
-  };
-
-  const menuProjects: ListItemProps[] = useMemo(() => {
-    return projects.map(i => {
-      i.selected = selectedProject === i.id;
-      i.onClick = () => handleSelectedProject(i.id);
-      return i;
-    });
-  }, [projects, selectedProject]);
+  const [environments] = useState<ListItemProps[]>([
+    {
+      label: 'Test',
+      selected: true
+    },
+    {
+      label: 'Production'
+    }
+  ]);
 
   const onOpenChange = useCallback((v: boolean) => {
     setIsShowProjectsList(v);
@@ -63,28 +55,20 @@ const ProjectList = () => {
           </div>
           <Divider />
           <div className="p-5">
-            <InputGroup
-              className="w-full"
-              addon={<Icon icon={IconSearch} size="sm" />}
-            >
-              <Input placeholder="Search" className="w-full" />
-            </InputGroup>
+            <SearchInput
+              placeholder="Search"
+              value={searchValue}
+              onChange={setSearchValue}
+            />
             <div className="mt-5 grid grid-cols-2 gap-4">
-              <List title="Projects" options={menuProjects} />
-              {selectedProject && (
-                <List
-                  title="Environment"
-                  options={[
-                    {
-                      text: 'Test',
-                      type: 'icon'
-                    },
-                    {
-                      text: 'Production'
-                    }
-                  ]}
-                />
-              )}
+              <div className="flex flex-col gap-3">
+                <List.Title>{`Projects`}</List.Title>
+                <List items={projects} />
+              </div>
+              <div className="flex flex-col gap-3">
+                <List.Title>{`Environment`}</List.Title>
+                <List items={environments} />
+              </div>
             </div>
           </div>
         </div>
