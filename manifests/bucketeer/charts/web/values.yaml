@@ -118,7 +118,7 @@ envoy:
   adminPort: 8001
   resources: {}
 service:
-  type: ClusterIP
+  type: NodePort
   grpcPort: 9000
   httpPort: 9003
 health:
