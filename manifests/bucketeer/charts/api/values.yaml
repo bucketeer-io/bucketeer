@@ -64,6 +64,7 @@ envoy:
 service:
   externalPort: 9000
 ingress:
+  name: api
   host:
   staticIPName:
 health:
