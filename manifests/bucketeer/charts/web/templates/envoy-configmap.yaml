@@ -859,6 +859,18 @@ data:
                                 retry_policy:
                                   retry_on: 5xx
                                   num_retries: 3
+                            - match:
+                                prefix: /
+                                headers:
+                                  - name: content-type
+                                    string_match:
+                                      exact: application/grpc
+                              route:
+                                cluster: healthcheck
+                                retry_policy:
+                                  num_retries: 3
+                                  retry_on: 5xx
+                                timeout: 15s
               transport_socket:
                 name: envoy.transport_sockets.tls
                 typed_config:
