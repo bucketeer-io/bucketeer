@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "backend.fullname" . }}
+  name: {{ template "web.fullname" . }}
   namespace: {{ .Values.namespace }}
   labels:
-    app: {{ template "backend.name" . }}
-    chart: {{ template "backend.chart" . }}
-    release: {{ template "backend.fullname" . }}
+    app: {{ template "web.name" . }}
+    chart: {{ template "web.chart" . }}
+    release: {{ template "web.fullname" . }}
     heritage: {{ .Release.Service }}
 spec:
   selector:
     matchLabels:
-      app: {{ template "backend.name" . }}
-      release: {{ template "backend.fullname" . }}
+      app: {{ template "web.name" . }}
+      release: {{ template "web.fullname" . }}
   template:
     metadata:
       labels:
-        app: {{ template "backend.name" . }}
-        release: {{ template "backend.fullname" . }}
+        app: {{ template "web.name" . }}
+        release: {{ template "web.fullname" . }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
     spec:
@@ -31,16 +31,13 @@ spec:
       volumes:
         - name: envoy-config
           configMap:
-            name: {{ template "backend.fullname" . }}-envoy-config
+            name: {{ template "web.fullname" . }}-envoy-config
         - name: oauth-config
           configMap:
-            name: {{ template "backend.fullname" . }}-oauth-config
+            name: {{ template "web.fullname" . }}-oauth-config
         - name: service-cert-secret
           secret:
             secretName: {{ template "service-cert-secret" . }}
-        - name: issuer-cert-secret
-          secret:
-            secretName: {{ template "issuer-cert-secret" . }}
         - name: service-token-secret
           secret:
             secretName: {{ template "service-token-secret" . }}
@@ -49,9 +46,45 @@ spec:
             secretName: {{ template "oauth-key-secret" . }}
         - name: env-js
           configMap:
-            name: {{ template "backend.name" . }}-env-js
+            name: {{ template "web.name" . }}-env-js
+        - name: envoy-account-descriptor-secret
+          secret:
+            secretName: {{ template "web.fullname" . }}-account
+        - name: envoy-auditlog-descriptor-secret
+          secret:
+            secretName: {{ template "web.fullname" . }}-auditlog
+        - name: envoy-auth-descriptor-secret
+          secret:
+            secretName: {{ template "web.fullname" . }}-auth
+        - name: envoy-autoops-descriptor-secret
+          secret:
+            secretName: {{ template "web.fullname" . }}-autoops
+        - name: envoy-environment-descriptor-secret
+          secret:
+            secretName: {{ template "web.fullname" . }}-environment
+        - name: envoy-eventcounter-descriptor-secret
+          secret:
+            secretName: {{ template "web.fullname" . }}-eventcounter
+        - name: envoy-experiment-descriptor-secret
+          secret:
+            secretName: {{ template "web.fullname" . }}-experiment
+        - name: envoy-experiment-calculator-descriptor-secret
+          secret:
+            secretName: {{ template "web.fullname" . }}-experimentcalculator
+        - name: envoy-feature-descriptor-secret
+          secret:
+            secretName: {{ template "web.fullname" . }}-feature
+        - name: envoy-notification-descriptor-secret
+          secret:
+            secretName: {{ template "web.fullname" . }}-notification
+        - name: envoy-push-descriptor-secret
+          secret:
+            secretName: {{ template "web.fullname" . }}-push
+        - name: envoy-batch-descriptor-secret
+          secret:
+            secretName: {{ template "web.fullname" . }}-batch
       {{- if .Values.serviceAccount.annotations }}
-      serviceAccountName: {{ template "backend.fullname" . }}
+      serviceAccountName: {{ template "web.fullname" . }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
@@ -59,117 +92,117 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["server"]
           env:
-            - name: BUCKETEER_BACKEND_CLOUD_SERVICE
+            - name: BUCKETEER_WEB_CLOUD_SERVICE
               value: "{{ .Values.env.cloudService }}"
             - name: BIGQUERY_EMULATOR_HOST
               value: "{{.Values.env.bigqueryEmulatorHost}}"
             - name: PUBSUB_EMULATOR_HOST
               value: "{{.Values.env.pubsubEmulatorHost}}"
-            - name: BUCKETEER_BACKEND_PROFILE
+            - name: BUCKETEER_WEB_PROFILE
               value: "{{.Values.env.profile}}"
             - name: BUCKETEER_TEST_ENABLED
               value: "{{.Values.env.bucketeerTestEnabled}}"
-            - name: BUCKETEER_BACKEND_GCP_TRACE_ENABLED
+            - name: BUCKETEER_WEB_GCP_TRACE_ENABLED
               value: "{{.Values.env.gcpEnabled}}"
-            - name: BUCKETEER_BACKEND_PROJECT
+            - name: BUCKETEER_WEB_PROJECT
               value: "{{ .Values.env.project }}"
-            - name: BUCKETEER_BACKEND_MYSQL_USER
+            - name: BUCKETEER_WEB_MYSQL_USER
               value: "{{ .Values.env.mysqlUser }}"
-            - name: BUCKETEER_BACKEND_MYSQL_PASS
+            - name: BUCKETEER_WEB_MYSQL_PASS
               value: "{{ .Values.env.mysqlPass }}"
-            - name: BUCKETEER_BACKEND_MYSQL_HOST
+            - name: BUCKETEER_WEB_MYSQL_HOST
               value: "{{ .Values.env.mysqlHost }}"
-            - name: BUCKETEER_BACKEND_MYSQL_PORT
+            - name: BUCKETEER_WEB_MYSQL_PORT
               value: "{{ .Values.env.mysqlPort }}"
-            - name: BUCKETEER_BACKEND_MYSQL_DB_NAME
+            - name: BUCKETEER_WEB_MYSQL_DB_NAME
               value: "{{ .Values.env.mysqlDbName }}"
-            - name: BUCKETEER_BACKEND_PERSISTENT_REDIS_SERVER_NAME
+            - name: BUCKETEER_WEB_PERSISTENT_REDIS_SERVER_NAME
               value: "{{ .Values.env.persistentRedis.serverName }}"
-            - name: BUCKETEER_BACKEND_PERSISTENT_REDIS_ADDR
+            - name: BUCKETEER_WEB_PERSISTENT_REDIS_ADDR
               value: "{{ .Values.env.persistentRedis.addr }}"
-            - name: BUCKETEER_BACKEND_PERSISTENT_REDIS_POOL_MAX_IDLE
+            - name: BUCKETEER_WEB_PERSISTENT_REDIS_POOL_MAX_IDLE
               value: "{{ .Values.env.persistentRedis.poolMaxIdle }}"
-            - name: BUCKETEER_BACKEND_PERSISTENT_REDIS_POOL_MAX_ACTIVE
+            - name: BUCKETEER_WEB_PERSISTENT_REDIS_POOL_MAX_ACTIVE
               value: "{{ .Values.env.persistentRedis.poolMaxActive }}"
-            - name: BUCKETEER_BACKEND_NON_PERSISTENT_REDIS_SERVER_NAME
+            - name: BUCKETEER_WEB_NON_PERSISTENT_REDIS_SERVER_NAME
               value: "{{ .Values.env.nonPersistentRedis.serverName }}"
-            - name: BUCKETEER_BACKEND_NON_PERSISTENT_REDIS_ADDR
+            - name: BUCKETEER_WEB_NON_PERSISTENT_REDIS_ADDR
               value: "{{ .Values.env.nonPersistentRedis.addr }}"
-            - name: BUCKETEER_BACKEND_NON_PERSISTENT_REDIS_POOL_MAX_IDLE
+            - name: BUCKETEER_WEB_NON_PERSISTENT_REDIS_POOL_MAX_IDLE
               value: "{{ .Values.env.nonPersistentRedis.poolMaxIdle }}"
-            - name: BUCKETEER_BACKEND_NON_PERSISTENT_REDIS_POOL_MAX_ACTIVE
+            - name: BUCKETEER_WEB_NON_PERSISTENT_REDIS_POOL_MAX_ACTIVE
               value: "{{ .Values.env.nonPersistentRedis.poolMaxActive }}"
-            - name: BUCKETEER_BACKEND_BIGQUERY_DATA_SET
+            - name: BUCKETEER_WEB_BIGQUERY_DATA_SET
               value: "{{ .Values.env.bigQueryDataSet }}"
-            - name: BUCKETEER_BACKEND_BIGQUERY_DATA_LOCATION
+            - name: BUCKETEER_WEB_BIGQUERY_DATA_LOCATION
               value: "{{ .Values.env.bigQueryDataLocation }}"
-            - name: BUCKETEER_BACKEND_DOMAIN_TOPIC
+            - name: BUCKETEER_WEB_DOMAIN_TOPIC
               value: "{{ .Values.env.domainTopic }}"
-            - name: BUCKETEER_BACKEND_BULK_SEGMENT_USERS_RECEIVED_TOPIC
+            - name: BUCKETEER_WEB_BULK_SEGMENT_USERS_RECEIVED_TOPIC
               value: "{{ .Values.env.bulkSegmentUsersReceivedTopic }}"
-            - name: BUCKETEER_BACKEND_HEALTH_CHECK_SERVICE_PORT
+            - name: BUCKETEER_WEB_HEALTH_CHECK_SERVICE_PORT
               value: "{{ .Values.env.healthCheckServicePort }}"
-            - name: BUCKETEER_BACKEND_ACCOUNT_SERVICE_PORT
+            - name: BUCKETEER_WEB_ACCOUNT_SERVICE_PORT
               value: "{{ .Values.env.accountServicePort }}"
-            - name: BUCKETEER_BACKEND_AUTH_SERVICE_PORT
+            - name: BUCKETEER_WEB_AUTH_SERVICE_PORT
               value: "{{ .Values.env.authServicePort }}"
-            - name: BUCKETEER_BACKEND_AUDIT_LOG_SERVICE_PORT
+            - name: BUCKETEER_WEB_AUDIT_LOG_SERVICE_PORT
               value: "{{ .Values.env.auditLogServicePort }}"
-            - name: BUCKETEER_BACKEND_AUTO_OPS_SERVICE_PORT
+            - name: BUCKETEER_WEB_AUTO_OPS_SERVICE_PORT
               value: "{{ .Values.env.autoOpsServicePort }}"
-            - name: BUCKETEER_BACKEND_ENVIRONMENT_SERVICE_PORT
+            - name: BUCKETEER_WEB_ENVIRONMENT_SERVICE_PORT
               value: "{{ .Values.env.environmentServicePort }}"
-            - name: BUCKETEER_BACKEND_EVENT_COUNTER_SERVICE_PORT
+            - name: BUCKETEER_WEB_EVENT_COUNTER_SERVICE_PORT
               value: "{{ .Values.env.eventCounterServicePort }}"
-            - name: BUCKETEER_BACKEND_EXPERIMENT_SERVICE_PORT
+            - name: BUCKETEER_WEB_EXPERIMENT_SERVICE_PORT
               value: "{{ .Values.env.experimentServicePort }}"
-            - name: BUCKETEER_BACKEND_FEATURE_SERVICE_PORT
+            - name: BUCKETEER_WEB_FEATURE_SERVICE_PORT
               value: "{{ .Values.env.featureServicePort }}"
-            - name: BUCKETEER_BACKEND_NOTIFICATION_SERVICE_PORT
+            - name: BUCKETEER_WEB_NOTIFICATION_SERVICE_PORT
               value: "{{ .Values.env.notificationServicePort }}"
-            - name: BUCKETEER_BACKEND_PUSH_SERVICE_PORT
+            - name: BUCKETEER_WEB_PUSH_SERVICE_PORT
               value: "{{ .Values.env.pushServicePort }}"
-            - name: BUCKETEER_BACKEND_WEB_CONSOLE_SERVICE_PORT
+            - name: BUCKETEER_WEB_WEB_CONSOLE_SERVICE_PORT
               value: "{{ .Values.env.webConsoleServicePort }}"
-            - name: BUCKETEER_BACKEND_ACCOUNT_SERVICE
+            - name: BUCKETEER_WEB_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
-            - name: BUCKETEER_BACKEND_AUTH_SERVICE
+            - name: BUCKETEER_WEB_AUTH_SERVICE
               value: "{{ .Values.env.authService }}"
-            - name: BUCKETEER_BACKEND_BATCH_SERVICE
+            - name: BUCKETEER_WEB_BATCH_SERVICE
               value: "{{ .Values.env.batchService }}"
-            - name: BUCKETEER_BACKEND_ENVIRONMENT_SERVICE
+            - name: BUCKETEER_WEB_ENVIRONMENT_SERVICE
               value: "{{ .Values.env.environmentService }}"
-            - name: BUCKETEER_BACKEND_EXPERIMENT_SERVICE
+            - name: BUCKETEER_WEB_EXPERIMENT_SERVICE
               value: "{{ .Values.env.experimentService }}"
-            - name: BUCKETEER_BACKEND_FEATURE_SERVICE
+            - name: BUCKETEER_WEB_FEATURE_SERVICE
               value: "{{ .Values.env.featureService }}"
-            - name: BUCKETEER_BACKEND_AUTO_OPS_SERVICE
+            - name: BUCKETEER_WEB_AUTO_OPS_SERVICE
               value: "{{ .Values.env.autoOpsService }}"
-            - name: BUCKETEER_BACKEND_TIMEZONE
+            - name: BUCKETEER_WEB_TIMEZONE
               value: "{{ .Values.env.timezone }}"
-            - name: BUCKETEER_BACKEND_METRICS_PORT
+            - name: BUCKETEER_WEB_METRICS_PORT
               value: "{{ .Values.env.metricsPort }}"
-            - name: BUCKETEER_BACKEND_LOG_LEVEL
+            - name: BUCKETEER_WEB_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
-            - name: BUCKETEER_BACKEND_OAUTH_PUBLIC_KEY
+            - name: BUCKETEER_WEB_OAUTH_PUBLIC_KEY
               value: /usr/local/oauth-key/public.pem
-            - name: BUCKETEER_BACKEND_OAUTH_PRIVATE_KEY
+            - name: BUCKETEER_WEB_OAUTH_PRIVATE_KEY
               value: /usr/local/oauth-key/private.pem
-            - name: BUCKETEER_BACKEND_CERT
+            - name: BUCKETEER_WEB_CERT
               value: /usr/local/certs/service/tls.crt
-            - name: BUCKETEER_BACKEND_KEY
+            - name: BUCKETEER_WEB_KEY
               value: /usr/local/certs/service/tls.key
-            - name: BUCKETEER_BACKEND_OAUTH_CONFIG_PATH
+            - name: BUCKETEER_WEB_OAUTH_CONFIG_PATH
               value: /usr/local/oauth-config/oauth-config.json
-            - name: BUCKETEER_BACKEND_SERVICE_TOKEN
+            - name: BUCKETEER_WEB_SERVICE_TOKEN
               value: /usr/local/service-token/token
-            - name: BUCKETEER_BACKEND_EMAIL_FILTER
+            - name: BUCKETEER_WEB_EMAIL_FILTER
               value: "{{ .Values.env.emailFilter }}"
-            - name: BUCKETEER_BACKEND_WEBHOOK_BASE_URL
+            - name: BUCKETEER_WEB_WEBHOOK_BASE_URL
               value: "{{ .Values.webhook.baseURL }}"
-            - name: BUCKETEER_BACKEND_WEBHOOK_KMS_RESOURCE_NAME
+            - name: BUCKETEER_WEB_WEBHOOK_KMS_RESOURCE_NAME
               value: "{{ .Values.webhook.kmsResourceName }}"
-            - name: BUCKETEER_BACKEND_WEB_CONSOLE_ENV_JS_PATH
+            - name: BUCKETEER_WEB_WEB_CONSOLE_ENV_JS_PATH
               value: /usr/local/static/js
           volumeMounts:
             - name: service-cert-secret
@@ -237,12 +270,49 @@ spec:
             - name: envoy-config
               mountPath: /usr/local/conf/
               readOnly: true
+            - name: envoy-account-descriptor-secret
+              mountPath: /usr/local/account-secret
+              readOnly: true
+            - name: envoy-auditlog-descriptor-secret
+              mountPath: /usr/local/auditlog-secret
+              readOnly: true
+            - name: envoy-auth-descriptor-secret
+              mountPath: /usr/local/auth-secret
+              readOnly: true
+            - name: envoy-autoops-descriptor-secret
+              mountPath: /usr/local/autoops-secret
+              readOnly: true
+            - name: envoy-environment-descriptor-secret
+              mountPath: /usr/local/environment-secret
+              readOnly: true
+            - name: envoy-eventcounter-descriptor-secret
+              mountPath: /usr/local/eventcounter-secret
+              readOnly: true
+            - name: envoy-experiment-descriptor-secret
+              mountPath: /usr/local/experiment-secret
+            - name: envoy-experiment-calculator-descriptor-secret
+              mountPath: /usr/local/experiment-calculator-secret
+              readOnly: true
+            - name: envoy-feature-descriptor-secret
+              mountPath: /usr/local/feature-secret
+              readOnly: true
+            - name: envoy-notification-descriptor-secret
+              mountPath: /usr/local/notification-secret
+              readOnly: true
+            - name: envoy-push-descriptor-secret
+              mountPath: /usr/local/push-secret
+              readOnly: true
+            - name: envoy-batch-descriptor-secret
+              mountPath: /usr/local/batch-secret
+              readOnly: true
             - name: service-cert-secret
               mountPath: /usr/local/certs/service
               readOnly: true
           ports:
-            - name: envoy
-              containerPort: {{ .Values.envoy.port }}
+            - name: envoy-grpc
+              containerPort: {{ .Values.envoy.grpcPort }}
+            - name: envoy-http
+              containerPort: {{ .Values.envoy.httpPort }}
             - name: admin
               containerPort: {{ .Values.envoy.adminPort }}
           livenessProbe:

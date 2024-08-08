@@ -21,7 +21,7 @@ migration:
   # First revision
   dbBaseline: "20240626022133"
 
-backend:
+web:
   env:
     gcpEnabled: false
     cloudService: hcv
@@ -55,11 +55,15 @@ backend:
   tls:
     service:
       secret: bucketeer-service-cert
-      cert:
-      key:
-    issuer:
-      secret: bucketeer-service-cert
-      cert:
+    bucketeerJP:
+      secrets:
+        - hosts:
+            - web-gateway.bucketeer.io
+          secretName: bucketeer-service-cert
+
+  ingress:
+    host: web-gateway.bucketeer.io
+
   serviceToken:
     secret: bucketeer-service-token
   oauth:
@@ -116,20 +120,6 @@ api-gateway:
     secret: bucketeer-service-token
   ingress:
     host: api-gateway.bucketeer.io
-
-web-gateway:
-  env:
-    gcpEnabled: false
-  tls:
-    bucketeerJP:
-      secrets:
-        - hosts:
-            - web-gateway.bucketeer.io
-          secretName: bucketeer-service-cert
-    service:
-      secret: bucketeer-service-cert
-  ingress:
-    host: web-gateway.bucketeer.io
 
 
 batch-server:
@@ -192,7 +182,7 @@ batch-server:
   cronjob:
     successfulJobsHistoryLimit: 1
     failedJobsHistoryLimit: 1
-    webGatewayAddress: https://web-gateway.default.svc.cluster.local:9000
+    webGatewayAddress: https://web.default.svc.cluster.local:9003
     jobs:
       - name: experiment-status-updater
         jobId: ExperimentStatusUpdater
@@ -428,32 +418,3 @@ subscriber:
       flushSize: 100
       flushInterval: 10
       flushTimeout: 10
-
-
-experiment-calculator:
-  env:
-    gcpEnabled: false
-    profile: false
-    project: bucketeer-test
-    stanHost: localhost
-    stanPort: 8080
-    mysqlUser: bucketeer
-    mysqlPass: bucketeer
-    mysqlHost: localenv-mysql-headless.default.svc.cluster.local
-    mysqlPort: 3306
-    mysqlDbName: bucketeer
-    environmentService: localhost:9001
-    experimentService: localhost:9001
-    eventCounterService: localhost:9001
-    logLevel: info
-    port: 9090
-    metricsPort: 9002
-    traceSamplingProbability: 0.001
-    timezone: UTC
-  tls:
-    service:
-      secret: bucketeer-service-cert
-      cert:
-      key:
-  serviceToken:
-    secret: bucketeer-service-token

@@ -63,19 +63,19 @@ data:
               unhealthy_threshold: 2
           ignore_health_on_host_removal: true
 
-        - name: backend
+        - name: web
           type: strict_dns
           lb_policy: {{ .Values.envoy.lbPolicy }}
           connect_timeout: 5s
           dns_lookup_family: V4_ONLY
           load_assignment:
-            cluster_name: backend
+            cluster_name: web
             endpoints:
               - lb_endpoints:
                   - endpoint:
                       address:
                         socket_address:
-                          address: backend.{{ .Values.namespace }}.svc.cluster.local
+                          address: web.{{ .Values.namespace }}.svc.cluster.local
                           port_value: 9000
           transport_socket:
             name: envoy.transport_sockets.tls
@@ -130,7 +130,7 @@ data:
                                       exact: application/grpc
                                 prefix: /bucketeer.account.AccountService
                               route:
-                                cluster: backend
+                                cluster: web
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx
@@ -142,7 +142,7 @@ data:
                                       exact: application/grpc
                                 prefix: /bucketeer.autoops.AutoOpsService
                               route:
-                                cluster: backend
+                                cluster: web
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx
@@ -154,7 +154,7 @@ data:
                                       exact: application/grpc
                                 prefix: /bucketeer.notification.NotificationService
                               route:
-                                cluster: backend
+                                cluster: web
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx
@@ -166,7 +166,7 @@ data:
                                       exact: application/grpc
                                 prefix: /bucketeer.environment.EnvironmentService
                               route:
-                                cluster: backend
+                                cluster: web
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx
@@ -178,7 +178,7 @@ data:
                                       exact: application/grpc
                                 prefix: /bucketeer.experiment.ExperimentService
                               route:
-                                cluster: backend
+                                cluster: web
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx
@@ -190,7 +190,7 @@ data:
                                       exact: application/grpc
                                 prefix: /bucketeer.eventcounter.EventCounterService
                               route:
-                                cluster: backend
+                                cluster: web
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx
@@ -214,7 +214,7 @@ data:
                                       exact: application/grpc
                                 prefix: /bucketeer.feature.FeatureService
                               route:
-                                cluster: backend
+                                cluster: web
                                 retry_policy:
                                   num_retries: 3
                                   retry_on: 5xx

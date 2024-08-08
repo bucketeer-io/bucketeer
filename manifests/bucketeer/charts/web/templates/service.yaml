@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "web.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  annotations:
+    cloud.google.com/backend-config: '{"default": "{{ template "web.fullname" . }}"}'
+    cloud.google.com/neg: '{"ingress": true}'
+    cloud.google.com/app-protocols: '{"http-service":"HTTP2"}'
+  labels:
+    app: {{ template "web.name" . }}
+    chart: {{ template "web.chart" . }}
+    release: {{ template "web.fullname" . }}
+    heritage: {{ .Release.Service }}
+    envoy: "true"
+    metrics: "true"
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - name: grpc-service
+      port: {{ .Values.service.grpcPort }}
+      targetPort: envoy-grpc
+      protocol: TCP
+    - name: http-service
+      port: {{ .Values.service.httpPort }}
+      targetPort: envoy-http
+      protocol: TCP
+    - name: metrics
+      port: {{ .Values.env.metricsPort }}
+      protocol: TCP
+    - name: admin
+      port: {{ .Values.envoy.adminPort }}
+      protocol: TCP
+  selector:
+    app: {{ template "web.name" . }}
+    release: {{ template "web.fullname" . }}

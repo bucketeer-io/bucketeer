@@ -33,7 +33,7 @@ encoded_descriptor=$(cat ${DESCRIPTOR_PATH}/gateway/${descriptor_file} | base64 
 yq eval ".envoy.descriptor = \"${encoded_descriptor}\"" -i ${api_gateway_values_path}
 
 # web-gateway
-web_gateway_values_path="./manifests/bucketeer/charts/web-gateway/values.yaml"
+web_gateway_values_path="./manifests/bucketeer/charts/web/values.yaml"
 proto_descriptor_dirnames=$(find ${DESCRIPTOR_PATH} -name "$descriptor_file" -not -path "**/gateway/*" -print0 | xargs -0 -n1 dirname | awk -F/ '{print $NF}')
 for service_name in $proto_descriptor_dirnames
 do

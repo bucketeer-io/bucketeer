@@ -123,7 +123,7 @@ serviceAccount:
 cronjob:
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 1
-  webGatewayAddress: https://web-gateway.default.svc.cluster.local:9000
+  webGatewayAddress: https://web.default.svc.cluster.local:9003
   jobs:
     - name: experiment-status-updater
       jobId: ExperimentStatusUpdater
