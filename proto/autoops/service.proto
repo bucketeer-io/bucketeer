@@ -85,8 +85,9 @@ message UpdateAutoOpsRuleResponse {}
 message ExecuteAutoOpsRequest {
   string environment_namespace = 1;
   string id = 2;
-  ChangeAutoOpsRuleTriggeredAtCommand
-      change_auto_ops_rule_triggered_at_command = 3 [deprecated = true];
+  // ChangeAutoOpsRuleTriggeredAtCommand
+  // change_auto_ops_rule_triggered_at_command = 3 [deprecated = true];
+  reserved 3;
   ExecuteAutoOpsRuleCommand execute_auto_ops_rule_command = 4;
 }
 

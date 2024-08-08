@@ -57,7 +57,6 @@ func TestNewAutoOpsRule(t *testing.T) {
 				},
 				CreatedAt:     time.Now().Unix(),
 				UpdatedAt:     time.Now().Unix(),
-				TriggeredAt:   0,
 				Deleted:       false,
 				AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
 			}},
@@ -109,7 +108,6 @@ func TestNewAutoOpsRule(t *testing.T) {
 				},
 				CreatedAt:     time.Now().Unix(),
 				UpdatedAt:     time.Now().Unix(),
-				TriggeredAt:   0,
 				Deleted:       false,
 				AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
 			}},
@@ -141,7 +139,6 @@ func TestNewAutoOpsRule(t *testing.T) {
 				},
 				CreatedAt:     time.Now().Unix(),
 				UpdatedAt:     time.Now().Unix(),
-				TriggeredAt:   0,
 				Deleted:       false,
 				AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
 			}},
@@ -177,7 +174,6 @@ func TestNewAutoOpsRule(t *testing.T) {
 				},
 				CreatedAt:     time.Now().Unix(),
 				UpdatedAt:     time.Now().Unix(),
-				TriggeredAt:   0,
 				Deleted:       false,
 				AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
 			}},
@@ -199,7 +195,6 @@ func TestNewAutoOpsRule(t *testing.T) {
 				assert.Equal(t, p.expected.AutoOpsStatus, aor.AutoOpsStatus)
 				assert.Equal(t, p.expected.CreatedAt, aor.CreatedAt)
 				assert.Equal(t, p.expected.UpdatedAt, aor.UpdatedAt)
-				assert.Equal(t, p.expected.TriggeredAt, aor.TriggeredAt)
 				assert.Equal(t, p.expected.Deleted, aor.Deleted)
 
 				for i, c := range aor.Clauses {
@@ -219,35 +214,16 @@ func TestSetDeleted(t *testing.T) {
 	assert.Equal(t, true, aor.Deleted)
 }
 
-func TestSetTriggeredAt(t *testing.T) {
-	t.Parallel()
-	aor := createAutoOpsRule(t)
-	aor.SetTriggeredAt()
-	assert.NotZero(t, aor.TriggeredAt)
-	assert.Equal(t, autoopsproto.AutoOpsStatus_FINISHED, aor.AutoOpsStatus)
-}
-
-func TestAlreadyTriggeredAt(t *testing.T) {
-	t.Parallel()
-	aor := createAutoOpsRule(t)
-	assert.False(t, aor.AlreadyTriggered())
-	aor.SetTriggeredAt()
-	assert.True(t, aor.AlreadyTriggered())
-}
-
 func TestSetOpsType(t *testing.T) {
 	t.Parallel()
 	aor := createAutoOpsRule(t)
-	aor.TriggeredAt = 1
 	aor.SetOpsType(autoopsproto.OpsType_DISABLE_FEATURE)
 	assert.Equal(t, autoopsproto.OpsType_DISABLE_FEATURE, aor.OpsType)
-	assert.Zero(t, aor.TriggeredAt)
 }
 
 func TestAddOpsEventRateClause(t *testing.T) {
 	t.Parallel()
 	aor := createAutoOpsRule(t)
-	aor.TriggeredAt = 1
 	l := len(aor.Clauses)
 	c := &autoopsproto.OpsEventRateClause{
 		GoalId:          "goalid01",
@@ -262,7 +238,6 @@ func TestAddOpsEventRateClause(t *testing.T) {
 	assert.NotEmpty(t, aor.Clauses[l].Id)
 	eventRateClause, err := aor.unmarshalOpsEventRateClause(aor.Clauses[l])
 	require.NoError(t, err)
-	assert.Zero(t, aor.TriggeredAt)
 
 	assert.Equal(t, c.GoalId, eventRateClause.GoalId)
 	assert.Equal(t, c.MinCount, eventRateClause.MinCount)
@@ -308,7 +283,6 @@ func TestAddDatetimeClause(t *testing.T) {
 func TestChangeOpsEventRateClause(t *testing.T) {
 	t.Parallel()
 	aor := createAutoOpsRule(t)
-	aor.TriggeredAt = 1
 	l := len(aor.Clauses)
 	c := &autoopsproto.OpsEventRateClause{
 		GoalId:          "goalid01",
@@ -321,14 +295,12 @@ func TestChangeOpsEventRateClause(t *testing.T) {
 	assert.Equal(t, l, len(aor.Clauses))
 	eventRateClause, err := aor.unmarshalOpsEventRateClause(aor.Clauses[0])
 	require.NoError(t, err)
-	assert.Zero(t, aor.TriggeredAt)
 	assert.Equal(t, c.GoalId, eventRateClause.GoalId)
 }
 
 func TestChangeDatetimeClause(t *testing.T) {
 	t.Parallel()
 	aor := createAutoOpsRule(t)
-	aor.TriggeredAt = 1
 	l := len(aor.Clauses)
 	c := &autoopsproto.DatetimeClause{
 		Time:       1,
@@ -341,7 +313,6 @@ func TestChangeDatetimeClause(t *testing.T) {
 	dc, err := aor.unmarshalDatetimeClause(aor.Clauses[0])
 	require.NoError(t, err)
 	assert.Equal(t, c.Time, dc.Time)
-	assert.Zero(t, aor.TriggeredAt)
 	assert.Equal(t, autoopsproto.AutoOpsStatus_WAITING, aor.AutoOpsStatus)
 
 	c1 := &autoopsproto.DatetimeClause{
@@ -382,7 +353,6 @@ func TestChangeDatetimeClause(t *testing.T) {
 func TestDeleteClause(t *testing.T) {
 	t.Parallel()
 	aor := createAutoOpsRule(t)
-	aor.TriggeredAt = 1
 	l := len(aor.Clauses)
 	c := &autoopsproto.OpsEventRateClause{
 		GoalId:          "goalid01",
@@ -397,7 +367,6 @@ func TestDeleteClause(t *testing.T) {
 	err = aor.DeleteClause(aor.Clauses[0].Id)
 	require.NoError(t, err)
 	assert.Equal(t, l, len(aor.Clauses))
-	assert.Zero(t, aor.TriggeredAt)
 	assert.Equal(t, addClause.Id, aor.Clauses[0].Id)
 	assert.Equal(t, autoopsproto.AutoOpsStatus_WAITING, aor.AutoOpsStatus)
 }

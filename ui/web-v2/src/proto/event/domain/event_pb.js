@@ -24429,7 +24429,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_clause_pb.Clause.toObject,
           includeInstance
         ),
-        triggeredAt: jspb.Message.getFieldWithDefault(msg, 4, 0),
         createdAt: jspb.Message.getFieldWithDefault(msg, 5, 0),
         updatedAt: jspb.Message.getFieldWithDefault(msg, 6, 0),
         opsStatus: jspb.Message.getFieldWithDefault(msg, 7, 0)
@@ -24489,10 +24488,6 @@ proto.bucketeer.event.domain.AutoOpsRuleCreatedEvent.deserializeBinaryFromReader
             proto_autoops_clause_pb.Clause.deserializeBinaryFromReader
           );
           msg.addClauses(value);
-          break;
-        case 4:
-          var value = /** @type {number} */ (reader.readInt64());
-          msg.setTriggeredAt(value);
           break;
         case 5:
           var value = /** @type {number} */ (reader.readInt64());
@@ -24555,10 +24550,6 @@ proto.bucketeer.event.domain.AutoOpsRuleCreatedEvent.serializeBinaryToWriter =
         f,
         proto_autoops_clause_pb.Clause.serializeBinaryToWriter
       );
-    }
-    f = message.getTriggeredAt();
-    if (f !== 0) {
-      writer.writeInt64(4, f);
     }
     f = message.getCreatedAt();
     if (f !== 0) {
@@ -24661,24 +24652,6 @@ proto.bucketeer.event.domain.AutoOpsRuleCreatedEvent.prototype.addClauses =
 proto.bucketeer.event.domain.AutoOpsRuleCreatedEvent.prototype.clearClausesList =
   function () {
     return this.setClausesList([]);
-  };
-
-/**
- * optional int64 triggered_at = 4;
- * @return {number}
- */
-proto.bucketeer.event.domain.AutoOpsRuleCreatedEvent.prototype.getTriggeredAt =
-  function () {
-    return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 4, 0));
-  };
-
-/**
- * @param {number} value
- * @return {!proto.bucketeer.event.domain.AutoOpsRuleCreatedEvent} returns this
- */
-proto.bucketeer.event.domain.AutoOpsRuleCreatedEvent.prototype.setTriggeredAt =
-  function (value) {
-    return jspb.Message.setProto3IntField(this, 4, value);
   };
 
 /**

@@ -60,10 +60,9 @@ func NewAutoOpsExecutor(autoOpsClient autoopsclient.Client, opts ...Option) Auto
 
 func (e *autoOpsExecutor) Execute(ctx context.Context, environmentNamespace, ruleID, clauseId string) error {
 	resp, err := e.autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
-		EnvironmentNamespace:                environmentNamespace,
-		Id:                                  ruleID,
-		ExecuteAutoOpsRuleCommand:           &autoopsproto.ExecuteAutoOpsRuleCommand{ClauseId: clauseId},
-		ChangeAutoOpsRuleTriggeredAtCommand: &autoopsproto.ChangeAutoOpsRuleTriggeredAtCommand{},
+		EnvironmentNamespace:      environmentNamespace,
+		Id:                        ruleID,
+		ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{ClauseId: clauseId},
 	})
 	if err != nil {
 		e.logger.Error("Failed to execute auto ops", zap.Error(err),

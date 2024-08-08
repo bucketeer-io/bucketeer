@@ -108,23 +108,8 @@ func (a *AutoOpsRule) SetDeleted() {
 	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
 }
 
-// TODO: Remove this function after auto ops migration.
-// Deprecated
-func (a *AutoOpsRule) SetTriggeredAt() {
-	now := time.Now().Unix()
-	a.AutoOpsRule.TriggeredAt = now
-	a.SetFinished()
-	a.AutoOpsRule.UpdatedAt = now
-}
-
 func (a *AutoOpsRule) SetFinished() {
 	a.SetAutoOpsStatus(proto.AutoOpsStatus_FINISHED)
-}
-
-// TODO: Remove this function after auto ops migration.
-// Deprecated
-func (a *AutoOpsRule) AlreadyTriggered() bool {
-	return a.TriggeredAt > 0 || a.AutoOpsStatus == proto.AutoOpsStatus_FINISHED
 }
 
 func (a *AutoOpsRule) IsFinished() bool {
@@ -138,17 +123,12 @@ func (a *AutoOpsRule) IsStopped() bool {
 func (a *AutoOpsRule) SetOpsType(opsType proto.OpsType) {
 	a.AutoOpsRule.OpsType = opsType
 	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
-	a.AutoOpsRule.TriggeredAt = 0
 }
 
 func (a *AutoOpsRule) SetAutoOpsStatus(status proto.AutoOpsStatus) {
 	now := time.Now().Unix()
 	a.AutoOpsRule.AutoOpsStatus = status
 	a.AutoOpsRule.UpdatedAt = now
-	// TODO: Remove this function after auto ops migration.
-	if status == proto.AutoOpsStatus_FINISHED {
-		a.AutoOpsRule.TriggeredAt = now
-	}
 }
 
 func (a *AutoOpsRule) AddOpsEventRateClause(oerc *proto.OpsEventRateClause) (*proto.Clause, error) {
@@ -161,7 +141,6 @@ func (a *AutoOpsRule) AddOpsEventRateClause(oerc *proto.OpsEventRateClause) (*pr
 		return nil, err
 	}
 	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
-	a.AutoOpsRule.TriggeredAt = 0
 	return clause, nil
 }
 
@@ -240,12 +219,10 @@ func (a *AutoOpsRule) ChangeDatetimeClause(id string, dc *proto.DatetimeClause) 
 		return err
 	}
 	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
-	a.AutoOpsRule.TriggeredAt = 0
 	return nil
 }
 
 func (a *AutoOpsRule) changeClause(id string, mc pb.Message, actionType proto.ActionType) error {
-	a.AutoOpsRule.TriggeredAt = 0
 	for _, c := range a.Clauses {
 		if c.Id == id {
 			clause, err := ptypes.MarshalAny(mc)
@@ -265,7 +242,6 @@ func (a *AutoOpsRule) DeleteClause(id string) error {
 		return errClauseEmpty
 	}
 	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
-	a.AutoOpsRule.TriggeredAt = 0
 	var clauses []*proto.Clause
 	for i, c := range a.Clauses {
 		if c.Id == id {

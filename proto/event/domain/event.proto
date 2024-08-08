@@ -789,7 +789,7 @@ message AutoOpsRuleCreatedEvent {
   string feature_id = 1;
   bucketeer.autoops.OpsType ops_type = 2;
   repeated bucketeer.autoops.Clause clauses = 3;
-  int64 triggered_at = 4 [deprecated = true];
+  reserved 4;  // int64 triggered_at = 4 [deprecated = true];
   int64 created_at = 5;
   int64 updated_at = 6;
   bucketeer.autoops.AutoOpsStatus ops_status = 7;

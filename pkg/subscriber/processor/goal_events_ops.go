@@ -221,7 +221,7 @@ func (u *evalGoalUpdater) linkOpsRulesByGoalID(
 	for _, aor := range listAutoOpsRules {
 		autoOpsRule := &aodomain.AutoOpsRule{AutoOpsRule: aor}
 		// We ignore the rules that are already triggered
-		if autoOpsRule.AlreadyTriggered() {
+		if autoOpsRule.IsFinished() || autoOpsRule.IsStopped() {
 			continue
 		}
 		clauses, err := autoOpsRule.ExtractOpsEventRateClauses()

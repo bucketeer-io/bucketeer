@@ -492,15 +492,6 @@ export class ExecuteAutoOpsRequest extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  hasChangeAutoOpsRuleTriggeredAtCommand(): boolean;
-  clearChangeAutoOpsRuleTriggeredAtCommand(): void;
-  getChangeAutoOpsRuleTriggeredAtCommand():
-    | proto_autoops_command_pb.ChangeAutoOpsRuleTriggeredAtCommand
-    | undefined;
-  setChangeAutoOpsRuleTriggeredAtCommand(
-    value?: proto_autoops_command_pb.ChangeAutoOpsRuleTriggeredAtCommand
-  ): void;
-
   hasExecuteAutoOpsRuleCommand(): boolean;
   clearExecuteAutoOpsRuleCommand(): void;
   getExecuteAutoOpsRuleCommand():
@@ -535,7 +526,6 @@ export namespace ExecuteAutoOpsRequest {
   export type AsObject = {
     environmentNamespace: string;
     id: string;
-    changeAutoOpsRuleTriggeredAtCommand?: proto_autoops_command_pb.ChangeAutoOpsRuleTriggeredAtCommand.AsObject;
     executeAutoOpsRuleCommand?: proto_autoops_command_pb.ExecuteAutoOpsRuleCommand.AsObject;
   };
 }
