@@ -1724,6 +1724,10 @@ export const messages = {
           id: 'feature.clause.operator.in',
           defaultMessage: 'contains'
         }),
+        partiallyMatch: defineMessage({
+          id: 'feature.clause.operator.partiallyMatch',
+          defaultMessage: 'partially matches'
+        }),
         startWith: defineMessage({
           id: 'feature.clause.operator.startWith',
           defaultMessage: 'starts with'
