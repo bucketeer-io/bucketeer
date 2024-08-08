@@ -3,7 +3,7 @@ export type ListTitleProps = {
 };
 
 const ListTitle = ({ text }: ListTitleProps) => {
-  return <h3 className="typo-para-big h-10 text-gray-700">{text}</h3>;
+  return <h3 className="typo-head-bold-medium h-10 text-gray-700">{text}</h3>;
 };
 
 export default ListTitle;

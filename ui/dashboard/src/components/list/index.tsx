@@ -1,4 +1,3 @@
-import ListGroup from './list-group';
 import ListItem, { ListItemProps } from './list-item';
 import ListTitle from './list-title';
 
@@ -11,16 +10,13 @@ const List = ({ title, options = [] }: ListProps) => {
   return (
     <div>
       <ListTitle text={title} />
-      <ListGroup>
-        {options.map((item, index) => (
-          <ListItem key={index} {...item} />
-        ))}
-      </ListGroup>
+      {options.map((item, index) => (
+        <ListItem key={index} {...item} />
+      ))}
     </div>
   );
 };
 
-List.Group = ListGroup;
 List.Item = ListItem;
 List.Title = ListTitle;
 

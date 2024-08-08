@@ -10,7 +10,6 @@ import UserMenu from './user-menu';
 
 const Navigation = () => {
   const [isShowSetting, onShowSetting, onCloseSetting] = useToggleOpen(false);
-  const [isShowProjects, , onCloseProjects] = useToggleOpen(false);
 
   return (
     <div className="fixed h-screen w-[248px] bg-primary-500 py-8 px-6">
@@ -69,18 +68,10 @@ const Navigation = () => {
           </div>
         ) : (
           <div className="flex flex-col flex-1 pt-6">
-            <SectionMenu
-              title={`Environment`}
-              items={[
-                {
-                  icon: IconSystem.IconFolder,
-                  actIcon: IconSystem.IconChevronRight,
-                  label: `Abematv`,
-                  onClick: () => {}
-                }
-              ]}
-            />
-            <ProjectList isOpen={isShowProjects} onClose={onCloseProjects} />
+            <div className="px-3 uppercase typo-head-bold-tiny text-primary-50 mb-3">
+              {`Environment`}
+            </div>
+            <ProjectList />
             <Divider className="my-5 bg-primary-50 opacity-10" />
             <SectionMenu
               title={`Management`}

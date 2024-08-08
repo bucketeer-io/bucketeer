@@ -22,12 +22,6 @@ td {
   outline: none;
 }
 
-/* Google Map Autocomplete */
-.pac-container {
-  z-index: 9999 !important;
-  pointer-events: auto !important;
-}
-
 /* Chrome, Safari, Edge, Opera */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
@@ -38,4 +32,36 @@ input::-webkit-inner-spin-button {
 /* Firefox */
 input[type='number'] {
   -moz-appearance: textfield;
+}
+
+/* Override TailwindCSS Form */
+input,
+[multiple],
+textarea,
+select {
+  color: #475569; /* gray-700 */
+  border: 1px solid #cbd5e1; /* gray-400 */
+  border-radius: 8px; /* rounded */
+}
+
+input::placeholder,
+input::-webkit-input-placeholder,
+input:-ms-input-placeholder,
+textarea::placeholder,
+textarea::-webkit-input-placeholder,
+textarea:-ms-input-placeholder {
+  color: #94a3b8; /* gray-500 */
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  --tw-ring-color: #573792; /* primary-500 */
+  border-color: #573792; /* primary-500 */
+  box-shadow: none;
+}
+
+input[readonly]:focus {
+  --tw-ring-color: #cbd5e1; /* gray-400 */
+  border-color: #cbd5e1; /* gray-400 */
 }
