@@ -6,7 +6,7 @@ metadata:
   annotations:
     cloud.google.com/backend-config: '{"default": "{{ template "web.fullname" . }}"}'
     cloud.google.com/neg: '{"ingress": true}'
-    cloud.google.com/app-protocols: '{"service":"HTTP2"}'
+    cloud.google.com/app-protocols: '{"http-service":"HTTP2"}'
   labels:
     app: {{ template "web.name" . }}
     chart: {{ template "web.chart" . }}
