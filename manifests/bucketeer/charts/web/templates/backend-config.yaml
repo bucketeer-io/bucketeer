@@ -8,4 +8,5 @@ spec:
   timeoutSec: 300
   connectionDraining:
     drainingTimeoutSec: 60
+  protocol: HTTP2
 {{- end }}
