@@ -18,14 +18,7 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-passthrough: "true"
     {{- end }}
 spec:
-  tls: {{- toYaml .Values.tls.bucketeerJP.secrets | nindent 4 }}
+  tls:
+    {{- toYaml .Values.tls.bucketeerJP.secrets | nindent 4 }}
   rules:
-    - host: {{ .Values.ingress.host }}
-      http:
-        paths:
-          - pathType: ImplementationSpecific
-            backend:
-              service:
-                name: {{ template "web.fullname" . }}
-                port:
-                  number: {{ .Values.service.httpPort }}
+    {{- toYaml .Values.ingress.rules | nindent 4 }}
