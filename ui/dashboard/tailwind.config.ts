@@ -1,6 +1,5 @@
 import tailwindCssForm from '@tailwindcss/forms';
 import type { Config } from 'tailwindcss';
-import { fontFamily } from 'tailwindcss/defaultTheme';
 import plugin from 'tailwindcss/plugin';
 
 const screens = {
