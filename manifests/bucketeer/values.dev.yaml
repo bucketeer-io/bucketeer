@@ -63,13 +63,6 @@ web:
 
   ingress:
     host: web-gateway.bucketeer.io
-    rulePaths:
-      - pathType: ImplementationSpecific
-        backend:
-          service:
-            name: web
-            port:
-              number: 9003
 
   serviceToken:
     secret: bucketeer-service-token
@@ -124,13 +117,7 @@ api:
   serviceToken:
     secret: bucketeer-service-token
   ingress:
-    rulePaths:
-      - pathType: ImplementationSpecific
-        backend:
-          service:
-            name: api
-            port:
-              number: 9000
+    host: api-gateway.bucketeer.io
 
 
 batch-server:
