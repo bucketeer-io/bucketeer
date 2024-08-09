@@ -21,4 +21,7 @@ spec:
   tls:
     {{- toYaml .Values.tls.bucketeerJP.secrets | nindent 4 }}
   rules:
-    {{- toYaml .Values.ingress.rules | nindent 4 }}
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          {{- toYaml .Values.ingress.rulePaths | nindent 10 }}
