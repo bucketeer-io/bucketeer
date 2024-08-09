@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "api-gateway.fullname" . }}-envoy-config
+  name: {{ template "api.fullname" . }}-envoy-config
   namespace: {{ .Values.namespace }}
   labels:
-    app: {{ template "api-gateway.name" . }}
-    chart: {{ template "api-gateway.chart" . }}
-    release: {{ template "api-gateway.fullname" . }}
+    app: {{ template "api.name" . }}
+    chart: {{ template "api.chart" . }}
+    release: {{ template "api.fullname" . }}
     heritage: {{ .Release.Service }}
 data:
   config.yaml: |-
@@ -22,7 +22,7 @@ data:
           port_value: 8001
     static_resources:
       clusters:
-        - name: api-gateway
+        - name: api
           connect_timeout: 5s
           ignore_health_on_host_removal: true
           circuit_breakers:
@@ -33,7 +33,7 @@ data:
                 max_requests: {{ .Values.envoy.circuitBreaker.maxRequests }}
                 max_connections: {{ .Values.envoy.circuitBreaker.maxConnections }}
           load_assignment:
-            cluster_name: api-gateway
+            cluster_name: api
             endpoints:
               - lb_endpoints:
                 - endpoint:
@@ -60,7 +60,7 @@ data:
                   private_key:
                     filename: /usr/local/certs/service/tls.key
           type: strict_dns
-        - name: api-gateway-rest-v1
+        - name: api-rest-v1
           connect_timeout: 5s
           ignore_health_on_host_removal: true
           circuit_breakers:
@@ -71,7 +71,7 @@ data:
                 max_requests: {{ .Values.envoy.circuitBreaker.maxRequests }}
                 max_connections: {{ .Values.envoy.circuitBreaker.maxConnections }}
           load_assignment:
-            cluster_name: api-gateway-rest-v1
+            cluster_name: api-rest-v1
             endpoints:
               - lb_endpoints:
                 - endpoint:
@@ -197,7 +197,7 @@ data:
                                   string_match:
                                     exact: application/json
                             route:
-                              cluster: api-gateway-rest-v1
+                              cluster: api-rest-v1
                               timeout: 15s
                               retry_policy:
                                 retry_on: 5xx
@@ -205,7 +205,7 @@ data:
                           - match:
                               prefix: /
                             route:
-                              cluster: api-gateway
+                              cluster: api
                               timeout: 15s
                               retry_policy:
                                 retry_on: 5xx

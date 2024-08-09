@@ -28,7 +28,7 @@ make proto-go
 descriptor_file="proto_descriptor.pb"
 
 # api-gateway
-api_gateway_values_path="./manifests/bucketeer/charts/api-gateway/values.yaml"
+api_gateway_values_path="./manifests/bucketeer/charts/api/values.yaml"
 encoded_descriptor=$(cat ${DESCRIPTOR_PATH}/gateway/${descriptor_file} | base64 | tr -d \\n)
 yq eval ".envoy.descriptor = \"${encoded_descriptor}\"" -i ${api_gateway_values_path}
 

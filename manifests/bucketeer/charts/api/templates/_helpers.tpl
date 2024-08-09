@@ -2,7 +2,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "api-gateway.name" -}}
+{{- define "api.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
@@ -11,7 +11,7 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "api-gateway.fullname" -}}
+{{- define "api.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
 {{- else -}}
@@ -27,7 +27,7 @@ If release name contains chart name it will be used as a full name.
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "api-gateway.chart" -}}
+{{- define "api.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
@@ -35,7 +35,7 @@ Create chart name and version as used by the chart label.
 {{- if .Values.tls.service.secret }}
 {{- printf "%s" .Values.tls.service.secret -}}
 {{- else -}}
-{{ template "api-gateway.fullname" . }}-service-cert
+{{ template "api.fullname" . }}-service-cert
 {{- end -}}
 {{- end -}}
 
@@ -43,6 +43,6 @@ Create chart name and version as used by the chart label.
 {{- if .Values.serviceToken.secret }}
 {{- printf "%s" .Values.serviceToken.secret -}}
 {{- else -}}
-{{ template "api-gateway.fullname" . }}-service-token
+{{ template "api.fullname" . }}-service-token
 {{- end -}}
 {{- end -}}

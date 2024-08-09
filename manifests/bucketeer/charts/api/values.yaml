@@ -1,7 +1,7 @@
 image:
-  repository: ghcr.io/bucketeer-io/bucketeer-gateway
+  repository: ghcr.io/bucketeer-io/bucketeer-api
   pullPolicy: IfNotPresent
-fullnameOverride: "api-gateway"
+fullnameOverride: "api"
 namespace: default
 env:
   project:
@@ -44,8 +44,6 @@ tls:
     secrets:
   service:
     secret:
-    cert:
-    key:
 serviceToken:
   secret:
 envoy:
@@ -66,8 +64,16 @@ envoy:
 service:
   externalPort: 9000
 ingress:
+  name: api
   host:
   staticIPName:
+  rulePaths:
+    - pathType: ImplementationSpecific
+      backend:
+        service:
+          name: api
+          port:
+            number: 9000
 health:
   livenessProbe:
     initialDelaySeconds: 10
