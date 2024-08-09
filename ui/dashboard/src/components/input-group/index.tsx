@@ -1,9 +1,7 @@
 import type { ReactNode } from 'react';
 import { cva } from 'class-variance-authority';
 import { cn } from 'utils/style';
-import { InputGroupContext } from './input-group-context';
-
-export * from './input-group-context';
+import { InputGroupContext } from './context';
 
 interface InputGroupProps {
   addon: ReactNode;

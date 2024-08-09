@@ -11,6 +11,7 @@ import { Button } from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
+import Input from 'components/input';
 import DialogModal from 'components/modal/dialog';
 import SlideModal from 'components/modal/slide';
 import Navigation from 'components/navigation';
@@ -101,6 +102,8 @@ const DashboardPage = () => {
               onClick={onOpenSlider}
               variant="secondary"
             >{`Slider`}</Button>
+            <Input className="w-fit" />
+            <Input className="w-fit" disabled value="Disabled" />
           </div>
 
           <SlideModal

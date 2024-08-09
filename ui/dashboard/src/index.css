@@ -56,8 +56,8 @@ textarea:-ms-input-placeholder {
 input:focus,
 textarea:focus,
 select:focus {
-  --tw-ring-color: #573792; /* primary-500 */
-  border-color: #573792; /* primary-500 */
+  --tw-ring-color: #94a3b8; /* gray-500 */
+  border-color: #94a3b8; /* gray-500 */
   box-shadow: none;
 }
 

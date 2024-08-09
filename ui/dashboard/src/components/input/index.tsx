@@ -2,7 +2,7 @@ import { forwardRef, InputHTMLAttributes } from 'react';
 import type { Ref, ChangeEvent } from 'react';
 import { cva } from 'class-variance-authority';
 import { cn } from 'utils/style';
-import { useInputGroupContext } from 'components/input-group';
+import { useInputGroupContext } from 'components/input-group/context';
 
 export interface InputProps
   extends Omit<
@@ -18,7 +18,7 @@ export interface InputProps
 const inputVariants = cva(
   [
     'typo-para-medium border-gray-400 text-gray-700 w-full',
-    'disabled:cursor-not-allowed disabled:border-gray-300 disabled:bg-gray-200'
+    'disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-100'
   ],
   {
     variants: {
