@@ -135,6 +135,19 @@ serviceAccount:
   annotations: {}
 ingress:
   name: web
-  host:
+  host: web-gateway.bucketeer.io
   staticIPName:
-  rules:
+  rulePaths:
+    - pathType: ImplementationSpecific
+      backend:
+        service:
+          name: web-gateway
+          port:
+            number: 9000
+    - pathType: Prefix
+      path: /web
+      backend:
+        service:
+          name: web
+          port:
+            number: 9003
