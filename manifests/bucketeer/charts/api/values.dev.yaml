@@ -30,4 +30,3 @@ tls:
 serviceToken:
   secret: bucketeer-service-token
 ingress:
-  host: api-gateway.bucketeer.io

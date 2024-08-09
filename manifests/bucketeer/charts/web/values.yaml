@@ -135,5 +135,5 @@ serviceAccount:
   annotations: {}
 ingress:
   name: web
-  host:
   staticIPName:
+  rules:
