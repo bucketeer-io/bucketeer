@@ -65,17 +65,10 @@ service:
   externalPort: 9000
 ingress:
   name: api
-  host: api-gateway.bucketeer.io
+  host:
   staticIPName:
   rulePaths:
     - pathType: ImplementationSpecific
-      backend:
-        service:
-          name: api-gateway
-          port:
-            number: 9000
-    - pathType: Prefix
-      path: /api
       backend:
         service:
           name: api
