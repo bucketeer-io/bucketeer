@@ -3,6 +3,7 @@ import {
   IconEditOutlined,
   IconPersonRound
 } from 'react-icons-material-design';
+import primaryAvatar from 'assets/avatars/primary.svg';
 import { useToggleOpen } from 'hooks';
 import { IconGoal } from '@icons';
 import { AvatarIcon, AvatarImage } from 'components/avatar';
@@ -53,6 +54,7 @@ const DashboardPage = () => {
         </div>
 
         <div className="mt-8 flex items-center gap-6">
+          <div className="typo-head-bold-huge font-sofiapro">{`Heading H1`}</div>
           <div className="typo-head-bold-huge">{`Heading H1`}</div>
           <div className="typo-head-bold-big">{`Heading H2`}</div>
           <div className="typo-head-bold-medium">{`Heading H3`}</div>
@@ -85,9 +87,9 @@ const DashboardPage = () => {
         </div>
 
         <div className="mt-10 flex items-center gap-6">
-          <AvatarImage size="xl" image="./assets/avatars/primary.svg" />
-          <AvatarImage size="md" image="./assets/avatars/primary.svg" />
-          <AvatarImage size="sm" image="./assets/avatars/primary.svg" />
+          <AvatarImage size="xl" image={primaryAvatar} />
+          <AvatarImage size="md" image={primaryAvatar} />
+          <AvatarImage size="sm" image={primaryAvatar} />
           <AvatarIcon icon={IconPersonRound} size="md" />
 
           <Badge>{'1'}</Badge>

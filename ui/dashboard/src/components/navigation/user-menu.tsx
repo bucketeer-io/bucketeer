@@ -1,4 +1,5 @@
 import * as Popover from '@radix-ui/react-popover';
+import primaryAvatar from 'assets/avatars/primary.svg';
 import { IconBuilding, IconChevronRight, IconLogout, IconUser } from '@icons';
 import { AvatarImage } from 'components/avatar';
 import MenuItemComponent from './menu-item';
@@ -33,7 +34,7 @@ const UserMenu = () => {
         </div>
       </Popover.Content>
       <Popover.Trigger>
-        <AvatarImage size="sm" image="./assets/avatars/primary.svg" />
+        <AvatarImage size="sm" image={primaryAvatar} />
       </Popover.Trigger>
     </Popover.Root>
   );

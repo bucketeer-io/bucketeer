@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import logo from 'assets/logo.svg';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useToggleOpen } from 'hooks';
 import * as IconSystem from '@icons';
@@ -15,7 +16,7 @@ const Navigation = () => {
     <div className="fixed h-screen w-[248px] bg-primary-500 py-8 px-6">
       <div className="flex flex-col h-full">
         <Link to={PAGE_PATH_ROOT}>
-          <img src="./assets/logo.svg" alt="Bucketer" />
+          <img src={logo} alt="Bucketer" />
         </Link>
 
         {isShowSetting ? (

@@ -130,7 +130,7 @@ const theme = {
     none: 'none'
   },
   fontFamily: {
-    sans: ['Poppins', ...fontFamily.sans]
+    sofiapro: ['Sofiapro', 'sans-serif']
   },
   extend: {
     animation: {

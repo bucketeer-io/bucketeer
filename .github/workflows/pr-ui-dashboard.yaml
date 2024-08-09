@@ -4,7 +4,6 @@ on:
   pull_request:
     branches:
       - main
-      - feat/renew-dashboard
     paths:
       - "ui/dashboard/**"
       - "!**/**.md"
