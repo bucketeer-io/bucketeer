@@ -18,10 +18,8 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-passthrough: "true"
     {{- end }}
 spec:
-  tls:
-    {{- toYaml .Values.tls.bucketeerJP.secrets | nindent 4 }}
+  tls: {{- toYaml .Values.tls.bucketeerJP.secrets | nindent 4 }}
   rules:
     - host: {{ .Values.ingress.host }}
       http:
-        paths:
-          {{- toYaml .Values.ingress.rulePaths | nindent 10 }}
+        paths: {{- toYaml .Values.ingress.rulePaths | nindent 10 }}
