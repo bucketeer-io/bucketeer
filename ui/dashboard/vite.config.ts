@@ -27,7 +27,7 @@ export default defineConfig({
           {
             name: 'Sofia Pro',
             src: './src/assets/fonts/sofiapro/*.ttf'
-          },
+          }
         ]
       }
     })

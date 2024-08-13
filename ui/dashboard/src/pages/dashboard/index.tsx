@@ -1,25 +1,19 @@
+import { useForm } from 'react-hook-form';
 import {
   IconAddRound,
   IconEditOutlined,
   IconPersonRound
 } from 'react-icons-material-design';
+import { zodResolver } from '@hookform/resolvers/zod';
 import primaryAvatar from 'assets/avatars/primary.svg';
 import { useToggleOpen } from 'hooks';
+import { z } from 'zod';
 import { IconGoal } from '@icons';
 import { AvatarIcon, AvatarImage } from 'components/avatar';
 import { Badge } from 'components/badge';
 import { Button } from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
-import Icon from 'components/icon';
-import Input from 'components/input';
-import DialogModal from 'components/modal/dialog';
-import SlideModal from 'components/modal/slide';
-import Navigation from 'components/navigation';
-
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import {
   Form,
   FormControl,
@@ -29,6 +23,11 @@ import {
   FormLabel,
   FormMessage
 } from 'components/form';
+import Icon from 'components/icon';
+import Input from 'components/input';
+import DialogModal from 'components/modal/dialog';
+import SlideModal from 'components/modal/slide';
+import Navigation from 'components/navigation';
 
 const formSchema = z.object({
   username: z.string().min(2, {
@@ -185,27 +184,28 @@ const DashboardPage = () => {
           </DialogModal>
         </div>
         <div className="mt-4">
-        <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Username</FormLabel>
-              <FormControl>
-                <Input placeholder="shadcn" {...field} />
-              </FormControl>
-              <FormDescription>
-                This is your public display name.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit">Submit</Button>
-      </form>
-    </Form>        </div>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                      <Input placeholder="shadcn" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      This is your public display name.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit">Submit</Button>
+            </form>
+          </Form>{' '}
+        </div>
       </div>
     </>
   );
