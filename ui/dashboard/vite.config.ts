@@ -25,9 +25,9 @@ export default defineConfig({
       custom: {
         families: [
           {
-            name: 'Sofiapro',
-            src: './src/assets/fonts/sofiapro/*.woff2'
-          }
+            name: 'Sofia Pro',
+            src: './src/assets/fonts/sofiapro/*.ttf'
+          },
         ]
       }
     })

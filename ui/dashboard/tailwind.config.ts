@@ -129,7 +129,7 @@ const theme = {
     none: 'none'
   },
   fontFamily: {
-    sofiapro: ['Sofiapro', 'sans-serif']
+    'sofia-pro': ['Sofia Pro', 'sans-serif']
   },
   extend: {
     animation: {

@@ -1,68 +1,68 @@
-@import url('https://fonts.googleapis.com/css2?family=Sofia:wght@400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html {
-  font-family: "Sofiapro", sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+@layer base {
+  html {
+    font-family: 'Sofia Pro', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-table {
-  border-collapse: collapse;
-}
-th,
-td {
-  padding: 0;
-}
+  table {
+    border-collapse: collapse;
+  }
+  th,
+  td {
+    padding: 0;
+  }
 
-*:focus,
-*:focus-visible {
-  outline: none;
-}
+  *:focus,
+  *:focus-visible {
+    outline: none;
+  }
 
-/* Chrome, Safari, Edge, Opera */
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
+  /* Chrome, Safari, Edge, Opera */
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 
-/* Firefox */
-input[type='number'] {
-  -moz-appearance: textfield;
-}
+  /* Firefox */
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
 
-/* Override TailwindCSS Form */
-input,
-[multiple],
-textarea,
-select {
-  color: #475569; /* gray-700 */
-  border: 1px solid #cbd5e1; /* gray-400 */
-  border-radius: 8px; /* rounded */
-}
+  /* Override TailwindCSS Form */
+  input,
+  [multiple],
+  textarea,
+  select {
+    color: #475569; /* gray-700 */
+    border: 1px solid #cbd5e1; /* gray-400 */
+    border-radius: 8px; /* rounded */
+  }
 
-input::placeholder,
-input::-webkit-input-placeholder,
-input:-ms-input-placeholder,
-textarea::placeholder,
-textarea::-webkit-input-placeholder,
-textarea:-ms-input-placeholder {
-  color: #94a3b8; /* gray-500 */
-}
+  input::placeholder,
+  input::-webkit-input-placeholder,
+  input:-ms-input-placeholder,
+  textarea::placeholder,
+  textarea::-webkit-input-placeholder,
+  textarea:-ms-input-placeholder {
+    color: #94a3b8; /* gray-500 */
+  }
 
-input:focus,
-textarea:focus,
-select:focus {
-  --tw-ring-color: #94a3b8; /* gray-500 */
-  border-color: #94a3b8; /* gray-500 */
-  box-shadow: none;
-}
+  input:focus,
+  textarea:focus,
+  select:focus {
+    --tw-ring-color: #94a3b8; /* gray-500 */
+    border-color: #94a3b8; /* gray-500 */
+    box-shadow: none;
+  }
 
-input[readonly]:focus {
-  --tw-ring-color: #cbd5e1; /* gray-400 */
-  border-color: #cbd5e1; /* gray-400 */
+  input[readonly]:focus {
+    --tw-ring-color: #cbd5e1; /* gray-400 */
+    border-color: #cbd5e1; /* gray-400 */
+  }
 }
