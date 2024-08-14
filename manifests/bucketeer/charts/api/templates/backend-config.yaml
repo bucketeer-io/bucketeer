@@ -5,6 +5,8 @@ metadata:
   name: {{ template "api.fullname" . }}
   namespace: {{ .Values.namespace }}
 spec:
+  healthCheck:
+    requestPath: /health
   timeoutSec: 40
   connectionDraining:
     drainingTimeoutSec: 60

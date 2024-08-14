@@ -23,8 +23,8 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	gwapi "github.com/bucketeer-io/bucketeer/pkg/gateway/api"
-	gatewayclient "github.com/bucketeer-io/bucketeer/pkg/gateway/client"
+	gwapi "github.com/bucketeer-io/bucketeer/pkg/api/api"
+	gatewayclient "github.com/bucketeer-io/bucketeer/pkg/api/client"
 	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
