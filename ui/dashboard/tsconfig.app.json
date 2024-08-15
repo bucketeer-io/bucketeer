@@ -1,0 +1,41 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "types": [
+      "vite/client",
+      "vite-plugin-svgr/client",
+      "unplugin-fonts/client"
+    ],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "importsNotUsedAsValues": "error",
+    "ignoreDeprecations": "5.0",
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": "src"
+  },
+  "include": [
+    "src/**/*",
+    "*.js"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

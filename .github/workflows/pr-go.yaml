@@ -6,7 +6,7 @@ on:
     branches:
       - main
     paths-ignore:
-      - "ui/web-v2/**"
+      - "ui/**"
       - "**/**.md"
 
 concurrency:
