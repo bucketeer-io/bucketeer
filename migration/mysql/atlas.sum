@@ -1,4 +1,5 @@
-h1:sYFVos4T4HLYVgst65akLkopVqHDEsvIIL0D3p3zW8Q=
+h1:ZM/9aJUgIKSjwZojDb8T85O1SW7cK9VcHQ8pv7K0xNc=
 20240626022133_initialization.sql h1:u9qmPkwWX7PN92qEcDDfR92lrMpwadQSMxUJgv6LjQ0=
 20240708065726_update_audit_log_table.sql h1:k7gK8Njv1yHMsYXAQtSgMaSbXy4lxyZ9MPzbJyMyyoM=
 20240815043128_update_auto_ops_rule_table.sql h1:6ib+XfS1uu9AUO3qESvkpUfOu3qUsLwHm9KHcrGEz0E=
+20240815085304_update_auto_ops_rule_table.sql h1:KJfby8c587oZZLtaUGi1y+mcFA1PC/dqRVwijh/W2ks=
