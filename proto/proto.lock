@@ -2536,23 +2536,7 @@
             "name": "OpsType",
             "enum_fields": [
               {
-                "name": "ENABLE_FEATURE",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
-                "name": "DISABLE_FEATURE",
-                "integer": 1,
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
+                "name": "Ops_Type_UNKNOWN"
               },
               {
                 "name": "SCHEDULE",
@@ -2562,6 +2546,9 @@
                 "name": "EVENT_RATE",
                 "integer": 3
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -2902,16 +2889,6 @@
                 "name": "datetime_clauses",
                 "type": "DatetimeClause",
                 "is_repeated": true
-              }
-            ]
-          },
-          {
-            "name": "ChangeAutoOpsRuleOpsTypeCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "ops_type",
-                "type": "OpsType"
               }
             ]
           },
@@ -3447,17 +3424,6 @@
                 "type": "string"
               },
               {
-                "id": 3,
-                "name": "change_auto_ops_rule_ops_type_command",
-                "type": "ChangeAutoOpsRuleOpsTypeCommand",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "id": 4,
                 "name": "add_ops_event_rate_clause_commands",
                 "type": "AddOpsEventRateClauseCommand",
@@ -3487,6 +3453,9 @@
                 "type": "ChangeDatetimeClauseCommand",
                 "is_repeated": true
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {

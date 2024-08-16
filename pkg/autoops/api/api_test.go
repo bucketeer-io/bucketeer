@@ -109,7 +109,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_ENABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_SCHEDULE,
 				},
 			},
 			expectedErr: createError(statusClauseRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause")),
@@ -119,7 +119,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_ENABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_Ops_Type_UNKNOWN,
 					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
 						{
 							VariationId:     "",
@@ -138,7 +138,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_DISABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_EVENT_RATE,
 					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
 						{
 							VariationId:     "",
@@ -157,7 +157,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_DISABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_EVENT_RATE,
 					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
 						{
 							VariationId:     "vid",
@@ -176,7 +176,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_DISABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_EVENT_RATE,
 					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
 						{
 							VariationId:     "vid",
@@ -195,7 +195,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_DISABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_EVENT_RATE,
 					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
 						{
 							VariationId:     "vid",
@@ -214,7 +214,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_DISABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_EVENT_RATE,
 					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
 						{
 							VariationId:     "vid",
@@ -233,7 +233,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_ENABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_SCHEDULE,
 					DatetimeClauses: []*autoopsproto.DatetimeClause{
 						{Time: 0},
 					},
@@ -346,7 +346,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_DISABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_EVENT_RATE,
 					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
 						{
 							VariationId:     "vid",
@@ -357,18 +357,12 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 							ActionType:      autoopsproto.ActionType_DISABLE,
 						},
 					},
-					DatetimeClauses: []*autoopsproto.DatetimeClause{
-						{
-							Time:       time.Now().AddDate(0, 0, 1).Unix(),
-							ActionType: autoopsproto.ActionType_ENABLE,
-						},
-					},
 				},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
-			desc: "success",
+			desc: "success event rate",
 			setup: func(s *AutoOpsService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().GetGoal(
 					gomock.Any(), gomock.Any(),
@@ -381,7 +375,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_DISABLE_FEATURE,
+					OpsType:   autoopsproto.OpsType_EVENT_RATE,
 					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
 						{
 							VariationId:     "vid",
@@ -392,11 +386,24 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 							ActionType:      autoopsproto.ActionType_DISABLE,
 						},
 					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success schedule",
+			setup: func(s *AutoOpsService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &autoopsproto.CreateAutoOpsRuleRequest{
+				Command: &autoopsproto.CreateAutoOpsRuleCommand{
+					FeatureId: "fid",
+					OpsType:   autoopsproto.OpsType_SCHEDULE,
 					DatetimeClauses: []*autoopsproto.DatetimeClause{
-						{
-							Time:       time.Now().AddDate(0, 0, 1).Unix(),
-							ActionType: autoopsproto.ActionType_ENABLE,
-						},
+						{Time: time.Now().AddDate(0, 0, 1).Unix(), ActionType: autoopsproto.ActionType_ENABLE},
 					},
 				},
 			},

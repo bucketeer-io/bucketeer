@@ -58,8 +58,6 @@ func (h *autoOpsRuleCommandHandler) Handle(ctx context.Context, cmd Command) err
 	switch c := cmd.(type) {
 	case *proto.CreateAutoOpsRuleCommand:
 		return h.create(ctx, c)
-	case *proto.ChangeAutoOpsRuleOpsTypeCommand:
-		return h.changeOpsType(ctx, c)
 	case *proto.DeleteAutoOpsRuleCommand:
 		return h.delete(ctx, c)
 	case *proto.AddOpsEventRateClauseCommand:
@@ -88,16 +86,6 @@ func (h *autoOpsRuleCommandHandler) create(ctx context.Context, cmd *proto.Creat
 		CreatedAt: h.autoOpsRule.CreatedAt,
 		UpdatedAt: h.autoOpsRule.UpdatedAt,
 		OpsStatus: h.autoOpsRule.AutoOpsStatus,
-	})
-}
-
-func (h *autoOpsRuleCommandHandler) changeOpsType(
-	ctx context.Context,
-	cmd *proto.ChangeAutoOpsRuleOpsTypeCommand,
-) error {
-	h.autoOpsRule.SetOpsType(cmd.OpsType)
-	return h.send(ctx, eventproto.Event_AUTOOPS_RULE_OPS_TYPE_CHANGED, &eventproto.AutoOpsRuleOpsTypeChangedEvent{
-		OpsType: h.autoOpsRule.OpsType,
 	})
 }
 

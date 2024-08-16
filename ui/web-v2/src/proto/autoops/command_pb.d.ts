@@ -65,39 +65,6 @@ export namespace CreateAutoOpsRuleCommand {
   };
 }
 
-export class ChangeAutoOpsRuleOpsTypeCommand extends jspb.Message {
-  getOpsType(): proto_autoops_auto_ops_rule_pb.OpsTypeMap[keyof proto_autoops_auto_ops_rule_pb.OpsTypeMap];
-  setOpsType(
-    value: proto_autoops_auto_ops_rule_pb.OpsTypeMap[keyof proto_autoops_auto_ops_rule_pb.OpsTypeMap]
-  ): void;
-
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): ChangeAutoOpsRuleOpsTypeCommand.AsObject;
-  static toObject(
-    includeInstance: boolean,
-    msg: ChangeAutoOpsRuleOpsTypeCommand
-  ): ChangeAutoOpsRuleOpsTypeCommand.AsObject;
-  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
-  static extensionsBinary: {
-    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
-  };
-  static serializeBinaryToWriter(
-    message: ChangeAutoOpsRuleOpsTypeCommand,
-    writer: jspb.BinaryWriter
-  ): void;
-  static deserializeBinary(bytes: Uint8Array): ChangeAutoOpsRuleOpsTypeCommand;
-  static deserializeBinaryFromReader(
-    message: ChangeAutoOpsRuleOpsTypeCommand,
-    reader: jspb.BinaryReader
-  ): ChangeAutoOpsRuleOpsTypeCommand;
-}
-
-export namespace ChangeAutoOpsRuleOpsTypeCommand {
-  export type AsObject = {
-    opsType: proto_autoops_auto_ops_rule_pb.OpsTypeMap[keyof proto_autoops_auto_ops_rule_pb.OpsTypeMap];
-  };
-}
-
 export class DeleteAutoOpsRuleCommand extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeleteAutoOpsRuleCommand.AsObject;

@@ -647,7 +647,7 @@ func TestDatetimeBatch(t *testing.T) {
 	}
 
 	clause := createDatetimeClause(t)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_DISABLE_FEATURE, nil, []*autoopsproto.DatetimeClause{clause})
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, []*autoopsproto.DatetimeClause{clause})
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
@@ -704,7 +704,7 @@ func TestDatetimeBatchForMultiSchedule(t *testing.T) {
 	}
 
 	clauses := createDatetimeClausesWithActionType(t, 2)
-	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_DISABLE_FEATURE, nil, clauses)
+	createAutoOpsRule(ctx, t, autoOpsClient, featureID, autoopsproto.OpsType_SCHEDULE, nil, clauses)
 	autoOpsRules := listAutoOpsRulesByFeatureID(t, autoOpsClient, featureID)
 	if len(autoOpsRules) != 1 {
 		t.Fatal("not enough rules")
