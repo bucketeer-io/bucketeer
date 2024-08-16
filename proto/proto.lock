@@ -563,6 +563,75 @@
       }
     },
     {
+      "protopath": "account:/:search_filter.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "FilterTargetType",
+            "enum_fields": [
+              {
+                "name": "UNKNOWN"
+              },
+              {
+                "name": "FEATURE_FLAG",
+                "integer": 1
+              },
+              {
+                "name": "GOAL",
+                "integer": 2
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "SearchFilter",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "query",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "filter_target_type",
+                "type": "FilterTargetType"
+              },
+              {
+                "id": 5,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "default_filter",
+                "type": "bool"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "bucketeer.account"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/account"
+          }
+        ]
+      }
+    },
+    {
       "protopath": "account:/:service.proto",
       "def": {
         "enums": [
