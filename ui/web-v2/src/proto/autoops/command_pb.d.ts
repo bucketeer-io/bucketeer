@@ -150,36 +150,6 @@ export namespace StopAutoOpsRuleCommand {
   export type AsObject = {};
 }
 
-export class ChangeAutoOpsRuleTriggeredAtCommand extends jspb.Message {
-  serializeBinary(): Uint8Array;
-  toObject(
-    includeInstance?: boolean
-  ): ChangeAutoOpsRuleTriggeredAtCommand.AsObject;
-  static toObject(
-    includeInstance: boolean,
-    msg: ChangeAutoOpsRuleTriggeredAtCommand
-  ): ChangeAutoOpsRuleTriggeredAtCommand.AsObject;
-  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
-  static extensionsBinary: {
-    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
-  };
-  static serializeBinaryToWriter(
-    message: ChangeAutoOpsRuleTriggeredAtCommand,
-    writer: jspb.BinaryWriter
-  ): void;
-  static deserializeBinary(
-    bytes: Uint8Array
-  ): ChangeAutoOpsRuleTriggeredAtCommand;
-  static deserializeBinaryFromReader(
-    message: ChangeAutoOpsRuleTriggeredAtCommand,
-    reader: jspb.BinaryReader
-  ): ChangeAutoOpsRuleTriggeredAtCommand;
-}
-
-export namespace ChangeAutoOpsRuleTriggeredAtCommand {
-  export type AsObject = {};
-}
-
 export class ChangeAutoOpsStatusCommand extends jspb.Message {
   getStatus(): proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap[keyof proto_autoops_auto_ops_rule_pb.AutoOpsStatusMap];
   setStatus(

@@ -62,8 +62,6 @@ func (h *autoOpsRuleCommandHandler) Handle(ctx context.Context, cmd Command) err
 		return h.changeOpsType(ctx, c)
 	case *proto.DeleteAutoOpsRuleCommand:
 		return h.delete(ctx, c)
-	case *proto.ChangeAutoOpsRuleTriggeredAtCommand:
-		return h.changeTriggeredAt(ctx, c)
 	case *proto.AddOpsEventRateClauseCommand:
 		return h.addOpsEventRateClause(ctx, c)
 	case *proto.ChangeOpsEventRateClauseCommand:
@@ -84,13 +82,12 @@ func (h *autoOpsRuleCommandHandler) Handle(ctx context.Context, cmd Command) err
 
 func (h *autoOpsRuleCommandHandler) create(ctx context.Context, cmd *proto.CreateAutoOpsRuleCommand) error {
 	return h.send(ctx, eventproto.Event_AUTOOPS_RULE_CREATED, &eventproto.AutoOpsRuleCreatedEvent{
-		FeatureId:   h.autoOpsRule.FeatureId,
-		OpsType:     h.autoOpsRule.OpsType,
-		Clauses:     h.autoOpsRule.Clauses,
-		TriggeredAt: h.autoOpsRule.TriggeredAt,
-		CreatedAt:   h.autoOpsRule.CreatedAt,
-		UpdatedAt:   h.autoOpsRule.UpdatedAt,
-		OpsStatus:   h.autoOpsRule.AutoOpsStatus,
+		FeatureId: h.autoOpsRule.FeatureId,
+		OpsType:   h.autoOpsRule.OpsType,
+		Clauses:   h.autoOpsRule.Clauses,
+		CreatedAt: h.autoOpsRule.CreatedAt,
+		UpdatedAt: h.autoOpsRule.UpdatedAt,
+		OpsStatus: h.autoOpsRule.AutoOpsStatus,
 	})
 }
 
@@ -112,18 +109,6 @@ func (h *autoOpsRuleCommandHandler) stop(ctx context.Context, cmd *proto.StopAut
 func (h *autoOpsRuleCommandHandler) delete(ctx context.Context, cmd *proto.DeleteAutoOpsRuleCommand) error {
 	h.autoOpsRule.SetDeleted()
 	return h.send(ctx, eventproto.Event_AUTOOPS_RULE_DELETED, &eventproto.AutoOpsRuleDeletedEvent{})
-}
-
-func (h *autoOpsRuleCommandHandler) changeTriggeredAt(
-	ctx context.Context,
-	cmd *proto.ChangeAutoOpsRuleTriggeredAtCommand,
-) error {
-	h.autoOpsRule.SetTriggeredAt()
-	return h.send(
-		ctx,
-		eventproto.Event_AUTOOPS_RULE_TRIGGERED_AT_CHANGED,
-		&eventproto.AutoOpsRuleTriggeredAtChangedEvent{},
-	)
 }
 
 func (h *autoOpsRuleCommandHandler) changeAutoOpsStatus(
