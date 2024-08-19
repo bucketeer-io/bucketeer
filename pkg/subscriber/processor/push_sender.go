@@ -131,10 +131,20 @@ func (p pushSender) send(featureID, environmentNamespace string) error {
 		EnvironmentNamespace: environmentNamespace,
 	})
 	if err != nil {
+		p.logger.Error("Failed to get feature flag",
+			zap.Error(err),
+			zap.String("featureId", featureID),
+			zap.String("environmentNamespace", environmentNamespace),
+		)
 		return err
 	}
 	pushes, err := p.listPushes(ctx, environmentNamespace)
 	if err != nil {
+		p.logger.Error("Failed to list pushes",
+			zap.Error(err),
+			zap.String("featureId", featureID),
+			zap.String("environmentNamespace", environmentNamespace),
+		)
 		return err
 	}
 	if len(pushes) == 0 {
