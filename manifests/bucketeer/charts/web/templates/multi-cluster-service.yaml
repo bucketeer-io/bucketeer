@@ -1,0 +1,37 @@
+{{- if and .Values.multiClusterService.enabled .Values.env.gcpEnabled }}
+apiVersion: networking.gke.io/v1
+kind: MultiClusterService
+metadata:
+  name: {{ .Values.multiClusterService.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ template "web.name" . }}
+    chart: {{ template "web.chart" . }}
+    release: {{ template "web.fullname" . }}
+    heritage: {{ .Release.Service }}
+  annotations:
+    cloud.google.com/backend-config: '{"default": "{{ template "web.fullname" . }}"}'
+    cloud.google.com/app-protocols: '{"http-service":"HTTP2"}'
+    cloud.google.com/neg: '{"ingress": true}'
+spec:
+  template:
+    spec:
+      selector:
+        app: {{ template "web.name" . }}
+        release: {{ template "web.fullname" . }}
+      ports:
+        - name: grpc-service
+          port: {{ .Values.service.grpcPort }}
+          targetPort: envoy-grpc
+          protocol: TCP
+        - name: http-service
+          port: {{ .Values.service.httpPort }}
+          targetPort: envoy-http
+          protocol: TCP
+        - name: metrics
+          port: {{ .Values.env.metricsPort }}
+          protocol: TCP
+        - name: admin
+          port: {{ .Values.envoy.adminPort }}
+          protocol: TCP
+{{- end }}

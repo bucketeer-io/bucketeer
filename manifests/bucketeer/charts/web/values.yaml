@@ -118,6 +118,7 @@ envoy:
   adminPort: 8001
   resources: {}
 service:
+  enabled: true
   type: NodePort
   grpcPort: 9000
   httpPort: 9003
@@ -134,6 +135,7 @@ resources: {}
 serviceAccount:
   annotations: {}
 ingress:
+  enabled: true
   name: web
   host:
   staticIPName:
@@ -144,3 +146,20 @@ ingress:
           name: web
           port:
             number: 9003
+
+multiClusterService:
+  enabled: false
+  name: web-multi-cluster-service
+
+
+multiClusterIngress:
+  enabled: false
+  name: web-multi-cluster-ingress
+  host: web-gateway.bucketeer.io
+  staticIPName: web-multi-cluster-static-ip
+  rulePaths:
+    - path: /
+      pathType: Prefix
+      backend:
+        serviceName: web
+        servicePort: 9003
