@@ -803,7 +803,7 @@ func createDatetimeClausesWithActionType(t *testing.T, createCount int) []*autoo
 			at = autoopsproto.ActionType_ENABLE
 		}
 		dc := &autoopsproto.DatetimeClause{
-			Time:       time.Now().Add(time.Duration((i+1)*5) * time.Second).Unix(),
+			Time:       time.Now().Add(time.Duration((i+1)*70) * time.Second).Unix(),
 			ActionType: at,
 		}
 		dcs = append(dcs, dc)
