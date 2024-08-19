@@ -17,8 +17,9 @@ package domain
 import (
 	"testing"
 
-	proto "github.com/bucketeer-io/bucketeer/proto/account"
 	"github.com/stretchr/testify/assert"
+
+	proto "github.com/bucketeer-io/bucketeer/proto/account"
 )
 
 func TestNewSearchFilter(t *testing.T) {
