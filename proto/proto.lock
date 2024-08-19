@@ -161,6 +161,12 @@
                 "id": 9,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 10,
+                "name": "search_filters",
+                "type": "SearchFilter",
+                "is_repeated": true
               }
             ],
             "messages": [
@@ -257,6 +263,9 @@
           },
           {
             "path": "proto/environment/organization.proto"
+          },
+          {
+            "path": "proto/account/search_filter.proto"
           }
         ],
         "package": {
@@ -575,10 +584,6 @@
               {
                 "name": "FEATURE_FLAG",
                 "integer": 1
-              },
-              {
-                "name": "GOAL",
-                "integer": 2
               }
             ]
           }

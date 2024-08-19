@@ -59,7 +59,6 @@ export namespace SearchFilter {
 export interface FilterTargetTypeMap {
   UNKNOWN: 0;
   FEATURE_FLAG: 1;
-  GOAL: 2;
 }
 
 export const FilterTargetType: FilterTargetTypeMap;

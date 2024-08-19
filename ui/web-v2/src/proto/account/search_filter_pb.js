@@ -325,8 +325,7 @@ proto.bucketeer.account.SearchFilter.prototype.setDefaultFilter = function (
  */
 proto.bucketeer.account.FilterTargetType = {
   UNKNOWN: 0,
-  FEATURE_FLAG: 1,
-  GOAL: 2
+  FEATURE_FLAG: 1
 };
 
 goog.object.extend(exports, proto.bucketeer.account);

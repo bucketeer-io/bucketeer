@@ -20,6 +20,7 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/account";
 import "proto/environment/environment.proto";
 import "proto/environment/project.proto";
 import "proto/environment/organization.proto";
+import "proto/account/search_filter.proto";
 
 message Account {
   option deprecated = true;
@@ -66,6 +67,7 @@ message AccountV2 {
   bool disabled = 7;
   int64 created_at = 8;
   int64 updated_at = 9;
+  repeated SearchFilter search_filters = 10;
 }
 
 message ConsoleAccount {
