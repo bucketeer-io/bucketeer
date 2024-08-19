@@ -1,3 +1,4 @@
+{{- if .Values.service.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -34,3 +35,4 @@ spec:
   selector:
     app: {{ template "web.name" . }}
     release: {{ template "web.fullname" . }}
+{{- end }}
