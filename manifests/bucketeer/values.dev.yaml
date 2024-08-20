@@ -89,7 +89,7 @@ web:
     baseURL: https://web-gateway.bucketeer.io
     kmsResourceName: vault
 
-api-gateway:
+api:
   env:
     gcpEnabled: false
     profile: false
@@ -114,8 +114,6 @@ api-gateway:
           secretName: bucketeer-service-cert
     service:
       secret: bucketeer-service-cert
-      cert:
-      key:
   serviceToken:
     secret: bucketeer-service-token
   ingress:

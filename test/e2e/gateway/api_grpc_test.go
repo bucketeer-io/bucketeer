@@ -30,9 +30,9 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
 
+	gatewayclient "github.com/bucketeer-io/bucketeer/pkg/api/client"
 	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	gatewayclient "github.com/bucketeer-io/bucketeer/pkg/gateway/client"
 	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	btproto "github.com/bucketeer-io/bucketeer/proto/batch"

@@ -22,10 +22,4 @@ spec:
   rules:
     - host: {{ .Values.ingress.host }}
       http:
-        paths:
-          - pathType: ImplementationSpecific
-            backend:
-              service:
-                name: {{ template "web.fullname" . }}
-                port:
-                  number: {{ .Values.service.httpPort }}
+        paths: {{- toYaml .Values.ingress.rulePaths | nindent 10 }}

@@ -22,10 +22,10 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	"github.com/bucketeer-io/bucketeer/pkg/api/api"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/pkg/gateway/api"
 	"github.com/bucketeer-io/bucketeer/pkg/health"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"

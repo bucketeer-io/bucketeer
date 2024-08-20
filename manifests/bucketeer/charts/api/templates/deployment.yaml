@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "api-gateway.fullname" . }}
+  name: {{ template "api.fullname" . }}
   namespace: {{ .Values.namespace }}
   labels:
-    app: {{ template "api-gateway.name" . }}
-    chart: {{ template "api-gateway.chart" . }}
-    release: {{ template "api-gateway.fullname" . }}
+    app: {{ template "api.name" . }}
+    chart: {{ template "api.chart" . }}
+    release: {{ template "api.fullname" . }}
     heritage: {{ .Release.Service }}
 spec:
   selector:
     matchLabels:
-      app: {{ template "api-gateway.name" . }}
-      release: {{ template "api-gateway.fullname" . }}
+      app: {{ template "api.name" . }}
+      release: {{ template "api.fullname" . }}
   template:
     metadata:
       labels:
-        app: {{ template "api-gateway.name" . }}
-        release: {{ template "api-gateway.fullname" . }}
+        app: {{ template "api.name" . }}
+        release: {{ template "api.fullname" . }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/envoy-configmap.yaml") . | sha256sum }}
     spec:
@@ -31,10 +31,10 @@ spec:
       volumes:
         - name: envoy-config
           configMap:
-            name: {{ template "api-gateway.fullname" . }}-envoy-config
+            name: {{ template "api.fullname" . }}-envoy-config
         - name: secret
           secret:
-            secretName: {{ template "api-gateway.fullname" . }}
+            secretName: {{ template "api.fullname" . }}
         - name: service-cert-secret
           secret:
             secretName: {{ template "service-cert-secret" . }}
@@ -42,7 +42,7 @@ spec:
           secret:
             secretName: {{ template "service-token-secret" . }}
       {{- if .Values.serviceAccount.annotations }}
-      serviceAccountName: {{ template "api-gateway.fullname" . }}
+      serviceAccountName: {{ template "api.fullname" . }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
@@ -50,55 +50,55 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args: ["server"]
           env:
-            - name: BUCKETEER_GATEWAY_PROFILE
+            - name: BUCKETEER_API_PROFILE
               value: "{{.Values.env.profile}}"
-            - name: BUCKETEER_GATEWAY_GCP_TRACE_ENABLED
+            - name: BUCKETEER_API_GCP_TRACE_ENABLED
               value: "{{.Values.env.gcpEnabled}}"
-            - name: BUCKETEER_GATEWAY_PROJECT
+            - name: BUCKETEER_API_PROJECT
               value: "{{ .Values.env.project }}"
             - name: PUBSUB_EMULATOR_HOST
               value: "{{.Values.env.pubsubEmulatorHost}}"
-            - name: BUCKETEER_GATEWAY_GOAL_TOPIC
+            - name: BUCKETEER_API_GOAL_TOPIC
               value: "{{ .Values.env.goalTopic }}"
-            - name: BUCKETEER_GATEWAY_EVALUATION_TOPIC
+            - name: BUCKETEER_API_EVALUATION_TOPIC
               value: "{{ .Values.env.evaluationTopic }}"
-            - name: BUCKETEER_GATEWAY_USER_TOPIC
+            - name: BUCKETEER_API_USER_TOPIC
               value: "{{ .Values.env.userTopic }}"
-            - name: BUCKETEER_GATEWAY_METRICS_TOPIC
+            - name: BUCKETEER_API_METRICS_TOPIC
               value: "{{ .Values.env.metricsTopic }}"
-            - name: BUCKETEER_GATEWAY_PUBLISH_NUM_GOROUTINES
+            - name: BUCKETEER_API_PUBLISH_NUM_GOROUTINES
               value: "{{ .Values.env.publishNumGoroutines }}"
-            - name: BUCKETEER_GATEWAY_PUBLISH_TIMEOUT
+            - name: BUCKETEER_API_PUBLISH_TIMEOUT
               value: "{{ .Values.env.publishTimeout }}"
-            - name: BUCKETEER_GATEWAY_REDIS_SERVER_NAME
+            - name: BUCKETEER_API_REDIS_SERVER_NAME
               value: "{{ .Values.env.redis.serverName }}"
-            - name: BUCKETEER_GATEWAY_REDIS_ADDR
+            - name: BUCKETEER_API_REDIS_ADDR
               value: "{{ .Values.env.redis.addr }}"
-            - name: BUCKETEER_GATEWAY_REDIS_POOL_MAX_IDLE
+            - name: BUCKETEER_API_REDIS_POOL_MAX_IDLE
               value: "{{ .Values.env.redis.poolMaxIdle }}"
-            - name: BUCKETEER_GATEWAY_REDIS_POOL_MAX_ACTIVE
+            - name: BUCKETEER_API_REDIS_POOL_MAX_ACTIVE
               value: "{{ .Values.env.redis.poolMaxActive }}"
-            - name: BUCKETEER_GATEWAY_OLDEST_EVENT_TIMESTAMP
+            - name: BUCKETEER_API_OLDEST_EVENT_TIMESTAMP
               value: "{{ .Values.env.oldestEventTimestamp }}"
-            - name: BUCKETEER_GATEWAY_FURTHEST_EVENT_TIMESTAMP
+            - name: BUCKETEER_API_FURTHEST_EVENT_TIMESTAMP
               value: "{{ .Values.env.furthestEventTimestamp }}"
-            - name: BUCKETEER_GATEWAY_FEATURE_SERVICE
+            - name: BUCKETEER_API_FEATURE_SERVICE
               value: "{{ .Values.env.featureService }}"
-            - name: BUCKETEER_GATEWAY_ACCOUNT_SERVICE
+            - name: BUCKETEER_API_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
-            - name: BUCKETEER_GATEWAY_PORT
+            - name: BUCKETEER_API_PORT
               value: "{{ .Values.env.port }}"
-            - name: BUCKETEER_GATEWAY_METRICS_PORT
+            - name: BUCKETEER_API_METRICS_PORT
               value: "{{ .Values.env.metricsPort }}"
-            - name: BUCKETEER_GATEWAY_LOG_LEVEL
+            - name: BUCKETEER_API_LOG_LEVEL
               value: "{{ .Values.env.logLevel }}"
-            - name: BUCKETEER_GATEWAY_TRACE_SAMPLING_PROBABILITY
+            - name: BUCKETEER_API_TRACE_SAMPLING_PROBABILITY
               value: "{{ .Values.env.traceSamplingProbability }}"
-            - name: BUCKETEER_GATEWAY_SERVICE_TOKEN
+            - name: BUCKETEER_API_SERVICE_TOKEN
               value: /usr/local/service-token/token
-            - name: BUCKETEER_GATEWAY_CERT
+            - name: BUCKETEER_API_CERT
               value: /usr/local/certs/service/tls.crt
-            - name: BUCKETEER_GATEWAY_KEY
+            - name: BUCKETEER_API_KEY
               value: /usr/local/certs/service/tls.key
           volumeMounts:
             - name: service-cert-secret

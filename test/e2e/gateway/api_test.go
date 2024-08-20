@@ -22,7 +22,7 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 
-	gwapi "github.com/bucketeer-io/bucketeer/pkg/gateway/api"
+	gwapi "github.com/bucketeer-io/bucketeer/pkg/api/api"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
