@@ -174,6 +174,15 @@ AccountService.GetAPIKeyBySearchingAllEnvironments = {
     proto_account_service_pb.GetAPIKeyBySearchingAllEnvironmentsResponse
 };
 
+AccountService.CreateSearchFilter = {
+  methodName: 'CreateSearchFilter',
+  service: AccountService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_account_service_pb.CreateSearchFilterRequest,
+  responseType: proto_account_service_pb.CreateSearchFilterResponse
+};
+
 exports.AccountService = AccountService;
 
 function AccountServiceClient(serviceHost, options) {
@@ -808,5 +817,40 @@ AccountServiceClient.prototype.getAPIKeyBySearchingAllEnvironments =
       }
     };
   };
+
+AccountServiceClient.prototype.createSearchFilter = function createSearchFilter(
+  requestMessage,
+  metadata,
+  callback
+) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(AccountService.CreateSearchFilter, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
 
 exports.AccountServiceClient = AccountServiceClient;

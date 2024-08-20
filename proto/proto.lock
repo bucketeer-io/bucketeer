@@ -1343,6 +1343,11 @@
                 "name": "GetAPIKeyBySearchingAllEnvironments",
                 "in_type": "GetAPIKeyBySearchingAllEnvironmentsRequest",
                 "out_type": "GetAPIKeyBySearchingAllEnvironmentsResponse"
+              },
+              {
+                "name": "CreateSearchFilter",
+                "in_type": "CreateSearchFilterRequest",
+                "out_type": "CreateSearchFilterResponse"
               }
             ]
           }

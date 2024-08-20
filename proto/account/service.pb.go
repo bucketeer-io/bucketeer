@@ -2574,7 +2574,7 @@ var file_proto_account_service_proto_rawDesc = []byte{
 	0x6c, 0x74, 0x65, 0x72, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x52, 0x07, 0x63, 0x6f, 0x6d,
 	0x6d, 0x61, 0x6e, 0x64, 0x22, 0x1c, 0x0a, 0x1a, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x65,
 	0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x32, 0xac, 0x0f, 0x0a, 0x0e, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x53, 0x65,
+	0x73, 0x65, 0x32, 0xa1, 0x10, 0x0a, 0x0e, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x53, 0x65,
 	0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x4a, 0x0a, 0x05, 0x47, 0x65, 0x74, 0x4d, 0x65, 0x12, 0x1f,
 	0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75,
 	0x6e, 0x74, 0x2e, 0x47, 0x65, 0x74, 0x4d, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
@@ -2697,10 +2697,18 @@ var file_proto_account_service_proto_rawDesc = []byte{
 	0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x47, 0x65, 0x74, 0x41, 0x50, 0x49, 0x4b, 0x65, 0x79, 0x42,
 	0x79, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x69, 0x6e, 0x67, 0x41, 0x6c, 0x6c, 0x45, 0x6e, 0x76,
 	0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
-	0x65, 0x42, 0x31, 0x5a, 0x2f, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f,
-	0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f, 0x2f, 0x62, 0x75, 0x63,
-	0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x61, 0x63, 0x63,
-	0x6f, 0x75, 0x6e, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x12, 0x73, 0x0a, 0x14, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x65, 0x61, 0x72, 0x63,
+	0x68, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x56, 0x32, 0x12, 0x2c, 0x2e, 0x62, 0x75, 0x63, 0x6b,
+	0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x43, 0x72,
+	0x65, 0x61, 0x74, 0x65, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x2d, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
+	0x65, 0x65, 0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x43, 0x72, 0x65, 0x61,
+	0x74, 0x65, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x31, 0x5a, 0x2f, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62,
+	0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2d, 0x69,
+	0x6f, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x2f, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x33,
 }
 
 var (
@@ -2832,26 +2840,28 @@ var file_proto_account_service_proto_depIdxs = []int32{
 	33, // 47: bucketeer.account.AccountService.GetAPIKey:input_type -> bucketeer.account.GetAPIKeyRequest
 	35, // 48: bucketeer.account.AccountService.ListAPIKeys:input_type -> bucketeer.account.ListAPIKeysRequest
 	37, // 49: bucketeer.account.AccountService.GetAPIKeyBySearchingAllEnvironments:input_type -> bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest
-	5,  // 50: bucketeer.account.AccountService.GetMe:output_type -> bucketeer.account.GetMeResponse
-	8,  // 51: bucketeer.account.AccountService.GetMyOrganizations:output_type -> bucketeer.account.GetMyOrganizationsResponse
-	8,  // 52: bucketeer.account.AccountService.GetMyOrganizationsByEmail:output_type -> bucketeer.account.GetMyOrganizationsResponse
-	10, // 53: bucketeer.account.AccountService.CreateAccountV2:output_type -> bucketeer.account.CreateAccountV2Response
-	12, // 54: bucketeer.account.AccountService.EnableAccountV2:output_type -> bucketeer.account.EnableAccountV2Response
-	14, // 55: bucketeer.account.AccountService.DisableAccountV2:output_type -> bucketeer.account.DisableAccountV2Response
-	18, // 56: bucketeer.account.AccountService.UpdateAccountV2:output_type -> bucketeer.account.UpdateAccountV2Response
-	16, // 57: bucketeer.account.AccountService.DeleteAccountV2:output_type -> bucketeer.account.DeleteAccountV2Response
-	20, // 58: bucketeer.account.AccountService.GetAccountV2:output_type -> bucketeer.account.GetAccountV2Response
-	22, // 59: bucketeer.account.AccountService.GetAccountV2ByEnvironmentID:output_type -> bucketeer.account.GetAccountV2ByEnvironmentIDResponse
-	24, // 60: bucketeer.account.AccountService.ListAccountsV2:output_type -> bucketeer.account.ListAccountsV2Response
-	26, // 61: bucketeer.account.AccountService.CreateAPIKey:output_type -> bucketeer.account.CreateAPIKeyResponse
-	28, // 62: bucketeer.account.AccountService.ChangeAPIKeyName:output_type -> bucketeer.account.ChangeAPIKeyNameResponse
-	30, // 63: bucketeer.account.AccountService.EnableAPIKey:output_type -> bucketeer.account.EnableAPIKeyResponse
-	32, // 64: bucketeer.account.AccountService.DisableAPIKey:output_type -> bucketeer.account.DisableAPIKeyResponse
-	34, // 65: bucketeer.account.AccountService.GetAPIKey:output_type -> bucketeer.account.GetAPIKeyResponse
-	36, // 66: bucketeer.account.AccountService.ListAPIKeys:output_type -> bucketeer.account.ListAPIKeysResponse
-	38, // 67: bucketeer.account.AccountService.GetAPIKeyBySearchingAllEnvironments:output_type -> bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse
-	50, // [50:68] is the sub-list for method output_type
-	32, // [32:50] is the sub-list for method input_type
+	39, // 50: bucketeer.account.AccountService.CreateSearchFilterV2:input_type -> bucketeer.account.CreateSearchFilterRequest
+	5,  // 51: bucketeer.account.AccountService.GetMe:output_type -> bucketeer.account.GetMeResponse
+	8,  // 52: bucketeer.account.AccountService.GetMyOrganizations:output_type -> bucketeer.account.GetMyOrganizationsResponse
+	8,  // 53: bucketeer.account.AccountService.GetMyOrganizationsByEmail:output_type -> bucketeer.account.GetMyOrganizationsResponse
+	10, // 54: bucketeer.account.AccountService.CreateAccountV2:output_type -> bucketeer.account.CreateAccountV2Response
+	12, // 55: bucketeer.account.AccountService.EnableAccountV2:output_type -> bucketeer.account.EnableAccountV2Response
+	14, // 56: bucketeer.account.AccountService.DisableAccountV2:output_type -> bucketeer.account.DisableAccountV2Response
+	18, // 57: bucketeer.account.AccountService.UpdateAccountV2:output_type -> bucketeer.account.UpdateAccountV2Response
+	16, // 58: bucketeer.account.AccountService.DeleteAccountV2:output_type -> bucketeer.account.DeleteAccountV2Response
+	20, // 59: bucketeer.account.AccountService.GetAccountV2:output_type -> bucketeer.account.GetAccountV2Response
+	22, // 60: bucketeer.account.AccountService.GetAccountV2ByEnvironmentID:output_type -> bucketeer.account.GetAccountV2ByEnvironmentIDResponse
+	24, // 61: bucketeer.account.AccountService.ListAccountsV2:output_type -> bucketeer.account.ListAccountsV2Response
+	26, // 62: bucketeer.account.AccountService.CreateAPIKey:output_type -> bucketeer.account.CreateAPIKeyResponse
+	28, // 63: bucketeer.account.AccountService.ChangeAPIKeyName:output_type -> bucketeer.account.ChangeAPIKeyNameResponse
+	30, // 64: bucketeer.account.AccountService.EnableAPIKey:output_type -> bucketeer.account.EnableAPIKeyResponse
+	32, // 65: bucketeer.account.AccountService.DisableAPIKey:output_type -> bucketeer.account.DisableAPIKeyResponse
+	34, // 66: bucketeer.account.AccountService.GetAPIKey:output_type -> bucketeer.account.GetAPIKeyResponse
+	36, // 67: bucketeer.account.AccountService.ListAPIKeys:output_type -> bucketeer.account.ListAPIKeysResponse
+	38, // 68: bucketeer.account.AccountService.GetAPIKeyBySearchingAllEnvironments:output_type -> bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse
+	40, // 69: bucketeer.account.AccountService.CreateSearchFilterV2:output_type -> bucketeer.account.CreateSearchFilterResponse
+	51, // [51:70] is the sub-list for method output_type
+	32, // [32:51] is the sub-list for method input_type
 	32, // [32:32] is the sub-list for extension type_name
 	32, // [32:32] is the sub-list for extension extendee
 	0,  // [0:32] is the sub-list for field type_name
@@ -3362,6 +3372,7 @@ type AccountServiceClient interface {
 	GetAPIKey(ctx context.Context, in *GetAPIKeyRequest, opts ...grpc.CallOption) (*GetAPIKeyResponse, error)
 	ListAPIKeys(ctx context.Context, in *ListAPIKeysRequest, opts ...grpc.CallOption) (*ListAPIKeysResponse, error)
 	GetAPIKeyBySearchingAllEnvironments(ctx context.Context, in *GetAPIKeyBySearchingAllEnvironmentsRequest, opts ...grpc.CallOption) (*GetAPIKeyBySearchingAllEnvironmentsResponse, error)
+	CreateSearchFilterV2(ctx context.Context, in *CreateSearchFilterRequest, opts ...grpc.CallOption) (*CreateSearchFilterResponse, error)
 }
 
 type accountServiceClient struct {
@@ -3534,6 +3545,15 @@ func (c *accountServiceClient) GetAPIKeyBySearchingAllEnvironments(ctx context.C
 	return out, nil
 }
 
+func (c *accountServiceClient) CreateSearchFilterV2(ctx context.Context, in *CreateSearchFilterRequest, opts ...grpc.CallOption) (*CreateSearchFilterResponse, error) {
+	out := new(CreateSearchFilterResponse)
+	err := c.cc.Invoke(ctx, "/bucketeer.account.AccountService/CreateSearchFilterV2", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AccountServiceServer is the server API for AccountService service.
 type AccountServiceServer interface {
 	GetMe(context.Context, *GetMeRequest) (*GetMeResponse, error)
@@ -3554,6 +3574,7 @@ type AccountServiceServer interface {
 	GetAPIKey(context.Context, *GetAPIKeyRequest) (*GetAPIKeyResponse, error)
 	ListAPIKeys(context.Context, *ListAPIKeysRequest) (*ListAPIKeysResponse, error)
 	GetAPIKeyBySearchingAllEnvironments(context.Context, *GetAPIKeyBySearchingAllEnvironmentsRequest) (*GetAPIKeyBySearchingAllEnvironmentsResponse, error)
+	CreateSearchFilterV2(context.Context, *CreateSearchFilterRequest) (*CreateSearchFilterResponse, error)
 }
 
 // UnimplementedAccountServiceServer can be embedded to have forward compatible implementations.
@@ -3613,6 +3634,9 @@ func (*UnimplementedAccountServiceServer) ListAPIKeys(context.Context, *ListAPIK
 }
 func (*UnimplementedAccountServiceServer) GetAPIKeyBySearchingAllEnvironments(context.Context, *GetAPIKeyBySearchingAllEnvironmentsRequest) (*GetAPIKeyBySearchingAllEnvironmentsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAPIKeyBySearchingAllEnvironments not implemented")
+}
+func (*UnimplementedAccountServiceServer) CreateSearchFilterV2(context.Context, *CreateSearchFilterRequest) (*CreateSearchFilterResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateSearchFilterV2 not implemented")
 }
 
 func RegisterAccountServiceServer(s *grpc.Server, srv AccountServiceServer) {
@@ -3943,6 +3967,24 @@ func _AccountService_GetAPIKeyBySearchingAllEnvironments_Handler(srv interface{}
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AccountService_CreateSearchFilterV2_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateSearchFilterRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AccountServiceServer).CreateSearchFilterV2(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/bucketeer.account.AccountService/CreateSearchFilterV2",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AccountServiceServer).CreateSearchFilterV2(ctx, req.(*CreateSearchFilterRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _AccountService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "bucketeer.account.AccountService",
 	HandlerType: (*AccountServiceServer)(nil),
@@ -4018,6 +4060,10 @@ var _AccountService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAPIKeyBySearchingAllEnvironments",
 			Handler:    _AccountService_GetAPIKeyBySearchingAllEnvironments_Handler,
+		},
+		{
+			MethodName: "CreateSearchFilterV2",
+			Handler:    _AccountService_CreateSearchFilterV2_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

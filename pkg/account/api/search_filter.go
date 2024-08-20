@@ -18,13 +18,14 @@ import (
 	"context"
 	"errors"
 
+	"go.uber.org/zap"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-	"go.uber.org/zap"
-	"google.golang.org/genproto/googleapis/rpc/errdetails"
 )
 
 func (s *AccountService) CreateSearchFilterV2(
