@@ -7,7 +7,8 @@ SELECT
     environment_roles,
     disabled,
     created_at,
-    updated_at
+    updated_at,
+    search_filters
 FROM
     account_v2
 WHERE
