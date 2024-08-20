@@ -213,6 +213,15 @@ message GetAPIKeyBySearchingAllEnvironmentsResponse {
   EnvironmentAPIKey environment_api_key = 1;
 }
 
+message CreateSearchFilterRequest {
+  string email = 1;
+  string organization_id = 2;
+  string environment_namespace = 3;
+  CreateSearchFilterCommand command = 4;
+}
+
+message CreateSearchFilterResponse {}
+
 service AccountService {
   rpc GetMe(GetMeRequest) returns (GetMeResponse);
   rpc GetMyOrganizations(GetMyOrganizationsRequest)

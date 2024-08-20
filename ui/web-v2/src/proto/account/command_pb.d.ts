@@ -4,6 +4,7 @@
 import * as jspb from 'google-protobuf';
 import * as proto_account_account_pb from '../../proto/account/account_pb';
 import * as proto_account_api_key_pb from '../../proto/account/api_key_pb';
+import * as proto_account_search_filter_pb from '../../proto/account/search_filter_pb';
 
 export class CreateAccountV2Command extends jspb.Message {
   getEmail(): string;
@@ -416,4 +417,37 @@ export class DisableAPIKeyCommand extends jspb.Message {
 
 export namespace DisableAPIKeyCommand {
   export type AsObject = {};
+}
+
+export class CreateSearchFilterCommand extends jspb.Message {
+  hasSearchFilter(): boolean;
+  clearSearchFilter(): void;
+  getSearchFilter(): proto_account_search_filter_pb.SearchFilter | undefined;
+  setSearchFilter(value?: proto_account_search_filter_pb.SearchFilter): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CreateSearchFilterCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: CreateSearchFilterCommand
+  ): CreateSearchFilterCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: CreateSearchFilterCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): CreateSearchFilterCommand;
+  static deserializeBinaryFromReader(
+    message: CreateSearchFilterCommand,
+    reader: jspb.BinaryReader
+  ): CreateSearchFilterCommand;
+}
+
+export namespace CreateSearchFilterCommand {
+  export type AsObject = {
+    searchFilter?: proto_account_search_filter_pb.SearchFilter.AsObject;
+  };
 }

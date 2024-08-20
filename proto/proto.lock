@@ -550,6 +550,16 @@
           },
           {
             "name": "DisableAPIKeyCommand"
+          },
+          {
+            "name": "CreateSearchFilterCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "search_filter",
+                "type": "SearchFilter"
+              }
+            ]
           }
         ],
         "imports": [
@@ -558,6 +568,9 @@
           },
           {
             "path": "proto/account/api_key.proto"
+          },
+          {
+            "path": "proto/account/search_filter.proto"
           }
         ],
         "package": {
@@ -1207,6 +1220,34 @@
                 "type": "EnvironmentAPIKey"
               }
             ]
+          },
+          {
+            "name": "CreateSearchFilterRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "command",
+                "type": "CreateSearchFilterCommand"
+              }
+            ]
+          },
+          {
+            "name": "CreateSearchFilterResponse"
           }
         ],
         "services": [
@@ -6433,6 +6474,10 @@
                 "integer": 312
               },
               {
+                "name": "ACCOUNT_V2_CREATED_SEARCH_FILTER",
+                "integer": 313
+              },
+              {
                 "name": "APIKEY_CREATED",
                 "integer": 400
               },
@@ -8087,6 +8132,21 @@
               {
                 "id": 1,
                 "name": "email",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "SearchFilterCreateEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "Name",
                 "type": "string"
               }
             ]

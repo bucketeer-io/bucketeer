@@ -188,6 +188,7 @@ export namespace Event {
     ACCOUNT_V2_ENABLED: 310;
     ACCOUNT_V2_DISABLED: 311;
     ACCOUNT_V2_DELETED: 312;
+    ACCOUNT_V2_CREATED_SEARCH_FILTER: 313;
     APIKEY_CREATED: 400;
     APIKEY_NAME_CHANGED: 401;
     APIKEY_ENABLED: 402;
@@ -2793,6 +2794,41 @@ export class AccountV2DeletedEvent extends jspb.Message {
 export namespace AccountV2DeletedEvent {
   export type AsObject = {
     email: string;
+  };
+}
+
+export class SearchFilterCreateEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SearchFilterCreateEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: SearchFilterCreateEvent
+  ): SearchFilterCreateEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: SearchFilterCreateEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): SearchFilterCreateEvent;
+  static deserializeBinaryFromReader(
+    message: SearchFilterCreateEvent,
+    reader: jspb.BinaryReader
+  ): SearchFilterCreateEvent;
+}
+
+export namespace SearchFilterCreateEvent {
+  export type AsObject = {
+    id: string;
+    name: string;
   };
 }
 

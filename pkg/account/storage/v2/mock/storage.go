@@ -235,3 +235,17 @@ func (mr *MockAccountStorageMockRecorder) UpdateAccountV2(ctx, a any) *gomock.Ca
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAccountV2", reflect.TypeOf((*MockAccountStorage)(nil).UpdateAccountV2), ctx, a)
 }
+
+// UpdateSearchFilters mocks base method.
+func (m *MockAccountStorage) UpdateSearchFilters(ctx context.Context, a *domain.AccountV2) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateSearchFilters", ctx, a)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateSearchFilters indicates an expected call of UpdateSearchFilters.
+func (mr *MockAccountStorageMockRecorder) UpdateSearchFilters(ctx, a any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSearchFilters", reflect.TypeOf((*MockAccountStorage)(nil).UpdateSearchFilters), ctx, a)
+}
