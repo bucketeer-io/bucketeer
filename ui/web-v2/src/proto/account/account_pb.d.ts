@@ -5,6 +5,7 @@ import * as jspb from 'google-protobuf';
 import * as proto_environment_environment_pb from '../../proto/environment/environment_pb';
 import * as proto_environment_project_pb from '../../proto/environment/project_pb';
 import * as proto_environment_organization_pb from '../../proto/environment/organization_pb';
+import * as proto_account_search_filter_pb from '../../proto/account/search_filter_pb';
 
 export class Account extends jspb.Message {
   getId(): string;
@@ -106,6 +107,16 @@ export class AccountV2 extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  clearSearchFiltersList(): void;
+  getSearchFiltersList(): Array<proto_account_search_filter_pb.SearchFilter>;
+  setSearchFiltersList(
+    value: Array<proto_account_search_filter_pb.SearchFilter>
+  ): void;
+  addSearchFilters(
+    value?: proto_account_search_filter_pb.SearchFilter,
+    index?: number
+  ): proto_account_search_filter_pb.SearchFilter;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AccountV2.AsObject;
   static toObject(includeInstance: boolean, msg: AccountV2): AccountV2.AsObject;
@@ -135,6 +146,7 @@ export namespace AccountV2 {
     disabled: boolean;
     createdAt: number;
     updatedAt: number;
+    searchFiltersList: Array<proto_account_search_filter_pb.SearchFilter.AsObject>;
   };
 
   export class Role extends jspb.Message {

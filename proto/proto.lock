@@ -161,6 +161,12 @@
                 "id": 9,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 10,
+                "name": "search_filters",
+                "type": "SearchFilter",
+                "is_repeated": true
               }
             ],
             "messages": [
@@ -257,6 +263,9 @@
           },
           {
             "path": "proto/environment/organization.proto"
+          },
+          {
+            "path": "proto/account/search_filter.proto"
           }
         ],
         "package": {
@@ -549,6 +558,71 @@
           },
           {
             "path": "proto/account/api_key.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.account"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/account"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "account:/:search_filter.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "FilterTargetType",
+            "enum_fields": [
+              {
+                "name": "UNKNOWN"
+              },
+              {
+                "name": "FEATURE_FLAG",
+                "integer": 1
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "SearchFilter",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "query",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "filter_target_type",
+                "type": "FilterTargetType"
+              },
+              {
+                "id": 5,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "default_filter",
+                "type": "bool"
+              }
+            ]
           }
         ],
         "package": {

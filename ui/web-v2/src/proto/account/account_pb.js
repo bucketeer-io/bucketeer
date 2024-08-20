@@ -29,6 +29,8 @@ var proto_environment_project_pb = require('../../proto/environment/project_pb.j
 goog.object.extend(proto, proto_environment_project_pb);
 var proto_environment_organization_pb = require('../../proto/environment/organization_pb.js');
 goog.object.extend(proto, proto_environment_organization_pb);
+var proto_account_search_filter_pb = require('../../proto/account/search_filter_pb.js');
+goog.object.extend(proto, proto_account_search_filter_pb);
 goog.exportSymbol('proto.bucketeer.account.Account', null, global);
 goog.exportSymbol('proto.bucketeer.account.Account.Role', null, global);
 goog.exportSymbol('proto.bucketeer.account.AccountV2', null, global);
@@ -530,7 +532,7 @@ proto.bucketeer.account.Account.prototype.setDeleted = function (value) {
  * @private {!Array<number>}
  * @const
  */
-proto.bucketeer.account.AccountV2.repeatedFields_ = [6];
+proto.bucketeer.account.AccountV2.repeatedFields_ = [6, 10];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
@@ -578,7 +580,12 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         ),
         disabled: jspb.Message.getBooleanFieldWithDefault(msg, 7, false),
         createdAt: jspb.Message.getFieldWithDefault(msg, 8, 0),
-        updatedAt: jspb.Message.getFieldWithDefault(msg, 9, 0)
+        updatedAt: jspb.Message.getFieldWithDefault(msg, 9, 0),
+        searchFiltersList: jspb.Message.toObjectList(
+          msg.getSearchFiltersList(),
+          proto_account_search_filter_pb.SearchFilter.toObject,
+          includeInstance
+        )
       };
 
     if (includeInstance) {
@@ -663,6 +670,15 @@ proto.bucketeer.account.AccountV2.deserializeBinaryFromReader = function (
         var value = /** @type {number} */ (reader.readInt64());
         msg.setUpdatedAt(value);
         break;
+      case 10:
+        var value = new proto_account_search_filter_pb.SearchFilter();
+        reader.readMessage(
+          value,
+          proto_account_search_filter_pb.SearchFilter
+            .deserializeBinaryFromReader
+        );
+        msg.addSearchFilters(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -732,6 +748,14 @@ proto.bucketeer.account.AccountV2.serializeBinaryToWriter = function (
   f = message.getUpdatedAt();
   if (f !== 0) {
     writer.writeInt64(9, f);
+  }
+  f = message.getSearchFiltersList();
+  if (f.length > 0) {
+    writer.writeRepeatedMessage(
+      10,
+      f,
+      proto_account_search_filter_pb.SearchFilter.serializeBinaryToWriter
+    );
   }
 };
 
@@ -1223,6 +1247,57 @@ proto.bucketeer.account.AccountV2.prototype.getUpdatedAt = function () {
 proto.bucketeer.account.AccountV2.prototype.setUpdatedAt = function (value) {
   return jspb.Message.setProto3IntField(this, 9, value);
 };
+
+/**
+ * repeated SearchFilter search_filters = 10;
+ * @return {!Array<!proto.bucketeer.account.SearchFilter>}
+ */
+proto.bucketeer.account.AccountV2.prototype.getSearchFiltersList = function () {
+  return /** @type{!Array<!proto.bucketeer.account.SearchFilter>} */ (
+    jspb.Message.getRepeatedWrapperField(
+      this,
+      proto_account_search_filter_pb.SearchFilter,
+      10
+    )
+  );
+};
+
+/**
+ * @param {!Array<!proto.bucketeer.account.SearchFilter>} value
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.setSearchFiltersList = function (
+  value
+) {
+  return jspb.Message.setRepeatedWrapperField(this, 10, value);
+};
+
+/**
+ * @param {!proto.bucketeer.account.SearchFilter=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.account.SearchFilter}
+ */
+proto.bucketeer.account.AccountV2.prototype.addSearchFilters = function (
+  opt_value,
+  opt_index
+) {
+  return jspb.Message.addToRepeatedWrapperField(
+    this,
+    10,
+    opt_value,
+    proto.bucketeer.account.SearchFilter,
+    opt_index
+  );
+};
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.clearSearchFiltersList =
+  function () {
+    return this.setSearchFiltersList([]);
+  };
 
 /**
  * List of repeated fields within this message type.

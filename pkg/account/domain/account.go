@@ -15,10 +15,16 @@
 package domain
 
 import (
+	"errors"
 	"time"
 
+	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
+)
+
+var (
+	errSearchFilterNotFound = errors.New("account: search filter not found")
 )
 
 type AccountV2 struct {
@@ -46,6 +52,7 @@ func NewAccountV2(
 		Disabled:         false,
 		CreatedAt:        now,
 		UpdatedAt:        now,
+		SearchFilters:    nil,
 	}}
 }
 
@@ -105,4 +112,52 @@ func (a *AccountV2) Disable() error {
 	a.AccountV2.Disabled = true
 	a.UpdatedAt = time.Now().Unix()
 	return nil
+}
+
+func (a *AccountV2) AddSearchFilter(
+	name string,
+	query string,
+	targetType proto.FilterTargetType,
+	environmentID string, defaultFilter bool) error {
+	id, err := uuid.NewUUID()
+	if err != nil {
+		return err
+	}
+
+	searchFilter := &proto.SearchFilter{
+		Id:               id.String(),
+		Name:             name,
+		Query:            query,
+		FilterTargetType: targetType,
+		EnvironmentId:    environmentID,
+		DefaultFilter:    defaultFilter,
+	}
+	a.AccountV2.SearchFilters = append(a.AccountV2.SearchFilters, searchFilter)
+	a.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (a *AccountV2) DeleteSearchFilter(id string) error {
+	for i, f := range a.AccountV2.SearchFilters {
+		if f.Id == id {
+			a.AccountV2.SearchFilters = append(a.AccountV2.SearchFilters[:i], a.AccountV2.SearchFilters[i+1:]...)
+			if len(a.AccountV2.SearchFilters) == 0 {
+				a.AccountV2.SearchFilters = nil
+			}
+			a.UpdatedAt = time.Now().Unix()
+			return nil
+		}
+	}
+	return errSearchFilterNotFound
+}
+
+func (a *AccountV2) UpdateSearchFilter(searchFilter *proto.SearchFilter) error {
+	for i, f := range a.AccountV2.SearchFilters {
+		if f.Id == searchFilter.Id {
+			a.AccountV2.SearchFilters[i] = searchFilter
+			a.UpdatedAt = time.Now().Unix()
+			return nil
+		}
+	}
+	return errSearchFilterNotFound
 }
