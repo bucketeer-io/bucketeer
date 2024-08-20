@@ -48,6 +48,7 @@ type AccountStorage interface {
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*proto.APIKey, int, int64, error)
+	UpdateSearchFilters(ctx context.Context, a *domain.AccountV2) error
 }
 
 const transactionKey = "transaction"

@@ -1361,3 +1361,74 @@ export namespace GetAPIKeyBySearchingAllEnvironmentsResponse {
     environmentApiKey?: proto_account_api_key_pb.EnvironmentAPIKey.AsObject;
   };
 }
+
+export class CreateSearchFilterRequest extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  hasCommand(): boolean;
+  clearCommand(): void;
+  getCommand(): proto_account_command_pb.CreateSearchFilterCommand | undefined;
+  setCommand(value?: proto_account_command_pb.CreateSearchFilterCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CreateSearchFilterRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: CreateSearchFilterRequest
+  ): CreateSearchFilterRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: CreateSearchFilterRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): CreateSearchFilterRequest;
+  static deserializeBinaryFromReader(
+    message: CreateSearchFilterRequest,
+    reader: jspb.BinaryReader
+  ): CreateSearchFilterRequest;
+}
+
+export namespace CreateSearchFilterRequest {
+  export type AsObject = {
+    email: string;
+    organizationId: string;
+    environmentNamespace: string;
+    command?: proto_account_command_pb.CreateSearchFilterCommand.AsObject;
+  };
+}
+
+export class CreateSearchFilterResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): CreateSearchFilterResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: CreateSearchFilterResponse
+  ): CreateSearchFilterResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: CreateSearchFilterResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): CreateSearchFilterResponse;
+  static deserializeBinaryFromReader(
+    message: CreateSearchFilterResponse,
+    reader: jspb.BinaryReader
+  ): CreateSearchFilterResponse;
+}
+
+export namespace CreateSearchFilterResponse {
+  export type AsObject = {};
+}

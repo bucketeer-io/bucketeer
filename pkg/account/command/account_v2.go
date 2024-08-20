@@ -72,6 +72,8 @@ func (h *accountV2CommandHandler) Handle(ctx context.Context, cmd Command) error
 		return h.disable(ctx, c)
 	case *accountproto.DeleteAccountV2Command:
 		return h.delete(ctx, c)
+	case *accountproto.CreateSearchFilterCommand:
+		return h.createSearchFiler(ctx, c)
 	default:
 		return ErrBadCommand
 	}
@@ -179,6 +181,25 @@ func (h *accountV2CommandHandler) disable(ctx context.Context, _ *accountproto.D
 func (h *accountV2CommandHandler) delete(ctx context.Context, _ *accountproto.DeleteAccountV2Command) error {
 	return h.send(ctx, eventproto.Event_ACCOUNT_V2_DELETED, &eventproto.AccountV2DeletedEvent{
 		Email: h.account.Email,
+	})
+}
+
+func (h *accountV2CommandHandler) createSearchFiler(
+	ctx context.Context,
+	cmd *accountproto.CreateSearchFilterCommand) error {
+	var searchFilter *accountproto.SearchFilter
+	var err error
+	if searchFilter, err = h.account.AddSearchFilter(
+		cmd.SearchFilter.Name,
+		cmd.SearchFilter.Query,
+		cmd.SearchFilter.FilterTargetType,
+		cmd.SearchFilter.EnvironmentId,
+		cmd.SearchFilter.DefaultFilter); err != nil {
+		return err
+	}
+	return h.send(ctx, eventproto.Event_ACCOUNT_V2_CREATED_SEARCH_FILTER, &eventproto.SearchFilterCreateEvent{
+		Id:   searchFilter.Id,
+		Name: searchFilter.Name,
 	})
 }
 

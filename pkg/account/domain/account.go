@@ -118,10 +118,10 @@ func (a *AccountV2) AddSearchFilter(
 	name string,
 	query string,
 	targetType proto.FilterTargetType,
-	environmentID string, defaultFilter bool) error {
+	environmentID string, defaultFilter bool) (*proto.SearchFilter, error) {
 	id, err := uuid.NewUUID()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	searchFilter := &proto.SearchFilter{
@@ -134,7 +134,7 @@ func (a *AccountV2) AddSearchFilter(
 	}
 	a.AccountV2.SearchFilters = append(a.AccountV2.SearchFilters, searchFilter)
 	a.UpdatedAt = time.Now().Unix()
-	return nil
+	return searchFilter, nil
 }
 
 func (a *AccountV2) DeleteSearchFilter(id string) error {
