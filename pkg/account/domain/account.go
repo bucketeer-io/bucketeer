@@ -118,7 +118,7 @@ func (a *AccountV2) AddSearchFilter(
 	name string,
 	query string,
 	targetType proto.FilterTargetType,
-	environmentId string, defaultFilter bool) error {
+	environmentID string, defaultFilter bool) error {
 	id, err := uuid.NewUUID()
 	if err != nil {
 		return err
@@ -129,7 +129,7 @@ func (a *AccountV2) AddSearchFilter(
 		Name:             name,
 		Query:            query,
 		FilterTargetType: targetType,
-		EnvironmentId:    environmentId,
+		EnvironmentId:    environmentID,
 		DefaultFilter:    defaultFilter,
 	}
 	a.AccountV2.SearchFilters = append(a.AccountV2.SearchFilters, searchFilter)
@@ -138,27 +138,17 @@ func (a *AccountV2) AddSearchFilter(
 }
 
 func (a *AccountV2) DeleteSearchFilter(id string) error {
-	var searchFilters []*proto.SearchFilter
-	var isFound = false
 	for i, f := range a.AccountV2.SearchFilters {
 		if f.Id == id {
-			searchFilters = append(a.AccountV2.SearchFilters[:i], a.AccountV2.SearchFilters[i+1:]...)
-			isFound = true
-			continue
-		}
-	}
-	if len(searchFilters) == 0 {
-		if isFound {
-			a.AccountV2.SearchFilters = nil
+			a.AccountV2.SearchFilters = append(a.AccountV2.SearchFilters[:i], a.AccountV2.SearchFilters[i+1:]...)
+			if len(a.AccountV2.SearchFilters) == 0 {
+				a.AccountV2.SearchFilters = nil
+			}
 			a.UpdatedAt = time.Now().Unix()
 			return nil
-		} else {
-			return errSearchFilterNotFound
 		}
 	}
-	a.AccountV2.SearchFilters = searchFilters
-	a.UpdatedAt = time.Now().Unix()
-	return nil
+	return errSearchFilterNotFound
 }
 
 func (a *AccountV2) UpdateSearchFilter(searchFilter *proto.SearchFilter) error {
