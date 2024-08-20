@@ -276,7 +276,7 @@ func (s *AutoOpsService) validateCreateAutoOpsRuleRequest(
 		}
 		return dt.Err()
 	}
-	if req.Command.OpsType == autoopsproto.OpsType_Ops_Type_UNKNOWN {
+	if req.Command.OpsType == autoopsproto.OpsType_TYPE_UNKNOWN {
 		dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),

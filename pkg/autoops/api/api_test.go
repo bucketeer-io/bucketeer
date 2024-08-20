@@ -119,7 +119,7 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
 				Command: &autoopsproto.CreateAutoOpsRuleCommand{
 					FeatureId: "fid",
-					OpsType:   autoopsproto.OpsType_Ops_Type_UNKNOWN,
+					OpsType:   autoopsproto.OpsType_TYPE_UNKNOWN,
 					OpsEventRateClauses: []*autoopsproto.OpsEventRateClause{
 						{
 							VariationId:     "",

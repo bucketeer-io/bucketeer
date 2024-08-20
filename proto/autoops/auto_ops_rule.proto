@@ -32,7 +32,7 @@ message AutoOpsRule {
 }
 
 enum OpsType {
-  Ops_Type_UNKNOWN = 0;
+  TYPE_UNKNOWN = 0;
   reserved 1;  // DISABLE_FEATURE = 1 [deprecated = true];
   SCHEDULE = 2;
   EVENT_RATE = 3;

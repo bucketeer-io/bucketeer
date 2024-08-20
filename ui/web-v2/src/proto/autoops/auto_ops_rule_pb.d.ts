@@ -102,7 +102,7 @@ export namespace AutoOpsRules {
 }
 
 export interface OpsTypeMap {
-  OPS_TYPE_UNKNOWN: 0;
+  TYPE_UNKNOWN: 0;
   SCHEDULE: 2;
   EVENT_RATE: 3;
 }

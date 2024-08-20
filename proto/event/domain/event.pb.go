@@ -6631,7 +6631,7 @@ func (x *AutoOpsRuleCreatedEvent) GetOpsType() autoops.OpsType {
 	if x != nil {
 		return x.OpsType
 	}
-	return autoops.OpsType_Ops_Type_UNKNOWN
+	return autoops.OpsType_TYPE_UNKNOWN
 }
 
 func (x *AutoOpsRuleCreatedEvent) GetClauses() []*autoops.Clause {
@@ -6782,7 +6782,7 @@ func (x *AutoOpsRuleOpsTypeChangedEvent) GetOpsType() autoops.OpsType {
 	if x != nil {
 		return x.OpsType
 	}
-	return autoops.OpsType_Ops_Type_UNKNOWN
+	return autoops.OpsType_TYPE_UNKNOWN
 }
 
 // TODO: Remove this function after auto ops migration.

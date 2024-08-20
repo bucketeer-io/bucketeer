@@ -2536,7 +2536,7 @@
             "name": "OpsType",
             "enum_fields": [
               {
-                "name": "Ops_Type_UNKNOWN"
+                "name": "TYPE_UNKNOWN"
               },
               {
                 "name": "SCHEDULE",

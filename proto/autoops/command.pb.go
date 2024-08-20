@@ -88,7 +88,7 @@ func (x *CreateAutoOpsRuleCommand) GetOpsType() OpsType {
 	if x != nil {
 		return x.OpsType
 	}
-	return OpsType_Ops_Type_UNKNOWN
+	return OpsType_TYPE_UNKNOWN
 }
 
 func (x *CreateAutoOpsRuleCommand) GetOpsEventRateClauses() []*OpsEventRateClause {

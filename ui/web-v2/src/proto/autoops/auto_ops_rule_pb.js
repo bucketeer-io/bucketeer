@@ -655,7 +655,7 @@ proto.bucketeer.autoops.AutoOpsRules.prototype.clearAutoOpsRulesList =
  * @enum {number}
  */
 proto.bucketeer.autoops.OpsType = {
-  OPS_TYPE_UNKNOWN: 0,
+  TYPE_UNKNOWN: 0,
   SCHEDULE: 2,
   EVENT_RATE: 3
 };
