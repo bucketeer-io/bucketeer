@@ -1,8 +1,8 @@
-{{- if and .Values.multiClusterService.enabled .Values.env.gcpEnabled }}
+{{- if .Values.gcpMultiCluster.enabled }}
 apiVersion: networking.gke.io/v1
 kind: MultiClusterService
 metadata:
-  name: {{ .Values.multiClusterService.name }}
+  name: {{ .Values.gcpMultiCluster.service.name }}
   namespace: {{ .Values.namespace }}
   labels:
     app: {{ template "web.name" . }}

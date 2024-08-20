@@ -1,8 +1,8 @@
-{{- if and .Values.multiClusterIngress.enabled .Values.env.gcpEnabled }}
+{{- if .Values.gcpMultiCluster.enabled }}
 apiVersion: networking.gke.io/v1
 kind: MultiClusterIngress
 metadata:
-  name: {{ .Values.multiClusterIngress.name }}
+  name: {{ .Values.gcpMultiCluster.ingress.name }}
   namespace: {{ .Values.namespace }}
   labels:
     app: {{ template "web.name" . }}
@@ -10,7 +10,7 @@ metadata:
     release: {{ template "web.fullname" . }}
     heritage: {{ .Release.Service }}
   annotations:
-    networking.gke.io/static-ip: {{ .Values.multiClusterIngress.staticIPName }}
+    networking.gke.io/static-ip: {{ .Values.gcpMultiCluster.ingress.staticIPName }}
 spec:
   template:
     spec:
@@ -18,7 +18,7 @@ spec:
         serviceName: {{ template "web.fullname" . }}
         servicePort: {{ .Values.service.httpPort }}
       rules:
-        - host: {{ .Values.multiClusterIngress.host }}
+        - host: {{ .Values.gcpMultiCluster.ingress.host }}
           http:
-            paths: {{- toYaml .Values.multiClusterIngress.rulePaths | nindent 14 }}
+            paths: {{- toYaml .Values.gcpMultiCluster.ingress.rulePaths | nindent 14 }}
 {{- end }}
