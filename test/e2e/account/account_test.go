@@ -273,6 +273,75 @@ func TestDeleteAccount(t *testing.T) {
 	}
 }
 
+func TestCreateSearchFilter(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	c := newAccountClient(t)
+	defer c.Close()
+	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+		OrganizationId: defaultOrganizationID,
+		Command: &accountproto.CreateAccountV2Command{
+			Name:             name,
+			Email:            email,
+			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	requestSearchFilter := &accountproto.SearchFilter{
+		Name:             "name",
+		Query:            "query",
+		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+		DefaultFilter:    false,
+		EnvironmentId:    "environment-id",
+	}
+	_, err = c.CreateSearchFilterV2(ctx, &accountproto.CreateSearchFilterRequest{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+		Command: &accountproto.CreateSearchFilterCommand{
+			SearchFilter: requestSearchFilter,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	
+	account, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(account.Account.SearchFilters) != 1 {
+		t.Fatalf("different count of filters, expected: 1, actual: %v", len(account.Account.SearchFilters))
+	}
+	if account.Account.SearchFilters[0].Name != requestSearchFilter.Name {
+		t.Fatalf("different name of filters, expected: %v, actual: %v", requestSearchFilter.Name, account.Account.SearchFilters[0].Name)
+	}
+	if account.Account.SearchFilters[0].Query != requestSearchFilter.Query {
+		t.Fatalf("different query of filters, expected: %v, actual: %v", requestSearchFilter.Query, account.Account.SearchFilters[0].Query)
+	}
+	if account.Account.SearchFilters[0].FilterTargetType != requestSearchFilter.FilterTargetType {
+		t.Fatalf("different filter target type of filters, expected: %v, actual: %v", requestSearchFilter.FilterTargetType, account.Account.SearchFilters[0].FilterTargetType)
+	}
+	if account.Account.SearchFilters[0].DefaultFilter != requestSearchFilter.DefaultFilter {
+		t.Fatalf("different default filter of filters, expected: %v, actual: %v", requestSearchFilter.DefaultFilter, account.Account.SearchFilters[0].DefaultFilter)
+	}
+}
+
 func newAccountClient(t *testing.T) accountclient.Client {
 	t.Helper()
 	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
