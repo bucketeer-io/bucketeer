@@ -20,17 +20,18 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
-	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
-	"github.com/bucketeer-io/bucketeer/pkg/locale"
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
+
+	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
+	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
+	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 )
 
 func TestCreateSearchFilter(t *testing.T) {
