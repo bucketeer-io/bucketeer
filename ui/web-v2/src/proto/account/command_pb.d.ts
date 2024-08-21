@@ -451,3 +451,36 @@ export namespace CreateSearchFilterCommand {
     searchFilter?: proto_account_search_filter_pb.SearchFilter.AsObject;
   };
 }
+
+export class UpdateSearchFilterCommand extends jspb.Message {
+  hasSearchFilter(): boolean;
+  clearSearchFilter(): void;
+  getSearchFilter(): proto_account_search_filter_pb.SearchFilter | undefined;
+  setSearchFilter(value?: proto_account_search_filter_pb.SearchFilter): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateSearchFilterCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: UpdateSearchFilterCommand
+  ): UpdateSearchFilterCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: UpdateSearchFilterCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateSearchFilterCommand;
+  static deserializeBinaryFromReader(
+    message: UpdateSearchFilterCommand,
+    reader: jspb.BinaryReader
+  ): UpdateSearchFilterCommand;
+}
+
+export namespace UpdateSearchFilterCommand {
+  export type AsObject = {
+    searchFilter?: proto_account_search_filter_pb.SearchFilter.AsObject;
+  };
+}

@@ -560,6 +560,16 @@
                 "type": "SearchFilter"
               }
             ]
+          },
+          {
+            "name": "UpdateSearchFilterCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "search_filter",
+                "type": "SearchFilter"
+              }
+            ]
           }
         ],
         "imports": [
@@ -1248,6 +1258,34 @@
           },
           {
             "name": "CreateSearchFilterResponse"
+          },
+          {
+            "name": "UpdateSearchFilterRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "command",
+                "type": "UpdateSearchFilterCommand"
+              }
+            ]
+          },
+          {
+            "name": "UpdateSearchFilterResponse"
           }
         ],
         "services": [
@@ -1345,9 +1383,14 @@
                 "out_type": "GetAPIKeyBySearchingAllEnvironmentsResponse"
               },
               {
-                "name": "CreateSearchFilter",
+                "name": "CreateSearchFilterV2",
                 "in_type": "CreateSearchFilterRequest",
                 "out_type": "CreateSearchFilterResponse"
+              },
+              {
+                "name": "UpdateSearchFilterV2",
+                "in_type": "UpdateSearchFilterRequest",
+                "out_type": "UpdateSearchFilterResponse"
               }
             ]
           }
@@ -6483,6 +6526,10 @@
                 "integer": 313
               },
               {
+                "name": "ACCOUNT_V2_UPDATED_SEARCH_FILTER",
+                "integer": 314
+              },
+              {
                 "name": "APIKEY_CREATED",
                 "integer": 400
               },
@@ -8143,6 +8190,21 @@
           },
           {
             "name": "SearchFilterCreateEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "Name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "SearchFilterUpdateEvent",
             "fields": [
               {
                 "id": 1,
