@@ -73,3 +73,7 @@ message DisableAPIKeyCommand {}
 message CreateSearchFilterCommand {
   SearchFilter search_filter = 1;
 }
+
+message UpdateSearchFilterCommand {
+  SearchFilter search_filter = 1;
+}

@@ -560,6 +560,16 @@
                 "type": "SearchFilter"
               }
             ]
+          },
+          {
+            "name": "UpdateSearchFilterCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "search_filter",
+                "type": "SearchFilter"
+              }
+            ]
           }
         ],
         "imports": [
@@ -1345,7 +1355,7 @@
                 "out_type": "GetAPIKeyBySearchingAllEnvironmentsResponse"
               },
               {
-                "name": "CreateSearchFilter",
+                "name": "CreateSearchFilterV2",
                 "in_type": "CreateSearchFilterRequest",
                 "out_type": "CreateSearchFilterResponse"
               }
@@ -6452,6 +6462,10 @@
                 "integer": 313
               },
               {
+                "name": "ACCOUNT_V2_UPDATED_SEARCH_FILTER",
+                "integer": 314
+              },
+              {
                 "name": "APIKEY_CREATED",
                 "integer": 400
               },
@@ -8112,6 +8126,21 @@
           },
           {
             "name": "SearchFilterCreateEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "Name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "SearchFilterUpdateEvent",
             "fields": [
               {
                 "id": 1,

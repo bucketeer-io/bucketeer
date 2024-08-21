@@ -166,7 +166,7 @@ type AccountServiceGetAPIKeyBySearchingAllEnvironments = {
   readonly responseType: typeof proto_account_service_pb.GetAPIKeyBySearchingAllEnvironmentsResponse;
 };
 
-type AccountServiceCreateSearchFilter = {
+type AccountServiceCreateSearchFilterV2 = {
   readonly methodName: string;
   readonly service: typeof AccountService;
   readonly requestStream: false;
@@ -195,7 +195,7 @@ export class AccountService {
   static readonly GetAPIKey: AccountServiceGetAPIKey;
   static readonly ListAPIKeys: AccountServiceListAPIKeys;
   static readonly GetAPIKeyBySearchingAllEnvironments: AccountServiceGetAPIKeyBySearchingAllEnvironments;
-  static readonly CreateSearchFilter: AccountServiceCreateSearchFilter;
+  static readonly CreateSearchFilterV2: AccountServiceCreateSearchFilterV2;
 }
 
 export type ServiceError = {
@@ -513,7 +513,7 @@ export class AccountServiceClient {
       responseMessage: proto_account_service_pb.GetAPIKeyBySearchingAllEnvironmentsResponse | null
     ) => void
   ): UnaryResponse;
-  createSearchFilter(
+  createSearchFilterV2(
     requestMessage: proto_account_service_pb.CreateSearchFilterRequest,
     metadata: grpc.Metadata,
     callback: (
@@ -521,7 +521,7 @@ export class AccountServiceClient {
       responseMessage: proto_account_service_pb.CreateSearchFilterResponse | null
     ) => void
   ): UnaryResponse;
-  createSearchFilter(
+  createSearchFilterV2(
     requestMessage: proto_account_service_pb.CreateSearchFilterRequest,
     callback: (
       error: ServiceError | null,

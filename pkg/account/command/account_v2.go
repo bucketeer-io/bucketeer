@@ -74,6 +74,8 @@ func (h *accountV2CommandHandler) Handle(ctx context.Context, cmd Command) error
 		return h.delete(ctx, c)
 	case *accountproto.CreateSearchFilterCommand:
 		return h.createSearchFiler(ctx, c)
+	case *accountproto.UpdateSearchFilterCommand:
+		return h.updateSearchFiler(ctx, c)
 	default:
 		return ErrBadCommand
 	}
@@ -200,6 +202,18 @@ func (h *accountV2CommandHandler) createSearchFiler(
 	return h.send(ctx, eventproto.Event_ACCOUNT_V2_CREATED_SEARCH_FILTER, &eventproto.SearchFilterCreateEvent{
 		Id:   searchFilter.Id,
 		Name: searchFilter.Name,
+	})
+}
+
+func (h *accountV2CommandHandler) updateSearchFiler(
+	ctx context.Context,
+	cmd *accountproto.UpdateSearchFilterCommand) error {
+	if err := h.account.UpdateSearchFilter(cmd.SearchFilter); err != nil {
+		return err
+	}
+	return h.send(ctx, eventproto.Event_ACCOUNT_V2_CREATED_SEARCH_FILTER, &eventproto.SearchFilterUpdateEvent{
+		Id:   cmd.SearchFilter.Id,
+		Name: cmd.SearchFilter.Name,
 	})
 }
 
