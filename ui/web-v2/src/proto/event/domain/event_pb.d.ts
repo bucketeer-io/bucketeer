@@ -4448,6 +4448,9 @@ export namespace DatetimeClauseChangedEvent {
 }
 
 export class PushCreatedEvent extends jspb.Message {
+  getFcmServiceAccount(): string;
+  setFcmServiceAccount(value: string): void;
+
   getFcmApiKey(): string;
   setFcmApiKey(value: string): void;
 
@@ -4482,6 +4485,7 @@ export class PushCreatedEvent extends jspb.Message {
 
 export namespace PushCreatedEvent {
   export type AsObject = {
+    fcmServiceAccount: string;
     fcmApiKey: string;
     tagsList: Array<string>;
     name: string;

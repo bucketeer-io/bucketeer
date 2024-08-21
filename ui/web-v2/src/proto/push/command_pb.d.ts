@@ -15,6 +15,11 @@ export class CreatePushCommand extends jspb.Message {
   getName(): string;
   setName(value: string): void;
 
+  getFcmServiceAccount(): Uint8Array | string;
+  getFcmServiceAccount_asU8(): Uint8Array;
+  getFcmServiceAccount_asB64(): string;
+  setFcmServiceAccount(value: Uint8Array | string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreatePushCommand.AsObject;
   static toObject(
@@ -41,6 +46,7 @@ export namespace CreatePushCommand {
     fcmApiKey: string;
     tagsList: Array<string>;
     name: string;
+    fcmServiceAccount: Uint8Array | string;
   };
 }
 

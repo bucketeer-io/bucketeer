@@ -27,6 +27,9 @@ export class Push extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getFcmServiceAccount(): string;
+  setFcmServiceAccount(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Push.AsObject;
   static toObject(includeInstance: boolean, msg: Push): Push.AsObject;
@@ -54,5 +57,6 @@ export namespace Push {
     name: string;
     createdAt: number;
     updatedAt: number;
+    fcmServiceAccount: string;
   };
 }

@@ -8849,9 +8849,20 @@
             "name": "PushCreatedEvent",
             "fields": [
               {
+                "id": 1,
+                "name": "fcm_service_account",
+                "type": "string"
+              },
+              {
                 "id": 2,
                 "name": "fcm_api_key",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 3,
@@ -18617,7 +18628,13 @@
               {
                 "id": 1,
                 "name": "fcm_api_key",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 2,
@@ -18629,6 +18646,11 @@
                 "id": 3,
                 "name": "name",
                 "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "fcm_service_account",
+                "type": "bytes"
               }
             ]
           },
@@ -18694,7 +18716,13 @@
               {
                 "id": 2,
                 "name": "fcm_api_key",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 3,
@@ -18721,6 +18749,11 @@
                 "id": 7,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 8,
+                "name": "fcm_service_account",
+                "type": "string"
               }
             ]
           }
