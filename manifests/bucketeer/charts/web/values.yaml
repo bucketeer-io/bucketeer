@@ -155,7 +155,6 @@ gcpMultiCluster:
     staticIPName: web-multi-cluster-static-ip
     rulePaths:
       - path: /
-        pathType: Prefix
         backend:
           serviceName: web
           servicePort: 9003
