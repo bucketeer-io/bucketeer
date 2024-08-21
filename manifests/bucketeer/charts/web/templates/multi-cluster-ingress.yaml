@@ -17,6 +17,8 @@ spec:
       backend:
         serviceName: {{ template "web.fullname" . }}
         servicePort: {{ .Values.service.httpPort }}
+      tls:
+        - secretName: {{ .Values.gcpMultiCluster.ingress.secretName }}
       rules:
         - host: {{ .Values.gcpMultiCluster.ingress.host }}
           http:

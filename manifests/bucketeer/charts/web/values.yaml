@@ -151,8 +151,9 @@ gcpMultiCluster:
     name: web-multi-cluster-service
   ingress:
     name: web-multi-cluster-ingress
-    host: web-gateway.bucketeer.io
-    staticIPName: web-multi-cluster-static-ip
+    host:
+    staticIPName:
+    secretName:
     rulePaths:
       - path: /
         backend:
