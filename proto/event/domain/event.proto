@@ -128,6 +128,7 @@ message Event {
     ACCOUNT_V2_DELETED = 312;
     ACCOUNT_V2_CREATED_SEARCH_FILTER = 313;
     ACCOUNT_V2_UPDATED_SEARCH_FILTER = 314;
+    ACCOUNT_V2_DELETED_SEARCH_FILTER = 315;
     APIKEY_CREATED = 400;
     APIKEY_NAME_CHANGED = 401;
     APIKEY_ENABLED = 402;
@@ -606,6 +607,10 @@ message SearchFilterCreateEvent {
 message SearchFilterUpdateEvent {
   string id = 1;
   string Name = 2;
+}
+
+message SearchFilterDeleteEvent {
+  string id = 1;
 }
 
 message APIKeyCreatedEvent {

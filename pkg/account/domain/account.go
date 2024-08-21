@@ -24,7 +24,7 @@ import (
 )
 
 var (
-	errSearchFilterNotFound = errors.New("account: search filter not found")
+	ErrSearchFilterNotFound = errors.New("account: search filter not found")
 )
 
 type AccountV2 struct {
@@ -148,7 +148,7 @@ func (a *AccountV2) DeleteSearchFilter(id string) error {
 			return nil
 		}
 	}
-	return errSearchFilterNotFound
+	return ErrSearchFilterNotFound
 }
 
 func (a *AccountV2) UpdateSearchFilter(searchFilter *proto.SearchFilter) error {
@@ -159,5 +159,5 @@ func (a *AccountV2) UpdateSearchFilter(searchFilter *proto.SearchFilter) error {
 			return nil
 		}
 	}
-	return errSearchFilterNotFound
+	return ErrSearchFilterNotFound
 }

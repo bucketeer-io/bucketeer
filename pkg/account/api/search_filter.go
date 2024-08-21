@@ -18,12 +18,14 @@ import (
 	"context"
 	"errors"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
+	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
+
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
@@ -63,12 +65,10 @@ func (s *AccountService) CreateSearchFilterV2(
 
 		// Since there is only one default setting for a filter target, set the existing default to OFF.
 		changeDefaultFilters := getChangeDefaultFilters(account, req.Command.SearchFilter)
-		if changeDefaultFilters != nil {
-			for _, changeDefaultFilter := range changeDefaultFilters {
-				updateCommand := &accountproto.UpdateSearchFilterCommand{SearchFilter: changeDefaultFilter}
-				if err := handler.Handle(ctx, updateCommand); err != nil {
-					return err
-				}
+		for _, changeDefaultFilter := range changeDefaultFilters {
+			updateCommand := &accountproto.UpdateSearchFilterCommand{SearchFilter: changeDefaultFilter}
+			if err := handler.Handle(ctx, updateCommand); err != nil {
+				return err
 			}
 		}
 
@@ -108,6 +108,86 @@ func (s *AccountService) CreateSearchFilterV2(
 	}
 
 	return &accountproto.CreateSearchFilterResponse{}, nil
+}
+
+func (s *AccountService) DeleteSearchFilterV2(
+	ctx context.Context,
+	req *accountproto.DeleteSearchFilterRequest,
+) (*accountproto.DeleteSearchFilterResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_UNASSIGNED,
+		req.EnvironmentNamespace, localizer)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := validateDeleteSearchFilterRequest(req, localizer); err != nil {
+		s.logger.Error(
+			"Failed to delete search filter",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, err
+	}
+
+	err = s.accountStorage.RunInTransaction(ctx, func() error {
+		account, err := s.accountStorage.GetAccountV2(ctx, req.Email, req.OrganizationId)
+		if err != nil {
+			return err
+		}
+		handler, err := command.NewAccountV2CommandHandler(editor, account, s.publisher, req.OrganizationId)
+		if err != nil {
+			return err
+		}
+
+		if err := handler.Handle(ctx, req.Command); err != nil {
+			return err
+		}
+		return s.accountStorage.UpdateSearchFilters(ctx, account)
+	})
+	if err != nil {
+		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		if errors.Is(err, domain.ErrSearchFilterNotFound) {
+			dt, err := statusSearchFilterIdNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to delete search filter",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+				zap.String("email", req.Email),
+				zap.String("searchFilterID", req.Command.SearchFilterId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	return &accountproto.DeleteSearchFilterResponse{}, nil
 }
 
 func getChangeDefaultFilters(

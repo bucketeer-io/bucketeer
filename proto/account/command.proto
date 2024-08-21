@@ -77,3 +77,7 @@ message CreateSearchFilterCommand {
 message UpdateSearchFilterCommand {
   SearchFilter search_filter = 1;
 }
+
+message DeleteSearchFilterCommand {
+  string search_filter_id = 1;
+}

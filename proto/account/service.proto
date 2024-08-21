@@ -222,6 +222,15 @@ message CreateSearchFilterRequest {
 
 message CreateSearchFilterResponse {}
 
+message DeleteSearchFilterRequest {
+  string email = 1;
+  string organization_id = 2;
+  string environment_namespace = 3;
+  DeleteSearchFilterCommand command = 4;
+}
+
+message DeleteSearchFilterResponse {}
+
 service AccountService {
   rpc GetMe(GetMeRequest) returns (GetMeResponse);
   rpc GetMyOrganizations(GetMyOrganizationsRequest)
@@ -251,4 +260,6 @@ service AccountService {
       returns (GetAPIKeyBySearchingAllEnvironmentsResponse);
   rpc CreateSearchFilterV2(CreateSearchFilterRequest)
       returns (CreateSearchFilterResponse);
+  rpc DeleteSearchFilterV2(DeleteSearchFilterRequest)
+      returns (DeleteSearchFilterResponse);
 }

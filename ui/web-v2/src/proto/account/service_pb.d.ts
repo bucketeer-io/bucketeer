@@ -1430,3 +1430,74 @@ export class CreateSearchFilterResponse extends jspb.Message {
 export namespace CreateSearchFilterResponse {
   export type AsObject = {};
 }
+
+export class DeleteSearchFilterRequest extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  hasCommand(): boolean;
+  clearCommand(): void;
+  getCommand(): proto_account_command_pb.DeleteSearchFilterCommand | undefined;
+  setCommand(value?: proto_account_command_pb.DeleteSearchFilterCommand): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DeleteSearchFilterRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: DeleteSearchFilterRequest
+  ): DeleteSearchFilterRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: DeleteSearchFilterRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): DeleteSearchFilterRequest;
+  static deserializeBinaryFromReader(
+    message: DeleteSearchFilterRequest,
+    reader: jspb.BinaryReader
+  ): DeleteSearchFilterRequest;
+}
+
+export namespace DeleteSearchFilterRequest {
+  export type AsObject = {
+    email: string;
+    organizationId: string;
+    environmentNamespace: string;
+    command?: proto_account_command_pb.DeleteSearchFilterCommand.AsObject;
+  };
+}
+
+export class DeleteSearchFilterResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DeleteSearchFilterResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: DeleteSearchFilterResponse
+  ): DeleteSearchFilterResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: DeleteSearchFilterResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): DeleteSearchFilterResponse;
+  static deserializeBinaryFromReader(
+    message: DeleteSearchFilterResponse,
+    reader: jspb.BinaryReader
+  ): DeleteSearchFilterResponse;
+}
+
+export namespace DeleteSearchFilterResponse {
+  export type AsObject = {};
+}

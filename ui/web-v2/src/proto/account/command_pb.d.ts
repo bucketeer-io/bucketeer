@@ -484,3 +484,34 @@ export namespace UpdateSearchFilterCommand {
     searchFilter?: proto_account_search_filter_pb.SearchFilter.AsObject;
   };
 }
+
+export class DeleteSearchFilterCommand extends jspb.Message {
+  getSearchFilterId(): string;
+  setSearchFilterId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DeleteSearchFilterCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: DeleteSearchFilterCommand
+  ): DeleteSearchFilterCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: DeleteSearchFilterCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): DeleteSearchFilterCommand;
+  static deserializeBinaryFromReader(
+    message: DeleteSearchFilterCommand,
+    reader: jspb.BinaryReader
+  ): DeleteSearchFilterCommand;
+}
+
+export namespace DeleteSearchFilterCommand {
+  export type AsObject = {
+    searchFilterId: string;
+  };
+}
