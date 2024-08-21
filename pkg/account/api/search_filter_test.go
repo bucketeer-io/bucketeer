@@ -17,7 +17,6 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -282,7 +281,7 @@ func TestCreateSearchFilter(t *testing.T) {
 			expectedErr: createError(statusSearchFilterNameIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
 		},
 		{
-			desc: "err: SearchFilter Name is query",
+			desc: "err: SearchFilter Query is empty",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -388,7 +387,6 @@ func TestCreateSearchFilter(t *testing.T) {
 				p.setup(service)
 			}
 			_, err := service.CreateSearchFilterV2(ctx, p.req)
-			fmt.Printf("err: %v\n", err)
 			assert.Equal(t, p.expectedErr, err, p.desc)
 		})
 	}
