@@ -43,8 +43,6 @@ var (
 	countAccountsV2SQL string
 	//go:embed sql/account_v2/select_accounts_with_organization.sql
 	selectAccountsWithOrganizationSQL string
-	//go:embed sql/account_v2/update_search_filters_account_v2.sql
-	updateSearchFiltersAccountV2SQL string
 )
 
 var (
@@ -86,6 +84,7 @@ func (s *accountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV
 		mysql.JSONObject{Val: a.EnvironmentRoles},
 		a.Disabled,
 		a.UpdatedAt,
+		mysql.JSONObject{Val: a.SearchFilters},
 		a.Email,
 		a.OrganizationId,
 	)
@@ -209,6 +208,7 @@ func (s *accountStorage) GetAccountsWithOrganization(
 			&account.Disabled,
 			&account.CreatedAt,
 			&account.UpdatedAt,
+			&mysql.JSONObject{Val: &account.SearchFilters},
 			&organization.Id,
 			&organization.Name,
 			&organization.UrlCode,
@@ -269,6 +269,7 @@ func (s *accountStorage) ListAccountsV2(
 			&account.Disabled,
 			&account.CreatedAt,
 			&account.UpdatedAt,
+			&mysql.JSONObject{Val: &account.SearchFilters},
 		)
 		if err != nil {
 			return nil, 0, 0, err
@@ -287,25 +288,4 @@ func (s *accountStorage) ListAccountsV2(
 		return nil, 0, 0, err
 	}
 	return accounts, nextOffset, totalCount, nil
-}
-
-func (s *accountStorage) UpdateSearchFilters(ctx context.Context, a *domain.AccountV2) error {
-	result, err := s.qe(ctx).ExecContext(
-		ctx,
-		updateSearchFiltersAccountV2SQL,
-		mysql.JSONObject{Val: a.SearchFilters},
-		a.Email,
-		a.OrganizationId,
-	)
-	if err != nil {
-		return err
-	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rowsAffected != 1 {
-		return ErrAccountUnexpectedAffectedRows
-	}
-	return nil
 }

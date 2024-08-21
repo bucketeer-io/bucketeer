@@ -410,69 +410,6 @@ func TestListAccountsV2(t *testing.T) {
 	}
 }
 
-func TestUpdateSearchFiltersV2(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	patterns := []struct {
-		desc        string
-		setup       func(*accountStorage)
-		input       *domain.AccountV2
-		expectedErr error
-	}{
-		{
-			desc: "ErrAccountUnexpectedAffectedRows",
-			setup: func(s *accountStorage) {
-				result := mock.NewMockResult(mockController)
-				result.EXPECT().RowsAffected().Return(int64(0), nil)
-				s.client.(*mock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(result, nil)
-			},
-			input: &domain.AccountV2{
-				AccountV2: &proto.AccountV2{Email: "test@example.com"},
-			},
-			expectedErr: ErrAccountUnexpectedAffectedRows,
-		},
-		{
-			desc: "Error",
-			setup: func(s *accountStorage) {
-				s.client.(*mock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
-			},
-			input: &domain.AccountV2{
-				AccountV2: &proto.AccountV2{Email: "test@example.com"},
-			},
-			expectedErr: errors.New("error"),
-		},
-		{
-			desc: "Success",
-			setup: func(s *accountStorage) {
-				result := mock.NewMockResult(mockController)
-				result.EXPECT().RowsAffected().Return(int64(1), nil)
-				s.client.(*mock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(result, nil)
-			},
-			input: &domain.AccountV2{
-				AccountV2: &proto.AccountV2{Email: "test@example.com"},
-			},
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			storage := newAccountStorageWithMock(t, mockController)
-			if p.setup != nil {
-				p.setup(storage)
-			}
-			err := storage.UpdateSearchFilters(context.Background(), p.input)
-			assert.Equal(t, p.expectedErr, err)
-		})
-	}
-}
-
 func newAccountStorageWithMock(t *testing.T, mockController *gomock.Controller) *accountStorage {
 	t.Helper()
 	return &accountStorage{mock.NewMockClient(mockController)}

@@ -6,7 +6,8 @@ SET
     organization_role = ?,
     environment_roles = ?,
     disabled = ?,
-    updated_at = ?
+    updated_at = ?,
+    search_filters = ?
 WHERE
     email = ?
     AND organization_id = ?
