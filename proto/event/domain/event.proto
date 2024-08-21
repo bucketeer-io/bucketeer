@@ -127,6 +127,7 @@ message Event {
     ACCOUNT_V2_DISABLED = 311;
     ACCOUNT_V2_DELETED = 312;
     ACCOUNT_V2_CREATED_SEARCH_FILTER = 313;
+    ACCOUNT_V2_UPDATED_SEARCH_FILTER = 314;
     APIKEY_CREATED = 400;
     APIKEY_NAME_CHANGED = 401;
     APIKEY_ENABLED = 402;
@@ -598,6 +599,11 @@ message AccountV2DeletedEvent {
 }
 
 message SearchFilterCreateEvent {
+  string id = 1;
+  string Name = 2;
+}
+
+message SearchFilterUpdateEvent {
   string id = 1;
   string Name = 2;
 }

@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
@@ -59,6 +60,18 @@ func (s *AccountService) CreateSearchFilterV2(
 		if err != nil {
 			return err
 		}
+
+		// Since there is only one default setting for a filter target, set the existing default to OFF.
+		changeDefaultFilters := getChangeDefaultFilters(account, req.Command.SearchFilter)
+		if changeDefaultFilters != nil {
+			for _, changeDefaultFilter := range changeDefaultFilters {
+				updateCommand := &accountproto.UpdateSearchFilterCommand{SearchFilter: changeDefaultFilter}
+				if err := handler.Handle(ctx, updateCommand); err != nil {
+					return err
+				}
+			}
+		}
+
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
@@ -95,4 +108,26 @@ func (s *AccountService) CreateSearchFilterV2(
 	}
 
 	return &accountproto.CreateSearchFilterResponse{}, nil
+}
+
+func getChangeDefaultFilters(
+	account *domain.AccountV2,
+	searchFilter *accountproto.SearchFilter,
+) []*accountproto.SearchFilter {
+	var changeDefaultFilters []*accountproto.SearchFilter
+	for _, filter := range account.SearchFilters {
+		if searchFilter.DefaultFilter && filter.DefaultFilter &&
+			searchFilter.FilterTargetType == filter.FilterTargetType &&
+			searchFilter.EnvironmentId == filter.EnvironmentId {
+			changeDefaultFilters = append(changeDefaultFilters, &accountproto.SearchFilter{
+				Id:               filter.Id,
+				Name:             filter.Name,
+				Query:            filter.Query,
+				FilterTargetType: filter.FilterTargetType,
+				EnvironmentId:    filter.EnvironmentId,
+				DefaultFilter:    false,
+			})
+		}
+	}
+	return changeDefaultFilters
 }
