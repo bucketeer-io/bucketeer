@@ -292,12 +292,15 @@ func TestCreateSearchFilter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+	baseAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
 	})
 	if err != nil {
 		t.Fatal(err)
+	}
+	if baseAccount.Account.SearchFilters != nil {
+		t.Fatal("search filters are not nil")
 	}
 
 	requestSearchFilter := &accountproto.SearchFilter{
@@ -317,7 +320,7 @@ func TestCreateSearchFilter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	
+
 	account, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
