@@ -161,8 +161,8 @@ export const PushIndexPage: FC = memo(() => {
     resolver: yupResolver(addFormSchema),
     defaultValues: {
       name: '',
-      fcmApiKey: '',
-      tags: null
+      tags: null,
+      file: null
     },
     mode: 'onChange'
   });
@@ -170,21 +170,25 @@ export const PushIndexPage: FC = memo(() => {
 
   const add = useCallback(
     async (data) => {
-      dispatch(
-        createPush({
-          environmentNamespace: currentEnvironment.id,
-          name: data.name,
-          fcmApiKey: data.fcmApiKey,
-          tags: data.tags
-        })
-      ).then(() => {
-        setOpen(false);
-        resetAdd();
-        history.replace(
-          `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}`
-        );
-        updatePushList(null, 1);
-      });
+      if (data.file?.[0]) {
+        convertFileToUnit8Array(data.file[0], (unit8Array) => {
+          dispatch(
+            createPush({
+              environmentNamespace: currentEnvironment.id,
+              name: data.name,
+              tags: data.tags,
+              fcmServiceAccount: unit8Array
+            })
+          ).then(() => {
+            setOpen(false);
+            resetAdd();
+            history.replace(
+              `${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_SETTINGS}${PAGE_PATH_PUSHES}`
+            );
+            updatePushList(null, 1);
+          });
+        });
+      }
     },
     [dispatch, location]
   );
@@ -194,7 +198,6 @@ export const PushIndexPage: FC = memo(() => {
       setOpen(true);
       resetUpdate({
         name: p.name,
-        fcmApiKey: p.fcmApiKey,
         tags: p.tagsList
       });
       history.push({
@@ -303,7 +306,6 @@ export const PushIndexPage: FC = memo(() => {
     if (isUpdate && push) {
       resetUpdate({
         name: push.name,
-        fcmApiKey: push.fcmApiKey,
         tags: push.tagsList
       });
     }
@@ -374,3 +376,14 @@ export const PushIndexPage: FC = memo(() => {
     </>
   );
 });
+
+const convertFileToUnit8Array = (
+  file: Blob,
+  onLoad: (data: Uint8Array) => void
+) => {
+  const reader = new FileReader();
+  reader.readAsArrayBuffer(file);
+  reader.onload = () => {
+    onLoad(new Uint8Array(reader.result as ArrayBuffer));
+  };
+};

@@ -72,8 +72,8 @@ export const listPushes = createAsyncThunk<
 export interface CreatePushParams {
   environmentNamespace: string;
   name: string;
-  fcmApiKey: string;
   tags: Array<string>;
+  fcmServiceAccount: Uint8Array | string;
 }
 
 export const createPush = createAsyncThunk<
@@ -83,8 +83,11 @@ export const createPush = createAsyncThunk<
 >(`${MODULE_NAME}/create`, async (params) => {
   const cmd = new CreatePushCommand();
   cmd.setName(params.name);
-  cmd.setFcmApiKey(params.fcmApiKey);
   cmd.setTagsList(params.tags);
+  cmd.setFcmServiceAccount(params.fcmServiceAccount);
+
+  // TODO: remove it
+  cmd.setFcmApiKey('123');
   const request = new CreatePushRequest();
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setCommand(cmd);

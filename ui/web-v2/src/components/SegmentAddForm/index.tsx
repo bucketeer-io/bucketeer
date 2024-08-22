@@ -130,7 +130,7 @@ export const SegmentAddForm: FC<SegmentAddFormProps> = memo(
                 <div className="">
                   <label className="block">
                     <span className="input-label">
-                      {f(messages.segment.fileUpload.userList)}
+                      {f(messages.fileUpload.userList)}
                     </span>
                     &nbsp;
                     <span className="input-label-optional">
@@ -187,7 +187,7 @@ export const SegmentAddForm: FC<SegmentAddFormProps> = memo(
                                   <FileUploadIcon />
                                 </div>
                                 <span className="block text-gray-500">
-                                  {f(messages.segment.fileUpload.browseFiles)}
+                                  {f(messages.fileUpload.browseFiles)}
                                 </span>
                               </div>
                             </div>
@@ -203,7 +203,7 @@ export const SegmentAddForm: FC<SegmentAddFormProps> = memo(
                             />
                           </div>
                           <div className="flex text-gray-400 my-2">
-                            {f(messages.segment.fileUpload.fileFormat)}
+                            {f(messages.fileUpload.fileFormatCsvText)}
                           </div>
                         </div>
                         {selectedFile && (
@@ -223,7 +223,7 @@ export const SegmentAddForm: FC<SegmentAddFormProps> = memo(
                                   {selectedFile.name}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  {f(messages.segment.fileUpload.fileSize, {
+                                  {f(messages.fileUpload.fileSize, {
                                     fileSize: selectedFile.size.toLocaleString()
                                   })}
                                 </p>
