@@ -137,3 +137,10 @@ ingress:
   name: web
   host:
   staticIPName:
+  rulePaths:
+    - pathType: ImplementationSpecific
+      backend:
+        service:
+          name: web
+          port:
+            number: 9003
