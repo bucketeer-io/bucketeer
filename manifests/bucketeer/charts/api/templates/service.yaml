@@ -1,3 +1,4 @@
+{{- if not .Values.gcpMultiCluster.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -30,3 +31,4 @@ spec:
   selector:
     app: {{ template "api.name" . }}
     release: {{ template "api.fullname" . }}
+{{- end }}

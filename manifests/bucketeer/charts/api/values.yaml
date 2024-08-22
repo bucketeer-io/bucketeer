@@ -86,3 +86,17 @@ health:
 resources: {}
 serviceAccount:
   annotations: {}
+gcpMultiCluster:
+  enabled: false
+  service:
+    name: api-multi-cluster-service
+  ingress:
+    name: api-multi-cluster-ingress
+    host:
+    staticIPName:
+    secretName:
+    rulePaths:
+      - path: /
+        backend:
+          serviceName: api
+          servicePort: 9000

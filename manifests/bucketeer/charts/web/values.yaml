@@ -144,7 +144,6 @@ ingress:
           name: web
           port:
             number: 9003
-
 gcpMultiCluster:
   enabled: false
   service:
