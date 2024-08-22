@@ -207,7 +207,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         fcmApiKey: jspb.Message.getFieldWithDefault(msg, 1, ''),
         tagsList:
           (f = jspb.Message.getRepeatedField(msg, 2)) == null ? undefined : f,
-        name: jspb.Message.getFieldWithDefault(msg, 3, '')
+        name: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        fcmServiceAccount: msg.getFcmServiceAccount_asB64()
       };
 
     if (includeInstance) {
@@ -260,6 +261,10 @@ proto.bucketeer.push.CreatePushCommand.deserializeBinaryFromReader = function (
         var value = /** @type {string} */ (reader.readString());
         msg.setName(value);
         break;
+      case 4:
+        var value = /** @type {!Uint8Array} */ (reader.readBytes());
+        msg.setFcmServiceAccount(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -301,6 +306,10 @@ proto.bucketeer.push.CreatePushCommand.serializeBinaryToWriter = function (
   f = message.getName();
   if (f.length > 0) {
     writer.writeString(3, f);
+  }
+  f = message.getFcmServiceAccount_asU8();
+  if (f.length > 0) {
+    writer.writeBytes(4, f);
   }
 };
 
@@ -375,6 +384,52 @@ proto.bucketeer.push.CreatePushCommand.prototype.getName = function () {
 proto.bucketeer.push.CreatePushCommand.prototype.setName = function (value) {
   return jspb.Message.setProto3StringField(this, 3, value);
 };
+
+/**
+ * optional bytes fcm_service_account = 4;
+ * @return {!(string|Uint8Array)}
+ */
+proto.bucketeer.push.CreatePushCommand.prototype.getFcmServiceAccount =
+  function () {
+    return /** @type {!(string|Uint8Array)} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * optional bytes fcm_service_account = 4;
+ * This is a type-conversion wrapper around `getFcmServiceAccount()`
+ * @return {string}
+ */
+proto.bucketeer.push.CreatePushCommand.prototype.getFcmServiceAccount_asB64 =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.bytesAsB64(this.getFcmServiceAccount())
+    );
+  };
+
+/**
+ * optional bytes fcm_service_account = 4;
+ * Note that Uint8Array is not supported on all browsers.
+ * @see http://caniuse.com/Uint8Array
+ * This is a type-conversion wrapper around `getFcmServiceAccount()`
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.push.CreatePushCommand.prototype.getFcmServiceAccount_asU8 =
+  function () {
+    return /** @type {!Uint8Array} */ (
+      jspb.Message.bytesAsU8(this.getFcmServiceAccount())
+    );
+  };
+
+/**
+ * @param {!(string|Uint8Array)} value
+ * @return {!proto.bucketeer.push.CreatePushCommand} returns this
+ */
+proto.bucketeer.push.CreatePushCommand.prototype.setFcmServiceAccount =
+  function (value) {
+    return jspb.Message.setProto3BytesField(this, 4, value);
+  };
 
 /**
  * List of repeated fields within this message type.
