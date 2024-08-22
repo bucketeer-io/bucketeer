@@ -86,8 +86,6 @@ export const createPush = createAsyncThunk<
   cmd.setTagsList(params.tags);
   cmd.setFcmServiceAccount(params.fcmServiceAccount);
 
-  // TODO: remove it
-  cmd.setFcmApiKey('123');
   const request = new CreatePushRequest();
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setCommand(cmd);

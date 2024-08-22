@@ -19,10 +19,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
 	"go.uber.org/zap"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/protobuf/proto"
 
 	btclient "github.com/bucketeer-io/bucketeer/pkg/batch/client"
@@ -31,6 +33,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
 	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
 	pushdomain "github.com/bucketeer-io/bucketeer/pkg/push/domain"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
 	btproto "github.com/bucketeer-io/bucketeer/proto/batch"
 	domaineventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
@@ -40,7 +43,6 @@ import (
 
 const (
 	listRequestSize = 500
-	fcmSendURL      = "https://fcm.googleapis.com/fcm/send"
 	topicPrefix     = "bucketeer-"
 )
 
@@ -49,6 +51,11 @@ type pushSender struct {
 	featureClient featureclient.Client
 	batchClient   btclient.Client
 	logger        *zap.Logger
+}
+
+type fcmConfig struct {
+	endpointURL string
+	accessToken string
 }
 
 func NewPushSender(
@@ -171,8 +178,8 @@ func (p pushSender) send(featureID, environmentNamespace string) error {
 			if !d.ExistTag(tag) {
 				continue
 			}
-			topic := topicPrefix + tag
-			if err = p.pushFCM(ctx, d.FcmApiKey, topic); err != nil {
+			topic := fmt.Sprintf("%s%s", topicPrefix, tag)
+			if err = p.pushFCM(ctx, topic, push.FcmServiceAccount); err != nil {
 				p.logger.Error("Failed to push notification", zap.Error(err),
 					zap.String("featureId", featureID),
 					zap.String("tag", tag),
@@ -195,24 +202,45 @@ func (p pushSender) send(featureID, environmentNamespace string) error {
 	return lastErr
 }
 
-func (p pushSender) pushFCM(ctx context.Context, fcmAPIKey, topic string) error {
-	requestBody, err := json.Marshal(map[string]interface{}{
-		"to": "/topics/" + topic,
-		// The values in the data payload should be converted to string type.
-		// https://firebase.google.com/docs/cloud-messaging/http-server-ref
-		"data": map[string]string{
-			"bucketeer_feature_flag_updated": "true",
+func (p pushSender) pushFCM(ctx context.Context, topic, fcmServiceAccount string) error {
+	creds, err := p.getFCMCredentials(ctx, fcmServiceAccount)
+	if err != nil {
+		return err
+	}
+	message := map[string]interface{}{
+		"message": map[string]interface{}{
+			"topic": topic,
+			// The values in the data payload should be converted to string type.
+			"data": map[string]interface{}{
+				"bucketeer_feature_flag_updated": "true",
+			},
+			"android": map[string]interface{}{
+				"priority": "high",
+				"notification": map[string]interface{}{
+					"visibility": "SECRET", // Notifications are hidden on Android
+				},
+			},
+			"apns": map[string]interface{}{
+				"headers": map[string]string{
+					"apns-priority": "5", // Background delivery for iOS
+				},
+				"payload": map[string]interface{}{
+					"aps": map[string]interface{}{
+						"content-available": 1, // Silent notification for iOS
+					},
+				},
+			},
 		},
-		"content_available": true,
-	})
+	}
+	requestBody, err := json.Marshal(message)
 	if err != nil {
 		return err
 	}
-	req, err := http.NewRequest("POST", fcmSendURL, bytes.NewBuffer(requestBody))
+	req, err := http.NewRequest("POST", creds.endpointURL, bytes.NewBuffer(requestBody))
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("key=%s", fcmAPIKey))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", creds.accessToken))
 	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -220,28 +248,42 @@ func (p pushSender) pushFCM(ctx context.Context, fcmAPIKey, topic string) error 
 		return err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("FCM request failed with status: %s, response body: %s", resp.Status, body)
+	}
 	return nil
 }
 
-func (p pushSender) listPushes(ctx context.Context, environmentNamespace string) ([]*pushproto.Push, error) {
-	var pushes []*pushproto.Push
-	cursor := ""
-	for {
-		resp, err := p.pushClient.ListPushes(ctx, &pushproto.ListPushesRequest{
-			PageSize:             listRequestSize,
-			Cursor:               cursor,
-			EnvironmentNamespace: environmentNamespace,
-		})
-		if err != nil {
-			return nil, err
-		}
-		pushes = append(pushes, resp.Pushes...)
-		pushSize := len(resp.Pushes)
-		if pushSize == 0 || pushSize < listRequestSize {
-			return pushes, nil
-		}
-		cursor = resp.Cursor
+func (p pushSender) getFCMCredentials(ctx context.Context, fcmServiceAccount string) (*fcmConfig, error) {
+	// Create OAuth2 token source
+	creds, err := google.CredentialsFromJSON(
+		ctx,
+		[]byte(fcmServiceAccount),
+		"https://www.googleapis.com/auth/firebase.messaging",
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get credentials from JSON: %w", err)
 	}
+	token, err := creds.TokenSource.Token()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get access token: %w", err)
+	}
+	return &fcmConfig{
+		endpointURL: fmt.Sprintf("https://fcm.googleapis.com/v1/projects/%s/messages:send", creds.ProjectID),
+		accessToken: token.AccessToken,
+	}, nil
+}
+
+func (p pushSender) listPushes(ctx context.Context, environmentNamespace string) ([]*pushproto.Push, error) {
+	resp, err := p.pushClient.ListPushes(ctx, &pushproto.ListPushesRequest{
+		PageSize:             mysql.QueryNoLimit,
+		EnvironmentNamespace: environmentNamespace,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.Pushes, nil
 }
 
 func (p pushSender) unmarshalMessage(msg *puller.Message) (*domaineventproto.Event, error) {

@@ -4,9 +4,6 @@
 import * as jspb from 'google-protobuf';
 
 export class CreatePushCommand extends jspb.Message {
-  getFcmApiKey(): string;
-  setFcmApiKey(value: string): void;
-
   clearTagsList(): void;
   getTagsList(): Array<string>;
   setTagsList(value: Array<string>): void;
@@ -43,7 +40,6 @@ export class CreatePushCommand extends jspb.Message {
 
 export namespace CreatePushCommand {
   export type AsObject = {
-    fcmApiKey: string;
     tagsList: Array<string>;
     name: string;
     fcmServiceAccount: Uint8Array | string;

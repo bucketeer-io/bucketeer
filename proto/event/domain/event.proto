@@ -837,7 +837,7 @@ message DatetimeClauseChangedEvent {
 
 message PushCreatedEvent {
   string fcm_service_account = 1;
-  string fcm_api_key = 2 [deprecated = true];
+  reserved 2;  // string fcm_api_key = 2 [deprecated = true]
   repeated string tags = 3;
   string name = 4;
 }

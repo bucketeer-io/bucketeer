@@ -42,6 +42,22 @@ import (
 	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
 )
 
+var fcmServiceAccountDummy = []byte(`
+	{
+		"type": "service_account",
+		"project_id": "test",
+		"private_key_id": "private-key-id",
+		"private_key": "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----\n",
+		"client_email": "fcm-service-account@test.iam.gserviceaccount.com",
+		"client_id": "client_id",
+		"auth_uri": "https://accounts.google.com/o/oauth2/auth",
+		"token_uri": "https://oauth2.googleapis.com/token",
+		"auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+		"client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/fcm-service-account@test.iam.gserviceaccount.com",
+		"universe_domain": "googleapis.com"
+	}
+`)
+
 func TestNewPushService(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -98,19 +114,19 @@ func TestCreatePushMySQL(t *testing.T) {
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
-			desc:  "err: ErrFCMAPIKeyRequired",
+			desc:  "err: ErrFCMServiceAccountRequired",
 			setup: nil,
 			req: &pushproto.CreatePushRequest{
 				Command: &pushproto.CreatePushCommand{},
 			},
-			expectedErr: createError(statusFCMAPIKeyRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fcm_api_key")),
+			expectedErr: createError(statusFCMServiceAccountRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fcm_service_account")),
 		},
 		{
 			desc:  "err: ErrTagsRequired",
 			setup: nil,
 			req: &pushproto.CreatePushRequest{
 				Command: &pushproto.CreatePushCommand{
-					FcmApiKey: "key-0",
+					FcmServiceAccount: fcmServiceAccountDummy,
 				},
 			},
 			expectedErr: createError(statusTagsRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag")),
@@ -120,8 +136,8 @@ func TestCreatePushMySQL(t *testing.T) {
 			setup: nil,
 			req: &pushproto.CreatePushRequest{
 				Command: &pushproto.CreatePushCommand{
-					FcmApiKey: "key-1",
-					Tags:      []string{"tag-0"},
+					FcmServiceAccount: fcmServiceAccountDummy,
+					Tags:              []string{"tag-0"},
 				},
 			},
 			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
@@ -149,9 +165,9 @@ func TestCreatePushMySQL(t *testing.T) {
 			req: &pushproto.CreatePushRequest{
 				EnvironmentNamespace: "ns0",
 				Command: &pushproto.CreatePushCommand{
-					FcmApiKey: "key-0",
-					Tags:      []string{"tag-0"},
-					Name:      "name-1",
+					FcmServiceAccount: fcmServiceAccountDummy,
+					Tags:              []string{"tag-0"},
+					Name:              "name-1",
 				},
 			},
 			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
@@ -179,9 +195,9 @@ func TestCreatePushMySQL(t *testing.T) {
 			req: &pushproto.CreatePushRequest{
 				EnvironmentNamespace: "ns0",
 				Command: &pushproto.CreatePushCommand{
-					FcmApiKey: "key-1",
-					Tags:      []string{"tag-0"},
-					Name:      "name-1",
+					FcmServiceAccount: fcmServiceAccountDummy,
+					Tags:              []string{"tag-0"},
+					Name:              "name-1",
 				},
 			},
 			expectedErr: nil,
