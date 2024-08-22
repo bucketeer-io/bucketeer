@@ -276,7 +276,7 @@ func (s *AutoOpsService) validateCreateAutoOpsRuleRequest(
 		}
 		return dt.Err()
 	}
-	if req.Command.OpsType == autoopsproto.OpsType_ENABLE_FEATURE && len(req.Command.OpsEventRateClauses) > 0 {
+	if req.Command.OpsType == autoopsproto.OpsType_TYPE_UNKNOWN {
 		dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
@@ -793,49 +793,6 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 			}
 		}
 
-		// Changes to a different opsType are not allowed
-		// ToDo: If ChangeAutoOpsRuleOpsTypeCommand is no longer used in the web console,
-		// changes must be made to validate the use of ChangeAutoOpsRuleOpsTypeCommand itself.
-		if req.ChangeAutoOpsRuleOpsTypeCommand != nil &&
-			req.ChangeAutoOpsRuleOpsTypeCommand.OpsType != autoOpsRule.OpsType &&
-			!(req.ChangeAutoOpsRuleOpsTypeCommand.OpsType == autoopsproto.OpsType_ENABLE_FEATURE ||
-				req.ChangeAutoOpsRuleOpsTypeCommand.OpsType == autoopsproto.OpsType_DISABLE_FEATURE) {
-			dt, err := statusDeprecatedChangedOpsType.WithDetails(&errdetails.LocalizedMessage{
-				Locale: localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(
-					locale.InvalidArgumentError,
-					"change_autoOpsRuleOps_type_command"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
-		}
-
-		// ToDo: If ChangeAutoOpsRuleOpsTypeCommand is no longer used in the web console,
-		// the following validation is unnecessary and should be deleted.
-		if req.ChangeAutoOpsRuleOpsTypeCommand != nil {
-			if req.ChangeAutoOpsRuleOpsTypeCommand.OpsType == autoopsproto.OpsType_ENABLE_FEATURE &&
-				len(req.AddOpsEventRateClauseCommands) > 0 {
-				dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
-					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
-				})
-				if err != nil {
-					return statusInternal.Err()
-				}
-				return dt.Err()
-			}
-		} else if autoOpsRule.OpsType == autoopsproto.OpsType_ENABLE_FEATURE && len(req.AddOpsEventRateClauseCommands) > 0 {
-			dt, err := statusIncompatibleOpsType.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "ops_type"),
-			})
-			if err != nil {
-				return statusInternal.Err()
-			}
-			return dt.Err()
-		}
 		if req.DeleteClauseCommands != nil && len(autoOpsRule.Clauses) == len(req.DeleteClauseCommands) &&
 			len(req.AddOpsEventRateClauseCommands) == 0 && len(req.AddDatetimeClauseCommands) == 0 {
 			// When deleting, at least one Clause must exist.
@@ -1021,8 +978,7 @@ func (s *AutoOpsService) validateUpdateAutoOpsRuleRequest(
 }
 
 func (s *AutoOpsService) isNoUpdateAutoOpsRuleCommand(req *autoopsproto.UpdateAutoOpsRuleRequest) bool {
-	return req.ChangeAutoOpsRuleOpsTypeCommand == nil &&
-		len(req.AddOpsEventRateClauseCommands) == 0 &&
+	return len(req.AddOpsEventRateClauseCommands) == 0 &&
 		len(req.ChangeOpsEventRateClauseCommands) == 0 &&
 		len(req.DeleteClauseCommands) == 0 &&
 		len(req.AddDatetimeClauseCommands) == 0 &&
@@ -1031,43 +987,16 @@ func (s *AutoOpsService) isNoUpdateAutoOpsRuleCommand(req *autoopsproto.UpdateAu
 
 func (s *AutoOpsService) createUpdateAutoOpsRuleCommands(req *autoopsproto.UpdateAutoOpsRuleRequest) []command.Command {
 	commands := make([]command.Command, 0)
-
-	// The current web console uses ChangeAutoOpsRuleOpsTypeCommand to update OpsTypes and enable or disable them.
-	// So ActionType is not set and you need to update ActionType according to OpsType.
-	// ToDo: If ChangeAutoOpsRuleOpsTypeCommand is no longer used in the web console,
-	// the following code is no longer needed and should be removed.
-	actionType := autoopsproto.ActionType_UNKNOWN
-	if req.ChangeAutoOpsRuleOpsTypeCommand != nil {
-		commands = append(commands, req.ChangeAutoOpsRuleOpsTypeCommand)
-		if req.ChangeAutoOpsRuleOpsTypeCommand.OpsType == autoopsproto.OpsType_DISABLE_FEATURE {
-			actionType = autoopsproto.ActionType_DISABLE
-		} else if req.ChangeAutoOpsRuleOpsTypeCommand.OpsType == autoopsproto.OpsType_ENABLE_FEATURE {
-			actionType = autoopsproto.ActionType_DISABLE
-		}
-	}
-
 	for _, c := range req.AddOpsEventRateClauseCommands {
-		if c.OpsEventRateClause.ActionType == autoopsproto.ActionType_UNKNOWN {
-			c.OpsEventRateClause.ActionType = actionType
-		}
 		commands = append(commands, c)
 	}
 	for _, c := range req.ChangeOpsEventRateClauseCommands {
-		if c.OpsEventRateClause.ActionType == autoopsproto.ActionType_UNKNOWN {
-			c.OpsEventRateClause.ActionType = actionType
-		}
 		commands = append(commands, c)
 	}
 	for _, c := range req.AddDatetimeClauseCommands {
-		if c.DatetimeClause.ActionType == autoopsproto.ActionType_UNKNOWN {
-			c.DatetimeClause.ActionType = actionType
-		}
 		commands = append(commands, c)
 	}
 	for _, c := range req.ChangeDatetimeClauseCommands {
-		if c.DatetimeClause.ActionType == autoopsproto.ActionType_UNKNOWN {
-			c.DatetimeClause.ActionType = actionType
-		}
 		commands = append(commands, c)
 	}
 	for _, c := range req.DeleteClauseCommands {
@@ -1308,8 +1237,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		}
 		prStorage := v2as.NewProgressiveRolloutStorage(tx)
 		// Stop the running progressive rollout if the operation type is disable
-		if autoOpsRule.OpsType == autoopsproto.OpsType_DISABLE_FEATURE ||
-			executeClause.ActionType == autoopsproto.ActionType_DISABLE {
+		if executeClause.ActionType == autoopsproto.ActionType_DISABLE {
 			if err := s.stopProgressiveRollout(
 				ctx,
 				req.EnvironmentNamespace,

@@ -71,26 +71,6 @@ func NewAutoOpsRule(
 				return nil, err
 			}
 		}
-	case proto.OpsType_ENABLE_FEATURE:
-		for _, c := range datetimeClauses {
-			c.ActionType = proto.ActionType_ENABLE
-			if _, err := autoOpsRule.AddDatetimeClause(c); err != nil {
-				return nil, err
-			}
-		}
-	case proto.OpsType_DISABLE_FEATURE:
-		for _, c := range opsEventRateClauses {
-			c.ActionType = proto.ActionType_DISABLE
-			if _, err := autoOpsRule.AddOpsEventRateClause(c); err != nil {
-				return nil, err
-			}
-		}
-		for _, c := range datetimeClauses {
-			c.ActionType = proto.ActionType_DISABLE
-			if _, err := autoOpsRule.AddDatetimeClause(c); err != nil {
-				return nil, err
-			}
-		}
 	}
 	if len(autoOpsRule.Clauses) == 0 {
 		return nil, errClauseEmpty
@@ -118,11 +98,6 @@ func (a *AutoOpsRule) IsFinished() bool {
 
 func (a *AutoOpsRule) IsStopped() bool {
 	return a.AutoOpsStatus == proto.AutoOpsStatus_STOPPED
-}
-
-func (a *AutoOpsRule) SetOpsType(opsType proto.OpsType) {
-	a.AutoOpsRule.OpsType = opsType
-	a.AutoOpsRule.UpdatedAt = time.Now().Unix()
 }
 
 func (a *AutoOpsRule) SetAutoOpsStatus(status proto.AutoOpsStatus) {

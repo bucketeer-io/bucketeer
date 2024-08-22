@@ -297,7 +297,7 @@ func TestDatetimeWatcher(t *testing.T) {
 		).Return(
 			&autoopsproto.ListAutoOpsRulesResponse{
 				AutoOpsRules: []*autoopsproto.AutoOpsRule{
-					newAutoOpsRule(t),
+					newAutoOpsRuleForScheduleType(t),
 				},
 			},
 			nil,
@@ -348,7 +348,7 @@ func TestEventCountWatcher(t *testing.T) {
 		).Return(
 			&autoopsproto.ListAutoOpsRulesResponse{
 				AutoOpsRules: []*autoopsproto.AutoOpsRule{
-					newAutoOpsRule(t),
+					newAutoOpsRuleForEventRate(t),
 				},
 			},
 			nil,
@@ -362,7 +362,7 @@ func TestEventCountWatcher(t *testing.T) {
 		).Return(
 			&autoopsproto.ListAutoOpsRulesResponse{
 				AutoOpsRules: []*autoopsproto.AutoOpsRule{
-					newAutoOpsRule(t),
+					newAutoOpsRuleForEventRate(t),
 				},
 			},
 			nil,
@@ -720,7 +720,7 @@ func TestAutoOpsRulesCacher(t *testing.T) {
 			Return(
 				&autoopsproto.ListAutoOpsRulesResponse{
 					AutoOpsRules: []*autoopsproto.AutoOpsRule{
-						newAutoOpsRule(t),
+						newAutoOpsRuleForScheduleType(t),
 					},
 				},
 				nil,
@@ -931,19 +931,7 @@ func getProjects(t *testing.T) []*environmentproto.Project {
 	}
 }
 
-func newAutoOpsRule(t *testing.T) *autoopsproto.AutoOpsRule {
-	oerc1 := &autoopsproto.OpsEventRateClause{
-		GoalId:          "gid",
-		MinCount:        10,
-		ThreadsholdRate: 0.5,
-		Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
-	}
-	oerc2 := &autoopsproto.OpsEventRateClause{
-		GoalId:          "gid",
-		MinCount:        10,
-		ThreadsholdRate: 0.5,
-		Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
-	}
+func newAutoOpsRuleForScheduleType(t *testing.T) *autoopsproto.AutoOpsRule {
 	dc1 := &autoopsproto.DatetimeClause{
 		Time: 1000000001,
 	}
@@ -952,9 +940,26 @@ func newAutoOpsRule(t *testing.T) *autoopsproto.AutoOpsRule {
 	}
 	aor, err := autoopsdomain.NewAutoOpsRule(
 		"fid",
-		autoopsproto.OpsType_DISABLE_FEATURE,
-		[]*autoopsproto.OpsEventRateClause{oerc1, oerc2},
+		autoopsproto.OpsType_SCHEDULE,
+		[]*autoopsproto.OpsEventRateClause{},
 		[]*autoopsproto.DatetimeClause{dc1, dc2},
+	)
+	require.NoError(t, err)
+	return aor.AutoOpsRule
+}
+
+func newAutoOpsRuleForEventRate(t *testing.T) *autoopsproto.AutoOpsRule {
+	oerc := &autoopsproto.OpsEventRateClause{
+		GoalId:          "gid",
+		MinCount:        10,
+		ThreadsholdRate: 0.5,
+		Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
+	}
+	aor, err := autoopsdomain.NewAutoOpsRule(
+		"fid",
+		autoopsproto.OpsType_EVENT_RATE,
+		[]*autoopsproto.OpsEventRateClause{oerc},
+		[]*autoopsproto.DatetimeClause{},
 	)
 	require.NoError(t, err)
 	return aor.AutoOpsRule

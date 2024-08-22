@@ -38,82 +38,6 @@ func TestNewAutoOpsRule(t *testing.T) {
 		expectedErr      error
 	}{
 		{
-			desc:            "OpsType: EnableFeature",
-			featureId:       "feature-id",
-			opsType:         autoopsproto.OpsType_ENABLE_FEATURE,
-			datetimeClauses: []*autoopsproto.DatetimeClause{{Time: 0}},
-			eventRateClauses: []*autoopsproto.OpsEventRateClause{
-				{
-					GoalId:          "goalid01",
-					MinCount:        10,
-					ThreadsholdRate: 0.5,
-					Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
-				},
-			},
-			expected: &AutoOpsRule{&autoopsproto.AutoOpsRule{FeatureId: "feature-id",
-				OpsType: autoopsproto.OpsType_ENABLE_FEATURE,
-				Clauses: []*autoopsproto.Clause{
-					newDateTimeClause(t, &autoopsproto.DatetimeClause{Time: 0, ActionType: autoopsproto.ActionType_ENABLE}),
-				},
-				CreatedAt:     time.Now().Unix(),
-				UpdatedAt:     time.Now().Unix(),
-				Deleted:       false,
-				AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
-			}},
-		},
-		{
-			desc:            "Err: For Enable type, EventRateClause cannot be specified",
-			featureId:       "feature-id",
-			opsType:         autoopsproto.OpsType_ENABLE_FEATURE,
-			datetimeClauses: []*autoopsproto.DatetimeClause{},
-			eventRateClauses: []*autoopsproto.OpsEventRateClause{
-				{
-					GoalId:          "goalid01",
-					MinCount:        10,
-					ThreadsholdRate: 0.5,
-					Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
-				},
-			},
-			expected:    nil,
-			expectedErr: errClauseEmpty,
-		},
-		{
-			desc:      "OpsType: DisableFeature",
-			featureId: "feature-id",
-			opsType:   autoopsproto.OpsType_DISABLE_FEATURE,
-			datetimeClauses: []*autoopsproto.DatetimeClause{
-				{Time: 2},
-				{Time: 0},
-			},
-			eventRateClauses: []*autoopsproto.OpsEventRateClause{
-				{
-					GoalId:          "goalid01",
-					MinCount:        10,
-					ThreadsholdRate: 0.5,
-					Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
-				},
-			},
-			expected: &AutoOpsRule{&autoopsproto.AutoOpsRule{FeatureId: "feature-id",
-				OpsType: autoopsproto.OpsType_DISABLE_FEATURE,
-				Clauses: []*autoopsproto.Clause{
-					newEventRateClause(t, &autoopsproto.OpsEventRateClause{
-						GoalId:          "goalid01",
-						MinCount:        10,
-						ThreadsholdRate: 0.5,
-						Operator:        autoopsproto.OpsEventRateClause_GREATER_OR_EQUAL,
-						ActionType:      autoopsproto.ActionType_DISABLE,
-					}),
-					newDateTimeClause(t, &autoopsproto.DatetimeClause{Time: 0, ActionType: autoopsproto.ActionType_DISABLE}),
-					newDateTimeClause(t, &autoopsproto.DatetimeClause{Time: 2, ActionType: autoopsproto.ActionType_DISABLE}),
-				},
-				CreatedAt:     time.Now().Unix(),
-				UpdatedAt:     time.Now().Unix(),
-				Deleted:       false,
-				AutoOpsStatus: autoopsproto.AutoOpsStatus_WAITING,
-			}},
-			expectedErr: nil,
-		},
-		{
 			desc:      "OpsType: Schedule",
 			featureId: "feature-id",
 			opsType:   autoopsproto.OpsType_SCHEDULE,
@@ -212,13 +136,6 @@ func TestSetDeleted(t *testing.T) {
 	aor.SetDeleted()
 	assert.NotZero(t, aor.UpdatedAt)
 	assert.Equal(t, true, aor.Deleted)
-}
-
-func TestSetOpsType(t *testing.T) {
-	t.Parallel()
-	aor := createAutoOpsRule(t)
-	aor.SetOpsType(autoopsproto.OpsType_DISABLE_FEATURE)
-	assert.Equal(t, autoopsproto.OpsType_DISABLE_FEATURE, aor.OpsType)
 }
 
 func TestAddOpsEventRateClause(t *testing.T) {

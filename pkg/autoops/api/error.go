@@ -47,10 +47,6 @@ var (
 		codes.InvalidArgument,
 		"autoops: ops type is incompatible with ops clause",
 	)
-	statusDeprecatedChangedOpsType = gstatus.New(
-		codes.InvalidArgument,
-		"autoops: changing OpsType is deprecated",
-	)
 	statusShouldAddMoreClauses = gstatus.New(
 		codes.InvalidArgument,
 		"autoops: if existing clauses are deleted all, should add one or more clauses.",
