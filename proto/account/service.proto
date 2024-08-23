@@ -18,6 +18,8 @@ package bucketeer.account;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/account";
 
 import "google/protobuf/wrappers.proto";
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 import "proto/account/account.proto";
 import "proto/account/api_key.proto";
@@ -213,31 +215,688 @@ message GetAPIKeyBySearchingAllEnvironmentsResponse {
   EnvironmentAPIKey environment_api_key = 1;
 }
 
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  tags: [ { name: "Account" }, { name: "API Key" } ]
+  responses: {
+    key: "503"
+    value: {
+      description: "Returned for internal errors."
+      schema: { json_schema: { ref: ".google.rpc.Status" } }
+      examples: {
+        key: "application/json"
+        value: '{ "code": 13, "message": "internal", "details": [] }'
+      }
+    }
+  }
+};
+
 service AccountService {
   rpc GetMe(GetMeRequest) returns (GetMeResponse);
   rpc GetMyOrganizations(GetMyOrganizationsRequest)
-      returns (GetMyOrganizationsResponse);
-  rpc GetMyOrganizationsByEmail(GetMyOrganizationsByEmailRequest)
-      returns (GetMyOrganizationsResponse);
-  rpc CreateAccountV2(CreateAccountV2Request) returns (CreateAccountV2Response);
-  rpc EnableAccountV2(EnableAccountV2Request) returns (EnableAccountV2Response);
-  rpc DisableAccountV2(DisableAccountV2Request)
-      returns (DisableAccountV2Response);
-  rpc UpdateAccountV2(UpdateAccountV2Request) returns (UpdateAccountV2Response);
-  rpc DeleteAccountV2(DeleteAccountV2Request) returns (DeleteAccountV2Response);
-  rpc GetAccountV2(GetAccountV2Request) returns (GetAccountV2Response);
-  rpc GetAccountV2ByEnvironmentID(GetAccountV2ByEnvironmentIDRequest)
-      returns (GetAccountV2ByEnvironmentIDResponse);
-  rpc ListAccountsV2(ListAccountsV2Request) returns (ListAccountsV2Response);
+      returns (GetMyOrganizationsResponse) {
+    option (google.api.http) = {
+      post: "/v1/account/my_organizations"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get My Organizations",
+      description: "Get all the organizations for a specific user.",
+      tags: "Account",
+      operation_id: "web.v1.account.my_organizations",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 
-  rpc CreateAPIKey(CreateAPIKeyRequest) returns (CreateAPIKeyResponse);
+  rpc GetMyOrganizationsByEmail(GetMyOrganizationsByEmailRequest)
+      returns (GetMyOrganizationsResponse) {
+    option (google.api.http) = {
+      post: "/v1/account/my_organizations_by_email"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get My Organizations By Email",
+      description: "Get all the organizations by email.",
+      tags: "Account",
+      operation_id: "web.v1.account.my_organizations_by_email",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc CreateAccountV2(CreateAccountV2Request)
+      returns (CreateAccountV2Response) {
+    option (google.api.http) = {
+      post: "/v1/account/create_account"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create",
+      description: "Create an account to have access to the console. To call this API, you need an `ADMIN` role.",
+      tags: "Account",
+      operation_id: "web.v1.account.create_account",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc EnableAccountV2(EnableAccountV2Request)
+      returns (EnableAccountV2Response) {
+    option (google.api.http) = {
+      post: "/v1/account/enable_account"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Enable",
+      description: "Enable an account to have access to the console. To call this API, you need an `ADMIN` role.",
+      tags: "Account",
+      operation_id: "web.v1.account.enable_account",
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc DisableAccountV2(DisableAccountV2Request)
+      returns (DisableAccountV2Response) {
+    option (google.api.http) = {
+      post: "/v1/account/disable_account"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Disable",
+      description: "Disable an account to block access to the console. To call this API, you need an `ADMIN` role.",
+      tags: "Account",
+      operation_id: "web.v1.account.disable_account",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc UpdateAccountV2(UpdateAccountV2Request)
+      returns (UpdateAccountV2Response) {
+    option (google.api.http) = {
+      post: "/v1/account/update_account"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update",
+      description: "Update an account. To call this API, you need an `ADMIN` role.",
+      tags: "Account",
+      operation_id: "web.v1.account.update_account",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc DeleteAccountV2(DeleteAccountV2Request)
+      returns (DeleteAccountV2Response) {
+    option (google.api.http) = {
+      post: "/v1/account/delete_account"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Delete",
+      description: "Delete an account. To call this API, you need an `ADMIN` role.",
+      tags: "Account",
+      operation_id: "web.v1.account.delete_account",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc GetAccountV2(GetAccountV2Request) returns (GetAccountV2Response) {
+    option (google.api.http) = {
+      post: "/v1/account/get_account"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get an account.",
+      tags: "Account",
+      operation_id: "web.v1.account.get_account",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc GetAccountV2ByEnvironmentID(GetAccountV2ByEnvironmentIDRequest)
+      returns (GetAccountV2ByEnvironmentIDResponse) {
+    option (google.api.http) = {
+      post: "/v1/account/get_account_by_environment"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Account By Environment",
+      description: "Get an account by environment.",
+      tags: "Account",
+      operation_id: "web.v1.account.get_account_by_environment",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc ListAccountsV2(ListAccountsV2Request) returns (ListAccountsV2Response) {
+    option (google.api.http) = {
+      post: "/v1/account/list_accounts"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List",
+      description: "List accounts.",
+      tags: "Account",
+      operation_id: "web.v1.account.list_accounts",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc CreateAPIKey(CreateAPIKeyRequest) returns (CreateAPIKeyResponse) {
+    option (google.api.http) = {
+      post: "/v1/account/create_api_key"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create",
+      description: "Create an API key to be used on the client SDK. To call this API, you need an `ADMIN` role.",
+      tags: "API Key",
+      operation_id: "web.v1.account.create_api_key",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc ChangeAPIKeyName(ChangeAPIKeyNameRequest)
-      returns (ChangeAPIKeyNameResponse);
-  rpc EnableAPIKey(EnableAPIKeyRequest) returns (EnableAPIKeyResponse);
-  rpc DisableAPIKey(DisableAPIKeyRequest) returns (DisableAPIKeyResponse);
-  rpc GetAPIKey(GetAPIKeyRequest) returns (GetAPIKeyResponse);
-  rpc ListAPIKeys(ListAPIKeysRequest) returns (ListAPIKeysResponse);
+      returns (ChangeAPIKeyNameResponse) {
+    option (google.api.http) = {
+      post: "/v1/account/change_api_key_name"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Change API Key Name",
+      description: "Change the API Key Name. To call this API, you need an `ADMIN` role.",
+      tags: "API Key",
+      operation_id: "web.v1.account.change_api_key_name",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc EnableAPIKey(EnableAPIKeyRequest) returns (EnableAPIKeyResponse) {
+    option (google.api.http) = {
+      post: "/v1/account/enable_api_key"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Enable",
+      description: "Enable an API Key. To call this API, you need an `ADMIN` role.",
+      tags: "API Key",
+      operation_id: "web.v1.account.enable_api_key",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc DisableAPIKey(DisableAPIKeyRequest) returns (DisableAPIKeyResponse) {
+    option (google.api.http) = {
+      post: "/v1/account/disable_api_key"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Disable",
+      description: "Disable an API Key. To call this API, you need an `ADMIN` role.",
+      tags: "API Key",
+      operation_id: "web.v1.account.disable_api_key",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc GetAPIKey(GetAPIKeyRequest) returns (GetAPIKeyResponse) {
+    option (google.api.http) = {
+      post: "/v1/account/get_api_key"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get an API Key.",
+      tags: "API Key",
+      operation_id: "web.v1.account.get_api_key",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc ListAPIKeys(ListAPIKeysRequest) returns (ListAPIKeysResponse) {
+    option (google.api.http) = {
+      post: "/v1/account/list_api_keys"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List",
+      description: "List API Keys.",
+      tags: "API Key",
+      operation_id: "web.v1.account.list_api_keys",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc GetAPIKeyBySearchingAllEnvironments(
       GetAPIKeyBySearchingAllEnvironmentsRequest)
-      returns (GetAPIKeyBySearchingAllEnvironmentsResponse);
+      returns (GetAPIKeyBySearchingAllEnvironmentsResponse) {
+    option (google.api.http) = {
+      post: "/v1/account/get_environment_api_key"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Environment API Key",
+      description: "Get an environment API Key.",
+      tags: "API Key",
+      operation_id: "web.v1.account.get_environment_api_key",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 }

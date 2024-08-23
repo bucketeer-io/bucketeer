@@ -12,6 +12,905 @@ consumes:
 produces:
   - application/json
 paths:
+  /v1/account/change_api_key_name:
+    post:
+      summary: Change API Key Name
+      description: Change the API Key Name. To call this API, you need an `ADMIN` role.
+      operationId: web.v1.account.change_api_key_name
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountChangeAPIKeyNameResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountChangeAPIKeyNameRequest'
+      tags:
+        - API Key
+  /v1/account/create_account:
+    post:
+      summary: Create
+      description: Create an account to have access to the console. To call this API, you need an `ADMIN` role.
+      operationId: web.v1.account.create_account
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountCreateAccountV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountCreateAccountV2Request'
+      tags:
+        - Account
+  /v1/account/create_api_key:
+    post:
+      summary: Create
+      description: Create an API key to be used on the client SDK. To call this API, you need an `ADMIN` role.
+      operationId: web.v1.account.create_api_key
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountCreateAPIKeyResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountCreateAPIKeyRequest'
+      tags:
+        - API Key
+  /v1/account/delete_account:
+    post:
+      summary: Delete
+      description: Delete an account. To call this API, you need an `ADMIN` role.
+      operationId: web.v1.account.delete_account
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountDeleteAccountV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountDeleteAccountV2Request'
+      tags:
+        - Account
+  /v1/account/disable_account:
+    post:
+      summary: Disable
+      description: Disable an account to block access to the console. To call this API, you need an `ADMIN` role.
+      operationId: web.v1.account.disable_account
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountDisableAccountV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountDisableAccountV2Request'
+      tags:
+        - Account
+  /v1/account/disable_api_key:
+    post:
+      summary: Disable
+      description: Disable an API Key. To call this API, you need an `ADMIN` role.
+      operationId: web.v1.account.disable_api_key
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountDisableAPIKeyResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountDisableAPIKeyRequest'
+      tags:
+        - API Key
+  /v1/account/enable_account:
+    post:
+      summary: Enable
+      description: Enable an account to have access to the console. To call this API, you need an `ADMIN` role.
+      operationId: web.v1.account.enable_account
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountEnableAccountV2Response'
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountEnableAccountV2Request'
+      tags:
+        - Account
+  /v1/account/enable_api_key:
+    post:
+      summary: Enable
+      description: Enable an API Key. To call this API, you need an `ADMIN` role.
+      operationId: web.v1.account.enable_api_key
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountEnableAPIKeyResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountEnableAPIKeyRequest'
+      tags:
+        - API Key
+  /v1/account/get_account:
+    post:
+      summary: Get
+      description: Get an account.
+      operationId: web.v1.account.get_account
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountGetAccountV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountGetAccountV2Request'
+      tags:
+        - Account
+  /v1/account/get_account_by_environment:
+    post:
+      summary: Get Account By Environment
+      description: Get an account by environment.
+      operationId: web.v1.account.get_account_by_environment
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountGetAccountV2ByEnvironmentIDResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountGetAccountV2ByEnvironmentIDRequest'
+      tags:
+        - Account
+  /v1/account/get_api_key:
+    post:
+      summary: Get
+      description: Get an API Key.
+      operationId: web.v1.account.get_api_key
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountGetAPIKeyResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountGetAPIKeyRequest'
+      tags:
+        - API Key
+  /v1/account/get_environment_api_key:
+    post:
+      summary: Get Environment API Key
+      description: Get an environment API Key.
+      operationId: web.v1.account.get_environment_api_key
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountGetAPIKeyBySearchingAllEnvironmentsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountGetAPIKeyBySearchingAllEnvironmentsRequest'
+      tags:
+        - API Key
+  /v1/account/list_accounts:
+    post:
+      summary: List
+      description: List accounts.
+      operationId: web.v1.account.list_accounts
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountListAccountsV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountListAccountsV2Request'
+      tags:
+        - Account
+  /v1/account/list_api_keys:
+    post:
+      summary: List
+      description: List API Keys.
+      operationId: web.v1.account.list_api_keys
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountListAPIKeysResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountListAPIKeysRequest'
+      tags:
+        - API Key
+  /v1/account/my_organizations:
+    post:
+      summary: Get My Organizations
+      description: Get all the organizations for a specific user.
+      operationId: web.v1.account.my_organizations
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountGetMyOrganizationsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountGetMyOrganizationsRequest'
+      tags:
+        - Account
+  /v1/account/my_organizations_by_email:
+    post:
+      summary: Get My Organizations By Email
+      description: Get all the organizations by email.
+      operationId: web.v1.account.my_organizations_by_email
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountGetMyOrganizationsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          description: |-
+            Retrieve the organization to which the account belongs by email.
+            it's called from another microservice.
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountGetMyOrganizationsByEmailRequest'
+      tags:
+        - Account
+  /v1/account/update_account:
+    post:
+      summary: Update
+      description: Update an account. To call this API, you need an `ADMIN` role.
+      operationId: web.v1.account.update_account
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountUpdateAccountV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountUpdateAccountV2Request'
+      tags:
+        - Account
   /v1/auth/authentication_url:
     post:
       summary: Get Authentication URL
@@ -204,6 +1103,496 @@ paths:
       tags:
         - Authentication
 definitions:
+  AccountV2RoleOrganization:
+    type: string
+    enum:
+      - Organization_UNASSIGNED
+      - Organization_MEMBER
+      - Organization_ADMIN
+      - Organization_OWNER
+    default: Organization_UNASSIGNED
+  ChangeAccountV2EnvironmentRolesCommandWriteType:
+    type: string
+    enum:
+      - WriteType_UNSPECIFIED
+      - WriteType_OVERRIDE
+      - WriteType_PATCH
+    default: WriteType_UNSPECIFIED
+  RoleEnvironment:
+    type: string
+    enum:
+      - Environment_UNASSIGNED
+      - Environment_VIEWER
+      - Environment_EDITOR
+    default: Environment_UNASSIGNED
+  accountAPIKey:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      role:
+        $ref: '#/definitions/accountAPIKeyRole'
+      disabled:
+        type: boolean
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+  accountAPIKeyRole:
+    type: string
+    enum:
+      - UNKNOWN
+      - SDK_CLIENT
+      - SDK_SERVER
+      - PUBLIC_API_READ_ONLY
+      - PUBLIC_API_WRITE
+      - PUBLIC_API_ADMIN
+    default: UNKNOWN
+    title: '- PUBLIC_API_ADMIN: For sensitive data'
+  accountAccountV2:
+    type: object
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      avatarImageUrl:
+        type: string
+      organizationId:
+        type: string
+      organizationRole:
+        $ref: '#/definitions/AccountV2RoleOrganization'
+      environmentRoles:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountAccountV2EnvironmentRole'
+      disabled:
+        type: boolean
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      searchFilters:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountSearchFilter'
+  accountAccountV2EnvironmentRole:
+    type: object
+    properties:
+      environmentId:
+        type: string
+      role:
+        $ref: '#/definitions/RoleEnvironment'
+  accountChangeAPIKeyNameCommand:
+    type: object
+    properties:
+      name:
+        type: string
+  accountChangeAPIKeyNameRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      command:
+        $ref: '#/definitions/accountChangeAPIKeyNameCommand'
+      environmentNamespace:
+        type: string
+  accountChangeAPIKeyNameResponse:
+    type: object
+  accountChangeAccountV2AvatarImageUrlCommand:
+    type: object
+    properties:
+      avatarImageUrl:
+        type: string
+  accountChangeAccountV2EnvironmentRolesCommand:
+    type: object
+    properties:
+      roles:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountAccountV2EnvironmentRole'
+      writeType:
+        $ref: '#/definitions/ChangeAccountV2EnvironmentRolesCommandWriteType'
+  accountChangeAccountV2NameCommand:
+    type: object
+    properties:
+      name:
+        type: string
+  accountChangeAccountV2OrganizationRoleCommand:
+    type: object
+    properties:
+      role:
+        $ref: '#/definitions/AccountV2RoleOrganization'
+  accountConsoleAccount:
+    type: object
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      avatarUrl:
+        type: string
+      isSystemAdmin:
+        type: boolean
+      organization:
+        $ref: '#/definitions/bucketeerenvironmentOrganization'
+      organizationRole:
+        $ref: '#/definitions/AccountV2RoleOrganization'
+      environmentRoles:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountConsoleAccountEnvironmentRole'
+  accountConsoleAccountEnvironmentRole:
+    type: object
+    properties:
+      environment:
+        $ref: '#/definitions/environmentEnvironmentV2'
+      project:
+        $ref: '#/definitions/environmentProject'
+      role:
+        $ref: '#/definitions/RoleEnvironment'
+  accountCreateAPIKeyCommand:
+    type: object
+    properties:
+      name:
+        type: string
+      role:
+        $ref: '#/definitions/accountAPIKeyRole'
+  accountCreateAPIKeyRequest:
+    type: object
+    properties:
+      command:
+        $ref: '#/definitions/accountCreateAPIKeyCommand'
+      environmentNamespace:
+        type: string
+  accountCreateAPIKeyResponse:
+    type: object
+    properties:
+      apiKey:
+        $ref: '#/definitions/accountAPIKey'
+  accountCreateAccountV2Command:
+    type: object
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      avatarImageUrl:
+        type: string
+      organizationRole:
+        $ref: '#/definitions/AccountV2RoleOrganization'
+      environmentRoles:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountAccountV2EnvironmentRole'
+  accountCreateAccountV2Request:
+    type: object
+    properties:
+      organizationId:
+        type: string
+      command:
+        $ref: '#/definitions/accountCreateAccountV2Command'
+  accountCreateAccountV2Response:
+    type: object
+    properties:
+      account:
+        $ref: '#/definitions/accountAccountV2'
+  accountDeleteAccountV2Command:
+    type: object
+  accountDeleteAccountV2Request:
+    type: object
+    properties:
+      email:
+        type: string
+      organizationId:
+        type: string
+      command:
+        $ref: '#/definitions/accountDeleteAccountV2Command'
+  accountDeleteAccountV2Response:
+    type: object
+  accountDisableAPIKeyCommand:
+    type: object
+  accountDisableAPIKeyRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      command:
+        $ref: '#/definitions/accountDisableAPIKeyCommand'
+      environmentNamespace:
+        type: string
+  accountDisableAPIKeyResponse:
+    type: object
+  accountDisableAccountV2Command:
+    type: object
+  accountDisableAccountV2Request:
+    type: object
+    properties:
+      email:
+        type: string
+      organizationId:
+        type: string
+      command:
+        $ref: '#/definitions/accountDisableAccountV2Command'
+  accountDisableAccountV2Response:
+    type: object
+  accountEnableAPIKeyCommand:
+    type: object
+  accountEnableAPIKeyRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      command:
+        $ref: '#/definitions/accountEnableAPIKeyCommand'
+      environmentNamespace:
+        type: string
+  accountEnableAPIKeyResponse:
+    type: object
+  accountEnableAccountV2Command:
+    type: object
+  accountEnableAccountV2Request:
+    type: object
+    properties:
+      email:
+        type: string
+      organizationId:
+        type: string
+      command:
+        $ref: '#/definitions/accountEnableAccountV2Command'
+  accountEnableAccountV2Response:
+    type: object
+  accountEnvironmentAPIKey:
+    type: object
+    properties:
+      environmentNamespace:
+        type: string
+      apiKey:
+        $ref: '#/definitions/accountAPIKey'
+      environmentDisabled:
+        type: boolean
+      projectId:
+        type: string
+      environment:
+        $ref: '#/definitions/environmentEnvironmentV2'
+      projectUrlCode:
+        type: string
+  accountFilterTargetType:
+    type: string
+    enum:
+      - UNKNOWN
+      - FEATURE_FLAG
+    default: UNKNOWN
+  accountGetAPIKeyBySearchingAllEnvironmentsRequest:
+    type: object
+    properties:
+      id:
+        type: string
+  accountGetAPIKeyBySearchingAllEnvironmentsResponse:
+    type: object
+    properties:
+      environmentApiKey:
+        $ref: '#/definitions/accountEnvironmentAPIKey'
+  accountGetAPIKeyRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      environmentNamespace:
+        type: string
+  accountGetAPIKeyResponse:
+    type: object
+    properties:
+      apiKey:
+        $ref: '#/definitions/accountAPIKey'
+  accountGetAccountV2ByEnvironmentIDRequest:
+    type: object
+    properties:
+      email:
+        type: string
+      environmentId:
+        type: string
+  accountGetAccountV2ByEnvironmentIDResponse:
+    type: object
+    properties:
+      account:
+        $ref: '#/definitions/accountAccountV2'
+  accountGetAccountV2Request:
+    type: object
+    properties:
+      email:
+        type: string
+      organizationId:
+        type: string
+  accountGetAccountV2Response:
+    type: object
+    properties:
+      account:
+        $ref: '#/definitions/accountAccountV2'
+  accountGetMeResponse:
+    type: object
+    properties:
+      account:
+        $ref: '#/definitions/accountConsoleAccount'
+  accountGetMyOrganizationsByEmailRequest:
+    type: object
+    properties:
+      email:
+        type: string
+    description: |-
+      Retrieve the organization to which the account belongs by email.
+      it's called from another microservice.
+  accountGetMyOrganizationsRequest:
+    type: object
+  accountGetMyOrganizationsResponse:
+    type: object
+    properties:
+      organizations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerenvironmentOrganization'
+  accountListAPIKeysRequest:
+    type: object
+    properties:
+      pageSize:
+        type: string
+        format: int64
+      cursor:
+        type: string
+      environmentNamespace:
+        type: string
+      orderBy:
+        $ref: '#/definitions/accountListAPIKeysRequestOrderBy'
+      orderDirection:
+        $ref: '#/definitions/accountListAPIKeysRequestOrderDirection'
+      searchKeyword:
+        type: string
+      disabled:
+        type: boolean
+  accountListAPIKeysRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  accountListAPIKeysRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  accountListAPIKeysResponse:
+    type: object
+    properties:
+      apiKeys:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountAPIKey'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  accountListAccountsV2Request:
+    type: object
+    properties:
+      pageSize:
+        type: string
+        format: int64
+      cursor:
+        type: string
+      organizationId:
+        type: string
+      orderBy:
+        $ref: '#/definitions/accountListAccountsV2RequestOrderBy'
+      orderDirection:
+        $ref: '#/definitions/accountListAccountsV2RequestOrderDirection'
+      searchKeyword:
+        type: string
+      disabled:
+        type: boolean
+      organizationRole:
+        type: integer
+        format: int32
+      environmentId:
+        type: string
+      environmentRole:
+        type: integer
+        format: int32
+  accountListAccountsV2RequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - EMAIL
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  accountListAccountsV2RequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  accountListAccountsV2Response:
+    type: object
+    properties:
+      accounts:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountAccountV2'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  accountSearchFilter:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      query:
+        type: string
+      filterTargetType:
+        $ref: '#/definitions/accountFilterTargetType'
+      environmentId:
+        type: string
+      defaultFilter:
+        type: boolean
+  accountUpdateAccountV2Request:
+    type: object
+    properties:
+      email:
+        type: string
+      organizationId:
+        type: string
+      changeNameCommand:
+        $ref: '#/definitions/accountChangeAccountV2NameCommand'
+      changeAvatarUrlCommand:
+        $ref: '#/definitions/accountChangeAccountV2AvatarImageUrlCommand'
+      changeOrganizationRoleCommand:
+        $ref: '#/definitions/accountChangeAccountV2OrganizationRoleCommand'
+      changeEnvironmentRolesCommand:
+        $ref: '#/definitions/accountChangeAccountV2EnvironmentRolesCommand'
+  accountUpdateAccountV2Response:
+    type: object
   authAuthType:
     type: string
     enum:
@@ -274,6 +1663,84 @@ definitions:
       expiry:
         type: string
         format: int64
+  bucketeerenvironmentOrganization:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      urlCode:
+        type: string
+      description:
+        type: string
+        title: optional
+      disabled:
+        type: boolean
+      archived:
+        type: boolean
+      trial:
+        type: boolean
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      systemAdmin:
+        type: boolean
+  environmentEnvironmentV2:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      urlCode:
+        type: string
+      description:
+        type: string
+        title: optional
+      projectId:
+        type: string
+      archived:
+        type: boolean
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      organizationId:
+        type: string
+      requireComment:
+        type: boolean
+  environmentProject:
+    type: object
+    properties:
+      id:
+        type: string
+      description:
+        type: string
+        title: optional
+      disabled:
+        type: boolean
+      trial:
+        type: boolean
+      creatorEmail:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      name:
+        type: string
+      urlCode:
+        type: string
+      organizationId:
+        type: string
   protobufAny:
     type: object
     properties:

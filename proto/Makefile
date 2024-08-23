@@ -56,7 +56,7 @@ openapi-api-gen:
 		--openapiv2_opt=disable_service_tags=true \
 		${GIT_TOP_DIR}/proto/gateway/*.proto; \
 
-PROTO_OPENAPI_WEB_TARGETS := ${GIT_TOP_DIR}/proto/auth/service.proto
+PROTO_OPENAPI_WEB_TARGETS := ${GIT_TOP_DIR}/proto/auth/service.proto ${GIT_TOP_DIR}/proto/account/service.proto
 .PHONY: openapi-web-gen
 openapi-web-gen:
 	protoc \
