@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
-	"github.com/stretchr/testify/assert"
 
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
@@ -85,15 +84,19 @@ func TestCreateAndListPush(t *testing.T) {
 	pushes := listPushes(t, pushClient)
 	var push *pushproto.Push
 	for _, p := range pushes {
-		equal, err := compareJSON(t, p.FcmServiceAccount, fcmServiceAccount)
-		assert.NoError(t, err)
-		if equal {
-			push = p
-			break
+		// Search the push by tag
+		for _, t := range p.Tags {
+			if t == tag {
+				push = p
+				break
+			}
 		}
 	}
 	if push == nil {
 		t.Fatalf("Push not found")
+	}
+	if push.FcmServiceAccount != "" {
+		t.Fatalf("The FCM service account must be empty. Actual: %s", push.FcmServiceAccount)
 	}
 	if len(push.Tags) != 1 {
 		t.Fatalf("The number of tags is incorrect. Expected: %d actual: %d", 1, len(push.Tags))

@@ -31,8 +31,8 @@ import (
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/puller/codes"
-	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
 	pushdomain "github.com/bucketeer-io/bucketeer/pkg/push/domain"
+	pushstorage "github.com/bucketeer-io/bucketeer/pkg/push/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/subscriber"
 	btproto "github.com/bucketeer-io/bucketeer/proto/batch"
@@ -47,9 +47,9 @@ const (
 )
 
 type pushSender struct {
-	pushClient    pushclient.Client
 	featureClient featureclient.Client
 	batchClient   btclient.Client
+	mysqlClient   mysql.Client
 	logger        *zap.Logger
 }
 
@@ -59,15 +59,15 @@ type fcmConfig struct {
 }
 
 func NewPushSender(
-	pushClient pushclient.Client,
 	featureClient featureclient.Client,
 	batchClient btclient.Client,
+	mysqlClient mysql.Client,
 	logger *zap.Logger,
 ) subscriber.Processor {
 	return &pushSender{
-		pushClient:    pushClient,
 		featureClient: featureClient,
 		batchClient:   batchClient,
+		mysqlClient:   mysqlClient,
 		logger:        logger,
 	}
 }
@@ -276,15 +276,26 @@ func (p pushSender) getFCMCredentials(ctx context.Context, fcmServiceAccount str
 	}, nil
 }
 
+// listPushes list all the pushes
+// Because the `ListPushes` API removes the FCM service account from the response
+// due to security reasons, we list the pushes directly from the storage interface
 func (p pushSender) listPushes(ctx context.Context, environmentNamespace string) ([]*pushproto.Push, error) {
-	resp, err := p.pushClient.ListPushes(ctx, &pushproto.ListPushesRequest{
-		PageSize:             mysql.QueryNoLimit,
-		EnvironmentNamespace: environmentNamespace,
-	})
+	whereParts := []mysql.WherePart{
+		mysql.NewFilter("deleted", "=", false),
+		mysql.NewFilter("environment_namespace", "=", environmentNamespace),
+	}
+	storage := pushstorage.NewPushStorage(p.mysqlClient)
+	pushes, _, _, err := storage.ListPushes(
+		ctx,
+		whereParts,
+		nil, // order by
+		mysql.QueryNoLimit,
+		0, // offset
+	)
 	if err != nil {
 		return nil, err
 	}
-	return resp.Pushes, nil
+	return pushes, nil
 }
 
 func (p pushSender) unmarshalMessage(msg *puller.Message) (*domaineventproto.Event, error) {

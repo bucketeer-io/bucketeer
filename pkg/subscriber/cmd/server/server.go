@@ -35,7 +35,6 @@ import (
 	notificationclient "github.com/bucketeer-io/bucketeer/pkg/notification/client"
 	notificationsender "github.com/bucketeer-io/bucketeer/pkg/notification/sender"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/sender/notifier"
-	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc/client"
@@ -239,18 +238,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
-	pushClient, err := pushclient.NewClient(*s.pushService, *s.certPath,
-		client.WithPerRPCCredentials(creds),
-		client.WithDialTimeout(30*time.Second),
-		client.WithBlock(),
-		client.WithMetrics(registerer),
-		client.WithLogger(logger),
-	)
-	if err != nil {
-		return err
-	}
-	defer pushClient.Close()
-
 	featureClient, err := featureclient.NewClient(*s.featureService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
 		client.WithDialTimeout(30*time.Second),
@@ -335,7 +322,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	processors, err := s.registerProcessorMap(
 		ctx,
 		environmentClient,
-		pushClient,
 		mysqlClient,
 		persistentRedisClient,
 		nonPersistentRedisClient,
@@ -478,7 +464,6 @@ func (s *server) startMultiPubSub(
 func (s *server) registerProcessorMap(
 	ctx context.Context,
 	environmentClient environmentclient.Client,
-	pushClient pushclient.Client,
 	mysqlClient mysql.Client,
 	persistentRedisClient redisv3.Client,
 	nonPersistentRedisClient redisv3.Client,
@@ -564,9 +549,9 @@ func (s *server) registerProcessorMap(
 		processors.RegisterProcessor(
 			processor.PushSenderName,
 			processor.NewPushSender(
-				pushClient,
 				ftClient,
 				batchClient,
+				mysqlClient,
 				logger,
 			),
 		)

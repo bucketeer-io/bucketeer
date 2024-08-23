@@ -771,6 +771,10 @@ func (s *PushService) ListPushes(
 	if err != nil {
 		return nil, err
 	}
+	// For security reasons we remove the service account from the API response
+	for _, p := range pushes {
+		p.FcmServiceAccount = ""
+	}
 	return &pushproto.ListPushesResponse{
 		Pushes:     pushes,
 		Cursor:     cursor,
