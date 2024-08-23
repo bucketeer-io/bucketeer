@@ -41,6 +41,7 @@ const (
 	AccountAvatarImageURL        = "AccountAvatarImageURL"
 	AccountOrganizationRole      = "AccountOrganizationRole"
 	AccountEnvironmentRoles      = "AccountEnvironmentRoles"
+	AccountSearchFilter          = "AccountSearchFilter"
 	AdminAccount                 = "AdminAccount"
 	AdminNotification            = "AdminNotification"
 	AdminNotificationType        = "AdminNotificationType"
