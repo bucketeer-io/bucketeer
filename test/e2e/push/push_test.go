@@ -15,13 +15,16 @@
 package autoops
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/golang/protobuf/ptypes/wrappers"
+	"github.com/stretchr/testify/assert"
 
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
@@ -48,6 +51,20 @@ var (
 	serviceTokenPath     = flag.String("service-token", "", "Service token path")
 	environmentNamespace = flag.String("environment-namespace", "", "Environment namespace")
 	testID               = flag.String("test-id", "", "test ID")
+
+	fcmServiceAccountDummy = `{
+		"type": "service_account",
+		"project_id": "%s-%s",
+		"private_key_id": "private-key-id",
+		"private_key": "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----\n",
+		"client_email": "fcm-service-account@test.iam.gserviceaccount.com",
+		"client_id": "client_id",
+		"auth_uri": "https://accounts.google.com/o/oauth2/auth",
+		"token_uri": "https://oauth2.googleapis.com/token",
+		"auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+		"client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/fcm-service-account@test.iam.gserviceaccount.com",
+		"universe_domain": "googleapis.com"
+	}`
 )
 
 func TestCreateAndListPush(t *testing.T) {
@@ -61,22 +78,22 @@ func TestCreateAndListPush(t *testing.T) {
 
 	featureID := newFeatureID(t)
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, newUUID(t))
-	fcmAPIKey := fmt.Sprintf("%s-fcm-api-key-%s", prefixTestName, newUUID(t))
+	fcmServiceAccount := fmt.Sprintf(fcmServiceAccountDummy, prefixTestName, newUUID(t))
+
 	createFeature(ctx, t, featureClient, featureID, tag)
-	createPush(ctx, t, pushClient, fcmAPIKey, tag)
+	createPush(ctx, t, pushClient, []byte(fcmServiceAccount), tag)
 	pushes := listPushes(t, pushClient)
 	var push *pushproto.Push
 	for _, p := range pushes {
-		if p.FcmApiKey == fcmAPIKey {
+		equal, err := compareJSON(t, p.FcmServiceAccount, fcmServiceAccount)
+		assert.NoError(t, err)
+		if equal {
 			push = p
 			break
 		}
 	}
 	if push == nil {
 		t.Fatalf("Push not found")
-	}
-	if push.FcmApiKey != fcmAPIKey {
-		t.Fatalf("Incorrect FcmApiKey. Expected: %s actual: %s", fcmAPIKey, push.FcmApiKey)
 	}
 	if len(push.Tags) != 1 {
 		t.Fatalf("The number of tags is incorrect. Expected: %d actual: %d", 1, len(push.Tags))
@@ -186,9 +203,15 @@ func newUUID(t *testing.T) string {
 	return id.String()
 }
 
-func createPush(ctx context.Context, t *testing.T, client pushclient.Client, fcmAPIKey, tag string) {
+func createPush(
+	ctx context.Context,
+	t *testing.T,
+	client pushclient.Client,
+	fcmServiceAccount []byte,
+	tag string,
+) {
 	t.Helper()
-	cmd := newCreatePushCommand(t, fcmAPIKey, []string{tag})
+	cmd := newCreatePushCommand(t, fcmServiceAccount, []string{tag})
 	createReq := &pushproto.CreatePushRequest{
 		EnvironmentNamespace: *environmentNamespace,
 		Command:              cmd,
@@ -198,11 +221,12 @@ func createPush(ctx context.Context, t *testing.T, client pushclient.Client, fcm
 	}
 }
 
-func newCreatePushCommand(t *testing.T, fcmAPIKey string, tags []string) *pushproto.CreatePushCommand {
+func newCreatePushCommand(t *testing.T, fcmServiceAccount []byte, tags []string) *pushproto.CreatePushCommand {
+	t.Helper()
 	return &pushproto.CreatePushCommand{
-		Name:      newPushName(t),
-		FcmApiKey: fcmAPIKey,
-		Tags:      tags,
+		Name:              newPushName(t),
+		FcmServiceAccount: fcmServiceAccount,
+		Tags:              tags,
 	}
 }
 
@@ -231,4 +255,28 @@ func newPushName(t *testing.T) string {
 		return fmt.Sprintf("%s-%s-push-name", prefixTestName, *testID)
 	}
 	return fmt.Sprintf("%s-push-name", prefixTestName)
+}
+
+// compareJSON compares two JSON strings and returns true if they are equivalent
+func compareJSON(t *testing.T, jsonStr1, jsonStr2 string) (bool, error) {
+	t.Helper()
+	var obj1, obj2 interface{}
+	// Unmarshal the JSON strings into Go data structures
+	if err := json.Unmarshal([]byte(jsonStr1), &obj1); err != nil {
+		return false, err
+	}
+	if err := json.Unmarshal([]byte(jsonStr2), &obj2); err != nil {
+		return false, err
+	}
+	// Marshal the Go data structures into canonical JSON format
+	json1, err := json.Marshal(obj1)
+	if err != nil {
+		return false, err
+	}
+	json2, err := json.Marshal(obj2)
+	if err != nil {
+		return false, err
+	}
+	// Compare the canonical JSON representations
+	return bytes.Equal(json1, json2), nil
 }

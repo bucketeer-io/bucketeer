@@ -401,6 +401,83 @@ func TestUpdatePushMySQL(t *testing.T) {
 	}
 }
 
+func TestValidateFCMServiceAccount(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken(t, true)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc              string
+		fcmServiceAccount []byte
+		pushes            []*pushproto.Push
+		expected          error
+	}{
+		{
+			desc:              "err: invalid service account",
+			fcmServiceAccount: []byte(`"key":"value"`),
+			pushes:            nil,
+			expected: createError(
+				statusFCMServiceAccountInvalid,
+				localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "FCM service account"),
+			),
+		},
+		{
+			desc:              "err: internal error",
+			fcmServiceAccount: fcmServiceAccountDummy,
+			pushes: []*pushproto.Push{
+				{
+					FcmServiceAccount: "`{\"key\":\"value\"}`",
+				},
+			},
+			expected: createError(
+				statusInternal,
+				localizer.MustLocalize(locale.InternalServerError),
+			),
+		},
+		{
+			desc:              "err: service account already exists",
+			fcmServiceAccount: fcmServiceAccountDummy,
+			pushes: []*pushproto.Push{
+				{
+					FcmServiceAccount: string(fcmServiceAccountDummy),
+				},
+			},
+			expected: createError(
+				statusFCMServiceAccountAlreadyExists,
+				localizer.MustLocalizeWithTemplate(locale.AlreadyExistsError, "FCM service account"),
+			),
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := newPushServiceWithMock(t, mockController)
+			err := service.validateFCMServiceAccount(
+				ctx,
+				p.pushes,
+				p.fcmServiceAccount,
+				localizer,
+			)
+			assert.Equal(t, p.expected, err)
+		})
+	}
+}
+
 func TestDeletePushMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)

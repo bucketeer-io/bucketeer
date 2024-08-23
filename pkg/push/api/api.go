@@ -17,8 +17,8 @@ package api
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"go.uber.org/zap"
@@ -145,27 +145,8 @@ func (s *PushService) CreatePush(
 		}
 		return nil, dt.Err()
 	}
-	if err := s.validateFCMServiceAccount(ctx, req.Command.FcmServiceAccount); err != nil {
-		dt, err := statusFCMServiceAccountInvalid.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "fcm_service_account"),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	if s.containsFCMServiceAccount(pushes, req.Command.FcmServiceAccount) {
-		if status.Code(err) == codes.AlreadyExists {
-			dt, err := statusFCMServiceAccountAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
+	if err := s.validateFCMServiceAccount(ctx, pushes, req.Command.FcmServiceAccount, localizer); err != nil {
+		return nil, err
 	}
 	err = s.containsTags(ctx, pushes, req.Command.Tags, localizer)
 	if err != nil {
@@ -644,28 +625,95 @@ func (s *PushService) containsTags(
 func (s *PushService) containsFCMServiceAccount(
 	pushes []*pushproto.Push,
 	fcmServiceAccount []byte,
-) bool {
+) (bool, error) {
 	for _, push := range pushes {
+		equal, err := s.compareJSON(push.FcmServiceAccount, string(fcmServiceAccount))
+		if err != nil {
+			return false, err
+		}
+		if equal {
+			return true, err
+		}
 		if bytes.Equal(fcmServiceAccount, []byte(push.FcmServiceAccount)) {
-			return true
+			return true, nil
 		}
 	}
-	return false
+	return false, nil
 }
 
 func (s *PushService) validateFCMServiceAccount(
 	ctx context.Context,
+	pushes []*pushproto.Push,
 	fcmServiceAccount []byte,
+	localizer locale.Localizer,
 ) error {
+	// Check if the JSON is a service account file
 	_, err := google.CredentialsFromJSON(
 		ctx,
 		[]byte(fcmServiceAccount),
 		"https://www.googleapis.com/auth/firebase.messaging",
 	)
 	if err != nil {
-		return fmt.Errorf("failed to get credentials from JSON: %w", err)
+		s.logger.Error("failed to get credentials from JSON", zap.Error(err))
+		dt, err := statusFCMServiceAccountInvalid.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "FCM service account"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	// Check if the service account already exists in the database
+	for _, push := range pushes {
+		equal, err := s.compareJSON(push.FcmServiceAccount, string(fcmServiceAccount))
+		if err != nil {
+			s.logger.Error("failed to compare the JSON", zap.Error(err))
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		if equal {
+			s.logger.Error("fcm service account already exists in the database")
+			dt, err := statusFCMServiceAccountAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.AlreadyExistsError, "FCM service account"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
 	}
 	return nil
+}
+
+// compareJSON compares two JSON strings and returns true if they are equivalent
+func (s *PushService) compareJSON(jsonStr1, jsonStr2 string) (bool, error) {
+	var obj1, obj2 interface{}
+	// Unmarshal the JSON strings into Go data structures
+	if err := json.Unmarshal([]byte(jsonStr1), &obj1); err != nil {
+		return false, err
+	}
+	if err := json.Unmarshal([]byte(jsonStr2), &obj2); err != nil {
+		return false, err
+	}
+	// Marshal the Go data structures into canonical JSON format
+	json1, err := json.Marshal(obj1)
+	if err != nil {
+		return false, err
+	}
+	json2, err := json.Marshal(obj2)
+	if err != nil {
+		return false, err
+	}
+	// Compare the canonical JSON representations
+	return bytes.Equal(json1, json2), nil
 }
 
 func (s *PushService) tagMap(pushes []*pushproto.Push) (map[string]struct{}, error) {
