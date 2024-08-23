@@ -675,7 +675,7 @@ func (s *PushService) checkFCMServiceAccount(
 
 // compareJSON compares two JSON strings and returns true if they are equivalent
 func (s *PushService) compareJSON(jsonStr1, jsonStr2 string) (bool, error) {
-	var obj1, obj2 interface{}
+	var obj1, obj2 json.RawMessage
 	// Unmarshal the JSON strings into Go data structures
 	if err := json.Unmarshal([]byte(jsonStr1), &obj1); err != nil {
 		return false, err

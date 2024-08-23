@@ -15,9 +15,7 @@
 package autoops
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"testing"
@@ -258,28 +256,4 @@ func newPushName(t *testing.T) string {
 		return fmt.Sprintf("%s-%s-push-name", prefixTestName, *testID)
 	}
 	return fmt.Sprintf("%s-push-name", prefixTestName)
-}
-
-// compareJSON compares two JSON strings and returns true if they are equivalent
-func compareJSON(t *testing.T, jsonStr1, jsonStr2 string) (bool, error) {
-	t.Helper()
-	var obj1, obj2 interface{}
-	// Unmarshal the JSON strings into Go data structures
-	if err := json.Unmarshal([]byte(jsonStr1), &obj1); err != nil {
-		return false, err
-	}
-	if err := json.Unmarshal([]byte(jsonStr2), &obj2); err != nil {
-		return false, err
-	}
-	// Marshal the Go data structures into canonical JSON format
-	json1, err := json.Marshal(obj1)
-	if err != nil {
-		return false, err
-	}
-	json2, err := json.Marshal(obj2)
-	if err != nil {
-		return false, err
-	}
-	// Compare the canonical JSON representations
-	return bytes.Equal(json1, json2), nil
 }
