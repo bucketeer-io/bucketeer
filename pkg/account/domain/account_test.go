@@ -313,7 +313,7 @@ func TestAddSearchFilter(t *testing.T) {
 				account.EnvironmentRoles,
 			)
 			for _, f := range p.expectedFilters {
-				err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
+				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
 			}
 			// account has not changed.
@@ -473,7 +473,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 				account.EnvironmentRoles,
 			)
 			for _, f := range p.existingFilters {
-				err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
+				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
 			}
 			updateFilterId := "update-filter-id"
@@ -609,7 +609,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 				account.EnvironmentRoles,
 			)
 			for _, f := range p.existingFilters {
-				err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
+				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
 			}
 			deleteFilterId := "delete-filter-id"
