@@ -202,6 +202,7 @@ func (p pushSender) send(featureID, environmentNamespace string) error {
 	return lastErr
 }
 
+// pushFCM sends a silent notification to all the devices subscrribed to the target topic
 func (p pushSender) pushFCM(ctx context.Context, topic, fcmServiceAccount string) error {
 	creds, err := p.getFCMCredentials(ctx, fcmServiceAccount)
 	if err != nil {
@@ -215,14 +216,14 @@ func (p pushSender) pushFCM(ctx context.Context, topic, fcmServiceAccount string
 				"bucketeer_feature_flag_updated": "true",
 			},
 			"android": map[string]interface{}{
-				"priority": "high",
+				"priority": "normal",
 				"notification": map[string]interface{}{
-					"visibility": "SECRET", // Notifications are hidden on Android
+					"visibility": "SECRET", // Silent notification for Android
 				},
 			},
 			"apns": map[string]interface{}{
 				"headers": map[string]string{
-					"apns-priority": "5", // Background delivery for iOS
+					"apns-priority": "5", // Normal priority for iOS
 				},
 				"payload": map[string]interface{}{
 					"aps": map[string]interface{}{
