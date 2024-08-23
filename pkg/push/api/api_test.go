@@ -401,7 +401,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 	}
 }
 
-func TestValidateFCMServiceAccount(t *testing.T) {
+func TestCheckFCMServiceAccount(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -467,7 +467,7 @@ func TestValidateFCMServiceAccount(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			service := newPushServiceWithMock(t, mockController)
-			err := service.validateFCMServiceAccount(
+			err := service.checkFCMServiceAccount(
 				ctx,
 				p.pushes,
 				p.fcmServiceAccount,

@@ -145,7 +145,7 @@ func (s *PushService) CreatePush(
 		}
 		return nil, dt.Err()
 	}
-	if err := s.validateFCMServiceAccount(ctx, pushes, req.Command.FcmServiceAccount, localizer); err != nil {
+	if err := s.checkFCMServiceAccount(ctx, pushes, req.Command.FcmServiceAccount, localizer); err != nil {
 		return nil, err
 	}
 	err = s.containsTags(pushes, req.Command.Tags, localizer)
@@ -621,7 +621,7 @@ func (s *PushService) containsTags(
 	return nil
 }
 
-func (s *PushService) validateFCMServiceAccount(
+func (s *PushService) checkFCMServiceAccount(
 	ctx context.Context,
 	pushes []*pushproto.Push,
 	fcmServiceAccount []byte,
