@@ -216,9 +216,6 @@ func (p pushSender) pushFCM(ctx context.Context, topic, fcmServiceAccount string
 			},
 			"android": map[string]interface{}{
 				"priority": "normal",
-				"notification": map[string]interface{}{
-					"visibility": "SECRET", // Silent notification for Android
-				},
 			},
 			"apns": map[string]interface{}{
 				"headers": map[string]string{
