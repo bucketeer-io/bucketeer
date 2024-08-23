@@ -373,7 +373,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 				DefaultFilter:    false,
 			},
 			expectedFilters: []*proto.SearchFilter{},
-			error:           errSearchFilterNotFound,
+			error:           ErrSearchFilterNotFound,
 		},
 		{
 			desc: "have a filter",
@@ -538,7 +538,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 			desc:            "don't have a filter",
 			existingFilters: nil,
 			expectedFilters: nil,
-			error:           errSearchFilterNotFound,
+			error:           ErrSearchFilterNotFound,
 		},
 		{
 			desc: "have a filter",

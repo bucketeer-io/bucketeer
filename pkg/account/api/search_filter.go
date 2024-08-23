@@ -122,64 +122,33 @@ func (s *AccountService) UpdateSearchFilterV2(
 		return nil, err
 	}
 
-	err = s.accountStorage.RunInTransaction(ctx, func() error {
-		account, err := s.accountStorage.GetAccountV2(ctx, req.Email, req.OrganizationId)
-		if err != nil {
-			return err
-		}
+	account, err := s.getAccountV2(ctx, req.Email, req.OrganizationId, localizer)
+	if err != nil {
+		return nil, err
+	}
+	// Since there is only one default setting for a filter target, set the existing default to OFF.
+	changeDefaultFilters := getChangeDefaultFilters(account, req.Command.SearchFilter)
+	commands := make([]command.Command, 0)
+	for _, changeDefaultFilter := range changeDefaultFilters {
+		commands = append(
+			commands,
+			&accountproto.UpdateSearchFilterCommand{SearchFilter: changeDefaultFilter},
+		)
+	}
+	commands = append(commands, req.Command)
 
-		var isFound = false
-		var changeDefaultFilter *accountproto.SearchFilter
-		rsf := req.Command.SearchFilter
-		for _, filter := range account.SearchFilters {
-			if rsf.Id == filter.Id {
-				isFound = true
-			}
-			// Since there is only one default setting for a filter target, set the existing default to OFF.
-			if rsf.DefaultFilter && filter.DefaultFilter &&
-				rsf.FilterTargetType == filter.FilterTargetType &&
-				rsf.EnvironmentId == filter.EnvironmentId {
-				changeDefaultFilter = &accountproto.SearchFilter{
-					Id:               filter.Id,
-					Name:             filter.Name,
-					Query:            filter.Query,
-					FilterTargetType: filter.FilterTargetType,
-					EnvironmentId:    filter.EnvironmentId,
-					DefaultFilter:    false,
-				}
-			}
-			if isFound && changeDefaultFilter != nil {
-				break
-			}
-		}
-		if !isFound {
-			dt, err := statusSearchFilterIDNotFound.WithDetails(&errdetails.LocalizedMessage{
+	if err := s.updateAccountV2MySQL(ctx, editor, commands, req.Email, req.OrganizationId); err != nil {
+		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
 			})
 			if err != nil {
-				return statusInternal.Err()
+				return nil, statusInternal.Err()
 			}
-			return dt.Err()
-		}
-		handler, err := command.NewAccountV2CommandHandler(editor, account, s.publisher, req.OrganizationId)
-		if err != nil {
-			return err
-		}
-		if changeDefaultFilter != nil {
-			updateCommand := &accountproto.UpdateSearchFilterCommand{SearchFilter: changeDefaultFilter}
-			if err := handler.Handle(ctx, updateCommand); err != nil {
-				return err
-			}
-		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
-			return err
-		}
-		return s.accountStorage.UpdateSearchFilters(ctx, account)
-	})
-	if err != nil {
-		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+			return nil, dt.Err()
+		} else if errors.Is(err, domain.ErrSearchFilterNotFound) {
+			dt, err := statusSearchFilterIDNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
 			})
@@ -194,7 +163,7 @@ func (s *AccountService) UpdateSearchFilterV2(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
-				zap.String("searchFilterId", req.Command.SearchFilter.Id),
+				zap.String("searchFilterName", req.Command.SearchFilter.Name),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -206,6 +175,91 @@ func (s *AccountService) UpdateSearchFilterV2(
 		}
 		return nil, dt.Err()
 	}
+
+	//err = s.accountStorage.RunInTransaction(ctx, func() error {
+	//	account, err := s.accountStorage.GetAccountV2(ctx, req.Email, req.OrganizationId)
+	//	if err != nil {
+	//		return err
+	//	}
+	//
+	//	var isFound = false
+	//	var changeDefaultFilter *accountproto.SearchFilter
+	//	rsf := req.Command.SearchFilter
+	//	for _, filter := range account.SearchFilters {
+	//		if rsf.Id == filter.Id {
+	//			isFound = true
+	//		}
+	//		// Since there is only one default setting for a filter target, set the existing default to OFF.
+	//		if rsf.DefaultFilter && filter.DefaultFilter &&
+	//			rsf.FilterTargetType == filter.FilterTargetType &&
+	//			rsf.EnvironmentId == filter.EnvironmentId {
+	//			changeDefaultFilter = &accountproto.SearchFilter{
+	//				Id:               filter.Id,
+	//				Name:             filter.Name,
+	//				Query:            filter.Query,
+	//				FilterTargetType: filter.FilterTargetType,
+	//				EnvironmentId:    filter.EnvironmentId,
+	//				DefaultFilter:    false,
+	//			}
+	//		}
+	//		if isFound && changeDefaultFilter != nil {
+	//			break
+	//		}
+	//	}
+	//	if !isFound {
+	//		dt, err := statusSearchFilterIDNotFound.WithDetails(&errdetails.LocalizedMessage{
+	//			Locale:  localizer.GetLocale(),
+	//			Message: localizer.MustLocalize(locale.NotFoundError),
+	//		})
+	//		if err != nil {
+	//			return statusInternal.Err()
+	//		}
+	//		return dt.Err()
+	//	}
+	//	handler, err := command.NewAccountV2CommandHandler(editor, account, s.publisher, req.OrganizationId)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	if changeDefaultFilter != nil {
+	//		updateCommand := &accountproto.UpdateSearchFilterCommand{SearchFilter: changeDefaultFilter}
+	//		if err := handler.Handle(ctx, updateCommand); err != nil {
+	//			return err
+	//		}
+	//	}
+	//	if err := handler.Handle(ctx, req.Command); err != nil {
+	//		return err
+	//	}
+	//	return s.accountStorage.UpdateAccountV2(ctx, account)
+	//})
+	//if err != nil {
+	//	if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
+	//		dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+	//			Locale:  localizer.GetLocale(),
+	//			Message: localizer.MustLocalize(locale.NotFoundError),
+	//		})
+	//		if err != nil {
+	//			return nil, statusInternal.Err()
+	//		}
+	//		return nil, dt.Err()
+	//	}
+	//	s.logger.Error(
+	//		"Failed to update search filter",
+	//		log.FieldsFromImcomingContext(ctx).AddFields(
+	//			zap.Error(err),
+	//			zap.String("organizationID", req.OrganizationId),
+	//			zap.String("email", req.Email),
+	//			zap.String("searchFilterId", req.Command.SearchFilter.Id),
+	//		)...,
+	//	)
+	//	dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+	//		Locale:  localizer.GetLocale(),
+	//		Message: localizer.MustLocalize(locale.InternalServerError),
+	//	})
+	//	if err != nil {
+	//		return nil, statusInternal.Err()
+	//	}
+	//	return nil, dt.Err()
+	//}
 
 	return &accountproto.UpdateSearchFilterResponse{}, nil
 }
