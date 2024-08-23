@@ -1258,6 +1258,34 @@
           },
           {
             "name": "CreateSearchFilterResponse"
+          },
+          {
+            "name": "UpdateSearchFilterRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "command",
+                "type": "UpdateSearchFilterCommand"
+              }
+            ]
+          },
+          {
+            "name": "UpdateSearchFilterResponse"
           }
         ],
         "services": [
@@ -1358,6 +1386,11 @@
                 "name": "CreateSearchFilterV2",
                 "in_type": "CreateSearchFilterRequest",
                 "out_type": "CreateSearchFilterResponse"
+              },
+              {
+                "name": "UpdateSearchFilterV2",
+                "in_type": "UpdateSearchFilterRequest",
+                "out_type": "UpdateSearchFilterResponse"
               }
             ]
           }
