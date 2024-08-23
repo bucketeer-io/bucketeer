@@ -183,15 +183,6 @@ AccountService.CreateSearchFilterV2 = {
   responseType: proto_account_service_pb.CreateSearchFilterResponse
 };
 
-AccountService.UpdateSearchFilterV2 = {
-  methodName: 'UpdateSearchFilterV2',
-  service: AccountService,
-  requestStream: false,
-  responseStream: false,
-  requestType: proto_account_service_pb.UpdateSearchFilterRequest,
-  responseType: proto_account_service_pb.UpdateSearchFilterResponse
-};
-
 exports.AccountService = AccountService;
 
 function AccountServiceClient(serviceHost, options) {
@@ -833,38 +824,6 @@ AccountServiceClient.prototype.createSearchFilterV2 =
       callback = arguments[1];
     }
     var client = grpc.unary(AccountService.CreateSearchFilterV2, {
-      request: requestMessage,
-      host: this.serviceHost,
-      metadata: metadata,
-      transport: this.options.transport,
-      debug: this.options.debug,
-      onEnd: function (response) {
-        if (callback) {
-          if (response.status !== grpc.Code.OK) {
-            var err = new Error(response.statusMessage);
-            err.code = response.status;
-            err.metadata = response.trailers;
-            callback(err, null);
-          } else {
-            callback(null, response.message);
-          }
-        }
-      }
-    });
-    return {
-      cancel: function () {
-        callback = null;
-        client.close();
-      }
-    };
-  };
-
-AccountServiceClient.prototype.updateSearchFilterV2 =
-  function updateSearchFilterV2(requestMessage, metadata, callback) {
-    if (arguments.length === 2) {
-      callback = arguments[1];
-    }
-    var client = grpc.unary(AccountService.UpdateSearchFilterV2, {
       request: requestMessage,
       host: this.serviceHost,
       metadata: metadata,

@@ -28,10 +28,6 @@ message CreateAutoOpsRuleCommand {
   repeated DatetimeClause datetime_clauses = 4;
 }
 
-message ChangeAutoOpsRuleOpsTypeCommand {
-  OpsType ops_type = 1;
-}
-
 message DeleteAutoOpsRuleCommand {}
 
 message StopAutoOpsRuleCommand {}

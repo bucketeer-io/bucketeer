@@ -366,15 +366,6 @@ export class UpdateAutoOpsRuleRequest extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  hasChangeAutoOpsRuleOpsTypeCommand(): boolean;
-  clearChangeAutoOpsRuleOpsTypeCommand(): void;
-  getChangeAutoOpsRuleOpsTypeCommand():
-    | proto_autoops_command_pb.ChangeAutoOpsRuleOpsTypeCommand
-    | undefined;
-  setChangeAutoOpsRuleOpsTypeCommand(
-    value?: proto_autoops_command_pb.ChangeAutoOpsRuleOpsTypeCommand
-  ): void;
-
   clearAddOpsEventRateClauseCommandsList(): void;
   getAddOpsEventRateClauseCommandsList(): Array<proto_autoops_command_pb.AddOpsEventRateClauseCommand>;
   setAddOpsEventRateClauseCommandsList(
@@ -450,7 +441,6 @@ export namespace UpdateAutoOpsRuleRequest {
   export type AsObject = {
     environmentNamespace: string;
     id: string;
-    changeAutoOpsRuleOpsTypeCommand?: proto_autoops_command_pb.ChangeAutoOpsRuleOpsTypeCommand.AsObject;
     addOpsEventRateClauseCommandsList: Array<proto_autoops_command_pb.AddOpsEventRateClauseCommand.AsObject>;
     changeOpsEventRateClauseCommandsList: Array<proto_autoops_command_pb.ChangeOpsEventRateClauseCommand.AsObject>;
     deleteClauseCommandsList: Array<proto_autoops_command_pb.DeleteClauseCommand.AsObject>;

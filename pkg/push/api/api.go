@@ -110,7 +110,12 @@ func (s *PushService) CreatePush(
 	if err := s.validateCreatePushRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	push, err := domain.NewPush(req.Command.Name, req.Command.FcmApiKey, req.Command.Tags)
+	push, err := domain.NewPush(
+		req.Command.Name,
+		req.Command.FcmApiKey,
+		string(req.Command.FcmServiceAccount),
+		req.Command.Tags,
+	)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new push",

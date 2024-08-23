@@ -18,9 +18,10 @@ package bucketeer.push;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/push";
 
 message CreatePushCommand {
-  string fcm_api_key = 1;
+  string fcm_api_key = 1 [deprecated = true];
   repeated string tags = 2;
   string name = 3;
+  bytes fcm_service_account = 4;
 }
 
 message AddPushTagsCommand {

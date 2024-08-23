@@ -86,6 +86,7 @@ func (s *accountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV
 		mysql.JSONObject{Val: a.EnvironmentRoles},
 		a.Disabled,
 		a.UpdatedAt,
+		mysql.JSONObject{Val: a.SearchFilters},
 		a.Email,
 		a.OrganizationId,
 	)
@@ -209,6 +210,7 @@ func (s *accountStorage) GetAccountsWithOrganization(
 			&account.Disabled,
 			&account.CreatedAt,
 			&account.UpdatedAt,
+			&mysql.JSONObject{Val: &account.SearchFilters},
 			&organization.Id,
 			&organization.Name,
 			&organization.UrlCode,
@@ -269,6 +271,7 @@ func (s *accountStorage) ListAccountsV2(
 			&account.Disabled,
 			&account.CreatedAt,
 			&account.UpdatedAt,
+			&mysql.JSONObject{Val: &account.SearchFilters},
 		)
 		if err != nil {
 			return nil, 0, 0, err

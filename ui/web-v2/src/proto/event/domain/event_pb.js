@@ -26686,6 +26686,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
+        fcmServiceAccount: jspb.Message.getFieldWithDefault(msg, 1, ''),
         fcmApiKey: jspb.Message.getFieldWithDefault(msg, 2, ''),
         tagsList:
           (f = jspb.Message.getRepeatedField(msg, 3)) == null ? undefined : f,
@@ -26730,6 +26731,10 @@ proto.bucketeer.event.domain.PushCreatedEvent.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
+        case 1:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setFcmServiceAccount(value);
+          break;
         case 2:
           var value = /** @type {string} */ (reader.readString());
           msg.setFcmApiKey(value);
@@ -26774,6 +26779,10 @@ proto.bucketeer.event.domain.PushCreatedEvent.prototype.serializeBinary =
 proto.bucketeer.event.domain.PushCreatedEvent.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
+    f = message.getFcmServiceAccount();
+    if (f.length > 0) {
+      writer.writeString(1, f);
+    }
     f = message.getFcmApiKey();
     if (f.length > 0) {
       writer.writeString(2, f);
@@ -26786,6 +26795,26 @@ proto.bucketeer.event.domain.PushCreatedEvent.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(4, f);
     }
+  };
+
+/**
+ * optional string fcm_service_account = 1;
+ * @return {string}
+ */
+proto.bucketeer.event.domain.PushCreatedEvent.prototype.getFcmServiceAccount =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 1, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.event.domain.PushCreatedEvent} returns this
+ */
+proto.bucketeer.event.domain.PushCreatedEvent.prototype.setFcmServiceAccount =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 1, value);
   };
 
 /**

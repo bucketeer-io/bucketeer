@@ -128,9 +128,7 @@ func TestCreateSearchFilter(t *testing.T) {
 		{
 			desc: "err: internal error",
 			setup: func(s *AccountService) {
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.AccountV2{
+				account := domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "email",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
@@ -141,7 +139,13 @@ func TestCreateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&account, nil).AnyTimes()
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&account, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("test"))
@@ -165,9 +169,7 @@ func TestCreateSearchFilter(t *testing.T) {
 		{
 			desc: "err: account not found",
 			setup: func(s *AccountService) {
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.AccountV2{
+				account := domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "email",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
@@ -178,7 +180,14 @@ func TestCreateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&account, nil).AnyTimes()
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&account, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
@@ -357,7 +366,68 @@ func TestCreateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &accountproto.CreateSearchFilterRequest{
+				Email:                "bucketeer@example.com",
+				OrganizationId:       "org0",
+				EnvironmentNamespace: "envName0",
+				Command: &accountproto.CreateSearchFilterCommand{
+					SearchFilter: &accountproto.SearchFilter{
+						Name:             "filter",
+						Query:            "query",
+						FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+						EnvironmentId:    "envID0",
+						DefaultFilter:    false,
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: already has default filter",
+			setup: func(s *AccountService) {
+				account := domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "email",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "ns0",
+								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+							},
+						},
+						SearchFilters: []*accountproto.SearchFilter{
+							{
+								Id:               "id",
+								Name:             "filter",
+								Query:            "query",
+								FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+								EnvironmentId:    "envID0",
+								DefaultFilter:    true,
+							},
+						},
+					},
+				}
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&account, nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&account, nil)
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
