@@ -18,11 +18,13 @@ import (
 	"context"
 	"errors"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
+
+	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
+
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -51,33 +53,22 @@ func (s *AccountService) CreateSearchFilterV2(
 		return nil, err
 	}
 
-	err = s.accountStorage.RunInTransaction(ctx, func() error {
-		account, err := s.accountStorage.GetAccountV2(ctx, req.Email, req.OrganizationId)
-		if err != nil {
-			return err
-		}
-		handler, err := command.NewAccountV2CommandHandler(editor, account, s.publisher, req.OrganizationId)
-		if err != nil {
-			return err
-		}
-
-		// Since there is only one default setting for a filter target, set the existing default to OFF.
-		changeDefaultFilters := getChangeDefaultFilters(account, req.Command.SearchFilter)
-		if changeDefaultFilters != nil {
-			for _, changeDefaultFilter := range changeDefaultFilters {
-				updateCommand := &accountproto.UpdateSearchFilterCommand{SearchFilter: changeDefaultFilter}
-				if err := handler.Handle(ctx, updateCommand); err != nil {
-					return err
-				}
-			}
-		}
-
-		if err := handler.Handle(ctx, req.Command); err != nil {
-			return err
-		}
-		return s.accountStorage.UpdateSearchFilters(ctx, account)
-	})
+	account, err := s.getAccountV2(ctx, req.Email, req.OrganizationId, localizer)
 	if err != nil {
+		return nil, err
+	}
+	// Since there is only one default setting for a filter target, set the existing default to OFF.
+	changeDefaultFilters := getChangeDefaultFilters(account, req.Command.SearchFilter)
+	commands := make([]command.Command, 0)
+	for _, changeDefaultFilter := range changeDefaultFilters {
+		commands = append(
+			commands,
+			&accountproto.UpdateSearchFilterCommand{SearchFilter: changeDefaultFilter},
+		)
+	}
+	commands = append(commands, req.Command)
+
+	if err := s.updateAccountV2MySQL(ctx, editor, commands, req.Email, req.OrganizationId); err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -106,7 +97,6 @@ func (s *AccountService) CreateSearchFilterV2(
 		}
 		return nil, dt.Err()
 	}
-
 	return &accountproto.CreateSearchFilterResponse{}, nil
 }
 
