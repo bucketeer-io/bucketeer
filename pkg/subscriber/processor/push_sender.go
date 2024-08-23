@@ -42,8 +42,7 @@ import (
 )
 
 const (
-	listRequestSize = 500
-	topicPrefix     = "bucketeer-"
+	topicPrefix = "bucketeer-"
 )
 
 type pushSender struct {

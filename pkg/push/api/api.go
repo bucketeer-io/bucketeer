@@ -630,7 +630,7 @@ func (s *PushService) checkFCMServiceAccount(
 	// Check if the JSON is a service account file
 	_, err := google.CredentialsFromJSON(
 		ctx,
-		[]byte(fcmServiceAccount),
+		fcmServiceAccount,
 		"https://www.googleapis.com/auth/firebase.messaging",
 	)
 	if err != nil {
