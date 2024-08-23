@@ -148,7 +148,7 @@ func (s *PushService) CreatePush(
 	if err := s.validateFCMServiceAccount(ctx, pushes, req.Command.FcmServiceAccount, localizer); err != nil {
 		return nil, err
 	}
-	err = s.containsTags(ctx, pushes, req.Command.Tags, localizer)
+	err = s.containsTags(pushes, req.Command.Tags, localizer)
 	if err != nil {
 		if status.Code(err) == codes.AlreadyExists {
 			dt, err := statusTagAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
@@ -443,7 +443,7 @@ func (s *PushService) validateAddPushTagsCommand(
 		}
 		return dt.Err()
 	}
-	err = s.containsTags(ctx, pushes, req.AddPushTagsCommand.Tags, localizer)
+	err = s.containsTags(pushes, req.AddPushTagsCommand.Tags, localizer)
 	if err != nil {
 		if status.Code(err) == codes.AlreadyExists {
 			dt, err := statusTagAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
@@ -598,7 +598,6 @@ func (s *PushService) createUpdatePushCommands(req *pushproto.UpdatePushRequest)
 }
 
 func (s *PushService) containsTags(
-	ctx context.Context,
 	pushes []*pushproto.Push,
 	tags []string,
 	localizer locale.Localizer,
@@ -620,25 +619,6 @@ func (s *PushService) containsTags(
 		}
 	}
 	return nil
-}
-
-func (s *PushService) containsFCMServiceAccount(
-	pushes []*pushproto.Push,
-	fcmServiceAccount []byte,
-) (bool, error) {
-	for _, push := range pushes {
-		equal, err := s.compareJSON(push.FcmServiceAccount, string(fcmServiceAccount))
-		if err != nil {
-			return false, err
-		}
-		if equal {
-			return true, err
-		}
-		if bytes.Equal(fcmServiceAccount, []byte(push.FcmServiceAccount)) {
-			return true, nil
-		}
-	}
-	return false, nil
 }
 
 func (s *PushService) validateFCMServiceAccount(
