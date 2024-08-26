@@ -1102,6 +1102,1340 @@ paths:
             $ref: '#/definitions/authSignInRequest'
       tags:
         - Authentication
+  /v1/environment/archive_environment:
+    post:
+      summary: Archive
+      description: Archive an environment. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.archive_environment
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentArchiveEnvironmentV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentArchiveEnvironmentV2Request'
+      tags:
+        - Environment
+  /v1/environment/archive_organization:
+    post:
+      summary: Archive
+      description: Archive an organization. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.archive_organization
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentArchiveOrganizationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentArchiveOrganizationRequest'
+      tags:
+        - Organization
+  /v1/environment/convert_trial_organization:
+    post:
+      summary: Convert Trial
+      description: Convert a trial organization to a paid one. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.convert_trial_organization
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentConvertTrialOrganizationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentConvertTrialOrganizationRequest'
+      tags:
+        - Organization
+  /v1/environment/convert_trial_project:
+    post:
+      summary: Convert Trial
+      description: Convert a trial project. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.convert_trial_project
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentConvertTrialProjectResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentConvertTrialProjectRequest'
+      tags:
+        - Project
+  /v1/environment/create_environment:
+    post:
+      summary: Create
+      description: Create an environment. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.create_environment
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentCreateEnvironmentV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentCreateEnvironmentV2Request'
+      tags:
+        - Environment
+  /v1/environment/create_organization:
+    post:
+      summary: Create
+      description: Create an organization. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.create_organization
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentCreateOrganizationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentCreateOrganizationRequest'
+      tags:
+        - Organization
+  /v1/environment/create_project:
+    post:
+      summary: Create
+      description: Create a project. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.create_project
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentCreateProjectResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentCreateProjectRequest'
+      tags:
+        - Project
+  /v1/environment/create_trial_project:
+    post:
+      summary: Create Trial
+      description: Create a trial project. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.create_trial_project
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentCreateTrialProjectResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentCreateTrialProjectRequest'
+      tags:
+        - Project
+  /v1/environment/disable_organization:
+    post:
+      summary: Disable
+      description: Disable an organization. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.disable_organization
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentDisableOrganizationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentDisableOrganizationRequest'
+      tags:
+        - Organization
+  /v1/environment/disable_project:
+    post:
+      summary: Disable
+      description: Disable a project. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.disable_project
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentDisableProjectResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentDisableProjectRequest'
+      tags:
+        - Project
+  /v1/environment/enable_organization:
+    post:
+      summary: Enable
+      description: Enable an organization. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.enable_organization
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentEnableOrganizationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentEnableOrganizationRequest'
+      tags:
+        - Organization
+  /v1/environment/enable_project:
+    post:
+      summary: Enable
+      description: Enable a project. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.enable_project
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentEnableProjectResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentEnableProjectRequest'
+      tags:
+        - Project
+  /v1/environment/get_environment:
+    post:
+      summary: Get
+      description: Get an environment. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.get_environment
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentGetEnvironmentV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentGetEnvironmentV2Request'
+      tags:
+        - Environment
+  /v1/environment/get_organization:
+    post:
+      summary: Get
+      description: Get an organization. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.get_organization
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentGetOrganizationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentGetOrganizationRequest'
+      tags:
+        - Organization
+  /v1/environment/get_project:
+    post:
+      summary: Get
+      description: Get a project. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.get_project
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentGetProjectResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentGetProjectRequest'
+      tags:
+        - Project
+  /v1/environment/list_environments:
+    post:
+      summary: List
+      description: List environments. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.list_environments
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentListEnvironmentsV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentListEnvironmentsV2Request'
+      tags:
+        - Environment
+  /v1/environment/list_organizations:
+    post:
+      summary: List
+      description: List organizations. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.list_organizations
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentListOrganizationsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentListOrganizationsRequest'
+      tags:
+        - Organization
+  /v1/environment/list_projects:
+    post:
+      summary: List
+      description: List projects. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.list_projects
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentListProjectsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentListProjectsRequest'
+      tags:
+        - Project
+  /v1/environment/unarchive_environment:
+    post:
+      summary: Unarchive
+      description: Unarchive an environment. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.unarchive_environment
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentUnarchiveEnvironmentV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentUnarchiveEnvironmentV2Request'
+      tags:
+        - Environment
+  /v1/environment/unarchive_organization:
+    post:
+      summary: Unarchive
+      description: Unarchive an organization. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.unarchive_organization
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentUnarchiveOrganizationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentUnarchiveOrganizationRequest'
+      tags:
+        - Organization
+  /v1/environment/update_environment:
+    post:
+      summary: Update
+      description: Update an environment. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.update_environment
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentUpdateEnvironmentV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentUpdateEnvironmentV2Request'
+      tags:
+        - Environment
+  /v1/environment/update_organization:
+    post:
+      summary: Update
+      description: Update an organization. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.update_organization
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentUpdateOrganizationResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentUpdateOrganizationRequest'
+      tags:
+        - Organization
+  /v1/environment/update_project:
+    post:
+      summary: Update
+      description: Update a project. To call this API, you need an `SYSTEM_ADMIN` role.
+      operationId: web.v1.environment.update_project
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentUpdateProjectResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentUpdateProjectRequest'
+      tags:
+        - Project
 definitions:
   AccountV2RoleOrganization:
     type: string
@@ -1689,6 +3023,208 @@ definitions:
         format: int64
       systemAdmin:
         type: boolean
+  environmentArchiveEnvironmentV2Command:
+    type: object
+  environmentArchiveEnvironmentV2Request:
+    type: object
+    properties:
+      id:
+        type: string
+      command:
+        $ref: '#/definitions/environmentArchiveEnvironmentV2Command'
+  environmentArchiveEnvironmentV2Response:
+    type: object
+  environmentArchiveOrganizationCommand:
+    type: object
+  environmentArchiveOrganizationRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      command:
+        $ref: '#/definitions/environmentArchiveOrganizationCommand'
+  environmentArchiveOrganizationResponse:
+    type: object
+  environmentChangeDescriptionEnvironmentV2Command:
+    type: object
+    properties:
+      description:
+        type: string
+  environmentChangeDescriptionOrganizationCommand:
+    type: object
+    properties:
+      description:
+        type: string
+  environmentChangeDescriptionProjectCommand:
+    type: object
+    properties:
+      description:
+        type: string
+  environmentChangeNameOrganizationCommand:
+    type: object
+    properties:
+      name:
+        type: string
+  environmentChangeRequireCommentCommand:
+    type: object
+    properties:
+      requireComment:
+        type: boolean
+  environmentConvertTrialOrganizationCommand:
+    type: object
+  environmentConvertTrialOrganizationRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      command:
+        $ref: '#/definitions/environmentConvertTrialOrganizationCommand'
+  environmentConvertTrialOrganizationResponse:
+    type: object
+  environmentConvertTrialProjectCommand:
+    type: object
+  environmentConvertTrialProjectRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      command:
+        $ref: '#/definitions/environmentConvertTrialProjectCommand'
+  environmentConvertTrialProjectResponse:
+    type: object
+  environmentCreateEnvironmentV2Command:
+    type: object
+    properties:
+      name:
+        type: string
+      urlCode:
+        type: string
+      description:
+        type: string
+        title: optional
+      projectId:
+        type: string
+      requireComment:
+        type: boolean
+  environmentCreateEnvironmentV2Request:
+    type: object
+    properties:
+      command:
+        $ref: '#/definitions/environmentCreateEnvironmentV2Command'
+  environmentCreateEnvironmentV2Response:
+    type: object
+    properties:
+      environment:
+        $ref: '#/definitions/environmentEnvironmentV2'
+  environmentCreateOrganizationCommand:
+    type: object
+    properties:
+      name:
+        type: string
+      urlCode:
+        type: string
+      description:
+        type: string
+        title: optional
+      isTrial:
+        type: boolean
+      isSystemAdmin:
+        type: boolean
+  environmentCreateOrganizationRequest:
+    type: object
+    properties:
+      command:
+        $ref: '#/definitions/environmentCreateOrganizationCommand'
+  environmentCreateOrganizationResponse:
+    type: object
+    properties:
+      Organization:
+        $ref: '#/definitions/bucketeerenvironmentOrganization'
+  environmentCreateProjectCommand:
+    type: object
+    properties:
+      id:
+        type: string
+      description:
+        type: string
+        title: optional
+      name:
+        type: string
+      urlCode:
+        type: string
+    description: 'TODO: add organizationID once we support organization create UI.'
+  environmentCreateProjectRequest:
+    type: object
+    properties:
+      command:
+        $ref: '#/definitions/environmentCreateProjectCommand'
+  environmentCreateProjectResponse:
+    type: object
+    properties:
+      project:
+        $ref: '#/definitions/environmentProject'
+  environmentCreateTrialProjectCommand:
+    type: object
+    properties:
+      id:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+      urlCode:
+        type: string
+  environmentCreateTrialProjectRequest:
+    type: object
+    properties:
+      command:
+        $ref: '#/definitions/environmentCreateTrialProjectCommand'
+  environmentCreateTrialProjectResponse:
+    type: object
+  environmentDisableOrganizationCommand:
+    type: object
+  environmentDisableOrganizationRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      command:
+        $ref: '#/definitions/environmentDisableOrganizationCommand'
+  environmentDisableOrganizationResponse:
+    type: object
+  environmentDisableProjectCommand:
+    type: object
+  environmentDisableProjectRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      command:
+        $ref: '#/definitions/environmentDisableProjectCommand'
+  environmentDisableProjectResponse:
+    type: object
+  environmentEnableOrganizationCommand:
+    type: object
+  environmentEnableOrganizationRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      command:
+        $ref: '#/definitions/environmentEnableOrganizationCommand'
+  environmentEnableOrganizationResponse:
+    type: object
+  environmentEnableProjectCommand:
+    type: object
+  environmentEnableProjectRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      command:
+        $ref: '#/definitions/environmentEnableProjectCommand'
+  environmentEnableProjectResponse:
+    type: object
   environmentEnvironmentV2:
     type: object
     properties:
@@ -1715,6 +3251,181 @@ definitions:
         type: string
       requireComment:
         type: boolean
+  environmentGetEnvironmentV2Request:
+    type: object
+    properties:
+      id:
+        type: string
+  environmentGetEnvironmentV2Response:
+    type: object
+    properties:
+      environment:
+        $ref: '#/definitions/environmentEnvironmentV2'
+  environmentGetOrganizationRequest:
+    type: object
+    properties:
+      id:
+        type: string
+  environmentGetOrganizationResponse:
+    type: object
+    properties:
+      organization:
+        $ref: '#/definitions/bucketeerenvironmentOrganization'
+  environmentGetProjectRequest:
+    type: object
+    properties:
+      id:
+        type: string
+  environmentGetProjectResponse:
+    type: object
+    properties:
+      project:
+        $ref: '#/definitions/environmentProject'
+  environmentListEnvironmentsV2Request:
+    type: object
+    properties:
+      pageSize:
+        type: string
+        format: int64
+      cursor:
+        type: string
+      orderBy:
+        $ref: '#/definitions/environmentListEnvironmentsV2RequestOrderBy'
+      orderDirection:
+        $ref: '#/definitions/environmentListEnvironmentsV2RequestOrderDirection'
+      projectId:
+        type: string
+      archived:
+        type: boolean
+      searchKeyword:
+        type: string
+      organizationId:
+        type: string
+  environmentListEnvironmentsV2RequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - ID
+      - NAME
+      - URL_CODE
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  environmentListEnvironmentsV2RequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  environmentListEnvironmentsV2Response:
+    type: object
+    properties:
+      environments:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/environmentEnvironmentV2'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  environmentListOrganizationsRequest:
+    type: object
+    properties:
+      pageSize:
+        type: string
+        format: int64
+      cursor:
+        type: string
+      orderBy:
+        $ref: '#/definitions/environmentListOrganizationsRequestOrderBy'
+      orderDirection:
+        $ref: '#/definitions/environmentListOrganizationsRequestOrderDirection'
+      searchKeyword:
+        type: string
+      disabled:
+        type: boolean
+      archived:
+        type: boolean
+  environmentListOrganizationsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - ID
+      - CREATED_AT
+      - UPDATED_AT
+      - NAME
+      - URL_CODE
+    default: DEFAULT
+  environmentListOrganizationsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  environmentListOrganizationsResponse:
+    type: object
+    properties:
+      Organizations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerenvironmentOrganization'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  environmentListProjectsRequest:
+    type: object
+    properties:
+      pageSize:
+        type: string
+        format: int64
+      cursor:
+        type: string
+      orderBy:
+        $ref: '#/definitions/environmentListProjectsRequestOrderBy'
+      orderDirection:
+        $ref: '#/definitions/environmentListProjectsRequestOrderDirection'
+      searchKeyword:
+        type: string
+      disabled:
+        type: boolean
+      organizationIds:
+        type: array
+        items:
+          type: string
+  environmentListProjectsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - ID
+      - CREATED_AT
+      - UPDATED_AT
+      - NAME
+      - URL_CODE
+    default: DEFAULT
+  environmentListProjectsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  environmentListProjectsResponse:
+    type: object
+    properties:
+      projects:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/environmentProject'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
   environmentProject:
     type: object
     properties:
@@ -1741,6 +3452,73 @@ definitions:
         type: string
       organizationId:
         type: string
+  environmentRenameEnvironmentV2Command:
+    type: object
+    properties:
+      name:
+        type: string
+  environmentRenameProjectCommand:
+    type: object
+    properties:
+      name:
+        type: string
+  environmentUnarchiveEnvironmentV2Command:
+    type: object
+  environmentUnarchiveEnvironmentV2Request:
+    type: object
+    properties:
+      id:
+        type: string
+      command:
+        $ref: '#/definitions/environmentUnarchiveEnvironmentV2Command'
+  environmentUnarchiveEnvironmentV2Response:
+    type: object
+  environmentUnarchiveOrganizationCommand:
+    type: object
+  environmentUnarchiveOrganizationRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      command:
+        $ref: '#/definitions/environmentUnarchiveOrganizationCommand'
+  environmentUnarchiveOrganizationResponse:
+    type: object
+  environmentUpdateEnvironmentV2Request:
+    type: object
+    properties:
+      id:
+        type: string
+      renameCommand:
+        $ref: '#/definitions/environmentRenameEnvironmentV2Command'
+      changeDescriptionCommand:
+        $ref: '#/definitions/environmentChangeDescriptionEnvironmentV2Command'
+      changeRequireCommentCommand:
+        $ref: '#/definitions/environmentChangeRequireCommentCommand'
+  environmentUpdateEnvironmentV2Response:
+    type: object
+  environmentUpdateOrganizationRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      renameCommand:
+        $ref: '#/definitions/environmentChangeNameOrganizationCommand'
+      changeDescriptionCommand:
+        $ref: '#/definitions/environmentChangeDescriptionOrganizationCommand'
+  environmentUpdateOrganizationResponse:
+    type: object
+  environmentUpdateProjectRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      changeDescriptionCommand:
+        $ref: '#/definitions/environmentChangeDescriptionProjectCommand'
+      renameCommand:
+        $ref: '#/definitions/environmentRenameProjectCommand'
+  environmentUpdateProjectResponse:
+    type: object
   protobufAny:
     type: object
     properties:
