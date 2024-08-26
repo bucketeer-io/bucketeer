@@ -570,6 +570,16 @@
                 "type": "SearchFilter"
               }
             ]
+          },
+          {
+            "name": "DeleteSearchFilterCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "search_filter_id",
+                "type": "string"
+              }
+            ]
           }
         ],
         "imports": [
@@ -1286,6 +1296,34 @@
           },
           {
             "name": "UpdateSearchFilterResponse"
+          },
+          {
+            "name": "DeleteSearchFilterRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "command",
+                "type": "DeleteSearchFilterCommand"
+              }
+            ]
+          },
+          {
+            "name": "DeleteSearchFilterResponse"
           }
         ],
         "services": [
@@ -1391,6 +1429,11 @@
                 "name": "UpdateSearchFilterV2",
                 "in_type": "UpdateSearchFilterRequest",
                 "out_type": "UpdateSearchFilterResponse"
+              },
+              {
+                "name": "DeleteSearchFilterV2",
+                "in_type": "DeleteSearchFilterRequest",
+                "out_type": "DeleteSearchFilterResponse"
               }
             ]
           }
@@ -6499,6 +6542,10 @@
                 "integer": 314
               },
               {
+                "name": "ACCOUNT_V2_DELETED_SEARCH_FILTER",
+                "integer": 315
+              },
+              {
                 "name": "APIKEY_CREATED",
                 "integer": 400
               },
@@ -8183,6 +8230,16 @@
               {
                 "id": 2,
                 "name": "Name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "SearchFilterDeleteEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
                 "type": "string"
               }
             ]
