@@ -25,6 +25,10 @@ var global =
 
 var google_protobuf_wrappers_pb = require('google-protobuf/google/protobuf/wrappers_pb.js');
 goog.object.extend(proto, google_protobuf_wrappers_pb);
+var google_api_annotations_pb = require('../../google/api/annotations_pb.js');
+goog.object.extend(proto, google_api_annotations_pb);
+var protoc$gen$openapiv2_options_annotations_pb = require('../../protoc-gen-openapiv2/options/annotations_pb.js');
+goog.object.extend(proto, protoc$gen$openapiv2_options_annotations_pb);
 var proto_account_account_pb = require('../../proto/account/account_pb.js');
 goog.object.extend(proto, proto_account_account_pb);
 var proto_account_api_key_pb = require('../../proto/account/api_key_pb.js');
