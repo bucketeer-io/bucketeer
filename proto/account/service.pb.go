@@ -2250,7 +2250,7 @@ func (*CreateSearchFilterResponse) Descriptor() ([]byte, []int) {
 	return file_proto_account_service_proto_rawDescGZIP(), []int{36}
 }
 
-type DeleteSearchFilterRequest struct {
+type UpdateSearchFilterRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -2258,11 +2258,11 @@ type DeleteSearchFilterRequest struct {
 	Email                string                     `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
 	OrganizationId       string                     `protobuf:"bytes,2,opt,name=organization_id,json=organizationId,proto3" json:"organization_id"`
 	EnvironmentNamespace string                     `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace"`
-	Command              *DeleteSearchFilterCommand `protobuf:"bytes,4,opt,name=command,proto3" json:"command"`
+	Command              *UpdateSearchFilterCommand `protobuf:"bytes,4,opt,name=command,proto3" json:"command"`
 }
 
-func (x *DeleteSearchFilterRequest) Reset() {
-	*x = DeleteSearchFilterRequest{}
+func (x *UpdateSearchFilterRequest) Reset() {
+	*x = UpdateSearchFilterRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_proto_account_service_proto_msgTypes[37]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2270,13 +2270,13 @@ func (x *DeleteSearchFilterRequest) Reset() {
 	}
 }
 
-func (x *DeleteSearchFilterRequest) String() string {
+func (x *UpdateSearchFilterRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteSearchFilterRequest) ProtoMessage() {}
+func (*UpdateSearchFilterRequest) ProtoMessage() {}
 
-func (x *DeleteSearchFilterRequest) ProtoReflect() protoreflect.Message {
+func (x *UpdateSearchFilterRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_account_service_proto_msgTypes[37]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2288,47 +2288,47 @@ func (x *DeleteSearchFilterRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteSearchFilterRequest.ProtoReflect.Descriptor instead.
-func (*DeleteSearchFilterRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpdateSearchFilterRequest.ProtoReflect.Descriptor instead.
+func (*UpdateSearchFilterRequest) Descriptor() ([]byte, []int) {
 	return file_proto_account_service_proto_rawDescGZIP(), []int{37}
 }
 
-func (x *DeleteSearchFilterRequest) GetEmail() string {
+func (x *UpdateSearchFilterRequest) GetEmail() string {
 	if x != nil {
 		return x.Email
 	}
 	return ""
 }
 
-func (x *DeleteSearchFilterRequest) GetOrganizationId() string {
+func (x *UpdateSearchFilterRequest) GetOrganizationId() string {
 	if x != nil {
 		return x.OrganizationId
 	}
 	return ""
 }
 
-func (x *DeleteSearchFilterRequest) GetEnvironmentNamespace() string {
+func (x *UpdateSearchFilterRequest) GetEnvironmentNamespace() string {
 	if x != nil {
 		return x.EnvironmentNamespace
 	}
 	return ""
 }
 
-func (x *DeleteSearchFilterRequest) GetCommand() *DeleteSearchFilterCommand {
+func (x *UpdateSearchFilterRequest) GetCommand() *UpdateSearchFilterCommand {
 	if x != nil {
 		return x.Command
 	}
 	return nil
 }
 
-type DeleteSearchFilterResponse struct {
+type UpdateSearchFilterResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 }
 
-func (x *DeleteSearchFilterResponse) Reset() {
-	*x = DeleteSearchFilterResponse{}
+func (x *UpdateSearchFilterResponse) Reset() {
+	*x = UpdateSearchFilterResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_proto_account_service_proto_msgTypes[38]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2336,13 +2336,13 @@ func (x *DeleteSearchFilterResponse) Reset() {
 	}
 }
 
-func (x *DeleteSearchFilterResponse) String() string {
+func (x *UpdateSearchFilterResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteSearchFilterResponse) ProtoMessage() {}
+func (*UpdateSearchFilterResponse) ProtoMessage() {}
 
-func (x *DeleteSearchFilterResponse) ProtoReflect() protoreflect.Message {
+func (x *UpdateSearchFilterResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_account_service_proto_msgTypes[38]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2354,8 +2354,8 @@ func (x *DeleteSearchFilterResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteSearchFilterResponse.ProtoReflect.Descriptor instead.
-func (*DeleteSearchFilterResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use UpdateSearchFilterResponse.ProtoReflect.Descriptor instead.
+func (*UpdateSearchFilterResponse) Descriptor() ([]byte, []int) {
 	return file_proto_account_service_proto_rawDescGZIP(), []int{38}
 }
 
@@ -2683,7 +2683,7 @@ var file_proto_account_service_proto_rawDesc = []byte{
 	0x6c, 0x74, 0x65, 0x72, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x52, 0x07, 0x63, 0x6f, 0x6d,
 	0x6d, 0x61, 0x6e, 0x64, 0x22, 0x1c, 0x0a, 0x1a, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x65,
 	0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
-	0x73, 0x65, 0x22, 0xd7, 0x01, 0x0a, 0x19, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x53, 0x65, 0x61,
+	0x73, 0x65, 0x22, 0xd7, 0x01, 0x0a, 0x19, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x53, 0x65, 0x61,
 	0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
 	0x12, 0x14, 0x0a, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
 	0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x12, 0x27, 0x0a, 0x0f, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69,
@@ -2694,10 +2694,10 @@ var file_proto_account_service_proto_rawDesc = []byte{
 	0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x4e, 0x61, 0x6d, 0x65, 0x73,
 	0x70, 0x61, 0x63, 0x65, 0x12, 0x46, 0x0a, 0x07, 0x63, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x18,
 	0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x2c, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65,
-	0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65,
+	0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65,
 	0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x43, 0x6f, 0x6d, 0x6d,
 	0x61, 0x6e, 0x64, 0x52, 0x07, 0x63, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x1c, 0x0a, 0x1a,
-	0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74,
+	0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74,
 	0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x32, 0x96, 0x11, 0x0a, 0x0e, 0x41,
 	0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x12, 0x4a, 0x0a,
 	0x05, 0x47, 0x65, 0x74, 0x4d, 0x65, 0x12, 0x1f, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65,
@@ -2829,12 +2829,12 @@ var file_proto_account_service_proto_rawDesc = []byte{
 	0x2d, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f,
 	0x75, 0x6e, 0x74, 0x2e, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68,
 	0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x73,
-	0x0a, 0x14, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69,
+	0x0a, 0x14, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69,
 	0x6c, 0x74, 0x65, 0x72, 0x56, 0x32, 0x12, 0x2c, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65,
-	0x65, 0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74,
+	0x65, 0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74,
 	0x65, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x65, 0x71,
 	0x75, 0x65, 0x73, 0x74, 0x1a, 0x2d, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72,
-	0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x53,
+	0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x53,
 	0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52, 0x65, 0x73, 0x70, 0x6f,
 	0x6e, 0x73, 0x65, 0x42, 0x31, 0x5a, 0x2f, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f,
 	0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f, 0x2f, 0x62,
@@ -2898,8 +2898,8 @@ var file_proto_account_service_proto_goTypes = []interface{}{
 	(*GetAPIKeyBySearchingAllEnvironmentsResponse)(nil), // 38: bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse
 	(*CreateSearchFilterRequest)(nil),                   // 39: bucketeer.account.CreateSearchFilterRequest
 	(*CreateSearchFilterResponse)(nil),                  // 40: bucketeer.account.CreateSearchFilterResponse
-	(*DeleteSearchFilterRequest)(nil),                   // 41: bucketeer.account.DeleteSearchFilterRequest
-	(*DeleteSearchFilterResponse)(nil),                  // 42: bucketeer.account.DeleteSearchFilterResponse
+	(*UpdateSearchFilterRequest)(nil),                   // 41: bucketeer.account.UpdateSearchFilterRequest
+	(*UpdateSearchFilterResponse)(nil),                  // 42: bucketeer.account.UpdateSearchFilterResponse
 	(*ConsoleAccount)(nil),                              // 43: bucketeer.account.ConsoleAccount
 	(*environment.Organization)(nil),                    // 44: bucketeer.environment.Organization
 	(*CreateAccountV2Command)(nil),                      // 45: bucketeer.account.CreateAccountV2Command
@@ -2921,7 +2921,7 @@ var file_proto_account_service_proto_goTypes = []interface{}{
 	(*DisableAPIKeyCommand)(nil),                        // 61: bucketeer.account.DisableAPIKeyCommand
 	(*EnvironmentAPIKey)(nil),                           // 62: bucketeer.account.EnvironmentAPIKey
 	(*CreateSearchFilterCommand)(nil),                   // 63: bucketeer.account.CreateSearchFilterCommand
-	(*DeleteSearchFilterCommand)(nil),                   // 64: bucketeer.account.DeleteSearchFilterCommand
+	(*UpdateSearchFilterCommand)(nil),                   // 64: bucketeer.account.UpdateSearchFilterCommand
 }
 var file_proto_account_service_proto_depIdxs = []int32{
 	43, // 0: bucketeer.account.GetMeResponse.account:type_name -> bucketeer.account.ConsoleAccount
@@ -2956,7 +2956,7 @@ var file_proto_account_service_proto_depIdxs = []int32{
 	58, // 29: bucketeer.account.ListAPIKeysResponse.api_keys:type_name -> bucketeer.account.APIKey
 	62, // 30: bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse.environment_api_key:type_name -> bucketeer.account.EnvironmentAPIKey
 	63, // 31: bucketeer.account.CreateSearchFilterRequest.command:type_name -> bucketeer.account.CreateSearchFilterCommand
-	64, // 32: bucketeer.account.DeleteSearchFilterRequest.command:type_name -> bucketeer.account.DeleteSearchFilterCommand
+	64, // 32: bucketeer.account.UpdateSearchFilterRequest.command:type_name -> bucketeer.account.UpdateSearchFilterCommand
 	4,  // 33: bucketeer.account.AccountService.GetMe:input_type -> bucketeer.account.GetMeRequest
 	6,  // 34: bucketeer.account.AccountService.GetMyOrganizations:input_type -> bucketeer.account.GetMyOrganizationsRequest
 	7,  // 35: bucketeer.account.AccountService.GetMyOrganizationsByEmail:input_type -> bucketeer.account.GetMyOrganizationsByEmailRequest
@@ -2976,7 +2976,7 @@ var file_proto_account_service_proto_depIdxs = []int32{
 	35, // 49: bucketeer.account.AccountService.ListAPIKeys:input_type -> bucketeer.account.ListAPIKeysRequest
 	37, // 50: bucketeer.account.AccountService.GetAPIKeyBySearchingAllEnvironments:input_type -> bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest
 	39, // 51: bucketeer.account.AccountService.CreateSearchFilterV2:input_type -> bucketeer.account.CreateSearchFilterRequest
-	41, // 52: bucketeer.account.AccountService.DeleteSearchFilterV2:input_type -> bucketeer.account.DeleteSearchFilterRequest
+	41, // 52: bucketeer.account.AccountService.UpdateSearchFilterV2:input_type -> bucketeer.account.UpdateSearchFilterRequest
 	5,  // 53: bucketeer.account.AccountService.GetMe:output_type -> bucketeer.account.GetMeResponse
 	8,  // 54: bucketeer.account.AccountService.GetMyOrganizations:output_type -> bucketeer.account.GetMyOrganizationsResponse
 	8,  // 55: bucketeer.account.AccountService.GetMyOrganizationsByEmail:output_type -> bucketeer.account.GetMyOrganizationsResponse
@@ -2996,7 +2996,7 @@ var file_proto_account_service_proto_depIdxs = []int32{
 	36, // 69: bucketeer.account.AccountService.ListAPIKeys:output_type -> bucketeer.account.ListAPIKeysResponse
 	38, // 70: bucketeer.account.AccountService.GetAPIKeyBySearchingAllEnvironments:output_type -> bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsResponse
 	40, // 71: bucketeer.account.AccountService.CreateSearchFilterV2:output_type -> bucketeer.account.CreateSearchFilterResponse
-	42, // 72: bucketeer.account.AccountService.DeleteSearchFilterV2:output_type -> bucketeer.account.DeleteSearchFilterResponse
+	42, // 72: bucketeer.account.AccountService.UpdateSearchFilterV2:output_type -> bucketeer.account.UpdateSearchFilterResponse
 	53, // [53:73] is the sub-list for method output_type
 	33, // [33:53] is the sub-list for method input_type
 	33, // [33:33] is the sub-list for extension type_name
@@ -3458,7 +3458,7 @@ func file_proto_account_service_proto_init() {
 			}
 		}
 		file_proto_account_service_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteSearchFilterRequest); i {
+			switch v := v.(*UpdateSearchFilterRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3470,7 +3470,7 @@ func file_proto_account_service_proto_init() {
 			}
 		}
 		file_proto_account_service_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteSearchFilterResponse); i {
+			switch v := v.(*UpdateSearchFilterResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3534,7 +3534,7 @@ type AccountServiceClient interface {
 	ListAPIKeys(ctx context.Context, in *ListAPIKeysRequest, opts ...grpc.CallOption) (*ListAPIKeysResponse, error)
 	GetAPIKeyBySearchingAllEnvironments(ctx context.Context, in *GetAPIKeyBySearchingAllEnvironmentsRequest, opts ...grpc.CallOption) (*GetAPIKeyBySearchingAllEnvironmentsResponse, error)
 	CreateSearchFilterV2(ctx context.Context, in *CreateSearchFilterRequest, opts ...grpc.CallOption) (*CreateSearchFilterResponse, error)
-	DeleteSearchFilterV2(ctx context.Context, in *DeleteSearchFilterRequest, opts ...grpc.CallOption) (*DeleteSearchFilterResponse, error)
+	UpdateSearchFilterV2(ctx context.Context, in *UpdateSearchFilterRequest, opts ...grpc.CallOption) (*UpdateSearchFilterResponse, error)
 }
 
 type accountServiceClient struct {
@@ -3716,9 +3716,9 @@ func (c *accountServiceClient) CreateSearchFilterV2(ctx context.Context, in *Cre
 	return out, nil
 }
 
-func (c *accountServiceClient) DeleteSearchFilterV2(ctx context.Context, in *DeleteSearchFilterRequest, opts ...grpc.CallOption) (*DeleteSearchFilterResponse, error) {
-	out := new(DeleteSearchFilterResponse)
-	err := c.cc.Invoke(ctx, "/bucketeer.account.AccountService/DeleteSearchFilterV2", in, out, opts...)
+func (c *accountServiceClient) UpdateSearchFilterV2(ctx context.Context, in *UpdateSearchFilterRequest, opts ...grpc.CallOption) (*UpdateSearchFilterResponse, error) {
+	out := new(UpdateSearchFilterResponse)
+	err := c.cc.Invoke(ctx, "/bucketeer.account.AccountService/UpdateSearchFilterV2", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -3746,7 +3746,7 @@ type AccountServiceServer interface {
 	ListAPIKeys(context.Context, *ListAPIKeysRequest) (*ListAPIKeysResponse, error)
 	GetAPIKeyBySearchingAllEnvironments(context.Context, *GetAPIKeyBySearchingAllEnvironmentsRequest) (*GetAPIKeyBySearchingAllEnvironmentsResponse, error)
 	CreateSearchFilterV2(context.Context, *CreateSearchFilterRequest) (*CreateSearchFilterResponse, error)
-	DeleteSearchFilterV2(context.Context, *DeleteSearchFilterRequest) (*DeleteSearchFilterResponse, error)
+	UpdateSearchFilterV2(context.Context, *UpdateSearchFilterRequest) (*UpdateSearchFilterResponse, error)
 }
 
 // UnimplementedAccountServiceServer can be embedded to have forward compatible implementations.
@@ -3810,8 +3810,8 @@ func (*UnimplementedAccountServiceServer) GetAPIKeyBySearchingAllEnvironments(co
 func (*UnimplementedAccountServiceServer) CreateSearchFilterV2(context.Context, *CreateSearchFilterRequest) (*CreateSearchFilterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateSearchFilterV2 not implemented")
 }
-func (*UnimplementedAccountServiceServer) DeleteSearchFilterV2(context.Context, *DeleteSearchFilterRequest) (*DeleteSearchFilterResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteSearchFilterV2 not implemented")
+func (*UnimplementedAccountServiceServer) UpdateSearchFilterV2(context.Context, *UpdateSearchFilterRequest) (*UpdateSearchFilterResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateSearchFilterV2 not implemented")
 }
 
 func RegisterAccountServiceServer(s *grpc.Server, srv AccountServiceServer) {
@@ -4160,20 +4160,20 @@ func _AccountService_CreateSearchFilterV2_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AccountService_DeleteSearchFilterV2_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteSearchFilterRequest)
+func _AccountService_UpdateSearchFilterV2_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateSearchFilterRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AccountServiceServer).DeleteSearchFilterV2(ctx, in)
+		return srv.(AccountServiceServer).UpdateSearchFilterV2(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/bucketeer.account.AccountService/DeleteSearchFilterV2",
+		FullMethod: "/bucketeer.account.AccountService/UpdateSearchFilterV2",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AccountServiceServer).DeleteSearchFilterV2(ctx, req.(*DeleteSearchFilterRequest))
+		return srv.(AccountServiceServer).UpdateSearchFilterV2(ctx, req.(*UpdateSearchFilterRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -4259,8 +4259,8 @@ var _AccountService_serviceDesc = grpc.ServiceDesc{
 			Handler:    _AccountService_CreateSearchFilterV2_Handler,
 		},
 		{
-			MethodName: "DeleteSearchFilterV2",
-			Handler:    _AccountService_DeleteSearchFilterV2_Handler,
+			MethodName: "UpdateSearchFilterV2",
+			Handler:    _AccountService_UpdateSearchFilterV2_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -183,13 +183,13 @@ AccountService.CreateSearchFilterV2 = {
   responseType: proto_account_service_pb.CreateSearchFilterResponse
 };
 
-AccountService.DeleteSearchFilterV2 = {
-  methodName: 'DeleteSearchFilterV2',
+AccountService.UpdateSearchFilterV2 = {
+  methodName: 'UpdateSearchFilterV2',
   service: AccountService,
   requestStream: false,
   responseStream: false,
-  requestType: proto_account_service_pb.DeleteSearchFilterRequest,
-  responseType: proto_account_service_pb.DeleteSearchFilterResponse
+  requestType: proto_account_service_pb.UpdateSearchFilterRequest,
+  responseType: proto_account_service_pb.UpdateSearchFilterResponse
 };
 
 exports.AccountService = AccountService;
@@ -859,12 +859,12 @@ AccountServiceClient.prototype.createSearchFilterV2 =
     };
   };
 
-AccountServiceClient.prototype.deleteSearchFilterV2 =
-  function deleteSearchFilterV2(requestMessage, metadata, callback) {
+AccountServiceClient.prototype.updateSearchFilterV2 =
+  function updateSearchFilterV2(requestMessage, metadata, callback) {
     if (arguments.length === 2) {
       callback = arguments[1];
     }
-    var client = grpc.unary(AccountService.DeleteSearchFilterV2, {
+    var client = grpc.unary(AccountService.UpdateSearchFilterV2, {
       request: requestMessage,
       host: this.serviceHost,
       metadata: metadata,

@@ -49,6 +49,6 @@ var (
 		codes.InvalidArgument,
 		"account: search filter target type is unknown",
 	)
-	statusSearchFilterIdNotFound = gstatus.New(codes.NotFound, "account: search filter id not found")
 	statusSearchFilterIDIsEmpty  = gstatus.New(codes.InvalidArgument, "account: search filter ID is empty")
+	statusSearchFilterIDNotFound = gstatus.New(codes.InvalidArgument, "account: search filter ID not found")
 )

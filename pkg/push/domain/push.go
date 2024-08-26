@@ -32,7 +32,7 @@ type Push struct {
 	*proto.Push
 }
 
-func NewPush(name, fcmAPIKey string, tags []string) (*Push, error) {
+func NewPush(name, fcmAPIKey, fcmServiceAccount string, tags []string) (*Push, error) {
 	_, err := convMap(tags)
 	if err != nil {
 		return nil, err
@@ -43,12 +43,13 @@ func NewPush(name, fcmAPIKey string, tags []string) (*Push, error) {
 	}
 	now := time.Now().Unix()
 	p := &Push{&proto.Push{
-		Name:      name,
-		Id:        id.String(),
-		FcmApiKey: fcmAPIKey,
-		Tags:      tags,
-		CreatedAt: now,
-		UpdatedAt: now,
+		Name:              name,
+		Id:                id.String(),
+		FcmApiKey:         fcmAPIKey,
+		FcmServiceAccount: fcmServiceAccount,
+		Tags:              tags,
+		CreatedAt:         now,
+		UpdatedAt:         now,
 	}}
 	return p, nil
 }

@@ -744,53 +744,6 @@ func (x *UpdateSearchFilterCommand) GetSearchFilter() *SearchFilter {
 	return nil
 }
 
-type DeleteSearchFilterCommand struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	SearchFilterId string `protobuf:"bytes,1,opt,name=search_filter_id,json=searchFilterId,proto3" json:"search_filter_id"`
-}
-
-func (x *DeleteSearchFilterCommand) Reset() {
-	*x = DeleteSearchFilterCommand{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[14]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *DeleteSearchFilterCommand) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteSearchFilterCommand) ProtoMessage() {}
-
-func (x *DeleteSearchFilterCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[14]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteSearchFilterCommand.ProtoReflect.Descriptor instead.
-func (*DeleteSearchFilterCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{14}
-}
-
-func (x *DeleteSearchFilterCommand) GetSearchFilterId() string {
-	if x != nil {
-		return x.SearchFilterId
-	}
-	return ""
-}
-
 var File_proto_account_command_proto protoreflect.FileDescriptor
 
 var file_proto_account_command_proto_rawDesc = []byte{
@@ -884,15 +837,10 @@ var file_proto_account_command_proto_rawDesc = []byte{
 	0x0b, 0x32, 0x1f, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x63,
 	0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74,
 	0x65, 0x72, 0x52, 0x0c, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72,
-	0x22, 0x45, 0x0a, 0x19, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68,
-	0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x28, 0x0a,
-	0x10, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x5f, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x5f, 0x69,
-	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46,
-	0x69, 0x6c, 0x74, 0x65, 0x72, 0x49, 0x64, 0x42, 0x31, 0x5a, 0x2f, 0x67, 0x69, 0x74, 0x68, 0x75,
-	0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2d,
-	0x69, 0x6f, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x2f, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x42, 0x31, 0x5a, 0x2f, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62,
+	0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f, 0x2f, 0x62, 0x75, 0x63, 0x6b,
+	0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x61, 0x63, 0x63, 0x6f,
+	0x75, 0x6e, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -908,7 +856,7 @@ func file_proto_account_command_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_account_command_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_account_command_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_proto_account_command_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_proto_account_command_proto_goTypes = []interface{}{
 	(ChangeAccountV2EnvironmentRolesCommand_WriteType)(0), // 0: bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.WriteType
 	(*CreateAccountV2Command)(nil),                        // 1: bucketeer.account.CreateAccountV2Command
@@ -925,21 +873,20 @@ var file_proto_account_command_proto_goTypes = []interface{}{
 	(*DisableAPIKeyCommand)(nil),                          // 12: bucketeer.account.DisableAPIKeyCommand
 	(*CreateSearchFilterCommand)(nil),                     // 13: bucketeer.account.CreateSearchFilterCommand
 	(*UpdateSearchFilterCommand)(nil),                     // 14: bucketeer.account.UpdateSearchFilterCommand
-	(*DeleteSearchFilterCommand)(nil),                     // 15: bucketeer.account.DeleteSearchFilterCommand
-	(AccountV2_Role_Organization)(0),                      // 16: bucketeer.account.AccountV2.Role.Organization
-	(*AccountV2_EnvironmentRole)(nil),                     // 17: bucketeer.account.AccountV2.EnvironmentRole
-	(APIKey_Role)(0),                                      // 18: bucketeer.account.APIKey.Role
-	(*SearchFilter)(nil),                                  // 19: bucketeer.account.SearchFilter
+	(AccountV2_Role_Organization)(0),                      // 15: bucketeer.account.AccountV2.Role.Organization
+	(*AccountV2_EnvironmentRole)(nil),                     // 16: bucketeer.account.AccountV2.EnvironmentRole
+	(APIKey_Role)(0),                                      // 17: bucketeer.account.APIKey.Role
+	(*SearchFilter)(nil),                                  // 18: bucketeer.account.SearchFilter
 }
 var file_proto_account_command_proto_depIdxs = []int32{
-	16, // 0: bucketeer.account.CreateAccountV2Command.organization_role:type_name -> bucketeer.account.AccountV2.Role.Organization
-	17, // 1: bucketeer.account.CreateAccountV2Command.environment_roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
-	16, // 2: bucketeer.account.ChangeAccountV2OrganizationRoleCommand.role:type_name -> bucketeer.account.AccountV2.Role.Organization
-	17, // 3: bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
+	15, // 0: bucketeer.account.CreateAccountV2Command.organization_role:type_name -> bucketeer.account.AccountV2.Role.Organization
+	16, // 1: bucketeer.account.CreateAccountV2Command.environment_roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
+	15, // 2: bucketeer.account.ChangeAccountV2OrganizationRoleCommand.role:type_name -> bucketeer.account.AccountV2.Role.Organization
+	16, // 3: bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
 	0,  // 4: bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.write_type:type_name -> bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.WriteType
-	18, // 5: bucketeer.account.CreateAPIKeyCommand.role:type_name -> bucketeer.account.APIKey.Role
-	19, // 6: bucketeer.account.CreateSearchFilterCommand.search_filter:type_name -> bucketeer.account.SearchFilter
-	19, // 7: bucketeer.account.UpdateSearchFilterCommand.search_filter:type_name -> bucketeer.account.SearchFilter
+	17, // 5: bucketeer.account.CreateAPIKeyCommand.role:type_name -> bucketeer.account.APIKey.Role
+	18, // 6: bucketeer.account.CreateSearchFilterCommand.search_filter:type_name -> bucketeer.account.SearchFilter
+	18, // 7: bucketeer.account.UpdateSearchFilterCommand.search_filter:type_name -> bucketeer.account.SearchFilter
 	8,  // [8:8] is the sub-list for method output_type
 	8,  // [8:8] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
@@ -1124,18 +1071,6 @@ func file_proto_account_command_proto_init() {
 				return nil
 			}
 		}
-		file_proto_account_command_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteSearchFilterCommand); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -1143,7 +1078,7 @@ func file_proto_account_command_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_account_command_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   15,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

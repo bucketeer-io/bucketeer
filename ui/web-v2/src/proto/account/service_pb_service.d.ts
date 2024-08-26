@@ -175,13 +175,13 @@ type AccountServiceCreateSearchFilterV2 = {
   readonly responseType: typeof proto_account_service_pb.CreateSearchFilterResponse;
 };
 
-type AccountServiceDeleteSearchFilterV2 = {
+type AccountServiceUpdateSearchFilterV2 = {
   readonly methodName: string;
   readonly service: typeof AccountService;
   readonly requestStream: false;
   readonly responseStream: false;
-  readonly requestType: typeof proto_account_service_pb.DeleteSearchFilterRequest;
-  readonly responseType: typeof proto_account_service_pb.DeleteSearchFilterResponse;
+  readonly requestType: typeof proto_account_service_pb.UpdateSearchFilterRequest;
+  readonly responseType: typeof proto_account_service_pb.UpdateSearchFilterResponse;
 };
 
 export class AccountService {
@@ -205,7 +205,7 @@ export class AccountService {
   static readonly ListAPIKeys: AccountServiceListAPIKeys;
   static readonly GetAPIKeyBySearchingAllEnvironments: AccountServiceGetAPIKeyBySearchingAllEnvironments;
   static readonly CreateSearchFilterV2: AccountServiceCreateSearchFilterV2;
-  static readonly DeleteSearchFilterV2: AccountServiceDeleteSearchFilterV2;
+  static readonly UpdateSearchFilterV2: AccountServiceUpdateSearchFilterV2;
 }
 
 export type ServiceError = {
@@ -538,19 +538,19 @@ export class AccountServiceClient {
       responseMessage: proto_account_service_pb.CreateSearchFilterResponse | null
     ) => void
   ): UnaryResponse;
-  deleteSearchFilterV2(
-    requestMessage: proto_account_service_pb.DeleteSearchFilterRequest,
+  updateSearchFilterV2(
+    requestMessage: proto_account_service_pb.UpdateSearchFilterRequest,
     metadata: grpc.Metadata,
     callback: (
       error: ServiceError | null,
-      responseMessage: proto_account_service_pb.DeleteSearchFilterResponse | null
+      responseMessage: proto_account_service_pb.UpdateSearchFilterResponse | null
     ) => void
   ): UnaryResponse;
-  deleteSearchFilterV2(
-    requestMessage: proto_account_service_pb.DeleteSearchFilterRequest,
+  updateSearchFilterV2(
+    requestMessage: proto_account_service_pb.UpdateSearchFilterRequest,
     callback: (
       error: ServiceError | null,
-      responseMessage: proto_account_service_pb.DeleteSearchFilterResponse | null
+      responseMessage: proto_account_service_pb.UpdateSearchFilterResponse | null
     ) => void
   ): UnaryResponse;
 }

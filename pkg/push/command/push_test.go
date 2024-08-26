@@ -46,7 +46,12 @@ func TestCreate(t *testing.T) {
 		if p.expected == nil {
 			pm.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil).Times(1)
 		}
-		cmd := &proto.CreatePushCommand{Name: "name-1", FcmApiKey: "key-0", Tags: []string{"tag-0", "tag-1"}}
+		cmd := &proto.CreatePushCommand{
+			Name:              "name-1",
+			FcmApiKey:         "key-0",
+			FcmServiceAccount: []byte("service-account"),
+			Tags:              []string{"tag-0", "tag-1"},
+		}
 		err := ch.Handle(context.Background(), cmd)
 		assert.Equal(t, p.expected, err)
 	}
@@ -145,7 +150,7 @@ func TestRename(t *testing.T) {
 }
 
 func newPush(t *testing.T) *domain.Push {
-	d, err := domain.NewPush("name-1", "key-0", []string{"tag-0", "tag-1"})
+	d, err := domain.NewPush("name-1", "key-0", "service-account", []string{"tag-0", "tag-1"})
 	require.NoError(t, err)
 	return d
 }

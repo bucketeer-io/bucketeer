@@ -27,13 +27,15 @@ func TestNewPush(t *testing.T) {
 	t.Parallel()
 	name := "name-1"
 	key := "key-1"
+	serviceAccount := "sa"
 	tags := []string{"tag-1", "tag-2"}
-	actual, err := NewPush(name, key, tags)
+	actual, err := NewPush(name, key, serviceAccount, tags)
 	assert.NoError(t, err)
 	assert.IsType(t, &Push{}, actual)
 	assert.NotEqual(t, "", actual.Id)
 	assert.NotEqual(t, key, actual.Id)
 	assert.Equal(t, key, actual.FcmApiKey)
+	assert.Equal(t, serviceAccount, actual.FcmServiceAccount)
 	assert.Equal(t, tags, actual.Tags)
 }
 
@@ -41,8 +43,9 @@ func TestSetDeleted(t *testing.T) {
 	t.Parallel()
 	name := "name-1"
 	key := "key-1"
+	serviceAccount := "sa"
 	tags := []string{"tag-1", "tag-2"}
-	actual, err := NewPush(name, key, tags)
+	actual, err := NewPush(name, key, serviceAccount, tags)
 	assert.NoError(t, err)
 	assert.Equal(t, false, actual.Deleted)
 	actual.SetDeleted()

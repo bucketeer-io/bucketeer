@@ -29,32 +29,6 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 
-func TestChangeOpsType(t *testing.T) {
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	patterns := []*struct {
-		input    proto.OpsType
-		expected error
-	}{
-		{
-			input:    proto.OpsType_DISABLE_FEATURE,
-			expected: nil,
-		},
-	}
-	for _, p := range patterns {
-		m := publishermock.NewMockPublisher(mockController)
-		a := newAutoOpsRule(t)
-		h := newAutoOpsRuleCommandHandler(t, m, a)
-		if p.expected == nil {
-			m.EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-		}
-		cmd := &proto.ChangeAutoOpsRuleOpsTypeCommand{OpsType: proto.OpsType_DISABLE_FEATURE}
-		err := h.Handle(context.Background(), cmd)
-		assert.Equal(t, p.expected, err)
-		assert.Equal(t, p.input, a.OpsType)
-	}
-}
-
 func TestDelete(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -251,7 +225,7 @@ func newAutoOpsRule(t *testing.T) *domain.AutoOpsRule {
 	dc2 := &proto.DatetimeClause{
 		Time: 1000000002,
 	}
-	aor, err := domain.NewAutoOpsRule("fid", proto.OpsType_DISABLE_FEATURE, []*proto.OpsEventRateClause{oerc1, oerc2}, []*proto.DatetimeClause{dc1, dc2})
+	aor, err := domain.NewAutoOpsRule("fid", proto.OpsType_SCHEDULE, []*proto.OpsEventRateClause{oerc1, oerc2}, []*proto.DatetimeClause{dc1, dc2})
 	require.NoError(t, err)
 	return aor
 }

@@ -9,7 +9,6 @@ import { AutoOpsRule } from '../proto/autoops/auto_ops_rule_pb';
 import {
   AddDatetimeClauseCommand,
   AddOpsEventRateClauseCommand,
-  ChangeAutoOpsRuleOpsTypeCommand,
   ChangeDatetimeClauseCommand,
   ChangeOpsEventRateClauseCommand,
   CreateAutoOpsRuleCommand,
@@ -72,7 +71,6 @@ export const listAutoOpsRules = createAsyncThunk<
 export interface UpdateAutoOpsRuleParams {
   environmentNamespace: string;
   id: string;
-  changeAutoOpsRuleOpsTypeCommand?: ChangeAutoOpsRuleOpsTypeCommand;
   addOpsEventRateClauseCommands?: Array<AddOpsEventRateClauseCommand>;
   changeOpsEventRateClauseCommands?: Array<ChangeOpsEventRateClauseCommand>;
   addDatetimeClauseCommands?: Array<AddDatetimeClauseCommand>;
@@ -88,10 +86,6 @@ export const updateAutoOpsRule = createAsyncThunk<
   const request = new UpdateAutoOpsRuleRequest();
   request.setEnvironmentNamespace(params.environmentNamespace);
   request.setId(params.id);
-  params.changeAutoOpsRuleOpsTypeCommand &&
-    request.setChangeAutoOpsRuleOpsTypeCommand(
-      params.changeAutoOpsRuleOpsTypeCommand
-    );
   params.addOpsEventRateClauseCommands?.length > 0 &&
     request.setAddOpsEventRateClauseCommandsList(
       params.addOpsEventRateClauseCommands
