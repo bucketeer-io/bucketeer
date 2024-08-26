@@ -154,6 +154,26 @@ func (mr *MockClientMockRecorder) DeleteAccountV2(ctx, in any, opts ...any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccountV2", reflect.TypeOf((*MockClient)(nil).DeleteAccountV2), varargs...)
 }
 
+// DeleteSearchFilterV2 mocks base method.
+func (m *MockClient) DeleteSearchFilterV2(ctx context.Context, in *account.DeleteSearchFilterRequest, opts ...grpc.CallOption) (*account.DeleteSearchFilterResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "DeleteSearchFilterV2", varargs...)
+	ret0, _ := ret[0].(*account.DeleteSearchFilterResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteSearchFilterV2 indicates an expected call of DeleteSearchFilterV2.
+func (mr *MockClientMockRecorder) DeleteSearchFilterV2(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSearchFilterV2", reflect.TypeOf((*MockClient)(nil).DeleteSearchFilterV2), varargs...)
+}
+
 // DisableAPIKey mocks base method.
 func (m *MockClient) DisableAPIKey(ctx context.Context, in *account.DisableAPIKeyRequest, opts ...grpc.CallOption) (*account.DisableAPIKeyResponse, error) {
 	m.ctrl.T.Helper()

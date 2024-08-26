@@ -213,7 +213,7 @@ func (s *AccountService) DeleteSearchFilterV2(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return s.accountStorage.UpdateSearchFilters(ctx, account)
+		return s.accountStorage.UpdateAccountV2(ctx, account)
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
@@ -227,7 +227,7 @@ func (s *AccountService) DeleteSearchFilterV2(
 			return nil, dt.Err()
 		}
 		if errors.Is(err, domain.ErrSearchFilterNotFound) {
-			dt, err := statusSearchFilterIdNotFound.WithDetails(&errdetails.LocalizedMessage{
+			dt, err := statusSearchFilterIDNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalizeWithTemplate(locale.NotFoundError),
 			})

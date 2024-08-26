@@ -225,7 +225,7 @@ func (h *accountV2CommandHandler) deleteSearchFiler(
 	if err := h.account.DeleteSearchFilter(cmd.SearchFilterId); err != nil {
 		return err
 	}
-	return h.send(ctx, eventproto.Event_ACCOUNT_V2_CREATED_SEARCH_FILTER, &eventproto.SearchFilterUpdateEvent{
+	return h.send(ctx, eventproto.Event_ACCOUNT_V2_DELETED_SEARCH_FILTER, &eventproto.SearchFilterDeleteEvent{
 		Id: cmd.SearchFilterId,
 	})
 }
