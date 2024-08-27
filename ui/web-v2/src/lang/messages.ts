@@ -2542,36 +2542,6 @@ export const messages = {
         })
       }
     },
-    fileUpload: {
-      browseFiles: defineMessage({
-        id: 'segment.fileUpload.browseFiles',
-        defaultMessage: 'Browse files'
-      }),
-      fileFormat: defineMessage({
-        id: 'segment.fileUpload.fileFormat',
-        defaultMessage: 'Accepted file type: .csv and .txt (Max size: 2MB)'
-      }),
-      userList: defineMessage({
-        id: 'segment.fileUpload.userList',
-        defaultMessage: 'List of user IDs'
-      }),
-      fileMaxSize: defineMessage({
-        id: 'segment.fileUpload.fileMaxSize',
-        defaultMessage: 'The maximum size of the file is 1MB'
-      }),
-      unsupportedType: defineMessage({
-        id: 'segment.fileUpload.unsupportedType',
-        defaultMessage: 'The file format is not supported'
-      }),
-      fileSize: defineMessage({
-        id: 'segment.fileUpload.fileSize',
-        defaultMessage: '{fileSize} bytes'
-      }),
-      uploadInProgress: defineMessage({
-        id: 'segment.fileUpload.uploadInProgress',
-        defaultMessage: 'The file cannot be updated due to upload in progress'
-      })
-    },
     search: {
       placeholder: defineMessage({
         id: 'segment.search.placeholder',
@@ -2644,6 +2614,10 @@ export const messages = {
       fcmApiKey: defineMessage({
         id: 'push.input.fcmApiKey',
         defaultMessage: 'Firebase Cloud Messaging API Key'
+      }),
+      fcmServiceAccount: defineMessage({
+        id: 'push.input.fcmServiceAccount',
+        defaultMessage: 'Firebase Cloud Messaging Service Account'
       })
     },
     list: {
@@ -2956,6 +2930,44 @@ export const messages = {
     staleFeatureFlagDescription: defineMessage({
       id: 'sourceType.staleFeatureFlagDescription',
       defaultMessage: 'Get notified when a feature flag becomes stale'
+    })
+  },
+  fileUpload: {
+    browseFiles: defineMessage({
+      id: 'fileUpload.browseFiles',
+      defaultMessage: 'Browse files'
+    }),
+    fileMaxSize: defineMessage({
+      id: 'fileUpload.fileMaxSize',
+      defaultMessage: 'The maximum size of the file is 2MB'
+    }),
+    unsupportedType: defineMessage({
+      id: 'fileUpload.unsupportedType',
+      defaultMessage: 'The file format is not supported'
+    }),
+    fileSize: defineMessage({
+      id: 'fileUpload.fileSize',
+      defaultMessage: '{fileSize} bytes'
+    }),
+    uploadInProgress: defineMessage({
+      id: 'fileUpload.uploadInProgress',
+      defaultMessage: 'The file cannot be updated due to upload in progress'
+    }),
+    invalidJson: defineMessage({
+      id: 'fileUpload.invalidJson',
+      defaultMessage: 'The file is not a valid JSON file.'
+    }),
+    fileFormatCsvText: defineMessage({
+      id: 'fileUpload.fileFormatCsvText',
+      defaultMessage: 'Accepted file type: .csv and .txt (Max size: 2MB)'
+    }),
+    userList: defineMessage({
+      id: 'fileUpload.userList',
+      defaultMessage: 'List of user IDs'
+    }),
+    fileFormatJson: defineMessage({
+      id: 'fileUpload.fileFormat',
+      defaultMessage: 'Accepted file type: .json'
     })
   },
   type: defineMessage({

@@ -7,9 +7,6 @@ export class Push extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  getFcmApiKey(): string;
-  setFcmApiKey(value: string): void;
-
   clearTagsList(): void;
   getTagsList(): Array<string>;
   setTagsList(value: Array<string>): void;
@@ -51,7 +48,6 @@ export class Push extends jspb.Message {
 export namespace Push {
   export type AsObject = {
     id: string;
-    fcmApiKey: string;
     tagsList: Array<string>;
     deleted: boolean;
     name: string;

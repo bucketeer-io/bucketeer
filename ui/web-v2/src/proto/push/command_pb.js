@@ -204,7 +204,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        fcmApiKey: jspb.Message.getFieldWithDefault(msg, 1, ''),
         tagsList:
           (f = jspb.Message.getRepeatedField(msg, 2)) == null ? undefined : f,
         name: jspb.Message.getFieldWithDefault(msg, 3, ''),
@@ -249,10 +248,6 @@ proto.bucketeer.push.CreatePushCommand.deserializeBinaryFromReader = function (
     }
     var field = reader.getFieldNumber();
     switch (field) {
-      case 1:
-        var value = /** @type {string} */ (reader.readString());
-        msg.setFcmApiKey(value);
-        break;
       case 2:
         var value = /** @type {string} */ (reader.readString());
         msg.addTags(value);
@@ -295,10 +290,6 @@ proto.bucketeer.push.CreatePushCommand.serializeBinaryToWriter = function (
   writer
 ) {
   var f = undefined;
-  f = message.getFcmApiKey();
-  if (f.length > 0) {
-    writer.writeString(1, f);
-  }
   f = message.getTagsList();
   if (f.length > 0) {
     writer.writeRepeatedString(2, f);
@@ -311,24 +302,6 @@ proto.bucketeer.push.CreatePushCommand.serializeBinaryToWriter = function (
   if (f.length > 0) {
     writer.writeBytes(4, f);
   }
-};
-
-/**
- * optional string fcm_api_key = 1;
- * @return {string}
- */
-proto.bucketeer.push.CreatePushCommand.prototype.getFcmApiKey = function () {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ''));
-};
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.push.CreatePushCommand} returns this
- */
-proto.bucketeer.push.CreatePushCommand.prototype.setFcmApiKey = function (
-  value
-) {
-  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 /**

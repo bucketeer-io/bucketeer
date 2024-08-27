@@ -15,11 +15,14 @@
 package api
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"strconv"
 
 	"go.uber.org/zap"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -40,8 +43,6 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
 )
-
-const listRequestSize = 500
 
 var errTagDuplicated = errors.New("push: tag is duplicated")
 
@@ -112,7 +113,6 @@ func (s *PushService) CreatePush(
 	}
 	push, err := domain.NewPush(
 		req.Command.Name,
-		req.Command.FcmApiKey,
 		string(req.Command.FcmServiceAccount),
 		req.Command.Tags,
 	)
@@ -145,19 +145,10 @@ func (s *PushService) CreatePush(
 		}
 		return nil, dt.Err()
 	}
-	if s.containsFCMKey(ctx, pushes, req.Command.FcmApiKey) {
-		if status.Code(err) == codes.AlreadyExists {
-			dt, err := statusFCMKeyAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.AlreadyExistsError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
+	if err := s.checkFCMServiceAccount(ctx, pushes, req.Command.FcmServiceAccount, localizer); err != nil {
+		return nil, err
 	}
-	err = s.containsTags(ctx, pushes, req.Command.Tags, localizer)
+	err = s.containsTags(pushes, req.Command.Tags, localizer)
 	if err != nil {
 		if status.Code(err) == codes.AlreadyExists {
 			dt, err := statusTagAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
@@ -259,10 +250,10 @@ func (s *PushService) validateCreatePushRequest(req *pushproto.CreatePushRequest
 		}
 		return dt.Err()
 	}
-	if req.Command.FcmApiKey == "" {
-		dt, err := statusFCMAPIKeyRequired.WithDetails(&errdetails.LocalizedMessage{
+	if string(req.Command.FcmServiceAccount) == "" {
+		dt, err := statusFCMServiceAccountRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fcm_api_key"),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fcm_service_account"),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -452,7 +443,7 @@ func (s *PushService) validateAddPushTagsCommand(
 		}
 		return dt.Err()
 	}
-	err = s.containsTags(ctx, pushes, req.AddPushTagsCommand.Tags, localizer)
+	err = s.containsTags(pushes, req.AddPushTagsCommand.Tags, localizer)
 	if err != nil {
 		if status.Code(err) == codes.AlreadyExists {
 			dt, err := statusTagAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
@@ -607,7 +598,6 @@ func (s *PushService) createUpdatePushCommands(req *pushproto.UpdatePushRequest)
 }
 
 func (s *PushService) containsTags(
-	ctx context.Context,
 	pushes []*pushproto.Push,
 	tags []string,
 	localizer locale.Localizer,
@@ -631,13 +621,79 @@ func (s *PushService) containsTags(
 	return nil
 }
 
-func (s *PushService) containsFCMKey(ctx context.Context, pushes []*pushproto.Push, fcmAPIKey string) bool {
+func (s *PushService) checkFCMServiceAccount(
+	ctx context.Context,
+	pushes []*pushproto.Push,
+	fcmServiceAccount []byte,
+	localizer locale.Localizer,
+) error {
+	// Check if the JSON is a service account file
+	_, err := google.CredentialsFromJSON(
+		ctx,
+		fcmServiceAccount,
+		"https://www.googleapis.com/auth/firebase.messaging",
+	)
+	if err != nil {
+		s.logger.Error("failed to get credentials from JSON", zap.Error(err))
+		dt, err := statusFCMServiceAccountInvalid.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "FCM service account"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	// Check if the service account already exists in the database
 	for _, push := range pushes {
-		if push.FcmApiKey == fcmAPIKey {
-			return true
+		equal, err := s.compareJSON(push.FcmServiceAccount, string(fcmServiceAccount))
+		if err != nil {
+			s.logger.Error("failed to compare the JSON", zap.Error(err))
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		if equal {
+			s.logger.Error("fcm service account already exists in the database")
+			dt, err := statusFCMServiceAccountAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.AlreadyExistsError, "FCM service account"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 	}
-	return false
+	return nil
+}
+
+// compareJSON compares two JSON strings and returns true if they are equivalent
+func (s *PushService) compareJSON(jsonStr1, jsonStr2 string) (bool, error) {
+	var obj1, obj2 json.RawMessage
+	// Unmarshal the JSON strings into Go data structures
+	if err := json.Unmarshal([]byte(jsonStr1), &obj1); err != nil {
+		return false, err
+	}
+	if err := json.Unmarshal([]byte(jsonStr2), &obj2); err != nil {
+		return false, err
+	}
+	// Marshal the Go data structures into canonical JSON format
+	json1, err := json.Marshal(obj1)
+	if err != nil {
+		return false, err
+	}
+	json2, err := json.Marshal(obj2)
+	if err != nil {
+		return false, err
+	}
+	// Compare the canonical JSON representations
+	return bytes.Equal(json1, json2), nil
 }
 
 func (s *PushService) tagMap(pushes []*pushproto.Push) (map[string]struct{}, error) {
@@ -658,32 +714,23 @@ func (s *PushService) listAllPushes(
 	environmentNamespace string,
 	localizer locale.Localizer,
 ) ([]*pushproto.Push, error) {
-	pushes := []*pushproto.Push{}
-	cursor := ""
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
 		mysql.NewFilter("environment_namespace", "=", environmentNamespace),
 	}
-	for {
-		ps, curCursor, _, err := s.listPushes(
-			ctx,
-			listRequestSize,
-			cursor,
-			environmentNamespace,
-			whereParts,
-			nil,
-			localizer,
-		)
-		if err != nil {
-			return nil, err
-		}
-		pushes = append(pushes, ps...)
-		psSize := len(ps)
-		if psSize == 0 || psSize < listRequestSize {
-			return pushes, nil
-		}
-		cursor = curCursor
+	pushes, _, _, err := s.listPushes(
+		ctx,
+		mysql.QueryNoLimit,
+		"",
+		environmentNamespace,
+		whereParts,
+		nil,
+		localizer,
+	)
+	if err != nil {
+		return nil, err
 	}
+	return pushes, nil
 }
 
 func (s *PushService) ListPushes(
@@ -723,6 +770,10 @@ func (s *PushService) ListPushes(
 	)
 	if err != nil {
 		return nil, err
+	}
+	// For security reasons we remove the service account from the API response
+	for _, p := range pushes {
+		p.FcmServiceAccount = ""
 	}
 	return &pushproto.ListPushesResponse{
 		Pushes:     pushes,

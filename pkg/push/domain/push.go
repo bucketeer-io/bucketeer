@@ -32,7 +32,7 @@ type Push struct {
 	*proto.Push
 }
 
-func NewPush(name, fcmAPIKey, fcmServiceAccount string, tags []string) (*Push, error) {
+func NewPush(name, fcmServiceAccount string, tags []string) (*Push, error) {
 	_, err := convMap(tags)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,6 @@ func NewPush(name, fcmAPIKey, fcmServiceAccount string, tags []string) (*Push, e
 	p := &Push{&proto.Push{
 		Name:              name,
 		Id:                id.String(),
-		FcmApiKey:         fcmAPIKey,
 		FcmServiceAccount: fcmServiceAccount,
 		Tags:              tags,
 		CreatedAt:         now,

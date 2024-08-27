@@ -172,7 +172,7 @@ export const SegmentUpdateForm: FC<SegmentUpdateFormProps> = memo(
                 <div className="">
                   <label htmlFor="file" className="block">
                     <span className="input-label">
-                      {f(messages.segment.fileUpload.userList)}
+                      {f(messages.fileUpload.userList)}
                     </span>
                     &nbsp;
                     <span className="input-label-optional">
@@ -239,7 +239,7 @@ export const SegmentUpdateForm: FC<SegmentUpdateFormProps> = memo(
                                   <FileUploadIcon />
                                 </div>
                                 <span className="block text-gray-500">
-                                  {f(messages.segment.fileUpload.browseFiles)}
+                                  {f(messages.fileUpload.browseFiles)}
                                 </span>
                               </div>
                             </div>
@@ -266,7 +266,7 @@ export const SegmentUpdateForm: FC<SegmentUpdateFormProps> = memo(
                               isInUseStatus ? 'text-gray-300' : 'text-gray-400'
                             )}
                           >
-                            {f(messages.segment.fileUpload.fileFormat)}
+                            {f(messages.fileUpload.fileFormatCsvText)}
                           </div>
                         </div>
                         {selectedFile && (
@@ -282,11 +282,11 @@ export const SegmentUpdateForm: FC<SegmentUpdateFormProps> = memo(
                                 <FilePresentIcon />
                               </div>
                               <div className="ml-3">
-                                <p className="text-base text-sm text-gray-700 w-96 truncate ...">
+                                <p className="text-sm text-gray-700 w-96 truncate ...">
                                   {selectedFile.name}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  {f(messages.segment.fileUpload.fileSize, {
+                                  {f(messages.fileUpload.fileSize, {
                                     fileSize: selectedFile.size.toLocaleString()
                                   })}
                                 </p>

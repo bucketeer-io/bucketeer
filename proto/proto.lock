@@ -15453,17 +15453,6 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "fcm_api_key",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "id": 3,
                 "name": "tags",
                 "type": "string",
@@ -15474,6 +15463,9 @@
                 "name": "name",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -25225,17 +25217,6 @@
             "name": "CreatePushCommand",
             "fields": [
               {
-                "id": 1,
-                "name": "fcm_api_key",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "id": 2,
                 "name": "tags",
                 "type": "string",
@@ -25251,6 +25232,9 @@
                 "name": "fcm_service_account",
                 "type": "bytes"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -25313,17 +25297,6 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "fcm_api_key",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "id": 3,
                 "name": "tags",
                 "type": "string",
@@ -25354,6 +25327,9 @@
                 "name": "fcm_service_account",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           }
         ],

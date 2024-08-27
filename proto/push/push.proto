@@ -19,7 +19,7 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/push";
 
 message Push {
   string id = 1;
-  string fcm_api_key = 2 [deprecated = true];
+  reserved 2;  // string fcm_api_key = 2
   repeated string tags = 3;
   bool deleted = 4;
   string name = 5;
