@@ -22,7 +22,7 @@ const MenuItemComponent = ({
   const textClsx = cn(
     'flex items-center gap-x-2 w-full text-primary-50',
     'px-3 py-3 rounded-lg typo-para-medium my-0.5',
-    'hover:bg-primary-400 hover:opacity-80 sidebar-menu',
+    'hover:bg-primary-400 hover:opacity-80 sidebar-menu'
   );
 
   const actionEl = href ? (

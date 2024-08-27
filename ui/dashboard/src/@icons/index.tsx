@@ -19,8 +19,8 @@ import IconSwitch from './sidebar-icons/switch.svg?react';
 import IconUsage from './sidebar-icons/usage.svg?react';
 import IconUser from './sidebar-icons/user.svg?react';
 import IconGithub from './special-icons/github.svg?react';
-import IconGoogle from './special-icons/google.svg?react';
 import IconGoal from './special-icons/goal.svg?react';
+import IconGoogle from './special-icons/google.svg?react';
 
 export {
   // Sidebar icons

@@ -15,7 +15,8 @@ const spinnerVariants = cva(
       }
     },
     defaultVariants: {
-      size: 'sm'
+      size: 'sm',
+      indicator: 'sm'
     }
   }
 );

@@ -10,7 +10,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #6746A4;
+  background: #6746a4;
   animation-timing-function: cubic-bezier(0, 1, 1, 0);
 }
 .main div:nth-child(1) {

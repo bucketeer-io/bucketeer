@@ -6,7 +6,7 @@ import React, {
   useState
 } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { accountOrganizationFetcher } from '@api/account';
+import { accountOrganizationFetcher, MeFetcherPayload } from '@api/account';
 import { accountMeFetcher } from '@api/account';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { Undefinable } from 'option-t/undefinable';
@@ -14,7 +14,11 @@ import {
   getCurrentEnvIdStorage,
   setCurrentEnvIdStorage
 } from 'storage/environment';
-import { clearOrgIdStorage, getOrgIdStorage } from 'storage/organization';
+import {
+  clearOrgIdStorage,
+  getOrgIdStorage,
+  setOrgIdStorage
+} from 'storage/organization';
 import {
   clearTokenStorage,
   getTokenStorage,
@@ -24,6 +28,7 @@ import { AuthToken, ConsoleAccount, Organization } from '@types';
 
 interface AuthContextType {
   syncSignIn: (authToken: AuthToken) => void;
+  onMeFetcher: (payload: MeFetcherPayload) => Promise<void>;
   logout: () => void;
   isLogin: boolean;
   isInitialLoading: boolean;
@@ -50,8 +55,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     []
   );
 
-  const onMeFetcher = (id: string) => {
-    accountMeFetcher({ organizationId: id })
+  const onMeFetcher = (payload: MeFetcherPayload) => {
+    return accountMeFetcher(payload)
       .then(response => {
         setConsoleAccount(response.account);
         setIsLogin(true);
@@ -67,12 +72,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const onSyncAuthentication = () => {
     setIsInitialLoading(true);
     if (organizationId) {
-      onMeFetcher(organizationId);
+      onMeFetcher({ organizationId });
     } else {
       accountOrganizationFetcher().then(response => {
         const organizationsList = response.organizations || [];
         if (organizationsList.length === 1) {
-          onMeFetcher(organizationsList[0].id);
+          setOrgIdStorage(organizationsList[0].id);
+          onMeFetcher({ organizationId: organizationsList[0].id });
         } else {
           setMyOrganizations(organizationsList);
           setIsInitialLoading(false);
@@ -104,6 +110,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     <AuthContext.Provider
       value={{
         syncSignIn,
+        onMeFetcher,
         logout,
         isLogin,
         isInitialLoading,

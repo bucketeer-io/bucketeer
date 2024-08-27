@@ -26,10 +26,10 @@ import { v4 as uuid } from 'uuid';
 import DashboardPage from 'pages/dashboard';
 import NotFoundPage from 'pages/not-found';
 import SignInEmailPage from 'pages/signin/email';
+import SelectOrganizationPage from 'pages/signin/organization';
 import SignInPage from 'pages/signin/signin';
 import Navigation from 'components/navigation';
 import Spinner from 'components/spinner';
-import SelectOrganizationPage from 'pages/signin/organization';
 
 function App() {
   return (
@@ -85,9 +85,7 @@ export const Root = memo(() => {
   }
 
   if (!!authToken && myOrganizations.length > 1) {
-    return (
-      <SelectOrganizationPage />
-    );
+    return <SelectOrganizationPage />;
   }
 
   return <SignInPage />;
