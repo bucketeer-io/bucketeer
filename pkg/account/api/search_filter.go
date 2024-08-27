@@ -52,7 +52,7 @@ func (s *AccountService) CreateSearchFilter(
 		)
 		return nil, err
 	}
-	
+
 	account, err := s.getAccountV2(ctx, req.Email, req.OrganizationId, localizer)
 	if err != nil {
 		return nil, err
@@ -107,9 +107,6 @@ func getChangeDefaultFilters(
 	filterTarget accountproto.FilterTargetType,
 	environmentId string,
 ) []*accountproto.SearchFilter {
-	if account.SearchFilters == nil || len(account.SearchFilters) == 0 {
-		return nil
-	}
 	var changeDefaultFilters []*accountproto.SearchFilter
 	for _, filter := range account.SearchFilters {
 		if filter.DefaultFilter &&
