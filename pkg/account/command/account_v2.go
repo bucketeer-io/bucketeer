@@ -192,11 +192,11 @@ func (h *accountV2CommandHandler) createSearchFiler(
 	var searchFilter *accountproto.SearchFilter
 	var err error
 	if searchFilter, err = h.account.AddSearchFilter(
-		cmd.SearchFilter.Name,
-		cmd.SearchFilter.Query,
-		cmd.SearchFilter.FilterTargetType,
-		cmd.SearchFilter.EnvironmentId,
-		cmd.SearchFilter.DefaultFilter); err != nil {
+		cmd.Name,
+		cmd.Query,
+		cmd.FilterTargetType,
+		cmd.EnvironmentId,
+		cmd.DefaultFilter); err != nil {
 		return err
 	}
 	return h.send(ctx, eventproto.Event_ACCOUNT_V2_CREATED_SEARCH_FILTER, &eventproto.SearchFilterCreatedEvent{

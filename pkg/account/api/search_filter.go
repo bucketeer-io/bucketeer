@@ -52,19 +52,21 @@ func (s *AccountService) CreateSearchFilter(
 		)
 		return nil, err
 	}
-
+	
 	account, err := s.getAccountV2(ctx, req.Email, req.OrganizationId, localizer)
 	if err != nil {
 		return nil, err
 	}
 	// Since there is only one default setting for a filter target, set the existing default to OFF.
-	changeDefaultFilters := getChangeDefaultFilters(account, req.Command.SearchFilter)
 	commands := make([]command.Command, 0)
-	for _, changeDefaultFilter := range changeDefaultFilters {
-		commands = append(
-			commands,
-			&accountproto.UpdateSearchFilterCommand{SearchFilter: changeDefaultFilter},
-		)
+	if req.Command.DefaultFilter {
+		changeDefaultFilters := getChangeDefaultFilters(account, req.Command.FilterTargetType, req.Command.EnvironmentId)
+		for _, changeDefaultFilter := range changeDefaultFilters {
+			commands = append(
+				commands,
+				&accountproto.UpdateSearchFilterCommand{SearchFilter: changeDefaultFilter},
+			)
+		}
 	}
 	commands = append(commands, req.Command)
 
@@ -85,7 +87,7 @@ func (s *AccountService) CreateSearchFilter(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
-				zap.String("searchFilterName", req.Command.SearchFilter.Name),
+				zap.String("searchFilterName", req.Command.Name),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -102,17 +104,17 @@ func (s *AccountService) CreateSearchFilter(
 
 func getChangeDefaultFilters(
 	account *domain.AccountV2,
-	searchFilter *accountproto.SearchFilter,
+	filterTarget accountproto.FilterTargetType,
+	environmentId string,
 ) []*accountproto.SearchFilter {
-	if searchFilter == nil || !searchFilter.DefaultFilter ||
-		account.SearchFilters == nil || len(account.SearchFilters) == 0 {
+	if account.SearchFilters == nil || len(account.SearchFilters) == 0 {
 		return nil
 	}
 	var changeDefaultFilters []*accountproto.SearchFilter
 	for _, filter := range account.SearchFilters {
-		if searchFilter.DefaultFilter && filter.DefaultFilter &&
-			searchFilter.FilterTargetType == filter.FilterTargetType &&
-			searchFilter.EnvironmentId == filter.EnvironmentId {
+		if filter.DefaultFilter &&
+			filterTarget == filter.FilterTargetType &&
+			environmentId == filter.EnvironmentId {
 			changeDefaultFilters = append(changeDefaultFilters, &accountproto.SearchFilter{
 				Id:               filter.Id,
 				Name:             filter.Name,

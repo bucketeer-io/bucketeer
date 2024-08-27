@@ -1723,8 +1723,16 @@ definitions:
   accountCreateSearchFilterCommand:
     type: object
     properties:
-      searchFilter:
-        $ref: '#/definitions/accountSearchFilter'
+      name:
+        type: string
+      query:
+        type: string
+      filterTargetType:
+        $ref: '#/definitions/accountFilterTargetType'
+      environmentId:
+        type: string
+      defaultFilter:
+        type: boolean
   accountCreateSearchFilterResponse:
     type: object
   accountDeleteAccountV2Command:

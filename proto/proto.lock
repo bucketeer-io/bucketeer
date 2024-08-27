@@ -556,8 +556,28 @@
             "fields": [
               {
                 "id": 1,
-                "name": "search_filter",
-                "type": "SearchFilter"
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "query",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "filter_target_type",
+                "type": "account.FilterTargetType"
+              },
+              {
+                "id": 4,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "default_filter",
+                "type": "bool"
               }
             ]
           },

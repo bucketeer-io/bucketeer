@@ -71,7 +71,11 @@ message EnableAPIKeyCommand {}
 message DisableAPIKeyCommand {}
 
 message CreateSearchFilterCommand {
-  SearchFilter search_filter = 1;
+  string name = 1;
+  string query = 2;
+  account.FilterTargetType filter_target_type = 3;
+  string environment_id = 4;
+  bool default_filter = 5;
 }
 
 message UpdateSearchFilterCommand {

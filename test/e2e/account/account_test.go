@@ -314,7 +314,11 @@ func TestCreateSearchFilter(t *testing.T) {
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
 		Command: &accountproto.CreateSearchFilterCommand{
-			SearchFilter: requestSearchFilter,
+			Name:             requestSearchFilter.Name,
+			Query:            requestSearchFilter.Query,
+			FilterTargetType: requestSearchFilter.FilterTargetType,
+			EnvironmentId:    requestSearchFilter.EnvironmentId,
+			DefaultFilter:    requestSearchFilter.DefaultFilter,
 		},
 	})
 	if err != nil {

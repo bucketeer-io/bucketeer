@@ -420,10 +420,22 @@ export namespace DisableAPIKeyCommand {
 }
 
 export class CreateSearchFilterCommand extends jspb.Message {
-  hasSearchFilter(): boolean;
-  clearSearchFilter(): void;
-  getSearchFilter(): proto_account_search_filter_pb.SearchFilter | undefined;
-  setSearchFilter(value?: proto_account_search_filter_pb.SearchFilter): void;
+  getName(): string;
+  setName(value: string): void;
+
+  getQuery(): string;
+  setQuery(value: string): void;
+
+  getFilterTargetType(): proto_account_search_filter_pb.FilterTargetTypeMap[keyof proto_account_search_filter_pb.FilterTargetTypeMap];
+  setFilterTargetType(
+    value: proto_account_search_filter_pb.FilterTargetTypeMap[keyof proto_account_search_filter_pb.FilterTargetTypeMap]
+  ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  getDefaultFilter(): boolean;
+  setDefaultFilter(value: boolean): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateSearchFilterCommand.AsObject;
@@ -448,7 +460,11 @@ export class CreateSearchFilterCommand extends jspb.Message {
 
 export namespace CreateSearchFilterCommand {
   export type AsObject = {
-    searchFilter?: proto_account_search_filter_pb.SearchFilter.AsObject;
+    name: string;
+    query: string;
+    filterTargetType: proto_account_search_filter_pb.FilterTargetTypeMap[keyof proto_account_search_filter_pb.FilterTargetTypeMap];
+    environmentId: string;
+    defaultFilter: boolean;
   };
 }
 

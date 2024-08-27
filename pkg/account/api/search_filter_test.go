@@ -81,13 +81,11 @@ func TestCreateSearchFilter(t *testing.T) {
 				OrganizationId:       "org0",
 				EnvironmentNamespace: "envName0",
 				Command: &accountproto.CreateSearchFilterCommand{
-					SearchFilter: &accountproto.SearchFilter{
-						Name:             "filter",
-						Query:            "query",
-						FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-						EnvironmentId:    "envID0",
-						DefaultFilter:    false,
-					},
+					Name:             "filter",
+					Query:            "query",
+					FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "envID0",
+					DefaultFilter:    false,
 				},
 			},
 			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
@@ -114,13 +112,11 @@ func TestCreateSearchFilter(t *testing.T) {
 				Email:                "bucketeer@example.com",
 				EnvironmentNamespace: "envName0",
 				Command: &accountproto.CreateSearchFilterCommand{
-					SearchFilter: &accountproto.SearchFilter{
-						Name:             "filter",
-						Query:            "query",
-						FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-						EnvironmentId:    "envID0",
-						DefaultFilter:    false,
-					},
+					Name:             "filter",
+					Query:            "query",
+					FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "envID0",
+					DefaultFilter:    false,
 				},
 			},
 			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
@@ -156,13 +152,11 @@ func TestCreateSearchFilter(t *testing.T) {
 				OrganizationId:       "org0",
 				EnvironmentNamespace: "envName0",
 				Command: &accountproto.CreateSearchFilterCommand{
-					SearchFilter: &accountproto.SearchFilter{
-						Name:             "filter",
-						Query:            "query",
-						FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-						EnvironmentId:    "envID0",
-						DefaultFilter:    false,
-					},
+					Name:             "filter",
+					Query:            "query",
+					FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "envID0",
+					DefaultFilter:    false,
 				},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
@@ -199,13 +193,11 @@ func TestCreateSearchFilter(t *testing.T) {
 				OrganizationId:       "org0",
 				EnvironmentNamespace: "envName0",
 				Command: &accountproto.CreateSearchFilterCommand{
-					SearchFilter: &accountproto.SearchFilter{
-						Name:             "filter",
-						Query:            "query",
-						FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-						EnvironmentId:    "envID0",
-						DefaultFilter:    false,
-					},
+					Name:             "filter",
+					Query:            "query",
+					FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "envID0",
+					DefaultFilter:    false,
 				},
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError)),
@@ -236,33 +228,6 @@ func TestCreateSearchFilter(t *testing.T) {
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
-			desc: "err: SearchFilter is nil",
-			setup: func(s *AccountService) {
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.AccountV2{
-					AccountV2: &accountproto.AccountV2{
-						Email:            "email",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-							{
-								EnvironmentId: "ns0",
-								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-							},
-						},
-					},
-				}, nil).AnyTimes()
-			},
-			req: &accountproto.CreateSearchFilterRequest{
-				Email:          "bucketeer@example.com",
-				OrganizationId: "org0",
-				Command: &accountproto.CreateSearchFilterCommand{
-					SearchFilter: nil,
-				},
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "search_filter")),
-		},
-		{
 			desc: "err: SearchFilter Name is empty",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
@@ -284,9 +249,7 @@ func TestCreateSearchFilter(t *testing.T) {
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
 				Command: &accountproto.CreateSearchFilterCommand{
-					SearchFilter: &accountproto.SearchFilter{
-						Name: "",
-					},
+					Name: "",
 				},
 			},
 			expectedErr: createError(statusSearchFilterNameIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
@@ -313,10 +276,8 @@ func TestCreateSearchFilter(t *testing.T) {
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
 				Command: &accountproto.CreateSearchFilterCommand{
-					SearchFilter: &accountproto.SearchFilter{
-						Name:  "name",
-						Query: "",
-					},
+					Name:  "name",
+					Query: "",
 				},
 			},
 			expectedErr: createError(statusSearchFilterQueryIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "query")),
@@ -343,11 +304,9 @@ func TestCreateSearchFilter(t *testing.T) {
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
 				Command: &accountproto.CreateSearchFilterCommand{
-					SearchFilter: &accountproto.SearchFilter{
-						Name:             "name",
-						Query:            "query",
-						FilterTargetType: accountproto.FilterTargetType_UNKNOWN,
-					},
+					Name:             "name",
+					Query:            "query",
+					FilterTargetType: accountproto.FilterTargetType_UNKNOWN,
 				},
 			},
 			expectedErr: createError(statusSearchFilterTargetTypeIsRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "filter_target_type")),
@@ -388,13 +347,11 @@ func TestCreateSearchFilter(t *testing.T) {
 				OrganizationId:       "org0",
 				EnvironmentNamespace: "envName0",
 				Command: &accountproto.CreateSearchFilterCommand{
-					SearchFilter: &accountproto.SearchFilter{
-						Name:             "filter",
-						Query:            "query",
-						FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-						EnvironmentId:    "envID0",
-						DefaultFilter:    false,
-					},
+					Name:             "filter",
+					Query:            "query",
+					FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "envID0",
+					DefaultFilter:    false,
 				},
 			},
 			expectedErr: nil,
@@ -440,13 +397,11 @@ func TestCreateSearchFilter(t *testing.T) {
 				OrganizationId:       "org0",
 				EnvironmentNamespace: "envName0",
 				Command: &accountproto.CreateSearchFilterCommand{
-					SearchFilter: &accountproto.SearchFilter{
-						Name:             "filter",
-						Query:            "query",
-						FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-						EnvironmentId:    "envID0",
-						DefaultFilter:    false,
-					},
+					Name:             "filter",
+					Query:            "query",
+					FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "envID0",
+					DefaultFilter:    false,
 				},
 			},
 			expectedErr: nil,
@@ -468,38 +423,12 @@ func TestCreateSearchFilter(t *testing.T) {
 func TestGetChangeDefaultFilters(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
-		desc         string
-		account      *domain.AccountV2
-		searchFilter *accountproto.SearchFilter
-		expected     []*accountproto.SearchFilter
+		desc          string
+		account       *domain.AccountV2
+		filterTarget  accountproto.FilterTargetType
+		environmentId string
+		expected      []*accountproto.SearchFilter
 	}{
-		{
-			desc: "search filter is nil",
-			account: &domain.AccountV2{
-				AccountV2: &accountproto.AccountV2{
-					Email:            "email",
-					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-						{
-							EnvironmentId: "ns0",
-							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-						},
-					},
-					SearchFilters: []*accountproto.SearchFilter{
-						{
-							Id:               "id",
-							Name:             "filter",
-							Query:            "query",
-							FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-							EnvironmentId:    "envID0",
-							DefaultFilter:    true,
-						},
-					},
-				},
-			},
-			searchFilter: nil,
-			expected:     nil,
-		},
 		{
 			desc: "account search filter is nil",
 			account: &domain.AccountV2{
@@ -508,25 +437,26 @@ func TestGetChangeDefaultFilters(t *testing.T) {
 					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 						{
-							EnvironmentId: "ns0",
+							EnvironmentId: "envID0",
 							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 						},
 					},
 					SearchFilters: nil,
 				},
 			},
-			searchFilter: nil,
-			expected:     nil,
+			filterTarget:  accountproto.FilterTargetType_FEATURE_FLAG,
+			environmentId: "envID0",
+			expected:      nil,
 		},
 		{
-			desc: "default filter is ON, but account default filter is OFF",
+			desc: "account default filter is OFF",
 			account: &domain.AccountV2{
 				AccountV2: &accountproto.AccountV2{
 					Email:            "email",
 					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 						{
-							EnvironmentId: "ns0",
+							EnvironmentId: "envID0",
 							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 						},
 					},
@@ -542,18 +472,12 @@ func TestGetChangeDefaultFilters(t *testing.T) {
 					},
 				},
 			},
-			searchFilter: &accountproto.SearchFilter{
-				Id:               "id1",
-				Name:             "filter1",
-				Query:            "query1",
-				FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-				EnvironmentId:    "envID0",
-				DefaultFilter:    true,
-			},
-			expected: nil,
+			filterTarget:  accountproto.FilterTargetType_FEATURE_FLAG,
+			environmentId: "envID0",
+			expected:      nil,
 		},
 		{
-			desc: "default filter is ON, account default filter is ON",
+			desc: "account default filter is ON, different filter target",
 			account: &domain.AccountV2{
 				AccountV2: &accountproto.AccountV2{
 					Email:            "email",
@@ -576,14 +500,64 @@ func TestGetChangeDefaultFilters(t *testing.T) {
 					},
 				},
 			},
-			searchFilter: &accountproto.SearchFilter{
-				Id:               "id1",
-				Name:             "filter1",
-				Query:            "query1",
-				FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-				EnvironmentId:    "envID0",
-				DefaultFilter:    true,
+			filterTarget:  accountproto.FilterTargetType_UNKNOWN,
+			environmentId: "envID0",
+			expected:      nil,
+		},
+		{
+			desc: "account default filter is ON, different environment",
+			account: &domain.AccountV2{
+				AccountV2: &accountproto.AccountV2{
+					Email:            "email",
+					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "ns0",
+							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						},
+					},
+					SearchFilters: []*accountproto.SearchFilter{
+						{
+							Id:               "id",
+							Name:             "filter",
+							Query:            "query",
+							FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+							EnvironmentId:    "envID0",
+							DefaultFilter:    true,
+						},
+					},
+				},
 			},
+			filterTarget:  accountproto.FilterTargetType_FEATURE_FLAG,
+			environmentId: "envID22222",
+			expected:      nil,
+		},
+		{
+			desc: "account default filter is ON, same filter target and environment",
+			account: &domain.AccountV2{
+				AccountV2: &accountproto.AccountV2{
+					Email:            "email",
+					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "ns0",
+							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						},
+					},
+					SearchFilters: []*accountproto.SearchFilter{
+						{
+							Id:               "id",
+							Name:             "filter",
+							Query:            "query",
+							FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+							EnvironmentId:    "envID0",
+							DefaultFilter:    true,
+						},
+					},
+				},
+			},
+			filterTarget:  accountproto.FilterTargetType_FEATURE_FLAG,
+			environmentId: "envID0",
 			expected: []*accountproto.SearchFilter{
 				{
 					Id:               "id",
@@ -598,8 +572,7 @@ func TestGetChangeDefaultFilters(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-
-			actual := getChangeDefaultFilters(p.account, p.searchFilter)
+			actual := getChangeDefaultFilters(p.account, p.filterTarget, p.environmentId)
 			assert.Equal(t, p.expected, actual)
 		})
 	}
