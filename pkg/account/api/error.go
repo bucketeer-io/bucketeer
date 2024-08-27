@@ -45,5 +45,8 @@ var (
 	statusPermissionDenied                 = gstatus.New(codes.PermissionDenied, "account: permission denied")
 	statusSearchFilterNameIsEmpty          = gstatus.New(codes.InvalidArgument, "account: search filter name is empty")
 	statusSearchFilterQueryIsEmpty         = gstatus.New(codes.InvalidArgument, "account: search filter query is empty")
-	statusSearchFilterTargetTypeIsRequired = gstatus.New(codes.InvalidArgument, "account: search filter target type is required")
+	statusSearchFilterTargetTypeIsRequired = gstatus.New(
+		codes.InvalidArgument,
+		"account: search filter target type is required",
+	)
 )

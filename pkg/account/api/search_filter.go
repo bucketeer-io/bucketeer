@@ -104,7 +104,7 @@ func getChangeDefaultFilters(
 	account *domain.AccountV2,
 	searchFilter *accountproto.SearchFilter,
 ) []*accountproto.SearchFilter {
-	if searchFilter == nil || searchFilter.DefaultFilter == false ||
+	if searchFilter == nil || !searchFilter.DefaultFilter ||
 		account.SearchFilters == nil || len(account.SearchFilters) == 0 {
 		return nil
 	}
