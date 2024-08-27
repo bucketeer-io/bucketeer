@@ -310,7 +310,7 @@ func TestCreateSearchFilter(t *testing.T) {
 		DefaultFilter:    false,
 		EnvironmentId:    "environment-id",
 	}
-	_, err = c.CreateSearchFilterV2(ctx, &accountproto.CreateSearchFilterRequest{
+	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
 		Command: &accountproto.CreateSearchFilterCommand{

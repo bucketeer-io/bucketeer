@@ -114,24 +114,24 @@ func (mr *MockClientMockRecorder) CreateAccountV2(ctx, in any, opts ...any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAccountV2", reflect.TypeOf((*MockClient)(nil).CreateAccountV2), varargs...)
 }
 
-// CreateSearchFilterV2 mocks base method.
-func (m *MockClient) CreateSearchFilterV2(ctx context.Context, in *account.CreateSearchFilterRequest, opts ...grpc.CallOption) (*account.CreateSearchFilterResponse, error) {
+// CreateSearchFilter mocks base method.
+func (m *MockClient) CreateSearchFilter(ctx context.Context, in *account.CreateSearchFilterRequest, opts ...grpc.CallOption) (*account.CreateSearchFilterResponse, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "CreateSearchFilterV2", varargs...)
+	ret := m.ctrl.Call(m, "CreateSearchFilter", varargs...)
 	ret0, _ := ret[0].(*account.CreateSearchFilterResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CreateSearchFilterV2 indicates an expected call of CreateSearchFilterV2.
-func (mr *MockClientMockRecorder) CreateSearchFilterV2(ctx, in any, opts ...any) *gomock.Call {
+// CreateSearchFilter indicates an expected call of CreateSearchFilter.
+func (mr *MockClientMockRecorder) CreateSearchFilter(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSearchFilterV2", reflect.TypeOf((*MockClient)(nil).CreateSearchFilterV2), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSearchFilter", reflect.TypeOf((*MockClient)(nil).CreateSearchFilter), varargs...)
 }
 
 // DeleteAccountV2 mocks base method.

@@ -31,7 +31,7 @@ import (
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 )
 
-func (s *AccountService) CreateSearchFilterV2(
+func (s *AccountService) CreateSearchFilter(
 	ctx context.Context,
 	req *accountproto.CreateSearchFilterRequest,
 ) (*accountproto.CreateSearchFilterResponse, error) {
@@ -104,6 +104,10 @@ func getChangeDefaultFilters(
 	account *domain.AccountV2,
 	searchFilter *accountproto.SearchFilter,
 ) []*accountproto.SearchFilter {
+	if searchFilter == nil || searchFilter.DefaultFilter == false ||
+		account.SearchFilters == nil || len(account.SearchFilters) == 0 {
+		return nil
+	}
 	var changeDefaultFilters []*accountproto.SearchFilter
 	for _, filter := range account.SearchFilters {
 		if searchFilter.DefaultFilter && filter.DefaultFilter &&

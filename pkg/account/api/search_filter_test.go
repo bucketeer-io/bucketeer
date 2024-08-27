@@ -350,7 +350,7 @@ func TestCreateSearchFilter(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: createError(statusSearchFilterTargetTypeIsUnknown, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "filter_target_type")),
+			expectedErr: createError(statusSearchFilterTargetTypeIsRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "filter_target_type")),
 		},
 		{
 			desc: "success",
@@ -459,7 +459,7 @@ func TestCreateSearchFilter(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
-			_, err := service.CreateSearchFilterV2(ctx, p.req)
+			_, err := service.CreateSearchFilter(ctx, p.req)
 			assert.Equal(t, p.expectedErr, err, p.desc)
 		})
 	}

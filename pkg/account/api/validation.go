@@ -565,7 +565,7 @@ func validateCreateSearchFilterRequest(
 		return dt.Err()
 	}
 	if req.Command.SearchFilter.FilterTargetType == accountproto.FilterTargetType_UNKNOWN {
-		dt, err := statusSearchFilterTargetTypeIsUnknown.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusSearchFilterTargetTypeIsRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "filter_target_type"),
 		})

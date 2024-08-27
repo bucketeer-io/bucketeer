@@ -249,6 +249,6 @@ service AccountService {
   rpc GetAPIKeyBySearchingAllEnvironments(
       GetAPIKeyBySearchingAllEnvironmentsRequest)
       returns (GetAPIKeyBySearchingAllEnvironmentsResponse);
-  rpc CreateSearchFilterV2(CreateSearchFilterRequest)
+  rpc CreateSearchFilter(CreateSearchFilterRequest)
       returns (CreateSearchFilterResponse);
 }

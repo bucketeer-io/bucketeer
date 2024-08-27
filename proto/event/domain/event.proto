@@ -36,6 +36,7 @@ import "proto/notification/recipient.proto";
 import "proto/feature/prerequisite.proto";
 import "proto/autoops/progressive_rollout.proto";
 import "proto/feature/flag_trigger.proto";
+import "proto/account/search_filter.proto";
 
 message Event {
   enum EntityType {
@@ -598,14 +599,22 @@ message AccountV2DeletedEvent {
   string email = 1;
 }
 
-message SearchFilterCreateEvent {
+message SearchFilterCreatedEvent {
   string id = 1;
   string Name = 2;
+  string Query = 3;
+  bucketeer.account.FilterTargetType TargetType = 4;
+  string environment_id = 5;
+  bool default_filter = 6;
 }
 
-message SearchFilterUpdateEvent {
+message SearchFilterUpdatedEvent {
   string id = 1;
   string Name = 2;
+  string Query = 3;
+  bucketeer.account.FilterTargetType TargetType = 4;
+  string environment_id = 5;
+  bool default_filter = 6;
 }
 
 message APIKeyCreatedEvent {

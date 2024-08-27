@@ -569,7 +569,7 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(
-				locale.UploadedTemplate,
+				locale.UpdatedTemplate,
 				localizer.MustLocalizeWithTemplate(locale.AccountSearchFilter),
 			),
 		}

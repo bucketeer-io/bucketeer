@@ -1355,7 +1355,7 @@
                 "out_type": "GetAPIKeyBySearchingAllEnvironmentsResponse"
               },
               {
-                "name": "CreateSearchFilterV2",
+                "name": "CreateSearchFilter",
                 "in_type": "CreateSearchFilterRequest",
                 "out_type": "CreateSearchFilterResponse"
               }
@@ -8033,7 +8033,7 @@
             ]
           },
           {
-            "name": "SearchFilterCreateEvent",
+            "name": "SearchFilterCreatedEvent",
             "fields": [
               {
                 "id": 1,
@@ -8044,11 +8044,31 @@
                 "id": 2,
                 "name": "Name",
                 "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "Query",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "TargetType",
+                "type": "bucketeer.account.FilterTargetType"
+              },
+              {
+                "id": 5,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "default_filter",
+                "type": "bool"
               }
             ]
           },
           {
-            "name": "SearchFilterUpdateEvent",
+            "name": "SearchFilterUpdatedEvent",
             "fields": [
               {
                 "id": 1,
@@ -8059,6 +8079,26 @@
                 "id": 2,
                 "name": "Name",
                 "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "Query",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "TargetType",
+                "type": "bucketeer.account.FilterTargetType"
+              },
+              {
+                "id": 5,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "default_filter",
+                "type": "bool"
               }
             ]
           },
@@ -9683,6 +9723,9 @@
           },
           {
             "path": "proto/feature/flag_trigger.proto"
+          },
+          {
+            "path": "proto/account/search_filter.proto"
           }
         ],
         "package": {

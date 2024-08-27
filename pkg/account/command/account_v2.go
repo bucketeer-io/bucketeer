@@ -199,7 +199,7 @@ func (h *accountV2CommandHandler) createSearchFiler(
 		cmd.SearchFilter.DefaultFilter); err != nil {
 		return err
 	}
-	return h.send(ctx, eventproto.Event_ACCOUNT_V2_CREATED_SEARCH_FILTER, &eventproto.SearchFilterCreateEvent{
+	return h.send(ctx, eventproto.Event_ACCOUNT_V2_CREATED_SEARCH_FILTER, &eventproto.SearchFilterCreatedEvent{
 		Id:   searchFilter.Id,
 		Name: searchFilter.Name,
 	})
@@ -211,7 +211,7 @@ func (h *accountV2CommandHandler) updateSearchFiler(
 	if err := h.account.UpdateSearchFilter(cmd.SearchFilter); err != nil {
 		return err
 	}
-	return h.send(ctx, eventproto.Event_ACCOUNT_V2_CREATED_SEARCH_FILTER, &eventproto.SearchFilterUpdateEvent{
+	return h.send(ctx, eventproto.Event_ACCOUNT_V2_CREATED_SEARCH_FILTER, &eventproto.SearchFilterUpdatedEvent{
 		Id:   cmd.SearchFilter.Id,
 		Name: cmd.SearchFilter.Name,
 	})
