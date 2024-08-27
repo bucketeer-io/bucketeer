@@ -464,3 +464,143 @@ func TestCreateSearchFilter(t *testing.T) {
 		})
 	}
 }
+
+func TestGetChangeDefaultFilters(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc         string
+		account      *domain.AccountV2
+		searchFilter *accountproto.SearchFilter
+		expected     []*accountproto.SearchFilter
+	}{
+		{
+			desc: "search filter is nil",
+			account: &domain.AccountV2{
+				AccountV2: &accountproto.AccountV2{
+					Email:            "email",
+					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "ns0",
+							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						},
+					},
+					SearchFilters: []*accountproto.SearchFilter{
+						{
+							Id:               "id",
+							Name:             "filter",
+							Query:            "query",
+							FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+							EnvironmentId:    "envID0",
+							DefaultFilter:    true,
+						},
+					},
+				},
+			},
+			searchFilter: nil,
+			expected:     nil,
+		},
+		{
+			desc: "account search filter is nil",
+			account: &domain.AccountV2{
+				AccountV2: &accountproto.AccountV2{
+					Email:            "email",
+					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "ns0",
+							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						},
+					},
+					SearchFilters: nil,
+				},
+			},
+			searchFilter: nil,
+			expected:     nil,
+		},
+		{
+			desc: "default filter is ON, but account default filter is OFF",
+			account: &domain.AccountV2{
+				AccountV2: &accountproto.AccountV2{
+					Email:            "email",
+					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "ns0",
+							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						},
+					},
+					SearchFilters: []*accountproto.SearchFilter{
+						{
+							Id:               "id",
+							Name:             "filter",
+							Query:            "query",
+							FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+							EnvironmentId:    "envID0",
+							DefaultFilter:    false,
+						},
+					},
+				},
+			},
+			searchFilter: &accountproto.SearchFilter{
+				Id:               "id1",
+				Name:             "filter1",
+				Query:            "query1",
+				FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+				EnvironmentId:    "envID0",
+				DefaultFilter:    true,
+			},
+			expected: nil,
+		},
+		{
+			desc: "default filter is ON, account default filter is ON",
+			account: &domain.AccountV2{
+				AccountV2: &accountproto.AccountV2{
+					Email:            "email",
+					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "ns0",
+							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						},
+					},
+					SearchFilters: []*accountproto.SearchFilter{
+						{
+							Id:               "id",
+							Name:             "filter",
+							Query:            "query",
+							FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+							EnvironmentId:    "envID0",
+							DefaultFilter:    true,
+						},
+					},
+				},
+			},
+			searchFilter: &accountproto.SearchFilter{
+				Id:               "id1",
+				Name:             "filter1",
+				Query:            "query1",
+				FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+				EnvironmentId:    "envID0",
+				DefaultFilter:    true,
+			},
+			expected: []*accountproto.SearchFilter{
+				{
+					Id:               "id",
+					Name:             "filter",
+					Query:            "query",
+					FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "envID0",
+					DefaultFilter:    false,
+				},
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+
+			actual := getChangeDefaultFilters(p.account, p.searchFilter)
+			assert.Equal(t, p.expected, actual)
+		})
+	}
+}
