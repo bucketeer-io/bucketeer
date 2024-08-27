@@ -1,5 +1,72 @@
 # Changelog
 
+## [0.4.7](https://github.com/bucketeer-io/bucketeer/compare/v0.4.6...v0.4.7) (2024-08-27)
+
+
+### Features
+
+* add proto and domain for search filter ([#1197](https://github.com/bucketeer-io/bucketeer/issues/1197)) ([03e5580](https://github.com/bucketeer-io/bucketeer/commit/03e55800f29a8ec091b881a3e84e42f27a11bb2d))
+* add support for storage as SearchFilter ([#1205](https://github.com/bucketeer-io/bucketeer/issues/1205)) ([fa7632e](https://github.com/bucketeer-io/bucketeer/commit/fa7632ea9fe3d8238d9a3346d8970fd11a33d687))
+* allows to define rules that are enabled when a given value is a partial match to a target attribute ([#1187](https://github.com/bucketeer-io/bucketeer/issues/1187)) ([fe4b9c8](https://github.com/bucketeer-io/bucketeer/commit/fe4b9c8403e82d798519a81223dc560355e9a435))
+* fcm service account upload in create push ([#1208](https://github.com/bucketeer-io/bucketeer/issues/1208)) ([1485398](https://github.com/bucketeer-io/bucketeer/commit/14853988d22a8a0107c066010029f4c983d2166c))
+* move experiment calculator to batch service ([#1160](https://github.com/bucketeer-io/bucketeer/issues/1160)) ([238b390](https://github.com/bucketeer-io/bucketeer/commit/238b39083692837475f9d39e1959cda12ab2d0e8))
+* **ui:** new dashboard strutcure ([#1123](https://github.com/bucketeer-io/bucketeer/issues/1123)) ([31f03c2](https://github.com/bucketeer-io/bucketeer/commit/31f03c2742d23146e7b78881fcc988af48766190))
+* **ui:** support multi scheduling in the auto operations ([#1143](https://github.com/bucketeer-io/bucketeer/issues/1143)) ([328b162](https://github.com/bucketeer-io/bucketeer/commit/328b162aa60035e242221df9902c298d0c95c106))
+
+
+### Bug Fixes
+
+* fixed to also check ActionType when validating the same date ([#1191](https://github.com/bucketeer-io/bucketeer/issues/1191)) ([88c627b](https://github.com/bucketeer-io/bucketeer/commit/88c627b461111214211ecaeadca5fbee8dee9b1a))
+* go building ([#1163](https://github.com/bucketeer-io/bucketeer/issues/1163)) ([6ae76a7](https://github.com/bucketeer-io/bucketeer/commit/6ae76a7543ed5b14d45b0e5090ee07b9e20ff100))
+* missing rule path when deploying ([c5050a5](https://github.com/bucketeer-io/bucketeer/commit/c5050a550e3a98be97d6b4659a9b8824401dadd1))
+* ops event rate not being processed ([#1164](https://github.com/bucketeer-io/bucketeer/issues/1164)) ([835ef0a](https://github.com/bucketeer-io/bucketeer/commit/835ef0adfedb3f813e11d7305b9d3d5b4f70f052))
+* pubsub message not being acknowledged when the reason is nil ([#1169](https://github.com/bucketeer-io/bucketeer/issues/1169)) ([dd4c878](https://github.com/bucketeer-io/bucketeer/commit/dd4c878e49a5f04dfc155193880842d4f873ca86))
+* sql argument when getting account ([#1213](https://github.com/bucketeer-io/bucketeer/issues/1213)) ([bc767aa](https://github.com/bucketeer-io/bucketeer/commit/bc767aaadf7dc6309b201d15fe2c269b82d93eaf))
+* subscriber metric name ([#1186](https://github.com/bucketeer-io/bucketeer/issues/1186)) ([2385042](https://github.com/bucketeer-io/bucketeer/commit/23850423860432ac275de2d0bb0b72f139075742))
+* **ui:** auto operation action type not being set ([#1162](https://github.com/bucketeer-io/bucketeer/issues/1162)) ([3e8c3c8](https://github.com/bucketeer-io/bucketeer/commit/3e8c3c8980c46e6dfb7534ee3f6db713815a9128))
+* **ui:** auto operation count ([#1159](https://github.com/bucketeer-io/bucketeer/issues/1159)) ([ee3c134](https://github.com/bucketeer-io/bucketeer/commit/ee3c1343ff5da1b7b7235d9dc28ab01eaa82a38b))
+* unimplemented api errror in the subscriber svc ([#1202](https://github.com/bucketeer-io/bucketeer/issues/1202)) ([a049738](https://github.com/bucketeer-io/bucketeer/commit/a049738337a6308a88aaa3575065174fb161d9fc))
+* validate unknown action type ([#1161](https://github.com/bucketeer-io/bucketeer/issues/1161)) ([93541f4](https://github.com/bucketeer-io/bucketeer/commit/93541f4d4503fdec771a2a131e5209f72d758c69))
+* validated the same date for schedule Auto Ops ([#1171](https://github.com/bucketeer-io/bucketeer/issues/1171)) ([63ab2f7](https://github.com/bucketeer-io/bucketeer/commit/63ab2f7e3b3fdf47889d96e9788002ae5c1957eb))
+
+
+### Miscellaneous
+
+* add authentication documentation ([#1149](https://github.com/bucketeer-io/bucketeer/issues/1149)) ([f2af674](https://github.com/bucketeer-io/bucketeer/commit/f2af674c66874a9130502b6843117bf7ecb160f5))
+* add docs for account get me api ([#1212](https://github.com/bucketeer-io/bucketeer/issues/1212)) ([f36a52e](https://github.com/bucketeer-io/bucketeer/commit/f36a52ede4dfdd394350e1ce5489e3b266a63ab7))
+* add documentation for web account amd environment services ([#1211](https://github.com/bucketeer-io/bucketeer/issues/1211)) ([f253084](https://github.com/bucketeer-io/bucketeer/commit/f253084116f0a7128b7f779cf11d9d47748c8927))
+* add environment_id column for tables ([#1209](https://github.com/bucketeer-io/bucketeer/issues/1209)) ([0f6d1fb](https://github.com/bucketeer-io/bucketeer/commit/0f6d1fbfed3c015c266ec40a246d746dd36e2b87))
+* add error logs for push sender ([#1201](https://github.com/bucketeer-io/bucketeer/issues/1201)) ([096fad6](https://github.com/bucketeer-io/bucketeer/commit/096fad6d195f00b5095ab4f6a504d6e7bad94dda))
+* add fcm service account field ([#1206](https://github.com/bucketeer-io/bucketeer/issues/1206)) ([3a271cf](https://github.com/bucketeer-io/bucketeer/commit/3a271cf2a5aec5ebe72a5cd785ba39a2cf635946))
+* change envoy load balancer to least_request ([#1153](https://github.com/bucketeer-io/bucketeer/issues/1153)) ([66597f4](https://github.com/bucketeer-io/bucketeer/commit/66597f4a2f2ae4f8f243ff7aeffbd0aa16041c8b))
+* delete deprecated OpsType and ChangeAutoOpsRuleOpsTypeCommand ([#1204](https://github.com/bucketeer-io/bucketeer/issues/1204)) ([c8b4fec](https://github.com/bucketeer-io/bucketeer/commit/c8b4fecea2912f7132c9d1c087f979cb629bc739))
+* delete docker building cache when open dev container ([#1158](https://github.com/bucketeer-io/bucketeer/issues/1158)) ([72415b4](https://github.com/bucketeer-io/bucketeer/commit/72415b4cf4535c26383436a115ce607bb372bac6))
+* delete triggered_at column ([#1196](https://github.com/bucketeer-io/bucketeer/issues/1196)) ([b76684a](https://github.com/bucketeer-io/bucketeer/commit/b76684aa361f0ea48121620e5e3886289bd43285))
+* delete triggeredAt for AutoOps ([#1179](https://github.com/bucketeer-io/bucketeer/issues/1179)) ([3df9296](https://github.com/bucketeer-io/bucketeer/commit/3df9296d8ec62ea229fc4d71f9b18118dc7541a2))
+* ensure that all kubectl commands for the dev container run in the minikube only ([#1165](https://github.com/bucketeer-io/bucketeer/issues/1165)) ([57c829f](https://github.com/bucketeer-io/bucketeer/commit/57c829fb859e71f3bcef2827776e67c37c2570a5))
+* ignore context canceled errors when publishing to pubsub ([#1185](https://github.com/bucketeer-io/bucketeer/issues/1185)) ([14454f3](https://github.com/bucketeer-io/bucketeer/commit/14454f3a8d65e7a66aa89ab89acbf14bf50f189c))
+* migrated account_v2 table to add search_filters ([#1199](https://github.com/bucketeer-io/bucketeer/issues/1199)) ([c93d7a8](https://github.com/bucketeer-io/bucketeer/commit/c93d7a8b7d8f7ec0fecb6db74fa1fe611ecda053))
+* **migration:** include atlas schema migration table to initilization file ([#1193](https://github.com/bucketeer-io/bucketeer/issues/1193)) ([251783b](https://github.com/bucketeer-io/bucketeer/commit/251783b409598821cb161e1d049828b2c7db6edd))
+* **migration:** set default value for triggered_at column ([#1194](https://github.com/bucketeer-io/bucketeer/issues/1194)) ([a460fa2](https://github.com/bucketeer-io/bucketeer/commit/a460fa2d783ffc2d5b6a86c830f2dd140ab5b948))
+* move subscribers to subscriber svc ([#1168](https://github.com/bucketeer-io/bucketeer/issues/1168)) ([d97f383](https://github.com/bucketeer-io/bucketeer/commit/d97f383c70422b6ebd180d2d9233b8d85031aa46))
+* rename api-gateway to api ([#1190](https://github.com/bucketeer-io/bucketeer/issues/1190)) ([19d2d5a](https://github.com/bucketeer-io/bucketeer/commit/19d2d5a01ede60f07a53462e398c2ea3f657e51c))
+* unify web-gateway and backend ([#1181](https://github.com/bucketeer-io/bucketeer/issues/1181)) ([62e3b1b](https://github.com/bucketeer-io/bucketeer/commit/62e3b1bba75377f730df6bd346bc2b4f1edaa949))
+* update prd envoy to 1.31.0 ([#1155](https://github.com/bucketeer-io/bucketeer/issues/1155)) ([7c458ff](https://github.com/bucketeer-io/bucketeer/commit/7c458ff8fb4a2082467e540e230e075a413fffa8))
+
+
+### Build System
+
+* **deps-dev:** bump postcss from 8.4.24 to 8.4.31 in /ui/web-v2 ([#1174](https://github.com/bucketeer-io/bucketeer/issues/1174)) ([9bff6c5](https://github.com/bucketeer-io/bucketeer/commit/9bff6c53207bde0c6fda0fc16b5f4ae533047c17))
+* **deps:** bump github.com/hashicorp/go-retryablehttp ([#1175](https://github.com/bucketeer-io/bucketeer/issues/1175)) ([a6b14a0](https://github.com/bucketeer-io/bucketeer/commit/a6b14a0e07bf85e7ea8b6ee4b18a87aebbb28ecc))
+* **deps:** bump golang.org/x/crypto in /hack/delete-e2e-data-mysql ([#1178](https://github.com/bucketeer-io/bucketeer/issues/1178)) ([02d047e](https://github.com/bucketeer-io/bucketeer/commit/02d047e64bfadefec39e7cf0b88df48a7938024a))
+* **deps:** bump golang.org/x/net in /hack/delete-e2e-data-mysql ([#1177](https://github.com/bucketeer-io/bucketeer/issues/1177)) ([ce055a0](https://github.com/bucketeer-io/bucketeer/commit/ce055a0b01da58038d16866d0eb7b7d27e16f00a))
+* **deps:** bump google.golang.org/protobuf ([#1176](https://github.com/bucketeer-io/bucketeer/issues/1176)) ([0aefd14](https://github.com/bucketeer-io/bucketeer/commit/0aefd14ff5485ef4cc1f98476bdd05435899f5d4))
+* **deps:** bump the dependencies group with 14 updates ([#1173](https://github.com/bucketeer-io/bucketeer/issues/1173)) ([cbed675](https://github.com/bucketeer-io/bucketeer/commit/cbed67563f93ecf37d76208675af0ea96b1756c6))
+* **deps:** bump the dependencies group with 3 updates ([#1172](https://github.com/bucketeer-io/bucketeer/issues/1172)) ([5390bc0](https://github.com/bucketeer-io/bucketeer/commit/5390bc0cd1e71060b72478e21881f3c505508030))
+* **deps:** bump the dependencies group with 4 updates ([#1183](https://github.com/bucketeer-io/bucketeer/issues/1183)) ([34d8f33](https://github.com/bucketeer-io/bucketeer/commit/34d8f338ea522a255727a3212caaee8281b25c0e))
+* **deps:** update package.json ([#1182](https://github.com/bucketeer-io/bucketeer/issues/1182)) ([4470ad2](https://github.com/bucketeer-io/bucketeer/commit/4470ad2751d2beadee3bac1e42c8697d16dcb32e))
+* **ui:** add post build script to recreate the file after building web project ([#1166](https://github.com/bucketeer-io/bucketeer/issues/1166)) ([41da191](https://github.com/bucketeer-io/bucketeer/commit/41da1916100bf29cc925010b629f74c17e014d5f))
+
 ## [0.4.6](https://github.com/bucketeer-io/bucketeer/compare/v0.4.5...v0.4.6) (2024-07-23)
 
 
