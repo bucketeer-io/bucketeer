@@ -5,9 +5,15 @@ export type MenuProps = {
   className?: string;
   title: string;
   items: MenuItem[];
+  onClickNavLink?: () => void;
 };
 
-const SectionMenu = ({ className, title, items = [] }: MenuProps) => {
+const SectionMenu = ({
+  className,
+  title,
+  items = [],
+  onClickNavLink
+}: MenuProps) => {
   return (
     <div className={cn('flex flex-col', className)}>
       <div className="px-3 uppercase typo-head-bold-tiny text-primary-50 mb-3">
@@ -15,7 +21,7 @@ const SectionMenu = ({ className, title, items = [] }: MenuProps) => {
       </div>
 
       {items.map((item, index) => (
-        <MenuItemComponent {...item} key={index} />
+        <MenuItemComponent {...item} key={index} onClick={onClickNavLink} />
       ))}
     </div>
   );

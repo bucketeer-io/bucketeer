@@ -1,14 +1,127 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { memo, useCallback, useEffect, useState } from 'react';
+import {
+  BrowserRouter,
+  Route,
+  Routes,
+  useParams,
+  useNavigate
+} from 'react-router-dom';
+import {
+  AuthCallbackPage,
+  AuthProvider,
+  currentEnvironmentRole,
+  useAuth,
+  useIsEditable
+} from 'auth';
+import {
+  PAGE_PATH_AUTH_CALLBACK,
+  PAGE_PATH_AUTH_SIGNIN,
+  PAGE_PATH_FEATURES,
+  PAGE_PATH_NEW,
+  PAGE_PATH_ROOT,
+  PAGE_PATH_ROOT_ALL
+} from 'constants/routing';
+import { getTokenStorage } from 'storage/token';
+import { v4 as uuid } from 'uuid';
 import DashboardPage from 'pages/dashboard';
+import NotFoundPage from 'pages/not-found';
+import SignInEmailPage from 'pages/signin/email';
+import SignInPage from 'pages/signin/signin';
+import Navigation from 'components/navigation';
+import Spinner from 'components/spinner';
+import SelectOrganizationPage from 'pages/signin/organization';
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<DashboardPage />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route
+            path={PAGE_PATH_AUTH_CALLBACK}
+            element={<AuthCallbackPage />}
+          />
+          <Route path={PAGE_PATH_AUTH_SIGNIN} element={<SignInEmailPage />} />
+          <Route path={PAGE_PATH_ROOT_ALL} element={<Root />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
+
+export const Root = memo(() => {
+  const authToken = getTokenStorage();
+  const [pageKey, setPageKey] = useState<string>(uuid());
+  const { isInitialLoading, isLogin, consoleAccount, myOrganizations } =
+    useAuth();
+
+  const handleChangePageKey = useCallback(() => {
+    setPageKey(uuid());
+  }, [setPageKey]);
+
+  if (isInitialLoading) {
+    return (
+      <div className="mt-20 flex justify-center w-full">
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (isLogin && consoleAccount) {
+    return (
+      <div className="flex flex-row w-full h-full">
+        <Navigation onClickNavLink={handleChangePageKey} />
+        <div className="flex-grow ml-[248px] shadow-lg overflow-y-auto">
+          <Routes>
+            <Route
+              key={pageKey}
+              path={'/:envUrlCode?/*'}
+              element={<EnvironmentRoot />}
+            />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </div>
+      </div>
+    );
+  }
+
+  if (!!authToken && myOrganizations.length > 1) {
+    return (
+      <SelectOrganizationPage />
+    );
+  }
+
+  return <SignInPage />;
+});
+
+export const EnvironmentRoot = memo(() => {
+  const navigate = useNavigate();
+  const { envUrlCode } = useParams();
+
+  const { consoleAccount, isLogin } = useAuth();
+  const editable = useIsEditable(consoleAccount!);
+
+  useEffect(() => {
+    if (isLogin) {
+      if (consoleAccount && !envUrlCode) {
+        const currentEnv = currentEnvironmentRole(consoleAccount).environment;
+        navigate(`${PAGE_PATH_ROOT}${currentEnv.urlCode}${PAGE_PATH_FEATURES}`);
+      }
+    } else {
+      navigate(PAGE_PATH_ROOT);
+    }
+  }, [consoleAccount]);
+
+  return (
+    <Routes>
+      {!editable && (
+        <Route path={`/:any${PAGE_PATH_NEW}`}>
+          <h3>{`403 Access denied`}</h3>
+        </Route>
+      )}
+      <Route path={`${PAGE_PATH_FEATURES}`} element={<DashboardPage />} />
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
+  );
+});
 
 export default App;

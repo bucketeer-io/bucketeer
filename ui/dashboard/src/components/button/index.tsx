@@ -2,6 +2,7 @@ import { forwardRef } from 'react';
 import type { ButtonHTMLAttributes } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from 'utils/style';
+import EllipsisSpinner from 'components/ellipsis-spinner';
 
 const buttonVariants = cva(
   'inline-flex animate-fade gap-2 items-center justify-center duration-300 ease-out',
@@ -20,10 +21,17 @@ const buttonVariants = cva(
           'hover:text-primary-700 hover:shadow-border-primary-700',
           'disabled:text-gray-500 disabled:shadow-border-gray-500'
         ],
+        'secondary-2': [
+          'text-gray-700 shadow-border-gray-300',
+          'rounded-lg px-6 py-2',
+          'hover:text-gray-900 hover:shadow-border-gray-500',
+          'disabled:text-gray-500 disabled:shadow-border-gray-500 disabled:bg-gray-200'
+        ],
         negative: [
           'bg-accent-red-500 text-gray-50 shadow-border-accent-red-500',
           'rounded-lg px-6 py-2',
-          'hover:bg-accent-red-600 hover:shadow-border-accent-red-600'
+          'hover:bg-accent-red-600 hover:shadow-border-accent-red-600',
+          'disabled:bg-accent-red-50 disabled:text-gray-500 '
         ],
         text: [
           'text-primary-500 px-2',
@@ -59,13 +67,28 @@ export interface ButtonProps
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, ...props }, ref) => {
+  (
+    { className, variant, size, loading, children, disabled, ...props },
+    ref
+  ) => {
     return (
       <button
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(
+          buttonVariants({ variant, size }),
+          { relative: loading },
+          className
+        )}
+        disabled={loading || disabled}
         ref={ref}
         {...props}
-      />
+      >
+        {children}
+        {loading && (
+          <div className="absolute inset-0 flex h-full w-full items-center justify-center">
+            <EllipsisSpinner />
+          </div>
+        )}
+      </button>
     );
   }
 );
