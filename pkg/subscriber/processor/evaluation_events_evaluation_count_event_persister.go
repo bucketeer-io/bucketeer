@@ -255,6 +255,21 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 		if err := p.countEvent(eckv2); err != nil {
 			return err
 		}
+
+		// Because there are a few environments without an ID, we must add a unique ID for those before migrating.
+		// So, we need to double-write the entries in the Redis for 30 days to avoid complex migrations.
+		// TODO: This will be removed after migrating from `environment_namespace` to `environment_id`
+		if environmentNamespace == "" {
+			environmentID := "production"
+			uckv := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentID, e.Timestamp)
+			if err := p.countUser(uckv, e.UserId); err != nil {
+				return err
+			}
+			eckv := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentID, e.Timestamp)
+			if err := p.countEvent(eckv); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }

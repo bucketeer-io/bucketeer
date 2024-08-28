@@ -291,6 +291,24 @@ func (u *evalGoalUpdater) updateUserCountPerClause(
 			subscriberHandledCounter.WithLabelValues(subscriberGoalEventOPS, codeFailedToUpdateUserCount).Inc()
 			return err
 		}
+
+		// Because there are a few environments without an ID, we must add a unique ID for those before migrating.
+		// So, we need to double-write the entries in the Redis for 30 days to avoid complex migrations.
+		// TODO: This will be removed after migrating from `environment_namespace` to `environment_id`
+		if environmentNamespace == "" {
+			key := u.newUserCountKey(
+				"production",
+				rule.ruleID,
+				id,
+				featureID,
+				clause.VariationId,
+				featureVersion,
+			)
+			if err := u.eventCounterCache.UpdateUserCount(key, userID); err != nil {
+				subscriberHandledCounter.WithLabelValues(subscriberGoalEventOPS, codeFailedToUpdateUserCount).Inc()
+				return err
+			}
+		}
 		u.logger.Debug(
 			"User count updated successfully",
 			zap.String("pfcountKey", key),
