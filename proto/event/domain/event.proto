@@ -128,7 +128,7 @@ message Event {
     ACCOUNT_V2_DISABLED = 311;
     ACCOUNT_V2_DELETED = 312;
     ACCOUNT_V2_CREATED_SEARCH_FILTER = 313;
-    ACCOUNT_V2_UPDATED_SEARCH_FILTER = 314;
+    ACCOUNT_V2_UPDATED_DEFAULT_SEARCH_FILTER = 314;
     APIKEY_CREATED = 400;
     APIKEY_NAME_CHANGED = 401;
     APIKEY_ENABLED = 402;
@@ -600,21 +600,15 @@ message AccountV2DeletedEvent {
 }
 
 message SearchFilterCreatedEvent {
-  string id = 1;
-  string Name = 2;
-  string Query = 3;
-  bucketeer.account.FilterTargetType TargetType = 4;
-  string environment_id = 5;
-  bool default_filter = 6;
+  string Name = 1;
+  string Query = 2;
+  bucketeer.account.FilterTargetType TargetType = 3;
+  string environment_id = 4;
+  bool default_filter = 5;
 }
 
-message SearchFilterUpdatedEvent {
-  string id = 1;
-  string Name = 2;
-  string Query = 3;
-  bucketeer.account.FilterTargetType TargetType = 4;
-  string environment_id = 5;
-  bool default_filter = 6;
+message DefaultSearchFilterUpdatedEvent {
+  bool default_filter = 1;
 }
 
 message APIKeyCreatedEvent {

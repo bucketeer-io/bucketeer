@@ -190,7 +190,7 @@ export namespace Event {
     ACCOUNT_V2_DISABLED: 311;
     ACCOUNT_V2_DELETED: 312;
     ACCOUNT_V2_CREATED_SEARCH_FILTER: 313;
-    ACCOUNT_V2_UPDATED_SEARCH_FILTER: 314;
+    ACCOUNT_V2_UPDATED_DEFAULT_SEARCH_FILTER: 314;
     APIKEY_CREATED: 400;
     APIKEY_NAME_CHANGED: 401;
     APIKEY_ENABLED: 402;
@@ -2800,9 +2800,6 @@ export namespace AccountV2DeletedEvent {
 }
 
 export class SearchFilterCreatedEvent extends jspb.Message {
-  getId(): string;
-  setId(value: string): void;
-
   getName(): string;
   setName(value: string): void;
 
@@ -2843,7 +2840,6 @@ export class SearchFilterCreatedEvent extends jspb.Message {
 
 export namespace SearchFilterCreatedEvent {
   export type AsObject = {
-    id: string;
     name: string;
     query: string;
     targettype: proto_account_search_filter_pb.FilterTargetTypeMap[keyof proto_account_search_filter_pb.FilterTargetTypeMap];
@@ -2852,55 +2848,33 @@ export namespace SearchFilterCreatedEvent {
   };
 }
 
-export class SearchFilterUpdatedEvent extends jspb.Message {
-  getId(): string;
-  setId(value: string): void;
-
-  getName(): string;
-  setName(value: string): void;
-
-  getQuery(): string;
-  setQuery(value: string): void;
-
-  getTargettype(): proto_account_search_filter_pb.FilterTargetTypeMap[keyof proto_account_search_filter_pb.FilterTargetTypeMap];
-  setTargettype(
-    value: proto_account_search_filter_pb.FilterTargetTypeMap[keyof proto_account_search_filter_pb.FilterTargetTypeMap]
-  ): void;
-
-  getEnvironmentId(): string;
-  setEnvironmentId(value: string): void;
-
+export class DefaultSearchFilterUpdatedEvent extends jspb.Message {
   getDefaultFilter(): boolean;
   setDefaultFilter(value: boolean): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): SearchFilterUpdatedEvent.AsObject;
+  toObject(includeInstance?: boolean): DefaultSearchFilterUpdatedEvent.AsObject;
   static toObject(
     includeInstance: boolean,
-    msg: SearchFilterUpdatedEvent
-  ): SearchFilterUpdatedEvent.AsObject;
+    msg: DefaultSearchFilterUpdatedEvent
+  ): DefaultSearchFilterUpdatedEvent.AsObject;
   static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
   static extensionsBinary: {
     [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
   };
   static serializeBinaryToWriter(
-    message: SearchFilterUpdatedEvent,
+    message: DefaultSearchFilterUpdatedEvent,
     writer: jspb.BinaryWriter
   ): void;
-  static deserializeBinary(bytes: Uint8Array): SearchFilterUpdatedEvent;
+  static deserializeBinary(bytes: Uint8Array): DefaultSearchFilterUpdatedEvent;
   static deserializeBinaryFromReader(
-    message: SearchFilterUpdatedEvent,
+    message: DefaultSearchFilterUpdatedEvent,
     reader: jspb.BinaryReader
-  ): SearchFilterUpdatedEvent;
+  ): DefaultSearchFilterUpdatedEvent;
 }
 
-export namespace SearchFilterUpdatedEvent {
+export namespace DefaultSearchFilterUpdatedEvent {
   export type AsObject = {
-    id: string;
-    name: string;
-    query: string;
-    targettype: proto_account_search_filter_pb.FilterTargetTypeMap[keyof proto_account_search_filter_pb.FilterTargetTypeMap];
-    environmentId: string;
     defaultFilter: boolean;
   };
 }

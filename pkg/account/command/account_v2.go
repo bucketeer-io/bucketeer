@@ -73,9 +73,9 @@ func (h *accountV2CommandHandler) Handle(ctx context.Context, cmd Command) error
 	case *accountproto.DeleteAccountV2Command:
 		return h.delete(ctx, c)
 	case *accountproto.CreateSearchFilterCommand:
-		return h.createSearchFiler(ctx, c)
-	case *accountproto.UpdateSearchFilterCommand:
-		return h.updateSearchFiler(ctx, c)
+		return h.createSearchFilter(ctx, c)
+	case *accountproto.ChangeDefaultSearchFilterCommand:
+		return h.updateDefaultSearchFilter(ctx, c)
 	default:
 		return ErrBadCommand
 	}
@@ -186,7 +186,7 @@ func (h *accountV2CommandHandler) delete(ctx context.Context, _ *accountproto.De
 	})
 }
 
-func (h *accountV2CommandHandler) createSearchFiler(
+func (h *accountV2CommandHandler) createSearchFilter(
 	ctx context.Context,
 	cmd *accountproto.CreateSearchFilterCommand) error {
 	var searchFilter *accountproto.SearchFilter
@@ -200,21 +200,24 @@ func (h *accountV2CommandHandler) createSearchFiler(
 		return err
 	}
 	return h.send(ctx, eventproto.Event_ACCOUNT_V2_CREATED_SEARCH_FILTER, &eventproto.SearchFilterCreatedEvent{
-		Id:   searchFilter.Id,
-		Name: searchFilter.Name,
+		Name:          searchFilter.Name,
+		Query:         searchFilter.Query,
+		TargetType:    searchFilter.FilterTargetType,
+		EnvironmentId: searchFilter.EnvironmentId,
+		DefaultFilter: searchFilter.DefaultFilter,
 	})
 }
 
-func (h *accountV2CommandHandler) updateSearchFiler(
+func (h *accountV2CommandHandler) updateDefaultSearchFilter(
 	ctx context.Context,
-	cmd *accountproto.UpdateSearchFilterCommand) error {
-	if err := h.account.UpdateSearchFilter(cmd.SearchFilter); err != nil {
+	cmd *accountproto.ChangeDefaultSearchFilterCommand) error {
+	if err := h.account.UpdateDefaultSearchFilter(cmd.Id, cmd.DefaultFilter); err != nil {
 		return err
 	}
-	return h.send(ctx, eventproto.Event_ACCOUNT_V2_CREATED_SEARCH_FILTER, &eventproto.SearchFilterUpdatedEvent{
-		Id:   cmd.SearchFilter.Id,
-		Name: cmd.SearchFilter.Name,
+	return h.send(ctx, eventproto.Event_ACCOUNT_V2_UPDATED_DEFAULT_SEARCH_FILTER, &eventproto.DefaultSearchFilterUpdatedEvent{
+		DefaultFilter: cmd.DefaultFilter,
 	})
+
 }
 
 func (h *accountV2CommandHandler) send(

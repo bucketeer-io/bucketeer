@@ -78,8 +78,8 @@ func TestCreateSearchFilter(t *testing.T) {
 				}, nil).AnyTimes()
 			},
 			req: &accountproto.CreateSearchFilterRequest{
-				OrganizationId:       "org0",
-				EnvironmentNamespace: "envName0",
+				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
 				Command: &accountproto.CreateSearchFilterCommand{
 					Name:             "filter",
 					Query:            "query",
@@ -109,8 +109,8 @@ func TestCreateSearchFilter(t *testing.T) {
 				}, nil).AnyTimes()
 			},
 			req: &accountproto.CreateSearchFilterRequest{
-				Email:                "bucketeer@example.com",
-				EnvironmentNamespace: "envName0",
+				Email:         "bucketeer@example.com",
+				EnvironmentId: "envID0",
 				Command: &accountproto.CreateSearchFilterCommand{
 					Name:             "filter",
 					Query:            "query",
@@ -148,9 +148,9 @@ func TestCreateSearchFilter(t *testing.T) {
 				).Return(errors.New("test"))
 			},
 			req: &accountproto.CreateSearchFilterRequest{
-				Email:                "bucketeer@example.com",
-				OrganizationId:       "org0",
-				EnvironmentNamespace: "envName0",
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
 				Command: &accountproto.CreateSearchFilterCommand{
 					Name:             "filter",
 					Query:            "query",
@@ -189,9 +189,9 @@ func TestCreateSearchFilter(t *testing.T) {
 				).Return(v2as.ErrAccountNotFound)
 			},
 			req: &accountproto.CreateSearchFilterRequest{
-				Email:                "bucketeer@example.com",
-				OrganizationId:       "org0",
-				EnvironmentNamespace: "envName0",
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
 				Command: &accountproto.CreateSearchFilterCommand{
 					Name:             "filter",
 					Query:            "query",
@@ -343,9 +343,9 @@ func TestCreateSearchFilter(t *testing.T) {
 				).Return(nil)
 			},
 			req: &accountproto.CreateSearchFilterRequest{
-				Email:                "bucketeer@example.com",
-				OrganizationId:       "org0",
-				EnvironmentNamespace: "envName0",
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
 				Command: &accountproto.CreateSearchFilterCommand{
 					Name:             "filter",
 					Query:            "query",
@@ -393,9 +393,9 @@ func TestCreateSearchFilter(t *testing.T) {
 				).Return(nil)
 			},
 			req: &accountproto.CreateSearchFilterRequest{
-				Email:                "bucketeer@example.com",
-				OrganizationId:       "org0",
-				EnvironmentNamespace: "envName0",
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
 				Command: &accountproto.CreateSearchFilterCommand{
 					Name:             "filter",
 					Query:            "query",
@@ -420,14 +420,14 @@ func TestCreateSearchFilter(t *testing.T) {
 	}
 }
 
-func TestGetChangeDefaultFilters(t *testing.T) {
+func TestGetChangeDefaultSearchFilterCommands(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
 		desc          string
 		account       *domain.AccountV2
 		filterTarget  accountproto.FilterTargetType
 		environmentId string
-		expected      []*accountproto.SearchFilter
+		expected      []*accountproto.ChangeDefaultSearchFilterCommand
 	}{
 		{
 			desc: "account search filter is nil",
@@ -558,21 +558,17 @@ func TestGetChangeDefaultFilters(t *testing.T) {
 			},
 			filterTarget:  accountproto.FilterTargetType_FEATURE_FLAG,
 			environmentId: "envID0",
-			expected: []*accountproto.SearchFilter{
+			expected: []*accountproto.ChangeDefaultSearchFilterCommand{
 				{
-					Id:               "id",
-					Name:             "filter",
-					Query:            "query",
-					FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-					EnvironmentId:    "envID0",
-					DefaultFilter:    false,
+					Id:            "id",
+					DefaultFilter: false,
 				},
 			},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			actual := getChangeDefaultFilters(p.account, p.filterTarget, p.environmentId)
+			actual := getChangeDefaultSearchFilterCommands(p.account, p.filterTarget, p.environmentId)
 			assert.Equal(t, p.expected, actual)
 		})
 	}

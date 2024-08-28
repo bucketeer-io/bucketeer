@@ -38,7 +38,7 @@ func (s *AccountService) CreateSearchFilter(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_UNASSIGNED,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -60,12 +60,9 @@ func (s *AccountService) CreateSearchFilter(
 	// Since there is only one default setting for a filter target, set the existing default to OFF.
 	commands := make([]command.Command, 0)
 	if req.Command.DefaultFilter {
-		changeDefaultFilters := getChangeDefaultFilters(account, req.Command.FilterTargetType, req.Command.EnvironmentId)
-		for _, changeDefaultFilter := range changeDefaultFilters {
-			commands = append(
-				commands,
-				&accountproto.UpdateSearchFilterCommand{SearchFilter: changeDefaultFilter},
-			)
+		changeDefaultFilterCmds := getChangeDefaultSearchFilterCommands(account, req.Command.FilterTargetType, req.Command.EnvironmentId)
+		for _, changeDefaultFilterCmd := range changeDefaultFilterCmds {
+			commands = append(commands, changeDefaultFilterCmd)
 		}
 	}
 	commands = append(commands, req.Command)
@@ -102,25 +99,21 @@ func (s *AccountService) CreateSearchFilter(
 	return &accountproto.CreateSearchFilterResponse{}, nil
 }
 
-func getChangeDefaultFilters(
+func getChangeDefaultSearchFilterCommands(
 	account *domain.AccountV2,
 	filterTarget accountproto.FilterTargetType,
 	environmentId string,
-) []*accountproto.SearchFilter {
-	var changeDefaultFilters []*accountproto.SearchFilter
+) []*accountproto.ChangeDefaultSearchFilterCommand {
+	var changeDefaultFiltersCmds []*accountproto.ChangeDefaultSearchFilterCommand
 	for _, filter := range account.SearchFilters {
 		if filter.DefaultFilter &&
 			filterTarget == filter.FilterTargetType &&
 			environmentId == filter.EnvironmentId {
-			changeDefaultFilters = append(changeDefaultFilters, &accountproto.SearchFilter{
-				Id:               filter.Id,
-				Name:             filter.Name,
-				Query:            filter.Query,
-				FilterTargetType: filter.FilterTargetType,
-				EnvironmentId:    filter.EnvironmentId,
-				DefaultFilter:    false,
+			changeDefaultFiltersCmds = append(changeDefaultFiltersCmds, &accountproto.ChangeDefaultSearchFilterCommand{
+				Id:            filter.Id,
+				DefaultFilter: false,
 			})
 		}
 	}
-	return changeDefaultFilters
+	return changeDefaultFiltersCmds
 }

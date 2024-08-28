@@ -398,7 +398,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 					Name:             "update-name",
 					Query:            "update-query",
 					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
-					EnvironmentId:    "environmentID",
+					EnvironmentId:    "environmentID0",
 					DefaultFilter:    true,
 				},
 			},
@@ -448,7 +448,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 					Name:             "update-name",
 					Query:            "update-query",
 					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
-					EnvironmentId:    "environmentID",
+					EnvironmentId:    "environmentID1",
 					DefaultFilter:    true,
 				},
 				{
@@ -488,7 +488,164 @@ func TestUpdateSearchFilter(t *testing.T) {
 				EnvironmentId:    p.updateFilter.EnvironmentId,
 				DefaultFilter:    p.updateFilter.DefaultFilter,
 			}
-			err := a.UpdateSearchFilter(updateFilter)
+			err := a.UpdateSearchFilter(
+				updateFilter.Id,
+				updateFilter.Name,
+				updateFilter.Query,
+				updateFilter.DefaultFilter)
+			assert.Equal(t, err, p.error)
+
+			// account has not changed.
+			assert.Equal(t, account.Name, a.Name)
+			assert.Equal(t, account.Email, a.Email)
+			assert.Equal(t, account.AvatarImageUrl, a.AvatarImageUrl)
+			assert.Equal(t, account.OrganizationId, a.OrganizationId)
+			assert.Equal(t, account.OrganizationRole, a.OrganizationRole)
+			assert.Equal(t, account.EnvironmentRoles, a.EnvironmentRoles)
+			assert.Equal(t, account.UpdatedAt, a.UpdatedAt)
+
+			assert.Equal(t, len(p.expectedFilters), len(a.SearchFilters))
+			for i, f := range p.expectedFilters {
+				assert.Equal(t, f.Name, a.SearchFilters[i].Name)
+				assert.Equal(t, f.Query, a.SearchFilters[i].Query)
+				assert.Equal(t, f.FilterTargetType, a.SearchFilters[i].FilterTargetType)
+				assert.Equal(t, f.EnvironmentId, a.SearchFilters[i].EnvironmentId)
+				assert.Equal(t, f.DefaultFilter, a.SearchFilters[i].DefaultFilter)
+			}
+		})
+	}
+}
+
+func TestUpdateDefaultSearchFilter(t *testing.T) {
+	account := proto.AccountV2{
+		Email:            "email",
+		Name:             "name",
+		AvatarImageUrl:   "avatarImageURL",
+		OrganizationId:   "organizationID",
+		OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
+		EnvironmentRoles: []*proto.AccountV2_EnvironmentRole{
+			{
+				EnvironmentId: "environmentID",
+				Role:          proto.AccountV2_Role_Environment_VIEWER,
+			},
+		},
+		UpdatedAt: time.Now().Unix(),
+	}
+
+	patterns := []struct {
+		desc                string
+		existingFilters     []*proto.SearchFilter
+		updateDefaultFilter bool
+		expectedFilters     []*proto.SearchFilter
+		error               error
+	}{
+		{
+			desc:                "don't have a filter",
+			existingFilters:     nil,
+			updateDefaultFilter: false,
+			expectedFilters:     []*proto.SearchFilter{},
+			error:               errSearchFilterNotFound,
+		},
+		{
+			desc: "have a filter",
+			existingFilters: []*proto.SearchFilter{
+				{
+					Name:             "name0",
+					Query:            "query0",
+					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "environmentID0",
+					DefaultFilter:    false,
+				},
+			},
+			updateDefaultFilter: true,
+			expectedFilters: []*proto.SearchFilter{
+				{
+					Name:             "name0",
+					Query:            "query0",
+					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "environmentID0",
+					DefaultFilter:    true,
+				},
+			},
+			error: nil,
+		},
+		{
+			desc: "have some filters",
+			existingFilters: []*proto.SearchFilter{
+				{
+					Name:             "name0",
+					Query:            "query0",
+					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "environmentID0",
+					DefaultFilter:    false,
+				},
+				{
+					Name:             "name1",
+					Query:            "query1",
+					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "environmentID1",
+					DefaultFilter:    false,
+				},
+				{
+					Name:             "name2",
+					Query:            "query2",
+					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "environmentID2",
+					DefaultFilter:    false,
+				},
+			},
+			updateDefaultFilter: true,
+			expectedFilters: []*proto.SearchFilter{
+				{
+					Name:             "name0",
+					Query:            "query0",
+					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "environmentID0",
+					DefaultFilter:    false,
+				},
+				{
+					Name:             "name1",
+					Query:            "query1",
+					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "environmentID1",
+					DefaultFilter:    true,
+				},
+				{
+					Name:             "name2",
+					Query:            "query2",
+					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "environmentID2",
+					DefaultFilter:    false,
+				},
+			},
+			error: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			a := NewAccountV2(
+				account.Email,
+				account.Name,
+				account.AvatarImageUrl,
+				account.OrganizationId,
+				account.OrganizationRole,
+				account.EnvironmentRoles,
+			)
+			for _, f := range p.existingFilters {
+				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
+				assert.Nil(t, err)
+			}
+			updateFilterId := "update-filter-id"
+			if len(a.SearchFilters) > 0 {
+				updateFilterId = a.SearchFilters[(len(a.SearchFilters) / 2)].Id
+			}
+			updateFilter := &proto.SearchFilter{
+				Id:            updateFilterId,
+				DefaultFilter: p.updateDefaultFilter,
+			}
+			err := a.UpdateDefaultSearchFilter(
+				updateFilter.Id,
+				updateFilter.DefaultFilter)
 			assert.Equal(t, err, p.error)
 
 			// account has not changed.

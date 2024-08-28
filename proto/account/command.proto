@@ -78,6 +78,7 @@ message CreateSearchFilterCommand {
   bool default_filter = 5;
 }
 
-message UpdateSearchFilterCommand {
-  SearchFilter search_filter = 1;
+message ChangeDefaultSearchFilterCommand {
+  string id = 1;
+  bool default_filter = 2;
 }

@@ -59,6 +59,11 @@ goog.exportSymbol(
   null,
   global
 );
+goog.exportSymbol(
+  'proto.bucketeer.account.ChangeDefaultSearchFilterCommand',
+  null,
+  global
+);
 goog.exportSymbol('proto.bucketeer.account.CreateAPIKeyCommand', null, global);
 goog.exportSymbol(
   'proto.bucketeer.account.CreateAccountV2Command',
@@ -84,11 +89,6 @@ goog.exportSymbol(
 goog.exportSymbol('proto.bucketeer.account.EnableAPIKeyCommand', null, global);
 goog.exportSymbol(
   'proto.bucketeer.account.EnableAccountV2Command',
-  null,
-  global
-);
-goog.exportSymbol(
-  'proto.bucketeer.account.UpdateSearchFilterCommand',
   null,
   global
 );
@@ -418,17 +418,20 @@ if (goog.DEBUG && !COMPILED) {
  * @extends {jspb.Message}
  * @constructor
  */
-proto.bucketeer.account.UpdateSearchFilterCommand = function (opt_data) {
+proto.bucketeer.account.ChangeDefaultSearchFilterCommand = function (opt_data) {
   jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
-goog.inherits(proto.bucketeer.account.UpdateSearchFilterCommand, jspb.Message);
+goog.inherits(
+  proto.bucketeer.account.ChangeDefaultSearchFilterCommand,
+  jspb.Message
+);
 if (goog.DEBUG && !COMPILED) {
   /**
    * @public
    * @override
    */
-  proto.bucketeer.account.UpdateSearchFilterCommand.displayName =
-    'proto.bucketeer.account.UpdateSearchFilterCommand';
+  proto.bucketeer.account.ChangeDefaultSearchFilterCommand.displayName =
+    'proto.bucketeer.account.ChangeDefaultSearchFilterCommand';
 }
 
 /**
@@ -2516,9 +2519,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
    *     http://goto/soy-param-migration
    * @return {!Object}
    */
-  proto.bucketeer.account.UpdateSearchFilterCommand.prototype.toObject =
+  proto.bucketeer.account.ChangeDefaultSearchFilterCommand.prototype.toObject =
     function (opt_includeInstance) {
-      return proto.bucketeer.account.UpdateSearchFilterCommand.toObject(
+      return proto.bucketeer.account.ChangeDefaultSearchFilterCommand.toObject(
         opt_includeInstance,
         this
       );
@@ -2529,22 +2532,18 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
    * @param {boolean|undefined} includeInstance Deprecated. Whether to include
    *     the JSPB instance for transitional soy proto support:
    *     http://goto/soy-param-migration
-   * @param {!proto.bucketeer.account.UpdateSearchFilterCommand} msg The msg instance to transform.
+   * @param {!proto.bucketeer.account.ChangeDefaultSearchFilterCommand} msg The msg instance to transform.
    * @return {!Object}
    * @suppress {unusedLocalVariables} f is only used for nested messages
    */
-  proto.bucketeer.account.UpdateSearchFilterCommand.toObject = function (
+  proto.bucketeer.account.ChangeDefaultSearchFilterCommand.toObject = function (
     includeInstance,
     msg
   ) {
     var f,
       obj = {
-        searchFilter:
-          (f = msg.getSearchFilter()) &&
-          proto_account_search_filter_pb.SearchFilter.toObject(
-            includeInstance,
-            f
-          )
+        id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        defaultFilter: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
       };
 
     if (includeInstance) {
@@ -2557,27 +2556,26 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
 /**
  * Deserializes binary data (in protobuf wire format).
  * @param {jspb.ByteSource} bytes The bytes to deserialize.
- * @return {!proto.bucketeer.account.UpdateSearchFilterCommand}
+ * @return {!proto.bucketeer.account.ChangeDefaultSearchFilterCommand}
  */
-proto.bucketeer.account.UpdateSearchFilterCommand.deserializeBinary = function (
-  bytes
-) {
-  var reader = new jspb.BinaryReader(bytes);
-  var msg = new proto.bucketeer.account.UpdateSearchFilterCommand();
-  return proto.bucketeer.account.UpdateSearchFilterCommand.deserializeBinaryFromReader(
-    msg,
-    reader
-  );
-};
+proto.bucketeer.account.ChangeDefaultSearchFilterCommand.deserializeBinary =
+  function (bytes) {
+    var reader = new jspb.BinaryReader(bytes);
+    var msg = new proto.bucketeer.account.ChangeDefaultSearchFilterCommand();
+    return proto.bucketeer.account.ChangeDefaultSearchFilterCommand.deserializeBinaryFromReader(
+      msg,
+      reader
+    );
+  };
 
 /**
  * Deserializes binary data (in protobuf wire format) from the
  * given reader into the given message object.
- * @param {!proto.bucketeer.account.UpdateSearchFilterCommand} msg The message object to deserialize into.
+ * @param {!proto.bucketeer.account.ChangeDefaultSearchFilterCommand} msg The message object to deserialize into.
  * @param {!jspb.BinaryReader} reader The BinaryReader to use.
- * @return {!proto.bucketeer.account.UpdateSearchFilterCommand}
+ * @return {!proto.bucketeer.account.ChangeDefaultSearchFilterCommand}
  */
-proto.bucketeer.account.UpdateSearchFilterCommand.deserializeBinaryFromReader =
+proto.bucketeer.account.ChangeDefaultSearchFilterCommand.deserializeBinaryFromReader =
   function (msg, reader) {
     while (reader.nextField()) {
       if (reader.isEndGroup()) {
@@ -2586,13 +2584,12 @@ proto.bucketeer.account.UpdateSearchFilterCommand.deserializeBinaryFromReader =
       var field = reader.getFieldNumber();
       switch (field) {
         case 1:
-          var value = new proto_account_search_filter_pb.SearchFilter();
-          reader.readMessage(
-            value,
-            proto_account_search_filter_pb.SearchFilter
-              .deserializeBinaryFromReader
-          );
-          msg.setSearchFilter(value);
+          var value = /** @type {string} */ (reader.readString());
+          msg.setId(value);
+          break;
+        case 2:
+          var value = /** @type {boolean} */ (reader.readBool());
+          msg.setDefaultFilter(value);
           break;
         default:
           reader.skipField();
@@ -2606,10 +2603,10 @@ proto.bucketeer.account.UpdateSearchFilterCommand.deserializeBinaryFromReader =
  * Serializes the message to binary data (in protobuf wire format).
  * @return {!Uint8Array}
  */
-proto.bucketeer.account.UpdateSearchFilterCommand.prototype.serializeBinary =
+proto.bucketeer.account.ChangeDefaultSearchFilterCommand.prototype.serializeBinary =
   function () {
     var writer = new jspb.BinaryWriter();
-    proto.bucketeer.account.UpdateSearchFilterCommand.serializeBinaryToWriter(
+    proto.bucketeer.account.ChangeDefaultSearchFilterCommand.serializeBinaryToWriter(
       this,
       writer
     );
@@ -2619,63 +2616,61 @@ proto.bucketeer.account.UpdateSearchFilterCommand.prototype.serializeBinary =
 /**
  * Serializes the given message to binary data (in protobuf wire
  * format), writing to the given BinaryWriter.
- * @param {!proto.bucketeer.account.UpdateSearchFilterCommand} message
+ * @param {!proto.bucketeer.account.ChangeDefaultSearchFilterCommand} message
  * @param {!jspb.BinaryWriter} writer
  * @suppress {unusedLocalVariables} f is only used for nested messages
  */
-proto.bucketeer.account.UpdateSearchFilterCommand.serializeBinaryToWriter =
+proto.bucketeer.account.ChangeDefaultSearchFilterCommand.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getSearchFilter();
-    if (f != null) {
-      writer.writeMessage(
-        1,
-        f,
-        proto_account_search_filter_pb.SearchFilter.serializeBinaryToWriter
-      );
+    f = message.getId();
+    if (f.length > 0) {
+      writer.writeString(1, f);
+    }
+    f = message.getDefaultFilter();
+    if (f) {
+      writer.writeBool(2, f);
     }
   };
 
 /**
- * optional SearchFilter search_filter = 1;
- * @return {?proto.bucketeer.account.SearchFilter}
+ * optional string id = 1;
+ * @return {string}
  */
-proto.bucketeer.account.UpdateSearchFilterCommand.prototype.getSearchFilter =
+proto.bucketeer.account.ChangeDefaultSearchFilterCommand.prototype.getId =
   function () {
-    return /** @type{?proto.bucketeer.account.SearchFilter} */ (
-      jspb.Message.getWrapperField(
-        this,
-        proto_account_search_filter_pb.SearchFilter,
-        1
-      )
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 1, '')
     );
   };
 
 /**
- * @param {?proto.bucketeer.account.SearchFilter|undefined} value
- * @return {!proto.bucketeer.account.UpdateSearchFilterCommand} returns this
+ * @param {string} value
+ * @return {!proto.bucketeer.account.ChangeDefaultSearchFilterCommand} returns this
  */
-proto.bucketeer.account.UpdateSearchFilterCommand.prototype.setSearchFilter =
+proto.bucketeer.account.ChangeDefaultSearchFilterCommand.prototype.setId =
   function (value) {
-    return jspb.Message.setWrapperField(this, 1, value);
+    return jspb.Message.setProto3StringField(this, 1, value);
   };
 
 /**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.account.UpdateSearchFilterCommand} returns this
- */
-proto.bucketeer.account.UpdateSearchFilterCommand.prototype.clearSearchFilter =
-  function () {
-    return this.setSearchFilter(undefined);
-  };
-
-/**
- * Returns whether this field is set.
+ * optional bool default_filter = 2;
  * @return {boolean}
  */
-proto.bucketeer.account.UpdateSearchFilterCommand.prototype.hasSearchFilter =
+proto.bucketeer.account.ChangeDefaultSearchFilterCommand.prototype.getDefaultFilter =
   function () {
-    return jspb.Message.getField(this, 1) != null;
+    return /** @type {boolean} */ (
+      jspb.Message.getBooleanFieldWithDefault(this, 2, false)
+    );
+  };
+
+/**
+ * @param {boolean} value
+ * @return {!proto.bucketeer.account.ChangeDefaultSearchFilterCommand} returns this
+ */
+proto.bucketeer.account.ChangeDefaultSearchFilterCommand.prototype.setDefaultFilter =
+  function (value) {
+    return jspb.Message.setProto3BooleanField(this, 2, value);
   };
 
 goog.object.extend(exports, proto.bucketeer.account);

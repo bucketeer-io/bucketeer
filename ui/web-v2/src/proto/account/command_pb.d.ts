@@ -468,35 +468,39 @@ export namespace CreateSearchFilterCommand {
   };
 }
 
-export class UpdateSearchFilterCommand extends jspb.Message {
-  hasSearchFilter(): boolean;
-  clearSearchFilter(): void;
-  getSearchFilter(): proto_account_search_filter_pb.SearchFilter | undefined;
-  setSearchFilter(value?: proto_account_search_filter_pb.SearchFilter): void;
+export class ChangeDefaultSearchFilterCommand extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getDefaultFilter(): boolean;
+  setDefaultFilter(value: boolean): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): UpdateSearchFilterCommand.AsObject;
+  toObject(
+    includeInstance?: boolean
+  ): ChangeDefaultSearchFilterCommand.AsObject;
   static toObject(
     includeInstance: boolean,
-    msg: UpdateSearchFilterCommand
-  ): UpdateSearchFilterCommand.AsObject;
+    msg: ChangeDefaultSearchFilterCommand
+  ): ChangeDefaultSearchFilterCommand.AsObject;
   static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
   static extensionsBinary: {
     [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
   };
   static serializeBinaryToWriter(
-    message: UpdateSearchFilterCommand,
+    message: ChangeDefaultSearchFilterCommand,
     writer: jspb.BinaryWriter
   ): void;
-  static deserializeBinary(bytes: Uint8Array): UpdateSearchFilterCommand;
+  static deserializeBinary(bytes: Uint8Array): ChangeDefaultSearchFilterCommand;
   static deserializeBinaryFromReader(
-    message: UpdateSearchFilterCommand,
+    message: ChangeDefaultSearchFilterCommand,
     reader: jspb.BinaryReader
-  ): UpdateSearchFilterCommand;
+  ): ChangeDefaultSearchFilterCommand;
 }
 
-export namespace UpdateSearchFilterCommand {
+export namespace ChangeDefaultSearchFilterCommand {
   export type AsObject = {
-    searchFilter?: proto_account_search_filter_pb.SearchFilter.AsObject;
+    id: string;
+    defaultFilter: boolean;
   };
 }

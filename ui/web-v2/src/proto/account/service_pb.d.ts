@@ -3,6 +3,8 @@
 
 import * as jspb from 'google-protobuf';
 import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
+import * as google_api_annotations_pb from '../../google/api/annotations_pb';
+import * as protoc_gen_openapiv2_options_annotations_pb from '../../protoc-gen-openapiv2/options/annotations_pb';
 import * as proto_account_account_pb from '../../proto/account/account_pb';
 import * as proto_account_api_key_pb from '../../proto/account/api_key_pb';
 import * as proto_account_command_pb from '../../proto/account/command_pb';
@@ -1367,8 +1369,8 @@ export class CreateSearchFilterRequest extends jspb.Message {
   getOrganizationId(): string;
   setOrganizationId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   hasCommand(): boolean;
   clearCommand(): void;
@@ -1400,7 +1402,7 @@ export namespace CreateSearchFilterRequest {
   export type AsObject = {
     email: string;
     organizationId: string;
-    environmentNamespace: string;
+    environmentId: string;
     command?: proto_account_command_pb.CreateSearchFilterCommand.AsObject;
   };
 }

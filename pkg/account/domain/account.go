@@ -151,10 +151,32 @@ func (a *AccountV2) DeleteSearchFilter(id string) error {
 	return errSearchFilterNotFound
 }
 
-func (a *AccountV2) UpdateSearchFilter(searchFilter *proto.SearchFilter) error {
+func (a *AccountV2) UpdateDefaultSearchFilter(id string, defaultFilter bool) error {
+	for _, f := range a.AccountV2.SearchFilters {
+		if f.Id == id {
+			f.DefaultFilter = defaultFilter
+			a.UpdatedAt = time.Now().Unix()
+			return nil
+		}
+	}
+	return errSearchFilterNotFound
+}
+
+func (a *AccountV2) UpdateSearchFilter(
+	id string,
+	name string,
+	query string,
+	defaultFilter bool) error {
 	for i, f := range a.AccountV2.SearchFilters {
-		if f.Id == searchFilter.Id {
-			a.AccountV2.SearchFilters[i] = searchFilter
+		if f.Id == id {
+			a.AccountV2.SearchFilters[i] = &proto.SearchFilter{
+				Id:               id,
+				Name:             name,
+				Query:            query,
+				FilterTargetType: f.FilterTargetType,
+				EnvironmentId:    f.EnvironmentId,
+				DefaultFilter:    defaultFilter,
+			}
 			a.UpdatedAt = time.Now().Unix()
 			return nil
 		}
