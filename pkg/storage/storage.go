@@ -24,6 +24,7 @@ import (
 
 const (
 	AdminEnvironmentNamespace = ""
+	AdminEnvironmentID        = ""
 
 	OrderDirectionAsc  OrderDirection = 0
 	OrderDirectionDesc OrderDirection = 1

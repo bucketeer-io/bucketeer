@@ -46,13 +46,13 @@ func NewEvent(
 	entityID string,
 	eventType domain.Event_Type,
 	event pb.Message,
-	environmentNamespace string,
+	environmentNamespace, environmentID string,
 	entityData, previousEntityData interface{},
 	opts ...Option,
 ) (*domain.Event, error) {
 	return newEvent(
 		editor, entityType, entityID, eventType, event,
-		environmentNamespace, false, entityData, previousEntityData, opts...)
+		environmentNamespace, environmentID, false, entityData, previousEntityData, opts...)
 }
 
 func NewAdminEvent(
@@ -66,7 +66,7 @@ func NewAdminEvent(
 ) (*domain.Event, error) {
 	return newEvent(
 		editor, entityType, entityID, eventType, event,
-		storage.AdminEnvironmentNamespace, true, entityData, previousEntityData, opts...)
+		storage.AdminEnvironmentNamespace, storage.AdminEnvironmentID, true, entityData, previousEntityData, opts...)
 }
 
 func newEvent(
@@ -75,7 +75,7 @@ func newEvent(
 	entityID string,
 	eventType domain.Event_Type,
 	event pb.Message,
-	environmentNamespace string,
+	environmentNamespace, environmentID string,
 	isAdminEvent bool,
 	entity, previousEntity interface{},
 	opts ...Option,
@@ -117,6 +117,7 @@ func newEvent(
 		Editor:               editor,
 		Data:                 buf,
 		EnvironmentNamespace: environmentNamespace,
+		EnvironmentId:        environmentID,
 		IsAdminEvent:         isAdminEvent,
 		EntityData:           string(entityData),
 		PreviousEntityData:   string(prevEntityData),

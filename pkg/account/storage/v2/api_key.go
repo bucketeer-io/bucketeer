@@ -44,7 +44,7 @@ var (
 	selectAPIKeyV2ByIDSQLQuery string
 )
 
-func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error {
+func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace, environmentID string) error {
 	_, err := s.qe(ctx).ExecContext(
 		ctx,
 		insertAPIKeyV2SQLQuery,
@@ -55,6 +55,7 @@ func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, env
 		k.CreatedAt,
 		k.UpdatedAt,
 		environmentNamespace,
+		environmentID,
 	)
 	if err != nil {
 		if err == mysql.ErrDuplicateEntry {
@@ -65,7 +66,7 @@ func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, env
 	return nil
 }
 
-func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace string) error {
+func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace, environmentID string) error {
 	result, err := s.qe(ctx).ExecContext(
 		ctx,
 		updateAPIKeyV2SQLQuery,
@@ -75,6 +76,7 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 		k.UpdatedAt,
 		k.Id,
 		environmentNamespace,
+		environmentID,
 	)
 	if err != nil {
 		return err
@@ -89,7 +91,7 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 	return nil
 }
 
-func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentNamespace string) (*domain.APIKey, error) {
+func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentNamespace, environmentID string) (*domain.APIKey, error) {
 	apiKey := proto.APIKey{}
 	var role int32
 	err := s.qe(ctx).QueryRowContext(
@@ -97,6 +99,7 @@ func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentNamespace
 		selectAPIKeyV2ByIDSQLQuery,
 		id,
 		environmentNamespace,
+		environmentID,
 	).Scan(
 		&apiKey.Id,
 		&apiKey.Name,

@@ -33,13 +33,14 @@ type apiKeyCommandHandler struct {
 	previousAPIKey       *domain.APIKey
 	publisher            publisher.Publisher
 	environmentNamespace string
+	environmentID        string
 }
 
 func NewAPIKeyCommandHandler(
 	editor *eventproto.Editor,
 	apiKey *domain.APIKey,
 	p publisher.Publisher,
-	environmentNamespace string,
+	environmentNamespace, environmentID string,
 ) (Handler, error) {
 	prev := &domain.APIKey{}
 	if err := copier.Copy(prev, apiKey); err != nil {
@@ -51,6 +52,7 @@ func NewAPIKeyCommandHandler(
 		previousAPIKey:       prev,
 		publisher:            p,
 		environmentNamespace: environmentNamespace,
+		environmentID:        environmentID,
 	}, nil
 }
 
@@ -120,6 +122,7 @@ func (h *apiKeyCommandHandler) send(ctx context.Context, eventType eventproto.Ev
 		eventType,
 		event,
 		h.environmentNamespace,
+		h.environmentID,
 		h.apiKey.APIKey,
 		prev,
 	)
