@@ -60,7 +60,11 @@ func (s *AccountService) CreateSearchFilter(
 	// Since there is only one default setting for a filter target, set the existing default to OFF.
 	commands := make([]command.Command, 0)
 	if req.Command.DefaultFilter {
-		changeDefaultFilterCmds := getChangeDefaultSearchFilterCommands(account, req.Command.FilterTargetType, req.Command.EnvironmentId)
+		changeDefaultFilterCmds := getChangeDefaultSearchFilterCommands(
+			account,
+			req.Command.FilterTargetType,
+			req.Command.EnvironmentId,
+		)
 		for _, changeDefaultFilterCmd := range changeDefaultFilterCmds {
 			commands = append(commands, changeDefaultFilterCmd)
 		}

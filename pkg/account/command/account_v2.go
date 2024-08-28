@@ -214,9 +214,13 @@ func (h *accountV2CommandHandler) updateDefaultSearchFilter(
 	if err := h.account.UpdateDefaultSearchFilter(cmd.Id, cmd.DefaultFilter); err != nil {
 		return err
 	}
-	return h.send(ctx, eventproto.Event_ACCOUNT_V2_UPDATED_DEFAULT_SEARCH_FILTER, &eventproto.DefaultSearchFilterUpdatedEvent{
-		DefaultFilter: cmd.DefaultFilter,
-	})
+	return h.send(
+		ctx,
+		eventproto.Event_ACCOUNT_V2_UPDATED_DEFAULT_SEARCH_FILTER,
+		&eventproto.DefaultSearchFilterUpdatedEvent{
+			DefaultFilter: cmd.DefaultFilter,
+		},
+	)
 
 }
 
