@@ -215,21 +215,6 @@ message GetAPIKeyBySearchingAllEnvironmentsResponse {
   EnvironmentAPIKey environment_api_key = 1;
 }
 
-option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
-  tags: [ { name: "Account" }, { name: "API Key" } ]
-  responses: {
-    key: "503"
-    value: {
-      description: "Returned for internal errors."
-      schema: { json_schema: { ref: ".google.rpc.Status" } }
-      examples: {
-        key: "application/json"
-        value: '{ "code": 13, "message": "internal", "details": [] }'
-      }
-    }
-  }
-};
-
 service AccountService {
   rpc GetMe(GetMeRequest) returns (GetMeResponse) {
     option (google.api.http) = {
