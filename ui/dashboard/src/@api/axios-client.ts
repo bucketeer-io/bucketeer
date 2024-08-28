@@ -1,5 +1,6 @@
 import axios from 'axios';
 import type { AxiosInstance } from 'axios';
+import { PAGE_PATH_ROOT } from 'constants/routing';
 import { clearOrgIdStorage } from 'storage/organization';
 import {
   clearTokenStorage,
@@ -36,18 +37,19 @@ axiosClient.interceptors.response.use(
       !originalRequest._retry
     ) {
       originalRequest._retry = true;
-      try {
-        refreshTokenFetcher(authToken?.refreshToken).then(response => {
+      refreshTokenFetcher(authToken?.refreshToken)
+        .then(response => {
           const newAccessToken = response.token.accessToken;
           setTokenStorage(response.token);
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        })
+        .catch(err => {
+          clearOrgIdStorage();
+          clearTokenStorage();
+          window.location.href = PAGE_PATH_ROOT;
+          return Promise.reject(err);
         });
-        return axiosClient(originalRequest);
-      } catch (err) {
-        clearOrgIdStorage();
-        clearTokenStorage();
-        return Promise.reject(err);
-      }
+      return axiosClient(originalRequest);
     }
     return Promise.reject(error);
   }

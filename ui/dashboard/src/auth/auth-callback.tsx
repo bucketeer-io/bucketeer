@@ -11,20 +11,25 @@ import Spinner from 'components/spinner';
 import { useAuth } from './auth-context';
 
 export const AuthCallbackPage: FC = memo(() => {
-  const { syncSignIn } = useAuth();
+  const { syncSignIn, setIsGoogleAuthError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const query = location.search;
 
   const { onSubmit: onGoogleLoginHandler } = useSubmit(
     (payload: ExchangeTokenPayload) =>
-      exchangeToken(payload).then(response => {
-        if (response.token) {
-          setTokenStorage(response.token);
-          syncSignIn(response.token);
+      exchangeToken(payload)
+        .then(response => {
+          if (response.token) {
+            setTokenStorage(response.token);
+            syncSignIn(response.token);
+            navigate(PAGE_PATH_ROOT);
+          }
+        })
+        .catch(() => {
+          setIsGoogleAuthError(true);
           navigate(PAGE_PATH_ROOT);
-        }
-      })
+        })
   );
 
   useEffect(() => {

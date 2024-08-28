@@ -1,20 +1,23 @@
 import { useNavigate } from 'react-router-dom';
 import { authenticationUrl } from '@api/auth';
+import { useAuth } from 'auth';
 import { urls } from 'configs';
 import { PAGE_PATH_AUTH_SIGNIN } from 'constants/routing';
 import { setCookieState } from 'cookie';
 import { useSubmit } from 'hooks';
-import { IconEmail, IconGithub, IconGoogle, IconKey } from '@icons';
+import { IconEmail, IconGoogle } from '@icons';
 import { Button } from 'components/button';
 import Icon from 'components/icon';
 import AuthWrapper from './elements/auth-wrapper';
 
 const SignIn = () => {
   const navigate = useNavigate();
+  const { isGoogleAuthError, setIsGoogleAuthError } = useAuth();
 
   const { onSubmit: onGoogleLoginHandler, submitting } = useSubmit(() => {
     const state = `${Date.now()}`;
     setCookieState(state);
+    setIsGoogleAuthError(false);
 
     return authenticationUrl({
       state,
@@ -33,15 +36,20 @@ const SignIn = () => {
         <h1 className="text-gray-900 typo-head-bold-huge">
           {`Sign in to Bucketeer`}
         </h1>
-        {/* <p className="text-accent-red-500 typo-para-medium">
-          No account found for this Google Account. Please check the email
-          entered or try a different Google Account.
-        </p> */}
+        {isGoogleAuthError && (
+          <p className="text-accent-red-500 typo-para-medium">
+            {` No account found for this Google Account. Please check the email
+          entered or try a different Google Account.`}
+          </p>
+        )}
       </div>
       <div className="flex flex-col gap-4 mt-10">
         <Button
           variant="secondary-2"
-          onClick={() => navigate(PAGE_PATH_AUTH_SIGNIN)}
+          onClick={() => {
+            navigate(PAGE_PATH_AUTH_SIGNIN);
+            setIsGoogleAuthError(false);
+          }}
         >
           <Icon icon={IconEmail} />
           {`Sign in With Email`}
@@ -55,14 +63,14 @@ const SignIn = () => {
           <Icon icon={IconGoogle} />
           {`Sign in With Google`}
         </Button>
-        <Button variant={'secondary-2'}>
+        {/* <Button variant={'secondary-2'}>
           <Icon icon={IconGithub} />
           {`Sign in With Github`}
         </Button>
         <Button variant={'secondary-2'}>
           <Icon icon={IconKey} />
           {`Sign in With SSO`}
-        </Button>
+        </Button> */}
       </div>
     </AuthWrapper>
   );

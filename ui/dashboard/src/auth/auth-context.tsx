@@ -34,6 +34,9 @@ interface AuthContextType {
   isInitialLoading: boolean;
   consoleAccount: Undefinable<ConsoleAccount>;
   myOrganizations: Array<Organization>;
+
+  isGoogleAuthError: boolean;
+  setIsGoogleAuthError: (v: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -51,9 +54,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [consoleAccount, setConsoleAccount] =
     useState<Undefinable<ConsoleAccount>>();
 
-  const [myOrganizations, setMyOrganizations] = useState<Array<Organization>>(
-    []
-  );
+  const [myOrganizations, setMyOrganizations] = useState<Organization[]>([]);
+  const [isGoogleAuthError, setIsGoogleAuthError] = useState(false);
 
   const onMeFetcher = (payload: MeFetcherPayload) => {
     return accountMeFetcher(payload)
@@ -115,7 +117,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
         isLogin,
         isInitialLoading,
         consoleAccount,
-        myOrganizations
+        myOrganizations,
+
+        isGoogleAuthError,
+        setIsGoogleAuthError
       }}
     >
       {children}
