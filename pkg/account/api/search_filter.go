@@ -37,7 +37,7 @@ func (s *AccountService) CreateSearchFilter(
 ) (*accountproto.CreateSearchFilterResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_UNASSIGNED,
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
 		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err

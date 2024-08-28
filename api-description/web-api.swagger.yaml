@@ -189,7 +189,7 @@ paths:
   /v1/account/create_search_filter:
     post:
       summary: Create Search Filter
-      description: Create a search filter to use in the console.
+      description: Create a search filter. To call this API, you need an `VIEWER` role.
       operationId: web.v1.account.create_search_filter
       responses:
         "200":

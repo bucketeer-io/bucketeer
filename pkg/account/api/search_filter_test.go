@@ -60,6 +60,37 @@ func TestCreateSearchFilter(t *testing.T) {
 		expectedErr error
 	}{
 		{
+			desc: "err: role is not allowed to create search filter",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "email",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "envID0",
+								Role:          accountproto.AccountV2_Role_Environment_UNASSIGNED,
+							},
+						},
+					},
+				}, nil).AnyTimes()
+			},
+			req: &accountproto.CreateSearchFilterRequest{
+				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
+				Command: &accountproto.CreateSearchFilterCommand{
+					Name:             "filter",
+					Query:            "query",
+					FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "envID0",
+					DefaultFilter:    false,
+				},
+			},
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
 			desc: "err: email is empty",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
@@ -70,7 +101,7 @@ func TestCreateSearchFilter(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 							{
-								EnvironmentId: "ns0",
+								EnvironmentId: "envID0",
 								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 							},
 						},
@@ -101,7 +132,7 @@ func TestCreateSearchFilter(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 							{
-								EnvironmentId: "ns0",
+								EnvironmentId: "envID0",
 								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 							},
 						},
@@ -130,7 +161,7 @@ func TestCreateSearchFilter(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 							{
-								EnvironmentId: "ns0",
+								EnvironmentId: "envID0",
 								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 							},
 						},
@@ -170,7 +201,7 @@ func TestCreateSearchFilter(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 							{
-								EnvironmentId: "ns0",
+								EnvironmentId: "envID0",
 								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 							},
 						},
@@ -213,7 +244,7 @@ func TestCreateSearchFilter(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 							{
-								EnvironmentId: "ns0",
+								EnvironmentId: "envID0",
 								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 							},
 						},
@@ -223,6 +254,7 @@ func TestCreateSearchFilter(t *testing.T) {
 			req: &accountproto.CreateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
 				Command:        nil,
 			},
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
@@ -238,7 +270,7 @@ func TestCreateSearchFilter(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 							{
-								EnvironmentId: "ns0",
+								EnvironmentId: "envID0",
 								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 							},
 						},
@@ -248,6 +280,7 @@ func TestCreateSearchFilter(t *testing.T) {
 			req: &accountproto.CreateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
 				Command: &accountproto.CreateSearchFilterCommand{
 					Name: "",
 				},
@@ -265,7 +298,7 @@ func TestCreateSearchFilter(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 							{
-								EnvironmentId: "ns0",
+								EnvironmentId: "envID0",
 								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 							},
 						},
@@ -275,6 +308,7 @@ func TestCreateSearchFilter(t *testing.T) {
 			req: &accountproto.CreateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
 				Command: &accountproto.CreateSearchFilterCommand{
 					Name:  "name",
 					Query: "",
@@ -293,7 +327,7 @@ func TestCreateSearchFilter(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 							{
-								EnvironmentId: "ns0",
+								EnvironmentId: "envID0",
 								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 							},
 						},
@@ -303,6 +337,7 @@ func TestCreateSearchFilter(t *testing.T) {
 			req: &accountproto.CreateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
 				Command: &accountproto.CreateSearchFilterCommand{
 					Name:             "name",
 					Query:            "query",
@@ -322,7 +357,7 @@ func TestCreateSearchFilter(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 							{
-								EnvironmentId: "ns0",
+								EnvironmentId: "envID0",
 								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 							},
 						},
@@ -365,7 +400,7 @@ func TestCreateSearchFilter(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 							{
-								EnvironmentId: "ns0",
+								EnvironmentId: "envID0",
 								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 							},
 						},

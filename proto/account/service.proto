@@ -949,7 +949,7 @@ service AccountService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Create Search Filter",
-      description: "Create a search filter to use in the console.",
+      description: "Create a search filter. To call this API, you need an `VIEWER` role.",
       tags: "Account",
       operation_id: "web.v1.account.create_search_filter",
       responses: {

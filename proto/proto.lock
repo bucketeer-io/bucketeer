@@ -3989,7 +3989,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Create a search filter to use in the console."
+                        "value": "Create a search filter. To call this API, you need an `VIEWER` role."
                       },
                       {
                         "name": "tags",
