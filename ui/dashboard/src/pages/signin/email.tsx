@@ -1,13 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import {
   IconRemoveRedEyeOutlined,
   IconVisibilityOffOutlined
 } from 'react-icons-material-design';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { signIn } from '@api/auth';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useAuth } from 'auth';
+import {
+  DEMO_SIGN_IN_EMAIL,
+  DEMO_SIGN_IN_ENABLED,
+  DEMO_SIGN_IN_PASSWORD
+} from 'configs';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import * as yup from 'yup';
 import { SignInForm } from '@types';
@@ -56,6 +61,12 @@ const SignInWithEmail = () => {
       });
   };
 
+  useEffect(() => {
+    if (!DEMO_SIGN_IN_ENABLED) {
+      navigate(PAGE_PATH_ROOT);
+    }
+  }, []);
+
   const PasswordAddonAction = () => (
     <Button
       type="button"
@@ -86,16 +97,13 @@ const SignInWithEmail = () => {
         {`To access our Demo site, please sign in using the follow in information.`}
       </p>
       <div className="text-gray-600 typo-para-medium mt-6">
-        <p>{`Email: demo@bucketeer.io`}</p>
-        <p>{`Password: demo`}</p>
+        <p>{`Email: ${DEMO_SIGN_IN_EMAIL}`}</p>
+        <p>{`Password: ${DEMO_SIGN_IN_PASSWORD}`}</p>
       </div>
 
       {showAuthError && (
         <p className="text-accent-red-500 typo-para-medium mt-6">
-          {`Wrong email or password. Try again or`}
-          <Link to={PAGE_PATH_ROOT}>
-            <span className="underline ml-1">{`create an account.`}</span>
-          </Link>
+          {`Invalid email or password.`}
         </p>
       )}
 

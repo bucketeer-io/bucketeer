@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { authenticationUrl } from '@api/auth';
 import { useAuth } from 'auth';
 import { urls } from 'configs';
+import { DEMO_SIGN_IN_ENABLED } from 'configs';
 import { PAGE_PATH_AUTH_SIGNIN } from 'constants/routing';
 import { setCookieState } from 'cookie';
 import { useSubmit } from 'hooks';
@@ -44,17 +45,18 @@ const SignIn = () => {
         )}
       </div>
       <div className="flex flex-col gap-4 mt-10">
-        <Button
-          variant="secondary-2"
-          onClick={() => {
-            navigate(PAGE_PATH_AUTH_SIGNIN);
-            setIsGoogleAuthError(false);
-          }}
-        >
-          <Icon icon={IconEmail} />
-          {`Sign in With Email`}
-        </Button>
-
+        {DEMO_SIGN_IN_ENABLED && (
+          <Button
+            variant="secondary-2"
+            onClick={() => {
+              navigate(PAGE_PATH_AUTH_SIGNIN);
+              setIsGoogleAuthError(false);
+            }}
+          >
+            <Icon icon={IconEmail} />
+            {`Sign in With Email`}
+          </Button>
+        )}
         <Button
           loading={submitting}
           onClick={onGoogleLoginHandler}

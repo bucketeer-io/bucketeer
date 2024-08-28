@@ -25,11 +25,17 @@ import { getTokenStorage } from 'storage/token';
 import { v4 as uuid } from 'uuid';
 import DashboardPage from 'pages/dashboard';
 import NotFoundPage from 'pages/not-found';
+import SignInPage from 'pages/signin';
 import SignInEmailPage from 'pages/signin/email';
 import SelectOrganizationPage from 'pages/signin/organization';
-import SignInPage from 'pages/signin/signin';
 import Navigation from 'components/navigation';
 import Spinner from 'components/spinner';
+
+export const AppLoading = () => (
+  <div className="flex items-center justify-center h-screen w-full">
+    <Spinner size="md" />
+  </div>
+);
 
 function App() {
   return (
@@ -59,11 +65,7 @@ export const Root = memo(() => {
   }, [setPageKey]);
 
   if (isInitialLoading) {
-    return (
-      <div className="mt-20 flex justify-center w-full">
-        <Spinner />
-      </div>
-    );
+    return <AppLoading />;
   }
 
   if (isLogin && consoleAccount) {
