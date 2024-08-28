@@ -61,7 +61,7 @@ func (s *FeatureService) GetFeature(
 ) (*featureproto.GetFeatureResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_UNASSIGNED,
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
 		req.EnvironmentNamespace, localizer)
 	if err != nil {
 		return nil, err
