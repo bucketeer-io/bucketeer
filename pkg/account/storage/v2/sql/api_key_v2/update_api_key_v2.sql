@@ -5,4 +5,7 @@ UPDATE api_key SET
     updated_at = ?
 WHERE
     id = ? AND
-    environment_namespace = ?
+    (
+        environment_namespace = ? or
+        environment_id = ?
+    )

@@ -247,6 +247,7 @@ message Event {
   Options options = 10;              // optional
   string entity_data = 11;           // JSON string of the entity data
   string previous_entity_data = 12;  // JSON string of the previous entity data
+  string environment_id = 13;
 }
 
 message Editor {

@@ -1490,6 +1490,11 @@
                 "id": 2,
                 "name": "environment_namespace",
                 "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_id",
+                "type": "string"
               }
             ]
           },
@@ -1520,6 +1525,11 @@
                 "id": 3,
                 "name": "environment_namespace",
                 "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "environment_id",
+                "type": "string"
               }
             ]
           },
@@ -1542,6 +1552,11 @@
               {
                 "id": 3,
                 "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "environment_id",
                 "type": "string"
               }
             ]
@@ -1566,6 +1581,11 @@
                 "id": 3,
                 "name": "environment_namespace",
                 "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "environment_id",
+                "type": "string"
               }
             ]
           },
@@ -1583,6 +1603,11 @@
               {
                 "id": 2,
                 "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_id",
                 "type": "string"
               }
             ]
@@ -1634,6 +1659,11 @@
                 "id": 7,
                 "name": "disabled",
                 "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 8,
+                "name": "environment_id",
+                "type": "string"
               }
             ]
           },
@@ -14826,6 +14856,11 @@
               {
                 "id": 12,
                 "name": "previous_entity_data",
+                "type": "string"
+              },
+              {
+                "id": 13,
+                "name": "environment_id",
                 "type": "string"
               }
             ]

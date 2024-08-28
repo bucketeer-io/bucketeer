@@ -67,14 +67,20 @@ func (s *AccountService) CreateAPIKey(
 		return nil, dt.Err()
 	}
 	err = s.accountStorage.RunInTransaction(ctx, func() error {
-		handler, err := command.NewAPIKeyCommandHandler(editor, key, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewAPIKeyCommandHandler(
+			editor,
+			key,
+			s.publisher,
+			req.EnvironmentNamespace,
+			req.EnvironmentId,
+		)
 		if err != nil {
 			return err
 		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return s.accountStorage.CreateAPIKey(ctx, key, req.EnvironmentNamespace)
+		return s.accountStorage.CreateAPIKey(ctx, key, req.EnvironmentNamespace, req.EnvironmentId)
 	})
 	if err != nil {
 		if err == v2as.ErrAPIKeyAlreadyExists {
@@ -132,7 +138,14 @@ func (s *AccountService) ChangeAPIKeyName(
 		)
 		return nil, err
 	}
-	if err := s.updateAPIKeyMySQL(ctx, editor, req.Id, req.EnvironmentNamespace, req.Command); err != nil {
+	if err := s.updateAPIKeyMySQL(
+		ctx,
+		editor,
+		req.Id,
+		req.EnvironmentNamespace,
+		req.EnvironmentId,
+		req.Command,
+	); err != nil {
 		if err == v2as.ErrAPIKeyNotFound || err == v2as.ErrAPIKeyUnexpectedAffectedRows {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -188,7 +201,14 @@ func (s *AccountService) EnableAPIKey(
 		)
 		return nil, err
 	}
-	if err := s.updateAPIKeyMySQL(ctx, editor, req.Id, req.EnvironmentNamespace, req.Command); err != nil {
+	if err := s.updateAPIKeyMySQL(
+		ctx,
+		editor,
+		req.Id,
+		req.EnvironmentNamespace,
+		req.EnvironmentId,
+		req.Command,
+	); err != nil {
 		if err == v2as.ErrAPIKeyNotFound || err == v2as.ErrAPIKeyUnexpectedAffectedRows {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -243,7 +263,14 @@ func (s *AccountService) DisableAPIKey(
 		)
 		return nil, err
 	}
-	if err := s.updateAPIKeyMySQL(ctx, editor, req.Id, req.EnvironmentNamespace, req.Command); err != nil {
+	if err := s.updateAPIKeyMySQL(
+		ctx,
+		editor,
+		req.Id,
+		req.EnvironmentNamespace,
+		req.EnvironmentId,
+		req.Command,
+	); err != nil {
 		if err == v2as.ErrAPIKeyNotFound || err == v2as.ErrAPIKeyUnexpectedAffectedRows {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -277,22 +304,22 @@ func (s *AccountService) DisableAPIKey(
 func (s *AccountService) updateAPIKeyMySQL(
 	ctx context.Context,
 	editor *eventproto.Editor,
-	id, environmentNamespace string,
+	id, environmentNamespace, environmentID string,
 	cmd command.Command,
 ) error {
 	return s.accountStorage.RunInTransaction(ctx, func() error {
-		apiKey, err := s.accountStorage.GetAPIKey(ctx, id, environmentNamespace)
+		apiKey, err := s.accountStorage.GetAPIKey(ctx, id, environmentNamespace, environmentID)
 		if err != nil {
 			return err
 		}
-		handler, err := command.NewAPIKeyCommandHandler(editor, apiKey, s.publisher, environmentNamespace)
+		handler, err := command.NewAPIKeyCommandHandler(editor, apiKey, s.publisher, environmentNamespace, environmentID)
 		if err != nil {
 			return err
 		}
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
 		}
-		return s.accountStorage.UpdateAPIKey(ctx, apiKey, environmentNamespace)
+		return s.accountStorage.UpdateAPIKey(ctx, apiKey, environmentNamespace, environmentID)
 	})
 }
 
@@ -314,7 +341,7 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 		}
 		return nil, dt.Err()
 	}
-	apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, req.EnvironmentNamespace)
+	apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, req.EnvironmentNamespace, req.EnvironmentId)
 	if err != nil {
 		if err == v2as.ErrAPIKeyNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -358,7 +385,7 @@ func (s *AccountService) ListAPIKeys(
 		return nil, err
 	}
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
 	if req.Disabled != nil {
 		whereParts = append(whereParts, mysql.NewFilter("disabled", "=", req.Disabled.Value))
@@ -535,7 +562,7 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 		if !ok || p.Disabled {
 			continue
 		}
-		apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, e.Id)
+		apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, e.Id, e.Id)
 		if err != nil {
 			if err == v2as.ErrAPIKeyNotFound {
 				continue
