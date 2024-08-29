@@ -170,9 +170,6 @@ func TestCreateSearchFilter(t *testing.T) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&account, nil).AnyTimes()
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&account, nil)
 
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
@@ -211,9 +208,6 @@ func TestCreateSearchFilter(t *testing.T) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&account, nil).AnyTimes()
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&account, nil)
 
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
@@ -363,15 +357,6 @@ func TestCreateSearchFilter(t *testing.T) {
 						},
 					},
 				}, nil)
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.AccountV2{
-					AccountV2: &accountproto.AccountV2{
-						Email:            "bucketeer@example.com",
-						Name:             "test",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-					},
-				}, nil)
 
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
@@ -419,9 +404,6 @@ func TestCreateSearchFilter(t *testing.T) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&account, nil)
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&account, nil)
 
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
@@ -451,160 +433,6 @@ func TestCreateSearchFilter(t *testing.T) {
 			}
 			_, err := service.CreateSearchFilter(ctx, p.req)
 			assert.Equal(t, p.expectedErr, err, p.desc)
-		})
-	}
-}
-
-func TestGetChangeDefaultSearchFilterCommands(t *testing.T) {
-	t.Parallel()
-	patterns := []struct {
-		desc          string
-		account       *domain.AccountV2
-		filterTarget  accountproto.FilterTargetType
-		environmentId string
-		expected      []*accountproto.ChangeDefaultSearchFilterCommand
-	}{
-		{
-			desc: "account search filter is nil",
-			account: &domain.AccountV2{
-				AccountV2: &accountproto.AccountV2{
-					Email:            "email",
-					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-						{
-							EnvironmentId: "envID0",
-							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-						},
-					},
-					SearchFilters: nil,
-				},
-			},
-			filterTarget:  accountproto.FilterTargetType_FEATURE_FLAG,
-			environmentId: "envID0",
-			expected:      nil,
-		},
-		{
-			desc: "account default filter is OFF",
-			account: &domain.AccountV2{
-				AccountV2: &accountproto.AccountV2{
-					Email:            "email",
-					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-						{
-							EnvironmentId: "envID0",
-							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-						},
-					},
-					SearchFilters: []*accountproto.SearchFilter{
-						{
-							Id:               "id",
-							Name:             "filter",
-							Query:            "query",
-							FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-							EnvironmentId:    "envID0",
-							DefaultFilter:    false,
-						},
-					},
-				},
-			},
-			filterTarget:  accountproto.FilterTargetType_FEATURE_FLAG,
-			environmentId: "envID0",
-			expected:      nil,
-		},
-		{
-			desc: "account default filter is ON, different filter target",
-			account: &domain.AccountV2{
-				AccountV2: &accountproto.AccountV2{
-					Email:            "email",
-					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-						{
-							EnvironmentId: "ns0",
-							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-						},
-					},
-					SearchFilters: []*accountproto.SearchFilter{
-						{
-							Id:               "id",
-							Name:             "filter",
-							Query:            "query",
-							FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-							EnvironmentId:    "envID0",
-							DefaultFilter:    true,
-						},
-					},
-				},
-			},
-			filterTarget:  accountproto.FilterTargetType_UNKNOWN,
-			environmentId: "envID0",
-			expected:      nil,
-		},
-		{
-			desc: "account default filter is ON, different environment",
-			account: &domain.AccountV2{
-				AccountV2: &accountproto.AccountV2{
-					Email:            "email",
-					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-						{
-							EnvironmentId: "ns0",
-							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-						},
-					},
-					SearchFilters: []*accountproto.SearchFilter{
-						{
-							Id:               "id",
-							Name:             "filter",
-							Query:            "query",
-							FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-							EnvironmentId:    "envID0",
-							DefaultFilter:    true,
-						},
-					},
-				},
-			},
-			filterTarget:  accountproto.FilterTargetType_FEATURE_FLAG,
-			environmentId: "envID22222",
-			expected:      nil,
-		},
-		{
-			desc: "account default filter is ON, same filter target and environment",
-			account: &domain.AccountV2{
-				AccountV2: &accountproto.AccountV2{
-					Email:            "email",
-					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
-						{
-							EnvironmentId: "ns0",
-							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
-						},
-					},
-					SearchFilters: []*accountproto.SearchFilter{
-						{
-							Id:               "id",
-							Name:             "filter",
-							Query:            "query",
-							FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-							EnvironmentId:    "envID0",
-							DefaultFilter:    true,
-						},
-					},
-				},
-			},
-			filterTarget:  accountproto.FilterTargetType_FEATURE_FLAG,
-			environmentId: "envID0",
-			expected: []*accountproto.ChangeDefaultSearchFilterCommand{
-				{
-					Id:            "id",
-					DefaultFilter: false,
-				},
-			},
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			actual := getChangeDefaultSearchFilterCommands(p.account, p.filterTarget, p.environmentId)
-			assert.Equal(t, p.expected, actual)
 		})
 	}
 }

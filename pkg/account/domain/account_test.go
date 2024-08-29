@@ -278,7 +278,7 @@ func TestAddSearchFilter(t *testing.T) {
 					Query:            "query",
 					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
 					EnvironmentId:    "environmentID",
-					DefaultFilter:    false,
+					DefaultFilter:    true,
 				},
 			},
 		},
@@ -298,6 +298,25 @@ func TestAddSearchFilter(t *testing.T) {
 					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
 					EnvironmentId:    "environmentID1",
 					DefaultFilter:    false,
+				},
+			},
+		},
+		{
+			desc: "add same targetType and environmentId filters with default filter true",
+			expectedFilters: []*proto.SearchFilter{
+				{
+					Name:             "name0",
+					Query:            "query0",
+					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "environmentID",
+					DefaultFilter:    true,
+				},
+				{
+					Name:             "name1",
+					Query:            "query1",
+					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "environmentID",
+					DefaultFilter:    true,
 				},
 			},
 		},
@@ -333,7 +352,17 @@ func TestAddSearchFilter(t *testing.T) {
 				assert.Equal(t, f.Query, filter.Query)
 				assert.Equal(t, f.FilterTargetType, filter.FilterTargetType)
 				assert.Equal(t, f.EnvironmentId, filter.EnvironmentId)
-				assert.Equal(t, f.DefaultFilter, filter.DefaultFilter)
+			}
+
+			// If target and EnvID are the same, only one DefaultFilter can exist
+			for srcCnt, f := range a.SearchFilters {
+				if f.DefaultFilter {
+					for dctCnt, ff := range a.SearchFilters {
+						if srcCnt != dctCnt && ff.DefaultFilter && ff.FilterTargetType == f.FilterTargetType && ff.EnvironmentId == f.EnvironmentId {
+							assert.New(t).Fail("multiple default filters")
+						}
+					}
+				}
 			}
 		})
 	}

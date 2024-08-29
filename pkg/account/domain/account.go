@@ -118,10 +118,14 @@ func (a *AccountV2) AddSearchFilter(
 	name string,
 	query string,
 	targetType proto.FilterTargetType,
-	environmentID string, defaultFilter bool) (*proto.SearchFilter, error) {
+	environmentId string, defaultFilter bool) (*proto.SearchFilter, error) {
 	id, err := uuid.NewUUID()
 	if err != nil {
 		return nil, err
+	}
+	// Since there is only one default setting for a filter target, set the existing default to OFF.
+	if defaultFilter {
+		a.ternOffDefaultFilters(targetType, environmentId)
 	}
 
 	searchFilter := &proto.SearchFilter{
@@ -129,7 +133,7 @@ func (a *AccountV2) AddSearchFilter(
 		Name:             name,
 		Query:            query,
 		FilterTargetType: targetType,
-		EnvironmentId:    environmentID,
+		EnvironmentId:    environmentId,
 		DefaultFilter:    defaultFilter,
 	}
 	a.AccountV2.SearchFilters = append(a.AccountV2.SearchFilters, searchFilter)
@@ -154,6 +158,11 @@ func (a *AccountV2) DeleteSearchFilter(id string) error {
 func (a *AccountV2) UpdateDefaultSearchFilter(id string, defaultFilter bool) error {
 	for _, f := range a.AccountV2.SearchFilters {
 		if f.Id == id {
+			// Since there is only one default setting for a filter target, set the existing default to OFF.
+			if defaultFilter {
+				a.ternOffDefaultFilters(f.FilterTargetType, f.EnvironmentId)
+			}
+
 			f.DefaultFilter = defaultFilter
 			a.UpdatedAt = time.Now().Unix()
 			return nil
@@ -167,14 +176,19 @@ func (a *AccountV2) UpdateSearchFilter(
 	name string,
 	query string,
 	defaultFilter bool) error {
-	for i, f := range a.AccountV2.SearchFilters {
-		if f.Id == id {
+	for i, srcF := range a.AccountV2.SearchFilters {
+		if srcF.Id == id {
+			// Since there is only one default setting for a filter target, set the existing default to OFF.
+			if defaultFilter {
+				a.ternOffDefaultFilters(srcF.FilterTargetType, srcF.EnvironmentId)
+			}
+
 			a.AccountV2.SearchFilters[i] = &proto.SearchFilter{
 				Id:               id,
 				Name:             name,
 				Query:            query,
-				FilterTargetType: f.FilterTargetType,
-				EnvironmentId:    f.EnvironmentId,
+				FilterTargetType: srcF.FilterTargetType,
+				EnvironmentId:    srcF.EnvironmentId,
 				DefaultFilter:    defaultFilter,
 			}
 			a.UpdatedAt = time.Now().Unix()
@@ -182,4 +196,14 @@ func (a *AccountV2) UpdateSearchFilter(
 		}
 	}
 	return errSearchFilterNotFound
+}
+
+func (a *AccountV2) ternOffDefaultFilters(targetFilter proto.FilterTargetType, environmentId string) {
+	for _, f := range a.AccountV2.SearchFilters {
+		if f.DefaultFilter &&
+			targetFilter == f.FilterTargetType &&
+			environmentId == f.EnvironmentId {
+			f.DefaultFilter = false
+		}
+	}
 }
