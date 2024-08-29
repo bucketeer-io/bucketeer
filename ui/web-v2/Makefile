@@ -43,7 +43,7 @@ gen_proto: clean_proto gen_proto_external_api
 	-I $(PROTOBUF_INCLUDE_DIR) \
 	-I $(GOOGLEAPIS) \
 	-I $(OPENAPI) \
-	$(shell find $(ROOT_DIR)/proto -type f -name "*.proto" -not -path "**/gateway/*.proto" -not -path "**/google/protobuf/*.proto" -not -path "**/google/api/*.proto" -not -path "**/protoc-gen-openapiv2/options/*.proto")
+	$(shell find $(ROOT_DIR)/proto -type f -name "*.proto" -not -path "**/openapi/web_default_settings.proto" -not -path "**/gateway/*.proto" -not -path "**/google/protobuf/*.proto" -not -path "**/google/api/*.proto" -not -path "**/protoc-gen-openapiv2/options/*.proto")
 	yarn lintfix
 
 .PHONY: gen_proto_external_api

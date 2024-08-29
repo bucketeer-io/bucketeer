@@ -3919,77 +3919,6 @@
           {
             "name": "go_package",
             "value": "github.com/bucketeer-io/bucketeer/proto/account"
-          },
-          {
-            "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger)",
-            "aggregated": [
-              {
-                "name": "tags",
-                "aggregated": [
-                  {
-                    "aggregated": [
-                      {
-                        "name": "name",
-                        "value": "Account"
-                      }
-                    ]
-                  },
-                  {
-                    "aggregated": [
-                      {
-                        "name": "name",
-                        "value": "API Key"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "responses",
-                "aggregated": [
-                  {
-                    "name": "key",
-                    "value": "503"
-                  },
-                  {
-                    "name": "value",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "Returned for internal errors."
-                      },
-                      {
-                        "name": "schema",
-                        "aggregated": [
-                          {
-                            "name": "json_schema",
-                            "aggregated": [
-                              {
-                                "name": "ref",
-                                "value": ".google.rpc.Status"
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "name": "examples",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "application/json"
-                          },
-                          {
-                            "name": "value",
-                            "value": "{\"code\":13,\"message\":\"internal\",\"details\":[]}"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
           }
         ]
       }
@@ -5051,98 +4980,6 @@
           {
             "name": "go_package",
             "value": "github.com/bucketeer-io/bucketeer/proto/auth"
-          },
-          {
-            "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger)",
-            "aggregated": [
-              {
-                "name": "info",
-                "aggregated": [
-                  {
-                    "name": "title",
-                    "value": "Bucketeer Web Service"
-                  },
-                  {
-                    "name": "version",
-                    "value": "1.0"
-                  }
-                ]
-              },
-              {
-                "name": "schemes",
-                "value": "HTTPS"
-              },
-              {
-                "name": "host",
-                "value": "ENDPOINT"
-              },
-              {
-                "name": "consumes",
-                "value": "application/json"
-              },
-              {
-                "name": "produces",
-                "value": "application/json"
-              },
-              {
-                "name": "tags",
-                "aggregated": [
-                  {
-                    "aggregated": [
-                      {
-                        "name": "name",
-                        "value": "Authentication"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "responses",
-                "aggregated": [
-                  {
-                    "name": "key",
-                    "value": "503"
-                  },
-                  {
-                    "name": "value",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "Returned for internal errors."
-                      },
-                      {
-                        "name": "schema",
-                        "aggregated": [
-                          {
-                            "name": "json_schema",
-                            "aggregated": [
-                              {
-                                "name": "ref",
-                                "value": ".google.rpc.Status"
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "name": "examples",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "application/json"
-                          },
-                          {
-                            "name": "value",
-                            "value": "{\"code\":13,\"message\":\"internal\",\"details\":[]}"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
           }
         ]
       }
@@ -25205,6 +25042,117 @@
           {
             "name": "go_package",
             "value": "github.com/bucketeer-io/bucketeer/proto/notification"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "openapi:/:web_default_settings.proto",
+      "def": {
+        "imports": [
+          {
+            "path": "protoc-gen-openapiv2/options/annotations.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.notification"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto"
+          },
+          {
+            "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger)",
+            "aggregated": [
+              {
+                "name": "info",
+                "aggregated": [
+                  {
+                    "name": "title",
+                    "value": "Bucketeer Web Service"
+                  },
+                  {
+                    "name": "version",
+                    "value": "1.0"
+                  }
+                ]
+              },
+              {
+                "name": "schemes",
+                "value": "HTTPS"
+              },
+              {
+                "name": "host",
+                "value": "ENDPOINT"
+              },
+              {
+                "name": "consumes",
+                "value": "application/json"
+              },
+              {
+                "name": "produces",
+                "value": "application/json"
+              },
+              {
+                "name": "tags",
+                "aggregated": [
+                  {
+                    "aggregated": [
+                      {
+                        "name": "name",
+                        "value": "Authentication"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "responses",
+                "aggregated": [
+                  {
+                    "name": "key",
+                    "value": "503"
+                  },
+                  {
+                    "name": "value",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "Returned for internal errors."
+                      },
+                      {
+                        "name": "schema",
+                        "aggregated": [
+                          {
+                            "name": "json_schema",
+                            "aggregated": [
+                              {
+                                "name": "ref",
+                                "value": ".google.rpc.Status"
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "examples",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "application/json"
+                          },
+                          {
+                            "name": "value",
+                            "value": "{\"code\":13,\"message\":\"internal\",\"details\":[]}"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       }
