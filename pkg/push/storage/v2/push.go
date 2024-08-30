@@ -55,7 +55,6 @@ func (s *pushStorage) CreatePush(ctx context.Context, e *domain.Push, environmen
 	query := `
 		INSERT INTO push (
 			id,
-			fcm_api_key,
 			fcm_service_account,
 			tags,
 			deleted,
@@ -64,14 +63,13 @@ func (s *pushStorage) CreatePush(ctx context.Context, e *domain.Push, environmen
 			updated_at,
 			environment_namespace 
 		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?, ?
+			?, ?, ?, ?, ?, ?, ?, ?
 		)
 	`
 	_, err := s.qe.ExecContext(
 		ctx,
 		query,
 		e.Id,
-		e.FcmApiKey,
 		e.FcmServiceAccount,
 		mysql.JSONObject{Val: e.Tags},
 		e.Deleted,
@@ -94,7 +92,6 @@ func (s *pushStorage) UpdatePush(ctx context.Context, e *domain.Push, environmen
 		UPDATE 
 			push
 		SET
-			fcm_api_key = ?,
 			fcm_service_account = ?,
 			tags = ?,
 			deleted = ?,
@@ -108,7 +105,6 @@ func (s *pushStorage) UpdatePush(ctx context.Context, e *domain.Push, environmen
 	result, err := s.qe.ExecContext(
 		ctx,
 		query,
-		e.FcmApiKey,
 		e.FcmServiceAccount,
 		mysql.JSONObject{Val: e.Tags},
 		e.Deleted,
@@ -136,7 +132,6 @@ func (s *pushStorage) GetPush(ctx context.Context, id, environmentNamespace stri
 	query := `
 		SELECT
 			id,
-			fcm_api_key,
 			fcm_service_account,
 			tags,
 			deleted,
@@ -156,7 +151,6 @@ func (s *pushStorage) GetPush(ctx context.Context, id, environmentNamespace stri
 		environmentNamespace,
 	).Scan(
 		&push.Id,
-		&push.FcmApiKey,
 		&push.FcmServiceAccount,
 		&mysql.JSONObject{Val: &push.Tags},
 		&push.Deleted,
@@ -185,7 +179,6 @@ func (s *pushStorage) ListPushes(
 	query := fmt.Sprintf(`
 		SELECT
 			id,
-			fcm_api_key,
 			fcm_service_account,
 			tags,
 			deleted,
@@ -207,7 +200,6 @@ func (s *pushStorage) ListPushes(
 		push := proto.Push{}
 		err := rows.Scan(
 			&push.Id,
-			&push.FcmApiKey,
 			&push.FcmServiceAccount,
 			&mysql.JSONObject{Val: &push.Tags},
 			&push.Deleted,

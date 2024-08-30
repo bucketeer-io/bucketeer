@@ -48,6 +48,20 @@ var (
 	serviceTokenPath     = flag.String("service-token", "", "Service token path")
 	environmentNamespace = flag.String("environment-namespace", "", "Environment namespace")
 	testID               = flag.String("test-id", "", "test ID")
+
+	fcmServiceAccountDummy = `{
+		"type": "service_account",
+		"project_id": "%s-%s",
+		"private_key_id": "private-key-id",
+		"private_key": "-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----\n",
+		"client_email": "fcm-service-account@test.iam.gserviceaccount.com",
+		"client_id": "client_id",
+		"auth_uri": "https://accounts.google.com/o/oauth2/auth",
+		"token_uri": "https://oauth2.googleapis.com/token",
+		"auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+		"client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/fcm-service-account@test.iam.gserviceaccount.com",
+		"universe_domain": "googleapis.com"
+	}`
 )
 
 func TestCreateAndListPush(t *testing.T) {
@@ -61,22 +75,26 @@ func TestCreateAndListPush(t *testing.T) {
 
 	featureID := newFeatureID(t)
 	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, newUUID(t))
-	fcmAPIKey := fmt.Sprintf("%s-fcm-api-key-%s", prefixTestName, newUUID(t))
+	fcmServiceAccount := fmt.Sprintf(fcmServiceAccountDummy, prefixTestName, newUUID(t))
+
 	createFeature(ctx, t, featureClient, featureID, tag)
-	createPush(ctx, t, pushClient, fcmAPIKey, tag)
+	createPush(ctx, t, pushClient, []byte(fcmServiceAccount), tag)
 	pushes := listPushes(t, pushClient)
 	var push *pushproto.Push
 	for _, p := range pushes {
-		if p.FcmApiKey == fcmAPIKey {
-			push = p
-			break
+		// Search the push by tag
+		for _, t := range p.Tags {
+			if t == tag {
+				push = p
+				break
+			}
 		}
 	}
 	if push == nil {
 		t.Fatalf("Push not found")
 	}
-	if push.FcmApiKey != fcmAPIKey {
-		t.Fatalf("Incorrect FcmApiKey. Expected: %s actual: %s", fcmAPIKey, push.FcmApiKey)
+	if push.FcmServiceAccount != "" {
+		t.Fatalf("The FCM service account must be empty. Actual: %s", push.FcmServiceAccount)
 	}
 	if len(push.Tags) != 1 {
 		t.Fatalf("The number of tags is incorrect. Expected: %d actual: %d", 1, len(push.Tags))
@@ -186,9 +204,15 @@ func newUUID(t *testing.T) string {
 	return id.String()
 }
 
-func createPush(ctx context.Context, t *testing.T, client pushclient.Client, fcmAPIKey, tag string) {
+func createPush(
+	ctx context.Context,
+	t *testing.T,
+	client pushclient.Client,
+	fcmServiceAccount []byte,
+	tag string,
+) {
 	t.Helper()
-	cmd := newCreatePushCommand(t, fcmAPIKey, []string{tag})
+	cmd := newCreatePushCommand(t, fcmServiceAccount, []string{tag})
 	createReq := &pushproto.CreatePushRequest{
 		EnvironmentNamespace: *environmentNamespace,
 		Command:              cmd,
@@ -198,11 +222,12 @@ func createPush(ctx context.Context, t *testing.T, client pushclient.Client, fcm
 	}
 }
 
-func newCreatePushCommand(t *testing.T, fcmAPIKey string, tags []string) *pushproto.CreatePushCommand {
+func newCreatePushCommand(t *testing.T, fcmServiceAccount []byte, tags []string) *pushproto.CreatePushCommand {
+	t.Helper()
 	return &pushproto.CreatePushCommand{
-		Name:      newPushName(t),
-		FcmApiKey: fcmAPIKey,
-		Tags:      tags,
+		Name:              newPushName(t),
+		FcmServiceAccount: fcmServiceAccount,
+		Tags:              tags,
 	}
 }
 

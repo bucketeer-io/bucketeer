@@ -8,6 +8,7 @@ SELECT
     a.disabled,
     a.created_at,
     a.updated_at,
+    a.search_filters,
     o.id,
     o.name,
     o.url_code,

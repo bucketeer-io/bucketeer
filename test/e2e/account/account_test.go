@@ -310,11 +310,15 @@ func TestCreateSearchFilter(t *testing.T) {
 		DefaultFilter:    false,
 		EnvironmentId:    "environment-id",
 	}
-	_, err = c.CreateSearchFilterV2(ctx, &accountproto.CreateSearchFilterRequest{
+	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
 		Command: &accountproto.CreateSearchFilterCommand{
-			SearchFilter: requestSearchFilter,
+			Name:             requestSearchFilter.Name,
+			Query:            requestSearchFilter.Query,
+			FilterTargetType: requestSearchFilter.FilterTargetType,
+			EnvironmentId:    requestSearchFilter.EnvironmentId,
+			DefaultFilter:    requestSearchFilter.DefaultFilter,
 		},
 	})
 	if err != nil {
@@ -382,11 +386,15 @@ func TestUpdateSearchFilter(t *testing.T) {
 		DefaultFilter:    false,
 		EnvironmentId:    "environment-id",
 	}
-	_, err = c.CreateSearchFilterV2(ctx, &accountproto.CreateSearchFilterRequest{
+	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
 		Command: &accountproto.CreateSearchFilterCommand{
-			SearchFilter: initialSearchFilter,
+			Name:             initialSearchFilter.Name,
+			Query:            initialSearchFilter.Query,
+			FilterTargetType: initialSearchFilter.FilterTargetType,
+			EnvironmentId:    initialSearchFilter.EnvironmentId,
+			DefaultFilter:    initialSearchFilter.DefaultFilter,
 		},
 	})
 	if err != nil {

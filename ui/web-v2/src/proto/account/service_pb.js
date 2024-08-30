@@ -25,6 +25,10 @@ var global =
 
 var google_protobuf_wrappers_pb = require('google-protobuf/google/protobuf/wrappers_pb.js');
 goog.object.extend(proto, google_protobuf_wrappers_pb);
+var google_api_annotations_pb = require('../../google/api/annotations_pb.js');
+goog.object.extend(proto, google_api_annotations_pb);
+var protoc$gen$openapiv2_options_annotations_pb = require('../../protoc-gen-openapiv2/options/annotations_pb.js');
+goog.object.extend(proto, protoc$gen$openapiv2_options_annotations_pb);
 var proto_account_account_pb = require('../../proto/account/account_pb.js');
 goog.object.extend(proto, proto_account_account_pb);
 var proto_account_api_key_pb = require('../../proto/account/api_key_pb.js');
@@ -7940,7 +7944,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         email: jspb.Message.getFieldWithDefault(msg, 1, ''),
         organizationId: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, ''),
         command:
           (f = msg.getCommand()) &&
           proto_account_command_pb.CreateSearchFilterCommand.toObject(
@@ -7997,7 +8001,7 @@ proto.bucketeer.account.CreateSearchFilterRequest.deserializeBinaryFromReader =
           break;
         case 3:
           var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
+          msg.setEnvironmentId(value);
           break;
         case 4:
           var value = new proto_account_command_pb.CreateSearchFilterCommand();
@@ -8048,7 +8052,7 @@ proto.bucketeer.account.CreateSearchFilterRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(2, f);
     }
-    f = message.getEnvironmentNamespace();
+    f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(3, f);
     }
@@ -8104,10 +8108,10 @@ proto.bucketeer.account.CreateSearchFilterRequest.prototype.setOrganizationId =
   };
 
 /**
- * optional string environment_namespace = 3;
+ * optional string environment_id = 3;
  * @return {string}
  */
-proto.bucketeer.account.CreateSearchFilterRequest.prototype.getEnvironmentNamespace =
+proto.bucketeer.account.CreateSearchFilterRequest.prototype.getEnvironmentId =
   function () {
     return /** @type {string} */ (
       jspb.Message.getFieldWithDefault(this, 3, '')
@@ -8118,7 +8122,7 @@ proto.bucketeer.account.CreateSearchFilterRequest.prototype.getEnvironmentNamesp
  * @param {string} value
  * @return {!proto.bucketeer.account.CreateSearchFilterRequest} returns this
  */
-proto.bucketeer.account.CreateSearchFilterRequest.prototype.setEnvironmentNamespace =
+proto.bucketeer.account.CreateSearchFilterRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 3, value);
   };

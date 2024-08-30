@@ -36,18 +36,18 @@ var (
 		codes.InvalidArgument,
 		"account: invalid update environment roles write type",
 	)
-	statusMissingAPIKeyID                 = gstatus.New(codes.InvalidArgument, "account: apikey id must be specified")
-	statusMissingAPIKeyName               = gstatus.New(codes.InvalidArgument, "account: apikey name must be not empty")
-	statusInvalidOrderBy                  = gstatus.New(codes.InvalidArgument, "account: order_by is invalid")
-	statusNotFound                        = gstatus.New(codes.NotFound, "account: not found")
-	statusAlreadyExists                   = gstatus.New(codes.AlreadyExists, "account: already exists")
-	statusUnauthenticated                 = gstatus.New(codes.Unauthenticated, "account: unauthenticated")
-	statusPermissionDenied                = gstatus.New(codes.PermissionDenied, "account: permission denied")
-	statusSearchFilterNameIsEmpty         = gstatus.New(codes.InvalidArgument, "account: search filter name is empty")
-	statusSearchFilterQueryIsEmpty        = gstatus.New(codes.InvalidArgument, "account: search filter query is empty")
-	statusSearchFilterTargetTypeIsUnknown = gstatus.New(
+	statusMissingAPIKeyID                  = gstatus.New(codes.InvalidArgument, "account: apikey id must be specified")
+	statusMissingAPIKeyName                = gstatus.New(codes.InvalidArgument, "account: apikey name must be not empty")
+	statusInvalidOrderBy                   = gstatus.New(codes.InvalidArgument, "account: order_by is invalid")
+	statusNotFound                         = gstatus.New(codes.NotFound, "account: not found")
+	statusAlreadyExists                    = gstatus.New(codes.AlreadyExists, "account: already exists")
+	statusUnauthenticated                  = gstatus.New(codes.Unauthenticated, "account: unauthenticated")
+	statusPermissionDenied                 = gstatus.New(codes.PermissionDenied, "account: permission denied")
+	statusSearchFilterNameIsEmpty          = gstatus.New(codes.InvalidArgument, "account: search filter name is empty")
+	statusSearchFilterQueryIsEmpty         = gstatus.New(codes.InvalidArgument, "account: search filter query is empty")
+	statusSearchFilterTargetTypeIsRequired = gstatus.New(
 		codes.InvalidArgument,
-		"account: search filter target type is unknown",
+		"account: search filter target type is required",
 	)
 	statusSearchFilterIDIsEmpty  = gstatus.New(codes.InvalidArgument, "account: search filter ID is empty")
 	statusSearchFilterIDNotFound = gstatus.New(codes.InvalidArgument, "account: search filter ID not found")

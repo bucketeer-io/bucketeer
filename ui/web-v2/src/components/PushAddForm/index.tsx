@@ -1,14 +1,16 @@
 import { AppState } from '../../modules';
 import { Tag } from '../../proto/feature/feature_pb';
 import { Dialog } from '@headlessui/react';
-import { FC, memo } from 'react';
+import { ChangeEvent, FC, memo, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useSelector } from 'react-redux';
-
+import FileUploadIcon from '@material-ui/icons/CloudUpload';
+import FilePresentIcon from '@material-ui/icons/FileCopyOutlined';
 import { messages } from '../../lang/messages';
 import { selectAll as selectAllTags } from '../../modules/tags';
 import { CreatableSelect, Option } from '../CreatableSelect';
+import { classNames } from '../../utils/css';
 
 export interface PushAddFormProps {
   onSubmit: () => void;
@@ -22,13 +24,25 @@ export const PushAddForm: FC<PushAddFormProps> = memo(
     const {
       register,
       control,
-      formState: { errors, isValid, isSubmitted }
+      formState: { errors, isValid, isSubmitted },
+      trigger
     } = methods;
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     const tagsList = useSelector<AppState, Tag.AsObject[]>(
       (state) => selectAllTags(state.tags),
       shallowEqual
     );
+
+    const onFileInput = (event: ChangeEvent<HTMLInputElement>): void => {
+      const file = event.target.files?.[0];
+      if (file) {
+        setSelectedFile(file);
+      } else {
+        setSelectedFile(null);
+      }
+      trigger('file');
+    };
 
     return (
       <div className="w-[500px]">
@@ -69,35 +83,6 @@ export const PushAddForm: FC<PushAddFormProps> = memo(
                   </div>
                 </div>
                 <div className="">
-                  <label htmlFor="fcmApiKey" className="block">
-                    <span className="input-label">
-                      {f(messages.push.input.fcmApiKey)}
-                    </span>
-                  </label>
-                  <div className="mt-1">
-                    <textarea
-                      {...register('fcmApiKey')}
-                      name="fcmApiKey"
-                      id="fcmApiKey"
-                      rows={1}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          return false;
-                        }
-                      }}
-                      className="input-text w-full h-48 break-all"
-                      disabled={isSubmitted}
-                    />
-                    <p className="input-error">
-                      {errors.fcmApiKey && (
-                        <span role="alert">{errors.fcmApiKey.message}</span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-                <div className="">
                   <label htmlFor="tags">
                     <span className="input-label">{f(messages.tags)}</span>
                   </label>
@@ -123,6 +108,89 @@ export const PushAddForm: FC<PushAddFormProps> = memo(
                   <p className="input-error">
                     {errors.tags && (
                       <span role="alert">{errors.tags.message}</span>
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <label htmlFor="file">
+                    <span className="input-label whitespace-nowrap">
+                      {f(messages.push.input.fcmServiceAccount)}
+                    </span>
+                  </label>
+                  <div className="mb-2 mt-1">
+                    <div
+                      className={classNames(
+                        'relative h-[90px] rounded-lg border-dashed',
+                        'border-2 border-gray-300 bg-gray-100',
+                        'flex justify-center items-center'
+                      )}
+                    >
+                      <div className="absolute">
+                        <div className="flex flex-col items-center ">
+                          <div className="text-gray-500">
+                            <FileUploadIcon />
+                          </div>
+                          <span className="block text-gray-500">
+                            {f(messages.fileUpload.browseFiles)}
+                          </span>
+                        </div>
+                      </div>
+                      <input
+                        {...register('file')}
+                        id="file"
+                        name="file"
+                        type="file"
+                        className="input-file"
+                        accept=".json"
+                        disabled={isSubmitted}
+                        onInput={onFileInput}
+                      />
+                    </div>
+                    <div className="flex text-gray-400 my-2">
+                      {f(messages.fileUpload.fileFormatJson)}
+                    </div>
+                  </div>
+                  {selectedFile && (
+                    <div
+                      className={classNames(
+                        'flex h-14 rounded-lg border-dashed border-2',
+                        errors.file ? 'border-red-400' : 'border-gray-300'
+                      )}
+                    >
+                      <div className="flex items-center ml-3">
+                        <div
+                          className={classNames(
+                            errors.file ? 'text-red-400' : 'text-gray-400'
+                          )}
+                        >
+                          <FilePresentIcon />
+                        </div>
+                        <div className="ml-3">
+                          <p
+                            className={classNames(
+                              'text-base w-96 truncate ...',
+                              errors.file ? 'text-red-600' : 'text-gray-400'
+                            )}
+                          >
+                            {selectedFile.name}
+                          </p>
+                          <p
+                            className={classNames(
+                              'text-xs',
+                              errors.file ? 'text-red-500' : 'text-gray-500'
+                            )}
+                          >
+                            {f(messages.fileUpload.fileSize, {
+                              fileSize: selectedFile.size.toLocaleString()
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <p className="input-error mt-1">
+                    {errors.file && (
+                      <span role="alert">{errors.file.message}</span>
                     )}
                   </p>
                 </div>

@@ -7,7 +7,8 @@ SELECT
     a.environment_roles,
     a.disabled,
     a.created_at,
-    a.updated_at
+    a.updated_at,
+    a.search_filters
 FROM
     account_v2 AS a
 INNER JOIN

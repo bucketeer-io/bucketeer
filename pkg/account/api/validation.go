@@ -534,17 +534,7 @@ func validateCreateSearchFilterRequest(
 		}
 		return dt.Err()
 	}
-	if req.Command.SearchFilter == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "search_filter"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Command.SearchFilter.Name == "" {
+	if req.Command.Name == "" {
 		dt, err := statusSearchFilterNameIsEmpty.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
@@ -554,7 +544,7 @@ func validateCreateSearchFilterRequest(
 		}
 		return dt.Err()
 	}
-	if req.Command.SearchFilter.Query == "" {
+	if req.Command.Query == "" {
 		dt, err := statusSearchFilterQueryIsEmpty.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "query"),
@@ -564,8 +554,8 @@ func validateCreateSearchFilterRequest(
 		}
 		return dt.Err()
 	}
-	if req.Command.SearchFilter.FilterTargetType == accountproto.FilterTargetType_UNKNOWN {
-		dt, err := statusSearchFilterTargetTypeIsUnknown.WithDetails(&errdetails.LocalizedMessage{
+	if req.Command.FilterTargetType == accountproto.FilterTargetType_UNKNOWN {
+		dt, err := statusSearchFilterTargetTypeIsRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "filter_target_type"),
 		})
@@ -652,7 +642,7 @@ func validateUpdateSearchFilterRequest(
 		return dt.Err()
 	}
 	if req.Command.SearchFilter.FilterTargetType == accountproto.FilterTargetType_UNKNOWN {
-		dt, err := statusSearchFilterTargetTypeIsUnknown.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusSearchFilterTargetTypeIsRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "filter_target_type"),
 		})

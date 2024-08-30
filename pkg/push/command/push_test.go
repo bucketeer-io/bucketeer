@@ -48,7 +48,6 @@ func TestCreate(t *testing.T) {
 		}
 		cmd := &proto.CreatePushCommand{
 			Name:              "name-1",
-			FcmApiKey:         "key-0",
 			FcmServiceAccount: []byte("service-account"),
 			Tags:              []string{"tag-0", "tag-1"},
 		}
@@ -150,7 +149,7 @@ func TestRename(t *testing.T) {
 }
 
 func newPush(t *testing.T) *domain.Push {
-	d, err := domain.NewPush("name-1", "key-0", "service-account", []string{"tag-0", "tag-1"})
+	d, err := domain.NewPush("name-1", "service-account", []string{"tag-0", "tag-1"})
 	require.NoError(t, err)
 	return d
 }

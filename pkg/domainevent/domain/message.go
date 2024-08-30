@@ -565,6 +565,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.AccountSearchFilter),
 			),
 		}
+	case proto.Event_ACCOUNT_V2_UPDATED_DEFAULT_SEARCH_FILTER:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.UpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.AccountDefaultSearchFilter),
+			),
+		}
 	case proto.Event_ACCOUNT_V2_UPDATED_SEARCH_FILTER:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),
