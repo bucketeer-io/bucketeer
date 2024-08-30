@@ -16,7 +16,6 @@ package command
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/jinzhu/copier"
@@ -74,11 +73,9 @@ func (h *accountV2CommandHandler) Handle(ctx context.Context, cmd Command) error
 	case *accountproto.DeleteAccountV2Command:
 		return h.delete(ctx, c)
 	case *accountproto.CreateSearchFilterCommand:
-		fmt.Printf("account CreateSearchFilterCommand\n")
 		return h.createSearchFilter(ctx, c)
 	case *accountproto.ChangeDefaultSearchFilterCommand:
-		fmt.Printf("account ChangeDefaultSearchFilterCommand\n")
-		return h.updateDefaultSearchFilter(ctx, c)
+		return h.changeDefaultSearchFilter(ctx, c)
 	default:
 		return ErrBadCommand
 	}
@@ -210,10 +207,10 @@ func (h *accountV2CommandHandler) createSearchFilter(
 	})
 }
 
-func (h *accountV2CommandHandler) updateDefaultSearchFilter(
+func (h *accountV2CommandHandler) changeDefaultSearchFilter(
 	ctx context.Context,
 	cmd *accountproto.ChangeDefaultSearchFilterCommand) error {
-	if err := h.account.UpdateDefaultSearchFilter(cmd.Id, cmd.DefaultFilter); err != nil {
+	if err := h.account.ChangeDefaultSearchFilter(cmd.Id, cmd.DefaultFilter); err != nil {
 		return err
 	}
 	return h.send(

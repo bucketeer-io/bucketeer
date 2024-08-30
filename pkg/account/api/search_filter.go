@@ -73,7 +73,10 @@ func (s *AccountService) CreateSearchFilter(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
+				zap.String("environmentID", req.EnvironmentId),
 				zap.String("searchFilterName", req.Command.Name),
+				zap.String("query", req.Command.Query),
+				zap.String("filterTargetType", req.Command.FilterTargetType.String()),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
