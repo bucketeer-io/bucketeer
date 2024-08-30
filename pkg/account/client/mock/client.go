@@ -434,6 +434,26 @@ func (mr *MockClientMockRecorder) UpdateAccountV2(ctx, in any, opts ...any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAccountV2", reflect.TypeOf((*MockClient)(nil).UpdateAccountV2), varargs...)
 }
 
+// UpdateDefaultSearchFilter mocks base method.
+func (m *MockClient) UpdateDefaultSearchFilter(ctx context.Context, in *account.UpdateDefaultSearchFilterRequest, opts ...grpc.CallOption) (*account.UpdateDefaultSearchFilterResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateDefaultSearchFilter", varargs...)
+	ret0, _ := ret[0].(*account.UpdateDefaultSearchFilterResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateDefaultSearchFilter indicates an expected call of UpdateDefaultSearchFilter.
+func (mr *MockClientMockRecorder) UpdateDefaultSearchFilter(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDefaultSearchFilter", reflect.TypeOf((*MockClient)(nil).UpdateDefaultSearchFilter), varargs...)
+}
+
 // UpdateSearchFilter mocks base method.
 func (m *MockClient) UpdateSearchFilter(ctx context.Context, in *account.UpdateSearchFilterRequest, opts ...grpc.CallOption) (*account.UpdateSearchFilterResponse, error) {
 	m.ctrl.T.Helper()

@@ -472,6 +472,110 @@ func TestUpdateSearchFilter(t *testing.T) {
 	}
 }
 
+func TestUpdateDefaultSearchFilter(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	c := newAccountClient(t)
+	defer c.Close()
+	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+		OrganizationId: defaultOrganizationID,
+		Command: &accountproto.CreateAccountV2Command{
+			Name:             name,
+			Email:            email,
+			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	baseAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if baseAccount.Account.SearchFilters != nil {
+		t.Fatal("search filters are not nil")
+	}
+
+	initialSearchFilter := &accountproto.SearchFilter{
+		Name:             "name",
+		Query:            "query",
+		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+		DefaultFilter:    false,
+		EnvironmentId:    "environment-id",
+	}
+	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+		Command: &accountproto.CreateSearchFilterCommand{
+			Name:             initialSearchFilter.Name,
+			Query:            initialSearchFilter.Query,
+			FilterTargetType: initialSearchFilter.FilterTargetType,
+			EnvironmentId:    initialSearchFilter.EnvironmentId,
+			DefaultFilter:    initialSearchFilter.DefaultFilter,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	account, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(account.Account.SearchFilters) != 1 {
+		t.Fatalf("different count of filters, expected: 1, actual: %v", len(account.Account.SearchFilters))
+	}
+	if account.Account.SearchFilters[0].Name != initialSearchFilter.Name {
+		t.Fatalf("different name of filters, expected: %v, actual: %v", initialSearchFilter.Name, account.Account.SearchFilters[0].Name)
+	}
+	if account.Account.SearchFilters[0].Query != initialSearchFilter.Query {
+		t.Fatalf("different query of filters, expected: %v, actual: %v", initialSearchFilter.Query, account.Account.SearchFilters[0].Query)
+	}
+	if account.Account.SearchFilters[0].FilterTargetType != initialSearchFilter.FilterTargetType {
+		t.Fatalf("different filter target type of filters, expected: %v, actual: %v", initialSearchFilter.FilterTargetType, account.Account.SearchFilters[0].FilterTargetType)
+	}
+	if account.Account.SearchFilters[0].DefaultFilter != initialSearchFilter.DefaultFilter {
+		t.Fatalf("different default filter, expected: %v, actual: %v", initialSearchFilter.DefaultFilter, account.Account.SearchFilters[0].DefaultFilter)
+	}
+
+	_, err = c.UpdateDefaultSearchFilter(ctx, &accountproto.UpdateDefaultSearchFilterRequest{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+		EnvironmentId:  initialSearchFilter.EnvironmentId,
+		Command: &accountproto.ChangeDefaultSearchFilterCommand{
+			Id:            account.Account.SearchFilters[0].Id,
+			DefaultFilter: true,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	updateAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(updateAccount.Account.SearchFilters) != 1 {
+		t.Fatalf("different count of filters, expected: 1, actual: %v", len(account.Account.SearchFilters))
+	}
+	updateSearchFilter := updateAccount.Account.SearchFilters[0]
+	if !updateSearchFilter.DefaultFilter {
+		t.Fatalf("different default filter, expected: true, actual: %v", updateSearchFilter.DefaultFilter)
+	}
+}
+
 func newAccountClient(t *testing.T) accountclient.Client {
 	t.Helper()
 	creds, err := rpcclient.NewPerRPCCredentials(*serviceTokenPath)
