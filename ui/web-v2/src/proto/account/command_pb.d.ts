@@ -469,10 +469,17 @@ export namespace CreateSearchFilterCommand {
 }
 
 export class UpdateSearchFilterCommand extends jspb.Message {
-  hasSearchFilter(): boolean;
-  clearSearchFilter(): void;
-  getSearchFilter(): proto_account_search_filter_pb.SearchFilter | undefined;
-  setSearchFilter(value?: proto_account_search_filter_pb.SearchFilter): void;
+  getId(): string;
+  setId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getQuery(): string;
+  setQuery(value: string): void;
+
+  getDefaultFilter(): boolean;
+  setDefaultFilter(value: boolean): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateSearchFilterCommand.AsObject;
@@ -497,7 +504,10 @@ export class UpdateSearchFilterCommand extends jspb.Message {
 
 export namespace UpdateSearchFilterCommand {
   export type AsObject = {
-    searchFilter?: proto_account_search_filter_pb.SearchFilter.AsObject;
+    id: string;
+    name: string;
+    query: string;
+    defaultFilter: boolean;
   };
 }
 

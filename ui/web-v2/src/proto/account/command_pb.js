@@ -2569,12 +2569,10 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        searchFilter:
-          (f = msg.getSearchFilter()) &&
-          proto_account_search_filter_pb.SearchFilter.toObject(
-            includeInstance,
-            f
-          )
+        id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        name: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        query: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        defaultFilter: jspb.Message.getBooleanFieldWithDefault(msg, 4, false)
       };
 
     if (includeInstance) {
@@ -2616,13 +2614,20 @@ proto.bucketeer.account.UpdateSearchFilterCommand.deserializeBinaryFromReader =
       var field = reader.getFieldNumber();
       switch (field) {
         case 1:
-          var value = new proto_account_search_filter_pb.SearchFilter();
-          reader.readMessage(
-            value,
-            proto_account_search_filter_pb.SearchFilter
-              .deserializeBinaryFromReader
-          );
-          msg.setSearchFilter(value);
+          var value = /** @type {string} */ (reader.readString());
+          msg.setId(value);
+          break;
+        case 2:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setName(value);
+          break;
+        case 3:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setQuery(value);
+          break;
+        case 4:
+          var value = /** @type {boolean} */ (reader.readBool());
+          msg.setDefaultFilter(value);
           break;
         default:
           reader.skipField();
@@ -2656,56 +2661,104 @@ proto.bucketeer.account.UpdateSearchFilterCommand.prototype.serializeBinary =
 proto.bucketeer.account.UpdateSearchFilterCommand.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getSearchFilter();
-    if (f != null) {
-      writer.writeMessage(
-        1,
-        f,
-        proto_account_search_filter_pb.SearchFilter.serializeBinaryToWriter
-      );
+    f = message.getId();
+    if (f.length > 0) {
+      writer.writeString(1, f);
+    }
+    f = message.getName();
+    if (f.length > 0) {
+      writer.writeString(2, f);
+    }
+    f = message.getQuery();
+    if (f.length > 0) {
+      writer.writeString(3, f);
+    }
+    f = message.getDefaultFilter();
+    if (f) {
+      writer.writeBool(4, f);
     }
   };
 
 /**
- * optional SearchFilter search_filter = 1;
- * @return {?proto.bucketeer.account.SearchFilter}
+ * optional string id = 1;
+ * @return {string}
  */
-proto.bucketeer.account.UpdateSearchFilterCommand.prototype.getSearchFilter =
+proto.bucketeer.account.UpdateSearchFilterCommand.prototype.getId =
   function () {
-    return /** @type{?proto.bucketeer.account.SearchFilter} */ (
-      jspb.Message.getWrapperField(
-        this,
-        proto_account_search_filter_pb.SearchFilter,
-        1
-      )
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 1, '')
     );
   };
 
 /**
- * @param {?proto.bucketeer.account.SearchFilter|undefined} value
+ * @param {string} value
  * @return {!proto.bucketeer.account.UpdateSearchFilterCommand} returns this
  */
-proto.bucketeer.account.UpdateSearchFilterCommand.prototype.setSearchFilter =
-  function (value) {
-    return jspb.Message.setWrapperField(this, 1, value);
-  };
+proto.bucketeer.account.UpdateSearchFilterCommand.prototype.setId = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
 
 /**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.account.UpdateSearchFilterCommand} returns this
+ * optional string name = 2;
+ * @return {string}
  */
-proto.bucketeer.account.UpdateSearchFilterCommand.prototype.clearSearchFilter =
+proto.bucketeer.account.UpdateSearchFilterCommand.prototype.getName =
   function () {
-    return this.setSearchFilter(undefined);
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 2, '')
+    );
   };
 
 /**
- * Returns whether this field is set.
+ * @param {string} value
+ * @return {!proto.bucketeer.account.UpdateSearchFilterCommand} returns this
+ */
+proto.bucketeer.account.UpdateSearchFilterCommand.prototype.setName = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+/**
+ * optional string query = 3;
+ * @return {string}
+ */
+proto.bucketeer.account.UpdateSearchFilterCommand.prototype.getQuery =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 3, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.UpdateSearchFilterCommand} returns this
+ */
+proto.bucketeer.account.UpdateSearchFilterCommand.prototype.setQuery =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 3, value);
+  };
+
+/**
+ * optional bool default_filter = 4;
  * @return {boolean}
  */
-proto.bucketeer.account.UpdateSearchFilterCommand.prototype.hasSearchFilter =
+proto.bucketeer.account.UpdateSearchFilterCommand.prototype.getDefaultFilter =
   function () {
-    return jspb.Message.getField(this, 1) != null;
+    return /** @type {boolean} */ (
+      jspb.Message.getBooleanFieldWithDefault(this, 4, false)
+    );
+  };
+
+/**
+ * @param {boolean} value
+ * @return {!proto.bucketeer.account.UpdateSearchFilterCommand} returns this
+ */
+proto.bucketeer.account.UpdateSearchFilterCommand.prototype.setDefaultFilter =
+  function (value) {
+    return jspb.Message.setProto3BooleanField(this, 4, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

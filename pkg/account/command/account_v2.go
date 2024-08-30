@@ -213,16 +213,16 @@ func (h *accountV2CommandHandler) updateSearchFiler(
 	ctx context.Context,
 	cmd *accountproto.UpdateSearchFilterCommand) error {
 	if err := h.account.UpdateSearchFilter(
-		cmd.SearchFilter.Id,
-		cmd.SearchFilter.Name,
-		cmd.SearchFilter.Query,
-		cmd.SearchFilter.DefaultFilter,
+		cmd.Id,
+		cmd.Name,
+		cmd.Query,
+		cmd.DefaultFilter,
 	); err != nil {
 		return err
 	}
-	return h.send(ctx, eventproto.Event_ACCOUNT_V2_CREATED_SEARCH_FILTER, &eventproto.SearchFilterUpdateEvent{
-		Id:   cmd.SearchFilter.Id,
-		Name: cmd.SearchFilter.Name,
+	return h.send(ctx, eventproto.Event_ACCOUNT_V2_UPDATED_SEARCH_FILTER, &eventproto.SearchFilterUpdateEvent{
+		Id:   cmd.Id,
+		Name: cmd.Name,
 	})
 }
 

@@ -1021,6 +1021,64 @@ paths:
             $ref: '#/definitions/accountUpdateAccountV2Request'
       tags:
         - Account
+  /v1/account/update_search_filter:
+    post:
+      summary: Update Search Filter
+      description: Update a search filter. To call this API, you need an `VIEWER` role.
+      operationId: web.v1.account.update_search_filter
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountUpdateSearchFilterResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountUpdateSearchFilterRequest'
+      tags:
+        - Account
   /v1/auth/authentication_url:
     post:
       summary: Get Authentication URL
@@ -3074,8 +3132,25 @@ definitions:
   accountUpdateSearchFilterCommand:
     type: object
     properties:
-      searchFilter:
-        $ref: '#/definitions/accountSearchFilter'
+      id:
+        type: string
+      name:
+        type: string
+      query:
+        type: string
+      defaultFilter:
+        type: boolean
+  accountUpdateSearchFilterRequest:
+    type: object
+    properties:
+      email:
+        type: string
+      organizationId:
+        type: string
+      environmentId:
+        type: string
+      command:
+        $ref: '#/definitions/accountUpdateSearchFilterCommand'
   accountUpdateSearchFilterResponse:
     type: object
   authAuthType:

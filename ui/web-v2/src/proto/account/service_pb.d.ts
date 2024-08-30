@@ -1440,8 +1440,8 @@ export class UpdateSearchFilterRequest extends jspb.Message {
   getOrganizationId(): string;
   setOrganizationId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   hasCommand(): boolean;
   clearCommand(): void;
@@ -1473,7 +1473,7 @@ export namespace UpdateSearchFilterRequest {
   export type AsObject = {
     email: string;
     organizationId: string;
-    environmentNamespace: string;
+    environmentId: string;
     command?: proto_account_command_pb.UpdateSearchFilterCommand.AsObject;
   };
 }

@@ -175,7 +175,7 @@ type AccountServiceCreateSearchFilter = {
   readonly responseType: typeof proto_account_service_pb.CreateSearchFilterResponse;
 };
 
-type AccountServiceUpdateSearchFilterV2 = {
+type AccountServiceUpdateSearchFilter = {
   readonly methodName: string;
   readonly service: typeof AccountService;
   readonly requestStream: false;
@@ -205,7 +205,7 @@ export class AccountService {
   static readonly ListAPIKeys: AccountServiceListAPIKeys;
   static readonly GetAPIKeyBySearchingAllEnvironments: AccountServiceGetAPIKeyBySearchingAllEnvironments;
   static readonly CreateSearchFilter: AccountServiceCreateSearchFilter;
-  static readonly UpdateSearchFilterV2: AccountServiceUpdateSearchFilterV2;
+  static readonly UpdateSearchFilter: AccountServiceUpdateSearchFilter;
 }
 
 export type ServiceError = {
@@ -538,7 +538,7 @@ export class AccountServiceClient {
       responseMessage: proto_account_service_pb.CreateSearchFilterResponse | null
     ) => void
   ): UnaryResponse;
-  updateSearchFilterV2(
+  updateSearchFilter(
     requestMessage: proto_account_service_pb.UpdateSearchFilterRequest,
     metadata: grpc.Metadata,
     callback: (
@@ -546,7 +546,7 @@ export class AccountServiceClient {
       responseMessage: proto_account_service_pb.UpdateSearchFilterResponse | null
     ) => void
   ): UnaryResponse;
-  updateSearchFilterV2(
+  updateSearchFilter(
     requestMessage: proto_account_service_pb.UpdateSearchFilterRequest,
     callback: (
       error: ServiceError | null,

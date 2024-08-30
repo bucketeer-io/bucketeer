@@ -89,14 +89,14 @@ func (s *AccountService) CreateSearchFilter(
 	return &accountproto.CreateSearchFilterResponse{}, nil
 }
 
-func (s *AccountService) UpdateSearchFilterV2(
+func (s *AccountService) UpdateSearchFilter(
 	ctx context.Context,
 	req *accountproto.UpdateSearchFilterRequest,
 ) (*accountproto.UpdateSearchFilterResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_UNASSIGNED,
-		req.EnvironmentNamespace, localizer)
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +111,12 @@ func (s *AccountService) UpdateSearchFilterV2(
 		return nil, err
 	}
 
-	if err := s.updateAccountV2MySQL(ctx, editor, []command.Command{req.Command}, req.Email, req.OrganizationId); err != nil {
+	if err := s.updateAccountV2MySQL(
+		ctx,
+		editor,
+		[]command.Command{req.Command},
+		req.Email,
+		req.OrganizationId); err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -137,7 +142,7 @@ func (s *AccountService) UpdateSearchFilterV2(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
-				zap.String("searchFilterName", req.Command.SearchFilter.Name),
+				zap.String("searchFilterName", req.Command.Name),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{

@@ -432,18 +432,15 @@ func TestUpdateSearchFilter(t *testing.T) {
 		EnvironmentId:    "environment-id",
 	}
 
-	_, err = c.UpdateSearchFilterV2(ctx, &accountproto.UpdateSearchFilterRequest{
+	_, err = c.UpdateSearchFilter(ctx, &accountproto.UpdateSearchFilterRequest{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
+		EnvironmentId:  requestSearchFilter.EnvironmentId,
 		Command: &accountproto.UpdateSearchFilterCommand{
-			SearchFilter: &accountproto.SearchFilter{
-				Id:               account.Account.SearchFilters[0].Id,
-				Name:             requestSearchFilter.Name,
-				Query:            requestSearchFilter.Query,
-				FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
-				DefaultFilter:    requestSearchFilter.DefaultFilter,
-				EnvironmentId:    requestSearchFilter.EnvironmentId,
-			},
+			Id:            account.Account.SearchFilters[0].Id,
+			Name:          requestSearchFilter.Name,
+			Query:         requestSearchFilter.Query,
+			DefaultFilter: requestSearchFilter.DefaultFilter,
 		},
 	})
 	if err != nil {
