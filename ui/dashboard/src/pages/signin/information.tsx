@@ -1,5 +1,6 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { UserInfoForm } from '@types';
 import { Button } from 'components/button';
@@ -20,6 +21,7 @@ const formSchema = yup.object().shape({
 });
 
 const UserInformation = () => {
+  const { t } = useTranslation(['auth']);
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
@@ -38,10 +40,10 @@ const UserInformation = () => {
       <div className="grid gap-10">
         <div>
           <h1 className="text-gray-900 typo-head-bold-huge mb-4">
-            {`Enter Your Information`}
+            {t(`enter-information.title`)}
           </h1>
           <p className="text-gray-600 typo-para-medium">
-            {`Enter your information to complete your account creation.`}
+            {t(`enter-information.description`)}
           </p>
         </div>
 
@@ -52,9 +54,12 @@ const UserInformation = () => {
               name="first_name"
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label required>{`First Name`}</Form.Label>
+                  <Form.Label required>{t(`first-name`)}</Form.Label>
                   <Form.Control>
-                    <Input placeholder="Enter your first name" {...field} />
+                    <Input
+                      placeholder={t(`first-name-placeholder`)}
+                      {...field}
+                    />
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>
@@ -65,9 +70,12 @@ const UserInformation = () => {
               name="last_name"
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label required>{`Last Name`}</Form.Label>
+                  <Form.Label required>{t(`last-name`)}</Form.Label>
                   <Form.Control>
-                    <Input placeholder="Enter your last name" {...field} />
+                    <Input
+                      placeholder={t(`last-name-placeholder`)}
+                      {...field}
+                    />
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>

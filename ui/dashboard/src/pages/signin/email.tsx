@@ -14,6 +14,7 @@ import {
   DEMO_SIGN_IN_PASSWORD
 } from 'configs';
 import { PAGE_PATH_ROOT } from 'constants/routing';
+import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { SignInForm } from '@types';
 import { IconBackspace } from '@icons';
@@ -33,6 +34,7 @@ const formSchema = yup.object().shape({
 });
 
 const SignInWithEmail = () => {
+  const { t } = useTranslation(['auth']);
   const { syncSignIn } = useAuth();
   const navigate = useNavigate();
 
@@ -94,16 +96,16 @@ const SignInWithEmail = () => {
       </Button>
       <h1 className="text-gray-900 typo-head-bold-huge mt-8">{`Sign in`}</h1>
       <p className="text-gray-600 typo-para-medium mt-4">
-        {`To access our Demo site, please sign in using the follow in information.`}
+        {t(`sign-in.description`)}
       </p>
       <div className="text-gray-600 typo-para-medium mt-6">
-        <p>{`Email: ${DEMO_SIGN_IN_EMAIL}`}</p>
-        <p>{`Password: ${DEMO_SIGN_IN_PASSWORD}`}</p>
+        <p>{`${t('email')}: ${DEMO_SIGN_IN_EMAIL}`}</p>
+        <p>{`${t('password')}: ${DEMO_SIGN_IN_PASSWORD}`}</p>
       </div>
 
       {showAuthError && (
         <p className="text-accent-red-500 typo-para-medium mt-6">
-          {`Invalid email or password.`}
+          {t(`error-message.invalid-sign-in`)}
         </p>
       )}
 
@@ -118,9 +120,9 @@ const SignInWithEmail = () => {
             name="email"
             render={({ field }) => (
               <Form.Item>
-                <Form.Label>{`Email`}</Form.Label>
+                <Form.Label>{t('email')}</Form.Label>
                 <Form.Control>
-                  <Input placeholder="Email" {...field} />
+                  <Input placeholder={t('email')} {...field} />
                 </Form.Control>
                 <Form.Message />
               </Form.Item>
@@ -131,7 +133,7 @@ const SignInWithEmail = () => {
             name="password"
             render={({ field }) => (
               <Form.Item>
-                <Form.Label>{`Password`}</Form.Label>
+                <Form.Label>{t('password')}</Form.Label>
                 <Form.Control>
                   <InputGroup
                     className="w-full"
@@ -140,7 +142,7 @@ const SignInWithEmail = () => {
                   >
                     <Input
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="Password"
+                      placeholder={t('password')}
                       {...field}
                     />
                   </InputGroup>

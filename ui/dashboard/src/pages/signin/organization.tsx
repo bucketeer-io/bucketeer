@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useAuth } from 'auth';
 import { PAGE_PATH_ROOT } from 'constants/routing';
+import { useTranslation } from 'i18n';
 import { setOrgIdStorage } from 'storage/organization';
 import * as yup from 'yup';
 import { Button } from 'components/button';
@@ -15,6 +16,7 @@ const formSchema = yup.object().shape({
 });
 
 const SelectOrganization = () => {
+  const { t } = useTranslation(['auth', 'common']);
   const navigate = useNavigate();
   const { myOrganizations, onMeFetcher } = useAuth();
 
@@ -37,10 +39,10 @@ const SelectOrganization = () => {
   return (
     <AuthWrapper>
       <h1 className="text-gray-900 typo-head-bold-huge">
-        {`Select your Organization`}
+        {t(`select-organization.title`)}
       </h1>
       <p className="text-gray-600 typo-para-medium mt-4">
-        {`Select the organization you want to work for.`}
+        {t(`select-organization.description`)}
       </p>
       <FormProvider {...form}>
         <Form onSubmit={form.handleSubmit(onSubmit)} className="mt-10">
@@ -49,13 +51,13 @@ const SelectOrganization = () => {
             name="organization"
             render={({ field }) => (
               <Form.Item>
-                <Form.Label required>{`Organization`}</Form.Label>
+                <Form.Label required>{t(`organization`)}</Form.Label>
                 <Form.Control>
                   <Dropdown
                     {...field}
                     expand="full"
                     className="w-[442px]"
-                    placeholder="Select your Organization"
+                    placeholder={t(`organization-placeholder`)}
                     options={myOrganizations.map(org => ({
                       label: org.name,
                       value: org.id
@@ -75,7 +77,9 @@ const SelectOrganization = () => {
             type="submit"
             loading={form.formState.isSubmitting}
             className="w-full mt-10"
-          >{`Continue`}</Button>
+          >
+            {t(`continue`)}
+          </Button>
         </Form>
       </FormProvider>
     </AuthWrapper>

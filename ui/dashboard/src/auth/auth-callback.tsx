@@ -7,7 +7,7 @@ import { getCookieState } from 'cookie';
 import { useSubmit } from 'hooks';
 import queryString from 'query-string';
 import { setTokenStorage } from 'storage/token';
-import Spinner from 'components/spinner';
+import { AppLoading } from 'app';
 import { useAuth } from './auth-context';
 
 export const AuthCallbackPage: FC = memo(() => {
@@ -48,9 +48,5 @@ export const AuthCallbackPage: FC = memo(() => {
     }
   }, [query]);
 
-  return (
-    <div className="mt-20 flex justify-center w-full">
-      <Spinner />
-    </div>
-  );
+  return <AppLoading />;
 });

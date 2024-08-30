@@ -6,12 +6,14 @@ import { DEMO_SIGN_IN_ENABLED } from 'configs';
 import { PAGE_PATH_AUTH_SIGNIN } from 'constants/routing';
 import { setCookieState } from 'cookie';
 import { useSubmit } from 'hooks';
+import { useTranslation } from 'i18n';
 import { IconEmail, IconGoogle } from '@icons';
 import { Button } from 'components/button';
 import Icon from 'components/icon';
 import AuthWrapper from './elements/auth-wrapper';
 
 const SignIn = () => {
+  const { t } = useTranslation(['auth']);
   const navigate = useNavigate();
   const { isGoogleAuthError, setIsGoogleAuthError } = useAuth();
 
@@ -39,8 +41,7 @@ const SignIn = () => {
         </h1>
         {isGoogleAuthError && (
           <p className="text-accent-red-500 typo-para-medium">
-            {` No account found for this Google Account. Please check the email
-          entered or try a different Google Account.`}
+            {t(`error-message.invalid-google-auth`)}
           </p>
         )}
       </div>
