@@ -73,7 +73,7 @@ jobs:
         run: helm push .artifacts/bucketeer-migration-${{ env.BUCKETEER_VERSION }}.tgz oci://${{ env.REGISTRY }}/bucketeer-io/chart
       - name: Authenticate to Google Cloud
         id: auth
-        uses: google-github-actions/auth@71fee32a0bb7e97b4d33d548e7d957010649d8fa # v2.1.3
+        uses: google-github-actions/auth@62cf5bd3e4211a0a0b51f2c6d6a37129d828611d # v2.1.5
         with:
           token_format: "access_token"
           workload_identity_provider: ${{ secrets.GAR_WORKLOAD_IDENTITY_PROVIDER }}
