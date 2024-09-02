@@ -78,11 +78,14 @@ message CreateSearchFilterCommand {
   bool default_filter = 5;
 }
 
-message UpdateSearchFilterCommand {
+message ChangeSearchFilterNameCommand {
   string id = 1;
   string name = 2;
-  string query = 3;
-  bool default_filter = 4;
+}
+
+message ChangeSearchFilterQueryCommand {
+  string id = 1;
+  string query = 2;
 }
 
 message ChangeDefaultSearchFilterCommand {

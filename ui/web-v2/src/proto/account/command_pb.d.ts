@@ -468,46 +468,73 @@ export namespace CreateSearchFilterCommand {
   };
 }
 
-export class UpdateSearchFilterCommand extends jspb.Message {
+export class ChangeSearchFilterNameCommand extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
   getName(): string;
   setName(value: string): void;
 
-  getQuery(): string;
-  setQuery(value: string): void;
-
-  getDefaultFilter(): boolean;
-  setDefaultFilter(value: boolean): void;
-
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): UpdateSearchFilterCommand.AsObject;
+  toObject(includeInstance?: boolean): ChangeSearchFilterNameCommand.AsObject;
   static toObject(
     includeInstance: boolean,
-    msg: UpdateSearchFilterCommand
-  ): UpdateSearchFilterCommand.AsObject;
+    msg: ChangeSearchFilterNameCommand
+  ): ChangeSearchFilterNameCommand.AsObject;
   static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
   static extensionsBinary: {
     [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
   };
   static serializeBinaryToWriter(
-    message: UpdateSearchFilterCommand,
+    message: ChangeSearchFilterNameCommand,
     writer: jspb.BinaryWriter
   ): void;
-  static deserializeBinary(bytes: Uint8Array): UpdateSearchFilterCommand;
+  static deserializeBinary(bytes: Uint8Array): ChangeSearchFilterNameCommand;
   static deserializeBinaryFromReader(
-    message: UpdateSearchFilterCommand,
+    message: ChangeSearchFilterNameCommand,
     reader: jspb.BinaryReader
-  ): UpdateSearchFilterCommand;
+  ): ChangeSearchFilterNameCommand;
 }
 
-export namespace UpdateSearchFilterCommand {
+export namespace ChangeSearchFilterNameCommand {
   export type AsObject = {
     id: string;
     name: string;
+  };
+}
+
+export class ChangeSearchFilterQueryCommand extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getQuery(): string;
+  setQuery(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ChangeSearchFilterQueryCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ChangeSearchFilterQueryCommand
+  ): ChangeSearchFilterQueryCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ChangeSearchFilterQueryCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ChangeSearchFilterQueryCommand;
+  static deserializeBinaryFromReader(
+    message: ChangeSearchFilterQueryCommand,
+    reader: jspb.BinaryReader
+  ): ChangeSearchFilterQueryCommand;
+}
+
+export namespace ChangeSearchFilterQueryCommand {
+  export type AsObject = {
+    id: string;
     query: string;
-    defaultFilter: boolean;
   };
 }
 

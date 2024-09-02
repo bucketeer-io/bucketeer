@@ -100,8 +100,9 @@ func (s *AccountService) UpdateSearchFilter(
 	if err != nil {
 		return nil, err
 	}
+	commands := s.getUpdateSearchFilterCommands(req)
 
-	if err := validateUpdateSearchFilterRequest(req, localizer); err != nil {
+	if err := validateUpdateSearchFilterRequest(req, commands, localizer); err != nil {
 		s.logger.Error(
 			"Failed to update search filter",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -114,7 +115,7 @@ func (s *AccountService) UpdateSearchFilter(
 	if err := s.updateAccountV2MySQL(
 		ctx,
 		editor,
-		[]command.Command{req.Command},
+		commands,
 		req.Email,
 		req.OrganizationId); err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
@@ -142,7 +143,6 @@ func (s *AccountService) UpdateSearchFilter(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
-				zap.String("searchFilterName", req.Command.Name),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -158,71 +158,19 @@ func (s *AccountService) UpdateSearchFilter(
 	return &accountproto.UpdateSearchFilterResponse{}, nil
 }
 
-func (s *AccountService) UpdateDefaultSearchFilter(
-	ctx context.Context,
-	req *accountproto.UpdateDefaultSearchFilterRequest,
-) (*accountproto.UpdateDefaultSearchFilterResponse, error) {
-	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
-	if err != nil {
-		return nil, err
+func (s *AccountService) getUpdateSearchFilterCommands(req *accountproto.UpdateSearchFilterRequest) []command.Command {
+	commands := make([]command.Command, 0)
+	if req.ChangeNameCommand != nil {
+		commands = append(commands, req.ChangeNameCommand)
 	}
-
-	if err := validateUpdateDefaultSearchFilterRequest(req, localizer); err != nil {
-		s.logger.Error(
-			"Failed to update default search filter",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		return nil, err
+	if req.ChangeNameCommand != nil {
+		commands = append(commands, req.ChangeNameCommand)
 	}
-
-	if err := s.updateAccountV2MySQL(
-		ctx,
-		editor,
-		[]command.Command{req.Command},
-		req.Email,
-		req.OrganizationId); err != nil {
-		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		} else if errors.Is(err, domain.ErrSearchFilterNotFound) {
-			dt, err := statusSearchFilterIDNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
-		s.logger.Error(
-			"Failed to update default search filter",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("organizationID", req.OrganizationId),
-				zap.String("email", req.Email),
-				zap.String("searchFilterName", req.Command.Id),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+	if req.ChangeQueryCommand != nil {
+		commands = append(commands, req.ChangeQueryCommand)
 	}
-
-	return &accountproto.UpdateDefaultSearchFilterResponse{}, nil
+	if req.ChangeDefaultFilterCommand != nil {
+		commands = append(commands, req.ChangeDefaultFilterCommand)
+	}
+	return commands
 }

@@ -74,10 +74,12 @@ func (h *accountV2CommandHandler) Handle(ctx context.Context, cmd Command) error
 		return h.delete(ctx, c)
 	case *accountproto.CreateSearchFilterCommand:
 		return h.createSearchFilter(ctx, c)
+	case *accountproto.ChangeSearchFilterNameCommand:
+		return h.changeSearchFilerName(ctx, c)
+	case *accountproto.ChangeSearchFilterQueryCommand:
+		return h.changeSearchFilterQuery(ctx, c)
 	case *accountproto.ChangeDefaultSearchFilterCommand:
 		return h.updateDefaultSearchFilter(ctx, c)
-	case *accountproto.UpdateSearchFilterCommand:
-		return h.updateSearchFiler(ctx, c)
 	default:
 		return ErrBadCommand
 	}
@@ -209,20 +211,27 @@ func (h *accountV2CommandHandler) createSearchFilter(
 	})
 }
 
-func (h *accountV2CommandHandler) updateSearchFiler(
+func (h *accountV2CommandHandler) changeSearchFilerName(
 	ctx context.Context,
-	cmd *accountproto.UpdateSearchFilterCommand) error {
-	if err := h.account.UpdateSearchFilter(
-		cmd.Id,
-		cmd.Name,
-		cmd.Query,
-		cmd.DefaultFilter,
-	); err != nil {
+	cmd *accountproto.ChangeSearchFilterNameCommand) error {
+	if err := h.account.ChangeSearchFilterName(cmd.Id, cmd.Name); err != nil {
 		return err
 	}
-	return h.send(ctx, eventproto.Event_ACCOUNT_V2_UPDATED_SEARCH_FILTER, &eventproto.SearchFilterUpdateEvent{
+	return h.send(ctx, eventproto.Event_ACCOUNT_V2_SEARCH_FILTER_NANE_CHANGED, &eventproto.SearchFilterNameChangedEvent{
 		Id:   cmd.Id,
 		Name: cmd.Name,
+	})
+}
+
+func (h *accountV2CommandHandler) changeSearchFilterQuery(
+	ctx context.Context,
+	cmd *accountproto.ChangeSearchFilterQueryCommand) error {
+	if err := h.account.ChangeSearchFilterQuery(cmd.Id, cmd.Query); err != nil {
+		return err
+	}
+	return h.send(ctx, eventproto.Event_ACCOUNT_V2_SEARCH_FILTER_QUERY_CHANGED, &eventproto.SearchFilterQueryChangedEvent{
+		Id:    cmd.Id,
+		Query: cmd.Query,
 	})
 }
 
@@ -234,8 +243,9 @@ func (h *accountV2CommandHandler) updateDefaultSearchFilter(
 	}
 	return h.send(
 		ctx,
-		eventproto.Event_ACCOUNT_V2_UPDATED_DEFAULT_SEARCH_FILTER,
-		&eventproto.DefaultSearchFilterUpdatedEvent{
+		eventproto.Event_ACCOUNT_V2_SEARCH_FILTER_DEFAULT_CHANGED,
+		&eventproto.SearchFilterDefaultChangedEvent{
+			Id:            cmd.Id,
 			DefaultFilter: cmd.DefaultFilter,
 		},
 	)

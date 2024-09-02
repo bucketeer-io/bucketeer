@@ -155,6 +155,28 @@ func (a *AccountV2) DeleteSearchFilter(id string) error {
 	return ErrSearchFilterNotFound
 }
 
+func (a *AccountV2) ChangeSearchFilterName(id string, name string) error {
+	for _, f := range a.AccountV2.SearchFilters {
+		if f.Id == id {
+			f.Name = name
+			a.UpdatedAt = time.Now().Unix()
+			return nil
+		}
+	}
+	return ErrSearchFilterNotFound
+}
+
+func (a *AccountV2) ChangeSearchFilterQuery(id string, query string) error {
+	for _, f := range a.AccountV2.SearchFilters {
+		if f.Id == id {
+			f.Query = query
+			a.UpdatedAt = time.Now().Unix()
+			return nil
+		}
+	}
+	return ErrSearchFilterNotFound
+}
+
 func (a *AccountV2) UpdateDefaultSearchFilter(id string, defaultFilter bool) error {
 	for _, f := range a.AccountV2.SearchFilters {
 		if f.Id == id {
@@ -164,33 +186,6 @@ func (a *AccountV2) UpdateDefaultSearchFilter(id string, defaultFilter bool) err
 			}
 
 			f.DefaultFilter = defaultFilter
-			a.UpdatedAt = time.Now().Unix()
-			return nil
-		}
-	}
-	return ErrSearchFilterNotFound
-}
-
-func (a *AccountV2) UpdateSearchFilter(
-	id string,
-	name string,
-	query string,
-	defaultFilter bool) error {
-	for i, srcF := range a.AccountV2.SearchFilters {
-		if srcF.Id == id {
-			// Since there is only one default setting for a filter target, set the existing default to OFF.
-			if defaultFilter {
-				a.ternOffDefaultFilters(srcF.FilterTargetType, srcF.EnvironmentId)
-			}
-
-			a.AccountV2.SearchFilters[i] = &proto.SearchFilter{
-				Id:               id,
-				Name:             name,
-				Query:            query,
-				FilterTargetType: srcF.FilterTargetType,
-				EnvironmentId:    srcF.EnvironmentId,
-				DefaultFilter:    defaultFilter,
-			}
 			a.UpdatedAt = time.Now().Unix()
 			return nil
 		}
