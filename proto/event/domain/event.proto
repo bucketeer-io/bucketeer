@@ -36,6 +36,7 @@ import "proto/notification/recipient.proto";
 import "proto/feature/prerequisite.proto";
 import "proto/autoops/progressive_rollout.proto";
 import "proto/feature/flag_trigger.proto";
+import "proto/account/search_filter.proto";
 
 message Event {
   enum EntityType {
@@ -126,6 +127,8 @@ message Event {
     ACCOUNT_V2_ENABLED = 310;
     ACCOUNT_V2_DISABLED = 311;
     ACCOUNT_V2_DELETED = 312;
+    ACCOUNT_V2_CREATED_SEARCH_FILTER = 313;
+    ACCOUNT_V2_UPDATED_DEFAULT_SEARCH_FILTER = 314;
     APIKEY_CREATED = 400;
     APIKEY_NAME_CHANGED = 401;
     APIKEY_ENABLED = 402;
@@ -594,6 +597,18 @@ message AccountV2DisabledEvent {
 
 message AccountV2DeletedEvent {
   string email = 1;
+}
+
+message SearchFilterCreatedEvent {
+  string Name = 1;
+  string Query = 2;
+  bucketeer.account.FilterTargetType TargetType = 3;
+  string environment_id = 4;
+  bool default_filter = 5;
+}
+
+message DefaultSearchFilterUpdatedEvent {
+  bool default_filter = 1;
 }
 
 message APIKeyCreatedEvent {

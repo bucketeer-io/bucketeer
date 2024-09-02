@@ -550,6 +550,51 @@
           },
           {
             "name": "DisableAPIKeyCommand"
+          },
+          {
+            "name": "CreateSearchFilterCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "query",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "filter_target_type",
+                "type": "account.FilterTargetType"
+              },
+              {
+                "id": 4,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "default_filter",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "name": "ChangeDefaultSearchFilterCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "default_filter",
+                "type": "bool"
+              }
+            ]
           }
         ],
         "imports": [
@@ -558,6 +603,9 @@
           },
           {
             "path": "proto/account/api_key.proto"
+          },
+          {
+            "path": "proto/account/search_filter.proto"
           }
         ],
         "package": {
@@ -1207,6 +1255,34 @@
                 "type": "EnvironmentAPIKey"
               }
             ]
+          },
+          {
+            "name": "CreateSearchFilterRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "command",
+                "type": "CreateSearchFilterCommand"
+              }
+            ]
+          },
+          {
+            "name": "CreateSearchFilterResponse"
           }
         ],
         "services": [
@@ -3885,6 +3961,182 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "CreateSearchFilter",
+                "in_type": "CreateSearchFilterRequest",
+                "out_type": "CreateSearchFilterResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/account/create_search_filter"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create Search Filter"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a search filter. To call this API, you need an `VIEWER` role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Account"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.account.create_search_filter"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "403"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request does not have permission to access the resource."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":7,\"message\":\"not authorized\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -3919,6 +4171,77 @@
           {
             "name": "go_package",
             "value": "github.com/bucketeer-io/bucketeer/proto/account"
+          },
+          {
+            "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger)",
+            "aggregated": [
+              {
+                "name": "tags",
+                "aggregated": [
+                  {
+                    "aggregated": [
+                      {
+                        "name": "name",
+                        "value": "Account"
+                      }
+                    ]
+                  },
+                  {
+                    "aggregated": [
+                      {
+                        "name": "name",
+                        "value": "API Key"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "responses",
+                "aggregated": [
+                  {
+                    "name": "key",
+                    "value": "503"
+                  },
+                  {
+                    "name": "value",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "Returned for internal errors."
+                      },
+                      {
+                        "name": "schema",
+                        "aggregated": [
+                          {
+                            "name": "json_schema",
+                            "aggregated": [
+                              {
+                                "name": "ref",
+                                "value": ".google.rpc.Status"
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "examples",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "application/json"
+                          },
+                          {
+                            "name": "value",
+                            "value": "{\"code\":13,\"message\":\"internal\",\"details\":[]}"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         ]
       }
@@ -12838,6 +13161,14 @@
                 "integer": 312
               },
               {
+                "name": "ACCOUNT_V2_CREATED_SEARCH_FILTER",
+                "integer": 313
+              },
+              {
+                "name": "ACCOUNT_V2_UPDATED_DEFAULT_SEARCH_FILTER",
+                "integer": 314
+              },
+              {
                 "name": "APIKEY_CREATED",
                 "integer": 400
               },
@@ -14497,6 +14828,46 @@
             ]
           },
           {
+            "name": "SearchFilterCreatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "Name",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "Query",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "TargetType",
+                "type": "bucketeer.account.FilterTargetType"
+              },
+              {
+                "id": 4,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "default_filter",
+                "type": "bool"
+              }
+            ]
+          },
+          {
+            "name": "DefaultSearchFilterUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "default_filter",
+                "type": "bool"
+              }
+            ]
+          },
+          {
             "name": "APIKeyCreatedEvent",
             "fields": [
               {
@@ -16109,6 +16480,9 @@
           },
           {
             "path": "proto/feature/flag_trigger.proto"
+          },
+          {
+            "path": "proto/account/search_filter.proto"
           }
         ],
         "package": {

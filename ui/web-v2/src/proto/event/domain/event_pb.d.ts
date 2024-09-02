@@ -20,6 +20,7 @@ import * as proto_notification_recipient_pb from '../../../proto/notification/re
 import * as proto_feature_prerequisite_pb from '../../../proto/feature/prerequisite_pb';
 import * as proto_autoops_progressive_rollout_pb from '../../../proto/autoops/progressive_rollout_pb';
 import * as proto_feature_flag_trigger_pb from '../../../proto/feature/flag_trigger_pb';
+import * as proto_account_search_filter_pb from '../../../proto/account/search_filter_pb';
 
 export class Event extends jspb.Message {
   getId(): string;
@@ -188,6 +189,8 @@ export namespace Event {
     ACCOUNT_V2_ENABLED: 310;
     ACCOUNT_V2_DISABLED: 311;
     ACCOUNT_V2_DELETED: 312;
+    ACCOUNT_V2_CREATED_SEARCH_FILTER: 313;
+    ACCOUNT_V2_UPDATED_DEFAULT_SEARCH_FILTER: 314;
     APIKEY_CREATED: 400;
     APIKEY_NAME_CHANGED: 401;
     APIKEY_ENABLED: 402;
@@ -2793,6 +2796,86 @@ export class AccountV2DeletedEvent extends jspb.Message {
 export namespace AccountV2DeletedEvent {
   export type AsObject = {
     email: string;
+  };
+}
+
+export class SearchFilterCreatedEvent extends jspb.Message {
+  getName(): string;
+  setName(value: string): void;
+
+  getQuery(): string;
+  setQuery(value: string): void;
+
+  getTargettype(): proto_account_search_filter_pb.FilterTargetTypeMap[keyof proto_account_search_filter_pb.FilterTargetTypeMap];
+  setTargettype(
+    value: proto_account_search_filter_pb.FilterTargetTypeMap[keyof proto_account_search_filter_pb.FilterTargetTypeMap]
+  ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  getDefaultFilter(): boolean;
+  setDefaultFilter(value: boolean): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SearchFilterCreatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: SearchFilterCreatedEvent
+  ): SearchFilterCreatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: SearchFilterCreatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): SearchFilterCreatedEvent;
+  static deserializeBinaryFromReader(
+    message: SearchFilterCreatedEvent,
+    reader: jspb.BinaryReader
+  ): SearchFilterCreatedEvent;
+}
+
+export namespace SearchFilterCreatedEvent {
+  export type AsObject = {
+    name: string;
+    query: string;
+    targettype: proto_account_search_filter_pb.FilterTargetTypeMap[keyof proto_account_search_filter_pb.FilterTargetTypeMap];
+    environmentId: string;
+    defaultFilter: boolean;
+  };
+}
+
+export class DefaultSearchFilterUpdatedEvent extends jspb.Message {
+  getDefaultFilter(): boolean;
+  setDefaultFilter(value: boolean): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DefaultSearchFilterUpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: DefaultSearchFilterUpdatedEvent
+  ): DefaultSearchFilterUpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: DefaultSearchFilterUpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): DefaultSearchFilterUpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: DefaultSearchFilterUpdatedEvent,
+    reader: jspb.BinaryReader
+  ): DefaultSearchFilterUpdatedEvent;
+}
+
+export namespace DefaultSearchFilterUpdatedEvent {
+  export type AsObject = {
+    defaultFilter: boolean;
   };
 }
 

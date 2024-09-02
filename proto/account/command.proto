@@ -19,6 +19,7 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/account";
 
 import "proto/account/account.proto";
 import "proto/account/api_key.proto";
+import "proto/account/search_filter.proto";
 
 message CreateAccountV2Command {
   string email = 1;
@@ -68,3 +69,16 @@ message ChangeAPIKeyNameCommand {
 message EnableAPIKeyCommand {}
 
 message DisableAPIKeyCommand {}
+
+message CreateSearchFilterCommand {
+  string name = 1;
+  string query = 2;
+  account.FilterTargetType filter_target_type = 3;
+  string environment_id = 4;
+  bool default_filter = 5;
+}
+
+message ChangeDefaultSearchFilterCommand {
+  string id = 1;
+  bool default_filter = 2;
+}

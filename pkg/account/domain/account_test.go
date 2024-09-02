@@ -278,7 +278,7 @@ func TestAddSearchFilter(t *testing.T) {
 					Query:            "query",
 					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
 					EnvironmentId:    "environmentID",
-					DefaultFilter:    false,
+					DefaultFilter:    true,
 				},
 			},
 		},
@@ -301,6 +301,25 @@ func TestAddSearchFilter(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc: "add same targetType and environmentID filters with default filter true",
+			expectedFilters: []*proto.SearchFilter{
+				{
+					Name:             "name0",
+					Query:            "query0",
+					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "environmentID",
+					DefaultFilter:    true,
+				},
+				{
+					Name:             "name1",
+					Query:            "query1",
+					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "environmentID",
+					DefaultFilter:    true,
+				},
+			},
+		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
@@ -313,7 +332,7 @@ func TestAddSearchFilter(t *testing.T) {
 				account.EnvironmentRoles,
 			)
 			for _, f := range p.expectedFilters {
-				err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
+				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
 			}
 			// account has not changed.
@@ -333,13 +352,23 @@ func TestAddSearchFilter(t *testing.T) {
 				assert.Equal(t, f.Query, filter.Query)
 				assert.Equal(t, f.FilterTargetType, filter.FilterTargetType)
 				assert.Equal(t, f.EnvironmentId, filter.EnvironmentId)
-				assert.Equal(t, f.DefaultFilter, filter.DefaultFilter)
+			}
+
+			// If target and EnvID are the same, only one DefaultFilter can exist
+			for srcCnt, f := range a.SearchFilters {
+				if f.DefaultFilter {
+					for dctCnt, ff := range a.SearchFilters {
+						if srcCnt != dctCnt && ff.DefaultFilter && ff.FilterTargetType == f.FilterTargetType && ff.EnvironmentId == f.EnvironmentId {
+							assert.New(t).Fail("multiple default filters")
+						}
+					}
+				}
 			}
 		})
 	}
 }
 
-func TestUpdateSearchFilter(t *testing.T) {
+func TestChangeDefaultSearchFilter(t *testing.T) {
 	account := proto.AccountV2{
 		Email:            "email",
 		Name:             "name",
@@ -356,24 +385,18 @@ func TestUpdateSearchFilter(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc            string
-		existingFilters []*proto.SearchFilter
-		updateFilter    *proto.SearchFilter
-		expectedFilters []*proto.SearchFilter
-		error           error
+		desc                string
+		existingFilters     []*proto.SearchFilter
+		updateDefaultFilter bool
+		expectedFilters     []*proto.SearchFilter
+		error               error
 	}{
 		{
-			desc:            "don't have a filter",
-			existingFilters: nil,
-			updateFilter: &proto.SearchFilter{
-				Name:             "update-name",
-				Query:            "update-query",
-				FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
-				EnvironmentId:    "environmentID",
-				DefaultFilter:    false,
-			},
-			expectedFilters: []*proto.SearchFilter{},
-			error:           errSearchFilterNotFound,
+			desc:                "don't have a filter",
+			existingFilters:     nil,
+			updateDefaultFilter: false,
+			expectedFilters:     []*proto.SearchFilter{},
+			error:               errSearchFilterNotFound,
 		},
 		{
 			desc: "have a filter",
@@ -386,19 +409,13 @@ func TestUpdateSearchFilter(t *testing.T) {
 					DefaultFilter:    false,
 				},
 			},
-			updateFilter: &proto.SearchFilter{
-				Name:             "update-name",
-				Query:            "update-query",
-				FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
-				EnvironmentId:    "environmentID",
-				DefaultFilter:    true,
-			},
+			updateDefaultFilter: true,
 			expectedFilters: []*proto.SearchFilter{
 				{
-					Name:             "update-name",
-					Query:            "update-query",
+					Name:             "name0",
+					Query:            "query0",
 					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
-					EnvironmentId:    "environmentID",
+					EnvironmentId:    "environmentID0",
 					DefaultFilter:    true,
 				},
 			},
@@ -429,13 +446,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 					DefaultFilter:    false,
 				},
 			},
-			updateFilter: &proto.SearchFilter{
-				Name:             "update-name",
-				Query:            "update-query",
-				FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
-				EnvironmentId:    "environmentID",
-				DefaultFilter:    true,
-			},
+			updateDefaultFilter: true,
 			expectedFilters: []*proto.SearchFilter{
 				{
 					Name:             "name0",
@@ -445,10 +456,10 @@ func TestUpdateSearchFilter(t *testing.T) {
 					DefaultFilter:    false,
 				},
 				{
-					Name:             "update-name",
-					Query:            "update-query",
+					Name:             "name1",
+					Query:            "query1",
 					FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
-					EnvironmentId:    "environmentID",
+					EnvironmentId:    "environmentID1",
 					DefaultFilter:    true,
 				},
 				{
@@ -473,7 +484,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 				account.EnvironmentRoles,
 			)
 			for _, f := range p.existingFilters {
-				err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
+				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
 			}
 			updateFilterId := "update-filter-id"
@@ -481,14 +492,12 @@ func TestUpdateSearchFilter(t *testing.T) {
 				updateFilterId = a.SearchFilters[(len(a.SearchFilters) / 2)].Id
 			}
 			updateFilter := &proto.SearchFilter{
-				Id:               updateFilterId,
-				Name:             p.updateFilter.Name,
-				Query:            p.updateFilter.Query,
-				FilterTargetType: p.updateFilter.FilterTargetType,
-				EnvironmentId:    p.updateFilter.EnvironmentId,
-				DefaultFilter:    p.updateFilter.DefaultFilter,
+				Id:            updateFilterId,
+				DefaultFilter: p.updateDefaultFilter,
 			}
-			err := a.UpdateSearchFilter(updateFilter)
+			err := a.ChangeDefaultSearchFilter(
+				updateFilter.Id,
+				updateFilter.DefaultFilter)
 			assert.Equal(t, err, p.error)
 
 			// account has not changed.
@@ -609,7 +618,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 				account.EnvironmentRoles,
 			)
 			for _, f := range p.existingFilters {
-				err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
+				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
 			}
 			deleteFilterId := "delete-filter-id"
