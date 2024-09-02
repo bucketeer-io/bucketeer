@@ -7,7 +7,6 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup';
 import primaryAvatar from 'assets/avatars/primary.svg';
 import { useToggleOpen } from 'hooks';
-import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { IconGoal } from '@icons';
 import { AvatarIcon, AvatarImage } from 'components/avatar';
@@ -29,8 +28,6 @@ const formSchema = yup.object().shape({
 });
 
 const DashboardPage = () => {
-  const { t } = useTranslation(['auth']);
-
   const [openModal, onOpenModal, onCloseModal] = useToggleOpen(false);
   const [openSlider, onOpenSlider, onCloseSlider] = useToggleOpen(false);
 
@@ -46,13 +43,7 @@ const DashboardPage = () => {
   }
 
   return (
-    <div className="px-10">
-      <div className="bg-white mb-10 py-4 text-gray-700 border-b border-gray-300 flex justify-between">
-        <div className="flex-1 pr-10">
-          <p className="text-xl">{t(`feature.title`)}</p>
-          <p className="text-sm">{t(`feature.description`)}</p>
-        </div>
-      </div>
+    <div className="p-10">
       <div className="pb-4 text-3xl font-bold">{`Design systems`}</div>
       <div className="py-2">{`Button types`}</div>
       <div className="flex items-center gap-6">
