@@ -662,7 +662,7 @@ func TestChangeSearchFilterQuery(t *testing.T) {
 	}
 }
 
-func TestUpdateDefaultSearchFilter(t *testing.T) {
+func TestChangeDefaultSearchFilter(t *testing.T) {
 	account := proto.AccountV2{
 		Email:            "email",
 		Name:             "name",
@@ -789,7 +789,7 @@ func TestUpdateDefaultSearchFilter(t *testing.T) {
 				Id:            updateFilterId,
 				DefaultFilter: p.updateDefaultFilter,
 			}
-			err := a.UpdateDefaultSearchFilter(
+			err := a.ChangeDefaultSearchFilter(
 				updateFilter.Id,
 				updateFilter.DefaultFilter)
 			assert.Equal(t, err, p.error)

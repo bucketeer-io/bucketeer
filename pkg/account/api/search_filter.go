@@ -166,9 +166,6 @@ func (s *AccountService) getUpdateSearchFilterCommands(req *accountproto.UpdateS
 	if req.ChangeNameCommand != nil {
 		commands = append(commands, req.ChangeNameCommand)
 	}
-	if req.ChangeNameCommand != nil {
-		commands = append(commands, req.ChangeNameCommand)
-	}
 	if req.ChangeQueryCommand != nil {
 		commands = append(commands, req.ChangeQueryCommand)
 	}

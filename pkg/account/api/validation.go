@@ -605,7 +605,7 @@ func validateUpdateSearchFilterRequest(
 	}
 	for _, cmd := range commands {
 		switch cmd := cmd.(type) {
-		case accountproto.ChangeSearchFilterNameCommand:
+		case *accountproto.ChangeSearchFilterNameCommand:
 			if err := validateChangeSearchFilterId(cmd.Id, localizer); err != nil {
 				return err
 			}
@@ -619,7 +619,7 @@ func validateUpdateSearchFilterRequest(
 				}
 				return dt.Err()
 			}
-		case accountproto.ChangeSearchFilterQueryCommand:
+		case *accountproto.ChangeSearchFilterQueryCommand:
 			if err := validateChangeSearchFilterId(cmd.Id, localizer); err != nil {
 				return err
 			}
@@ -633,7 +633,7 @@ func validateUpdateSearchFilterRequest(
 				}
 				return dt.Err()
 			}
-		case accountproto.ChangeDefaultSearchFilterCommand:
+		case *accountproto.ChangeDefaultSearchFilterCommand:
 			if err := validateChangeSearchFilterId(cmd.Id, localizer); err != nil {
 				return err
 			}
@@ -646,7 +646,7 @@ func validateChangeSearchFilterId(id string, localizer locale.Localizer) error {
 	if id == "" {
 		dt, err := statusSearchFilterIDIsEmpty.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "search_filter_id"),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
 		})
 		if err != nil {
 			return statusInternal.Err()

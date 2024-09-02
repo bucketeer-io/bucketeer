@@ -177,7 +177,7 @@ func (a *AccountV2) ChangeSearchFilterQuery(id string, query string) error {
 	return ErrSearchFilterNotFound
 }
 
-func (a *AccountV2) UpdateDefaultSearchFilter(id string, defaultFilter bool) error {
+func (a *AccountV2) ChangeDefaultSearchFilter(id string, defaultFilter bool) error {
 	for _, f := range a.AccountV2.SearchFilters {
 		if f.Id == id {
 			// Since there is only one default setting for a filter target, set the existing default to OFF.

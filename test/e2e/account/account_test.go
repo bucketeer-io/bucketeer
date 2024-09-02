@@ -436,10 +436,16 @@ func TestUpdateSearchFilter(t *testing.T) {
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
 		EnvironmentId:  requestSearchFilter.EnvironmentId,
-		Command: &accountproto.UpdateSearchFilterCommand{
+		ChangeNameCommand: &accountproto.ChangeSearchFilterNameCommand{
+			Id:   account.Account.SearchFilters[0].Id,
+			Name: requestSearchFilter.Name,
+		},
+		ChangeQueryCommand: &accountproto.ChangeSearchFilterQueryCommand{
+			Id:    account.Account.SearchFilters[0].Id,
+			Query: requestSearchFilter.Query,
+		},
+		ChangeDefaultFilterCommand: &accountproto.ChangeDefaultSearchFilterCommand{
 			Id:            account.Account.SearchFilters[0].Id,
-			Name:          requestSearchFilter.Name,
-			Query:         requestSearchFilter.Query,
 			DefaultFilter: requestSearchFilter.DefaultFilter,
 		},
 	})

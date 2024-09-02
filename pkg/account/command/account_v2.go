@@ -79,7 +79,7 @@ func (h *accountV2CommandHandler) Handle(ctx context.Context, cmd Command) error
 	case *accountproto.ChangeSearchFilterQueryCommand:
 		return h.changeSearchFilterQuery(ctx, c)
 	case *accountproto.ChangeDefaultSearchFilterCommand:
-		return h.updateDefaultSearchFilter(ctx, c)
+		return h.changeDefaultSearchFilter(ctx, c)
 	default:
 		return ErrBadCommand
 	}
@@ -235,10 +235,10 @@ func (h *accountV2CommandHandler) changeSearchFilterQuery(
 	})
 }
 
-func (h *accountV2CommandHandler) updateDefaultSearchFilter(
+func (h *accountV2CommandHandler) changeDefaultSearchFilter(
 	ctx context.Context,
 	cmd *accountproto.ChangeDefaultSearchFilterCommand) error {
-	if err := h.account.UpdateDefaultSearchFilter(cmd.Id, cmd.DefaultFilter); err != nil {
+	if err := h.account.ChangeDefaultSearchFilter(cmd.Id, cmd.DefaultFilter); err != nil {
 		return err
 	}
 	return h.send(
