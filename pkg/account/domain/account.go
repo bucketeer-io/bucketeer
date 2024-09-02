@@ -118,14 +118,14 @@ func (a *AccountV2) AddSearchFilter(
 	name string,
 	query string,
 	targetType proto.FilterTargetType,
-	environmentId string, defaultFilter bool) (*proto.SearchFilter, error) {
+	environmentID string, defaultFilter bool) (*proto.SearchFilter, error) {
 	id, err := uuid.NewUUID()
 	if err != nil {
 		return nil, err
 	}
 	// Since there is only one default setting for a filter target, set the existing default to OFF.
 	if defaultFilter {
-		a.ternOffDefaultFilters(targetType, environmentId)
+		a.resetDefaultFilter(targetType, environmentID)
 	}
 
 	searchFilter := &proto.SearchFilter{
@@ -133,7 +133,7 @@ func (a *AccountV2) AddSearchFilter(
 		Name:             name,
 		Query:            query,
 		FilterTargetType: targetType,
-		EnvironmentId:    environmentId,
+		EnvironmentId:    environmentID,
 		DefaultFilter:    defaultFilter,
 	}
 	a.AccountV2.SearchFilters = append(a.AccountV2.SearchFilters, searchFilter)
@@ -182,7 +182,7 @@ func (a *AccountV2) UpdateDefaultSearchFilter(id string, defaultFilter bool) err
 		if f.Id == id {
 			// Since there is only one default setting for a filter target, set the existing default to OFF.
 			if defaultFilter {
-				a.ternOffDefaultFilters(f.FilterTargetType, f.EnvironmentId)
+				a.resetDefaultFilter(f.FilterTargetType, f.EnvironmentId)
 			}
 
 			f.DefaultFilter = defaultFilter
@@ -193,11 +193,11 @@ func (a *AccountV2) UpdateDefaultSearchFilter(id string, defaultFilter bool) err
 	return ErrSearchFilterNotFound
 }
 
-func (a *AccountV2) ternOffDefaultFilters(targetFilter proto.FilterTargetType, environmentId string) {
+func (a *AccountV2) resetDefaultFilter(targetFilter proto.FilterTargetType, environmentID string) {
 	for _, f := range a.AccountV2.SearchFilters {
 		if f.DefaultFilter &&
 			targetFilter == f.FilterTargetType &&
-			environmentId == f.EnvironmentId {
+			environmentID == f.EnvironmentId {
 			f.DefaultFilter = false
 		}
 	}
