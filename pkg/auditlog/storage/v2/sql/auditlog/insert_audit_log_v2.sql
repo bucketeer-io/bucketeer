@@ -7,7 +7,7 @@ INSERT INTO audit_log (
     event,
     editor,
     options,
+    environment_id,
     entity_data,
-    previous_entity_data,
-    environment_id
+    previous_entity_data
 ) VALUES
