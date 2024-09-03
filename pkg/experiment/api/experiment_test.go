@@ -55,16 +55,16 @@ func TestGetExperimentMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		setup                func(*experimentService)
-		id                   string
-		environmentNamespace string
-		expectedErr          error
+		setup         func(*experimentService)
+		id            string
+		environmentId string
+		expectedErr   error
 	}{
 		{
-			setup:                nil,
-			id:                   "",
-			environmentNamespace: "ns0",
-			expectedErr:          createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			setup:         nil,
+			id:            "",
+			environmentId: "ns0",
+			expectedErr:   createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			setup: func(s *experimentService) {
@@ -74,9 +74,9 @@ func TestGetExperimentMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			id:                   "id-0",
-			environmentNamespace: "ns0",
-			expectedErr:          createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			id:            "id-0",
+			environmentId: "ns0",
+			expectedErr:   createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			setup: func(s *experimentService) {
@@ -86,9 +86,9 @@ func TestGetExperimentMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			id:                   "id-1",
-			environmentNamespace: "ns0",
-			expectedErr:          nil,
+			id:            "id-1",
+			environmentId: "ns0",
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -96,7 +96,7 @@ func TestGetExperimentMySQL(t *testing.T) {
 		if p.setup != nil {
 			p.setup(service)
 		}
-		req := &experimentproto.GetExperimentRequest{Id: p.id, EnvironmentNamespace: p.environmentNamespace}
+		req := &experimentproto.GetExperimentRequest{Id: p.id, EnvironmentId: p.environmentId}
 		_, err := service.GetExperiment(ctx, req)
 		assert.Equal(t, p.expectedErr, err)
 	}
@@ -132,7 +132,7 @@ func TestListExperimentsMySQL(t *testing.T) {
 			desc:        "error: ErrPermissionDenied",
 			orgRole:     toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole:     toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			req:         &experimentproto.ListExperimentsRequest{FeatureId: "id-0", EnvironmentNamespace: "ns0"},
+			req:         &experimentproto.ListExperimentsRequest{FeatureId: "id-0", EnvironmentId: "ns0"},
 			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
@@ -153,7 +153,7 @@ func TestListExperimentsMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			req:         &experimentproto.ListExperimentsRequest{FeatureId: "id-0", EnvironmentNamespace: "ns0"},
+			req:         &experimentproto.ListExperimentsRequest{FeatureId: "id-0", EnvironmentId: "ns0"},
 			expectedErr: nil,
 		},
 	}
@@ -198,7 +198,7 @@ func TestCreateExperimentMySQL(t *testing.T) {
 					StartAt:   1,
 					StopAt:    10,
 				},
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},
@@ -241,7 +241,7 @@ func TestValidateCreateExperimentRequest(t *testing.T) {
 					StartAt:   1,
 					StopAt:    10,
 				},
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expected: nil,
 		},
@@ -251,7 +251,7 @@ func TestValidateCreateExperimentRequest(t *testing.T) {
 					FeatureId: "",
 					GoalIds:   []string{"gid"},
 				},
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expected: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
 		},
@@ -261,7 +261,7 @@ func TestValidateCreateExperimentRequest(t *testing.T) {
 					FeatureId: "fid",
 					GoalIds:   nil,
 				},
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expected: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
 		},
@@ -271,7 +271,7 @@ func TestValidateCreateExperimentRequest(t *testing.T) {
 					FeatureId: "fid",
 					GoalIds:   []string{""},
 				},
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expected: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
 		},
@@ -281,7 +281,7 @@ func TestValidateCreateExperimentRequest(t *testing.T) {
 					FeatureId: "fid",
 					GoalIds:   []string{"gid", ""},
 				},
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expected: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
 		},
@@ -293,7 +293,7 @@ func TestValidateCreateExperimentRequest(t *testing.T) {
 					StartAt:   1,
 					StopAt:    30*24*60*60 + 2,
 				},
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expected: createError(statusPeriodTooLong, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "period")),
 		},
@@ -305,7 +305,7 @@ func TestValidateCreateExperimentRequest(t *testing.T) {
 					StartAt:   1,
 					StopAt:    10,
 				},
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expected: nil,
 		},
@@ -342,7 +342,7 @@ func TestUpdateExperimentMySQL(t *testing.T) {
 		{
 			setup: nil,
 			req: &experimentproto.UpdateExperimentRequest{
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
@@ -354,7 +354,7 @@ func TestUpdateExperimentMySQL(t *testing.T) {
 					StartAt: time.Now().Unix(),
 					StopAt:  time.Now().AddDate(0, 0, 31).Unix(),
 				},
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusPeriodTooLong, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "period")),
 		},
@@ -366,8 +366,8 @@ func TestUpdateExperimentMySQL(t *testing.T) {
 				).Return(v2es.ErrExperimentNotFound)
 			},
 			req: &experimentproto.UpdateExperimentRequest{
-				Id:                   "id-0",
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -379,9 +379,9 @@ func TestUpdateExperimentMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &experimentproto.UpdateExperimentRequest{
-				Id:                   "id-1",
-				ChangeNameCommand:    &experimentproto.ChangeExperimentNameCommand{Name: "test-name"},
-				EnvironmentNamespace: "ns0",
+				Id:                "id-1",
+				ChangeNameCommand: &experimentproto.ChangeExperimentNameCommand{Name: "test-name"},
+				EnvironmentId:     "ns0",
 			},
 			expectedErr: nil,
 		},
@@ -424,7 +424,7 @@ func TestStartExperimentMySQL(t *testing.T) {
 			desc:  "error id required",
 			setup: nil,
 			req: &experimentproto.StartExperimentRequest{
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
@@ -432,8 +432,8 @@ func TestStartExperimentMySQL(t *testing.T) {
 			desc:  "error no command",
 			setup: nil,
 			req: &experimentproto.StartExperimentRequest{
-				Id:                   "eid",
-				EnvironmentNamespace: "ns0",
+				Id:            "eid",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
@@ -446,9 +446,9 @@ func TestStartExperimentMySQL(t *testing.T) {
 				).Return(v2es.ErrExperimentNotFound)
 			},
 			req: &experimentproto.StartExperimentRequest{
-				Id:                   "noop",
-				Command:              &experimentproto.StartExperimentCommand{},
-				EnvironmentNamespace: "ns0",
+				Id:            "noop",
+				Command:       &experimentproto.StartExperimentCommand{},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -461,9 +461,9 @@ func TestStartExperimentMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &experimentproto.StartExperimentRequest{
-				Id:                   "eid",
-				Command:              &experimentproto.StartExperimentCommand{},
-				EnvironmentNamespace: "ns0",
+				Id:            "eid",
+				Command:       &experimentproto.StartExperimentCommand{},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},
@@ -508,7 +508,7 @@ func TestFinishExperimentMySQL(t *testing.T) {
 			desc:  "error id required",
 			setup: nil,
 			req: &experimentproto.FinishExperimentRequest{
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
@@ -516,8 +516,8 @@ func TestFinishExperimentMySQL(t *testing.T) {
 			desc:  "error no command",
 			setup: nil,
 			req: &experimentproto.FinishExperimentRequest{
-				Id:                   "eid",
-				EnvironmentNamespace: "ns0",
+				Id:            "eid",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
@@ -530,9 +530,9 @@ func TestFinishExperimentMySQL(t *testing.T) {
 				).Return(v2es.ErrExperimentNotFound)
 			},
 			req: &experimentproto.FinishExperimentRequest{
-				Id:                   "noop",
-				Command:              &experimentproto.FinishExperimentCommand{},
-				EnvironmentNamespace: "ns0",
+				Id:            "noop",
+				Command:       &experimentproto.FinishExperimentCommand{},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -545,9 +545,9 @@ func TestFinishExperimentMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &experimentproto.FinishExperimentRequest{
-				Id:                   "eid",
-				Command:              &experimentproto.FinishExperimentCommand{},
-				EnvironmentNamespace: "ns0",
+				Id:            "eid",
+				Command:       &experimentproto.FinishExperimentCommand{},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},
@@ -590,15 +590,15 @@ func TestStopExperimentMySQL(t *testing.T) {
 		{
 			setup: nil,
 			req: &experimentproto.StopExperimentRequest{
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			setup: nil,
 			req: &experimentproto.StopExperimentRequest{
-				Id:                   "id-0",
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
@@ -610,9 +610,9 @@ func TestStopExperimentMySQL(t *testing.T) {
 				).Return(v2es.ErrExperimentNotFound)
 			},
 			req: &experimentproto.StopExperimentRequest{
-				Id:                   "id-0",
-				Command:              &experimentproto.StopExperimentCommand{},
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				Command:       &experimentproto.StopExperimentCommand{},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -624,9 +624,9 @@ func TestStopExperimentMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &experimentproto.StopExperimentRequest{
-				Id:                   "id-1",
-				Command:              &experimentproto.StopExperimentCommand{},
-				EnvironmentNamespace: "ns0",
+				Id:            "id-1",
+				Command:       &experimentproto.StopExperimentCommand{},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},
@@ -667,15 +667,15 @@ func TestArchiveExperimentMySQL(t *testing.T) {
 		{
 			setup: nil,
 			req: &experimentproto.ArchiveExperimentRequest{
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "experiment_id")),
 		},
 		{
 			setup: nil,
 			req: &experimentproto.ArchiveExperimentRequest{
-				Id:                   "id-0",
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
@@ -687,9 +687,9 @@ func TestArchiveExperimentMySQL(t *testing.T) {
 				).Return(v2es.ErrExperimentNotFound)
 			},
 			req: &experimentproto.ArchiveExperimentRequest{
-				Id:                   "id-0",
-				Command:              &experimentproto.ArchiveExperimentCommand{},
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				Command:       &experimentproto.ArchiveExperimentCommand{},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -701,9 +701,9 @@ func TestArchiveExperimentMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &experimentproto.ArchiveExperimentRequest{
-				Id:                   "id-1",
-				Command:              &experimentproto.ArchiveExperimentCommand{},
-				EnvironmentNamespace: "ns0",
+				Id:            "id-1",
+				Command:       &experimentproto.ArchiveExperimentCommand{},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},
@@ -744,15 +744,15 @@ func TestDeleteExperimentMySQL(t *testing.T) {
 		{
 			setup: nil,
 			req: &experimentproto.DeleteExperimentRequest{
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			setup: nil,
 			req: &experimentproto.DeleteExperimentRequest{
-				Id:                   "id-0",
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
@@ -764,9 +764,9 @@ func TestDeleteExperimentMySQL(t *testing.T) {
 				).Return(v2es.ErrExperimentNotFound)
 			},
 			req: &experimentproto.DeleteExperimentRequest{
-				Id:                   "id-0",
-				Command:              &experimentproto.DeleteExperimentCommand{},
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				Command:       &experimentproto.DeleteExperimentCommand{},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -778,9 +778,9 @@ func TestDeleteExperimentMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &experimentproto.DeleteExperimentRequest{
-				Id:                   "id-1",
-				Command:              &experimentproto.DeleteExperimentCommand{},
-				EnvironmentNamespace: "ns0",
+				Id:            "id-1",
+				Command:       &experimentproto.DeleteExperimentCommand{},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},

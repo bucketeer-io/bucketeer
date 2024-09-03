@@ -46,10 +46,10 @@ var (
 )
 
 type SubscriptionStorage interface {
-	CreateSubscription(ctx context.Context, e *domain.Subscription, environmentNamespace string) error
-	UpdateSubscription(ctx context.Context, e *domain.Subscription, environmentNamespace string) error
-	DeleteSubscription(ctx context.Context, id, environmentNamespace string) error
-	GetSubscription(ctx context.Context, id, environmentNamespace string) (*domain.Subscription, error)
+	CreateSubscription(ctx context.Context, e *domain.Subscription, environmentId string) error
+	UpdateSubscription(ctx context.Context, e *domain.Subscription, environmentId string) error
+	DeleteSubscription(ctx context.Context, id, environmentId string) error
+	GetSubscription(ctx context.Context, id, environmentId string) (*domain.Subscription, error)
 	ListSubscriptions(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
@@ -69,7 +69,7 @@ func NewSubscriptionStorage(qe mysql.QueryExecer) SubscriptionStorage {
 func (s *subscriptionStorage) CreateSubscription(
 	ctx context.Context,
 	e *domain.Subscription,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	_, err := s.qe.ExecContext(
 		ctx,
@@ -81,7 +81,7 @@ func (s *subscriptionStorage) CreateSubscription(
 		mysql.JSONObject{Val: e.SourceTypes},
 		mysql.JSONObject{Val: e.Recipient},
 		e.Name,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		if err == mysql.ErrDuplicateEntry {
@@ -95,7 +95,7 @@ func (s *subscriptionStorage) CreateSubscription(
 func (s *subscriptionStorage) UpdateSubscription(
 	ctx context.Context,
 	e *domain.Subscription,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	result, err := s.qe.ExecContext(
 		ctx,
@@ -106,7 +106,7 @@ func (s *subscriptionStorage) UpdateSubscription(
 		mysql.JSONObject{Val: e.Recipient},
 		e.Name,
 		e.Id,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		return err
@@ -123,13 +123,13 @@ func (s *subscriptionStorage) UpdateSubscription(
 
 func (s *subscriptionStorage) DeleteSubscription(
 	ctx context.Context,
-	id, environmentNamespace string,
+	id, environmentId string,
 ) error {
 	result, err := s.qe.ExecContext(
 		ctx,
 		deleteSubscriptionV2SQLQuery,
 		id,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		return err
@@ -146,14 +146,14 @@ func (s *subscriptionStorage) DeleteSubscription(
 
 func (s *subscriptionStorage) GetSubscription(
 	ctx context.Context,
-	id, environmentNamespace string,
+	id, environmentId string,
 ) (*domain.Subscription, error) {
 	subscription := proto.Subscription{}
 	err := s.qe.QueryRowContext(
 		ctx,
 		selectSubscriptionV2SQLQuery,
 		id,
-		environmentNamespace,
+		environmentId,
 	).Scan(
 		&subscription.Id,
 		&subscription.CreatedAt,

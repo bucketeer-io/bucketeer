@@ -32,9 +32,9 @@ var (
 )
 
 type PushStorage interface {
-	CreatePush(ctx context.Context, e *domain.Push, environmentNamespace string) error
-	UpdatePush(ctx context.Context, e *domain.Push, environmentNamespace string) error
-	GetPush(ctx context.Context, id, environmentNamespace string) (*domain.Push, error)
+	CreatePush(ctx context.Context, e *domain.Push, environmentId string) error
+	UpdatePush(ctx context.Context, e *domain.Push, environmentId string) error
+	GetPush(ctx context.Context, id, environmentId string) (*domain.Push, error)
 	ListPushes(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
@@ -51,7 +51,7 @@ func NewPushStorage(qe mysql.QueryExecer) PushStorage {
 	return &pushStorage{qe: qe}
 }
 
-func (s *pushStorage) CreatePush(ctx context.Context, e *domain.Push, environmentNamespace string) error {
+func (s *pushStorage) CreatePush(ctx context.Context, e *domain.Push, environmentId string) error {
 	query := `
 		INSERT INTO push (
 			id,
@@ -61,7 +61,7 @@ func (s *pushStorage) CreatePush(ctx context.Context, e *domain.Push, environmen
 			name,
 			created_at,
 			updated_at,
-			environment_namespace 
+			environment_id 
 		) VALUES (
 			?, ?, ?, ?, ?, ?, ?, ?
 		)
@@ -76,7 +76,7 @@ func (s *pushStorage) CreatePush(ctx context.Context, e *domain.Push, environmen
 		e.Name,
 		e.CreatedAt,
 		e.UpdatedAt,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		if err == mysql.ErrDuplicateEntry {
@@ -87,7 +87,7 @@ func (s *pushStorage) CreatePush(ctx context.Context, e *domain.Push, environmen
 	return nil
 }
 
-func (s *pushStorage) UpdatePush(ctx context.Context, e *domain.Push, environmentNamespace string) error {
+func (s *pushStorage) UpdatePush(ctx context.Context, e *domain.Push, environmentId string) error {
 	query := `
 		UPDATE 
 			push
@@ -100,7 +100,7 @@ func (s *pushStorage) UpdatePush(ctx context.Context, e *domain.Push, environmen
 			updated_at = ?
 		WHERE
 			id = ? AND
-			environment_namespace = ?
+			environment_id = ?
 	`
 	result, err := s.qe.ExecContext(
 		ctx,
@@ -112,7 +112,7 @@ func (s *pushStorage) UpdatePush(ctx context.Context, e *domain.Push, environmen
 		e.CreatedAt,
 		e.UpdatedAt,
 		e.Id,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		return err
@@ -127,7 +127,7 @@ func (s *pushStorage) UpdatePush(ctx context.Context, e *domain.Push, environmen
 	return nil
 }
 
-func (s *pushStorage) GetPush(ctx context.Context, id, environmentNamespace string) (*domain.Push, error) {
+func (s *pushStorage) GetPush(ctx context.Context, id, environmentId string) (*domain.Push, error) {
 	push := proto.Push{}
 	query := `
 		SELECT
@@ -142,13 +142,13 @@ func (s *pushStorage) GetPush(ctx context.Context, id, environmentNamespace stri
 			push
 		WHERE
 			id = ? AND
-			environment_namespace = ?
+			environment_id = ?
 	`
 	err := s.qe.QueryRowContext(
 		ctx,
 		query,
 		id,
-		environmentNamespace,
+		environmentId,
 	).Scan(
 		&push.Id,
 		&push.FcmServiceAccount,

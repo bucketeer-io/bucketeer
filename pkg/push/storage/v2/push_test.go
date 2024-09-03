@@ -41,11 +41,11 @@ func TestCreatePush(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	patterns := []struct {
-		desc                 string
-		setup                func(*pushStorage)
-		input                *domain.Push
-		environmentNamespace string
-		expectedErr          error
+		desc          string
+		setup         func(*pushStorage)
+		input         *domain.Push
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			desc: "ErrPushAlreadyExists",
@@ -57,8 +57,8 @@ func TestCreatePush(t *testing.T) {
 			input: &domain.Push{
 				Push: &proto.Push{Id: "id-0"},
 			},
-			environmentNamespace: "ns",
-			expectedErr:          ErrPushAlreadyExists,
+			environmentId: "ns",
+			expectedErr:   ErrPushAlreadyExists,
 		},
 		{
 			desc: "Error",
@@ -71,8 +71,8 @@ func TestCreatePush(t *testing.T) {
 			input: &domain.Push{
 				Push: &proto.Push{Id: "id-0"},
 			},
-			environmentNamespace: "ns",
-			expectedErr:          errors.New("error"),
+			environmentId: "ns",
+			expectedErr:   errors.New("error"),
 		},
 		{
 			desc: "Success",
@@ -84,8 +84,8 @@ func TestCreatePush(t *testing.T) {
 			input: &domain.Push{
 				Push: &proto.Push{Id: "id-0"},
 			},
-			environmentNamespace: "ns",
-			expectedErr:          nil,
+			environmentId: "ns",
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -94,7 +94,7 @@ func TestCreatePush(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			err := storage.CreatePush(context.Background(), p.input, p.environmentNamespace)
+			err := storage.CreatePush(context.Background(), p.input, p.environmentId)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -105,11 +105,11 @@ func TestUpdatePush(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	patterns := []struct {
-		desc                 string
-		setup                func(*pushStorage)
-		input                *domain.Push
-		environmentNamespace string
-		expectedErr          error
+		desc          string
+		setup         func(*pushStorage)
+		input         *domain.Push
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			desc: "ErrPushUnexpectedAffectedRows",
@@ -123,8 +123,8 @@ func TestUpdatePush(t *testing.T) {
 			input: &domain.Push{
 				Push: &proto.Push{Id: "id-0"},
 			},
-			environmentNamespace: "ns",
-			expectedErr:          ErrPushUnexpectedAffectedRows,
+			environmentId: "ns",
+			expectedErr:   ErrPushUnexpectedAffectedRows,
 		},
 		{
 			desc: "Error",
@@ -137,8 +137,8 @@ func TestUpdatePush(t *testing.T) {
 			input: &domain.Push{
 				Push: &proto.Push{Id: "id-0"},
 			},
-			environmentNamespace: "ns",
-			expectedErr:          errors.New("error"),
+			environmentId: "ns",
+			expectedErr:   errors.New("error"),
 		},
 		{
 			desc: "Success",
@@ -152,8 +152,8 @@ func TestUpdatePush(t *testing.T) {
 			input: &domain.Push{
 				Push: &proto.Push{Id: "id-0"},
 			},
-			environmentNamespace: "ns",
-			expectedErr:          nil,
+			environmentId: "ns",
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -162,7 +162,7 @@ func TestUpdatePush(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			err := storage.UpdatePush(context.Background(), p.input, p.environmentNamespace)
+			err := storage.UpdatePush(context.Background(), p.input, p.environmentId)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -173,11 +173,11 @@ func TestGetPush(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	patterns := []struct {
-		desc                 string
-		setup                func(*pushStorage)
-		id                   string
-		environmentNamespace string
-		expectedErr          error
+		desc          string
+		setup         func(*pushStorage)
+		id            string
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			desc: "ErrPushNotFound",
@@ -188,9 +188,9 @@ func TestGetPush(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			id:                   "id-0",
-			environmentNamespace: "ns",
-			expectedErr:          ErrPushNotFound,
+			id:            "id-0",
+			environmentId: "ns",
+			expectedErr:   ErrPushNotFound,
 		},
 		{
 			desc: "Error",
@@ -202,9 +202,9 @@ func TestGetPush(t *testing.T) {
 				).Return(row)
 
 			},
-			id:                   "id-0",
-			environmentNamespace: "ns",
-			expectedErr:          errors.New("error"),
+			id:            "id-0",
+			environmentId: "ns",
+			expectedErr:   errors.New("error"),
 		},
 		{
 			desc: "Success",
@@ -215,9 +215,9 @@ func TestGetPush(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			id:                   "id-0",
-			environmentNamespace: "ns",
-			expectedErr:          nil,
+			id:            "id-0",
+			environmentId: "ns",
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -226,7 +226,7 @@ func TestGetPush(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			_, err := storage.GetPush(context.Background(), p.id, p.environmentNamespace)
+			_, err := storage.GetPush(context.Background(), p.id, p.environmentId)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

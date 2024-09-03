@@ -79,7 +79,7 @@ func (u *experimentStatusUpdater) Run(ctx context.Context) (lastErr error) {
 			exps, err := u.listExperiments(ctx, env.Id, status)
 			if err != nil {
 				u.logger.Error("Failed to list experiments", zap.Error(err),
-					zap.String("environmentNamespace", env.Id),
+					zap.String("environmentId", env.Id),
 					zap.Int32("status", int32(status)),
 				)
 				lastErr = err
@@ -98,17 +98,17 @@ func (u *experimentStatusUpdater) Run(ctx context.Context) (lastErr error) {
 
 func (u *experimentStatusUpdater) updateStatus(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 	experiment *experimentproto.Experiment,
 ) error {
 	if experiment.Status == experimentproto.Experiment_WAITING {
-		if err := u.updateToRunning(ctx, environmentNamespace, experiment); err != nil {
+		if err := u.updateToRunning(ctx, environmentId, experiment); err != nil {
 			return err
 		}
 		return nil
 	}
 	if experiment.Status == experimentproto.Experiment_RUNNING {
-		if err := u.updateToStopped(ctx, environmentNamespace, experiment); err != nil {
+		if err := u.updateToStopped(ctx, environmentId, experiment); err != nil {
 			return err
 		}
 	}
@@ -117,27 +117,27 @@ func (u *experimentStatusUpdater) updateStatus(
 
 func (u *experimentStatusUpdater) updateToRunning(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 	experiment *experimentproto.Experiment,
 ) error {
 	de := domain.Experiment{Experiment: experiment}
 	if err := de.Start(); err != nil {
 		if err != domain.ErrExperimentBeforeStart {
 			u.logger.Error("Failed to start check if experiment running", zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 				zap.String("id", experiment.Id))
 			return err
 		}
 		return nil
 	}
 	_, err := u.experimentClient.StartExperiment(ctx, &experimentproto.StartExperimentRequest{
-		EnvironmentNamespace: environmentNamespace,
-		Id:                   experiment.Id,
-		Command:              &experimentproto.StartExperimentCommand{},
+		EnvironmentId: environmentId,
+		Id:            experiment.Id,
+		Command:       &experimentproto.StartExperimentCommand{},
 	})
 	if err != nil {
 		u.logger.Error("Failed to update status to running", zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 			zap.String("id", experiment.Id))
 		return err
 	}
@@ -146,27 +146,27 @@ func (u *experimentStatusUpdater) updateToRunning(
 
 func (u *experimentStatusUpdater) updateToStopped(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 	experiment *experimentproto.Experiment,
 ) error {
 	de := domain.Experiment{Experiment: experiment}
 	if err := de.Finish(); err != nil {
 		if err != domain.ErrExperimentBeforeStop {
 			u.logger.Error("Failed to end check if experiment running", zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 				zap.String("id", experiment.Id))
 			return err
 		}
 		return nil
 	}
 	_, err := u.experimentClient.FinishExperiment(ctx, &experimentproto.FinishExperimentRequest{
-		EnvironmentNamespace: environmentNamespace,
-		Id:                   experiment.Id,
-		Command:              &experimentproto.FinishExperimentCommand{},
+		EnvironmentId: environmentId,
+		Id:            experiment.Id,
+		Command:       &experimentproto.FinishExperimentCommand{},
 	})
 	if err != nil {
 		u.logger.Error("Failed to update status to stopped", zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 			zap.String("id", experiment.Id))
 		return err
 	}
@@ -175,17 +175,17 @@ func (u *experimentStatusUpdater) updateToStopped(
 
 func (u *experimentStatusUpdater) listExperiments(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 	status experimentproto.Experiment_Status,
 ) ([]*experimentproto.Experiment, error) {
 	var experiments []*experimentproto.Experiment
 	cursor := ""
 	for {
 		resp, err := u.experimentClient.ListExperiments(ctx, &experimentproto.ListExperimentsRequest{
-			PageSize:             listRequestSize,
-			Cursor:               cursor,
-			EnvironmentNamespace: environmentNamespace,
-			Status:               &wrappersproto.Int32Value{Value: int32(status)},
+			PageSize:      listRequestSize,
+			Cursor:        cursor,
+			EnvironmentId: environmentId,
+			Status:        &wrappersproto.Int32Value{Value: int32(status)},
 		})
 		if err != nil {
 			return nil, err

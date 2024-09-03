@@ -31,8 +31,8 @@ const (
 )
 
 type AutoOpsRulesCache interface {
-	Get(environmentNamespace string) (*aoproto.AutoOpsRules, error)
-	Put(autoOps *aoproto.AutoOpsRules, environmentNamespace string) error
+	Get(environmentId string) (*aoproto.AutoOpsRules, error)
+	Put(autoOps *aoproto.AutoOpsRules, environmentId string) error
 }
 
 type autoOpsRulesCache struct {
@@ -43,8 +43,8 @@ func NewAutoOpsRulesCache(c cache.MultiGetCache) AutoOpsRulesCache {
 	return &autoOpsRulesCache{cache: c}
 }
 
-func (c *autoOpsRulesCache) Get(environmentNamespace string) (*aoproto.AutoOpsRules, error) {
-	key := c.key(environmentNamespace)
+func (c *autoOpsRulesCache) Get(environmentId string) (*aoproto.AutoOpsRules, error) {
+	key := c.key(environmentId)
 	value, err := c.cache.Get(key)
 	if err != nil {
 		return nil, err
@@ -61,15 +61,15 @@ func (c *autoOpsRulesCache) Get(environmentNamespace string) (*aoproto.AutoOpsRu
 	return autoOps, nil
 }
 
-func (c *autoOpsRulesCache) Put(autoOps *aoproto.AutoOpsRules, environmentNamespace string) error {
+func (c *autoOpsRulesCache) Put(autoOps *aoproto.AutoOpsRules, environmentId string) error {
 	buffer, err := proto.Marshal(autoOps)
 	if err != nil {
 		return err
 	}
-	key := c.key(environmentNamespace)
+	key := c.key(environmentId)
 	return c.cache.Put(key, buffer, autoOpsRuleCacheTTL)
 }
 
-func (c *autoOpsRulesCache) key(environmentNamespace string) string {
-	return fmt.Sprintf("%s:%s", environmentNamespace, autoOpsRuleKind)
+func (c *autoOpsRulesCache) key(environmentId string) string {
+	return fmt.Sprintf("%s:%s", environmentId, autoOpsRuleKind)
 }

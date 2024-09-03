@@ -44,18 +44,18 @@ func (m *MockSegmentUserStorage) EXPECT() *MockSegmentUserStorageMockRecorder {
 }
 
 // GetSegmentUser mocks base method.
-func (m *MockSegmentUserStorage) GetSegmentUser(ctx context.Context, id, environmentNamespace string) (*domain.SegmentUser, error) {
+func (m *MockSegmentUserStorage) GetSegmentUser(ctx context.Context, id, environmentId string) (*domain.SegmentUser, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSegmentUser", ctx, id, environmentNamespace)
+	ret := m.ctrl.Call(m, "GetSegmentUser", ctx, id, environmentId)
 	ret0, _ := ret[0].(*domain.SegmentUser)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetSegmentUser indicates an expected call of GetSegmentUser.
-func (mr *MockSegmentUserStorageMockRecorder) GetSegmentUser(ctx, id, environmentNamespace any) *gomock.Call {
+func (mr *MockSegmentUserStorageMockRecorder) GetSegmentUser(ctx, id, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSegmentUser", reflect.TypeOf((*MockSegmentUserStorage)(nil).GetSegmentUser), ctx, id, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSegmentUser", reflect.TypeOf((*MockSegmentUserStorage)(nil).GetSegmentUser), ctx, id, environmentId)
 }
 
 // ListSegmentUsers mocks base method.
@@ -75,15 +75,15 @@ func (mr *MockSegmentUserStorageMockRecorder) ListSegmentUsers(ctx, whereParts, 
 }
 
 // UpsertSegmentUsers mocks base method.
-func (m *MockSegmentUserStorage) UpsertSegmentUsers(ctx context.Context, users []*feature.SegmentUser, environmentNamespace string) error {
+func (m *MockSegmentUserStorage) UpsertSegmentUsers(ctx context.Context, users []*feature.SegmentUser, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertSegmentUsers", ctx, users, environmentNamespace)
+	ret := m.ctrl.Call(m, "UpsertSegmentUsers", ctx, users, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpsertSegmentUsers indicates an expected call of UpsertSegmentUsers.
-func (mr *MockSegmentUserStorageMockRecorder) UpsertSegmentUsers(ctx, users, environmentNamespace any) *gomock.Call {
+func (mr *MockSegmentUserStorageMockRecorder) UpsertSegmentUsers(ctx, users, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertSegmentUsers", reflect.TypeOf((*MockSegmentUserStorage)(nil).UpsertSegmentUsers), ctx, users, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertSegmentUsers", reflect.TypeOf((*MockSegmentUserStorage)(nil).UpsertSegmentUsers), ctx, users, environmentId)
 }

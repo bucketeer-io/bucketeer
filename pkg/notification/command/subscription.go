@@ -30,14 +30,14 @@ type subscriptionCommandHandler struct {
 	editor               *eventproto.Editor
 	subscription         *domain.Subscription
 	previousSubscription *domain.Subscription
-	environmentNamespace string
+	environmentId        string
 	events               []*eventproto.Event
 }
 
 func NewSubscriptionCommandHandler(
 	editor *eventproto.Editor,
 	subscription *domain.Subscription,
-	environmentNamespace string,
+	environmentId string,
 ) (Handler, error) {
 	prev := &domain.Subscription{}
 	if err := copier.Copy(prev, subscription); err != nil {
@@ -47,7 +47,7 @@ func NewSubscriptionCommandHandler(
 		editor:               editor,
 		subscription:         subscription,
 		previousSubscription: prev,
-		environmentNamespace: environmentNamespace,
+		environmentId:        environmentId,
 		events:               []*eventproto.Event{},
 	}, nil
 }
@@ -155,7 +155,7 @@ func (h *subscriptionCommandHandler) createEvent(
 		h.subscription.Id,
 		eventType,
 		event,
-		h.environmentNamespace,
+		h.environmentId,
 		h.subscription.Subscription,
 		prev,
 	)

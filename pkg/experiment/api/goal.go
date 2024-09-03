@@ -39,7 +39,7 @@ func (s *experimentService) GetGoal(ctx context.Context, req *proto.GetGoalReque
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func (s *experimentService) GetGoal(ctx context.Context, req *proto.GetGoalReque
 		}
 		return nil, dt.Err()
 	}
-	goal, err := s.getGoalMySQL(ctx, req.Id, req.EnvironmentNamespace)
+	goal, err := s.getGoalMySQL(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if err == v2es.ErrGoalNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -79,16 +79,16 @@ func (s *experimentService) GetGoal(ctx context.Context, req *proto.GetGoalReque
 
 func (s *experimentService) getGoalMySQL(
 	ctx context.Context,
-	goalID, environmentNamespace string,
+	goalID, environmentId string,
 ) (*domain.Goal, error) {
 	goalStorage := v2es.NewGoalStorage(s.mysqlClient)
-	goal, err := goalStorage.GetGoal(ctx, goalID, environmentNamespace)
+	goal, err := goalStorage.GetGoal(ctx, goalID, environmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get goal",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 				zap.String("goalId", goalID),
 			)...,
 		)
@@ -103,13 +103,13 @@ func (s *experimentService) ListGoals(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
 	if req.Archived != nil {
 		whereParts = append(whereParts, mysql.NewFilter("archived", "=", req.Archived.Value))
@@ -153,14 +153,14 @@ func (s *experimentService) ListGoals(
 		limit,
 		offset,
 		isInUseStatus,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 	)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list goals",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -217,7 +217,7 @@ func (s *experimentService) CreateGoal(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +230,7 @@ func (s *experimentService) CreateGoal(
 			"Failed to create a new goal",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -261,14 +261,14 @@ func (s *experimentService) CreateGoal(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		goalStorage := v2es.NewGoalStorage(tx)
-		handler, err := command.NewGoalCommandHandler(editor, goal, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewGoalCommandHandler(editor, goal, s.publisher, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return goalStorage.CreateGoal(ctx, goal, req.EnvironmentNamespace)
+		return goalStorage.CreateGoal(ctx, goal, req.EnvironmentId)
 	})
 	if err != nil {
 		if err == v2es.ErrGoalAlreadyExists {
@@ -285,7 +285,7 @@ func (s *experimentService) CreateGoal(
 			"Failed to create goal",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -351,7 +351,7 @@ func (s *experimentService) UpdateGoal(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -385,7 +385,7 @@ func (s *experimentService) UpdateGoal(
 	err = s.updateGoal(
 		ctx,
 		editor,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		req.Id,
 		commands,
 		localizer,
@@ -395,7 +395,7 @@ func (s *experimentService) UpdateGoal(
 			"Failed to update goal",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -410,7 +410,7 @@ func (s *experimentService) ArchiveGoal(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -437,7 +437,7 @@ func (s *experimentService) ArchiveGoal(
 	err = s.updateGoal(
 		ctx,
 		editor,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		req.Id,
 		[]command.Command{req.Command},
 		localizer,
@@ -447,7 +447,7 @@ func (s *experimentService) ArchiveGoal(
 			"Failed to archive goal",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -462,7 +462,7 @@ func (s *experimentService) DeleteGoal(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -489,7 +489,7 @@ func (s *experimentService) DeleteGoal(
 	err = s.updateGoal(
 		ctx,
 		editor,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		req.Id,
 		[]command.Command{req.Command},
 		localizer,
@@ -499,7 +499,7 @@ func (s *experimentService) DeleteGoal(
 			"Failed to delete goal",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -510,7 +510,7 @@ func (s *experimentService) DeleteGoal(
 func (s *experimentService) updateGoal(
 	ctx context.Context,
 	editor *eventproto.Editor,
-	environmentNamespace, goalID string,
+	environmentId, goalID string,
 	commands []command.Command,
 	localizer locale.Localizer,
 ) error {
@@ -533,11 +533,11 @@ func (s *experimentService) updateGoal(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		goalStorage := v2es.NewGoalStorage(tx)
-		goal, err := goalStorage.GetGoal(ctx, goalID, environmentNamespace)
+		goal, err := goalStorage.GetGoal(ctx, goalID, environmentId)
 		if err != nil {
 			return err
 		}
-		handler, err := command.NewGoalCommandHandler(editor, goal, s.publisher, environmentNamespace)
+		handler, err := command.NewGoalCommandHandler(editor, goal, s.publisher, environmentId)
 		if err != nil {
 			return err
 		}
@@ -546,7 +546,7 @@ func (s *experimentService) updateGoal(
 				return err
 			}
 		}
-		return goalStorage.UpdateGoal(ctx, goal, environmentNamespace)
+		return goalStorage.UpdateGoal(ctx, goal, environmentId)
 	})
 	if err != nil {
 		if err == v2es.ErrGoalNotFound || err == v2es.ErrGoalUnexpectedAffectedRows {

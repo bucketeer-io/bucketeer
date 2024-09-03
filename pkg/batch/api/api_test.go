@@ -291,8 +291,8 @@ func TestDatetimeWatcher(t *testing.T) {
 		autoOpsRulesMockClient.EXPECT().ListAutoOpsRules(
 			gomock.Any(),
 			&autoopsproto.ListAutoOpsRulesRequest{
-				PageSize:             0,
-				EnvironmentNamespace: "env0",
+				PageSize:      0,
+				EnvironmentId: "env0",
 			},
 		).Return(
 			&autoopsproto.ListAutoOpsRulesResponse{
@@ -342,8 +342,8 @@ func TestEventCountWatcher(t *testing.T) {
 		autoOpsRulesMockClient.EXPECT().ListAutoOpsRules(
 			gomock.Any(),
 			&autoopsproto.ListAutoOpsRulesRequest{
-				PageSize:             0,
-				EnvironmentNamespace: "env0",
+				PageSize:      0,
+				EnvironmentId: "env0",
 			},
 		).Return(
 			&autoopsproto.ListAutoOpsRulesResponse{
@@ -356,8 +356,8 @@ func TestEventCountWatcher(t *testing.T) {
 		autoOpsRulesMockClient.EXPECT().ListAutoOpsRules(
 			gomock.Any(),
 			&autoopsproto.ListAutoOpsRulesRequest{
-				PageSize:             0,
-				EnvironmentNamespace: "env1",
+				PageSize:      0,
+				EnvironmentId: "env1",
 			},
 		).Return(
 			&autoopsproto.ListAutoOpsRulesResponse{
@@ -443,8 +443,8 @@ func TestProgressiveRolloutWatcher(t *testing.T) {
 		autoOpsRulesMockClient.EXPECT().ListProgressiveRollouts(
 			gomock.Any(),
 			&autoopsproto.ListProgressiveRolloutsRequest{
-				PageSize:             0,
-				EnvironmentNamespace: "env0",
+				PageSize:      0,
+				EnvironmentId: "env0",
 			},
 		).Return(
 			&autoopsproto.ListProgressiveRolloutsResponse{
@@ -457,8 +457,8 @@ func TestProgressiveRolloutWatcher(t *testing.T) {
 		autoOpsRulesMockClient.EXPECT().ListProgressiveRollouts(
 			gomock.Any(),
 			&autoopsproto.ListProgressiveRolloutsRequest{
-				PageSize:             0,
-				EnvironmentNamespace: "env1",
+				PageSize:      0,
+				EnvironmentId: "env1",
 			},
 		).Return(
 			&autoopsproto.ListProgressiveRolloutsResponse{

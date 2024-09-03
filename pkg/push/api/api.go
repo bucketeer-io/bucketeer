@@ -104,7 +104,7 @@ func (s *PushService) CreatePush(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func (s *PushService) CreatePush(
 			"Failed to create a new push",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.Strings("tags", req.Command.Tags),
 			)...,
 		)
@@ -134,7 +134,7 @@ func (s *PushService) CreatePush(
 		}
 		return nil, dt.Err()
 	}
-	pushes, err := s.listAllPushes(ctx, req.EnvironmentNamespace, localizer)
+	pushes, err := s.listAllPushes(ctx, req.EnvironmentId, localizer)
 	if err != nil {
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -164,7 +164,7 @@ func (s *PushService) CreatePush(
 			"Failed to validate tag existence",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.Strings("tags", req.Command.Tags),
 			)...,
 		)
@@ -196,10 +196,10 @@ func (s *PushService) CreatePush(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		pushStorage := v2ps.NewPushStorage(tx)
-		if err := pushStorage.CreatePush(ctx, push, req.EnvironmentNamespace); err != nil {
+		if err := pushStorage.CreatePush(ctx, push, req.EnvironmentId); err != nil {
 			return err
 		}
-		handler, err := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -224,7 +224,7 @@ func (s *PushService) CreatePush(
 			"Failed to create push",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -290,7 +290,7 @@ func (s *PushService) UpdatePush(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -317,11 +317,11 @@ func (s *PushService) UpdatePush(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		pushStorage := v2ps.NewPushStorage(tx)
-		push, err := pushStorage.GetPush(ctx, req.Id, req.EnvironmentNamespace)
+		push, err := pushStorage.GetPush(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
-		handler, err := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -330,7 +330,7 @@ func (s *PushService) UpdatePush(
 				return err
 			}
 		}
-		return pushStorage.UpdatePush(ctx, push, req.EnvironmentNamespace)
+		return pushStorage.UpdatePush(ctx, push, req.EnvironmentId)
 	})
 	if err != nil {
 		if err == v2ps.ErrPushNotFound || err == v2ps.ErrPushUnexpectedAffectedRows {
@@ -347,7 +347,7 @@ func (s *PushService) UpdatePush(
 			"Failed to update push",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
 			)...,
 		)
@@ -432,7 +432,7 @@ func (s *PushService) validateAddPushTagsCommand(
 		}
 		return dt.Err()
 	}
-	pushes, err := s.listAllPushes(ctx, req.EnvironmentNamespace, localizer)
+	pushes, err := s.listAllPushes(ctx, req.EnvironmentId, localizer)
 	if err != nil {
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -459,7 +459,7 @@ func (s *PushService) validateAddPushTagsCommand(
 			"Failed to validate tag existence",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
 				zap.Strings("tags", req.AddPushTagsCommand.Tags),
 			)...,
@@ -489,7 +489,7 @@ func (s *PushService) DeletePush(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -515,18 +515,18 @@ func (s *PushService) DeletePush(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		pushStorage := v2ps.NewPushStorage(tx)
-		push, err := pushStorage.GetPush(ctx, req.Id, req.EnvironmentNamespace)
+		push, err := pushStorage.GetPush(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
-		handler, err := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return pushStorage.UpdatePush(ctx, push, req.EnvironmentNamespace)
+		return pushStorage.UpdatePush(ctx, push, req.EnvironmentId)
 	})
 	if err != nil {
 		if err == v2ps.ErrPushNotFound || err == v2ps.ErrPushUnexpectedAffectedRows {
@@ -544,7 +544,7 @@ func (s *PushService) DeletePush(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -711,18 +711,18 @@ func (s *PushService) tagMap(pushes []*pushproto.Push) (map[string]struct{}, err
 
 func (s *PushService) listAllPushes(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 	localizer locale.Localizer,
 ) ([]*pushproto.Push, error) {
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_namespace", "=", environmentNamespace),
+		mysql.NewFilter("environment_id", "=", environmentId),
 	}
 	pushes, _, _, err := s.listPushes(
 		ctx,
 		mysql.QueryNoLimit,
 		"",
-		environmentNamespace,
+		environmentId,
 		whereParts,
 		nil,
 		localizer,
@@ -740,13 +740,13 @@ func (s *PushService) ListPushes(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"name"}, req.SearchKeyword))
@@ -763,7 +763,7 @@ func (s *PushService) ListPushes(
 		ctx,
 		req.PageSize,
 		req.Cursor,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		whereParts,
 		orders,
 		localizer,
@@ -817,7 +817,7 @@ func (s *PushService) listPushes(
 	ctx context.Context,
 	pageSize int64,
 	cursor string,
-	environmentNamespace string,
+	environmentId string,
 	whereParts []mysql.WherePart,
 	orders []*mysql.Order,
 	localizer locale.Localizer,
@@ -850,7 +850,7 @@ func (s *PushService) listPushes(
 			"Failed to list pushes",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -868,17 +868,17 @@ func (s *PushService) listPushes(
 func (s *PushService) checkEnvironmentRole(
 	ctx context.Context,
 	requiredRole accountproto.AccountV2_Role_Environment,
-	environmentNamespace string,
+	environmentId string,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckEnvironmentRole(
 		ctx,
 		requiredRole,
-		environmentNamespace,
+		environmentId,
 		func(email string) (*accountproto.AccountV2, error) {
 			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
 				Email:         email,
-				EnvironmentId: environmentNamespace,
+				EnvironmentId: environmentId,
 			})
 			if err != nil {
 				return nil, err
@@ -892,7 +892,7 @@ func (s *PushService) checkEnvironmentRole(
 				"Unauthenticated",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
@@ -908,7 +908,7 @@ func (s *PushService) checkEnvironmentRole(
 				"Permission denied",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
@@ -924,7 +924,7 @@ func (s *PushService) checkEnvironmentRole(
 				"Failed to check role",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{

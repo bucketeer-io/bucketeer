@@ -140,8 +140,8 @@ func TestGetFeatureMySQL(t *testing.T) {
 				"accept-language": []string{"ja"},
 			})
 			req := &featureproto.GetFeatureRequest{
-				EnvironmentNamespace: "ns0",
-				Id:                   p.input,
+				EnvironmentId: "ns0",
+				Id:            p.input,
 			}
 			localizer := locale.NewLocalizer(ctx)
 
@@ -246,8 +246,8 @@ func TestGetFeaturesMySQL(t *testing.T) {
 				p.setup(fs)
 			}
 			req := &featureproto.GetFeaturesRequest{
-				EnvironmentNamespace: "ns0",
-				Ids:                  p.input,
+				EnvironmentId: "ns0",
+				Ids:           p.input,
 			}
 			ctx := p.context
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
@@ -267,23 +267,23 @@ func TestListFeaturesMySQL(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		desc                 string
-		service              *FeatureService
-		context              context.Context
-		setup                func(*FeatureService)
-		orderBy              featureproto.ListFeaturesRequest_OrderBy
-		hasExperiment        bool
-		environmentNamespace string
-		getExpectedErr       func(localizer locale.Localizer) error
+		desc           string
+		service        *FeatureService
+		context        context.Context
+		setup          func(*FeatureService)
+		orderBy        featureproto.ListFeaturesRequest_OrderBy
+		hasExperiment  bool
+		environmentId  string
+		getExpectedErr func(localizer locale.Localizer) error
 	}{
 		{
-			desc:                 "error: invalid order by",
-			service:              createFeatureService(mockController),
-			context:              createContextWithToken(),
-			setup:                nil,
-			orderBy:              featureproto.ListFeaturesRequest_OrderBy(999),
-			hasExperiment:        false,
-			environmentNamespace: "ns0",
+			desc:          "error: invalid order by",
+			service:       createFeatureService(mockController),
+			context:       createContextWithToken(),
+			setup:         nil,
+			orderBy:       featureproto.ListFeaturesRequest_OrderBy(999),
+			hasExperiment: false,
+			environmentId: "ns0",
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(t, statusInvalidOrderBy, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"), localizer)
 			},
@@ -306,10 +306,10 @@ func TestListFeaturesMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			orderBy:              featureproto.ListFeaturesRequest_DEFAULT,
-			hasExperiment:        false,
-			environmentNamespace: "ns0",
-			getExpectedErr:       func(localizer locale.Localizer) error { return nil },
+			orderBy:        featureproto.ListFeaturesRequest_DEFAULT,
+			hasExperiment:  false,
+			environmentId:  "ns0",
+			getExpectedErr: func(localizer locale.Localizer) error { return nil },
 		},
 		{
 			desc:    "success has Experiment",
@@ -329,9 +329,9 @@ func TestListFeaturesMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			orderBy:              featureproto.ListFeaturesRequest_DEFAULT,
-			hasExperiment:        true,
-			environmentNamespace: "ns0",
+			orderBy:       featureproto.ListFeaturesRequest_DEFAULT,
+			hasExperiment: true,
+			environmentId: "ns0",
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
 			},
@@ -354,19 +354,19 @@ func TestListFeaturesMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			orderBy:              featureproto.ListFeaturesRequest_DEFAULT,
-			hasExperiment:        false,
-			environmentNamespace: "ns0",
-			getExpectedErr:       func(localizer locale.Localizer) error { return nil },
+			orderBy:        featureproto.ListFeaturesRequest_DEFAULT,
+			hasExperiment:  false,
+			environmentId:  "ns0",
+			getExpectedErr: func(localizer locale.Localizer) error { return nil },
 		},
 		{
-			desc:                 "errPermissionDenied",
-			service:              createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			context:              createContextWithTokenRoleUnassigned(),
-			setup:                func(s *FeatureService) {},
-			orderBy:              featureproto.ListFeaturesRequest_DEFAULT,
-			hasExperiment:        false,
-			environmentNamespace: "ns0",
+			desc:          "errPermissionDenied",
+			service:       createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			context:       createContextWithTokenRoleUnassigned(),
+			setup:         func(s *FeatureService) {},
+			orderBy:       featureproto.ListFeaturesRequest_DEFAULT,
+			hasExperiment: false,
+			environmentId: "ns0",
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
 			},
@@ -379,9 +379,9 @@ func TestListFeaturesMySQL(t *testing.T) {
 				p.setup(service)
 			}
 			req := &featureproto.ListFeaturesRequest{
-				OrderBy:              p.orderBy,
-				EnvironmentNamespace: "ns0",
-				HasExperiment:        &wrappers.BoolValue{Value: p.hasExperiment},
+				OrderBy:       p.orderBy,
+				EnvironmentId: "ns0",
+				HasExperiment: &wrappers.BoolValue{Value: p.hasExperiment},
 			}
 			ctx := p.context
 			ctx = metadata.NewIncomingContext(ctx, metadata.MD{
@@ -422,7 +422,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 		variations                                        []*featureproto.Variation
 		tags                                              []string
 		defaultOnVariationIndex, defaultOffVariationIndex *wrappers.Int32Value
-		environmentNamespace                              string
+		environmentId                                     string
 		expected                                          error
 	}{
 		{
@@ -434,7 +434,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			tags:                     nil,
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
-			environmentNamespace:     "ns0",
+			environmentId:            "ns0",
 			expected:                 createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
@@ -446,7 +446,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			tags:                     nil,
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
-			environmentNamespace:     "ns0",
+			environmentId:            "ns0",
 			expected:                 createError(statusInvalidID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "id")),
 		},
 		{
@@ -458,7 +458,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			tags:                     nil,
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
-			environmentNamespace:     "ns0",
+			environmentId:            "ns0",
 			expected:                 createError(statusMissingName, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
 		},
 		{
@@ -470,18 +470,18 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			tags:                     nil,
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
-			environmentNamespace:     "ns0",
+			environmentId:            "ns0",
 			expected:                 createError(statusMissingFeatureVariations, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variations")),
 		},
 		{
-			setup:                nil,
-			id:                   "Bucketeer-id-2019",
-			name:                 "name",
-			description:          "error: statusMissingFeatureTags",
-			variations:           variations,
-			tags:                 nil,
-			environmentNamespace: "ns0",
-			expected:             createError(statusMissingFeatureTags, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tags")),
+			setup:         nil,
+			id:            "Bucketeer-id-2019",
+			name:          "name",
+			description:   "error: statusMissingFeatureTags",
+			variations:    variations,
+			tags:          nil,
+			environmentId: "ns0",
+			expected:      createError(statusMissingFeatureTags, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tags")),
 		},
 		{
 			setup:                    nil,
@@ -492,7 +492,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			tags:                     tags,
 			defaultOnVariationIndex:  nil,
 			defaultOffVariationIndex: nil,
-			environmentNamespace:     "ns0",
+			environmentId:            "ns0",
 			expected:                 createError(statusMissingDefaultOnVariation, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "default_on_variation")),
 		},
 		{
@@ -504,7 +504,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			tags:                     tags,
 			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
 			defaultOffVariationIndex: nil,
-			environmentNamespace:     "ns0",
+			environmentId:            "ns0",
 			expected:                 createError(statusMissingDefaultOffVariation, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "default_off_variation")),
 		},
 		{
@@ -521,7 +521,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			tags:                     tags,
 			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
 			defaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
-			environmentNamespace:     "ns0",
+			environmentId:            "ns0",
 			expected:                 createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
 		{
@@ -539,7 +539,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 			tags:                     tags,
 			defaultOnVariationIndex:  &wrappers.Int32Value{Value: int32(0)},
 			defaultOffVariationIndex: &wrappers.Int32Value{Value: int32(1)},
-			environmentNamespace:     "ns0",
+			environmentId:            "ns0",
 			expected:                 nil,
 		},
 	}
@@ -559,7 +559,7 @@ func TestCreateFeatureMySQL(t *testing.T) {
 					DefaultOnVariationIndex:  p.defaultOnVariationIndex,
 					DefaultOffVariationIndex: p.defaultOffVariationIndex,
 				},
-				EnvironmentNamespace: p.environmentNamespace,
+				EnvironmentId: p.environmentId,
 			}
 			actual, err := service.CreateFeature(ctx, req)
 			if p.expected == nil {
@@ -580,10 +580,10 @@ func TestSetFeatureToLastUsedInfosByChunk(t *testing.T) {
 	})
 	localizer := locale.NewLocalizer(ctx)
 	patterns := []struct {
-		setup                func(*FeatureService)
-		input                []*featureproto.Feature
-		environmentNamespace string
-		expected             error
+		setup         func(*FeatureService)
+		input         []*featureproto.Feature
+		environmentId string
+		expected      error
 	}{
 		{
 			setup: func(s *FeatureService) {
@@ -601,14 +601,14 @@ func TestSetFeatureToLastUsedInfosByChunk(t *testing.T) {
 					Version: 1,
 				},
 			},
-			environmentNamespace: "ns0",
-			expected:             nil,
+			environmentId: "ns0",
+			expected:      nil,
 		},
 	}
 	for _, p := range patterns {
 		fs := createFeatureServiceNew(mockController)
 		p.setup(fs)
-		err := fs.setLastUsedInfosToFeatureByChunk(context.Background(), p.input, p.environmentNamespace, localizer)
+		err := fs.setLastUsedInfosToFeatureByChunk(context.Background(), p.input, p.environmentId, localizer)
 		assert.Equal(t, p.expected, err)
 	}
 }
@@ -715,7 +715,7 @@ func TestEvaluateFeatures(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0", Tag: "android"},
+			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(t, statusInternal, localizer.MustLocalize(locale.InternalServerError), localizer)
@@ -832,7 +832,7 @@ func TestEvaluateFeatures(t *testing.T) {
 						},
 					}, nil)
 			},
-			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "user-id-1"}, EnvironmentNamespace: "ns0", Tag: "ios"},
+			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "user-id-1"}, EnvironmentId: "ns0", Tag: "ios"},
 			expected: &featureproto.EvaluateFeaturesResponse{
 				UserEvaluations: &featureproto.UserEvaluations{
 					Evaluations: []*featureproto.Evaluation{
@@ -960,7 +960,7 @@ func TestEvaluateFeatures(t *testing.T) {
 						},
 					}, nil)
 			},
-			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "user-id-1"}, EnvironmentNamespace: "ns0", Tag: "web"},
+			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "user-id-1"}, EnvironmentId: "ns0", Tag: "web"},
 			expected: &featureproto.EvaluateFeaturesResponse{
 				UserEvaluations: &featureproto.UserEvaluations{
 					Evaluations: []*featureproto.Evaluation{},
@@ -990,7 +990,7 @@ func TestEvaluateFeatures(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0", Tag: "android"},
+			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: &featureproto.EvaluateFeaturesResponse{
 				UserEvaluations: &featureproto.UserEvaluations{
 					Evaluations: []*featureproto.Evaluation{},
@@ -1055,7 +1055,7 @@ func TestEvaluateFeatures(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0", Tag: "android"},
+			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(t, statusInternal, localizer.MustLocalize(locale.InternalServerError), localizer)
@@ -1120,7 +1120,7 @@ func TestEvaluateFeatures(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0", Tag: "android"},
+			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: &featureproto.EvaluateFeaturesResponse{
 				UserEvaluations: &featureproto.UserEvaluations{
 					Evaluations: []*featureproto.Evaluation{
@@ -1157,7 +1157,7 @@ func TestEvaluateFeatures(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0", Tag: "android"},
+			input: &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: &featureproto.EvaluateFeaturesResponse{
 				UserEvaluations: &featureproto.UserEvaluations{
 					Evaluations: []*featureproto.Evaluation{},
@@ -1172,7 +1172,7 @@ func TestEvaluateFeatures(t *testing.T) {
 			context:  createContextWithTokenRoleUnassigned(),
 			service:  createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			setup:    func(s *FeatureService) {},
-			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentNamespace: "ns0", Tag: "android"},
+			input:    &featureproto.EvaluateFeaturesRequest{User: &userproto.User{Id: "test-id"}, EnvironmentId: "ns0", Tag: "android"},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
@@ -1326,10 +1326,10 @@ func TestEvaluateSingleFeature(t *testing.T) {
 				).Return(rows, nil)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{
-				User:                 &userproto.User{Id: "user-id"},
-				EnvironmentNamespace: "ns0",
-				Tag:                  "android",
-				FeatureId:            "fid-2",
+				User:          &userproto.User{Id: "user-id"},
+				EnvironmentId: "ns0",
+				Tag:           "android",
+				FeatureId:     "fid-2",
 			},
 			expected: &featureproto.EvaluateFeaturesResponse{
 				UserEvaluations: &featureproto.UserEvaluations{
@@ -1410,10 +1410,10 @@ func TestEvaluateSingleFeature(t *testing.T) {
 						}}, nil)
 			},
 			input: &featureproto.EvaluateFeaturesRequest{
-				User:                 &userproto.User{Id: "user-id"},
-				EnvironmentNamespace: "ns0",
-				Tag:                  "android",
-				FeatureId:            "fid-1",
+				User:          &userproto.User{Id: "user-id"},
+				EnvironmentId: "ns0",
+				Tag:           "android",
+				FeatureId:     "fid-1",
 			},
 			expected: &featureproto.EvaluateFeaturesResponse{
 				UserEvaluations: &featureproto.UserEvaluations{
@@ -1520,7 +1520,7 @@ func TestListEnabledFeaturesMySQL(t *testing.T) {
 				"accept-language": []string{"ja"},
 			})
 			req := &featureproto.ListEnabledFeaturesRequest{
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			}
 			localizer := locale.NewLocalizer(ctx)
 
@@ -1700,9 +1700,9 @@ func TestPermissionDenied(t *testing.T) {
 				_, err := fs.CloneFeature(ctx, &featureproto.CloneFeatureRequest{
 					Id: "id",
 					Command: &featureproto.CloneFeatureCommand{
-						EnvironmentNamespace: "ns1",
+						EnvironmentId: "ns1",
 					},
-					EnvironmentNamespace: "ns0",
+					EnvironmentId: "ns0",
 				})
 				return err
 			},
@@ -1744,7 +1744,7 @@ func TestEnableFeatureMySQL(t *testing.T) {
 			desc:  "error: statusMissingID",
 			setup: nil,
 			req: &featureproto.EnableFeatureRequest{
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
@@ -1752,8 +1752,8 @@ func TestEnableFeatureMySQL(t *testing.T) {
 			desc:  "error: statusMissingCommand",
 			setup: nil,
 			req: &featureproto.EnableFeatureRequest{
-				Id:                   "id-0",
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
@@ -1772,9 +1772,9 @@ func TestEnableFeatureMySQL(t *testing.T) {
 				)
 			},
 			req: &featureproto.EnableFeatureRequest{
-				Id:                   "id-0",
-				Command:              &featureproto.EnableFeatureCommand{},
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				Command:       &featureproto.EnableFeatureCommand{},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -1801,10 +1801,10 @@ func TestEnableFeatureMySQL(t *testing.T) {
 				)
 			},
 			req: &featureproto.EnableFeatureRequest{
-				Id:                   "id-1",
-				Command:              &featureproto.EnableFeatureCommand{},
-				Comment:              "test comment",
-				EnvironmentNamespace: "ns0",
+				Id:            "id-1",
+				Command:       &featureproto.EnableFeatureCommand{},
+				Comment:       "test comment",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},
@@ -1850,7 +1850,7 @@ func TestDisableFeatureMySQL(t *testing.T) {
 			desc:  "error: statusMissingID",
 			setup: nil,
 			req: &featureproto.DisableFeatureRequest{
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
@@ -1858,8 +1858,8 @@ func TestDisableFeatureMySQL(t *testing.T) {
 			desc:  "error: statusMissingCommand",
 			setup: nil,
 			req: &featureproto.DisableFeatureRequest{
-				Id:                   "id-0",
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
@@ -1878,9 +1878,9 @@ func TestDisableFeatureMySQL(t *testing.T) {
 				)
 			},
 			req: &featureproto.DisableFeatureRequest{
-				Id:                   "id-0",
-				Command:              &featureproto.DisableFeatureCommand{},
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				Command:       &featureproto.DisableFeatureCommand{},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -1907,10 +1907,10 @@ func TestDisableFeatureMySQL(t *testing.T) {
 				)
 			},
 			req: &featureproto.DisableFeatureRequest{
-				Id:                   "id-1",
-				Command:              &featureproto.DisableFeatureCommand{},
-				Comment:              "test comment",
-				EnvironmentNamespace: "ns0",
+				Id:            "id-1",
+				Command:       &featureproto.DisableFeatureCommand{},
+				Comment:       "test comment",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},
@@ -1950,22 +1950,22 @@ func TestValidateArchiveFeature(t *testing.T) {
 	}{
 		{
 			req: &featureproto.ArchiveFeatureRequest{
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
 			req: &featureproto.ArchiveFeatureRequest{
-				Id:                   "id-0",
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
 			req: &featureproto.ArchiveFeatureRequest{
-				Id:                   "fID-0",
-				EnvironmentNamespace: "ns0",
-				Command:              &featureproto.ArchiveFeatureCommand{},
+				Id:            "fID-0",
+				EnvironmentId: "ns0",
+				Command:       &featureproto.ArchiveFeatureCommand{},
 			},
 			expectedErr: nil,
 		},
@@ -2005,7 +2005,7 @@ func TestUnarchiveFeatureMySQL(t *testing.T) {
 			desc:  "error: statusMissingID",
 			setup: nil,
 			req: &featureproto.UnarchiveFeatureRequest{
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
@@ -2013,8 +2013,8 @@ func TestUnarchiveFeatureMySQL(t *testing.T) {
 			desc:  "error: statusMissingCommand",
 			setup: nil,
 			req: &featureproto.UnarchiveFeatureRequest{
-				Id:                   "id-0",
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
@@ -2033,9 +2033,9 @@ func TestUnarchiveFeatureMySQL(t *testing.T) {
 				)
 			},
 			req: &featureproto.UnarchiveFeatureRequest{
-				Id:                   "id-0",
-				Command:              &featureproto.UnarchiveFeatureCommand{},
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				Command:       &featureproto.UnarchiveFeatureCommand{},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -2062,10 +2062,10 @@ func TestUnarchiveFeatureMySQL(t *testing.T) {
 				)
 			},
 			req: &featureproto.UnarchiveFeatureRequest{
-				Id:                   "id-1",
-				Command:              &featureproto.UnarchiveFeatureCommand{},
-				Comment:              "test comment",
-				EnvironmentNamespace: "ns0",
+				Id:            "id-1",
+				Command:       &featureproto.UnarchiveFeatureCommand{},
+				Comment:       "test comment",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},
@@ -2111,7 +2111,7 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 			desc:  "error: statusMissingID",
 			setup: nil,
 			req: &featureproto.DeleteFeatureRequest{
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
@@ -2119,8 +2119,8 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 			desc:  "error: statusMissingCommand",
 			setup: nil,
 			req: &featureproto.DeleteFeatureRequest{
-				Id:                   "id-0",
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
@@ -2139,9 +2139,9 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 				)
 			},
 			req: &featureproto.DeleteFeatureRequest{
-				Id:                   "id-0",
-				Command:              &featureproto.DeleteFeatureCommand{},
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				Command:       &featureproto.DeleteFeatureCommand{},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -2168,10 +2168,10 @@ func TestDeleteFeatureMySQL(t *testing.T) {
 				)
 			},
 			req: &featureproto.DeleteFeatureRequest{
-				Id:                   "id-1",
-				Command:              &featureproto.DeleteFeatureCommand{},
-				Comment:              "test comment",
-				EnvironmentNamespace: "ns0",
+				Id:            "id-1",
+				Command:       &featureproto.DeleteFeatureCommand{},
+				Comment:       "test comment",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},
@@ -2225,8 +2225,8 @@ func TestCloneFeatureMySQL(t *testing.T) {
 			desc:  "error: statusMissingCommand",
 			setup: nil,
 			req: &featureproto.CloneFeatureRequest{
-				Id:                   "id-0",
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
@@ -2236,9 +2236,9 @@ func TestCloneFeatureMySQL(t *testing.T) {
 			req: &featureproto.CloneFeatureRequest{
 				Id: "id-0",
 				Command: &featureproto.CloneFeatureCommand{
-					EnvironmentNamespace: "ns0",
+					EnvironmentId: "ns0",
 				},
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusIncorrectDestinationEnvironment, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "environment")),
 		},
@@ -2258,9 +2258,9 @@ func TestCloneFeatureMySQL(t *testing.T) {
 			req: &featureproto.CloneFeatureRequest{
 				Id: "id-0",
 				Command: &featureproto.CloneFeatureCommand{
-					EnvironmentNamespace: "ns1",
+					EnvironmentId: "ns1",
 				},
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
@@ -2281,9 +2281,9 @@ func TestCloneFeatureMySQL(t *testing.T) {
 			req: &featureproto.CloneFeatureRequest{
 				Id: "id-0",
 				Command: &featureproto.CloneFeatureCommand{
-					EnvironmentNamespace: "ns1",
+					EnvironmentId: "ns1",
 				},
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},
@@ -3147,10 +3147,10 @@ func TestChangeDefaultStrategy(t *testing.T) {
 				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
 					gomock.Any(),
 					&aoproto.ListProgressiveRolloutsRequest{
-						EnvironmentNamespace: environmentID,
-						PageSize:             listRequestSize,
-						Cursor:               "",
-						FeatureIds:           []string{f.Id},
+						EnvironmentId: environmentID,
+						PageSize:      listRequestSize,
+						Cursor:        "",
+						FeatureIds:    []string{f.Id},
 					},
 				).Return(nil, errors.New("internal"))
 			},
@@ -3167,10 +3167,10 @@ func TestChangeDefaultStrategy(t *testing.T) {
 				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
 					gomock.Any(),
 					&aoproto.ListProgressiveRolloutsRequest{
-						EnvironmentNamespace: environmentID,
-						PageSize:             listRequestSize,
-						Cursor:               "",
-						FeatureIds:           []string{f.Id},
+						EnvironmentId: environmentID,
+						PageSize:      listRequestSize,
+						Cursor:        "",
+						FeatureIds:    []string{f.Id},
 					},
 				).Return(&aoproto.ListProgressiveRolloutsResponse{
 					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
@@ -3193,10 +3193,10 @@ func TestChangeDefaultStrategy(t *testing.T) {
 				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
 					gomock.Any(),
 					&aoproto.ListProgressiveRolloutsRequest{
-						EnvironmentNamespace: environmentID,
-						PageSize:             listRequestSize,
-						Cursor:               "",
-						FeatureIds:           []string{f.Id},
+						EnvironmentId: environmentID,
+						PageSize:      listRequestSize,
+						Cursor:        "",
+						FeatureIds:    []string{f.Id},
 					},
 				).Return(&aoproto.ListProgressiveRolloutsResponse{
 					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
@@ -3216,10 +3216,10 @@ func TestChangeDefaultStrategy(t *testing.T) {
 				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
 					gomock.Any(),
 					&aoproto.ListProgressiveRolloutsRequest{
-						EnvironmentNamespace: environmentID,
-						PageSize:             listRequestSize,
-						Cursor:               "",
-						FeatureIds:           []string{f.Id},
+						EnvironmentId: environmentID,
+						PageSize:      listRequestSize,
+						Cursor:        "",
+						FeatureIds:    []string{f.Id},
 					},
 				).Return(&aoproto.ListProgressiveRolloutsResponse{
 					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
@@ -3253,10 +3253,10 @@ func TestChangeDefaultStrategy(t *testing.T) {
 				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
 					gomock.Any(),
 					&aoproto.ListProgressiveRolloutsRequest{
-						EnvironmentNamespace: environmentID,
-						PageSize:             listRequestSize,
-						Cursor:               "",
-						FeatureIds:           []string{f.Id},
+						EnvironmentId: environmentID,
+						PageSize:      listRequestSize,
+						Cursor:        "",
+						FeatureIds:    []string{f.Id},
 					},
 				).Return(&aoproto.ListProgressiveRolloutsResponse{
 					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
@@ -3290,10 +3290,10 @@ func TestChangeDefaultStrategy(t *testing.T) {
 				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
 					gomock.Any(),
 					&aoproto.ListProgressiveRolloutsRequest{
-						EnvironmentNamespace: environmentID,
-						PageSize:             listRequestSize,
-						Cursor:               "",
-						FeatureIds:           []string{f.Id},
+						EnvironmentId: environmentID,
+						PageSize:      listRequestSize,
+						Cursor:        "",
+						FeatureIds:    []string{f.Id},
 					},
 				).Return(&aoproto.ListProgressiveRolloutsResponse{
 					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
@@ -3393,10 +3393,10 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
 					gomock.Any(),
 					&aoproto.ListProgressiveRolloutsRequest{
-						EnvironmentNamespace: environmentID,
-						PageSize:             listRequestSize,
-						Cursor:               "",
-						FeatureIds:           []string{fID0},
+						EnvironmentId: environmentID,
+						PageSize:      listRequestSize,
+						Cursor:        "",
+						FeatureIds:    []string{fID0},
 					},
 				).Return(nil, errors.New("internal"))
 			},
@@ -3419,10 +3419,10 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
 					gomock.Any(),
 					&aoproto.ListProgressiveRolloutsRequest{
-						EnvironmentNamespace: environmentID,
-						PageSize:             listRequestSize,
-						Cursor:               "",
-						FeatureIds:           []string{fID0},
+						EnvironmentId: environmentID,
+						PageSize:      listRequestSize,
+						Cursor:        "",
+						FeatureIds:    []string{fID0},
 					},
 				).Return(nil, errors.New("internal"))
 			},
@@ -3445,10 +3445,10 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
 					gomock.Any(),
 					&aoproto.ListProgressiveRolloutsRequest{
-						EnvironmentNamespace: environmentID,
-						PageSize:             listRequestSize,
-						Cursor:               "",
-						FeatureIds:           []string{fID0},
+						EnvironmentId: environmentID,
+						PageSize:      listRequestSize,
+						Cursor:        "",
+						FeatureIds:    []string{fID0},
 					},
 				).Return(&aoproto.ListProgressiveRolloutsResponse{
 					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
@@ -3477,10 +3477,10 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
 					gomock.Any(),
 					&aoproto.ListProgressiveRolloutsRequest{
-						EnvironmentNamespace: environmentID,
-						PageSize:             listRequestSize,
-						Cursor:               "",
-						FeatureIds:           []string{fID0},
+						EnvironmentId: environmentID,
+						PageSize:      listRequestSize,
+						Cursor:        "",
+						FeatureIds:    []string{fID0},
 					},
 				).Return(&aoproto.ListProgressiveRolloutsResponse{
 					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
@@ -3519,10 +3519,10 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
 					gomock.Any(),
 					&aoproto.ListProgressiveRolloutsRequest{
-						EnvironmentNamespace: environmentID,
-						PageSize:             listRequestSize,
-						Cursor:               "",
-						FeatureIds:           []string{fID0},
+						EnvironmentId: environmentID,
+						PageSize:      listRequestSize,
+						Cursor:        "",
+						FeatureIds:    []string{fID0},
 					},
 				).Return(&aoproto.ListProgressiveRolloutsResponse{
 					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
@@ -3588,10 +3588,10 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
 					gomock.Any(),
 					&aoproto.ListProgressiveRolloutsRequest{
-						EnvironmentNamespace: environmentID,
-						PageSize:             listRequestSize,
-						Cursor:               "",
-						FeatureIds:           []string{fID0},
+						EnvironmentId: environmentID,
+						PageSize:      listRequestSize,
+						Cursor:        "",
+						FeatureIds:    []string{fID0},
 					},
 				).Return(&aoproto.ListProgressiveRolloutsResponse{
 					ProgressiveRollouts: []*aoproto.ProgressiveRollout{
@@ -3650,10 +3650,10 @@ func TestValidateFeatureVariationsCommand(t *testing.T) {
 				fs.autoOpsClient.(*acmock.MockClient).EXPECT().ListProgressiveRollouts(
 					gomock.Any(),
 					&aoproto.ListProgressiveRolloutsRequest{
-						EnvironmentNamespace: environmentID,
-						PageSize:             listRequestSize,
-						Cursor:               "",
-						FeatureIds:           []string{fID0},
+						EnvironmentId: environmentID,
+						PageSize:      listRequestSize,
+						Cursor:        "",
+						FeatureIds:    []string{fID0},
 					},
 				).Return(&aoproto.ListProgressiveRolloutsResponse{
 					ProgressiveRollouts: []*aoproto.ProgressiveRollout{

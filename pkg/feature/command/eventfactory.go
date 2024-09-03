@@ -25,11 +25,11 @@ import (
 )
 
 type FeatureEventFactory struct {
-	editor               *eventproto.Editor
-	feature              *domain.Feature
-	previousFeature      *domain.Feature
-	environmentNamespace string
-	comment              string
+	editor          *eventproto.Editor
+	feature         *domain.Feature
+	previousFeature *domain.Feature
+	environmentId   string
+	comment         string
 }
 
 func (s *FeatureEventFactory) CreateEvent(
@@ -46,7 +46,7 @@ func (s *FeatureEventFactory) CreateEvent(
 		s.feature.Id,
 		eventType,
 		event,
-		s.environmentNamespace,
+		s.environmentId,
 		s.feature.Feature,
 		prev,
 		domainevent.WithComment(s.comment),

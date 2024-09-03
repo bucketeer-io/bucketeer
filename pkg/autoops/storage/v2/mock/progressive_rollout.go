@@ -44,46 +44,46 @@ func (m *MockProgressiveRolloutStorage) EXPECT() *MockProgressiveRolloutStorageM
 }
 
 // CreateProgressiveRollout mocks base method.
-func (m *MockProgressiveRolloutStorage) CreateProgressiveRollout(ctx context.Context, progressiveRollout *domain.ProgressiveRollout, environmentNamespace string) error {
+func (m *MockProgressiveRolloutStorage) CreateProgressiveRollout(ctx context.Context, progressiveRollout *domain.ProgressiveRollout, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateProgressiveRollout", ctx, progressiveRollout, environmentNamespace)
+	ret := m.ctrl.Call(m, "CreateProgressiveRollout", ctx, progressiveRollout, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateProgressiveRollout indicates an expected call of CreateProgressiveRollout.
-func (mr *MockProgressiveRolloutStorageMockRecorder) CreateProgressiveRollout(ctx, progressiveRollout, environmentNamespace any) *gomock.Call {
+func (mr *MockProgressiveRolloutStorageMockRecorder) CreateProgressiveRollout(ctx, progressiveRollout, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProgressiveRollout", reflect.TypeOf((*MockProgressiveRolloutStorage)(nil).CreateProgressiveRollout), ctx, progressiveRollout, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateProgressiveRollout", reflect.TypeOf((*MockProgressiveRolloutStorage)(nil).CreateProgressiveRollout), ctx, progressiveRollout, environmentId)
 }
 
 // DeleteProgressiveRollout mocks base method.
-func (m *MockProgressiveRolloutStorage) DeleteProgressiveRollout(ctx context.Context, id, environmentNamespace string) error {
+func (m *MockProgressiveRolloutStorage) DeleteProgressiveRollout(ctx context.Context, id, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteProgressiveRollout", ctx, id, environmentNamespace)
+	ret := m.ctrl.Call(m, "DeleteProgressiveRollout", ctx, id, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteProgressiveRollout indicates an expected call of DeleteProgressiveRollout.
-func (mr *MockProgressiveRolloutStorageMockRecorder) DeleteProgressiveRollout(ctx, id, environmentNamespace any) *gomock.Call {
+func (mr *MockProgressiveRolloutStorageMockRecorder) DeleteProgressiveRollout(ctx, id, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProgressiveRollout", reflect.TypeOf((*MockProgressiveRolloutStorage)(nil).DeleteProgressiveRollout), ctx, id, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteProgressiveRollout", reflect.TypeOf((*MockProgressiveRolloutStorage)(nil).DeleteProgressiveRollout), ctx, id, environmentId)
 }
 
 // GetProgressiveRollout mocks base method.
-func (m *MockProgressiveRolloutStorage) GetProgressiveRollout(ctx context.Context, id, environmentNamespace string) (*domain.ProgressiveRollout, error) {
+func (m *MockProgressiveRolloutStorage) GetProgressiveRollout(ctx context.Context, id, environmentId string) (*domain.ProgressiveRollout, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetProgressiveRollout", ctx, id, environmentNamespace)
+	ret := m.ctrl.Call(m, "GetProgressiveRollout", ctx, id, environmentId)
 	ret0, _ := ret[0].(*domain.ProgressiveRollout)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetProgressiveRollout indicates an expected call of GetProgressiveRollout.
-func (mr *MockProgressiveRolloutStorageMockRecorder) GetProgressiveRollout(ctx, id, environmentNamespace any) *gomock.Call {
+func (mr *MockProgressiveRolloutStorageMockRecorder) GetProgressiveRollout(ctx, id, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProgressiveRollout", reflect.TypeOf((*MockProgressiveRolloutStorage)(nil).GetProgressiveRollout), ctx, id, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProgressiveRollout", reflect.TypeOf((*MockProgressiveRolloutStorage)(nil).GetProgressiveRollout), ctx, id, environmentId)
 }
 
 // ListProgressiveRollouts mocks base method.
@@ -104,15 +104,15 @@ func (mr *MockProgressiveRolloutStorageMockRecorder) ListProgressiveRollouts(ctx
 }
 
 // UpdateProgressiveRollout mocks base method.
-func (m *MockProgressiveRolloutStorage) UpdateProgressiveRollout(ctx context.Context, progressiveRollout *domain.ProgressiveRollout, environmentNamespace string) error {
+func (m *MockProgressiveRolloutStorage) UpdateProgressiveRollout(ctx context.Context, progressiveRollout *domain.ProgressiveRollout, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateProgressiveRollout", ctx, progressiveRollout, environmentNamespace)
+	ret := m.ctrl.Call(m, "UpdateProgressiveRollout", ctx, progressiveRollout, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateProgressiveRollout indicates an expected call of UpdateProgressiveRollout.
-func (mr *MockProgressiveRolloutStorageMockRecorder) UpdateProgressiveRollout(ctx, progressiveRollout, environmentNamespace any) *gomock.Call {
+func (mr *MockProgressiveRolloutStorageMockRecorder) UpdateProgressiveRollout(ctx, progressiveRollout, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProgressiveRollout", reflect.TypeOf((*MockProgressiveRolloutStorage)(nil).UpdateProgressiveRollout), ctx, progressiveRollout, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateProgressiveRollout", reflect.TypeOf((*MockProgressiveRolloutStorage)(nil).UpdateProgressiveRollout), ctx, progressiveRollout, environmentId)
 }

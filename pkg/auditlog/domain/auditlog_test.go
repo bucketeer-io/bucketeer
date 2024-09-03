@@ -35,7 +35,8 @@ func TestNewAuditLog(t *testing.T) {
 			EntityData:         "entityData",
 			PreviousEntityData: "previousEntityData",
 			Options:            &domainevent.Options{Comment: "comment"},
-		}, "en",
+		},
+		"en",
 	)
 	assert.IsType(t, &AuditLog{}, actual)
 	assert.Equal(t, "id", actual.Id)
@@ -47,5 +48,5 @@ func TestNewAuditLog(t *testing.T) {
 	assert.Equal(t, "entityData", actual.EntityData)
 	assert.Equal(t, "previousEntityData", actual.PreviousEntityData)
 	assert.Equal(t, &domainevent.Options{Comment: "comment"}, actual.Options)
-	assert.Equal(t, "en", actual.EnvironmentNamespace)
+	assert.Equal(t, "en", actual.EnvironmentID)
 }

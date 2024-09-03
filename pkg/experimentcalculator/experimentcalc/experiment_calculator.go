@@ -109,7 +109,7 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *domain.Experimen
 	if calculationErr != nil {
 		e.logger.Error("ExperimentCalculator failed to calculate experiment result",
 			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("environmentNamespace", request.EnvironmentId),
+				zap.String("environmentId", request.EnvironmentId),
 				zap.Any("experiment", request.Experiment),
 				zap.Error(calculationErr),
 			)...,
@@ -122,7 +122,7 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *domain.Experimen
 		}); err != nil {
 		e.logger.Error("ExperimentCalculator failed to update experiment result",
 			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.String("environmentNamespace", request.EnvironmentId),
+				zap.String("environmentId", request.EnvironmentId),
 				zap.Any("experiment", request.Experiment),
 				zap.Error(err),
 			)...,
@@ -131,7 +131,7 @@ func (e ExperimentCalculator) Run(ctx context.Context, request *domain.Experimen
 	}
 	e.logger.Info("ExperimentCalculator calculated successfully",
 		log.FieldsFromImcomingContext(ctx).AddFields(
-			zap.String("environmentNamespace", request.EnvironmentId),
+			zap.String("environmentId", request.EnvironmentId),
 			zap.Any("experiment", request.Experiment),
 			zap.Duration("elapsedTime", time.Since(startTime)),
 		)...,
@@ -165,12 +165,12 @@ func (e ExperimentCalculator) createExperimentResult(
 		}
 		for _, timestamp := range endAts {
 			evalVc, evalErr := e.getEvaluationCount(ctx, &eventcounter.GetExperimentEvaluationCountRequest{
-				EnvironmentNamespace: envNamespace,
-				StartAt:              experiment.StartAt,
-				EndAt:                timestamp,
-				FeatureId:            experiment.FeatureId,
-				FeatureVersion:       experiment.FeatureVersion,
-				VariationIds:         variationIDs,
+				EnvironmentId:  envNamespace,
+				StartAt:        experiment.StartAt,
+				EndAt:          timestamp,
+				FeatureId:      experiment.FeatureId,
+				FeatureVersion: experiment.FeatureVersion,
+				VariationIds:   variationIDs,
 			})
 			if evalErr != nil {
 				e.logger.Error("ExperimentCalculator failed to get evaluation count",
@@ -183,13 +183,13 @@ func (e ExperimentCalculator) createExperimentResult(
 				return nil, errFailedToGetEvalVariationCount
 			}
 			goalVc, goalErr := e.getGoalCount(ctx, &eventcounter.GetExperimentGoalCountRequest{
-				EnvironmentNamespace: envNamespace,
-				StartAt:              experiment.StartAt,
-				EndAt:                timestamp,
-				GoalId:               goalID,
-				FeatureId:            experiment.FeatureId,
-				FeatureVersion:       experiment.FeatureVersion,
-				VariationIds:         variationIDs,
+				EnvironmentId:  envNamespace,
+				StartAt:        experiment.StartAt,
+				EndAt:          timestamp,
+				GoalId:         goalID,
+				FeatureId:      experiment.FeatureId,
+				FeatureVersion: experiment.FeatureVersion,
+				VariationIds:   variationIDs,
 			})
 			if goalErr != nil {
 				e.logger.Error("ExperimentCalculator failed to get goal count",

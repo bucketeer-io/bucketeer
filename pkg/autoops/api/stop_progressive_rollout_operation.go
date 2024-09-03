@@ -27,11 +27,11 @@ func executeStopProgressiveRolloutOperation(
 	ctx context.Context,
 	storage v2as.ProgressiveRolloutStorage,
 	featureIDs []interface{},
-	environmentNamespace string,
+	environmentId string,
 	operation autoopsproto.ProgressiveRollout_StoppedBy,
 ) error {
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_namespace", "=", environmentNamespace),
+		mysql.NewFilter("environment_id", "=", environmentId),
 		mysql.NewInFilter("feature_id", featureIDs),
 	}
 	list, _, _, err := storage.ListProgressiveRollouts(ctx, whereParts, nil, 0, 0)
@@ -44,7 +44,7 @@ func executeStopProgressiveRolloutOperation(
 			if err := r.Stop(operation); err != nil {
 				return err
 			}
-			if err := storage.UpdateProgressiveRollout(ctx, r, environmentNamespace); err != nil {
+			if err := storage.UpdateProgressiveRollout(ctx, r, environmentId); err != nil {
 				return err
 			}
 		}

@@ -6,5 +6,5 @@ INSERT INTO subscription (
     source_types,
     recipient,
     name,
-    environment_namespace
+    environment_id
 ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )

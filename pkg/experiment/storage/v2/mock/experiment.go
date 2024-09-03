@@ -44,32 +44,32 @@ func (m *MockExperimentStorage) EXPECT() *MockExperimentStorageMockRecorder {
 }
 
 // CreateExperiment mocks base method.
-func (m *MockExperimentStorage) CreateExperiment(ctx context.Context, e *domain.Experiment, environmentNamespace string) error {
+func (m *MockExperimentStorage) CreateExperiment(ctx context.Context, e *domain.Experiment, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateExperiment", ctx, e, environmentNamespace)
+	ret := m.ctrl.Call(m, "CreateExperiment", ctx, e, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateExperiment indicates an expected call of CreateExperiment.
-func (mr *MockExperimentStorageMockRecorder) CreateExperiment(ctx, e, environmentNamespace any) *gomock.Call {
+func (mr *MockExperimentStorageMockRecorder) CreateExperiment(ctx, e, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateExperiment", reflect.TypeOf((*MockExperimentStorage)(nil).CreateExperiment), ctx, e, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateExperiment", reflect.TypeOf((*MockExperimentStorage)(nil).CreateExperiment), ctx, e, environmentId)
 }
 
 // GetExperiment mocks base method.
-func (m *MockExperimentStorage) GetExperiment(ctx context.Context, id, environmentNamespace string) (*domain.Experiment, error) {
+func (m *MockExperimentStorage) GetExperiment(ctx context.Context, id, environmentId string) (*domain.Experiment, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetExperiment", ctx, id, environmentNamespace)
+	ret := m.ctrl.Call(m, "GetExperiment", ctx, id, environmentId)
 	ret0, _ := ret[0].(*domain.Experiment)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetExperiment indicates an expected call of GetExperiment.
-func (mr *MockExperimentStorageMockRecorder) GetExperiment(ctx, id, environmentNamespace any) *gomock.Call {
+func (mr *MockExperimentStorageMockRecorder) GetExperiment(ctx, id, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExperiment", reflect.TypeOf((*MockExperimentStorage)(nil).GetExperiment), ctx, id, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExperiment", reflect.TypeOf((*MockExperimentStorage)(nil).GetExperiment), ctx, id, environmentId)
 }
 
 // ListExperiments mocks base method.
@@ -90,15 +90,15 @@ func (mr *MockExperimentStorageMockRecorder) ListExperiments(ctx, whereParts, or
 }
 
 // UpdateExperiment mocks base method.
-func (m *MockExperimentStorage) UpdateExperiment(ctx context.Context, e *domain.Experiment, environmentNamespace string) error {
+func (m *MockExperimentStorage) UpdateExperiment(ctx context.Context, e *domain.Experiment, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateExperiment", ctx, e, environmentNamespace)
+	ret := m.ctrl.Call(m, "UpdateExperiment", ctx, e, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateExperiment indicates an expected call of UpdateExperiment.
-func (mr *MockExperimentStorageMockRecorder) UpdateExperiment(ctx, e, environmentNamespace any) *gomock.Call {
+func (mr *MockExperimentStorageMockRecorder) UpdateExperiment(ctx, e, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateExperiment", reflect.TypeOf((*MockExperimentStorage)(nil).UpdateExperiment), ctx, e, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateExperiment", reflect.TypeOf((*MockExperimentStorage)(nil).UpdateExperiment), ctx, e, environmentId)
 }

@@ -41,30 +41,30 @@ func (m *MockAutoOpsRulesCache) EXPECT() *MockAutoOpsRulesCacheMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockAutoOpsRulesCache) Get(environmentNamespace string) (*autoops.AutoOpsRules, error) {
+func (m *MockAutoOpsRulesCache) Get(environmentId string) (*autoops.AutoOpsRules, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", environmentNamespace)
+	ret := m.ctrl.Call(m, "Get", environmentId)
 	ret0, _ := ret[0].(*autoops.AutoOpsRules)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockAutoOpsRulesCacheMockRecorder) Get(environmentNamespace any) *gomock.Call {
+func (mr *MockAutoOpsRulesCacheMockRecorder) Get(environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockAutoOpsRulesCache)(nil).Get), environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockAutoOpsRulesCache)(nil).Get), environmentId)
 }
 
 // Put mocks base method.
-func (m *MockAutoOpsRulesCache) Put(autoOps *autoops.AutoOpsRules, environmentNamespace string) error {
+func (m *MockAutoOpsRulesCache) Put(autoOps *autoops.AutoOpsRules, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", autoOps, environmentNamespace)
+	ret := m.ctrl.Call(m, "Put", autoOps, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Put indicates an expected call of Put.
-func (mr *MockAutoOpsRulesCacheMockRecorder) Put(autoOps, environmentNamespace any) *gomock.Call {
+func (mr *MockAutoOpsRulesCacheMockRecorder) Put(autoOps, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockAutoOpsRulesCache)(nil).Put), autoOps, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockAutoOpsRulesCache)(nil).Put), autoOps, environmentId)
 }

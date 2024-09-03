@@ -38,12 +38,12 @@ func (s *FeatureService) ListTags(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id"}, req.SearchKeyword))
@@ -54,7 +54,7 @@ func (s *FeatureService) ListTags(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -88,10 +88,10 @@ func (s *FeatureService) ListTags(
 			"Failed to list tags",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
-		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentNamespace, localizer)
+		return nil, s.reportInternalServerError(ctx, err, req.EnvironmentId, localizer)
 	}
 	return &featureproto.ListTagsResponse{
 		Tags:       tags,
@@ -135,7 +135,7 @@ func (s *FeatureService) upsertTags(
 	ctx context.Context,
 	tx mysql.Transaction,
 	tags []string,
-	environmentNamespace string,
+	environment_id string,
 ) error {
 	tagStorage := v2fs.NewTagStorage(tx)
 	for _, tag := range tags {
@@ -144,12 +144,12 @@ func (s *FeatureService) upsertTags(
 			continue
 		}
 		t := domain.NewTag(trimed)
-		if err := tagStorage.UpsertTag(ctx, t, environmentNamespace); err != nil {
+		if err := tagStorage.UpsertTag(ctx, t, environment_id); err != nil {
 			s.logger.Error(
 				"Failed to store tag",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environment_id", environment_id),
 					zap.String("tagID", tag),
 				)...,
 			)

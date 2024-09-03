@@ -27,12 +27,12 @@ type FeatureLastUsedStorage interface {
 	GetFeatureLastUsedInfos(
 		ctx context.Context,
 		ids []string,
-		environmentNamespace string,
+		environmentId string,
 	) ([]*domain.FeatureLastUsedInfo, error)
 	UpsertFeatureLastUsedInfos(
 		ctx context.Context,
 		featureLastUsedInfos []*domain.FeatureLastUsedInfo,
-		environmentNamespace string,
+		environmentId string,
 	) error
 }
 
@@ -40,7 +40,7 @@ type FeatureLastUsedLister interface {
 	ListFeatureLastUsedInfo(
 		ctx context.Context,
 		pageSize int,
-		cursor, environmentNamespace string,
+		cursor, environmentId string,
 		filters ...*storage.Filter,
 	) ([]*proto.FeatureLastUsedInfo, string, error)
 }
@@ -58,12 +58,12 @@ func NewFeatureLastUsedInfoStorage(client storage.GetPutter) FeatureLastUsedStor
 func (s *featureLastUsedInfoStorage) GetFeatureLastUsedInfos(
 	ctx context.Context,
 	ids []string,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*domain.FeatureLastUsedInfo, error) {
 	keys := make([]*storage.Key, 0, len(ids))
 	featureLastUsedInfos := make([]*proto.FeatureLastUsedInfo, 0, len(keys))
 	for _, k := range ids {
-		keys = append(keys, s.newKey(k, environmentNamespace))
+		keys = append(keys, s.newKey(k, environmentId))
 		featureLastUsedInfos = append(featureLastUsedInfos, &proto.FeatureLastUsedInfo{})
 	}
 	err := s.client.GetMulti(ctx, keys, featureLastUsedInfos)
@@ -98,19 +98,19 @@ func (s *featureLastUsedInfoStorage) GetFeatureLastUsedInfos(
 func (s *featureLastUsedInfoStorage) UpsertFeatureLastUsedInfos(
 	ctx context.Context,
 	featureLastUsedInfos []*domain.FeatureLastUsedInfo,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	keys := make([]*storage.Key, 0, len(featureLastUsedInfos))
 	featureLastUsedInfoProtos := make([]*proto.FeatureLastUsedInfo, 0, len(featureLastUsedInfos))
 	for _, f := range featureLastUsedInfos {
-		keys = append(keys, storage.NewKey(f.ID(), featureLastUsedInfoKind, environmentNamespace))
+		keys = append(keys, storage.NewKey(f.ID(), featureLastUsedInfoKind, environmentId))
 		featureLastUsedInfoProtos = append(featureLastUsedInfoProtos, f.FeatureLastUsedInfo)
 	}
 	return s.client.PutMulti(ctx, keys, featureLastUsedInfoProtos)
 }
 
-func (s *featureLastUsedInfoStorage) newKey(featureLastUsedInfoKey, environmentNamespace string) *storage.Key {
-	return storage.NewKey(featureLastUsedInfoKey, featureLastUsedInfoKind, environmentNamespace)
+func (s *featureLastUsedInfoStorage) newKey(featureLastUsedInfoKey, environmentId string) *storage.Key {
+	return storage.NewKey(featureLastUsedInfoKey, featureLastUsedInfoKind, environmentId)
 }
 
 type featureLastUsedInfoLister struct {
@@ -124,15 +124,15 @@ func NewFeatureLastUsedInfoLister(client storage.Querier) FeatureLastUsedLister 
 func (l *featureLastUsedInfoLister) ListFeatureLastUsedInfo(
 	ctx context.Context,
 	pageSize int,
-	cursor, environmentNamespace string,
+	cursor, environmentId string,
 	filters ...*storage.Filter,
 ) ([]*proto.FeatureLastUsedInfo, string, error) {
 	query := storage.Query{
-		Kind:                 featureLastUsedInfoKind,
-		Limit:                pageSize,
-		StartCursor:          cursor,
-		Filters:              filters,
-		EnvironmentNamespace: environmentNamespace,
+		Kind:          featureLastUsedInfoKind,
+		Limit:         pageSize,
+		StartCursor:   cursor,
+		Filters:       filters,
+		EnvironmentId: environmentId,
 	}
 	it, err := l.client.RunQuery(ctx, query)
 	if err != nil {

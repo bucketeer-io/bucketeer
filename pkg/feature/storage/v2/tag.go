@@ -31,7 +31,7 @@ var (
 )
 
 type TagStorage interface {
-	UpsertTag(ctx context.Context, tag *domain.Tag, environmentNamespace string) error
+	UpsertTag(ctx context.Context, tag *domain.Tag, environmentId string) error
 	ListTags(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
@@ -51,7 +51,7 @@ func NewTagStorage(qe mysql.QueryExecer) TagStorage {
 func (s *tagStorage) UpsertTag(
 	ctx context.Context,
 	tag *domain.Tag,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	// To get last tags, update `updated_at`.
 	query := `
@@ -59,7 +59,7 @@ func (s *tagStorage) UpsertTag(
 			id,
 			created_at,
 			updated_at,
-			environment_namespace
+			environment_id
 		) VALUES (
 			?, ?, ?, ?
 		) ON DUPLICATE KEY UPDATE
@@ -71,7 +71,7 @@ func (s *tagStorage) UpsertTag(
 		tag.Id,
 		tag.CreatedAt,
 		tag.UpdatedAt,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		return err

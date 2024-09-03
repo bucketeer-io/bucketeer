@@ -44,9 +44,9 @@ import (
 )
 
 const (
-	environmentNamespace = "test"
-	tag                  = "tag"
-	userID               = "user-id"
+	environmentId = "test"
+	tag           = "tag"
+	userID        = "user-id"
 )
 
 var (

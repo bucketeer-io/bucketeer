@@ -58,32 +58,32 @@ func (mr *MockFlagTriggerStorageMockRecorder) CreateFlagTrigger(ctx, flagTrigger
 }
 
 // DeleteFlagTrigger mocks base method.
-func (m *MockFlagTriggerStorage) DeleteFlagTrigger(ctx context.Context, id, environmentNamespace string) error {
+func (m *MockFlagTriggerStorage) DeleteFlagTrigger(ctx context.Context, id, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteFlagTrigger", ctx, id, environmentNamespace)
+	ret := m.ctrl.Call(m, "DeleteFlagTrigger", ctx, id, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteFlagTrigger indicates an expected call of DeleteFlagTrigger.
-func (mr *MockFlagTriggerStorageMockRecorder) DeleteFlagTrigger(ctx, id, environmentNamespace any) *gomock.Call {
+func (mr *MockFlagTriggerStorageMockRecorder) DeleteFlagTrigger(ctx, id, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFlagTrigger", reflect.TypeOf((*MockFlagTriggerStorage)(nil).DeleteFlagTrigger), ctx, id, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFlagTrigger", reflect.TypeOf((*MockFlagTriggerStorage)(nil).DeleteFlagTrigger), ctx, id, environmentId)
 }
 
 // GetFlagTrigger mocks base method.
-func (m *MockFlagTriggerStorage) GetFlagTrigger(ctx context.Context, id, environmentNamespace string) (*domain.FlagTrigger, error) {
+func (m *MockFlagTriggerStorage) GetFlagTrigger(ctx context.Context, id, environmentId string) (*domain.FlagTrigger, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFlagTrigger", ctx, id, environmentNamespace)
+	ret := m.ctrl.Call(m, "GetFlagTrigger", ctx, id, environmentId)
 	ret0, _ := ret[0].(*domain.FlagTrigger)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetFlagTrigger indicates an expected call of GetFlagTrigger.
-func (mr *MockFlagTriggerStorageMockRecorder) GetFlagTrigger(ctx, id, environmentNamespace any) *gomock.Call {
+func (mr *MockFlagTriggerStorageMockRecorder) GetFlagTrigger(ctx, id, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFlagTrigger", reflect.TypeOf((*MockFlagTriggerStorage)(nil).GetFlagTrigger), ctx, id, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFlagTrigger", reflect.TypeOf((*MockFlagTriggerStorage)(nil).GetFlagTrigger), ctx, id, environmentId)
 }
 
 // GetFlagTriggerByToken mocks base method.

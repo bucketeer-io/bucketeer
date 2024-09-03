@@ -92,27 +92,27 @@ type Lister interface {
 	Keys(pattern string, maxSize int) ([]string, error)
 }
 
-func MakeKey(kind, id, environmentNamespace string) string {
-	if environmentNamespace == storage.AdminEnvironmentNamespace {
+func MakeKey(kind, id, environmentId string) string {
+	if environmentId == storage.AdminEnvironmentID {
 		return fmt.Sprintf("%s:%s", kind, id)
 	}
-	return fmt.Sprintf("%s:%s:%s", environmentNamespace, kind, id)
+	return fmt.Sprintf("%s:%s:%s", environmentId, kind, id)
 }
 
-func MakeKeyPrefix(kind, environmentNamespace string) string {
-	if environmentNamespace == storage.AdminEnvironmentNamespace {
+func MakeKeyPrefix(kind, environmentId string) string {
+	if environmentId == storage.AdminEnvironmentID {
 		return fmt.Sprintf("%s:", kind)
 	}
-	return fmt.Sprintf("%s:%s:", environmentNamespace, kind)
+	return fmt.Sprintf("%s:%s:", environmentId, kind)
 }
 
 // MakeHashSlotKey creates a key to ensure that multiple keys are allocated in the same hash slot.
 // https://redis.io/topics/cluster-spec#keys-hash-tags
-func MakeHashSlotKey(hashTag, id, environmentNamespace string) string {
-	if environmentNamespace == storage.AdminEnvironmentNamespace {
+func MakeHashSlotKey(hashTag, id, environmentId string) string {
+	if environmentId == storage.AdminEnvironmentID {
 		return fmt.Sprintf("{%s}%s", hashTag, id)
 	}
-	return fmt.Sprintf("{%s:%s}%s", environmentNamespace, hashTag, id)
+	return fmt.Sprintf("{%s:%s}%s", environmentId, hashTag, id)
 }
 
 func Bytes(value interface{}) ([]byte, error) {

@@ -28,29 +28,29 @@ import (
 )
 
 type pushCommandHandler struct {
-	editor               *eventproto.Editor
-	push                 *domain.Push
-	previousPush         *domain.Push
-	publisher            publisher.Publisher
-	environmentNamespace string
+	editor        *eventproto.Editor
+	push          *domain.Push
+	previousPush  *domain.Push
+	publisher     publisher.Publisher
+	environmentId string
 }
 
 func NewPushCommandHandler(
 	editor *eventproto.Editor,
 	push *domain.Push,
 	p publisher.Publisher,
-	environmentNamespace string,
+	environmentId string,
 ) (Handler, error) {
 	prev := &domain.Push{}
 	if err := copier.Copy(prev, push); err != nil {
 		return nil, err
 	}
 	return &pushCommandHandler{
-		editor:               editor,
-		push:                 push,
-		previousPush:         prev,
-		publisher:            p,
-		environmentNamespace: environmentNamespace,
+		editor:        editor,
+		push:          push,
+		previousPush:  prev,
+		publisher:     p,
+		environmentId: environmentId,
 	}, nil
 }
 
@@ -123,7 +123,7 @@ func (h *pushCommandHandler) send(ctx context.Context, eventType eventproto.Even
 		h.push.Id,
 		eventType,
 		event,
-		h.environmentNamespace,
+		h.environmentId,
 		h.push.Push,
 		prev,
 	)

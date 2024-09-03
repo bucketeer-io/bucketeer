@@ -27,7 +27,7 @@ import (
 var ErrExperimentResultNotFound = errors.New("experimentResult: experiment result not found")
 
 type ExperimentResultStorage interface {
-	GetExperimentResult(ctx context.Context, id, environmentNamespace string) (*domain.ExperimentResult, error)
+	GetExperimentResult(ctx context.Context, id, environmentId string) (*domain.ExperimentResult, error)
 }
 
 type experimentResultStorage struct {
@@ -40,7 +40,7 @@ func NewExperimentResultStorage(qe mysql.QueryExecer) ExperimentResultStorage {
 
 func (s *experimentResultStorage) GetExperimentResult(
 	ctx context.Context,
-	id, environmentNamespace string,
+	id, environmentId string,
 ) (*domain.ExperimentResult, error) {
 	er := proto.ExperimentResult{}
 	er_for_goal_results := proto.ExperimentResult{}
@@ -54,13 +54,13 @@ func (s *experimentResultStorage) GetExperimentResult(
 			experiment_result
 		WHERE
 			id = ? AND
-			environment_namespace = ?
+			environment_id = ?
 	`
 	err := s.qe.QueryRowContext(
 		ctx,
 		query,
 		id,
-		environmentNamespace,
+		environmentId,
 	).Scan(
 		&er.Id,
 		&er.ExperimentId,

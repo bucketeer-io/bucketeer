@@ -44,32 +44,32 @@ func (m *MockPushStorage) EXPECT() *MockPushStorageMockRecorder {
 }
 
 // CreatePush mocks base method.
-func (m *MockPushStorage) CreatePush(ctx context.Context, e *domain.Push, environmentNamespace string) error {
+func (m *MockPushStorage) CreatePush(ctx context.Context, e *domain.Push, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreatePush", ctx, e, environmentNamespace)
+	ret := m.ctrl.Call(m, "CreatePush", ctx, e, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreatePush indicates an expected call of CreatePush.
-func (mr *MockPushStorageMockRecorder) CreatePush(ctx, e, environmentNamespace any) *gomock.Call {
+func (mr *MockPushStorageMockRecorder) CreatePush(ctx, e, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePush", reflect.TypeOf((*MockPushStorage)(nil).CreatePush), ctx, e, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePush", reflect.TypeOf((*MockPushStorage)(nil).CreatePush), ctx, e, environmentId)
 }
 
 // GetPush mocks base method.
-func (m *MockPushStorage) GetPush(ctx context.Context, id, environmentNamespace string) (*domain.Push, error) {
+func (m *MockPushStorage) GetPush(ctx context.Context, id, environmentId string) (*domain.Push, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPush", ctx, id, environmentNamespace)
+	ret := m.ctrl.Call(m, "GetPush", ctx, id, environmentId)
 	ret0, _ := ret[0].(*domain.Push)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPush indicates an expected call of GetPush.
-func (mr *MockPushStorageMockRecorder) GetPush(ctx, id, environmentNamespace any) *gomock.Call {
+func (mr *MockPushStorageMockRecorder) GetPush(ctx, id, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPush", reflect.TypeOf((*MockPushStorage)(nil).GetPush), ctx, id, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPush", reflect.TypeOf((*MockPushStorage)(nil).GetPush), ctx, id, environmentId)
 }
 
 // ListPushes mocks base method.
@@ -90,15 +90,15 @@ func (mr *MockPushStorageMockRecorder) ListPushes(ctx, whereParts, orders, limit
 }
 
 // UpdatePush mocks base method.
-func (m *MockPushStorage) UpdatePush(ctx context.Context, e *domain.Push, environmentNamespace string) error {
+func (m *MockPushStorage) UpdatePush(ctx context.Context, e *domain.Push, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdatePush", ctx, e, environmentNamespace)
+	ret := m.ctrl.Call(m, "UpdatePush", ctx, e, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdatePush indicates an expected call of UpdatePush.
-func (mr *MockPushStorageMockRecorder) UpdatePush(ctx, e, environmentNamespace any) *gomock.Call {
+func (mr *MockPushStorageMockRecorder) UpdatePush(ctx, e, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePush", reflect.TypeOf((*MockPushStorage)(nil).UpdatePush), ctx, e, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePush", reflect.TypeOf((*MockPushStorage)(nil).UpdatePush), ctx, e, environmentId)
 }

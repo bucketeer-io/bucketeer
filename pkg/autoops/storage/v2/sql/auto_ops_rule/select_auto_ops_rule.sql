@@ -11,4 +11,4 @@ FROM
     auto_ops_rule
 WHERE
     id = ? AND
-    environment_namespace = ?
+    environment_id = ?

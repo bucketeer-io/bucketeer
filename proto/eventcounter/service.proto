@@ -30,6 +30,7 @@ message GetExperimentEvaluationCountRequest {
   string feature_id = 4;
   int32 feature_version = 5;
   repeated string variation_ids = 6;
+  string environment_id = 7;
 }
 
 message GetExperimentEvaluationCountResponse {
@@ -49,6 +50,7 @@ message GetEvaluationTimeseriesCountRequest {
   string environment_namespace = 1;
   string feature_id = 2;
   TimeRange time_range = 3;
+  string environment_id = 4;
 }
 
 message GetEvaluationTimeseriesCountResponse {
@@ -59,6 +61,7 @@ message GetEvaluationTimeseriesCountResponse {
 message GetExperimentResultRequest {
   string environment_namespace = 1;
   string experiment_id = 2;
+  string environment_id = 3;
 }
 
 message GetExperimentResultResponse {
@@ -69,6 +72,7 @@ message ListExperimentResultsRequest {
   string feature_id = 1;
   google.protobuf.Int32Value feature_version = 2;
   string environment_namespace = 3;
+  string environment_id = 4;
 }
 
 message ListExperimentResultsResponse {
@@ -83,6 +87,7 @@ message GetExperimentGoalCountRequest {
   string feature_id = 5;
   int32 feature_version = 6;
   repeated string variation_ids = 7;
+  string environment_id = 8;
 }
 
 message GetExperimentGoalCountResponse {
@@ -97,6 +102,7 @@ message GetOpsEvaluationUserCountRequest {
   string feature_id = 4;
   int32 feature_version = 5;
   string variation_id = 6;
+  string environment_id = 7;
 }
 
 message GetOpsEvaluationUserCountResponse {
@@ -112,6 +118,7 @@ message GetOpsGoalUserCountRequest {
   string feature_id = 4;
   int32 feature_version = 5;
   string variation_id = 6;
+  string environment_id = 7;
 }
 
 message GetOpsGoalUserCountResponse {
@@ -123,6 +130,7 @@ message GetOpsGoalUserCountResponse {
 message GetMAUCountRequest {
   string environment_namespace = 1;
   string year_month = 2;
+  string environment_id = 3;
 }
 
 message GetMAUCountResponse {

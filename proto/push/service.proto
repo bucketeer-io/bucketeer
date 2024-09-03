@@ -23,6 +23,7 @@ import "proto/push/command.proto";
 message CreatePushRequest {
   string environment_namespace = 1;
   CreatePushCommand command = 2;
+  string environment_id = 3;
 }
 
 message CreatePushResponse {}
@@ -44,6 +45,7 @@ message ListPushesRequest {
   OrderBy order_by = 4;
   OrderDirection order_direction = 5;
   string search_keyword = 6;
+  string environment_id = 7;
 }
 
 message ListPushesResponse {
@@ -56,6 +58,7 @@ message DeletePushRequest {
   string environment_namespace = 1;
   string id = 2;
   DeletePushCommand command = 3;
+  string environment_id = 4;
 }
 
 message DeletePushResponse {}
@@ -66,6 +69,7 @@ message UpdatePushRequest {
   AddPushTagsCommand add_push_tags_command = 3;
   DeletePushTagsCommand delete_push_tags_command = 4;
   RenamePushCommand rename_push_command = 5;
+  string environment_id = 6;
 }
 
 message UpdatePushResponse {}

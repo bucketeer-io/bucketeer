@@ -1,6 +1,6 @@
 INSERT INTO flag_trigger(id,
                          feature_id,
-                         environment_namespace,
+                         environment_id,
                          type,
                          action,
                          description,

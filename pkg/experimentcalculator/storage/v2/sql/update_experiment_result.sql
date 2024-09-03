@@ -1,5 +1,5 @@
 INSERT INTO experiment_result
-    (id, experiment_id, updated_at, data, environment_namespace)
+    (id, experiment_id, updated_at, data, environment_id)
 VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY
 UPDATE
     experiment_id = VALUES(experiment_id),

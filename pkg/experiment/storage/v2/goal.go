@@ -32,16 +32,16 @@ var (
 )
 
 type GoalStorage interface {
-	CreateGoal(ctx context.Context, g *domain.Goal, environmentNamespace string) error
-	UpdateGoal(ctx context.Context, g *domain.Goal, environmentNamespace string) error
-	GetGoal(ctx context.Context, id, environmentNamespace string) (*domain.Goal, error)
+	CreateGoal(ctx context.Context, g *domain.Goal, environmentId string) error
+	UpdateGoal(ctx context.Context, g *domain.Goal, environmentId string) error
+	GetGoal(ctx context.Context, id, environmentId string) (*domain.Goal, error)
 	ListGoals(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
 		orders []*mysql.Order,
 		limit, offset int,
 		isInUseStatus *bool,
-		environmentNamespace string,
+		environmentId string,
 	) ([]*proto.Goal, int, int64, error)
 }
 
@@ -53,7 +53,7 @@ func NewGoalStorage(qe mysql.QueryExecer) GoalStorage {
 	return &goalStorage{qe: qe}
 }
 
-func (s *goalStorage) CreateGoal(ctx context.Context, g *domain.Goal, environmentNamespace string) error {
+func (s *goalStorage) CreateGoal(ctx context.Context, g *domain.Goal, environmentId string) error {
 	query := `
 		INSERT INTO goal (
 			id,
@@ -63,7 +63,7 @@ func (s *goalStorage) CreateGoal(ctx context.Context, g *domain.Goal, environmen
 			deleted,
 			created_at,
 			updated_at,
-			environment_namespace
+			environment_id
 		) VALUES (
 			?, ?, ?, ?, ?, ?, ?, ?
 		)
@@ -78,7 +78,7 @@ func (s *goalStorage) CreateGoal(ctx context.Context, g *domain.Goal, environmen
 		g.Deleted,
 		g.CreatedAt,
 		g.UpdatedAt,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		if err == mysql.ErrDuplicateEntry {
@@ -89,7 +89,7 @@ func (s *goalStorage) CreateGoal(ctx context.Context, g *domain.Goal, environmen
 	return nil
 }
 
-func (s *goalStorage) UpdateGoal(ctx context.Context, g *domain.Goal, environmentNamespace string) error {
+func (s *goalStorage) UpdateGoal(ctx context.Context, g *domain.Goal, environmentId string) error {
 	query := `
 		UPDATE 
 			goal
@@ -102,7 +102,7 @@ func (s *goalStorage) UpdateGoal(ctx context.Context, g *domain.Goal, environmen
 			updated_at = ?
 		WHERE
 			id = ? AND
-			environment_namespace = ?
+			environment_id = ?
 	`
 	result, err := s.qe.ExecContext(
 		ctx,
@@ -114,7 +114,7 @@ func (s *goalStorage) UpdateGoal(ctx context.Context, g *domain.Goal, environmen
 		g.CreatedAt,
 		g.UpdatedAt,
 		g.Id,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		return err
@@ -129,7 +129,7 @@ func (s *goalStorage) UpdateGoal(ctx context.Context, g *domain.Goal, environmen
 	return nil
 }
 
-func (s *goalStorage) GetGoal(ctx context.Context, id, environmentNamespace string) (*domain.Goal, error) {
+func (s *goalStorage) GetGoal(ctx context.Context, id, environmentId string) (*domain.Goal, error) {
 	goal := proto.Goal{}
 	query := `
 		SELECT
@@ -147,7 +147,7 @@ func (s *goalStorage) GetGoal(ctx context.Context, id, environmentNamespace stri
 					FROM 
 						experiment
 					WHERE
-						environment_namespace = ? AND
+						environment_id = ? AND
 						goal_ids LIKE concat("%", goal.id, "%")
 				) > 0 THEN TRUE 
 				ELSE FALSE 
@@ -156,14 +156,14 @@ func (s *goalStorage) GetGoal(ctx context.Context, id, environmentNamespace stri
 			goal
 		WHERE
 			id = ? AND
-			environment_namespace = ?
+			environment_id = ?
 	`
 	err := s.qe.QueryRowContext(
 		ctx,
 		query,
-		environmentNamespace,
+		environmentId,
 		id,
-		environmentNamespace,
+		environmentId,
 	).Scan(
 		&goal.Id,
 		&goal.Name,
@@ -189,11 +189,11 @@ func (s *goalStorage) ListGoals(
 	orders []*mysql.Order,
 	limit, offset int,
 	isInUseStatus *bool,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*proto.Goal, int, int64, error) {
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	prepareArgs := make([]interface{}, 0, len(whereArgs)+1)
-	prepareArgs = append(prepareArgs, environmentNamespace)
+	prepareArgs = append(prepareArgs, environmentId)
 	prepareArgs = append(prepareArgs, whereArgs...)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
@@ -221,7 +221,7 @@ func (s *goalStorage) ListGoals(
 					FROM 
 						experiment
 					WHERE
-						environment_namespace = ? AND
+						environment_id = ? AND
 						goal_ids LIKE concat("%%", goal.id, "%%")
 				) > 0 THEN TRUE 
 				ELSE FALSE 
@@ -277,7 +277,7 @@ func (s *goalStorage) ListGoals(
 						FROM 
 							experiment
 						WHERE
-							environment_namespace = ? AND
+							environment_id = ? AND
 							goal_ids LIKE concat("%%", goal.id, "%%")
 					) %s
 				END

@@ -44,38 +44,38 @@ func (m *MockGoalStorage) EXPECT() *MockGoalStorageMockRecorder {
 }
 
 // CreateGoal mocks base method.
-func (m *MockGoalStorage) CreateGoal(ctx context.Context, g *domain.Goal, environmentNamespace string) error {
+func (m *MockGoalStorage) CreateGoal(ctx context.Context, g *domain.Goal, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateGoal", ctx, g, environmentNamespace)
+	ret := m.ctrl.Call(m, "CreateGoal", ctx, g, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateGoal indicates an expected call of CreateGoal.
-func (mr *MockGoalStorageMockRecorder) CreateGoal(ctx, g, environmentNamespace any) *gomock.Call {
+func (mr *MockGoalStorageMockRecorder) CreateGoal(ctx, g, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGoal", reflect.TypeOf((*MockGoalStorage)(nil).CreateGoal), ctx, g, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGoal", reflect.TypeOf((*MockGoalStorage)(nil).CreateGoal), ctx, g, environmentId)
 }
 
 // GetGoal mocks base method.
-func (m *MockGoalStorage) GetGoal(ctx context.Context, id, environmentNamespace string) (*domain.Goal, error) {
+func (m *MockGoalStorage) GetGoal(ctx context.Context, id, environmentId string) (*domain.Goal, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetGoal", ctx, id, environmentNamespace)
+	ret := m.ctrl.Call(m, "GetGoal", ctx, id, environmentId)
 	ret0, _ := ret[0].(*domain.Goal)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetGoal indicates an expected call of GetGoal.
-func (mr *MockGoalStorageMockRecorder) GetGoal(ctx, id, environmentNamespace any) *gomock.Call {
+func (mr *MockGoalStorageMockRecorder) GetGoal(ctx, id, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGoal", reflect.TypeOf((*MockGoalStorage)(nil).GetGoal), ctx, id, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGoal", reflect.TypeOf((*MockGoalStorage)(nil).GetGoal), ctx, id, environmentId)
 }
 
 // ListGoals mocks base method.
-func (m *MockGoalStorage) ListGoals(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int, isInUseStatus *bool, environmentNamespace string) ([]*experiment.Goal, int, int64, error) {
+func (m *MockGoalStorage) ListGoals(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int, isInUseStatus *bool, environmentId string) ([]*experiment.Goal, int, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListGoals", ctx, whereParts, orders, limit, offset, isInUseStatus, environmentNamespace)
+	ret := m.ctrl.Call(m, "ListGoals", ctx, whereParts, orders, limit, offset, isInUseStatus, environmentId)
 	ret0, _ := ret[0].([]*experiment.Goal)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -84,21 +84,21 @@ func (m *MockGoalStorage) ListGoals(ctx context.Context, whereParts []mysql.Wher
 }
 
 // ListGoals indicates an expected call of ListGoals.
-func (mr *MockGoalStorageMockRecorder) ListGoals(ctx, whereParts, orders, limit, offset, isInUseStatus, environmentNamespace any) *gomock.Call {
+func (mr *MockGoalStorageMockRecorder) ListGoals(ctx, whereParts, orders, limit, offset, isInUseStatus, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGoals", reflect.TypeOf((*MockGoalStorage)(nil).ListGoals), ctx, whereParts, orders, limit, offset, isInUseStatus, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListGoals", reflect.TypeOf((*MockGoalStorage)(nil).ListGoals), ctx, whereParts, orders, limit, offset, isInUseStatus, environmentId)
 }
 
 // UpdateGoal mocks base method.
-func (m *MockGoalStorage) UpdateGoal(ctx context.Context, g *domain.Goal, environmentNamespace string) error {
+func (m *MockGoalStorage) UpdateGoal(ctx context.Context, g *domain.Goal, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateGoal", ctx, g, environmentNamespace)
+	ret := m.ctrl.Call(m, "UpdateGoal", ctx, g, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateGoal indicates an expected call of UpdateGoal.
-func (mr *MockGoalStorageMockRecorder) UpdateGoal(ctx, g, environmentNamespace any) *gomock.Call {
+func (mr *MockGoalStorageMockRecorder) UpdateGoal(ctx, g, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGoal", reflect.TypeOf((*MockGoalStorage)(nil).UpdateGoal), ctx, g, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGoal", reflect.TypeOf((*MockGoalStorage)(nil).UpdateGoal), ctx, g, environmentId)
 }

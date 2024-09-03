@@ -44,32 +44,32 @@ func (m *MockAutoOpsRuleStorage) EXPECT() *MockAutoOpsRuleStorageMockRecorder {
 }
 
 // CreateAutoOpsRule mocks base method.
-func (m *MockAutoOpsRuleStorage) CreateAutoOpsRule(ctx context.Context, e *domain.AutoOpsRule, environmentNamespace string) error {
+func (m *MockAutoOpsRuleStorage) CreateAutoOpsRule(ctx context.Context, e *domain.AutoOpsRule, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateAutoOpsRule", ctx, e, environmentNamespace)
+	ret := m.ctrl.Call(m, "CreateAutoOpsRule", ctx, e, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateAutoOpsRule indicates an expected call of CreateAutoOpsRule.
-func (mr *MockAutoOpsRuleStorageMockRecorder) CreateAutoOpsRule(ctx, e, environmentNamespace any) *gomock.Call {
+func (mr *MockAutoOpsRuleStorageMockRecorder) CreateAutoOpsRule(ctx, e, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAutoOpsRule", reflect.TypeOf((*MockAutoOpsRuleStorage)(nil).CreateAutoOpsRule), ctx, e, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAutoOpsRule", reflect.TypeOf((*MockAutoOpsRuleStorage)(nil).CreateAutoOpsRule), ctx, e, environmentId)
 }
 
 // GetAutoOpsRule mocks base method.
-func (m *MockAutoOpsRuleStorage) GetAutoOpsRule(ctx context.Context, id, environmentNamespace string) (*domain.AutoOpsRule, error) {
+func (m *MockAutoOpsRuleStorage) GetAutoOpsRule(ctx context.Context, id, environmentId string) (*domain.AutoOpsRule, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAutoOpsRule", ctx, id, environmentNamespace)
+	ret := m.ctrl.Call(m, "GetAutoOpsRule", ctx, id, environmentId)
 	ret0, _ := ret[0].(*domain.AutoOpsRule)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAutoOpsRule indicates an expected call of GetAutoOpsRule.
-func (mr *MockAutoOpsRuleStorageMockRecorder) GetAutoOpsRule(ctx, id, environmentNamespace any) *gomock.Call {
+func (mr *MockAutoOpsRuleStorageMockRecorder) GetAutoOpsRule(ctx, id, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAutoOpsRule", reflect.TypeOf((*MockAutoOpsRuleStorage)(nil).GetAutoOpsRule), ctx, id, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAutoOpsRule", reflect.TypeOf((*MockAutoOpsRuleStorage)(nil).GetAutoOpsRule), ctx, id, environmentId)
 }
 
 // ListAutoOpsRules mocks base method.
@@ -89,15 +89,15 @@ func (mr *MockAutoOpsRuleStorageMockRecorder) ListAutoOpsRules(ctx, whereParts, 
 }
 
 // UpdateAutoOpsRule mocks base method.
-func (m *MockAutoOpsRuleStorage) UpdateAutoOpsRule(ctx context.Context, e *domain.AutoOpsRule, environmentNamespace string) error {
+func (m *MockAutoOpsRuleStorage) UpdateAutoOpsRule(ctx context.Context, e *domain.AutoOpsRule, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateAutoOpsRule", ctx, e, environmentNamespace)
+	ret := m.ctrl.Call(m, "UpdateAutoOpsRule", ctx, e, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateAutoOpsRule indicates an expected call of UpdateAutoOpsRule.
-func (mr *MockAutoOpsRuleStorageMockRecorder) UpdateAutoOpsRule(ctx, e, environmentNamespace any) *gomock.Call {
+func (mr *MockAutoOpsRuleStorageMockRecorder) UpdateAutoOpsRule(ctx, e, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAutoOpsRule", reflect.TypeOf((*MockAutoOpsRuleStorage)(nil).UpdateAutoOpsRule), ctx, e, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAutoOpsRule", reflect.TypeOf((*MockAutoOpsRuleStorage)(nil).UpdateAutoOpsRule), ctx, e, environmentId)
 }

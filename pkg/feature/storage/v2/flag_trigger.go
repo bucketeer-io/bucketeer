@@ -53,8 +53,8 @@ var (
 type FlagTriggerStorage interface {
 	CreateFlagTrigger(ctx context.Context, flagTrigger *domain.FlagTrigger) error
 	UpdateFlagTrigger(ctx context.Context, flagTrigger *domain.FlagTrigger) error
-	DeleteFlagTrigger(ctx context.Context, id, environmentNamespace string) error
-	GetFlagTrigger(ctx context.Context, id, environmentNamespace string) (*domain.FlagTrigger, error)
+	DeleteFlagTrigger(ctx context.Context, id, environmentId string) error
+	GetFlagTrigger(ctx context.Context, id, environmentId string) (*domain.FlagTrigger, error)
 	GetFlagTriggerByToken(ctx context.Context, token string) (*domain.FlagTrigger, error)
 	ListFlagTriggers(
 		ctx context.Context,
@@ -81,7 +81,7 @@ func (f flagTriggerStorage) CreateFlagTrigger(
 	_, err := f.qe.ExecContext(ctx, insertFlagTriggerSQL,
 		flagTrigger.Id,
 		flagTrigger.FeatureId,
-		flagTrigger.EnvironmentNamespace,
+		flagTrigger.EnvironmentId,
 		flagTrigger.Type,
 		flagTrigger.Action,
 		flagTrigger.Description,
@@ -114,7 +114,7 @@ func (f flagTriggerStorage) UpdateFlagTrigger(ctx context.Context, flagTrigger *
 		flagTrigger.CreatedAt,
 		flagTrigger.UpdatedAt,
 		flagTrigger.Id,
-		flagTrigger.EnvironmentNamespace,
+		flagTrigger.EnvironmentId,
 	)
 	if err != nil {
 		return err
@@ -131,11 +131,11 @@ func (f flagTriggerStorage) UpdateFlagTrigger(ctx context.Context, flagTrigger *
 
 func (f flagTriggerStorage) DeleteFlagTrigger(
 	ctx context.Context,
-	id, environmentNamespace string,
+	id, environmentId string,
 ) error {
 	result, err := f.qe.ExecContext(ctx, deleteFlagTriggerSQL,
 		id,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		return err
@@ -152,18 +152,18 @@ func (f flagTriggerStorage) DeleteFlagTrigger(
 
 func (f flagTriggerStorage) GetFlagTrigger(
 	ctx context.Context,
-	id, environmentNamespace string,
+	id, environmentId string,
 ) (*domain.FlagTrigger, error) {
 	trigger := proto.FlagTrigger{}
 	err := f.qe.QueryRowContext(
 		ctx,
 		getFlagTriggerSQL,
 		id,
-		environmentNamespace,
+		environmentId,
 	).Scan(
 		&trigger.Id,
 		&trigger.FeatureId,
-		&trigger.EnvironmentNamespace,
+		&trigger.EnvironmentId,
 		&trigger.Type,
 		&trigger.Action,
 		&trigger.Description,
@@ -195,7 +195,7 @@ func (f flagTriggerStorage) GetFlagTriggerByToken(
 	).Scan(
 		&trigger.Id,
 		&trigger.FeatureId,
-		&trigger.EnvironmentNamespace,
+		&trigger.EnvironmentId,
 		&trigger.Type,
 		&trigger.Action,
 		&trigger.Description,

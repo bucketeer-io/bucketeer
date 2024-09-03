@@ -28,29 +28,29 @@ import (
 )
 
 type experimentCommandHandler struct {
-	editor               *eventproto.Editor
-	experiment           *domain.Experiment
-	previousExperiment   *domain.Experiment
-	publisher            publisher.Publisher
-	environmentNamespace string
+	editor             *eventproto.Editor
+	experiment         *domain.Experiment
+	previousExperiment *domain.Experiment
+	publisher          publisher.Publisher
+	environmentId      string
 }
 
 func NewExperimentCommandHandler(
 	editor *eventproto.Editor,
 	experiment *domain.Experiment,
 	p publisher.Publisher,
-	environmentNamespace string,
+	environmentId string,
 ) (Handler, error) {
 	prev := &domain.Experiment{}
 	if err := copier.Copy(prev, experiment); err != nil {
 		return nil, err
 	}
 	return &experimentCommandHandler{
-		editor:               editor,
-		experiment:           experiment,
-		previousExperiment:   prev,
-		publisher:            p,
-		environmentNamespace: environmentNamespace,
+		editor:             editor,
+		experiment:         experiment,
+		previousExperiment: prev,
+		publisher:          p,
+		environmentId:      environmentId,
 	}, nil
 }
 
@@ -172,7 +172,7 @@ func (h *experimentCommandHandler) send(ctx context.Context, eventType eventprot
 		h.experiment.Id,
 		eventType,
 		event,
-		h.environmentNamespace,
+		h.environmentId,
 		h.experiment.Experiment,
 		prev,
 	)

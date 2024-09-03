@@ -119,17 +119,17 @@ func (s *FeatureService) Register(server *grpc.Server) {
 func (s *FeatureService) checkEnvironmentRole(
 	ctx context.Context,
 	requiredRole accountproto.AccountV2_Role_Environment,
-	environmentNamespace string,
+	environmentId string,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckEnvironmentRole(
 		ctx,
 		requiredRole,
-		environmentNamespace,
+		environmentId,
 		func(email string) (*accountproto.AccountV2, error) {
 			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
 				Email:         email,
-				EnvironmentId: environmentNamespace,
+				EnvironmentId: environmentId,
 			})
 			if err != nil {
 				return nil, err
@@ -143,7 +143,7 @@ func (s *FeatureService) checkEnvironmentRole(
 				"Unauthenticated",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
@@ -159,7 +159,7 @@ func (s *FeatureService) checkEnvironmentRole(
 				"Permission denied",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
@@ -175,7 +175,7 @@ func (s *FeatureService) checkEnvironmentRole(
 				"Failed to check role",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -194,14 +194,14 @@ func (s *FeatureService) checkEnvironmentRole(
 func (s *FeatureService) reportInternalServerError(
 	ctx context.Context,
 	err error,
-	environmentNamespace string,
+	environmentId string,
 	localizer locale.Localizer,
 ) error {
 	s.logger.Error(
 		"Internal server error",
 		log.FieldsFromImcomingContext(ctx).AddFields(
 			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 		)...,
 	)
 	dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{

@@ -596,8 +596,8 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &autoopsproto.UpdateAutoOpsRuleRequest{
-				Id:                   "aid1",
-				EnvironmentNamespace: "ns0",
+				Id:            "aid1",
+				EnvironmentId: "ns0",
 				AddDatetimeClauseCommands: []*autoopsproto.AddDatetimeClauseCommand{{
 					DatetimeClause: &autoopsproto.DatetimeClause{
 						ActionType: autoopsproto.ActionType_ENABLE,
@@ -679,9 +679,9 @@ func TestStopAutoOpsRuleMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &autoopsproto.StopAutoOpsRuleRequest{
-				Id:                   "aid1",
-				EnvironmentNamespace: "ns0",
-				Command:              &autoopsproto.StopAutoOpsRuleCommand{},
+				Id:            "aid1",
+				EnvironmentId: "ns0",
+				Command:       &autoopsproto.StopAutoOpsRuleCommand{},
 			},
 			expectedErr: nil,
 		},
@@ -744,9 +744,9 @@ func TestDeleteAutoOpsRuleMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &autoopsproto.DeleteAutoOpsRuleRequest{
-				Id:                   "aid1",
-				EnvironmentNamespace: "ns0",
-				Command:              &autoopsproto.DeleteAutoOpsRuleCommand{},
+				Id:            "aid1",
+				EnvironmentId: "ns0",
+				Command:       &autoopsproto.DeleteAutoOpsRuleCommand{},
 			},
 			expectedErr: nil,
 		},
@@ -792,7 +792,7 @@ func TestGetAutoOpsRuleMySQL(t *testing.T) {
 		{
 			desc:        "err: ErrIDRequired",
 			service:     createAutoOpsService(mockController, nil),
-			req:         &autoopsproto.GetAutoOpsRuleRequest{EnvironmentNamespace: "ns0"},
+			req:         &autoopsproto.GetAutoOpsRuleRequest{EnvironmentId: "ns0"},
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
@@ -805,14 +805,14 @@ func TestGetAutoOpsRuleMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			req:         &autoopsproto.GetAutoOpsRuleRequest{Id: "wrongid", EnvironmentNamespace: "ns0"},
+			req:         &autoopsproto.GetAutoOpsRuleRequest{Id: "wrongid", EnvironmentId: "ns0"},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc:        "errPermissionDenied",
 			service:     createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			setup:       func(s *AutoOpsService) {},
-			req:         &autoopsproto.GetAutoOpsRuleRequest{Id: "aid1", EnvironmentNamespace: "ns0"},
+			req:         &autoopsproto.GetAutoOpsRuleRequest{Id: "aid1", EnvironmentId: "ns0"},
 			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
@@ -825,7 +825,7 @@ func TestGetAutoOpsRuleMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			req:         &autoopsproto.GetAutoOpsRuleRequest{Id: "aid1", EnvironmentNamespace: "ns0"},
+			req:         &autoopsproto.GetAutoOpsRuleRequest{Id: "aid1", EnvironmentId: "ns0"},
 			expectedErr: nil,
 		},
 		{
@@ -838,7 +838,7 @@ func TestGetAutoOpsRuleMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			req:         &autoopsproto.GetAutoOpsRuleRequest{Id: "aid1", EnvironmentNamespace: "ns0"},
+			req:         &autoopsproto.GetAutoOpsRuleRequest{Id: "aid1", EnvironmentId: "ns0"},
 			expectedErr: nil,
 		},
 	}
@@ -892,14 +892,14 @@ func TestListAutoOpsRulesMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			req:         &autoopsproto.ListAutoOpsRulesRequest{EnvironmentNamespace: "ns0", Cursor: ""},
+			req:         &autoopsproto.ListAutoOpsRulesRequest{EnvironmentId: "ns0", Cursor: ""},
 			expectedErr: nil,
 		},
 		{
 			desc:        "errPermissionDenied",
 			service:     createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			setup:       func(s *AutoOpsService) {},
-			req:         &autoopsproto.ListAutoOpsRulesRequest{EnvironmentNamespace: "ns0", Cursor: ""},
+			req:         &autoopsproto.ListAutoOpsRulesRequest{EnvironmentId: "ns0", Cursor: ""},
 			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
@@ -914,7 +914,7 @@ func TestListAutoOpsRulesMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			req:         &autoopsproto.ListAutoOpsRulesRequest{EnvironmentNamespace: "ns0", Cursor: ""},
+			req:         &autoopsproto.ListAutoOpsRulesRequest{EnvironmentId: "ns0", Cursor: ""},
 			expectedErr: nil,
 		},
 	}
@@ -967,14 +967,14 @@ func TestListOpsCountsMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			req:         &autoopsproto.ListOpsCountsRequest{EnvironmentNamespace: "ns0", Cursor: ""},
+			req:         &autoopsproto.ListOpsCountsRequest{EnvironmentId: "ns0", Cursor: ""},
 			expectedErr: nil,
 		},
 		{
 			desc:        "errPermissionDenied",
 			service:     createServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			setup:       func(s *AutoOpsService) {},
-			req:         &autoopsproto.ListOpsCountsRequest{EnvironmentNamespace: "ns0", Cursor: ""},
+			req:         &autoopsproto.ListOpsCountsRequest{EnvironmentId: "ns0", Cursor: ""},
 			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
@@ -989,7 +989,7 @@ func TestListOpsCountsMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			req:         &autoopsproto.ListOpsCountsRequest{EnvironmentNamespace: "ns0", Cursor: ""},
+			req:         &autoopsproto.ListOpsCountsRequest{EnvironmentId: "ns0", Cursor: ""},
 			expectedErr: nil,
 		},
 	}
@@ -1045,8 +1045,8 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 		{
 			desc: "err: ErrNoExecuteAutoOpsRuleCommand_ClauseId",
 			req: &autoopsproto.ExecuteAutoOpsRequest{
-				Id:                   "aid1",
-				EnvironmentNamespace: "ns0",
+				Id:            "aid1",
+				EnvironmentId: "ns0",
 				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
 					ClauseId: "",
 				},
@@ -1063,8 +1063,8 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 				).Return(row)
 			},
 			req: &autoopsproto.ExecuteAutoOpsRequest{
-				Id:                   "aid1",
-				EnvironmentNamespace: "ns0",
+				Id:            "aid1",
+				EnvironmentId: "ns0",
 				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
 					ClauseId: "id",
 				},
@@ -1085,8 +1085,8 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &autoopsproto.ExecuteAutoOpsRequest{
-				Id:                   "aid1",
-				EnvironmentNamespace: "ns0",
+				Id:            "aid1",
+				EnvironmentId: "ns0",
 				ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
 					ClauseId: "testClauseId",
 				},

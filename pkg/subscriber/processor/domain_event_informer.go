@@ -95,7 +95,7 @@ func (d domainEventInformer) handleMessage(msg *puller.Message) {
 	// https://github.com/bucketeer-io/bucketeer/blob/main/pkg/domainevent/domain/url.go#L36-L40
 	environmentURLCode := ""
 	if !domainEvent.IsAdminEvent {
-		environment, err := d.getEnvironment(ctx, domainEvent.EnvironmentNamespace)
+		environment, err := d.getEnvironment(ctx, domainEvent.EnvironmentId)
 		if err != nil {
 			if code := gstatus.Code(err); code == gcodes.NotFound {
 				subscriberHandledCounter.WithLabelValues(subscriberDomainEvent, codes.BadMessage.String()).Inc()
@@ -145,9 +145,9 @@ func (d domainEventInformer) createNotificationEvent(
 		return nil, err
 	}
 	ne := &senderproto.NotificationEvent{
-		Id:                   id.String(),
-		EnvironmentNamespace: event.EnvironmentNamespace,
-		SourceType:           st,
+		Id:            id.String(),
+		EnvironmentId: event.EnvironmentId,
+		SourceType:    st,
 		Notification: &senderproto.Notification{
 			Type: senderproto.Notification_DomainEvent,
 			DomainEventNotification: &senderproto.DomainEventNotification{

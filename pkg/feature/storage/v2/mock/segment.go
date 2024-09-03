@@ -44,23 +44,23 @@ func (m *MockSegmentStorage) EXPECT() *MockSegmentStorageMockRecorder {
 }
 
 // CreateSegment mocks base method.
-func (m *MockSegmentStorage) CreateSegment(ctx context.Context, segment *domain.Segment, environmentNamespace string) error {
+func (m *MockSegmentStorage) CreateSegment(ctx context.Context, segment *domain.Segment, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateSegment", ctx, segment, environmentNamespace)
+	ret := m.ctrl.Call(m, "CreateSegment", ctx, segment, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateSegment indicates an expected call of CreateSegment.
-func (mr *MockSegmentStorageMockRecorder) CreateSegment(ctx, segment, environmentNamespace any) *gomock.Call {
+func (mr *MockSegmentStorageMockRecorder) CreateSegment(ctx, segment, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSegment", reflect.TypeOf((*MockSegmentStorage)(nil).CreateSegment), ctx, segment, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSegment", reflect.TypeOf((*MockSegmentStorage)(nil).CreateSegment), ctx, segment, environmentId)
 }
 
 // GetSegment mocks base method.
-func (m *MockSegmentStorage) GetSegment(ctx context.Context, id, environmentNamespace string) (*domain.Segment, []string, error) {
+func (m *MockSegmentStorage) GetSegment(ctx context.Context, id, environmentId string) (*domain.Segment, []string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSegment", ctx, id, environmentNamespace)
+	ret := m.ctrl.Call(m, "GetSegment", ctx, id, environmentId)
 	ret0, _ := ret[0].(*domain.Segment)
 	ret1, _ := ret[1].([]string)
 	ret2, _ := ret[2].(error)
@@ -68,15 +68,15 @@ func (m *MockSegmentStorage) GetSegment(ctx context.Context, id, environmentName
 }
 
 // GetSegment indicates an expected call of GetSegment.
-func (mr *MockSegmentStorageMockRecorder) GetSegment(ctx, id, environmentNamespace any) *gomock.Call {
+func (mr *MockSegmentStorageMockRecorder) GetSegment(ctx, id, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSegment", reflect.TypeOf((*MockSegmentStorage)(nil).GetSegment), ctx, id, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSegment", reflect.TypeOf((*MockSegmentStorage)(nil).GetSegment), ctx, id, environmentId)
 }
 
 // ListSegments mocks base method.
-func (m *MockSegmentStorage) ListSegments(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int, isInUseStatus *bool, environmentNamespace string) ([]*feature.Segment, int, int64, map[string][]string, error) {
+func (m *MockSegmentStorage) ListSegments(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int, isInUseStatus *bool, environmentId string) ([]*feature.Segment, int, int64, map[string][]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListSegments", ctx, whereParts, orders, limit, offset, isInUseStatus, environmentNamespace)
+	ret := m.ctrl.Call(m, "ListSegments", ctx, whereParts, orders, limit, offset, isInUseStatus, environmentId)
 	ret0, _ := ret[0].([]*feature.Segment)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(int64)
@@ -86,21 +86,21 @@ func (m *MockSegmentStorage) ListSegments(ctx context.Context, whereParts []mysq
 }
 
 // ListSegments indicates an expected call of ListSegments.
-func (mr *MockSegmentStorageMockRecorder) ListSegments(ctx, whereParts, orders, limit, offset, isInUseStatus, environmentNamespace any) *gomock.Call {
+func (mr *MockSegmentStorageMockRecorder) ListSegments(ctx, whereParts, orders, limit, offset, isInUseStatus, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSegments", reflect.TypeOf((*MockSegmentStorage)(nil).ListSegments), ctx, whereParts, orders, limit, offset, isInUseStatus, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSegments", reflect.TypeOf((*MockSegmentStorage)(nil).ListSegments), ctx, whereParts, orders, limit, offset, isInUseStatus, environmentId)
 }
 
 // UpdateSegment mocks base method.
-func (m *MockSegmentStorage) UpdateSegment(ctx context.Context, segment *domain.Segment, environmentNamespace string) error {
+func (m *MockSegmentStorage) UpdateSegment(ctx context.Context, segment *domain.Segment, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateSegment", ctx, segment, environmentNamespace)
+	ret := m.ctrl.Call(m, "UpdateSegment", ctx, segment, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateSegment indicates an expected call of UpdateSegment.
-func (mr *MockSegmentStorageMockRecorder) UpdateSegment(ctx, segment, environmentNamespace any) *gomock.Call {
+func (mr *MockSegmentStorageMockRecorder) UpdateSegment(ctx, segment, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSegment", reflect.TypeOf((*MockSegmentStorage)(nil).UpdateSegment), ctx, segment, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSegment", reflect.TypeOf((*MockSegmentStorage)(nil).UpdateSegment), ctx, segment, environmentId)
 }

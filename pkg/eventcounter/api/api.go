@@ -118,7 +118,7 @@ func (s *eventCounterService) GetExperimentEvaluationCount(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (s *eventCounterService) GetExperimentEvaluationCount(
 	endAt := time.Unix(req.EndAt, 0)
 	evaluationCounts, err := s.eventStorage.QueryEvaluationCount(
 		ctx,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		startAt,
 		endAt,
 		req.FeatureId,
@@ -140,7 +140,7 @@ func (s *eventCounterService) GetExperimentEvaluationCount(
 			"Failed to query experiment evaluation counts",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.Time("startAt", startAt),
 				zap.Time("endAt", endAt),
 				zap.String("featureId", req.FeatureId),
@@ -244,7 +244,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -252,15 +252,15 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 		return nil, err
 	}
 	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
-		EnvironmentNamespace: req.EnvironmentNamespace,
-		Id:                   req.FeatureId,
+		EnvironmentId: req.EnvironmentId,
+		Id:            req.FeatureId,
 	})
 	if err != nil {
 		s.logger.Error(
 			"Failed to get feature",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.String("featureId", req.FeatureId),
 			)...,
 		)
@@ -292,13 +292,13 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 	for _, vID := range vIDs {
 		eventCountKeys := s.getEventCountKeys(
 			hourlyTimeStamps,
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 			req.FeatureId,
 			vID,
 		)
 		userCountKeys := s.getUserCountKeys(
 			hourlyTimeStamps,
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 			req.FeatureId,
 			vID,
 		)
@@ -307,7 +307,7 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 			s.logCountError(
 				ctx,
 				err,
-				"Failed to get event counts", req.EnvironmentNamespace, req.FeatureId, vID,
+				"Failed to get event counts", req.EnvironmentId, req.FeatureId, vID,
 				resp.Feature.Version,
 				timestampUnit, req.TimeRange,
 			)
@@ -324,14 +324,14 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 		userCounts, err := s.getUserCounts(
 			userCountKeys,
 			req.FeatureId,
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 			timestampUnit,
 		)
 		if err != nil {
 			s.logCountError(
 				ctx,
 				err,
-				"Failed to get user counts", req.EnvironmentNamespace, req.FeatureId, vID,
+				"Failed to get user counts", req.EnvironmentId, req.FeatureId, vID,
 				resp.Feature.Version,
 				timestampUnit, req.TimeRange,
 			)
@@ -347,13 +347,13 @@ func (s *eventCounterService) GetEvaluationTimeseriesCount(
 		totalUserCounts, err := s.getTotalUserCounts(
 			userCountKeys,
 			req.FeatureId,
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 		)
 		if err != nil {
 			s.logCountError(
 				ctx,
 				err,
-				"Failed to get user counts", req.EnvironmentNamespace, req.FeatureId, vID,
+				"Failed to get user counts", req.EnvironmentId, req.FeatureId, vID,
 				resp.Feature.Version,
 				timestampUnit, req.TimeRange,
 			)
@@ -453,18 +453,18 @@ func (s *eventCounterService) getTotalEventCounts(
 
 func (s *eventCounterService) getUserCounts(
 	keys [][]string,
-	featureID, environmentNamespace string,
+	featureID, environmentId string,
 	unit ecproto.Timeseries_Unit,
 ) ([]float64, error) {
 	if unit == ecproto.Timeseries_HOUR {
-		return s.getHourlyUserCounts(keys, featureID, environmentNamespace)
+		return s.getHourlyUserCounts(keys, featureID, environmentId)
 	}
-	return s.getDailyUserCounts(keys, featureID, environmentNamespace)
+	return s.getDailyUserCounts(keys, featureID, environmentId)
 }
 
 func (s *eventCounterService) getHourlyUserCounts(
 	days [][]string,
-	featureID, environmentNamespace string,
+	featureID, environmentId string,
 ) ([]float64, error) {
 	hours := days[0]
 	counts := make([]float64, 0, len(hours))
@@ -480,13 +480,13 @@ func (s *eventCounterService) getHourlyUserCounts(
 
 func (s *eventCounterService) getDailyUserCounts(
 	days [][]string,
-	featureID, environmentNamespace string,
+	featureID, environmentId string,
 ) ([]float64, error) {
 	counts := make([]float64, 0, len(days))
 	for _, day := range days {
 		c, err := s.countUniqueUser(
 			day,
-			featureID, environmentNamespace,
+			featureID, environmentId,
 		)
 		if err != nil {
 			return nil, err
@@ -508,12 +508,12 @@ func (s *eventCounterService) flattenAry(
 
 func (s *eventCounterService) getTotalUserCounts(
 	userCountKeys [][]string,
-	featureID, environmentNamespace string,
+	featureID, environmentId string,
 ) (int64, error) {
 	flat := s.flattenAry(userCountKeys)
 	count, err := s.countUniqueUser(
 		flat,
-		featureID, environmentNamespace,
+		featureID, environmentId,
 	)
 	if err != nil {
 		return 0, err
@@ -523,12 +523,12 @@ func (s *eventCounterService) getTotalUserCounts(
 
 func (s *eventCounterService) countUniqueUser(
 	userCountKeys []string,
-	featureID, environmentNamespace string,
+	featureID, environmentId string,
 ) (count float64, err multiError) {
 	key := newPFMergeKey(
 		UserCountPrefix,
 		featureID,
-		environmentNamespace,
+		environmentId,
 	)
 	// We need to count the number of unique users in the target term.
 	if e := s.evaluationCountCacher.MergeMultiKeys(key, userCountKeys); e != nil {
@@ -551,7 +551,7 @@ func (s *eventCounterService) countUniqueUser(
 
 func (*eventCounterService) getEventCountKeys(
 	hourlyTimeStamps [][]int64,
-	environmentNamespace string,
+	environmentId string,
 	featureID string,
 	vID string,
 ) [][]string {
@@ -559,7 +559,7 @@ func (*eventCounterService) getEventCountKeys(
 	for _, twentyFourHours := range hourlyTimeStamps {
 		ecHourlyKeys := make([]string, 0, len(twentyFourHours))
 		for _, hour := range twentyFourHours {
-			ec := newEvaluationCountkey(EventCountPrefix, featureID, vID, environmentNamespace, hour)
+			ec := newEvaluationCountkey(EventCountPrefix, featureID, vID, environmentId, hour)
 			ecHourlyKeys = append(ecHourlyKeys, ec)
 		}
 		eventCountKeys = append(eventCountKeys, ecHourlyKeys)
@@ -569,7 +569,7 @@ func (*eventCounterService) getEventCountKeys(
 
 func (*eventCounterService) getUserCountKeys(
 	hourlyTimeStamps [][]int64,
-	environmentNamespace string,
+	environmentId string,
 	featureID string,
 	vID string,
 ) [][]string {
@@ -577,7 +577,7 @@ func (*eventCounterService) getUserCountKeys(
 	for _, twentyFourHours := range hourlyTimeStamps {
 		ucHourlyKeys := make([]string, 0, len(twentyFourHours))
 		for _, hour := range twentyFourHours {
-			uc := newEvaluationCountkey(UserCountPrefix, featureID, vID, environmentNamespace, hour)
+			uc := newEvaluationCountkey(UserCountPrefix, featureID, vID, environmentId, hour)
 			ucHourlyKeys = append(ucHourlyKeys, uc)
 		}
 		userCountKeys = append(userCountKeys, ucHourlyKeys)
@@ -588,7 +588,7 @@ func (*eventCounterService) getUserCountKeys(
 func (s *eventCounterService) logCountError(
 	ctx context.Context,
 	err error,
-	msg, environmentNamespace, featureID, vID string,
+	msg, environmentId, featureID, vID string,
 	featureVersion int32,
 	unit ecproto.Timeseries_Unit,
 	timeRange ecproto.GetEvaluationTimeseriesCountRequest_TimeRange,
@@ -597,7 +597,7 @@ func (s *eventCounterService) logCountError(
 		msg,
 		log.FieldsFromImcomingContext(ctx).AddFields(
 			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 			zap.String("unit", unit.String()),
 			zap.String("timeRange", timeRange.String()),
 			zap.String("featureId", featureID),
@@ -608,12 +608,12 @@ func (s *eventCounterService) logCountError(
 }
 
 func newPFMergeKey(
-	kind, featureID, environmentNamespace string,
+	kind, featureID, environmentId string,
 ) string {
 	return cache.MakeKey(
 		kind,
 		fmt.Sprintf("%s:%s", pfMergeKey, featureID),
-		environmentNamespace,
+		environmentId,
 	)
 }
 
@@ -630,13 +630,13 @@ func getStartTime(loc *time.Location, endAt time.Time, durationDays int) time.Ti
 }
 
 func newEvaluationCountkey(
-	kind, featureID, variationID, environmentNamespace string,
+	kind, featureID, variationID, environmentId string,
 	ts int64,
 ) string {
 	return cache.MakeKey(
 		kind,
 		fmt.Sprintf("%d:%s:%s", ts, featureID, variationID),
-		environmentNamespace,
+		environmentId,
 	)
 }
 
@@ -724,7 +724,7 @@ func (s *eventCounterService) GetExperimentResult(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -738,7 +738,7 @@ func (s *eventCounterService) GetExperimentResult(
 		}
 		return nil, dt.Err()
 	}
-	result, err := s.mysqlExperimentResultStorage.GetExperimentResult(ctx, req.ExperimentId, req.EnvironmentNamespace)
+	result, err := s.mysqlExperimentResultStorage.GetExperimentResult(ctx, req.ExperimentId, req.EnvironmentId)
 	if err != nil {
 		if err == v2ecstorage.ErrExperimentResultNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -754,7 +754,7 @@ func (s *eventCounterService) GetExperimentResult(
 			"Failed to get experiment result",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.String("experimentId", req.ExperimentId),
 			)...,
 		)
@@ -779,7 +779,7 @@ func (s *eventCounterService) ListExperimentResults(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -793,7 +793,7 @@ func (s *eventCounterService) ListExperimentResults(
 		}
 		return nil, dt.Err()
 	}
-	experiments, err := s.listExperiments(ctx, req.FeatureId, req.FeatureVersion, req.EnvironmentNamespace)
+	experiments, err := s.listExperiments(ctx, req.FeatureId, req.FeatureVersion, req.EnvironmentId)
 	if err != nil {
 		if err == storage.ErrKeyNotFound {
 			listExperimentCountsCounter.WithLabelValues(codeSuccess).Inc()
@@ -810,7 +810,7 @@ func (s *eventCounterService) ListExperimentResults(
 			"Failed to get Experiment list",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.String("featureID", req.FeatureId),
 				zap.Int32("featureVersion", req.FeatureVersion.Value),
 			)...,
@@ -827,7 +827,7 @@ func (s *eventCounterService) ListExperimentResults(
 	}
 	results := make(map[string]*ecproto.ExperimentResult, len(experiments))
 	for _, e := range experiments {
-		er, err := s.getExperimentResultMySQL(ctx, e.Id, req.EnvironmentNamespace)
+		er, err := s.getExperimentResultMySQL(ctx, e.Id, req.EnvironmentId)
 		if err != nil {
 			if err == v2ecstorage.ErrExperimentResultNotFound {
 				getExperimentCountsCounter.WithLabelValues(codeSuccess).Inc()
@@ -836,7 +836,7 @@ func (s *eventCounterService) ListExperimentResults(
 					"Failed to get Experiment result",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.Error(err),
-						zap.String("environmentNamespace", req.EnvironmentNamespace),
+						zap.String("environmentId", req.EnvironmentId),
 						zap.String("experimentID", e.Id),
 					)...,
 				)
@@ -855,17 +855,17 @@ func (s *eventCounterService) listExperiments(
 	ctx context.Context,
 	featureID string,
 	featureVersion *wrappers.Int32Value,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*experimentproto.Experiment, error) {
 	experiments := []*experimentproto.Experiment{}
 	cursor := ""
 	for {
 		resp, err := s.experimentClient.ListExperiments(ctx, &experimentproto.ListExperimentsRequest{
-			FeatureId:            featureID,
-			FeatureVersion:       featureVersion,
-			PageSize:             listRequestPageSize,
-			Cursor:               cursor,
-			EnvironmentNamespace: environmentNamespace,
+			FeatureId:      featureID,
+			FeatureVersion: featureVersion,
+			PageSize:       listRequestPageSize,
+			Cursor:         cursor,
+			EnvironmentId:  environmentId,
 		})
 		if err != nil {
 			return nil, err
@@ -886,7 +886,7 @@ func (s *eventCounterService) GetExperimentGoalCount(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -897,7 +897,7 @@ func (s *eventCounterService) GetExperimentGoalCount(
 	endAt := time.Unix(req.EndAt, 0)
 	goalCounts, err := s.eventStorage.QueryGoalCount(
 		ctx,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		startAt,
 		endAt,
 		req.GoalId,
@@ -909,7 +909,7 @@ func (s *eventCounterService) GetExperimentGoalCount(
 			"Failed to query experiment goal counts",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.Time("startAt", startAt),
 				zap.Time("endAt", endAt),
 				zap.String("featureId", req.FeatureId),
@@ -1025,7 +1025,7 @@ func (s *eventCounterService) GetMAUCount(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1039,13 +1039,13 @@ func (s *eventCounterService) GetMAUCount(
 		}
 		return nil, dt.Err()
 	}
-	userCount, eventCount, err := s.userCountStorage.GetMAUCount(ctx, req.EnvironmentNamespace, req.YearMonth)
+	userCount, eventCount, err := s.userCountStorage.GetMAUCount(ctx, req.EnvironmentId, req.YearMonth)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get the mau count",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.String("yearMonth", req.YearMonth),
 			)...,
 		)
@@ -1146,9 +1146,9 @@ func (s *eventCounterService) SummarizeMAUCounts(
 
 func (s *eventCounterService) getExperimentResultMySQL(
 	ctx context.Context,
-	id, environmentNamespace string,
+	id, environmentId string,
 ) (*ecproto.ExperimentResult, error) {
-	result, err := s.mysqlExperimentResultStorage.GetExperimentResult(ctx, id, environmentNamespace)
+	result, err := s.mysqlExperimentResultStorage.GetExperimentResult(ctx, id, environmentId)
 	if err != nil {
 		if err == v2ecstorage.ErrExperimentResultNotFound {
 			return nil, err
@@ -1157,7 +1157,7 @@ func (s *eventCounterService) getExperimentResultMySQL(
 			"Failed to get experiment count",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		return nil, err
@@ -1172,7 +1172,7 @@ func (s *eventCounterService) GetOpsEvaluationUserCount(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1186,7 +1186,7 @@ func (s *eventCounterService) GetOpsEvaluationUserCount(
 		req.FeatureId,
 		int(req.FeatureVersion),
 		req.VariationId,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 	)
 	userCount, err := s.evaluationCountCacher.GetUserCount(cacheKey)
 	if err != nil {
@@ -1194,7 +1194,7 @@ func (s *eventCounterService) GetOpsEvaluationUserCount(
 			"Failed to get ops evaluation user count",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.String("opsRuleId", req.OpsRuleId),
 				zap.String("clauseId", req.ClauseId),
 				zap.String("featureId", req.FeatureId),
@@ -1278,12 +1278,12 @@ func validateGetOpsEvaluationUserCountRequest(
 func newOpsEvaluationUserCountKey(
 	kind, opsRuleID, clauseID, featureID string,
 	featureVersion int,
-	variationID, environmentNamespace string,
+	variationID, environmentId string,
 ) string {
 	return cache.MakeKey(
 		kind,
 		fmt.Sprintf("%s:%d:%s:%s:%s", featureID, featureVersion, opsRuleID, clauseID, variationID),
-		environmentNamespace,
+		environmentId,
 	)
 }
 
@@ -1294,7 +1294,7 @@ func (s *eventCounterService) GetOpsGoalUserCount(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1308,7 +1308,7 @@ func (s *eventCounterService) GetOpsGoalUserCount(
 		req.FeatureId,
 		int(req.FeatureVersion),
 		req.VariationId,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 	)
 	userCount, err := s.evaluationCountCacher.GetUserCount(cacheKey)
 	if err != nil {
@@ -1316,7 +1316,7 @@ func (s *eventCounterService) GetOpsGoalUserCount(
 			"Failed to get ops goal user count",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.String("opsRuleId", req.OpsRuleId),
 				zap.String("clauseId", req.ClauseId),
 				zap.String("featureId", req.FeatureId),
@@ -1400,29 +1400,29 @@ func validateGetOpsGoalUserCountRequest(
 func newOpsGoalUserCountKey(
 	kind, opsRuleID, clauseID, featureID string,
 	featureVersion int,
-	variationID, environmentNamespace string,
+	variationID, environmentId string,
 ) string {
 	return cache.MakeKey(
 		kind,
 		fmt.Sprintf("%s:%d:%s:%s:%s", featureID, featureVersion, opsRuleID, clauseID, variationID),
-		environmentNamespace,
+		environmentId,
 	)
 }
 
 func (s *eventCounterService) checkEnvironmentRole(
 	ctx context.Context,
 	requiredRole accountproto.AccountV2_Role_Environment,
-	environmentNamespace string,
+	environmentId string,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckEnvironmentRole(
 		ctx,
 		requiredRole,
-		environmentNamespace,
+		environmentId,
 		func(email string) (*accountproto.AccountV2, error) {
 			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
 				Email:         email,
-				EnvironmentId: environmentNamespace,
+				EnvironmentId: environmentId,
 			})
 			if err != nil {
 				return nil, err
@@ -1436,7 +1436,7 @@ func (s *eventCounterService) checkEnvironmentRole(
 				"Unauthenticated",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
@@ -1452,7 +1452,7 @@ func (s *eventCounterService) checkEnvironmentRole(
 				"Permission denied",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
@@ -1468,7 +1468,7 @@ func (s *eventCounterService) checkEnvironmentRole(
 				"Failed to check role",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{

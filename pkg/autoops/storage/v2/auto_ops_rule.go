@@ -44,9 +44,9 @@ var (
 )
 
 type AutoOpsRuleStorage interface {
-	CreateAutoOpsRule(ctx context.Context, e *domain.AutoOpsRule, environmentNamespace string) error
-	UpdateAutoOpsRule(ctx context.Context, e *domain.AutoOpsRule, environmentNamespace string) error
-	GetAutoOpsRule(ctx context.Context, id, environmentNamespace string) (*domain.AutoOpsRule, error)
+	CreateAutoOpsRule(ctx context.Context, e *domain.AutoOpsRule, environmentId string) error
+	UpdateAutoOpsRule(ctx context.Context, e *domain.AutoOpsRule, environmentId string) error
+	GetAutoOpsRule(ctx context.Context, id, environmentId string) (*domain.AutoOpsRule, error)
 	ListAutoOpsRules(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
@@ -66,7 +66,7 @@ func NewAutoOpsRuleStorage(qe mysql.QueryExecer) AutoOpsRuleStorage {
 func (s *autoOpsRuleStorage) CreateAutoOpsRule(
 	ctx context.Context,
 	e *domain.AutoOpsRule,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	_, err := s.qe.ExecContext(
 		ctx,
@@ -79,7 +79,7 @@ func (s *autoOpsRuleStorage) CreateAutoOpsRule(
 		e.UpdatedAt,
 		e.Deleted,
 		int32(e.AutoOpsStatus),
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		if err == mysql.ErrDuplicateEntry {
@@ -93,7 +93,7 @@ func (s *autoOpsRuleStorage) CreateAutoOpsRule(
 func (s *autoOpsRuleStorage) UpdateAutoOpsRule(
 	ctx context.Context,
 	e *domain.AutoOpsRule,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	result, err := s.qe.ExecContext(
 		ctx,
@@ -106,7 +106,7 @@ func (s *autoOpsRuleStorage) UpdateAutoOpsRule(
 		e.Deleted,
 		int32(e.AutoOpsStatus),
 		e.Id,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		return err
@@ -123,7 +123,7 @@ func (s *autoOpsRuleStorage) UpdateAutoOpsRule(
 
 func (s *autoOpsRuleStorage) GetAutoOpsRule(
 	ctx context.Context,
-	id, environmentNamespace string,
+	id, environmentId string,
 ) (*domain.AutoOpsRule, error) {
 	autoOpsRule := proto.AutoOpsRule{}
 	var opsType int32
@@ -131,7 +131,7 @@ func (s *autoOpsRuleStorage) GetAutoOpsRule(
 		ctx,
 		selectAutoOpsRuleSQL,
 		id,
-		environmentNamespace,
+		environmentId,
 	).Scan(
 		&autoOpsRule.Id,
 		&autoOpsRule.FeatureId,

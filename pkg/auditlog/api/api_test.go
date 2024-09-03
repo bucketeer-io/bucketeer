@@ -79,7 +79,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			service:  newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
 			context:  createContextWithToken(t, true),
 			setup:    nil,
-			input:    &proto.ListAuditLogsRequest{Cursor: "XXX", EnvironmentNamespace: "ns0"},
+			input:    &proto.ListAuditLogsRequest{Cursor: "XXX", EnvironmentId: "ns0", EnvironmentId: "ns0"},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"), localizer)
@@ -94,7 +94,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("test"))
 			},
-			input:    &proto.ListAuditLogsRequest{EnvironmentNamespace: "ns0"},
+			input:    &proto.ListAuditLogsRequest{EnvironmentId: "ns0", EnvironmentId: "ns0"},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(statusInternal, localizer.MustLocalize(locale.InternalServerError), localizer)
@@ -105,7 +105,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 			service:  newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			context:  createContextWithToken(t, false),
 			setup:    func(s *auditlogService) {},
-			input:    &proto.ListAuditLogsRequest{PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0"},
+			input:    &proto.ListAuditLogsRequest{PageSize: 2, Cursor: "", EnvironmentId: "ns0", EnvironmentId: "ns0"},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
@@ -120,7 +120,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
 			},
-			input:    &proto.ListAuditLogsRequest{PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0"},
+			input:    &proto.ListAuditLogsRequest{PageSize: 2, Cursor: "", EnvironmentId: "ns0", EnvironmentId: "ns0"},
 			expected: &proto.ListAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: 10},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
@@ -135,7 +135,7 @@ func TestListAuditLogsMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(createAuditLogs(t), 2, int64(10), nil)
 			},
-			input:    &proto.ListAuditLogsRequest{PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0"},
+			input:    &proto.ListAuditLogsRequest{PageSize: 2, Cursor: "", EnvironmentId: "ns0", EnvironmentId: "ns0"},
 			expected: &proto.ListAuditLogsResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: 10},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
@@ -259,7 +259,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 			service:  newAuditLogServiceWithGetAccountByEnvironmentMock(t, mockController, accountproto.AccountV2_Role_Organization_OWNER, accountproto.AccountV2_Role_Environment_EDITOR),
 			context:  createContextWithToken(t, false),
 			setup:    nil,
-			input:    &proto.ListFeatureHistoryRequest{Cursor: "XXX", EnvironmentNamespace: "ns0"},
+			input:    &proto.ListFeatureHistoryRequest{Cursor: "XXX", EnvironmentId: "ns0", EnvironmentId: "ns0"},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(localizer, statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"))
@@ -274,7 +274,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("test"))
 			},
-			input:    &proto.ListFeatureHistoryRequest{EnvironmentNamespace: "ns0"},
+			input:    &proto.ListFeatureHistoryRequest{EnvironmentId: "ns0", EnvironmentId: "ns0"},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(localizer, statusInternal, localizer.MustLocalize(locale.InternalServerError))
@@ -286,7 +286,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 			context: createContextWithTokenRoleUnassigned(t),
 			setup:   func(s *auditlogService) {},
 			input: &proto.ListFeatureHistoryRequest{
-				FeatureId: "fid-1", PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0",
+				FeatureId: "fid-1", PageSize: 2, Cursor: "", EnvironmentId: "ns0", EnvironmentId: "ns0",
 			},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
@@ -303,7 +303,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 				).Return(createAuditLogs(t), 2, int64(10), nil)
 			},
 			input: &proto.ListFeatureHistoryRequest{
-				FeatureId: "fid-1", PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0",
+				FeatureId: "fid-1", PageSize: 2, Cursor: "", EnvironmentId: "ns0", EnvironmentId: "ns0",
 			},
 			expected: &proto.ListFeatureHistoryResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: int64(10)},
 			getExpectedErr: func(localizer locale.Localizer) error {
@@ -320,7 +320,7 @@ func TestListFeatureHistoryMySQL(t *testing.T) {
 				).Return(createAuditLogs(t), 2, int64(10), nil)
 			},
 			input: &proto.ListFeatureHistoryRequest{
-				FeatureId: "fid-1", PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0",
+				FeatureId: "fid-1", PageSize: 2, Cursor: "", EnvironmentId: "ns0", EnvironmentId: "ns0",
 			},
 			expected: &proto.ListFeatureHistoryResponse{AuditLogs: createAuditLogs(t), Cursor: "2", TotalCount: int64(10)},
 			getExpectedErr: func(localizer locale.Localizer) error {

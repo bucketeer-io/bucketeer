@@ -42,16 +42,16 @@ func (m *MockExperimentResultStorage) EXPECT() *MockExperimentResultStorageMockR
 }
 
 // GetExperimentResult mocks base method.
-func (m *MockExperimentResultStorage) GetExperimentResult(ctx context.Context, id, environmentNamespace string) (*domain.ExperimentResult, error) {
+func (m *MockExperimentResultStorage) GetExperimentResult(ctx context.Context, id, environmentId string) (*domain.ExperimentResult, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetExperimentResult", ctx, id, environmentNamespace)
+	ret := m.ctrl.Call(m, "GetExperimentResult", ctx, id, environmentId)
 	ret0, _ := ret[0].(*domain.ExperimentResult)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetExperimentResult indicates an expected call of GetExperimentResult.
-func (mr *MockExperimentResultStorageMockRecorder) GetExperimentResult(ctx, id, environmentNamespace any) *gomock.Call {
+func (mr *MockExperimentResultStorageMockRecorder) GetExperimentResult(ctx, id, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExperimentResult", reflect.TypeOf((*MockExperimentResultStorage)(nil).GetExperimentResult), ctx, id, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExperimentResult", reflect.TypeOf((*MockExperimentResultStorage)(nil).GetExperimentResult), ctx, id, environmentId)
 }

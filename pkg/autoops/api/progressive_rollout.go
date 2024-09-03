@@ -50,7 +50,7 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 			editor,
 			progressiveRollout,
 			s.publisher,
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 		)
 		if err != nil {
 			return err
@@ -96,7 +96,7 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return storage.CreateProgressiveRollout(ctx, progressiveRollout, req.EnvironmentNamespace)
+		return storage.CreateProgressiveRollout(ctx, progressiveRollout, req.EnvironmentId)
 	})
 	if err != nil {
 		switch err {
@@ -114,7 +114,7 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 			"Failed to create ProgressiveRollout",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -136,7 +136,7 @@ func (s *AutoOpsService) GetProgressiveRollout(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -144,14 +144,14 @@ func (s *AutoOpsService) GetProgressiveRollout(
 		return nil, err
 	}
 	storage := v2as.NewProgressiveRolloutStorage(s.mysqlClient)
-	progressiveRollout, err := storage.GetProgressiveRollout(ctx, req.Id, req.EnvironmentNamespace)
+	progressiveRollout, err := storage.GetProgressiveRollout(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get progressive rollout",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		if err == v2as.ErrProgressiveRolloutNotFound {
@@ -185,7 +185,7 @@ func (s *AutoOpsService) StopProgressiveRollout(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +195,7 @@ func (s *AutoOpsService) StopProgressiveRollout(
 	err = s.updateProgressiveRollout(
 		ctx,
 		req.Id,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		req.Command,
 		editor,
 		localizer,
@@ -208,7 +208,7 @@ func (s *AutoOpsService) StopProgressiveRollout(
 
 func (s *AutoOpsService) updateProgressiveRollout(
 	ctx context.Context,
-	progressiveRolloutID, environmentNamespace string,
+	progressiveRolloutID, environmentId string,
 	cmd command.Command,
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
@@ -232,7 +232,7 @@ func (s *AutoOpsService) updateProgressiveRollout(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		storage := v2as.NewProgressiveRolloutStorage(tx)
-		progressiveRollout, err := storage.GetProgressiveRollout(ctx, progressiveRolloutID, environmentNamespace)
+		progressiveRollout, err := storage.GetProgressiveRollout(ctx, progressiveRolloutID, environmentId)
 		if err != nil {
 			return err
 		}
@@ -240,7 +240,7 @@ func (s *AutoOpsService) updateProgressiveRollout(
 			editor,
 			progressiveRollout,
 			s.publisher,
-			environmentNamespace,
+			environmentId,
 		)
 		if err != nil {
 			return err
@@ -248,7 +248,7 @@ func (s *AutoOpsService) updateProgressiveRollout(
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
 		}
-		return storage.UpdateProgressiveRollout(ctx, progressiveRollout, environmentNamespace)
+		return storage.UpdateProgressiveRollout(ctx, progressiveRollout, environmentId)
 	})
 	if err != nil {
 		s.logger.Error(
@@ -256,7 +256,7 @@ func (s *AutoOpsService) updateProgressiveRollout(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", progressiveRolloutID),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		if err == v2as.ErrProgressiveRolloutNotFound || err == v2as.ErrProgressiveRolloutUnexpectedAffectedRows {
@@ -288,7 +288,7 @@ func (s *AutoOpsService) DeleteProgressiveRollout(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -314,7 +314,7 @@ func (s *AutoOpsService) DeleteProgressiveRollout(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		storage := v2as.NewProgressiveRolloutStorage(tx)
-		progressiveRollout, err := storage.GetProgressiveRollout(ctx, req.Id, req.EnvironmentNamespace)
+		progressiveRollout, err := storage.GetProgressiveRollout(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -322,7 +322,7 @@ func (s *AutoOpsService) DeleteProgressiveRollout(
 			editor,
 			progressiveRollout,
 			s.publisher,
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 		)
 		if err != nil {
 			return err
@@ -330,14 +330,14 @@ func (s *AutoOpsService) DeleteProgressiveRollout(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return storage.DeleteProgressiveRollout(ctx, req.Id, req.EnvironmentNamespace)
+		return storage.DeleteProgressiveRollout(ctx, req.Id, req.EnvironmentId)
 	})
 	if err != nil {
 		s.logger.Error(
 			"Failed to delete ProgressiveRollout",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		if err == v2as.ErrProgressiveRolloutNotFound || err == v2as.ErrProgressiveRolloutUnexpectedAffectedRows {
@@ -369,7 +369,7 @@ func (s *AutoOpsService) ListProgressiveRollouts(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -395,7 +395,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -422,12 +422,12 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 	var event *eventproto.Event
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		storage := v2as.NewProgressiveRolloutStorage(tx)
-		progressiveRollout, err := storage.GetProgressiveRollout(ctx, req.Id, req.EnvironmentNamespace)
+		progressiveRollout, err := storage.GetProgressiveRollout(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
 		ftStorage := ftstorage.NewFeatureStorage(tx)
-		feature, err := ftStorage.GetFeature(ctx, progressiveRollout.FeatureId, req.EnvironmentNamespace)
+		feature, err := ftStorage.GetFeature(ctx, progressiveRollout.FeatureId, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -436,7 +436,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 				"Progressive rollout is already stopped",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 					zap.String("id", progressiveRollout.Id),
 					zap.String("featureId", progressiveRollout.FeatureId),
 				)...,
@@ -456,7 +456,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("ruleID", req.ChangeProgressiveRolloutTriggeredAtCommand.ScheduleId),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return nil
@@ -470,7 +470,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 			editor,
 			progressiveRollout,
 			s.publisher,
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 		)
 		if err != nil {
 			return err
@@ -478,14 +478,13 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		if err := handler.Handle(ctx, req.ChangeProgressiveRolloutTriggeredAtCommand); err != nil {
 			return err
 		}
-		if err := storage.UpdateProgressiveRollout(ctx, progressiveRollout, req.EnvironmentNamespace); err != nil {
+		if err := storage.UpdateProgressiveRollout(ctx, progressiveRollout, req.EnvironmentId); err != nil {
 			return err
 		}
 		defaultStrategy, err := ExecuteProgressiveRolloutOperation(
 			progressiveRollout,
 			feature,
 			req.ChangeProgressiveRolloutTriggeredAtCommand.ScheduleId,
-			req.EnvironmentNamespace,
 		)
 		if err != nil {
 			return err
@@ -500,12 +499,12 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 		if err != nil {
 			return err
 		}
-		if err := ftStorage.UpdateFeature(ctx, updated, req.EnvironmentNamespace); err != nil {
+		if err := ftStorage.UpdateFeature(ctx, updated, req.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to update feature flag",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 					zap.String("id", progressiveRollout.Id),
 					zap.String("featureId", progressiveRollout.FeatureId),
 				)...,
@@ -520,7 +519,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 			&eventproto.FeatureUpdatedEvent{
 				Id: updated.Id,
 			},
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 			updated.Feature,
 			feature.Feature,
 			domainevent.WithComment("Progressive rollout executed"),
@@ -536,7 +535,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 			"Failed to execute progressiveRollout",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		if err == v2as.ErrProgressiveRolloutNotFound || err == v2as.ErrProgressiveRolloutUnexpectedAffectedRows {
@@ -564,7 +563,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 				"Failed to publish events",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Any("errors", errs),
-					zap.String("environmentId", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -611,7 +610,7 @@ func (s *AutoOpsService) listProgressiveRollouts(
 	localizer locale.Localizer,
 ) ([]*autoopsproto.ProgressiveRollout, int64, int, error) {
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
 	limit := int(req.PageSize)
 	cursor := req.Cursor
@@ -643,7 +642,7 @@ func (s *AutoOpsService) listProgressiveRollouts(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, 0, 0, err
@@ -667,7 +666,7 @@ func (s *AutoOpsService) listProgressiveRollouts(
 			"Failed to list progressive rollouts",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -913,8 +912,8 @@ func (s *AutoOpsService) getFeature(
 	localizer locale.Localizer,
 ) (*featureproto.Feature, error) {
 	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
-		EnvironmentNamespace: req.EnvironmentNamespace,
-		Id:                   req.Command.FeatureId,
+		EnvironmentId: req.EnvironmentId,
+		Id:            req.Command.FeatureId,
 	})
 	if err != nil {
 		return nil, err
