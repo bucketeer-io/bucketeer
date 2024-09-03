@@ -84,7 +84,7 @@ func (s *auditLogStorage) CreateAuditLogs(ctx context.Context, auditLogs []*doma
 			mysql.JSONObject{Val: al.Options},
 			al.EntityData,
 			al.PreviousEntityData,
-			al.EnvironmentID,
+			al.EnvironmentId,
 		)
 	}
 	_, err := s.qe.ExecContext(ctx, query.String(), args...)
