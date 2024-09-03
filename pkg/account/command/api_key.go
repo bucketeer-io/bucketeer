@@ -32,7 +32,6 @@ type apiKeyCommandHandler struct {
 	apiKey         *domain.APIKey
 	previousAPIKey *domain.APIKey
 	publisher      publisher.Publisher
-	environmentId  string
 	environmentID  string
 }
 
