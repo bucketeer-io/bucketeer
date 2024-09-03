@@ -21,10 +21,10 @@ import (
 
 type AuditLog struct {
 	*proto.AuditLog
-	EnvironmentID string
+	EnvironmentId string
 }
 
-func NewAuditLog(event *domainevent.Event, environmentID string) *AuditLog {
+func NewAuditLog(event *domainevent.Event, environmentId string) *AuditLog {
 	return &AuditLog{
 		AuditLog: &proto.AuditLog{
 			Id:                 event.Id,
@@ -38,6 +38,6 @@ func NewAuditLog(event *domainevent.Event, environmentID string) *AuditLog {
 			PreviousEntityData: event.PreviousEntityData,
 			Options:            event.Options,
 		},
-		EnvironmentID: environmentID,
+		EnvironmentId: environmentId,
 	}
 }

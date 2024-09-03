@@ -48,5 +48,5 @@ func TestNewAuditLog(t *testing.T) {
 	assert.Equal(t, "entityData", actual.EntityData)
 	assert.Equal(t, "previousEntityData", actual.PreviousEntityData)
 	assert.Equal(t, &domainevent.Options{Comment: "comment"}, actual.Options)
-	assert.Equal(t, "en", actual.EnvironmentID)
+	assert.Equal(t, "en", actual.EnvironmentId)
 }
