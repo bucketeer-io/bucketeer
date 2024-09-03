@@ -653,10 +653,6 @@ func TestUpdateSearchFilter(t *testing.T) {
 						},
 					},
 				}, nil).AnyTimes()
-
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(),
-				).Return(nil)
 			},
 			req: &accountproto.UpdateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
