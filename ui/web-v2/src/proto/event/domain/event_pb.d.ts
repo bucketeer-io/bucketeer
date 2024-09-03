@@ -20,6 +20,7 @@ import * as proto_notification_recipient_pb from '../../../proto/notification/re
 import * as proto_feature_prerequisite_pb from '../../../proto/feature/prerequisite_pb';
 import * as proto_autoops_progressive_rollout_pb from '../../../proto/autoops/progressive_rollout_pb';
 import * as proto_feature_flag_trigger_pb from '../../../proto/feature/flag_trigger_pb';
+import * as proto_account_search_filter_pb from '../../../proto/account/search_filter_pb';
 
 export class Event extends jspb.Message {
   getId(): string;
@@ -189,8 +190,9 @@ export namespace Event {
     ACCOUNT_V2_DISABLED: 311;
     ACCOUNT_V2_DELETED: 312;
     ACCOUNT_V2_CREATED_SEARCH_FILTER: 313;
-    ACCOUNT_V2_UPDATED_SEARCH_FILTER: 314;
-    ACCOUNT_V2_DELETED_SEARCH_FILTER: 315;
+    ACCOUNT_V2_SEARCH_FILTER_NANE_CHANGED: 314;
+    ACCOUNT_V2_SEARCH_FILTER_QUERY_CHANGED: 315;
+    ACCOUNT_V2_SEARCH_FILTER_DEFAULT_CHANGED: 316;
     APIKEY_CREATED: 400;
     APIKEY_NAME_CHANGED: 401;
     APIKEY_ENABLED: 402;
@@ -2799,7 +2801,56 @@ export namespace AccountV2DeletedEvent {
   };
 }
 
-export class SearchFilterCreateEvent extends jspb.Message {
+export class SearchFilterCreatedEvent extends jspb.Message {
+  getName(): string;
+  setName(value: string): void;
+
+  getQuery(): string;
+  setQuery(value: string): void;
+
+  getTargettype(): proto_account_search_filter_pb.FilterTargetTypeMap[keyof proto_account_search_filter_pb.FilterTargetTypeMap];
+  setTargettype(
+    value: proto_account_search_filter_pb.FilterTargetTypeMap[keyof proto_account_search_filter_pb.FilterTargetTypeMap]
+  ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  getDefaultFilter(): boolean;
+  setDefaultFilter(value: boolean): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SearchFilterCreatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: SearchFilterCreatedEvent
+  ): SearchFilterCreatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: SearchFilterCreatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): SearchFilterCreatedEvent;
+  static deserializeBinaryFromReader(
+    message: SearchFilterCreatedEvent,
+    reader: jspb.BinaryReader
+  ): SearchFilterCreatedEvent;
+}
+
+export namespace SearchFilterCreatedEvent {
+  export type AsObject = {
+    name: string;
+    query: string;
+    targettype: proto_account_search_filter_pb.FilterTargetTypeMap[keyof proto_account_search_filter_pb.FilterTargetTypeMap];
+    environmentId: string;
+    defaultFilter: boolean;
+  };
+}
+
+export class SearchFilterNameChangedEvent extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
@@ -2807,96 +2858,100 @@ export class SearchFilterCreateEvent extends jspb.Message {
   setName(value: string): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): SearchFilterCreateEvent.AsObject;
+  toObject(includeInstance?: boolean): SearchFilterNameChangedEvent.AsObject;
   static toObject(
     includeInstance: boolean,
-    msg: SearchFilterCreateEvent
-  ): SearchFilterCreateEvent.AsObject;
+    msg: SearchFilterNameChangedEvent
+  ): SearchFilterNameChangedEvent.AsObject;
   static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
   static extensionsBinary: {
     [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
   };
   static serializeBinaryToWriter(
-    message: SearchFilterCreateEvent,
+    message: SearchFilterNameChangedEvent,
     writer: jspb.BinaryWriter
   ): void;
-  static deserializeBinary(bytes: Uint8Array): SearchFilterCreateEvent;
+  static deserializeBinary(bytes: Uint8Array): SearchFilterNameChangedEvent;
   static deserializeBinaryFromReader(
-    message: SearchFilterCreateEvent,
+    message: SearchFilterNameChangedEvent,
     reader: jspb.BinaryReader
-  ): SearchFilterCreateEvent;
+  ): SearchFilterNameChangedEvent;
 }
 
-export namespace SearchFilterCreateEvent {
+export namespace SearchFilterNameChangedEvent {
   export type AsObject = {
     id: string;
     name: string;
   };
 }
 
-export class SearchFilterUpdateEvent extends jspb.Message {
+export class SearchFilterQueryChangedEvent extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  getName(): string;
-  setName(value: string): void;
+  getQuery(): string;
+  setQuery(value: string): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): SearchFilterUpdateEvent.AsObject;
+  toObject(includeInstance?: boolean): SearchFilterQueryChangedEvent.AsObject;
   static toObject(
     includeInstance: boolean,
-    msg: SearchFilterUpdateEvent
-  ): SearchFilterUpdateEvent.AsObject;
+    msg: SearchFilterQueryChangedEvent
+  ): SearchFilterQueryChangedEvent.AsObject;
   static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
   static extensionsBinary: {
     [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
   };
   static serializeBinaryToWriter(
-    message: SearchFilterUpdateEvent,
+    message: SearchFilterQueryChangedEvent,
     writer: jspb.BinaryWriter
   ): void;
-  static deserializeBinary(bytes: Uint8Array): SearchFilterUpdateEvent;
+  static deserializeBinary(bytes: Uint8Array): SearchFilterQueryChangedEvent;
   static deserializeBinaryFromReader(
-    message: SearchFilterUpdateEvent,
+    message: SearchFilterQueryChangedEvent,
     reader: jspb.BinaryReader
-  ): SearchFilterUpdateEvent;
+  ): SearchFilterQueryChangedEvent;
 }
 
-export namespace SearchFilterUpdateEvent {
+export namespace SearchFilterQueryChangedEvent {
   export type AsObject = {
     id: string;
-    name: string;
+    query: string;
   };
 }
 
-export class SearchFilterDeleteEvent extends jspb.Message {
+export class SearchFilterDefaultChangedEvent extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
+  getDefaultFilter(): boolean;
+  setDefaultFilter(value: boolean): void;
+
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): SearchFilterDeleteEvent.AsObject;
+  toObject(includeInstance?: boolean): SearchFilterDefaultChangedEvent.AsObject;
   static toObject(
     includeInstance: boolean,
-    msg: SearchFilterDeleteEvent
-  ): SearchFilterDeleteEvent.AsObject;
+    msg: SearchFilterDefaultChangedEvent
+  ): SearchFilterDefaultChangedEvent.AsObject;
   static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
   static extensionsBinary: {
     [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
   };
   static serializeBinaryToWriter(
-    message: SearchFilterDeleteEvent,
+    message: SearchFilterDefaultChangedEvent,
     writer: jspb.BinaryWriter
   ): void;
-  static deserializeBinary(bytes: Uint8Array): SearchFilterDeleteEvent;
+  static deserializeBinary(bytes: Uint8Array): SearchFilterDefaultChangedEvent;
   static deserializeBinaryFromReader(
-    message: SearchFilterDeleteEvent,
+    message: SearchFilterDefaultChangedEvent,
     reader: jspb.BinaryReader
-  ): SearchFilterDeleteEvent;
+  ): SearchFilterDefaultChangedEvent;
 }
 
-export namespace SearchFilterDeleteEvent {
+export namespace SearchFilterDefaultChangedEvent {
   export type AsObject = {
     id: string;
+    defaultFilter: boolean;
   };
 }
 
@@ -4555,9 +4610,6 @@ export class PushCreatedEvent extends jspb.Message {
   getFcmServiceAccount(): string;
   setFcmServiceAccount(value: string): void;
 
-  getFcmApiKey(): string;
-  setFcmApiKey(value: string): void;
-
   clearTagsList(): void;
   getTagsList(): Array<string>;
   setTagsList(value: Array<string>): void;
@@ -4590,7 +4642,6 @@ export class PushCreatedEvent extends jspb.Message {
 export namespace PushCreatedEvent {
   export type AsObject = {
     fcmServiceAccount: string;
-    fcmApiKey: string;
     tagsList: Array<string>;
     name: string;
   };

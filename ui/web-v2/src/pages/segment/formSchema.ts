@@ -19,7 +19,7 @@ const fileSchema = yup
   .nullable()
   .test(
     'fileSize',
-    intl.formatMessage(messages.segment.fileUpload.fileMaxSize),
+    intl.formatMessage(messages.fileUpload.fileMaxSize),
     (value) => {
       return (
         !value ||
@@ -30,7 +30,7 @@ const fileSchema = yup
   )
   .test(
     'fileType',
-    intl.formatMessage(messages.segment.fileUpload.unsupportedType),
+    intl.formatMessage(messages.fileUpload.unsupportedType),
     (value) => {
       return (
         !value ||

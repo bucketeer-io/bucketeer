@@ -534,17 +534,7 @@ func validateCreateSearchFilterRequest(
 		}
 		return dt.Err()
 	}
-	if req.Command.SearchFilter == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "search_filter"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Command.SearchFilter.Name == "" {
+	if req.Command.Name == "" {
 		dt, err := statusSearchFilterNameIsEmpty.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
@@ -554,7 +544,7 @@ func validateCreateSearchFilterRequest(
 		}
 		return dt.Err()
 	}
-	if req.Command.SearchFilter.Query == "" {
+	if req.Command.Query == "" {
 		dt, err := statusSearchFilterQueryIsEmpty.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "query"),
@@ -564,8 +554,8 @@ func validateCreateSearchFilterRequest(
 		}
 		return dt.Err()
 	}
-	if req.Command.SearchFilter.FilterTargetType == accountproto.FilterTargetType_UNKNOWN {
-		dt, err := statusSearchFilterTargetTypeIsUnknown.WithDetails(&errdetails.LocalizedMessage{
+	if req.Command.FilterTargetType == accountproto.FilterTargetType_UNKNOWN {
+		dt, err := statusSearchFilterTargetTypeIsRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "filter_target_type"),
 		})
@@ -579,6 +569,7 @@ func validateCreateSearchFilterRequest(
 
 func validateUpdateSearchFilterRequest(
 	req *accountproto.UpdateSearchFilterRequest,
+	commands []command.Command,
 	localizer locale.Localizer,
 ) error {
 	if req.Email == "" {
@@ -601,7 +592,8 @@ func validateUpdateSearchFilterRequest(
 		}
 		return dt.Err()
 	}
-	if req.Command == nil {
+
+	if len(commands) == 0 {
 		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
@@ -611,50 +603,50 @@ func validateUpdateSearchFilterRequest(
 		}
 		return dt.Err()
 	}
-	if req.Command.SearchFilter == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "search_filter"),
-		})
-		if err != nil {
-			return statusInternal.Err()
+	for _, cmd := range commands {
+		switch cmd := cmd.(type) {
+		case *accountproto.ChangeSearchFilterNameCommand:
+			if err := validateChangeSearchFilterId(cmd.Id, localizer); err != nil {
+				return err
+			}
+			if cmd.Name == "" {
+				dt, err := statusSearchFilterNameIsEmpty.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+				})
+				if err != nil {
+					return statusInternal.Err()
+				}
+				return dt.Err()
+			}
+		case *accountproto.ChangeSearchFilterQueryCommand:
+			if err := validateChangeSearchFilterId(cmd.Id, localizer); err != nil {
+				return err
+			}
+			if cmd.Query == "" {
+				dt, err := statusSearchFilterQueryIsEmpty.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "query"),
+				})
+				if err != nil {
+					return statusInternal.Err()
+				}
+				return dt.Err()
+			}
+		case *accountproto.ChangeDefaultSearchFilterCommand:
+			if err := validateChangeSearchFilterId(cmd.Id, localizer); err != nil {
+				return err
+			}
 		}
-		return dt.Err()
 	}
-	if req.Command.SearchFilter.Id == "" {
+	return nil
+}
+
+func validateChangeSearchFilterId(id string, localizer locale.Localizer) error {
+	if id == "" {
 		dt, err := statusSearchFilterIDIsEmpty.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Command.SearchFilter.Name == "" {
-		dt, err := statusSearchFilterNameIsEmpty.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Command.SearchFilter.Query == "" {
-		dt, err := statusSearchFilterQueryIsEmpty.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "query"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Command.SearchFilter.FilterTargetType == accountproto.FilterTargetType_UNKNOWN {
-		dt, err := statusSearchFilterTargetTypeIsUnknown.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "filter_target_type"),
 		})
 		if err != nil {
 			return statusInternal.Err()

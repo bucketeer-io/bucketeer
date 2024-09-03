@@ -73,7 +73,6 @@ func (h *pushCommandHandler) Handle(ctx context.Context, cmd Command) error {
 func (h *pushCommandHandler) create(ctx context.Context, cmd *proto.CreatePushCommand) error {
 	return h.send(ctx, eventproto.Event_PUSH_CREATED, &eventproto.PushCreatedEvent{
 		Name:              h.push.Name,
-		FcmApiKey:         h.push.FcmApiKey,
 		FcmServiceAccount: h.push.FcmServiceAccount,
 		Tags:              h.push.Tags,
 	})

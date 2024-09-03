@@ -655,7 +655,11 @@ type CreateSearchFilterCommand struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SearchFilter *SearchFilter `protobuf:"bytes,1,opt,name=search_filter,json=searchFilter,proto3" json:"search_filter"`
+	Name             string           `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
+	Query            string           `protobuf:"bytes,2,opt,name=query,proto3" json:"query"`
+	FilterTargetType FilterTargetType `protobuf:"varint,3,opt,name=filter_target_type,json=filterTargetType,proto3,enum=bucketeer.account.FilterTargetType" json:"filter_target_type"`
+	EnvironmentId    string           `protobuf:"bytes,4,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
+	DefaultFilter    bool             `protobuf:"varint,5,opt,name=default_filter,json=defaultFilter,proto3" json:"default_filter"`
 }
 
 func (x *CreateSearchFilterCommand) Reset() {
@@ -690,23 +694,52 @@ func (*CreateSearchFilterCommand) Descriptor() ([]byte, []int) {
 	return file_proto_account_command_proto_rawDescGZIP(), []int{12}
 }
 
-func (x *CreateSearchFilterCommand) GetSearchFilter() *SearchFilter {
+func (x *CreateSearchFilterCommand) GetName() string {
 	if x != nil {
-		return x.SearchFilter
+		return x.Name
 	}
-	return nil
+	return ""
 }
 
-type UpdateSearchFilterCommand struct {
+func (x *CreateSearchFilterCommand) GetQuery() string {
+	if x != nil {
+		return x.Query
+	}
+	return ""
+}
+
+func (x *CreateSearchFilterCommand) GetFilterTargetType() FilterTargetType {
+	if x != nil {
+		return x.FilterTargetType
+	}
+	return FilterTargetType_UNKNOWN
+}
+
+func (x *CreateSearchFilterCommand) GetEnvironmentId() string {
+	if x != nil {
+		return x.EnvironmentId
+	}
+	return ""
+}
+
+func (x *CreateSearchFilterCommand) GetDefaultFilter() bool {
+	if x != nil {
+		return x.DefaultFilter
+	}
+	return false
+}
+
+type ChangeSearchFilterNameCommand struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SearchFilter *SearchFilter `protobuf:"bytes,1,opt,name=search_filter,json=searchFilter,proto3" json:"search_filter"`
+	Id   string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
 }
 
-func (x *UpdateSearchFilterCommand) Reset() {
-	*x = UpdateSearchFilterCommand{}
+func (x *ChangeSearchFilterNameCommand) Reset() {
+	*x = ChangeSearchFilterNameCommand{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_proto_account_command_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -714,13 +747,13 @@ func (x *UpdateSearchFilterCommand) Reset() {
 	}
 }
 
-func (x *UpdateSearchFilterCommand) String() string {
+func (x *ChangeSearchFilterNameCommand) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UpdateSearchFilterCommand) ProtoMessage() {}
+func (*ChangeSearchFilterNameCommand) ProtoMessage() {}
 
-func (x *UpdateSearchFilterCommand) ProtoReflect() protoreflect.Message {
+func (x *ChangeSearchFilterNameCommand) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_account_command_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -732,28 +765,36 @@ func (x *UpdateSearchFilterCommand) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UpdateSearchFilterCommand.ProtoReflect.Descriptor instead.
-func (*UpdateSearchFilterCommand) Descriptor() ([]byte, []int) {
+// Deprecated: Use ChangeSearchFilterNameCommand.ProtoReflect.Descriptor instead.
+func (*ChangeSearchFilterNameCommand) Descriptor() ([]byte, []int) {
 	return file_proto_account_command_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *UpdateSearchFilterCommand) GetSearchFilter() *SearchFilter {
+func (x *ChangeSearchFilterNameCommand) GetId() string {
 	if x != nil {
-		return x.SearchFilter
+		return x.Id
 	}
-	return nil
+	return ""
 }
 
-type DeleteSearchFilterCommand struct {
+func (x *ChangeSearchFilterNameCommand) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type ChangeSearchFilterQueryCommand struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	SearchFilterId string `protobuf:"bytes,1,opt,name=search_filter_id,json=searchFilterId,proto3" json:"search_filter_id"`
+	Id    string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Query string `protobuf:"bytes,2,opt,name=query,proto3" json:"query"`
 }
 
-func (x *DeleteSearchFilterCommand) Reset() {
-	*x = DeleteSearchFilterCommand{}
+func (x *ChangeSearchFilterQueryCommand) Reset() {
+	*x = ChangeSearchFilterQueryCommand{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_proto_account_command_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -761,13 +802,13 @@ func (x *DeleteSearchFilterCommand) Reset() {
 	}
 }
 
-func (x *DeleteSearchFilterCommand) String() string {
+func (x *ChangeSearchFilterQueryCommand) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteSearchFilterCommand) ProtoMessage() {}
+func (*ChangeSearchFilterQueryCommand) ProtoMessage() {}
 
-func (x *DeleteSearchFilterCommand) ProtoReflect() protoreflect.Message {
+func (x *ChangeSearchFilterQueryCommand) ProtoReflect() protoreflect.Message {
 	mi := &file_proto_account_command_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -779,16 +820,78 @@ func (x *DeleteSearchFilterCommand) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteSearchFilterCommand.ProtoReflect.Descriptor instead.
-func (*DeleteSearchFilterCommand) Descriptor() ([]byte, []int) {
+// Deprecated: Use ChangeSearchFilterQueryCommand.ProtoReflect.Descriptor instead.
+func (*ChangeSearchFilterQueryCommand) Descriptor() ([]byte, []int) {
 	return file_proto_account_command_proto_rawDescGZIP(), []int{14}
 }
 
-func (x *DeleteSearchFilterCommand) GetSearchFilterId() string {
+func (x *ChangeSearchFilterQueryCommand) GetId() string {
 	if x != nil {
-		return x.SearchFilterId
+		return x.Id
 	}
 	return ""
+}
+
+func (x *ChangeSearchFilterQueryCommand) GetQuery() string {
+	if x != nil {
+		return x.Query
+	}
+	return ""
+}
+
+type ChangeDefaultSearchFilterCommand struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	DefaultFilter bool   `protobuf:"varint,2,opt,name=default_filter,json=defaultFilter,proto3" json:"default_filter"`
+}
+
+func (x *ChangeDefaultSearchFilterCommand) Reset() {
+	*x = ChangeDefaultSearchFilterCommand{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_account_command_proto_msgTypes[15]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ChangeDefaultSearchFilterCommand) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeDefaultSearchFilterCommand) ProtoMessage() {}
+
+func (x *ChangeDefaultSearchFilterCommand) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_account_command_proto_msgTypes[15]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeDefaultSearchFilterCommand.ProtoReflect.Descriptor instead.
+func (*ChangeDefaultSearchFilterCommand) Descriptor() ([]byte, []int) {
+	return file_proto_account_command_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *ChangeDefaultSearchFilterCommand) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *ChangeDefaultSearchFilterCommand) GetDefaultFilter() bool {
+	if x != nil {
+		return x.DefaultFilter
+	}
+	return false
 }
 
 var File_proto_account_command_proto protoreflect.FileDescriptor
@@ -871,28 +974,40 @@ var file_proto_account_command_proto_rawDesc = []byte{
 	0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x15, 0x0a, 0x13, 0x45,
 	0x6e, 0x61, 0x62, 0x6c, 0x65, 0x41, 0x50, 0x49, 0x4b, 0x65, 0x79, 0x43, 0x6f, 0x6d, 0x6d, 0x61,
 	0x6e, 0x64, 0x22, 0x16, 0x0a, 0x14, 0x44, 0x69, 0x73, 0x61, 0x62, 0x6c, 0x65, 0x41, 0x50, 0x49,
-	0x4b, 0x65, 0x79, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x61, 0x0a, 0x19, 0x43, 0x72,
-	0x65, 0x61, 0x74, 0x65, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72,
-	0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x44, 0x0a, 0x0d, 0x73, 0x65, 0x61, 0x72, 0x63,
-	0x68, 0x5f, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1f,
+	0x4b, 0x65, 0x79, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0xe6, 0x01, 0x0a, 0x19, 0x43,
+	0x72, 0x65, 0x61, 0x74, 0x65, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74, 0x65,
+	0x72, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12, 0x14, 0x0a, 0x05,
+	0x71, 0x75, 0x65, 0x72, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x71, 0x75, 0x65,
+	0x72, 0x79, 0x12, 0x51, 0x0a, 0x12, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x5f, 0x74, 0x61, 0x72,
+	0x67, 0x65, 0x74, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x23,
 	0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75,
-	0x6e, 0x74, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x52,
-	0x0c, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x22, 0x61, 0x0a,
-	0x19, 0x55, 0x70, 0x64, 0x61, 0x74, 0x65, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c,
-	0x74, 0x65, 0x72, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x44, 0x0a, 0x0d, 0x73, 0x65,
-	0x61, 0x72, 0x63, 0x68, 0x5f, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x18, 0x01, 0x20, 0x01, 0x28,
-	0x0b, 0x32, 0x1f, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x63,
-	0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74,
-	0x65, 0x72, 0x52, 0x0c, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72,
-	0x22, 0x45, 0x0a, 0x19, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68,
-	0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x28, 0x0a,
-	0x10, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x5f, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x5f, 0x69,
-	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46,
-	0x69, 0x6c, 0x74, 0x65, 0x72, 0x49, 0x64, 0x42, 0x31, 0x5a, 0x2f, 0x67, 0x69, 0x74, 0x68, 0x75,
-	0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2d,
-	0x69, 0x6f, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x2f, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x33,
+	0x6e, 0x74, 0x2e, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x54, 0x61, 0x72, 0x67, 0x65, 0x74, 0x54,
+	0x79, 0x70, 0x65, 0x52, 0x10, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x54, 0x61, 0x72, 0x67, 0x65,
+	0x74, 0x54, 0x79, 0x70, 0x65, 0x12, 0x25, 0x0a, 0x0e, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e,
+	0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x65,
+	0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x25, 0x0a, 0x0e,
+	0x64, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x5f, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x18, 0x05,
+	0x20, 0x01, 0x28, 0x08, 0x52, 0x0d, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x46, 0x69, 0x6c,
+	0x74, 0x65, 0x72, 0x22, 0x43, 0x0a, 0x1d, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x53, 0x65, 0x61,
+	0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x4e, 0x61, 0x6d, 0x65, 0x43, 0x6f, 0x6d,
+	0x6d, 0x61, 0x6e, 0x64, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x02, 0x69, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x46, 0x0a, 0x1e, 0x43, 0x68, 0x61, 0x6e,
+	0x67, 0x65, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x51, 0x75,
+	0x65, 0x72, 0x79, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x02, 0x69, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x71, 0x75,
+	0x65, 0x72, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x71, 0x75, 0x65, 0x72, 0x79,
+	0x22, 0x59, 0x0a, 0x20, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x44, 0x65, 0x66, 0x61, 0x75, 0x6c,
+	0x74, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x43, 0x6f, 0x6d,
+	0x6d, 0x61, 0x6e, 0x64, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x02, 0x69, 0x64, 0x12, 0x25, 0x0a, 0x0e, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x5f,
+	0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0d, 0x64, 0x65,
+	0x66, 0x61, 0x75, 0x6c, 0x74, 0x46, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x42, 0x31, 0x5a, 0x2f, 0x67,
+	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
+	0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72,
+	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -908,7 +1023,7 @@ func file_proto_account_command_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_account_command_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_account_command_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_proto_account_command_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_proto_account_command_proto_goTypes = []interface{}{
 	(ChangeAccountV2EnvironmentRolesCommand_WriteType)(0), // 0: bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.WriteType
 	(*CreateAccountV2Command)(nil),                        // 1: bucketeer.account.CreateAccountV2Command
@@ -924,27 +1039,27 @@ var file_proto_account_command_proto_goTypes = []interface{}{
 	(*EnableAPIKeyCommand)(nil),                           // 11: bucketeer.account.EnableAPIKeyCommand
 	(*DisableAPIKeyCommand)(nil),                          // 12: bucketeer.account.DisableAPIKeyCommand
 	(*CreateSearchFilterCommand)(nil),                     // 13: bucketeer.account.CreateSearchFilterCommand
-	(*UpdateSearchFilterCommand)(nil),                     // 14: bucketeer.account.UpdateSearchFilterCommand
-	(*DeleteSearchFilterCommand)(nil),                     // 15: bucketeer.account.DeleteSearchFilterCommand
-	(AccountV2_Role_Organization)(0),                      // 16: bucketeer.account.AccountV2.Role.Organization
-	(*AccountV2_EnvironmentRole)(nil),                     // 17: bucketeer.account.AccountV2.EnvironmentRole
-	(APIKey_Role)(0),                                      // 18: bucketeer.account.APIKey.Role
-	(*SearchFilter)(nil),                                  // 19: bucketeer.account.SearchFilter
+	(*ChangeSearchFilterNameCommand)(nil),                 // 14: bucketeer.account.ChangeSearchFilterNameCommand
+	(*ChangeSearchFilterQueryCommand)(nil),                // 15: bucketeer.account.ChangeSearchFilterQueryCommand
+	(*ChangeDefaultSearchFilterCommand)(nil),              // 16: bucketeer.account.ChangeDefaultSearchFilterCommand
+	(AccountV2_Role_Organization)(0),                      // 17: bucketeer.account.AccountV2.Role.Organization
+	(*AccountV2_EnvironmentRole)(nil),                     // 18: bucketeer.account.AccountV2.EnvironmentRole
+	(APIKey_Role)(0),                                      // 19: bucketeer.account.APIKey.Role
+	(FilterTargetType)(0),                                 // 20: bucketeer.account.FilterTargetType
 }
 var file_proto_account_command_proto_depIdxs = []int32{
-	16, // 0: bucketeer.account.CreateAccountV2Command.organization_role:type_name -> bucketeer.account.AccountV2.Role.Organization
-	17, // 1: bucketeer.account.CreateAccountV2Command.environment_roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
-	16, // 2: bucketeer.account.ChangeAccountV2OrganizationRoleCommand.role:type_name -> bucketeer.account.AccountV2.Role.Organization
-	17, // 3: bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
+	17, // 0: bucketeer.account.CreateAccountV2Command.organization_role:type_name -> bucketeer.account.AccountV2.Role.Organization
+	18, // 1: bucketeer.account.CreateAccountV2Command.environment_roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
+	17, // 2: bucketeer.account.ChangeAccountV2OrganizationRoleCommand.role:type_name -> bucketeer.account.AccountV2.Role.Organization
+	18, // 3: bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
 	0,  // 4: bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.write_type:type_name -> bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.WriteType
-	18, // 5: bucketeer.account.CreateAPIKeyCommand.role:type_name -> bucketeer.account.APIKey.Role
-	19, // 6: bucketeer.account.CreateSearchFilterCommand.search_filter:type_name -> bucketeer.account.SearchFilter
-	19, // 7: bucketeer.account.UpdateSearchFilterCommand.search_filter:type_name -> bucketeer.account.SearchFilter
-	8,  // [8:8] is the sub-list for method output_type
-	8,  // [8:8] is the sub-list for method input_type
-	8,  // [8:8] is the sub-list for extension type_name
-	8,  // [8:8] is the sub-list for extension extendee
-	0,  // [0:8] is the sub-list for field type_name
+	19, // 5: bucketeer.account.CreateAPIKeyCommand.role:type_name -> bucketeer.account.APIKey.Role
+	20, // 6: bucketeer.account.CreateSearchFilterCommand.filter_target_type:type_name -> bucketeer.account.FilterTargetType
+	7,  // [7:7] is the sub-list for method output_type
+	7,  // [7:7] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_proto_account_command_proto_init() }
@@ -1113,7 +1228,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UpdateSearchFilterCommand); i {
+			switch v := v.(*ChangeSearchFilterNameCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1125,7 +1240,19 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteSearchFilterCommand); i {
+			switch v := v.(*ChangeSearchFilterQueryCommand); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_account_command_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ChangeDefaultSearchFilterCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1143,7 +1270,7 @@ func file_proto_account_command_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_account_command_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   15,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

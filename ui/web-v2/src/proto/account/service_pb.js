@@ -25,6 +25,10 @@ var global =
 
 var google_protobuf_wrappers_pb = require('google-protobuf/google/protobuf/wrappers_pb.js');
 goog.object.extend(proto, google_protobuf_wrappers_pb);
+var google_api_annotations_pb = require('../../google/api/annotations_pb.js');
+goog.object.extend(proto, google_api_annotations_pb);
+var protoc$gen$openapiv2_options_annotations_pb = require('../../protoc-gen-openapiv2/options/annotations_pb.js');
+goog.object.extend(proto, protoc$gen$openapiv2_options_annotations_pb);
 var proto_account_account_pb = require('../../proto/account/account_pb.js');
 goog.object.extend(proto, proto_account_account_pb);
 var proto_account_api_key_pb = require('../../proto/account/api_key_pb.js');
@@ -7994,7 +7998,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         email: jspb.Message.getFieldWithDefault(msg, 1, ''),
         organizationId: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, ''),
         command:
           (f = msg.getCommand()) &&
           proto_account_command_pb.CreateSearchFilterCommand.toObject(
@@ -8051,7 +8055,7 @@ proto.bucketeer.account.CreateSearchFilterRequest.deserializeBinaryFromReader =
           break;
         case 3:
           var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
+          msg.setEnvironmentId(value);
           break;
         case 4:
           var value = new proto_account_command_pb.CreateSearchFilterCommand();
@@ -8102,7 +8106,7 @@ proto.bucketeer.account.CreateSearchFilterRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(2, f);
     }
-    f = message.getEnvironmentNamespace();
+    f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(3, f);
     }
@@ -8158,10 +8162,10 @@ proto.bucketeer.account.CreateSearchFilterRequest.prototype.setOrganizationId =
   };
 
 /**
- * optional string environment_namespace = 3;
+ * optional string environment_id = 3;
  * @return {string}
  */
-proto.bucketeer.account.CreateSearchFilterRequest.prototype.getEnvironmentNamespace =
+proto.bucketeer.account.CreateSearchFilterRequest.prototype.getEnvironmentId =
   function () {
     return /** @type {string} */ (
       jspb.Message.getFieldWithDefault(this, 3, '')
@@ -8172,7 +8176,7 @@ proto.bucketeer.account.CreateSearchFilterRequest.prototype.getEnvironmentNamesp
  * @param {string} value
  * @return {!proto.bucketeer.account.CreateSearchFilterRequest} returns this
  */
-proto.bucketeer.account.CreateSearchFilterRequest.prototype.setEnvironmentNamespace =
+proto.bucketeer.account.CreateSearchFilterRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 3, value);
   };
@@ -8365,10 +8369,22 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         email: jspb.Message.getFieldWithDefault(msg, 1, ''),
         organizationId: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
-        command:
-          (f = msg.getCommand()) &&
-          proto_account_command_pb.UpdateSearchFilterCommand.toObject(
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        changeNameCommand:
+          (f = msg.getChangeNameCommand()) &&
+          proto_account_command_pb.ChangeSearchFilterNameCommand.toObject(
+            includeInstance,
+            f
+          ),
+        changeQueryCommand:
+          (f = msg.getChangeQueryCommand()) &&
+          proto_account_command_pb.ChangeSearchFilterQueryCommand.toObject(
+            includeInstance,
+            f
+          ),
+        changeDefaultFilterCommand:
+          (f = msg.getChangeDefaultFilterCommand()) &&
+          proto_account_command_pb.ChangeDefaultSearchFilterCommand.toObject(
             includeInstance,
             f
           )
@@ -8422,16 +8438,37 @@ proto.bucketeer.account.UpdateSearchFilterRequest.deserializeBinaryFromReader =
           break;
         case 3:
           var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
+          msg.setEnvironmentId(value);
           break;
         case 4:
-          var value = new proto_account_command_pb.UpdateSearchFilterCommand();
+          var value =
+            new proto_account_command_pb.ChangeSearchFilterNameCommand();
           reader.readMessage(
             value,
-            proto_account_command_pb.UpdateSearchFilterCommand
+            proto_account_command_pb.ChangeSearchFilterNameCommand
               .deserializeBinaryFromReader
           );
-          msg.setCommand(value);
+          msg.setChangeNameCommand(value);
+          break;
+        case 5:
+          var value =
+            new proto_account_command_pb.ChangeSearchFilterQueryCommand();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.ChangeSearchFilterQueryCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setChangeQueryCommand(value);
+          break;
+        case 6:
+          var value =
+            new proto_account_command_pb.ChangeDefaultSearchFilterCommand();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.ChangeDefaultSearchFilterCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setChangeDefaultFilterCommand(value);
           break;
         default:
           reader.skipField();
@@ -8473,16 +8510,34 @@ proto.bucketeer.account.UpdateSearchFilterRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(2, f);
     }
-    f = message.getEnvironmentNamespace();
+    f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(3, f);
     }
-    f = message.getCommand();
+    f = message.getChangeNameCommand();
     if (f != null) {
       writer.writeMessage(
         4,
         f,
-        proto_account_command_pb.UpdateSearchFilterCommand
+        proto_account_command_pb.ChangeSearchFilterNameCommand
+          .serializeBinaryToWriter
+      );
+    }
+    f = message.getChangeQueryCommand();
+    if (f != null) {
+      writer.writeMessage(
+        5,
+        f,
+        proto_account_command_pb.ChangeSearchFilterQueryCommand
+          .serializeBinaryToWriter
+      );
+    }
+    f = message.getChangeDefaultFilterCommand();
+    if (f != null) {
+      writer.writeMessage(
+        6,
+        f,
+        proto_account_command_pb.ChangeDefaultSearchFilterCommand
           .serializeBinaryToWriter
       );
     }
@@ -8529,10 +8584,10 @@ proto.bucketeer.account.UpdateSearchFilterRequest.prototype.setOrganizationId =
   };
 
 /**
- * optional string environment_namespace = 3;
+ * optional string environment_id = 3;
  * @return {string}
  */
-proto.bucketeer.account.UpdateSearchFilterRequest.prototype.getEnvironmentNamespace =
+proto.bucketeer.account.UpdateSearchFilterRequest.prototype.getEnvironmentId =
   function () {
     return /** @type {string} */ (
       jspb.Message.getFieldWithDefault(this, 3, '')
@@ -8543,31 +8598,31 @@ proto.bucketeer.account.UpdateSearchFilterRequest.prototype.getEnvironmentNamesp
  * @param {string} value
  * @return {!proto.bucketeer.account.UpdateSearchFilterRequest} returns this
  */
-proto.bucketeer.account.UpdateSearchFilterRequest.prototype.setEnvironmentNamespace =
+proto.bucketeer.account.UpdateSearchFilterRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 3, value);
   };
 
 /**
- * optional UpdateSearchFilterCommand command = 4;
- * @return {?proto.bucketeer.account.UpdateSearchFilterCommand}
+ * optional ChangeSearchFilterNameCommand change_name_command = 4;
+ * @return {?proto.bucketeer.account.ChangeSearchFilterNameCommand}
  */
-proto.bucketeer.account.UpdateSearchFilterRequest.prototype.getCommand =
+proto.bucketeer.account.UpdateSearchFilterRequest.prototype.getChangeNameCommand =
   function () {
-    return /** @type{?proto.bucketeer.account.UpdateSearchFilterCommand} */ (
+    return /** @type{?proto.bucketeer.account.ChangeSearchFilterNameCommand} */ (
       jspb.Message.getWrapperField(
         this,
-        proto_account_command_pb.UpdateSearchFilterCommand,
+        proto_account_command_pb.ChangeSearchFilterNameCommand,
         4
       )
     );
   };
 
 /**
- * @param {?proto.bucketeer.account.UpdateSearchFilterCommand|undefined} value
+ * @param {?proto.bucketeer.account.ChangeSearchFilterNameCommand|undefined} value
  * @return {!proto.bucketeer.account.UpdateSearchFilterRequest} returns this
  */
-proto.bucketeer.account.UpdateSearchFilterRequest.prototype.setCommand =
+proto.bucketeer.account.UpdateSearchFilterRequest.prototype.setChangeNameCommand =
   function (value) {
     return jspb.Message.setWrapperField(this, 4, value);
   };
@@ -8576,18 +8631,102 @@ proto.bucketeer.account.UpdateSearchFilterRequest.prototype.setCommand =
  * Clears the message field making it undefined.
  * @return {!proto.bucketeer.account.UpdateSearchFilterRequest} returns this
  */
-proto.bucketeer.account.UpdateSearchFilterRequest.prototype.clearCommand =
+proto.bucketeer.account.UpdateSearchFilterRequest.prototype.clearChangeNameCommand =
   function () {
-    return this.setCommand(undefined);
+    return this.setChangeNameCommand(undefined);
   };
 
 /**
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.bucketeer.account.UpdateSearchFilterRequest.prototype.hasCommand =
+proto.bucketeer.account.UpdateSearchFilterRequest.prototype.hasChangeNameCommand =
   function () {
     return jspb.Message.getField(this, 4) != null;
+  };
+
+/**
+ * optional ChangeSearchFilterQueryCommand change_query_command = 5;
+ * @return {?proto.bucketeer.account.ChangeSearchFilterQueryCommand}
+ */
+proto.bucketeer.account.UpdateSearchFilterRequest.prototype.getChangeQueryCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.ChangeSearchFilterQueryCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.ChangeSearchFilterQueryCommand,
+        5
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.ChangeSearchFilterQueryCommand|undefined} value
+ * @return {!proto.bucketeer.account.UpdateSearchFilterRequest} returns this
+ */
+proto.bucketeer.account.UpdateSearchFilterRequest.prototype.setChangeQueryCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 5, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateSearchFilterRequest} returns this
+ */
+proto.bucketeer.account.UpdateSearchFilterRequest.prototype.clearChangeQueryCommand =
+  function () {
+    return this.setChangeQueryCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateSearchFilterRequest.prototype.hasChangeQueryCommand =
+  function () {
+    return jspb.Message.getField(this, 5) != null;
+  };
+
+/**
+ * optional ChangeDefaultSearchFilterCommand change_default_filter_command = 6;
+ * @return {?proto.bucketeer.account.ChangeDefaultSearchFilterCommand}
+ */
+proto.bucketeer.account.UpdateSearchFilterRequest.prototype.getChangeDefaultFilterCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.ChangeDefaultSearchFilterCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.ChangeDefaultSearchFilterCommand,
+        6
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.ChangeDefaultSearchFilterCommand|undefined} value
+ * @return {!proto.bucketeer.account.UpdateSearchFilterRequest} returns this
+ */
+proto.bucketeer.account.UpdateSearchFilterRequest.prototype.setChangeDefaultFilterCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 6, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateSearchFilterRequest} returns this
+ */
+proto.bucketeer.account.UpdateSearchFilterRequest.prototype.clearChangeDefaultFilterCommand =
+  function () {
+    return this.setChangeDefaultFilterCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateSearchFilterRequest.prototype.hasChangeDefaultFilterCommand =
+  function () {
+    return jspb.Message.getField(this, 6) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

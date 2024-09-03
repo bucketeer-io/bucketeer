@@ -24,7 +24,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
-
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -32,14 +31,14 @@ import (
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 )
 
-func (s *AccountService) CreateSearchFilterV2(
+func (s *AccountService) CreateSearchFilter(
 	ctx context.Context,
 	req *accountproto.CreateSearchFilterRequest,
 ) (*accountproto.CreateSearchFilterResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_UNASSIGNED,
-		req.EnvironmentNamespace, localizer)
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -54,22 +53,12 @@ func (s *AccountService) CreateSearchFilterV2(
 		return nil, err
 	}
 
-	account, err := s.getAccountV2(ctx, req.Email, req.OrganizationId, localizer)
-	if err != nil {
-		return nil, err
-	}
-	// Since there is only one default setting for a filter target, set the existing default to OFF.
-	changeDefaultFilters := getChangeDefaultFilters(account, req.Command.SearchFilter)
-	commands := make([]command.Command, 0)
-	for _, changeDefaultFilter := range changeDefaultFilters {
-		commands = append(
-			commands,
-			&accountproto.UpdateSearchFilterCommand{SearchFilter: changeDefaultFilter},
-		)
-	}
-	commands = append(commands, req.Command)
-
-	if err := s.updateAccountV2MySQL(ctx, editor, commands, req.Email, req.OrganizationId); err != nil {
+	if err := s.updateAccountV2MySQL(
+		ctx,
+		editor,
+		[]command.Command{req.Command},
+		req.Email,
+		req.OrganizationId); err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -86,7 +75,10 @@ func (s *AccountService) CreateSearchFilterV2(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
-				zap.String("searchFilterName", req.Command.SearchFilter.Name),
+				zap.String("environmentID", req.EnvironmentId),
+				zap.String("searchFilterName", req.Command.Name),
+				zap.String("query", req.Command.Query),
+				zap.String("filterTargetType", req.Command.FilterTargetType.String()),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -102,18 +94,20 @@ func (s *AccountService) CreateSearchFilterV2(
 	return &accountproto.CreateSearchFilterResponse{}, nil
 }
 
-func (s *AccountService) UpdateSearchFilterV2(
+func (s *AccountService) UpdateSearchFilter(
 	ctx context.Context,
 	req *accountproto.UpdateSearchFilterRequest,
 ) (*accountproto.UpdateSearchFilterResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_UNASSIGNED,
-		req.EnvironmentNamespace, localizer)
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
-	if err := validateUpdateSearchFilterRequest(req, localizer); err != nil {
+	commands := s.getUpdateSearchFilterCommands(req)
+
+	if err := validateUpdateSearchFilterRequest(req, commands, localizer); err != nil {
 		s.logger.Error(
 			"Failed to update search filter",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -122,22 +116,13 @@ func (s *AccountService) UpdateSearchFilterV2(
 		)
 		return nil, err
 	}
-	account, err := s.getAccountV2(ctx, req.Email, req.OrganizationId, localizer)
-	if err != nil {
-		return nil, err
-	}
-	// Since there is only one default setting for a filter target, set the existing default to OFF.
-	changeDefaultFilters := getChangeDefaultFilters(account, req.Command.SearchFilter)
-	commands := make([]command.Command, 0)
-	for _, changeDefaultFilter := range changeDefaultFilters {
-		commands = append(
-			commands,
-			&accountproto.UpdateSearchFilterCommand{SearchFilter: changeDefaultFilter},
-		)
-	}
-	commands = append(commands, req.Command)
 
-	if err := s.updateAccountV2MySQL(ctx, editor, commands, req.Email, req.OrganizationId); err != nil {
+	if err := s.updateAccountV2MySQL(
+		ctx,
+		editor,
+		commands,
+		req.Email,
+		req.OrganizationId); err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -163,7 +148,6 @@ func (s *AccountService) UpdateSearchFilterV2(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
 				zap.String("email", req.Email),
-				zap.String("searchFilterName", req.Command.SearchFilter.Name),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -176,6 +160,20 @@ func (s *AccountService) UpdateSearchFilterV2(
 		return nil, dt.Err()
 	}
 	return &accountproto.UpdateSearchFilterResponse{}, nil
+}
+
+func (s *AccountService) getUpdateSearchFilterCommands(req *accountproto.UpdateSearchFilterRequest) []command.Command {
+	commands := make([]command.Command, 0)
+	if req.ChangeNameCommand != nil {
+		commands = append(commands, req.ChangeNameCommand)
+	}
+	if req.ChangeQueryCommand != nil {
+		commands = append(commands, req.ChangeQueryCommand)
+	}
+	if req.ChangeDefaultFilterCommand != nil {
+		commands = append(commands, req.ChangeDefaultFilterCommand)
+	}
+	return commands
 }
 
 func (s *AccountService) DeleteSearchFilterV2(
@@ -256,26 +254,4 @@ func (s *AccountService) DeleteSearchFilterV2(
 	}
 
 	return &accountproto.DeleteSearchFilterResponse{}, nil
-}
-
-func getChangeDefaultFilters(
-	account *domain.AccountV2,
-	searchFilter *accountproto.SearchFilter,
-) []*accountproto.SearchFilter {
-	var changeDefaultFilters []*accountproto.SearchFilter
-	for _, filter := range account.SearchFilters {
-		if searchFilter.DefaultFilter && filter.DefaultFilter &&
-			searchFilter.FilterTargetType == filter.FilterTargetType &&
-			searchFilter.EnvironmentId == filter.EnvironmentId {
-			changeDefaultFilters = append(changeDefaultFilters, &accountproto.SearchFilter{
-				Id:               filter.Id,
-				Name:             filter.Name,
-				Query:            filter.Query,
-				FilterTargetType: filter.FilterTargetType,
-				EnvironmentId:    filter.EnvironmentId,
-				DefaultFilter:    false,
-			})
-		}
-	}
-	return changeDefaultFilters
 }

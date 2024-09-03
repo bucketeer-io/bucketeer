@@ -3,6 +3,8 @@
 
 import * as jspb from 'google-protobuf';
 import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
+import * as google_api_annotations_pb from '../../google/api/annotations_pb';
+import * as protoc_gen_openapiv2_options_annotations_pb from '../../protoc-gen-openapiv2/options/annotations_pb';
 import * as proto_account_account_pb from '../../proto/account/account_pb';
 import * as proto_account_api_key_pb from '../../proto/account/api_key_pb';
 import * as proto_account_command_pb from '../../proto/account/command_pb';
@@ -1367,8 +1369,8 @@ export class CreateSearchFilterRequest extends jspb.Message {
   getOrganizationId(): string;
   setOrganizationId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   hasCommand(): boolean;
   clearCommand(): void;
@@ -1400,7 +1402,7 @@ export namespace CreateSearchFilterRequest {
   export type AsObject = {
     email: string;
     organizationId: string;
-    environmentNamespace: string;
+    environmentId: string;
     command?: proto_account_command_pb.CreateSearchFilterCommand.AsObject;
   };
 }
@@ -1438,13 +1440,35 @@ export class UpdateSearchFilterRequest extends jspb.Message {
   getOrganizationId(): string;
   setOrganizationId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
-  hasCommand(): boolean;
-  clearCommand(): void;
-  getCommand(): proto_account_command_pb.UpdateSearchFilterCommand | undefined;
-  setCommand(value?: proto_account_command_pb.UpdateSearchFilterCommand): void;
+  hasChangeNameCommand(): boolean;
+  clearChangeNameCommand(): void;
+  getChangeNameCommand():
+    | proto_account_command_pb.ChangeSearchFilterNameCommand
+    | undefined;
+  setChangeNameCommand(
+    value?: proto_account_command_pb.ChangeSearchFilterNameCommand
+  ): void;
+
+  hasChangeQueryCommand(): boolean;
+  clearChangeQueryCommand(): void;
+  getChangeQueryCommand():
+    | proto_account_command_pb.ChangeSearchFilterQueryCommand
+    | undefined;
+  setChangeQueryCommand(
+    value?: proto_account_command_pb.ChangeSearchFilterQueryCommand
+  ): void;
+
+  hasChangeDefaultFilterCommand(): boolean;
+  clearChangeDefaultFilterCommand(): void;
+  getChangeDefaultFilterCommand():
+    | proto_account_command_pb.ChangeDefaultSearchFilterCommand
+    | undefined;
+  setChangeDefaultFilterCommand(
+    value?: proto_account_command_pb.ChangeDefaultSearchFilterCommand
+  ): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateSearchFilterRequest.AsObject;
@@ -1471,8 +1495,10 @@ export namespace UpdateSearchFilterRequest {
   export type AsObject = {
     email: string;
     organizationId: string;
-    environmentNamespace: string;
-    command?: proto_account_command_pb.UpdateSearchFilterCommand.AsObject;
+    environmentId: string;
+    changeNameCommand?: proto_account_command_pb.ChangeSearchFilterNameCommand.AsObject;
+    changeQueryCommand?: proto_account_command_pb.ChangeSearchFilterQueryCommand.AsObject;
+    changeDefaultFilterCommand?: proto_account_command_pb.ChangeDefaultSearchFilterCommand.AsObject;
   };
 }
 

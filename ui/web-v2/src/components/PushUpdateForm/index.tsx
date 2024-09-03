@@ -71,28 +71,6 @@ export const PushUpdateForm: FC<PushUpdateFormProps> = memo(
                   </div>
                 </div>
                 <div className="">
-                  <label htmlFor="fcmApiKey" className="block">
-                    <span className="input-label">
-                      {f(messages.push.input.fcmApiKey)}
-                    </span>
-                  </label>
-                  <div className="mt-1">
-                    <textarea
-                      {...register('fcmApiKey')}
-                      name="fcmApiKey"
-                      id="fcmApiKey"
-                      rows={1}
-                      className="input-text w-full h-48 break-all"
-                      disabled={true}
-                    />
-                    <p className="input-error">
-                      {errors.fcmApiKey && (
-                        <span role="alert">{errors.fcmApiKey.message}</span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-                <div className="">
                   <label htmlFor="tags">
                     <span className="input-label">{f(messages.tags)}</span>
                   </label>

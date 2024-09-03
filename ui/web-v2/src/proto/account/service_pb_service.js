@@ -174,8 +174,8 @@ AccountService.GetAPIKeyBySearchingAllEnvironments = {
     proto_account_service_pb.GetAPIKeyBySearchingAllEnvironmentsResponse
 };
 
-AccountService.CreateSearchFilterV2 = {
-  methodName: 'CreateSearchFilterV2',
+AccountService.CreateSearchFilter = {
+  methodName: 'CreateSearchFilter',
   service: AccountService,
   requestStream: false,
   responseStream: false,
@@ -183,8 +183,8 @@ AccountService.CreateSearchFilterV2 = {
   responseType: proto_account_service_pb.CreateSearchFilterResponse
 };
 
-AccountService.UpdateSearchFilterV2 = {
-  methodName: 'UpdateSearchFilterV2',
+AccountService.UpdateSearchFilter = {
+  methodName: 'UpdateSearchFilter',
   service: AccountService,
   requestStream: false,
   responseStream: false,
@@ -836,69 +836,75 @@ AccountServiceClient.prototype.getAPIKeyBySearchingAllEnvironments =
     };
   };
 
-AccountServiceClient.prototype.createSearchFilterV2 =
-  function createSearchFilterV2(requestMessage, metadata, callback) {
-    if (arguments.length === 2) {
-      callback = arguments[1];
-    }
-    var client = grpc.unary(AccountService.CreateSearchFilterV2, {
-      request: requestMessage,
-      host: this.serviceHost,
-      metadata: metadata,
-      transport: this.options.transport,
-      debug: this.options.debug,
-      onEnd: function (response) {
-        if (callback) {
-          if (response.status !== grpc.Code.OK) {
-            var err = new Error(response.statusMessage);
-            err.code = response.status;
-            err.metadata = response.trailers;
-            callback(err, null);
-          } else {
-            callback(null, response.message);
-          }
+AccountServiceClient.prototype.createSearchFilter = function createSearchFilter(
+  requestMessage,
+  metadata,
+  callback
+) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(AccountService.CreateSearchFilter, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
         }
       }
-    });
-    return {
-      cancel: function () {
-        callback = null;
-        client.close();
-      }
-    };
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
   };
+};
 
-AccountServiceClient.prototype.updateSearchFilterV2 =
-  function updateSearchFilterV2(requestMessage, metadata, callback) {
-    if (arguments.length === 2) {
-      callback = arguments[1];
-    }
-    var client = grpc.unary(AccountService.UpdateSearchFilterV2, {
-      request: requestMessage,
-      host: this.serviceHost,
-      metadata: metadata,
-      transport: this.options.transport,
-      debug: this.options.debug,
-      onEnd: function (response) {
-        if (callback) {
-          if (response.status !== grpc.Code.OK) {
-            var err = new Error(response.statusMessage);
-            err.code = response.status;
-            err.metadata = response.trailers;
-            callback(err, null);
-          } else {
-            callback(null, response.message);
-          }
+AccountServiceClient.prototype.updateSearchFilter = function updateSearchFilter(
+  requestMessage,
+  metadata,
+  callback
+) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(AccountService.UpdateSearchFilter, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
         }
       }
-    });
-    return {
-      cancel: function () {
-        callback = null;
-        client.close();
-      }
-    };
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
   };
+};
 
 AccountServiceClient.prototype.deleteSearchFilterV2 =
   function deleteSearchFilterV2(requestMessage, metadata, callback) {
