@@ -506,35 +506,43 @@ func TestDeleteSearchFilter(t *testing.T) {
 		t.Fatal("search filters are not nil")
 	}
 
-	requestSearchFilter := &accountproto.SearchFilter{
+	initial1SearchFilter := &accountproto.SearchFilter{
 		Name:             "name1",
 		Query:            "query1",
 		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
 		DefaultFilter:    false,
 		EnvironmentId:    "environment-id",
 	}
-	_, err = c.CreateSearchFilterV2(ctx, &accountproto.CreateSearchFilterRequest{
+	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
 		Command: &accountproto.CreateSearchFilterCommand{
-			SearchFilter: requestSearchFilter,
+			Name:             initial1SearchFilter.Name,
+			Query:            initial1SearchFilter.Query,
+			FilterTargetType: initial1SearchFilter.FilterTargetType,
+			EnvironmentId:    initial1SearchFilter.EnvironmentId,
+			DefaultFilter:    initial1SearchFilter.DefaultFilter,
 		},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	request2SearchFilter := &accountproto.SearchFilter{
+	initial2SearchFilter := &accountproto.SearchFilter{
 		Name:             "name2",
 		Query:            "query2",
 		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
 		DefaultFilter:    false,
 		EnvironmentId:    "environment-id",
 	}
-	_, err = c.CreateSearchFilterV2(ctx, &accountproto.CreateSearchFilterRequest{
+	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
 		Command: &accountproto.CreateSearchFilterCommand{
-			SearchFilter: request2SearchFilter,
+			Name:             initial2SearchFilter.Name,
+			Query:            initial2SearchFilter.Query,
+			FilterTargetType: initial2SearchFilter.FilterTargetType,
+			EnvironmentId:    initial2SearchFilter.EnvironmentId,
+			DefaultFilter:    initial2SearchFilter.DefaultFilter,
 		},
 	})
 	if err != nil {
@@ -554,7 +562,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 	}
 
 	deleteFilterID := updatedAccount.Account.SearchFilters[0].Id
-	_, err = c.DeleteSearchFilterV2(ctx, &accountproto.DeleteSearchFilterRequest{
+	_, err = c.DeleteSearchFilter(ctx, &accountproto.DeleteSearchFilterRequest{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
 		Command: &accountproto.DeleteSearchFilterCommand{

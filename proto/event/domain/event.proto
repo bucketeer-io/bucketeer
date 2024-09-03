@@ -131,7 +131,7 @@ message Event {
     ACCOUNT_V2_SEARCH_FILTER_NANE_CHANGED = 314;
     ACCOUNT_V2_SEARCH_FILTER_QUERY_CHANGED = 315;
     ACCOUNT_V2_SEARCH_FILTER_DEFAULT_CHANGED = 316;
-    ACCOUNT_V2_SEARCH_FILTER_DEFAULT_DELETED = 317;
+    ACCOUNT_V2_SEARCH_FILTER_DELETED = 317;
     APIKEY_CREATED = 400;
     APIKEY_NAME_CHANGED = 401;
     APIKEY_ENABLED = 402;
@@ -625,7 +625,7 @@ message SearchFilterDefaultChangedEvent {
   bool default_filter = 2;
 }
 
-message SearchFilterDeleteEvent {
+message SearchFilterDeletedEvent {
   string id = 1;
 }
 

@@ -905,6 +905,33 @@ func TestDeleteSearchFilter(t *testing.T) {
 		expectedErr error
 	}{
 		{
+			desc: "err: role is not allowed to update search filter",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "email",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "envID0",
+								Role:          accountproto.AccountV2_Role_Environment_UNASSIGNED,
+							},
+						},
+					},
+				}, nil).AnyTimes()
+			},
+			req: &accountproto.DeleteSearchFilterRequest{
+				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
+				Command: &accountproto.DeleteSearchFilterCommand{
+					SearchFilterId: "filterID",
+				},
+			},
+			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+		},
+		{
 			desc: "err: email is empty",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
@@ -915,7 +942,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 							{
-								EnvironmentId: "ns0",
+								EnvironmentId: "envID0",
 								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 							},
 						},
@@ -923,8 +950,8 @@ func TestDeleteSearchFilter(t *testing.T) {
 				}, nil).AnyTimes()
 			},
 			req: &accountproto.DeleteSearchFilterRequest{
-				OrganizationId:       "org0",
-				EnvironmentNamespace: "envName0",
+				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
 				Command: &accountproto.DeleteSearchFilterCommand{
 					SearchFilterId: "filterID",
 				},
@@ -942,7 +969,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 							{
-								EnvironmentId: "ns0",
+								EnvironmentId: "envID0",
 								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 							},
 						},
@@ -950,8 +977,8 @@ func TestDeleteSearchFilter(t *testing.T) {
 				}, nil).AnyTimes()
 			},
 			req: &accountproto.DeleteSearchFilterRequest{
-				Email:                "bucketeer@example.com",
-				EnvironmentNamespace: "envName0",
+				Email:         "bucketeer@example.com",
+				EnvironmentId: "envID0",
 				Command: &accountproto.DeleteSearchFilterCommand{
 					SearchFilterId: "filterID",
 				},
@@ -969,7 +996,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 							{
-								EnvironmentId: "ns0",
+								EnvironmentId: "envID0",
 								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 							},
 						},
@@ -980,9 +1007,9 @@ func TestDeleteSearchFilter(t *testing.T) {
 				).Return(errors.New("test"))
 			},
 			req: &accountproto.DeleteSearchFilterRequest{
-				Email:                "bucketeer@example.com",
-				OrganizationId:       "org0",
-				EnvironmentNamespace: "envName0",
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
 				Command: &accountproto.DeleteSearchFilterCommand{
 					SearchFilterId: "filterID",
 				},
@@ -1000,7 +1027,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 							{
-								EnvironmentId: "ns0",
+								EnvironmentId: "envID0",
 								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 							},
 						},
@@ -1011,9 +1038,9 @@ func TestDeleteSearchFilter(t *testing.T) {
 				).Return(v2as.ErrAccountNotFound)
 			},
 			req: &accountproto.DeleteSearchFilterRequest{
-				Email:                "bucketeer@example.com",
-				OrganizationId:       "org0",
-				EnvironmentNamespace: "envName0",
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
 				Command: &accountproto.DeleteSearchFilterCommand{
 					SearchFilterId: "filterID",
 				},
@@ -1031,7 +1058,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 							{
-								EnvironmentId: "ns0",
+								EnvironmentId: "envID0",
 								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 							},
 						},
@@ -1041,6 +1068,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 			req: &accountproto.DeleteSearchFilterRequest{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
 				Command:        nil,
 			},
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
@@ -1056,7 +1084,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 							{
-								EnvironmentId: "ns0",
+								EnvironmentId: "envID0",
 								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 							},
 						},
@@ -1066,6 +1094,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 			req: &accountproto.DeleteSearchFilterRequest{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
 				Command: &accountproto.DeleteSearchFilterCommand{
 					SearchFilterId: "",
 				},
@@ -1083,7 +1112,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 							{
-								EnvironmentId: "ns0",
+								EnvironmentId: "envID0",
 								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
 							},
 						},
@@ -1094,9 +1123,9 @@ func TestDeleteSearchFilter(t *testing.T) {
 				).Return(nil)
 			},
 			req: &accountproto.DeleteSearchFilterRequest{
-				Email:                "bucketeer@example.com",
-				OrganizationId:       "org0",
-				EnvironmentNamespace: "envName0",
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
 				Command: &accountproto.DeleteSearchFilterCommand{
 					SearchFilterId: "filterID",
 				},
@@ -1111,7 +1140,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
-			_, err := service.DeleteSearchFilterV2(ctx, p.req)
+			_, err := service.DeleteSearchFilter(ctx, p.req)
 			assert.Equal(t, p.expectedErr, err, p.desc)
 		})
 	}

@@ -625,6 +625,16 @@
                 "type": "bool"
               }
             ]
+          },
+          {
+            "name": "DeleteSearchFilterCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "search_filter_id",
+                "type": "string"
+              }
+            ]
           }
         ],
         "imports": [
@@ -1351,6 +1361,34 @@
           },
           {
             "name": "UpdateSearchFilterResponse"
+          },
+          {
+            "name": "DeleteSearchFilterRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "command",
+                "type": "DeleteSearchFilterCommand"
+              }
+            ]
+          },
+          {
+            "name": "DeleteSearchFilterResponse"
           }
         ],
         "services": [
@@ -4242,6 +4280,182 @@
                       {
                         "name": "operation_id",
                         "value": "web.v1.account.update_search_filter"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "403"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request does not have permission to access the resource."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":7,\"message\":\"not authorized\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "DeleteSearchFilter",
+                "in_type": "DeleteSearchFilterRequest",
+                "out_type": "DeleteSearchFilterResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/account/delete_search_filter"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Delete Search Filter"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Delete a search filter. To call this API, you need an `VIEWER` role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Account"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.account.delete_search_filter"
                       },
                       {
                         "name": "responses",
@@ -13350,6 +13564,10 @@
                 "integer": 316
               },
               {
+                "name": "ACCOUNT_V2_SEARCH_FILTER_DELETED",
+                "integer": 317
+              },
+              {
                 "name": "APIKEY_CREATED",
                 "integer": 400
               },
@@ -15080,6 +15298,16 @@
                 "id": 2,
                 "name": "default_filter",
                 "type": "bool"
+              }
+            ]
+          },
+          {
+            "name": "SearchFilterDeletedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
               }
             ]
           },

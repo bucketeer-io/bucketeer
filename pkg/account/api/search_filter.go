@@ -176,14 +176,14 @@ func (s *AccountService) getUpdateSearchFilterCommands(req *accountproto.UpdateS
 	return commands
 }
 
-func (s *AccountService) DeleteSearchFilterV2(
+func (s *AccountService) DeleteSearchFilter(
 	ctx context.Context,
 	req *accountproto.DeleteSearchFilterRequest,
 ) (*accountproto.DeleteSearchFilterResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
-		ctx, accountproto.AccountV2_Role_Environment_UNASSIGNED,
-		req.EnvironmentNamespace, localizer)
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -198,22 +198,12 @@ func (s *AccountService) DeleteSearchFilterV2(
 		return nil, err
 	}
 
-	err = s.accountStorage.RunInTransaction(ctx, func() error {
-		account, err := s.accountStorage.GetAccountV2(ctx, req.Email, req.OrganizationId)
-		if err != nil {
-			return err
-		}
-		handler, err := command.NewAccountV2CommandHandler(editor, account, s.publisher, req.OrganizationId)
-		if err != nil {
-			return err
-		}
-
-		if err := handler.Handle(ctx, req.Command); err != nil {
-			return err
-		}
-		return s.accountStorage.UpdateAccountV2(ctx, account)
-	})
-	if err != nil {
+	if err := s.updateAccountV2MySQL(
+		ctx,
+		editor,
+		[]command.Command{req.Command},
+		req.Email,
+		req.OrganizationId); err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),

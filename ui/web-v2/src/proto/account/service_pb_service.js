@@ -192,8 +192,8 @@ AccountService.UpdateSearchFilter = {
   responseType: proto_account_service_pb.UpdateSearchFilterResponse
 };
 
-AccountService.DeleteSearchFilterV2 = {
-  methodName: 'DeleteSearchFilterV2',
+AccountService.DeleteSearchFilter = {
+  methodName: 'DeleteSearchFilter',
   service: AccountService,
   requestStream: false,
   responseStream: false,
@@ -906,36 +906,39 @@ AccountServiceClient.prototype.updateSearchFilter = function updateSearchFilter(
   };
 };
 
-AccountServiceClient.prototype.deleteSearchFilterV2 =
-  function deleteSearchFilterV2(requestMessage, metadata, callback) {
-    if (arguments.length === 2) {
-      callback = arguments[1];
-    }
-    var client = grpc.unary(AccountService.DeleteSearchFilterV2, {
-      request: requestMessage,
-      host: this.serviceHost,
-      metadata: metadata,
-      transport: this.options.transport,
-      debug: this.options.debug,
-      onEnd: function (response) {
-        if (callback) {
-          if (response.status !== grpc.Code.OK) {
-            var err = new Error(response.statusMessage);
-            err.code = response.status;
-            err.metadata = response.trailers;
-            callback(err, null);
-          } else {
-            callback(null, response.message);
-          }
+AccountServiceClient.prototype.deleteSearchFilter = function deleteSearchFilter(
+  requestMessage,
+  metadata,
+  callback
+) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(AccountService.DeleteSearchFilter, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
         }
       }
-    });
-    return {
-      cancel: function () {
-        callback = null;
-        client.close();
-      }
-    };
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
   };
+};
 
 exports.AccountServiceClient = AccountServiceClient;

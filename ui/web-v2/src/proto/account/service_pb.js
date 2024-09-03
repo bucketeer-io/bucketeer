@@ -8875,7 +8875,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         email: jspb.Message.getFieldWithDefault(msg, 1, ''),
         organizationId: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, ''),
         command:
           (f = msg.getCommand()) &&
           proto_account_command_pb.DeleteSearchFilterCommand.toObject(
@@ -8932,7 +8932,7 @@ proto.bucketeer.account.DeleteSearchFilterRequest.deserializeBinaryFromReader =
           break;
         case 3:
           var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
+          msg.setEnvironmentId(value);
           break;
         case 4:
           var value = new proto_account_command_pb.DeleteSearchFilterCommand();
@@ -8983,7 +8983,7 @@ proto.bucketeer.account.DeleteSearchFilterRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(2, f);
     }
-    f = message.getEnvironmentNamespace();
+    f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(3, f);
     }
@@ -9039,10 +9039,10 @@ proto.bucketeer.account.DeleteSearchFilterRequest.prototype.setOrganizationId =
   };
 
 /**
- * optional string environment_namespace = 3;
+ * optional string environment_id = 3;
  * @return {string}
  */
-proto.bucketeer.account.DeleteSearchFilterRequest.prototype.getEnvironmentNamespace =
+proto.bucketeer.account.DeleteSearchFilterRequest.prototype.getEnvironmentId =
   function () {
     return /** @type {string} */ (
       jspb.Message.getFieldWithDefault(this, 3, '')
@@ -9053,7 +9053,7 @@ proto.bucketeer.account.DeleteSearchFilterRequest.prototype.getEnvironmentNamesp
  * @param {string} value
  * @return {!proto.bucketeer.account.DeleteSearchFilterRequest} returns this
  */
-proto.bucketeer.account.DeleteSearchFilterRequest.prototype.setEnvironmentNamespace =
+proto.bucketeer.account.DeleteSearchFilterRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 3, value);
   };
