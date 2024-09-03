@@ -29,4 +29,5 @@ message EvaluationEvent {
   string source_id = 9;
   string environment_namespace = 10;
   int64 timestamp = 11;
+  string environment_id = 12;
 }

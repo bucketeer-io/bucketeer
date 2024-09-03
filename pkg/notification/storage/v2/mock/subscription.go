@@ -44,46 +44,46 @@ func (m *MockSubscriptionStorage) EXPECT() *MockSubscriptionStorageMockRecorder 
 }
 
 // CreateSubscription mocks base method.
-func (m *MockSubscriptionStorage) CreateSubscription(ctx context.Context, e *domain.Subscription, environmentNamespace string) error {
+func (m *MockSubscriptionStorage) CreateSubscription(ctx context.Context, e *domain.Subscription, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateSubscription", ctx, e, environmentNamespace)
+	ret := m.ctrl.Call(m, "CreateSubscription", ctx, e, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // CreateSubscription indicates an expected call of CreateSubscription.
-func (mr *MockSubscriptionStorageMockRecorder) CreateSubscription(ctx, e, environmentNamespace any) *gomock.Call {
+func (mr *MockSubscriptionStorageMockRecorder) CreateSubscription(ctx, e, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSubscription", reflect.TypeOf((*MockSubscriptionStorage)(nil).CreateSubscription), ctx, e, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSubscription", reflect.TypeOf((*MockSubscriptionStorage)(nil).CreateSubscription), ctx, e, environmentId)
 }
 
 // DeleteSubscription mocks base method.
-func (m *MockSubscriptionStorage) DeleteSubscription(ctx context.Context, id, environmentNamespace string) error {
+func (m *MockSubscriptionStorage) DeleteSubscription(ctx context.Context, id, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteSubscription", ctx, id, environmentNamespace)
+	ret := m.ctrl.Call(m, "DeleteSubscription", ctx, id, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteSubscription indicates an expected call of DeleteSubscription.
-func (mr *MockSubscriptionStorageMockRecorder) DeleteSubscription(ctx, id, environmentNamespace any) *gomock.Call {
+func (mr *MockSubscriptionStorageMockRecorder) DeleteSubscription(ctx, id, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSubscription", reflect.TypeOf((*MockSubscriptionStorage)(nil).DeleteSubscription), ctx, id, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSubscription", reflect.TypeOf((*MockSubscriptionStorage)(nil).DeleteSubscription), ctx, id, environmentId)
 }
 
 // GetSubscription mocks base method.
-func (m *MockSubscriptionStorage) GetSubscription(ctx context.Context, id, environmentNamespace string) (*domain.Subscription, error) {
+func (m *MockSubscriptionStorage) GetSubscription(ctx context.Context, id, environmentId string) (*domain.Subscription, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSubscription", ctx, id, environmentNamespace)
+	ret := m.ctrl.Call(m, "GetSubscription", ctx, id, environmentId)
 	ret0, _ := ret[0].(*domain.Subscription)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetSubscription indicates an expected call of GetSubscription.
-func (mr *MockSubscriptionStorageMockRecorder) GetSubscription(ctx, id, environmentNamespace any) *gomock.Call {
+func (mr *MockSubscriptionStorageMockRecorder) GetSubscription(ctx, id, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubscription", reflect.TypeOf((*MockSubscriptionStorage)(nil).GetSubscription), ctx, id, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubscription", reflect.TypeOf((*MockSubscriptionStorage)(nil).GetSubscription), ctx, id, environmentId)
 }
 
 // ListSubscriptions mocks base method.
@@ -104,15 +104,15 @@ func (mr *MockSubscriptionStorageMockRecorder) ListSubscriptions(ctx, whereParts
 }
 
 // UpdateSubscription mocks base method.
-func (m *MockSubscriptionStorage) UpdateSubscription(ctx context.Context, e *domain.Subscription, environmentNamespace string) error {
+func (m *MockSubscriptionStorage) UpdateSubscription(ctx context.Context, e *domain.Subscription, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateSubscription", ctx, e, environmentNamespace)
+	ret := m.ctrl.Call(m, "UpdateSubscription", ctx, e, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpdateSubscription indicates an expected call of UpdateSubscription.
-func (mr *MockSubscriptionStorageMockRecorder) UpdateSubscription(ctx, e, environmentNamespace any) *gomock.Call {
+func (mr *MockSubscriptionStorageMockRecorder) UpdateSubscription(ctx, e, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSubscription", reflect.TypeOf((*MockSubscriptionStorage)(nil).UpdateSubscription), ctx, e, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSubscription", reflect.TypeOf((*MockSubscriptionStorage)(nil).UpdateSubscription), ctx, e, environmentId)
 }

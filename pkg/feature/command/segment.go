@@ -29,29 +29,29 @@ import (
 )
 
 type segmentCommandHandler struct {
-	editor               *eventproto.Editor
-	segment              *domain.Segment
-	previousSegment      *domain.Segment
-	publisher            publisher.Publisher
-	environmentNamespace string
+	editor          *eventproto.Editor
+	segment         *domain.Segment
+	previousSegment *domain.Segment
+	publisher       publisher.Publisher
+	environmentId   string
 }
 
 func NewSegmentCommandHandler(
 	editor *eventproto.Editor,
 	segment *domain.Segment,
 	publisher publisher.Publisher,
-	environmentNamespace string,
+	environmentId string,
 ) (Handler, error) {
 	prev := &domain.Segment{}
 	if err := copier.Copy(prev, segment); err != nil {
 		return nil, err
 	}
 	return &segmentCommandHandler{
-		editor:               editor,
-		segment:              segment,
-		previousSegment:      prev,
-		publisher:            publisher,
-		environmentNamespace: environmentNamespace,
+		editor:          editor,
+		segment:         segment,
+		previousSegment: prev,
+		publisher:       publisher,
+		environmentId:   environmentId,
 	}, nil
 }
 
@@ -318,7 +318,7 @@ func (h *segmentCommandHandler) send(ctx context.Context, eventType eventproto.E
 		h.segment.Id,
 		eventType,
 		event,
-		h.environmentNamespace,
+		h.environmentId,
 		h.segment.Segment,
 		prev,
 	)

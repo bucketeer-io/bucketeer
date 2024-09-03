@@ -30,8 +30,8 @@ const (
 )
 
 type MAUStorage interface {
-	UpsertMAU(ctx context.Context, event *esproto.UserEvent, environmentNamespace string) error
-	UpsertMAUs(ctx context.Context, events []*esproto.UserEvent, environmentNamespace string) error
+	UpsertMAU(ctx context.Context, event *esproto.UserEvent, environmentId string) error
+	UpsertMAUs(ctx context.Context, events []*esproto.UserEvent, environmentId string) error
 }
 
 // mysqlMAUStorage is the temporal implementation.
@@ -44,7 +44,7 @@ func NewMysqlMAUStorage(qe mysql.QueryExecer) MAUStorage {
 	return &mysqlMAUStorage{qe: qe}
 }
 
-func (s *mysqlMAUStorage) UpsertMAU(ctx context.Context, event *esproto.UserEvent, environmentNamespace string) error {
+func (s *mysqlMAUStorage) UpsertMAU(ctx context.Context, event *esproto.UserEvent, environmentId string) error {
 	query := `
 	INSERT INTO mau (
 		user_id,
@@ -53,7 +53,7 @@ func (s *mysqlMAUStorage) UpsertMAU(ctx context.Context, event *esproto.UserEven
 		event_count,
 		created_at,
 		updated_at,
-		environment_namespace
+		environment_id
 	) VALUES (
 		?, ?, ?, ?, ?, ?, ?
 	) ON DUPLICATE KEY UPDATE
@@ -71,7 +71,7 @@ func (s *mysqlMAUStorage) UpsertMAU(ctx context.Context, event *esproto.UserEven
 		1,
 		event.LastSeen,
 		event.LastSeen,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		return err
@@ -82,7 +82,7 @@ func (s *mysqlMAUStorage) UpsertMAU(ctx context.Context, event *esproto.UserEven
 func (s *mysqlMAUStorage) UpsertMAUs(
 	ctx context.Context,
 	events []*esproto.UserEvent,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	// Upsert the events in batches
 	for i := 0; i < len(events); i += batchSize {
@@ -93,7 +93,7 @@ func (s *mysqlMAUStorage) UpsertMAUs(
 		if err := s.upsertMAUs(
 			ctx,
 			events[i:j],
-			environmentNamespace,
+			environmentId,
 		); err != nil {
 			return err
 		}
@@ -104,7 +104,7 @@ func (s *mysqlMAUStorage) UpsertMAUs(
 func (s *mysqlMAUStorage) upsertMAUs(
 	ctx context.Context,
 	users []*esproto.UserEvent,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	var query strings.Builder
 	query.WriteString(`
@@ -115,7 +115,7 @@ func (s *mysqlMAUStorage) upsertMAUs(
 			event_count,
 			created_at,
 			updated_at,
-			environment_namespace
+			environment_id
 		) VALUES
 	`)
 	args := []interface{}{}
@@ -134,7 +134,7 @@ func (s *mysqlMAUStorage) upsertMAUs(
 			1,
 			event.LastSeen,
 			event.LastSeen,
-			environmentNamespace,
+			environmentId,
 		)
 	}
 	query.WriteString(`

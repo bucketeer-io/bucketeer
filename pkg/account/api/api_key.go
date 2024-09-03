@@ -39,7 +39,7 @@ func (s *AccountService) CreateAPIKey(
 	editor, err := s.checkOrganizationRoleByEnvironmentID(
 		ctx,
 		proto.AccountV2_Role_Organization_ADMIN,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer,
 	)
 	if err != nil {
@@ -54,7 +54,7 @@ func (s *AccountService) CreateAPIKey(
 			"Failed to create a new api key",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -71,7 +71,6 @@ func (s *AccountService) CreateAPIKey(
 			editor,
 			key,
 			s.publisher,
-			req.EnvironmentNamespace,
 			req.EnvironmentId,
 		)
 		if err != nil {
@@ -80,7 +79,7 @@ func (s *AccountService) CreateAPIKey(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return s.accountStorage.CreateAPIKey(ctx, key, req.EnvironmentNamespace, req.EnvironmentId)
+		return s.accountStorage.CreateAPIKey(ctx, key, req.EnvironmentId)
 	})
 	if err != nil {
 		if err == v2as.ErrAPIKeyAlreadyExists {
@@ -97,7 +96,7 @@ func (s *AccountService) CreateAPIKey(
 			"Failed to create api key",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -122,7 +121,7 @@ func (s *AccountService) ChangeAPIKeyName(
 	editor, err := s.checkOrganizationRoleByEnvironmentID(
 		ctx,
 		proto.AccountV2_Role_Organization_ADMIN,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer,
 	)
 	if err != nil {
@@ -133,7 +132,7 @@ func (s *AccountService) ChangeAPIKeyName(
 			"Failed to change api key name",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -142,7 +141,6 @@ func (s *AccountService) ChangeAPIKeyName(
 		ctx,
 		editor,
 		req.Id,
-		req.EnvironmentNamespace,
 		req.EnvironmentId,
 		req.Command,
 	); err != nil {
@@ -160,7 +158,7 @@ func (s *AccountService) ChangeAPIKeyName(
 			"Failed to change api key name",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
 				zap.String("name", req.Command.Name),
 			)...,
@@ -185,7 +183,7 @@ func (s *AccountService) EnableAPIKey(
 	editor, err := s.checkOrganizationRoleByEnvironmentID(
 		ctx,
 		proto.AccountV2_Role_Organization_ADMIN,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer,
 	)
 	if err != nil {
@@ -196,7 +194,7 @@ func (s *AccountService) EnableAPIKey(
 			"Failed to enable api key",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -205,7 +203,6 @@ func (s *AccountService) EnableAPIKey(
 		ctx,
 		editor,
 		req.Id,
-		req.EnvironmentNamespace,
 		req.EnvironmentId,
 		req.Command,
 	); err != nil {
@@ -223,7 +220,7 @@ func (s *AccountService) EnableAPIKey(
 			"Failed to enable api key",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
 			)...,
 		)
@@ -247,7 +244,7 @@ func (s *AccountService) DisableAPIKey(
 	editor, err := s.checkOrganizationRoleByEnvironmentID(
 		ctx,
 		proto.AccountV2_Role_Organization_ADMIN,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer,
 	)
 	if err != nil {
@@ -258,7 +255,7 @@ func (s *AccountService) DisableAPIKey(
 			"Failed to disable api key",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -267,7 +264,6 @@ func (s *AccountService) DisableAPIKey(
 		ctx,
 		editor,
 		req.Id,
-		req.EnvironmentNamespace,
 		req.EnvironmentId,
 		req.Command,
 	); err != nil {
@@ -285,7 +281,7 @@ func (s *AccountService) DisableAPIKey(
 			"Failed to disable api key",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
 			)...,
 		)
@@ -304,22 +300,22 @@ func (s *AccountService) DisableAPIKey(
 func (s *AccountService) updateAPIKeyMySQL(
 	ctx context.Context,
 	editor *eventproto.Editor,
-	id, environmentNamespace, environmentID string,
+	id, environmentID string,
 	cmd command.Command,
 ) error {
 	return s.accountStorage.RunInTransaction(ctx, func() error {
-		apiKey, err := s.accountStorage.GetAPIKey(ctx, id, environmentNamespace, environmentID)
+		apiKey, err := s.accountStorage.GetAPIKey(ctx, id, environmentID)
 		if err != nil {
 			return err
 		}
-		handler, err := command.NewAPIKeyCommandHandler(editor, apiKey, s.publisher, environmentNamespace, environmentID)
+		handler, err := command.NewAPIKeyCommandHandler(editor, apiKey, s.publisher, environmentID)
 		if err != nil {
 			return err
 		}
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
 		}
-		return s.accountStorage.UpdateAPIKey(ctx, apiKey, environmentNamespace, environmentID)
+		return s.accountStorage.UpdateAPIKey(ctx, apiKey, environmentID)
 	})
 }
 
@@ -327,7 +323,7 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, proto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -341,7 +337,7 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 		}
 		return nil, dt.Err()
 	}
-	apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, req.EnvironmentNamespace, req.EnvironmentId)
+	apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if err == v2as.ErrAPIKeyNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -357,7 +353,7 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 			"Failed to get api key",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
 			)...,
 		)
@@ -380,7 +376,7 @@ func (s *AccountService) ListAPIKeys(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, proto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -429,7 +425,7 @@ func (s *AccountService) ListAPIKeys(
 			"Failed to list api keys",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -562,7 +558,7 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 		if !ok || p.Disabled {
 			continue
 		}
-		apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, e.Id, e.Id)
+		apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, e.Id)
 		if err != nil {
 			if err == v2as.ErrAPIKeyNotFound {
 				continue
@@ -571,7 +567,7 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 				"Failed to get api key",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", e.Id),
+					zap.String("environmentId", e.Id),
 					zap.String("id", req.Id),
 				)...,
 			)

@@ -120,7 +120,7 @@ func (p pushSender) handle(msg *puller.Message) {
 		p.logger.Warn("Message contains an empty FeatureID", zap.Any("event", event))
 		return
 	}
-	if err := p.send(featureID, event.EnvironmentNamespace); err != nil {
+	if err := p.send(featureID, event.EnvironmentId); err != nil {
 		msg.Ack()
 		subscriberHandledCounter.WithLabelValues(subscriberPushSender, codes.NonRepeatableError.String()).Inc()
 		return
@@ -129,34 +129,34 @@ func (p pushSender) handle(msg *puller.Message) {
 	subscriberHandledCounter.WithLabelValues(subscriberPushSender, codes.OK.String()).Inc()
 }
 
-func (p pushSender) send(featureID, environmentNamespace string) error {
+func (p pushSender) send(featureID, environmentId string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	resp, err := p.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
-		Id:                   featureID,
-		EnvironmentNamespace: environmentNamespace,
+		Id:            featureID,
+		EnvironmentId: environmentId,
 	})
 	if err != nil {
 		p.logger.Error("Failed to get feature flag",
 			zap.Error(err),
 			zap.String("featureId", featureID),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 		)
 		return err
 	}
-	pushes, err := p.listPushes(ctx, environmentNamespace)
+	pushes, err := p.listPushes(ctx, environmentId)
 	if err != nil {
 		p.logger.Error("Failed to list pushes",
 			zap.Error(err),
 			zap.String("featureId", featureID),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 		)
 		return err
 	}
 	if len(pushes) == 0 {
 		p.logger.Info("No pushes",
 			zap.String("featureId", featureID),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 		)
 		return nil
 	}
@@ -184,7 +184,7 @@ func (p pushSender) send(featureID, environmentNamespace string) error {
 					zap.String("tag", tag),
 					zap.String("topic", topic),
 					zap.String("pushId", d.Push.Id),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)
 				lastErr = err
 				continue
@@ -194,7 +194,7 @@ func (p pushSender) send(featureID, environmentNamespace string) error {
 				zap.String("tag", tag),
 				zap.String("topic", topic),
 				zap.String("pushId", d.Push.Id),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)
 		}
 	}
@@ -275,10 +275,10 @@ func (p pushSender) getFCMCredentials(ctx context.Context, fcmServiceAccount str
 // listPushes list all the pushes
 // Because the `ListPushes` API removes the FCM service account from the response
 // due to security reasons, we list the pushes directly from the storage interface
-func (p pushSender) listPushes(ctx context.Context, environmentNamespace string) ([]*pushproto.Push, error) {
+func (p pushSender) listPushes(ctx context.Context, environmentId string) ([]*pushproto.Push, error) {
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_namespace", "=", environmentNamespace),
+		mysql.NewFilter("environment_id", "=", environmentId),
 	}
 	storage := pushstorage.NewPushStorage(p.mysqlClient)
 	pushes, _, _, err := storage.ListPushes(

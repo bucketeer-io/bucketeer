@@ -41,7 +41,7 @@ func (s *NotificationService) CreateSubscription(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer)
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (s *NotificationService) CreateSubscription(
 			"Failed to create a new subscription",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.Any("sourceType", req.Command.SourceTypes),
 				zap.Any("recipient", req.Command.Recipient),
 			)...,
@@ -89,10 +89,10 @@ func (s *NotificationService) CreateSubscription(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		subscriptionStorage := v2ss.NewSubscriptionStorage(tx)
-		if err := subscriptionStorage.CreateSubscription(ctx, subscription, req.EnvironmentNamespace); err != nil {
+		if err := subscriptionStorage.CreateSubscription(ctx, subscription, req.EnvironmentId); err != nil {
 			return err
 		}
-		handler, err = command.NewSubscriptionCommandHandler(editor, subscription, req.EnvironmentNamespace)
+		handler, err = command.NewSubscriptionCommandHandler(editor, subscription, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -132,7 +132,7 @@ func (s *NotificationService) CreateSubscription(
 			"Failed to publish events",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -249,7 +249,7 @@ func (s *NotificationService) UpdateSubscription(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer)
 	if err != nil {
 		return nil, err
@@ -258,13 +258,13 @@ func (s *NotificationService) UpdateSubscription(
 		return nil, err
 	}
 	commands := s.createUpdateSubscriptionCommands(req)
-	if err := s.updateSubscription(ctx, commands, req.Id, req.EnvironmentNamespace, editor, localizer); err != nil {
+	if err := s.updateSubscription(ctx, commands, req.Id, req.EnvironmentId, editor, localizer); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
 				"Failed to update feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 					zap.String("id", req.Id),
 				)...,
 			)
@@ -281,7 +281,7 @@ func (s *NotificationService) EnableSubscription(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer)
 	if err != nil {
 		return nil, err
@@ -293,7 +293,7 @@ func (s *NotificationService) EnableSubscription(
 		ctx,
 		[]command.Command{req.Command},
 		req.Id,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		editor,
 		localizer,
 	); err != nil {
@@ -302,7 +302,7 @@ func (s *NotificationService) EnableSubscription(
 				"Failed to enable feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 		}
@@ -345,7 +345,7 @@ func (s *NotificationService) DisableSubscription(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer)
 	if err != nil {
 		return nil, err
@@ -357,7 +357,7 @@ func (s *NotificationService) DisableSubscription(
 		ctx,
 		[]command.Command{req.Command},
 		req.Id,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		editor,
 		localizer,
 	); err != nil {
@@ -366,7 +366,7 @@ func (s *NotificationService) DisableSubscription(
 				"Failed to disable feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 		}
@@ -405,7 +405,7 @@ func (s *NotificationService) validateDisableSubscriptionRequest(
 func (s *NotificationService) updateSubscription(
 	ctx context.Context,
 	commands []command.Command,
-	id, environmentNamespace string,
+	id, environmentId string,
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
 ) error {
@@ -429,11 +429,11 @@ func (s *NotificationService) updateSubscription(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		subscriptionStorage := v2ss.NewSubscriptionStorage(tx)
-		subscription, err := subscriptionStorage.GetSubscription(ctx, id, environmentNamespace)
+		subscription, err := subscriptionStorage.GetSubscription(ctx, id, environmentId)
 		if err != nil {
 			return err
 		}
-		handler, err = command.NewSubscriptionCommandHandler(editor, subscription, environmentNamespace)
+		handler, err = command.NewSubscriptionCommandHandler(editor, subscription, environmentId)
 		if err != nil {
 			return err
 		}
@@ -442,7 +442,7 @@ func (s *NotificationService) updateSubscription(
 				return err
 			}
 		}
-		if err = subscriptionStorage.UpdateSubscription(ctx, subscription, environmentNamespace); err != nil {
+		if err = subscriptionStorage.UpdateSubscription(ctx, subscription, environmentId); err != nil {
 			return err
 		}
 		return nil
@@ -479,7 +479,7 @@ func (s *NotificationService) updateSubscription(
 			"Failed to publish events",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 				zap.String("id", id),
 			)...,
 		)
@@ -565,7 +565,7 @@ func (s *NotificationService) DeleteSubscription(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer)
 	if err != nil {
 		return nil, err
@@ -593,18 +593,18 @@ func (s *NotificationService) DeleteSubscription(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		subscriptionStorage := v2ss.NewSubscriptionStorage(tx)
-		subscription, err := subscriptionStorage.GetSubscription(ctx, req.Id, req.EnvironmentNamespace)
+		subscription, err := subscriptionStorage.GetSubscription(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
-		handler, err = command.NewSubscriptionCommandHandler(editor, subscription, req.EnvironmentNamespace)
+		handler, err = command.NewSubscriptionCommandHandler(editor, subscription, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		if err = subscriptionStorage.DeleteSubscription(ctx, req.Id, req.EnvironmentNamespace); err != nil {
+		if err = subscriptionStorage.DeleteSubscription(ctx, req.Id, req.EnvironmentId); err != nil {
 			return err
 		}
 		return nil
@@ -641,7 +641,7 @@ func (s *NotificationService) DeleteSubscription(
 			"Failed to publish events",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
 			)...,
 		)
@@ -707,7 +707,7 @@ func (s *NotificationService) GetSubscription(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer)
 	if err != nil {
 		return nil, err
@@ -716,7 +716,7 @@ func (s *NotificationService) GetSubscription(
 		return nil, err
 	}
 	subscriptionStorage := v2ss.NewSubscriptionStorage(s.mysqlClient)
-	subscription, err := subscriptionStorage.GetSubscription(ctx, req.Id, req.EnvironmentNamespace)
+	subscription, err := subscriptionStorage.GetSubscription(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if err == v2ss.ErrSubscriptionNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -768,13 +768,13 @@ func (s *NotificationService) ListSubscriptions(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer)
 	if err != nil {
 		return nil, err
 	}
 	var whereParts []mysql.WherePart
-	whereParts = append(whereParts, mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace))
+	whereParts = append(whereParts, mysql.NewFilter("environment_id", "=", req.EnvironmentId))
 	sourceTypesValues := make([]interface{}, len(req.SourceTypes))
 	for i, st := range req.SourceTypes {
 		sourceTypesValues[i] = int32(st)
@@ -855,7 +855,7 @@ func (s *NotificationService) ListEnabledSubscriptions(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer)
 	if err != nil {
 		return nil, err
@@ -863,7 +863,7 @@ func (s *NotificationService) ListEnabledSubscriptions(
 	var whereParts []mysql.WherePart
 	whereParts = append(
 		whereParts,
-		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 		mysql.NewFilter("disabled", "=", false),
 	)
 	sourceTypesValues := make([]interface{}, len(req.SourceTypes))

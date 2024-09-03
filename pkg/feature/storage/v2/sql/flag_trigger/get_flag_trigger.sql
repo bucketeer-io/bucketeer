@@ -1,6 +1,6 @@
 SELECT id,
        feature_id,
-       environment_namespace,
+       environment_id,
        type,
        `action`,
        description,
@@ -12,4 +12,4 @@ SELECT id,
        updated_at
 from flag_trigger
 where id = ?
-  AND environment_namespace = ?
+  AND environment_id = ?

@@ -28,29 +28,29 @@ import (
 )
 
 type goalCommandHandler struct {
-	editor               *eventproto.Editor
-	goal                 *domain.Goal
-	previousGoal         *domain.Goal
-	publisher            publisher.Publisher
-	environmentNamespace string
+	editor        *eventproto.Editor
+	goal          *domain.Goal
+	previousGoal  *domain.Goal
+	publisher     publisher.Publisher
+	environmentId string
 }
 
 func NewGoalCommandHandler(
 	editor *eventproto.Editor,
 	goal *domain.Goal,
 	p publisher.Publisher,
-	environmentNamespace string,
+	environmentId string,
 ) (Handler, error) {
 	prev := &domain.Goal{}
 	if err := copier.Copy(prev, goal); err != nil {
 		return nil, err
 	}
 	return &goalCommandHandler{
-		editor:               editor,
-		goal:                 goal,
-		previousGoal:         prev,
-		publisher:            p,
-		environmentNamespace: environmentNamespace,
+		editor:        editor,
+		goal:          goal,
+		previousGoal:  prev,
+		publisher:     p,
+		environmentId: environmentId,
 	}, nil
 }
 
@@ -131,7 +131,7 @@ func (h *goalCommandHandler) send(ctx context.Context, eventType eventproto.Even
 		h.goal.Id,
 		eventType,
 		event,
-		h.environmentNamespace,
+		h.environmentId,
 		h.goal.Goal,
 		prev,
 	)

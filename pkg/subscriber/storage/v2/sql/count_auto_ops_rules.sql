@@ -2,7 +2,7 @@ SELECT COUNT(*)
 FROM auto_ops_rule
 LEFT JOIN feature
 ON auto_ops_rule.feature_id = feature.id
-AND auto_ops_rule.environment_namespace = feature.environment_namespace
+AND auto_ops_rule.environment_id = feature.environment_id
 WHERE feature.archived = 0
   AND auto_ops_rule.status IN (0, 1) -- 0: WAITING, 1: RUNNING
   AND auto_ops_rule.deleted = 0

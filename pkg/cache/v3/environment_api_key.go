@@ -71,5 +71,5 @@ func (c *environmentAPIKeyCache) Put(environmentAPIKey *accountproto.Environment
 
 func (c *environmentAPIKeyCache) key(id string) string {
 	// always use AdminEnvironmentNamespace because we'd like to get APIKey and environment_namespace only by id
-	return cache.MakeKey(environmentAPIKeyKind, id, storage.AdminEnvironmentNamespace)
+	return cache.MakeKey(environmentAPIKeyKind, id, storage.AdminEnvironmentID)
 }

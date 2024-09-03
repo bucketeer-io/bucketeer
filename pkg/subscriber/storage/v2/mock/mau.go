@@ -42,29 +42,29 @@ func (m *MockMAUStorage) EXPECT() *MockMAUStorageMockRecorder {
 }
 
 // UpsertMAU mocks base method.
-func (m *MockMAUStorage) UpsertMAU(ctx context.Context, event *service.UserEvent, environmentNamespace string) error {
+func (m *MockMAUStorage) UpsertMAU(ctx context.Context, event *service.UserEvent, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertMAU", ctx, event, environmentNamespace)
+	ret := m.ctrl.Call(m, "UpsertMAU", ctx, event, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpsertMAU indicates an expected call of UpsertMAU.
-func (mr *MockMAUStorageMockRecorder) UpsertMAU(ctx, event, environmentNamespace any) *gomock.Call {
+func (mr *MockMAUStorageMockRecorder) UpsertMAU(ctx, event, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertMAU", reflect.TypeOf((*MockMAUStorage)(nil).UpsertMAU), ctx, event, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertMAU", reflect.TypeOf((*MockMAUStorage)(nil).UpsertMAU), ctx, event, environmentId)
 }
 
 // UpsertMAUs mocks base method.
-func (m *MockMAUStorage) UpsertMAUs(ctx context.Context, events []*service.UserEvent, environmentNamespace string) error {
+func (m *MockMAUStorage) UpsertMAUs(ctx context.Context, events []*service.UserEvent, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertMAUs", ctx, events, environmentNamespace)
+	ret := m.ctrl.Call(m, "UpsertMAUs", ctx, events, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpsertMAUs indicates an expected call of UpsertMAUs.
-func (mr *MockMAUStorageMockRecorder) UpsertMAUs(ctx, events, environmentNamespace any) *gomock.Call {
+func (mr *MockMAUStorageMockRecorder) UpsertMAUs(ctx, events, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertMAUs", reflect.TypeOf((*MockMAUStorage)(nil).UpsertMAUs), ctx, events, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertMAUs", reflect.TypeOf((*MockMAUStorage)(nil).UpsertMAUs), ctx, events, environmentId)
 }

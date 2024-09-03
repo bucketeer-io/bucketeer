@@ -155,11 +155,11 @@ func (w *mauCountWatcher) listEnvironments(
 
 func (w *mauCountWatcher) getUserCount(
 	ctx context.Context,
-	environmentNamespace, yearMonth string,
+	environmentId, yearMonth string,
 ) (eventCount, userCount int64, err error) {
 	resp, e := w.eventCounterClient.GetMAUCount(ctx, &ecproto.GetMAUCountRequest{
-		EnvironmentNamespace: environmentNamespace,
-		YearMonth:            yearMonth,
+		EnvironmentId: environmentId,
+		YearMonth:     yearMonth,
 	})
 	if e != nil {
 		err = e
@@ -196,9 +196,9 @@ func (w *mauCountWatcher) createNotificationEvent(
 		return nil, err
 	}
 	ne := &senderproto.NotificationEvent{
-		Id:                   id.String(),
-		EnvironmentNamespace: environment.Id,
-		SourceType:           notificationproto.Subscription_MAU_COUNT,
+		Id:            id.String(),
+		EnvironmentId: environment.Id,
+		SourceType:    notificationproto.Subscription_MAU_COUNT,
 		Notification: &senderproto.Notification{
 			Type: senderproto.Notification_MauCount,
 			MauCountNotification: &senderproto.MauCountNotification{

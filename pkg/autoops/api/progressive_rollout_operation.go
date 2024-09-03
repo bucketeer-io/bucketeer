@@ -32,7 +32,7 @@ const totalVariationWeight = int32(100000)
 func ExecuteProgressiveRolloutOperation(
 	progressiveRollout *domain.ProgressiveRollout,
 	feature *ftdomain.Feature,
-	scheduleID, environmentNamespace string,
+	scheduleID string,
 ) (*featureproto.Strategy, error) {
 	var variationID string
 	var weight int32

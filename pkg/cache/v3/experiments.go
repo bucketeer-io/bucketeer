@@ -31,8 +31,8 @@ const (
 )
 
 type ExperimentsCache interface {
-	Get(environmentNamespace string) (*exproto.Experiments, error)
-	Put(experiments *exproto.Experiments, environmentNamespace string) error
+	Get(environmentId string) (*exproto.Experiments, error)
+	Put(experiments *exproto.Experiments, environmentId string) error
 }
 
 type experimentsCache struct {
@@ -43,8 +43,8 @@ func NewExperimentsCache(c cache.MultiGetCache) ExperimentsCache {
 	return &experimentsCache{cache: c}
 }
 
-func (c *experimentsCache) Get(environmentNamespace string) (*exproto.Experiments, error) {
-	key := c.key(environmentNamespace)
+func (c *experimentsCache) Get(environmentId string) (*exproto.Experiments, error) {
+	key := c.key(environmentId)
 	value, err := c.cache.Get(key)
 	if err != nil {
 		return nil, err
@@ -61,15 +61,15 @@ func (c *experimentsCache) Get(environmentNamespace string) (*exproto.Experiment
 	return experiments, nil
 }
 
-func (c *experimentsCache) Put(experiments *exproto.Experiments, environmentNamespace string) error {
+func (c *experimentsCache) Put(experiments *exproto.Experiments, environmentId string) error {
 	buffer, err := proto.Marshal(experiments)
 	if err != nil {
 		return err
 	}
-	key := c.key(environmentNamespace)
+	key := c.key(environmentId)
 	return c.cache.Put(key, buffer, experimentCacheTTL)
 }
 
-func (c *experimentsCache) key(environmentNamespace string) string {
-	return fmt.Sprintf("%s:%s", environmentNamespace, experimentsKind)
+func (c *experimentsCache) key(environmentId string) string {
+	return fmt.Sprintf("%s:%s", environmentId, experimentsKind)
 }

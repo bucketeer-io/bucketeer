@@ -33,11 +33,11 @@ func TestCreateAPIKey(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	patterns := []struct {
-		desc                 string
-		setup                func(*accountStorage)
-		input                *domain.APIKey
-		environmentNamespace string
-		expectedErr          error
+		desc          string
+		setup         func(*accountStorage)
+		input         *domain.APIKey
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			desc: "ErrAPIKeyAlreadyExists",
@@ -49,8 +49,8 @@ func TestCreateAPIKey(t *testing.T) {
 			input: &domain.APIKey{
 				APIKey: &proto.APIKey{Id: "aid-0"},
 			},
-			environmentNamespace: "ns0",
-			expectedErr:          ErrAPIKeyAlreadyExists,
+			environmentId: "ns0",
+			expectedErr:   ErrAPIKeyAlreadyExists,
 		},
 		{
 			desc: "Error",
@@ -62,8 +62,8 @@ func TestCreateAPIKey(t *testing.T) {
 			input: &domain.APIKey{
 				APIKey: &proto.APIKey{Id: "aid-0"},
 			},
-			environmentNamespace: "ns0",
-			expectedErr:          errors.New("error"),
+			environmentId: "ns0",
+			expectedErr:   errors.New("error"),
 		},
 		{
 			desc: "Success",
@@ -77,8 +77,8 @@ func TestCreateAPIKey(t *testing.T) {
 			input: &domain.APIKey{
 				APIKey: &proto.APIKey{Id: "aid-0", Name: "name", Role: 0, Disabled: false, CreatedAt: 2, UpdatedAt: 3},
 			},
-			environmentNamespace: "ns0",
-			expectedErr:          nil,
+			environmentId: "ns0",
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -87,7 +87,7 @@ func TestCreateAPIKey(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			err := storage.CreateAPIKey(context.Background(), p.input, p.environmentNamespace)
+			err := storage.CreateAPIKey(context.Background(), p.input, p.environmentId)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -99,7 +99,7 @@ func TestUpdateAPIKey(t *testing.T) {
 	defer mockController.Finish()
 
 	id := "aid-0"
-	environmentNamespace := "ns0"
+	environmentId := "ns0"
 	name := "name"
 	role := proto.APIKey_Role(0)
 	disabled := false
@@ -107,11 +107,11 @@ func TestUpdateAPIKey(t *testing.T) {
 	updatedAt := int64(3)
 
 	patterns := []struct {
-		desc                 string
-		setup                func(*accountStorage)
-		input                *domain.APIKey
-		environmentNamespace string
-		expectedErr          error
+		desc          string
+		setup         func(*accountStorage)
+		input         *domain.APIKey
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			desc: "ErrAPIKeyUnexpectedAffectedRows",
@@ -125,8 +125,8 @@ func TestUpdateAPIKey(t *testing.T) {
 			input: &domain.APIKey{
 				APIKey: &proto.APIKey{Id: id},
 			},
-			environmentNamespace: environmentNamespace,
-			expectedErr:          ErrAPIKeyUnexpectedAffectedRows,
+			environmentId: environmentId,
+			expectedErr:   ErrAPIKeyUnexpectedAffectedRows,
 		},
 		{
 			desc: "Error",
@@ -138,8 +138,8 @@ func TestUpdateAPIKey(t *testing.T) {
 			input: &domain.APIKey{
 				APIKey: &proto.APIKey{Id: id},
 			},
-			environmentNamespace: environmentNamespace,
-			expectedErr:          errors.New("error"),
+			environmentId: environmentId,
+			expectedErr:   errors.New("error"),
 		},
 		{
 			desc: "Success",
@@ -149,14 +149,14 @@ func TestUpdateAPIKey(t *testing.T) {
 				s.client.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
-					name, int32(role), disabled, updatedAt, id, environmentNamespace,
+					name, int32(role), disabled, updatedAt, id, environmentId,
 				).Return(result, nil)
 			},
 			input: &domain.APIKey{
 				APIKey: &proto.APIKey{Id: id, Name: name, Role: role, Disabled: disabled, CreatedAt: createdAt, UpdatedAt: updatedAt},
 			},
-			environmentNamespace: environmentNamespace,
-			expectedErr:          nil,
+			environmentId: environmentId,
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -165,7 +165,7 @@ func TestUpdateAPIKey(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			err := storage.UpdateAPIKey(context.Background(), p.input, p.environmentNamespace)
+			err := storage.UpdateAPIKey(context.Background(), p.input, p.environmentId)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -176,11 +176,11 @@ func TestGetAPIKey(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	patterns := []struct {
-		desc                 string
-		setup                func(*accountStorage)
-		id                   string
-		environmentNamespace string
-		expectedErr          error
+		desc          string
+		setup         func(*accountStorage)
+		id            string
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			desc: "ErrAPIKeyNotFound",
@@ -191,9 +191,9 @@ func TestGetAPIKey(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			id:                   "id-0",
-			environmentNamespace: "ns0",
-			expectedErr:          ErrAPIKeyNotFound,
+			id:            "id-0",
+			environmentId: "ns0",
+			expectedErr:   ErrAPIKeyNotFound,
 		},
 		{
 			desc: "Error",
@@ -205,9 +205,9 @@ func TestGetAPIKey(t *testing.T) {
 				).Return(row)
 
 			},
-			id:                   "id-0",
-			environmentNamespace: "ns0",
-			expectedErr:          errors.New("error"),
+			id:            "id-0",
+			environmentId: "ns0",
+			expectedErr:   errors.New("error"),
 		},
 		{
 			desc: "Success",
@@ -220,9 +220,9 @@ func TestGetAPIKey(t *testing.T) {
 					"id-0", "ns0",
 				).Return(row)
 			},
-			id:                   "id-0",
-			environmentNamespace: "ns0",
-			expectedErr:          nil,
+			id:            "id-0",
+			environmentId: "ns0",
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -231,7 +231,7 @@ func TestGetAPIKey(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			_, err := storage.GetAPIKey(context.Background(), p.id, p.environmentNamespace)
+			_, err := storage.GetAPIKey(context.Background(), p.id, p.environmentId)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

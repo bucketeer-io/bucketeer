@@ -86,12 +86,12 @@ func (w *goalEvtWriter) Write(
 ) map[string]bool {
 	var goalEvents []*epproto.GoalEvent
 	fails := make(map[string]bool, len(envEvents))
-	for environmentNamespace, events := range envEvents {
-		experiments, err := w.listExperiments(ctx, environmentNamespace)
+	for environmentId, events := range envEvents {
+		experiments, err := w.listExperiments(ctx, environmentId)
 		if err != nil {
 			w.logger.Error("failed to list experiments",
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)
 			subscriberHandledCounter.WithLabelValues(subscriberGoalEventDWH, codeFailedToListExperiments).Inc()
 			// Make sure to retry all the events in the next pulling
@@ -106,7 +106,7 @@ func (w *goalEvtWriter) Write(
 		for id, event := range events {
 			switch evt := event.(type) {
 			case *eventproto.GoalEvent:
-				e, retriable, err := w.convToGoalEvents(ctx, evt, id, environmentNamespace, experiments)
+				e, retriable, err := w.convToGoalEvents(ctx, evt, id, environmentId, experiments)
 				if err != nil {
 					if errors.Is(err, ErrExperimentNotFound) {
 						// If there is nothing to link, we don't report it as an error
@@ -118,7 +118,7 @@ func (w *goalEvtWriter) Write(
 							"Failed to convert to goal event",
 							zap.Error(err),
 							zap.String("id", id),
-							zap.String("environmentNamespace", environmentNamespace),
+							zap.String("environmentId", environmentId),
 							zap.Any("goalEvent", evt),
 						)
 					}
@@ -131,7 +131,7 @@ func (w *goalEvtWriter) Write(
 				w.logger.Error(
 					"The event is an unexpected message type",
 					zap.String("id", id),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 					zap.Any("goalEvent", evt),
 				)
 				fails[id] = false
@@ -170,16 +170,16 @@ func (w *goalEvtWriter) Write(
 func (w *goalEvtWriter) convToGoalEvents(
 	ctx context.Context,
 	e *eventproto.GoalEvent,
-	id, environmentNamespace string,
+	id, environmentId string,
 	experiments []*exproto.Experiment,
 ) ([]*epproto.GoalEvent, bool, error) {
-	evals, retriable, err := w.linkGoalEvent(ctx, e, environmentNamespace, e.Tag, experiments)
+	evals, retriable, err := w.linkGoalEvent(ctx, e, environmentId, e.Tag, experiments)
 	if err != nil {
 		return nil, retriable, err
 	}
 	events := make([]*epproto.GoalEvent, 0, len(evals))
 	for _, eval := range evals {
-		event, retriable, err := w.convToGoalEvent(ctx, e, eval, id, e.Tag, environmentNamespace)
+		event, retriable, err := w.convToGoalEvent(ctx, e, eval, id, e.Tag, environmentId)
 		if err != nil {
 			return nil, retriable, err
 		}
@@ -192,7 +192,7 @@ func (w *goalEvtWriter) convToGoalEvent(
 	ctx context.Context,
 	e *eventproto.GoalEvent,
 	eval *featureproto.Evaluation,
-	id, tag, environmentNamespace string,
+	id, tag, environmentId string,
 ) (*epproto.GoalEvent, bool, error) {
 	var ud []byte
 	if e.User != nil {
@@ -211,29 +211,29 @@ func (w *goalEvtWriter) convToGoalEvent(
 		tag = "none"
 	}
 	return &epproto.GoalEvent{
-		Id:                   id,
-		GoalId:               e.GoalId,
-		Value:                float32(e.Value),
-		UserData:             string(ud),
-		UserId:               e.UserId,
-		Tag:                  tag,
-		SourceId:             e.SourceId.String(),
-		EnvironmentNamespace: environmentNamespace,
-		Timestamp:            time.Unix(e.Timestamp, 0).UnixMicro(),
-		FeatureId:            eval.FeatureId,
-		FeatureVersion:       eval.FeatureVersion,
-		VariationId:          eval.VariationId,
-		Reason:               eval.Reason.Type.String(),
+		Id:             id,
+		GoalId:         e.GoalId,
+		Value:          float32(e.Value),
+		UserData:       string(ud),
+		UserId:         e.UserId,
+		Tag:            tag,
+		SourceId:       e.SourceId.String(),
+		EnvironmentId:  environmentId,
+		Timestamp:      time.Unix(e.Timestamp, 0).UnixMicro(),
+		FeatureId:      eval.FeatureId,
+		FeatureVersion: eval.FeatureVersion,
+		VariationId:    eval.VariationId,
+		Reason:         eval.Reason.Type.String(),
 	}, false, nil
 }
 
 func (w *goalEvtWriter) linkGoalEvent(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
-	environmentNamespace, tag string,
+	environmentId, tag string,
 	experiments []*exproto.Experiment,
 ) ([]*featureproto.Evaluation, bool, error) {
-	evalExp, retriable, err := w.linkGoalEventByExperiment(ctx, event, environmentNamespace, tag, experiments)
+	evalExp, retriable, err := w.linkGoalEventByExperiment(ctx, event, environmentId, tag, experiments)
 	if err != nil {
 		return nil, retriable, err
 	}
@@ -244,7 +244,7 @@ func (w *goalEvtWriter) linkGoalEvent(
 func (w *goalEvtWriter) linkGoalEventByExperiment(
 	ctx context.Context,
 	event *eventproto.GoalEvent,
-	environmentNamespace, tag string,
+	environmentId, tag string,
 	experiments []*exproto.Experiment,
 ) ([]*featureproto.Evaluation, bool, error) {
 	// Find the experiment by goal ID
@@ -278,7 +278,7 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 		ev, err := w.getUserEvaluation(
 			ctx,
 			event.User,
-			environmentNamespace,
+			environmentId,
 			tag,
 			exp.FeatureId,
 			exp.FeatureVersion,
@@ -287,14 +287,14 @@ func (w *goalEvtWriter) linkGoalEventByExperiment(
 			if errors.Is(err, ErrEvaluationsAreEmpty) {
 				w.logger.Error("evaluations are empty",
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 					zap.Any("goalEvent", event),
 				)
 				return nil, false, err
 			}
 			w.logger.Error("failed to get user evaluation",
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 				zap.Any("goalEvent", event),
 			)
 			return nil, true, err
@@ -315,20 +315,20 @@ func (w *goalEvtWriter) findGoalID(id string, goalIDs []string) bool {
 
 func (w *goalEvtWriter) listExperiments(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*exproto.Experiment, error) {
 	exp, err, _ := w.flightgroup.Do(
-		fmt.Sprintf("%s:%s", environmentNamespace, "listExperiments"),
+		fmt.Sprintf("%s:%s", environmentId, "listExperiments"),
 		func() (interface{}, error) {
 			// Get the experiment cache
-			expList, err := w.cache.Get(environmentNamespace)
+			expList, err := w.cache.Get(environmentId)
 			if err == nil {
 				return expList.Experiments, nil
 			}
 			// Get the experiments from the DB
 			resp, err := w.experimentClient.ListExperiments(ctx, &exproto.ListExperimentsRequest{
-				PageSize:             0,
-				EnvironmentNamespace: environmentNamespace,
+				PageSize:      0,
+				EnvironmentId: environmentId,
 				Statuses: []exproto.Experiment_Status{
 					exproto.Experiment_RUNNING,
 					exproto.Experiment_STOPPED,
@@ -363,20 +363,20 @@ func (w *goalEvtWriter) listExperiments(
 func (w *goalEvtWriter) getUserEvaluation(
 	ctx context.Context,
 	user *userproto.User,
-	environmentNamespace, tag, featureID string,
+	environmentId, tag, featureID string,
 	featureVersion int32,
 ) (*featureproto.Evaluation, error) {
 	resp, err := w.featureClient.EvaluateFeatures(ctx, &featureproto.EvaluateFeaturesRequest{
-		EnvironmentNamespace: environmentNamespace,
-		FeatureId:            featureID,
-		Tag:                  tag,
-		User:                 user,
+		EnvironmentId: environmentId,
+		FeatureId:     featureID,
+		Tag:           tag,
+		User:          user,
 	})
 	if err != nil {
 		w.logger.Error(
 			"Failed to evaluate user",
 			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 			zap.String("userId", user.Id),
 			zap.String("featureId", featureID),
 			zap.Int32("featureVersion", featureVersion),
@@ -390,7 +390,7 @@ func (w *goalEvtWriter) getUserEvaluation(
 		w.logger.Error(
 			"Evaluations are empty",
 			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 			zap.String("userId", user.Id),
 			zap.String("featureId", featureID),
 			zap.Int32("featureVersion", featureVersion),

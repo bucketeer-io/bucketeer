@@ -29,6 +29,7 @@ message Event {
   google.protobuf.Any event = 2;
   string environment_namespace =
       3;  // SDK doens't need to set this field. It's set by gateway service.
+  string environment_id = 4;
 }
 
 message EvaluationEvent {

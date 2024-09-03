@@ -42,10 +42,10 @@ func TestUpsertOpsCount(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		setup                func(*opsCountStorage)
-		input                *domain.OpsCount
-		environmentNamespace string
-		expectedErr          error
+		setup         func(*opsCountStorage)
+		input         *domain.OpsCount
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			setup: func(s *opsCountStorage) {
@@ -54,9 +54,9 @@ func TestUpsertOpsCount(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
-			input:                &domain.OpsCount{OpsCount: &proto.OpsCount{}},
-			environmentNamespace: "ns",
-			expectedErr:          nil,
+			input:         &domain.OpsCount{OpsCount: &proto.OpsCount{}},
+			environmentId: "ns",
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -64,7 +64,7 @@ func TestUpsertOpsCount(t *testing.T) {
 		if p.setup != nil {
 			p.setup(storage)
 		}
-		err := storage.UpsertOpsCount(context.Background(), p.environmentNamespace, p.input)
+		err := storage.UpsertOpsCount(context.Background(), p.environmentId, p.input)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }

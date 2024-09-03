@@ -26,6 +26,7 @@ import "proto/experiment/experiment.proto";
 message GetGoalRequest {
   string id = 1;
   string environment_namespace = 2;
+  string environment_id = 3;
 }
 
 message GetGoalResponse {
@@ -51,6 +52,7 @@ message ListGoalsRequest {
   string search_keyword = 6;
   google.protobuf.BoolValue is_in_use_status = 7;
   google.protobuf.BoolValue archived = 8;
+  string environment_id = 9;
 }
 
 message ListGoalsResponse {
@@ -62,6 +64,7 @@ message ListGoalsResponse {
 message CreateGoalRequest {
   CreateGoalCommand command = 1;
   string environment_namespace = 2;
+  string environment_id = 3;
 }
 
 message CreateGoalResponse {}
@@ -70,6 +73,7 @@ message ArchiveGoalRequest {
   string id = 1;
   ArchiveGoalCommand command = 2;
   string environment_namespace = 3;
+  string environment_id = 4;
 }
 
 message ArchiveGoalResponse {}
@@ -78,6 +82,7 @@ message DeleteGoalRequest {
   string id = 1;
   DeleteGoalCommand command = 2;
   string environment_namespace = 3;
+  string environment_id = 4;
 }
 
 message DeleteGoalResponse {}
@@ -87,6 +92,7 @@ message UpdateGoalRequest {
   RenameGoalCommand rename_command = 2;
   ChangeDescriptionGoalCommand change_description_command = 3;
   string environment_namespace = 4;
+  string environment_id = 5;
 }
 
 message UpdateGoalResponse {}
@@ -94,6 +100,7 @@ message UpdateGoalResponse {}
 message GetExperimentRequest {
   string id = 1;
   string environment_namespace = 2;
+  string environment_id = 3;
 }
 
 message GetExperimentResponse {
@@ -125,6 +132,7 @@ message ListExperimentsRequest {
   string search_keyword = 12;
   google.protobuf.BoolValue archived = 13;
   repeated Experiment.Status statuses = 14;
+  string environment_id = 15;
 }
 
 message ListExperimentsResponse {
@@ -136,6 +144,7 @@ message ListExperimentsResponse {
 message CreateExperimentRequest {
   CreateExperimentCommand command = 1;
   string environment_namespace = 2;
+  string environment_id = 3;
 }
 
 message CreateExperimentResponse {
@@ -152,6 +161,7 @@ message UpdateExperimentRequest {
   ChangeExperimentPeriodCommand change_experiment_period_command = 5;
   ChangeExperimentNameCommand change_name_command = 6;
   ChangeExperimentDescriptionCommand change_description_command = 7;
+  string environment_id = 8;
 }
 
 message UpdateExperimentResponse {}
@@ -160,6 +170,7 @@ message StartExperimentRequest {
   string environment_namespace = 1;
   string id = 2;
   StartExperimentCommand command = 3;
+  string environment_id = 4;
 }
 
 message StartExperimentResponse {}
@@ -168,6 +179,7 @@ message FinishExperimentRequest {
   string environment_namespace = 1;
   string id = 2;
   FinishExperimentCommand command = 3;
+  string environment_id = 4;
 }
 
 message FinishExperimentResponse {}
@@ -176,6 +188,7 @@ message StopExperimentRequest {
   string id = 1;
   StopExperimentCommand command = 2;
   string environment_namespace = 3;
+  string environment_id = 4;
 }
 
 message StopExperimentResponse {}
@@ -184,6 +197,7 @@ message ArchiveExperimentRequest {
   string id = 1;
   ArchiveExperimentCommand command = 2;
   string environment_namespace = 3;
+  string environment_id = 4;
 }
 
 message ArchiveExperimentResponse {}
@@ -192,6 +206,7 @@ message DeleteExperimentRequest {
   string id = 1;
   DeleteExperimentCommand command = 2;
   string environment_namespace = 3;
+  string environment_id = 4;
 }
 
 message DeleteExperimentResponse {}

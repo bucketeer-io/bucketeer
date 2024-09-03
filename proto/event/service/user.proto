@@ -30,4 +30,5 @@ message UserEvent {
   int64 last_seen = 7;
   map<string, string> data = 8;
   bucketeer.event.client.SourceId source_id = 9;
+  string environment_id = 10;
 }

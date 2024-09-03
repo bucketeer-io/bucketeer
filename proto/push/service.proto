@@ -28,6 +28,7 @@ message CreatePushRequest {
   repeated string tags = 3;
   string name = 4;
   bytes fcm_service_account = 5;
+  string environment_id = 6;
 }
 
 message CreatePushResponse {
@@ -51,6 +52,7 @@ message ListPushesRequest {
   OrderBy order_by = 4;
   OrderDirection order_direction = 5;
   string search_keyword = 6;
+  string environment_id = 7;
 }
 
 message ListPushesResponse {
@@ -63,6 +65,7 @@ message DeletePushRequest {
   string environment_namespace = 1;
   string id = 2;
   DeletePushCommand command = 3 [deprecated = true];
+  string environment_id = 4;
 }
 
 message DeletePushResponse {}
@@ -75,6 +78,7 @@ message UpdatePushRequest {
   RenamePushCommand rename_push_command = 5 [deprecated = true];
   repeated string tags = 6;
   google.protobuf.StringValue name = 7;
+  string environment_id = 8;
 }
 
 message UpdatePushResponse {

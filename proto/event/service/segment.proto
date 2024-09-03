@@ -27,4 +27,5 @@ message BulkSegmentUsersReceivedEvent {
   bytes data = 4;
   bucketeer.feature.SegmentUser.State state = 5;
   bucketeer.event.domain.Editor editor = 6;
+  string environment_id = 7;
 }

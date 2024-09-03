@@ -32,9 +32,9 @@ var (
 )
 
 type ExperimentStorage interface {
-	CreateExperiment(ctx context.Context, e *domain.Experiment, environmentNamespace string) error
-	UpdateExperiment(ctx context.Context, e *domain.Experiment, environmentNamespace string) error
-	GetExperiment(ctx context.Context, id, environmentNamespace string) (*domain.Experiment, error)
+	CreateExperiment(ctx context.Context, e *domain.Experiment, environmentId string) error
+	UpdateExperiment(ctx context.Context, e *domain.Experiment, environmentId string) error
+	GetExperiment(ctx context.Context, id, environmentId string) (*domain.Experiment, error)
 	ListExperiments(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
@@ -54,7 +54,7 @@ func NewExperimentStorage(qe mysql.QueryExecer) ExperimentStorage {
 func (s *experimentStorage) CreateExperiment(
 	ctx context.Context,
 	e *domain.Experiment,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	query := `
 		INSERT INTO experiment (
@@ -77,7 +77,7 @@ func (s *experimentStorage) CreateExperiment(
 			base_variation_id,
 			status,
 			maintainer,
-			environment_namespace
+			environment_id
 		) VALUES (
 			?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
 			?, ?, ?, ?, ?, ?, ?, ?, ?, ?
@@ -105,7 +105,7 @@ func (s *experimentStorage) CreateExperiment(
 		e.BaseVariationId,
 		int32(e.Status),
 		e.Maintainer,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		if err == mysql.ErrDuplicateEntry {
@@ -119,7 +119,7 @@ func (s *experimentStorage) CreateExperiment(
 func (s *experimentStorage) UpdateExperiment(
 	ctx context.Context,
 	e *domain.Experiment,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	query := `
 		UPDATE 
@@ -145,7 +145,7 @@ func (s *experimentStorage) UpdateExperiment(
 			status = ?
 		WHERE
 			id = ? AND
-			environment_namespace = ?
+			environment_id = ?
 	`
 	result, err := s.qe.ExecContext(
 		ctx,
@@ -169,7 +169,7 @@ func (s *experimentStorage) UpdateExperiment(
 		e.Maintainer,
 		int32(e.Status),
 		e.Id,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		return err
@@ -186,7 +186,7 @@ func (s *experimentStorage) UpdateExperiment(
 
 func (s *experimentStorage) GetExperiment(
 	ctx context.Context,
-	id, environmentNamespace string,
+	id, environmentId string,
 ) (*domain.Experiment, error) {
 	experiment := proto.Experiment{}
 	var status int32
@@ -215,13 +215,13 @@ func (s *experimentStorage) GetExperiment(
 			experiment
 		WHERE
 			id = ? AND
-			environment_namespace = ?
+			environment_id = ?
 	`
 	err := s.qe.QueryRowContext(
 		ctx,
 		query,
 		id,
-		environmentNamespace,
+		environmentId,
 	).Scan(
 		&experiment.Id,
 		&experiment.GoalId,

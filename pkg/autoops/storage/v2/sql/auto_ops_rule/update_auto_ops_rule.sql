@@ -10,4 +10,4 @@ SET
     status = ?
 WHERE
     id = ? AND
-    environment_namespace = ?
+    environment_id = ?

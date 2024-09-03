@@ -165,7 +165,7 @@ func TestCreatePushMySQL(t *testing.T) {
 				).Return(v2ps.ErrPushAlreadyExists)
 			},
 			req: &pushproto.CreatePushRequest{
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 				Command: &pushproto.CreatePushCommand{
 					FcmServiceAccount: fcmServiceAccountDummy,
 					Tags:              []string{"tag-0"},
@@ -195,7 +195,7 @@ func TestCreatePushMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &pushproto.CreatePushRequest{
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 				Command: &pushproto.CreatePushCommand{
 					FcmServiceAccount: fcmServiceAccountDummy,
 					Tags:              []string{"tag-0"},
@@ -436,9 +436,9 @@ func TestUpdatePushMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &pushproto.UpdatePushRequest{
-				EnvironmentNamespace: "ns0",
-				Id:                   "key-0",
-				RenamePushCommand:    &pushproto.RenamePushCommand{Name: "name-1"},
+				EnvironmentId:     "ns0",
+				Id:                "key-0",
+				RenamePushCommand: &pushproto.RenamePushCommand{Name: "name-1"},
 			},
 			expectedErr: nil,
 		},
@@ -451,7 +451,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &pushproto.UpdatePushRequest{
-				EnvironmentNamespace:  "ns0",
+				EnvironmentId:         "ns0",
 				Id:                    "key-0",
 				DeletePushTagsCommand: &pushproto.DeletePushTagsCommand{Tags: []string{"tag-0"}},
 			},
@@ -478,9 +478,9 @@ func TestUpdatePushMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &pushproto.UpdatePushRequest{
-				EnvironmentNamespace: "ns0",
-				Id:                   "key-0",
-				AddPushTagsCommand:   &pushproto.AddPushTagsCommand{Tags: []string{"tag-2"}},
+				EnvironmentId:      "ns0",
+				Id:                 "key-0",
+				AddPushTagsCommand: &pushproto.AddPushTagsCommand{Tags: []string{"tag-2"}},
 			},
 			expectedErr: nil,
 		},
@@ -505,7 +505,7 @@ func TestUpdatePushMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &pushproto.UpdatePushRequest{
-				EnvironmentNamespace:  "ns0",
+				EnvironmentId:         "ns0",
 				Id:                    "key-0",
 				AddPushTagsCommand:    &pushproto.AddPushTagsCommand{Tags: []string{"tag-2"}},
 				DeletePushTagsCommand: &pushproto.DeletePushTagsCommand{Tags: []string{"tag-0"}},
@@ -752,9 +752,9 @@ func TestDeletePushMySQL(t *testing.T) {
 				).Return(v2ps.ErrPushNotFound)
 			},
 			req: &pushproto.DeletePushRequest{
-				EnvironmentNamespace: "ns0",
-				Id:                   "key-1",
-				Command:              &pushproto.DeletePushCommand{},
+				EnvironmentId: "ns0",
+				Id:            "key-1",
+				Command:       &pushproto.DeletePushCommand{},
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -767,9 +767,9 @@ func TestDeletePushMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &pushproto.DeletePushRequest{
-				EnvironmentNamespace: "ns0",
-				Id:                   "key-0",
-				Command:              &pushproto.DeletePushCommand{},
+				EnvironmentId: "ns0",
+				Id:            "key-0",
+				Command:       &pushproto.DeletePushCommand{},
 			},
 			expectedErr: nil,
 		},
@@ -819,7 +819,7 @@ func TestListPushesMySQL(t *testing.T) {
 			orgRole:     toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole:     toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup:       nil,
-			input:       &pushproto.ListPushesRequest{Cursor: "XXX", EnvironmentNamespace: "ns0"},
+			input:       &pushproto.ListPushesRequest{Cursor: "XXX", EnvironmentId: "ns0"},
 			expected:    nil,
 			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
 		},
@@ -830,7 +830,7 @@ func TestListPushesMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			input:       &pushproto.ListPushesRequest{EnvironmentNamespace: "ns0"},
+			input:       &pushproto.ListPushesRequest{EnvironmentId: "ns0"},
 			expected:    nil,
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
@@ -838,7 +838,7 @@ func TestListPushesMySQL(t *testing.T) {
 			desc:        "err: ErrPermissionDenied",
 			orgRole:     toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole:     toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			input:       &pushproto.ListPushesRequest{EnvironmentNamespace: "ns0"},
+			input:       &pushproto.ListPushesRequest{EnvironmentId: "ns0"},
 			expected:    nil,
 			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
@@ -860,7 +860,7 @@ func TestListPushesMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			input:       &pushproto.ListPushesRequest{PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0"},
+			input:       &pushproto.ListPushesRequest{PageSize: 2, Cursor: "", EnvironmentId: "ns0"},
 			expected:    &pushproto.ListPushesResponse{Pushes: []*pushproto.Push{}, Cursor: "0"},
 			expectedErr: nil,
 		},

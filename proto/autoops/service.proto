@@ -25,6 +25,7 @@ import "proto/autoops/progressive_rollout.proto";
 message GetAutoOpsRuleRequest {
   string environment_namespace = 1;
   string id = 2;
+  string environment_id = 3;
 }
 
 message GetAutoOpsRuleResponse {
@@ -34,6 +35,7 @@ message GetAutoOpsRuleResponse {
 message CreateAutoOpsRuleRequest {
   string environment_namespace = 1;
   CreateAutoOpsRuleCommand command = 2;
+  string environment_id = 3;
 }
 
 message CreateAutoOpsRuleResponse {}
@@ -43,6 +45,7 @@ message ListAutoOpsRulesRequest {
   int64 page_size = 2;
   string cursor = 3;
   repeated string feature_ids = 4;
+  string environment_id = 5;
 }
 
 message ListAutoOpsRulesResponse {
@@ -54,6 +57,7 @@ message StopAutoOpsRuleRequest {
   string environment_namespace = 1;
   string id = 2;
   StopAutoOpsRuleCommand command = 3;
+  string environment_id = 4;
 }
 
 message StopAutoOpsRuleResponse {}
@@ -62,6 +66,7 @@ message DeleteAutoOpsRuleRequest {
   string environment_namespace = 1;
   string id = 2;
   DeleteAutoOpsRuleCommand command = 3;
+  string environment_id = 4;
 }
 
 message DeleteAutoOpsRuleResponse {}
@@ -78,6 +83,7 @@ message UpdateAutoOpsRuleRequest {
   repeated DeleteClauseCommand delete_clause_commands = 6;
   repeated AddDatetimeClauseCommand add_datetime_clause_commands = 7;
   repeated ChangeDatetimeClauseCommand change_datetime_clause_commands = 8;
+  string environment_id = 9;
 }
 
 message UpdateAutoOpsRuleResponse {}
@@ -89,6 +95,7 @@ message ExecuteAutoOpsRequest {
   // change_auto_ops_rule_triggered_at_command = 3 [deprecated = true];
   reserved 3;
   ExecuteAutoOpsRuleCommand execute_auto_ops_rule_command = 4;
+  string environment_id = 5;
 }
 
 message ExecuteAutoOpsResponse {
@@ -101,6 +108,7 @@ message ListOpsCountsRequest {
   string cursor = 3;
   repeated string auto_ops_rule_ids = 4;
   repeated string feature_ids = 5;
+  string environment_id = 6;
 }
 
 message ListOpsCountsResponse {
@@ -111,6 +119,7 @@ message ListOpsCountsResponse {
 message CreateProgressiveRolloutRequest {
   string environment_namespace = 1;
   CreateProgressiveRolloutCommand command = 2;
+  string environment_id = 3;
 }
 
 message CreateProgressiveRolloutResponse {}
@@ -118,6 +127,7 @@ message CreateProgressiveRolloutResponse {}
 message GetProgressiveRolloutRequest {
   string environment_namespace = 1;
   string id = 2;
+  string environment_id = 3;
 }
 
 message GetProgressiveRolloutResponse {
@@ -128,6 +138,7 @@ message StopProgressiveRolloutRequest {
   string environment_namespace = 1;
   string id = 2;
   StopProgressiveRolloutCommand command = 3;
+  string environment_id = 4;
 }
 
 message StopProgressiveRolloutResponse {}
@@ -136,6 +147,7 @@ message DeleteProgressiveRolloutRequest {
   string environment_namespace = 1;
   string id = 2;
   DeleteProgressiveRolloutCommand command = 3;
+  string environment_id = 4;
 }
 
 message DeleteProgressiveRolloutResponse {}
@@ -158,6 +170,7 @@ message ListProgressiveRolloutsRequest {
   OrderDirection order_direction = 6;
   optional ProgressiveRollout.Status status = 7;
   optional ProgressiveRollout.Type type = 8;
+  string environment_id = 9;
 }
 
 message ListProgressiveRolloutsResponse {
@@ -171,6 +184,7 @@ message ExecuteProgressiveRolloutRequest {
   string id = 2;
   ChangeProgressiveRolloutScheduleTriggeredAtCommand
       change_progressive_rollout_triggered_at_command = 3;
+  string environment_id = 4;
 }
 
 message ExecuteProgressiveRolloutResponse {}

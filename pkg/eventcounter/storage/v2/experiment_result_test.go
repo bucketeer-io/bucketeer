@@ -39,11 +39,11 @@ func TestGetExperimentResult(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	patterns := []struct {
-		desc                 string
-		setup                func(*experimentResultStorage)
-		id                   string
-		environmentNamespace string
-		expectedErr          error
+		desc          string
+		setup         func(*experimentResultStorage)
+		id            string
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			desc: "ErrExperimentResultNotFound",
@@ -54,9 +54,9 @@ func TestGetExperimentResult(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			id:                   "id-0",
-			environmentNamespace: "ns",
-			expectedErr:          ErrExperimentResultNotFound,
+			id:            "id-0",
+			environmentId: "ns",
+			expectedErr:   ErrExperimentResultNotFound,
 		},
 		{
 			desc: "Error",
@@ -68,9 +68,9 @@ func TestGetExperimentResult(t *testing.T) {
 				).Return(row)
 
 			},
-			id:                   "id-0",
-			environmentNamespace: "ns",
-			expectedErr:          errors.New("error"),
+			id:            "id-0",
+			environmentId: "ns",
+			expectedErr:   errors.New("error"),
 		},
 		{
 			desc: "Success",
@@ -81,9 +81,9 @@ func TestGetExperimentResult(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			id:                   "id-0",
-			environmentNamespace: "ns",
-			expectedErr:          nil,
+			id:            "id-0",
+			environmentId: "ns",
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -92,7 +92,7 @@ func TestGetExperimentResult(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			_, err := storage.GetExperimentResult(context.Background(), p.id, p.environmentNamespace)
+			_, err := storage.GetExperimentResult(context.Background(), p.id, p.environmentId)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

@@ -63,12 +63,12 @@ func NewEvalUserCountUpdater(
 
 func (u *evalEvtUpdater) UpdateUserCounts(ctx context.Context, evt environmentEventOPSMap) map[string]bool {
 	fails := map[string]bool{}
-	for environmentNamespace, events := range evt {
-		listAutoOpsRules, err := u.listAutoOpsRules(ctx, environmentNamespace)
+	for environmentId, events := range evt {
+		listAutoOpsRules, err := u.listAutoOpsRules(ctx, environmentId)
 		if err != nil {
 			u.logger.Error("failed to list auto ops rules",
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)
 			subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventOPS, codeFailedToListAutoOpsRules).Inc()
 			// Make sure to retry all the events in the next pulling
@@ -83,7 +83,7 @@ func (u *evalEvtUpdater) UpdateUserCounts(ctx context.Context, evt environmentEv
 		for id, event := range events {
 			switch evt := event.(type) {
 			case *eventproto.EvaluationEvent:
-				retriable, err := u.updateUserCount(ctx, environmentNamespace, evt, listAutoOpsRules)
+				retriable, err := u.updateUserCount(ctx, environmentId, evt, listAutoOpsRules)
 				if err != nil {
 					if errors.Is(err, ErrAutoOpsRuleNotFound) {
 						// If there is nothing to link, we don't report it as an error
@@ -95,7 +95,7 @@ func (u *evalEvtUpdater) UpdateUserCounts(ctx context.Context, evt environmentEv
 							"Failed to persister evaluation event for auto ops",
 							zap.Error(err),
 							zap.String("eventId", id),
-							zap.String("environmentNamespace", environmentNamespace),
+							zap.String("environmentId", environmentId),
 						)
 					}
 					fails[id] = retriable
@@ -106,7 +106,7 @@ func (u *evalEvtUpdater) UpdateUserCounts(ctx context.Context, evt environmentEv
 				u.logger.Error(
 					"Unexpected message type while trying to persister an evaluation event",
 					zap.String("eventId", id),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)
 				fails[id] = false
 			}
@@ -117,7 +117,7 @@ func (u *evalEvtUpdater) UpdateUserCounts(ctx context.Context, evt environmentEv
 
 func (u *evalEvtUpdater) updateUserCount(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 	event *eventproto.EvaluationEvent,
 	listAutoOpsRules []*aoproto.AutoOpsRule,
 ) (bool, error) {
@@ -137,7 +137,7 @@ func (u *evalEvtUpdater) updateUserCount(
 	// Update the user count per rule
 	for ruleID, clauseIDs := range linkedOpsRules {
 		err := u.updateUserCountPerClause(
-			environmentNamespace,
+			environmentId,
 			event.FeatureId,
 			event.FeatureVersion,
 			event.VariationId,
@@ -154,13 +154,13 @@ func (u *evalEvtUpdater) updateUserCount(
 
 func (u *evalEvtUpdater) listAutoOpsRules(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*aoproto.AutoOpsRule, error) {
 	exp, err, _ := u.flightgroup.Do(
-		fmt.Sprintf("%s:%s", environmentNamespace, "listAutoOpsRules"),
+		fmt.Sprintf("%s:%s", environmentId, "listAutoOpsRules"),
 		func() (interface{}, error) {
 			// Get the auto ops rules cache
-			aorList, err := u.autoOpsRulesCache.Get(environmentNamespace)
+			aorList, err := u.autoOpsRulesCache.Get(environmentId)
 			if err == nil {
 				return aorList.AutoOpsRules, nil
 			}
@@ -168,8 +168,8 @@ func (u *evalEvtUpdater) listAutoOpsRules(
 			// because it will increase access to the DB, which also will increase the costs.
 			// So we list all rules and use the singleflight implementation to share the response
 			resp, err := u.autoOpsClient.ListAutoOpsRules(ctx, &aoproto.ListAutoOpsRulesRequest{
-				EnvironmentNamespace: environmentNamespace,
-				PageSize:             0,
+				EnvironmentId: environmentId,
+				PageSize:      0,
 			})
 			if err != nil {
 				return nil, err
@@ -220,7 +220,7 @@ func (u *evalEvtUpdater) linkOpsEventRateByVariationID(
 }
 
 func (u *evalEvtUpdater) updateUserCountPerClause(
-	environmentNamespace,
+	environmentId,
 	featureID string,
 	featureVersion int32,
 	variationID,
@@ -230,7 +230,7 @@ func (u *evalEvtUpdater) updateUserCountPerClause(
 ) error {
 	for _, clauseID := range clauseIDs {
 		key := u.newUserCountKey(
-			environmentNamespace,
+			environmentId,
 			ruleID,
 			clauseID,
 			featureID,
@@ -244,14 +244,14 @@ func (u *evalEvtUpdater) updateUserCountPerClause(
 		u.logger.Debug(
 			"User count updated successfully",
 			zap.String("pfcountKey", key),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 		)
 	}
 	return nil
 }
 
 func (u *evalEvtUpdater) newUserCountKey(
-	environmentNamespace,
+	environmentId,
 	ruleID, clauseID, featureID, variationID string,
 	featureVersion int32,
 ) string {
@@ -265,6 +265,6 @@ func (u *evalEvtUpdater) newUserCountKey(
 	return cache.MakeKey(
 		opsEvalKeyPrefix,
 		key,
-		environmentNamespace,
+		environmentId,
 	)
 }

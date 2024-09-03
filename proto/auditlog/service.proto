@@ -39,6 +39,7 @@ message ListAuditLogsRequest {
   int64 from = 7;
   int64 to = 8;
   google.protobuf.Int32Value entity_type = 9;
+  string environment_id = 10;
 }
 
 message ListAuditLogsResponse {
@@ -90,6 +91,7 @@ message ListFeatureHistoryRequest {
   string search_keyword = 7;
   int64 from = 8;
   int64 to = 9;
+  string environment_id = 10;
 }
 
 message ListFeatureHistoryResponse {

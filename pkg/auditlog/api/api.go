@@ -100,7 +100,7 @@ func (s *auditlogService) ListAuditLogs(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func (s *auditlogService) ListAuditLogs(
 		return nil, dt.Err()
 	}
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
 	if req.From != 0 {
 		whereParts = append(whereParts, mysql.NewFilter("timestamp", ">=", req.From))
@@ -312,13 +312,13 @@ func (s *auditlogService) ListFeatureHistory(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer)
 	if err != nil {
 		return nil, err
 	}
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 		mysql.NewFilter("entity_type", "=", int32(eventproto.Event_FEATURE)),
 		mysql.NewFilter("entity_id", "=", req.FeatureId),
 	}
@@ -367,7 +367,7 @@ func (s *auditlogService) ListFeatureHistory(
 			"Failed to list feature history",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.String("featureId", req.FeatureId),
 			)...,
 		)
@@ -420,17 +420,17 @@ func (s *auditlogService) newFeatureHistoryAuditLogListOrders(
 func (s *auditlogService) checkEnvironmentRole(
 	ctx context.Context,
 	requiredRole accountproto.AccountV2_Role_Environment,
-	environmentNamespace string,
+	environmentId string,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckEnvironmentRole(
 		ctx,
 		requiredRole,
-		environmentNamespace,
+		environmentId,
 		func(email string) (*accountproto.AccountV2, error) {
 			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
 				Email:         email,
-				EnvironmentId: environmentNamespace,
+				EnvironmentId: environmentId,
 			})
 			if err != nil {
 				return nil, err
@@ -444,7 +444,7 @@ func (s *auditlogService) checkEnvironmentRole(
 				"Unauthenticated",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
@@ -460,7 +460,7 @@ func (s *auditlogService) checkEnvironmentRole(
 				"Permission denied",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
@@ -476,7 +476,7 @@ func (s *auditlogService) checkEnvironmentRole(
 				"Failed to check role",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{

@@ -29,8 +29,8 @@ import (
 )
 
 const (
-	tag                  = "bucketeer-tag"
-	environmentNamespace = "bucketeer-environment"
+	tag           = "bucketeer-tag"
+	environmentId = "bucketeer-environment"
 )
 
 func TestGetFeatures(t *testing.T) {
@@ -40,7 +40,7 @@ func TestGetFeatures(t *testing.T) {
 
 	features := createFeatures(t)
 	dataFeatures := marshalMessage(t, features)
-	key := fmt.Sprintf("%s:%s", environmentNamespace, featuresKind)
+	key := fmt.Sprintf("%s:%s", environmentId, featuresKind)
 
 	patterns := []struct {
 		desc        string
@@ -73,7 +73,7 @@ func TestGetFeatures(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			tf := newFeaturesCache(t, mockController)
 			p.setup(tf)
-			features, err := tf.Get(environmentNamespace)
+			features, err := tf.Get(environmentId)
 			if err == nil {
 				assert.Equal(t, features.Features[0].Id, features.Features[0].Id)
 				assert.Equal(t, features.Features[0].Name, features.Features[0].Name)
@@ -90,7 +90,7 @@ func TestPutFeatures(t *testing.T) {
 
 	features := createFeatures(t)
 	dataFeatures := marshalMessage(t, features)
-	key := fmt.Sprintf("%s:%s", environmentNamespace, featuresKind)
+	key := fmt.Sprintf("%s:%s", environmentId, featuresKind)
 
 	patterns := []struct {
 		desc        string
@@ -119,7 +119,7 @@ func TestPutFeatures(t *testing.T) {
 			if p.setup != nil {
 				p.setup(tf)
 			}
-			err := tf.Put(p.input, environmentNamespace)
+			err := tf.Put(p.input, environmentId)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

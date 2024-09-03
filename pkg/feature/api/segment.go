@@ -45,7 +45,7 @@ func (s *FeatureService) CreateSegment(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (s *FeatureService) CreateSegment(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -65,7 +65,7 @@ func (s *FeatureService) CreateSegment(
 			"Failed to create segment",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -96,12 +96,12 @@ func (s *FeatureService) CreateSegment(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		segmentStorage := v2fs.NewSegmentStorage(tx)
-		if err := segmentStorage.CreateSegment(ctx, segment, req.EnvironmentNamespace); err != nil {
+		if err := segmentStorage.CreateSegment(ctx, segment, req.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to store segment",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
@@ -110,7 +110,7 @@ func (s *FeatureService) CreateSegment(
 			editor,
 			segment,
 			s.domainPublisher,
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 		)
 		if err != nil {
 			return err
@@ -120,7 +120,7 @@ func (s *FeatureService) CreateSegment(
 				"Failed to handle command",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
@@ -142,7 +142,7 @@ func (s *FeatureService) CreateSegment(
 			"Failed to create segment",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -166,7 +166,7 @@ func (s *FeatureService) DeleteSegment(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -175,12 +175,12 @@ func (s *FeatureService) DeleteSegment(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
 	}
-	if err := s.checkSegmentInUse(ctx, req.Id, req.EnvironmentNamespace, localizer); err != nil {
+	if err := s.checkSegmentInUse(ctx, req.Id, req.EnvironmentId, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateSegment(
@@ -188,7 +188,7 @@ func (s *FeatureService) DeleteSegment(
 		editor,
 		[]command.Command{req.Command},
 		req.Id,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer,
 	); err != nil {
 		return nil, err
@@ -198,13 +198,13 @@ func (s *FeatureService) DeleteSegment(
 
 func (s *FeatureService) checkSegmentInUse(
 	ctx context.Context,
-	segmentID, environmentNamespace string,
+	segmentID, environmentId string,
 	localizer locale.Localizer,
 ) error {
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_namespace", "=", environmentNamespace),
+		mysql.NewFilter("environment_id", "=", environmentId),
 	}
 	features, _, _, err := featureStorage.ListFeatures(
 		ctx,
@@ -218,7 +218,7 @@ func (s *FeatureService) checkSegmentInUse(
 			"Failed to list features",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -235,7 +235,7 @@ func (s *FeatureService) checkSegmentInUse(
 			"Segment User in use",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.String("segmentId", segmentID),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		dt, err := statusSegmentInUse.WithDetails(&errdetails.LocalizedMessage{
@@ -274,13 +274,13 @@ func (s *FeatureService) UpdateSegment(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		s.logger.Info(
 			"Permission denied",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -293,7 +293,7 @@ func (s *FeatureService) UpdateSegment(
 				"Failed to unmarshal command",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -312,12 +312,19 @@ func (s *FeatureService) UpdateSegment(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
 	}
-	if err := s.updateSegment(ctx, editor, commands, req.Id, req.EnvironmentNamespace, localizer); err != nil {
+	if err := s.updateSegment(
+		ctx,
+		editor,
+		commands,
+		req.Id,
+		req.EnvironmentId,
+		localizer,
+	); err != nil {
 		return nil, err
 	}
 	return &featureproto.UpdateSegmentResponse{}, nil
@@ -327,7 +334,7 @@ func (s *FeatureService) updateSegment(
 	ctx context.Context,
 	editor *eventproto.Editor,
 	commands []command.Command,
-	segmentID, environmentNamespace string,
+	segmentID, environmentId string,
 	localizer locale.Localizer,
 ) error {
 	tx, err := s.mysqlClient.BeginTx(ctx)
@@ -349,13 +356,13 @@ func (s *FeatureService) updateSegment(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		segmentStorage := v2fs.NewSegmentStorage(tx)
-		segment, _, err := segmentStorage.GetSegment(ctx, segmentID, environmentNamespace)
+		segment, _, err := segmentStorage.GetSegment(ctx, segmentID, environmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get segment",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			return err
@@ -364,7 +371,7 @@ func (s *FeatureService) updateSegment(
 			editor,
 			segment,
 			s.domainPublisher,
-			environmentNamespace,
+			environmentId,
 		)
 		if err != nil {
 			return err
@@ -375,13 +382,13 @@ func (s *FeatureService) updateSegment(
 					"Failed to handle command",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.Error(err),
-						zap.String("environmentNamespace", environmentNamespace),
+						zap.String("environmentId", environmentId),
 					)...,
 				)
 				return err
 			}
 		}
-		return segmentStorage.UpdateSegment(ctx, segment, environmentNamespace)
+		return segmentStorage.UpdateSegment(ctx, segment, environmentId)
 	})
 	if err != nil {
 		if err == v2fs.ErrSegmentNotFound || err == v2fs.ErrSegmentUnexpectedAffectedRows {
@@ -398,7 +405,7 @@ func (s *FeatureService) updateSegment(
 			"Failed to update segment",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -420,7 +427,7 @@ func (s *FeatureService) GetSegment(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -429,13 +436,13 @@ func (s *FeatureService) GetSegment(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
 	}
 	segmentStorage := v2fs.NewSegmentStorage(s.mysqlClient)
-	segment, featureIDs, err := segmentStorage.GetSegment(ctx, req.Id, req.EnvironmentNamespace)
+	segment, featureIDs, err := segmentStorage.GetSegment(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if err == v2fs.ErrSegmentNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -451,7 +458,7 @@ func (s *FeatureService) GetSegment(
 			"Failed to get segment",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -471,13 +478,13 @@ func (s *FeatureService) GetSegment(
 		map[string][]string{
 			segment.Id: featureIDs,
 		},
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 	); err != nil {
 		s.logger.Error(
 			"Failed to inject features into segments",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -500,7 +507,7 @@ func (s *FeatureService) ListSegments(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -509,14 +516,14 @@ func (s *FeatureService) ListSegments(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
 	}
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
 	if req.Status != nil {
 		whereParts = append(whereParts, mysql.NewFilter("status", "=", req.Status.Value))
@@ -560,14 +567,14 @@ func (s *FeatureService) ListSegments(
 		limit,
 		offset,
 		isInUseStatus,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 	)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list segments",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -583,13 +590,13 @@ func (s *FeatureService) ListSegments(
 		ctx,
 		segments,
 		featureIDsMap,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 	); err != nil {
 		s.logger.Error(
 			"Failed to inject features into segments",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{

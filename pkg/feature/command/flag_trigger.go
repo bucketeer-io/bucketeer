@@ -29,29 +29,29 @@ import (
 )
 
 type flagTriggerCommandHandler struct {
-	editor               *eventproto.Editor
-	flagTrigger          *domain.FlagTrigger
-	previousFlagTrigger  *domain.FlagTrigger
-	publisher            publisher.Publisher
-	environmentNamespace string
+	editor              *eventproto.Editor
+	flagTrigger         *domain.FlagTrigger
+	previousFlagTrigger *domain.FlagTrigger
+	publisher           publisher.Publisher
+	environmentID       string
 }
 
 func NewFlagTriggerCommandHandler(
 	editor *eventproto.Editor,
 	flagTrigger *domain.FlagTrigger,
 	publisher publisher.Publisher,
-	environmentNamespace string,
+	environmentID string,
 ) (Handler, error) {
 	prev := &domain.FlagTrigger{}
 	if err := copier.Copy(prev, flagTrigger); err != nil {
 		return nil, err
 	}
 	return &flagTriggerCommandHandler{
-		editor:               editor,
-		flagTrigger:          flagTrigger,
-		previousFlagTrigger:  prev,
-		publisher:            publisher,
-		environmentNamespace: environmentNamespace,
+		editor:              editor,
+		flagTrigger:         flagTrigger,
+		previousFlagTrigger: prev,
+		publisher:           publisher,
+		environmentID:       environmentID,
 	}, nil
 }
 
@@ -86,15 +86,15 @@ func (f *flagTriggerCommandHandler) create(
 		return err
 	}
 	return f.send(ctx, eventproto.Event_FLAG_TRIGGER_CREATED, &eventproto.FlagTriggerCreatedEvent{
-		Id:                   f.flagTrigger.Id,
-		FeatureId:            f.flagTrigger.FeatureId,
-		EnvironmentNamespace: f.flagTrigger.EnvironmentNamespace,
-		Type:                 f.flagTrigger.Type,
-		Action:               f.flagTrigger.Action,
-		Description:          f.flagTrigger.Description,
-		CreatedAt:            f.flagTrigger.CreatedAt,
-		UpdatedAt:            f.flagTrigger.UpdatedAt,
-		Token:                f.flagTrigger.Token,
+		Id:            f.flagTrigger.Id,
+		FeatureId:     f.flagTrigger.FeatureId,
+		EnvironmentId: f.flagTrigger.EnvironmentId,
+		Type:          f.flagTrigger.Type,
+		Action:        f.flagTrigger.Action,
+		Description:   f.flagTrigger.Description,
+		CreatedAt:     f.flagTrigger.CreatedAt,
+		UpdatedAt:     f.flagTrigger.UpdatedAt,
+		Token:         f.flagTrigger.Token,
 	})
 }
 
@@ -106,10 +106,10 @@ func (f *flagTriggerCommandHandler) reset(
 		return err
 	}
 	return f.send(ctx, eventproto.Event_FLAG_TRIGGER_RESET, &eventproto.FlagTriggerResetEvent{
-		Id:                   f.flagTrigger.Id,
-		FeatureId:            f.flagTrigger.FeatureId,
-		EnvironmentNamespace: f.flagTrigger.EnvironmentNamespace,
-		Token:                f.flagTrigger.Token,
+		Id:            f.flagTrigger.Id,
+		FeatureId:     f.flagTrigger.FeatureId,
+		EnvironmentId: f.flagTrigger.EnvironmentId,
+		Token:         f.flagTrigger.Token,
 	})
 }
 
@@ -121,10 +121,10 @@ func (f *flagTriggerCommandHandler) changeDescription(
 	return f.send(ctx,
 		eventproto.Event_FLAG_TRIGGER_DESCRIPTION_CHANGED,
 		&eventproto.FlagTriggerDescriptionChangedEvent{
-			Id:                   f.flagTrigger.Id,
-			FeatureId:            f.flagTrigger.FeatureId,
-			EnvironmentNamespace: f.flagTrigger.EnvironmentNamespace,
-			Description:          f.flagTrigger.Description,
+			Id:            f.flagTrigger.Id,
+			FeatureId:     f.flagTrigger.FeatureId,
+			EnvironmentId: f.flagTrigger.EnvironmentId,
+			Description:   f.flagTrigger.Description,
 		})
 }
 
@@ -134,9 +134,9 @@ func (f *flagTriggerCommandHandler) disable(
 ) error {
 	_ = f.flagTrigger.Disable()
 	return f.send(ctx, eventproto.Event_FLAG_TRIGGER_DISABLED, &eventproto.FlagTriggerDisabledEvent{
-		Id:                   f.flagTrigger.Id,
-		FeatureId:            f.flagTrigger.FeatureId,
-		EnvironmentNamespace: f.flagTrigger.EnvironmentNamespace,
+		Id:            f.flagTrigger.Id,
+		FeatureId:     f.flagTrigger.FeatureId,
+		EnvironmentId: f.flagTrigger.EnvironmentId,
 	})
 }
 
@@ -146,9 +146,9 @@ func (f *flagTriggerCommandHandler) enable(
 ) error {
 	_ = f.flagTrigger.Enable()
 	return f.send(ctx, eventproto.Event_FLAG_TRIGGER_ENABLED, &eventproto.FlagTriggerEnabledEvent{
-		Id:                   f.flagTrigger.Id,
-		FeatureId:            f.flagTrigger.FeatureId,
-		EnvironmentNamespace: f.flagTrigger.EnvironmentNamespace,
+		Id:            f.flagTrigger.Id,
+		FeatureId:     f.flagTrigger.FeatureId,
+		EnvironmentId: f.flagTrigger.EnvironmentId,
 	})
 }
 
@@ -158,11 +158,11 @@ func (f *flagTriggerCommandHandler) updateUsage(
 ) error {
 	_ = f.flagTrigger.UpdateTriggerUsage()
 	return f.send(ctx, eventproto.Event_FLAG_TRIGGER_USAGE_UPDATED, &eventproto.FlagTriggerUsageUpdatedEvent{
-		Id:                   f.flagTrigger.Id,
-		FeatureId:            f.flagTrigger.FeatureId,
-		EnvironmentNamespace: f.flagTrigger.EnvironmentNamespace,
-		LastTriggeredAt:      f.flagTrigger.LastTriggeredAt,
-		TriggerTimes:         f.flagTrigger.TriggerCount,
+		Id:              f.flagTrigger.Id,
+		FeatureId:       f.flagTrigger.FeatureId,
+		EnvironmentId:   f.flagTrigger.EnvironmentId,
+		LastTriggeredAt: f.flagTrigger.LastTriggeredAt,
+		TriggerTimes:    f.flagTrigger.TriggerCount,
 	})
 }
 
@@ -171,9 +171,9 @@ func (f *flagTriggerCommandHandler) delete(
 	cmd *proto.DeleteFlagTriggerCommand,
 ) error {
 	return f.send(ctx, eventproto.Event_FLAG_TRIGGER_DELETED, &eventproto.FlagTriggerDeletedEvent{
-		Id:                   f.flagTrigger.Id,
-		FeatureId:            f.flagTrigger.FeatureId,
-		EnvironmentNamespace: f.flagTrigger.EnvironmentNamespace,
+		Id:            f.flagTrigger.Id,
+		FeatureId:     f.flagTrigger.FeatureId,
+		EnvironmentId: f.flagTrigger.EnvironmentId,
 	})
 }
 
@@ -192,7 +192,7 @@ func (f *flagTriggerCommandHandler) send(
 		f.flagTrigger.Id,
 		eventType,
 		event,
-		f.environmentNamespace,
+		f.environmentID,
 		f.flagTrigger.FlagTrigger,
 		prev,
 	)

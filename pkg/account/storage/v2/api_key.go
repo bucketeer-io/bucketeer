@@ -44,7 +44,7 @@ var (
 	selectAPIKeyV2ByIDSQLQuery string
 )
 
-func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace, environmentID string) error {
+func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentID string) error {
 	_, err := s.qe(ctx).ExecContext(
 		ctx,
 		insertAPIKeyV2SQLQuery,
@@ -54,7 +54,6 @@ func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, env
 		k.Disabled,
 		k.CreatedAt,
 		k.UpdatedAt,
-		environmentNamespace,
 		environmentID,
 	)
 	if err != nil {
@@ -66,7 +65,7 @@ func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, env
 	return nil
 }
 
-func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentNamespace, environmentID string) error {
+func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentID string) error {
 	result, err := s.qe(ctx).ExecContext(
 		ctx,
 		updateAPIKeyV2SQLQuery,
@@ -75,7 +74,6 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 		k.Disabled,
 		k.UpdatedAt,
 		k.Id,
-		environmentNamespace,
 		environmentID,
 	)
 	if err != nil {
@@ -91,14 +89,13 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 	return nil
 }
 
-func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentNamespace, environmentID string) (*domain.APIKey, error) {
+func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentID string) (*domain.APIKey, error) {
 	apiKey := proto.APIKey{}
 	var role int32
 	err := s.qe(ctx).QueryRowContext(
 		ctx,
 		selectAPIKeyV2ByIDSQLQuery,
 		id,
-		environmentNamespace,
 		environmentID,
 	).Scan(
 		&apiKey.Id,

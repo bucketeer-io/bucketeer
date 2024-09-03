@@ -217,6 +217,7 @@ message IncrementFeatureVersionCommand {}
 
 message CloneFeatureCommand {
   string environment_namespace = 1;
+  string environment_id = 2;
 }
 
 message ResetSamplingSeedCommand {}

@@ -41,30 +41,30 @@ func (m *MockFeaturesCache) EXPECT() *MockFeaturesCacheMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockFeaturesCache) Get(environmentNamespace string) (*feature.Features, error) {
+func (m *MockFeaturesCache) Get(environmentId string) (*feature.Features, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", environmentNamespace)
+	ret := m.ctrl.Call(m, "Get", environmentId)
 	ret0, _ := ret[0].(*feature.Features)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockFeaturesCacheMockRecorder) Get(environmentNamespace any) *gomock.Call {
+func (mr *MockFeaturesCacheMockRecorder) Get(environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockFeaturesCache)(nil).Get), environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockFeaturesCache)(nil).Get), environmentId)
 }
 
 // Put mocks base method.
-func (m *MockFeaturesCache) Put(features *feature.Features, environmentNamespace string) error {
+func (m *MockFeaturesCache) Put(features *feature.Features, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", features, environmentNamespace)
+	ret := m.ctrl.Call(m, "Put", features, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Put indicates an expected call of Put.
-func (mr *MockFeaturesCacheMockRecorder) Put(features, environmentNamespace any) *gomock.Call {
+func (mr *MockFeaturesCacheMockRecorder) Put(features, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockFeaturesCache)(nil).Put), features, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockFeaturesCache)(nil).Put), features, environmentId)
 }

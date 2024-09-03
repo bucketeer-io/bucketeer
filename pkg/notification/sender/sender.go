@@ -100,7 +100,7 @@ func (s *sender) Send(ctx context.Context, notificationEvent *senderproto.Notifi
 	} else {
 		subs, err := s.listEnabledSubscriptions(
 			ctx,
-			notificationEvent.EnvironmentNamespace,
+			notificationEvent.EnvironmentId,
 			notificationEvent.SourceType,
 		)
 		if err != nil {
@@ -118,13 +118,13 @@ func (s *sender) Send(ctx context.Context, notificationEvent *senderproto.Notifi
 			subscription.Recipient.Language,
 		); err != nil {
 			s.logger.Error("Failed to send notification", zap.Error(err),
-				zap.String("environmentNamespace", notificationEvent.EnvironmentNamespace),
+				zap.String("environmentId", notificationEvent.EnvironmentId),
 			)
 			lastErr = err
 			continue
 		}
 		s.logger.Info("Succeeded to send notification",
-			zap.String("environmentNamespace", notificationEvent.EnvironmentNamespace),
+			zap.String("environmentId", notificationEvent.EnvironmentId),
 		)
 	}
 	if lastErr != nil {
@@ -151,17 +151,17 @@ func (s *sender) send(
 
 func (s *sender) listEnabledSubscriptions(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 	sourceType notificationproto.Subscription_SourceType) ([]*notificationproto.Subscription, error) {
 
 	subscriptions := []*notificationproto.Subscription{}
 	cursor := ""
 	for {
 		resp, err := s.notificationClient.ListEnabledSubscriptions(ctx, &notificationproto.ListEnabledSubscriptionsRequest{
-			EnvironmentNamespace: environmentNamespace,
-			SourceTypes:          []notificationproto.Subscription_SourceType{sourceType},
-			PageSize:             listRequestSize,
-			Cursor:               cursor,
+			EnvironmentId: environmentId,
+			SourceTypes:   []notificationproto.Subscription_SourceType{sourceType},
+			PageSize:      listRequestSize,
+			Cursor:        cursor,
 		})
 		if err != nil {
 			return nil, err

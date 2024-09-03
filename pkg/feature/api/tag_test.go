@@ -59,7 +59,7 @@ func TestListTagsMySQL(t *testing.T) {
 		{
 			desc:        "errInvalidCursor",
 			setup:       nil,
-			input:       &featureproto.ListTagsRequest{EnvironmentNamespace: environmentNamespace, Cursor: "foo"},
+			input:       &featureproto.ListTagsRequest{EnvironmentId: environmentId, Cursor: "foo"},
 			expected:    nil,
 			expectedErr: createError(localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"), statusInvalidCursor),
 		},
@@ -70,7 +70,7 @@ func TestListTagsMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("test"))
 			},
-			input:       &featureproto.ListTagsRequest{EnvironmentNamespace: environmentNamespace},
+			input:       &featureproto.ListTagsRequest{EnvironmentId: environmentId},
 			expected:    nil,
 			expectedErr: createError(localizer.MustLocalize(locale.InternalServerError), statusInternal),
 		},
@@ -91,9 +91,9 @@ func TestListTagsMySQL(t *testing.T) {
 				).Return(row)
 			},
 			input: &featureproto.ListTagsRequest{
-				PageSize:             2,
-				Cursor:               "",
-				EnvironmentNamespace: environmentNamespace,
+				PageSize:      2,
+				Cursor:        "",
+				EnvironmentId: environmentId,
 			},
 			expected:    &featureproto.ListTagsResponse{Tags: []*featureproto.Tag{}, Cursor: "0"},
 			expectedErr: nil,
@@ -158,7 +158,7 @@ func TestUpsertTags(t *testing.T) {
 			if p.setup != nil {
 				p.setup(transaction)
 			}
-			err := service.upsertTags(ctx, transaction, p.tags, environmentNamespace)
+			err := service.upsertTags(ctx, transaction, p.tags, environmentId)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

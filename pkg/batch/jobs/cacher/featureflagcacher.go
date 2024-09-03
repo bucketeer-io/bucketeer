@@ -102,8 +102,8 @@ func (c *featureFlagCacher) listFeatures(
 	environmentID string,
 ) ([]*ftproto.Feature, error) {
 	req := &ftproto.ListFeaturesRequest{
-		PageSize:             0,
-		EnvironmentNamespace: environmentID,
+		PageSize:      0,
+		EnvironmentId: environmentID,
 	}
 	resp, err := c.featureClient.ListFeatures(ctx, req)
 	if err != nil {

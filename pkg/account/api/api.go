@@ -263,15 +263,15 @@ func (s *AccountService) checkSystemAdminRole(
 func (s *AccountService) checkEnvironmentRole(
 	ctx context.Context,
 	requiredRole proto.AccountV2_Role_Environment,
-	environmentNamespace string,
+	environmentId string,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckEnvironmentRole(
 		ctx,
 		requiredRole,
-		environmentNamespace,
+		environmentId,
 		func(email string) (*proto.AccountV2, error) {
-			account, err := s.getAccountV2ByEnvironmentID(ctx, email, environmentNamespace, localizer)
+			account, err := s.getAccountV2ByEnvironmentID(ctx, email, environmentId, localizer)
 			if err != nil {
 				return nil, err
 			}
@@ -285,7 +285,7 @@ func (s *AccountService) checkEnvironmentRole(
 				"Unauthenticated",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
@@ -301,7 +301,7 @@ func (s *AccountService) checkEnvironmentRole(
 				"Permission denied",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
@@ -317,7 +317,7 @@ func (s *AccountService) checkEnvironmentRole(
 				"Failed to check role",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{

@@ -40,15 +40,15 @@ func (m *MockProgressiveRolloutExecutor) EXPECT() *MockProgressiveRolloutExecuto
 }
 
 // ExecuteProgressiveRollout mocks base method.
-func (m *MockProgressiveRolloutExecutor) ExecuteProgressiveRollout(ctx context.Context, environmentNamespace, ruleID, scheduleID string) error {
+func (m *MockProgressiveRolloutExecutor) ExecuteProgressiveRollout(ctx context.Context, environmentId, ruleID, scheduleID string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExecuteProgressiveRollout", ctx, environmentNamespace, ruleID, scheduleID)
+	ret := m.ctrl.Call(m, "ExecuteProgressiveRollout", ctx, environmentId, ruleID, scheduleID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ExecuteProgressiveRollout indicates an expected call of ExecuteProgressiveRollout.
-func (mr *MockProgressiveRolloutExecutorMockRecorder) ExecuteProgressiveRollout(ctx, environmentNamespace, ruleID, scheduleID any) *gomock.Call {
+func (mr *MockProgressiveRolloutExecutorMockRecorder) ExecuteProgressiveRollout(ctx, environmentId, ruleID, scheduleID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteProgressiveRollout", reflect.TypeOf((*MockProgressiveRolloutExecutor)(nil).ExecuteProgressiveRollout), ctx, environmentNamespace, ruleID, scheduleID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteProgressiveRollout", reflect.TypeOf((*MockProgressiveRolloutExecutor)(nil).ExecuteProgressiveRollout), ctx, environmentId, ruleID, scheduleID)
 }
