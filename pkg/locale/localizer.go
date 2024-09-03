@@ -42,6 +42,8 @@ const (
 	AccountOrganizationRole      = "AccountOrganizationRole"
 	AccountEnvironmentRoles      = "AccountEnvironmentRoles"
 	AccountSearchFilter          = "AccountSearchFilter"
+	AccountSearchFilterName      = "AccountSearchFilterName"
+	AccountSearchFilterQuery     = "AccountSearchFilterQuery"
 	AccountDefaultSearchFilter   = "AccountDefaultSearchFilter"
 	AdminAccount                 = "AdminAccount"
 	AdminNotification            = "AdminNotification"

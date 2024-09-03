@@ -24,7 +24,7 @@ import (
 )
 
 var (
-	errSearchFilterNotFound = errors.New("account: search filter not found")
+	ErrSearchFilterNotFound = errors.New("account: search filter not found")
 )
 
 type AccountV2 struct {
@@ -152,7 +152,29 @@ func (a *AccountV2) DeleteSearchFilter(id string) error {
 			return nil
 		}
 	}
-	return errSearchFilterNotFound
+	return ErrSearchFilterNotFound
+}
+
+func (a *AccountV2) ChangeSearchFilterName(id string, name string) error {
+	for _, f := range a.AccountV2.SearchFilters {
+		if f.Id == id {
+			f.Name = name
+			a.UpdatedAt = time.Now().Unix()
+			return nil
+		}
+	}
+	return ErrSearchFilterNotFound
+}
+
+func (a *AccountV2) ChangeSearchFilterQuery(id string, query string) error {
+	for _, f := range a.AccountV2.SearchFilters {
+		if f.Id == id {
+			f.Query = query
+			a.UpdatedAt = time.Now().Unix()
+			return nil
+		}
+	}
+	return ErrSearchFilterNotFound
 }
 
 func (a *AccountV2) ChangeDefaultSearchFilter(id string, defaultFilter bool) error {
@@ -168,7 +190,7 @@ func (a *AccountV2) ChangeDefaultSearchFilter(id string, defaultFilter bool) err
 			return nil
 		}
 	}
-	return errSearchFilterNotFound
+	return ErrSearchFilterNotFound
 }
 
 func (a *AccountV2) resetDefaultFilter(targetFilter proto.FilterTargetType, environmentID string) {

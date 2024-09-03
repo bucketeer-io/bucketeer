@@ -22,7 +22,7 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
-
+	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
@@ -88,5 +88,89 @@ func (s *AccountService) CreateSearchFilter(
 		}
 		return nil, dt.Err()
 	}
+
 	return &accountproto.CreateSearchFilterResponse{}, nil
+}
+
+func (s *AccountService) UpdateSearchFilter(
+	ctx context.Context,
+	req *accountproto.UpdateSearchFilterRequest,
+) (*accountproto.UpdateSearchFilterResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	editor, err := s.checkEnvironmentRole(
+		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
+		req.EnvironmentId, localizer)
+	if err != nil {
+		return nil, err
+	}
+	commands := s.getUpdateSearchFilterCommands(req)
+
+	if err := validateUpdateSearchFilterRequest(req, commands, localizer); err != nil {
+		s.logger.Error(
+			"Failed to update search filter",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, err
+	}
+
+	if err := s.updateAccountV2MySQL(
+		ctx,
+		editor,
+		commands,
+		req.Email,
+		req.OrganizationId); err != nil {
+		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		} else if errors.Is(err, domain.ErrSearchFilterNotFound) {
+			dt, err := statusSearchFilterIDNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to update search filter",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+				zap.String("email", req.Email),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	return &accountproto.UpdateSearchFilterResponse{}, nil
+}
+
+func (s *AccountService) getUpdateSearchFilterCommands(req *accountproto.UpdateSearchFilterRequest) []command.Command {
+	commands := make([]command.Command, 0)
+	if req.ChangeNameCommand != nil {
+		commands = append(commands, req.ChangeNameCommand)
+	}
+	if req.ChangeQueryCommand != nil {
+		commands = append(commands, req.ChangeQueryCommand)
+	}
+	if req.ChangeDefaultFilterCommand != nil {
+		commands = append(commands, req.ChangeDefaultFilterCommand)
+	}
+	return commands
 }

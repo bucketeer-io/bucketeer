@@ -128,7 +128,9 @@ message Event {
     ACCOUNT_V2_DISABLED = 311;
     ACCOUNT_V2_DELETED = 312;
     ACCOUNT_V2_CREATED_SEARCH_FILTER = 313;
-    ACCOUNT_V2_UPDATED_DEFAULT_SEARCH_FILTER = 314;
+    ACCOUNT_V2_SEARCH_FILTER_NANE_CHANGED = 314;
+    ACCOUNT_V2_SEARCH_FILTER_QUERY_CHANGED = 315;
+    ACCOUNT_V2_SEARCH_FILTER_DEFAULT_CHANGED = 316;
     APIKEY_CREATED = 400;
     APIKEY_NAME_CHANGED = 401;
     APIKEY_ENABLED = 402;
@@ -607,8 +609,19 @@ message SearchFilterCreatedEvent {
   bool default_filter = 5;
 }
 
-message DefaultSearchFilterUpdatedEvent {
-  bool default_filter = 1;
+message SearchFilterNameChangedEvent {
+  string id = 1;
+  string Name = 2;
+}
+
+message SearchFilterQueryChangedEvent {
+  string id = 1;
+  string Query = 2;
+}
+
+message SearchFilterDefaultChangedEvent {
+  string id = 1;
+  bool default_filter = 2;
 }
 
 message APIKeyCreatedEvent {

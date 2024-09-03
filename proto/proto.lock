@@ -582,6 +582,36 @@
             ]
           },
           {
+            "name": "ChangeSearchFilterNameCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ChangeSearchFilterQueryCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "query",
+                "type": "string"
+              }
+            ]
+          },
+          {
             "name": "ChangeDefaultSearchFilterCommand",
             "fields": [
               {
@@ -1283,6 +1313,44 @@
           },
           {
             "name": "CreateSearchFilterResponse"
+          },
+          {
+            "name": "UpdateSearchFilterRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "change_name_command",
+                "type": "ChangeSearchFilterNameCommand"
+              },
+              {
+                "id": 5,
+                "name": "change_query_command",
+                "type": "ChangeSearchFilterQueryCommand"
+              },
+              {
+                "id": 6,
+                "name": "change_default_filter_command",
+                "type": "ChangeDefaultSearchFilterCommand"
+              }
+            ]
+          },
+          {
+            "name": "UpdateSearchFilterResponse"
           }
         ],
         "services": [
@@ -4137,6 +4205,182 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "UpdateSearchFilter",
+                "in_type": "UpdateSearchFilterRequest",
+                "out_type": "UpdateSearchFilterResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/account/update_search_filter"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update Search Filter"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update a search filter. To call this API, you need an `VIEWER` role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Account"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.account.update_search_filter"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "403"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request does not have permission to access the resource."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":7,\"message\":\"not authorized\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -4171,77 +4415,6 @@
           {
             "name": "go_package",
             "value": "github.com/bucketeer-io/bucketeer/proto/account"
-          },
-          {
-            "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger)",
-            "aggregated": [
-              {
-                "name": "tags",
-                "aggregated": [
-                  {
-                    "aggregated": [
-                      {
-                        "name": "name",
-                        "value": "Account"
-                      }
-                    ]
-                  },
-                  {
-                    "aggregated": [
-                      {
-                        "name": "name",
-                        "value": "API Key"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "responses",
-                "aggregated": [
-                  {
-                    "name": "key",
-                    "value": "503"
-                  },
-                  {
-                    "name": "value",
-                    "aggregated": [
-                      {
-                        "name": "description",
-                        "value": "Returned for internal errors."
-                      },
-                      {
-                        "name": "schema",
-                        "aggregated": [
-                          {
-                            "name": "json_schema",
-                            "aggregated": [
-                              {
-                                "name": "ref",
-                                "value": ".google.rpc.Status"
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "name": "examples",
-                        "aggregated": [
-                          {
-                            "name": "key",
-                            "value": "application/json"
-                          },
-                          {
-                            "name": "value",
-                            "value": "{\"code\":13,\"message\":\"internal\",\"details\":[]}"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
           }
         ]
       }
@@ -13165,8 +13338,16 @@
                 "integer": 313
               },
               {
-                "name": "ACCOUNT_V2_UPDATED_DEFAULT_SEARCH_FILTER",
+                "name": "ACCOUNT_V2_SEARCH_FILTER_NANE_CHANGED",
                 "integer": 314
+              },
+              {
+                "name": "ACCOUNT_V2_SEARCH_FILTER_QUERY_CHANGED",
+                "integer": 315
+              },
+              {
+                "name": "ACCOUNT_V2_SEARCH_FILTER_DEFAULT_CHANGED",
+                "integer": 316
               },
               {
                 "name": "APIKEY_CREATED",
@@ -14858,10 +15039,45 @@
             ]
           },
           {
-            "name": "DefaultSearchFilterUpdatedEvent",
+            "name": "SearchFilterNameChangedEvent",
             "fields": [
               {
                 "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "Name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "SearchFilterQueryChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "Query",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "SearchFilterDefaultChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
                 "name": "default_filter",
                 "type": "bool"
               }

@@ -1432,3 +1432,98 @@ export class CreateSearchFilterResponse extends jspb.Message {
 export namespace CreateSearchFilterResponse {
   export type AsObject = {};
 }
+
+export class UpdateSearchFilterRequest extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  hasChangeNameCommand(): boolean;
+  clearChangeNameCommand(): void;
+  getChangeNameCommand():
+    | proto_account_command_pb.ChangeSearchFilterNameCommand
+    | undefined;
+  setChangeNameCommand(
+    value?: proto_account_command_pb.ChangeSearchFilterNameCommand
+  ): void;
+
+  hasChangeQueryCommand(): boolean;
+  clearChangeQueryCommand(): void;
+  getChangeQueryCommand():
+    | proto_account_command_pb.ChangeSearchFilterQueryCommand
+    | undefined;
+  setChangeQueryCommand(
+    value?: proto_account_command_pb.ChangeSearchFilterQueryCommand
+  ): void;
+
+  hasChangeDefaultFilterCommand(): boolean;
+  clearChangeDefaultFilterCommand(): void;
+  getChangeDefaultFilterCommand():
+    | proto_account_command_pb.ChangeDefaultSearchFilterCommand
+    | undefined;
+  setChangeDefaultFilterCommand(
+    value?: proto_account_command_pb.ChangeDefaultSearchFilterCommand
+  ): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateSearchFilterRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: UpdateSearchFilterRequest
+  ): UpdateSearchFilterRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: UpdateSearchFilterRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateSearchFilterRequest;
+  static deserializeBinaryFromReader(
+    message: UpdateSearchFilterRequest,
+    reader: jspb.BinaryReader
+  ): UpdateSearchFilterRequest;
+}
+
+export namespace UpdateSearchFilterRequest {
+  export type AsObject = {
+    email: string;
+    organizationId: string;
+    environmentId: string;
+    changeNameCommand?: proto_account_command_pb.ChangeSearchFilterNameCommand.AsObject;
+    changeQueryCommand?: proto_account_command_pb.ChangeSearchFilterQueryCommand.AsObject;
+    changeDefaultFilterCommand?: proto_account_command_pb.ChangeDefaultSearchFilterCommand.AsObject;
+  };
+}
+
+export class UpdateSearchFilterResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateSearchFilterResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: UpdateSearchFilterResponse
+  ): UpdateSearchFilterResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: UpdateSearchFilterResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateSearchFilterResponse;
+  static deserializeBinaryFromReader(
+    message: UpdateSearchFilterResponse,
+    reader: jspb.BinaryReader
+  ): UpdateSearchFilterResponse;
+}
+
+export namespace UpdateSearchFilterResponse {
+  export type AsObject = {};
+}

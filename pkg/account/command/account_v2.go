@@ -74,6 +74,10 @@ func (h *accountV2CommandHandler) Handle(ctx context.Context, cmd Command) error
 		return h.delete(ctx, c)
 	case *accountproto.CreateSearchFilterCommand:
 		return h.createSearchFilter(ctx, c)
+	case *accountproto.ChangeSearchFilterNameCommand:
+		return h.changeSearchFilerName(ctx, c)
+	case *accountproto.ChangeSearchFilterQueryCommand:
+		return h.changeSearchFilterQuery(ctx, c)
 	case *accountproto.ChangeDefaultSearchFilterCommand:
 		return h.changeDefaultSearchFilter(ctx, c)
 	default:
@@ -207,6 +211,30 @@ func (h *accountV2CommandHandler) createSearchFilter(
 	})
 }
 
+func (h *accountV2CommandHandler) changeSearchFilerName(
+	ctx context.Context,
+	cmd *accountproto.ChangeSearchFilterNameCommand) error {
+	if err := h.account.ChangeSearchFilterName(cmd.Id, cmd.Name); err != nil {
+		return err
+	}
+	return h.send(ctx, eventproto.Event_ACCOUNT_V2_SEARCH_FILTER_NANE_CHANGED, &eventproto.SearchFilterNameChangedEvent{
+		Id:   cmd.Id,
+		Name: cmd.Name,
+	})
+}
+
+func (h *accountV2CommandHandler) changeSearchFilterQuery(
+	ctx context.Context,
+	cmd *accountproto.ChangeSearchFilterQueryCommand) error {
+	if err := h.account.ChangeSearchFilterQuery(cmd.Id, cmd.Query); err != nil {
+		return err
+	}
+	return h.send(ctx, eventproto.Event_ACCOUNT_V2_SEARCH_FILTER_QUERY_CHANGED, &eventproto.SearchFilterQueryChangedEvent{
+		Id:    cmd.Id,
+		Query: cmd.Query,
+	})
+}
+
 func (h *accountV2CommandHandler) changeDefaultSearchFilter(
 	ctx context.Context,
 	cmd *accountproto.ChangeDefaultSearchFilterCommand) error {
@@ -215,12 +243,12 @@ func (h *accountV2CommandHandler) changeDefaultSearchFilter(
 	}
 	return h.send(
 		ctx,
-		eventproto.Event_ACCOUNT_V2_UPDATED_DEFAULT_SEARCH_FILTER,
-		&eventproto.DefaultSearchFilterUpdatedEvent{
+		eventproto.Event_ACCOUNT_V2_SEARCH_FILTER_DEFAULT_CHANGED,
+		&eventproto.SearchFilterDefaultChangedEvent{
+			Id:            cmd.Id,
 			DefaultFilter: cmd.DefaultFilter,
 		},
 	)
-
 }
 
 func (h *accountV2CommandHandler) send(
