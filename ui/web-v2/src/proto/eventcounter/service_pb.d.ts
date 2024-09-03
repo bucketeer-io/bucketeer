@@ -28,6 +28,9 @@ export class GetExperimentEvaluationCountRequest extends jspb.Message {
   setVariationIdsList(value: Array<string>): void;
   addVariationIds(value: string, index?: number): string;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(
     includeInstance?: boolean
@@ -61,6 +64,7 @@ export namespace GetExperimentEvaluationCountRequest {
     featureId: string;
     featureVersion: number;
     variationIdsList: Array<string>;
+    environmentId: string;
   };
 }
 
@@ -126,6 +130,9 @@ export class GetEvaluationTimeseriesCountRequest extends jspb.Message {
     value: GetEvaluationTimeseriesCountRequest.TimeRangeMap[keyof GetEvaluationTimeseriesCountRequest.TimeRangeMap]
   ): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(
     includeInstance?: boolean
@@ -156,6 +163,7 @@ export namespace GetEvaluationTimeseriesCountRequest {
     environmentNamespace: string;
     featureId: string;
     timeRange: GetEvaluationTimeseriesCountRequest.TimeRangeMap[keyof GetEvaluationTimeseriesCountRequest.TimeRangeMap];
+    environmentId: string;
   };
 
   export interface TimeRangeMap {
@@ -229,6 +237,9 @@ export class GetExperimentResultRequest extends jspb.Message {
   getExperimentId(): string;
   setExperimentId(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetExperimentResultRequest.AsObject;
   static toObject(
@@ -254,6 +265,7 @@ export namespace GetExperimentResultRequest {
   export type AsObject = {
     environmentNamespace: string;
     experimentId: string;
+    environmentId: string;
   };
 }
 
@@ -306,6 +318,9 @@ export class ListExperimentResultsRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListExperimentResultsRequest.AsObject;
   static toObject(
@@ -332,6 +347,7 @@ export namespace ListExperimentResultsRequest {
     featureId: string;
     featureVersion?: google_protobuf_wrappers_pb.Int32Value.AsObject;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -397,6 +413,9 @@ export class GetExperimentGoalCountRequest extends jspb.Message {
   setVariationIdsList(value: Array<string>): void;
   addVariationIds(value: string, index?: number): string;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetExperimentGoalCountRequest.AsObject;
   static toObject(
@@ -427,6 +446,7 @@ export namespace GetExperimentGoalCountRequest {
     featureId: string;
     featureVersion: number;
     variationIdsList: Array<string>;
+    environmentId: string;
   };
 }
 
@@ -491,6 +511,9 @@ export class GetOpsEvaluationUserCountRequest extends jspb.Message {
   getVariationId(): string;
   setVariationId(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(
     includeInstance?: boolean
@@ -522,6 +545,7 @@ export namespace GetOpsEvaluationUserCountRequest {
     featureId: string;
     featureVersion: number;
     variationId: string;
+    environmentId: string;
   };
 }
 
@@ -587,6 +611,9 @@ export class GetOpsGoalUserCountRequest extends jspb.Message {
   getVariationId(): string;
   setVariationId(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetOpsGoalUserCountRequest.AsObject;
   static toObject(
@@ -616,6 +643,7 @@ export namespace GetOpsGoalUserCountRequest {
     featureId: string;
     featureVersion: number;
     variationId: string;
+    environmentId: string;
   };
 }
 
@@ -665,6 +693,9 @@ export class GetMAUCountRequest extends jspb.Message {
   getYearMonth(): string;
   setYearMonth(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetMAUCountRequest.AsObject;
   static toObject(
@@ -690,6 +721,7 @@ export namespace GetMAUCountRequest {
   export type AsObject = {
     environmentNamespace: string;
     yearMonth: string;
+    environmentId: string;
   };
 }
 

@@ -23,6 +23,9 @@ export class GetFeatureRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetFeatureRequest.AsObject;
   static toObject(
@@ -48,6 +51,7 @@ export namespace GetFeatureRequest {
   export type AsObject = {
     id: string;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -93,6 +97,9 @@ export class GetFeaturesRequest extends jspb.Message {
   setIdsList(value: Array<string>): void;
   addIds(value: string, index?: number): string;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetFeaturesRequest.AsObject;
   static toObject(
@@ -118,6 +125,7 @@ export namespace GetFeaturesRequest {
   export type AsObject = {
     environmentNamespace: string;
     idsList: Array<string>;
+    environmentId: string;
   };
 }
 
@@ -208,6 +216,9 @@ export class ListFeaturesRequest extends jspb.Message {
   getHasPrerequisites(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setHasPrerequisites(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListFeaturesRequest.AsObject;
   static toObject(
@@ -243,6 +254,7 @@ export namespace ListFeaturesRequest {
     searchKeyword: string;
     archived?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     hasPrerequisites?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    environmentId: string;
   };
 
   export interface OrderByMap {
@@ -323,6 +335,9 @@ export class ListEnabledFeaturesRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListEnabledFeaturesRequest.AsObject;
   static toObject(
@@ -350,6 +365,7 @@ export namespace ListEnabledFeaturesRequest {
     cursor: string;
     tagsList: Array<string>;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -402,6 +418,9 @@ export class CreateFeatureRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateFeatureRequest.AsObject;
   static toObject(
@@ -427,6 +446,7 @@ export namespace CreateFeatureRequest {
   export type AsObject = {
     command?: proto_feature_command_pb.CreateFeatureCommand.AsObject;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -630,6 +650,9 @@ export class EnableFeatureRequest extends jspb.Message {
   getComment(): string;
   setComment(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EnableFeatureRequest.AsObject;
   static toObject(
@@ -657,6 +680,7 @@ export namespace EnableFeatureRequest {
     command?: proto_feature_command_pb.EnableFeatureCommand.AsObject;
     environmentNamespace: string;
     comment: string;
+    environmentId: string;
   };
 }
 
@@ -701,6 +725,9 @@ export class DisableFeatureRequest extends jspb.Message {
   getComment(): string;
   setComment(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DisableFeatureRequest.AsObject;
   static toObject(
@@ -728,6 +755,7 @@ export namespace DisableFeatureRequest {
     command?: proto_feature_command_pb.DisableFeatureCommand.AsObject;
     environmentNamespace: string;
     comment: string;
+    environmentId: string;
   };
 }
 
@@ -772,6 +800,9 @@ export class ArchiveFeatureRequest extends jspb.Message {
   getComment(): string;
   setComment(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ArchiveFeatureRequest.AsObject;
   static toObject(
@@ -799,6 +830,7 @@ export namespace ArchiveFeatureRequest {
     command?: proto_feature_command_pb.ArchiveFeatureCommand.AsObject;
     environmentNamespace: string;
     comment: string;
+    environmentId: string;
   };
 }
 
@@ -843,6 +875,9 @@ export class UnarchiveFeatureRequest extends jspb.Message {
   getComment(): string;
   setComment(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UnarchiveFeatureRequest.AsObject;
   static toObject(
@@ -870,6 +905,7 @@ export namespace UnarchiveFeatureRequest {
     command?: proto_feature_command_pb.UnarchiveFeatureCommand.AsObject;
     environmentNamespace: string;
     comment: string;
+    environmentId: string;
   };
 }
 
@@ -914,6 +950,9 @@ export class DeleteFeatureRequest extends jspb.Message {
   getComment(): string;
   setComment(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeleteFeatureRequest.AsObject;
   static toObject(
@@ -941,6 +980,7 @@ export namespace DeleteFeatureRequest {
     command?: proto_feature_command_pb.DeleteFeatureCommand.AsObject;
     environmentNamespace: string;
     comment: string;
+    environmentId: string;
   };
 }
 
@@ -1018,6 +1058,9 @@ export class UpdateFeatureDetailsRequest extends jspb.Message {
   getComment(): string;
   setComment(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateFeatureDetailsRequest.AsObject;
   static toObject(
@@ -1048,6 +1091,7 @@ export namespace UpdateFeatureDetailsRequest {
     removeTagCommandsList: Array<proto_feature_command_pb.RemoveTagCommand.AsObject>;
     environmentNamespace: string;
     comment: string;
+    environmentId: string;
   };
 }
 
@@ -1095,6 +1139,9 @@ export class UpdateFeatureVariationsRequest extends jspb.Message {
   getComment(): string;
   setComment(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateFeatureVariationsRequest.AsObject;
   static toObject(
@@ -1122,6 +1169,7 @@ export namespace UpdateFeatureVariationsRequest {
     commandsList: Array<proto_feature_command_pb.Command.AsObject>;
     environmentNamespace: string;
     comment: string;
+    environmentId: string;
   };
 }
 
@@ -1174,6 +1222,9 @@ export class UpdateFeatureTargetingRequest extends jspb.Message {
     value: UpdateFeatureTargetingRequest.FromMap[keyof UpdateFeatureTargetingRequest.FromMap]
   ): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateFeatureTargetingRequest.AsObject;
   static toObject(
@@ -1202,6 +1253,7 @@ export namespace UpdateFeatureTargetingRequest {
     environmentNamespace: string;
     comment: string;
     from: UpdateFeatureTargetingRequest.FromMap[keyof UpdateFeatureTargetingRequest.FromMap];
+    environmentId: string;
   };
 
   export interface FromMap {
@@ -1251,6 +1303,9 @@ export class CloneFeatureRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CloneFeatureRequest.AsObject;
   static toObject(
@@ -1277,6 +1332,7 @@ export namespace CloneFeatureRequest {
     id: string;
     command?: proto_feature_command_pb.CloneFeatureCommand.AsObject;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1315,6 +1371,9 @@ export class CreateSegmentRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateSegmentRequest.AsObject;
   static toObject(
@@ -1340,6 +1399,7 @@ export namespace CreateSegmentRequest {
   export type AsObject = {
     command?: proto_feature_command_pb.CreateSegmentCommand.AsObject;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1383,6 +1443,9 @@ export class GetSegmentRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetSegmentRequest.AsObject;
   static toObject(
@@ -1408,6 +1471,7 @@ export namespace GetSegmentRequest {
   export type AsObject = {
     id: string;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1477,6 +1541,9 @@ export class ListSegmentsRequest extends jspb.Message {
   getIsInUseStatus(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setIsInUseStatus(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListSegmentsRequest.AsObject;
   static toObject(
@@ -1508,6 +1575,7 @@ export namespace ListSegmentsRequest {
     searchKeyword: string;
     status?: google_protobuf_wrappers_pb.Int32Value.AsObject;
     isInUseStatus?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    environmentId: string;
   };
 
   export interface OrderByMap {
@@ -1583,6 +1651,9 @@ export class DeleteSegmentRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeleteSegmentRequest.AsObject;
   static toObject(
@@ -1609,6 +1680,7 @@ export namespace DeleteSegmentRequest {
     id: string;
     command?: proto_feature_command_pb.DeleteSegmentCommand.AsObject;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1653,6 +1725,9 @@ export class UpdateSegmentRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateSegmentRequest.AsObject;
   static toObject(
@@ -1679,6 +1754,7 @@ export namespace UpdateSegmentRequest {
     id: string;
     commandsList: Array<proto_feature_command_pb.Command.AsObject>;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1720,6 +1796,9 @@ export class AddSegmentUserRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AddSegmentUserRequest.AsObject;
   static toObject(
@@ -1746,6 +1825,7 @@ export namespace AddSegmentUserRequest {
     id: string;
     command?: proto_feature_command_pb.AddSegmentUserCommand.AsObject;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1787,6 +1867,9 @@ export class DeleteSegmentUserRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeleteSegmentUserRequest.AsObject;
   static toObject(
@@ -1813,6 +1896,7 @@ export namespace DeleteSegmentUserRequest {
     id: string;
     command?: proto_feature_command_pb.DeleteSegmentUserCommand.AsObject;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1857,6 +1941,9 @@ export class GetSegmentUserRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetSegmentUserRequest.AsObject;
   static toObject(
@@ -1884,6 +1971,7 @@ export namespace GetSegmentUserRequest {
     userId: string;
     state: proto_feature_segment_pb.SegmentUser.StateMap[keyof proto_feature_segment_pb.SegmentUser.StateMap];
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1941,6 +2029,9 @@ export class ListSegmentUsersRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListSegmentUsersRequest.AsObject;
   static toObject(
@@ -1970,6 +2061,7 @@ export namespace ListSegmentUsersRequest {
     state?: google_protobuf_wrappers_pb.Int32Value.AsObject;
     userId: string;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -2029,6 +2121,9 @@ export class BulkUploadSegmentUsersRequest extends jspb.Message {
     value?: proto_feature_command_pb.BulkUploadSegmentUsersCommand
   ): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): BulkUploadSegmentUsersRequest.AsObject;
   static toObject(
@@ -2055,6 +2150,7 @@ export namespace BulkUploadSegmentUsersRequest {
     environmentNamespace: string;
     segmentId: string;
     command?: proto_feature_command_pb.BulkUploadSegmentUsersCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -2096,6 +2192,9 @@ export class BulkDownloadSegmentUsersRequest extends jspb.Message {
     value: proto_feature_segment_pb.SegmentUser.StateMap[keyof proto_feature_segment_pb.SegmentUser.StateMap]
   ): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): BulkDownloadSegmentUsersRequest.AsObject;
   static toObject(
@@ -2122,6 +2221,7 @@ export namespace BulkDownloadSegmentUsersRequest {
     environmentNamespace: string;
     segmentId: string;
     state: proto_feature_segment_pb.SegmentUser.StateMap[keyof proto_feature_segment_pb.SegmentUser.StateMap];
+    environmentId: string;
   };
 }
 
@@ -2175,6 +2275,9 @@ export class EvaluateFeaturesRequest extends jspb.Message {
   getFeatureId(): string;
   setFeatureId(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EvaluateFeaturesRequest.AsObject;
   static toObject(
@@ -2202,6 +2305,7 @@ export namespace EvaluateFeaturesRequest {
     environmentNamespace: string;
     tag: string;
     featureId: string;
+    environmentId: string;
   };
 }
 
@@ -2261,6 +2365,9 @@ export class ListTagsRequest extends jspb.Message {
   getSearchKeyword(): string;
   setSearchKeyword(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListTagsRequest.AsObject;
   static toObject(
@@ -2290,6 +2397,7 @@ export namespace ListTagsRequest {
     orderBy: ListTagsRequest.OrderByMap[keyof ListTagsRequest.OrderByMap];
     orderDirection: ListTagsRequest.OrderDirectionMap[keyof ListTagsRequest.OrderDirectionMap];
     searchKeyword: string;
+    environmentId: string;
   };
 
   export interface OrderByMap {
@@ -2366,6 +2474,9 @@ export class CreateFlagTriggerRequest extends jspb.Message {
     value?: proto_feature_command_pb.CreateFlagTriggerCommand
   ): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateFlagTriggerRequest.AsObject;
   static toObject(
@@ -2391,6 +2502,7 @@ export namespace CreateFlagTriggerRequest {
   export type AsObject = {
     environmentNamespace: string;
     createFlagTriggerCommand?: proto_feature_command_pb.CreateFlagTriggerCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -2447,6 +2559,9 @@ export class DeleteFlagTriggerRequest extends jspb.Message {
     value?: proto_feature_command_pb.DeleteFlagTriggerCommand
   ): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeleteFlagTriggerRequest.AsObject;
   static toObject(
@@ -2473,6 +2588,7 @@ export namespace DeleteFlagTriggerRequest {
     id: string;
     environmentNamespace: string;
     deleteFlagTriggerCommand?: proto_feature_command_pb.DeleteFlagTriggerCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -2518,6 +2634,9 @@ export class UpdateFlagTriggerRequest extends jspb.Message {
     value?: proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand
   ): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateFlagTriggerRequest.AsObject;
   static toObject(
@@ -2544,6 +2663,7 @@ export namespace UpdateFlagTriggerRequest {
     id: string;
     environmentNamespace: string;
     changeFlagTriggerDescriptionCommand?: proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -2589,6 +2709,9 @@ export class EnableFlagTriggerRequest extends jspb.Message {
     value?: proto_feature_command_pb.EnableFlagTriggerCommand
   ): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EnableFlagTriggerRequest.AsObject;
   static toObject(
@@ -2615,6 +2738,7 @@ export namespace EnableFlagTriggerRequest {
     id: string;
     environmentNamespace: string;
     enableFlagTriggerCommand?: proto_feature_command_pb.EnableFlagTriggerCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -2660,6 +2784,9 @@ export class DisableFlagTriggerRequest extends jspb.Message {
     value?: proto_feature_command_pb.DisableFlagTriggerCommand
   ): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DisableFlagTriggerRequest.AsObject;
   static toObject(
@@ -2686,6 +2813,7 @@ export namespace DisableFlagTriggerRequest {
     id: string;
     environmentNamespace: string;
     disableFlagTriggerCommand?: proto_feature_command_pb.DisableFlagTriggerCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -2731,6 +2859,9 @@ export class ResetFlagTriggerRequest extends jspb.Message {
     value?: proto_feature_command_pb.ResetFlagTriggerCommand
   ): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ResetFlagTriggerRequest.AsObject;
   static toObject(
@@ -2757,6 +2888,7 @@ export namespace ResetFlagTriggerRequest {
     id: string;
     environmentNamespace: string;
     resetFlagTriggerCommand?: proto_feature_command_pb.ResetFlagTriggerCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -2804,6 +2936,9 @@ export class GetFlagTriggerRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetFlagTriggerRequest.AsObject;
   static toObject(
@@ -2829,6 +2964,7 @@ export namespace GetFlagTriggerRequest {
   export type AsObject = {
     id: string;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -2892,6 +3028,9 @@ export class ListFlagTriggersRequest extends jspb.Message {
     value: ListFlagTriggersRequest.OrderDirectionMap[keyof ListFlagTriggersRequest.OrderDirectionMap]
   ): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListFlagTriggersRequest.AsObject;
   static toObject(
@@ -2921,6 +3060,7 @@ export namespace ListFlagTriggersRequest {
     pageSize: number;
     orderBy: ListFlagTriggersRequest.OrderByMap[keyof ListFlagTriggersRequest.OrderByMap];
     orderDirection: ListFlagTriggersRequest.OrderDirectionMap[keyof ListFlagTriggersRequest.OrderDirectionMap];
+    environmentId: string;
   };
 
   export interface OrderByMap {

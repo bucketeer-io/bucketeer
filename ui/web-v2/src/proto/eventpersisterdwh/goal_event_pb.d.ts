@@ -43,6 +43,9 @@ export class GoalEvent extends jspb.Message {
   getReason(): string;
   setReason(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GoalEvent.AsObject;
   static toObject(includeInstance: boolean, msg: GoalEvent): GoalEvent.AsObject;
@@ -76,5 +79,6 @@ export namespace GoalEvent {
     featureVersion: number;
     variationId: string;
     reason: string;
+    environmentId: string;
   };
 }

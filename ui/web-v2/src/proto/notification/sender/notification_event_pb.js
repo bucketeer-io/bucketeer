@@ -103,7 +103,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        isAdminEvent: jspb.Message.getBooleanFieldWithDefault(msg, 5, false)
+        isAdminEvent: jspb.Message.getBooleanFieldWithDefault(msg, 5, false),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 6, '')
       };
 
     if (includeInstance) {
@@ -172,6 +173,10 @@ proto.bucketeer.notification.sender.NotificationEvent.deserializeBinaryFromReade
           var value = /** @type {boolean} */ (reader.readBool());
           msg.setIsAdminEvent(value);
           break;
+        case 6:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -228,6 +233,10 @@ proto.bucketeer.notification.sender.NotificationEvent.serializeBinaryToWriter =
     f = message.getIsAdminEvent();
     if (f) {
       writer.writeBool(5, f);
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(6, f);
     }
   };
 
@@ -351,6 +360,26 @@ proto.bucketeer.notification.sender.NotificationEvent.prototype.getIsAdminEvent 
 proto.bucketeer.notification.sender.NotificationEvent.prototype.setIsAdminEvent =
   function (value) {
     return jspb.Message.setProto3BooleanField(this, 5, value);
+  };
+
+/**
+ * optional string environment_id = 6;
+ * @return {string}
+ */
+proto.bucketeer.notification.sender.NotificationEvent.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 6, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.notification.sender.NotificationEvent} returns this
+ */
+proto.bucketeer.notification.sender.NotificationEvent.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 6, value);
   };
 
 goog.object.extend(exports, proto.bucketeer.notification.sender);

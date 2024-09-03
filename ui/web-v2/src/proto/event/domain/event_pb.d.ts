@@ -65,6 +65,9 @@ export class Event extends jspb.Message {
   getPreviousEntityData(): string;
   setPreviousEntityData(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Event.AsObject;
   static toObject(includeInstance: boolean, msg: Event): Event.AsObject;
@@ -97,6 +100,7 @@ export namespace Event {
     options?: Options.AsObject;
     entityData: string;
     previousEntityData: string;
+    environmentId: string;
   };
 
   export interface EntityTypeMap {
@@ -6202,6 +6206,9 @@ export class FlagTriggerCreatedEvent extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTriggerCreatedEvent.AsObject;
   static toObject(
@@ -6234,6 +6241,7 @@ export namespace FlagTriggerCreatedEvent {
     token: string;
     createdAt: number;
     updatedAt: number;
+    environmentId: string;
   };
 }
 
@@ -6249,6 +6257,9 @@ export class FlagTriggerResetEvent extends jspb.Message {
 
   getToken(): string;
   setToken(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTriggerResetEvent.AsObject;
@@ -6277,6 +6288,7 @@ export namespace FlagTriggerResetEvent {
     featureId: string;
     environmentNamespace: string;
     token: string;
+    environmentId: string;
   };
 }
 
@@ -6292,6 +6304,9 @@ export class FlagTriggerDescriptionChangedEvent extends jspb.Message {
 
   getDescription(): string;
   setDescription(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(
@@ -6324,6 +6339,7 @@ export namespace FlagTriggerDescriptionChangedEvent {
     featureId: string;
     environmentNamespace: string;
     description: string;
+    environmentId: string;
   };
 }
 
@@ -6336,6 +6352,9 @@ export class FlagTriggerDisabledEvent extends jspb.Message {
 
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTriggerDisabledEvent.AsObject;
@@ -6363,6 +6382,7 @@ export namespace FlagTriggerDisabledEvent {
     id: string;
     featureId: string;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -6375,6 +6395,9 @@ export class FlagTriggerEnabledEvent extends jspb.Message {
 
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTriggerEnabledEvent.AsObject;
@@ -6402,6 +6425,7 @@ export namespace FlagTriggerEnabledEvent {
     id: string;
     featureId: string;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -6414,6 +6438,9 @@ export class FlagTriggerDeletedEvent extends jspb.Message {
 
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTriggerDeletedEvent.AsObject;
@@ -6441,6 +6468,7 @@ export namespace FlagTriggerDeletedEvent {
     id: string;
     featureId: string;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -6459,6 +6487,9 @@ export class FlagTriggerUsageUpdatedEvent extends jspb.Message {
 
   getTriggerTimes(): number;
   setTriggerTimes(value: number): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTriggerUsageUpdatedEvent.AsObject;
@@ -6488,5 +6519,6 @@ export namespace FlagTriggerUsageUpdatedEvent {
     environmentNamespace: string;
     lastTriggeredAt: number;
     triggerTimes: number;
+    environmentId: string;
   };
 }

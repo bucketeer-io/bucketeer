@@ -29,6 +29,9 @@ export class NotificationEvent extends jspb.Message {
   getIsAdminEvent(): boolean;
   setIsAdminEvent(value: boolean): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): NotificationEvent.AsObject;
   static toObject(
@@ -57,5 +60,6 @@ export namespace NotificationEvent {
     sourceType: proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap];
     notification?: proto_notification_sender_notification_pb.Notification.AsObject;
     isAdminEvent: boolean;
+    environmentId: string;
   };
 }

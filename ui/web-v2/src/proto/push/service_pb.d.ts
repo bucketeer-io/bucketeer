@@ -14,6 +14,9 @@ export class CreatePushRequest extends jspb.Message {
   getCommand(): proto_push_command_pb.CreatePushCommand | undefined;
   setCommand(value?: proto_push_command_pb.CreatePushCommand): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreatePushRequest.AsObject;
   static toObject(
@@ -39,6 +42,7 @@ export namespace CreatePushRequest {
   export type AsObject = {
     environmentNamespace: string;
     command?: proto_push_command_pb.CreatePushCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -91,6 +95,9 @@ export class ListPushesRequest extends jspb.Message {
   getSearchKeyword(): string;
   setSearchKeyword(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListPushesRequest.AsObject;
   static toObject(
@@ -120,6 +127,7 @@ export namespace ListPushesRequest {
     orderBy: ListPushesRequest.OrderByMap[keyof ListPushesRequest.OrderByMap];
     orderDirection: ListPushesRequest.OrderDirectionMap[keyof ListPushesRequest.OrderDirectionMap];
     searchKeyword: string;
+    environmentId: string;
   };
 
   export interface OrderByMap {
@@ -195,6 +203,9 @@ export class DeletePushRequest extends jspb.Message {
   getCommand(): proto_push_command_pb.DeletePushCommand | undefined;
   setCommand(value?: proto_push_command_pb.DeletePushCommand): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeletePushRequest.AsObject;
   static toObject(
@@ -221,6 +232,7 @@ export namespace DeletePushRequest {
     environmentNamespace: string;
     id: string;
     command?: proto_push_command_pb.DeletePushCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -276,6 +288,9 @@ export class UpdatePushRequest extends jspb.Message {
   getRenamePushCommand(): proto_push_command_pb.RenamePushCommand | undefined;
   setRenamePushCommand(value?: proto_push_command_pb.RenamePushCommand): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdatePushRequest.AsObject;
   static toObject(
@@ -304,6 +319,7 @@ export namespace UpdatePushRequest {
     addPushTagsCommand?: proto_push_command_pb.AddPushTagsCommand.AsObject;
     deletePushTagsCommand?: proto_push_command_pb.DeletePushTagsCommand.AsObject;
     renamePushCommand?: proto_push_command_pb.RenamePushCommand.AsObject;
+    environmentId: string;
   };
 }
 

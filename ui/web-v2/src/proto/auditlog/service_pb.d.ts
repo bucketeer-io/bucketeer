@@ -39,6 +39,9 @@ export class ListAuditLogsRequest extends jspb.Message {
   getEntityType(): google_protobuf_wrappers_pb.Int32Value | undefined;
   setEntityType(value?: google_protobuf_wrappers_pb.Int32Value): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListAuditLogsRequest.AsObject;
   static toObject(
@@ -71,6 +74,7 @@ export namespace ListAuditLogsRequest {
     from: number;
     to: number;
     entityType?: google_protobuf_wrappers_pb.Int32Value.AsObject;
+    environmentId: string;
   };
 
   export interface OrderByMap {
@@ -287,6 +291,9 @@ export class ListFeatureHistoryRequest extends jspb.Message {
   getTo(): number;
   setTo(value: number): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListFeatureHistoryRequest.AsObject;
   static toObject(
@@ -319,6 +326,7 @@ export namespace ListFeatureHistoryRequest {
     searchKeyword: string;
     from: number;
     to: number;
+    environmentId: string;
   };
 
   export interface OrderByMap {

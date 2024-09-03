@@ -94,7 +94,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         tag: jspb.Message.getFieldWithDefault(msg, 8, ''),
         sourceId: jspb.Message.getFieldWithDefault(msg, 9, ''),
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 10, ''),
-        timestamp: jspb.Message.getFieldWithDefault(msg, 11, 0)
+        timestamp: jspb.Message.getFieldWithDefault(msg, 11, 0),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 12, '')
       };
 
     if (includeInstance) {
@@ -179,6 +180,10 @@ proto.bucketeer.eventcounter.EvaluationEvent.deserializeBinaryFromReader =
           var value = /** @type {number} */ (reader.readInt64());
           msg.setTimestamp(value);
           break;
+        case 12:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -254,6 +259,10 @@ proto.bucketeer.eventcounter.EvaluationEvent.serializeBinaryToWriter =
     f = message.getTimestamp();
     if (f !== 0) {
       writer.writeInt64(11, f);
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(12, f);
     }
   };
 
@@ -470,5 +479,25 @@ proto.bucketeer.eventcounter.EvaluationEvent.prototype.setTimestamp = function (
 ) {
   return jspb.Message.setProto3IntField(this, 11, value);
 };
+
+/**
+ * optional string environment_id = 12;
+ * @return {string}
+ */
+proto.bucketeer.eventcounter.EvaluationEvent.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 12, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.eventcounter.EvaluationEvent} returns this
+ */
+proto.bucketeer.eventcounter.EvaluationEvent.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 12, value);
+  };
 
 goog.object.extend(exports, proto.bucketeer.eventcounter);
