@@ -905,7 +905,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "err: role is not allowed to update search filter",
+			desc: "err: role is not allowed",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
 					gomock.Any(), gomock.Any(), gomock.Any(),
