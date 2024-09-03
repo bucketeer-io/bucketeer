@@ -17,7 +17,7 @@ export interface InputProps
 
 const inputVariants = cva(
   [
-    'typo-para-medium border-gray-400 text-gray-700 w-full',
+    'typo-para-medium border rounded-lg border-gray-400 text-gray-700 w-full',
     'disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-100'
   ],
   {
@@ -54,7 +54,6 @@ const Input = forwardRef(
 
     return (
       <input
-        {...props}
         ref={ref}
         className={cn(inputVariants({ className, size, addonSlot }), className)}
         role={role}
@@ -66,6 +65,7 @@ const Input = forwardRef(
         onBlur={event => {
           onBlur?.(event.target.value, event);
         }}
+        {...props}
       />
     );
   }

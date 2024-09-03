@@ -1,6 +1,5 @@
 import type { FunctionComponent } from 'react';
-import { Link } from 'react-router-dom';
-import type { Route } from '@types';
+import { NavLink } from 'react-router-dom';
 import { cn } from 'utils/style';
 import Icon from 'components/icon';
 
@@ -8,16 +7,9 @@ export type MenuItem = {
   icon: FunctionComponent;
   label: string;
   actIcon?: FunctionComponent;
-} & (
-  | {
-      href: Route;
-      onClick?: never;
-    }
-  | {
-      href?: never;
-      onClick: () => void;
-    }
-);
+  href?: string;
+  onClick?: () => void;
+};
 
 const MenuItemComponent = ({
   icon,
@@ -29,15 +21,15 @@ const MenuItemComponent = ({
   const iconEl = <Icon color="primary-50" size="sm" icon={icon} />;
   const textClsx = cn(
     'flex items-center gap-x-2 w-full text-primary-50',
-    'px-3 py-3 rounded-lg typo-para-medium',
-    'hover:bg-primary-400 hover:opacity-80'
+    'px-3 py-3 rounded-lg typo-para-medium my-0.5',
+    'hover:bg-primary-400 hover:opacity-80 sidebar-menu'
   );
 
   const actionEl = href ? (
-    <Link className={textClsx} to={href}>
+    <NavLink onClick={onClick} className={textClsx} to={href}>
       {iconEl}
       {label}
-    </Link>
+    </NavLink>
   ) : (
     <button
       className={cn(textClsx, { 'justify-between': actIcon })}
