@@ -294,7 +294,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         to: jspb.Message.getFieldWithDefault(msg, 8, 0),
         entityType:
           (f = msg.getEntityType()) &&
-          google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f)
+          google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 10, '')
       };
 
     if (includeInstance) {
@@ -381,6 +382,10 @@ proto.bucketeer.auditlog.ListAuditLogsRequest.deserializeBinaryFromReader =
           );
           msg.setEntityType(value);
           break;
+        case 10:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -452,6 +457,10 @@ proto.bucketeer.auditlog.ListAuditLogsRequest.serializeBinaryToWriter =
         f,
         google_protobuf_wrappers_pb.Int32Value.serializeBinaryToWriter
       );
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(10, f);
     }
   };
 
@@ -668,6 +677,26 @@ proto.bucketeer.auditlog.ListAuditLogsRequest.prototype.clearEntityType =
 proto.bucketeer.auditlog.ListAuditLogsRequest.prototype.hasEntityType =
   function () {
     return jspb.Message.getField(this, 9) != null;
+  };
+
+/**
+ * optional string environment_id = 10;
+ * @return {string}
+ */
+proto.bucketeer.auditlog.ListAuditLogsRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 10, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.auditlog.ListAuditLogsRequest} returns this
+ */
+proto.bucketeer.auditlog.ListAuditLogsRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 10, value);
   };
 
 /**
@@ -1591,7 +1620,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         orderDirection: jspb.Message.getFieldWithDefault(msg, 6, 0),
         searchKeyword: jspb.Message.getFieldWithDefault(msg, 7, ''),
         from: jspb.Message.getFieldWithDefault(msg, 8, 0),
-        to: jspb.Message.getFieldWithDefault(msg, 9, 0)
+        to: jspb.Message.getFieldWithDefault(msg, 9, 0),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 10, '')
       };
 
     if (includeInstance) {
@@ -1673,6 +1703,10 @@ proto.bucketeer.auditlog.ListFeatureHistoryRequest.deserializeBinaryFromReader =
           var value = /** @type {number} */ (reader.readInt64());
           msg.setTo(value);
           break;
+        case 10:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -1740,6 +1774,10 @@ proto.bucketeer.auditlog.ListFeatureHistoryRequest.serializeBinaryToWriter =
     f = message.getTo();
     if (f !== 0) {
       writer.writeInt64(9, f);
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(10, f);
     }
   };
 
@@ -1933,6 +1971,26 @@ proto.bucketeer.auditlog.ListFeatureHistoryRequest.prototype.setTo = function (
 ) {
   return jspb.Message.setProto3IntField(this, 9, value);
 };
+
+/**
+ * optional string environment_id = 10;
+ * @return {string}
+ */
+proto.bucketeer.auditlog.ListFeatureHistoryRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 10, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.auditlog.ListFeatureHistoryRequest} returns this
+ */
+proto.bucketeer.auditlog.ListFeatureHistoryRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 10, value);
+  };
 
 /**
  * List of repeated fields within this message type.

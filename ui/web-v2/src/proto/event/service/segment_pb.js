@@ -101,7 +101,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           state: jspb.Message.getFieldWithDefault(msg, 5, 0),
           editor:
             (f = msg.getEditor()) &&
-            proto_event_domain_event_pb.Editor.toObject(includeInstance, f)
+            proto_event_domain_event_pb.Editor.toObject(includeInstance, f),
+          environmentId: jspb.Message.getFieldWithDefault(msg, 7, '')
         };
 
       if (includeInstance) {
@@ -172,6 +173,10 @@ proto.bucketeer.event.service.BulkSegmentUsersReceivedEvent.deserializeBinaryFro
           );
           msg.setEditor(value);
           break;
+        case 7:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -231,6 +236,10 @@ proto.bucketeer.event.service.BulkSegmentUsersReceivedEvent.serializeBinaryToWri
         f,
         proto_event_domain_event_pb.Editor.serializeBinaryToWriter
       );
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(7, f);
     }
   };
 
@@ -392,6 +401,26 @@ proto.bucketeer.event.service.BulkSegmentUsersReceivedEvent.prototype.clearEdito
 proto.bucketeer.event.service.BulkSegmentUsersReceivedEvent.prototype.hasEditor =
   function () {
     return jspb.Message.getField(this, 6) != null;
+  };
+
+/**
+ * optional string environment_id = 7;
+ * @return {string}
+ */
+proto.bucketeer.event.service.BulkSegmentUsersReceivedEvent.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 7, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.event.service.BulkSegmentUsersReceivedEvent} returns this
+ */
+proto.bucketeer.event.service.BulkSegmentUsersReceivedEvent.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 7, value);
   };
 
 goog.object.extend(exports, proto.bucketeer.event.service);

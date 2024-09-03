@@ -1082,6 +1082,9 @@ export class CreateAPIKeyRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateAPIKeyRequest.AsObject;
   static toObject(
@@ -1107,6 +1110,7 @@ export namespace CreateAPIKeyRequest {
   export type AsObject = {
     command?: proto_account_command_pb.CreateAPIKeyCommand.AsObject;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1155,6 +1159,9 @@ export class ChangeAPIKeyNameRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ChangeAPIKeyNameRequest.AsObject;
   static toObject(
@@ -1181,6 +1188,7 @@ export namespace ChangeAPIKeyNameRequest {
     id: string;
     command?: proto_account_command_pb.ChangeAPIKeyNameCommand.AsObject;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1222,6 +1230,9 @@ export class EnableAPIKeyRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EnableAPIKeyRequest.AsObject;
   static toObject(
@@ -1248,6 +1259,7 @@ export namespace EnableAPIKeyRequest {
     id: string;
     command?: proto_account_command_pb.EnableAPIKeyCommand.AsObject;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1289,6 +1301,9 @@ export class DisableAPIKeyRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DisableAPIKeyRequest.AsObject;
   static toObject(
@@ -1315,6 +1330,7 @@ export namespace DisableAPIKeyRequest {
     id: string;
     command?: proto_account_command_pb.DisableAPIKeyCommand.AsObject;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1351,6 +1367,9 @@ export class GetAPIKeyRequest extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetAPIKeyRequest.AsObject;
   static toObject(
@@ -1376,6 +1395,7 @@ export namespace GetAPIKeyRequest {
   export type AsObject = {
     id: string;
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1440,6 +1460,9 @@ export class ListAPIKeysRequest extends jspb.Message {
   getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListAPIKeysRequest.AsObject;
   static toObject(
@@ -1470,6 +1493,7 @@ export namespace ListAPIKeysRequest {
     orderDirection: ListAPIKeysRequest.OrderDirectionMap[keyof ListAPIKeysRequest.OrderDirectionMap];
     searchKeyword: string;
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    environmentId: string;
   };
 
   export interface OrderByMap {

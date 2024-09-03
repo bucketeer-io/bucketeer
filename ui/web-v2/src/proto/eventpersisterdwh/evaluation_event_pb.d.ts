@@ -37,6 +37,9 @@ export class EvaluationEvent extends jspb.Message {
   getTimestamp(): number;
   setTimestamp(value: number): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EvaluationEvent.AsObject;
   static toObject(
@@ -71,5 +74,6 @@ export namespace EvaluationEvent {
     sourceId: string;
     environmentNamespace: string;
     timestamp: number;
+    environmentId: string;
   };
 }

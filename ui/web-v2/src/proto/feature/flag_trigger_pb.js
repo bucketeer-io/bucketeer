@@ -97,7 +97,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         token: jspb.Message.getFieldWithDefault(msg, 9, ''),
         disabled: jspb.Message.getBooleanFieldWithDefault(msg, 10, false),
         createdAt: jspb.Message.getFieldWithDefault(msg, 11, 0),
-        updatedAt: jspb.Message.getFieldWithDefault(msg, 12, 0)
+        updatedAt: jspb.Message.getFieldWithDefault(msg, 12, 0),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 13, '')
       };
 
     if (includeInstance) {
@@ -190,6 +191,10 @@ proto.bucketeer.feature.FlagTrigger.deserializeBinaryFromReader = function (
         var value = /** @type {number} */ (reader.readInt64());
         msg.setUpdatedAt(value);
         break;
+      case 13:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setEnvironmentId(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -267,6 +272,10 @@ proto.bucketeer.feature.FlagTrigger.serializeBinaryToWriter = function (
   f = message.getUpdatedAt();
   if (f !== 0) {
     writer.writeInt64(12, f);
+  }
+  f = message.getEnvironmentId();
+  if (f.length > 0) {
+    writer.writeString(13, f);
   }
 };
 
@@ -493,6 +502,24 @@ proto.bucketeer.feature.FlagTrigger.prototype.getUpdatedAt = function () {
  */
 proto.bucketeer.feature.FlagTrigger.prototype.setUpdatedAt = function (value) {
   return jspb.Message.setProto3IntField(this, 12, value);
+};
+
+/**
+ * optional string environment_id = 13;
+ * @return {string}
+ */
+proto.bucketeer.feature.FlagTrigger.prototype.getEnvironmentId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 13, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.FlagTrigger} returns this
+ */
+proto.bucketeer.feature.FlagTrigger.prototype.setEnvironmentId = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 13, value);
 };
 
 goog.object.extend(exports, proto.bucketeer.feature);

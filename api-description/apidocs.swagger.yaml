@@ -1100,6 +1100,8 @@ definitions:
       environmentNamespace:
         type: string
         description: SDK doens't need to set this field. It's set by gateway service.
+      environmentId:
+        type: string
   clientSourceId:
     type: string
     enum:

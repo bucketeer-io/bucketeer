@@ -2853,6 +2853,8 @@ definitions:
         $ref: '#/definitions/accountChangeAPIKeyNameCommand'
       environmentNamespace:
         type: string
+      environmentId:
+        type: string
   accountChangeAPIKeyNameResponse:
     type: object
   accountChangeAccountV2AvatarCommand:
@@ -2989,6 +2991,8 @@ definitions:
         $ref: '#/definitions/accountCreateAPIKeyCommand'
       environmentNamespace:
         type: string
+      environmentId:
+        type: string
   accountCreateAPIKeyResponse:
     type: object
     properties:
@@ -3115,6 +3119,8 @@ definitions:
         $ref: '#/definitions/accountDisableAPIKeyCommand'
       environmentNamespace:
         type: string
+      environmentId:
+        type: string
   accountDisableAPIKeyResponse:
     type: object
   accountDisableAccountV2Command:
@@ -3143,6 +3149,8 @@ definitions:
       command:
         $ref: '#/definitions/accountEnableAPIKeyCommand'
       environmentNamespace:
+        type: string
+      environmentId:
         type: string
   accountEnableAPIKeyResponse:
     type: object
@@ -3199,6 +3207,8 @@ definitions:
       id:
         type: string
       environmentNamespace:
+        type: string
+      environmentId:
         type: string
   accountGetAPIKeyResponse:
     type: object
@@ -3278,6 +3288,8 @@ definitions:
         type: string
       disabled:
         type: boolean
+      environmentId:
+        type: string
   accountListAPIKeysRequestOrderBy:
     type: string
     enum:

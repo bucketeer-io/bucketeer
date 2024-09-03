@@ -27,6 +27,9 @@ export class UserEvent extends jspb.Message {
     value: proto_event_client_event_pb.SourceIdMap[keyof proto_event_client_event_pb.SourceIdMap]
   ): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UserEvent.AsObject;
   static toObject(includeInstance: boolean, msg: UserEvent): UserEvent.AsObject;
@@ -54,5 +57,6 @@ export namespace UserEvent {
     lastSeen: number;
     dataMap: Array<[string, string]>;
     sourceId: proto_event_client_event_pb.SourceIdMap[keyof proto_event_client_event_pb.SourceIdMap];
+    environmentId: string;
   };
 }

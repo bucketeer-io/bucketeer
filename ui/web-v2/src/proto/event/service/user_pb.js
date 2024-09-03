@@ -94,7 +94,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         dataMap: (f = msg.getDataMap())
           ? f.toObject(includeInstance, undefined)
           : [],
-        sourceId: jspb.Message.getFieldWithDefault(msg, 9, 0)
+        sourceId: jspb.Message.getFieldWithDefault(msg, 9, 0),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 10, '')
       };
 
     if (includeInstance) {
@@ -175,6 +176,10 @@ proto.bucketeer.event.service.UserEvent.deserializeBinaryFromReader = function (
         );
         msg.setSourceId(value);
         break;
+      case 10:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setEnvironmentId(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -241,6 +246,10 @@ proto.bucketeer.event.service.UserEvent.serializeBinaryToWriter = function (
   f = message.getSourceId();
   if (f !== 0.0) {
     writer.writeEnum(9, f);
+  }
+  f = message.getEnvironmentId();
+  if (f.length > 0) {
+    writer.writeString(10, f);
   }
 };
 
@@ -371,6 +380,27 @@ proto.bucketeer.event.service.UserEvent.prototype.setSourceId = function (
   value
 ) {
   return jspb.Message.setProto3EnumField(this, 9, value);
+};
+
+/**
+ * optional string environment_id = 10;
+ * @return {string}
+ */
+proto.bucketeer.event.service.UserEvent.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 10, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.event.service.UserEvent} returns this
+ */
+proto.bucketeer.event.service.UserEvent.prototype.setEnvironmentId = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 10, value);
 };
 
 goog.object.extend(exports, proto.bucketeer.event.service);

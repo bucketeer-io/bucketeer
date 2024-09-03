@@ -919,7 +919,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        id: jspb.Message.getFieldWithDefault(msg, 2, '')
+        id: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
       };
 
     if (includeInstance) {
@@ -968,6 +969,10 @@ proto.bucketeer.autoops.GetAutoOpsRuleRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
           break;
+        case 3:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -1008,6 +1013,10 @@ proto.bucketeer.autoops.GetAutoOpsRuleRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(2, f);
     }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(3, f);
+    }
   };
 
 /**
@@ -1047,6 +1056,26 @@ proto.bucketeer.autoops.GetAutoOpsRuleRequest.prototype.setId = function (
 ) {
   return jspb.Message.setProto3StringField(this, 2, value);
 };
+
+/**
+ * optional string environment_id = 3;
+ * @return {string}
+ */
+proto.bucketeer.autoops.GetAutoOpsRuleRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 3, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.GetAutoOpsRuleRequest} returns this
+ */
+proto.bucketeer.autoops.GetAutoOpsRuleRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 3, value);
+  };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
@@ -1266,7 +1295,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_command_pb.CreateAutoOpsRuleCommand.toObject(
             includeInstance,
             f
-          )
+          ),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
       };
 
     if (includeInstance) {
@@ -1320,6 +1350,10 @@ proto.bucketeer.autoops.CreateAutoOpsRuleRequest.deserializeBinaryFromReader =
           );
           msg.setCommand(value);
           break;
+        case 3:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -1364,6 +1398,10 @@ proto.bucketeer.autoops.CreateAutoOpsRuleRequest.serializeBinaryToWriter =
         proto_autoops_command_pb.CreateAutoOpsRuleCommand
           .serializeBinaryToWriter
       );
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(3, f);
     }
   };
 
@@ -1427,6 +1465,26 @@ proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.clearCommand =
 proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.hasCommand =
   function () {
     return jspb.Message.getField(this, 2) != null;
+  };
+
+/**
+ * optional string environment_id = 3;
+ * @return {string}
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 3, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.CreateAutoOpsRuleRequest} returns this
+ */
+proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 3, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -1585,7 +1643,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         pageSize: jspb.Message.getFieldWithDefault(msg, 2, 0),
         cursor: jspb.Message.getFieldWithDefault(msg, 3, ''),
         featureIdsList:
-          (f = jspb.Message.getRepeatedField(msg, 4)) == null ? undefined : f
+          (f = jspb.Message.getRepeatedField(msg, 4)) == null ? undefined : f,
+        environmentId: jspb.Message.getFieldWithDefault(msg, 5, '')
       };
 
     if (includeInstance) {
@@ -1642,6 +1701,10 @@ proto.bucketeer.autoops.ListAutoOpsRulesRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.addFeatureIds(value);
           break;
+        case 5:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -1689,6 +1752,10 @@ proto.bucketeer.autoops.ListAutoOpsRulesRequest.serializeBinaryToWriter =
     f = message.getFeatureIdsList();
     if (f.length > 0) {
       writer.writeRepeatedString(4, f);
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(5, f);
     }
   };
 
@@ -1788,6 +1855,26 @@ proto.bucketeer.autoops.ListAutoOpsRulesRequest.prototype.addFeatureIds =
 proto.bucketeer.autoops.ListAutoOpsRulesRequest.prototype.clearFeatureIdsList =
   function () {
     return this.setFeatureIdsList([]);
+  };
+
+/**
+ * optional string environment_id = 5;
+ * @return {string}
+ */
+proto.bucketeer.autoops.ListAutoOpsRulesRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 5, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.ListAutoOpsRulesRequest} returns this
+ */
+proto.bucketeer.autoops.ListAutoOpsRulesRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 5, value);
   };
 
 /**
@@ -2051,7 +2138,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_command_pb.StopAutoOpsRuleCommand.toObject(
             includeInstance,
             f
-          )
+          ),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -2109,6 +2197,10 @@ proto.bucketeer.autoops.StopAutoOpsRuleRequest.deserializeBinaryFromReader =
           );
           msg.setCommand(value);
           break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -2156,6 +2248,10 @@ proto.bucketeer.autoops.StopAutoOpsRuleRequest.serializeBinaryToWriter =
         f,
         proto_autoops_command_pb.StopAutoOpsRuleCommand.serializeBinaryToWriter
       );
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(4, f);
     }
   };
 
@@ -2238,6 +2334,26 @@ proto.bucketeer.autoops.StopAutoOpsRuleRequest.prototype.clearCommand =
 proto.bucketeer.autoops.StopAutoOpsRuleRequest.prototype.hasCommand =
   function () {
     return jspb.Message.getField(this, 3) != null;
+  };
+
+/**
+ * optional string environment_id = 4;
+ * @return {string}
+ */
+proto.bucketeer.autoops.StopAutoOpsRuleRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.StopAutoOpsRuleRequest} returns this
+ */
+proto.bucketeer.autoops.StopAutoOpsRuleRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 4, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -2392,7 +2508,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_command_pb.DeleteAutoOpsRuleCommand.toObject(
             includeInstance,
             f
-          )
+          ),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -2450,6 +2567,10 @@ proto.bucketeer.autoops.DeleteAutoOpsRuleRequest.deserializeBinaryFromReader =
           );
           msg.setCommand(value);
           break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -2498,6 +2619,10 @@ proto.bucketeer.autoops.DeleteAutoOpsRuleRequest.serializeBinaryToWriter =
         proto_autoops_command_pb.DeleteAutoOpsRuleCommand
           .serializeBinaryToWriter
       );
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(4, f);
     }
   };
 
@@ -2579,6 +2704,26 @@ proto.bucketeer.autoops.DeleteAutoOpsRuleRequest.prototype.clearCommand =
 proto.bucketeer.autoops.DeleteAutoOpsRuleRequest.prototype.hasCommand =
   function () {
     return jspb.Message.getField(this, 3) != null;
+  };
+
+/**
+ * optional string environment_id = 4;
+ * @return {string}
+ */
+proto.bucketeer.autoops.DeleteAutoOpsRuleRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.DeleteAutoOpsRuleRequest} returns this
+ */
+proto.bucketeer.autoops.DeleteAutoOpsRuleRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 4, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -2761,7 +2906,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg.getChangeDatetimeClauseCommandsList(),
           proto_autoops_command_pb.ChangeDatetimeClauseCommand.toObject,
           includeInstance
-        )
+        ),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 9, '')
       };
 
     if (includeInstance) {
@@ -2858,6 +3004,10 @@ proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.deserializeBinaryFromReader =
           );
           msg.addChangeDatetimeClauseCommands(value);
           break;
+        case 9:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -2941,6 +3091,10 @@ proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.serializeBinaryToWriter =
         proto_autoops_command_pb.ChangeDatetimeClauseCommand
           .serializeBinaryToWriter
       );
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(9, f);
     }
   };
 
@@ -3227,6 +3381,26 @@ proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.prototype.clearChangeDatetimeCl
     return this.setChangeDatetimeClauseCommandsList([]);
   };
 
+/**
+ * optional string environment_id = 9;
+ * @return {string}
+ */
+proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 9, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.UpdateAutoOpsRuleRequest} returns this
+ */
+proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 9, value);
+  };
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -3380,7 +3554,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_command_pb.ExecuteAutoOpsRuleCommand.toObject(
             includeInstance,
             f
-          )
+          ),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 5, '')
       };
 
     if (includeInstance) {
@@ -3438,6 +3613,10 @@ proto.bucketeer.autoops.ExecuteAutoOpsRequest.deserializeBinaryFromReader =
           );
           msg.setExecuteAutoOpsRuleCommand(value);
           break;
+        case 5:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -3486,6 +3665,10 @@ proto.bucketeer.autoops.ExecuteAutoOpsRequest.serializeBinaryToWriter =
         proto_autoops_command_pb.ExecuteAutoOpsRuleCommand
           .serializeBinaryToWriter
       );
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(5, f);
     }
   };
 
@@ -3567,6 +3750,26 @@ proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.clearExecuteAutoOpsRuleC
 proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.hasExecuteAutoOpsRuleCommand =
   function () {
     return jspb.Message.getField(this, 4) != null;
+  };
+
+/**
+ * optional string environment_id = 5;
+ * @return {string}
+ */
+proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 5, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.ExecuteAutoOpsRequest} returns this
+ */
+proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 5, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -3759,7 +3962,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         autoOpsRuleIdsList:
           (f = jspb.Message.getRepeatedField(msg, 4)) == null ? undefined : f,
         featureIdsList:
-          (f = jspb.Message.getRepeatedField(msg, 5)) == null ? undefined : f
+          (f = jspb.Message.getRepeatedField(msg, 5)) == null ? undefined : f,
+        environmentId: jspb.Message.getFieldWithDefault(msg, 6, '')
       };
 
     if (includeInstance) {
@@ -3820,6 +4024,10 @@ proto.bucketeer.autoops.ListOpsCountsRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.addFeatureIds(value);
           break;
+        case 6:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -3871,6 +4079,10 @@ proto.bucketeer.autoops.ListOpsCountsRequest.serializeBinaryToWriter =
     f = message.getFeatureIdsList();
     if (f.length > 0) {
       writer.writeRepeatedString(5, f);
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(6, f);
     }
   };
 
@@ -4007,6 +4219,26 @@ proto.bucketeer.autoops.ListOpsCountsRequest.prototype.addFeatureIds =
 proto.bucketeer.autoops.ListOpsCountsRequest.prototype.clearFeatureIdsList =
   function () {
     return this.setFeatureIdsList([]);
+  };
+
+/**
+ * optional string environment_id = 6;
+ * @return {string}
+ */
+proto.bucketeer.autoops.ListOpsCountsRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 6, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.ListOpsCountsRequest} returns this
+ */
+proto.bucketeer.autoops.ListOpsCountsRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 6, value);
   };
 
 /**
@@ -4269,7 +4501,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_command_pb.CreateProgressiveRolloutCommand.toObject(
             includeInstance,
             f
-          )
+          ),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
       };
 
     if (includeInstance) {
@@ -4323,6 +4556,10 @@ proto.bucketeer.autoops.CreateProgressiveRolloutRequest.deserializeBinaryFromRea
           );
           msg.setCommand(value);
           break;
+        case 3:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -4367,6 +4604,10 @@ proto.bucketeer.autoops.CreateProgressiveRolloutRequest.serializeBinaryToWriter 
         proto_autoops_command_pb.CreateProgressiveRolloutCommand
           .serializeBinaryToWriter
       );
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(3, f);
     }
   };
 
@@ -4430,6 +4671,26 @@ proto.bucketeer.autoops.CreateProgressiveRolloutRequest.prototype.clearCommand =
 proto.bucketeer.autoops.CreateProgressiveRolloutRequest.prototype.hasCommand =
   function () {
     return jspb.Message.getField(this, 2) != null;
+  };
+
+/**
+ * optional string environment_id = 3;
+ * @return {string}
+ */
+proto.bucketeer.autoops.CreateProgressiveRolloutRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 3, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.CreateProgressiveRolloutRequest} returns this
+ */
+proto.bucketeer.autoops.CreateProgressiveRolloutRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 3, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -4577,7 +4838,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        id: jspb.Message.getFieldWithDefault(msg, 2, '')
+        id: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
       };
 
     if (includeInstance) {
@@ -4625,6 +4887,10 @@ proto.bucketeer.autoops.GetProgressiveRolloutRequest.deserializeBinaryFromReader
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
           break;
+        case 3:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -4664,6 +4930,10 @@ proto.bucketeer.autoops.GetProgressiveRolloutRequest.serializeBinaryToWriter =
     f = message.getId();
     if (f.length > 0) {
       writer.writeString(2, f);
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(3, f);
     }
   };
 
@@ -4705,6 +4975,26 @@ proto.bucketeer.autoops.GetProgressiveRolloutRequest.prototype.getId =
 proto.bucketeer.autoops.GetProgressiveRolloutRequest.prototype.setId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 2, value);
+  };
+
+/**
+ * optional string environment_id = 3;
+ * @return {string}
+ */
+proto.bucketeer.autoops.GetProgressiveRolloutRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 3, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.GetProgressiveRolloutRequest} returns this
+ */
+proto.bucketeer.autoops.GetProgressiveRolloutRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 3, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -4926,7 +5216,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_command_pb.StopProgressiveRolloutCommand.toObject(
             includeInstance,
             f
-          )
+          ),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -4984,6 +5275,10 @@ proto.bucketeer.autoops.StopProgressiveRolloutRequest.deserializeBinaryFromReade
           );
           msg.setCommand(value);
           break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -5032,6 +5327,10 @@ proto.bucketeer.autoops.StopProgressiveRolloutRequest.serializeBinaryToWriter =
         proto_autoops_command_pb.StopProgressiveRolloutCommand
           .serializeBinaryToWriter
       );
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(4, f);
     }
   };
 
@@ -5115,6 +5414,26 @@ proto.bucketeer.autoops.StopProgressiveRolloutRequest.prototype.clearCommand =
 proto.bucketeer.autoops.StopProgressiveRolloutRequest.prototype.hasCommand =
   function () {
     return jspb.Message.getField(this, 3) != null;
+  };
+
+/**
+ * optional string environment_id = 4;
+ * @return {string}
+ */
+proto.bucketeer.autoops.StopProgressiveRolloutRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.StopProgressiveRolloutRequest} returns this
+ */
+proto.bucketeer.autoops.StopProgressiveRolloutRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 4, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -5268,7 +5587,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_command_pb.DeleteProgressiveRolloutCommand.toObject(
             includeInstance,
             f
-          )
+          ),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -5326,6 +5646,10 @@ proto.bucketeer.autoops.DeleteProgressiveRolloutRequest.deserializeBinaryFromRea
           );
           msg.setCommand(value);
           break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -5374,6 +5698,10 @@ proto.bucketeer.autoops.DeleteProgressiveRolloutRequest.serializeBinaryToWriter 
         proto_autoops_command_pb.DeleteProgressiveRolloutCommand
           .serializeBinaryToWriter
       );
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(4, f);
     }
   };
 
@@ -5457,6 +5785,26 @@ proto.bucketeer.autoops.DeleteProgressiveRolloutRequest.prototype.clearCommand =
 proto.bucketeer.autoops.DeleteProgressiveRolloutRequest.prototype.hasCommand =
   function () {
     return jspb.Message.getField(this, 3) != null;
+  };
+
+/**
+ * optional string environment_id = 4;
+ * @return {string}
+ */
+proto.bucketeer.autoops.DeleteProgressiveRolloutRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.DeleteProgressiveRolloutRequest} returns this
+ */
+proto.bucketeer.autoops.DeleteProgressiveRolloutRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 4, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -5618,7 +5966,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         orderBy: jspb.Message.getFieldWithDefault(msg, 5, 0),
         orderDirection: jspb.Message.getFieldWithDefault(msg, 6, 0),
         status: jspb.Message.getFieldWithDefault(msg, 7, 0),
-        type: jspb.Message.getFieldWithDefault(msg, 8, 0)
+        type: jspb.Message.getFieldWithDefault(msg, 8, 0),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 9, '')
       };
 
     if (includeInstance) {
@@ -5702,6 +6051,10 @@ proto.bucketeer.autoops.ListProgressiveRolloutsRequest.deserializeBinaryFromRead
             );
           msg.setType(value);
           break;
+        case 9:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -5769,6 +6122,10 @@ proto.bucketeer.autoops.ListProgressiveRolloutsRequest.serializeBinaryToWriter =
     );
     if (f != null) {
       writer.writeEnum(8, f);
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(9, f);
     }
   };
 
@@ -6000,6 +6357,26 @@ proto.bucketeer.autoops.ListProgressiveRolloutsRequest.prototype.clearType =
 proto.bucketeer.autoops.ListProgressiveRolloutsRequest.prototype.hasType =
   function () {
     return jspb.Message.getField(this, 8) != null;
+  };
+
+/**
+ * optional string environment_id = 9;
+ * @return {string}
+ */
+proto.bucketeer.autoops.ListProgressiveRolloutsRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 9, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.ListProgressiveRolloutsRequest} returns this
+ */
+proto.bucketeer.autoops.ListProgressiveRolloutsRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 9, value);
   };
 
 /**
@@ -6290,7 +6667,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_autoops_command_pb.ChangeProgressiveRolloutScheduleTriggeredAtCommand.toObject(
             includeInstance,
             f
-          )
+          ),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -6349,6 +6727,10 @@ proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest.deserializeBinaryFromRe
           );
           msg.setChangeProgressiveRolloutTriggeredAtCommand(value);
           break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -6398,6 +6780,10 @@ proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest.serializeBinaryToWriter
           .ChangeProgressiveRolloutScheduleTriggeredAtCommand
           .serializeBinaryToWriter
       );
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(4, f);
     }
   };
 
@@ -6481,6 +6867,26 @@ proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest.prototype.clearChangePr
 proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest.prototype.hasChangeProgressiveRolloutTriggeredAtCommand =
   function () {
     return jspb.Message.getField(this, 3) != null;
+  };
+
+/**
+ * optional string environment_id = 4;
+ * @return {string}
+ */
+proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest} returns this
+ */
+proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 4, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

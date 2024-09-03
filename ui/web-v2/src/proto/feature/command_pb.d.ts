@@ -1457,6 +1457,9 @@ export class CloneFeatureCommand extends jspb.Message {
   getEnvironmentNamespace(): string;
   setEnvironmentNamespace(value: string): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CloneFeatureCommand.AsObject;
   static toObject(
@@ -1481,6 +1484,7 @@ export class CloneFeatureCommand extends jspb.Message {
 export namespace CloneFeatureCommand {
   export type AsObject = {
     environmentNamespace: string;
+    environmentId: string;
   };
 }
 
