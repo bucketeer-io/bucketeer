@@ -36,6 +36,7 @@
 
   /* Override TailwindCSS Form */
   input,
+  input[type],
   [multiple],
   textarea,
   select {
@@ -54,6 +55,7 @@
   }
 
   input:focus,
+  input[type]:focus,
   textarea:focus,
   select:focus {
     --tw-ring-color: #94a3b8; /* gray-500 */
@@ -64,5 +66,9 @@
   input[readonly]:focus {
     --tw-ring-color: #cbd5e1; /* gray-400 */
     border-color: #cbd5e1; /* gray-400 */
+  }
+
+  .sidebar-menu.active {
+    @apply bg-primary-400 opacity-100;
   }
 }

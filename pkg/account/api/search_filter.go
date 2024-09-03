@@ -21,9 +21,8 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
-
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
+	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 
 	"github.com/bucketeer-io/bucketeer/pkg/locale"

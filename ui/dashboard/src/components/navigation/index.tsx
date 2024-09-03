@@ -1,6 +1,15 @@
 import { Link } from 'react-router-dom';
-import logo from 'assets/logo.svg';
-import { PAGE_PATH_ROOT } from 'constants/routing';
+import logo from 'assets/logos/logo-white.svg';
+import { useAuth, useCurrentEnvironment } from 'auth';
+import {
+  PAGE_PATH_AUDIT_LOGS,
+  PAGE_PATH_FEATURES,
+  PAGE_PATH_ROOT,
+  PAGE_PATH_USER_SEGMENTS,
+  PAGE_PATH_DEBUGGER,
+  PAGE_PATH_GOALS,
+  PAGE_PATH_EXPERIMENTS
+} from 'constants/routing';
 import { useToggleOpen } from 'hooks';
 import * as IconSystem from '@icons';
 import Divider from 'components/divider';
@@ -9,8 +18,11 @@ import SectionMenu from './menu-section';
 import ProjectList from './project-list';
 import UserMenu from './user-menu';
 
-const Navigation = () => {
+const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
   const [isShowSetting, onShowSetting, onCloseSetting] = useToggleOpen(false);
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = useCurrentEnvironment(consoleAccount!);
+  const environmentUrlCode = currentEnvironment.urlCode;
 
   return (
     <div className="fixed h-screen w-[248px] bg-primary-500 py-8 px-6">
@@ -32,21 +44,25 @@ const Navigation = () => {
             <SectionMenu
               title="General"
               items={[
-                { label: 'Projects', icon: IconSystem.IconFolder, href: '/' },
+                {
+                  label: 'Projects',
+                  icon: IconSystem.IconFolder,
+                  href: '/projects'
+                },
                 {
                   label: 'Organizations',
                   icon: IconSystem.IconBuilding,
-                  href: '/'
+                  href: '/organizations'
                 },
                 {
                   label: 'Members',
                   icon: IconSystem.IconMember,
-                  href: '/'
+                  href: '/members'
                 },
                 {
                   label: 'Usage',
                   icon: IconSystem.IconUsage,
-                  href: '/'
+                  href: '/usage'
                 }
               ]}
             />
@@ -57,12 +73,12 @@ const Navigation = () => {
                 {
                   label: 'Integrations',
                   icon: IconSystem.IconIntegration,
-                  href: '/'
+                  href: '/integrations'
                 },
                 {
                   label: 'API Keys',
                   icon: IconSystem.IconKey,
-                  href: '/'
+                  href: '/api-keys'
                 }
               ]}
             />
@@ -80,24 +96,25 @@ const Navigation = () => {
                 {
                   label: 'Audit Logs',
                   icon: IconSystem.IconLogs,
-                  href: '/'
+                  href: `/${environmentUrlCode}${PAGE_PATH_AUDIT_LOGS}`
                 },
                 {
                   label: 'Feature Flags',
                   icon: IconSystem.IconSwitch,
-                  href: '/'
+                  href: `/${environmentUrlCode}${PAGE_PATH_FEATURES}`
                 },
                 {
                   label: 'User Segment',
                   icon: IconSystem.IconUser,
-                  href: '/'
+                  href: `/${environmentUrlCode}${PAGE_PATH_USER_SEGMENTS}`
                 },
                 {
                   label: 'Debugger',
                   icon: IconSystem.IconDebugger,
-                  href: '/'
+                  href: `/${environmentUrlCode}${PAGE_PATH_DEBUGGER}`
                 }
               ]}
+              onClickNavLink={onClickNavLink}
             />
             <SectionMenu
               title={`Analysis`}
@@ -106,12 +123,12 @@ const Navigation = () => {
                 {
                   label: 'Goals',
                   icon: IconSystem.IconNote,
-                  href: '/'
+                  href: `/${environmentUrlCode}${PAGE_PATH_GOALS}`
                 },
                 {
                   label: 'Experiments',
                   icon: IconSystem.IconProton,
-                  href: '/'
+                  href: `/${environmentUrlCode}${PAGE_PATH_EXPERIMENTS}`
                 }
               ]}
             />

@@ -14,6 +14,7 @@ const screens = {
 const colors = {
   transparent: 'transparent',
   white: '#FFFFFF',
+  'primary-additional': '#EFEFFE',
   overlay: 'rgba(0, 0, 0, 0.8)',
   primary: {
     900: '#292C4C',
@@ -124,6 +125,7 @@ const theme = {
     'border-primary-500': `inset 0 0 0 1px ${colors.primary[500]}`,
     'border-primary-600': `inset 0 0 0 1px ${colors.primary[600]}`,
     'border-gray-200': `inset 0 0 0 1px ${colors.gray[200]}`,
+    'border-gray-300': `inset 0 0 0 1px ${colors.gray[300]}`,
     'border-gray-500': `inset 0 0 0 1px ${colors.gray[500]}`,
     'border-accent-red-500': `inset 0 0 0 1px ${colors.accent.red[500]}`,
     none: 'none'

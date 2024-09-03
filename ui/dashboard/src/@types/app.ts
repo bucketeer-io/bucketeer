@@ -1,6 +1,3 @@
-// App Route
-export type Route = '/' | '/login';
-
 // Theme
 export type Color =
   | 'primary-600'
