@@ -45,7 +45,7 @@ export type OrderDirection =
   ListPushesRequest.OrderDirectionMap[keyof ListPushesRequest.OrderDirectionMap];
 
 interface ListPushesParams {
-  environmentNamespace: string;
+  environmentId: string;
   pageSize: number;
   cursor: string;
   orderBy?: OrderBy;
@@ -59,7 +59,7 @@ export const listPushes = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/list`, async (params) => {
   const request = new ListPushesRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setPageSize(params.pageSize);
   request.setCursor(params.cursor);
   request.setOrderBy(params.orderBy);
@@ -70,7 +70,7 @@ export const listPushes = createAsyncThunk<
 });
 
 export interface CreatePushParams {
-  environmentNamespace: string;
+  environmentId: string;
   name: string;
   tags: Array<string>;
   fcmServiceAccount: Uint8Array | string;
@@ -87,13 +87,13 @@ export const createPush = createAsyncThunk<
   cmd.setFcmServiceAccount(params.fcmServiceAccount);
 
   const request = new CreatePushRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setCommand(cmd);
   await pushGrpc.createPush(request);
 });
 
 export interface UpdatePushParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
   name: string;
   currentTags: Array<string>;
@@ -129,13 +129,13 @@ export const updatePush = createAsyncThunk<
       request.setDeletePushTagsCommand(cmd);
     }
   }
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   await pushGrpc.updatePush(request);
 });
 
 export interface DeletePushParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -145,7 +145,7 @@ export const deletePush = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/delete`, async (params) => {
   const request = new DeletePushRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setCommand(new DeletePushCommand());
   await pushGrpc.deletePush(request);

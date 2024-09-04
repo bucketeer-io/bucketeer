@@ -28,7 +28,7 @@ export type OrderDirection =
   ListTagsRequest.OrderDirectionMap[keyof ListTagsRequest.OrderDirectionMap];
 
 export interface ListTagsParams {
-  environmentNamespace: string;
+  environmentId: string;
   pageSize: number;
   cursor: string;
   orderBy: OrderBy;
@@ -42,7 +42,7 @@ export const listTags = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/listTags`, async (params) => {
   const request = new ListTagsRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setPageSize(params.pageSize);
   request.setCursor(params.cursor);
   request.setOrderBy(params.orderBy);

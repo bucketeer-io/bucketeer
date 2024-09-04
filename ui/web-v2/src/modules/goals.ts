@@ -37,7 +37,7 @@ export const goalsAdapter = createEntityAdapter({
 export const { selectAll, selectById } = goalsAdapter.getSelectors();
 
 interface GetGoalParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -47,7 +47,7 @@ export const getGoal = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/getGoal`, async (params) => {
   const request = new GetGoalRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   const result = await grpc.getGoal(request);
   return result.response.toObject();
@@ -59,7 +59,7 @@ export type OrderDirection =
   ListGoalsRequest.OrderDirectionMap[keyof ListGoalsRequest.OrderDirectionMap];
 
 interface ListGoalsParams {
-  environmentNamespace: string;
+  environmentId: string;
   pageSize: number;
   cursor: string;
   searchKeyword: string;
@@ -75,7 +75,7 @@ export const listGoals = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/listGoals`, async (params) => {
   const request = new ListGoalsRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setPageSize(params.pageSize);
   request.setCursor(params.cursor);
   request.setOrderBy(params.orderBy);
@@ -94,7 +94,7 @@ export const listGoals = createAsyncThunk<
 });
 
 interface CreateGoalParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
   name: string;
   description: string;
@@ -107,7 +107,7 @@ export const createGoal = createAsyncThunk<
 >(`${MODULE_NAME}/createGoal`, async (params) => {
   const request = new CreateGoalRequest();
   const command = new CreateGoalCommand();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   command.setId(params.id);
   command.setName(params.name);
   command.setDescription(params.description);
@@ -116,7 +116,7 @@ export const createGoal = createAsyncThunk<
 });
 
 interface DeleteGoalParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -126,14 +126,14 @@ export const deleteGoal = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/deleteGoal`, async (params) => {
   const request = new DeleteGoalRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setCommand(new DeleteGoalCommand());
   await grpc.deleteGoal(request);
 });
 
 interface UpdateGoalParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
   name?: string;
   description?: string;
@@ -145,7 +145,7 @@ export const updateGoal = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/updateGoal`, async (params) => {
   const request = new UpdateGoalRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   if (params.name) {
     const renameCommand = new RenameGoalCommand();
@@ -161,7 +161,7 @@ export const updateGoal = createAsyncThunk<
 });
 
 export interface ArchiveGoalParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -171,7 +171,7 @@ export const archiveGoal = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/archive`, async (params) => {
   const request = new ArchiveGoalRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setCommand(new ArchiveGoalCommand());
   await grpc.archiveGoal(request);

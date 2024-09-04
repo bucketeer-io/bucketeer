@@ -107,7 +107,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
     useEffect(() => {
       dispatch(
         listGoals({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           pageSize: 99999,
           cursor: '',
           searchKeyword: null,
@@ -119,7 +119,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
       );
       dispatch(
         listFeatures({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           pageSize: 99999,
           cursor: '',
           tags: [],
@@ -139,7 +139,7 @@ export const ExperimentAddForm: FC<ExperimentAddFormProps> = memo(
         dispatch(
           listProgressiveRollout({
             featureId: featureId,
-            environmentNamespace: currentEnvironment.id
+            environmentId: currentEnvironment.id
           })
         ).then((res) => {
           const response =

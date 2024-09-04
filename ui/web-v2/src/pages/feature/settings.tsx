@@ -100,7 +100,7 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
         }
         dispatch(
           updateFeatureDetails({
-            environmentNamespace: currentEnvironment.id,
+            environmentId: currentEnvironment.id,
             id: feature.id,
             comment: data.comment,
             updateDetailCommands: commands
@@ -109,7 +109,7 @@ export const FeatureSettingsPage: FC<FeatureSettingsPageProps> = memo(
           setIsConfirmDialogOpen(false);
           dispatch(
             getFeature({
-              environmentNamespace: currentEnvironment.id,
+              environmentId: currentEnvironment.id,
               id: featureId
             })
           );

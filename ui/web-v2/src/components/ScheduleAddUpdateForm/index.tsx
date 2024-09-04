@@ -186,7 +186,7 @@ export const ScheduleAddUpdateForm: FC<ScheduleAddUpdateFormProps> = memo(
           }
 
           const param: UpdateAutoOpsRuleParams = {
-            environmentNamespace: currentEnvironment.id,
+            environmentId: currentEnvironment.id,
             id: autoOpsRule.id,
             addDatetimeClauseCommands,
             deleteClauseCommands,
@@ -210,7 +210,7 @@ export const ScheduleAddUpdateForm: FC<ScheduleAddUpdateFormProps> = memo(
 
           dispatch(
             createAutoOpsRule({
-              environmentNamespace: currentEnvironment.id,
+              environmentId: currentEnvironment.id,
               command: command
             })
           ).then(() => onSubmit());

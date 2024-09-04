@@ -164,7 +164,7 @@ export const ProgressiveRolloutAddForm: FC<ProgressiveRolloutAddFormProps> =
         dispatch(
           listExperiments({
             featureId: featureId,
-            environmentNamespace: currentEnvironment.id,
+            environmentId: currentEnvironment.id,
             searchKeyword: '',
             pageSize: 1000,
             cursor: ''
@@ -287,7 +287,7 @@ export const ProgressiveRolloutAddForm: FC<ProgressiveRolloutAddFormProps> =
 
           dispatch(
             createProgressiveRollout({
-              environmentNamespace: currentEnvironment.id,
+              environmentId: currentEnvironment.id,
               command: command
             })
           ).then(() => {
