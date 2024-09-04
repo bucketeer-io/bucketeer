@@ -22,7 +22,7 @@ import "proto/notification/subscription.proto";
 
 message NotificationEvent {
   string id = 1;
-  string environment_namespace = 2;
+  reserved 2;
   bucketeer.notification.Subscription.SourceType source_type = 3;
   Notification notification = 4;
   bool is_admin_event = 5;

@@ -25,7 +25,7 @@ message GoalEvent {
   string user_id = 5;
   string tag = 6;
   string source_id = 7;
-  string environment_namespace = 8;
+  reserved 8;
   int64 timestamp = 9;
   string feature_id = 10;
   int32 feature_version = 11;

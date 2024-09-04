@@ -22,7 +22,7 @@ import "proto/event/domain/event.proto";
 
 message BulkSegmentUsersReceivedEvent {
   string id = 1;
-  string environment_namespace = 2;
+  reserved 2;
   string segment_id = 3;
   bytes data = 4;
   bucketeer.feature.SegmentUser.State state = 5;

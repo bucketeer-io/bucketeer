@@ -23,7 +23,7 @@ import "proto/push/push.proto";
 import "proto/push/command.proto";
 
 message CreatePushRequest {
-  string environment_namespace = 1;
+  reserved 1;
   CreatePushCommand command = 2 [deprecated = true];
   repeated string tags = 3;
   string name = 4;
@@ -46,7 +46,7 @@ message ListPushesRequest {
     ASC = 0;
     DESC = 1;
   }
-  string environment_namespace = 1;
+  reserved 1;
   int64 page_size = 2;
   string cursor = 3;
   OrderBy order_by = 4;
@@ -62,16 +62,16 @@ message ListPushesResponse {
 }
 
 message DeletePushRequest {
-  string environment_namespace = 1;
+  reserved 1;
   string id = 2;
-  DeletePushCommand command = 3 [deprecated = true];
+  DeletePushCommand command = 3;
   string environment_id = 4;
 }
 
 message DeletePushResponse {}
 
 message UpdatePushRequest {
-  string environment_namespace = 1;
+  reserved 1;
   string id = 2;
   AddPushTagsCommand add_push_tags_command = 3 [deprecated = true];
   DeletePushTagsCommand delete_push_tags_command = 4 [deprecated = true];
