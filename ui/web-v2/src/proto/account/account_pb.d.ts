@@ -258,6 +258,16 @@ export class ConsoleAccount extends jspb.Message {
     index?: number
   ): ConsoleAccount.EnvironmentRole;
 
+  clearSearchFiltersList(): void;
+  getSearchFiltersList(): Array<proto_account_search_filter_pb.SearchFilter>;
+  setSearchFiltersList(
+    value: Array<proto_account_search_filter_pb.SearchFilter>
+  ): void;
+  addSearchFilters(
+    value?: proto_account_search_filter_pb.SearchFilter,
+    index?: number
+  ): proto_account_search_filter_pb.SearchFilter;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ConsoleAccount.AsObject;
   static toObject(
@@ -288,6 +298,7 @@ export namespace ConsoleAccount {
     organization?: proto_environment_organization_pb.Organization.AsObject;
     organizationRole: AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap];
     environmentRolesList: Array<ConsoleAccount.EnvironmentRole.AsObject>;
+    searchFiltersList: Array<proto_account_search_filter_pb.SearchFilter.AsObject>;
   };
 
   export class EnvironmentRole extends jspb.Message {

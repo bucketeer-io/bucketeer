@@ -254,6 +254,11 @@ func TestGetMeMySQL(t *testing.T) {
 							},
 						},
 						Disabled: false,
+						SearchFilters: []*accountproto.SearchFilter{
+							{
+								Id: "search-filter-id",
+							},
+						},
 					},
 				}, nil)
 			},
@@ -278,6 +283,11 @@ func TestGetMeMySQL(t *testing.T) {
 								Id: "pj0",
 							},
 							Role: accountproto.AccountV2_Role_Environment_EDITOR,
+						},
+					},
+					SearchFilters: []*accountproto.SearchFilter{
+						{
+							Id: "search-filter-id",
 						},
 					},
 				},
