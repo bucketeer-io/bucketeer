@@ -11,9 +11,6 @@ export class GetGoalRequest extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
@@ -41,7 +38,6 @@ export class GetGoalRequest extends jspb.Message {
 export namespace GetGoalRequest {
   export type AsObject = {
     id: string;
-    environmentNamespace: string;
     environmentId: string;
   };
 }
@@ -85,9 +81,6 @@ export class ListGoalsRequest extends jspb.Message {
 
   getCursor(): string;
   setCursor(value: string): void;
-
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
 
   getOrderBy(): ListGoalsRequest.OrderByMap[keyof ListGoalsRequest.OrderByMap];
   setOrderBy(
@@ -140,7 +133,6 @@ export namespace ListGoalsRequest {
   export type AsObject = {
     pageSize: number;
     cursor: string;
-    environmentNamespace: string;
     orderBy: ListGoalsRequest.OrderByMap[keyof ListGoalsRequest.OrderByMap];
     orderDirection: ListGoalsRequest.OrderDirectionMap[keyof ListGoalsRequest.OrderDirectionMap];
     searchKeyword: string;
@@ -216,9 +208,6 @@ export class CreateGoalRequest extends jspb.Message {
   getCommand(): proto_experiment_command_pb.CreateGoalCommand | undefined;
   setCommand(value?: proto_experiment_command_pb.CreateGoalCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
@@ -246,7 +235,6 @@ export class CreateGoalRequest extends jspb.Message {
 export namespace CreateGoalRequest {
   export type AsObject = {
     command?: proto_experiment_command_pb.CreateGoalCommand.AsObject;
-    environmentNamespace: string;
     environmentId: string;
   };
 }
@@ -286,9 +274,6 @@ export class ArchiveGoalRequest extends jspb.Message {
   getCommand(): proto_experiment_command_pb.ArchiveGoalCommand | undefined;
   setCommand(value?: proto_experiment_command_pb.ArchiveGoalCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
@@ -317,7 +302,6 @@ export namespace ArchiveGoalRequest {
   export type AsObject = {
     id: string;
     command?: proto_experiment_command_pb.ArchiveGoalCommand.AsObject;
-    environmentNamespace: string;
     environmentId: string;
   };
 }
@@ -357,9 +341,6 @@ export class DeleteGoalRequest extends jspb.Message {
   getCommand(): proto_experiment_command_pb.DeleteGoalCommand | undefined;
   setCommand(value?: proto_experiment_command_pb.DeleteGoalCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
@@ -388,7 +369,6 @@ export namespace DeleteGoalRequest {
   export type AsObject = {
     id: string;
     command?: proto_experiment_command_pb.DeleteGoalCommand.AsObject;
-    environmentNamespace: string;
     environmentId: string;
   };
 }
@@ -437,9 +417,6 @@ export class UpdateGoalRequest extends jspb.Message {
     value?: proto_experiment_command_pb.ChangeDescriptionGoalCommand
   ): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
@@ -469,7 +446,6 @@ export namespace UpdateGoalRequest {
     id: string;
     renameCommand?: proto_experiment_command_pb.RenameGoalCommand.AsObject;
     changeDescriptionCommand?: proto_experiment_command_pb.ChangeDescriptionGoalCommand.AsObject;
-    environmentNamespace: string;
     environmentId: string;
   };
 }
@@ -504,9 +480,6 @@ export class GetExperimentRequest extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
@@ -534,7 +507,6 @@ export class GetExperimentRequest extends jspb.Message {
 export namespace GetExperimentRequest {
   export type AsObject = {
     id: string;
-    environmentNamespace: string;
     environmentId: string;
   };
 }
@@ -592,9 +564,6 @@ export class ListExperimentsRequest extends jspb.Message {
 
   getCursor(): string;
   setCursor(value: string): void;
-
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
 
   hasStatus(): boolean;
   clearStatus(): void;
@@ -668,7 +637,6 @@ export namespace ListExperimentsRequest {
     to: number;
     pageSize: number;
     cursor: string;
-    environmentNamespace: string;
     status?: google_protobuf_wrappers_pb.Int32Value.AsObject;
     maintainer: string;
     orderBy: ListExperimentsRequest.OrderByMap[keyof ListExperimentsRequest.OrderByMap];
@@ -750,9 +718,6 @@ export class CreateExperimentRequest extends jspb.Message {
   getCommand(): proto_experiment_command_pb.CreateExperimentCommand | undefined;
   setCommand(value?: proto_experiment_command_pb.CreateExperimentCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
@@ -780,7 +745,6 @@ export class CreateExperimentRequest extends jspb.Message {
 export namespace CreateExperimentRequest {
   export type AsObject = {
     command?: proto_experiment_command_pb.CreateExperimentCommand.AsObject;
-    environmentNamespace: string;
     environmentId: string;
   };
 }
@@ -821,9 +785,6 @@ export namespace CreateExperimentResponse {
 export class UpdateExperimentRequest extends jspb.Message {
   getId(): string;
   setId(value: string): void;
-
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
 
   hasChangeExperimentPeriodCommand(): boolean;
   clearChangeExperimentPeriodCommand(): void;
@@ -879,7 +840,6 @@ export class UpdateExperimentRequest extends jspb.Message {
 export namespace UpdateExperimentRequest {
   export type AsObject = {
     id: string;
-    environmentNamespace: string;
     changeExperimentPeriodCommand?: proto_experiment_command_pb.ChangeExperimentPeriodCommand.AsObject;
     changeNameCommand?: proto_experiment_command_pb.ChangeExperimentNameCommand.AsObject;
     changeDescriptionCommand?: proto_experiment_command_pb.ChangeExperimentDescriptionCommand.AsObject;
@@ -914,9 +874,6 @@ export namespace UpdateExperimentResponse {
 }
 
 export class StartExperimentRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -951,7 +908,6 @@ export class StartExperimentRequest extends jspb.Message {
 
 export namespace StartExperimentRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     command?: proto_experiment_command_pb.StartExperimentCommand.AsObject;
     environmentId: string;
@@ -985,9 +941,6 @@ export namespace StartExperimentResponse {
 }
 
 export class FinishExperimentRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -1022,7 +975,6 @@ export class FinishExperimentRequest extends jspb.Message {
 
 export namespace FinishExperimentRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     command?: proto_experiment_command_pb.FinishExperimentCommand.AsObject;
     environmentId: string;
@@ -1064,9 +1016,6 @@ export class StopExperimentRequest extends jspb.Message {
   getCommand(): proto_experiment_command_pb.StopExperimentCommand | undefined;
   setCommand(value?: proto_experiment_command_pb.StopExperimentCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
@@ -1095,7 +1044,6 @@ export namespace StopExperimentRequest {
   export type AsObject = {
     id: string;
     command?: proto_experiment_command_pb.StopExperimentCommand.AsObject;
-    environmentNamespace: string;
     environmentId: string;
   };
 }
@@ -1139,9 +1087,6 @@ export class ArchiveExperimentRequest extends jspb.Message {
     value?: proto_experiment_command_pb.ArchiveExperimentCommand
   ): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
@@ -1170,7 +1115,6 @@ export namespace ArchiveExperimentRequest {
   export type AsObject = {
     id: string;
     command?: proto_experiment_command_pb.ArchiveExperimentCommand.AsObject;
-    environmentNamespace: string;
     environmentId: string;
   };
 }
@@ -1210,9 +1154,6 @@ export class DeleteExperimentRequest extends jspb.Message {
   getCommand(): proto_experiment_command_pb.DeleteExperimentCommand | undefined;
   setCommand(value?: proto_experiment_command_pb.DeleteExperimentCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
@@ -1241,7 +1182,6 @@ export namespace DeleteExperimentRequest {
   export type AsObject = {
     id: string;
     command?: proto_experiment_command_pb.DeleteExperimentCommand.AsObject;
-    environmentNamespace: string;
     environmentId: string;
   };
 }

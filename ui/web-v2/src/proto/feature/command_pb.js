@@ -8482,7 +8482,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         environmentId: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
@@ -8524,10 +8523,6 @@ proto.bucketeer.feature.CloneFeatureCommand.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 2:
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
@@ -8566,35 +8561,11 @@ proto.bucketeer.feature.CloneFeatureCommand.serializeBinaryToWriter = function (
   writer
 ) {
   var f = undefined;
-  f = message.getEnvironmentNamespace();
-  if (f.length > 0) {
-    writer.writeString(1, f);
-  }
   f = message.getEnvironmentId();
   if (f.length > 0) {
     writer.writeString(2, f);
   }
 };
-
-/**
- * optional string environment_namespace = 1;
- * @return {string}
- */
-proto.bucketeer.feature.CloneFeatureCommand.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 1, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.feature.CloneFeatureCommand} returns this
- */
-proto.bucketeer.feature.CloneFeatureCommand.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
-  };
 
 /**
  * optional string environment_id = 2;

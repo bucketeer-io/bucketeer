@@ -7,9 +7,6 @@ import * as proto_push_push_pb from '../../proto/push/push_pb';
 import * as proto_push_command_pb from '../../proto/push/command_pb';
 
 export class CreatePushRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   hasCommand(): boolean;
   clearCommand(): void;
   getCommand(): proto_push_command_pb.CreatePushCommand | undefined;
@@ -51,7 +48,6 @@ export class CreatePushRequest extends jspb.Message {
 
 export namespace CreatePushRequest {
   export type AsObject = {
-    environmentNamespace: string;
     command?: proto_push_command_pb.CreatePushCommand.AsObject;
     tagsList: Array<string>;
     name: string;
@@ -93,9 +89,6 @@ export namespace CreatePushResponse {
 }
 
 export class ListPushesRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getPageSize(): number;
   setPageSize(value: number): void;
 
@@ -138,7 +131,6 @@ export class ListPushesRequest extends jspb.Message {
 
 export namespace ListPushesRequest {
   export type AsObject = {
-    environmentNamespace: string;
     pageSize: number;
     cursor: string;
     orderBy: ListPushesRequest.OrderByMap[keyof ListPushesRequest.OrderByMap];
@@ -208,9 +200,6 @@ export namespace ListPushesResponse {
 }
 
 export class DeletePushRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -242,7 +231,6 @@ export class DeletePushRequest extends jspb.Message {
 
 export namespace DeletePushRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     command?: proto_push_command_pb.DeletePushCommand.AsObject;
   };
@@ -275,9 +263,6 @@ export namespace DeletePushResponse {
 }
 
 export class UpdatePushRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -333,7 +318,6 @@ export class UpdatePushRequest extends jspb.Message {
 
 export namespace UpdatePushRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     addPushTagsCommand?: proto_push_command_pb.AddPushTagsCommand.AsObject;
     deletePushTagsCommand?: proto_push_command_pb.DeletePushTagsCommand.AsObject;

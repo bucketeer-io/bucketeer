@@ -286,7 +286,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         pageSize: jspb.Message.getFieldWithDefault(msg, 1, 0),
         cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
         orderBy: jspb.Message.getFieldWithDefault(msg, 4, 0),
         orderDirection: jspb.Message.getFieldWithDefault(msg, 5, 0),
         searchKeyword: jspb.Message.getFieldWithDefault(msg, 6, ''),
@@ -343,10 +342,6 @@ proto.bucketeer.auditlog.ListAuditLogsRequest.deserializeBinaryFromReader =
         case 2:
           var value = /** @type {string} */ (reader.readString());
           msg.setCursor(value);
-          break;
-        case 3:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
           break;
         case 4:
           var value =
@@ -425,10 +420,6 @@ proto.bucketeer.auditlog.ListAuditLogsRequest.serializeBinaryToWriter =
     f = message.getCursor();
     if (f.length > 0) {
       writer.writeString(2, f);
-    }
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(3, f);
     }
     f = message.getOrderBy();
     if (f !== 0.0) {
@@ -519,26 +510,6 @@ proto.bucketeer.auditlog.ListAuditLogsRequest.prototype.setCursor = function (
 ) {
   return jspb.Message.setProto3StringField(this, 2, value);
 };
-
-/**
- * optional string environment_namespace = 3;
- * @return {string}
- */
-proto.bucketeer.auditlog.ListAuditLogsRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 3, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.auditlog.ListAuditLogsRequest} returns this
- */
-proto.bucketeer.auditlog.ListAuditLogsRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 3, value);
-  };
 
 /**
  * optional OrderBy order_by = 4;
@@ -1615,7 +1586,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         featureId: jspb.Message.getFieldWithDefault(msg, 1, ''),
         pageSize: jspb.Message.getFieldWithDefault(msg, 2, 0),
         cursor: jspb.Message.getFieldWithDefault(msg, 3, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 4, ''),
         orderBy: jspb.Message.getFieldWithDefault(msg, 5, 0),
         orderDirection: jspb.Message.getFieldWithDefault(msg, 6, 0),
         searchKeyword: jspb.Message.getFieldWithDefault(msg, 7, ''),
@@ -1672,10 +1642,6 @@ proto.bucketeer.auditlog.ListFeatureHistoryRequest.deserializeBinaryFromReader =
         case 3:
           var value = /** @type {string} */ (reader.readString());
           msg.setCursor(value);
-          break;
-        case 4:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
           break;
         case 5:
           var value =
@@ -1750,10 +1716,6 @@ proto.bucketeer.auditlog.ListFeatureHistoryRequest.serializeBinaryToWriter =
     f = message.getCursor();
     if (f.length > 0) {
       writer.writeString(3, f);
-    }
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(4, f);
     }
     f = message.getOrderBy();
     if (f !== 0.0) {
@@ -1853,26 +1815,6 @@ proto.bucketeer.auditlog.ListFeatureHistoryRequest.prototype.getCursor =
 proto.bucketeer.auditlog.ListFeatureHistoryRequest.prototype.setCursor =
   function (value) {
     return jspb.Message.setProto3StringField(this, 3, value);
-  };
-
-/**
- * optional string environment_namespace = 4;
- * @return {string}
- */
-proto.bucketeer.auditlog.ListFeatureHistoryRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 4, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.auditlog.ListFeatureHistoryRequest} returns this
- */
-proto.bucketeer.auditlog.ListFeatureHistoryRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 4, value);
   };
 
 /**

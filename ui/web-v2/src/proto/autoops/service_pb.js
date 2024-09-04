@@ -918,7 +918,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         id: jspb.Message.getFieldWithDefault(msg, 2, ''),
         environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
       };
@@ -961,10 +960,6 @@ proto.bucketeer.autoops.GetAutoOpsRuleRequest.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 2:
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
@@ -1005,10 +1000,6 @@ proto.bucketeer.autoops.GetAutoOpsRuleRequest.prototype.serializeBinary =
 proto.bucketeer.autoops.GetAutoOpsRuleRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(1, f);
-    }
     f = message.getId();
     if (f.length > 0) {
       writer.writeString(2, f);
@@ -1017,26 +1008,6 @@ proto.bucketeer.autoops.GetAutoOpsRuleRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(3, f);
     }
-  };
-
-/**
- * optional string environment_namespace = 1;
- * @return {string}
- */
-proto.bucketeer.autoops.GetAutoOpsRuleRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 1, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.autoops.GetAutoOpsRuleRequest} returns this
- */
-proto.bucketeer.autoops.GetAutoOpsRuleRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
   };
 
 /**
@@ -1289,7 +1260,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         command:
           (f = msg.getCommand()) &&
           proto_autoops_command_pb.CreateAutoOpsRuleCommand.toObject(
@@ -1337,10 +1307,6 @@ proto.bucketeer.autoops.CreateAutoOpsRuleRequest.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 2:
           var value = new proto_autoops_command_pb.CreateAutoOpsRuleCommand();
           reader.readMessage(
@@ -1386,10 +1352,6 @@ proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.serializeBinary =
 proto.bucketeer.autoops.CreateAutoOpsRuleRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(1, f);
-    }
     f = message.getCommand();
     if (f != null) {
       writer.writeMessage(
@@ -1403,26 +1365,6 @@ proto.bucketeer.autoops.CreateAutoOpsRuleRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(3, f);
     }
-  };
-
-/**
- * optional string environment_namespace = 1;
- * @return {string}
- */
-proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 1, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.autoops.CreateAutoOpsRuleRequest} returns this
- */
-proto.bucketeer.autoops.CreateAutoOpsRuleRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
   };
 
 /**
@@ -1639,7 +1581,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         pageSize: jspb.Message.getFieldWithDefault(msg, 2, 0),
         cursor: jspb.Message.getFieldWithDefault(msg, 3, ''),
         featureIdsList:
@@ -1685,10 +1626,6 @@ proto.bucketeer.autoops.ListAutoOpsRulesRequest.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 2:
           var value = /** @type {number} */ (reader.readInt64());
           msg.setPageSize(value);
@@ -1737,10 +1674,6 @@ proto.bucketeer.autoops.ListAutoOpsRulesRequest.prototype.serializeBinary =
 proto.bucketeer.autoops.ListAutoOpsRulesRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(1, f);
-    }
     f = message.getPageSize();
     if (f !== 0) {
       writer.writeInt64(2, f);
@@ -1757,26 +1690,6 @@ proto.bucketeer.autoops.ListAutoOpsRulesRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(5, f);
     }
-  };
-
-/**
- * optional string environment_namespace = 1;
- * @return {string}
- */
-proto.bucketeer.autoops.ListAutoOpsRulesRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 1, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.autoops.ListAutoOpsRulesRequest} returns this
- */
-proto.bucketeer.autoops.ListAutoOpsRulesRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
   };
 
 /**
@@ -2131,7 +2044,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         id: jspb.Message.getFieldWithDefault(msg, 2, ''),
         command:
           (f = msg.getCommand()) &&
@@ -2180,10 +2092,6 @@ proto.bucketeer.autoops.StopAutoOpsRuleRequest.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 2:
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
@@ -2233,10 +2141,6 @@ proto.bucketeer.autoops.StopAutoOpsRuleRequest.prototype.serializeBinary =
 proto.bucketeer.autoops.StopAutoOpsRuleRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(1, f);
-    }
     f = message.getId();
     if (f.length > 0) {
       writer.writeString(2, f);
@@ -2253,26 +2157,6 @@ proto.bucketeer.autoops.StopAutoOpsRuleRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(4, f);
     }
-  };
-
-/**
- * optional string environment_namespace = 1;
- * @return {string}
- */
-proto.bucketeer.autoops.StopAutoOpsRuleRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 1, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.autoops.StopAutoOpsRuleRequest} returns this
- */
-proto.bucketeer.autoops.StopAutoOpsRuleRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
   };
 
 /**
@@ -2501,7 +2385,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         id: jspb.Message.getFieldWithDefault(msg, 2, ''),
         command:
           (f = msg.getCommand()) &&
@@ -2550,10 +2433,6 @@ proto.bucketeer.autoops.DeleteAutoOpsRuleRequest.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 2:
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
@@ -2603,10 +2482,6 @@ proto.bucketeer.autoops.DeleteAutoOpsRuleRequest.prototype.serializeBinary =
 proto.bucketeer.autoops.DeleteAutoOpsRuleRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(1, f);
-    }
     f = message.getId();
     if (f.length > 0) {
       writer.writeString(2, f);
@@ -2624,26 +2499,6 @@ proto.bucketeer.autoops.DeleteAutoOpsRuleRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(4, f);
     }
-  };
-
-/**
- * optional string environment_namespace = 1;
- * @return {string}
- */
-proto.bucketeer.autoops.DeleteAutoOpsRuleRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 1, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.autoops.DeleteAutoOpsRuleRequest} returns this
- */
-proto.bucketeer.autoops.DeleteAutoOpsRuleRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
   };
 
 /**
@@ -2880,7 +2735,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         id: jspb.Message.getFieldWithDefault(msg, 2, ''),
         addOpsEventRateClauseCommandsList: jspb.Message.toObjectList(
           msg.getAddOpsEventRateClauseCommandsList(),
@@ -2948,10 +2802,6 @@ proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 2:
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
@@ -3040,10 +2890,6 @@ proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.prototype.serializeBinary =
 proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(1, f);
-    }
     f = message.getId();
     if (f.length > 0) {
       writer.writeString(2, f);
@@ -3096,26 +2942,6 @@ proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(9, f);
     }
-  };
-
-/**
- * optional string environment_namespace = 1;
- * @return {string}
- */
-proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 1, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.autoops.UpdateAutoOpsRuleRequest} returns this
- */
-proto.bucketeer.autoops.UpdateAutoOpsRuleRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
   };
 
 /**
@@ -3547,7 +3373,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         id: jspb.Message.getFieldWithDefault(msg, 2, ''),
         executeAutoOpsRuleCommand:
           (f = msg.getExecuteAutoOpsRuleCommand()) &&
@@ -3596,10 +3421,6 @@ proto.bucketeer.autoops.ExecuteAutoOpsRequest.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 2:
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
@@ -3649,10 +3470,6 @@ proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.serializeBinary =
 proto.bucketeer.autoops.ExecuteAutoOpsRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(1, f);
-    }
     f = message.getId();
     if (f.length > 0) {
       writer.writeString(2, f);
@@ -3670,26 +3487,6 @@ proto.bucketeer.autoops.ExecuteAutoOpsRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(5, f);
     }
-  };
-
-/**
- * optional string environment_namespace = 1;
- * @return {string}
- */
-proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 1, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.autoops.ExecuteAutoOpsRequest} returns this
- */
-proto.bucketeer.autoops.ExecuteAutoOpsRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
   };
 
 /**
@@ -3956,7 +3753,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         pageSize: jspb.Message.getFieldWithDefault(msg, 2, 0),
         cursor: jspb.Message.getFieldWithDefault(msg, 3, ''),
         autoOpsRuleIdsList:
@@ -4004,10 +3800,6 @@ proto.bucketeer.autoops.ListOpsCountsRequest.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 2:
           var value = /** @type {number} */ (reader.readInt64());
           msg.setPageSize(value);
@@ -4060,10 +3852,6 @@ proto.bucketeer.autoops.ListOpsCountsRequest.prototype.serializeBinary =
 proto.bucketeer.autoops.ListOpsCountsRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(1, f);
-    }
     f = message.getPageSize();
     if (f !== 0) {
       writer.writeInt64(2, f);
@@ -4084,26 +3872,6 @@ proto.bucketeer.autoops.ListOpsCountsRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(6, f);
     }
-  };
-
-/**
- * optional string environment_namespace = 1;
- * @return {string}
- */
-proto.bucketeer.autoops.ListOpsCountsRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 1, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.autoops.ListOpsCountsRequest} returns this
- */
-proto.bucketeer.autoops.ListOpsCountsRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
   };
 
 /**
@@ -4495,7 +4263,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         command:
           (f = msg.getCommand()) &&
           proto_autoops_command_pb.CreateProgressiveRolloutCommand.toObject(
@@ -4542,10 +4309,6 @@ proto.bucketeer.autoops.CreateProgressiveRolloutRequest.deserializeBinaryFromRea
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 2:
           var value =
             new proto_autoops_command_pb.CreateProgressiveRolloutCommand();
@@ -4592,10 +4355,6 @@ proto.bucketeer.autoops.CreateProgressiveRolloutRequest.prototype.serializeBinar
 proto.bucketeer.autoops.CreateProgressiveRolloutRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(1, f);
-    }
     f = message.getCommand();
     if (f != null) {
       writer.writeMessage(
@@ -4609,26 +4368,6 @@ proto.bucketeer.autoops.CreateProgressiveRolloutRequest.serializeBinaryToWriter 
     if (f.length > 0) {
       writer.writeString(3, f);
     }
-  };
-
-/**
- * optional string environment_namespace = 1;
- * @return {string}
- */
-proto.bucketeer.autoops.CreateProgressiveRolloutRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 1, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.autoops.CreateProgressiveRolloutRequest} returns this
- */
-proto.bucketeer.autoops.CreateProgressiveRolloutRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
   };
 
 /**
@@ -4837,7 +4576,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         id: jspb.Message.getFieldWithDefault(msg, 2, ''),
         environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
       };
@@ -4879,10 +4617,6 @@ proto.bucketeer.autoops.GetProgressiveRolloutRequest.deserializeBinaryFromReader
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 2:
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
@@ -4923,10 +4657,6 @@ proto.bucketeer.autoops.GetProgressiveRolloutRequest.prototype.serializeBinary =
 proto.bucketeer.autoops.GetProgressiveRolloutRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(1, f);
-    }
     f = message.getId();
     if (f.length > 0) {
       writer.writeString(2, f);
@@ -4935,26 +4665,6 @@ proto.bucketeer.autoops.GetProgressiveRolloutRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(3, f);
     }
-  };
-
-/**
- * optional string environment_namespace = 1;
- * @return {string}
- */
-proto.bucketeer.autoops.GetProgressiveRolloutRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 1, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.autoops.GetProgressiveRolloutRequest} returns this
- */
-proto.bucketeer.autoops.GetProgressiveRolloutRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
   };
 
 /**
@@ -5209,7 +4919,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         id: jspb.Message.getFieldWithDefault(msg, 2, ''),
         command:
           (f = msg.getCommand()) &&
@@ -5257,10 +4966,6 @@ proto.bucketeer.autoops.StopProgressiveRolloutRequest.deserializeBinaryFromReade
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 2:
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
@@ -5311,10 +5016,6 @@ proto.bucketeer.autoops.StopProgressiveRolloutRequest.prototype.serializeBinary 
 proto.bucketeer.autoops.StopProgressiveRolloutRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(1, f);
-    }
     f = message.getId();
     if (f.length > 0) {
       writer.writeString(2, f);
@@ -5332,26 +5033,6 @@ proto.bucketeer.autoops.StopProgressiveRolloutRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(4, f);
     }
-  };
-
-/**
- * optional string environment_namespace = 1;
- * @return {string}
- */
-proto.bucketeer.autoops.StopProgressiveRolloutRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 1, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.autoops.StopProgressiveRolloutRequest} returns this
- */
-proto.bucketeer.autoops.StopProgressiveRolloutRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
   };
 
 /**
@@ -5580,7 +5261,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         id: jspb.Message.getFieldWithDefault(msg, 2, ''),
         command:
           (f = msg.getCommand()) &&
@@ -5628,10 +5308,6 @@ proto.bucketeer.autoops.DeleteProgressiveRolloutRequest.deserializeBinaryFromRea
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 2:
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
@@ -5682,10 +5358,6 @@ proto.bucketeer.autoops.DeleteProgressiveRolloutRequest.prototype.serializeBinar
 proto.bucketeer.autoops.DeleteProgressiveRolloutRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(1, f);
-    }
     f = message.getId();
     if (f.length > 0) {
       writer.writeString(2, f);
@@ -5703,26 +5375,6 @@ proto.bucketeer.autoops.DeleteProgressiveRolloutRequest.serializeBinaryToWriter 
     if (f.length > 0) {
       writer.writeString(4, f);
     }
-  };
-
-/**
- * optional string environment_namespace = 1;
- * @return {string}
- */
-proto.bucketeer.autoops.DeleteProgressiveRolloutRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 1, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.autoops.DeleteProgressiveRolloutRequest} returns this
- */
-proto.bucketeer.autoops.DeleteProgressiveRolloutRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
   };
 
 /**
@@ -5958,7 +5610,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         pageSize: jspb.Message.getFieldWithDefault(msg, 2, 0),
         cursor: jspb.Message.getFieldWithDefault(msg, 3, ''),
         featureIdsList:
@@ -6007,10 +5658,6 @@ proto.bucketeer.autoops.ListProgressiveRolloutsRequest.deserializeBinaryFromRead
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 2:
           var value = /** @type {number} */ (reader.readInt64());
           msg.setPageSize(value);
@@ -6087,10 +5734,6 @@ proto.bucketeer.autoops.ListProgressiveRolloutsRequest.prototype.serializeBinary
 proto.bucketeer.autoops.ListProgressiveRolloutsRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(1, f);
-    }
     f = message.getPageSize();
     if (f !== 0) {
       writer.writeInt64(2, f);
@@ -6145,26 +5788,6 @@ proto.bucketeer.autoops.ListProgressiveRolloutsRequest.OrderDirection = {
   ASC: 0,
   DESC: 1
 };
-
-/**
- * optional string environment_namespace = 1;
- * @return {string}
- */
-proto.bucketeer.autoops.ListProgressiveRolloutsRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 1, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.autoops.ListProgressiveRolloutsRequest} returns this
- */
-proto.bucketeer.autoops.ListProgressiveRolloutsRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
-  };
 
 /**
  * optional int64 page_size = 2;
@@ -6660,7 +6283,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         id: jspb.Message.getFieldWithDefault(msg, 2, ''),
         changeProgressiveRolloutTriggeredAtCommand:
           (f = msg.getChangeProgressiveRolloutTriggeredAtCommand()) &&
@@ -6708,10 +6330,6 @@ proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest.deserializeBinaryFromRe
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 2:
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
@@ -6763,10 +6381,6 @@ proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest.prototype.serializeBina
 proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(1, f);
-    }
     f = message.getId();
     if (f.length > 0) {
       writer.writeString(2, f);
@@ -6785,26 +6399,6 @@ proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest.serializeBinaryToWriter
     if (f.length > 0) {
       writer.writeString(4, f);
     }
-  };
-
-/**
- * optional string environment_namespace = 1;
- * @return {string}
- */
-proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 1, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest} returns this
- */
-proto.bucketeer.autoops.ExecuteProgressiveRolloutRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
   };
 
 /**

@@ -8,9 +8,6 @@ export class UserEvent extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getTag(): string;
   setTag(value: string): void;
 
@@ -51,7 +48,6 @@ export class UserEvent extends jspb.Message {
 export namespace UserEvent {
   export type AsObject = {
     id: string;
-    environmentNamespace: string;
     tag: string;
     userId: string;
     lastSeen: number;

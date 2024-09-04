@@ -9,9 +9,6 @@ export class NotificationEvent extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getSourceType(): proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap];
   setSourceType(
     value: proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap]
@@ -56,7 +53,6 @@ export class NotificationEvent extends jspb.Message {
 export namespace NotificationEvent {
   export type AsObject = {
     id: string;
-    environmentNamespace: string;
     sourceType: proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap];
     notification?: proto_notification_sender_notification_pb.Notification.AsObject;
     isAdminEvent: boolean;

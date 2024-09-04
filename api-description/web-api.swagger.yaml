@@ -2851,8 +2851,6 @@ definitions:
         type: string
       command:
         $ref: '#/definitions/accountChangeAPIKeyNameCommand'
-      environmentNamespace:
-        type: string
       environmentId:
         type: string
   accountChangeAPIKeyNameResponse:
@@ -2989,8 +2987,6 @@ definitions:
     properties:
       command:
         $ref: '#/definitions/accountCreateAPIKeyCommand'
-      environmentNamespace:
-        type: string
       environmentId:
         type: string
   accountCreateAPIKeyResponse:
@@ -3117,8 +3113,6 @@ definitions:
         type: string
       command:
         $ref: '#/definitions/accountDisableAPIKeyCommand'
-      environmentNamespace:
-        type: string
       environmentId:
         type: string
   accountDisableAPIKeyResponse:
@@ -3148,8 +3142,6 @@ definitions:
         type: string
       command:
         $ref: '#/definitions/accountEnableAPIKeyCommand'
-      environmentNamespace:
-        type: string
       environmentId:
         type: string
   accountEnableAPIKeyResponse:
@@ -3173,8 +3165,6 @@ definitions:
   accountEnvironmentAPIKey:
     type: object
     properties:
-      environmentNamespace:
-        type: string
       apiKey:
         $ref: '#/definitions/accountAPIKey'
       environmentDisabled:
@@ -3205,8 +3195,6 @@ definitions:
     type: object
     properties:
       id:
-        type: string
-      environmentNamespace:
         type: string
       environmentId:
         type: string
@@ -3277,8 +3265,6 @@ definitions:
         type: string
         format: int64
       cursor:
-        type: string
-      environmentNamespace:
         type: string
       orderBy:
         $ref: '#/definitions/accountListAPIKeysRequestOrderBy'

@@ -1454,9 +1454,6 @@ export namespace IncrementFeatureVersionCommand {
 }
 
 export class CloneFeatureCommand extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
@@ -1483,7 +1480,6 @@ export class CloneFeatureCommand extends jspb.Message {
 
 export namespace CloneFeatureCommand {
   export type AsObject = {
-    environmentNamespace: string;
     environmentId: string;
   };
 }

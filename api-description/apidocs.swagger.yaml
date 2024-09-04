@@ -1097,11 +1097,9 @@ definitions:
         type: string
       event:
         $ref: '#/definitions/protobufAny'
-      environmentNamespace:
-        type: string
-        description: SDK doens't need to set this field. It's set by gateway service.
       environmentId:
         type: string
+        description: service.
   clientSourceId:
     type: string
     enum:

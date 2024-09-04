@@ -25,9 +25,6 @@ export class GoalEvent extends jspb.Message {
   getSourceId(): string;
   setSourceId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getTimestamp(): number;
   setTimestamp(value: number): void;
 
@@ -73,7 +70,6 @@ export namespace GoalEvent {
     userId: string;
     tag: string;
     sourceId: string;
-    environmentNamespace: string;
     timestamp: number;
     featureId: string;
     featureVersion: number;

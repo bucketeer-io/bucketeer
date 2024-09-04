@@ -95,7 +95,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       var f,
         obj = {
           id: jspb.Message.getFieldWithDefault(msg, 1, ''),
-          environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ''),
           segmentId: jspb.Message.getFieldWithDefault(msg, 3, ''),
           data: msg.getData_asB64(),
           state: jspb.Message.getFieldWithDefault(msg, 5, 0),
@@ -145,10 +144,6 @@ proto.bucketeer.event.service.BulkSegmentUsersReceivedEvent.deserializeBinaryFro
         case 1:
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
-          break;
-        case 2:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
           break;
         case 3:
           var value = /** @type {string} */ (reader.readString());
@@ -213,10 +208,6 @@ proto.bucketeer.event.service.BulkSegmentUsersReceivedEvent.serializeBinaryToWri
     if (f.length > 0) {
       writer.writeString(1, f);
     }
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(2, f);
-    }
     f = message.getSegmentId();
     if (f.length > 0) {
       writer.writeString(3, f);
@@ -261,26 +252,6 @@ proto.bucketeer.event.service.BulkSegmentUsersReceivedEvent.prototype.getId =
 proto.bucketeer.event.service.BulkSegmentUsersReceivedEvent.prototype.setId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 1, value);
-  };
-
-/**
- * optional string environment_namespace = 2;
- * @return {string}
- */
-proto.bucketeer.event.service.BulkSegmentUsersReceivedEvent.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 2, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.event.service.BulkSegmentUsersReceivedEvent} returns this
- */
-proto.bucketeer.event.service.BulkSegmentUsersReceivedEvent.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 2, value);
   };
 
 /**

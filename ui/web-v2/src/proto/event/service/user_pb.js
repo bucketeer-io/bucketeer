@@ -87,7 +87,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 4, ''),
         tag: jspb.Message.getFieldWithDefault(msg, 5, ''),
         userId: jspb.Message.getFieldWithDefault(msg, 6, ''),
         lastSeen: jspb.Message.getFieldWithDefault(msg, 7, 0),
@@ -139,10 +138,6 @@ proto.bucketeer.event.service.UserEvent.deserializeBinaryFromReader = function (
       case 1:
         var value = /** @type {string} */ (reader.readString());
         msg.setId(value);
-        break;
-      case 4:
-        var value = /** @type {string} */ (reader.readString());
-        msg.setEnvironmentNamespace(value);
         break;
       case 5:
         var value = /** @type {string} */ (reader.readString());
@@ -218,10 +213,6 @@ proto.bucketeer.event.service.UserEvent.serializeBinaryToWriter = function (
   if (f.length > 0) {
     writer.writeString(1, f);
   }
-  f = message.getEnvironmentNamespace();
-  if (f.length > 0) {
-    writer.writeString(4, f);
-  }
   f = message.getTag();
   if (f.length > 0) {
     writer.writeString(5, f);
@@ -268,26 +259,6 @@ proto.bucketeer.event.service.UserEvent.prototype.getId = function () {
 proto.bucketeer.event.service.UserEvent.prototype.setId = function (value) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
-
-/**
- * optional string environment_namespace = 4;
- * @return {string}
- */
-proto.bucketeer.event.service.UserEvent.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 4, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.event.service.UserEvent} returns this
- */
-proto.bucketeer.event.service.UserEvent.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 4, value);
-  };
 
 /**
  * optional string tag = 5;
