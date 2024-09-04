@@ -650,11 +650,11 @@ func (s *FeatureService) injectFeaturesIntoSegments(
 	ctx context.Context,
 	segments []*featureproto.Segment,
 	featureIDsMap map[string][]string,
-	environmentNameSpace string,
+	environmentId string,
 ) error {
 	allFeatures, err := s.listAllFeatures(
 		ctx,
-		environmentNameSpace,
+		environmentId,
 	)
 	if err != nil {
 		return err
@@ -679,7 +679,7 @@ func (s *FeatureService) injectFeaturesIntoSegments(
 
 func (s *FeatureService) listAllFeatures(
 	ctx context.Context,
-	environmentNameSpace string,
+	environmentId string,
 ) (map[string]*featureproto.Feature, error) {
 	fs, _, _, err := s.listFeatures(
 		ctx,
@@ -693,7 +693,7 @@ func (s *FeatureService) listAllFeatures(
 		"",
 		featureproto.ListFeaturesRequest_DEFAULT,
 		featureproto.ListFeaturesRequest_ASC,
-		environmentNameSpace,
+		environmentId,
 	)
 	if err != nil {
 		return nil, err
