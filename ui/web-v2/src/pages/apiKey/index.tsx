@@ -134,7 +134,7 @@ export const APIKeyIndexPage: FC = memo(() => {
         options && options.enabled ? options.enabled === 'false' : null;
       dispatch(
         listAPIKeys({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           pageSize: APIKEY_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
@@ -179,12 +179,12 @@ export const APIKeyIndexPage: FC = memo(() => {
         (() => {
           if (data.enabled) {
             return enableAPIKey({
-              environmentNamespace: currentEnvironment.id,
+              environmentId: currentEnvironment.id,
               id: data.apiKeyId
             });
           }
           return disableAPIKey({
-            environmentNamespace: currentEnvironment.id,
+            environmentId: currentEnvironment.id,
             id: data.apiKeyId
           });
         })()
@@ -192,7 +192,7 @@ export const APIKeyIndexPage: FC = memo(() => {
         setIsConfirmDialogOpen(false);
         dispatch(
           getAPIKey({
-            environmentNamespace: currentEnvironment.id,
+            environmentId: currentEnvironment.id,
             id: data.apiKeyId
           })
         );
@@ -274,7 +274,7 @@ export const APIKeyIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         createAPIKey({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           name: data.name,
           role: data.role
         })
@@ -294,14 +294,14 @@ export const APIKeyIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         updateAPIKey({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           id: apiKeyId,
           name: data.name
         })
       ).then(() => {
         dispatch(
           getAPIKey({
-            environmentNamespace: currentEnvironment.id,
+            environmentId: currentEnvironment.id,
             id: apiKeyId
           })
         );
@@ -326,7 +326,7 @@ export const APIKeyIndexPage: FC = memo(() => {
     if (isUpdate) {
       dispatch(
         getAPIKey({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           id: apiKeyId
         })
       ).then((e) => {

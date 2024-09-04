@@ -68,13 +68,13 @@ export const FeatureExperimentsPage: FC<FeatureExperimentsPageProps> = memo(
     const handleStop = useCallback(async () => {
       dispatch(
         stopExperiment({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           experimentId: experimentId
         })
       ).then(() => {
         dispatch(
           getExperiment({
-            environmentNamespace: currentEnvironment.id,
+            environmentId: currentEnvironment.id,
             id: experimentId
           })
         );
@@ -86,7 +86,7 @@ export const FeatureExperimentsPage: FC<FeatureExperimentsPageProps> = memo(
       dispatch(
         listExperiments({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           searchKeyword: '',
           pageSize: 1000,
           cursor: '',

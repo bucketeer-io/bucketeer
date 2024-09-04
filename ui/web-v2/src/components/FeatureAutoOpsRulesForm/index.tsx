@@ -321,7 +321,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
         if (ids.length > 0) {
           dispatch(
             listOpsCounts({
-              environmentNamespace: currentEnvironment.id,
+              environmentId: currentEnvironment.id,
               ids
             })
           );
@@ -392,7 +392,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       ) {
         dispatch(
           deleteAutoOpsRule({
-            environmentNamespace: currentEnvironment.id,
+            environmentId: currentEnvironment.id,
             id: selectedOperation.id
           })
         ).then(() => {
@@ -401,7 +401,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       } else if (selectedOperation.type === OperationType.PROGRESSIVE_ROLLOUT) {
         dispatch(
           deleteProgressiveRollout({
-            environmentNamespace: currentEnvironment.id,
+            environmentId: currentEnvironment.id,
             id: selectedOperation.id
           })
         ).then(() => {
@@ -424,7 +424,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       ) {
         dispatch(
           stopAutoOpsRule({
-            environmentNamespace: currentEnvironment.id,
+            environmentId: currentEnvironment.id,
             id: selectedOperation.id
           })
         ).then(() => {
@@ -433,7 +433,7 @@ export const FeatureAutoOpsRulesForm: FC<FeatureAutoOpsRulesFormProps> = memo(
       } else if (selectedOperation.type === OperationType.PROGRESSIVE_ROLLOUT) {
         dispatch(
           stopProgressiveRollout({
-            environmentNamespace: currentEnvironment.id,
+            environmentId: currentEnvironment.id,
             id: selectedOperation.id
           })
         ).then(() => {

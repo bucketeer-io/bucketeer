@@ -97,7 +97,7 @@ export const EventRateAddUpdateForm: FC<EventRateAddUpdateFormProps> = memo(
     useEffect(() => {
       dispatch(
         listGoals({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           pageSize: 99999,
           cursor: '',
           searchKeyword: '',
@@ -139,7 +139,7 @@ export const EventRateAddUpdateForm: FC<EventRateAddUpdateFormProps> = memo(
           changeOpsEventRateClauseCommands.push(command);
 
           const param: UpdateAutoOpsRuleParams = {
-            environmentNamespace: currentEnvironment.id,
+            environmentId: currentEnvironment.id,
             id: autoOpsRule.id,
             changeOpsEventRateClauseCommands
           };
@@ -155,7 +155,7 @@ export const EventRateAddUpdateForm: FC<EventRateAddUpdateFormProps> = memo(
 
           dispatch(
             createAutoOpsRule({
-              environmentNamespace: currentEnvironment.id,
+              environmentId: currentEnvironment.id,
               command: command
             })
           ).then(() => onSubmit());
@@ -535,7 +535,7 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
     async (data) => {
       dispatch(
         createGoal({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           id: data.id,
           name: data.name,
           description: data.description
@@ -545,7 +545,7 @@ const AddGoalModal: FC<AddGoalModalProps> = ({ open, setOpen }) => {
         resetAdd();
         dispatch(
           listGoals({
-            environmentNamespace: currentEnvironment.id,
+            environmentId: currentEnvironment.id,
             pageSize: 99999,
             cursor: '',
             searchKeyword: '',

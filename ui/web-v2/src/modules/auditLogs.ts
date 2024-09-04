@@ -72,7 +72,7 @@ export const listAdminAuditLogs = createAsyncThunk<
 export interface ListAuditLogsParams {
   pageSize: number;
   cursor: string;
-  environmentNamespace: string;
+  environmentId: string;
   orderBy?: OrderBy;
   orderDirection?: OrderDirection;
   searchKeyword?: string;
@@ -89,7 +89,7 @@ export const listAuditLogs = createAsyncThunk<
   const request = new ListAuditLogsRequest();
   request.setPageSize(params.pageSize);
   request.setCursor(params.cursor);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setOrderBy(params.orderBy);
   request.setOrderDirection(params.orderDirection);
   request.setSearchKeyword(params.searchKeyword);
@@ -105,7 +105,7 @@ export interface ListFeatureHistoryParams {
   featureId: string;
   pageSize: number;
   cursor: string;
-  environmentNamespace: string;
+  environmentId: string;
   orderBy?: OrderBy;
   orderDirection?: OrderDirection;
   searchKeyword?: string;
@@ -122,7 +122,7 @@ export const listFeatureHistory = createAsyncThunk<
   request.setFeatureId(params.featureId);
   request.setPageSize(params.pageSize);
   request.setCursor(params.cursor);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setOrderBy(params.orderBy);
   request.setOrderDirection(params.orderDirection);
   request.setSearchKeyword(params.searchKeyword);

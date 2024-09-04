@@ -128,7 +128,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
       dispatch(
         listProgressiveRollout({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.id
+          environmentId: currentEnvironment.id
         })
       );
     }
@@ -137,7 +137,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
   useEffect(() => {
     if (isArchive && open) {
       listFeatures({
-        environmentNamespace: currentEnvironment.id,
+        environmentId: currentEnvironment.id,
         pageSize: 0,
         cursor: '',
         tags: [],
@@ -216,7 +216,7 @@ export const FeatureConfirmDialog: FC<FeatureConfirmDialogProps> = ({
     command.setDatetimeClausesList([clause]);
     dispatch(
       createAutoOpsRule({
-        environmentNamespace: currentEnvironment.id,
+        environmentId: currentEnvironment.id,
         command: command
       })
     ).then(() => {
