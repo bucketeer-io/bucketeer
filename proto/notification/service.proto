@@ -104,7 +104,7 @@ message UpdateAdminSubscriptionRequest {
 message UpdateAdminSubscriptionResponse {}
 
 message GetSubscriptionRequest {
-  string environment_namespace = 1;
+  reserved 1;
   string id = 2;
   string environment_id = 3;
 }
@@ -124,7 +124,7 @@ message ListSubscriptionsRequest {
     ASC = 0;
     DESC = 1;
   }
-  string environment_namespace = 1;
+  reserved 1;
   int64 page_size = 2;
   string cursor = 3;
   repeated Subscription.SourceType source_types = 4;
@@ -142,7 +142,7 @@ message ListSubscriptionsResponse {
 }
 
 message ListEnabledSubscriptionsRequest {
-  string environment_namespace = 1;
+  reserved 1;
   int64 page_size = 2;
   string cursor = 3;
   repeated Subscription.SourceType source_types = 4;
@@ -155,7 +155,7 @@ message ListEnabledSubscriptionsResponse {
 }
 
 message CreateSubscriptionRequest {
-  string environment_namespace = 1;
+  reserved 1;
   CreateSubscriptionCommand command = 2;
   string environment_id = 3;
 }
@@ -163,7 +163,7 @@ message CreateSubscriptionRequest {
 message CreateSubscriptionResponse {}
 
 message DeleteSubscriptionRequest {
-  string environment_namespace = 1;
+  reserved 1;
   string id = 2;
   DeleteSubscriptionCommand command = 3;
   string environment_id = 4;
@@ -172,7 +172,7 @@ message DeleteSubscriptionRequest {
 message DeleteSubscriptionResponse {}
 
 message EnableSubscriptionRequest {
-  string environment_namespace = 1;
+  reserved 1;
   string id = 2;
   EnableSubscriptionCommand command = 3;
   string environment_id = 4;
@@ -181,7 +181,7 @@ message EnableSubscriptionRequest {
 message EnableSubscriptionResponse {}
 
 message DisableSubscriptionRequest {
-  string environment_namespace = 1;
+  reserved 1;
   string id = 2;
   DisableSubscriptionCommand command = 3;
   string environment_id = 4;
@@ -190,7 +190,7 @@ message DisableSubscriptionRequest {
 message DisableSubscriptionResponse {}
 
 message UpdateSubscriptionRequest {
-  string environment_namespace = 1;
+  reserved 1;
   string id = 2;
   AddSourceTypesCommand add_source_types_command = 3;
   DeleteSourceTypesCommand delete_source_types_command = 4;

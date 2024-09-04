@@ -27,8 +27,8 @@ import "proto/user/user.proto";
 message Event {
   string id = 1;
   google.protobuf.Any event = 2;
-  string environment_namespace =
-      3;  // SDK doens't need to set this field. It's set by gateway service.
+  reserved 3;  // SDK doens't need to set this field. It's set by gateway
+               // service.
   string environment_id = 4;
 }
 

@@ -34,7 +34,7 @@ import "proto/feature/target.proto";
 
 message GetFeatureRequest {
   string id = 1;
-  string environment_namespace = 2;
+  reserved 2;
   string environment_id = 3;
 }
 
@@ -43,7 +43,7 @@ message GetFeatureResponse {
 }
 
 message GetFeaturesRequest {
-  string environment_namespace = 1;
+  reserved 1;
   repeated string ids = 2;
   string environment_id = 3;
 }
@@ -70,7 +70,7 @@ message ListFeaturesRequest {
   repeated string tags = 3;
   OrderBy order_by = 4;
   OrderDirection order_direction = 5;
-  string environment_namespace = 6;
+  reserved 6;
   string maintainer = 7;
   google.protobuf.BoolValue enabled = 8;
   google.protobuf.BoolValue has_experiment = 9;
@@ -90,7 +90,7 @@ message ListEnabledFeaturesRequest {
   int64 page_size = 1;
   string cursor = 2;
   repeated string tags = 3;
-  string environment_namespace = 4;
+  reserved 4;
   string environment_id = 5;
 }
 
@@ -101,7 +101,7 @@ message ListEnabledFeaturesResponse {
 
 message CreateFeatureRequest {
   CreateFeatureCommand command = 1;
-  string environment_namespace = 2;
+  reserved 2;
   string environment_id = 3;
 }
 
@@ -133,7 +133,7 @@ message UpdateFeatureResponse {
 message EnableFeatureRequest {
   string id = 1;
   EnableFeatureCommand command = 2;
-  string environment_namespace = 3;
+  reserved 3;
   string comment = 4;
   string environment_id = 5;
 }
@@ -143,7 +143,7 @@ message EnableFeatureResponse {}
 message DisableFeatureRequest {
   string id = 1;
   DisableFeatureCommand command = 2;
-  string environment_namespace = 3;
+  reserved 3;
   string comment = 4;
   string environment_id = 5;
 }
@@ -153,7 +153,7 @@ message DisableFeatureResponse {}
 message ArchiveFeatureRequest {
   string id = 1;
   ArchiveFeatureCommand command = 2;
-  string environment_namespace = 3;
+  reserved 3;
   string comment = 4;
   string environment_id = 5;
 }
@@ -163,7 +163,7 @@ message ArchiveFeatureResponse {}
 message UnarchiveFeatureRequest {
   string id = 1;
   UnarchiveFeatureCommand command = 2;
-  string environment_namespace = 3;
+  reserved 3;
   string comment = 4;
   string environment_id = 5;
 }
@@ -173,7 +173,7 @@ message UnarchiveFeatureResponse {}
 message DeleteFeatureRequest {
   string id = 1;
   DeleteFeatureCommand command = 2;
-  string environment_namespace = 3;
+  reserved 3;
   string comment = 4;
   string environment_id = 5;
 }
@@ -186,7 +186,7 @@ message UpdateFeatureDetailsRequest {
   ChangeDescriptionCommand change_description_command = 3;
   repeated AddTagCommand add_tag_commands = 4;
   repeated RemoveTagCommand remove_tag_commands = 5;
-  string environment_namespace = 6;
+  reserved 6;
   string comment = 7;
   string environment_id = 8;
 }
@@ -196,7 +196,7 @@ message UpdateFeatureDetailsResponse {}
 message UpdateFeatureVariationsRequest {
   string id = 1;
   repeated Command commands = 2;
-  string environment_namespace = 3;
+  reserved 3;
   string comment = 4;
   string environment_id = 5;
 }
@@ -211,7 +211,7 @@ message UpdateFeatureTargetingRequest {
   }
   string id = 1;
   repeated Command commands = 2;
-  string environment_namespace = 3;
+  reserved 3;
   string comment = 4;
   From from = 5;
   string environment_id = 6;
@@ -222,7 +222,7 @@ message UpdateFeatureTargetingResponse {}
 message CloneFeatureRequest {
   string id = 1;
   CloneFeatureCommand command = 2;
-  string environment_namespace = 3;
+  reserved 3;
   string environment_id = 4;
 }
 
@@ -230,7 +230,7 @@ message CloneFeatureResponse {}
 
 message CreateSegmentRequest {
   CreateSegmentCommand command = 1;
-  string environment_namespace = 2;
+  reserved 2;
   string environment_id = 4;
 }
 
@@ -240,7 +240,7 @@ message CreateSegmentResponse {
 
 message GetSegmentRequest {
   string id = 1;
-  string environment_namespace = 2;
+  reserved 2;
   string environment_id = 3;
 }
 
@@ -261,7 +261,7 @@ message ListSegmentsRequest {
   }
   int64 page_size = 1;
   string cursor = 2;
-  string environment_namespace = 3;
+  reserved 3;
   OrderBy order_by = 4;
   OrderDirection order_direction = 5;
   string search_keyword = 6;
@@ -279,7 +279,7 @@ message ListSegmentsResponse {
 message DeleteSegmentRequest {
   string id = 1;
   DeleteSegmentCommand command = 2;
-  string environment_namespace = 3;
+  reserved 3;
   string environment_id = 4;
 }
 
@@ -288,7 +288,7 @@ message DeleteSegmentResponse {}
 message UpdateSegmentRequest {
   string id = 1;
   repeated Command commands = 2;
-  string environment_namespace = 3;
+  reserved 3;
   string environment_id = 4;
 }
 
@@ -297,7 +297,7 @@ message UpdateSegmentResponse {}
 message AddSegmentUserRequest {
   string id = 1;
   AddSegmentUserCommand command = 2;
-  string environment_namespace = 3;
+  reserved 3;
   string environment_id = 4;
 }
 
@@ -306,7 +306,7 @@ message AddSegmentUserResponse {}
 message DeleteSegmentUserRequest {
   string id = 1;
   DeleteSegmentUserCommand command = 2;
-  string environment_namespace = 3;
+  reserved 3;
   string environment_id = 4;
 }
 
@@ -316,7 +316,7 @@ message GetSegmentUserRequest {
   string segment_id = 1;
   string user_id = 2;
   SegmentUser.State state = 3;
-  string environment_namespace = 4;
+  reserved 4;
   string environment_id = 5;
 }
 
@@ -330,7 +330,7 @@ message ListSegmentUsersRequest {
   string segment_id = 3;
   google.protobuf.Int32Value state = 4;
   string user_id = 5;
-  string environment_namespace = 6;
+  reserved 6;
   string environment_id = 7;
 }
 
@@ -340,7 +340,7 @@ message ListSegmentUsersResponse {
 }
 
 message BulkUploadSegmentUsersRequest {
-  string environment_namespace = 1;
+  reserved 1;
   string segment_id = 2;
   BulkUploadSegmentUsersCommand command = 3;
   string environment_id = 4;
@@ -349,7 +349,7 @@ message BulkUploadSegmentUsersRequest {
 message BulkUploadSegmentUsersResponse {}
 
 message BulkDownloadSegmentUsersRequest {
-  string environment_namespace = 1;
+  reserved 1;
   string segment_id = 2;
   SegmentUser.State state = 3;
   string environment_id = 4;
@@ -361,7 +361,7 @@ message BulkDownloadSegmentUsersResponse {
 
 message EvaluateFeaturesRequest {
   bucketeer.user.User user = 1;
-  string environment_namespace = 2;
+  reserved 2;
   string tag = 3;
   string feature_id = 4;  // it will evaluate a single feature if set
   string environment_id = 5;
@@ -382,7 +382,7 @@ message ListTagsRequest {
     ASC = 0;
     DESC = 1;
   }
-  string environment_namespace = 1;
+  reserved 1;
   int64 page_size = 2;
   string cursor = 3;
   OrderBy order_by = 4;
@@ -398,7 +398,7 @@ message ListTagsResponse {
 }
 
 message CreateFlagTriggerRequest {
-  string environment_namespace = 1;
+  reserved 1;
   CreateFlagTriggerCommand create_flag_trigger_command = 2;
   string environment_id = 3;
 }
@@ -410,7 +410,7 @@ message CreateFlagTriggerResponse {
 
 message DeleteFlagTriggerRequest {
   string id = 1;
-  string environment_namespace = 2;
+  reserved 2;
   DeleteFlagTriggerCommand delete_flag_trigger_command = 3;
   string environment_id = 4;
 }
@@ -419,7 +419,7 @@ message DeleteFlagTriggerResponse {}
 
 message UpdateFlagTriggerRequest {
   string id = 1;
-  string environment_namespace = 2;
+  reserved 2;
   ChangeFlagTriggerDescriptionCommand change_flag_trigger_description_command =
       3;
   string environment_id = 4;
@@ -429,7 +429,7 @@ message UpdateFlagTriggerResponse {}
 
 message EnableFlagTriggerRequest {
   string id = 1;
-  string environment_namespace = 2;
+  reserved 2;
   EnableFlagTriggerCommand enable_flag_trigger_command = 3;
   string environment_id = 4;
 }
@@ -438,7 +438,7 @@ message EnableFlagTriggerResponse {}
 
 message DisableFlagTriggerRequest {
   string id = 1;
-  string environment_namespace = 2;
+  reserved 2;
   DisableFlagTriggerCommand disable_flag_trigger_command = 3;
   string environment_id = 4;
 }
@@ -447,7 +447,7 @@ message DisableFlagTriggerResponse {}
 
 message ResetFlagTriggerRequest {
   string id = 1;
-  string environment_namespace = 2;
+  reserved 2;
   ResetFlagTriggerCommand reset_flag_trigger_command = 3;
   string environment_id = 4;
 }
@@ -459,7 +459,7 @@ message ResetFlagTriggerResponse {
 
 message GetFlagTriggerRequest {
   string id = 1;
-  string environment_namespace = 2;
+  reserved 2;
   string environment_id = 3;
 }
 
@@ -479,7 +479,7 @@ message ListFlagTriggersRequest {
     DESC = 1;
   }
   string feature_id = 1;
-  string environment_namespace = 2;
+  reserved 2;
   string cursor = 3;
   int32 page_size = 4;
   OrderBy order_by = 5;

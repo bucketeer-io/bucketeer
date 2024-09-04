@@ -358,17 +358,6 @@
             "name": "EnvironmentAPIKey",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
-              },
-              {
                 "id": 2,
                 "name": "api_key",
                 "type": "APIKey"
@@ -399,6 +388,9 @@
                 "name": "project_url_code",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           }
         ],
@@ -1111,15 +1103,13 @@
                 "type": "CreateAPIKeyCommand"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -1146,15 +1136,13 @@
                 "type": "ChangeAPIKeyNameCommand"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -1174,15 +1162,13 @@
                 "type": "EnableAPIKeyCommand"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -1202,15 +1188,13 @@
                 "type": "DisableAPIKeyCommand"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -1225,15 +1209,13 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -1257,11 +1239,6 @@
               {
                 "id": 2,
                 "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "environment_namespace",
                 "type": "string"
               },
               {
@@ -1289,6 +1266,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -4848,11 +4828,6 @@
                 "type": "string"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "order_by",
                 "type": "OrderBy"
@@ -4887,6 +4862,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -4995,11 +4973,6 @@
                 "type": "string"
               },
               {
-                "id": 4,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 5,
                 "name": "order_by",
                 "type": "OrderBy"
@@ -5029,6 +5002,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              4
             ]
           },
           {
@@ -6536,11 +6512,6 @@
             "name": "GetAutoOpsRuleRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "id",
                 "type": "string"
@@ -6550,6 +6521,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -6566,11 +6540,6 @@
             "name": "CreateAutoOpsRuleRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "command",
                 "type": "CreateAutoOpsRuleCommand"
@@ -6580,6 +6549,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -6588,11 +6560,6 @@
           {
             "name": "ListAutoOpsRulesRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "page_size",
@@ -6614,6 +6581,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -6636,11 +6606,6 @@
             "name": "StopAutoOpsRuleRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "id",
                 "type": "string"
@@ -6655,6 +6620,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -6663,11 +6631,6 @@
           {
             "name": "DeleteAutoOpsRuleRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "id",
@@ -6683,6 +6646,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -6691,11 +6657,6 @@
           {
             "name": "UpdateAutoOpsRuleRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "id",
@@ -6738,6 +6699,7 @@
               }
             ],
             "reserved_ids": [
+              1,
               3
             ]
           },
@@ -6747,11 +6709,6 @@
           {
             "name": "ExecuteAutoOpsRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "id",
@@ -6769,6 +6726,7 @@
               }
             ],
             "reserved_ids": [
+              1,
               3
             ]
           },
@@ -6785,11 +6743,6 @@
           {
             "name": "ListOpsCountsRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "page_size",
@@ -6817,6 +6770,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -6839,11 +6795,6 @@
             "name": "CreateProgressiveRolloutRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "command",
                 "type": "CreateProgressiveRolloutCommand"
@@ -6853,6 +6804,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -6861,11 +6815,6 @@
           {
             "name": "GetProgressiveRolloutRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "id",
@@ -6876,6 +6825,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -6892,11 +6844,6 @@
             "name": "StopProgressiveRolloutRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "id",
                 "type": "string"
@@ -6911,6 +6858,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -6919,11 +6869,6 @@
           {
             "name": "DeleteProgressiveRolloutRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "id",
@@ -6939,6 +6884,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -6947,11 +6895,6 @@
           {
             "name": "ListProgressiveRolloutsRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "page_size",
@@ -6993,6 +6936,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -7020,11 +6966,6 @@
             "name": "ExecuteProgressiveRolloutRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "id",
                 "type": "string"
@@ -7039,6 +6980,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -12602,15 +12546,13 @@
                 "type": "google.protobuf.Any"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -14119,11 +14061,6 @@
                 "type": "google.protobuf.Any"
               },
               {
-                "id": 8,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 9,
                 "name": "is_admin_event",
                 "type": "bool"
@@ -14148,6 +14085,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              8
             ]
           },
           {
@@ -16819,11 +16759,6 @@
                 "type": "string"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "type",
                 "type": "bucketeer.feature.FlagTrigger.Type"
@@ -16858,6 +16793,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -16874,11 +16812,6 @@
                 "type": "string"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "token",
                 "type": "string"
@@ -16888,6 +16821,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -16904,11 +16840,6 @@
                 "type": "string"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "description",
                 "type": "string"
@@ -16918,6 +16849,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -16934,15 +16868,13 @@
                 "type": "string"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -16959,15 +16891,13 @@
                 "type": "string"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -16984,15 +16914,13 @@
                 "type": "string"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -17006,11 +16934,6 @@
               {
                 "id": 2,
                 "name": "feature_id",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "environment_namespace",
                 "type": "string"
               },
               {
@@ -17028,6 +16951,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           }
         ],
@@ -17155,18 +17081,14 @@
                 "type": "bucketeer.user.User"
               },
               {
-                "id": 5,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 6,
                 "name": "tag",
                 "type": "string"
               }
             ],
             "reserved_ids": [
-              4
+              4,
+              5
             ]
           }
         ],
@@ -17199,11 +17121,6 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "segment_id",
                 "type": "string"
@@ -17228,6 +17145,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           }
         ],
@@ -17260,11 +17180,6 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "environment_namespace",
                 "type": "string"
               },
               {
@@ -17305,7 +17220,8 @@
             ],
             "reserved_ids": [
               2,
-              3
+              3,
+              4
             ]
           }
         ],
@@ -17791,11 +17707,6 @@
             "name": "GetExperimentEvaluationCountRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "start_at",
                 "type": "int64"
@@ -17826,6 +17737,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -17853,11 +17767,6 @@
             "name": "GetEvaluationTimeseriesCountRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "feature_id",
                 "type": "string"
@@ -17872,6 +17781,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -17895,11 +17807,6 @@
             "name": "GetExperimentResultRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "experiment_id",
                 "type": "string"
@@ -17909,6 +17816,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -17935,15 +17845,13 @@
                 "type": "google.protobuf.Int32Value"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -17962,11 +17870,6 @@
           {
             "name": "GetExperimentGoalCountRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "start_at",
@@ -18003,6 +17906,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -18024,11 +17930,6 @@
           {
             "name": "GetOpsEvaluationUserCountRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "ops_rule_id",
@@ -18059,6 +17960,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -18085,11 +17989,6 @@
             "name": "GetOpsGoalUserCountRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "ops_rule_id",
                 "type": "string"
@@ -18119,6 +18018,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -18145,11 +18047,6 @@
             "name": "GetMAUCountRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "year_month",
                 "type": "string"
@@ -18159,6 +18056,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -18600,11 +18500,6 @@
                 "type": "string"
               },
               {
-                "id": 10,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 11,
                 "name": "timestamp",
                 "type": "int64"
@@ -18614,6 +18509,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              10
             ]
           }
         ],
@@ -18671,11 +18569,6 @@
                 "type": "string"
               },
               {
-                "id": 8,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 9,
                 "name": "timestamp",
                 "type": "int64"
@@ -18705,6 +18598,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              8
             ]
           }
         ],
@@ -19192,15 +19088,13 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -19224,11 +19118,6 @@
               {
                 "id": 2,
                 "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "environment_namespace",
                 "type": "string"
               },
               {
@@ -19261,6 +19150,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -19293,15 +19185,13 @@
                 "type": "CreateGoalCommand"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -19321,15 +19211,13 @@
                 "type": "ArchiveGoalCommand"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -19349,15 +19237,13 @@
                 "type": "DeleteGoalCommand"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -19382,15 +19268,13 @@
                 "type": "ChangeDescriptionGoalCommand"
               },
               {
-                "id": 4,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 5,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              4
             ]
           },
           {
@@ -19405,15 +19289,13 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -19460,11 +19342,6 @@
                 "type": "string"
               },
               {
-                "id": 7,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 8,
                 "name": "status",
                 "type": "google.protobuf.Int32Value"
@@ -19505,6 +19382,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              7
             ]
           },
           {
@@ -19537,15 +19417,13 @@
                 "type": "CreateExperimentCommand"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -19564,11 +19442,6 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "environment_namespace",
                 "type": "string"
               },
               {
@@ -19594,7 +19467,8 @@
             ],
             "reserved_ids": [
               2,
-              3
+              3,
+              4
             ]
           },
           {
@@ -19603,11 +19477,6 @@
           {
             "name": "StartExperimentRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "id",
@@ -19623,6 +19492,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -19631,11 +19503,6 @@
           {
             "name": "FinishExperimentRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "id",
@@ -19651,6 +19518,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -19670,15 +19540,13 @@
                 "type": "StopExperimentCommand"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -19698,15 +19566,13 @@
                 "type": "ArchiveExperimentCommand"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -19726,15 +19592,13 @@
                 "type": "DeleteExperimentCommand"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -20502,15 +20366,13 @@
             "name": "CloneFeatureCommand",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -21095,11 +20957,6 @@
                 "type": "string"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "type",
                 "type": "Type"
@@ -21149,6 +21006,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           }
         ],
@@ -21662,15 +21522,13 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -21687,11 +21545,6 @@
             "name": "GetFeaturesRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "ids",
                 "type": "string",
@@ -21702,6 +21555,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -21745,11 +21601,6 @@
                 "type": "OrderDirection"
               },
               {
-                "id": 6,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 7,
                 "name": "maintainer",
                 "type": "string"
@@ -21784,6 +21635,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              6
             ]
           },
           {
@@ -21827,15 +21681,13 @@
                 "is_repeated": true
               },
               {
-                "id": 4,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 5,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              4
             ]
           },
           {
@@ -21863,15 +21715,13 @@
                 "type": "CreateFeatureCommand"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -21988,11 +21838,6 @@
                 "type": "EnableFeatureCommand"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "comment",
                 "type": "string"
@@ -22002,6 +21847,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -22021,11 +21869,6 @@
                 "type": "DisableFeatureCommand"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "comment",
                 "type": "string"
@@ -22035,6 +21878,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -22054,11 +21900,6 @@
                 "type": "ArchiveFeatureCommand"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "comment",
                 "type": "string"
@@ -22068,6 +21909,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -22087,11 +21931,6 @@
                 "type": "UnarchiveFeatureCommand"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "comment",
                 "type": "string"
@@ -22101,6 +21940,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -22120,11 +21962,6 @@
                 "type": "DeleteFeatureCommand"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "comment",
                 "type": "string"
@@ -22134,6 +21971,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -22170,11 +22010,6 @@
                 "is_repeated": true
               },
               {
-                "id": 6,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 7,
                 "name": "comment",
                 "type": "string"
@@ -22184,6 +22019,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              6
             ]
           },
           {
@@ -22204,11 +22042,6 @@
                 "is_repeated": true
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "comment",
                 "type": "string"
@@ -22218,6 +22051,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -22238,11 +22074,6 @@
                 "is_repeated": true
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "comment",
                 "type": "string"
@@ -22257,6 +22088,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -22276,15 +22110,13 @@
                 "type": "CloneFeatureCommand"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -22299,15 +22131,13 @@
                 "type": "CreateSegmentCommand"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -22329,15 +22159,13 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -22361,11 +22189,6 @@
               {
                 "id": 2,
                 "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "environment_namespace",
                 "type": "string"
               },
               {
@@ -22398,6 +22221,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -22435,15 +22261,13 @@
                 "type": "DeleteSegmentCommand"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -22464,15 +22288,13 @@
                 "is_repeated": true
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -22492,15 +22314,13 @@
                 "type": "AddSegmentUserCommand"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -22520,15 +22340,13 @@
                 "type": "DeleteSegmentUserCommand"
               },
               {
-                "id": 3,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 4,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -22553,15 +22371,13 @@
                 "type": "SegmentUser.State"
               },
               {
-                "id": 4,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 5,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              4
             ]
           },
           {
@@ -22603,15 +22419,13 @@
                 "type": "string"
               },
               {
-                "id": 6,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 7,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              6
             ]
           },
           {
@@ -22634,11 +22448,6 @@
             "name": "BulkUploadSegmentUsersRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "segment_id",
                 "type": "string"
@@ -22653,6 +22462,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -22661,11 +22473,6 @@
           {
             "name": "BulkDownloadSegmentUsersRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "segment_id",
@@ -22681,6 +22488,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -22702,11 +22512,6 @@
                 "type": "bucketeer.user.User"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "tag",
                 "type": "string"
@@ -22721,6 +22526,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -22736,11 +22544,6 @@
           {
             "name": "ListTagsRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "page_size",
@@ -22771,6 +22574,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -22798,11 +22604,6 @@
             "name": "CreateFlagTriggerRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "create_flag_trigger_command",
                 "type": "CreateFlagTriggerCommand"
@@ -22812,6 +22613,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -22838,11 +22642,6 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "delete_flag_trigger_command",
                 "type": "DeleteFlagTriggerCommand"
@@ -22852,6 +22651,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -22866,11 +22668,6 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "change_flag_trigger_description_command",
                 "type": "ChangeFlagTriggerDescriptionCommand"
@@ -22880,6 +22677,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -22894,11 +22694,6 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "enable_flag_trigger_command",
                 "type": "EnableFlagTriggerCommand"
@@ -22908,6 +22703,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -22922,11 +22720,6 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "disable_flag_trigger_command",
                 "type": "DisableFlagTriggerCommand"
@@ -22936,6 +22729,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -22950,11 +22746,6 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "reset_flag_trigger_command",
                 "type": "ResetFlagTriggerCommand"
@@ -22964,6 +22755,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -22990,15 +22784,13 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -23022,11 +22814,6 @@
               {
                 "id": 1,
                 "name": "feature_id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "environment_namespace",
                 "type": "string"
               },
               {
@@ -23054,6 +22841,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           },
           {
@@ -25508,11 +25298,6 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "source_type",
                 "type": "bucketeer.notification.Subscription.SourceType"
@@ -25532,6 +25317,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ]
           }
         ],
@@ -25842,11 +25630,6 @@
             "name": "GetSubscriptionRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "id",
                 "type": "string"
@@ -25856,6 +25639,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -25871,11 +25657,6 @@
           {
             "name": "ListSubscriptionsRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "page_size",
@@ -25917,6 +25698,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -25944,11 +25728,6 @@
             "name": "ListEnabledSubscriptionsRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "page_size",
                 "type": "int64"
@@ -25969,6 +25748,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -25991,11 +25773,6 @@
             "name": "CreateSubscriptionRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "command",
                 "type": "CreateSubscriptionCommand"
@@ -26005,6 +25782,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -26013,11 +25793,6 @@
           {
             "name": "DeleteSubscriptionRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "id",
@@ -26033,6 +25808,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -26041,11 +25819,6 @@
           {
             "name": "EnableSubscriptionRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "id",
@@ -26061,6 +25834,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -26069,11 +25845,6 @@
           {
             "name": "DisableSubscriptionRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "id",
@@ -26089,6 +25860,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -26097,11 +25871,6 @@
           {
             "name": "UpdateSubscriptionRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "id",
@@ -26127,6 +25896,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -26678,11 +26450,6 @@
             "name": "CreatePushRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "command",
                 "type": "CreatePushCommand"
@@ -26692,6 +26459,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -26700,11 +26470,6 @@
           {
             "name": "ListPushesRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "page_size",
@@ -26735,6 +26500,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -26762,11 +26530,6 @@
             "name": "DeletePushRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
-              {
                 "id": 2,
                 "name": "id",
                 "type": "string"
@@ -26781,6 +26544,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
@@ -26789,11 +26555,6 @@
           {
             "name": "UpdatePushRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "environment_namespace",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "id",
@@ -26819,6 +26580,9 @@
                 "name": "environment_id",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
             ]
           },
           {
