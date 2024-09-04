@@ -48,9 +48,6 @@ export class Event extends jspb.Message {
   getData(): google_protobuf_any_pb.Any | undefined;
   setData(value?: google_protobuf_any_pb.Any): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getIsAdminEvent(): boolean;
   setIsAdminEvent(value: boolean): void;
 
@@ -95,7 +92,6 @@ export namespace Event {
     type: Event.TypeMap[keyof Event.TypeMap];
     editor?: Editor.AsObject;
     data?: google_protobuf_any_pb.Any.AsObject;
-    environmentNamespace: string;
     isAdminEvent: boolean;
     options?: Options.AsObject;
     entityData: string;
@@ -6181,9 +6177,6 @@ export class FlagTriggerCreatedEvent extends jspb.Message {
   getFeatureId(): string;
   setFeatureId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getType(): proto_feature_flag_trigger_pb.FlagTrigger.TypeMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.TypeMap];
   setType(
     value: proto_feature_flag_trigger_pb.FlagTrigger.TypeMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.TypeMap]
@@ -6234,7 +6227,6 @@ export namespace FlagTriggerCreatedEvent {
   export type AsObject = {
     id: string;
     featureId: string;
-    environmentNamespace: string;
     type: proto_feature_flag_trigger_pb.FlagTrigger.TypeMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.TypeMap];
     action: proto_feature_flag_trigger_pb.FlagTrigger.ActionMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.ActionMap];
     description: string;
@@ -6251,9 +6243,6 @@ export class FlagTriggerResetEvent extends jspb.Message {
 
   getFeatureId(): string;
   setFeatureId(value: string): void;
-
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
 
   getToken(): string;
   setToken(value: string): void;
@@ -6286,7 +6275,6 @@ export namespace FlagTriggerResetEvent {
   export type AsObject = {
     id: string;
     featureId: string;
-    environmentNamespace: string;
     token: string;
     environmentId: string;
   };
@@ -6298,9 +6286,6 @@ export class FlagTriggerDescriptionChangedEvent extends jspb.Message {
 
   getFeatureId(): string;
   setFeatureId(value: string): void;
-
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
 
   getDescription(): string;
   setDescription(value: string): void;
@@ -6337,7 +6322,6 @@ export namespace FlagTriggerDescriptionChangedEvent {
   export type AsObject = {
     id: string;
     featureId: string;
-    environmentNamespace: string;
     description: string;
     environmentId: string;
   };
@@ -6349,9 +6333,6 @@ export class FlagTriggerDisabledEvent extends jspb.Message {
 
   getFeatureId(): string;
   setFeatureId(value: string): void;
-
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
 
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
@@ -6381,7 +6362,6 @@ export namespace FlagTriggerDisabledEvent {
   export type AsObject = {
     id: string;
     featureId: string;
-    environmentNamespace: string;
     environmentId: string;
   };
 }
@@ -6392,9 +6372,6 @@ export class FlagTriggerEnabledEvent extends jspb.Message {
 
   getFeatureId(): string;
   setFeatureId(value: string): void;
-
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
 
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
@@ -6424,7 +6401,6 @@ export namespace FlagTriggerEnabledEvent {
   export type AsObject = {
     id: string;
     featureId: string;
-    environmentNamespace: string;
     environmentId: string;
   };
 }
@@ -6435,9 +6411,6 @@ export class FlagTriggerDeletedEvent extends jspb.Message {
 
   getFeatureId(): string;
   setFeatureId(value: string): void;
-
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
 
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
@@ -6467,7 +6440,6 @@ export namespace FlagTriggerDeletedEvent {
   export type AsObject = {
     id: string;
     featureId: string;
-    environmentNamespace: string;
     environmentId: string;
   };
 }
@@ -6478,9 +6450,6 @@ export class FlagTriggerUsageUpdatedEvent extends jspb.Message {
 
   getFeatureId(): string;
   setFeatureId(value: string): void;
-
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
 
   getLastTriggeredAt(): number;
   setLastTriggeredAt(value: number): void;
@@ -6516,7 +6485,6 @@ export namespace FlagTriggerUsageUpdatedEvent {
   export type AsObject = {
     id: string;
     featureId: string;
-    environmentNamespace: string;
     lastTriggeredAt: number;
     triggerTimes: number;
     environmentId: string;

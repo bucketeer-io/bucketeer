@@ -12,9 +12,6 @@ export class ListAuditLogsRequest extends jspb.Message {
   getCursor(): string;
   setCursor(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getOrderBy(): ListAuditLogsRequest.OrderByMap[keyof ListAuditLogsRequest.OrderByMap];
   setOrderBy(
     value: ListAuditLogsRequest.OrderByMap[keyof ListAuditLogsRequest.OrderByMap]
@@ -67,7 +64,6 @@ export namespace ListAuditLogsRequest {
   export type AsObject = {
     pageSize: number;
     cursor: string;
-    environmentNamespace: string;
     orderBy: ListAuditLogsRequest.OrderByMap[keyof ListAuditLogsRequest.OrderByMap];
     orderDirection: ListAuditLogsRequest.OrderDirectionMap[keyof ListAuditLogsRequest.OrderDirectionMap];
     searchKeyword: string;
@@ -269,9 +265,6 @@ export class ListFeatureHistoryRequest extends jspb.Message {
   getCursor(): string;
   setCursor(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getOrderBy(): ListFeatureHistoryRequest.OrderByMap[keyof ListFeatureHistoryRequest.OrderByMap];
   setOrderBy(
     value: ListFeatureHistoryRequest.OrderByMap[keyof ListFeatureHistoryRequest.OrderByMap]
@@ -320,7 +313,6 @@ export namespace ListFeatureHistoryRequest {
     featureId: string;
     pageSize: number;
     cursor: string;
-    environmentNamespace: string;
     orderBy: ListFeatureHistoryRequest.OrderByMap[keyof ListFeatureHistoryRequest.OrderByMap];
     orderDirection: ListFeatureHistoryRequest.OrderDirectionMap[keyof ListFeatureHistoryRequest.OrderDirectionMap];
     searchKeyword: string;

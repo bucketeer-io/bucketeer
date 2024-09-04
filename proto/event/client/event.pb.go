@@ -166,9 +166,10 @@ type Event struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Id            string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
-	Event         *anypb.Any `protobuf:"bytes,2,opt,name=event,proto3" json:"event"`
-	EnvironmentId string     `protobuf:"bytes,4,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
+	Id    string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id"`
+	Event *anypb.Any `protobuf:"bytes,2,opt,name=event,proto3" json:"event"`
+	// service.
+	EnvironmentId string `protobuf:"bytes,4,opt,name=environment_id,json=environmentId,proto3" json:"environment_id"`
 }
 
 func (x *Event) Reset() {

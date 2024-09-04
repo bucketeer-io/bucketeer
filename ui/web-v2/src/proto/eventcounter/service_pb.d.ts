@@ -8,9 +8,6 @@ import * as proto_eventcounter_timeseries_pb from '../../proto/eventcounter/time
 import * as proto_eventcounter_variation_count_pb from '../../proto/eventcounter/variation_count_pb';
 
 export class GetExperimentEvaluationCountRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getStartAt(): number;
   setStartAt(value: number): void;
 
@@ -58,7 +55,6 @@ export class GetExperimentEvaluationCountRequest extends jspb.Message {
 
 export namespace GetExperimentEvaluationCountRequest {
   export type AsObject = {
-    environmentNamespace: string;
     startAt: number;
     endAt: number;
     featureId: string;
@@ -119,9 +115,6 @@ export namespace GetExperimentEvaluationCountResponse {
 }
 
 export class GetEvaluationTimeseriesCountRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getFeatureId(): string;
   setFeatureId(value: string): void;
 
@@ -160,7 +153,6 @@ export class GetEvaluationTimeseriesCountRequest extends jspb.Message {
 
 export namespace GetEvaluationTimeseriesCountRequest {
   export type AsObject = {
-    environmentNamespace: string;
     featureId: string;
     timeRange: GetEvaluationTimeseriesCountRequest.TimeRangeMap[keyof GetEvaluationTimeseriesCountRequest.TimeRangeMap];
     environmentId: string;
@@ -231,9 +223,6 @@ export namespace GetEvaluationTimeseriesCountResponse {
 }
 
 export class GetExperimentResultRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getExperimentId(): string;
   setExperimentId(value: string): void;
 
@@ -263,7 +252,6 @@ export class GetExperimentResultRequest extends jspb.Message {
 
 export namespace GetExperimentResultRequest {
   export type AsObject = {
-    environmentNamespace: string;
     experimentId: string;
     environmentId: string;
   };
@@ -315,9 +303,6 @@ export class ListExperimentResultsRequest extends jspb.Message {
   getFeatureVersion(): google_protobuf_wrappers_pb.Int32Value | undefined;
   setFeatureVersion(value?: google_protobuf_wrappers_pb.Int32Value): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
@@ -346,7 +331,6 @@ export namespace ListExperimentResultsRequest {
   export type AsObject = {
     featureId: string;
     featureVersion?: google_protobuf_wrappers_pb.Int32Value.AsObject;
-    environmentNamespace: string;
     environmentId: string;
   };
 }
@@ -390,9 +374,6 @@ export namespace ListExperimentResultsResponse {
 }
 
 export class GetExperimentGoalCountRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getStartAt(): number;
   setStartAt(value: number): void;
 
@@ -439,7 +420,6 @@ export class GetExperimentGoalCountRequest extends jspb.Message {
 
 export namespace GetExperimentGoalCountRequest {
   export type AsObject = {
-    environmentNamespace: string;
     startAt: number;
     endAt: number;
     goalId: string;
@@ -493,9 +473,6 @@ export namespace GetExperimentGoalCountResponse {
 }
 
 export class GetOpsEvaluationUserCountRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getOpsRuleId(): string;
   setOpsRuleId(value: string): void;
 
@@ -539,7 +516,6 @@ export class GetOpsEvaluationUserCountRequest extends jspb.Message {
 
 export namespace GetOpsEvaluationUserCountRequest {
   export type AsObject = {
-    environmentNamespace: string;
     opsRuleId: string;
     clauseId: string;
     featureId: string;
@@ -593,9 +569,6 @@ export namespace GetOpsEvaluationUserCountResponse {
 }
 
 export class GetOpsGoalUserCountRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getOpsRuleId(): string;
   setOpsRuleId(value: string): void;
 
@@ -637,7 +610,6 @@ export class GetOpsGoalUserCountRequest extends jspb.Message {
 
 export namespace GetOpsGoalUserCountRequest {
   export type AsObject = {
-    environmentNamespace: string;
     opsRuleId: string;
     clauseId: string;
     featureId: string;
@@ -687,9 +659,6 @@ export namespace GetOpsGoalUserCountResponse {
 }
 
 export class GetMAUCountRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getYearMonth(): string;
   setYearMonth(value: string): void;
 
@@ -719,7 +688,6 @@ export class GetMAUCountRequest extends jspb.Message {
 
 export namespace GetMAUCountRequest {
   export type AsObject = {
-    environmentNamespace: string;
     yearMonth: string;
     environmentId: string;
   };

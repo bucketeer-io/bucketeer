@@ -95,7 +95,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ''),
         sourceType: jspb.Message.getFieldWithDefault(msg, 3, 0),
         notification:
           (f = msg.getNotification()) &&
@@ -147,10 +146,6 @@ proto.bucketeer.notification.sender.NotificationEvent.deserializeBinaryFromReade
         case 1:
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
-          break;
-        case 2:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
           break;
         case 3:
           var value =
@@ -213,10 +208,6 @@ proto.bucketeer.notification.sender.NotificationEvent.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(1, f);
     }
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(2, f);
-    }
     f = message.getSourceType();
     if (f !== 0.0) {
       writer.writeEnum(3, f);
@@ -258,26 +249,6 @@ proto.bucketeer.notification.sender.NotificationEvent.prototype.getId =
 proto.bucketeer.notification.sender.NotificationEvent.prototype.setId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 1, value);
-  };
-
-/**
- * optional string environment_namespace = 2;
- * @return {string}
- */
-proto.bucketeer.notification.sender.NotificationEvent.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 2, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.notification.sender.NotificationEvent} returns this
- */
-proto.bucketeer.notification.sender.NotificationEvent.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 2, value);
   };
 
 /**

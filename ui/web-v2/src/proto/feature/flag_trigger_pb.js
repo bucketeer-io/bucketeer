@@ -88,7 +88,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
         featureId: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
         type: jspb.Message.getFieldWithDefault(msg, 4, 0),
         action: jspb.Message.getFieldWithDefault(msg, 5, 0),
         description: jspb.Message.getFieldWithDefault(msg, 6, ''),
@@ -146,10 +145,6 @@ proto.bucketeer.feature.FlagTrigger.deserializeBinaryFromReader = function (
       case 2:
         var value = /** @type {string} */ (reader.readString());
         msg.setFeatureId(value);
-        break;
-      case 3:
-        var value = /** @type {string} */ (reader.readString());
-        msg.setEnvironmentNamespace(value);
         break;
       case 4:
         var value = /** @type {!proto.bucketeer.feature.FlagTrigger.Type} */ (
@@ -232,10 +227,6 @@ proto.bucketeer.feature.FlagTrigger.serializeBinaryToWriter = function (
   f = message.getFeatureId();
   if (f.length > 0) {
     writer.writeString(2, f);
-  }
-  f = message.getEnvironmentNamespace();
-  if (f.length > 0) {
-    writer.writeString(3, f);
   }
   f = message.getType();
   if (f !== 0.0) {
@@ -327,26 +318,6 @@ proto.bucketeer.feature.FlagTrigger.prototype.getFeatureId = function () {
 proto.bucketeer.feature.FlagTrigger.prototype.setFeatureId = function (value) {
   return jspb.Message.setProto3StringField(this, 2, value);
 };
-
-/**
- * optional string environment_namespace = 3;
- * @return {string}
- */
-proto.bucketeer.feature.FlagTrigger.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 3, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.feature.FlagTrigger} returns this
- */
-proto.bucketeer.feature.FlagTrigger.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 3, value);
-  };
 
 /**
  * optional Type type = 4;

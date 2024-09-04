@@ -832,9 +832,6 @@ export class CreateAPIKeyRequest extends jspb.Message {
   getCommand(): proto_account_command_pb.CreateAPIKeyCommand | undefined;
   setCommand(value?: proto_account_command_pb.CreateAPIKeyCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
@@ -862,7 +859,6 @@ export class CreateAPIKeyRequest extends jspb.Message {
 export namespace CreateAPIKeyRequest {
   export type AsObject = {
     command?: proto_account_command_pb.CreateAPIKeyCommand.AsObject;
-    environmentNamespace: string;
     environmentId: string;
   };
 }
@@ -909,9 +905,6 @@ export class ChangeAPIKeyNameRequest extends jspb.Message {
   getCommand(): proto_account_command_pb.ChangeAPIKeyNameCommand | undefined;
   setCommand(value?: proto_account_command_pb.ChangeAPIKeyNameCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
@@ -940,7 +933,6 @@ export namespace ChangeAPIKeyNameRequest {
   export type AsObject = {
     id: string;
     command?: proto_account_command_pb.ChangeAPIKeyNameCommand.AsObject;
-    environmentNamespace: string;
     environmentId: string;
   };
 }
@@ -980,9 +972,6 @@ export class EnableAPIKeyRequest extends jspb.Message {
   getCommand(): proto_account_command_pb.EnableAPIKeyCommand | undefined;
   setCommand(value?: proto_account_command_pb.EnableAPIKeyCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
@@ -1011,7 +1000,6 @@ export namespace EnableAPIKeyRequest {
   export type AsObject = {
     id: string;
     command?: proto_account_command_pb.EnableAPIKeyCommand.AsObject;
-    environmentNamespace: string;
     environmentId: string;
   };
 }
@@ -1051,9 +1039,6 @@ export class DisableAPIKeyRequest extends jspb.Message {
   getCommand(): proto_account_command_pb.DisableAPIKeyCommand | undefined;
   setCommand(value?: proto_account_command_pb.DisableAPIKeyCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
@@ -1082,7 +1067,6 @@ export namespace DisableAPIKeyRequest {
   export type AsObject = {
     id: string;
     command?: proto_account_command_pb.DisableAPIKeyCommand.AsObject;
-    environmentNamespace: string;
     environmentId: string;
   };
 }
@@ -1117,9 +1101,6 @@ export class GetAPIKeyRequest extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
@@ -1147,7 +1128,6 @@ export class GetAPIKeyRequest extends jspb.Message {
 export namespace GetAPIKeyRequest {
   export type AsObject = {
     id: string;
-    environmentNamespace: string;
     environmentId: string;
   };
 }
@@ -1191,9 +1171,6 @@ export class ListAPIKeysRequest extends jspb.Message {
 
   getCursor(): string;
   setCursor(value: string): void;
-
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
 
   getOrderBy(): ListAPIKeysRequest.OrderByMap[keyof ListAPIKeysRequest.OrderByMap];
   setOrderBy(
@@ -1241,7 +1218,6 @@ export namespace ListAPIKeysRequest {
   export type AsObject = {
     pageSize: number;
     cursor: string;
-    environmentNamespace: string;
     orderBy: ListAPIKeysRequest.OrderByMap[keyof ListAPIKeysRequest.OrderByMap];
     orderDirection: ListAPIKeysRequest.OrderDirectionMap[keyof ListAPIKeysRequest.OrderDirectionMap];
     searchKeyword: string;

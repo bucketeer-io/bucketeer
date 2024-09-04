@@ -666,9 +666,6 @@ export namespace UpdateAdminSubscriptionResponse {
 }
 
 export class GetSubscriptionRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -698,7 +695,6 @@ export class GetSubscriptionRequest extends jspb.Message {
 
 export namespace GetSubscriptionRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     environmentId: string;
   };
@@ -742,9 +738,6 @@ export namespace GetSubscriptionResponse {
 }
 
 export class ListSubscriptionsRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getPageSize(): number;
   setPageSize(value: number): void;
 
@@ -809,7 +802,6 @@ export class ListSubscriptionsRequest extends jspb.Message {
 
 export namespace ListSubscriptionsRequest {
   export type AsObject = {
-    environmentNamespace: string;
     pageSize: number;
     cursor: string;
     sourceTypesList: Array<
@@ -886,9 +878,6 @@ export namespace ListSubscriptionsResponse {
 }
 
 export class ListEnabledSubscriptionsRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getPageSize(): number;
   setPageSize(value: number): void;
 
@@ -935,7 +924,6 @@ export class ListEnabledSubscriptionsRequest extends jspb.Message {
 
 export namespace ListEnabledSubscriptionsRequest {
   export type AsObject = {
-    environmentNamespace: string;
     pageSize: number;
     cursor: string;
     sourceTypesList: Array<
@@ -990,9 +978,6 @@ export namespace ListEnabledSubscriptionsResponse {
 }
 
 export class CreateSubscriptionRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   hasCommand(): boolean;
   clearCommand(): void;
   getCommand():
@@ -1028,7 +1013,6 @@ export class CreateSubscriptionRequest extends jspb.Message {
 
 export namespace CreateSubscriptionRequest {
   export type AsObject = {
-    environmentNamespace: string;
     command?: proto_notification_command_pb.CreateSubscriptionCommand.AsObject;
     environmentId: string;
   };
@@ -1061,9 +1045,6 @@ export namespace CreateSubscriptionResponse {
 }
 
 export class DeleteSubscriptionRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -1102,7 +1083,6 @@ export class DeleteSubscriptionRequest extends jspb.Message {
 
 export namespace DeleteSubscriptionRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     command?: proto_notification_command_pb.DeleteSubscriptionCommand.AsObject;
     environmentId: string;
@@ -1136,9 +1116,6 @@ export namespace DeleteSubscriptionResponse {
 }
 
 export class EnableSubscriptionRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -1177,7 +1154,6 @@ export class EnableSubscriptionRequest extends jspb.Message {
 
 export namespace EnableSubscriptionRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     command?: proto_notification_command_pb.EnableSubscriptionCommand.AsObject;
     environmentId: string;
@@ -1211,9 +1187,6 @@ export namespace EnableSubscriptionResponse {
 }
 
 export class DisableSubscriptionRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -1252,7 +1225,6 @@ export class DisableSubscriptionRequest extends jspb.Message {
 
 export namespace DisableSubscriptionRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     command?: proto_notification_command_pb.DisableSubscriptionCommand.AsObject;
     environmentId: string;
@@ -1286,9 +1258,6 @@ export namespace DisableSubscriptionResponse {
 }
 
 export class UpdateSubscriptionRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -1345,7 +1314,6 @@ export class UpdateSubscriptionRequest extends jspb.Message {
 
 export namespace UpdateSubscriptionRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     addSourceTypesCommand?: proto_notification_command_pb.AddSourceTypesCommand.AsObject;
     deleteSourceTypesCommand?: proto_notification_command_pb.DeleteSourceTypesCommand.AsObject;
