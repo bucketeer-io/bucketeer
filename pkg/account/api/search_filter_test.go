@@ -926,7 +926,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 				OrganizationId: "org0",
 				EnvironmentId:  "envID0",
 				Command: &accountproto.DeleteSearchFilterCommand{
-					SearchFilterId: "filterID",
+					Id: "filterID",
 				},
 			},
 			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
@@ -953,7 +953,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 				OrganizationId: "org0",
 				EnvironmentId:  "envID0",
 				Command: &accountproto.DeleteSearchFilterCommand{
-					SearchFilterId: "filterID",
+					Id: "filterID",
 				},
 			},
 			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
@@ -980,7 +980,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 				Email:         "bucketeer@example.com",
 				EnvironmentId: "envID0",
 				Command: &accountproto.DeleteSearchFilterCommand{
-					SearchFilterId: "filterID",
+					Id: "filterID",
 				},
 			},
 			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
@@ -1011,7 +1011,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 				OrganizationId: "org0",
 				EnvironmentId:  "envID0",
 				Command: &accountproto.DeleteSearchFilterCommand{
-					SearchFilterId: "filterID",
+					Id: "filterID",
 				},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
@@ -1042,7 +1042,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 				OrganizationId: "org0",
 				EnvironmentId:  "envID0",
 				Command: &accountproto.DeleteSearchFilterCommand{
-					SearchFilterId: "filterID",
+					Id: "filterID",
 				},
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError)),
@@ -1096,7 +1096,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 				OrganizationId: "org0",
 				EnvironmentId:  "envID0",
 				Command: &accountproto.DeleteSearchFilterCommand{
-					SearchFilterId: "",
+					Id: "",
 				},
 			},
 			expectedErr: createError(statusSearchFilterIDIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "search_filter_id")),
@@ -1127,7 +1127,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 				OrganizationId: "org0",
 				EnvironmentId:  "envID0",
 				Command: &accountproto.DeleteSearchFilterCommand{
-					SearchFilterId: "filterID",
+					Id: "filterID",
 				},
 			},
 			expectedErr: nil,
