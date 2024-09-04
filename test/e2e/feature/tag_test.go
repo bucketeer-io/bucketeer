@@ -85,8 +85,8 @@ func existTag(tags []string, target string) bool {
 func listTags(ctx context.Context, t *testing.T, client featureclient.Client) []*feature.Tag {
 	t.Helper()
 	resp, err := client.ListTags(ctx, &feature.ListTagsRequest{
-		PageSize:             int64(500),
-		EnvironmentNamespace: *environmentNamespace,
+		PageSize:      int64(500),
+		EnvironmentId: *environmentNamespace,
 	})
 	if err != nil {
 		t.Fatal("failed to list tags", err)
@@ -101,7 +101,7 @@ func addTag(t *testing.T, tag string, featureID string, client featureclient.Cli
 		AddTagCommands: []*feature.AddTagCommand{
 			{Tag: tag},
 		},
-		EnvironmentNamespace: *environmentNamespace,
+		EnvironmentId: *environmentNamespace,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()

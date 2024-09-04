@@ -80,10 +80,10 @@ var (
 type eventType int
 
 type event struct {
-	ID                   string          `json:"id,omitempty"`
-	Event                json.RawMessage `json:"event,omitempty"`
-	EnvironmentNamespace string          `json:"environment_namespace,omitempty"`
-	Type                 eventType       `json:"type,omitempty"`
+	ID            string          `json:"id,omitempty"`
+	Event         json.RawMessage `json:"event,omitempty"`
+	EnvironmentId string          `json:"environment_id,omitempty"`
+	Type          eventType       `json:"type,omitempty"`
 }
 
 type successResponse struct {
@@ -299,8 +299,8 @@ func TestDeleteAutoOpsRule(t *testing.T) {
 	}
 	deleteAutoOpsRules(t, autoOpsClient, autoOpsRules[0].Id)
 	resp, err := autoOpsClient.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   autoOpsRules[0].Id,
+		EnvironmentId: *environmentNamespace,
+		Id:            autoOpsRules[0].Id,
 	})
 	if resp != nil {
 		t.Fatal("autoOpsRules is not deleted")
@@ -336,8 +336,8 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 	}
 	updateAutoOpsRules(t, autoOpsClient, autoOpsRules[0].Id, &addClause)
 	resp, err := autoOpsClient.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   autoOpsRules[0].Id,
+		EnvironmentId: *environmentNamespace,
+		Id:            autoOpsRules[0].Id,
 	})
 	if resp == nil {
 		t.Fatalf("failed to get AutoOpsRule, err %d", err)
@@ -382,8 +382,8 @@ func TestExecuteAutoOpsRule(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 	_, err := autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   autoOpsRules[0].Id,
+		EnvironmentId: *environmentNamespace,
+		Id:            autoOpsRules[0].Id,
 		ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
 			ClauseId: autoOpsRules[0].Clauses[0].Id,
 		},
@@ -421,8 +421,8 @@ func TestExecuteAutoOpsRuleForMultiSchedule(t *testing.T) {
 		t.Fatal("not enough rules")
 	}
 	_, err := autoOpsClient.ExecuteAutoOps(ctx, &autoopsproto.ExecuteAutoOpsRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   autoOpsRules[0].Id,
+		EnvironmentId: *environmentNamespace,
+		Id:            autoOpsRules[0].Id,
 		ExecuteAutoOpsRuleCommand: &autoopsproto.ExecuteAutoOpsRuleCommand{
 			ClauseId: autoOpsRules[0].Clauses[0].Id,
 		},
@@ -766,8 +766,8 @@ func createGoal(ctx context.Context, t *testing.T, client experimentclient.Clien
 		Description: goalID,
 	}
 	_, err := client.CreateGoal(ctx, &experimentproto.CreateGoalRequest{
-		Command:              cmd,
-		EnvironmentNamespace: *environmentNamespace,
+		Command:       cmd,
+		EnvironmentId: *environmentNamespace,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -828,8 +828,8 @@ func createAutoOpsRule(
 		DatetimeClauses:     dcs,
 	}
 	_, err := client.CreateAutoOpsRule(ctx, &autoopsproto.CreateAutoOpsRuleRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Command:              cmd,
+		EnvironmentId: *environmentNamespace,
+		Command:       cmd,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -897,8 +897,8 @@ func createFeature(ctx context.Context, t *testing.T, client featureclient.Clien
 	t.Helper()
 	cmd := newCreateFeatureCommand(featureID)
 	createReq := &featureproto.CreateFeatureRequest{
-		Command:              cmd,
-		EnvironmentNamespace: *environmentNamespace,
+		Command:       cmd,
+		EnvironmentId: *environmentNamespace,
 	}
 	if _, err := client.CreateFeature(ctx, createReq); err != nil {
 		t.Fatal(err)
@@ -910,8 +910,8 @@ func createDisabledFeature(ctx context.Context, t *testing.T, client featureclie
 	t.Helper()
 	cmd := newCreateFeatureCommand(featureID)
 	createReq := &featureproto.CreateFeatureRequest{
-		Command:              cmd,
-		EnvironmentNamespace: *environmentNamespace,
+		Command:       cmd,
+		EnvironmentId: *environmentNamespace,
 	}
 	if _, err := client.CreateFeature(ctx, createReq); err != nil {
 		t.Fatal(err)
@@ -921,8 +921,8 @@ func createDisabledFeature(ctx context.Context, t *testing.T, client featureclie
 func getFeature(t *testing.T, client featureclient.Client, featureID string) *featureproto.Feature {
 	t.Helper()
 	getReq := &featureproto.GetFeatureRequest{
-		Id:                   featureID,
-		EnvironmentNamespace: *environmentNamespace,
+		Id:            featureID,
+		EnvironmentId: *environmentNamespace,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -982,9 +982,9 @@ func newCreateFeatureCommand(featureID string) *featureproto.CreateFeatureComman
 func enableFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
 	enableReq := &featureproto.EnableFeatureRequest{
-		Id:                   featureID,
-		Command:              &featureproto.EnableFeatureCommand{},
-		EnvironmentNamespace: *environmentNamespace,
+		Id:            featureID,
+		Command:       &featureproto.EnableFeatureCommand{},
+		EnvironmentId: *environmentNamespace,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -998,9 +998,9 @@ func listAutoOpsRulesByFeatureID(t *testing.T, client autoopsclient.Client, feat
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	resp, err := client.ListAutoOpsRules(ctx, &autoopsproto.ListAutoOpsRulesRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		PageSize:             int64(500),
-		FeatureIds:           []string{featureID},
+		EnvironmentId: *environmentNamespace,
+		PageSize:      int64(500),
+		FeatureIds:    []string{featureID},
 	})
 	if err != nil {
 		t.Fatal("failed to list auto ops rules", err)
@@ -1015,8 +1015,8 @@ func getAutoOpsRules(t *testing.T, id string) *autoopsproto.AutoOpsRule {
 	c := newAutoOpsClient(t)
 	defer c.Close()
 	resp, err := c.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
 	})
 	if err != nil {
 		t.Fatal("failed to list auto ops rules", err)
@@ -1029,9 +1029,9 @@ func deleteAutoOpsRules(t *testing.T, client autoopsclient.Client, id string) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	_, err := client.DeleteAutoOpsRule(ctx, &autoopsproto.DeleteAutoOpsRuleRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
-		Command:              &autoopsproto.DeleteAutoOpsRuleCommand{},
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
+		Command:       &autoopsproto.DeleteAutoOpsRuleCommand{},
 	})
 	if err != nil {
 		t.Fatal("failed to list auto ops rules", err)
@@ -1057,8 +1057,8 @@ func TestStopAutoOpsRule(t *testing.T) {
 	}
 	stopAutoOpsRule(t, autoOpsClient, autoOpsRules[0].Id)
 	resp, err := autoOpsClient.GetAutoOpsRule(ctx, &autoopsproto.GetAutoOpsRuleRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   autoOpsRules[0].Id,
+		EnvironmentId: *environmentNamespace,
+		Id:            autoOpsRules[0].Id,
 	})
 	if resp == nil {
 		t.Fatalf("failed to get AutoOpsRule, err %d", err)
@@ -1074,9 +1074,9 @@ func stopAutoOpsRule(t *testing.T, client autoopsclient.Client, id string) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	_, err := client.StopAutoOpsRule(ctx, &autoopsproto.StopAutoOpsRuleRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
-		Command:              &autoopsproto.StopAutoOpsRuleCommand{},
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
+		Command:       &autoopsproto.StopAutoOpsRuleCommand{},
 	})
 	if err != nil {
 		t.Fatal("failed to stop auto ops rules", err)
@@ -1088,8 +1088,8 @@ func updateAutoOpsRules(t *testing.T, client autoopsclient.Client, id string, da
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	_, err := client.UpdateAutoOpsRule(ctx, &autoopsproto.UpdateAutoOpsRuleRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
 		AddDatetimeClauseCommands: []*autoopsproto.AddDatetimeClauseCommand{
 			{DatetimeClause: dateClause},
 		},
