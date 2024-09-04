@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import logo from 'assets/logos/logo-white.svg';
-import { useAuth, useCurrentEnvironment } from 'auth';
+import { useAuth, getCurrentEnvironment } from 'auth';
 import {
   PAGE_PATH_AUDIT_LOGS,
   PAGE_PATH_FEATURES,
@@ -15,13 +15,13 @@ import * as IconSystem from '@icons';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
 import SectionMenu from './menu-section';
-import ProjectList from './project-list';
+import MyProjects from './my-projects';
 import UserMenu from './user-menu';
 
 const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
   const [isShowSetting, onShowSetting, onCloseSetting] = useToggleOpen(false);
   const { consoleAccount } = useAuth();
-  const currentEnvironment = useCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const environmentUrlCode = currentEnvironment.urlCode;
 
   return (
@@ -88,7 +88,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
             <div className="px-3 uppercase typo-head-bold-tiny text-primary-50 mb-3">
               {`Environment`}
             </div>
-            <ProjectList />
+            <MyProjects />
             <Divider className="my-5 bg-primary-50 opacity-10" />
             <SectionMenu
               title={`Management`}

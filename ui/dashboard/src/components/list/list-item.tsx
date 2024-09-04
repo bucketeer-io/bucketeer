@@ -1,21 +1,23 @@
-import { FunctionComponent } from 'react';
 import { cn } from 'utils/style';
+import { IconChevronRight } from '@icons';
 import Icon from 'components/icon';
 
 export type ListItemProps = {
   label: string;
-  icon?: FunctionComponent;
+  expanded?: boolean;
   className?: string;
+  value: string;
   selected?: boolean;
-  onClick?: () => void;
+  onSelect?: (value: string) => void;
 };
 
 const ListItem = ({
   label,
-  icon,
+  expanded,
+  value,
   selected,
   className,
-  onClick
+  onSelect
 }: ListItemProps) => {
   return (
     <li
@@ -25,10 +27,10 @@ const ListItem = ({
         selected && 'bg-gray-100',
         className
       )}
-      onClick={onClick}
+      onClick={() => onSelect?.(value)}
     >
       <p className="typo-para-medium">{label}</p>
-      {icon && <Icon icon={icon} size="sm" />}
+      {expanded && <Icon icon={IconChevronRight} size="sm" />}
     </li>
   );
 };
