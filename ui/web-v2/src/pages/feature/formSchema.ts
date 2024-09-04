@@ -435,3 +435,7 @@ export const triggerFormSchema = yup.object().shape({
   action: yup.string().nullable().required(),
   description: yup.string()
 });
+
+export const viewFormSchema = yup.object().shape({
+  name: yup.string().required()
+});

@@ -17,7 +17,13 @@ import {
   ListAccountsV2Request,
   ListAccountsV2Response,
   UpdateAccountV2Request,
-  UpdateAccountV2Response
+  UpdateAccountV2Response,
+  CreateSearchFilterRequest,
+  CreateSearchFilterResponse,
+  UpdateSearchFilterRequest,
+  UpdateSearchFilterResponse,
+  DeleteSearchFilterRequest,
+  DeleteSearchFilterResponse
 } from '../proto/account/service_pb';
 import {
   AccountServiceClient,
@@ -249,6 +255,99 @@ export function listAccounts(
           resolve({ request, response });
         }
       });
+    }
+  );
+}
+
+export interface createSearchFilterResult {
+  request: CreateSearchFilterRequest;
+  response: CreateSearchFilterResponse;
+}
+
+export function createSearchFilter(
+  request: CreateSearchFilterRequest
+): Promise<createSearchFilterResult> {
+  return new Promise(
+    (resolve: (result: createSearchFilterResult) => void, reject): void => {
+      client.createSearchFilter(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new AccountServiceError(
+                extractErrorMessage(error),
+                request,
+                error
+              )
+            );
+          } else {
+            resolve({ request, response });
+          }
+        }
+      );
+    }
+  );
+}
+
+export interface updateSearchFilterResult {
+  request: UpdateSearchFilterRequest;
+  response: UpdateSearchFilterResponse;
+}
+
+export function updateSearchFilter(
+  request: UpdateSearchFilterRequest
+): Promise<updateSearchFilterResult> {
+  return new Promise(
+    (resolve: (result: updateSearchFilterResult) => void, reject): void => {
+      client.updateSearchFilter(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new AccountServiceError(
+                extractErrorMessage(error),
+                request,
+                error
+              )
+            );
+          } else {
+            resolve({ request, response });
+          }
+        }
+      );
+    }
+  );
+}
+
+export interface deleteSearchFilterResult {
+  request: DeleteSearchFilterRequest;
+  response: DeleteSearchFilterResponse;
+}
+
+export function deleteSearchFilter(
+  request: DeleteSearchFilterRequest
+): Promise<deleteSearchFilterResult> {
+  return new Promise(
+    (resolve: (result: deleteSearchFilterResult) => void, reject): void => {
+      client.deleteSearchFilter(
+        request,
+        getMetaData(),
+        (error, response): void => {
+          if (isNotNull(error) || isNull(response)) {
+            reject(
+              new AccountServiceError(
+                extractErrorMessage(error),
+                request,
+                error
+              )
+            );
+          } else {
+            resolve({ request, response });
+          }
+        }
+      );
     }
   );
 }

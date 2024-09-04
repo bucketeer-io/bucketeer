@@ -253,10 +253,6 @@ export const FeatureIndexPage: FC = memo(() => {
     [dispatch]
   );
 
-  const clearURLParameters = useCallback(() => {
-    history.replace(url);
-  }, [history]);
-
   const updateURL = useCallback(
     (options: Record<string, string | number | boolean | undefined>) => {
       history.replace(
@@ -268,18 +264,23 @@ export const FeatureIndexPage: FC = memo(() => {
     [history]
   );
 
+  const removeEmptyFields = (obj) => {
+    return Object.fromEntries(
+      Object.entries(obj).filter(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        ([_, value]) => value !== '' && value !== undefined && value !== null
+      )
+    );
+  };
+
   const handleSearchOptionsChange = useCallback(
     (options) => {
-      updateURL({ ...options, page: 1 });
-      updateFeatureList(options, 1);
+      const newOptions = removeEmptyFields(options);
+      updateURL({ ...newOptions, page: 1 });
+      updateFeatureList(newOptions, 1);
     },
     [updateURL, updateFeatureList]
   );
-
-  const handleClearSearchOptionsChange = useCallback(() => {
-    clearURLParameters();
-    updateFeatureList(null, 1);
-  }, [updateFeatureList]);
 
   const handlePageChange = useCallback(
     (page: number) => {
@@ -547,7 +548,6 @@ export const FeatureIndexPage: FC = memo(() => {
           onClone={handleClickClone}
           onAdd={handleOpen}
           onChangeSearchOptions={handleSearchOptionsChange}
-          onClearSearchOptions={handleClearSearchOptionsChange}
         />
       </div>
       <Overlay open={open} onClose={handleClose}>
