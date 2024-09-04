@@ -72,8 +72,8 @@ func TestCreateGetDeleteSubscription(t *testing.T) {
 	}
 	createSubscription(ctx, t, notificationClient, name, sourceTypes, recipient)
 	resp, err := notificationClient.GetSubscription(ctx, &proto.GetSubscriptionRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -101,16 +101,16 @@ func TestCreateGetDeleteSubscription(t *testing.T) {
 		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
 	}
 	_, err = notificationClient.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
-		Command:              &proto.DeleteSubscriptionCommand{},
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
+		Command:       &proto.DeleteSubscriptionCommand{},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	_, err = notificationClient.GetSubscription(ctx, &proto.GetSubscriptionRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
 	})
 	if err != nil {
 		st, _ := status.FromError(err)
@@ -171,16 +171,16 @@ func TestCreateListDeleteSubscription(t *testing.T) {
 		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
 	}
 	_, err = notificationClient.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
-		Command:              &proto.DeleteSubscriptionCommand{},
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
+		Command:       &proto.DeleteSubscriptionCommand{},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	_, err = notificationClient.GetSubscription(ctx, &proto.GetSubscriptionRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
 	})
 	if err != nil {
 		st, _ := status.FromError(err)
@@ -212,8 +212,8 @@ func TestUpdateSubscription(t *testing.T) {
 	}
 	createSubscription(ctx, t, notificationClient, name, sourceTypes, recipient)
 	_, err = notificationClient.UpdateSubscription(ctx, &proto.UpdateSubscriptionRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
 		AddSourceTypesCommand: &proto.AddSourceTypesCommand{
 			SourceTypes: []proto.Subscription_SourceType{
 				proto.Subscription_DOMAIN_EVENT_ADMIN_ACCOUNT,
@@ -229,8 +229,8 @@ func TestUpdateSubscription(t *testing.T) {
 		t.Fatal(err)
 	}
 	resp, err := notificationClient.GetSubscription(ctx, &proto.GetSubscriptionRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -258,16 +258,16 @@ func TestUpdateSubscription(t *testing.T) {
 		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
 	}
 	_, err = notificationClient.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
-		Command:              &proto.DeleteSubscriptionCommand{},
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
+		Command:       &proto.DeleteSubscriptionCommand{},
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	_, err = notificationClient.GetSubscription(ctx, &proto.GetSubscriptionRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
 	})
 	if err != nil {
 		st, _ := status.FromError(err)
@@ -299,9 +299,9 @@ func TestListEnabledSubscriptions(t *testing.T) {
 	}
 	createSubscription(ctx, t, notificationClient, name, sourceTypes, recipient)
 	_, err = notificationClient.DisableSubscription(ctx, &proto.DisableSubscriptionRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
-		Command:              &proto.DisableSubscriptionCommand{},
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
+		Command:       &proto.DisableSubscriptionCommand{},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -322,9 +322,9 @@ func TestListEnabledSubscriptions(t *testing.T) {
 		t.Fatal("List enabled subscriptions include disabled subscription")
 	}
 	_, err = notificationClient.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
-		Command:              &proto.DeleteSubscriptionCommand{},
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
+		Command:       &proto.DeleteSubscriptionCommand{},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -370,8 +370,8 @@ func createSubscription(
 	t.Helper()
 	cmd := newCreateSubscriptionCommand(name, sourceTypes, recipient)
 	createReq := &proto.CreateSubscriptionRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Command:              cmd,
+		EnvironmentId: *environmentNamespace,
+		Command:       cmd,
 	}
 	if _, err := client.CreateSubscription(ctx, createReq); err != nil {
 		t.Fatal(err)
@@ -398,9 +398,9 @@ func listSubscriptions(
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	resp, err := client.ListSubscriptions(ctx, &proto.ListSubscriptionsRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		PageSize:             int64(500),
-		SourceTypes:          sourceTypes,
+		EnvironmentId: *environmentNamespace,
+		PageSize:      int64(500),
+		SourceTypes:   sourceTypes,
 	})
 	if err != nil {
 		t.Fatal("failed to list subscriptions", err)
@@ -416,9 +416,9 @@ func listEnabledSubscriptions(
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	resp, err := client.ListEnabledSubscriptions(ctx, &proto.ListEnabledSubscriptionsRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		PageSize:             int64(500),
-		SourceTypes:          sourceTypes,
+		EnvironmentId: *environmentNamespace,
+		PageSize:      int64(500),
+		SourceTypes:   sourceTypes,
 	})
 	if err != nil {
 		t.Fatal("failed to list enabled subscriptions", err)

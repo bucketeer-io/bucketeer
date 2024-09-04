@@ -75,10 +75,10 @@ type getEvaluationResponse struct {
 }
 
 type Event struct {
-	ID                   string          `json:"id,omitempty"`
-	Event                json.RawMessage `json:"event,omitempty"`
-	EnvironmentNamespace string          `json:"environment_namespace,omitempty"`
-	Type                 gwapi.EventType `json:"type,omitempty"`
+	ID            string          `json:"id,omitempty"`
+	Event         json.RawMessage `json:"event,omitempty"`
+	EnvironmentId string          `json:"environment_id,omitempty"`
+	Type          gwapi.EventType `json:"type,omitempty"`
 }
 
 func GetEvaluations(t *testing.T, tag, userID, gatewayAddr, apiKeyPath string) *getEvaluationsResponse {

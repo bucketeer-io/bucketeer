@@ -130,8 +130,8 @@ func createFeature(ctx context.Context, t *testing.T, client featureclient.Clien
 	t.Helper()
 	cmd := newCreateFeatureCommand(featureID, tag)
 	createReq := &featureproto.CreateFeatureRequest{
-		Command:              cmd,
-		EnvironmentNamespace: *environmentNamespace,
+		Command:       cmd,
+		EnvironmentId: *environmentNamespace,
 	}
 	if _, err := client.CreateFeature(ctx, createReq); err != nil {
 		t.Fatal(err)
@@ -142,9 +142,9 @@ func createFeature(ctx context.Context, t *testing.T, client featureclient.Clien
 func enableFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
 	enableReq := &featureproto.EnableFeatureRequest{
-		Id:                   featureID,
-		Command:              &featureproto.EnableFeatureCommand{},
-		EnvironmentNamespace: *environmentNamespace,
+		Id:            featureID,
+		Command:       &featureproto.EnableFeatureCommand{},
+		EnvironmentId: *environmentNamespace,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -214,8 +214,8 @@ func createPush(
 	t.Helper()
 	cmd := newCreatePushCommand(t, fcmServiceAccount, []string{tag})
 	createReq := &pushproto.CreatePushRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Command:              cmd,
+		EnvironmentId: *environmentNamespace,
+		Command:       cmd,
 	}
 	if _, err := client.CreatePush(ctx, createReq); err != nil {
 		t.Fatal(err)
@@ -235,8 +235,8 @@ func listPushes(t *testing.T, client pushclient.Client) []*pushproto.Push {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	resp, err := client.ListPushes(ctx, &pushproto.ListPushesRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		PageSize:             int64(500),
+		EnvironmentId: *environmentNamespace,
+		PageSize:      int64(500),
 	})
 	if err != nil {
 		t.Fatal("failed to list pushes", err)
