@@ -83,4 +83,5 @@ message ConsoleAccount {
   environment.Organization organization = 5;
   AccountV2.Role.Organization organization_role = 6;
   repeated EnvironmentRole environment_roles = 7;
+  repeated SearchFilter search_filters = 8;
 }

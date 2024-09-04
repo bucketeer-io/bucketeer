@@ -140,6 +140,7 @@ func (s *AccountService) GetMe(
 			Organization:     organization,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 			EnvironmentRoles: adminEnvRoles,
+			SearchFilters:    sysAdminAccount.SearchFilters,
 		}}, nil
 	}
 	// non admin account response
@@ -156,6 +157,7 @@ func (s *AccountService) GetMe(
 		Organization:     organization,
 		OrganizationRole: account.OrganizationRole,
 		EnvironmentRoles: envRoles,
+		SearchFilters:    account.SearchFilters,
 	}}, nil
 }
 

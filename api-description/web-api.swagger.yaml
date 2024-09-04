@@ -2775,6 +2775,11 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/accountConsoleAccountEnvironmentRole'
+      searchFilters:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountSearchFilter'
   accountConsoleAccountEnvironmentRole:
     type: object
     properties:
