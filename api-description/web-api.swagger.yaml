@@ -2931,7 +2931,7 @@ definitions:
   accountDeleteSearchFilterCommand:
     type: object
     properties:
-      searchFilterId:
+      id:
         type: string
   accountDeleteSearchFilterRequest:
     type: object

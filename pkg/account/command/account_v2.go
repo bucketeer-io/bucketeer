@@ -256,11 +256,11 @@ func (h *accountV2CommandHandler) changeDefaultSearchFilter(
 func (h *accountV2CommandHandler) deleteSearchFiler(
 	ctx context.Context,
 	cmd *accountproto.DeleteSearchFilterCommand) error {
-	if err := h.account.DeleteSearchFilter(cmd.SearchFilterId); err != nil {
+	if err := h.account.DeleteSearchFilter(cmd.Id); err != nil {
 		return err
 	}
 	return h.send(ctx, eventproto.Event_ACCOUNT_V2_SEARCH_FILTER_DELETED, &eventproto.SearchFilterDeletedEvent{
-		Id: cmd.SearchFilterId,
+		Id: cmd.Id,
 	})
 }
 

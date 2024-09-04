@@ -566,7 +566,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
 		Command: &accountproto.DeleteSearchFilterCommand{
-			SearchFilterId: deleteFilterID,
+			Id: deleteFilterID,
 		},
 	})
 	if err != nil {

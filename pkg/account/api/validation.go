@@ -690,7 +690,7 @@ func validateDeleteSearchFilterRequest(
 		}
 		return dt.Err()
 	}
-	if req.Command.SearchFilterId == "" {
+	if req.Command.Id == "" {
 		dt, err := statusSearchFilterIDIsEmpty.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "search_filter_id"),

@@ -44,9 +44,10 @@ func (s *AccountService) CreateSearchFilter(
 
 	if err := validateCreateSearchFilterRequest(req, localizer); err != nil {
 		s.logger.Error(
-			"Failed to create search filter",
+			"Failed to validate request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
+				zap.Any("request", req),
 			)...,
 		)
 		return nil, err
@@ -58,16 +59,6 @@ func (s *AccountService) CreateSearchFilter(
 		[]command.Command{req.Command},
 		req.Email,
 		req.OrganizationId); err != nil {
-		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
-			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.NotFoundError),
-			})
-			if err != nil {
-				return nil, statusInternal.Err()
-			}
-			return nil, dt.Err()
-		}
 		s.logger.Error(
 			"Failed to create search filter",
 			log.FieldsFromImcomingContext(ctx).AddFields(
@@ -80,6 +71,16 @@ func (s *AccountService) CreateSearchFilter(
 				zap.String("filterTargetType", req.Command.FilterTargetType.String()),
 			)...,
 		)
+		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
@@ -108,9 +109,10 @@ func (s *AccountService) UpdateSearchFilter(
 
 	if err := validateUpdateSearchFilterRequest(req, commands, localizer); err != nil {
 		s.logger.Error(
-			"Failed to update search filter",
+			"Failed to validate request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
+				zap.Any("request", req),
 			)...,
 		)
 		return nil, err
@@ -122,6 +124,14 @@ func (s *AccountService) UpdateSearchFilter(
 		commands,
 		req.Email,
 		req.OrganizationId); err != nil {
+		s.logger.Error(
+			"Failed to update search filter",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+				zap.String("email", req.Email),
+			)...,
+		)
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -141,14 +151,6 @@ func (s *AccountService) UpdateSearchFilter(
 			}
 			return nil, dt.Err()
 		}
-		s.logger.Error(
-			"Failed to update search filter",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("organizationID", req.OrganizationId),
-				zap.String("email", req.Email),
-			)...,
-		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),
@@ -189,9 +191,10 @@ func (s *AccountService) DeleteSearchFilter(
 
 	if err := validateDeleteSearchFilterRequest(req, localizer); err != nil {
 		s.logger.Error(
-			"Failed to delete search filter",
+			"Failed to validate request",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
+				zap.Any("request", req),
 			)...,
 		)
 		return nil, err
@@ -203,6 +206,15 @@ func (s *AccountService) DeleteSearchFilter(
 		[]command.Command{req.Command},
 		req.Email,
 		req.OrganizationId); err != nil {
+		s.logger.Error(
+			"Failed to delete search filter",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+				zap.String("email", req.Email),
+				zap.String("searchFilterID", req.Command.Id),
+			)...,
+		)
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -223,15 +235,6 @@ func (s *AccountService) DeleteSearchFilter(
 			}
 			return nil, dt.Err()
 		}
-		s.logger.Error(
-			"Failed to delete search filter",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("organizationID", req.OrganizationId),
-				zap.String("email", req.Email),
-				zap.String("searchFilterID", req.Command.SearchFilterId),
-			)...,
-		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalize(locale.InternalServerError),

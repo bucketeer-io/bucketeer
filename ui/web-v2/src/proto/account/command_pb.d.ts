@@ -576,8 +576,8 @@ export namespace ChangeDefaultSearchFilterCommand {
 }
 
 export class DeleteSearchFilterCommand extends jspb.Message {
-  getSearchFilterId(): string;
-  setSearchFilterId(value: string): void;
+  getId(): string;
+  setId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeleteSearchFilterCommand.AsObject;
@@ -602,6 +602,6 @@ export class DeleteSearchFilterCommand extends jspb.Message {
 
 export namespace DeleteSearchFilterCommand {
   export type AsObject = {
-    searchFilterId: string;
+    id: string;
   };
 }

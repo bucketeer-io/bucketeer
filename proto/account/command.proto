@@ -94,5 +94,5 @@ message ChangeDefaultSearchFilterCommand {
 }
 
 message DeleteSearchFilterCommand {
-  string search_filter_id = 1;
+  string id = 1;
 }

@@ -3130,7 +3130,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        searchFilterId: jspb.Message.getFieldWithDefault(msg, 1, '')
+        id: jspb.Message.getFieldWithDefault(msg, 1, '')
       };
 
     if (includeInstance) {
@@ -3173,7 +3173,7 @@ proto.bucketeer.account.DeleteSearchFilterCommand.deserializeBinaryFromReader =
       switch (field) {
         case 1:
           var value = /** @type {string} */ (reader.readString());
-          msg.setSearchFilterId(value);
+          msg.setId(value);
           break;
         default:
           reader.skipField();
@@ -3207,17 +3207,17 @@ proto.bucketeer.account.DeleteSearchFilterCommand.prototype.serializeBinary =
 proto.bucketeer.account.DeleteSearchFilterCommand.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getSearchFilterId();
+    f = message.getId();
     if (f.length > 0) {
       writer.writeString(1, f);
     }
   };
 
 /**
- * optional string search_filter_id = 1;
+ * optional string id = 1;
  * @return {string}
  */
-proto.bucketeer.account.DeleteSearchFilterCommand.prototype.getSearchFilterId =
+proto.bucketeer.account.DeleteSearchFilterCommand.prototype.getId =
   function () {
     return /** @type {string} */ (
       jspb.Message.getFieldWithDefault(this, 1, '')
@@ -3228,9 +3228,10 @@ proto.bucketeer.account.DeleteSearchFilterCommand.prototype.getSearchFilterId =
  * @param {string} value
  * @return {!proto.bucketeer.account.DeleteSearchFilterCommand} returns this
  */
-proto.bucketeer.account.DeleteSearchFilterCommand.prototype.setSearchFilterId =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
-  };
+proto.bucketeer.account.DeleteSearchFilterCommand.prototype.setId = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
 
 goog.object.extend(exports, proto.bucketeer.account);

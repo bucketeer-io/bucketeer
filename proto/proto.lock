@@ -631,7 +631,7 @@
             "fields": [
               {
                 "id": 1,
-                "name": "search_filter_id",
+                "name": "id",
                 "type": "string"
               }
             ]
