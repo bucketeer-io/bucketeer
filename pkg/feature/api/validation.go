@@ -1455,10 +1455,10 @@ func validateVariationID(fs []*featureproto.Feature, p *featureproto.Prerequisit
 
 func (s *FeatureService) validateFeatureStatus(
 	ctx context.Context,
-	id, environmentNameSpace string,
+	id, environmentId string,
 	localizer locale.Localizer,
 ) error {
-	runningExperimentExists, err := s.existsRunningExperiment(ctx, id, environmentNameSpace)
+	runningExperimentExists, err := s.existsRunningExperiment(ctx, id, environmentId)
 	if err != nil {
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
