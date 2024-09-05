@@ -156,5 +156,5 @@ gcpMultiCluster:
     rulePaths:
       - path: /
         backend:
-          serviceName: web
+          serviceName: web-multi-cluster-service
           servicePort: 9003

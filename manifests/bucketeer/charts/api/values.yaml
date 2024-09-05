@@ -98,5 +98,5 @@ gcpMultiCluster:
     rulePaths:
       - path: /
         backend:
-          serviceName: api
+          serviceName: api-multi-cluster-service
           servicePort: 9000
