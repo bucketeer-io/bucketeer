@@ -8,7 +8,7 @@ INSERT INTO ops_progressive_rollout (
     stopped_at,
     created_at,
     updated_at,
-    environment_
+    environment_id
 ) VALUES (
     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 )
