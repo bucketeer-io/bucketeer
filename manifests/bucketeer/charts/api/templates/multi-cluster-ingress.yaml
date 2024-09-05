@@ -15,7 +15,7 @@ spec:
   template:
     spec:
       backend:
-        serviceName: {{ template "api.fullname" . }}
+        serviceName: {{ .Values.gcpMultiCluster.service.name }}
         servicePort: {{ .Values.service.externalPort }}
       tls:
         - secretName: {{ .Values.gcpMultiCluster.ingress.secretName }}
