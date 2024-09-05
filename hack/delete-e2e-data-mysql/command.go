@@ -140,7 +140,7 @@ func (c *command) constructDeleteQuery(target *mysqlE2EInfo) (query string, args
 			DELETE FROM
 				%s
 			WHERE
-				environment_namespace = ? AND
+				environment_id = ? AND
 				%s LIKE ?
 		`, target.table, target.targetField)
 		args = []interface{}{
@@ -153,7 +153,7 @@ func (c *command) constructDeleteQuery(target *mysqlE2EInfo) (query string, args
 		DELETE FROM
 			%s
 		WHERE
-			environment_namespace = ?
+			environment_id = ?
 	`, target.table)
 	args = []interface{}{
 		envNamespace,

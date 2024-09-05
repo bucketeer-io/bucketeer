@@ -1610,7 +1610,7 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:  "success: without environment_namespace",
+			desc:  "success: without environment_id",
 			envId: toPtr(""),
 			setup: func(s *eventCounterService) {
 				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
@@ -1771,7 +1771,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:  "success: without environment_namespace",
+			desc:  "success: without environment_id",
 			envId: toPtr(""),
 			setup: func(s *eventCounterService) {
 				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
