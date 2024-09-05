@@ -1304,7 +1304,7 @@ proto.bucketeer.account.AccountV2.prototype.clearSearchFiltersList =
  * @private {!Array<number>}
  * @const
  */
-proto.bucketeer.account.ConsoleAccount.repeatedFields_ = [7];
+proto.bucketeer.account.ConsoleAccount.repeatedFields_ = [7, 8];
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
@@ -1357,6 +1357,11 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         environmentRolesList: jspb.Message.toObjectList(
           msg.getEnvironmentRolesList(),
           proto.bucketeer.account.ConsoleAccount.EnvironmentRole.toObject,
+          includeInstance
+        ),
+        searchFiltersList: jspb.Message.toObjectList(
+          msg.getSearchFiltersList(),
+          proto_account_search_filter_pb.SearchFilter.toObject,
           includeInstance
         )
       };
@@ -1441,6 +1446,15 @@ proto.bucketeer.account.ConsoleAccount.deserializeBinaryFromReader = function (
         );
         msg.addEnvironmentRoles(value);
         break;
+      case 8:
+        var value = new proto_account_search_filter_pb.SearchFilter();
+        reader.readMessage(
+          value,
+          proto_account_search_filter_pb.SearchFilter
+            .deserializeBinaryFromReader
+        );
+        msg.addSearchFilters(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -1506,6 +1520,14 @@ proto.bucketeer.account.ConsoleAccount.serializeBinaryToWriter = function (
       f,
       proto.bucketeer.account.ConsoleAccount.EnvironmentRole
         .serializeBinaryToWriter
+    );
+  }
+  f = message.getSearchFiltersList();
+  if (f.length > 0) {
+    writer.writeRepeatedMessage(
+      8,
+      f,
+      proto_account_search_filter_pb.SearchFilter.serializeBinaryToWriter
     );
   }
 };
@@ -1956,6 +1978,57 @@ proto.bucketeer.account.ConsoleAccount.prototype.addEnvironmentRoles =
 proto.bucketeer.account.ConsoleAccount.prototype.clearEnvironmentRolesList =
   function () {
     return this.setEnvironmentRolesList([]);
+  };
+
+/**
+ * repeated SearchFilter search_filters = 8;
+ * @return {!Array<!proto.bucketeer.account.SearchFilter>}
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.getSearchFiltersList =
+  function () {
+    return /** @type{!Array<!proto.bucketeer.account.SearchFilter>} */ (
+      jspb.Message.getRepeatedWrapperField(
+        this,
+        proto_account_search_filter_pb.SearchFilter,
+        8
+      )
+    );
+  };
+
+/**
+ * @param {!Array<!proto.bucketeer.account.SearchFilter>} value
+ * @return {!proto.bucketeer.account.ConsoleAccount} returns this
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.setSearchFiltersList =
+  function (value) {
+    return jspb.Message.setRepeatedWrapperField(this, 8, value);
+  };
+
+/**
+ * @param {!proto.bucketeer.account.SearchFilter=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.account.SearchFilter}
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.addSearchFilters = function (
+  opt_value,
+  opt_index
+) {
+  return jspb.Message.addToRepeatedWrapperField(
+    this,
+    8,
+    opt_value,
+    proto.bucketeer.account.SearchFilter,
+    opt_index
+  );
+};
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.account.ConsoleAccount} returns this
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.clearSearchFiltersList =
+  function () {
+    return this.setSearchFiltersList([]);
   };
 
 goog.object.extend(exports, proto.bucketeer.account);
