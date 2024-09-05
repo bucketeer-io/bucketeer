@@ -80,6 +80,8 @@ func (h *accountV2CommandHandler) Handle(ctx context.Context, cmd Command) error
 		return h.changeSearchFilterQuery(ctx, c)
 	case *accountproto.ChangeDefaultSearchFilterCommand:
 		return h.changeDefaultSearchFilter(ctx, c)
+	case *accountproto.DeleteSearchFilterCommand:
+		return h.deleteSearchFiler(ctx, c)
 	default:
 		return ErrBadCommand
 	}
@@ -249,6 +251,17 @@ func (h *accountV2CommandHandler) changeDefaultSearchFilter(
 			DefaultFilter: cmd.DefaultFilter,
 		},
 	)
+}
+
+func (h *accountV2CommandHandler) deleteSearchFiler(
+	ctx context.Context,
+	cmd *accountproto.DeleteSearchFilterCommand) error {
+	if err := h.account.DeleteSearchFilter(cmd.Id); err != nil {
+		return err
+	}
+	return h.send(ctx, eventproto.Event_ACCOUNT_V2_SEARCH_FILTER_DELETED, &eventproto.SearchFilterDeletedEvent{
+		Id: cmd.Id,
+	})
 }
 
 func (h *accountV2CommandHandler) send(

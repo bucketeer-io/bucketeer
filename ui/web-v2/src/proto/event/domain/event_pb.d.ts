@@ -193,6 +193,7 @@ export namespace Event {
     ACCOUNT_V2_SEARCH_FILTER_NANE_CHANGED: 314;
     ACCOUNT_V2_SEARCH_FILTER_QUERY_CHANGED: 315;
     ACCOUNT_V2_SEARCH_FILTER_DEFAULT_CHANGED: 316;
+    ACCOUNT_V2_SEARCH_FILTER_DELETED: 317;
     APIKEY_CREATED: 400;
     APIKEY_NAME_CHANGED: 401;
     APIKEY_ENABLED: 402;
@@ -2952,6 +2953,37 @@ export namespace SearchFilterDefaultChangedEvent {
   export type AsObject = {
     id: string;
     defaultFilter: boolean;
+  };
+}
+
+export class SearchFilterDeletedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SearchFilterDeletedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: SearchFilterDeletedEvent
+  ): SearchFilterDeletedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: SearchFilterDeletedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): SearchFilterDeletedEvent;
+  static deserializeBinaryFromReader(
+    message: SearchFilterDeletedEvent,
+    reader: jspb.BinaryReader
+  ): SearchFilterDeletedEvent;
+}
+
+export namespace SearchFilterDeletedEvent {
+  export type AsObject = {
+    id: string;
   };
 }
 

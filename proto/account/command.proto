@@ -92,3 +92,7 @@ message ChangeDefaultSearchFilterCommand {
   string id = 1;
   bool default_filter = 2;
 }
+
+message DeleteSearchFilterCommand {
+  string id = 1;
+}

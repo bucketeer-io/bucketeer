@@ -378,7 +378,6 @@ func TestUpdateSearchFilter(t *testing.T) {
 	if baseAccount.Account.SearchFilters != nil {
 		t.Fatal("search filters are not nil")
 	}
-
 	initialSearchFilter := &accountproto.SearchFilter{
 		Name:             "name",
 		Query:            "query",
@@ -452,7 +451,6 @@ func TestUpdateSearchFilter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
 	updateAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
@@ -475,6 +473,121 @@ func TestUpdateSearchFilter(t *testing.T) {
 	}
 	if updateSearchFilter.DefaultFilter != requestSearchFilter.DefaultFilter {
 		t.Fatalf("different default filter of filters, expected: %v, actual: %v", initialSearchFilter.DefaultFilter, requestSearchFilter.DefaultFilter)
+	}
+}
+
+func TestDeleteSearchFilter(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	c := newAccountClient(t)
+	defer c.Close()
+	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+		OrganizationId: defaultOrganizationID,
+		Command: &accountproto.CreateAccountV2Command{
+			Name:             name,
+			Email:            email,
+			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	baseAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if baseAccount.Account.SearchFilters != nil {
+		t.Fatal("search filters are not nil")
+	}
+
+	initial1SearchFilter := &accountproto.SearchFilter{
+		Name:             "name1",
+		Query:            "query1",
+		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+		DefaultFilter:    false,
+		EnvironmentId:    "environment-id",
+	}
+	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+		Command: &accountproto.CreateSearchFilterCommand{
+			Name:             initial1SearchFilter.Name,
+			Query:            initial1SearchFilter.Query,
+			FilterTargetType: initial1SearchFilter.FilterTargetType,
+			EnvironmentId:    initial1SearchFilter.EnvironmentId,
+			DefaultFilter:    initial1SearchFilter.DefaultFilter,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	initial2SearchFilter := &accountproto.SearchFilter{
+		Name:             "name2",
+		Query:            "query2",
+		FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+		DefaultFilter:    false,
+		EnvironmentId:    "environment-id",
+	}
+	_, err = c.CreateSearchFilter(ctx, &accountproto.CreateSearchFilterRequest{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+		Command: &accountproto.CreateSearchFilterCommand{
+			Name:             initial2SearchFilter.Name,
+			Query:            initial2SearchFilter.Query,
+			FilterTargetType: initial2SearchFilter.FilterTargetType,
+			EnvironmentId:    initial2SearchFilter.EnvironmentId,
+			DefaultFilter:    initial2SearchFilter.DefaultFilter,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	updatedAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(updatedAccount.Account.SearchFilters) != 2 {
+		t.Fatalf("different count of filters, expected: 2, actual: %v", len(updatedAccount.Account.SearchFilters))
+	}
+
+	deleteFilterID := updatedAccount.Account.SearchFilters[0].Id
+	_, err = c.DeleteSearchFilter(ctx, &accountproto.DeleteSearchFilterRequest{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+		Command: &accountproto.DeleteSearchFilterCommand{
+			Id: deleteFilterID,
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	filterRemovalAccount, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(filterRemovalAccount.Account.SearchFilters) != 1 {
+		t.Fatalf("different count of filters, expected: 1, actual: %v", len(filterRemovalAccount.Account.SearchFilters))
+	}
+	for _, f := range filterRemovalAccount.Account.SearchFilters {
+		if f.Id == deleteFilterID {
+			t.Fatalf("search filter is not deleted")
+		}
 	}
 }
 

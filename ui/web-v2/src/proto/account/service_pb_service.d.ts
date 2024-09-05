@@ -184,6 +184,15 @@ type AccountServiceUpdateSearchFilter = {
   readonly responseType: typeof proto_account_service_pb.UpdateSearchFilterResponse;
 };
 
+type AccountServiceDeleteSearchFilter = {
+  readonly methodName: string;
+  readonly service: typeof AccountService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_account_service_pb.DeleteSearchFilterRequest;
+  readonly responseType: typeof proto_account_service_pb.DeleteSearchFilterResponse;
+};
+
 export class AccountService {
   static readonly serviceName: string;
   static readonly GetMe: AccountServiceGetMe;
@@ -206,6 +215,7 @@ export class AccountService {
   static readonly GetAPIKeyBySearchingAllEnvironments: AccountServiceGetAPIKeyBySearchingAllEnvironments;
   static readonly CreateSearchFilter: AccountServiceCreateSearchFilter;
   static readonly UpdateSearchFilter: AccountServiceUpdateSearchFilter;
+  static readonly DeleteSearchFilter: AccountServiceDeleteSearchFilter;
 }
 
 export type ServiceError = {
@@ -551,6 +561,21 @@ export class AccountServiceClient {
     callback: (
       error: ServiceError | null,
       responseMessage: proto_account_service_pb.UpdateSearchFilterResponse | null
+    ) => void
+  ): UnaryResponse;
+  deleteSearchFilter(
+    requestMessage: proto_account_service_pb.DeleteSearchFilterRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_account_service_pb.DeleteSearchFilterResponse | null
+    ) => void
+  ): UnaryResponse;
+  deleteSearchFilter(
+    requestMessage: proto_account_service_pb.DeleteSearchFilterRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_account_service_pb.DeleteSearchFilterResponse | null
     ) => void
   ): UnaryResponse;
 }

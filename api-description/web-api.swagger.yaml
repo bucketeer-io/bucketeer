@@ -302,6 +302,64 @@ paths:
             $ref: '#/definitions/accountDeleteAccountV2Request'
       tags:
         - Account
+  /v1/account/delete_search_filter:
+    post:
+      summary: Delete Search Filter
+      description: Delete a search filter. To call this API, you need an `VIEWER` role.
+      operationId: web.v1.account.delete_search_filter
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountDeleteSearchFilterResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountDeleteSearchFilterRequest'
+      tags:
+        - Account
   /v1/account/disable_account:
     post:
       summary: Disable
@@ -2874,6 +2932,24 @@ definitions:
       command:
         $ref: '#/definitions/accountDeleteAccountV2Command'
   accountDeleteAccountV2Response:
+    type: object
+  accountDeleteSearchFilterCommand:
+    type: object
+    properties:
+      id:
+        type: string
+  accountDeleteSearchFilterRequest:
+    type: object
+    properties:
+      email:
+        type: string
+      organizationId:
+        type: string
+      environmentId:
+        type: string
+      command:
+        $ref: '#/definitions/accountDeleteSearchFilterCommand'
+  accountDeleteSearchFilterResponse:
     type: object
   accountDisableAPIKeyCommand:
     type: object
