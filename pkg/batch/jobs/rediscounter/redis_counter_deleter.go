@@ -206,7 +206,7 @@ func (r *redisCounterDeleter) filterKeysOlderThanThirtyOneDays(
 ) ([]string, error) {
 	filteredKeys := make([]string, 0, len(keys))
 	for _, key := range keys {
-		// E.g. environment_namespace:uc:1689835532:feature_id:variation_id
+		// E.g. environment_id:uc:1689835532:feature_id:variation_id
 		var regex string
 		if environmentId == "" {
 			regex = fmt.Sprintf("%s:(.*?):", kind)
