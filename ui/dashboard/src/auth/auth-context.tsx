@@ -11,6 +11,7 @@ import { accountMeFetcher } from '@api/account';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { Undefinable } from 'option-t/undefinable';
 import {
+  clearCurrentEnvIdStorage,
   getCurrentEnvIdStorage,
   setCurrentEnvIdStorage
 } from 'storage/environment';
@@ -49,7 +50,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const organizationId = getOrgIdStorage();
   const environmentId = getCurrentEnvIdStorage();
 
-  const [isInitialLoading, setIsInitialLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(
+    !!authToken?.accessToken
+  );
   const [isLogin, setIsLogin] = useState<boolean>(false);
   const [consoleAccount, setConsoleAccount] =
     useState<Undefinable<ConsoleAccount>>();
@@ -72,7 +75,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const onSyncAuthentication = () => {
-    setIsInitialLoading(true);
     if (organizationId) {
       onMeFetcher({ organizationId });
     } else {
@@ -99,6 +101,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     setIsLogin(false);
     clearOrgIdStorage();
     clearTokenStorage();
+    clearCurrentEnvIdStorage();
     navigate(PAGE_PATH_ROOT);
   };
 

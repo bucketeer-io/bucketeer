@@ -1,14 +1,14 @@
 import { getCurrentEnvIdStorage } from 'storage/environment';
 import { ConsoleAccount, Environment, EnvironmentRole, Project } from '@types';
+import { isNotEmpty } from 'utils/data-type';
 
 export const currentEnvironmentRole = (
   account: ConsoleAccount
 ): EnvironmentRole => {
   const currentEnvId = getCurrentEnvIdStorage();
-  const curEnvId =
-    currentEnvId != null && currentEnvId != undefined
-      ? currentEnvId
-      : account.environmentRoles[0].environment.id;
+  const curEnvId = isNotEmpty(currentEnvId)
+    ? currentEnvId
+    : account.environmentRoles[0].environment.id;
 
   let curEnvRole = account.environmentRoles.find(
     environmentRole => environmentRole.environment.id === curEnvId

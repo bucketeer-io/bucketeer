@@ -106,7 +106,7 @@ export const EnvironmentRoot = memo(
       if (!envUrlCode) {
         navigate(`${PAGE_PATH_ROOT}${currentEnv.urlCode}${PAGE_PATH_FEATURES}`);
       }
-    }, [account]);
+    }, [account, envUrlCode]);
 
     return (
       <Routes>

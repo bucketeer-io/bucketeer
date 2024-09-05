@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { IconCloseRound } from 'react-icons-material-design';
+import { useNavigate } from 'react-router-dom';
 import * as Popover from '@radix-ui/react-popover';
 import {
   getCurrentEnvironment,
@@ -7,6 +8,10 @@ import {
   getUniqueProjects,
   useAuth
 } from 'auth';
+import { PAGE_PATH_ROOT } from 'constants/routing';
+import { unwrapUndefinable } from 'option-t/undefinable';
+import { setCurrentEnvIdStorage } from 'storage/environment';
+import { Environment, Project } from '@types';
 import { cn } from 'utils/style';
 import { IconChevronRight, IconFolder } from '@icons';
 import Divider from 'components/divider';
@@ -16,26 +21,45 @@ import { ScrollArea } from 'components/scroll-area';
 import SearchInput from 'components/search-input';
 
 const MyProjects = () => {
+  const navigate = useNavigate();
   const { consoleAccount } = useAuth();
   const [isShowProjectsList, setIsShowProjectsList] = useState(false);
   const [searchValue, setSearchValue] = useState('');
 
-  const envRoles = consoleAccount?.environmentRoles || [];
-  const projects = getUniqueProjects(envRoles);
-  const currentEnv = getCurrentEnvironment(consoleAccount!);
+  const environmentRoles = consoleAccount?.environmentRoles || [];
+  const projects = getUniqueProjects(environmentRoles);
+  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
 
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(
-    projects[0].id
+  const initialProject = unwrapUndefinable(
+    environmentRoles.find(role => role.environment.id == currenEnvironment.id)
+  ).project;
+
+  const [selectedProject, setSelectedProject] =
+    useState<Project>(initialProject);
+  const [selectedEnvironment, setSelectedEnvironment] =
+    useState<Environment>(currenEnvironment);
+
+  const environments = getEnvironmentsByProjectId(
+    environmentRoles,
+    selectedProject.id
   );
-  const [selectedEnvId, setSelectedEnvId] = useState<string>(currentEnv.id);
-  const environments = getEnvironmentsByProjectId(envRoles, selectedProjectId);
 
   const onOpenChange = useCallback((v: boolean) => {
     setIsShowProjectsList(v);
   }, []);
 
+  const onHandleChange = useCallback(
+    (value: Environment) => {
+      setSelectedEnvironment(value);
+      setCurrentEnvIdStorage(value.id);
+      navigate(PAGE_PATH_ROOT);
+      setIsShowProjectsList(false);
+    },
+    [setSelectedEnvironment]
+  );
+
   return (
-    <Popover.Root onOpenChange={onOpenChange}>
+    <Popover.Root onOpenChange={onOpenChange} open={isShowProjectsList}>
       <Popover.Content align="start" className="border-none mt-2">
         <div className="w-[600px] bg-white rounded-lg shadow">
           <div className="flex items-center justify-between px-5 py-4">
@@ -62,9 +86,9 @@ const MyProjects = () => {
                     items={projects.map(item => ({
                       label: item.name,
                       value: item.id,
-                      selected: item.id === selectedProjectId,
-                      expanded: item.id === selectedProjectId,
-                      onSelect: setSelectedProjectId
+                      selected: item.id === selectedProject.id,
+                      expanded: item.id === selectedProject.id,
+                      onSelect: () => setSelectedProject(item)
                     }))}
                   />
                 </ScrollArea>
@@ -77,8 +101,8 @@ const MyProjects = () => {
                     items={environments.map(item => ({
                       label: item.name,
                       value: item.id,
-                      selected: item.id === selectedEnvId,
-                      onSelect: setSelectedEnvId
+                      selected: item.id === selectedEnvironment.id,
+                      onSelect: () => onHandleChange(item)
                     }))}
                   />
                 </ScrollArea>
@@ -96,9 +120,9 @@ const MyProjects = () => {
             { 'bg-primary-400': isShowProjectsList }
           )}
         >
-          <div className="flex items-center gap-x-2">
+          <div className="flex items-center gap-x-2 truncate">
             <Icon color="primary-50" icon={IconFolder} size="sm" />
-            {`Abematv`}
+            <span className="truncate">{selectedEnvironment.name}</span>
           </div>
           <Icon color="primary-50" icon={IconChevronRight} />
         </div>
