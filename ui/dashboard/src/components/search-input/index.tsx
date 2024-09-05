@@ -17,39 +17,25 @@ const SearchInput = ({
   onChange,
   disabled
 }: SearchBarProps) => {
-  const searchAtionRef = useRef<HTMLDivElement>(null);
   const [searchValue, setSearchValue] = useState(defaultValue);
-  const searchValueRef = useRef(searchValue);
-
-  useEffect(() => {
-    searchValueRef.current = searchValue;
-  }, [searchValue]);
+  const searchValueRef = useRef(false);
 
   useEffect(() => {
     setSearchValue(defaultValue);
   }, [defaultValue]);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (searchValueRef.current === '') {
-        setSearchValue('');
-        onChange('');
-      } else if (
-        searchAtionRef.current &&
-        !searchAtionRef.current.contains(event.target as Node)
-      ) {
-        if (defaultValue !== searchValueRef.current) {
-          setSearchValue(defaultValue);
-        }
-      }
+    if (searchValueRef.current) {
+      const timeout = setTimeout(() => onChange(searchValue), 500);
+      return () => {
+        clearTimeout(timeout);
+      };
     }
+  }, [searchValue]);
 
-    document.addEventListener('mousedown', handleClickOutside);
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [defaultValue]);
+  useEffect(() => {
+    searchValueRef.current = true;
+  }, []);
 
   return (
     <form

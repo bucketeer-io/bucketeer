@@ -11,6 +11,7 @@ import {
   PAGE_PATH_EXPERIMENTS
 } from 'constants/routing';
 import { useToggleOpen } from 'hooks';
+import { useTranslation } from 'i18n';
 import * as IconSystem from '@icons';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
@@ -19,6 +20,7 @@ import MyProjects from './my-projects';
 import UserMenu from './user-menu';
 
 const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
+  const { t } = useTranslation(['common']);
   const [isShowSetting, onShowSetting, onCloseSetting] = useToggleOpen(false);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -38,47 +40,64 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
               className="flex items-center gap-x-2 text-primary-50"
             >
               <Icon icon={IconSystem.IconBackspace} />
-              <span>{`Back to Main`}</span>
+              <span>{t(`navigation.back-to-main`)}</span>
             </button>
             <Divider className="my-5 bg-primary-50 opacity-10" />
             <SectionMenu
-              title="General"
+              title={t('general')}
               items={[
                 {
-                  label: 'Projects',
-                  icon: IconSystem.IconFolder,
-                  href: '/projects'
-                },
-                {
-                  label: 'Organizations',
+                  label: t(`organizations`),
                   icon: IconSystem.IconBuilding,
                   href: '/organizations'
                 },
                 {
-                  label: 'Members',
-                  icon: IconSystem.IconMember,
-                  href: '/members'
+                  label: t(`settings`),
+                  icon: IconSystem.IconSetting,
+                  href: '/settings'
                 },
                 {
-                  label: 'Usage',
+                  label: t(`projects`),
+                  icon: IconSystem.IconFolder,
+                  href: '/projects'
+                },
+
+                {
+                  label: t(`usage`),
                   icon: IconSystem.IconUsage,
                   href: '/usage'
                 }
               ]}
             />
             <SectionMenu
-              title="INTEGRATIONS"
+              title={t(`access`)}
               className="mt-5"
               items={[
                 {
-                  label: 'Integrations',
-                  icon: IconSystem.IconIntegration,
-                  href: '/integrations'
+                  label: t(`members`),
+                  icon: IconSystem.IconMember,
+                  href: '/members'
                 },
                 {
-                  label: 'API Keys',
+                  label: t(`API-keys`),
                   icon: IconSystem.IconKey,
                   href: '/api-keys'
+                }
+              ]}
+            />
+            <SectionMenu
+              title={t(`integrations`)}
+              className="mt-5"
+              items={[
+                {
+                  label: `Slack`,
+                  icon: IconSystem.IconSlack,
+                  href: '/integrations/slack'
+                },
+                {
+                  label: `FCM`,
+                  icon: IconSystem.IconFCM,
+                  href: '/integrations/fcm'
                 }
               ]}
             />
@@ -86,30 +105,30 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
         ) : (
           <div className="flex flex-col flex-1 pt-6">
             <div className="px-3 uppercase typo-head-bold-tiny text-primary-50 mb-3">
-              {`Environment`}
+              {t(`environment`)}
             </div>
             <MyProjects />
             <Divider className="my-5 bg-primary-50 opacity-10" />
             <SectionMenu
-              title={`Management`}
+              title={t(`management`)}
               items={[
                 {
-                  label: 'Audit Logs',
+                  label: t(`navigation.audit-logs`),
                   icon: IconSystem.IconLogs,
                   href: `/${environmentUrlCode}${PAGE_PATH_AUDIT_LOGS}`
                 },
                 {
-                  label: 'Feature Flags',
+                  label: t(`navigation.feature-flags`),
                   icon: IconSystem.IconSwitch,
                   href: `/${environmentUrlCode}${PAGE_PATH_FEATURES}`
                 },
                 {
-                  label: 'User Segment',
+                  label: t(`navigation.user-segment`),
                   icon: IconSystem.IconUser,
                   href: `/${environmentUrlCode}${PAGE_PATH_USER_SEGMENTS}`
                 },
                 {
-                  label: 'Debugger',
+                  label: t(`navigation.debugger`),
                   icon: IconSystem.IconDebugger,
                   href: `/${environmentUrlCode}${PAGE_PATH_DEBUGGER}`
                 }
@@ -117,16 +136,16 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
               onClickNavLink={onClickNavLink}
             />
             <SectionMenu
-              title={`Analysis`}
+              title={t(`analysis`)}
               className="mt-4"
               items={[
                 {
-                  label: 'Goals',
+                  label: t(`navigation.goals`),
                   icon: IconSystem.IconNote,
                   href: `/${environmentUrlCode}${PAGE_PATH_GOALS}`
                 },
                 {
-                  label: 'Experiments',
+                  label: t(`navigation.experiments`),
                   icon: IconSystem.IconProton,
                   href: `/${environmentUrlCode}${PAGE_PATH_EXPERIMENTS}`
                 }

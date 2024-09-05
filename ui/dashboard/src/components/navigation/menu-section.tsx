@@ -16,7 +16,7 @@ const SectionMenu = ({
 }: MenuProps) => {
   return (
     <div className={cn('flex flex-col', className)}>
-      <div className="px-3 uppercase typo-head-bold-tiny text-primary-50 mb-3">
+      <div className="px-3 uppercase typo-head-bold-tiny text-primary-50 mb-3 opacity-70">
         {title}
       </div>
 

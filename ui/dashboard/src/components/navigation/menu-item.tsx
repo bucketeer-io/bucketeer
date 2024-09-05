@@ -21,8 +21,8 @@ const MenuItemComponent = ({
   const iconEl = <Icon color="primary-50" size="sm" icon={icon} />;
   const textClsx = cn(
     'flex items-center gap-x-2 w-full text-primary-50',
-    'px-3 py-3 rounded-lg typo-para-medium my-0.5',
-    'hover:bg-primary-400 hover:opacity-80 sidebar-menu'
+    'px-3 py-3 rounded-lg typo-para-medium my-0.5 capitalize',
+    'hover:bg-primary-400 opacity-80 sidebar-menu'
   );
 
   const actionEl = href ? (

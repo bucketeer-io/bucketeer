@@ -1,27 +1,29 @@
 import * as Popover from '@radix-ui/react-popover';
 import primaryAvatar from 'assets/avatars/primary.svg';
 import { useAuth } from 'auth';
+import { useTranslation } from 'i18n';
 import { IconBuilding, IconChevronRight, IconLogout, IconUser } from '@icons';
 import { AvatarImage } from 'components/avatar';
 import MenuItemComponent from './menu-item';
 
 const UserMenu = () => {
+  const { t } = useTranslation(['common']);
   const { logout } = useAuth();
 
   const menuItems = [
     {
-      label: 'User Profile',
+      label: t(`navigation.user-profile`),
       icon: IconUser,
       onClick: () => {}
     },
     {
-      label: 'Polaris Edge',
+      label: t(`navigation.polaris-edge`),
       icon: IconBuilding,
       actIcon: IconChevronRight,
       onClick: () => {}
     },
     {
-      label: 'Logout',
+      label: t(`navigation.logout`),
       icon: IconLogout,
       onClick: logout
     }
