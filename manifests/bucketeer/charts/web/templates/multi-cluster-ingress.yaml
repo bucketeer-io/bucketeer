@@ -1,4 +1,4 @@
-{{- if .Values.gcpMultiCluster.enabled }}
+{{- if and .Values.gcpMultiCluster.enabled .Values.gcpMultiCluster.configCluster }}
 apiVersion: networking.gke.io/v1
 kind: MultiClusterIngress
 metadata:

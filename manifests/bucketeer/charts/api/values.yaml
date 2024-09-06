@@ -87,6 +87,7 @@ resources: {}
 serviceAccount:
   annotations: {}
 gcpMultiCluster:
+  configCluster: false
   enabled: false
   service:
     name: api-multi-cluster-service
