@@ -85,8 +85,6 @@ const MyProjects = () => {
     [setSelectedEnvironment]
   );
 
-  console.log('selected', selectedProject, initialProject);
-
   return (
     <Popover.Root onOpenChange={onOpenChange} open={isShowProjectsList}>
       <Popover.Content align="start" className="border-none mt-2 z-20">
@@ -150,10 +148,9 @@ const MyProjects = () => {
       <Popover.Trigger>
         <div
           className={cn(
-            'flex items-center gap-x-2 w-full text-primary-50',
+            'flex items-center gap-x-2 w-full text-primary-50 hover:bg-primary-400',
             'px-3 py-3 rounded-lg typo-para-medium justify-between',
-            'hover:bg-primary-400 opacity-80',
-            { 'bg-primary-400 opacity-100': isShowProjectsList }
+            { 'bg-primary-400': isShowProjectsList }
           )}
         >
           <div className="flex items-center gap-x-2 truncate">

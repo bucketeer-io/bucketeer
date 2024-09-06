@@ -12,6 +12,7 @@ import {
 } from 'constants/routing';
 import { useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
+import { cn } from 'utils/style';
 import * as IconSystem from '@icons';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
@@ -21,20 +22,25 @@ import UserMenu from './user-menu';
 
 const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
   const { t } = useTranslation(['common']);
-  const [isShowSetting, onShowSetting, onCloseSetting] = useToggleOpen(false);
+  const [isOpenSetting, onOpenSetting, onCloseSetting] = useToggleOpen(false);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const environmentUrlCode = currentEnvironment.urlCode;
 
   return (
-    <div className="fixed h-screen w-[248px] bg-primary-500 py-8 px-6">
-      <div className="flex flex-col h-full">
+    <div className="fixed h-screen w-[248px] bg-primary-500 z-50 py-8 px-6">
+      <div className="flex flex-col h-full relative overflow-hidden">
         <Link to={PAGE_PATH_ROOT}>
           <img src={logo} alt="Bucketer" />
         </Link>
 
-        {isShowSetting ? (
-          <div className="flex flex-col flex-1 pt-6">
+        <div className="flex flex-col flex-1 items-center pt-6">
+          <div
+            className={cn(
+              'w-full absolute ease-in-out transition-all duration-500 -right-[100%]',
+              { 'right-0': isOpenSetting }
+            )}
+          >
             <button
               onClick={onCloseSetting}
               className="flex items-center gap-x-2 text-primary-50"
@@ -61,7 +67,6 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
                   icon: IconSystem.IconFolder,
                   href: '/projects'
                 },
-
                 {
                   label: t(`usage`),
                   icon: IconSystem.IconUsage,
@@ -102,9 +107,13 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
               ]}
             />
           </div>
-        ) : (
-          <div className="flex flex-col flex-1 pt-6">
-            <div className="px-3 uppercase typo-head-bold-tiny text-primary-50 mb-3">
+          <div
+            className={cn(
+              'w-full absolute ease-in-out transition-all duration-500 -left-[100%]',
+              { 'left-0': !isOpenSetting }
+            )}
+          >
+            <div className="px-3 opacity-80 uppercase typo-head-bold-tiny text-primary-50 mb-3">
               {t(`environment`)}
             </div>
             <MyProjects />
@@ -152,12 +161,13 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
               ]}
             />
           </div>
-        )}
+        </div>
+
         <Divider className="mb-3 bg-primary-50 opacity-10" />
 
         <div className="flex items-center justify-between">
           <UserMenu />
-          <button onClick={onShowSetting}>
+          <button onClick={onOpenSetting}>
             <Icon icon={IconSystem.IconSetting} color="primary-50" />
           </button>
         </div>

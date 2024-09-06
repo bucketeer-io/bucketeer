@@ -61,17 +61,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [isGoogleAuthError, setIsGoogleAuthError] = useState(false);
 
   const onMeFetcher = (payload: MeFetcherPayload) => {
-    return accountMeFetcher(payload)
-      .then(response => {
-        setConsoleAccount(response.account);
-        setIsLogin(true);
-        if (!environmentId) {
-          setCurrentEnvIdStorage(
-            response.account.environmentRoles[0].environment.id
-          );
-        }
-      })
-      .finally(() => setIsInitialLoading(false));
+    return accountMeFetcher(payload).then(response => {
+      setConsoleAccount(response.account);
+      setIsLogin(true);
+      if (!environmentId) {
+        setCurrentEnvIdStorage(
+          response.account.environmentRoles[0].environment.id
+        );
+      }
+      setIsInitialLoading(false);
+    });
   };
 
   const onSyncAuthentication = () => {
