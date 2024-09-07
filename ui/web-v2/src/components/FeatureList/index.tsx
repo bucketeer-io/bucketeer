@@ -14,12 +14,13 @@ import React, {
 } from 'react';
 import { useIntl } from 'react-intl';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useHistory, Prompt } from 'react-router-dom';
 
 import { FEATURE_LIST_PAGE_SIZE } from '../../constants/feature';
 import {
   PAGE_PATH_FEATURES,
   PAGE_PATH_FEATURE_TARGETING,
+  PAGE_PATH_NEW,
   PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { intl } from '../../lang';
@@ -78,12 +79,18 @@ import {
   useSearchParams
 } from '../../utils/search-params';
 import SaveSvg from '../../assets/svg/save.svg';
+import SaveLargeSvg from '../../assets/svg/save-large.svg';
 import { parse } from 'query-string';
 
 export enum FlagStatus {
   NEW, // This flag is new and has not been requested yet.
   RECEIVING_REQUESTS, // It is receiving one more requests in the last 7 days.
   INACTIVE // It is not receiving requests for 7 days.
+}
+
+enum ConfirmType {
+  YES,
+  NO
 }
 
 interface FlagStatusIconProps {
@@ -516,6 +523,13 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
 
     const organizationId = currentEnvironment.organizationId;
 
+    const location = useLocation();
+    const [unsavedChanges, setUnsavedChanges] = useState(false);
+    const [nextLocation, setNextLocation] = useState(null);
+    const [showSaveChangesDialog, setShowSaveChangesDialog] = useState(false);
+
+    const history = useHistory();
+
     useEffect(() => {
       const newSearchFiltersList =
         (me.consoleAccount?.searchFiltersList as SearchFilter[]) || [];
@@ -568,23 +582,28 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       }
     }, [selectedSearchFilter, options]);
 
-    // useEffect(() => {
-    //   const handleBeforeUnload = (e) => {
-    //     // if (isFormDirty) {
-    //     const message =
-    //       'You have unsaved changes. Do you really want to leave?';
-    //     console.log('beforeunload');
-    //     e.returnValue = message; // Standard way to set custom message.
-    //     return message; // Some browsers show this message, others show a generic one.
-    //     // }
-    //   };
+    useEffect(() => {
+      const findSaveChanges = searchFiltersList.find((s) => s.saveChanges);
+      setUnsavedChanges(findSaveChanges ? true : false);
+    }, [searchFiltersList]);
 
-    //   window.addEventListener('beforeunload', handleBeforeUnload);
+    useEffect(() => {
+      const handleBeforeUnload = (e) => {
+        if (unsavedChanges) {
+          const message =
+            'You have unsaved changes. Do you really want to leave?';
+          console.log('beforeunload');
+          e.returnValue = message; // Standard way to set custom message.
+          return message; // Some browsers show this message, others show a generic one.
+        }
+      };
 
-    //   return () => {
-    //     window.removeEventListener('beforeunload', handleBeforeUnload);
-    //   };
-    // }, []);
+      window.addEventListener('beforeunload', handleBeforeUnload);
+
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      };
+    }, [unsavedChanges]);
 
     const handleFilterKeyChange = useCallback(
       (key: string): void => {
@@ -768,6 +787,54 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       setSelectedSearchFilter(null);
     };
 
+    const handleConfirm = (confirmType: ConfirmType) => {
+      if (confirmType === ConfirmType.YES) {
+        handleSaveChanges(selectedSearchFilter.id);
+      } else {
+        // If the user clicked on the "No" button, we should reset the query to the last saved query
+        onChange(parse(selectedSearchFilter.query));
+        setSearchFiltersList(
+          searchFiltersList.map((s) => ({
+            ...s,
+            saveChanges: false,
+            query:
+              s.id === selectedSearchFilter.id
+                ? selectedSearchFilter.query
+                : s.query
+          }))
+        );
+      }
+
+      const { pathname: nextPathname } = nextLocation;
+      const isNew =
+        `/${nextPathname.substring(nextPathname.lastIndexOf('/') + 1)}` ==
+        PAGE_PATH_NEW;
+
+      setShowSaveChangesDialog(false);
+
+      // If the user clicked on the "Add" button, we should show add form
+      if (isNew) {
+        onAdd();
+      } else {
+        history.push({
+          pathname: nextLocation.pathname
+        });
+      }
+    };
+
+    const handleNavigation = (nextLocation) => {
+      if (
+        !showSaveChangesDialog &&
+        unsavedChanges &&
+        location.pathname !== nextLocation.pathname
+      ) {
+        setNextLocation(nextLocation); // Save the location the user is trying to go to
+        setShowSaveChangesDialog(true); // Show custom confirmation popup
+        return false; // Block navigation for now
+      }
+      return true; // Allow navigation if no unsaved changes
+    };
+
     return (
       <div
         className={classNames(
@@ -798,6 +865,12 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
             />
           </div>
           <div className="flex gap-2 flex-wrap w-full items-center">
+            <Prompt
+              when={unsavedChanges}
+              message={(location) => {
+                return handleNavigation(location);
+              }}
+            />
             {searchFiltersList.map((searchFilter) => (
               <Popover className="relative flex" key={searchFilter.id}>
                 <div
@@ -894,7 +967,11 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
               handleFormSubmit={handleFormSubmit}
             />
           )}
-          {/* <div className="flex-grow" /> */}
+          <SaveChangesDialog
+            open={showSaveChangesDialog}
+            close={() => setShowSaveChangesDialog(false)}
+            onConfirm={handleConfirm}
+          />
           <div className="flex-none -mr-2">
             <SortSelect
               sortKey={options.sort}
@@ -1042,6 +1119,90 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     );
   }
 );
+
+interface SaveChangesDialogProps {
+  open: boolean;
+  close: () => void;
+  onConfirm: (confirmType: ConfirmType) => void;
+}
+
+const SaveChangesDialog = ({
+  open,
+  close,
+  onConfirm
+}: SaveChangesDialogProps) => {
+  const { formatMessage: f } = useIntl();
+
+  return (
+    <Transition.Root show={open} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={close}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        </Transition.Child>
+        <form className="fixed inset-0 z-10 overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enterTo="opacity-100 translate-y-0 sm:scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            >
+              <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all w-[500px]">
+                <div className="flex items-center justify-between px-4 py-5 border-b">
+                  <p className="text-xl font-bold">
+                    Save Changes Before Exiting?
+                  </p>
+                  <XIcon
+                    width={20}
+                    className="text-gray-400 cursor-pointer"
+                    onClick={close}
+                  />
+                </div>
+                <div className="p-4 space-y-4 py-5 px-11 flex flex-col items-center">
+                  <SaveLargeSvg />
+                  <p className="text-gray-500 text-center">
+                    If you exit without saving the changes, your modifications
+                    will not be preserved. Would you like to save before
+                    exiting? Click 'Yes' to confirm or 'No' to exit without
+                    saving.
+                  </p>
+                </div>
+                <div className="p-4 flex justify-end border-t space-x-4">
+                  <button
+                    type="button"
+                    className="btn-cancel !min-w-max"
+                    disabled={false}
+                    onClick={() => onConfirm(ConfirmType.NO)}
+                  >
+                    {f(messages.no)}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-submit"
+                    onClick={() => onConfirm(ConfirmType.YES)}
+                  >
+                    {f(messages.yes)}
+                  </button>
+                </div>
+              </div>
+            </Transition.Child>
+          </div>
+        </form>
+      </Dialog>
+    </Transition.Root>
+  );
+};
 
 interface AddEditViewModalProps {
   open: boolean;

@@ -175,11 +175,7 @@ function isMenuItem(item: MenuItem | Divider): item is MenuItem {
   return item.messageComponent !== null;
 }
 
-interface Props {
-  onClickNavLink: () => void;
-}
-
-export const SideMenu: FC<Props> = memo(({ onClickNavLink }) => {
+export const SideMenu: FC = memo(() => {
   const dispatch = useDispatch<AppDispatch>();
   const history = useHistory();
   const { formatMessage: f } = useIntl();
@@ -211,7 +207,7 @@ export const SideMenu: FC<Props> = memo(({ onClickNavLink }) => {
           (item, i) =>
             isMenuItem(item) ? (
               <div key={i} className="py-1">
-                <SideMenuItem item={item} onClick={onClickNavLink} />
+                <SideMenuItem item={item} />
               </div>
             ) : (
               <div
@@ -239,10 +235,9 @@ export const SideMenu: FC<Props> = memo(({ onClickNavLink }) => {
 
 interface SideMenuItemProps {
   item: MenuItem;
-  onClick: () => void;
 }
 
-const SideMenuItem: FC<SideMenuItemProps> = ({ item, onClick }) => {
+const SideMenuItem: FC<SideMenuItemProps> = ({ item }) => {
   return item.external ? (
     <a href={item.path} target={item.target}>
       <div className="px-3">
@@ -259,7 +254,6 @@ const SideMenuItem: FC<SideMenuItemProps> = ({ item, onClick }) => {
       <NavLink
         to={item.path}
         target={item.target}
-        onClick={onClick}
         className="sidemenu-item flex px-5 py-2.5 rounded-md"
       >
         <div className="flex justify-content items-center">
