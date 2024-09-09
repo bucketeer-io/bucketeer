@@ -145,19 +145,21 @@ const MyProjects = () => {
           </div>
         </div>
       </Popover.Content>
-      <Popover.Trigger>
+      <Popover.Trigger className="w-full">
         <div
           className={cn(
-            'flex items-center gap-x-2 w-full text-primary-50 hover:bg-primary-400',
-            'px-3 py-3 rounded-lg typo-para-medium justify-between',
+            'flex items-center w-full text-primary-50 hover:bg-primary-400',
+            'pl-3 pr-1.5 py-3 rounded-lg typo-para-medium justify-between',
             { 'bg-primary-400': isShowProjectsList }
           )}
         >
           <div className="flex items-center gap-x-2 truncate">
             <Icon color="primary-50" icon={IconFolder} size="sm" />
-            <span className="truncate">{selectedEnvironment.name}</span>
+            <span className="truncate text-ellipsis">
+              {selectedEnvironment.name}
+            </span>
           </div>
-          <Icon color="primary-50" icon={IconChevronRight} />
+          <Icon color="primary-50" size="sm" icon={IconChevronRight} />
         </div>
       </Popover.Trigger>
     </Popover.Root>

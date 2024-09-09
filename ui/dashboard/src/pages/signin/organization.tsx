@@ -49,12 +49,11 @@ const SelectOrganization = () => {
           <Form.Field
             control={form.control}
             name="organization"
-            render={({ field }) => (
+            render={() => (
               <Form.Item>
                 <Form.Label required>{t(`organization`)}</Form.Label>
                 <Form.Control>
                   <Dropdown
-                    {...field}
                     expand="full"
                     className="w-[442px]"
                     placeholder={t(`organization-placeholder`)}
