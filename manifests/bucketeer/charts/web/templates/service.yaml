@@ -15,7 +15,7 @@ metadata:
     envoy: "true"
     metrics: "true"
 spec:
-  type: ClusterIP
+  type: {{ .Values.service.type }}
   ports:
     - name: grpc-service
       port: {{ .Values.service.grpcPort }}

@@ -62,6 +62,7 @@ envoy:
     maxRequests: 3500
     maxConnections: 3500
 service:
+  type: ClusterIP
   externalPort: 9000
 ingress:
   name: api
