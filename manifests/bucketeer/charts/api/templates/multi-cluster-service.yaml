@@ -10,7 +10,7 @@ metadata:
     release: {{ template "api.fullname" . }}
     heritage: {{ .Release.Service }}
   annotations:
-    cloud.google.com/backend-config: '{"ports": {"{{ .Values.service.externalPort }}":"{{ template "api.fullname" . }}-mcs-backend-config"}}'
+    cloud.google.com/backend-config: '{"ports": {"{{ .Values.service.externalPort }}":"{{ template "api.fullname" . }}"}}'
     networking.gke.io/app-protocols: '{"service":"HTTP2"}'
     cloud.google.com/neg: '{"ingress": true}'
 spec:

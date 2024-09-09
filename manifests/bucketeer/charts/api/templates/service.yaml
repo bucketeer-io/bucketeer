@@ -1,4 +1,3 @@
-{{- if not .Values.gcpMultiCluster.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -16,7 +15,7 @@ metadata:
     envoy: "true"
     metrics: "true"
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
     - name: service
       port: {{ .Values.service.externalPort }}
@@ -31,4 +30,3 @@ spec:
   selector:
     app: {{ template "api.name" . }}
     release: {{ template "api.fullname" . }}
-{{- end }}

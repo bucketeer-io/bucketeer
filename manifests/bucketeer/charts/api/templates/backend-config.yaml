@@ -1,4 +1,4 @@
-{{- if and .Values.env.gcpEnabled (not .Values.gcpMultiCluster.enabled) }}
+{{- if .Values.env.gcpEnabled }}
 apiVersion: cloud.google.com/v1beta1
 kind: BackendConfig
 metadata:

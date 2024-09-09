@@ -1,4 +1,3 @@
-{{- if not .Values.gcpMultiCluster.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -16,7 +15,7 @@ metadata:
     envoy: "true"
     metrics: "true"
 spec:
-  type: {{ .Values.service.type }}
+  type: ClusterIP
   ports:
     - name: grpc-service
       port: {{ .Values.service.grpcPort }}
@@ -35,4 +34,3 @@ spec:
   selector:
     app: {{ template "web.name" . }}
     release: {{ template "web.fullname" . }}
-{{- end }}
