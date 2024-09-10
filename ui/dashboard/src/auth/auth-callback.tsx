@@ -11,7 +11,7 @@ import { AppLoading } from 'app';
 import { useAuth } from './auth-context';
 
 export const AuthCallbackPage: FC = memo(() => {
-  const { syncSignIn, setIsGoogleAuthError } = useAuth();
+  const { syncSignIn, setIsGoogleAuthError, setIsInitialLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const query = location.search;
@@ -28,6 +28,7 @@ export const AuthCallbackPage: FC = memo(() => {
         })
         .catch(() => {
           setIsGoogleAuthError(true);
+          setIsInitialLoading(false);
           navigate(PAGE_PATH_ROOT);
         })
   );
@@ -35,6 +36,7 @@ export const AuthCallbackPage: FC = memo(() => {
   useEffect(() => {
     const { code, state } = queryString.parse(query);
     const cookieState = getCookieState();
+    setIsInitialLoading(true);
     if (!!code && state === cookieState) {
       if (typeof code === 'string') {
         onGoogleLoginHandler({

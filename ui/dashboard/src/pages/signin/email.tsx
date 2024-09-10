@@ -35,7 +35,7 @@ const formSchema = yup.object().shape({
 
 const SignInWithEmail = () => {
   const { t } = useTranslation(['auth']);
-  const { syncSignIn } = useAuth();
+  const { syncSignIn, setIsInitialLoading } = useAuth();
   const navigate = useNavigate();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -54,6 +54,7 @@ const SignInWithEmail = () => {
     return signIn(values)
       .then(response => {
         syncSignIn(response.token);
+        setIsInitialLoading(true);
         navigate(PAGE_PATH_ROOT);
       })
       .catch(error => {

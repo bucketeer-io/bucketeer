@@ -28,13 +28,17 @@ import {
 import { AuthToken, ConsoleAccount, Organization } from '@types';
 
 interface AuthContextType {
-  syncSignIn: (authToken: AuthToken) => void;
-  onMeFetcher: (payload: MeFetcherPayload) => Promise<void>;
   logout: () => void;
   isLogin: boolean;
-  isInitialLoading: boolean;
+
   consoleAccount: Undefinable<ConsoleAccount>;
   myOrganizations: Array<Organization>;
+
+  syncSignIn: (authToken: AuthToken) => void;
+  onMeFetcher: (payload: MeFetcherPayload) => Promise<void>;
+
+  isInitialLoading: boolean;
+  setIsInitialLoading: (v: boolean) => void;
 
   isGoogleAuthError: boolean;
   setIsGoogleAuthError: (v: boolean) => void;
@@ -61,16 +65,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [isGoogleAuthError, setIsGoogleAuthError] = useState(false);
 
   const onMeFetcher = (payload: MeFetcherPayload) => {
-    return accountMeFetcher(payload).then(response => {
-      setConsoleAccount(response.account);
-      setIsLogin(true);
-      if (!environmentId) {
-        setCurrentEnvIdStorage(
-          response.account.environmentRoles[0].environment.id
-        );
-      }
-      setIsInitialLoading(false);
-    });
+    return accountMeFetcher(payload)
+      .then(response => {
+        setConsoleAccount(response.account);
+        setIsLogin(true);
+        if (!environmentId) {
+          setCurrentEnvIdStorage(
+            response.account.environmentRoles[0].environment.id
+          );
+        }
+      })
+      .finally(() => setIsInitialLoading(false));
   };
 
   const onSyncAuthentication = () => {
@@ -95,6 +100,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const logout = () => {
     setConsoleAccount(undefined);
+    setMyOrganizations([]);
     setIsLogin(false);
     clearOrgIdStorage();
     clearTokenStorage();
@@ -111,13 +117,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   return (
     <AuthContext.Provider
       value={{
-        syncSignIn,
-        onMeFetcher,
-        logout,
         isLogin,
-        isInitialLoading,
+        logout,
+
         consoleAccount,
         myOrganizations,
+
+        syncSignIn,
+        onMeFetcher,
+
+        isInitialLoading,
+        setIsInitialLoading,
 
         isGoogleAuthError,
         setIsGoogleAuthError
