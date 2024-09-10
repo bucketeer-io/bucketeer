@@ -66,7 +66,7 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	// Create tables
 	evaluationEventSchema := bigquery.Schema{
 		{Name: "id", Type: bigquery.StringFieldType},
-		{Name: "environment_namespace", Type: bigquery.StringFieldType},
+		{Name: "environment_id", Type: bigquery.StringFieldType},
 		{Name: "timestamp", Type: bigquery.TimestampFieldType},
 		{Name: "feature_id", Type: bigquery.StringFieldType},
 		{Name: "feature_version", Type: bigquery.IntegerFieldType},
@@ -85,7 +85,7 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	}
 	goalEventSchema := bigquery.Schema{
 		{Name: "id", Type: bigquery.StringFieldType},
-		{Name: "environment_namespace", Type: bigquery.StringFieldType},
+		{Name: "environment_id", Type: bigquery.StringFieldType},
 		{Name: "timestamp", Type: bigquery.TimestampFieldType},
 		{Name: "goal_id", Type: bigquery.StringFieldType},
 		{Name: "value", Type: bigquery.FloatFieldType},
