@@ -121,7 +121,7 @@ const theme = {
   colors,
   boxShadow: {
     DEFAULT: '0px 2px 2px rgba(136, 135, 135, 0.25)',
-    menu: '0px 8px 12px rgba(0, 0, 0, 0.08)',
+    menu: '0px 3px 12px 0px rgba(0, 0, 0, 0.08)',
     'border-primary-500': `inset 0 0 0 1px ${colors.primary[500]}`,
     'border-primary-600': `inset 0 0 0 1px ${colors.primary[600]}`,
     'border-gray-200': `inset 0 0 0 1px ${colors.gray[200]}`,

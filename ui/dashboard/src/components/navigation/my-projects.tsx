@@ -88,7 +88,7 @@ const MyProjects = () => {
   return (
     <Popover.Root onOpenChange={onOpenChange} open={isShowProjectsList}>
       <Popover.Content align="start" className="border-none mt-2 z-20">
-        <div className="w-[600px] bg-white rounded-lg shadow">
+        <div className="w-[600px] bg-white rounded-lg shadow-menu">
           <div className="flex items-center justify-between px-5 py-4">
             <h1 className="typo-head-bold-huge text-gray-900 capitalize">
               {t(`navigation.my-projects`)}
