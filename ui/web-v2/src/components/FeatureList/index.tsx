@@ -68,7 +68,7 @@ import { Dialog, Popover, Transition } from '@headlessui/react';
 import { PencilIcon, TrashIcon, XIcon } from '@heroicons/react/outline';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { viewFormSchema } from '../../pages/feature/formSchema';
+import { shortcutFormSchema } from '../../pages/feature/formSchema';
 import { AppDispatch } from '../../store';
 import {
   FilterTargetType,
@@ -734,7 +734,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       [searchOptions, selectedSearchFilter]
     );
 
-    const handleSetAsPreferred = (id: string) => {
+    const handleSetAsDefault = (id: string) => {
       dispatch(
         changeDefaultSearchFilter({
           id,
@@ -900,13 +900,13 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                         <button
                           onClick={() => {
                             close();
-                            handleSetAsPreferred(searchFilter.id);
+                            handleSetAsDefault(searchFilter.id);
                           }}
                           className="flex w-full space-x-2 px-2 py-1.5 items-center hover:bg-gray-100"
                         >
                           <StarIconOutline width={18} />
                           <span className="text-sm">
-                            {f(messages.saveChanges.setAsPreferred)}
+                            {f(messages.saveChanges.setAsDefault)}
                           </span>
                         </button>
                       )}
@@ -931,7 +931,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                       >
                         <PencilIcon width={18} />
                         <span className="text-sm">
-                          {f(messages.saveChanges.editView)}
+                          {f(messages.saveChanges.editShortcut)}
                         </span>
                       </button>
                       <button
@@ -943,7 +943,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                       >
                         <TrashIcon width={18} className="text-red-500" />
                         <span className="text-red-500 text-sm">
-                          {f(messages.saveChanges.deleteView)}
+                          {f(messages.saveChanges.deleteShortcut)}
                         </span>
                       </button>
                     </div>
@@ -962,7 +962,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
             </button>
           </div>
           {open && (
-            <AddEditViewModal
+            <AddEditShortcutModal
               open={open}
               close={handleClose}
               selectedSearchFilter={selectedSearchFilter}
@@ -1205,28 +1205,28 @@ const SaveChangesDialog = ({
   );
 };
 
-interface AddEditViewModalProps {
+interface AddEditShortcutModalProps {
   open: boolean;
   close: () => void;
   selectedSearchFilter?: SelectedSearchFilter;
   handleFormSubmit: (data: { name: string }) => void;
 }
 
-const AddEditViewModal = ({
+const AddEditShortcutModal = ({
   open,
   close,
   selectedSearchFilter,
   handleFormSubmit
-}: AddEditViewModalProps) => {
+}: AddEditShortcutModalProps) => {
   const { formatMessage: f } = useIntl();
 
   const {
     register,
     handleSubmit,
     formState: { errors, isValid, isSubmitting },
-    reset: resetView
+    reset: resetShortcut
   } = useForm({
-    resolver: yupResolver(viewFormSchema),
+    resolver: yupResolver(shortcutFormSchema),
     defaultValues: {
       name: ''
     },
@@ -1235,7 +1235,7 @@ const AddEditViewModal = ({
 
   useEffect(() => {
     if (selectedSearchFilter?.name) {
-      resetView({
+      resetShortcut({
         name: selectedSearchFilter.name
       });
     }
@@ -1276,8 +1276,8 @@ const AddEditViewModal = ({
                 <div className="flex items-center justify-between px-4 py-5 border-b">
                   <p className="text-xl font-medium">
                     {selectedSearchFilter?.name
-                      ? f(messages.saveChanges.editView)
-                      : f(messages.saveChanges.addView)}
+                      ? f(messages.saveChanges.editShortcut)
+                      : f(messages.saveChanges.addShortcut)}
                   </p>
                   <XIcon
                     width={20}
@@ -1287,7 +1287,7 @@ const AddEditViewModal = ({
                 </div>
                 <div className="p-4 space-y-4">
                   <p className="text-gray-500">
-                    {f(messages.saveChanges.viewDescription)}
+                    {f(messages.saveChanges.shortcutDescription)}
                   </p>
                   <div className="space-y-1">
                     <label htmlFor="name" className="flex items-center">

@@ -436,6 +436,6 @@ export const triggerFormSchema = yup.object().shape({
   description: yup.string()
 });
 
-export const viewFormSchema = yup.object().shape({
+export const shortcutFormSchema = yup.object().shape({
   name: yup.string().required()
 });

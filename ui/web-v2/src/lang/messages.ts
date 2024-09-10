@@ -2986,34 +2986,34 @@ export const messages = {
     })
   },
   saveChanges: {
-    addView: defineMessage({
-      id: 'saveChanges.addView',
-      defaultMessage: 'Add view'
+    addShortcut: defineMessage({
+      id: 'saveChanges.addShortcut',
+      defaultMessage: 'Add shortcut'
     }),
-    editView: defineMessage({
-      id: 'saveChanges.editView',
-      defaultMessage: 'Edit view'
+    editShortcut: defineMessage({
+      id: 'saveChanges.editShortcut',
+      defaultMessage: 'Edit shortcut'
     }),
-    deleteView: defineMessage({
-      id: 'saveChanges.deleteView',
-      defaultMessage: 'Delete view'
+    deleteShortcut: defineMessage({
+      id: 'saveChanges.deleteShortcut',
+      defaultMessage: 'Delete shortcut'
     }),
-    viewDescription: defineMessage({
-      id: 'saveChanges.viewDescription',
+    shortcutDescription: defineMessage({
+      id: 'saveChanges.shortcutDescription',
       defaultMessage:
         'Setting up a view will maintain all applied filters and currently visible columns.'
     }),
-    setAsPreferred: defineMessage({
-      id: 'saveChanges.setAsPreferred',
-      defaultMessage: 'Set as Preferred'
+    setAsDefault: defineMessage({
+      id: 'saveChanges.setAsDefault',
+      defaultMessage: 'Set as Default'
     }),
     saveChangesBeforeExiting: {
       title: defineMessage({
-        id: 'saveChanges.saveChangesBeforeExiting',
+        id: 'saveChanges.saveChangesBeforeExiting.title',
         defaultMessage: 'Save Changes Before Exiting?'
       }),
       description: defineMessage({
-        id: 'saveChanges.saveChangesBeforeExiting',
+        id: 'saveChanges.saveChangesBeforeExiting.description',
         defaultMessage: `If you exit without saving the changes, your modifications will not be preserved. Would you like to save before exiting? Click 'Yes' to confirm or 'No' to exit without saving.`
       })
     }
