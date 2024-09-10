@@ -590,11 +590,9 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     useEffect(() => {
       const handleBeforeUnload = (e) => {
         if (unsavedChanges) {
-          const message =
-            'You have unsaved changes. Do you really want to leave?';
-          console.log('beforeunload');
-          e.returnValue = message; // Standard way to set custom message.
-          return message; // Some browsers show this message, others show a generic one.
+          // The standard way to trigger the confirmation dialog
+          e.preventDefault();
+          e.returnValue = ''; // For most browsers, this will trigger the default confirmation dialog
         }
       };
 
@@ -907,7 +905,9 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                           className="flex w-full space-x-2 px-2 py-1.5 items-center hover:bg-gray-100"
                         >
                           <StarIconOutline width={18} />
-                          <span className="text-sm">Set as Preferred</span>
+                          <span className="text-sm">
+                            {f(messages.saveChanges.setAsPreferred)}
+                          </span>
                         </button>
                       )}
                       {searchFilter.saveChanges && (
@@ -930,7 +930,9 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                         className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
                       >
                         <PencilIcon width={18} />
-                        <span className="text-sm">Edit View</span>
+                        <span className="text-sm">
+                          {f(messages.saveChanges.editView)}
+                        </span>
                       </button>
                       <button
                         onClick={() => {
@@ -941,7 +943,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                       >
                         <TrashIcon width={18} className="text-red-500" />
                         <span className="text-red-500 text-sm">
-                          Delete View
+                          {f(messages.saveChanges.deleteView)}
                         </span>
                       </button>
                     </div>
@@ -1161,7 +1163,7 @@ const SaveChangesDialog = ({
               <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all w-[500px]">
                 <div className="flex items-center justify-between px-4 py-5 border-b">
                   <p className="text-xl font-bold">
-                    Save Changes Before Exiting?
+                    {f(messages.saveChanges.saveChangesBeforeExiting.title)}
                   </p>
                   <XIcon
                     width={20}
@@ -1172,10 +1174,9 @@ const SaveChangesDialog = ({
                 <div className="p-4 space-y-4 py-5 px-11 flex flex-col items-center">
                   <SaveLargeSvg />
                   <p className="text-gray-500 text-center">
-                    If you exit without saving the changes, your modifications
-                    will not be preserved. Would you like to save before
-                    exiting? Click 'Yes' to confirm or 'No' to exit without
-                    saving.
+                    {f(
+                      messages.saveChanges.saveChangesBeforeExiting.description
+                    )}
                   </p>
                 </div>
                 <div className="p-4 flex justify-end border-t space-x-4">
@@ -1274,8 +1275,9 @@ const AddEditViewModal = ({
               <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all w-[542px]">
                 <div className="flex items-center justify-between px-4 py-5 border-b">
                   <p className="text-xl font-medium">
-                    {/* {f(messages.goal.newGoal)} */}
-                    Add View
+                    {selectedSearchFilter?.name
+                      ? f(messages.saveChanges.editView)
+                      : f(messages.saveChanges.addView)}
                   </p>
                   <XIcon
                     width={20}
@@ -1285,8 +1287,7 @@ const AddEditViewModal = ({
                 </div>
                 <div className="p-4 space-y-4">
                   <p className="text-gray-500">
-                    Setting up a view will maintain all applied filters and
-                    currently visible columns.
+                    {f(messages.saveChanges.viewDescription)}
                   </p>
                   <div className="space-y-1">
                     <label htmlFor="name" className="flex items-center">
@@ -1299,7 +1300,6 @@ const AddEditViewModal = ({
                       name="name"
                       id="name"
                       className="input-text w-full"
-                      placeholder="Enter name"
                     />
                     <p className="input-error">
                       {errors.name && (

@@ -2985,6 +2985,39 @@ export const messages = {
         'The debugger can verify what variation will be assigned to a specific end-user under different conditions in real-time.'
     })
   },
+  saveChanges: {
+    addView: defineMessage({
+      id: 'saveChanges.addView',
+      defaultMessage: 'Add view'
+    }),
+    editView: defineMessage({
+      id: 'saveChanges.editView',
+      defaultMessage: 'Edit view'
+    }),
+    deleteView: defineMessage({
+      id: 'saveChanges.deleteView',
+      defaultMessage: 'Delete view'
+    }),
+    viewDescription: defineMessage({
+      id: 'saveChanges.viewDescription',
+      defaultMessage:
+        'Setting up a view will maintain all applied filters and currently visible columns.'
+    }),
+    setAsPreferred: defineMessage({
+      id: 'saveChanges.setAsPreferred',
+      defaultMessage: 'Set as Preferred'
+    }),
+    saveChangesBeforeExiting: {
+      title: defineMessage({
+        id: 'saveChanges.saveChangesBeforeExiting',
+        defaultMessage: 'Save Changes Before Exiting?'
+      }),
+      description: defineMessage({
+        id: 'saveChanges.saveChangesBeforeExiting',
+        defaultMessage: `If you exit without saving the changes, your modifications will not be preserved. Would you like to save before exiting? Click 'Yes' to confirm or 'No' to exit without saving.`
+      })
+    }
+  },
   type: defineMessage({
     id: 'type',
     defaultMessage: 'Type'
