@@ -23,7 +23,7 @@ const ListItem = ({
     <li
       className={cn(
         'flex items-center justify-between cursor-default',
-        'rounded-lg bg-white px-3 py-2 text-gray-700',
+        'rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-100',
         selected && 'bg-gray-100',
         className
       )}

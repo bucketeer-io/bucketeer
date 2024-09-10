@@ -9,7 +9,7 @@ export type ListProps = {
 
 const List = ({ className, items = [] }: ListProps) => {
   return (
-    <ul className={cn(className)}>
+    <ul className={cn('flex flex-col gap-0.5', className)}>
       {items.map((item, index) => (
         <ListItem key={index} {...item} />
       ))}

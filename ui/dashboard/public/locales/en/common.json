@@ -1,7 +1,7 @@
 {
   "continue": "Continue",
   "projects": "Projects",
-  "environment": "Environment",
+  "environments": "Environments",
   "organizations": "Organizations",
   "members": "Members",
   "search": "Search",
@@ -22,7 +22,6 @@
     "goals": "Goals",
     "experiments": "Experiments",
     "user-profile": "User profile",
-    "polaris-edge": "Polaris edge",
     "logout": "Logout",
     "back-to-main": "Back to Main",
     "no-projects": "No projects found"

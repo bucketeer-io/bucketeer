@@ -121,15 +121,17 @@ const MyProjects = () => {
                   </ScrollArea>
                 </div>
                 <div className="flex flex-col gap-3">
-                  <List.Title>{t(`environment`)}</List.Title>
+                  <List.Title>{t(`environments`)}</List.Title>
                   <ScrollArea className="h-[120px] pr-2">
                     <List
-                      items={environments.map(item => ({
-                        label: item.name,
-                        value: item.id,
-                        selected: item.id === selectedEnvironment.id,
-                        onSelect: () => onHandleChange(item)
-                      }))}
+                      items={environments
+                        .filter(i => i.id !== selectedEnvironment.id)
+                        .map(item => ({
+                          label: item.name,
+                          value: item.id,
+                          selected: item.id === selectedEnvironment.id,
+                          onSelect: () => onHandleChange(item)
+                        }))}
                     />
                   </ScrollArea>
                 </div>
@@ -138,7 +140,7 @@ const MyProjects = () => {
               <div className="flex flex-col justify-center items-center gap-3 pt-10 pb-4">
                 <IconNoData />
                 <div className="typo-para-medium text-gray-500">
-                  {t(`no-projects`)}
+                  {t(`navigation.no-projects`)}
                 </div>
               </div>
             )}

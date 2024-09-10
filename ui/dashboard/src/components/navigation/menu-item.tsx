@@ -22,7 +22,7 @@ const MenuItemComponent = ({
   const textClsx = cn(
     'flex items-center gap-x-2 w-full text-primary-50',
     'px-3 py-3 rounded-lg typo-para-medium my-0.5 capitalize',
-    'hover:bg-primary-400 opacity-80 sidebar-menu'
+    'hover:bg-primary-400 hover:opacity-100 opacity-80 sidebar-menu'
   );
 
   const actionEl = href ? (
@@ -39,7 +39,7 @@ const MenuItemComponent = ({
         {iconEl}
         {label}
       </div>
-      {actIcon && <Icon color="primary-50" icon={actIcon} />}
+      {actIcon && <Icon color="primary-50" size="sm" icon={actIcon} />}
     </button>
   );
 

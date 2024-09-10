@@ -74,20 +74,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const onSyncAuthentication = () => {
-    if (organizationId) {
-      onMeFetcher({ organizationId });
-    } else {
-      accountOrganizationFetcher().then(response => {
-        const organizationsList = response.organizations || [];
-        if (organizationsList.length === 1) {
-          setOrgIdStorage(organizationsList[0].id);
-          onMeFetcher({ organizationId: organizationsList[0].id });
-        } else {
-          setMyOrganizations(organizationsList);
-          setIsInitialLoading(false);
-        }
-      });
-    }
+    accountOrganizationFetcher().then(response => {
+      const organizationsList = response.organizations || [];
+      if (organizationId) {
+        onMeFetcher({ organizationId });
+      } else if (organizationsList.length === 1) {
+        setOrgIdStorage(organizationsList[0].id);
+        onMeFetcher({ organizationId: organizationsList[0].id });
+      } else {
+        setIsInitialLoading(false);
+      }
+      setMyOrganizations(organizationsList);
+    });
   };
 
   const syncSignIn = (authToken: AuthToken) => {
