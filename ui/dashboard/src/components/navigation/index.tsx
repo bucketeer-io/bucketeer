@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import logo from 'assets/logos/logo-white.svg';
-import { useAuth, useCurrentEnvironment } from 'auth';
+import { useAuth, getCurrentEnvironment } from 'auth';
 import {
   PAGE_PATH_AUDIT_LOGS,
   PAGE_PATH_FEATURES,
@@ -11,105 +11,133 @@ import {
   PAGE_PATH_EXPERIMENTS
 } from 'constants/routing';
 import { useToggleOpen } from 'hooks';
+import { useTranslation } from 'i18n';
+import { cn } from 'utils/style';
 import * as IconSystem from '@icons';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
 import SectionMenu from './menu-section';
-import ProjectList from './project-list';
+import MyProjects from './my-projects';
 import UserMenu from './user-menu';
 
 const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
-  const [isShowSetting, onShowSetting, onCloseSetting] = useToggleOpen(false);
+  const { t } = useTranslation(['common']);
+  const [isOpenSetting, onOpenSetting, onCloseSetting] = useToggleOpen(false);
   const { consoleAccount } = useAuth();
-  const currentEnvironment = useCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const environmentUrlCode = currentEnvironment.urlCode;
 
   return (
-    <div className="fixed h-screen w-[248px] bg-primary-500 py-8 px-6">
-      <div className="flex flex-col h-full">
+    <div className="fixed h-screen w-[248px] bg-primary-500 z-50 py-8 px-6">
+      <div className="flex flex-col h-full relative overflow-hidden">
         <Link to={PAGE_PATH_ROOT}>
           <img src={logo} alt="Bucketer" />
         </Link>
 
-        {isShowSetting ? (
-          <div className="flex flex-col flex-1 pt-6">
+        <div className="flex flex-col flex-1 items-center pt-6">
+          <div
+            className={cn(
+              'w-full absolute ease-in-out transition-all duration-500 -right-[100%]',
+              { 'right-0': isOpenSetting }
+            )}
+          >
             <button
               onClick={onCloseSetting}
               className="flex items-center gap-x-2 text-primary-50"
             >
               <Icon icon={IconSystem.IconBackspace} />
-              <span>{`Back to Main`}</span>
+              <span>{t(`navigation.back-to-main`)}</span>
             </button>
             <Divider className="my-5 bg-primary-50 opacity-10" />
             <SectionMenu
-              title="General"
+              title={t('general')}
               items={[
                 {
-                  label: 'Projects',
-                  icon: IconSystem.IconFolder,
-                  href: '/projects'
-                },
-                {
-                  label: 'Organizations',
+                  label: t(`organizations`),
                   icon: IconSystem.IconBuilding,
                   href: '/organizations'
                 },
                 {
-                  label: 'Members',
-                  icon: IconSystem.IconMember,
-                  href: '/members'
+                  label: t(`settings`),
+                  icon: IconSystem.IconSetting,
+                  href: '/settings'
                 },
                 {
-                  label: 'Usage',
+                  label: t(`projects`),
+                  icon: IconSystem.IconFolder,
+                  href: '/projects'
+                },
+                {
+                  label: t(`usage`),
                   icon: IconSystem.IconUsage,
                   href: '/usage'
                 }
               ]}
             />
             <SectionMenu
-              title="INTEGRATIONS"
+              title={t(`access`)}
               className="mt-5"
               items={[
                 {
-                  label: 'Integrations',
-                  icon: IconSystem.IconIntegration,
-                  href: '/integrations'
+                  label: t(`members`),
+                  icon: IconSystem.IconMember,
+                  href: '/members'
                 },
                 {
-                  label: 'API Keys',
+                  label: t(`API-keys`),
                   icon: IconSystem.IconKey,
                   href: '/api-keys'
                 }
               ]}
             />
-          </div>
-        ) : (
-          <div className="flex flex-col flex-1 pt-6">
-            <div className="px-3 uppercase typo-head-bold-tiny text-primary-50 mb-3">
-              {`Environment`}
-            </div>
-            <ProjectList />
-            <Divider className="my-5 bg-primary-50 opacity-10" />
             <SectionMenu
-              title={`Management`}
+              title={t(`integrations`)}
+              className="mt-5"
               items={[
                 {
-                  label: 'Audit Logs',
+                  label: `Slack`,
+                  icon: IconSystem.IconSlack,
+                  href: '/integrations/slack'
+                },
+                {
+                  label: `FCM`,
+                  icon: IconSystem.IconFCM,
+                  href: '/integrations/fcm'
+                }
+              ]}
+            />
+          </div>
+          <div
+            className={cn(
+              'w-full absolute ease-in-out transition-all duration-500 -left-[100%]',
+              { 'left-0': !isOpenSetting }
+            )}
+          >
+            <div className="px-3 opacity-80 uppercase typo-head-bold-tiny text-primary-50 mb-3">
+              {t(`environment`)}
+            </div>
+            <MyProjects />
+            <Divider className="my-5 bg-primary-50 opacity-10" />
+            <SectionMenu
+              title={t(`management`)}
+              items={[
+                {
+                  label: t(`navigation.audit-logs`),
                   icon: IconSystem.IconLogs,
                   href: `/${environmentUrlCode}${PAGE_PATH_AUDIT_LOGS}`
                 },
                 {
-                  label: 'Feature Flags',
+                  label: t(`navigation.feature-flags`),
                   icon: IconSystem.IconSwitch,
                   href: `/${environmentUrlCode}${PAGE_PATH_FEATURES}`
                 },
                 {
-                  label: 'User Segment',
+                  label: t(`navigation.user-segment`),
                   icon: IconSystem.IconUser,
                   href: `/${environmentUrlCode}${PAGE_PATH_USER_SEGMENTS}`
                 },
                 {
-                  label: 'Debugger',
+                  label: t(`navigation.debugger`),
                   icon: IconSystem.IconDebugger,
                   href: `/${environmentUrlCode}${PAGE_PATH_DEBUGGER}`
                 }
@@ -117,28 +145,29 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
               onClickNavLink={onClickNavLink}
             />
             <SectionMenu
-              title={`Analysis`}
+              title={t(`analysis`)}
               className="mt-4"
               items={[
                 {
-                  label: 'Goals',
+                  label: t(`navigation.goals`),
                   icon: IconSystem.IconNote,
                   href: `/${environmentUrlCode}${PAGE_PATH_GOALS}`
                 },
                 {
-                  label: 'Experiments',
+                  label: t(`navigation.experiments`),
                   icon: IconSystem.IconProton,
                   href: `/${environmentUrlCode}${PAGE_PATH_EXPERIMENTS}`
                 }
               ]}
             />
           </div>
-        )}
+        </div>
+
         <Divider className="mb-3 bg-primary-50 opacity-10" />
 
         <div className="flex items-center justify-between">
           <UserMenu />
-          <button onClick={onShowSetting}>
+          <button onClick={onOpenSetting}>
             <Icon icon={IconSystem.IconSetting} color="primary-50" />
           </button>
         </div>

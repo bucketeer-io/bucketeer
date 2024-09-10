@@ -20,7 +20,7 @@ export const setCurrentEnvIdStorage = (id: string): void => {
   }
 };
 
-export const clearCurrentIdStorage = (): void => {
+export const clearCurrentEnvIdStorage = (): void => {
   try {
     window.localStorage.removeItem(KEY);
   } catch (error) {

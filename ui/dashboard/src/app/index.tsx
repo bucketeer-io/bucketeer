@@ -9,9 +9,9 @@ import {
 import {
   AuthCallbackPage,
   AuthProvider,
-  currentEnvironmentRole,
   useAuth,
-  useIsEditable
+  getCurrentEnvironment,
+  hasEditable
 } from 'auth';
 import {
   PAGE_PATH_AUTH_CALLBACK,
@@ -23,6 +23,7 @@ import {
 } from 'constants/routing';
 import { getTokenStorage } from 'storage/token';
 import { v4 as uuid } from 'uuid';
+import { ConsoleAccount } from '@types';
 import DashboardPage from 'pages/dashboard';
 import NotFoundPage from 'pages/not-found';
 import SignInPage from 'pages/signin';
@@ -77,7 +78,7 @@ export const Root = memo(() => {
             <Route
               key={pageKey}
               path={'/:envUrlCode?/*'}
-              element={<EnvironmentRoot />}
+              element={<EnvironmentRoot account={consoleAccount} />}
             />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
@@ -93,35 +94,32 @@ export const Root = memo(() => {
   return <SignInPage />;
 });
 
-export const EnvironmentRoot = memo(() => {
-  const navigate = useNavigate();
-  const { envUrlCode } = useParams();
+export const EnvironmentRoot = memo(
+  ({ account }: { account: ConsoleAccount }) => {
+    const navigate = useNavigate();
+    const { envUrlCode } = useParams();
 
-  const { consoleAccount, isLogin } = useAuth();
-  const editable = useIsEditable(consoleAccount!);
+    const editable = hasEditable(account);
+    const currentEnv = getCurrentEnvironment(account);
 
-  useEffect(() => {
-    if (isLogin) {
-      if (consoleAccount && !envUrlCode) {
-        const currentEnv = currentEnvironmentRole(consoleAccount).environment;
+    useEffect(() => {
+      if (!envUrlCode) {
         navigate(`${PAGE_PATH_ROOT}${currentEnv.urlCode}${PAGE_PATH_FEATURES}`);
       }
-    } else {
-      navigate(PAGE_PATH_ROOT);
-    }
-  }, [consoleAccount]);
+    }, [account, envUrlCode]);
 
-  return (
-    <Routes>
-      {!editable && (
-        <Route path={`/:any${PAGE_PATH_NEW}`}>
-          <h3>{`403 Access denied`}</h3>
-        </Route>
-      )}
-      <Route path={`${PAGE_PATH_FEATURES}`} element={<DashboardPage />} />
-      <Route path="*" element={<NotFoundPage />} />
-    </Routes>
-  );
-});
+    return (
+      <Routes>
+        {!editable && (
+          <Route path={`/:any${PAGE_PATH_NEW}`}>
+            <h3>{`403 Access denied`}</h3>
+          </Route>
+        )}
+        <Route path={`${PAGE_PATH_FEATURES}`} element={<DashboardPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    );
+  }
+);
 
 export default App;

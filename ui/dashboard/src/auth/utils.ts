@@ -1,32 +1,52 @@
 import { getCurrentEnvIdStorage } from 'storage/environment';
-import { ConsoleAccount, Environment, EnvironmentRole } from '@types';
+import { ConsoleAccount, Environment, EnvironmentRole, Project } from '@types';
+import { isNotEmpty } from 'utils/data-type';
 
 export const currentEnvironmentRole = (
-  consoleAccount: ConsoleAccount
+  account: ConsoleAccount
 ): EnvironmentRole => {
   const currentEnvId = getCurrentEnvIdStorage();
-  const curEnvId =
-    currentEnvId != null && currentEnvId != undefined
-      ? currentEnvId
-      : consoleAccount.environmentRoles[0].environment.id;
-  let curEnvRole = consoleAccount.environmentRoles.find(
+  const curEnvId = isNotEmpty(currentEnvId)
+    ? currentEnvId
+    : account.environmentRoles[0].environment.id;
+
+  let curEnvRole = account.environmentRoles.find(
     environmentRole => environmentRole.environment.id === curEnvId
   );
   if (!curEnvRole) {
-    curEnvRole = consoleAccount.environmentRoles[0];
+    curEnvRole = account.environmentRoles[0];
   }
   return curEnvRole;
 };
 
-export const useCurrentEnvironment = (
-  consoleAccount: ConsoleAccount
-): Environment => {
-  return currentEnvironmentRole(consoleAccount).environment;
+export const getCurrentEnvironment = (account: ConsoleAccount): Environment => {
+  return currentEnvironmentRole(account).environment;
 };
 
-export const useIsEditable = (consoleAccount: ConsoleAccount): boolean => {
-  if (consoleAccount.isSystemAdmin) return true;
+export const hasEditable = (account: ConsoleAccount): boolean => {
+  if (account.isSystemAdmin) return true;
 
-  const envRole = currentEnvironmentRole(consoleAccount);
+  const envRole = currentEnvironmentRole(account);
   return envRole.role === 'Environment_EDITOR';
+};
+
+export const getUniqueProjects = (roles: EnvironmentRole[]): Project[] => {
+  const projectMap = new Map<string, Project>();
+
+  roles.forEach(role => {
+    if (!projectMap.has(role.project.id)) {
+      projectMap.set(role.project.id, role.project);
+    }
+  });
+
+  return Array.from(projectMap.values());
+};
+
+export const getEnvironmentsByProjectId = (
+  roles: EnvironmentRole[],
+  projectId: string
+): Environment[] => {
+  return roles
+    .filter(role => role.environment.projectId === projectId)
+    .map(role => role.environment);
 };

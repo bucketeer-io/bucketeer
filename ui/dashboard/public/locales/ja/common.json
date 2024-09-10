@@ -1,3 +1,29 @@
 {
-  "continue": "Continue"
+  "continue": "Continue",
+  "projects": "Projects",
+  "environments": "Environments",
+  "organizations": "Organizations",
+  "members": "Members",
+  "search": "Search",
+  "management": "Management",
+  "analysis": "Analysis",
+  "usage": "Usage",
+  "API-keys": "API keys",
+  "general": "General",
+  "settings": "Settings",
+  "integrations": "Integrations",
+  "access": "Access",
+  "navigation": {
+    "my-projects": "My projects",
+    "audit-logs": "Audit logs",
+    "feature-flags": "Feature flags",
+    "user-segment": "User segment",
+    "debugger": "Debugger",
+    "goals": "Goals",
+    "experiments": "Experiments",
+    "user-profile": "User profile",
+    "logout": "Logout",
+    "back-to-main": "Back to Main",
+    "no-projects": "No projects found"
+  }
 }

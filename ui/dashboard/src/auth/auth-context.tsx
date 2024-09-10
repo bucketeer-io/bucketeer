@@ -11,6 +11,7 @@ import { accountMeFetcher } from '@api/account';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { Undefinable } from 'option-t/undefinable';
 import {
+  clearCurrentEnvIdStorage,
   getCurrentEnvIdStorage,
   setCurrentEnvIdStorage
 } from 'storage/environment';
@@ -27,13 +28,17 @@ import {
 import { AuthToken, ConsoleAccount, Organization } from '@types';
 
 interface AuthContextType {
-  syncSignIn: (authToken: AuthToken) => void;
-  onMeFetcher: (payload: MeFetcherPayload) => Promise<void>;
   logout: () => void;
   isLogin: boolean;
-  isInitialLoading: boolean;
+
   consoleAccount: Undefinable<ConsoleAccount>;
   myOrganizations: Array<Organization>;
+
+  syncSignIn: (authToken: AuthToken) => void;
+  onMeFetcher: (payload: MeFetcherPayload) => Promise<void>;
+
+  isInitialLoading: boolean;
+  setIsInitialLoading: (v: boolean) => void;
 
   isGoogleAuthError: boolean;
   setIsGoogleAuthError: (v: boolean) => void;
@@ -49,7 +54,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const organizationId = getOrgIdStorage();
   const environmentId = getCurrentEnvIdStorage();
 
-  const [isInitialLoading, setIsInitialLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(
+    !!authToken?.accessToken
+  );
   const [isLogin, setIsLogin] = useState<boolean>(false);
   const [consoleAccount, setConsoleAccount] =
     useState<Undefinable<ConsoleAccount>>();
@@ -72,21 +79,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const onSyncAuthentication = () => {
-    setIsInitialLoading(true);
-    if (organizationId) {
-      onMeFetcher({ organizationId });
-    } else {
-      accountOrganizationFetcher().then(response => {
-        const organizationsList = response.organizations || [];
-        if (organizationsList.length === 1) {
-          setOrgIdStorage(organizationsList[0].id);
-          onMeFetcher({ organizationId: organizationsList[0].id });
-        } else {
-          setMyOrganizations(organizationsList);
-          setIsInitialLoading(false);
-        }
-      });
-    }
+    accountOrganizationFetcher().then(response => {
+      const organizationsList = response.organizations || [];
+      if (organizationId) {
+        onMeFetcher({ organizationId });
+      } else if (organizationsList.length === 1) {
+        setOrgIdStorage(organizationsList[0].id);
+        onMeFetcher({ organizationId: organizationsList[0].id });
+      } else {
+        setIsInitialLoading(false);
+      }
+      setMyOrganizations(organizationsList);
+    });
   };
 
   const syncSignIn = (authToken: AuthToken) => {
@@ -96,9 +100,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
   const logout = () => {
     setConsoleAccount(undefined);
+    setMyOrganizations([]);
     setIsLogin(false);
     clearOrgIdStorage();
     clearTokenStorage();
+    clearCurrentEnvIdStorage();
     navigate(PAGE_PATH_ROOT);
   };
 
@@ -111,13 +117,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   return (
     <AuthContext.Provider
       value={{
-        syncSignIn,
-        onMeFetcher,
-        logout,
         isLogin,
-        isInitialLoading,
+        logout,
+
         consoleAccount,
         myOrganizations,
+
+        syncSignIn,
+        onMeFetcher,
+
+        isInitialLoading,
+        setIsInitialLoading,
 
         isGoogleAuthError,
         setIsGoogleAuthError
