@@ -507,7 +507,7 @@
   "saveChanges.deleteShortcut": "Delete shortcut",
   "saveChanges.editShortcut": "Edit shortcut",
   "saveChanges.saveChangesBeforeExiting.description": "If you exit without saving the changes, your modifications will not be preserved. Would you like to save before exiting? Click 'Yes' to confirm or 'No' to exit without saving.",
-  "saveChanges.saveChangesBeforeExiting.title": "Save Changes Before Exiting?",
+  "saveChanges.saveChangesBeforeExiting.title": "Unsaved Search Filters",
   "saveChanges.setAsDefault": "Set as Default",
   "saveChanges.shortcutDescription": "Setting up a view will maintain all applied filters and currently visible columns.",
   "seeMore": "See more",

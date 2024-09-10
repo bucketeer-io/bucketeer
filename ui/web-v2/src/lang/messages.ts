@@ -3010,7 +3010,7 @@ export const messages = {
     saveChangesBeforeExiting: {
       title: defineMessage({
         id: 'saveChanges.saveChangesBeforeExiting.title',
-        defaultMessage: 'Save Changes Before Exiting?'
+        defaultMessage: 'Unsaved Search Filters'
       }),
       description: defineMessage({
         id: 'saveChanges.saveChangesBeforeExiting.description',
