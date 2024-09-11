@@ -377,7 +377,7 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 		}
 	}
 	if searchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"id", "name", "description"}, searchKeyword))
+		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"feature.id", "feature.name", "feature.description"}, searchKeyword))
 	}
 	orders, err := s.newListFeaturesOrdersMySQL(orderBy, orderDirection, localizer)
 	if err != nil {
