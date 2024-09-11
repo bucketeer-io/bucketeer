@@ -749,6 +749,13 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     };
 
     const handleDeleteSearchFilter = (id: string) => {
+      if (id === selectedSearchFilter.id) {
+        const clearOptions = Object.keys(options).reduce((acc, current) => {
+          return { ...acc, [current]: null };
+        }, {});
+        onChange(clearOptions);
+      }
+
       dispatch(
         deleteSearchFilter({
           id,
