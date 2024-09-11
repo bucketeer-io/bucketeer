@@ -3001,7 +3001,7 @@ export const messages = {
     shortcutDescription: defineMessage({
       id: 'saveChanges.shortcutDescription',
       defaultMessage:
-        'Setting up a view will maintain all applied filters and currently visible columns.'
+        'Shortcut will save all search queries and filters you have in the current view so that next time you access this page will not need to apply them every time.'
     }),
     setAsDefault: defineMessage({
       id: 'saveChanges.setAsDefault',
@@ -3014,7 +3014,7 @@ export const messages = {
       }),
       description: defineMessage({
         id: 'saveChanges.saveChangesBeforeExiting.description',
-        defaultMessage: `If you exit without saving the changes, your modifications will not be preserved. Would you like to save before exiting? Click 'Yes' to confirm or 'No' to exit without saving.`
+        defaultMessage: `You have unsaved search filter changes. Are you sure you want to leave this page without saving them?`
       })
     }
   },

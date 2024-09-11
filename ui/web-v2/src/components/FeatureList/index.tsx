@@ -562,6 +562,8 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
         }
 
         setSearchFiltersList(updatedFiltersList);
+      } else {
+        setSearchFiltersList([]);
       }
     }, [me.consoleAccount.searchFiltersList, onChange]);
 
