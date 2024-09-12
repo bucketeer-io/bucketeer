@@ -1023,7 +1023,10 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                 >
                   <PlusIcon width={20} className="text-primary" />
                 </button>
-                <HelpTextTooltip helpText="hello " />
+                <HelpTextTooltip
+                  helpText={f(messages.saveChanges.addShortcut)}
+                  width={86}
+                />
               </div>
             )}
           </div>

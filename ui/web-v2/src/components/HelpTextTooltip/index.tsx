@@ -10,10 +10,11 @@ import { HoverPopover } from '../HoverPopover';
 export interface HelpTextTooltipProps {
   helpText: string;
   link?: string;
+  width?: number;
 }
 
 export const HelpTextTooltip: FC<HelpTextTooltipProps> = memo(
-  ({ helpText, link }) => {
+  ({ helpText, link, width }) => {
     const { formatMessage: f } = useIntl();
     return (
       <HoverPopover
@@ -22,8 +23,11 @@ export const HelpTextTooltip: FC<HelpTextTooltipProps> = memo(
             <div
               className={classNames(
                 'border shadow-sm bg-white text-gray-500 p-1',
-                'w-64 text-xs rounded whitespace-normal break-words'
+                'text-xs rounded whitespace-normal break-words'
               )}
+              style={{
+                width: width ? width : 256
+              }}
             >
               {helpText}
               {link && (
