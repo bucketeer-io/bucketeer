@@ -104,7 +104,8 @@ export const FeatureIndexPage: FC = memo(() => {
   const environments = useEnvironments();
   const history = useHistory();
   const searchOptions = useSearchParams();
-  searchOptions.sort = searchOptions.sort ? searchOptions.sort : '-createdAt';
+  // searchOptions.sort = searchOptions.sort ? searchOptions.sort : '-createdAt';
+  // searchOptions.page = '1';
   const { url } = useRouteMatch();
   const { featureId } = useParams<{ featureId: string }>();
   const isNew = `/${url.substring(url.lastIndexOf('/') + 1)}` == PAGE_PATH_NEW;
@@ -254,7 +255,9 @@ export const FeatureIndexPage: FC = memo(() => {
   );
 
   const updateURL = useCallback(
-    (options: Record<string, string | number | boolean | undefined>) => {
+    (
+      options: Record<string, string | number | boolean | undefined | unknown>
+    ) => {
       history.replace(
         `${url}?${stringifySearchParams({
           ...options
@@ -276,7 +279,7 @@ export const FeatureIndexPage: FC = memo(() => {
   const handleSearchOptionsChange = useCallback(
     (options) => {
       const newOptions = removeEmptyFields(options);
-      updateURL({ ...newOptions, page: 1 });
+      updateURL(newOptions);
       updateFeatureList(newOptions, 1);
     },
     [updateURL, updateFeatureList]

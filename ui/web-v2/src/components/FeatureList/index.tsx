@@ -31,8 +31,9 @@ import {
   selectAll as selectAllAccounts,
   changeSearchFilterName,
   changeSearchFilterQuery,
-  changeDefaultSearchFilter,
-  deleteSearchFilter
+  // changeDefaultSearchFilter,
+  deleteSearchFilter,
+  getAccount
 } from '../../modules/accounts';
 import { selectAll as selectAllFeatures } from '../../modules/features';
 import {
@@ -79,8 +80,10 @@ import {
   useSearchParams
 } from '../../utils/search-params';
 import SaveSvg from '../../assets/svg/save.svg';
+import SaveGraySvg from '../../assets/svg/save-gray.svg';
 import SaveLargeSvg from '../../assets/svg/save-large.svg';
 import { parse } from 'query-string';
+import { HelpTextTooltip } from '../HelpTextTooltip';
 
 export enum FlagStatus {
   NEW, // This flag is new and has not been requested yet.
@@ -504,6 +507,9 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     const me = useMe();
     const searchOptions = useSearchParams();
 
+    const [initialOptions, setInitialOptions] =
+      useState<FeatureSearchOptions>(options);
+
     const accounts = useSelector<AppState, AccountV2.AsObject[]>(
       (state) => selectAllAccounts(state.accounts),
       shallowEqual
@@ -531,34 +537,48 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     const history = useHistory();
 
     useEffect(() => {
+      setInitialOptions(options);
+    }, []);
+
+    useEffect(() => {
       const newSearchFiltersList =
         (me.consoleAccount?.searchFiltersList as SearchFilter[]) || [];
 
       if (newSearchFiltersList.length > 0) {
-        const oldSelectedSearchFilter = searchFiltersList.find(
-          (s) => s.selected
-        );
+        let updatedFiltersList = [];
+        if (newSearchFiltersList.length > searchFiltersList.length) {
+          updatedFiltersList = newSearchFiltersList.map((s, i) => ({
+            ...s,
+            selected: i + 1 === newSearchFiltersList.length
+          }));
+        } else {
+          const oldSelectedSearchFilter = searchFiltersList.find(
+            (s) => s.selected
+          );
 
-        const updatedFiltersList = newSearchFiltersList.map((s) => ({
-          ...s,
-          selected: oldSelectedSearchFilter?.id === s.id,
-          saveChanges: false
-        }));
+          updatedFiltersList = newSearchFiltersList.map((s) => ({
+            ...s,
+            selected: oldSelectedSearchFilter?.id === s.id,
+            saveChanges: false
+          }));
 
-        if (!oldSelectedSearchFilter) {
-          const defaultFilter = updatedFiltersList.find((s) => s.defaultFilter);
+          // if (!oldSelectedSearchFilter) {
+          //   const defaultFilter = updatedFiltersList.find(
+          //     (s) => s.defaultFilter
+          //   );
 
-          if (defaultFilter) {
-            const finalFiltersList = updatedFiltersList.map((s) => ({
-              ...s,
-              selected: defaultFilter.id === s.id
-            }));
+          //   if (defaultFilter) {
+          //     const finalFiltersList = updatedFiltersList.map((s) => ({
+          //       ...s,
+          //       selected: defaultFilter.id === s.id
+          //     }));
 
-            onChange(parse(defaultFilter.query));
-            setSelectedSearchFilter(defaultFilter);
-            setSearchFiltersList(finalFiltersList);
-            return;
-          }
+          //     onChange(parse(defaultFilter.query));
+          //     setSelectedSearchFilter(defaultFilter);
+          //     setSearchFiltersList(finalFiltersList);
+          //     return;
+          //   }
+          // }
         }
 
         setSearchFiltersList(updatedFiltersList);
@@ -604,6 +624,39 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
         window.removeEventListener('beforeunload', handleBeforeUnload);
       };
     }, [unsavedChanges]);
+
+    useEffect(() => {
+      if (Object.keys(options).length === 0) {
+        setSelectedSearchFilter(null);
+        setSearchFiltersList(
+          me.consoleAccount.searchFiltersList.map((s) => ({
+            ...s,
+            selected: false,
+            saveChanges: false
+          }))
+        );
+        onChange({});
+      }
+    }, [options, me.consoleAccount.searchFiltersList]);
+
+    useEffect(() => {
+      if (!shallowEqual(options, initialOptions)) {
+        setUnsavedChanges(true);
+      } else {
+        setUnsavedChanges(false);
+      }
+    }, [options]);
+
+    // useEffect(() => {
+    //   dispatch(
+    //     getAccount({
+    //       organizationId: currentEnvironment.organizationId,
+    //       email: 'bimalgrg519@gmail.com'
+    //     })
+    //   ).then((e) => {
+    //     console.log({ e });
+    //   });
+    // }, []);
 
     const handleFilterKeyChange = useCallback(
       (key: string): void => {
@@ -705,9 +758,8 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
           page: 1
         });
         const filterTargetType = FilterTargetType.FEATURE_FLAG;
-        const environmentId = currentEnvironment.id;
-        const organizationId = currentEnvironment.organizationId;
         const defaultFilter = false;
+        const environmentId = currentEnvironment.id;
 
         if (selectedSearchFilter) {
           dispatch(
@@ -716,7 +768,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
               name: data.name,
               email: me.consoleAccount.email,
               environmentId,
-              organizationId
+              organizationId: me.consoleAccount.organization.id
             })
           ).then(() => refetchMe());
         } else {
@@ -727,33 +779,36 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
               filterTargetType,
               environmentId,
               defaultFilter,
-              organizationId,
+              organizationId: currentEnvironment.organizationId,
               email: me.consoleAccount.email
             })
-          ).then(() => refetchMe());
+          ).then(() => {
+            refetchMe();
+          });
         }
       },
       [searchOptions, selectedSearchFilter]
     );
 
-    const handleSetAsDefault = (id: string) => {
-      dispatch(
-        changeDefaultSearchFilter({
-          id,
-          defaultFilter: true,
-          email: me.consoleAccount.email,
-          organizationId,
-          environmentId: currentEnvironment.id
-        })
-      ).then(() => refetchMe());
-    };
+    // const handleSetAsDefault = (id: string) => {
+    //   dispatch(
+    //     changeDefaultSearchFilter({
+    //       id,
+    //       defaultFilter: true,
+    //       email: me.consoleAccount.email,
+    //       organizationId,
+    //       environmentId: currentEnvironment.id
+    //     })
+    //   ).then(() => refetchMe());
+    // };
 
     const handleDeleteSearchFilter = (id: string) => {
-      if (id === selectedSearchFilter.id) {
-        const clearOptions = Object.keys(options).reduce((acc, current) => {
-          return { ...acc, [current]: null };
-        }, {});
-        onChange(clearOptions);
+      if (id === selectedSearchFilter?.id || searchFiltersList.length === 1) {
+        // const clearOptions = Object.keys(options).reduce((acc, current) => {
+        //   return { ...acc, [current]: null };
+        // }, {});
+        // onChange(clearOptions);
+        onChange({});
       }
 
       dispatch(
@@ -797,7 +852,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     const handleConfirm = (confirmType: ConfirmType) => {
       if (confirmType === ConfirmType.YES) {
         handleSaveChanges(selectedSearchFilter.id);
-      } else {
+      } else if (selectedSearchFilter?.query) {
         // If the user clicked on the "No" button, we should reset the query to the last saved query
         onChange(parse(selectedSearchFilter.query));
         setSearchFiltersList(
@@ -889,9 +944,9 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                     handleSearchFilter(searchFilter.id);
                   }}
                 >
-                  {searchFilter.defaultFilter && (
+                  {/* {searchFilter.defaultFilter && (
                     <StarIcon width={18} className="text-pink-500" />
-                  )}
+                  )} */}
                   <span className="text-primary">{searchFilter.name}</span>
                   {searchFilter.saveChanges && (
                     <div className="text-primary opacity-80">
@@ -905,7 +960,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                 <Popover.Panel className="absolute bg-white left-0 rounded-lg p-1 whitespace-nowrap drop-shadow z-50 top-10">
                   {({ close }) => (
                     <div>
-                      {!searchFilter.defaultFilter && (
+                      {/* {!searchFilter.defaultFilter && (
                         <button
                           onClick={() => {
                             close();
@@ -918,7 +973,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                             {f(messages.saveChanges.setAsDefault)}
                           </span>
                         </button>
-                      )}
+                      )} */}
                       {searchFilter.saveChanges && (
                         <button
                           onClick={() => {
@@ -927,7 +982,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                           }}
                           className="flex w-full space-x-2 px-2 py-1.5 items-center hover:bg-gray-100"
                         >
-                          <SaveSvg />
+                          <SaveGraySvg />
                           <span className="text-sm pl-[2px]">Save Changes</span>
                         </button>
                       )}
@@ -960,15 +1015,20 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                 </Popover.Panel>
               </Popover>
             ))}
-            <button
-              className="bg-purple-50 p-[6px] rounded hover:bg-purple-100 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-              onClick={() => {
-                setOpen(true);
-                setSelectedSearchFilter(null);
-              }}
-            >
-              <PlusIcon width={20} className="text-primary" />
-            </button>
+            {(searchFiltersList.length > 0 || unsavedChanges) && (
+              <div className="flex space-x-1">
+                <button
+                  className="bg-purple-50 p-[6px] rounded hover:bg-purple-100 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => {
+                    setOpen(true);
+                    setSelectedSearchFilter(null);
+                  }}
+                >
+                  <PlusIcon width={20} className="text-primary" />
+                </button>
+                <HelpTextTooltip helpText="hello " />
+              </div>
+            )}
           </div>
           {open && (
             <AddEditShortcutModal
