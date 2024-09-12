@@ -540,39 +540,37 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       setInitialOptions(options);
     }, []);
 
-    useEffect(() => {
-      const newSearchFiltersList =
-        (me.consoleAccount?.searchFiltersList as SearchFilter[]) || [];
+    const filteredSearchFiltersList =
+      me.consoleAccount.searchFiltersList.filter(
+        (s) => s.environmentId === currentEnvironment.id
+      );
 
-      if (newSearchFiltersList.length > 0) {
+    useEffect(() => {
+      if (filteredSearchFiltersList.length > 0) {
         let updatedFiltersList = [];
-        if (newSearchFiltersList.length > searchFiltersList.length) {
-          updatedFiltersList = newSearchFiltersList.map((s, i) => ({
+        if (filteredSearchFiltersList.length > searchFiltersList.length) {
+          updatedFiltersList = filteredSearchFiltersList.map((s, i) => ({
             ...s,
-            selected: i + 1 === newSearchFiltersList.length
+            selected: i + 1 === filteredSearchFiltersList.length
           }));
         } else {
           const oldSelectedSearchFilter = searchFiltersList.find(
             (s) => s.selected
           );
-
-          updatedFiltersList = newSearchFiltersList.map((s) => ({
+          updatedFiltersList = filteredSearchFiltersList.map((s) => ({
             ...s,
             selected: oldSelectedSearchFilter?.id === s.id,
             saveChanges: false
           }));
-
           // if (!oldSelectedSearchFilter) {
           //   const defaultFilter = updatedFiltersList.find(
           //     (s) => s.defaultFilter
           //   );
-
           //   if (defaultFilter) {
           //     const finalFiltersList = updatedFiltersList.map((s) => ({
           //       ...s,
           //       selected: defaultFilter.id === s.id
           //     }));
-
           //     onChange(parse(defaultFilter.query));
           //     setSelectedSearchFilter(defaultFilter);
           //     setSearchFiltersList(finalFiltersList);
@@ -580,7 +578,6 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
           //   }
           // }
         }
-
         setSearchFiltersList(updatedFiltersList);
       } else {
         setSearchFiltersList([]);
@@ -629,7 +626,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       if (Object.keys(options).length === 0) {
         setSelectedSearchFilter(null);
         setSearchFiltersList(
-          me.consoleAccount.searchFiltersList.map((s) => ({
+          filteredSearchFiltersList.map((s) => ({
             ...s,
             selected: false,
             saveChanges: false
