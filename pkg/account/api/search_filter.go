@@ -20,6 +20,8 @@ import (
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
@@ -53,17 +55,29 @@ func (s *AccountService) CreateSearchFilter(
 		return nil, err
 	}
 
+	// If the target account is a system admin, we must use the system admin organization ID
+	// Otherwise, it will return a not found error
+	// because the account doesn't exist in non-system admin organizations.
+	sysAdminAccount, err := s.getSystemAdminAccountV2(ctx, req.Email, localizer)
+	if err != nil && status.Code(err) != codes.NotFound {
+		return nil, err
+	}
+	orgID := req.OrganizationId
+	if sysAdminAccount != nil {
+		orgID = sysAdminAccount.OrganizationId
+	}
+
 	if err := s.updateAccountV2MySQL(
 		ctx,
 		editor,
 		[]command.Command{req.Command},
 		req.Email,
-		req.OrganizationId); err != nil {
+		orgID); err != nil {
 		s.logger.Error(
 			"Failed to create search filter",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("organizationID", req.OrganizationId),
+				zap.String("organizationID", orgID),
 				zap.String("email", req.Email),
 				zap.String("environmentID", req.EnvironmentId),
 				zap.String("searchFilterName", req.Command.Name),
@@ -118,17 +132,29 @@ func (s *AccountService) UpdateSearchFilter(
 		return nil, err
 	}
 
+	// If the target account is a system admin, we must use the system admin organization ID
+	// Otherwise, it will return a not found error
+	// because the account doesn't exist in non-system admin organizations.
+	sysAdminAccount, err := s.getSystemAdminAccountV2(ctx, req.Email, localizer)
+	if err != nil && status.Code(err) != codes.NotFound {
+		return nil, err
+	}
+	orgID := req.OrganizationId
+	if sysAdminAccount != nil {
+		orgID = sysAdminAccount.OrganizationId
+	}
+
 	if err := s.updateAccountV2MySQL(
 		ctx,
 		editor,
 		commands,
 		req.Email,
-		req.OrganizationId); err != nil {
+		orgID); err != nil {
 		s.logger.Error(
 			"Failed to update search filter",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("organizationID", req.OrganizationId),
+				zap.String("organizationID", orgID),
 				zap.String("email", req.Email),
 			)...,
 		)
@@ -200,17 +226,29 @@ func (s *AccountService) DeleteSearchFilter(
 		return nil, err
 	}
 
+	// If the target account is a system admin, we must use the system admin organization ID
+	// Otherwise, it will return a not found error
+	// because the account doesn't exist in non-system admin organizations.
+	sysAdminAccount, err := s.getSystemAdminAccountV2(ctx, req.Email, localizer)
+	if err != nil && status.Code(err) != codes.NotFound {
+		return nil, err
+	}
+	orgID := req.OrganizationId
+	if sysAdminAccount != nil {
+		orgID = sysAdminAccount.OrganizationId
+	}
+
 	if err := s.updateAccountV2MySQL(
 		ctx,
 		editor,
 		[]command.Command{req.Command},
 		req.Email,
-		req.OrganizationId); err != nil {
+		orgID); err != nil {
 		s.logger.Error(
 			"Failed to delete search filter",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("organizationID", req.OrganizationId),
+				zap.String("organizationID", orgID),
 				zap.String("email", req.Email),
 				zap.String("searchFilterID", req.Command.Id),
 			)...,

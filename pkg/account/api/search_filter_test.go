@@ -30,6 +30,7 @@ import (
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 )
 
@@ -75,7 +76,7 @@ func TestCreateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.CreateSearchFilterRequest{
 				OrganizationId: "org0",
@@ -106,7 +107,7 @@ func TestCreateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.CreateSearchFilterRequest{
 				OrganizationId: "org0",
@@ -137,7 +138,7 @@ func TestCreateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.CreateSearchFilterRequest{
 				Email:         "bucketeer@example.com",
@@ -169,7 +170,11 @@ func TestCreateSearchFilter(t *testing.T) {
 				}
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&account, nil).AnyTimes()
+				).Return(&account, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetSystemAdminAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
 
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
@@ -207,7 +212,11 @@ func TestCreateSearchFilter(t *testing.T) {
 
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&account, nil).AnyTimes()
+				).Return(&account, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetSystemAdminAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
 
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
@@ -243,7 +252,7 @@ func TestCreateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.CreateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
@@ -269,7 +278,7 @@ func TestCreateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.CreateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
@@ -297,7 +306,7 @@ func TestCreateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.CreateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
@@ -326,7 +335,7 @@ func TestCreateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.CreateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
@@ -358,9 +367,71 @@ func TestCreateSearchFilter(t *testing.T) {
 					},
 				}, nil)
 
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetSystemAdminAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
+
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
+			},
+			req: &accountproto.CreateSearchFilterRequest{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
+				Command: &accountproto.CreateSearchFilterCommand{
+					Name:             "filter",
+					Query:            "query",
+					FilterTargetType: accountproto.FilterTargetType_FEATURE_FLAG,
+					EnvironmentId:    "envID0",
+					DefaultFilter:    false,
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: system admin account",
+			setup: func(s *AccountService) {
+				email := "bucketeer@example.com"
+				orgID := "system_admin_org_id"
+				acc := &domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            email,
+						OrganizationId:   orgID,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "envID0",
+								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+							},
+						},
+					},
+				}
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+					gomock.Any(), "email", gomock.Any(),
+				).Return(acc, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetSystemAdminAccountV2(
+					gomock.Any(), email,
+				).Return(acc, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), email, orgID,
+				).Return(acc, nil)
+
+				s.publisher.(*mock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func() error) {
+					_ = fn()
+				}).Return(nil)
 			},
 			req: &accountproto.CreateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
@@ -404,6 +475,10 @@ func TestCreateSearchFilter(t *testing.T) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&account, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetSystemAdminAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
 
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
@@ -479,7 +554,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.UpdateSearchFilterRequest{
 				OrganizationId: "org0",
@@ -507,7 +582,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.UpdateSearchFilterRequest{
 				OrganizationId: "org0",
@@ -535,7 +610,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.UpdateSearchFilterRequest{
 				Email:         "bucketeer@example.com",
@@ -563,7 +638,12 @@ func TestUpdateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetSystemAdminAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
+
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("test"))
@@ -595,7 +675,12 @@ func TestUpdateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetSystemAdminAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
+
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
@@ -627,7 +712,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.UpdateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
@@ -652,7 +737,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.UpdateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
@@ -681,7 +766,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.UpdateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
@@ -710,7 +795,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.UpdateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
@@ -739,7 +824,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.UpdateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
@@ -768,7 +853,7 @@ func TestUpdateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.UpdateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
@@ -796,11 +881,86 @@ func TestUpdateSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetSystemAdminAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
+
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
+			req: &accountproto.UpdateSearchFilterRequest{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
+				ChangeNameCommand: &accountproto.ChangeSearchFilterNameCommand{
+					Id:   "tesID",
+					Name: "update-name",
+				},
+				ChangeQueryCommand: &accountproto.ChangeSearchFilterQueryCommand{
+					Id:    "tesID",
+					Query: "query",
+				},
+				ChangeDefaultFilterCommand: &accountproto.ChangeDefaultSearchFilterCommand{
+					Id:            "tesID",
+					DefaultFilter: true,
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: system admin account",
+			setup: func(s *AccountService) {
+				email := "bucketeer@example.com"
+				orgID := "system_admin_org_id"
+				acc := &domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            email,
+						OrganizationId:   orgID,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "envID0",
+								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+							},
+						},
+						SearchFilters: []*accountproto.SearchFilter{
+							{
+								Id: "tesID",
+							},
+						},
+					},
+				}
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+					gomock.Any(), "email", gomock.Any(),
+				).Return(acc, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetSystemAdminAccountV2(
+					gomock.Any(), email,
+				).Return(acc, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), email, orgID,
+				).Return(acc, nil)
+
+				s.publisher.(*mock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil).Times(3)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func() error) {
+					_ = fn()
+				}).Return(nil)
+			},
+
 			req: &accountproto.UpdateSearchFilterRequest{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
@@ -848,6 +1008,10 @@ func TestUpdateSearchFilter(t *testing.T) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&account, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetSystemAdminAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
 
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
@@ -920,7 +1084,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.DeleteSearchFilterRequest{
 				OrganizationId: "org0",
@@ -947,7 +1111,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.DeleteSearchFilterRequest{
 				OrganizationId: "org0",
@@ -974,7 +1138,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.DeleteSearchFilterRequest{
 				Email:         "bucketeer@example.com",
@@ -1001,7 +1165,12 @@ func TestDeleteSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetSystemAdminAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
+
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(errors.New("test"))
@@ -1032,7 +1201,12 @@ func TestDeleteSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetSystemAdminAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
+
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrAccountNotFound)
@@ -1063,7 +1237,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.DeleteSearchFilterRequest{
 				Email:          "bucketeer@example.com",
@@ -1089,7 +1263,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
 			},
 			req: &accountproto.DeleteSearchFilterRequest{
 				Email:          "bucketeer@example.com",
@@ -1117,10 +1291,74 @@ func TestDeleteSearchFilter(t *testing.T) {
 							},
 						},
 					},
-				}, nil).AnyTimes()
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetSystemAdminAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil, v2as.ErrSystemAdminAccountNotFound)
+
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
+			},
+			req: &accountproto.DeleteSearchFilterRequest{
+				Email:          "bucketeer@example.com",
+				OrganizationId: "org0",
+				EnvironmentId:  "envID0",
+				Command: &accountproto.DeleteSearchFilterCommand{
+					Id: "filterID",
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: system admin account",
+			setup: func(s *AccountService) {
+				email := "bucketeer@example.com"
+				orgID := "system_admin_org_id"
+				acc := &domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "email",
+						OrganizationId:   orgID,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "envID0",
+								Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+							},
+						},
+						SearchFilters: []*accountproto.SearchFilter{
+							{
+								Id: "filterID",
+							},
+						},
+					},
+				}
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+					gomock.Any(), "email", gomock.Any(),
+				).Return(acc, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetSystemAdminAccountV2(
+					gomock.Any(), email,
+				).Return(acc, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), email, orgID,
+				).Return(acc, nil)
+
+				s.publisher.(*mock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func() error) {
+					_ = fn()
+				}).Return(nil)
 			},
 			req: &accountproto.DeleteSearchFilterRequest{
 				Email:          "bucketeer@example.com",
@@ -1144,5 +1382,4 @@ func TestDeleteSearchFilter(t *testing.T) {
 			assert.Equal(t, p.expectedErr, err, p.desc)
 		})
 	}
-
 }
