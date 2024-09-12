@@ -1,5 +1,4 @@
-import { DotsVerticalIcon, PlusIcon, StarIcon } from '@heroicons/react/solid';
-import { StarIcon as StarIconOutline } from '@heroicons/react/outline';
+import { DotsVerticalIcon, PlusIcon } from '@heroicons/react/solid';
 import MUArchiveIcon from '@material-ui/icons/Archive';
 import MUFileCopyIcon from '@material-ui/icons/FileCopy';
 import MUUnarchiveIcon from '@material-ui/icons/Unarchive';
@@ -31,9 +30,7 @@ import {
   selectAll as selectAllAccounts,
   changeSearchFilterName,
   changeSearchFilterQuery,
-  // changeDefaultSearchFilter,
-  deleteSearchFilter,
-  getAccount
+  deleteSearchFilter
 } from '../../modules/accounts';
 import { selectAll as selectAllFeatures } from '../../modules/features';
 import {
@@ -562,21 +559,6 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
             selected: oldSelectedSearchFilter?.id === s.id,
             saveChanges: false
           }));
-          // if (!oldSelectedSearchFilter) {
-          //   const defaultFilter = updatedFiltersList.find(
-          //     (s) => s.defaultFilter
-          //   );
-          //   if (defaultFilter) {
-          //     const finalFiltersList = updatedFiltersList.map((s) => ({
-          //       ...s,
-          //       selected: defaultFilter.id === s.id
-          //     }));
-          //     onChange(parse(defaultFilter.query));
-          //     setSelectedSearchFilter(defaultFilter);
-          //     setSearchFiltersList(finalFiltersList);
-          //     return;
-          //   }
-          // }
         }
         setSearchFiltersList(updatedFiltersList);
       } else {
@@ -643,17 +625,6 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
         setUnsavedChanges(false);
       }
     }, [options]);
-
-    // useEffect(() => {
-    //   dispatch(
-    //     getAccount({
-    //       organizationId: currentEnvironment.organizationId,
-    //       email: 'bimalgrg519@gmail.com'
-    //     })
-    //   ).then((e) => {
-    //     console.log({ e });
-    //   });
-    // }, []);
 
     const handleFilterKeyChange = useCallback(
       (key: string): void => {
@@ -787,24 +758,8 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       [searchOptions, selectedSearchFilter]
     );
 
-    // const handleSetAsDefault = (id: string) => {
-    //   dispatch(
-    //     changeDefaultSearchFilter({
-    //       id,
-    //       defaultFilter: true,
-    //       email: me.consoleAccount.email,
-    //       organizationId,
-    //       environmentId: currentEnvironment.id
-    //     })
-    //   ).then(() => refetchMe());
-    // };
-
     const handleDeleteSearchFilter = (id: string) => {
       if (id === selectedSearchFilter?.id || searchFiltersList.length === 1) {
-        // const clearOptions = Object.keys(options).reduce((acc, current) => {
-        //   return { ...acc, [current]: null };
-        // }, {});
-        // onChange(clearOptions);
         onChange({});
       }
 
@@ -957,20 +912,6 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                 <Popover.Panel className="absolute bg-white left-0 rounded-lg p-1 whitespace-nowrap drop-shadow z-50 top-10">
                   {({ close }) => (
                     <div>
-                      {/* {!searchFilter.defaultFilter && (
-                        <button
-                          onClick={() => {
-                            close();
-                            handleSetAsDefault(searchFilter.id);
-                          }}
-                          className="flex w-full space-x-2 px-2 py-1.5 items-center hover:bg-gray-100"
-                        >
-                          <StarIconOutline width={18} />
-                          <span className="text-sm">
-                            {f(messages.saveChanges.setAsDefault)}
-                          </span>
-                        </button>
-                      )} */}
                       {searchFilter.saveChanges && (
                         <button
                           onClick={() => {
