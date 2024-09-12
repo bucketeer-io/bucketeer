@@ -1,5 +1,6 @@
 import logo from '../../assets/logo.png';
 import { clearOrganizationId } from '../../storage/organizationId';
+import DebuggerIcon from '../../assets/svg/debugger.svg';
 import MUAccountCircleIcon from '@material-ui/icons/AccountCircle';
 import MUBarChart from '@material-ui/icons/BarChart';
 import MUFlagIcon from '@material-ui/icons/Flag';
@@ -37,7 +38,7 @@ import { clearToken } from '../../modules/auth';
 import { clearMe, useCurrentEnvironment, useMe } from '../../modules/me';
 import { AppDispatch } from '../../store';
 import { EnvironmentSelect } from '../EnvironmentSelect';
-import DebuggerIcon from '../../assets/svg/debugger.svg';
+import { clearCurrentEnvironmentId } from '../../storage/environment';
 
 export interface MenuItem {
   readonly messageComponent?: ReactNode;
@@ -183,6 +184,7 @@ export const SideMenu: FC = memo(() => {
   const currentEnvironment = useCurrentEnvironment();
 
   const handleLogout = useCallback(async () => {
+    clearCurrentEnvironmentId();
     clearOrganizationId();
     dispatch(clearMe());
     dispatch(clearToken());

@@ -7,6 +7,7 @@ import { clearToken } from '../modules/auth';
 import { clearOrganizationId } from '../storage/organizationId';
 import { clearMe } from '../modules/me';
 import { PAGE_PATH_ROOT } from '../constants/routing';
+import { clearCurrentEnvironmentId } from '../storage/environment';
 
 export const UNAUTHENTICATED_ERROR = 'UNAUTHENTICATED_ERROR';
 
@@ -40,6 +41,7 @@ export const thunkErrorHandler: Middleware =
           dispatch(clearToken());
           dispatch(clearMe());
           clearOrganizationId();
+          clearCurrentEnvironmentId();
         } else {
           dispatch(
             addToast({ message: action.error.message, severity: 'error' })
