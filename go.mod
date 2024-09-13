@@ -10,6 +10,7 @@ require (
 	cloud.google.com/go/profiler v0.4.1
 	cloud.google.com/go/pubsub v1.40.0
 	contrib.go.opencensus.io/exporter/stackdriver v0.13.14
+	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/VividCortex/mysqlerr v1.0.0
 	github.com/aws/aws-sdk-go-v2/config v1.27.27
 	github.com/aws/aws-sdk-go-v2/service/kms v1.35.3

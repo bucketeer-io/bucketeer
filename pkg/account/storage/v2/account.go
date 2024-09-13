@@ -111,7 +111,12 @@ func (s *accountStorage) DeleteAccountV2(ctx context.Context, a *domain.AccountV
 	if err != nil {
 		return err
 	}
+	fmt.Printf("kaki result : %v\n", result)
 	rowsAffected, err := result.RowsAffected()
+	
+	fmt.Printf("kaki rowsAffected : %v\n", rowsAffected)
+
+	fmt.Printf("kaki rowsAffected : %v\n", rowsAffected)
 	if err != nil {
 		return err
 	}
@@ -241,6 +246,8 @@ func (s *accountStorage) ListAccountsV2(
 	orders []*mysql.Order,
 	limit, offset int,
 ) ([]*proto.AccountV2, int, int64, error) {
+	fmt.Printf("kaki Start\n")
+
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
@@ -250,13 +257,17 @@ func (s *accountStorage) ListAccountsV2(
 		orderBySQL,
 		limitOffsetSQL,
 	)
+	fmt.Printf("kaki query: %s\n", query)
 	rows, err := s.qe(ctx).QueryContext(ctx, query, whereArgs...)
+	fmt.Printf("kaki Start2\n")
 	if err != nil {
+		fmt.Printf("kaki Start2 Error\n")
 		return nil, 0, 0, err
 	}
 	defer rows.Close()
 	accounts := make([]*proto.AccountV2, 0, limit)
 	for rows.Next() {
+		fmt.Printf("kaki Next Do\n")
 		account := proto.AccountV2{}
 		var organizationRole int32
 		err := rows.Scan(
@@ -271,6 +282,8 @@ func (s *accountStorage) ListAccountsV2(
 			&account.UpdatedAt,
 			&mysql.JSONObject{Val: &account.SearchFilters},
 		)
+		fmt.Printf("kaki accountName: %s\n", account.Name)
+		fmt.Printf("kaki error: %v\n", err)
 		if err != nil {
 			return nil, 0, 0, err
 		}
@@ -283,7 +296,10 @@ func (s *accountStorage) ListAccountsV2(
 	nextOffset := offset + len(accounts)
 	var totalCount int64
 	countQuery := fmt.Sprintf(countAccountsV2SQL, whereSQL, orderBySQL)
+	fmt.Printf("kaki countQuery: %s\n", countQuery)
+
 	err = s.qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	fmt.Printf("kaki count: %v\n", totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
