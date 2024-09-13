@@ -161,7 +161,7 @@ batch-server:
       addr: localenv-redis-headless.default.svc.cluster.local:6379
       poolMaxIdle: 25
       poolMaxActive: 25
-    experimentLockTTL: 10m
+    experimentLockTTL: 1m
 
   tls:
     service:
