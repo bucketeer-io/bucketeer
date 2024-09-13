@@ -156,8 +156,7 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 		)
 		return nil
 	}
-
-	defer func() {
+	if calcErr := e.calculateExperiment(ctx, env, experiment); calcErr != nil {
 		unlocked, unlockErr := e.experimentLock.Unlock(ctx, env.Id, experiment.Id, lockValue)
 		if unlockErr != nil {
 			e.logger.Error("Failed to release lock",
@@ -172,9 +171,9 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 				zap.String("experimentId", experiment.Id),
 			)
 		}
-	}()
-
-	return e.calculateExperiment(ctx, env, experiment)
+		return calcErr
+	}
+	return nil
 }
 
 func (e *experimentCalculate) calculateExperiment(ctx context.Context,
