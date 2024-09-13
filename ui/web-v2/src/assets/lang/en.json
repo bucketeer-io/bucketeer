@@ -504,6 +504,7 @@
   "reason.rule": "Rule",
   "reason.target": "Target",
   "saveChanges.addShortcut": "Add shortcut",
+  "saveChanges.addShortcutTooltip": "Create shortcuts for your most used search filters.",
   "saveChanges.deleteShortcut": "Delete shortcut",
   "saveChanges.editShortcut": "Edit shortcut",
   "saveChanges.saveChangesBeforeExiting.description": "You have unsaved search filter changes. Are you sure you want to leave this page without saving them?",

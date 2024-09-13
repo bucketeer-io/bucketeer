@@ -3016,7 +3016,11 @@ export const messages = {
         id: 'saveChanges.saveChangesBeforeExiting.description',
         defaultMessage: `You have unsaved search filter changes. Are you sure you want to leave this page without saving them?`
       })
-    }
+    },
+    addShortcutTooltip: defineMessage({
+      id: 'saveChanges.addShortcutTooltip',
+      defaultMessage: 'Create shortcuts for your most used search filters.'
+    })
   },
   type: defineMessage({
     id: 'type',

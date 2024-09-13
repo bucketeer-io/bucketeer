@@ -63,7 +63,12 @@ import { SortItem, SortSelect } from '../SortSelect';
 import { Switch } from '../Switch';
 import { TagChips } from '../TagsChips';
 import { Dialog, Popover, Transition } from '@headlessui/react';
-import { PencilIcon, TrashIcon, XIcon } from '@heroicons/react/outline';
+import {
+  InformationCircleIcon,
+  PencilIcon,
+  TrashIcon,
+  XIcon
+} from '@heroicons/react/outline';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { shortcutFormSchema } from '../../pages/feature/formSchema';
@@ -80,7 +85,7 @@ import SaveSvg from '../../assets/svg/save.svg';
 import SaveGraySvg from '../../assets/svg/save-gray.svg';
 import SaveLargeSvg from '../../assets/svg/save-large.svg';
 import { parse } from 'query-string';
-import { HelpTextTooltip } from '../HelpTextTooltip';
+import { HoverPopover } from '../HoverPopover';
 
 export enum FlagStatus {
   NEW, // This flag is new and has not been requested yet.
@@ -504,9 +509,6 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     const me = useMe();
     const searchOptions = useSearchParams();
 
-    const [initialOptions, setInitialOptions] =
-      useState<FeatureSearchOptions>(options);
-
     const accounts = useSelector<AppState, AccountV2.AsObject[]>(
       (state) => selectAllAccounts(state.accounts),
       shallowEqual
@@ -533,24 +535,32 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
 
     const history = useHistory();
 
-    useEffect(() => {
-      setInitialOptions(options);
-    }, []);
-
     const filteredSearchFiltersList =
       me.consoleAccount.searchFiltersList.filter(
         (s) => s.environmentId === currentEnvironment.id
       );
 
     useEffect(() => {
+      // If there are search filters at initial load, remove the query params
+      if (Object.keys(options).length > 0) {
+        onChange({});
+      }
+    }, []);
+
+    useEffect(() => {
       if (filteredSearchFiltersList.length > 0) {
         let updatedFiltersList = [];
-        if (filteredSearchFiltersList.length > searchFiltersList.length) {
+        // Make last search filter selected if new search filter is added
+        if (
+          filteredSearchFiltersList.length > searchFiltersList.length &&
+          Object.keys(options).length > 0
+        ) {
           updatedFiltersList = filteredSearchFiltersList.map((s, i) => ({
             ...s,
             selected: i + 1 === filteredSearchFiltersList.length
           }));
         } else {
+          // Save the changes
           const oldSelectedSearchFilter = searchFiltersList.find(
             (s) => s.selected
           );
@@ -568,9 +578,10 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
 
     useEffect(() => {
       const stringigyOptions = stringifySearchParams(options);
-      const query = selectedSearchFilter?.query;
+      const query = selectedSearchFilter?.query ?? '';
 
-      if (selectedSearchFilter) {
+      // If the selected search filter has changes, mark it as unsaved
+      if (stringigyOptions && query) {
         setSearchFiltersList(
           searchFiltersList.map((s) => ({
             ...s,
@@ -584,11 +595,13 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     }, [selectedSearchFilter, options]);
 
     useEffect(() => {
+      // If there are any search filters with changes, mark the page as having unsaved changes
       const findSaveChanges = searchFiltersList.find((s) => s.saveChanges);
       setUnsavedChanges(findSaveChanges ? true : false);
     }, [searchFiltersList]);
 
     useEffect(() => {
+      // If there are unsaved changes when the user tries to leave the page, show the confirmation dialog
       const handleBeforeUnload = (e) => {
         if (unsavedChanges) {
           // The standard way to trigger the confirmation dialog
@@ -605,8 +618,9 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     }, [unsavedChanges]);
 
     useEffect(() => {
+      // If the user clicks on `Feature Flag` sidebar menu, reset the search filters
       if (Object.keys(options).length === 0) {
-        setSelectedSearchFilter(null);
+        onChange({});
         setSearchFiltersList(
           filteredSearchFiltersList.map((s) => ({
             ...s,
@@ -614,17 +628,15 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
             saveChanges: false
           }))
         );
-        onChange({});
-      }
-    }, [options, me.consoleAccount.searchFiltersList]);
-
-    useEffect(() => {
-      if (!shallowEqual(options, initialOptions)) {
-        setUnsavedChanges(true);
-      } else {
-        setUnsavedChanges(false);
+        setSelectedSearchFilter(null);
       }
     }, [options]);
+
+    useEffect(() => {
+      if (!selectedSearchFilter && Object.keys(options).length > 0) {
+        setUnsavedChanges(true);
+      }
+    }, [options, selectedSearchFilter]);
 
     const handleFilterKeyChange = useCallback(
       (key: string): void => {
@@ -802,45 +814,30 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     };
 
     const handleConfirm = (confirmType: ConfirmType) => {
-      if (confirmType === ConfirmType.YES) {
-        handleSaveChanges(selectedSearchFilter.id);
-      } else if (selectedSearchFilter?.query) {
-        // If the user clicked on the "No" button, we should reset the query to the last saved query
-        onChange(parse(selectedSearchFilter.query));
-        setSearchFiltersList(
-          searchFiltersList.map((s) => ({
-            ...s,
-            saveChanges: false,
-            query:
-              s.id === selectedSearchFilter.id
-                ? selectedSearchFilter.query
-                : s.query
-          }))
-        );
-      }
-
-      const { pathname: nextPathname } = nextLocation;
-      const isNew =
-        `/${nextPathname.substring(nextPathname.lastIndexOf('/') + 1)}` ==
-        PAGE_PATH_NEW;
-
       setShowSaveChangesDialog(false);
+      if (confirmType === ConfirmType.YES) {
+        setUnsavedChanges(false);
 
-      // If the user clicked on the "Add" button, we should show add form
-      if (isNew) {
-        onAdd();
-      } else {
-        history.push({
-          pathname: nextLocation.pathname
-        });
+        const { pathname: nextPathname } = nextLocation;
+        const isNew =
+          `/${nextPathname.substring(nextPathname.lastIndexOf('/') + 1)}` ==
+          PAGE_PATH_NEW;
+
+        // If the user clicked on the "Add" button, we should show add form
+        if (isNew) {
+          onAdd();
+        } else {
+          history.push({
+            pathname: nextPathname
+          });
+        }
       }
     };
 
     const handleNavigation = (nextLocation) => {
       if (
-        !showSaveChangesDialog &&
-        unsavedChanges &&
-        location.pathname !== nextLocation.pathname
+        location.pathname !== nextLocation.pathname ||
+        (location.pathname === nextLocation.pathname && !nextLocation.search) // If the user is trying to go to the same page by clicking on the sidebar menu
       ) {
         setNextLocation(nextLocation); // Save the location the user is trying to go to
         setShowSaveChangesDialog(true); // Show custom confirmation popup
@@ -880,7 +877,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
           </div>
           <div className="flex gap-2 flex-wrap w-full items-center">
             <Prompt
-              when={unsavedChanges}
+              when={unsavedChanges && showSaveChangesDialog === false}
               message={(location) => {
                 return handleNavigation(location);
               }}
@@ -896,10 +893,9 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                     handleSearchFilter(searchFilter.id);
                   }}
                 >
-                  {/* {searchFilter.defaultFilter && (
-                    <StarIcon width={18} className="text-pink-500" />
-                  )} */}
-                  <span className="text-primary">{searchFilter.name}</span>
+                  <span className="text-primary truncate max-w-[180px]">
+                    {searchFilter.name}
+                  </span>
                   {searchFilter.saveChanges && (
                     <div className="text-primary opacity-80">
                       <SaveSvg />
@@ -927,7 +923,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                       <button
                         onClick={() => {
                           setOpen(true);
-                          setSelectedSearchFilter(searchFilter);
+                          handleSearchFilter(searchFilter.id);
                         }}
                         className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
                       >
@@ -956,7 +952,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
             {(searchFiltersList.length > 0 || unsavedChanges) && (
               <div className="flex space-x-1">
                 <button
-                  className="bg-purple-50 p-[6px] rounded hover:bg-purple-100 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                  className="bg-gray-50 p-[6px] rounded hover:bg-purple-100 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => {
                     setOpen(true);
                     setSelectedSearchFilter(null);
@@ -964,10 +960,27 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                 >
                   <PlusIcon width={20} className="text-primary" />
                 </button>
-                <HelpTextTooltip
-                  helpText={f(messages.saveChanges.addShortcut)}
-                  width={86}
-                />
+                <HoverPopover
+                  render={() => {
+                    return (
+                      <div
+                        className={classNames(
+                          'border shadow-sm bg-white text-gray-500 p-1',
+                          'text-xs rounded whitespace-normal break-words w-64'
+                        )}
+                      >
+                        {f(messages.saveChanges.addShortcutTooltip)}
+                      </div>
+                    );
+                  }}
+                >
+                  <div className={classNames('hover:text-gray-500')}>
+                    <InformationCircleIcon
+                      className="w-5 h-5 text-gray-400"
+                      aria-hidden="true"
+                    />
+                  </div>
+                </HoverPopover>
               </div>
             )}
           </div>
