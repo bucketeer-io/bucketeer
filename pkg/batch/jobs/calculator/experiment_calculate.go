@@ -52,6 +52,7 @@ type experimentCalculate struct {
 
 func NewExperimentCalculate(
 	httpStan *stan.Stan,
+	stanModelID string,
 	environmentClient environmentclient.Client,
 	experimentClient experimentclient.Client,
 	ecClient ecclient.Client,
@@ -69,6 +70,7 @@ func NewExperimentCalculate(
 	}
 	calculator := experimentcalc.NewExperimentCalculator(
 		httpStan,
+		stanModelID,
 		environmentClient,
 		ecClient,
 		experimentClient,
@@ -154,8 +156,9 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 		)
 		return nil
 	}
-
-	defer func() {
+	if calcErr := e.calculateExperiment(ctx, env, experiment); calcErr != nil {
+		// To prevent calculating the same experiment multiple times in a short time,
+		// we set the TTL for the lock key and only unlock it when an error occurs so that it can retry.
 		unlocked, unlockErr := e.experimentLock.Unlock(ctx, env.Id, experiment.Id, lockValue)
 		if unlockErr != nil {
 			e.logger.Error("Failed to release lock",
@@ -170,9 +173,9 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 				zap.String("experimentId", experiment.Id),
 			)
 		}
-	}()
-
-	return e.calculateExperiment(ctx, env, experiment)
+		return calcErr
+	}
+	return nil
 }
 
 func (e *experimentCalculate) calculateExperiment(ctx context.Context,

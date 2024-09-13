@@ -144,6 +144,8 @@ spec:
               value: "{{ .Values.env.nonPersistentRedis.poolMaxActive }}"
             - name: BUCKETEER_BATCH_EXPERIMENT_LOCK_TTL
               value: "{{ .Values.env.experimentLockTTL }}"
+            - name: BUCKETEER_BATCH_STAN_MODEL_ID
+              value: "{{ .Values.httpstan.modelId }}"
 
           volumeMounts:
             - name: service-cert-secret

@@ -97,6 +97,10 @@ httpstan:
     pullPolicy: IfNotPresent
   config:
   port: 8080
+  # The model ID is generated when the HTTP Stan model is compiled.
+  # We must update the ID every time we compile the model.
+  # Since we don't change the model so often, this ID won't change.
+  modelId: y3qsnd7m
   healthPath: v1/health
   resources: {}
 
