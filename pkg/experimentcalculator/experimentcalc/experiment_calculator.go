@@ -50,8 +50,8 @@ const (
 )
 
 type ExperimentCalculator struct {
-	httpStan *stan.Stan
-	modelID  string
+	httpStan    *stan.Stan
+	stanModelID string
 
 	environmentClient  envclient.Client
 	eventCounterClient ecclient.Client
@@ -65,7 +65,7 @@ type ExperimentCalculator struct {
 
 func NewExperimentCalculator(
 	httpStan *stan.Stan,
-	modelID string,
+	stanModelID string,
 	environmentClient envclient.Client,
 	eventCounterClient ecclient.Client,
 	experimentClient experimentclient.Client,
@@ -77,7 +77,7 @@ func NewExperimentCalculator(
 	registerMetrics(metrics)
 	return &ExperimentCalculator{
 		httpStan:           httpStan,
-		modelID:            modelID,
+		stanModelID:        stanModelID,
 		environmentClient:  environmentClient,
 		eventCounterClient: eventCounterClient,
 		experimentClient:   experimentClient,
@@ -448,11 +448,11 @@ func (e ExperimentCalculator) binomialModelSample(
 				NumWarmup:  1000,
 				RandomSeed: 1234,
 			}
-			fitResp, err := e.httpStan.CreateFit(ctx, e.modelID, req)
+			fitResp, err := e.httpStan.CreateFit(ctx, e.stanModelID, req)
 			if err != nil {
 				e.logger.Error("Failed to create fit",
 					log.FieldsFromImcomingContext(ctx).AddFields(
-						zap.String("modelId", e.modelID),
+						zap.String("modelId", e.stanModelID),
 						zap.Error(err),
 					)...,
 				)
@@ -475,7 +475,7 @@ func (e ExperimentCalculator) binomialModelSample(
 				}
 				time.Sleep(50 * time.Millisecond)
 			}
-			result, err := e.httpStan.GetFitResult(ctx, e.modelID, fitId)
+			result, err := e.httpStan.GetFitResult(ctx, e.stanModelID, fitId)
 			if err != nil {
 				e.logger.Error("Failed to get fit result",
 					log.FieldsFromImcomingContext(ctx).AddFields(
@@ -486,7 +486,7 @@ func (e ExperimentCalculator) binomialModelSample(
 				return
 			}
 			fit := e.httpStan.ExtractFromFitResult(ctx, result)
-			constrainedNames, _ := e.httpStan.StanParams(ctx, e.modelID, req.Data)
+			constrainedNames, _ := e.httpStan.StanParams(ctx, e.stanModelID, req.Data)
 			samplesChan <- fit.Select(constrainedNames)
 		}(i)
 	}

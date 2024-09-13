@@ -37,7 +37,7 @@ var (
 )
 
 const (
-	modelID = "y3qsnd7m"
+	stanModelID = "y3qsnd7m"
 )
 
 func creatExperimentCalculator(mockController *gomock.Controller) *ExperimentCalculator {
@@ -45,7 +45,7 @@ func creatExperimentCalculator(mockController *gomock.Controller) *ExperimentCal
 	registerer.EXPECT().MustRegister(gomock.Any()).Return()
 	return NewExperimentCalculator(
 		stan.NewStan("localhost", "8080"),
-		modelID,
+		stanModelID,
 		envclient.NewMockClient(mockController),
 		ecclient.NewMockClient(mockController),
 		experimentclient.NewMockClient(mockController),
