@@ -36,11 +36,16 @@ var (
 	jpLocation = time.FixedZone("Asia/Tokyo", 9*60*60)
 )
 
+const (
+	modelID = "y3qsnd7m"
+)
+
 func creatExperimentCalculator(mockController *gomock.Controller) *ExperimentCalculator {
 	registerer := metricsmock.NewMockRegisterer(mockController)
 	registerer.EXPECT().MustRegister(gomock.Any()).Return()
 	return NewExperimentCalculator(
 		stan.NewStan("localhost", "8080"),
+		modelID,
 		envclient.NewMockClient(mockController),
 		ecclient.NewMockClient(mockController),
 		experimentclient.NewMockClient(mockController),

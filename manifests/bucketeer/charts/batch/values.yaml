@@ -97,6 +97,7 @@ httpstan:
     pullPolicy: IfNotPresent
   config:
   port: 8080
+  modelId: y3qsnd7m
   healthPath: v1/health
   resources: {}
 

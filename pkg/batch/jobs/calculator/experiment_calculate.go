@@ -52,6 +52,7 @@ type experimentCalculate struct {
 
 func NewExperimentCalculate(
 	httpStan *stan.Stan,
+	modelID string,
 	environmentClient environmentclient.Client,
 	experimentClient experimentclient.Client,
 	ecClient ecclient.Client,
@@ -69,6 +70,7 @@ func NewExperimentCalculate(
 	}
 	calculator := experimentcalc.NewExperimentCalculator(
 		httpStan,
+		modelID,
 		environmentClient,
 		ecClient,
 		experimentClient,

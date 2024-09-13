@@ -65,6 +65,7 @@ type ExperimentCalculator struct {
 
 func NewExperimentCalculator(
 	httpStan *stan.Stan,
+	modelID string,
 	environmentClient envclient.Client,
 	eventCounterClient ecclient.Client,
 	experimentClient experimentclient.Client,
@@ -74,24 +75,9 @@ func NewExperimentCalculator(
 	logger *zap.Logger,
 ) *ExperimentCalculator {
 	registerMetrics(metrics)
-	var compiledModel stan.ModelCompileResp
-	for i := 0; i < 3; i++ {
-		resp, err := httpStan.CompileModel(context.TODO(), stan.ModelCode())
-		if err != nil {
-			logger.Warn("ExperimentCalculator failed to compile model, retrying...",
-				zap.Error(err),
-			)
-			time.Sleep(1 * time.Second)
-		} else {
-			compiledModel = resp
-			break
-		}
-	}
-	modelID := compiledModel.Name[len("models/"):]
 	return &ExperimentCalculator{
-		httpStan: httpStan,
-		modelID:  modelID,
-
+		httpStan:           httpStan,
+		modelID:            modelID,
 		environmentClient:  environmentClient,
 		eventCounterClient: eventCounterClient,
 		experimentClient:   experimentClient,

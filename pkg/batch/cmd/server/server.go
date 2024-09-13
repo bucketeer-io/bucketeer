@@ -80,6 +80,7 @@ type server struct {
 	oauthIssuer        *string
 	stanHost           *string
 	stanPort           *string
+	stanModelID        *string
 	// MySQL
 	mysqlUser        *string
 	mysqlPass        *string
@@ -133,9 +134,11 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"oauth-audience",
 			"The oauth audience registered in the token",
 		).Required().String(),
-		oauthIssuer:      cmd.Flag("oauth-issuer", "The issuer url").Required().String(),
-		stanHost:         cmd.Flag("stan-host", "httpstan host.").Default("localhost").String(),
-		stanPort:         cmd.Flag("stan-port", "httpstan port.").Default("8080").String(),
+		oauthIssuer: cmd.Flag("oauth-issuer", "The issuer url").Required().String(),
+		stanHost:    cmd.Flag("stan-host", "httpstan host.").Default("localhost").String(),
+		stanPort:    cmd.Flag("stan-port", "httpstan port.").Default("8080").String(),
+		stanModelID: cmd.Flag("stan-model-id", "httpstan modelId.").
+			Default("y3qsnd7m").Required().String(),
 		mysqlUser:        cmd.Flag("mysql-user", "MySQL user.").Required().String(),
 		mysqlPass:        cmd.Flag("mysql-pass", "MySQL password.").Required().String(),
 		mysqlHost:        cmd.Flag("mysql-host", "MySQL host.").Required().String(),
@@ -456,6 +459,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		),
 		calculator.NewExperimentCalculate(
 			stan.NewStan(*s.stanHost, *s.stanPort),
+			*s.stanModelID,
 			environmentClient,
 			experimentClient,
 			eventCounterClient,
