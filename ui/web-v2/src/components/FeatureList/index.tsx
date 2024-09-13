@@ -500,6 +500,11 @@ interface FeatureSearchProps {
   onAdd: () => void;
 }
 
+const defaultOptions = {
+  page: '1',
+  sort: '-createdAt'
+};
+
 const FeatureSearch: FC<FeatureSearchProps> = memo(
   ({ options, onChange, onAdd }) => {
     const editable = useIsEditable();
@@ -541,11 +546,13 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       );
 
     useEffect(() => {
-      // If there are search filters at initial load, remove the query params
-      if (Object.keys(options).length > 0) {
-        onChange({});
+      // set default options
+      if (Object.keys(options).length === 0) {
+        onChange(defaultOptions);
       }
-    }, []);
+    }, [options]);
+
+    console.log(options);
 
     useEffect(() => {
       if (filteredSearchFiltersList.length > 0) {
@@ -553,7 +560,8 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
         // Make last search filter selected if new search filter is added
         if (
           filteredSearchFiltersList.length > searchFiltersList.length &&
-          Object.keys(options).length > 0
+          Object.keys(options).length > 0 &&
+          JSON.stringify(options) !== JSON.stringify(defaultOptions)
         ) {
           updatedFiltersList = filteredSearchFiltersList.map((s, i) => ({
             ...s,
@@ -618,23 +626,13 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     }, [unsavedChanges]);
 
     useEffect(() => {
-      // If the user clicks on `Feature Flag` sidebar menu, reset the search filters
-      if (Object.keys(options).length === 0) {
-        onChange({});
-        setSearchFiltersList(
-          filteredSearchFiltersList.map((s) => ({
-            ...s,
-            selected: false,
-            saveChanges: false
-          }))
-        );
-        setSelectedSearchFilter(null);
-      }
-    }, [options]);
-
-    useEffect(() => {
-      if (!selectedSearchFilter && Object.keys(options).length > 0) {
+      if (
+        !selectedSearchFilter &&
+        JSON.stringify(options) !== JSON.stringify(defaultOptions)
+      ) {
         setUnsavedChanges(true);
+      } else {
+        setUnsavedChanges(false);
       }
     }, [options, selectedSearchFilter]);
 
@@ -772,7 +770,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
 
     const handleDeleteSearchFilter = (id: string) => {
       if (id === selectedSearchFilter?.id || searchFiltersList.length === 1) {
-        onChange({});
+        onChange(defaultOptions);
       }
 
       dispatch(
@@ -823,10 +821,20 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
           `/${nextPathname.substring(nextPathname.lastIndexOf('/') + 1)}` ==
           PAGE_PATH_NEW;
 
+        onChange(defaultOptions);
+        setSelectedSearchFilter(null);
+        setSearchFiltersList(
+          filteredSearchFiltersList.map((s) => ({
+            ...s,
+            selected: false,
+            saveChanges: false
+          }))
+        );
+
         // If the user clicked on the "Add" button, we should show add form
         if (isNew) {
           onAdd();
-        } else {
+        } else if (location.pathname !== nextPathname) {
           history.push({
             pathname: nextPathname
           });
@@ -835,6 +843,9 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     };
 
     const handleNavigation = (nextLocation) => {
+      console.log({
+        nextLocation
+      });
       if (
         location.pathname !== nextLocation.pathname ||
         (location.pathname === nextLocation.pathname && !nextLocation.search) // If the user is trying to go to the same page by clicking on the sidebar menu
