@@ -28,7 +28,8 @@ import {
   PAGE_PATH_ROOT,
   PAGE_PATH_AUDIT_LOGS,
   PAGE_PATH_DOCUMENTATION,
-  PAGE_PATH_SETTINGS
+  PAGE_PATH_SETTINGS,
+  PAGE_PATH_DEBUGGER
 } from '../../constants/routing';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
@@ -36,6 +37,7 @@ import { clearToken } from '../../modules/auth';
 import { clearMe, useCurrentEnvironment, useMe } from '../../modules/me';
 import { AppDispatch } from '../../store';
 import { EnvironmentSelect } from '../EnvironmentSelect';
+import DebuggerIcon from '../../assets/svg/debugger.svg';
 
 export interface MenuItem {
   readonly messageComponent?: ReactNode;
@@ -105,6 +107,13 @@ const createMenuItems = (
     external: null,
     target: null,
     iconElement: <MUNotificationsIcon />
+  });
+  items.push({
+    messageComponent: <span>Debugger</span>,
+    path: `/${environmentUrlCode}${PAGE_PATH_DEBUGGER}`,
+    external: null,
+    target: null,
+    iconElement: <DebuggerIcon />
   });
   items.push({ messageComponent: null });
   items.push({

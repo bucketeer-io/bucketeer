@@ -10,6 +10,7 @@ export const PAGE_PATH_APIKEYS = '/apikeys';
 export const PAGE_PATH_USER_SEGMENTS = '/segments';
 export const PAGE_PATH_USERS = '/users';
 export const PAGE_PATH_AUDIT_LOGS = '/auditlogs';
+export const PAGE_PATH_DEBUGGER = '/debugger';
 export const PAGE_PATH_ACCOUNTS = '/accounts';
 export const PAGE_PATH_DOCUMENTATION = 'https://docs.bucketeer.io';
 export const PAGE_PATH_SETTINGS = '/settings';
