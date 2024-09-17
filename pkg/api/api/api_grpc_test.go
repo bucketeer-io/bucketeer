@@ -21,7 +21,7 @@ import (
 	"testing"
 	"time"
 
-	evaluation "github.com/bucketeer-io/bucketeer/evaluation"
+	evaluation "github.com/bucketeer-io/bucketeer/evaluation/go"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	"github.com/bucketeer-io/bucketeer/proto/feature"
 

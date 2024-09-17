@@ -46,7 +46,7 @@ local-deps:
 
 .PHONY: lint
 lint:
-	golangci-lint run --timeout 3m0s ./cmd/... ./evaluation/... ./pkg/... ./hack/... ./test/...
+	golangci-lint run --timeout 3m0s ./cmd/... ./evaluation/go/... ./pkg/... ./hack/... ./test/...
 
 .PHONY: gofmt
 gofmt:
@@ -167,7 +167,7 @@ build-go-embed: build-web-console $(GO_APP_BUILD_TARGETS) clean-web-console
 # Make sure bucketeer-httpstan is already running. If not, run "make start-httpstan".
 .PHONY: test-go
 test-go:
-	TZ=UTC CGO_ENABLED=0 go test -v ./pkg/... ./evaluation/...
+	TZ=UTC CGO_ENABLED=0 go test -v ./pkg/... ./evaluation/go/...
 
 .PHONY: start-httpstan
 start-httpstan:

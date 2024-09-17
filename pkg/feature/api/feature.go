@@ -26,7 +26,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	evaluation "github.com/bucketeer-io/bucketeer/evaluation"
+	evaluation "github.com/bucketeer-io/bucketeer/evaluation/go"
 	autoopsdomain "github.com/bucketeer-io/bucketeer/pkg/autoops/domain"
 	v2ao "github.com/bucketeer-io/bucketeer/pkg/autoops/storage/v2"
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
