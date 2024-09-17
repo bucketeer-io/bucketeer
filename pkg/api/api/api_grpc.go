@@ -29,7 +29,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	evaluation "github.com/bucketeer-io/bucketeer/evaluation"
+	evaluation "github.com/bucketeer-io/bucketeer/evaluation/go"
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
