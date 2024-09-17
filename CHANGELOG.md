@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.4.8](https://github.com/bucketeer-io/bucketeer/compare/v0.4.7...v0.4.8) (2024-09-17)
+
+
+### Features
+
+* add CreateSearchFilter API ([#1210](https://github.com/bucketeer-io/bucketeer/issues/1210)) ([6400856](https://github.com/bucketeer-io/bucketeer/commit/6400856428794497dc5ce2c3ecd86bf668938887))
+* add DeleteSearchFilter API  ([#1227](https://github.com/bucketeer-io/bucketeer/issues/1227)) ([fed6f9d](https://github.com/bucketeer-io/bucketeer/commit/fed6f9da2face5545ffb93d995e2459f298e301c))
+* add UpdateSearchFilter API ([#1214](https://github.com/bucketeer-io/bucketeer/issues/1214)) ([08205bc](https://github.com/bucketeer-io/bucketeer/commit/08205bc22a0a3792825aa6e6d93be4d6a7c82467))
+* **ui/dashboard:** add my projects menu ([#1229](https://github.com/bucketeer-io/bucketeer/issues/1229)) ([39f20bd](https://github.com/bucketeer-io/bucketeer/commit/39f20bdc030a0095ee0b908b259ab54eb507ba98))
+* **ui/dashboard:** implement auth flow ([#1215](https://github.com/bucketeer-io/bucketeer/issues/1215)) ([78cbfba](https://github.com/bucketeer-io/bucketeer/commit/78cbfba052cc0af75013d1c68032349c78a1c721))
+
+
+### Bug Fixes
+
+* column 'id' in where clause is ambiguous when searching flag ([#1234](https://github.com/bucketeer-io/bucketeer/issues/1234)) ([abab6d2](https://github.com/bucketeer-io/bucketeer/commit/abab6d267f001e38539724a9a930695c5ef4017e))
+* missing search filter field in the get me api ([#1228](https://github.com/bucketeer-io/bucketeer/issues/1228)) ([5d582ab](https://github.com/bucketeer-io/bucketeer/commit/5d582ab0984bc207b50c5e0eed6f2b3121ec1dbc))
+* system admin search filter not being updated ([#1235](https://github.com/bucketeer-io/bucketeer/issues/1235)) ([d959edc](https://github.com/bucketeer-io/bucketeer/commit/d959edcddc89038f3374b0264278f3590e3b3ee0))
+
+
+### Miscellaneous
+
+* move evaluation pkg to go directory ([#1238](https://github.com/bucketeer-io/bucketeer/issues/1238)) ([05363ef](https://github.com/bucketeer-io/bucketeer/commit/05363efcb486454608347b772e86b16a499e0975))
+* unify duplicate openapi default settings into a single file ([#1216](https://github.com/bucketeer-io/bucketeer/issues/1216)) ([82d4b73](https://github.com/bucketeer-io/bucketeer/commit/82d4b73e8fae43942d2dd054a4ed9a14d18f8a3d))
+* using configured stan modelId ([#1237](https://github.com/bucketeer-io/bucketeer/issues/1237)) ([b23df7c](https://github.com/bucketeer-io/bucketeer/commit/b23df7cb2dc8e0e560cfc9c3bb0062d41c6494b5))
+
+
+### Build System
+
+* **deps-dev:** bump webpack from 5.92.0 to 5.94.0 in /ui/web-v2 ([#1219](https://github.com/bucketeer-io/bucketeer/issues/1219)) ([fc855e7](https://github.com/bucketeer-io/bucketeer/commit/fc855e756a34e19191519e4735acbc77d667b7e4))
+* **deps:** bump micromatch from 4.0.7 to 4.0.8 in /ui/dashboard ([#1220](https://github.com/bucketeer-io/bucketeer/issues/1220)) ([7bbba20](https://github.com/bucketeer-io/bucketeer/commit/7bbba20eba0480a476f68b9824eb433fd2392752))
+* **deps:** bump micromatch from 4.0.7 to 4.0.8 in /ui/web-v2 ([#1221](https://github.com/bucketeer-io/bucketeer/issues/1221)) ([fd80067](https://github.com/bucketeer-io/bucketeer/commit/fd8006712163bbab9f4bfcd696ff51e3a01963a9))
+* **deps:** bump the dependencies group with 3 updates ([#1223](https://github.com/bucketeer-io/bucketeer/issues/1223)) ([56975a3](https://github.com/bucketeer-io/bucketeer/commit/56975a3f7d94fb9f0b6fc98b50ff8ed82d27dae5))
+
 ## [0.4.7](https://github.com/bucketeer-io/bucketeer/compare/v0.4.6...v0.4.7) (2024-08-27)
 
 
