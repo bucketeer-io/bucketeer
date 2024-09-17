@@ -209,6 +209,8 @@
   "copy.copied": "コピーしました",
   "copy.copyToClipboard": "クリップボードにコピー",
   "created": "作成",
+  "debugger.description": "",
+  "debugger.title": "",
   "description": "説明",
   "disabled": "無効",
   "enabled": "有効",

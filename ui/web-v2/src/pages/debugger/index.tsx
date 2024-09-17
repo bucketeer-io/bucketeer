@@ -3,7 +3,6 @@ import { useDispatch } from 'react-redux';
 
 import { Header } from '../../components/Header';
 import { AppDispatch } from '../../store';
-import { useSearchParams } from '../../utils/search-params';
 import { DebuggerEvaluateForm } from '../../components/DebuggerEvaluateForm';
 import { FormProvider, useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -15,6 +14,8 @@ import { EvaluateFeaturesResponse } from '../../proto/feature/service_pb';
 import { getFeature } from '../../modules/features';
 import { Feature } from '../../proto/feature/feature_pb';
 import { Reason } from '../../proto/feature/reason_pb';
+import { useIntl } from 'react-intl';
+import { messages } from '../../lang/messages';
 
 export interface UserEvaluation {
   id: string;
@@ -32,8 +33,7 @@ export interface UserEvaluation {
 export const DebuggerIndexPage: FC = memo(() => {
   const dispatch = useDispatch<AppDispatch>();
   const currentEnvironment = useCurrentEnvironment();
-  const searchOptions = useSearchParams();
-  searchOptions.sort = searchOptions.sort ? searchOptions.sort : '-createdAt';
+  const { formatMessage: f } = useIntl();
 
   const [showResults, setShowResults] = useState(false);
   const [userEvaluations, setUserEvaluations] = useState([]);
@@ -100,8 +100,8 @@ export const DebuggerIndexPage: FC = memo(() => {
     <>
       <div className="w-full">
         <Header
-          title="Debugger"
-          description="You can diagnose and troubleshoot problems."
+          title={f(messages.debugger.title)}
+          description={f(messages.debugger.description)}
         />
       </div>
       <div className="m-10">

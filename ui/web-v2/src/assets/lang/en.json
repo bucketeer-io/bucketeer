@@ -209,6 +209,8 @@
   "copy.copied": "Copied!",
   "copy.copyToClipboard": "Copy to clipboard",
   "created": "Created",
+  "debugger.description": "You can diagnose and troubleshoot problems.",
+  "debugger.title": "Debugger",
   "description": "Description",
   "disabled": "Disabled",
   "enabled": "Enabled",

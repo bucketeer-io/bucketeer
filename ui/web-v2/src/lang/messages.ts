@@ -2970,6 +2970,16 @@ export const messages = {
       defaultMessage: 'Accepted file type: .json'
     })
   },
+  debugger: {
+    title: defineMessage({
+      id: 'debugger.title',
+      defaultMessage: 'Debugger'
+    }),
+    description: defineMessage({
+      id: 'debugger.description',
+      defaultMessage: 'You can diagnose and troubleshoot problems.'
+    })
+  },
   type: defineMessage({
     id: 'type',
     defaultMessage: 'Type'
