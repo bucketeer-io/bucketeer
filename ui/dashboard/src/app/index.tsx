@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useState } from 'react';
+import { I18nextProvider } from 'react-i18next';
 import {
   BrowserRouter,
   Route,
@@ -6,6 +7,8 @@ import {
   useParams,
   useNavigate
 } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import {
   AuthCallbackPage,
   AuthProvider,
@@ -18,14 +21,19 @@ import {
   PAGE_PATH_AUTH_SIGNIN,
   PAGE_PATH_FEATURES,
   PAGE_PATH_NEW,
+  PAGE_PATH_ORGANIZATIONS,
+  PAGE_PATH_PROJECTS,
   PAGE_PATH_ROOT,
   PAGE_PATH_ROOT_ALL
 } from 'constants/routing';
+import { i18n } from 'i18n';
 import { getTokenStorage } from 'storage/token';
 import { v4 as uuid } from 'uuid';
 import { ConsoleAccount } from '@types';
 import DashboardPage from 'pages/dashboard';
 import NotFoundPage from 'pages/not-found';
+import OrganizationsPage from 'pages/organizations';
+import ProjectsPage from 'pages/projects';
 import SignInPage from 'pages/signin';
 import SignInEmailPage from 'pages/signin/email';
 import SelectOrganizationPage from 'pages/signin/organization';
@@ -38,20 +46,36 @@ export const AppLoading = () => (
   </div>
 );
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30 * 60 * 1000 // Set the global stale time to 30 minutes
+    }
+  }
+});
+
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route
-            path={PAGE_PATH_AUTH_CALLBACK}
-            element={<AuthCallbackPage />}
-          />
-          <Route path={PAGE_PATH_AUTH_SIGNIN} element={<SignInEmailPage />} />
-          <Route path={PAGE_PATH_ROOT_ALL} element={<Root />} />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+    <I18nextProvider i18n={i18n}>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route
+                path={PAGE_PATH_AUTH_CALLBACK}
+                element={<AuthCallbackPage />}
+              />
+              <Route
+                path={PAGE_PATH_AUTH_SIGNIN}
+                element={<SignInEmailPage />}
+              />
+              <Route path={PAGE_PATH_ROOT_ALL} element={<Root />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </I18nextProvider>
   );
 }
 
@@ -80,6 +104,11 @@ export const Root = memo(() => {
               path={'/:envUrlCode?/*'}
               element={<EnvironmentRoot account={consoleAccount} />}
             />
+            <Route
+              path={`${PAGE_PATH_ORGANIZATIONS}`}
+              element={<OrganizationsPage />}
+            />
+            <Route path={`${PAGE_PATH_PROJECTS}`} element={<ProjectsPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>

@@ -13,7 +13,13 @@ export interface Organization {
   disabled: boolean;
   archived: boolean;
   trial: boolean;
-  createdAt: number;
-  updatedAt: number;
+  createdAt: string;
+  updatedAt: string;
   systemAdmin: boolean;
+}
+
+export interface OrganizationsCollection {
+  Organizations: Array<Organization>;
+  cursor: string;
+  totalCount: string;
 }

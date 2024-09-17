@@ -30,9 +30,12 @@ export type DropdownProps<DropdownValue> = {
   readOnly?: boolean;
   modal?: boolean;
   className?: string;
+  triggerType?: 'normal' | 'icon-only';
 };
 
-const Dropdown = <DropdownValue extends number | string>({
+export type DropdownValue = number | string;
+
+const Dropdown = <DropdownValue,>({
   align = 'start',
   expand,
   placeholder = 'Select...',
@@ -45,7 +48,8 @@ const Dropdown = <DropdownValue extends number | string>({
   action,
   disabled,
   modal = false,
-  className
+  className,
+  triggerType = 'normal'
 }: DropdownProps<DropdownValue>) => {
   const selected = options.find(o => o.value === value);
 
@@ -56,23 +60,31 @@ const Dropdown = <DropdownValue extends number | string>({
           styles.trigger,
           addonSlot === 'left' && styles['pad-left'],
           addonSlot === 'right' && styles['pad-right'],
-          expand === 'full' && styles.full
+          expand === 'full' && styles.full,
+          triggerType === 'icon-only' && styles['icon-only']
         )}
         disabled={disabled}
       >
         {icon && (
           <span className={styles.icon}>
-            <Icon icon={icon} color="gray-300" />
+            <Icon
+              icon={icon}
+              color={triggerType === 'normal' ? 'gray-300' : 'gray-600'}
+            />
           </span>
         )}
-        {selected ? (
-          <span className={styles.selected}>{selected.label}</span>
-        ) : (
-          <span className={styles.placeholder}>{placeholder}</span>
+        {triggerType === 'normal' && (
+          <>
+            {selected ? (
+              <span className={styles.selected}>{selected.label}</span>
+            ) : (
+              <span className={styles.placeholder}>{placeholder}</span>
+            )}
+            <span className={styles.arrow}>
+              <Icon icon={IconExpandMoreRound} />
+            </span>
+          </>
         )}
-        <span className={styles.arrow}>
-          <Icon icon={IconExpandMoreRound} />
-        </span>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content
