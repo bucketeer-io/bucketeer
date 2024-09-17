@@ -9,15 +9,15 @@ import {
 } from '../../constants/routing';
 import { useCurrentEnvironment } from '../../modules/me';
 import { Feature } from '../../proto/feature/feature_pb';
-import { classNames } from '../../utils/css';
-import UserProfileSvg from '../../assets/svg/user-profile.svg';
 import FlagBoolean from '../../assets/svg/flag-boolean.svg';
 import FlagNumber from '../../assets/svg/flag-number.svg';
 import FlagString from '../../assets/svg/flag-string.svg';
+import FlagJson from '../../assets/svg/flag-json.svg';
 import { FlagStatus, getFlagStatus } from '../FeatureList';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
 import { Reason } from '../../proto/feature/reason_pb';
+import { HoverPopover } from '../HoverPopover';
 
 interface FlagStatusIconProps {
   flagStatus: FlagStatus;
@@ -136,25 +136,16 @@ export const DebuggerResult: FC<DebuggerResultProps> = memo(
                     <td>
                       <div className="flex items-center space-x-6 whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
                         <div className="bg-purple-50 rounded flex justify-center items-center text-primary w-9 h-9">
-                          {variationType === Feature.VariationType.BOOLEAN ? (
-                            <FlagBoolean width={18} />
-                          ) : variationType === Feature.VariationType.STRING ? (
-                            <FlagString width={18} />
-                          ) : variationType === Feature.VariationType.NUMBER ? (
-                            <FlagNumber width={18} />
-                          ) : null}
+                          <FlagIcon variationType={variationType} />
                         </div>
                         <div>
                           <div className="flex items-center space-x-3">
                             <Link
                               to={`${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_TARGETING}`}
-                              className="link text-left text-base font-normal"
+                              className="link text-left text-base font-normal w-full max-w-[60ch] truncate"
                             >
                               {featureDetails.name}
                             </Link>
-                            <div className="bg-purple-50 w-8 h-8 flex justify-center items-center rounded">
-                              <UserProfileSvg />
-                            </div>
                             <FlagStatusBadge
                               flagStatus={getFlagStatus(
                                 featureDetails,
@@ -162,7 +153,7 @@ export const DebuggerResult: FC<DebuggerResultProps> = memo(
                               )}
                             />
                           </div>
-                          <p className="text-sm text-gray-400 font-light">
+                          <p className="text-sm text-gray-400 font-light w-full max-w-[60ch] truncate">
                             {featureId}
                           </p>
                         </div>
@@ -170,18 +161,6 @@ export const DebuggerResult: FC<DebuggerResultProps> = memo(
                     </td>
                     <td>
                       <div className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 flex space-x-3 items-center">
-                        <div
-                          className={classNames(
-                            'w-3 h-3 rotate-45 rounded-sm',
-                            variationType === Feature.VariationType.BOOLEAN
-                              ? 'bg-[#0ea5e9]'
-                              : variationType === Feature.VariationType.STRING
-                                ? 'bg-pink-600'
-                                : variationType === Feature.VariationType.NUMBER
-                                  ? 'bg-green-500'
-                                  : ''
-                          )}
-                        />
                         <span>{variationName}</span>
                       </div>
                     </td>
@@ -200,3 +179,41 @@ export const DebuggerResult: FC<DebuggerResultProps> = memo(
     );
   }
 );
+
+interface FlagIconProps {
+  variationType: Feature.AsObject['variationType'];
+}
+const FlagIcon = ({ variationType }: FlagIconProps) => {
+  let icon;
+  let msg;
+
+  if (variationType === Feature.VariationType.BOOLEAN) {
+    icon = <FlagBoolean width={18} />;
+    msg = intl.formatMessage(messages.feature.type.boolean);
+  } else if (variationType === Feature.VariationType.STRING) {
+    icon = <FlagString width={18} />;
+    msg = intl.formatMessage(messages.feature.type.string);
+  } else if (variationType === Feature.VariationType.NUMBER) {
+    icon = <FlagNumber width={18} />;
+    msg = intl.formatMessage(messages.feature.type.number);
+  } else if (variationType === Feature.VariationType.JSON) {
+    icon = <FlagJson width={18} />;
+    msg = intl.formatMessage(messages.feature.type.json);
+  } else {
+    return null;
+  }
+
+  return (
+    <HoverPopover
+      render={() => {
+        return (
+          <div className="bg-gray-900 text-white p-2 text-xs rounded whitespace-pre">
+            {msg}
+          </div>
+        );
+      }}
+    >
+      <div className="w-9 h-9 flex justify-center items-center">{icon}</div>
+    </HoverPopover>
+  );
+};
