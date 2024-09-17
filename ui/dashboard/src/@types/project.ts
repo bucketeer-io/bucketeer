@@ -10,3 +10,9 @@ export interface Project {
   updatedAt: string;
   urlCode: string;
 }
+
+export interface ProjectCollection {
+  projects: Array<Project>;
+  cursor: string;
+  totalCount: string;
+}

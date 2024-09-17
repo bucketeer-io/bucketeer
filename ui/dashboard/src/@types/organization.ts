@@ -18,7 +18,7 @@ export interface Organization {
   systemAdmin: boolean;
 }
 
-export interface OrganizationsCollection {
+export interface OrganizationCollection {
   Organizations: Array<Organization>;
   cursor: string;
   totalCount: string;

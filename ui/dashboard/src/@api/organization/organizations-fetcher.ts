@@ -1,5 +1,5 @@
 import axiosClient from '@api/axios-client';
-import { OrderBy, OrderDirection, OrganizationsCollection } from '@types';
+import { OrderBy, OrderDirection, OrganizationCollection } from '@types';
 
 export interface OrganizationsFetcherParams {
   pageSize: number;
@@ -13,8 +13,8 @@ export interface OrganizationsFetcherParams {
 
 export const organizationsFetcher = async (
   params?: OrganizationsFetcherParams
-): Promise<OrganizationsCollection> => {
+): Promise<OrganizationCollection> => {
   return axiosClient
-    .post<OrganizationsCollection>('/v1/environment/list_organizations', params)
+    .post<OrganizationCollection>('/v1/environment/list_organizations', params)
     .then(response => response.data);
 };

@@ -1,37 +1,54 @@
 import { useMemo, useState } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
+import { ProjectFetcherParams } from '@api/project';
+import { useQueryProjects } from '@queries/projects';
+import { LIST_PAGE_SIZE } from 'constants/app';
 import Filter from 'containers/filter';
 import TableContent from 'containers/table-content';
 import { projectsHeader } from 'helpers/layouts/header-table';
 import { commonTabs } from 'helpers/layouts/tab';
-import { projectsMockData } from 'helpers/mock/table-data';
+import { TableRows } from '@types';
+import { useFormatDateTime } from 'utils/date-time';
 import { Button } from 'components/button';
 import Icon from 'components/icon';
+import Spinner from 'components/spinner';
 import Tab from 'components/tab';
-import { TableRows } from 'components/table';
-import { StatusTagType } from 'components/tag/status-tag';
 
 export const ProjectsContent = () => {
+  const formatDateTime = useFormatDateTime();
   const [targetTab, setTargetTab] = useState(commonTabs[0].value);
 
+  const projectParams: ProjectFetcherParams = {
+    pageSize: LIST_PAGE_SIZE,
+    cursor: String(0),
+    orderBy: 'DEFAULT',
+    orderDirection: 'ASC',
+    disabled: false,
+    organizationIds: []
+  };
+
+  const { data, isLoading } = useQueryProjects({
+    params: projectParams
+  });
+
   const rows: TableRows = useMemo(() => {
-    return projectsMockData.map(e => [
+    const projects = data?.projects || [];
+    return projects.map(item => [
       {
-        text: e.projectName,
-        type: e?.status ? 'flag' : 'title',
-        status: e?.status as StatusTagType
+        text: item.name,
+        type: item.trial ? 'flag' : 'title',
+        status: 'new'
       },
       {
-        text: e.userName,
-        description: e.email,
+        text: '-',
         type: 'text'
       },
       {
-        text: e.envQuantity,
+        text: '-',
         type: 'text'
       },
       {
-        text: e.createdAt,
+        text: formatDateTime(item.createdAt),
         type: 'text'
       },
       {
@@ -41,7 +58,7 @@ export const ProjectsContent = () => {
         type: 'icon'
       }
     ]);
-  }, [projectsMockData]);
+  }, [data]);
 
   return (
     <div className="py-8 px-6">
@@ -49,7 +66,7 @@ export const ProjectsContent = () => {
         additionalActions={
           <Button className="flex-1 lg:flex-none">
             <Icon icon={IconAddOutlined} size="sm" />
-            New Project
+            {`New Project`}
           </Button>
         }
       />
@@ -59,21 +76,27 @@ export const ProjectsContent = () => {
           value={targetTab}
           onSelect={value => setTargetTab(value)}
         />
-        <TableContent
-          headers={projectsHeader}
-          rows={rows}
-          emptyTitle="No registered projects"
-          emptyDescription="There are no registered projects. Add a new one to start managing."
-          emptyActions={
-            <div className="flex-center">
-              <Button className="w-[164px]">
-                <Icon icon={IconAddOutlined} size="sm" />
-                New Project
-              </Button>
-            </div>
-          }
-          className="mt-5"
-        />
+        {isLoading ? (
+          <div className="pt-20 flex items-center justify-center">
+            <Spinner />
+          </div>
+        ) : (
+          <TableContent
+            headers={projectsHeader}
+            rows={rows}
+            emptyTitle="No registered projects"
+            emptyDescription="There are no registered projects. Add a new one to start managing."
+            emptyActions={
+              <div className="flex-center">
+                <Button className="w-fit">
+                  <Icon icon={IconAddOutlined} size="sm" />
+                  {`New Project`}
+                </Button>
+              </div>
+            }
+            className="mt-5"
+          />
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { TableHeaders } from 'components/table';
+import { TableHeaders } from '@types';
 
 export const orgDetailsUserHeader: TableHeaders = [
   {

@@ -12,8 +12,6 @@ import Filter from 'containers/filter';
 import TableContent from 'containers/table-content';
 import { orgHeader } from 'helpers/layouts/header-table';
 import { commonTabs } from 'helpers/layouts/tab';
-import { orgMockData } from 'helpers/mock/table-data';
-import { cloneDeep } from 'lodash';
 import { TableRows } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { Button } from 'components/button';
@@ -26,7 +24,6 @@ export const OrganizationsContent = () => {
   const formatDateTime = useFormatDateTime();
 
   const [targetTab, setTargetTab] = useState(commonTabs[0].value);
-  const [rowsData, setRowsData] = useState(cloneDeep(orgMockData));
 
   const organizationParams: OrganizationsFetcherParams = {
     pageSize: LIST_PAGE_SIZE,
@@ -90,7 +87,7 @@ export const OrganizationsContent = () => {
         additionalActions={
           <Button className="flex-1 lg:flex-none">
             <Icon icon={IconAddOutlined} size="sm" />
-            New Organization
+            {`New Organization`}
           </Button>
         }
       />
@@ -112,15 +109,12 @@ export const OrganizationsContent = () => {
             emptyDescription="There are no registered organizations. Add a new one to start managing."
             emptyActions={
               <div className="flex justify-center">
-                <Button className="w-[209px]">
+                <Button className="w-fit">
                   <Icon icon={IconAddOutlined} size="sm" />
-                  New Organization
+                  {`New Organization`}
                 </Button>
               </div>
             }
-            originalData={cloneDeep(orgMockData)}
-            rowsData={rowsData}
-            setRowsData={setRowsData}
           />
         )}
       </div>

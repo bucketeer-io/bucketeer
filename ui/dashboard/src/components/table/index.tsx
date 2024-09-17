@@ -1,7 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { cloneDeep } from 'lodash';
-import { SortedObjType, TableProps, TableSignature } from '@types';
-import { sortedDataFunc } from 'utils/sort';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { TableProps } from '@types';
 import Pagination from 'components/pagination';
 import ElementOnEmpty from './element-on-empty';
 import TableHeader from './table-header';
@@ -12,28 +10,9 @@ import Flag from './table-row-items/flag';
 import Text from './table-row-items/text';
 import Title from './table-row-items/title';
 
-const Table = <T extends TableSignature>({
-  headers,
-  rows = [],
-  elementEmpty,
-  originalData,
-  rowsData,
-  setRowsData
-}: TableProps<T>) => {
+const Table = ({ headers, rows = [], elementEmpty }: TableProps) => {
   const [isSelectAllRows, setIsSelectAllRows] = useState(false);
   const [rowsSelected, setRowsSelected] = useState<number[]>([]);
-  const [sortedObj, setSortedObj] = useState<SortedObjType>({
-    colIndex: -1,
-    sortedType: ''
-  });
-
-  const nextSortedType = useMemo(() => {
-    return sortedObj.sortedType === 'asc'
-      ? 'desc'
-      : sortedObj.sortedType === 'desc'
-        ? ''
-        : 'asc';
-  }, [sortedObj]);
 
   const initLoadedRef = useRef(true);
 
@@ -53,29 +32,6 @@ const Table = <T extends TableSignature>({
     initLoadedRef.current = false;
   };
 
-  const handleSortedData = (colIndex?: number, fieldName?: string) => {
-    if (typeof colIndex !== 'number' || !fieldName) return;
-    if (nextSortedType === '') {
-      setSortedObj({
-        colIndex,
-        sortedType: nextSortedType
-      });
-      return setRowsData(originalData);
-    }
-    const cloneData = cloneDeep(rowsData);
-    const sortedType = colIndex === sortedObj.colIndex ? nextSortedType : 'asc';
-    const sortedData = sortedDataFunc({
-      data: cloneData,
-      sortedType,
-      fieldName
-    });
-    setSortedObj({
-      colIndex,
-      sortedType
-    });
-    setRowsData(sortedData);
-  };
-
   useEffect(() => {
     if (!initLoadedRef.current) {
       if (!isSelectAllRows) return setRowsSelected([]);
@@ -91,8 +47,7 @@ const Table = <T extends TableSignature>({
             data={headers}
             isSelectAllRows={isSelectAllRows}
             handleToggleSelectAllRows={handleToggleSelectAllRows}
-            sortedObj={sortedObj}
-            handleSortedData={handleSortedData}
+            handleSortedData={() => {}}
           />
         </thead>
         <tbody>

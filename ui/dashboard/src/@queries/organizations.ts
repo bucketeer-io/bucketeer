@@ -3,9 +3,9 @@ import {
   OrganizationsFetcherParams
 } from '@api/organization';
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { OrganizationsCollection, QueryOptionsRespond } from '@types';
+import type { OrganizationCollection, QueryOptionsRespond } from '@types';
 
-type QueryOptions = QueryOptionsRespond<OrganizationsCollection> & {
+type QueryOptions = QueryOptionsRespond<OrganizationCollection> & {
   params?: OrganizationsFetcherParams;
 };
 

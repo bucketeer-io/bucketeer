@@ -74,13 +74,10 @@ export type TableRowItemProps = TitleProps &
   VariationGroupProps &
   TableRowItemAdditionalProps;
 
-export type TableProps<T> = {
+export type TableProps = {
   headers: TableHeaders;
   rows: TableRows;
   elementEmpty?: ReactNode;
-  originalData: T[];
-  rowsData: T[];
-  setRowsData: (data: T[]) => void;
 };
 
 export type TableHeaderProps = {
