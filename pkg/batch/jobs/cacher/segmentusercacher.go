@@ -119,9 +119,9 @@ func (c *segmentUserCacher) listSegments(
 	environmentID string,
 ) ([]*ftproto.Segment, error) {
 	req := &ftproto.ListSegmentsRequest{
-		PageSize:             0,
-		EnvironmentNamespace: environmentID,
-		IsInUseStatus:        &wrapperspb.BoolValue{Value: true},
+		PageSize:      0,
+		EnvironmentId: environmentID,
+		IsInUseStatus: &wrapperspb.BoolValue{Value: true},
 	}
 	resp, err := c.featureClient.ListSegments(ctx, req)
 	if err != nil {
@@ -135,9 +135,9 @@ func (c *segmentUserCacher) listSegmentUsers(
 	environmentID, segmentID string,
 ) ([]*ftproto.SegmentUser, error) {
 	req := &ftproto.ListSegmentUsersRequest{
-		PageSize:             0,
-		EnvironmentNamespace: environmentID,
-		SegmentId:            segmentID,
+		PageSize:      0,
+		EnvironmentId: environmentID,
+		SegmentId:     segmentID,
 	}
 	resp, err := c.featureClient.ListSegmentUsers(ctx, req)
 	if err != nil {

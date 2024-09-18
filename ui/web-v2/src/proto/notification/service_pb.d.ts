@@ -666,11 +666,11 @@ export namespace UpdateAdminSubscriptionResponse {
 }
 
 export class GetSubscriptionRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetSubscriptionRequest.AsObject;
@@ -695,8 +695,8 @@ export class GetSubscriptionRequest extends jspb.Message {
 
 export namespace GetSubscriptionRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
+    environmentId: string;
   };
 }
 
@@ -738,9 +738,6 @@ export namespace GetSubscriptionResponse {
 }
 
 export class ListSubscriptionsRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getPageSize(): number;
   setPageSize(value: number): void;
 
@@ -779,6 +776,9 @@ export class ListSubscriptionsRequest extends jspb.Message {
   getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListSubscriptionsRequest.AsObject;
   static toObject(
@@ -802,7 +802,6 @@ export class ListSubscriptionsRequest extends jspb.Message {
 
 export namespace ListSubscriptionsRequest {
   export type AsObject = {
-    environmentNamespace: string;
     pageSize: number;
     cursor: string;
     sourceTypesList: Array<
@@ -812,6 +811,7 @@ export namespace ListSubscriptionsRequest {
     orderDirection: ListSubscriptionsRequest.OrderDirectionMap[keyof ListSubscriptionsRequest.OrderDirectionMap];
     searchKeyword: string;
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    environmentId: string;
   };
 
   export interface OrderByMap {
@@ -878,9 +878,6 @@ export namespace ListSubscriptionsResponse {
 }
 
 export class ListEnabledSubscriptionsRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getPageSize(): number;
   setPageSize(value: number): void;
 
@@ -900,6 +897,9 @@ export class ListEnabledSubscriptionsRequest extends jspb.Message {
     value: proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap],
     index?: number
   ): proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap];
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListEnabledSubscriptionsRequest.AsObject;
@@ -924,12 +924,12 @@ export class ListEnabledSubscriptionsRequest extends jspb.Message {
 
 export namespace ListEnabledSubscriptionsRequest {
   export type AsObject = {
-    environmentNamespace: string;
     pageSize: number;
     cursor: string;
     sourceTypesList: Array<
       proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap]
     >;
+    environmentId: string;
   };
 }
 
@@ -978,9 +978,6 @@ export namespace ListEnabledSubscriptionsResponse {
 }
 
 export class CreateSubscriptionRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   hasCommand(): boolean;
   clearCommand(): void;
   getCommand():
@@ -989,6 +986,9 @@ export class CreateSubscriptionRequest extends jspb.Message {
   setCommand(
     value?: proto_notification_command_pb.CreateSubscriptionCommand
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateSubscriptionRequest.AsObject;
@@ -1013,8 +1013,8 @@ export class CreateSubscriptionRequest extends jspb.Message {
 
 export namespace CreateSubscriptionRequest {
   export type AsObject = {
-    environmentNamespace: string;
     command?: proto_notification_command_pb.CreateSubscriptionCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -1045,9 +1045,6 @@ export namespace CreateSubscriptionResponse {
 }
 
 export class DeleteSubscriptionRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -1059,6 +1056,9 @@ export class DeleteSubscriptionRequest extends jspb.Message {
   setCommand(
     value?: proto_notification_command_pb.DeleteSubscriptionCommand
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeleteSubscriptionRequest.AsObject;
@@ -1083,9 +1083,9 @@ export class DeleteSubscriptionRequest extends jspb.Message {
 
 export namespace DeleteSubscriptionRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     command?: proto_notification_command_pb.DeleteSubscriptionCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -1116,9 +1116,6 @@ export namespace DeleteSubscriptionResponse {
 }
 
 export class EnableSubscriptionRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -1130,6 +1127,9 @@ export class EnableSubscriptionRequest extends jspb.Message {
   setCommand(
     value?: proto_notification_command_pb.EnableSubscriptionCommand
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EnableSubscriptionRequest.AsObject;
@@ -1154,9 +1154,9 @@ export class EnableSubscriptionRequest extends jspb.Message {
 
 export namespace EnableSubscriptionRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     command?: proto_notification_command_pb.EnableSubscriptionCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -1187,9 +1187,6 @@ export namespace EnableSubscriptionResponse {
 }
 
 export class DisableSubscriptionRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -1201,6 +1198,9 @@ export class DisableSubscriptionRequest extends jspb.Message {
   setCommand(
     value?: proto_notification_command_pb.DisableSubscriptionCommand
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DisableSubscriptionRequest.AsObject;
@@ -1225,9 +1225,9 @@ export class DisableSubscriptionRequest extends jspb.Message {
 
 export namespace DisableSubscriptionRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     command?: proto_notification_command_pb.DisableSubscriptionCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -1258,9 +1258,6 @@ export namespace DisableSubscriptionResponse {
 }
 
 export class UpdateSubscriptionRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -1291,6 +1288,9 @@ export class UpdateSubscriptionRequest extends jspb.Message {
     value?: proto_notification_command_pb.RenameSubscriptionCommand
   ): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateSubscriptionRequest.AsObject;
   static toObject(
@@ -1314,11 +1314,11 @@ export class UpdateSubscriptionRequest extends jspb.Message {
 
 export namespace UpdateSubscriptionRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     addSourceTypesCommand?: proto_notification_command_pb.AddSourceTypesCommand.AsObject;
     deleteSourceTypesCommand?: proto_notification_command_pb.DeleteSourceTypesCommand.AsObject;
     renameSubscriptionCommand?: proto_notification_command_pb.RenameSubscriptionCommand.AsObject;
+    environmentId: string;
   };
 }
 

@@ -67,7 +67,7 @@ func TestCreateFlagTrigger(t *testing.T) {
 			desc:  "Error Invalid Argument",
 			setup: nil,
 			input: &proto.CreateFlagTriggerRequest{
-				EnvironmentNamespace: "namespace",
+				EnvironmentId: "namespace",
 			},
 			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "create_flag_trigger_command")),
 		},
@@ -80,7 +80,7 @@ func TestCreateFlagTrigger(t *testing.T) {
 				).Return(errors.New("error"))
 			},
 			input: &proto.CreateFlagTriggerRequest{
-				EnvironmentNamespace: "namespace",
+				EnvironmentId: "namespace",
 				CreateFlagTriggerCommand: &proto.CreateFlagTriggerCommand{
 					FeatureId: "id-1",
 					Type:      proto.FlagTrigger_Type_WEBHOOK,
@@ -98,7 +98,7 @@ func TestCreateFlagTrigger(t *testing.T) {
 				).Return(nil)
 			},
 			input: &proto.CreateFlagTriggerRequest{
-				EnvironmentNamespace: "namespace",
+				EnvironmentId: "namespace",
 				CreateFlagTriggerCommand: &proto.CreateFlagTriggerCommand{
 					FeatureId: "id-1",
 					Type:      proto.FlagTrigger_Type_WEBHOOK,
@@ -133,7 +133,7 @@ func TestGetFlagTrigger(t *testing.T) {
 	defer mockController.Finish()
 
 	baseId := "1"
-	baseEnvironmentNamespace := "ns0"
+	baseEnvironmentId := "ns0"
 
 	patterns := []struct {
 		desc           string
@@ -168,7 +168,7 @@ func TestGetFlagTrigger(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, v2fs.ErrFlagTriggerNotFound)
 			},
-			input: &proto.GetFlagTriggerRequest{Id: "1", EnvironmentNamespace: "namespace"},
+			input: &proto.GetFlagTriggerRequest{Id: "1", EnvironmentId: "namespace"},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(t, statusNotFound, localizer.MustLocalize(locale.NotFoundError), localizer)
 			},
@@ -185,22 +185,22 @@ func TestGetFlagTrigger(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.FlagTrigger{
 					FlagTrigger: &proto.FlagTrigger{
-						Id:                   baseId,
-						FeatureId:            "featureId",
-						EnvironmentNamespace: baseEnvironmentNamespace,
-						Type:                 proto.FlagTrigger_Type_WEBHOOK,
-						Action:               proto.FlagTrigger_Action_ON,
-						Description:          "base",
-						TriggerCount:         100,
-						LastTriggeredAt:      500,
-						Token:                "test-token",
-						Disabled:             false,
-						CreatedAt:            200,
-						UpdatedAt:            300,
+						Id:              baseId,
+						FeatureId:       "featureId",
+						EnvironmentId:   baseEnvironmentId,
+						Type:            proto.FlagTrigger_Type_WEBHOOK,
+						Action:          proto.FlagTrigger_Action_ON,
+						Description:     "base",
+						TriggerCount:    100,
+						LastTriggeredAt: 500,
+						Token:           "test-token",
+						Disabled:        false,
+						CreatedAt:       200,
+						UpdatedAt:       300,
 					},
 				}, nil)
 			},
-			input: &proto.GetFlagTriggerRequest{Id: baseId, EnvironmentNamespace: baseEnvironmentNamespace},
+			input: &proto.GetFlagTriggerRequest{Id: baseId, EnvironmentId: baseEnvironmentId},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
 			},
@@ -217,22 +217,22 @@ func TestGetFlagTrigger(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.FlagTrigger{
 					FlagTrigger: &proto.FlagTrigger{
-						Id:                   "1",
-						FeatureId:            "featureId",
-						EnvironmentNamespace: "ns0",
-						Type:                 proto.FlagTrigger_Type_WEBHOOK,
-						Action:               proto.FlagTrigger_Action_ON,
-						Description:          "base",
-						TriggerCount:         100,
-						LastTriggeredAt:      500,
-						Token:                "test-token",
-						Disabled:             false,
-						CreatedAt:            200,
-						UpdatedAt:            300,
+						Id:              "1",
+						FeatureId:       "featureId",
+						EnvironmentId:   "ns0",
+						Type:            proto.FlagTrigger_Type_WEBHOOK,
+						Action:          proto.FlagTrigger_Action_ON,
+						Description:     "base",
+						TriggerCount:    100,
+						LastTriggeredAt: 500,
+						Token:           "test-token",
+						Disabled:        false,
+						CreatedAt:       200,
+						UpdatedAt:       300,
 					},
 				}, nil)
 			},
-			input: &proto.GetFlagTriggerRequest{Id: baseId, EnvironmentNamespace: baseEnvironmentNamespace},
+			input: &proto.GetFlagTriggerRequest{Id: baseId, EnvironmentId: baseEnvironmentId},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
 			},
@@ -245,7 +245,7 @@ func TestGetFlagTrigger(t *testing.T) {
 			),
 			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			setup:   func(s *FeatureService) {},
-			input:   &proto.GetFlagTriggerRequest{Id: baseId, EnvironmentNamespace: baseEnvironmentNamespace},
+			input:   &proto.GetFlagTriggerRequest{Id: baseId, EnvironmentId: baseEnvironmentId},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
 			},
@@ -298,8 +298,8 @@ func TestUpdateFlagTrigger(t *testing.T) {
 			desc:  "Error Invalid Argument",
 			setup: func(s *FeatureService) {},
 			input: &proto.UpdateFlagTriggerRequest{
-				Id:                   "id",
-				EnvironmentNamespace: "namespace",
+				Id:            "id",
+				EnvironmentId: "namespace",
 			},
 			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "change_flag_trigger_description_command")),
 		},
@@ -312,8 +312,8 @@ func TestUpdateFlagTrigger(t *testing.T) {
 				).Return(errors.New("error"))
 			},
 			input: &proto.UpdateFlagTriggerRequest{
-				Id:                   "id",
-				EnvironmentNamespace: "namespace",
+				Id:            "id",
+				EnvironmentId: "namespace",
 				ChangeFlagTriggerDescriptionCommand: &proto.ChangeFlagTriggerDescriptionCommand{
 					Description: "description",
 				},
@@ -329,8 +329,8 @@ func TestUpdateFlagTrigger(t *testing.T) {
 				).Return(nil)
 			},
 			input: &proto.UpdateFlagTriggerRequest{
-				Id:                   "id",
-				EnvironmentNamespace: "namespace",
+				Id:            "id",
+				EnvironmentId: "namespace",
 				ChangeFlagTriggerDescriptionCommand: &proto.ChangeFlagTriggerDescriptionCommand{
 					Description: "description",
 				},
@@ -382,8 +382,8 @@ func TestEnableFlagTrigger(t *testing.T) {
 			desc:  "Error Invalid Argument",
 			setup: func(s *FeatureService) {},
 			input: &proto.EnableFlagTriggerRequest{
-				Id:                   "id",
-				EnvironmentNamespace: "namespace",
+				Id:            "id",
+				EnvironmentId: "namespace",
 			},
 			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError)),
 		},
@@ -397,7 +397,7 @@ func TestEnableFlagTrigger(t *testing.T) {
 			},
 			input: &proto.EnableFlagTriggerRequest{
 				Id:                       "id",
-				EnvironmentNamespace:     "namespace",
+				EnvironmentId:            "namespace",
 				EnableFlagTriggerCommand: &proto.EnableFlagTriggerCommand{},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
@@ -412,7 +412,7 @@ func TestEnableFlagTrigger(t *testing.T) {
 			},
 			input: &proto.EnableFlagTriggerRequest{
 				Id:                       "id",
-				EnvironmentNamespace:     "namespace",
+				EnvironmentId:            "namespace",
 				EnableFlagTriggerCommand: &proto.EnableFlagTriggerCommand{},
 			},
 			expectedErr: nil,
@@ -462,8 +462,8 @@ func TestDisableFlagTrigger(t *testing.T) {
 			desc:  "Error Invalid Argument",
 			setup: func(s *FeatureService) {},
 			input: &proto.DisableFlagTriggerRequest{
-				Id:                   "id",
-				EnvironmentNamespace: "namespace",
+				Id:            "id",
+				EnvironmentId: "namespace",
 			},
 			expectedErr: createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError)),
 		},
@@ -477,7 +477,7 @@ func TestDisableFlagTrigger(t *testing.T) {
 			},
 			input: &proto.DisableFlagTriggerRequest{
 				Id:                        "id",
-				EnvironmentNamespace:      "namespace",
+				EnvironmentId:             "namespace",
 				DisableFlagTriggerCommand: &proto.DisableFlagTriggerCommand{},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
@@ -492,7 +492,7 @@ func TestDisableFlagTrigger(t *testing.T) {
 			},
 			input: &proto.DisableFlagTriggerRequest{
 				Id:                        "id",
-				EnvironmentNamespace:      "namespace",
+				EnvironmentId:             "namespace",
 				DisableFlagTriggerCommand: &proto.DisableFlagTriggerCommand{},
 			},
 			expectedErr: nil,
@@ -705,18 +705,18 @@ func TestFlagTriggerWebhook(t *testing.T) {
 	}
 
 	baseFlagTrigger := &proto.FlagTrigger{
-		Id:                   "1",
-		FeatureId:            "featureId",
-		EnvironmentNamespace: "namespace",
-		Type:                 proto.FlagTrigger_Type_WEBHOOK,
-		Action:               proto.FlagTrigger_Action_ON,
-		Description:          "base",
-		TriggerCount:         100,
-		LastTriggeredAt:      500,
-		Token:                "test-token",
-		Disabled:             false,
-		CreatedAt:            200,
-		UpdatedAt:            300,
+		Id:              "1",
+		FeatureId:       "featureId",
+		EnvironmentId:   "namespace",
+		Type:            proto.FlagTrigger_Type_WEBHOOK,
+		Action:          proto.FlagTrigger_Action_ON,
+		Description:     "base",
+		TriggerCount:    100,
+		LastTriggeredAt: 500,
+		Token:           "test-token",
+		Disabled:        false,
+		CreatedAt:       200,
+		UpdatedAt:       300,
 	}
 
 	patterns := []struct {
@@ -875,7 +875,7 @@ func TestListFlagTriggers(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			input:    &proto.ListFlagTriggersRequest{FeatureId: "1", PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0"},
+			input:    &proto.ListFlagTriggersRequest{FeatureId: "1", PageSize: 2, Cursor: "", EnvironmentId: "ns0"},
 			expected: &proto.ListFlagTriggersResponse{FlagTriggers: []*proto.ListFlagTriggersResponse_FlagTriggerWithUrl{}, Cursor: "0"},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
@@ -889,7 +889,7 @@ func TestListFlagTriggers(t *testing.T) {
 			),
 			service: createFeatureServiceWithGetAccountByEnvironmentMock(mockController, accountproto.AccountV2_Role_Organization_UNASSIGNED, accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			setup:   func(s *FeatureService) {},
-			input:   &proto.ListFlagTriggersRequest{FeatureId: "1", PageSize: 2, Cursor: "", EnvironmentNamespace: "ns0"},
+			input:   &proto.ListFlagTriggersRequest{FeatureId: "1", PageSize: 2, Cursor: "", EnvironmentId: "ns0"},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
 			},

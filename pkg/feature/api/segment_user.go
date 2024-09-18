@@ -45,7 +45,7 @@ func (s *FeatureService) AddSegmentUser(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func (s *FeatureService) AddSegmentUser(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -64,7 +64,7 @@ func (s *FeatureService) AddSegmentUser(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -77,7 +77,7 @@ func (s *FeatureService) AddSegmentUser(
 		req.Command.State,
 		false,
 		req.Command,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer,
 	); err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func (s *FeatureService) DeleteSegmentUser(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func (s *FeatureService) DeleteSegmentUser(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -111,7 +111,7 @@ func (s *FeatureService) DeleteSegmentUser(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -124,7 +124,7 @@ func (s *FeatureService) DeleteSegmentUser(
 		req.Command.State,
 		true,
 		req.Command,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer,
 	); err != nil {
 		return nil, err
@@ -140,7 +140,7 @@ func (s *FeatureService) updateSegmentUser(
 	state featureproto.SegmentUser_State,
 	deleted bool,
 	cmd command.Command,
-	environmentNamespace string,
+	environmentId string,
 	localizer locale.Localizer,
 ) error {
 	segmentUsers := make([]*featureproto.SegmentUser, 0, len(userIDs))
@@ -168,24 +168,24 @@ func (s *FeatureService) updateSegmentUser(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		segmentStorage := v2fs.NewSegmentStorage(tx)
-		segment, _, err := segmentStorage.GetSegment(ctx, segmentID, environmentNamespace)
+		segment, _, err := segmentStorage.GetSegment(ctx, segmentID, environmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get segment",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			return err
 		}
 		segmentUserStorage := v2fs.NewSegmentUserStorage(tx)
-		if err := segmentUserStorage.UpsertSegmentUsers(ctx, segmentUsers, environmentNamespace); err != nil {
+		if err := segmentUserStorage.UpsertSegmentUsers(ctx, segmentUsers, environmentId); err != nil {
 			s.logger.Error(
 				"Failed to store segment user",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			return err
@@ -194,7 +194,7 @@ func (s *FeatureService) updateSegmentUser(
 			editor,
 			segment,
 			s.domainPublisher,
-			environmentNamespace,
+			environmentId,
 		)
 		if err != nil {
 			return err
@@ -204,12 +204,12 @@ func (s *FeatureService) updateSegmentUser(
 				"Failed to handle command",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			return err
 		}
-		if err := segmentStorage.UpdateSegment(ctx, segment, environmentNamespace); err != nil {
+		if err := segmentStorage.UpdateSegment(ctx, segment, environmentId); err != nil {
 			return err
 		}
 		return nil
@@ -229,7 +229,7 @@ func (s *FeatureService) updateSegmentUser(
 			"Failed to upsert segment user",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -251,7 +251,7 @@ func (s *FeatureService) GetSegmentUser(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -260,14 +260,14 @@ func (s *FeatureService) GetSegmentUser(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
 	}
 	segmentUserStorage := v2fs.NewSegmentUserStorage(s.mysqlClient)
 	id := domain.SegmentUserID(req.SegmentId, req.UserId, req.State)
-	user, err := segmentUserStorage.GetSegmentUser(ctx, id, req.EnvironmentNamespace)
+	user, err := segmentUserStorage.GetSegmentUser(ctx, id, req.EnvironmentId)
 	if err != nil {
 		if err == v2fs.ErrSegmentUserNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -283,7 +283,7 @@ func (s *FeatureService) GetSegmentUser(
 			"Failed to get segment user",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -307,7 +307,7 @@ func (s *FeatureService) ListSegmentUsers(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -316,7 +316,7 @@ func (s *FeatureService) ListSegmentUsers(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -324,7 +324,7 @@ func (s *FeatureService) ListSegmentUsers(
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("segment_id", "=", req.SegmentId),
 		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
 	if req.State != nil {
 		whereParts = append(whereParts, mysql.NewFilter("state", "=", req.State.GetValue()))
@@ -361,7 +361,7 @@ func (s *FeatureService) ListSegmentUsers(
 			"Failed to list segment users",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -386,7 +386,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -395,7 +395,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -405,7 +405,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -429,7 +429,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		segmentStorage := v2fs.NewSegmentStorage(tx)
-		segment, _, err := segmentStorage.GetSegment(ctx, req.SegmentId, req.EnvironmentNamespace)
+		segment, _, err := segmentStorage.GetSegment(ctx, req.SegmentId, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -457,7 +457,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 			editor,
 			segment,
 			s.domainPublisher,
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 		)
 		if err != nil {
 			return err
@@ -467,18 +467,18 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 				"Failed to handle command",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
 		}
-		if err := segmentStorage.UpdateSegment(ctx, segment, req.EnvironmentNamespace); err != nil {
+		if err := segmentStorage.UpdateSegment(ctx, segment, req.EnvironmentId); err != nil {
 			return err
 		}
 		return s.publishBulkSegmentUsersReceivedEvent(
 			ctx,
 			editor,
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 			req.SegmentId,
 			req.Command.Data,
 			req.Command.State,
@@ -502,7 +502,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 			"Failed to bulk upload segment users",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -520,7 +520,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 func (s *FeatureService) publishBulkSegmentUsersReceivedEvent(
 	ctx context.Context,
 	editor *eventproto.Editor,
-	environmentNamespace string,
+	environmentId string,
 	segmentID string,
 	data []byte,
 	state featureproto.SegmentUser_State,
@@ -530,12 +530,12 @@ func (s *FeatureService) publishBulkSegmentUsersReceivedEvent(
 		return err
 	}
 	e := &serviceeventproto.BulkSegmentUsersReceivedEvent{
-		Id:                   id.String(),
-		EnvironmentNamespace: environmentNamespace,
-		SegmentId:            segmentID,
-		Data:                 data,
-		State:                state,
-		Editor:               editor,
+		Id:            id.String(),
+		EnvironmentId: environmentId,
+		SegmentId:     segmentID,
+		Data:          data,
+		State:         state,
+		Editor:        editor,
 	}
 	return s.segmentUsersPublisher.Publish(ctx, e)
 }
@@ -547,7 +547,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -556,13 +556,13 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
 	}
 	segmentStorage := v2fs.NewSegmentStorage(s.mysqlClient)
-	segment, _, err := segmentStorage.GetSegment(ctx, req.SegmentId, req.EnvironmentNamespace)
+	segment, _, err := segmentStorage.GetSegment(ctx, req.SegmentId, req.EnvironmentId)
 	if err != nil {
 		if err == v2fs.ErrSegmentNotFound {
 			dt, err := statusSegmentNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -578,7 +578,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 			"Failed to get segment",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -604,7 +604,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 		mysql.NewFilter("segment_id", "=", req.SegmentId),
 		mysql.NewFilter("state", "=", int32(req.State)),
 		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
 	segmentUserStorage := v2fs.NewSegmentUserStorage(s.mysqlClient)
 	users, _, err := segmentUserStorage.ListSegmentUsers(
@@ -619,7 +619,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 			"Failed to list segment users",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{

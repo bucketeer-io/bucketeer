@@ -54,52 +54,52 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 	}
 
 	testcases := []struct {
-		desc                 string
-		setup                func(*FeatureService)
-		environmentNamespace string
-		segmentID            string
-		cmd                  *featureproto.BulkUploadSegmentUsersCommand
-		expectedErr          error
+		desc          string
+		setup         func(*FeatureService)
+		environmentId string
+		segmentID     string
+		cmd           *featureproto.BulkUploadSegmentUsersCommand
+		expectedErr   error
 	}{
 		{
-			desc:                 "ErrMissingSegmentID",
-			setup:                nil,
-			environmentNamespace: "ns0",
-			segmentID:            "",
-			cmd:                  nil,
-			expectedErr:          createError(statusMissingSegmentID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "segment_id")),
+			desc:          "ErrMissingSegmentID",
+			setup:         nil,
+			environmentId: "ns0",
+			segmentID:     "",
+			cmd:           nil,
+			expectedErr:   createError(statusMissingSegmentID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "segment_id")),
 		},
 		{
-			desc:                 "ErrMissingCommand",
-			setup:                nil,
-			environmentNamespace: "ns0",
-			segmentID:            "id",
-			cmd:                  nil,
-			expectedErr:          createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
+			desc:          "ErrMissingCommand",
+			setup:         nil,
+			environmentId: "ns0",
+			segmentID:     "id",
+			cmd:           nil,
+			expectedErr:   createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
-			desc:                 "ErrMissingSegmentUsersData",
-			setup:                nil,
-			environmentNamespace: "ns0",
-			segmentID:            "id",
-			cmd:                  &featureproto.BulkUploadSegmentUsersCommand{},
-			expectedErr:          createError(statusMissingSegmentUsersData, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_data")),
+			desc:          "ErrMissingSegmentUsersData",
+			setup:         nil,
+			environmentId: "ns0",
+			segmentID:     "id",
+			cmd:           &featureproto.BulkUploadSegmentUsersCommand{},
+			expectedErr:   createError(statusMissingSegmentUsersData, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_data")),
 		},
 		{
-			desc:                 "ErrExceededMaxSegmentUsersDataSize",
-			setup:                nil,
-			environmentNamespace: "ns0",
-			segmentID:            "id",
+			desc:          "ErrExceededMaxSegmentUsersDataSize",
+			setup:         nil,
+			environmentId: "ns0",
+			segmentID:     "id",
 			cmd: &featureproto.BulkUploadSegmentUsersCommand{
 				Data: []byte(strings.Repeat("a", maxSegmentUsersDataSize+1)),
 			},
 			expectedErr: createError(statusExceededMaxSegmentUsersDataSize, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "user_data_state")),
 		},
 		{
-			desc:                 "ErrUnknownSegmentUserState",
-			setup:                nil,
-			environmentNamespace: "ns0",
-			segmentID:            "id",
+			desc:          "ErrUnknownSegmentUserState",
+			setup:         nil,
+			environmentId: "ns0",
+			segmentID:     "id",
 			cmd: &featureproto.BulkUploadSegmentUsersCommand{
 				Data:  []byte("data"),
 				State: featureproto.SegmentUser_State(99),
@@ -114,8 +114,8 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(v2fs.ErrSegmentNotFound)
 			},
-			environmentNamespace: "ns0",
-			segmentID:            "not_found_id",
+			environmentId: "ns0",
+			segmentID:     "not_found_id",
 			cmd: &featureproto.BulkUploadSegmentUsersCommand{
 				Data:  []byte("data"),
 				State: featureproto.SegmentUser_INCLUDED,
@@ -130,8 +130,8 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(createError(statusSegmentUsersAlreadyUploading, localizer.MustLocalize(locale.SegmentUsersAlreadyUploading)))
 			},
-			environmentNamespace: "ns0",
-			segmentID:            "id",
+			environmentId: "ns0",
+			segmentID:     "id",
 			cmd: &featureproto.BulkUploadSegmentUsersCommand{
 				Data:  []byte("data"),
 				State: featureproto.SegmentUser_INCLUDED,
@@ -146,8 +146,8 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			environmentNamespace: "ns0",
-			segmentID:            "id",
+			environmentId: "ns0",
+			segmentID:     "id",
 			cmd: &featureproto.BulkUploadSegmentUsersCommand{
 				Data:  []byte("data"),
 				State: featureproto.SegmentUser_INCLUDED,
@@ -163,9 +163,9 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 				tc.setup(service)
 			}
 			req := &featureproto.BulkUploadSegmentUsersRequest{
-				EnvironmentNamespace: tc.environmentNamespace,
-				SegmentId:            tc.segmentID,
-				Command:              tc.cmd,
+				EnvironmentId: tc.environmentId,
+				SegmentId:     tc.segmentID,
+				Command:       tc.cmd,
 			}
 			ctx = setToken(ctx)
 			_, err := service.BulkUploadSegmentUsers(ctx, req)
@@ -195,28 +195,28 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 	}
 
 	testcases := []struct {
-		desc                 string
-		setup                func(*FeatureService)
-		environmentNamespace string
-		segmentID            string
-		state                featureproto.SegmentUser_State
-		expectedErr          error
+		desc          string
+		setup         func(*FeatureService)
+		environmentId string
+		segmentID     string
+		state         featureproto.SegmentUser_State
+		expectedErr   error
 	}{
 		{
-			desc:                 "ErrMissingSegmentID",
-			setup:                nil,
-			environmentNamespace: "ns0",
-			segmentID:            "",
-			state:                featureproto.SegmentUser_INCLUDED,
-			expectedErr:          createError(statusMissingSegmentID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "segment_id")),
+			desc:          "ErrMissingSegmentID",
+			setup:         nil,
+			environmentId: "ns0",
+			segmentID:     "",
+			state:         featureproto.SegmentUser_INCLUDED,
+			expectedErr:   createError(statusMissingSegmentID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "segment_id")),
 		},
 		{
-			desc:                 "ErrUnknownSegmentUserState",
-			setup:                nil,
-			environmentNamespace: "ns0",
-			segmentID:            "id",
-			state:                featureproto.SegmentUser_State(99),
-			expectedErr:          createError(statusUnknownSegmentUserState, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "user_state")),
+			desc:          "ErrUnknownSegmentUserState",
+			setup:         nil,
+			environmentId: "ns0",
+			segmentID:     "id",
+			state:         featureproto.SegmentUser_State(99),
+			expectedErr:   createError(statusUnknownSegmentUserState, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "user_state")),
 		},
 		{
 			desc: "ErrSegmentNotFound",
@@ -227,10 +227,10 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			environmentNamespace: "ns0",
-			segmentID:            "id",
-			state:                featureproto.SegmentUser_INCLUDED,
-			expectedErr:          createError(statusSegmentNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			environmentId: "ns0",
+			segmentID:     "id",
+			state:         featureproto.SegmentUser_INCLUDED,
+			expectedErr:   createError(statusSegmentNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			desc: "ErrSegmentStatusNotSuceeded",
@@ -241,10 +241,10 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			environmentNamespace: "ns0",
-			segmentID:            "id",
-			state:                featureproto.SegmentUser_INCLUDED,
-			expectedErr:          createError(statusSegmentStatusNotSuceeded, localizer.MustLocalize(locale.SegmentStatusNotSucceeded)),
+			environmentId: "ns0",
+			segmentID:     "id",
+			state:         featureproto.SegmentUser_INCLUDED,
+			expectedErr:   createError(statusSegmentStatusNotSuceeded, localizer.MustLocalize(locale.SegmentStatusNotSucceeded)),
 		},
 	}
 	for _, tc := range testcases {
@@ -255,9 +255,9 @@ func TestBulkDownloadSegmentUsersMySQL(t *testing.T) {
 			}
 			ctx = setToken(ctx)
 			req := &featureproto.BulkDownloadSegmentUsersRequest{
-				EnvironmentNamespace: tc.environmentNamespace,
-				SegmentId:            tc.segmentID,
-				State:                tc.state,
+				EnvironmentId: tc.environmentId,
+				SegmentId:     tc.segmentID,
+				State:         tc.state,
 			}
 			_, err := service.BulkDownloadSegmentUsers(ctx, req)
 			assert.Equal(t, tc.expectedErr, err)

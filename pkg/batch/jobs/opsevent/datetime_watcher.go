@@ -107,11 +107,11 @@ func (w *datetimeWatcher) listEnvironments(ctx context.Context) ([]*envproto.Env
 
 func (w *datetimeWatcher) listAutoOpsRules(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*autoopsproto.AutoOpsRule, error) {
 	resp, err := w.aoClient.ListAutoOpsRules(ctx, &autoopsproto.ListAutoOpsRulesRequest{
-		PageSize:             0,
-		EnvironmentNamespace: environmentNamespace,
+		PageSize:      0,
+		EnvironmentId: environmentId,
 	})
 	if err != nil {
 		return nil, err
@@ -121,7 +121,7 @@ func (w *datetimeWatcher) listAutoOpsRules(
 
 func (w *datetimeWatcher) getExecuteClauseId(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 	a *autoopsdomain.AutoOpsRule,
 ) (string, error) {
 	nowTimestamp := time.Now().Unix()
@@ -141,7 +141,7 @@ func (w *datetimeWatcher) getExecuteClauseId(
 	}
 	if latestExecuteClauseId != "" {
 		w.logger.Info("Clause satisfies condition",
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 			zap.String("featureId", a.FeatureId),
 			zap.String("autoOpsRuleId", a.Id),
 			zap.String("clauseId", latestExecuteClauseId),

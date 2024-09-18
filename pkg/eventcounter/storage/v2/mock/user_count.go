@@ -42,9 +42,9 @@ func (m *MockUserCountStorage) EXPECT() *MockUserCountStorageMockRecorder {
 }
 
 // GetMAUCount mocks base method.
-func (m *MockUserCountStorage) GetMAUCount(ctx context.Context, environmentNamespace, yearMonth string) (int64, int64, error) {
+func (m *MockUserCountStorage) GetMAUCount(ctx context.Context, environmentId, yearMonth string) (int64, int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMAUCount", ctx, environmentNamespace, yearMonth)
+	ret := m.ctrl.Call(m, "GetMAUCount", ctx, environmentId, yearMonth)
 	ret0, _ := ret[0].(int64)
 	ret1, _ := ret[1].(int64)
 	ret2, _ := ret[2].(error)
@@ -52,9 +52,9 @@ func (m *MockUserCountStorage) GetMAUCount(ctx context.Context, environmentNames
 }
 
 // GetMAUCount indicates an expected call of GetMAUCount.
-func (mr *MockUserCountStorageMockRecorder) GetMAUCount(ctx, environmentNamespace, yearMonth any) *gomock.Call {
+func (mr *MockUserCountStorageMockRecorder) GetMAUCount(ctx, environmentId, yearMonth any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMAUCount", reflect.TypeOf((*MockUserCountStorage)(nil).GetMAUCount), ctx, environmentNamespace, yearMonth)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMAUCount", reflect.TypeOf((*MockUserCountStorage)(nil).GetMAUCount), ctx, environmentId, yearMonth)
 }
 
 // GetMAUCounts mocks base method.

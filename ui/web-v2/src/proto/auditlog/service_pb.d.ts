@@ -12,9 +12,6 @@ export class ListAuditLogsRequest extends jspb.Message {
   getCursor(): string;
   setCursor(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getOrderBy(): ListAuditLogsRequest.OrderByMap[keyof ListAuditLogsRequest.OrderByMap];
   setOrderBy(
     value: ListAuditLogsRequest.OrderByMap[keyof ListAuditLogsRequest.OrderByMap]
@@ -38,6 +35,9 @@ export class ListAuditLogsRequest extends jspb.Message {
   clearEntityType(): void;
   getEntityType(): google_protobuf_wrappers_pb.Int32Value | undefined;
   setEntityType(value?: google_protobuf_wrappers_pb.Int32Value): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListAuditLogsRequest.AsObject;
@@ -64,13 +64,13 @@ export namespace ListAuditLogsRequest {
   export type AsObject = {
     pageSize: number;
     cursor: string;
-    environmentNamespace: string;
     orderBy: ListAuditLogsRequest.OrderByMap[keyof ListAuditLogsRequest.OrderByMap];
     orderDirection: ListAuditLogsRequest.OrderDirectionMap[keyof ListAuditLogsRequest.OrderDirectionMap];
     searchKeyword: string;
     from: number;
     to: number;
     entityType?: google_protobuf_wrappers_pb.Int32Value.AsObject;
+    environmentId: string;
   };
 
   export interface OrderByMap {
@@ -265,9 +265,6 @@ export class ListFeatureHistoryRequest extends jspb.Message {
   getCursor(): string;
   setCursor(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getOrderBy(): ListFeatureHistoryRequest.OrderByMap[keyof ListFeatureHistoryRequest.OrderByMap];
   setOrderBy(
     value: ListFeatureHistoryRequest.OrderByMap[keyof ListFeatureHistoryRequest.OrderByMap]
@@ -286,6 +283,9 @@ export class ListFeatureHistoryRequest extends jspb.Message {
 
   getTo(): number;
   setTo(value: number): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListFeatureHistoryRequest.AsObject;
@@ -313,12 +313,12 @@ export namespace ListFeatureHistoryRequest {
     featureId: string;
     pageSize: number;
     cursor: string;
-    environmentNamespace: string;
     orderBy: ListFeatureHistoryRequest.OrderByMap[keyof ListFeatureHistoryRequest.OrderByMap];
     orderDirection: ListFeatureHistoryRequest.OrderDirectionMap[keyof ListFeatureHistoryRequest.OrderDirectionMap];
     searchKeyword: string;
     from: number;
     to: number;
+    environmentId: string;
   };
 
   export interface OrderByMap {

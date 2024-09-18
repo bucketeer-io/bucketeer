@@ -83,7 +83,7 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
         data.resetSampling && commands.push(createResetSampleSeedCommand());
         dispatch(
           updateFeatureVariations({
-            environmentNamespace: currentEnvironment.id,
+            environmentId: currentEnvironment.id,
             id: feature.id,
             comment: data.comment,
             commands: commands
@@ -92,7 +92,7 @@ export const FeatureVariationsPage: FC<FeatureVariationsPageProps> = memo(
           setIsConfirmDialogOpen(false);
           dispatch(
             getFeature({
-              environmentNamespace: currentEnvironment.id,
+              environmentId: currentEnvironment.id,
               id: featureId
             })
           );

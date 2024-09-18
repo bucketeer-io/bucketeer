@@ -32,7 +32,7 @@ export const { selectAll, selectById } =
   progressiveRolloutAdapter.getSelectors();
 
 interface CreateProgressiveRolloutParams {
-  environmentNamespace: string;
+  environmentId: string;
   command: CreateProgressiveRolloutCommand;
 }
 
@@ -43,13 +43,13 @@ export const createProgressiveRollout = createAsyncThunk<
 >(`${MODULE_NAME}/create`, async (params) => {
   const request = new CreateProgressiveRolloutRequest();
 
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setCommand(params.command);
   await progressiveRolloutGrpc.createProgressiveRollout(request);
 });
 
 export interface ListProgressiveRolloutParams {
-  environmentNamespace: string;
+  environmentId: string;
   featureId: string;
 }
 
@@ -60,13 +60,13 @@ export const listProgressiveRollout = createAsyncThunk<
 >(`${MODULE_NAME}/list`, async (params) => {
   const request = new ListProgressiveRolloutsRequest();
   request.setFeatureIdsList([params.featureId]);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   const result = await progressiveRolloutGrpc.listProgressiveRollouts(request);
   return result.response.toObject();
 });
 
 export interface DeleteProgressiveRolloutParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -77,14 +77,14 @@ export const deleteProgressiveRollout = createAsyncThunk<
 >(`${MODULE_NAME}/delete`, async (params) => {
   const request = new DeleteProgressiveRolloutRequest();
   request.setId(params.id);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   const command = new DeleteProgressiveRolloutCommand();
   request.setCommand(command);
   await progressiveRolloutGrpc.deleteProgressiveRollout(request);
 });
 
 export interface StopProgressiveRolloutParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -95,7 +95,7 @@ export const stopProgressiveRollout = createAsyncThunk<
 >(`${MODULE_NAME}/stop`, async (params) => {
   const request = new StopProgressiveRolloutRequest();
   request.setId(params.id);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   const command = new StopProgressiveRolloutCommand();
   command.setStoppedBy(ProgressiveRollout.StoppedBy.USER);
   request.setCommand(command);

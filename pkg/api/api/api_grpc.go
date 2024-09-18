@@ -258,9 +258,9 @@ func (s *grpcGatewayService) Track(ctx context.Context, req *gwproto.TrackReques
 		return nil, ErrInternal
 	}
 	event := &eventproto.Event{
-		Id:                   id.String(),
-		Event:                goal,
-		EnvironmentNamespace: envAPIKey.Environment.Id,
+		Id:            id.String(),
+		Event:         goal,
+		EnvironmentId: envAPIKey.Environment.Id,
 	}
 	if err := s.goalPublisher.Publish(ctx, event); err != nil {
 		if err == publisher.ErrBadMessage {
@@ -956,7 +956,7 @@ func (s *grpcGatewayService) CreateFeature(
 		return nil, err
 	}
 	res, err := s.featureClient.CreateFeature(ctx, &featureproto.CreateFeatureRequest{
-		EnvironmentNamespace: envAPIKey.Environment.Id,
+		EnvironmentId: envAPIKey.Environment.Id,
 		Command: &featureproto.CreateFeatureCommand{
 			Id:                       req.Id,
 			Name:                     req.Name,
@@ -993,8 +993,8 @@ func (s *grpcGatewayService) GetFeature(
 		return nil, err
 	}
 	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
-		EnvironmentNamespace: envAPIKey.Environment.Id,
-		Id:                   req.Id,
+		EnvironmentId: envAPIKey.Environment.Id,
+		Id:            req.Id,
 	})
 	if err != nil {
 		return nil, err
@@ -1022,11 +1022,11 @@ func (s *grpcGatewayService) ListFeatures(
 		return nil, err
 	}
 	resp, err := s.featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
-		EnvironmentNamespace: envAPIKey.Environment.Id,
-		PageSize:             req.PageSize,
-		Cursor:               req.Cursor,
-		OrderBy:              req.OrderBy,
-		OrderDirection:       req.OrderDirection,
+		EnvironmentId:  envAPIKey.Environment.Id,
+		PageSize:       req.PageSize,
+		Cursor:         req.Cursor,
+		OrderBy:        req.OrderBy,
+		OrderDirection: req.OrderDirection,
 	})
 	if err != nil {
 		return nil, err
@@ -1160,22 +1160,22 @@ func (s *grpcGatewayService) publishUserEvent(
 		return err
 	}
 	userEvent := &serviceeventproto.UserEvent{
-		Id:                   id.String(),
-		SourceId:             sourceID,
-		Tag:                  tag,
-		UserId:               user.Id,
-		LastSeen:             time.Now().Unix(),
-		Data:                 nil, // We set nil until we decide again what to do with the user metadata.
-		EnvironmentNamespace: environmentId,
+		Id:            id.String(),
+		SourceId:      sourceID,
+		Tag:           tag,
+		UserId:        user.Id,
+		LastSeen:      time.Now().Unix(),
+		Data:          nil, // We set nil until we decide again what to do with the user metadata.
+		EnvironmentId: environmentId,
 	}
 	ue, err := ptypes.MarshalAny(userEvent)
 	if err != nil {
 		return err
 	}
 	event := &eventproto.Event{
-		Id:                   id.String(),
-		Event:                ue,
-		EnvironmentNamespace: environmentId,
+		Id:            id.String(),
+		Event:         ue,
+		EnvironmentId: environmentId,
 	}
 	return s.userPublisher.Publish(ctx, event)
 }
@@ -1217,9 +1217,9 @@ func (s *grpcGatewayService) listFeatures(
 	cursor := ""
 	for {
 		resp, err := s.featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
-			PageSize:             listRequestSize,
-			Cursor:               cursor,
-			EnvironmentNamespace: environmentId,
+			PageSize:      listRequestSize,
+			Cursor:        cursor,
+			EnvironmentId: environmentId,
 		})
 		if err != nil {
 			return nil, err
@@ -1325,8 +1325,8 @@ func (s *grpcGatewayService) getSegmentUsersBySegmentID(
 		)...,
 	)
 	req := &featureproto.ListSegmentUsersRequest{
-		SegmentId:            segmentID,
-		EnvironmentNamespace: environmentId,
+		SegmentId:     segmentID,
+		EnvironmentId: environmentId,
 	}
 	res, err := s.featureClient.ListSegmentUsers(ctx, req)
 	if err != nil {
@@ -1341,8 +1341,8 @@ func (s *grpcGatewayService) getSegmentUsersBySegmentID(
 		return nil, ErrInternal
 	}
 	reqGet := &featureproto.GetSegmentRequest{
-		Id:                   segmentID,
-		EnvironmentNamespace: environmentId,
+		Id:            segmentID,
+		EnvironmentId: environmentId,
 	}
 	respGet, err := s.featureClient.GetSegment(ctx, reqGet)
 	if err != nil {
@@ -1449,7 +1449,7 @@ func (s *grpcGatewayService) RegisterEvents(
 		return errs
 	}
 	for i, event := range req.Events {
-		event.EnvironmentNamespace = envAPIKey.Environment.Id
+		event.EnvironmentId = envAPIKey.Environment.Id
 		if event.Id == "" {
 			return nil, ErrMissingEventID
 		}
@@ -1464,7 +1464,7 @@ func (s *grpcGatewayService) RegisterEvents(
 				zap.String("apiKey", envAPIKey.ApiKey.Id),
 				zap.String("projectID", envAPIKey.ProjectId),
 				zap.String("eventID", event.Id),
-				zap.String("environmentNamespace", event.EnvironmentNamespace),
+				zap.String("environmentId", event.EnvironmentId),
 				zap.Any("event", event.Event),
 				zap.Any("sourceId", req.SourceId),
 			)

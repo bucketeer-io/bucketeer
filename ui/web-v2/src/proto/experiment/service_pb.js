@@ -911,7 +911,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
       };
 
     if (includeInstance) {
@@ -954,9 +954,9 @@ proto.bucketeer.experiment.GetGoalRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
           break;
-        case 2:
+        case 3:
           var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -996,9 +996,9 @@ proto.bucketeer.experiment.GetGoalRequest.serializeBinaryToWriter = function (
   if (f.length > 0) {
     writer.writeString(1, f);
   }
-  f = message.getEnvironmentNamespace();
+  f = message.getEnvironmentId();
   if (f.length > 0) {
-    writer.writeString(2, f);
+    writer.writeString(3, f);
   }
 };
 
@@ -1019,13 +1019,13 @@ proto.bucketeer.experiment.GetGoalRequest.prototype.setId = function (value) {
 };
 
 /**
- * optional string environment_namespace = 2;
+ * optional string environment_id = 3;
  * @return {string}
  */
-proto.bucketeer.experiment.GetGoalRequest.prototype.getEnvironmentNamespace =
+proto.bucketeer.experiment.GetGoalRequest.prototype.getEnvironmentId =
   function () {
     return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 2, '')
+      jspb.Message.getFieldWithDefault(this, 3, '')
     );
   };
 
@@ -1033,9 +1033,9 @@ proto.bucketeer.experiment.GetGoalRequest.prototype.getEnvironmentNamespace =
  * @param {string} value
  * @return {!proto.bucketeer.experiment.GetGoalRequest} returns this
  */
-proto.bucketeer.experiment.GetGoalRequest.prototype.setEnvironmentNamespace =
+proto.bucketeer.experiment.GetGoalRequest.prototype.setEnvironmentId =
   function (value) {
-    return jspb.Message.setProto3StringField(this, 2, value);
+    return jspb.Message.setProto3StringField(this, 3, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -1245,7 +1245,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         pageSize: jspb.Message.getFieldWithDefault(msg, 1, 0),
         cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
         orderBy: jspb.Message.getFieldWithDefault(msg, 4, 0),
         orderDirection: jspb.Message.getFieldWithDefault(msg, 5, 0),
         searchKeyword: jspb.Message.getFieldWithDefault(msg, 6, ''),
@@ -1254,7 +1253,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
         archived:
           (f = msg.getArchived()) &&
-          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 9, '')
       };
 
     if (includeInstance) {
@@ -1303,10 +1303,6 @@ proto.bucketeer.experiment.ListGoalsRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setCursor(value);
           break;
-        case 3:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 4:
           var value =
             /** @type {!proto.bucketeer.experiment.ListGoalsRequest.OrderBy} */ (
@@ -1340,6 +1336,10 @@ proto.bucketeer.experiment.ListGoalsRequest.deserializeBinaryFromReader =
             google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader
           );
           msg.setArchived(value);
+          break;
+        case 9:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -1383,10 +1383,6 @@ proto.bucketeer.experiment.ListGoalsRequest.serializeBinaryToWriter = function (
   if (f.length > 0) {
     writer.writeString(2, f);
   }
-  f = message.getEnvironmentNamespace();
-  if (f.length > 0) {
-    writer.writeString(3, f);
-  }
   f = message.getOrderBy();
   if (f !== 0.0) {
     writer.writeEnum(4, f);
@@ -1414,6 +1410,10 @@ proto.bucketeer.experiment.ListGoalsRequest.serializeBinaryToWriter = function (
       f,
       google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
     );
+  }
+  f = message.getEnvironmentId();
+  if (f.length > 0) {
+    writer.writeString(9, f);
   }
 };
 
@@ -1471,26 +1471,6 @@ proto.bucketeer.experiment.ListGoalsRequest.prototype.setCursor = function (
 ) {
   return jspb.Message.setProto3StringField(this, 2, value);
 };
-
-/**
- * optional string environment_namespace = 3;
- * @return {string}
- */
-proto.bucketeer.experiment.ListGoalsRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 3, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.experiment.ListGoalsRequest} returns this
- */
-proto.bucketeer.experiment.ListGoalsRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 3, value);
-  };
 
 /**
  * optional OrderBy order_by = 4;
@@ -1635,6 +1615,26 @@ proto.bucketeer.experiment.ListGoalsRequest.prototype.clearArchived =
 proto.bucketeer.experiment.ListGoalsRequest.prototype.hasArchived =
   function () {
     return jspb.Message.getField(this, 8) != null;
+  };
+
+/**
+ * optional string environment_id = 9;
+ * @return {string}
+ */
+proto.bucketeer.experiment.ListGoalsRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 9, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.experiment.ListGoalsRequest} returns this
+ */
+proto.bucketeer.experiment.ListGoalsRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 9, value);
   };
 
 /**
@@ -1925,7 +1925,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
       };
 
     if (includeInstance) {
@@ -1975,9 +1975,9 @@ proto.bucketeer.experiment.CreateGoalRequest.deserializeBinaryFromReader =
           );
           msg.setCommand(value);
           break;
-        case 2:
+        case 3:
           var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -2019,9 +2019,9 @@ proto.bucketeer.experiment.CreateGoalRequest.serializeBinaryToWriter =
         proto_experiment_command_pb.CreateGoalCommand.serializeBinaryToWriter
       );
     }
-    f = message.getEnvironmentNamespace();
+    f = message.getEnvironmentId();
     if (f.length > 0) {
-      writer.writeString(2, f);
+      writer.writeString(3, f);
     }
   };
 
@@ -2069,13 +2069,13 @@ proto.bucketeer.experiment.CreateGoalRequest.prototype.hasCommand =
   };
 
 /**
- * optional string environment_namespace = 2;
+ * optional string environment_id = 3;
  * @return {string}
  */
-proto.bucketeer.experiment.CreateGoalRequest.prototype.getEnvironmentNamespace =
+proto.bucketeer.experiment.CreateGoalRequest.prototype.getEnvironmentId =
   function () {
     return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 2, '')
+      jspb.Message.getFieldWithDefault(this, 3, '')
     );
   };
 
@@ -2083,9 +2083,9 @@ proto.bucketeer.experiment.CreateGoalRequest.prototype.getEnvironmentNamespace =
  * @param {string} value
  * @return {!proto.bucketeer.experiment.CreateGoalRequest} returns this
  */
-proto.bucketeer.experiment.CreateGoalRequest.prototype.setEnvironmentNamespace =
+proto.bucketeer.experiment.CreateGoalRequest.prototype.setEnvironmentId =
   function (value) {
-    return jspb.Message.setProto3StringField(this, 2, value);
+    return jspb.Message.setProto3StringField(this, 3, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -2242,7 +2242,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -2296,9 +2296,9 @@ proto.bucketeer.experiment.ArchiveGoalRequest.deserializeBinaryFromReader =
           );
           msg.setCommand(value);
           break;
-        case 3:
+        case 4:
           var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -2344,9 +2344,9 @@ proto.bucketeer.experiment.ArchiveGoalRequest.serializeBinaryToWriter =
         proto_experiment_command_pb.ArchiveGoalCommand.serializeBinaryToWriter
       );
     }
-    f = message.getEnvironmentNamespace();
+    f = message.getEnvironmentId();
     if (f.length > 0) {
-      writer.writeString(3, f);
+      writer.writeString(4, f);
     }
   };
 
@@ -2412,13 +2412,13 @@ proto.bucketeer.experiment.ArchiveGoalRequest.prototype.hasCommand =
   };
 
 /**
- * optional string environment_namespace = 3;
+ * optional string environment_id = 4;
  * @return {string}
  */
-proto.bucketeer.experiment.ArchiveGoalRequest.prototype.getEnvironmentNamespace =
+proto.bucketeer.experiment.ArchiveGoalRequest.prototype.getEnvironmentId =
   function () {
     return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 3, '')
+      jspb.Message.getFieldWithDefault(this, 4, '')
     );
   };
 
@@ -2426,9 +2426,9 @@ proto.bucketeer.experiment.ArchiveGoalRequest.prototype.getEnvironmentNamespace 
  * @param {string} value
  * @return {!proto.bucketeer.experiment.ArchiveGoalRequest} returns this
  */
-proto.bucketeer.experiment.ArchiveGoalRequest.prototype.setEnvironmentNamespace =
+proto.bucketeer.experiment.ArchiveGoalRequest.prototype.setEnvironmentId =
   function (value) {
-    return jspb.Message.setProto3StringField(this, 3, value);
+    return jspb.Message.setProto3StringField(this, 4, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -2585,7 +2585,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -2639,9 +2639,9 @@ proto.bucketeer.experiment.DeleteGoalRequest.deserializeBinaryFromReader =
           );
           msg.setCommand(value);
           break;
-        case 3:
+        case 4:
           var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -2687,9 +2687,9 @@ proto.bucketeer.experiment.DeleteGoalRequest.serializeBinaryToWriter =
         proto_experiment_command_pb.DeleteGoalCommand.serializeBinaryToWriter
       );
     }
-    f = message.getEnvironmentNamespace();
+    f = message.getEnvironmentId();
     if (f.length > 0) {
-      writer.writeString(3, f);
+      writer.writeString(4, f);
     }
   };
 
@@ -2755,13 +2755,13 @@ proto.bucketeer.experiment.DeleteGoalRequest.prototype.hasCommand =
   };
 
 /**
- * optional string environment_namespace = 3;
+ * optional string environment_id = 4;
  * @return {string}
  */
-proto.bucketeer.experiment.DeleteGoalRequest.prototype.getEnvironmentNamespace =
+proto.bucketeer.experiment.DeleteGoalRequest.prototype.getEnvironmentId =
   function () {
     return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 3, '')
+      jspb.Message.getFieldWithDefault(this, 4, '')
     );
   };
 
@@ -2769,9 +2769,9 @@ proto.bucketeer.experiment.DeleteGoalRequest.prototype.getEnvironmentNamespace =
  * @param {string} value
  * @return {!proto.bucketeer.experiment.DeleteGoalRequest} returns this
  */
-proto.bucketeer.experiment.DeleteGoalRequest.prototype.setEnvironmentNamespace =
+proto.bucketeer.experiment.DeleteGoalRequest.prototype.setEnvironmentId =
   function (value) {
-    return jspb.Message.setProto3StringField(this, 3, value);
+    return jspb.Message.setProto3StringField(this, 4, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -2934,7 +2934,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 4, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 5, '')
       };
 
     if (includeInstance) {
@@ -2998,9 +2998,9 @@ proto.bucketeer.experiment.UpdateGoalRequest.deserializeBinaryFromReader =
           );
           msg.setChangeDescriptionCommand(value);
           break;
-        case 4:
+        case 5:
           var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -3055,9 +3055,9 @@ proto.bucketeer.experiment.UpdateGoalRequest.serializeBinaryToWriter =
           .serializeBinaryToWriter
       );
     }
-    f = message.getEnvironmentNamespace();
+    f = message.getEnvironmentId();
     if (f.length > 0) {
-      writer.writeString(4, f);
+      writer.writeString(5, f);
     }
   };
 
@@ -3164,13 +3164,13 @@ proto.bucketeer.experiment.UpdateGoalRequest.prototype.hasChangeDescriptionComma
   };
 
 /**
- * optional string environment_namespace = 4;
+ * optional string environment_id = 5;
  * @return {string}
  */
-proto.bucketeer.experiment.UpdateGoalRequest.prototype.getEnvironmentNamespace =
+proto.bucketeer.experiment.UpdateGoalRequest.prototype.getEnvironmentId =
   function () {
     return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 4, '')
+      jspb.Message.getFieldWithDefault(this, 5, '')
     );
   };
 
@@ -3178,9 +3178,9 @@ proto.bucketeer.experiment.UpdateGoalRequest.prototype.getEnvironmentNamespace =
  * @param {string} value
  * @return {!proto.bucketeer.experiment.UpdateGoalRequest} returns this
  */
-proto.bucketeer.experiment.UpdateGoalRequest.prototype.setEnvironmentNamespace =
+proto.bucketeer.experiment.UpdateGoalRequest.prototype.setEnvironmentId =
   function (value) {
-    return jspb.Message.setProto3StringField(this, 4, value);
+    return jspb.Message.setProto3StringField(this, 5, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -3330,7 +3330,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
       };
 
     if (includeInstance) {
@@ -3375,9 +3375,9 @@ proto.bucketeer.experiment.GetExperimentRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
           break;
-        case 2:
+        case 3:
           var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -3415,9 +3415,9 @@ proto.bucketeer.experiment.GetExperimentRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(1, f);
     }
-    f = message.getEnvironmentNamespace();
+    f = message.getEnvironmentId();
     if (f.length > 0) {
-      writer.writeString(2, f);
+      writer.writeString(3, f);
     }
   };
 
@@ -3440,13 +3440,13 @@ proto.bucketeer.experiment.GetExperimentRequest.prototype.setId = function (
 };
 
 /**
- * optional string environment_namespace = 2;
+ * optional string environment_id = 3;
  * @return {string}
  */
-proto.bucketeer.experiment.GetExperimentRequest.prototype.getEnvironmentNamespace =
+proto.bucketeer.experiment.GetExperimentRequest.prototype.getEnvironmentId =
   function () {
     return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 2, '')
+      jspb.Message.getFieldWithDefault(this, 3, '')
     );
   };
 
@@ -3454,9 +3454,9 @@ proto.bucketeer.experiment.GetExperimentRequest.prototype.getEnvironmentNamespac
  * @param {string} value
  * @return {!proto.bucketeer.experiment.GetExperimentRequest} returns this
  */
-proto.bucketeer.experiment.GetExperimentRequest.prototype.setEnvironmentNamespace =
+proto.bucketeer.experiment.GetExperimentRequest.prototype.setEnvironmentId =
   function (value) {
-    return jspb.Message.setProto3StringField(this, 2, value);
+    return jspb.Message.setProto3StringField(this, 3, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -3682,7 +3682,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         to: jspb.Message.getFieldWithDefault(msg, 4, 0),
         pageSize: jspb.Message.getFieldWithDefault(msg, 5, 0),
         cursor: jspb.Message.getFieldWithDefault(msg, 6, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 7, ''),
         status:
           (f = msg.getStatus()) &&
           google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f),
@@ -3694,7 +3693,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           (f = msg.getArchived()) &&
           google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
         statusesList:
-          (f = jspb.Message.getRepeatedField(msg, 14)) == null ? undefined : f
+          (f = jspb.Message.getRepeatedField(msg, 14)) == null ? undefined : f,
+        environmentId: jspb.Message.getFieldWithDefault(msg, 15, '')
       };
 
     if (includeInstance) {
@@ -3763,10 +3763,6 @@ proto.bucketeer.experiment.ListExperimentsRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setCursor(value);
           break;
-        case 7:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 8:
           var value = new google_protobuf_wrappers_pb.Int32Value();
           reader.readMessage(
@@ -3815,6 +3811,10 @@ proto.bucketeer.experiment.ListExperimentsRequest.deserializeBinaryFromReader =
           for (var i = 0; i < values.length; i++) {
             msg.addStatuses(values[i]);
           }
+          break;
+        case 15:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -3876,10 +3876,6 @@ proto.bucketeer.experiment.ListExperimentsRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(6, f);
     }
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(7, f);
-    }
     f = message.getStatus();
     if (f != null) {
       writer.writeMessage(
@@ -3915,6 +3911,10 @@ proto.bucketeer.experiment.ListExperimentsRequest.serializeBinaryToWriter =
     f = message.getStatusesList();
     if (f.length > 0) {
       writer.writePackedEnum(14, f);
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(15, f);
     }
   };
 
@@ -4072,26 +4072,6 @@ proto.bucketeer.experiment.ListExperimentsRequest.prototype.getCursor =
 proto.bucketeer.experiment.ListExperimentsRequest.prototype.setCursor =
   function (value) {
     return jspb.Message.setProto3StringField(this, 6, value);
-  };
-
-/**
- * optional string environment_namespace = 7;
- * @return {string}
- */
-proto.bucketeer.experiment.ListExperimentsRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 7, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.experiment.ListExperimentsRequest} returns this
- */
-proto.bucketeer.experiment.ListExperimentsRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 7, value);
   };
 
 /**
@@ -4295,6 +4275,26 @@ proto.bucketeer.experiment.ListExperimentsRequest.prototype.addStatuses =
 proto.bucketeer.experiment.ListExperimentsRequest.prototype.clearStatusesList =
   function () {
     return this.setStatusesList([]);
+  };
+
+/**
+ * optional string environment_id = 15;
+ * @return {string}
+ */
+proto.bucketeer.experiment.ListExperimentsRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 15, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.experiment.ListExperimentsRequest} returns this
+ */
+proto.bucketeer.experiment.ListExperimentsRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 15, value);
   };
 
 /**
@@ -4582,7 +4582,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
       };
 
     if (includeInstance) {
@@ -4631,9 +4631,9 @@ proto.bucketeer.experiment.CreateExperimentRequest.deserializeBinaryFromReader =
           );
           msg.setCommand(value);
           break;
-        case 2:
+        case 3:
           var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -4676,9 +4676,9 @@ proto.bucketeer.experiment.CreateExperimentRequest.serializeBinaryToWriter =
           .serializeBinaryToWriter
       );
     }
-    f = message.getEnvironmentNamespace();
+    f = message.getEnvironmentId();
     if (f.length > 0) {
-      writer.writeString(2, f);
+      writer.writeString(3, f);
     }
   };
 
@@ -4725,13 +4725,13 @@ proto.bucketeer.experiment.CreateExperimentRequest.prototype.hasCommand =
   };
 
 /**
- * optional string environment_namespace = 2;
+ * optional string environment_id = 3;
  * @return {string}
  */
-proto.bucketeer.experiment.CreateExperimentRequest.prototype.getEnvironmentNamespace =
+proto.bucketeer.experiment.CreateExperimentRequest.prototype.getEnvironmentId =
   function () {
     return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 2, '')
+      jspb.Message.getFieldWithDefault(this, 3, '')
     );
   };
 
@@ -4739,9 +4739,9 @@ proto.bucketeer.experiment.CreateExperimentRequest.prototype.getEnvironmentNames
  * @param {string} value
  * @return {!proto.bucketeer.experiment.CreateExperimentRequest} returns this
  */
-proto.bucketeer.experiment.CreateExperimentRequest.prototype.setEnvironmentNamespace =
+proto.bucketeer.experiment.CreateExperimentRequest.prototype.setEnvironmentId =
   function (value) {
-    return jspb.Message.setProto3StringField(this, 2, value);
+    return jspb.Message.setProto3StringField(this, 3, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -4952,7 +4952,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 4, ''),
         changeExperimentPeriodCommand:
           (f = msg.getChangeExperimentPeriodCommand()) &&
           proto_experiment_command_pb.ChangeExperimentPeriodCommand.toObject(
@@ -4970,7 +4969,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_experiment_command_pb.ChangeExperimentDescriptionCommand.toObject(
             includeInstance,
             f
-          )
+          ),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 8, '')
       };
 
     if (includeInstance) {
@@ -5014,10 +5014,6 @@ proto.bucketeer.experiment.UpdateExperimentRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
           break;
-        case 4:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 5:
           var value =
             new proto_experiment_command_pb.ChangeExperimentPeriodCommand();
@@ -5047,6 +5043,10 @@ proto.bucketeer.experiment.UpdateExperimentRequest.deserializeBinaryFromReader =
               .deserializeBinaryFromReader
           );
           msg.setChangeDescriptionCommand(value);
+          break;
+        case 8:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -5084,10 +5084,6 @@ proto.bucketeer.experiment.UpdateExperimentRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(1, f);
     }
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(4, f);
-    }
     f = message.getChangeExperimentPeriodCommand();
     if (f != null) {
       writer.writeMessage(
@@ -5115,6 +5111,10 @@ proto.bucketeer.experiment.UpdateExperimentRequest.serializeBinaryToWriter =
           .serializeBinaryToWriter
       );
     }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(8, f);
+    }
   };
 
 /**
@@ -5137,26 +5137,6 @@ proto.bucketeer.experiment.UpdateExperimentRequest.prototype.setId = function (
 ) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
-
-/**
- * optional string environment_namespace = 4;
- * @return {string}
- */
-proto.bucketeer.experiment.UpdateExperimentRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 4, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.experiment.UpdateExperimentRequest} returns this
- */
-proto.bucketeer.experiment.UpdateExperimentRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 4, value);
-  };
 
 /**
  * optional ChangeExperimentPeriodCommand change_experiment_period_command = 5;
@@ -5282,6 +5262,26 @@ proto.bucketeer.experiment.UpdateExperimentRequest.prototype.clearChangeDescript
 proto.bucketeer.experiment.UpdateExperimentRequest.prototype.hasChangeDescriptionCommand =
   function () {
     return jspb.Message.getField(this, 7) != null;
+  };
+
+/**
+ * optional string environment_id = 8;
+ * @return {string}
+ */
+proto.bucketeer.experiment.UpdateExperimentRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 8, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.experiment.UpdateExperimentRequest} returns this
+ */
+proto.bucketeer.experiment.UpdateExperimentRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 8, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -5428,14 +5428,14 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         id: jspb.Message.getFieldWithDefault(msg, 2, ''),
         command:
           (f = msg.getCommand()) &&
           proto_experiment_command_pb.StartExperimentCommand.toObject(
             includeInstance,
             f
-          )
+          ),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -5476,10 +5476,6 @@ proto.bucketeer.experiment.StartExperimentRequest.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 2:
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
@@ -5492,6 +5488,10 @@ proto.bucketeer.experiment.StartExperimentRequest.deserializeBinaryFromReader =
               .deserializeBinaryFromReader
           );
           msg.setCommand(value);
+          break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -5525,10 +5525,6 @@ proto.bucketeer.experiment.StartExperimentRequest.prototype.serializeBinary =
 proto.bucketeer.experiment.StartExperimentRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(1, f);
-    }
     f = message.getId();
     if (f.length > 0) {
       writer.writeString(2, f);
@@ -5542,26 +5538,10 @@ proto.bucketeer.experiment.StartExperimentRequest.serializeBinaryToWriter =
           .serializeBinaryToWriter
       );
     }
-  };
-
-/**
- * optional string environment_namespace = 1;
- * @return {string}
- */
-proto.bucketeer.experiment.StartExperimentRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 1, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.experiment.StartExperimentRequest} returns this
- */
-proto.bucketeer.experiment.StartExperimentRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(4, f);
+    }
   };
 
 /**
@@ -5625,6 +5605,26 @@ proto.bucketeer.experiment.StartExperimentRequest.prototype.clearCommand =
 proto.bucketeer.experiment.StartExperimentRequest.prototype.hasCommand =
   function () {
     return jspb.Message.getField(this, 3) != null;
+  };
+
+/**
+ * optional string environment_id = 4;
+ * @return {string}
+ */
+proto.bucketeer.experiment.StartExperimentRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.experiment.StartExperimentRequest} returns this
+ */
+proto.bucketeer.experiment.StartExperimentRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 4, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -5771,14 +5771,14 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         id: jspb.Message.getFieldWithDefault(msg, 2, ''),
         command:
           (f = msg.getCommand()) &&
           proto_experiment_command_pb.FinishExperimentCommand.toObject(
             includeInstance,
             f
-          )
+          ),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -5818,10 +5818,6 @@ proto.bucketeer.experiment.FinishExperimentRequest.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 2:
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
@@ -5834,6 +5830,10 @@ proto.bucketeer.experiment.FinishExperimentRequest.deserializeBinaryFromReader =
               .deserializeBinaryFromReader
           );
           msg.setCommand(value);
+          break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -5867,10 +5867,6 @@ proto.bucketeer.experiment.FinishExperimentRequest.prototype.serializeBinary =
 proto.bucketeer.experiment.FinishExperimentRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(1, f);
-    }
     f = message.getId();
     if (f.length > 0) {
       writer.writeString(2, f);
@@ -5884,26 +5880,10 @@ proto.bucketeer.experiment.FinishExperimentRequest.serializeBinaryToWriter =
           .serializeBinaryToWriter
       );
     }
-  };
-
-/**
- * optional string environment_namespace = 1;
- * @return {string}
- */
-proto.bucketeer.experiment.FinishExperimentRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 1, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.experiment.FinishExperimentRequest} returns this
- */
-proto.bucketeer.experiment.FinishExperimentRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(4, f);
+    }
   };
 
 /**
@@ -5967,6 +5947,26 @@ proto.bucketeer.experiment.FinishExperimentRequest.prototype.clearCommand =
 proto.bucketeer.experiment.FinishExperimentRequest.prototype.hasCommand =
   function () {
     return jspb.Message.getField(this, 3) != null;
+  };
+
+/**
+ * optional string environment_id = 4;
+ * @return {string}
+ */
+proto.bucketeer.experiment.FinishExperimentRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.experiment.FinishExperimentRequest} returns this
+ */
+proto.bucketeer.experiment.FinishExperimentRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 4, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -6120,7 +6120,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -6174,9 +6174,9 @@ proto.bucketeer.experiment.StopExperimentRequest.deserializeBinaryFromReader =
           );
           msg.setCommand(value);
           break;
-        case 3:
+        case 4:
           var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -6223,9 +6223,9 @@ proto.bucketeer.experiment.StopExperimentRequest.serializeBinaryToWriter =
           .serializeBinaryToWriter
       );
     }
-    f = message.getEnvironmentNamespace();
+    f = message.getEnvironmentId();
     if (f.length > 0) {
-      writer.writeString(3, f);
+      writer.writeString(4, f);
     }
   };
 
@@ -6290,13 +6290,13 @@ proto.bucketeer.experiment.StopExperimentRequest.prototype.hasCommand =
   };
 
 /**
- * optional string environment_namespace = 3;
+ * optional string environment_id = 4;
  * @return {string}
  */
-proto.bucketeer.experiment.StopExperimentRequest.prototype.getEnvironmentNamespace =
+proto.bucketeer.experiment.StopExperimentRequest.prototype.getEnvironmentId =
   function () {
     return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 3, '')
+      jspb.Message.getFieldWithDefault(this, 4, '')
     );
   };
 
@@ -6304,9 +6304,9 @@ proto.bucketeer.experiment.StopExperimentRequest.prototype.getEnvironmentNamespa
  * @param {string} value
  * @return {!proto.bucketeer.experiment.StopExperimentRequest} returns this
  */
-proto.bucketeer.experiment.StopExperimentRequest.prototype.setEnvironmentNamespace =
+proto.bucketeer.experiment.StopExperimentRequest.prototype.setEnvironmentId =
   function (value) {
-    return jspb.Message.setProto3StringField(this, 3, value);
+    return jspb.Message.setProto3StringField(this, 4, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -6461,7 +6461,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -6515,9 +6515,9 @@ proto.bucketeer.experiment.ArchiveExperimentRequest.deserializeBinaryFromReader 
           );
           msg.setCommand(value);
           break;
-        case 3:
+        case 4:
           var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -6564,9 +6564,9 @@ proto.bucketeer.experiment.ArchiveExperimentRequest.serializeBinaryToWriter =
           .serializeBinaryToWriter
       );
     }
-    f = message.getEnvironmentNamespace();
+    f = message.getEnvironmentId();
     if (f.length > 0) {
-      writer.writeString(3, f);
+      writer.writeString(4, f);
     }
   };
 
@@ -6634,13 +6634,13 @@ proto.bucketeer.experiment.ArchiveExperimentRequest.prototype.hasCommand =
   };
 
 /**
- * optional string environment_namespace = 3;
+ * optional string environment_id = 4;
  * @return {string}
  */
-proto.bucketeer.experiment.ArchiveExperimentRequest.prototype.getEnvironmentNamespace =
+proto.bucketeer.experiment.ArchiveExperimentRequest.prototype.getEnvironmentId =
   function () {
     return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 3, '')
+      jspb.Message.getFieldWithDefault(this, 4, '')
     );
   };
 
@@ -6648,9 +6648,9 @@ proto.bucketeer.experiment.ArchiveExperimentRequest.prototype.getEnvironmentName
  * @param {string} value
  * @return {!proto.bucketeer.experiment.ArchiveExperimentRequest} returns this
  */
-proto.bucketeer.experiment.ArchiveExperimentRequest.prototype.setEnvironmentNamespace =
+proto.bucketeer.experiment.ArchiveExperimentRequest.prototype.setEnvironmentId =
   function (value) {
-    return jspb.Message.setProto3StringField(this, 3, value);
+    return jspb.Message.setProto3StringField(this, 4, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -6804,7 +6804,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -6857,9 +6857,9 @@ proto.bucketeer.experiment.DeleteExperimentRequest.deserializeBinaryFromReader =
           );
           msg.setCommand(value);
           break;
-        case 3:
+        case 4:
           var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -6906,9 +6906,9 @@ proto.bucketeer.experiment.DeleteExperimentRequest.serializeBinaryToWriter =
           .serializeBinaryToWriter
       );
     }
-    f = message.getEnvironmentNamespace();
+    f = message.getEnvironmentId();
     if (f.length > 0) {
-      writer.writeString(3, f);
+      writer.writeString(4, f);
     }
   };
 
@@ -6976,13 +6976,13 @@ proto.bucketeer.experiment.DeleteExperimentRequest.prototype.hasCommand =
   };
 
 /**
- * optional string environment_namespace = 3;
+ * optional string environment_id = 4;
  * @return {string}
  */
-proto.bucketeer.experiment.DeleteExperimentRequest.prototype.getEnvironmentNamespace =
+proto.bucketeer.experiment.DeleteExperimentRequest.prototype.getEnvironmentId =
   function () {
     return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 3, '')
+      jspb.Message.getFieldWithDefault(this, 4, '')
     );
   };
 
@@ -6990,9 +6990,9 @@ proto.bucketeer.experiment.DeleteExperimentRequest.prototype.getEnvironmentNames
  * @param {string} value
  * @return {!proto.bucketeer.experiment.DeleteExperimentRequest} returns this
  */
-proto.bucketeer.experiment.DeleteExperimentRequest.prototype.setEnvironmentNamespace =
+proto.bucketeer.experiment.DeleteExperimentRequest.prototype.setEnvironmentId =
   function (value) {
-    return jspb.Message.setProto3StringField(this, 3, value);
+    return jspb.Message.setProto3StringField(this, 4, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

@@ -34,16 +34,16 @@ var (
 )
 
 type SegmentStorage interface {
-	CreateSegment(ctx context.Context, segment *domain.Segment, environmentNamespace string) error
-	UpdateSegment(ctx context.Context, segment *domain.Segment, environmentNamespace string) error
-	GetSegment(ctx context.Context, id, environmentNamespace string) (*domain.Segment, []string, error)
+	CreateSegment(ctx context.Context, segment *domain.Segment, environmentId string) error
+	UpdateSegment(ctx context.Context, segment *domain.Segment, environmentId string) error
+	GetSegment(ctx context.Context, id, environmentId string) (*domain.Segment, []string, error)
 	ListSegments(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
 		orders []*mysql.Order,
 		limit, offset int,
 		isInUseStatus *bool,
-		environmentNamespace string,
+		environmentId string,
 	) ([]*proto.Segment, int, int64, map[string][]string, error)
 }
 
@@ -58,7 +58,7 @@ func NewSegmentStorage(qe mysql.QueryExecer) SegmentStorage {
 func (s *segmentStorage) CreateSegment(
 	ctx context.Context,
 	segment *domain.Segment,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	query := `
 		INSERT INTO segment (
@@ -73,7 +73,7 @@ func (s *segmentStorage) CreateSegment(
 			included_user_count,
 			excluded_user_count,
 			status,
-			environment_namespace
+			environment_id
 		) VALUES (
 			?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
 			?, ?
@@ -93,7 +93,7 @@ func (s *segmentStorage) CreateSegment(
 		segment.IncludedUserCount,
 		segment.ExcludedUserCount,
 		int32(segment.Status),
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		if err == mysql.ErrDuplicateEntry {
@@ -107,7 +107,7 @@ func (s *segmentStorage) CreateSegment(
 func (s *segmentStorage) UpdateSegment(
 	ctx context.Context,
 	segment *domain.Segment,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	query := `
 		UPDATE 
@@ -125,7 +125,7 @@ func (s *segmentStorage) UpdateSegment(
 			status = ?
 		WHERE
 			id = ? AND
-			environment_namespace = ?
+			environment_id = ?
 	`
 	result, err := s.qe.ExecContext(
 		ctx,
@@ -141,7 +141,7 @@ func (s *segmentStorage) UpdateSegment(
 		segment.ExcludedUserCount,
 		int32(segment.Status),
 		segment.Id,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		return err
@@ -158,7 +158,7 @@ func (s *segmentStorage) UpdateSegment(
 
 func (s *segmentStorage) GetSegment(
 	ctx context.Context,
-	id, environmentNamespace string,
+	id, environmentId string,
 ) (*domain.Segment, []string, error) {
 	segment := proto.Segment{}
 	var status int32
@@ -181,22 +181,22 @@ func (s *segmentStorage) GetSegment(
 				FROM 
 					feature
 				WHERE
-					environment_namespace = ? AND
+					environment_id = ? AND
 					rules LIKE concat("%%", segment.id, "%%")
 			) AS feature_ids
 		FROM
 			segment
 		WHERE
 			id = ? AND
-			environment_namespace = ?
+			environment_id = ?
 	`
 	featureIDs := new(sql.NullString)
 	err := s.qe.QueryRowContext(
 		ctx,
 		query,
-		environmentNamespace,
+		environmentId,
 		id,
-		environmentNamespace,
+		environmentId,
 	).Scan(
 		&segment.Id,
 		&segment.Name,
@@ -232,11 +232,11 @@ func (s *segmentStorage) ListSegments(
 	orders []*mysql.Order,
 	limit, offset int,
 	isInUseStatus *bool,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*proto.Segment, int, int64, map[string][]string, error) {
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	prepareArgs := make([]interface{}, 0, len(whereArgs)+1)
-	prepareArgs = append(prepareArgs, environmentNamespace)
+	prepareArgs = append(prepareArgs, environmentId)
 	prepareArgs = append(prepareArgs, whereArgs...)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
@@ -267,7 +267,7 @@ func (s *segmentStorage) ListSegments(
 				FROM 
 					feature
 				WHERE
-					environment_namespace = ? AND
+					environment_id = ? AND
 					rules LIKE concat("%%", segment.id, "%%")
 			) AS feature_ids
 		FROM
@@ -335,7 +335,7 @@ func (s *segmentStorage) ListSegments(
 						FROM 
 							feature
 						WHERE
-							environment_namespace = ? AND
+							environment_id = ? AND
 							rules LIKE concat("%%", segment.id, "%%")
 					) %s
 				END

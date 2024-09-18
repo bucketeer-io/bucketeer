@@ -42,30 +42,30 @@ func (m *MockFeatureLastUsedInfoStorage) EXPECT() *MockFeatureLastUsedInfoStorag
 }
 
 // GetFeatureLastUsedInfos mocks base method.
-func (m *MockFeatureLastUsedInfoStorage) GetFeatureLastUsedInfos(ctx context.Context, ids []string, environmentNamespace string) ([]*domain.FeatureLastUsedInfo, error) {
+func (m *MockFeatureLastUsedInfoStorage) GetFeatureLastUsedInfos(ctx context.Context, ids []string, environmentId string) ([]*domain.FeatureLastUsedInfo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFeatureLastUsedInfos", ctx, ids, environmentNamespace)
+	ret := m.ctrl.Call(m, "GetFeatureLastUsedInfos", ctx, ids, environmentId)
 	ret0, _ := ret[0].([]*domain.FeatureLastUsedInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetFeatureLastUsedInfos indicates an expected call of GetFeatureLastUsedInfos.
-func (mr *MockFeatureLastUsedInfoStorageMockRecorder) GetFeatureLastUsedInfos(ctx, ids, environmentNamespace any) *gomock.Call {
+func (mr *MockFeatureLastUsedInfoStorageMockRecorder) GetFeatureLastUsedInfos(ctx, ids, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureLastUsedInfos", reflect.TypeOf((*MockFeatureLastUsedInfoStorage)(nil).GetFeatureLastUsedInfos), ctx, ids, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureLastUsedInfos", reflect.TypeOf((*MockFeatureLastUsedInfoStorage)(nil).GetFeatureLastUsedInfos), ctx, ids, environmentId)
 }
 
 // UpsertFeatureLastUsedInfo mocks base method.
-func (m *MockFeatureLastUsedInfoStorage) UpsertFeatureLastUsedInfo(ctx context.Context, featureLastUsedInfos *domain.FeatureLastUsedInfo, environmentNamespace string) error {
+func (m *MockFeatureLastUsedInfoStorage) UpsertFeatureLastUsedInfo(ctx context.Context, featureLastUsedInfos *domain.FeatureLastUsedInfo, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertFeatureLastUsedInfo", ctx, featureLastUsedInfos, environmentNamespace)
+	ret := m.ctrl.Call(m, "UpsertFeatureLastUsedInfo", ctx, featureLastUsedInfos, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpsertFeatureLastUsedInfo indicates an expected call of UpsertFeatureLastUsedInfo.
-func (mr *MockFeatureLastUsedInfoStorageMockRecorder) UpsertFeatureLastUsedInfo(ctx, featureLastUsedInfos, environmentNamespace any) *gomock.Call {
+func (mr *MockFeatureLastUsedInfoStorageMockRecorder) UpsertFeatureLastUsedInfo(ctx, featureLastUsedInfos, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertFeatureLastUsedInfo", reflect.TypeOf((*MockFeatureLastUsedInfoStorage)(nil).UpsertFeatureLastUsedInfo), ctx, featureLastUsedInfos, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertFeatureLastUsedInfo", reflect.TypeOf((*MockFeatureLastUsedInfoStorage)(nil).UpsertFeatureLastUsedInfo), ctx, featureLastUsedInfos, environmentId)
 }

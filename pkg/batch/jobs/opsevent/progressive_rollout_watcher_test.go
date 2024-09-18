@@ -81,8 +81,8 @@ func TestRunProgressiveRolloutWatcher(t *testing.T) {
 				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListProgressiveRollouts(
 					gomock.Any(),
 					&autoopsproto.ListProgressiveRolloutsRequest{
-						EnvironmentNamespace: "eID",
-						PageSize:             0,
+						EnvironmentId: "eID",
+						PageSize:      0,
 					},
 				).Return(
 					&autoopsproto.ListProgressiveRolloutsResponse{
@@ -133,8 +133,8 @@ func TestRunProgressiveRolloutWatcher(t *testing.T) {
 				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListProgressiveRollouts(
 					gomock.Any(),
 					&autoopsproto.ListProgressiveRolloutsRequest{
-						EnvironmentNamespace: "eID",
-						PageSize:             0,
+						EnvironmentId: "eID",
+						PageSize:      0,
 					},
 				).Return(
 					&autoopsproto.ListProgressiveRolloutsResponse{
@@ -182,8 +182,8 @@ func TestRunProgressiveRolloutWatcher(t *testing.T) {
 				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListProgressiveRollouts(
 					gomock.Any(),
 					&autoopsproto.ListProgressiveRolloutsRequest{
-						EnvironmentNamespace: "eID",
-						PageSize:             0,
+						EnvironmentId: "eID",
+						PageSize:      0,
 					},
 				).Return(
 					&autoopsproto.ListProgressiveRolloutsResponse{
@@ -235,8 +235,8 @@ func TestRunProgressiveRolloutWatcher(t *testing.T) {
 				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListProgressiveRollouts(
 					gomock.Any(),
 					&autoopsproto.ListProgressiveRolloutsRequest{
-						EnvironmentNamespace: "eID",
-						PageSize:             0,
+						EnvironmentId: "eID",
+						PageSize:      0,
 					},
 				).Return(
 					&autoopsproto.ListProgressiveRolloutsResponse{

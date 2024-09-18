@@ -240,11 +240,11 @@ func (e *eventsDWHPersister) extractEvents(messages map[string]*puller.Message) 
 			handleBadMessage(m, err)
 			continue
 		}
-		if innerEvents, ok := envEvents[event.EnvironmentNamespace]; ok {
+		if innerEvents, ok := envEvents[event.EnvironmentId]; ok {
 			innerEvents[event.Id] = innerEvent.Message
 			continue
 		}
-		envEvents[event.EnvironmentNamespace] = eventDWHMap{event.Id: innerEvent.Message}
+		envEvents[event.EnvironmentId] = eventDWHMap{event.Id: innerEvent.Message}
 	}
 	return envEvents
 }

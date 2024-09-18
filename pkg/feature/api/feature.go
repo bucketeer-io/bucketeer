@@ -62,7 +62,7 @@ func (s *FeatureService) GetFeature(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func (s *FeatureService) GetFeature(
 		return nil, err
 	}
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	feature, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentNamespace)
+	feature, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if err == v2fs.ErrFeatureNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -87,7 +87,7 @@ func (s *FeatureService) GetFeature(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -102,7 +102,7 @@ func (s *FeatureService) GetFeature(
 	if err := s.setLastUsedInfosToFeatureByChunk(
 		ctx,
 		[]*featureproto.Feature{feature.Feature},
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer,
 	); err != nil {
 		return nil, err
@@ -117,7 +117,7 @@ func (s *FeatureService) GetFeatures(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (s *FeatureService) GetFeatures(
 		return nil, err
 	}
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
 	ids := make([]interface{}, 0, len(req.Ids))
 	for _, id := range req.Ids {
@@ -147,7 +147,7 @@ func (s *FeatureService) GetFeatures(
 			"Failed to get feature",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -169,7 +169,7 @@ func (s *FeatureService) ListFeatures(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func (s *FeatureService) ListFeatures(
 			req.SearchKeyword,
 			req.OrderBy,
 			req.OrderDirection,
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 		)
 	} else {
 		features, cursor, totalCount, err = s.listFeaturesFilteredByExperiment(
@@ -205,7 +205,7 @@ func (s *FeatureService) ListFeatures(
 			req.OrderBy,
 			req.OrderDirection,
 			req.HasExperiment.Value,
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 		)
 	}
 	if err != nil {
@@ -230,12 +230,12 @@ func (s *FeatureService) listFeatures(
 	searchKeyword string,
 	orderBy featureproto.ListFeaturesRequest_OrderBy,
 	orderDirection featureproto.ListFeaturesRequest_OrderDirection,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*featureproto.Feature, string, int64, error) {
 	localizer := locale.NewLocalizer(ctx)
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_namespace", "=", environmentNamespace),
+		mysql.NewFilter("environment_id", "=", environmentId),
 	}
 	tagValues := make([]interface{}, 0, len(tags))
 	for _, tag := range tags {
@@ -278,7 +278,7 @@ func (s *FeatureService) listFeatures(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		return nil, "", 0, err
@@ -311,12 +311,12 @@ func (s *FeatureService) listFeatures(
 			"Failed to list features",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		return nil, "", 0, err
 	}
-	if err = s.setLastUsedInfosToFeatureByChunk(ctx, features, environmentNamespace, localizer); err != nil {
+	if err = s.setLastUsedInfosToFeatureByChunk(ctx, features, environmentId, localizer); err != nil {
 		return nil, "", 0, err
 	}
 	return features, strconv.Itoa(nextCursor), totalCount, nil
@@ -335,13 +335,13 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 	orderBy featureproto.ListFeaturesRequest_OrderBy,
 	orderDirection featureproto.ListFeaturesRequest_OrderDirection,
 	hasExperiment bool,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*featureproto.Feature, string, int64, error) {
 	localizer := locale.NewLocalizer(ctx)
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("feature.deleted", "=", false),
 		mysql.NewFilter("experiment.deleted", "=", false),
-		mysql.NewFilter("feature.environment_namespace", "=", environmentNamespace),
+		mysql.NewFilter("feature.environment_id", "=", environmentId),
 		mysql.NewNullFilter("experiment.id", !hasExperiment),
 	}
 	tagValues := make([]interface{}, 0, len(tags))
@@ -388,7 +388,7 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		return nil, "", 0, err
@@ -421,12 +421,12 @@ func (s *FeatureService) listFeaturesFilteredByExperiment(
 			"Failed to list features filtered by experiment",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		return nil, "", 0, err
 	}
-	if err = s.setLastUsedInfosToFeatureByChunk(ctx, features, environmentNamespace, localizer); err != nil {
+	if err = s.setLastUsedInfosToFeatureByChunk(ctx, features, environmentId, localizer); err != nil {
 		return nil, "", 0, err
 	}
 	return features, strconv.Itoa(nextCursor), totalCount, nil
@@ -474,7 +474,7 @@ func (s *FeatureService) ListEnabledFeatures(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -482,7 +482,7 @@ func (s *FeatureService) ListEnabledFeatures(
 		mysql.NewFilter("archived", "=", false),
 		mysql.NewFilter("enabled", "=", true),
 		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
 	tagValues := make([]interface{}, 0, len(req.Tags))
 	for _, tag := range req.Tags {
@@ -523,12 +523,12 @@ func (s *FeatureService) ListEnabledFeatures(
 			"Failed to list enabled features",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
 	}
-	if err = s.setLastUsedInfosToFeatureByChunk(ctx, features, req.EnvironmentNamespace, localizer); err != nil {
+	if err = s.setLastUsedInfosToFeatureByChunk(ctx, features, req.EnvironmentId, localizer); err != nil {
 		return nil, err
 	}
 	return &featureproto.ListEnabledFeaturesResponse{
@@ -544,7 +544,7 @@ func (s *FeatureService) CreateFeature(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -584,22 +584,22 @@ func (s *FeatureService) CreateFeature(
 		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		if err := s.upsertTags(ctx, tx, req.Command.Tags, req.EnvironmentNamespace); err != nil {
+		if err := s.upsertTags(ctx, tx, req.Command.Tags, req.EnvironmentId); err != nil {
 			return err
 		}
 
 		featureStorage := v2fs.NewFeatureStorage(tx)
-		if err := featureStorage.CreateFeature(ctx, feature, req.EnvironmentNamespace); err != nil {
+		if err := featureStorage.CreateFeature(ctx, feature, req.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to store feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
 		}
-		handler, err = command.NewFeatureCommandHandler(editor, feature, req.EnvironmentNamespace, "")
+		handler, err = command.NewFeatureCommandHandler(editor, feature, req.EnvironmentId, "")
 		if err != nil {
 			return err
 		}
@@ -608,7 +608,7 @@ func (s *FeatureService) CreateFeature(
 				"Failed to create feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
@@ -630,7 +630,7 @@ func (s *FeatureService) CreateFeature(
 			"Failed to create feature",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -647,7 +647,7 @@ func (s *FeatureService) CreateFeature(
 			"Failed to publish events",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -713,7 +713,7 @@ func (s *FeatureService) UpdateFeature(
 		featureStorage := v2fs.NewFeatureStorage(tx)
 		whereParts := []mysql.WherePart{
 			mysql.NewFilter("deleted", "=", false),
-			mysql.NewFilter("environment_namespace", "=", req.EnvironmentId),
+			mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 		}
 		features, _, _, err := featureStorage.ListFeatures(
 			ctx,
@@ -846,7 +846,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -860,10 +860,10 @@ func (s *FeatureService) UpdateFeatureDetails(
 		}
 		return nil, dt.Err()
 	}
-	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentNamespace, localizer); err != nil {
+	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentId, localizer); err != nil {
 		return nil, err
 	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
 		return nil, err
 	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
@@ -886,18 +886,18 @@ func (s *FeatureService) UpdateFeatureDetails(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		featureStorage := v2fs.NewFeatureStorage(tx)
-		feature, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentNamespace)
+		feature, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
 		}
-		handler, err = command.NewFeatureCommandHandler(editor, feature, req.EnvironmentNamespace, req.Comment)
+		handler, err = command.NewFeatureCommandHandler(editor, feature, req.EnvironmentId, req.Comment)
 		if err != nil {
 			return err
 		}
@@ -907,7 +907,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 				"Failed to increment feature version",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
@@ -919,7 +919,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 					"Failed to rename feature",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.Error(err),
-						zap.String("environmentNamespace", req.EnvironmentNamespace),
+						zap.String("environmentId", req.EnvironmentId),
 					)...,
 				)
 				return err
@@ -932,7 +932,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 					"Failed to change feature description",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.Error(err),
-						zap.String("environmentNamespace", req.EnvironmentNamespace),
+						zap.String("environmentId", req.EnvironmentId),
 					)...,
 				)
 				return err
@@ -946,7 +946,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 						"Failed to add tag to feature",
 						log.FieldsFromImcomingContext(ctx).AddFields(
 							zap.Error(err),
-							zap.String("environmentNamespace", req.EnvironmentNamespace),
+							zap.String("environmentId", req.EnvironmentId),
 						)...,
 					)
 					return err
@@ -956,7 +956,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 			for _, c := range req.AddTagCommands {
 				tags = append(tags, c.Tag)
 			}
-			if err := s.upsertTags(ctx, tx, tags, req.EnvironmentNamespace); err != nil {
+			if err := s.upsertTags(ctx, tx, tags, req.EnvironmentId); err != nil {
 				return err
 			}
 		}
@@ -968,20 +968,20 @@ func (s *FeatureService) UpdateFeatureDetails(
 						"Failed to remove tag from feature",
 						log.FieldsFromImcomingContext(ctx).AddFields(
 							zap.Error(err),
-							zap.String("environmentNamespace", req.EnvironmentNamespace),
+							zap.String("environmentId", req.EnvironmentId),
 						)...,
 					)
 					return err
 				}
 			}
 		}
-		err = featureStorage.UpdateFeature(ctx, feature, req.EnvironmentNamespace)
+		err = featureStorage.UpdateFeature(ctx, feature, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to update feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
@@ -996,7 +996,7 @@ func (s *FeatureService) UpdateFeatureDetails(
 			"Failed to publish events",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -1014,15 +1014,15 @@ func (s *FeatureService) UpdateFeatureDetails(
 
 func (s *FeatureService) existsRunningExperiment(
 	ctx context.Context,
-	featureID, environmentNamespace string,
+	featureID, environmentId string,
 ) (bool, error) {
-	experiments, err := s.listExperiments(ctx, environmentNamespace, featureID)
+	experiments, err := s.listExperiments(ctx, environmentId, featureID)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list experiments",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		return false, err
@@ -1043,15 +1043,15 @@ func containsRunningExperiment(experiments []*experimentproto.Experiment) bool {
 
 func (s *FeatureService) existsRunningProgressiveRollout(
 	ctx context.Context,
-	featureID, environmentNamespace string,
+	featureID, environmentId string,
 ) (bool, error) {
-	progressiveRollouts, err := s.listProgressiveRollouts(ctx, featureID, environmentNamespace)
+	progressiveRollouts, err := s.listProgressiveRollouts(ctx, featureID, environmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list progressiveRollouts",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		return false, err
@@ -1073,7 +1073,7 @@ func containsRunningProgressiveRollout(progressiveRollouts []*autoopsproto.Progr
 
 func (s *FeatureService) listProgressiveRollouts(
 	ctx context.Context,
-	featureID, environmentNamespace string,
+	featureID, environmentId string,
 ) ([]*autoopsproto.ProgressiveRollout, error) {
 	progressiveRollouts := make([]*autoopsproto.ProgressiveRollout, 0)
 	cursor := ""
@@ -1081,10 +1081,10 @@ func (s *FeatureService) listProgressiveRollouts(
 		resp, err := s.autoOpsClient.ListProgressiveRollouts(
 			ctx,
 			&autoopsproto.ListProgressiveRolloutsRequest{
-				EnvironmentNamespace: environmentNamespace,
-				PageSize:             listRequestSize,
-				Cursor:               cursor,
-				FeatureIds:           []string{featureID},
+				EnvironmentId: environmentId,
+				PageSize:      listRequestSize,
+				Cursor:        cursor,
+				FeatureIds:    []string{featureID},
 			},
 		)
 		if err != nil {
@@ -1111,18 +1111,18 @@ func (s *FeatureService) EnableFeature(
 	}
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateFeature(
 		ctx,
 		req.Command,
 		req.Id,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		req.Comment,
 		localizer,
 		editor,
@@ -1132,7 +1132,7 @@ func (s *FeatureService) EnableFeature(
 				"Failed to enable feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 		}
@@ -1153,18 +1153,18 @@ func (s *FeatureService) DisableFeature(
 	}
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateFeature(
 		ctx,
 		req.Command,
 		req.Id,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		req.Comment,
 		localizer,
 		editor,
@@ -1174,7 +1174,7 @@ func (s *FeatureService) DisableFeature(
 				"Failed to disable feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 		}
@@ -1194,7 +1194,7 @@ func (s *FeatureService) ArchiveFeature(
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("archived", "=", false),
 		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
 	features, _, _, err := featureStorage.ListFeatures(
@@ -1209,7 +1209,7 @@ func (s *FeatureService) ArchiveFeature(
 			"Failed to list feature",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -1226,7 +1226,7 @@ func (s *FeatureService) ArchiveFeature(
 			"Feature not found",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -1251,18 +1251,18 @@ func (s *FeatureService) ArchiveFeature(
 
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateFeature(
 		ctx,
 		req.Command,
 		req.Id,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		req.Comment,
 		localizer,
 		editor,
@@ -1272,7 +1272,7 @@ func (s *FeatureService) ArchiveFeature(
 				"Failed to archive feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 		}
@@ -1291,18 +1291,18 @@ func (s *FeatureService) UnarchiveFeature(
 	}
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateFeature(
 		ctx,
 		req.Command,
 		req.Id,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		req.Comment,
 		localizer,
 		editor,
@@ -1312,7 +1312,7 @@ func (s *FeatureService) UnarchiveFeature(
 				"Failed to unarchive feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 		}
@@ -1331,18 +1331,18 @@ func (s *FeatureService) DeleteFeature(
 	}
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
 		return nil, err
 	}
 	if err := s.updateFeature(
 		ctx,
 		req.Command,
 		req.Id,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		req.Comment,
 		localizer,
 		editor,
@@ -1352,7 +1352,7 @@ func (s *FeatureService) DeleteFeature(
 				"Failed to delete feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 		}
@@ -1364,7 +1364,7 @@ func (s *FeatureService) DeleteFeature(
 func (s *FeatureService) updateFeature(
 	ctx context.Context,
 	cmd command.Command,
-	id, environmentNamespace, comment string,
+	id, environmentId, comment string,
 	localizer locale.Localizer,
 	editor *eventproto.Editor,
 ) error {
@@ -1408,18 +1408,18 @@ func (s *FeatureService) updateFeature(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		featureStorage := v2fs.NewFeatureStorage(tx)
-		feature, err := featureStorage.GetFeature(ctx, id, environmentNamespace)
+		feature, err := featureStorage.GetFeature(ctx, id, environmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			return err
 		}
-		handler, err = command.NewFeatureCommandHandler(editor, feature, environmentNamespace, comment)
+		handler, err = command.NewFeatureCommandHandler(editor, feature, environmentId, comment)
 		if err != nil {
 			return err
 		}
@@ -1429,7 +1429,7 @@ func (s *FeatureService) updateFeature(
 				"Failed to increment feature version",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			return err
@@ -1437,7 +1437,7 @@ func (s *FeatureService) updateFeature(
 		// We must stop the progressive rollout if it contains a `DisableFeatureCommand`
 		switch cmd.(type) {
 		case *featureproto.DisableFeatureCommand:
-			if err := s.stopProgressiveRollout(ctx, tx, environmentNamespace, feature.Id); err != nil {
+			if err := s.stopProgressiveRollout(ctx, tx, environmentId, feature.Id); err != nil {
 				return err
 			}
 		}
@@ -1446,17 +1446,17 @@ func (s *FeatureService) updateFeature(
 				"Failed to handle command",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			return err
 		}
-		if err := featureStorage.UpdateFeature(ctx, feature, environmentNamespace); err != nil {
+		if err := featureStorage.UpdateFeature(ctx, feature, environmentId); err != nil {
 			s.logger.Error(
 				"Failed to update feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			return err
@@ -1471,7 +1471,7 @@ func (s *FeatureService) updateFeature(
 			"Failed to publish events",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -1537,7 +1537,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1551,10 +1551,10 @@ func (s *FeatureService) UpdateFeatureVariations(
 		}
 		return nil, dt.Err()
 	}
-	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentNamespace, localizer); err != nil {
+	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentId, localizer); err != nil {
 		return nil, err
 	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
 		return nil, err
 	}
 	commands := make([]command.Command, 0, len(req.Commands))
@@ -1565,7 +1565,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 				"Failed to unmarshal command",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return nil, err
@@ -1592,7 +1592,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 	}
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		featureStorage := v2fs.NewFeatureStorage(tx)
@@ -1608,7 +1608,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 				"Failed to list feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
@@ -1619,7 +1619,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 				"Failed to find feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
@@ -1629,7 +1629,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 			if err := s.validateFeatureVariationsCommand(
 				ctx,
 				features,
-				req.EnvironmentNamespace,
+				req.EnvironmentId,
 				f,
 				cmd,
 				localizer,
@@ -1638,13 +1638,13 @@ func (s *FeatureService) UpdateFeatureVariations(
 					"Invalid argument",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.Error(err),
-						zap.String("environmentNamespace", req.EnvironmentNamespace),
+						zap.String("environmentId", req.EnvironmentId),
 					)...,
 				)
 				return err
 			}
 		}
-		handler, err = command.NewFeatureCommandHandler(editor, feature, req.EnvironmentNamespace, req.Comment)
+		handler, err = command.NewFeatureCommandHandler(editor, feature, req.EnvironmentId, req.Comment)
 		if err != nil {
 			return err
 		}
@@ -1654,7 +1654,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 				"Failed to increment feature version",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
@@ -1667,19 +1667,19 @@ func (s *FeatureService) UpdateFeatureVariations(
 					"Failed to handle command",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.Error(err),
-						zap.String("environmentNamespace", req.EnvironmentNamespace),
+						zap.String("environmentId", req.EnvironmentId),
 					)...,
 				)
 				return err
 			}
 		}
-		err = featureStorage.UpdateFeature(ctx, feature, req.EnvironmentNamespace)
+		err = featureStorage.UpdateFeature(ctx, feature, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to update feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
@@ -1694,7 +1694,7 @@ func (s *FeatureService) UpdateFeatureVariations(
 			"Failed to publish events",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -1725,14 +1725,14 @@ func (s *FeatureService) UpdateFeatureTargeting(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
 	if err := validateUpdateFeatureTargetingRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentNamespace, req.Comment, localizer); err != nil {
+	if err := s.validateEnvironmentSettings(ctx, req.EnvironmentId, req.Comment, localizer); err != nil {
 		return nil, err
 	}
 	commands := make([]command.Command, 0, len(req.Commands))
@@ -1743,14 +1743,14 @@ func (s *FeatureService) UpdateFeatureTargeting(
 				"Failed to unmarshal command",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return nil, err
 		}
 		commands = append(commands, cmd)
 	}
-	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentNamespace, localizer); err != nil {
+	if err := s.validateFeatureStatus(ctx, req.Id, req.EnvironmentId, localizer); err != nil {
 		return nil, err
 	}
 	// TODO: clean this up.
@@ -1780,7 +1780,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		whereParts := []mysql.WherePart{
 			mysql.NewFilter("deleted", "=", false),
-			mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
+			mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 		}
 		featureStorage := v2fs.NewFeatureStorage(tx)
 		features, _, _, err := featureStorage.ListFeatures(
@@ -1795,7 +1795,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 				"Failed to list feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
@@ -1806,7 +1806,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 				"Failed to find feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
@@ -1815,7 +1815,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 			if err := s.validateFeatureTargetingCommand(
 				ctx,
 				req.From,
-				req.EnvironmentNamespace,
+				req.EnvironmentId,
 				features,
 				f,
 				cmd,
@@ -1825,7 +1825,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 					"Invalid argument",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.Error(err),
-						zap.String("environmentNamespace", req.EnvironmentNamespace),
+						zap.String("environmentId", req.EnvironmentId),
 					)...,
 				)
 				return err
@@ -1835,7 +1835,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 		handler, err = command.NewFeatureCommandHandler(
 			editor,
 			feature,
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 			req.Comment,
 		)
 		if err != nil {
@@ -1847,7 +1847,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 				"Failed to increment feature version",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
@@ -1856,7 +1856,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 			// We must stop the progressive rollout if it contains a `DisableFeatureCommand`
 			switch cmd.(type) {
 			case *featureproto.DisableFeatureCommand:
-				if err := s.stopProgressiveRollout(ctx, tx, req.EnvironmentNamespace, feature.Id); err != nil {
+				if err := s.stopProgressiveRollout(ctx, tx, req.EnvironmentId, feature.Id); err != nil {
 					return err
 				}
 			}
@@ -1867,19 +1867,19 @@ func (s *FeatureService) UpdateFeatureTargeting(
 					"Failed to handle command",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.Error(err),
-						zap.String("environmentNamespace", req.EnvironmentNamespace),
+						zap.String("environmentId", req.EnvironmentId),
 					)...,
 				)
 				return err
 			}
 		}
-		err = featureStorage.UpdateFeature(ctx, feature, req.EnvironmentNamespace)
+		err = featureStorage.UpdateFeature(ctx, feature, req.EnvironmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to update feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return err
@@ -1894,7 +1894,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 			"Failed to publish events",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -1913,11 +1913,11 @@ func (s *FeatureService) UpdateFeatureTargeting(
 func (s *FeatureService) stopProgressiveRollout(
 	ctx context.Context,
 	tx mysql.Transaction,
-	environmentNamespace, featureID string) error {
+	EnvironmentId, featureID string) error {
 	storage := v2ao.NewProgressiveRolloutStorage(tx)
 	ids := convToInterfaceSlice([]string{featureID})
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_namespace", "=", environmentNamespace),
+		mysql.NewFilter("environment_id", "=", EnvironmentId),
 		mysql.NewInFilter("feature_id", ids),
 	}
 	list, _, _, err := storage.ListProgressiveRollouts(ctx, whereParts, nil, 0, 0)
@@ -1930,7 +1930,7 @@ func (s *FeatureService) stopProgressiveRollout(
 			if err := r.Stop(autoopsproto.ProgressiveRollout_USER); err != nil {
 				return err
 			}
-			if err := storage.UpdateProgressiveRollout(ctx, r, environmentNamespace); err != nil {
+			if err := storage.UpdateProgressiveRollout(ctx, r, EnvironmentId); err != nil {
 				return err
 			}
 		}
@@ -1968,7 +1968,7 @@ func (s *FeatureService) evaluateFeatures(
 	ctx context.Context,
 	features []*featureproto.Feature,
 	user *userproto.User,
-	environmentNamespace string,
+	EnvironmentId string,
 	tag string,
 	localizer locale.Localizer,
 ) (*featureproto.UserEvaluations, error) {
@@ -1979,13 +1979,13 @@ func (s *FeatureService) evaluateFeatures(
 			mapIDs[id] = struct{}{}
 		}
 	}
-	mapSegmentUsers, err := s.listSegmentUsers(ctx, mapIDs, environmentNamespace)
+	mapSegmentUsers, err := s.listSegmentUsers(ctx, mapIDs, EnvironmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list segments",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", EnvironmentId),
 				zap.String("userId", user.Id),
 				zap.String("tag", tag),
 			)...,
@@ -1998,7 +1998,7 @@ func (s *FeatureService) evaluateFeatures(
 			"Failed to evaluate",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", EnvironmentId),
 				zap.String("userId", user.Id),
 				zap.String("tag", tag),
 			)...,
@@ -2017,9 +2017,9 @@ func (s *FeatureService) evaluateFeatures(
 
 func (s *FeatureService) getFeatures(
 	ctx context.Context,
-	environmentNamespace string,
+	EnvironmentId string,
 ) ([]*featureproto.Feature, error) {
-	features, err := s.featuresCache.Get(environmentNamespace)
+	features, err := s.featuresCache.Get(EnvironmentId)
 	if err == nil {
 		return features.Features, nil
 	}
@@ -2027,7 +2027,7 @@ func (s *FeatureService) getFeatures(
 		"No cached data for Features",
 		log.FieldsFromImcomingContext(ctx).AddFields(
 			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", EnvironmentId),
 		)...,
 	)
 	fs, _, _, err := s.listFeatures(
@@ -2042,14 +2042,14 @@ func (s *FeatureService) getFeatures(
 		"",
 		featureproto.ListFeaturesRequest_DEFAULT,
 		featureproto.ListFeaturesRequest_ASC,
-		environmentNamespace,
+		EnvironmentId,
 	)
 	if err != nil {
 		s.logger.Error(
 			"Failed to retrive features from storage",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -2060,7 +2060,7 @@ func (s *FeatureService) getFeatures(
 func (s *FeatureService) listSegmentUsers(
 	ctx context.Context,
 	mapSegmentIDs map[string]struct{},
-	environmentNamespace string,
+	EnvironmentId string,
 ) (map[string][]*featureproto.SegmentUser, error) {
 	if len(mapSegmentIDs) == 0 {
 		return nil, nil
@@ -2068,9 +2068,9 @@ func (s *FeatureService) listSegmentUsers(
 	users := make(map[string][]*featureproto.SegmentUser)
 	for segmentID := range mapSegmentIDs {
 		s, err, _ := s.flightgroup.Do(
-			s.segmentFlightID(environmentNamespace, segmentID),
+			s.segmentFlightID(EnvironmentId, segmentID),
 			func() (interface{}, error) {
-				return s.getSegmentUsers(ctx, segmentID, environmentNamespace)
+				return s.getSegmentUsers(ctx, segmentID, EnvironmentId)
 			},
 		)
 		if err != nil {
@@ -2082,15 +2082,15 @@ func (s *FeatureService) listSegmentUsers(
 	return users, nil
 }
 
-func (s *FeatureService) segmentFlightID(environmentNamespace, segmentID string) string {
-	return fmt.Sprintf("%s:%s", environmentNamespace, segmentID)
+func (s *FeatureService) segmentFlightID(EnvironmentId, segmentID string) string {
+	return fmt.Sprintf("%s:%s", EnvironmentId, segmentID)
 }
 
 func (s *FeatureService) getSegmentUsers(
 	ctx context.Context,
-	segmentID, environmentNamespace string,
+	segmentID, EnvironmentId string,
 ) ([]*featureproto.SegmentUser, error) {
-	segmentUsers, err := s.segmentUsersCache.Get(segmentID, environmentNamespace)
+	segmentUsers, err := s.segmentUsersCache.Get(segmentID, EnvironmentId)
 	if err == nil {
 		return segmentUsers.Users, nil
 	}
@@ -2098,13 +2098,13 @@ func (s *FeatureService) getSegmentUsers(
 		"No cached data for SegmentUsers",
 		log.FieldsFromImcomingContext(ctx).AddFields(
 			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", EnvironmentId),
 			zap.String("segmentId", segmentID),
 		)...,
 	)
 	req := &featureproto.ListSegmentUsersRequest{
-		SegmentId:            segmentID,
-		EnvironmentNamespace: environmentNamespace,
+		SegmentId:     segmentID,
+		EnvironmentId: EnvironmentId,
 	}
 	res, err := s.ListSegmentUsers(ctx, req)
 	if err != nil {
@@ -2112,7 +2112,7 @@ func (s *FeatureService) getSegmentUsers(
 			"Failed to retrieve segment users from storage",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", EnvironmentId),
 				zap.String("segmentId", segmentID),
 			)...,
 		)
@@ -2124,7 +2124,7 @@ func (s *FeatureService) getSegmentUsers(
 func (s *FeatureService) setLastUsedInfosToFeatureByChunk(
 	ctx context.Context,
 	features []*featureproto.Feature,
-	environmentNamespace string,
+	EnvironmentId string,
 	localizer locale.Localizer,
 ) error {
 	for i := 0; i < len(features); i += getMultiChunkSize {
@@ -2132,7 +2132,7 @@ func (s *FeatureService) setLastUsedInfosToFeatureByChunk(
 		if end > len(features) {
 			end = len(features)
 		}
-		if err := s.setLastUsedInfosToFeature(ctx, features[i:end], environmentNamespace, localizer); err != nil {
+		if err := s.setLastUsedInfosToFeature(ctx, features[i:end], EnvironmentId, localizer); err != nil {
 			return err
 		}
 	}
@@ -2142,7 +2142,7 @@ func (s *FeatureService) setLastUsedInfosToFeatureByChunk(
 func (s *FeatureService) setLastUsedInfosToFeature(
 	ctx context.Context,
 	features []*featureproto.Feature,
-	environmentNamespace string,
+	EnvironmentId string,
 	localizer locale.Localizer,
 ) error {
 	ids := make([]string, 0, len(features))
@@ -2150,13 +2150,13 @@ func (s *FeatureService) setLastUsedInfosToFeature(
 		ids = append(ids, domain.FeatureLastUsedInfoID(f.Id, f.Version))
 	}
 	storage := v2fs.NewFeatureLastUsedInfoStorage(s.mysqlClient)
-	fluiList, err := storage.GetFeatureLastUsedInfos(ctx, ids, environmentNamespace)
+	fluiList, err := storage.GetFeatureLastUsedInfos(ctx, ids, EnvironmentId)
 	if err != nil {
 		s.logger.Error(
 			"Failed to get feature last used infos",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -2186,7 +2186,7 @@ func (s *FeatureService) EvaluateFeatures(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -2195,15 +2195,15 @@ func (s *FeatureService) EvaluateFeatures(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
 	}
 	fs, err, _ := s.flightgroup.Do(
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		func() (interface{}, error) {
-			return s.getFeatures(ctx, req.EnvironmentNamespace)
+			return s.getFeatures(ctx, req.EnvironmentId)
 		},
 	)
 	if err != nil {
@@ -2211,7 +2211,7 @@ func (s *FeatureService) EvaluateFeatures(
 			"Failed to list features",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -2230,7 +2230,7 @@ func (s *FeatureService) EvaluateFeatures(
 			"Failed to get target features",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -2242,13 +2242,13 @@ func (s *FeatureService) EvaluateFeatures(
 		}
 		return nil, dt.Err()
 	}
-	userEvaluations, err := s.evaluateFeatures(ctx, features, req.User, req.EnvironmentNamespace, req.Tag, localizer)
+	userEvaluations, err := s.evaluateFeatures(ctx, features, req.User, req.EnvironmentId, req.Tag, localizer)
 	if err != nil {
 		s.logger.Error(
 			"Failed to evaluate features",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -2268,7 +2268,7 @@ func (s *FeatureService) EvaluateFeatures(
 				"Failed to find evaluation",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -2324,16 +2324,16 @@ func (*FeatureService) findEvaluation(
 
 func (s *FeatureService) listExperiments(
 	ctx context.Context,
-	environmentNamespace, featureID string,
+	EnvironmentId, featureID string,
 ) ([]*experimentproto.Experiment, error) {
 	experiments := []*experimentproto.Experiment{}
 	cursor := ""
 	for {
 		resp, err := s.experimentClient.ListExperiments(ctx, &experimentproto.ListExperimentsRequest{
-			FeatureId:            featureID,
-			PageSize:             listRequestSize,
-			Cursor:               cursor,
-			EnvironmentNamespace: environmentNamespace,
+			FeatureId:     featureID,
+			PageSize:      listRequestSize,
+			Cursor:        cursor,
+			EnvironmentId: EnvironmentId,
 		})
 		if err != nil {
 			return nil, err
@@ -2357,13 +2357,13 @@ func (s *FeatureService) CloneFeature(
 	}
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.Command.EnvironmentNamespace, localizer,
+		req.Command.EnvironmentId, localizer,
 	)
 	if err != nil {
 		return nil, err
 	}
 	featureStorage := v2fs.NewFeatureStorage(s.mysqlClient)
-	f, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentNamespace)
+	f, err := featureStorage.GetFeature(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if err == v2fs.ErrFeatureNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -2380,7 +2380,7 @@ func (s *FeatureService) CloneFeature(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", req.Id),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -2418,17 +2418,17 @@ func (s *FeatureService) CloneFeature(
 		return nil, dt.Err()
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		if err := featureStorage.CreateFeature(ctx, feature, req.Command.EnvironmentNamespace); err != nil {
+		if err := featureStorage.CreateFeature(ctx, feature, req.Command.EnvironmentId); err != nil {
 			s.logger.Error(
 				"Failed to store feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.Command.EnvironmentNamespace),
+					zap.String("environmentId", req.Command.EnvironmentId),
 				)...,
 			)
 			return err
 		}
-		handler, err = command.NewFeatureCommandHandler(editor, feature, req.Command.EnvironmentNamespace, "")
+		handler, err = command.NewFeatureCommandHandler(editor, feature, req.Command.EnvironmentId, "")
 		if err != nil {
 			return err
 		}
@@ -2437,7 +2437,7 @@ func (s *FeatureService) CloneFeature(
 				"Failed to clone feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNameSpace", req.Command.EnvironmentNamespace),
+					zap.String("environmentId", req.Command.EnvironmentId),
 				)...,
 			)
 			return err
@@ -2459,7 +2459,7 @@ func (s *FeatureService) CloneFeature(
 			"Failed to clone feature",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.Command.EnvironmentNamespace),
+				zap.String("environmentId", req.Command.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -2476,7 +2476,7 @@ func (s *FeatureService) CloneFeature(
 			"Failed to publish events",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Any("errors", errs),
-				zap.String("environmentNameSpace", req.Command.EnvironmentNamespace),
+				zap.String("environmentId", req.Command.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{

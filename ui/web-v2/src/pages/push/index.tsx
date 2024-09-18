@@ -110,7 +110,7 @@ export const PushIndexPage: FC = memo(() => {
       const cursor = (page - 1) * PUSH_LIST_PAGE_SIZE;
       dispatch(
         listPushes({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           pageSize: PUSH_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
@@ -174,7 +174,7 @@ export const PushIndexPage: FC = memo(() => {
         convertFileToUnit8Array(data.file[0], (unit8Array) => {
           dispatch(
             createPush({
-              environmentNamespace: currentEnvironment.id,
+              environmentId: currentEnvironment.id,
               name: data.name,
               tags: data.tags,
               fcmServiceAccount: unit8Array
@@ -231,7 +231,7 @@ export const PushIndexPage: FC = memo(() => {
       }
       dispatch(
         updatePush({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           id: pushId,
           name: name,
           currentTags: push.tagsList,
@@ -280,7 +280,7 @@ export const PushIndexPage: FC = memo(() => {
     (data) => {
       dispatch(
         deletePush({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           id: data.push.id
         })
       ).then(() => {
@@ -321,7 +321,7 @@ export const PushIndexPage: FC = memo(() => {
   useEffect(() => {
     dispatch(
       listTags({
-        environmentNamespace: currentEnvironment.id,
+        environmentId: currentEnvironment.id,
         pageSize: 99999,
         cursor: '',
         orderBy: ListTagsRequest.OrderBy.DEFAULT,

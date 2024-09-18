@@ -8,7 +8,7 @@ WITH grouped_by_user_evaluation AS (
         `%s`
     WHERE
         timestamp BETWEEN TIMESTAMP(@startAt) AND TIMESTAMP(@endAt)
-    AND environment_namespace = @environmentNamespace
+    AND environment_id = @environmentId
     AND goal_id = @goalID
     AND feature_id = @featureID
     AND feature_version = @featureVersion

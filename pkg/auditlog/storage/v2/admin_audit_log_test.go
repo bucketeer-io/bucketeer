@@ -92,8 +92,8 @@ func TestCreateAdminAuditLogs(t *testing.T) {
 				).Return(nil, nil)
 			},
 			input: []*domain.AuditLog{
-				{AuditLog: &proto.AuditLog{Id: id0, Timestamp: 1, EntityType: 2, EntityId: "e0", Type: 3, EntityData: "ed", PreviousEntityData: "ped"}, EnvironmentNamespace: "ns0"},
-				{AuditLog: &proto.AuditLog{Id: id1, Timestamp: 10, EntityType: 3, EntityId: "e2", Type: 4, EntityData: "ed", PreviousEntityData: "ped"}, EnvironmentNamespace: "ns1"},
+				{AuditLog: &proto.AuditLog{Id: id0, Timestamp: 1, EntityType: 2, EntityId: "e0", Type: 3, EntityData: "ed", PreviousEntityData: "ped"}, EnvironmentId: "ns0"},
+				{AuditLog: &proto.AuditLog{Id: id1, Timestamp: 10, EntityType: 3, EntityId: "e2", Type: 4, EntityData: "ed", PreviousEntityData: "ped"}, EnvironmentId: "ns1"},
 			},
 			expectedErr: nil,
 		},

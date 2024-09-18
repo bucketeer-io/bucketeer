@@ -28,29 +28,29 @@ import (
 )
 
 type autoOpsRuleCommandHandler struct {
-	editor               *eventproto.Editor
-	autoOpsRule          *domain.AutoOpsRule
-	previousAutoOpsRule  *domain.AutoOpsRule
-	publisher            publisher.Publisher
-	environmentNamespace string
+	editor              *eventproto.Editor
+	autoOpsRule         *domain.AutoOpsRule
+	previousAutoOpsRule *domain.AutoOpsRule
+	publisher           publisher.Publisher
+	environmentId       string
 }
 
 func NewAutoOpsCommandHandler(
 	editor *eventproto.Editor,
 	autoOpsRule *domain.AutoOpsRule,
 	p publisher.Publisher,
-	environmentNamespace string,
+	environmentId string,
 ) (Handler, error) {
 	prev := &domain.AutoOpsRule{}
 	if err := copier.Copy(prev, autoOpsRule); err != nil {
 		return nil, err
 	}
 	return &autoOpsRuleCommandHandler{
-		editor:               editor,
-		autoOpsRule:          autoOpsRule,
-		previousAutoOpsRule:  prev,
-		publisher:            p,
-		environmentNamespace: environmentNamespace,
+		editor:              editor,
+		autoOpsRule:         autoOpsRule,
+		previousAutoOpsRule: prev,
+		publisher:           p,
+		environmentId:       environmentId,
 	}, nil
 }
 
@@ -184,7 +184,7 @@ func (h *autoOpsRuleCommandHandler) send(ctx context.Context, eventType eventpro
 		h.autoOpsRule.Id,
 		eventType,
 		event,
-		h.environmentNamespace,
+		h.environmentId,
 		h.autoOpsRule.AutoOpsRule,
 		prev,
 	)

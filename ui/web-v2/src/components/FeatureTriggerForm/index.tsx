@@ -104,7 +104,7 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
     const fetchFlagTriggers = useCallback(() => {
       dispatch(
         listFlagTriggers({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           featureId
         })
       );
@@ -120,7 +120,7 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
       dispatch(
         deleteFlagTrigger({
           id: selectedFlagTrigger.flagTrigger.id,
-          environmentNamespace: currentEnvironment.id
+          environmentId: currentEnvironment.id
         })
       ).then(() => fetchFlagTriggers());
     };
@@ -132,7 +132,7 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
       dispatch(
         resetFlagTrigger({
           id: selectedFlagTrigger.flagTrigger.id,
-          environmentNamespace: currentEnvironment.id
+          environmentId: currentEnvironment.id
         })
       ).then((response) => {
         const payload = response.payload as ResetFlagTriggerResponse.AsObject;
@@ -148,7 +148,7 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
       dispatch(
         enableFlagTrigger({
           id: flagTriggerId,
-          environmentNamespace: currentEnvironment.id
+          environmentId: currentEnvironment.id
         })
       ).then(() => fetchFlagTriggers());
     }, []);
@@ -157,7 +157,7 @@ export const FeatureTriggerForm: FC<FeatureTriggerFormProps> = memo(
       dispatch(
         disableFlagTrigger({
           id: flagTriggerId,
-          environmentNamespace: currentEnvironment.id
+          environmentId: currentEnvironment.id
         })
       ).then(() => fetchFlagTriggers());
     }, []);
@@ -527,7 +527,7 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
     const handleOnSubmit = useCallback((data) => {
       dispatch(
         createFlagTrigger({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           featureId,
           triggerType: data.triggerType,
           action: data.action,
@@ -549,7 +549,7 @@ const AddUpdateTrigger: FC<AddUpdateTriggerProps> = memo(
       (data) => {
         dispatch(
           updateFlagTrigger({
-            environmentNamespace: currentEnvironment.id,
+            environmentId: currentEnvironment.id,
             id: flagTriggerWithUrl.flagTrigger.id,
             description: data.description
           })

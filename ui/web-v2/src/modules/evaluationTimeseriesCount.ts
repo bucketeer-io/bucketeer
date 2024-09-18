@@ -18,7 +18,7 @@ export interface EvaluationTimeseriesCount {
 }
 
 export interface GetEvaluationTimeseriesCountParams {
-  environmentNamespace: string;
+  environmentId: string;
   featureId: string;
   timeRange: GetEvaluationTimeseriesCountRequest.TimeRangeMap[keyof GetEvaluationTimeseriesCountRequest.TimeRangeMap];
 }
@@ -30,7 +30,7 @@ export const getEvaluationTimeseriesCount = createAsyncThunk<
 >(`${MODULE_NAME}/getEvaluationTimeseriesCount`, async (params) => {
   const request = new GetEvaluationTimeseriesCountRequest();
 
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setFeatureId(params.featureId);
   request.setTimeRange(params.timeRange);
   const result = await grpc.getEvaluationTimeseriesCount(request);

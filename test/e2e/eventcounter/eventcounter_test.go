@@ -1606,8 +1606,8 @@ func createGoals(ctx context.Context, t *testing.T, client experimentclient.Clie
 			Description: fmt.Sprintf("%s-goal-description", prefixTestName),
 		}
 		_, err := client.CreateGoal(ctx, &experimentproto.CreateGoalRequest{
-			Command:              cmd,
-			EnvironmentNamespace: *environmentNamespace,
+			Command:       cmd,
+			EnvironmentId: *environmentNamespace,
 		})
 		if err != nil {
 			t.Fatal(err)
@@ -1636,16 +1636,16 @@ func createExperimentWithMultiGoals(
 		BaseVariationId: baseVariationID,
 	}
 	resp, err := client.CreateExperiment(ctx, &experimentproto.CreateExperimentRequest{
-		Command:              cmd,
-		EnvironmentNamespace: *environmentNamespace,
+		Command:       cmd,
+		EnvironmentId: *environmentNamespace,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	_, err = client.StartExperiment(ctx, &experimentproto.StartExperimentRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   resp.Experiment.Id,
-		Command:              &experimentproto.StartExperimentCommand{},
+		EnvironmentId: *environmentNamespace,
+		Id:            resp.Experiment.Id,
+		Command:       &experimentproto.StartExperimentCommand{},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -2058,8 +2058,8 @@ func createFeature(
 	t.Helper()
 	cmd := newCreateFeatureCommand(featureID, []string{variationA, variationB})
 	createReq := &featureproto.CreateFeatureRequest{
-		Command:              cmd,
-		EnvironmentNamespace: *environmentNamespace,
+		Command:       cmd,
+		EnvironmentId: *environmentNamespace,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -2077,7 +2077,7 @@ func addTag(t *testing.T, tag string, featureID string, client featureclient.Cli
 		AddTagCommands: []*featureproto.AddTagCommand{
 			{Tag: tag},
 		},
-		EnvironmentNamespace: *environmentNamespace,
+		EnvironmentId: *environmentNamespace,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -2089,9 +2089,9 @@ func addTag(t *testing.T, tag string, featureID string, client featureclient.Cli
 func enableFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
 	enableReq := &featureproto.EnableFeatureRequest{
-		Id:                   featureID,
-		Command:              &featureproto.EnableFeatureCommand{},
-		EnvironmentNamespace: *environmentNamespace,
+		Id:            featureID,
+		Command:       &featureproto.EnableFeatureCommand{},
+		EnvironmentId: *environmentNamespace,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -2115,8 +2115,8 @@ func addFeatureIndividualTargeting(t *testing.T, featureID, userID, variationID 
 				Command: cmd,
 			},
 		},
-		EnvironmentNamespace: *environmentNamespace,
-		From:                 featureproto.UpdateFeatureTargetingRequest_USER,
+		EnvironmentId: *environmentNamespace,
+		From:          featureproto.UpdateFeatureTargetingRequest_USER,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -2161,8 +2161,8 @@ func getExperiment(t *testing.T, c experimentclient.Client, id string) (*experim
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	req := &experimentproto.GetExperimentRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
 	}
 	var response *experimentproto.GetExperimentResponse
 	var err error
@@ -2190,8 +2190,8 @@ func getExperimentResult(t *testing.T, c ecclient.Client, experimentID string) (
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	req := &ecproto.GetExperimentResultRequest{
-		ExperimentId:         experimentID,
-		EnvironmentNamespace: *environmentNamespace,
+		ExperimentId:  experimentID,
+		EnvironmentId: *environmentNamespace,
 	}
 	var response *ecproto.GetExperimentResultResponse
 	var err error
@@ -2223,12 +2223,12 @@ func getExperimentEvaluationCount(
 	defer cancel()
 	now := time.Now()
 	req := &ecproto.GetExperimentEvaluationCountRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		StartAt:              now.Add(-30 * 24 * time.Hour).Unix(),
-		EndAt:                now.Unix(),
-		FeatureId:            featureID,
-		FeatureVersion:       featureVersion,
-		VariationIds:         variationIDs,
+		EnvironmentId:  *environmentNamespace,
+		StartAt:        now.Add(-30 * 24 * time.Hour).Unix(),
+		EndAt:          now.Unix(),
+		FeatureId:      featureID,
+		FeatureVersion: featureVersion,
+		VariationIds:   variationIDs,
 	}
 	var response *ecproto.GetExperimentEvaluationCountResponse
 	var err error
@@ -2260,13 +2260,13 @@ func getExperimentGoalCount(
 	defer cancel()
 	now := time.Now()
 	req := &ecproto.GetExperimentGoalCountRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		StartAt:              now.Add(-30 * 24 * time.Hour).Unix(),
-		EndAt:                now.Unix(),
-		GoalId:               goalID,
-		FeatureId:            featureID,
-		FeatureVersion:       featureVersion,
-		VariationIds:         variationIDs,
+		EnvironmentId:  *environmentNamespace,
+		StartAt:        now.Add(-30 * 24 * time.Hour).Unix(),
+		EndAt:          now.Unix(),
+		GoalId:         goalID,
+		FeatureId:      featureID,
+		FeatureVersion: featureVersion,
+		VariationIds:   variationIDs,
 	}
 	var response *ecproto.GetExperimentGoalCountResponse
 	var err error
@@ -2293,8 +2293,8 @@ func getExperimentGoalCount(
 func getFeature(t *testing.T, client featureclient.Client, featureID string) (*featureproto.Feature, error) {
 	t.Helper()
 	getReq := &featureproto.GetFeatureRequest{
-		Id:                   featureID,
-		EnvironmentNamespace: *environmentNamespace,
+		Id:            featureID,
+		EnvironmentId: *environmentNamespace,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -2326,9 +2326,9 @@ func getEvaluationTimeseriesCount(
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	req := &ecproto.GetEvaluationTimeseriesCountRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		FeatureId:            featureID,
-		TimeRange:            timeRange,
+		EnvironmentId: *environmentNamespace,
+		FeatureId:     featureID,
+		TimeRange:     timeRange,
 	}
 	var response *ecproto.GetEvaluationTimeseriesCountResponse
 	var err error

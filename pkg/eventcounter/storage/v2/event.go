@@ -44,14 +44,14 @@ var (
 type EventStorage interface {
 	QueryEvaluationCount(
 		ctx context.Context,
-		environmentNamespace string,
+		environmentId string,
 		startAt, endAt time.Time,
 		featureID string,
 		featureVersion int32,
 	) ([]*EvaluationEventCount, error)
 	QueryGoalCount(
 		ctx context.Context,
-		environmentNamespace string,
+		environmentId string,
 		startAt, endAt time.Time,
 		goalID, featureID string,
 		featureVersion int32,
@@ -89,7 +89,7 @@ func NewEventStorage(querier bqquerier.Client, dataset string, logger *zap.Logge
 
 func (es *eventStorage) QueryEvaluationCount(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 	startAt, endAt time.Time,
 	featureID string,
 	featureVersion int32,
@@ -110,8 +110,8 @@ func (es *eventStorage) QueryEvaluationCount(
 	query := fmt.Sprintf(string(q), datasource)
 	params := []bigquery.QueryParameter{
 		{
-			Name:  "environmentNamespace",
-			Value: environmentNamespace,
+			Name:  "environmentId",
+			Value: environmentId,
 		},
 		{
 			Name:  "startAt",
@@ -171,7 +171,7 @@ func (es *eventStorage) QueryEvaluationCount(
 
 func (es *eventStorage) QueryGoalCount(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 	startAt, endAt time.Time,
 	goalID, featureID string,
 	featureVersion int32,
@@ -192,8 +192,8 @@ func (es *eventStorage) QueryGoalCount(
 	query := fmt.Sprintf(string(q), datasource)
 	params := []bigquery.QueryParameter{
 		{
-			Name:  "environmentNamespace",
-			Value: environmentNamespace,
+			Name:  "environmentId",
+			Value: environmentId,
 		},
 		{
 			Name:  "startAt",

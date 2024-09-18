@@ -9,4 +9,4 @@ FROM
     api_key
 WHERE
     id = ? AND
-    environment_namespace = ?
+    environment_id = ?

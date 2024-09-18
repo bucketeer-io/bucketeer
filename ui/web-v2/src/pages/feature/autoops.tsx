@@ -83,7 +83,7 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
       dispatch(
         listAutoOpsRules({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.id
+          environmentId: currentEnvironment.id
         })
       );
     }, [dispatch]);
@@ -92,7 +92,7 @@ export const FeatureAutoOpsPage: FC<FeatureAutoOpsPageProps> = memo(
       dispatch(
         listProgressiveRollout({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.id
+          environmentId: currentEnvironment.id
         })
       );
     }, [dispatch]);

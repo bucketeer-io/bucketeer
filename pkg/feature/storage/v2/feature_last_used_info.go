@@ -28,12 +28,12 @@ type FeatureLastUsedInfoStorage interface {
 	GetFeatureLastUsedInfos(
 		ctx context.Context,
 		ids []string,
-		environmentNamespace string,
+		environmentId string,
 	) ([]*domain.FeatureLastUsedInfo, error)
 	UpsertFeatureLastUsedInfo(
 		ctx context.Context,
 		featureLastUsedInfos *domain.FeatureLastUsedInfo,
-		environmentNamespace string,
+		environmentId string,
 	) error
 }
 
@@ -48,7 +48,7 @@ func NewFeatureLastUsedInfoStorage(qe mysql.QueryExecer) FeatureLastUsedInfoStor
 func (s *featureLastUsedInfoStorage) GetFeatureLastUsedInfos(
 	ctx context.Context,
 	ids []string,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*domain.FeatureLastUsedInfo, error) {
 	inFilterIDs := make([]interface{}, 0, len(ids))
 	for _, id := range ids {
@@ -56,7 +56,7 @@ func (s *featureLastUsedInfoStorage) GetFeatureLastUsedInfos(
 	}
 	whereParts := []mysql.WherePart{
 		mysql.NewInFilter("id", inFilterIDs),
-		mysql.NewFilter("environment_namespace", "=", environmentNamespace),
+		mysql.NewFilter("environment_id", "=", environmentId),
 	}
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	query := fmt.Sprintf(`
@@ -114,7 +114,7 @@ func (s *featureLastUsedInfoStorage) GetFeatureLastUsedInfos(
 func (s *featureLastUsedInfoStorage) UpsertFeatureLastUsedInfo(
 	ctx context.Context,
 	flui *domain.FeatureLastUsedInfo,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	query := `
 		INSERT INTO feature_last_used_info (
@@ -125,7 +125,7 @@ func (s *featureLastUsedInfoStorage) UpsertFeatureLastUsedInfo(
 			client_oldest_version,
 			client_latest_version,
 			created_at,
-			environment_namespace
+			environment_id
 		) VALUES (
 			?, ?, ?, ?, ?, ?, ?, ?
 		) ON DUPLICATE KEY UPDATE
@@ -145,7 +145,7 @@ func (s *featureLastUsedInfoStorage) UpsertFeatureLastUsedInfo(
 		flui.ClientOldestVersion,
 		flui.ClientLatestVersion,
 		flui.CreatedAt,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		return err

@@ -161,15 +161,15 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 
 func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environmentEventMap) map[string]bool {
 	fails := make(map[string]bool, len(envEvents))
-	for environmentNamespace, events := range envEvents {
+	for environmentId, events := range envEvents {
 		for id, event := range events {
 			// Increment the evaluation event count in the Redis
-			if err := p.incrementEvaluationCount(event, environmentNamespace); err != nil {
+			if err := p.incrementEvaluationCount(event, environmentId); err != nil {
 				p.logger.Error(
 					"Failed to increment the evaluation event in the Redis",
 					zap.Error(err),
 					zap.String("id", id),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)
 				if errors.Is(err, ErrReasonNil) {
 					fails[id] = false
@@ -217,11 +217,11 @@ func (p *evaluationCountEventPersister) extractEvents(messages map[string]*pulle
 			handleBadMessage(m, err)
 			continue
 		}
-		if innerEvents, ok := envEvents[event.EnvironmentNamespace]; ok {
+		if innerEvents, ok := envEvents[event.EnvironmentId]; ok {
 			innerEvents[event.Id] = innerEvent
 			continue
 		}
-		envEvents[event.EnvironmentNamespace] = eventMap{event.Id: innerEvent}
+		envEvents[event.EnvironmentId] = eventMap{event.Id: innerEvent}
 	}
 	return envEvents
 }
@@ -238,7 +238,7 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 
 func (p *evaluationCountEventPersister) incrementEvaluationCount(
 	event proto.Message,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	if e, ok := event.(*eventproto.EvaluationEvent); ok {
 		vID, err := getVariationID(e.Reason, e.VariationId)
@@ -247,11 +247,11 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 		}
 		// To avoid duplication when the request fails, we increment the event count in the end
 		// because the user count is an unique count, and there is no problem adding the same event more than once
-		uckv2 := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
+		uckv2 := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
 		if err := p.countUser(uckv2, e.UserId); err != nil {
 			return err
 		}
-		eckv2 := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentNamespace, e.Timestamp)
+		eckv2 := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
 		if err := p.countEvent(eckv2); err != nil {
 			return err
 		}
@@ -260,7 +260,7 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 }
 
 func (p *evaluationCountEventPersister) newEvaluationCountkeyV2(
-	kind, featureID, variationID, environmentNamespace string,
+	kind, featureID, variationID, environmentId string,
 	timestamp int64,
 ) string {
 	t := time.Unix(timestamp, 0)
@@ -268,7 +268,7 @@ func (p *evaluationCountEventPersister) newEvaluationCountkeyV2(
 	return cache.MakeKey(
 		kind,
 		fmt.Sprintf("%d:%s:%s", date.Unix(), featureID, variationID),
-		environmentNamespace,
+		environmentId,
 	)
 }
 
@@ -289,13 +289,13 @@ func (p *evaluationCountEventPersister) countUser(key, userID string) error {
 }
 
 func (p *evaluationCountEventPersister) cacheLastUsedInfoPerEnv(envEvents environmentEventMap) {
-	for environmentNamespace, events := range envEvents {
+	for environmentId, events := range envEvents {
 		for _, event := range events {
-			p.cacheEnvLastUsedInfo(event, environmentNamespace)
+			p.cacheEnvLastUsedInfo(event, environmentId)
 		}
 		p.logger.Debug("Cache has been updated",
-			zap.String("environmentNamespace", environmentNamespace),
-			zap.Int("cacheSize", len(p.envLastUsedCache[environmentNamespace])),
+			zap.String("environmentId", environmentId),
+			zap.Int("cacheSize", len(p.envLastUsedCache[environmentId])),
 			zap.Int("eventSize", len(events)),
 		)
 	}
@@ -303,25 +303,25 @@ func (p *evaluationCountEventPersister) cacheLastUsedInfoPerEnv(envEvents enviro
 
 func (p *evaluationCountEventPersister) cacheEnvLastUsedInfo(
 	event *eventproto.EvaluationEvent,
-	environmentNamespace string,
+	environmentId string,
 ) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	var clientVersion string
 	if event.User == nil {
 		p.logger.Warn("Failed to cache last used info. User is nil.",
-			zap.String("environmentNamespace", environmentNamespace))
+			zap.String("environmentId", environmentId))
 	} else {
 		clientVersion = event.User.Data[userDataAppVersion]
 	}
 	id := ftdomain.FeatureLastUsedInfoID(event.FeatureId, event.FeatureVersion)
-	if cache, ok := p.envLastUsedCache[environmentNamespace]; ok {
+	if cache, ok := p.envLastUsedCache[environmentId]; ok {
 		if info, ok := cache[id]; ok {
 			info.UsedAt(event.Timestamp)
 			if err := info.SetClientVersion(clientVersion); err != nil {
 				p.logger.Error("Failed to set client version",
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 					zap.String("featureId", info.FeatureId),
 					zap.Int32("featureVersion", info.Version),
 					zap.String("clientVersion", clientVersion))
@@ -343,7 +343,7 @@ func (p *evaluationCountEventPersister) cacheEnvLastUsedInfo(
 		event.Timestamp,
 		clientVersion,
 	)
-	p.envLastUsedCache[environmentNamespace] = cache
+	p.envLastUsedCache[environmentId] = cache
 }
 
 // Write the feature flag last-used cache in the MySQL and reset the cache
@@ -364,18 +364,18 @@ func (p *evaluationCountEventPersister) writeEnvLastUsedInfo() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
-	for environmentNamespace, cache := range p.envLastUsedCache {
+	for environmentId, cache := range p.envLastUsedCache {
 		info := make([]*ftdomain.FeatureLastUsedInfo, 0, len(cache))
 		for _, v := range cache {
 			info = append(info, v)
 		}
-		if err := p.upsertMultiFeatureLastUsedInfo(context.Background(), info, environmentNamespace); err != nil {
+		if err := p.upsertMultiFeatureLastUsedInfo(context.Background(), info, environmentId); err != nil {
 			p.logger.Error("Failed to write feature last-used info", zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace))
+				zap.String("environmentId", environmentId))
 			continue
 		}
 		p.logger.Debug("Cache has been written",
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 			zap.Int("cacheSize", len(info)),
 		)
 	}
@@ -386,7 +386,7 @@ func (p *evaluationCountEventPersister) writeEnvLastUsedInfo() {
 func (p *evaluationCountEventPersister) upsertMultiFeatureLastUsedInfo(
 	ctx context.Context,
 	featureLastUsedInfos []*ftdomain.FeatureLastUsedInfo,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	ids := make([]string, 0, len(featureLastUsedInfos))
 	for _, f := range featureLastUsedInfos {
@@ -394,7 +394,7 @@ func (p *evaluationCountEventPersister) upsertMultiFeatureLastUsedInfo(
 	}
 	storage := ftstorage.NewFeatureLastUsedInfoStorage(p.mysqlClient)
 	updatedInfo := make([]*ftdomain.FeatureLastUsedInfo, 0, len(ids))
-	currentInfo, err := storage.GetFeatureLastUsedInfos(ctx, ids, environmentNamespace)
+	currentInfo, err := storage.GetFeatureLastUsedInfos(ctx, ids, environmentId)
 	if err != nil {
 		return err
 	}
@@ -426,7 +426,7 @@ func (p *evaluationCountEventPersister) upsertMultiFeatureLastUsedInfo(
 		}
 	}
 	for _, info := range updatedInfo {
-		if err := p.upsertFeatureLastUsedInfo(ctx, info, environmentNamespace); err != nil {
+		if err := p.upsertFeatureLastUsedInfo(ctx, info, environmentId); err != nil {
 			return err
 		}
 	}
@@ -436,13 +436,13 @@ func (p *evaluationCountEventPersister) upsertMultiFeatureLastUsedInfo(
 func (p *evaluationCountEventPersister) upsertFeatureLastUsedInfo(
 	ctx context.Context,
 	featureLastUsedInfo *ftdomain.FeatureLastUsedInfo,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	storage := ftstorage.NewFeatureLastUsedInfoStorage(p.mysqlClient)
 	if err := storage.UpsertFeatureLastUsedInfo(
 		ctx,
 		featureLastUsedInfo,
-		environmentNamespace,
+		environmentId,
 	); err != nil {
 		return err
 	}

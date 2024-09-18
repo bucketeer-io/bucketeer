@@ -44,32 +44,32 @@ func (m *MockFeatureLastUsedStorage) EXPECT() *MockFeatureLastUsedStorageMockRec
 }
 
 // GetFeatureLastUsedInfos mocks base method.
-func (m *MockFeatureLastUsedStorage) GetFeatureLastUsedInfos(ctx context.Context, ids []string, environmentNamespace string) ([]*domain.FeatureLastUsedInfo, error) {
+func (m *MockFeatureLastUsedStorage) GetFeatureLastUsedInfos(ctx context.Context, ids []string, environmentId string) ([]*domain.FeatureLastUsedInfo, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFeatureLastUsedInfos", ctx, ids, environmentNamespace)
+	ret := m.ctrl.Call(m, "GetFeatureLastUsedInfos", ctx, ids, environmentId)
 	ret0, _ := ret[0].([]*domain.FeatureLastUsedInfo)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetFeatureLastUsedInfos indicates an expected call of GetFeatureLastUsedInfos.
-func (mr *MockFeatureLastUsedStorageMockRecorder) GetFeatureLastUsedInfos(ctx, ids, environmentNamespace any) *gomock.Call {
+func (mr *MockFeatureLastUsedStorageMockRecorder) GetFeatureLastUsedInfos(ctx, ids, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureLastUsedInfos", reflect.TypeOf((*MockFeatureLastUsedStorage)(nil).GetFeatureLastUsedInfos), ctx, ids, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureLastUsedInfos", reflect.TypeOf((*MockFeatureLastUsedStorage)(nil).GetFeatureLastUsedInfos), ctx, ids, environmentId)
 }
 
 // UpsertFeatureLastUsedInfos mocks base method.
-func (m *MockFeatureLastUsedStorage) UpsertFeatureLastUsedInfos(ctx context.Context, featureLastUsedInfos []*domain.FeatureLastUsedInfo, environmentNamespace string) error {
+func (m *MockFeatureLastUsedStorage) UpsertFeatureLastUsedInfos(ctx context.Context, featureLastUsedInfos []*domain.FeatureLastUsedInfo, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertFeatureLastUsedInfos", ctx, featureLastUsedInfos, environmentNamespace)
+	ret := m.ctrl.Call(m, "UpsertFeatureLastUsedInfos", ctx, featureLastUsedInfos, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpsertFeatureLastUsedInfos indicates an expected call of UpsertFeatureLastUsedInfos.
-func (mr *MockFeatureLastUsedStorageMockRecorder) UpsertFeatureLastUsedInfos(ctx, featureLastUsedInfos, environmentNamespace any) *gomock.Call {
+func (mr *MockFeatureLastUsedStorageMockRecorder) UpsertFeatureLastUsedInfos(ctx, featureLastUsedInfos, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertFeatureLastUsedInfos", reflect.TypeOf((*MockFeatureLastUsedStorage)(nil).UpsertFeatureLastUsedInfos), ctx, featureLastUsedInfos, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertFeatureLastUsedInfos", reflect.TypeOf((*MockFeatureLastUsedStorage)(nil).UpsertFeatureLastUsedInfos), ctx, featureLastUsedInfos, environmentId)
 }
 
 // MockFeatureLastUsedLister is a mock of FeatureLastUsedLister interface.
@@ -96,9 +96,9 @@ func (m *MockFeatureLastUsedLister) EXPECT() *MockFeatureLastUsedListerMockRecor
 }
 
 // ListFeatureLastUsedInfo mocks base method.
-func (m *MockFeatureLastUsedLister) ListFeatureLastUsedInfo(ctx context.Context, pageSize int, cursor, environmentNamespace string, filters ...*storage.Filter) ([]*feature.FeatureLastUsedInfo, string, error) {
+func (m *MockFeatureLastUsedLister) ListFeatureLastUsedInfo(ctx context.Context, pageSize int, cursor, environmentId string, filters ...*storage.Filter) ([]*feature.FeatureLastUsedInfo, string, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, pageSize, cursor, environmentNamespace}
+	varargs := []any{ctx, pageSize, cursor, environmentId}
 	for _, a := range filters {
 		varargs = append(varargs, a)
 	}
@@ -110,8 +110,8 @@ func (m *MockFeatureLastUsedLister) ListFeatureLastUsedInfo(ctx context.Context,
 }
 
 // ListFeatureLastUsedInfo indicates an expected call of ListFeatureLastUsedInfo.
-func (mr *MockFeatureLastUsedListerMockRecorder) ListFeatureLastUsedInfo(ctx, pageSize, cursor, environmentNamespace any, filters ...any) *gomock.Call {
+func (mr *MockFeatureLastUsedListerMockRecorder) ListFeatureLastUsedInfo(ctx, pageSize, cursor, environmentId any, filters ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, pageSize, cursor, environmentNamespace}, filters...)
+	varargs := append([]any{ctx, pageSize, cursor, environmentId}, filters...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFeatureLastUsedInfo", reflect.TypeOf((*MockFeatureLastUsedLister)(nil).ListFeatureLastUsedInfo), varargs...)
 }

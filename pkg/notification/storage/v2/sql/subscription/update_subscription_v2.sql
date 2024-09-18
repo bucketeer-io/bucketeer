@@ -6,4 +6,4 @@ UPDATE subscription SET
     name = ?
 WHERE
     id = ? AND
-    environment_namespace = ?
+    environment_id = ?

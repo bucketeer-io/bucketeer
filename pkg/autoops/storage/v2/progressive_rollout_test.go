@@ -41,11 +41,11 @@ func TestCreateProgressiveRollout(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		desc                 string
-		setup                func(*progressiveRolloutStorage)
-		input                *domain.ProgressiveRollout
-		environmentNamespace string
-		expectedErr          error
+		desc          string
+		setup         func(*progressiveRolloutStorage)
+		input         *domain.ProgressiveRollout
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			desc: "",
@@ -57,8 +57,8 @@ func TestCreateProgressiveRollout(t *testing.T) {
 			input: &domain.ProgressiveRollout{
 				ProgressiveRollout: &proto.ProgressiveRollout{Id: "id-1"},
 			},
-			environmentNamespace: "ns0",
-			expectedErr:          ErrProgressiveRolloutAlreadyExists,
+			environmentId: "ns0",
+			expectedErr:   ErrProgressiveRolloutAlreadyExists,
 		},
 		{
 			setup: func(s *progressiveRolloutStorage) {
@@ -69,8 +69,8 @@ func TestCreateProgressiveRollout(t *testing.T) {
 			input: &domain.ProgressiveRollout{
 				ProgressiveRollout: &proto.ProgressiveRollout{Id: "id-1"},
 			},
-			environmentNamespace: "ns0",
-			expectedErr:          nil,
+			environmentId: "ns0",
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -78,7 +78,7 @@ func TestCreateProgressiveRollout(t *testing.T) {
 		if p.setup != nil {
 			p.setup(storage)
 		}
-		err := storage.CreateProgressiveRollout(context.Background(), p.input, p.environmentNamespace)
+		err := storage.CreateProgressiveRollout(context.Background(), p.input, p.environmentId)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }

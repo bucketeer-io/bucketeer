@@ -514,7 +514,7 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 					},
 				}, nil)
 			},
-			req: &accountproto.GetAPIKeyRequest{Id: "id", EnvironmentNamespace: "ns0"},
+			req: &accountproto.GetAPIKeyRequest{Id: "id", EnvironmentId: "ns0"},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
 			},
@@ -538,7 +538,7 @@ func TestGetAPIKeyMySQL(t *testing.T) {
 					},
 				}, nil).AnyTimes()
 			},
-			req: &accountproto.GetAPIKeyRequest{Id: "id", EnvironmentNamespace: "ns0"},
+			req: &accountproto.GetAPIKeyRequest{Id: "id", EnvironmentId: "ns0"},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(localizer, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied))
 			},
@@ -629,7 +629,7 @@ func TestListAPIKeysMySQL(t *testing.T) {
 					},
 				}, nil).AnyTimes()
 			},
-			input:    &accountproto.ListAPIKeysRequest{EnvironmentNamespace: "ns0"},
+			input:    &accountproto.ListAPIKeysRequest{EnvironmentId: "ns0"},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(localizer, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied))
@@ -671,7 +671,7 @@ func TestListAPIKeysMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return([]*accountproto.APIKey{}, 0, int64(0), nil)
 			},
-			input:    &accountproto.ListAPIKeysRequest{EnvironmentNamespace: "ns0"},
+			input:    &accountproto.ListAPIKeysRequest{EnvironmentId: "ns0"},
 			expected: &accountproto.ListAPIKeysResponse{ApiKeys: []*accountproto.APIKey{}, Cursor: "0"},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil

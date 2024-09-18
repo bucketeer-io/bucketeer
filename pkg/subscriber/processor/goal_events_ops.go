@@ -70,12 +70,12 @@ func NewGoalUserCountUpdater(
 
 func (u *evalGoalUpdater) UpdateUserCounts(ctx context.Context, evt environmentEventOPSMap) map[string]bool {
 	fails := map[string]bool{}
-	for environmentNamespace, events := range evt {
-		listAutoOpsRules, err := u.listAutoOpsRules(ctx, environmentNamespace)
+	for environmentId, events := range evt {
+		listAutoOpsRules, err := u.listAutoOpsRules(ctx, environmentId)
 		if err != nil {
 			u.logger.Error("failed to list auto ops rules",
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)
 			subscriberHandledCounter.WithLabelValues(subscriberGoalEventOPS, codeFailedToListAutoOpsRules).Inc()
 			// Make sure to retry all the events in the next pulling
@@ -90,7 +90,7 @@ func (u *evalGoalUpdater) UpdateUserCounts(ctx context.Context, evt environmentE
 		for id, event := range events {
 			switch evt := event.(type) {
 			case *eventproto.GoalEvent:
-				retriable, err := u.updateUserCount(ctx, environmentNamespace, evt, listAutoOpsRules)
+				retriable, err := u.updateUserCount(ctx, environmentId, evt, listAutoOpsRules)
 				if err != nil {
 					if errors.Is(err, ErrAutoOpsRuleNotFound) {
 						// If there is nothing to link, we don't report it as an error
@@ -99,7 +99,7 @@ func (u *evalGoalUpdater) UpdateUserCounts(ctx context.Context, evt environmentE
 							"There is no auto ops rules to link the goal event",
 							zap.Error(err),
 							zap.String("eventId", id),
-							zap.String("environmentNamespace", environmentNamespace),
+							zap.String("environmentId", environmentId),
 						)
 						continue
 					}
@@ -108,7 +108,7 @@ func (u *evalGoalUpdater) UpdateUserCounts(ctx context.Context, evt environmentE
 							"Failed to persister goal event for auto ops",
 							zap.Error(err),
 							zap.String("eventId", id),
-							zap.String("environmentNamespace", environmentNamespace),
+							zap.String("environmentId", environmentId),
 						)
 					}
 					fails[id] = retriable
@@ -119,7 +119,7 @@ func (u *evalGoalUpdater) UpdateUserCounts(ctx context.Context, evt environmentE
 				u.logger.Error(
 					"Unexpected message type while trying to persister a goal event",
 					zap.String("eventId", id),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)
 				fails[id] = false
 			}
@@ -130,7 +130,7 @@ func (u *evalGoalUpdater) UpdateUserCounts(ctx context.Context, evt environmentE
 
 func (u *evalGoalUpdater) updateUserCount(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 	event *eventproto.GoalEvent,
 	listAutoOpsRules []*aoproto.AutoOpsRule,
 ) (bool, error) {
@@ -142,8 +142,8 @@ func (u *evalGoalUpdater) updateUserCount(
 	featureIDs := u.getUniqueFeatureIDs(linkedRules)
 	// Get the latest feature version
 	resp, err := u.featureClient.GetFeatures(ctx, &featureproto.GetFeaturesRequest{
-		EnvironmentNamespace: environmentNamespace,
-		Ids:                  featureIDs,
+		EnvironmentId: environmentId,
+		Ids:           featureIDs,
 	})
 	if err != nil {
 		subscriberHandledCounter.WithLabelValues(subscriberGoalEventOPS, codeFailedToGetFeatures).Inc()
@@ -162,14 +162,14 @@ func (u *evalGoalUpdater) updateUserCount(
 				"Failed to find the feature version",
 				zap.Error(ErrFeatureVersionNotFound),
 				zap.String("featureId", r.featureID),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)
 			subscriberHandledCounter.WithLabelValues(subscriberGoalEventOPS, codeFailedToFindFeatureVersion).Inc()
 			return false, err
 		}
 		// Update the user count per clause
 		err = u.updateUserCountPerClause(
-			environmentNamespace,
+			environmentId,
 			r.featureID,
 			fVersion,
 			event.UserId,
@@ -184,13 +184,13 @@ func (u *evalGoalUpdater) updateUserCount(
 
 func (u *evalGoalUpdater) listAutoOpsRules(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*aoproto.AutoOpsRule, error) {
 	exp, err, _ := u.flightgroup.Do(
-		fmt.Sprintf("%s:%s", environmentNamespace, "listAutoOpsRules"),
+		fmt.Sprintf("%s:%s", environmentId, "listAutoOpsRules"),
 		func() (interface{}, error) {
 			// Get the auto ops rules cache
-			aorList, err := u.autoOpsRulesCache.Get(environmentNamespace)
+			aorList, err := u.autoOpsRulesCache.Get(environmentId)
 			if err == nil {
 				return aorList.AutoOpsRules, nil
 			}
@@ -198,8 +198,8 @@ func (u *evalGoalUpdater) listAutoOpsRules(
 			// because it will increase access to the DB, which also will increase the costs.
 			// So we list all rules and use the singleflight implementation to share the response
 			resp, err := u.autoOpsClient.ListAutoOpsRules(ctx, &aoproto.ListAutoOpsRulesRequest{
-				EnvironmentNamespace: environmentNamespace,
-				PageSize:             0,
+				EnvironmentId: environmentId,
+				PageSize:      0,
 			})
 			if err != nil {
 				return nil, err
@@ -272,7 +272,7 @@ func (u *evalGoalUpdater) getFeatureVersion(
 }
 
 func (u *evalGoalUpdater) updateUserCountPerClause(
-	environmentNamespace,
+	environmentId,
 	featureID string,
 	featureVersion int32,
 	userID string,
@@ -280,7 +280,7 @@ func (u *evalGoalUpdater) updateUserCountPerClause(
 ) error {
 	for id, clause := range rule.clauses {
 		key := u.newUserCountKey(
-			environmentNamespace,
+			environmentId,
 			rule.ruleID,
 			id,
 			featureID,
@@ -294,14 +294,14 @@ func (u *evalGoalUpdater) updateUserCountPerClause(
 		u.logger.Debug(
 			"User count updated successfully",
 			zap.String("pfcountKey", key),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 		)
 	}
 	return nil
 }
 
 func (u *evalGoalUpdater) newUserCountKey(
-	environmentNamespace,
+	environmentId,
 	ruleID, clauseID, featureID, variationID string,
 	featureVersion int32,
 ) string {
@@ -315,6 +315,6 @@ func (u *evalGoalUpdater) newUserCountKey(
 	return cache.MakeKey(
 		opsGoalKeyPrefix,
 		key,
-		environmentNamespace,
+		environmentId,
 	)
 }

@@ -838,7 +838,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         event:
           (f = msg.getEvent()) &&
           google_protobuf_any_pb.Any.toObject(includeInstance, f),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -891,9 +891,9 @@ proto.bucketeer.event.client.Event.deserializeBinaryFromReader = function (
         );
         msg.setEvent(value);
         break;
-      case 3:
+      case 4:
         var value = /** @type {string} */ (reader.readString());
-        msg.setEnvironmentNamespace(value);
+        msg.setEnvironmentId(value);
         break;
       default:
         reader.skipField();
@@ -937,9 +937,9 @@ proto.bucketeer.event.client.Event.serializeBinaryToWriter = function (
       google_protobuf_any_pb.Any.serializeBinaryToWriter
     );
   }
-  f = message.getEnvironmentNamespace();
+  f = message.getEnvironmentId();
   if (f.length > 0) {
-    writer.writeString(3, f);
+    writer.writeString(4, f);
   }
 };
 
@@ -994,24 +994,22 @@ proto.bucketeer.event.client.Event.prototype.hasEvent = function () {
 };
 
 /**
- * optional string environment_namespace = 3;
+ * optional string environment_id = 4;
  * @return {string}
  */
-proto.bucketeer.event.client.Event.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 3, '')
-    );
-  };
+proto.bucketeer.event.client.Event.prototype.getEnvironmentId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ''));
+};
 
 /**
  * @param {string} value
  * @return {!proto.bucketeer.event.client.Event} returns this
  */
-proto.bucketeer.event.client.Event.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 3, value);
-  };
+proto.bucketeer.event.client.Event.prototype.setEnvironmentId = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 4, value);
+};
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**

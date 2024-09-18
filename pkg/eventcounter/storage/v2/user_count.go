@@ -26,7 +26,7 @@ import (
 type UserCountStorage interface {
 	GetMAUCount(
 		ctx context.Context,
-		environmentNamespace, yearMonth string,
+		environmentId, yearMonth string,
 	) (int64, int64, error)
 	GetMAUCounts(
 		ctx context.Context,
@@ -48,7 +48,7 @@ func NewUserCountStorage(qe mysql.QueryExecer) UserCountStorage {
 
 func (s *userCountStorage) GetMAUCount(
 	ctx context.Context,
-	environmentNamespace, yearMonth string,
+	environmentId, yearMonth string,
 ) (int64, int64, error) {
 	query := `
 		SELECT
@@ -57,14 +57,14 @@ func (s *userCountStorage) GetMAUCount(
 		FROM
 			mau
 		WHERE
-			environment_namespace = ? AND
+			environment_id = ? AND
 			yearmonth = ?
 	`
 	var userCount, eventCount int64
 	err := s.qe.QueryRowContext(
 		ctx,
 		query,
-		environmentNamespace,
+		environmentId,
 		yearMonth,
 	).Scan(
 		&userCount,
@@ -83,7 +83,7 @@ func (s *userCountStorage) GetMAUCounts(
 	summaries := make([]*proto.MAUSummary, 0)
 	query := `
 		SELECT
-			environment_namespace as environment_id,
+			environment_id,
 			count(*) as user_count,
 			IFNULL(SUM(event_count), 0) as request_count
 		FROM
@@ -91,7 +91,7 @@ func (s *userCountStorage) GetMAUCounts(
 		WHERE
 			yearmonth = ?
 		GROUP BY
-			environment_namespace
+			environment_id
 	`
 	rows, err := s.qe.QueryContext(
 		ctx,
@@ -129,7 +129,7 @@ func (s *userCountStorage) GetMAUCountsGroupBySourceID(
 	summaries := make([]*proto.MAUSummary, 0)
 	query := `
 		SELECT
-			environment_namespace as environment_id,
+			environment_id,
 			source_id,
 			count(*) as user_count,
 			IFNULL(SUM(event_count), 0) as request_count
@@ -138,7 +138,7 @@ func (s *userCountStorage) GetMAUCountsGroupBySourceID(
 		WHERE
 			yearmonth = ?
 		GROUP BY
-			environment_namespace,
+			environment_id,
 			source_id
 	`
 	rows, err := s.qe.QueryContext(

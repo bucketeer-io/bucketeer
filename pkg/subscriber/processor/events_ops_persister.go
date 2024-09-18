@@ -206,11 +206,11 @@ func (e eventsOPSPersister) extractEvents(messages map[string]*puller.Message) e
 			handleBadMessage(m, err)
 			continue
 		}
-		if innerEvents, ok := envEvents[event.EnvironmentNamespace]; ok {
+		if innerEvents, ok := envEvents[event.EnvironmentId]; ok {
 			innerEvents[event.Id] = innerEvent.Message
 			continue
 		}
-		envEvents[event.EnvironmentNamespace] = eventOPSMap{event.Id: innerEvent.Message}
+		envEvents[event.EnvironmentId] = eventOPSMap{event.Id: innerEvent.Message}
 	}
 	return envEvents
 }

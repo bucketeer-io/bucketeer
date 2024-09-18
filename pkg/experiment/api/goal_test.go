@@ -54,20 +54,20 @@ func TestGetGoalMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc                 string
-		setup                func(*experimentService)
-		orgRole              *accountproto.AccountV2_Role_Organization
-		envRole              *accountproto.AccountV2_Role_Environment
-		id                   string
-		environmentNamespace string
-		expectedErr          error
+		desc          string
+		setup         func(*experimentService)
+		orgRole       *accountproto.AccountV2_Role_Organization
+		envRole       *accountproto.AccountV2_Role_Environment
+		id            string
+		environmentId string
+		expectedErr   error
 	}{
 		{
-			desc:                 "error: ErrRequiredFieldTemplate",
-			setup:                nil,
-			id:                   "",
-			environmentNamespace: "ns0",
-			expectedErr:          createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
+			desc:          "error: ErrRequiredFieldTemplate",
+			setup:         nil,
+			id:            "",
+			environmentId: "ns0",
+			expectedErr:   createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
 		},
 		{
 			desc: "error: ErrNotFound",
@@ -78,17 +78,17 @@ func TestGetGoalMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			id:                   "id-0",
-			environmentNamespace: "ns0",
-			expectedErr:          createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			id:            "id-0",
+			environmentId: "ns0",
+			expectedErr:   createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
-			desc:                 "error: ErrPermissionDenied",
-			orgRole:              toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
-			envRole:              toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			id:                   "id-1",
-			environmentNamespace: "ns0",
-			expectedErr:          createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
+			desc:          "error: ErrPermissionDenied",
+			orgRole:       toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
+			envRole:       toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
+			id:            "id-1",
+			environmentId: "ns0",
+			expectedErr:   createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
 			desc:    "success",
@@ -101,9 +101,9 @@ func TestGetGoalMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			id:                   "id-1",
-			environmentNamespace: "ns0",
-			expectedErr:          nil,
+			id:            "id-1",
+			environmentId: "ns0",
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -112,7 +112,7 @@ func TestGetGoalMySQL(t *testing.T) {
 			if p.setup != nil {
 				p.setup(service)
 			}
-			req := &experimentproto.GetGoalRequest{Id: p.id, EnvironmentNamespace: p.environmentNamespace}
+			req := &experimentproto.GetGoalRequest{Id: p.id, EnvironmentId: p.environmentId}
 			_, err := service.GetGoal(ctx, req)
 			assert.Equal(t, p.expectedErr, err)
 		})
@@ -150,7 +150,7 @@ func TestListGoalMySQL(t *testing.T) {
 			desc:        "error: ErrPermissionDenied",
 			orgRole:     toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole:     toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
-			req:         &experimentproto.ListGoalsRequest{EnvironmentNamespace: "ns0"},
+			req:         &experimentproto.ListGoalsRequest{EnvironmentId: "ns0"},
 			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
 		{
@@ -171,7 +171,7 @@ func TestListGoalMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			req:         &experimentproto.ListGoalsRequest{EnvironmentNamespace: "ns0"},
+			req:         &experimentproto.ListGoalsRequest{EnvironmentId: "ns0"},
 			expectedErr: nil,
 		},
 	}
@@ -213,32 +213,32 @@ func TestCreateGoalMySQL(t *testing.T) {
 		{
 			setup: nil,
 			req: &experimentproto.CreateGoalRequest{
-				Command:              nil,
-				EnvironmentNamespace: "ns0",
+				Command:       nil,
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
 			setup: nil,
 			req: &experimentproto.CreateGoalRequest{
-				Command:              &experimentproto.CreateGoalCommand{Id: ""},
-				EnvironmentNamespace: "ns0",
+				Command:       &experimentproto.CreateGoalCommand{Id: ""},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
 		},
 		{
 			setup: nil,
 			req: &experimentproto.CreateGoalRequest{
-				Command:              &experimentproto.CreateGoalCommand{Id: "bucketeer_goal_id?"},
-				EnvironmentNamespace: "ns0",
+				Command:       &experimentproto.CreateGoalCommand{Id: "bucketeer_goal_id?"},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusInvalidGoalID, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "goal_id")),
 		},
 		{
 			setup: nil,
 			req: &experimentproto.CreateGoalRequest{
-				Command:              &experimentproto.CreateGoalCommand{Id: "Bucketeer-id-2019", Name: ""},
-				EnvironmentNamespace: "ns0",
+				Command:       &experimentproto.CreateGoalCommand{Id: "Bucketeer-id-2019", Name: ""},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusGoalNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
 		},
@@ -250,8 +250,8 @@ func TestCreateGoalMySQL(t *testing.T) {
 				).Return(v2es.ErrGoalAlreadyExists)
 			},
 			req: &experimentproto.CreateGoalRequest{
-				Command:              &experimentproto.CreateGoalCommand{Id: "Bucketeer-id-2019", Name: "name-0"},
-				EnvironmentNamespace: "ns0",
+				Command:       &experimentproto.CreateGoalCommand{Id: "Bucketeer-id-2019", Name: "name-0"},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
@@ -263,8 +263,8 @@ func TestCreateGoalMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &experimentproto.CreateGoalRequest{
-				Command:              &experimentproto.CreateGoalCommand{Id: "Bucketeer-id-2020", Name: "name-1"},
-				EnvironmentNamespace: "ns0",
+				Command:       &experimentproto.CreateGoalCommand{Id: "Bucketeer-id-2020", Name: "name-1"},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},
@@ -305,15 +305,15 @@ func TestUpdateGoalMySQL(t *testing.T) {
 		{
 			setup: nil,
 			req: &experimentproto.UpdateGoalRequest{
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
 		},
 		{
 			setup: nil,
 			req: &experimentproto.UpdateGoalRequest{
-				Id:                   "id-0",
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
@@ -325,9 +325,9 @@ func TestUpdateGoalMySQL(t *testing.T) {
 				).Return(v2es.ErrGoalNotFound)
 			},
 			req: &experimentproto.UpdateGoalRequest{
-				Id:                   "id-0",
-				RenameCommand:        &experimentproto.RenameGoalCommand{Name: "name-0"},
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				RenameCommand: &experimentproto.RenameGoalCommand{Name: "name-0"},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -339,9 +339,9 @@ func TestUpdateGoalMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &experimentproto.UpdateGoalRequest{
-				Id:                   "id-1",
-				RenameCommand:        &experimentproto.RenameGoalCommand{Name: "name-1"},
-				EnvironmentNamespace: "ns0",
+				Id:            "id-1",
+				RenameCommand: &experimentproto.RenameGoalCommand{Name: "name-1"},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},
@@ -382,15 +382,15 @@ func TestArchiveGoalMySQL(t *testing.T) {
 		{
 			setup: nil,
 			req: &experimentproto.ArchiveGoalRequest{
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
 		},
 		{
 			setup: nil,
 			req: &experimentproto.ArchiveGoalRequest{
-				Id:                   "id-0",
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
@@ -402,9 +402,9 @@ func TestArchiveGoalMySQL(t *testing.T) {
 				).Return(v2es.ErrGoalNotFound)
 			},
 			req: &experimentproto.ArchiveGoalRequest{
-				Id:                   "id-0",
-				Command:              &experimentproto.ArchiveGoalCommand{},
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				Command:       &experimentproto.ArchiveGoalCommand{},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -416,9 +416,9 @@ func TestArchiveGoalMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &experimentproto.ArchiveGoalRequest{
-				Id:                   "id-1",
-				Command:              &experimentproto.ArchiveGoalCommand{},
-				EnvironmentNamespace: "ns0",
+				Id:            "id-1",
+				Command:       &experimentproto.ArchiveGoalCommand{},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},
@@ -459,15 +459,15 @@ func TestDeleteGoalMySQL(t *testing.T) {
 		{
 			setup: nil,
 			req: &experimentproto.DeleteGoalRequest{
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
 		},
 		{
 			setup: nil,
 			req: &experimentproto.DeleteGoalRequest{
-				Id:                   "id-0",
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
@@ -479,9 +479,9 @@ func TestDeleteGoalMySQL(t *testing.T) {
 				).Return(v2es.ErrGoalNotFound)
 			},
 			req: &experimentproto.DeleteGoalRequest{
-				Id:                   "id-0",
-				Command:              &experimentproto.DeleteGoalCommand{},
-				EnvironmentNamespace: "ns0",
+				Id:            "id-0",
+				Command:       &experimentproto.DeleteGoalCommand{},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -493,9 +493,9 @@ func TestDeleteGoalMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &experimentproto.DeleteGoalRequest{
-				Id:                   "id-1",
-				Command:              &experimentproto.DeleteGoalCommand{},
-				EnvironmentNamespace: "ns0",
+				Id:            "id-1",
+				Command:       &experimentproto.DeleteGoalCommand{},
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},

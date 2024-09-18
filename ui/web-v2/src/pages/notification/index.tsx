@@ -119,7 +119,7 @@ export const NotificationIndexPage: FC = memo(() => {
         options && options.enabled ? options.enabled === 'false' : null;
       dispatch(
         listNotification({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           pageSize: NOTIFICATION_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
@@ -182,7 +182,7 @@ export const NotificationIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         createNotification({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           name: data.name,
           sourceTypes: data.sourceTypes,
           webhookUrl: data.webhookUrl
@@ -240,7 +240,7 @@ export const NotificationIndexPage: FC = memo(() => {
       }
       dispatch(
         updateNotification({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           id: notificationId,
           name: name,
           currentSourceTypes: notification.sourceTypesList,
@@ -295,11 +295,11 @@ export const NotificationIndexPage: FC = memo(() => {
       dispatch(
         data.notification.disabled
           ? enableNotification({
-              environmentNamespace: currentEnvironment.id,
+              environmentId: currentEnvironment.id,
               id: data.notification.id
             })
           : disableNotification({
-              environmentNamespace: currentEnvironment.id,
+              environmentId: currentEnvironment.id,
               id: data.notification.id
             })
       ).then(() => {
@@ -335,7 +335,7 @@ export const NotificationIndexPage: FC = memo(() => {
     (data) => {
       dispatch(
         deleteNotification({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           id: data.notification.id
         })
       ).then(() => {

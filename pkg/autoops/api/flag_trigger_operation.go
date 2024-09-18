@@ -29,7 +29,7 @@ import (
 func executeAutoOpsRuleOperation(
 	ctx context.Context,
 	ftStorage ftstorage.FeatureStorage,
-	environmentNamespace string,
+	environmentId string,
 	actionType autoopsproto.ActionType,
 	feature *ftdomain.Feature,
 	logger *zap.Logger,
@@ -37,9 +37,9 @@ func executeAutoOpsRuleOperation(
 ) error {
 	switch actionType {
 	case autoopsproto.ActionType_ENABLE:
-		return enableFeature(ctx, ftStorage, environmentNamespace, feature, logger)
+		return enableFeature(ctx, ftStorage, environmentId, feature, logger)
 	case autoopsproto.ActionType_DISABLE:
-		return disableFeature(ctx, ftStorage, environmentNamespace, feature, logger)
+		return disableFeature(ctx, ftStorage, environmentId, feature, logger)
 	}
 	dt, err := statusUnknownOpsType.WithDetails(&errdetails.LocalizedMessage{
 		Locale:  localizer.GetLocale(),
@@ -57,7 +57,7 @@ func executeAutoOpsRuleOperation(
 func enableFeature(
 	ctx context.Context,
 	ftStorage ftstorage.FeatureStorage,
-	environmentNamespace string,
+	environmentId string,
 	feature *ftdomain.Feature,
 	logger *zap.Logger,
 ) error {
@@ -65,7 +65,7 @@ func enableFeature(
 		// If the flag is already disabled, we skip the updating
 		return nil
 	}
-	if err := ftStorage.UpdateFeature(ctx, feature, environmentNamespace); err != nil {
+	if err := ftStorage.UpdateFeature(ctx, feature, environmentId); err != nil {
 		return err
 	}
 	return nil
@@ -77,7 +77,7 @@ func enableFeature(
 func disableFeature(
 	ctx context.Context,
 	ftStorage ftstorage.FeatureStorage,
-	environmentNamespace string,
+	environmentId string,
 	feature *ftdomain.Feature,
 	logger *zap.Logger,
 ) error {
@@ -85,7 +85,7 @@ func disableFeature(
 		// If the flag is already disabled, we skip the updating
 		return nil
 	}
-	if err := ftStorage.UpdateFeature(ctx, feature, environmentNamespace); err != nil {
+	if err := ftStorage.UpdateFeature(ctx, feature, environmentId); err != nil {
 		return err
 	}
 	return nil

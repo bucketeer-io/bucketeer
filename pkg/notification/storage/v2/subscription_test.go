@@ -47,11 +47,11 @@ func TestCreateSubscription(t *testing.T) {
 	name := "name-0"
 	envNamespace := "ns"
 	patterns := []struct {
-		desc                 string
-		setup                func(*subscriptionStorage)
-		input                *domain.Subscription
-		environmentNamespace string
-		expectedErr          error
+		desc          string
+		setup         func(*subscriptionStorage)
+		input         *domain.Subscription
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			desc: "ErrSubscriptionAlreadyExists",
@@ -63,8 +63,8 @@ func TestCreateSubscription(t *testing.T) {
 			input: &domain.Subscription{
 				Subscription: &proto.Subscription{Id: id},
 			},
-			environmentNamespace: "ns",
-			expectedErr:          ErrSubscriptionAlreadyExists,
+			environmentId: "ns",
+			expectedErr:   ErrSubscriptionAlreadyExists,
 		},
 		{
 			desc: "Error",
@@ -77,8 +77,8 @@ func TestCreateSubscription(t *testing.T) {
 			input: &domain.Subscription{
 				Subscription: &proto.Subscription{Id: id},
 			},
-			environmentNamespace: "ns",
-			expectedErr:          errors.New("error"),
+			environmentId: "ns",
+			expectedErr:   errors.New("error"),
 		},
 		{
 			desc: "Success",
@@ -92,8 +92,8 @@ func TestCreateSubscription(t *testing.T) {
 			input: &domain.Subscription{
 				Subscription: &proto.Subscription{Id: id, CreatedAt: 1, UpdatedAt: 2, Disabled: false, SourceTypes: sourceTypes, Recipient: recipient, Name: name},
 			},
-			environmentNamespace: envNamespace,
-			expectedErr:          nil,
+			environmentId: envNamespace,
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -102,7 +102,7 @@ func TestCreateSubscription(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			err := storage.CreateSubscription(context.Background(), p.input, p.environmentNamespace)
+			err := storage.CreateSubscription(context.Background(), p.input, p.environmentId)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -119,11 +119,11 @@ func TestUpdateSubscription(t *testing.T) {
 	name := "name-0"
 	envNamespace := "ns"
 	patterns := []struct {
-		desc                 string
-		setup                func(*subscriptionStorage)
-		input                *domain.Subscription
-		environmentNamespace string
-		expectedErr          error
+		desc          string
+		setup         func(*subscriptionStorage)
+		input         *domain.Subscription
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			desc: "ErrSubscriptionUnexpectedAffectedRows",
@@ -137,8 +137,8 @@ func TestUpdateSubscription(t *testing.T) {
 			input: &domain.Subscription{
 				Subscription: &proto.Subscription{Id: id},
 			},
-			environmentNamespace: envNamespace,
-			expectedErr:          ErrSubscriptionUnexpectedAffectedRows,
+			environmentId: envNamespace,
+			expectedErr:   ErrSubscriptionUnexpectedAffectedRows,
 		},
 		{
 			desc: "Error",
@@ -151,8 +151,8 @@ func TestUpdateSubscription(t *testing.T) {
 			input: &domain.Subscription{
 				Subscription: &proto.Subscription{Id: id},
 			},
-			environmentNamespace: envNamespace,
-			expectedErr:          errors.New("error"),
+			environmentId: envNamespace,
+			expectedErr:   errors.New("error"),
 		},
 		{
 			desc: "Success",
@@ -168,8 +168,8 @@ func TestUpdateSubscription(t *testing.T) {
 			input: &domain.Subscription{
 				Subscription: &proto.Subscription{Id: id, CreatedAt: 1, UpdatedAt: 2, Disabled: false, SourceTypes: sourceTypes, Recipient: recipient, Name: name},
 			},
-			environmentNamespace: envNamespace,
-			expectedErr:          nil,
+			environmentId: envNamespace,
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -178,7 +178,7 @@ func TestUpdateSubscription(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			err := storage.UpdateSubscription(context.Background(), p.input, p.environmentNamespace)
+			err := storage.UpdateSubscription(context.Background(), p.input, p.environmentId)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -192,11 +192,11 @@ func TestDeleteSubscription(t *testing.T) {
 	id := "id-0"
 	envNamespace := "ns"
 	patterns := []struct {
-		desc                 string
-		setup                func(*subscriptionStorage)
-		id                   string
-		environmentNamespace string
-		expectedErr          error
+		desc          string
+		setup         func(*subscriptionStorage)
+		id            string
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			desc: "ErrSubscriptionUnexpectedAffectedRows",
@@ -207,9 +207,9 @@ func TestDeleteSubscription(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
-			id:                   id,
-			environmentNamespace: envNamespace,
-			expectedErr:          ErrSubscriptionUnexpectedAffectedRows,
+			id:            id,
+			environmentId: envNamespace,
+			expectedErr:   ErrSubscriptionUnexpectedAffectedRows,
 		},
 		{
 			desc: "Error",
@@ -219,9 +219,9 @@ func TestDeleteSubscription(t *testing.T) {
 				).Return(nil, errors.New("error"))
 
 			},
-			id:                   id,
-			environmentNamespace: envNamespace,
-			expectedErr:          errors.New("error"),
+			id:            id,
+			environmentId: envNamespace,
+			expectedErr:   errors.New("error"),
 		},
 		{
 			desc: "Success",
@@ -234,9 +234,9 @@ func TestDeleteSubscription(t *testing.T) {
 					id, envNamespace,
 				).Return(result, nil)
 			},
-			id:                   id,
-			environmentNamespace: envNamespace,
-			expectedErr:          nil,
+			id:            id,
+			environmentId: envNamespace,
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -245,7 +245,7 @@ func TestDeleteSubscription(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			err := storage.DeleteSubscription(context.Background(), p.id, p.environmentNamespace)
+			err := storage.DeleteSubscription(context.Background(), p.id, p.environmentId)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -259,11 +259,11 @@ func TestGetSubscription(t *testing.T) {
 	id := "id-0"
 	envNamespace := "ns"
 	patterns := []struct {
-		desc                 string
-		setup                func(*subscriptionStorage)
-		id                   string
-		environmentNamespace string
-		expectedErr          error
+		desc          string
+		setup         func(*subscriptionStorage)
+		id            string
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			desc: "ErrSubscriptionNotFound",
@@ -274,9 +274,9 @@ func TestGetSubscription(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			id:                   id,
-			environmentNamespace: envNamespace,
-			expectedErr:          ErrSubscriptionNotFound,
+			id:            id,
+			environmentId: envNamespace,
+			expectedErr:   ErrSubscriptionNotFound,
 		},
 		{
 			desc: "Error",
@@ -288,9 +288,9 @@ func TestGetSubscription(t *testing.T) {
 				).Return(row)
 
 			},
-			id:                   id,
-			environmentNamespace: envNamespace,
-			expectedErr:          errors.New("error"),
+			id:            id,
+			environmentId: envNamespace,
+			expectedErr:   errors.New("error"),
 		},
 		{
 			desc: "Success",
@@ -303,9 +303,9 @@ func TestGetSubscription(t *testing.T) {
 					id, envNamespace,
 				).Return(row)
 			},
-			id:                   id,
-			environmentNamespace: envNamespace,
-			expectedErr:          nil,
+			id:            id,
+			environmentId: envNamespace,
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -314,7 +314,7 @@ func TestGetSubscription(t *testing.T) {
 			if p.setup != nil {
 				p.setup(storage)
 			}
-			_, err := storage.GetSubscription(context.Background(), p.id, p.environmentNamespace)
+			_, err := storage.GetSubscription(context.Background(), p.id, p.environmentId)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

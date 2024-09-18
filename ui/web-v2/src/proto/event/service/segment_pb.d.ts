@@ -9,9 +9,6 @@ export class BulkSegmentUsersReceivedEvent extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getSegmentId(): string;
   setSegmentId(value: string): void;
 
@@ -29,6 +26,9 @@ export class BulkSegmentUsersReceivedEvent extends jspb.Message {
   clearEditor(): void;
   getEditor(): proto_event_domain_event_pb.Editor | undefined;
   setEditor(value?: proto_event_domain_event_pb.Editor): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): BulkSegmentUsersReceivedEvent.AsObject;
@@ -54,10 +54,10 @@ export class BulkSegmentUsersReceivedEvent extends jspb.Message {
 export namespace BulkSegmentUsersReceivedEvent {
   export type AsObject = {
     id: string;
-    environmentNamespace: string;
     segmentId: string;
     data: Uint8Array | string;
     state: proto_feature_segment_pb.SegmentUser.StateMap[keyof proto_feature_segment_pb.SegmentUser.StateMap];
     editor?: proto_event_domain_event_pb.Editor.AsObject;
+    environmentId: string;
   };
 }

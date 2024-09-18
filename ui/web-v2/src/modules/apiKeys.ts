@@ -40,7 +40,7 @@ export const listAPIKeys = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/list`, async (params) => {
   const request = new ListAPIKeysRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setPageSize(params.pageSize);
   request.setCursor(params.cursor);
   request.setOrderBy(params.orderBy);
@@ -59,7 +59,7 @@ export type OrderDirection =
   ListAPIKeysRequest.OrderDirectionMap[keyof ListAPIKeysRequest.OrderDirectionMap];
 
 interface APIKeyParams {
-  environmentNamespace: string;
+  environmentId: string;
   pageSize: number;
   cursor: string;
   orderBy: OrderBy;
@@ -69,7 +69,7 @@ interface APIKeyParams {
 }
 
 export interface GetAPIKeyParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -79,14 +79,14 @@ export const getAPIKey = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/get`, async (params) => {
   const request = new GetAPIKeyRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   const result = await grpc.getAPIKey(request);
   return result.response.toObject().apiKey;
 });
 
 export interface EnableAPIKeyParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -96,14 +96,14 @@ export const enableAPIKey = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/enable`, async (params) => {
   const request = new EnableAPIKeyRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setCommand(new EnableAPIKeyCommand());
   await grpc.enableAPIKey(request);
 });
 
 export interface DisableAPIKeyParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -113,14 +113,14 @@ export const disableAPIKey = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/disable`, async (params) => {
   const request = new DisableAPIKeyRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setCommand(new DisableAPIKeyCommand());
   await grpc.disableAPIKey(request);
 });
 
 export interface CreateAPIKeyParams {
-  environmentNamespace: string;
+  environmentId: string;
   name: string;
   role: APIKey.RoleMap[keyof APIKey.RoleMap];
 }
@@ -134,13 +134,13 @@ export const createAPIKey = createAsyncThunk<
   const cmd = new CreateAPIKeyCommand();
   cmd.setName(params.name);
   cmd.setRole(params.role);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setCommand(cmd);
   await grpc.createAPIKey(request);
 });
 
 export interface updateAPIKeyParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
   name: string;
 }
@@ -153,7 +153,7 @@ export const updateAPIKey = createAsyncThunk<
   const request = new ChangeAPIKeyNameRequest();
   const cmd = new ChangeAPIKeyNameCommand();
   cmd.setName(params.name);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setCommand(cmd);
   await grpc.changeAPIKeyName(request);

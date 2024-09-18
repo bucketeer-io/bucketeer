@@ -84,12 +84,12 @@ func (w *evalEvtWriter) Write(
 ) map[string]bool {
 	var evalEvents []*epproto.EvaluationEvent
 	fails := make(map[string]bool, len(envEvents))
-	for environmentNamespace, events := range envEvents {
-		experiments, err := w.listExperiments(ctx, environmentNamespace)
+	for environmentId, events := range envEvents {
+		experiments, err := w.listExperiments(ctx, environmentId)
 		if err != nil {
 			w.logger.Error("failed to list experiments",
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)
 			subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codeFailedToListExperiments).Inc()
 			// Make sure to retry all the events in the next pulling
@@ -104,7 +104,7 @@ func (w *evalEvtWriter) Write(
 		for id, event := range events {
 			switch evt := event.(type) {
 			case *eventproto.EvaluationEvent:
-				e, retriable, err := w.convToEvaluationEvent(ctx, evt, id, environmentNamespace, experiments)
+				e, retriable, err := w.convToEvaluationEvent(ctx, evt, id, environmentId, experiments)
 				if err != nil {
 					// If there is nothing to link, we don't report it as an error
 					if errors.Is(err, ErrExperimentNotFound) {
@@ -120,7 +120,7 @@ func (w *evalEvtWriter) Write(
 							"Failed to convert to evaluation event",
 							zap.Error(err),
 							zap.String("id", id),
-							zap.String("environmentNamespace", environmentNamespace),
+							zap.String("environmentId", environmentId),
 							zap.Any("evalEvent", evt),
 						)
 					}
@@ -133,7 +133,7 @@ func (w *evalEvtWriter) Write(
 				w.logger.Error(
 					"The event is an unexpected message type",
 					zap.String("id", id),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 					zap.Any("evalEvent", evt),
 				)
 				fails[id] = false
@@ -171,7 +171,7 @@ func (w *evalEvtWriter) Write(
 func (w *evalEvtWriter) convToEvaluationEvent(
 	ctx context.Context,
 	e *eventproto.EvaluationEvent,
-	id, environmentNamespace string,
+	id, environmentId string,
 	experiments []*exproto.Experiment,
 ) (*epproto.EvaluationEvent, bool, error) {
 	exp := w.existExperiment(experiments, e.FeatureId, e.FeatureVersion)
@@ -199,17 +199,17 @@ func (w *evalEvtWriter) convToEvaluationEvent(
 		tag = "none"
 	}
 	return &epproto.EvaluationEvent{
-		Id:                   id,
-		FeatureId:            e.FeatureId,
-		FeatureVersion:       e.FeatureVersion,
-		UserData:             string(ud),
-		UserId:               e.UserId,
-		VariationId:          e.VariationId,
-		Reason:               e.Reason.Type.String(),
-		Tag:                  tag,
-		SourceId:             e.SourceId.String(),
-		EnvironmentNamespace: environmentNamespace,
-		Timestamp:            time.Unix(e.Timestamp, 0).UnixMicro(),
+		Id:             id,
+		FeatureId:      e.FeatureId,
+		FeatureVersion: e.FeatureVersion,
+		UserData:       string(ud),
+		UserId:         e.UserId,
+		VariationId:    e.VariationId,
+		Reason:         e.Reason.Type.String(),
+		Tag:            tag,
+		SourceId:       e.SourceId.String(),
+		EnvironmentId:  environmentId,
+		Timestamp:      time.Unix(e.Timestamp, 0).UnixMicro(),
 	}, false, nil
 }
 
@@ -228,20 +228,20 @@ func (w *evalEvtWriter) existExperiment(
 
 func (w *evalEvtWriter) listExperiments(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*exproto.Experiment, error) {
 	exp, err, _ := w.flightgroup.Do(
-		fmt.Sprintf("%s:%s", environmentNamespace, "listExperiments"),
+		fmt.Sprintf("%s:%s", environmentId, "listExperiments"),
 		func() (interface{}, error) {
 			// Get the experiment cache
-			expList, err := w.cache.Get(environmentNamespace)
+			expList, err := w.cache.Get(environmentId)
 			if err == nil {
 				return expList.Experiments, nil
 			}
 			// Get the experiments from the DB
 			resp, err := w.experimentClient.ListExperiments(ctx, &exproto.ListExperimentsRequest{
-				PageSize:             0,
-				EnvironmentNamespace: environmentNamespace,
+				PageSize:      0,
+				EnvironmentId: environmentId,
 				Statuses: []exproto.Experiment_Status{
 					exproto.Experiment_RUNNING,
 					exproto.Experiment_STOPPED,

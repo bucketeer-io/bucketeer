@@ -745,33 +745,33 @@ func (mr *MockBucketMockRecorder) Delete(ctx, key any) *gomock.Call {
 }
 
 // Reader mocks base method.
-func (m *MockBucket) Reader(ctx context.Context, environmentNamespace, filename string) (storage.Reader, error) {
+func (m *MockBucket) Reader(ctx context.Context, environmentId, filename string) (storage.Reader, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Reader", ctx, environmentNamespace, filename)
+	ret := m.ctrl.Call(m, "Reader", ctx, environmentId, filename)
 	ret0, _ := ret[0].(storage.Reader)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Reader indicates an expected call of Reader.
-func (mr *MockBucketMockRecorder) Reader(ctx, environmentNamespace, filename any) *gomock.Call {
+func (mr *MockBucketMockRecorder) Reader(ctx, environmentId, filename any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reader", reflect.TypeOf((*MockBucket)(nil).Reader), ctx, environmentNamespace, filename)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reader", reflect.TypeOf((*MockBucket)(nil).Reader), ctx, environmentId, filename)
 }
 
 // Writer mocks base method.
-func (m *MockBucket) Writer(ctx context.Context, environmentNamespace, filename string, CRC32C uint32) (storage.Writer, error) {
+func (m *MockBucket) Writer(ctx context.Context, environmentId, filename string, CRC32C uint32) (storage.Writer, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Writer", ctx, environmentNamespace, filename, CRC32C)
+	ret := m.ctrl.Call(m, "Writer", ctx, environmentId, filename, CRC32C)
 	ret0, _ := ret[0].(storage.Writer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Writer indicates an expected call of Writer.
-func (mr *MockBucketMockRecorder) Writer(ctx, environmentNamespace, filename, CRC32C any) *gomock.Call {
+func (mr *MockBucketMockRecorder) Writer(ctx, environmentId, filename, CRC32C any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Writer", reflect.TypeOf((*MockBucket)(nil).Writer), ctx, environmentNamespace, filename, CRC32C)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Writer", reflect.TypeOf((*MockBucket)(nil).Writer), ctx, environmentId, filename, CRC32C)
 }
 
 // MockObject is a mock of Object interface.
@@ -812,31 +812,31 @@ func (mr *MockObjectMockRecorder) Delete(ctx, key any) *gomock.Call {
 }
 
 // Reader mocks base method.
-func (m *MockObject) Reader(ctx context.Context, environmentNamespace, filename string) (storage.Reader, error) {
+func (m *MockObject) Reader(ctx context.Context, environmentId, filename string) (storage.Reader, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Reader", ctx, environmentNamespace, filename)
+	ret := m.ctrl.Call(m, "Reader", ctx, environmentId, filename)
 	ret0, _ := ret[0].(storage.Reader)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Reader indicates an expected call of Reader.
-func (mr *MockObjectMockRecorder) Reader(ctx, environmentNamespace, filename any) *gomock.Call {
+func (mr *MockObjectMockRecorder) Reader(ctx, environmentId, filename any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reader", reflect.TypeOf((*MockObject)(nil).Reader), ctx, environmentNamespace, filename)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reader", reflect.TypeOf((*MockObject)(nil).Reader), ctx, environmentId, filename)
 }
 
 // Writer mocks base method.
-func (m *MockObject) Writer(ctx context.Context, environmentNamespace, filename string, CRC32C uint32) (storage.Writer, error) {
+func (m *MockObject) Writer(ctx context.Context, environmentId, filename string, CRC32C uint32) (storage.Writer, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Writer", ctx, environmentNamespace, filename, CRC32C)
+	ret := m.ctrl.Call(m, "Writer", ctx, environmentId, filename, CRC32C)
 	ret0, _ := ret[0].(storage.Writer)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Writer indicates an expected call of Writer.
-func (mr *MockObjectMockRecorder) Writer(ctx, environmentNamespace, filename, CRC32C any) *gomock.Call {
+func (mr *MockObjectMockRecorder) Writer(ctx, environmentId, filename, CRC32C any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Writer", reflect.TypeOf((*MockObject)(nil).Writer), ctx, environmentNamespace, filename, CRC32C)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Writer", reflect.TypeOf((*MockObject)(nil).Writer), ctx, environmentId, filename, CRC32C)
 }

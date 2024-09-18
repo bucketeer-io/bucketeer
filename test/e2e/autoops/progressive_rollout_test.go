@@ -157,8 +157,8 @@ func TestStopProgressiveRollout(t *testing.T) {
 	}
 	stopProgressiveRollout(t, autoOpsClient, progressiveRollouts[0].Id)
 	resp, err := autoOpsClient.GetProgressiveRollout(ctx, &autoopsproto.GetProgressiveRolloutRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   progressiveRollouts[0].Id,
+		EnvironmentId: *environmentNamespace,
+		Id:            progressiveRollouts[0].Id,
 	})
 	assert.NoError(t, err)
 	assert.True(t, resp.ProgressiveRollout.StoppedAt > time.Now().Add(time.Second*-10).Unix())
@@ -196,8 +196,8 @@ func TestDeleteProgressiveRollout(t *testing.T) {
 	}
 	deleteProgressiveRollout(t, autoOpsClient, progressiveRollouts[0].Id)
 	resp, err := autoOpsClient.GetProgressiveRollout(ctx, &autoopsproto.GetProgressiveRolloutRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   progressiveRollouts[0].Id,
+		EnvironmentId: *environmentNamespace,
+		Id:            progressiveRollouts[0].Id,
 	})
 	if resp != nil {
 		t.Fatal("progressiveRollout is not deleted")
@@ -240,8 +240,8 @@ func TestExecuteProgressiveRollout(t *testing.T) {
 	}
 	clause := unmarshalProgressiveRolloutManualClause(t, progressiveRollouts[0].Clause)
 	_, err := autoOpsClient.ExecuteProgressiveRollout(ctx, &autoopsproto.ExecuteProgressiveRolloutRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   progressiveRollouts[0].Id,
+		EnvironmentId: *environmentNamespace,
+		Id:            progressiveRollouts[0].Id,
 		ChangeProgressiveRolloutTriggeredAtCommand: &autoopsproto.ChangeProgressiveRolloutScheduleTriggeredAtCommand{
 			ScheduleId: clause.Schedules[0].ScheduleId,
 		},
@@ -374,8 +374,8 @@ func createProgressiveRollout(
 		ProgressiveRolloutTemplateScheduleClause: template,
 	}
 	_, err := client.CreateProgressiveRollout(ctx, &autoopsproto.CreateProgressiveRolloutRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Command:              cmd,
+		EnvironmentId: *environmentNamespace,
+		Command:       cmd,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -387,9 +387,9 @@ func listProgressiveRollouts(t *testing.T, client autoopsclient.Client, featureI
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	resp, err := client.ListProgressiveRollouts(ctx, &autoopsproto.ListProgressiveRolloutsRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		PageSize:             0,
-		FeatureIds:           []string{featureID},
+		EnvironmentId: *environmentNamespace,
+		PageSize:      0,
+		FeatureIds:    []string{featureID},
 	})
 	if err != nil {
 		t.Fatal("Failed to list progressive rollout", err)
@@ -430,8 +430,8 @@ func getProgressiveRollout(t *testing.T, id string) *autoopsproto.ProgressiveRol
 	c := newAutoOpsClient(t)
 	defer c.Close()
 	resp, err := c.GetProgressiveRollout(ctx, &autoopsproto.GetProgressiveRolloutRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
 	})
 	if err != nil {
 		t.Fatal("Failed to get progressive rollout", err)
@@ -444,8 +444,8 @@ func stopProgressiveRollout(t *testing.T, client autoopsclient.Client, id string
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	_, err := client.StopProgressiveRollout(ctx, &autoopsproto.StopProgressiveRolloutRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
 		Command: &autoopsproto.StopProgressiveRolloutCommand{
 			StoppedBy: autoopsproto.ProgressiveRollout_USER,
 		},
@@ -460,9 +460,9 @@ func deleteProgressiveRollout(t *testing.T, client autoopsclient.Client, id stri
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	_, err := client.DeleteProgressiveRollout(ctx, &autoopsproto.DeleteProgressiveRolloutRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Id:                   id,
-		Command:              &autoopsproto.DeleteProgressiveRolloutCommand{},
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
+		Command:       &autoopsproto.DeleteProgressiveRolloutCommand{},
 	})
 	if err != nil {
 		t.Fatal("Failed to delete progressive rollout", err)

@@ -16,9 +16,6 @@ export class EvaluationRequestEvent extends jspb.Message {
   getUser(): proto_user_user_pb.User | undefined;
   setUser(value?: proto_user_user_pb.User): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getTag(): string;
   setTag(value: string): void;
 
@@ -48,7 +45,6 @@ export namespace EvaluationRequestEvent {
     id: string;
     timestamp: number;
     user?: proto_user_user_pb.User.AsObject;
-    environmentNamespace: string;
     tag: string;
   };
 }

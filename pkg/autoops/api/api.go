@@ -107,7 +107,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 			"Failed to create a new autoOpsRule",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -143,7 +143,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 			"Failed to extract opsEventRateClauses",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -156,7 +156,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 		return nil, dt.Err()
 	}
 	for _, c := range opsEventRateClauses {
-		exist, err := s.existGoal(ctx, req.EnvironmentNamespace, c.GoalId)
+		exist, err := s.existGoal(ctx, req.EnvironmentId, c.GoalId)
 		if err != nil {
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -170,7 +170,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 		if !exist {
 			s.logger.Error(
 				"Goal does not exist",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.String("environmentNamespace", req.EnvironmentNamespace))...,
+				log.FieldsFromImcomingContext(ctx).AddFields(zap.String("environmentId", req.EnvironmentId))...,
 			)
 			dt, err := statusOpsEventRateClauseGoalNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -201,14 +201,14 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
-		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return autoOpsRuleStorage.CreateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentNamespace)
+		return autoOpsRuleStorage.CreateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentId)
 	})
 	if err != nil {
 		if err == v2as.ErrAutoOpsRuleAlreadyExists {
@@ -225,7 +225,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 			"Failed to create autoOps",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -465,7 +465,7 @@ func (s *AutoOpsService) StopAutoOpsRule(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -493,7 +493,7 @@ func (s *AutoOpsService) StopAutoOpsRule(
 
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
-		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentNamespace)
+		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -507,14 +507,14 @@ func (s *AutoOpsService) StopAutoOpsRule(
 			}
 			return dt.Err()
 		}
-		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentNamespace)
+		return autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentId)
 	})
 
 	if err != nil {
@@ -554,7 +554,7 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -580,18 +580,18 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
-		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentNamespace)
+		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
-		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentNamespace)
+		return autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentId)
 	})
 	if err != nil {
 		if err == v2as.ErrAutoOpsRuleNotFound || err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
@@ -608,7 +608,7 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 			"Failed to delete autoOpsRule",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -654,7 +654,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -669,7 +669,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 		opsEventRateClauses = append(opsEventRateClauses, c.OpsEventRateClause)
 	}
 	for _, c := range opsEventRateClauses {
-		exist, err := s.existGoal(ctx, req.EnvironmentNamespace, c.GoalId)
+		exist, err := s.existGoal(ctx, req.EnvironmentId, c.GoalId)
 		if err != nil {
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -683,7 +683,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 		if !exist {
 			s.logger.Error(
 				"Goal does not exist",
-				log.FieldsFromImcomingContext(ctx).AddFields(zap.String("environmentNamespace", req.EnvironmentNamespace))...,
+				log.FieldsFromImcomingContext(ctx).AddFields(zap.String("environmentId", req.EnvironmentId))...,
 			)
 			dt, err := statusOpsEventRateClauseGoalNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -715,7 +715,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
-		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentNamespace)
+		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -808,7 +808,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 			}
 			return dt.Err()
 		}
-		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -817,7 +817,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 				return err
 			}
 		}
-		return autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentNamespace)
+		return autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentId)
 	})
 	if err != nil {
 		if err == v2as.ErrAutoOpsRuleNotFound || err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
@@ -837,7 +837,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 			"Failed to update autoOpsRule",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -1012,7 +1012,7 @@ func (s *AutoOpsService) GetAutoOpsRule(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1020,7 +1020,7 @@ func (s *AutoOpsService) GetAutoOpsRule(
 		return nil, err
 	}
 	autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
-	autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentNamespace)
+	autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if err == v2as.ErrAutoOpsRuleNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -1080,7 +1080,7 @@ func (s *AutoOpsService) ListAutoOpsRules(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1090,7 +1090,7 @@ func (s *AutoOpsService) ListAutoOpsRules(
 		req.PageSize,
 		req.Cursor,
 		req.FeatureIds,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer,
 		autoOpsRuleStorage,
 	)
@@ -1108,13 +1108,13 @@ func (s *AutoOpsService) listAutoOpsRules(
 	pageSize int64,
 	cursor string,
 	featureIds []string,
-	environmentNamespace string,
+	environmentId string,
 	localizer locale.Localizer,
 	storage v2as.AutoOpsRuleStorage,
 ) ([]*autoopsproto.AutoOpsRule, string, error) {
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_namespace", "=", environmentNamespace),
+		mysql.NewFilter("environment_id", "=", environmentId),
 	}
 	fIDs := make([]interface{}, 0, len(featureIds))
 	for _, fID := range featureIds {
@@ -1151,7 +1151,7 @@ func (s *AutoOpsService) listAutoOpsRules(
 			"Failed to list autoOpsRules",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -1173,14 +1173,14 @@ func (s *AutoOpsService) ExecuteAutoOps(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
 	if err := s.validateExecuteAutoOpsRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	triggered, err := s.checkIfHasAlreadyTriggered(ctx, localizer, req.Id, req.EnvironmentNamespace)
+	triggered, err := s.checkIfHasAlreadyTriggered(ctx, localizer, req.Id, req.EnvironmentId)
 	if err != nil {
 		return nil, err
 	}
@@ -1206,7 +1206,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
-		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentNamespace)
+		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -1231,7 +1231,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		}
 
 		ftStorage := ftstorage.NewFeatureStorage(tx)
-		feature, err := ftStorage.GetFeature(ctx, autoOpsRule.FeatureId, req.EnvironmentNamespace)
+		feature, err := ftStorage.GetFeature(ctx, autoOpsRule.FeatureId, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -1240,7 +1240,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		if executeClause.ActionType == autoopsproto.ActionType_DISABLE {
 			if err := s.stopProgressiveRollout(
 				ctx,
-				req.EnvironmentNamespace,
+				req.EnvironmentId,
 				autoOpsRule,
 				prStorage,
 				localizer,
@@ -1251,7 +1251,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		if err := executeAutoOpsRuleOperation(
 			ctx,
 			ftStorage,
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 			executeClause.ActionType,
 			feature,
 			s.logger,
@@ -1261,7 +1261,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 				"Failed to execute auto ops rule operation",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 					zap.String("autoOpsRuleId", autoOpsRule.Id),
 					zap.String("featureId", autoOpsRule.FeatureId),
 				)...,
@@ -1272,7 +1272,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		if autoOpsRule.Clauses[len(autoOpsRule.Clauses)-1].Id == req.ExecuteAutoOpsRuleCommand.ClauseId {
 			opsStatus = autoopsproto.AutoOpsStatus_FINISHED
 		}
-		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentNamespace)
+		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -1280,14 +1280,14 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			return err
 		}
 
-		if err = autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentNamespace); err != nil {
+		if err = autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentId); err != nil {
 			if err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
 				s.logger.Warn(
 					"No rows were affected",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.Error(err),
 						zap.String("id", req.Id),
-						zap.String("environmentNamespace", req.EnvironmentNamespace),
+						zap.String("environmentId", req.EnvironmentId),
 					)...,
 				)
 				return nil
@@ -1303,7 +1303,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", req.Id),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -1319,7 +1319,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			"Failed to execute autoOpsRule",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -1336,7 +1336,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 
 func (s *AutoOpsService) stopProgressiveRollout(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 	autoOpsRule *domain.AutoOpsRule,
 	storage v2as.ProgressiveRolloutStorage,
 	localizer locale.Localizer,
@@ -1350,7 +1350,7 @@ func (s *AutoOpsService) stopProgressiveRollout(
 			"Failed to check operation type",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 				zap.String("autoOpsRuleId", autoOpsRule.Id),
 				zap.String("featureId", autoOpsRule.FeatureId),
 			)...,
@@ -1373,14 +1373,14 @@ func (s *AutoOpsService) stopProgressiveRollout(
 		ctx,
 		storage,
 		s.convToInterfaceSlice([]string{autoOpsRule.FeatureId}),
-		environmentNamespace,
+		environmentId,
 		stoppedBy,
 	); err != nil {
 		s.logger.Error(
 			"Failed to stop progressive rollout",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 				zap.String("autoOpsRuleId", autoOpsRule.Id),
 				zap.String("featureId", autoOpsRule.FeatureId),
 			)...,
@@ -1438,10 +1438,10 @@ func (s *AutoOpsService) checkIfHasAlreadyTriggered(
 	ctx context.Context,
 	localizer locale.Localizer,
 	ruleID,
-	environmentNamespace string,
+	environmentId string,
 ) (bool, error) {
 	storage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
-	autoOpsRule, err := storage.GetAutoOpsRule(ctx, ruleID, environmentNamespace)
+	autoOpsRule, err := storage.GetAutoOpsRule(ctx, ruleID, environmentId)
 	if err != nil {
 		if err == v2as.ErrAutoOpsRuleNotFound {
 			s.logger.Warn(
@@ -1449,7 +1449,7 @@ func (s *AutoOpsService) checkIfHasAlreadyTriggered(
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("ruleID", ruleID),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -1465,7 +1465,7 @@ func (s *AutoOpsService) checkIfHasAlreadyTriggered(
 			"Failed to get auto ops rule",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -1483,7 +1483,7 @@ func (s *AutoOpsService) checkIfHasAlreadyTriggered(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("ruleID", ruleID),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		return true, nil
@@ -1498,7 +1498,7 @@ func (s *AutoOpsService) ListOpsCounts(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -1506,7 +1506,7 @@ func (s *AutoOpsService) ListOpsCounts(
 		ctx,
 		req.PageSize,
 		req.Cursor,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		req.FeatureIds,
 		req.AutoOpsRuleIds,
 		localizer,
@@ -1524,13 +1524,13 @@ func (s *AutoOpsService) listOpsCounts(
 	ctx context.Context,
 	pageSize int64,
 	cursor string,
-	environmentNamespace string,
+	environmentId string,
 	featureIDs []string,
 	autoOpsRuleIDs []string,
 	localizer locale.Localizer,
 ) ([]*autoopsproto.OpsCount, string, error) {
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_namespace", "=", environmentNamespace),
+		mysql.NewFilter("environment_id", "=", environmentId),
 	}
 	fIDs := make([]interface{}, 0, len(featureIDs))
 	for _, fID := range featureIDs {
@@ -1575,7 +1575,7 @@ func (s *AutoOpsService) listOpsCounts(
 			"Failed to list opsCounts",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -1590,8 +1590,8 @@ func (s *AutoOpsService) listOpsCounts(
 	return opsCounts, strconv.Itoa(nextCursor), nil
 }
 
-func (s *AutoOpsService) existGoal(ctx context.Context, environmentNamespace string, goalID string) (bool, error) {
-	_, err := s.getGoal(ctx, environmentNamespace, goalID)
+func (s *AutoOpsService) existGoal(ctx context.Context, environmentId string, goalID string) (bool, error) {
+	_, err := s.getGoal(ctx, environmentId, goalID)
 	if err != nil {
 		if err == storage.ErrKeyNotFound {
 			return false, nil
@@ -1603,18 +1603,18 @@ func (s *AutoOpsService) existGoal(ctx context.Context, environmentNamespace str
 
 func (s *AutoOpsService) getGoal(
 	ctx context.Context,
-	environmentNamespace, goalID string,
+	environmentId, goalID string,
 ) (*experimentproto.Goal, error) {
 	resp, err := s.experimentClient.GetGoal(ctx, &experimentproto.GetGoalRequest{
-		Id:                   goalID,
-		EnvironmentNamespace: environmentNamespace,
+		Id:            goalID,
+		EnvironmentId: environmentId,
 	})
 	if err != nil {
 		s.logger.Error(
 			"Failed to get goal",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 				zap.String("goalId", goalID),
 			)...,
 		)
@@ -1626,17 +1626,17 @@ func (s *AutoOpsService) getGoal(
 func (s *AutoOpsService) checkEnvironmentRole(
 	ctx context.Context,
 	requiredRole accountproto.AccountV2_Role_Environment,
-	environmentNamespace string,
+	environmentId string,
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckEnvironmentRole(
 		ctx,
 		requiredRole,
-		environmentNamespace,
+		environmentId,
 		func(email string) (*accountproto.AccountV2, error) {
 			resp, err := s.accountClient.GetAccountV2ByEnvironmentID(ctx, &accountproto.GetAccountV2ByEnvironmentIDRequest{
 				Email:         email,
-				EnvironmentId: environmentNamespace,
+				EnvironmentId: environmentId,
 			})
 			if err != nil {
 				return nil, err
@@ -1650,7 +1650,7 @@ func (s *AutoOpsService) checkEnvironmentRole(
 				"Unauthenticated",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
@@ -1666,7 +1666,7 @@ func (s *AutoOpsService) checkEnvironmentRole(
 				"Permission denied",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
@@ -1682,7 +1682,7 @@ func (s *AutoOpsService) checkEnvironmentRole(
 				"Failed to check role",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{

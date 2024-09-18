@@ -43,10 +43,10 @@ func TestCreateExperiment(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		setup                func(*experimentStorage)
-		input                *domain.Experiment
-		environmentNamespace string
-		expectedErr          error
+		setup         func(*experimentStorage)
+		input         *domain.Experiment
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			setup: func(s *experimentStorage) {
@@ -57,8 +57,8 @@ func TestCreateExperiment(t *testing.T) {
 			input: &domain.Experiment{
 				Experiment: &proto.Experiment{Id: "id-0"},
 			},
-			environmentNamespace: "ns0",
-			expectedErr:          ErrExperimentAlreadyExists,
+			environmentId: "ns0",
+			expectedErr:   ErrExperimentAlreadyExists,
 		},
 		{
 			setup: func(s *experimentStorage) {
@@ -69,8 +69,8 @@ func TestCreateExperiment(t *testing.T) {
 			input: &domain.Experiment{
 				Experiment: &proto.Experiment{Id: "id-1"},
 			},
-			environmentNamespace: "ns0",
-			expectedErr:          nil,
+			environmentId: "ns0",
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -80,7 +80,7 @@ func TestCreateExperiment(t *testing.T) {
 		if p.setup != nil {
 			p.setup(db)
 		}
-		err := db.CreateExperiment(ctx, p.input, p.environmentNamespace)
+		err := db.CreateExperiment(ctx, p.input, p.environmentId)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
@@ -91,10 +91,10 @@ func TestUpdateExperiment(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		setup                func(*experimentStorage)
-		input                *domain.Experiment
-		environmentNamespace string
-		expectedErr          error
+		setup         func(*experimentStorage)
+		input         *domain.Experiment
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			setup: func(s *experimentStorage) {
@@ -107,8 +107,8 @@ func TestUpdateExperiment(t *testing.T) {
 			input: &domain.Experiment{
 				Experiment: &proto.Experiment{Id: "id-0"},
 			},
-			environmentNamespace: "ns",
-			expectedErr:          ErrExperimentUnexpectedAffectedRows,
+			environmentId: "ns",
+			expectedErr:   ErrExperimentUnexpectedAffectedRows,
 		},
 		{
 			setup: func(s *experimentStorage) {
@@ -121,8 +121,8 @@ func TestUpdateExperiment(t *testing.T) {
 			input: &domain.Experiment{
 				Experiment: &proto.Experiment{Id: "id-0"},
 			},
-			environmentNamespace: "ns",
-			expectedErr:          nil,
+			environmentId: "ns",
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -130,7 +130,7 @@ func TestUpdateExperiment(t *testing.T) {
 		if p.setup != nil {
 			p.setup(storage)
 		}
-		err := storage.UpdateExperiment(context.Background(), p.input, p.environmentNamespace)
+		err := storage.UpdateExperiment(context.Background(), p.input, p.environmentId)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
@@ -141,11 +141,11 @@ func TestGetExperiment(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		setup                func(*experimentStorage)
-		input                string
-		environmentNamespace string
-		expected             *domain.Experiment
-		expectedErr          error
+		setup         func(*experimentStorage)
+		input         string
+		environmentId string
+		expected      *domain.Experiment
+		expectedErr   error
 	}{
 		{
 			setup: func(s *experimentStorage) {
@@ -155,10 +155,10 @@ func TestGetExperiment(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			input:                "",
-			environmentNamespace: "ns0",
-			expected:             nil,
-			expectedErr:          ErrExperimentNotFound,
+			input:         "",
+			environmentId: "ns0",
+			expected:      nil,
+			expectedErr:   ErrExperimentNotFound,
 		},
 		{
 			setup: func(s *experimentStorage) {
@@ -168,8 +168,8 @@ func TestGetExperiment(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			input:                "id-0",
-			environmentNamespace: "ns0",
+			input:         "id-0",
+			environmentId: "ns0",
 			expected: &domain.Experiment{
 				Experiment: &proto.Experiment{Id: "id-0"},
 			},
@@ -181,7 +181,7 @@ func TestGetExperiment(t *testing.T) {
 		if p.setup != nil {
 			p.setup(storage)
 		}
-		_, err := storage.GetExperiment(context.Background(), p.input, p.environmentNamespace)
+		_, err := storage.GetExperiment(context.Background(), p.input, p.environmentId)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }

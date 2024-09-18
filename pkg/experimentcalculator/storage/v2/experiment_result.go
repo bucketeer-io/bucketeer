@@ -29,7 +29,7 @@ var (
 )
 
 type ExperimentResultStorage interface {
-	UpdateExperimentResult(ctx context.Context, environmentNamespace string,
+	UpdateExperimentResult(ctx context.Context, environmentId string,
 		experimentResult *domain.ExperimentResult) error
 }
 
@@ -43,7 +43,7 @@ func NewExperimentResultStorage(qe mysql.QueryExecer) ExperimentResultStorage {
 
 func (e experimentResultStorage) UpdateExperimentResult(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 	experimentResult *domain.ExperimentResult,
 ) error {
 	if _, err := e.qe.ExecContext(
@@ -53,7 +53,7 @@ func (e experimentResultStorage) UpdateExperimentResult(
 		experimentResult.ExperimentId,
 		experimentResult.UpdatedAt,
 		mysql.JSONObject{Val: experimentResult},
-		environmentNamespace,
+		environmentId,
 	); err != nil {
 		return err
 	}

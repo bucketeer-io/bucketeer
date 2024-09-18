@@ -44,20 +44,20 @@ func TestCreateNotificationEvent(t *testing.T) {
 		{
 			desc: "success: DomainEvent",
 			input: &domaineventproto.Event{
-				Id:                   "did",
-				EntityType:           domaineventproto.Event_FEATURE,
-				EntityId:             "fid",
-				Type:                 domaineventproto.Event_FEATURE_CREATED,
-				Editor:               &domaineventproto.Editor{Email: "test@test.com"},
-				EnvironmentNamespace: "ns0",
-				IsAdminEvent:         false,
+				Id:            "did",
+				EntityType:    domaineventproto.Event_FEATURE,
+				EntityId:      "fid",
+				Type:          domaineventproto.Event_FEATURE_CREATED,
+				Editor:        &domaineventproto.Editor{Email: "test@test.com"},
+				EnvironmentId: "ns0",
+				IsAdminEvent:  false,
 			},
 			environmentName:    envName,
 			environmentURLCode: envURLCode,
 			expected: &senderproto.NotificationEvent{
-				Id:                   "id",
-				EnvironmentNamespace: "ns0",
-				SourceType:           notificationproto.Subscription_DOMAIN_EVENT_FEATURE,
+				Id:            "id",
+				EnvironmentId: "ns0",
+				SourceType:    notificationproto.Subscription_DOMAIN_EVENT_FEATURE,
 				Notification: &senderproto.Notification{
 					Type: senderproto.Notification_DomainEvent,
 					DomainEventNotification: &senderproto.DomainEventNotification{
@@ -76,20 +76,20 @@ func TestCreateNotificationEvent(t *testing.T) {
 		{
 			desc: "success: Admin DomainEvent",
 			input: &domaineventproto.Event{
-				Id:                   "did",
-				EntityType:           domaineventproto.Event_PROJECT,
-				EntityId:             "pid",
-				Type:                 domaineventproto.Event_PROJECT_CREATED,
-				Editor:               &domaineventproto.Editor{Email: "test@test.com"},
-				EnvironmentNamespace: "",
-				IsAdminEvent:         true,
+				Id:            "did",
+				EntityType:    domaineventproto.Event_PROJECT,
+				EntityId:      "pid",
+				Type:          domaineventproto.Event_PROJECT_CREATED,
+				Editor:        &domaineventproto.Editor{Email: "test@test.com"},
+				EnvironmentId: "",
+				IsAdminEvent:  true,
 			},
 			environmentName:    envName,
 			environmentURLCode: envURLCode,
 			expected: &senderproto.NotificationEvent{
-				Id:                   "id",
-				EnvironmentNamespace: "",
-				SourceType:           notificationproto.Subscription_DOMAIN_EVENT_PROJECT,
+				Id:            "id",
+				EnvironmentId: "",
+				SourceType:    notificationproto.Subscription_DOMAIN_EVENT_PROJECT,
 				Notification: &senderproto.Notification{
 					Type: senderproto.Notification_DomainEvent,
 					DomainEventNotification: &senderproto.DomainEventNotification{
@@ -112,7 +112,7 @@ func TestCreateNotificationEvent(t *testing.T) {
 			actual, err := i.createNotificationEvent(p.input, p.environmentName, p.environmentURLCode, p.input.IsAdminEvent)
 			assert.Equal(t, p.expectedErr, err)
 			if p.expected != nil {
-				assert.Equal(t, p.expected.EnvironmentNamespace, actual.EnvironmentNamespace)
+				assert.Equal(t, p.expected.EnvironmentId, actual.EnvironmentId)
 				assert.Equal(t, p.expected.SourceType, actual.SourceType)
 				assert.Equal(t, p.expected.IsAdminEvent, actual.IsAdminEvent)
 				assert.Equal(t, p.expected.Notification.Type, actual.Notification.Type)

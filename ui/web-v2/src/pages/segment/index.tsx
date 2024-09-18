@@ -133,7 +133,7 @@ export const SegmentIndexPage: FC = memo(() => {
         options && options.inUse != null ? options.inUse === 'true' : null;
       dispatch(
         listSegments({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           pageSize: SEGMENT_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
@@ -174,7 +174,7 @@ export const SegmentIndexPage: FC = memo(() => {
       setIsConfirmDialogOpen(false);
       dispatch(
         deleteSegmentUser({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           id: data.segment.id
         })
       );
@@ -186,7 +186,7 @@ export const SegmentIndexPage: FC = memo(() => {
     (segment: Segment.AsObject) => {
       dispatch(
         bulkDownloadSegmentUsers({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           segmentId: segment.id
         })
       ).then((data) => {
@@ -292,7 +292,7 @@ export const SegmentIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         createSegment({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           name: data.name,
           description: data.description
         })
@@ -311,7 +311,7 @@ export const SegmentIndexPage: FC = memo(() => {
           convertFileToUint8Array(file, (uint8Array) => {
             dispatch(
               bulkUploadSegmentUsers({
-                environmentNamespace: currentEnvironment.id,
+                environmentId: currentEnvironment.id,
                 segmentId: response.payload as string,
                 data: uint8Array
               })
@@ -371,14 +371,14 @@ export const SegmentIndexPage: FC = memo(() => {
         convertFileToUint8Array(file, (uint8Array) => {
           dispatch(
             bulkUploadSegmentUsers({
-              environmentNamespace: currentEnvironment.id,
+              environmentId: currentEnvironment.id,
               segmentId: segmentId,
               data: uint8Array
             })
           ).then(() => {
             dispatch(
               getSegment({
-                environmentNamespace: currentEnvironment.id,
+                environmentId: currentEnvironment.id,
                 id: segmentId
               })
             ).then(handleOnClose);
@@ -389,7 +389,7 @@ export const SegmentIndexPage: FC = memo(() => {
       // Name, description and file
       dispatch(
         updateSegment({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           id: segmentId,
           name: name,
           description: description
@@ -398,7 +398,7 @@ export const SegmentIndexPage: FC = memo(() => {
         if (!file) {
           dispatch(
             getSegment({
-              environmentNamespace: currentEnvironment.id,
+              environmentId: currentEnvironment.id,
               id: segmentId
             })
           ).then(handleOnClose);
@@ -407,14 +407,14 @@ export const SegmentIndexPage: FC = memo(() => {
         convertFileToUint8Array(file, (uint8Array) => {
           dispatch(
             bulkUploadSegmentUsers({
-              environmentNamespace: currentEnvironment.id,
+              environmentId: currentEnvironment.id,
               segmentId: segmentId,
               data: uint8Array
             })
           ).then(() => {
             dispatch(
               getSegment({
-                environmentNamespace: currentEnvironment.id,
+                environmentId: currentEnvironment.id,
                 id: segmentId
               })
             ).then(handleOnClose);
@@ -437,7 +437,7 @@ export const SegmentIndexPage: FC = memo(() => {
     if (isUpdate) {
       dispatch(
         getSegment({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           id: segmentId
         })
       ).then((response) => {
