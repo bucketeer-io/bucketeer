@@ -1,12 +1,11 @@
 {
   "compilerOptions": {
     /* Basic Options */
-    "target": "es5", /* Specify ECMAScript target version. */
+    "target": "es2017", /* Specify ECMAScript target version. */
     "module": "ESNext", /* Specify module code generation. */
     "moduleResolution": "node",
     "lib": [
-      "dom",
-      "es6"
+      "es2023"
     ],
     "declaration": true,
     "allowJs": true,
@@ -29,6 +28,7 @@
   ],
   "exclude": [
     "./src/**/__tests__/*",
+    "./src/**/proto/*",
   ],
   /* Module Resolution Options */
   /* Advanced Options */

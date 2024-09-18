@@ -2,19 +2,19 @@
   "extends": "./tsconfig",
   "compilerOptions": {
     /* Basic Options */
-    "target": "es5", /* Specify ECMAScript target version. */
+    "target": "es2017", /* Specify ECMAScript target version. */
     "module": "ESNext", /* Specify module code generation. */
     "moduleResolution": "node",
     "lib": [
-      "dom",
-      "es6",
+      "es2023",
     ],
     "esModuleInterop": true,
     "outDir": "./__test/",
     "types": [
       "@types/node",
-      "symbol-observable"
     ]
   },
-  "exclude": [],
+  "exclude": [
+    "./src/**/proto/*"
+  ],
 }

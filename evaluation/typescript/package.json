@@ -48,7 +48,6 @@
     "typescript": "^5.5.4",
     "typescript-eslint": "^8.0.0",
     "uglify-es": "3.3.9",
-
     "protoc-gen-js": "^3.21.2",
     "ts-protoc-gen": "0.15.0"
   }

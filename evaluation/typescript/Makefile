@@ -13,7 +13,7 @@ init:
 
 .PHONY: clean
 clean:
-	rm -rf $(CURDIR)/__test $(CURDIR)/__e2e $(CURDIR)/lib
+	rm -rf $(CURDIR)/__test $(CURDIR)/lib
 
 .PHONY: build
 build: clean-build tsc rename-js
@@ -23,8 +23,14 @@ clean-build:
 	rm -rf $(GENFILES_DIR)
 
 .PHONY: tsc
-tsc:
+tsc: clean
 	$(NPM_BIN_DIR)/tsc --project tsconfig.json
+	cp -r $(SRC_DIR)/proto __lib/
+
+.PHONY: build_test
+build_test: clean
+	$(NPM_BIN_DIR)/tsc --project tsconfig.test.json
+	cp -r $(SRC_DIR)/proto __test/
 
 .PHONY: rename-js
 rename-js:
@@ -34,6 +40,7 @@ rename-js:
 test:
 	rm -rf $(CURDIR)/__test
 	$(NPM_BIN_DIR)/babel src --extensions '.ts' --config-file "$(CURDIR)/babel-test.config.js" --out-dir "__test"
+	cp -r $(SRC_DIR)/proto __test/
 	$(NPM_BIN_DIR)/ava --config ava-test.config.mjs
 
 .PHONY: fmt
