@@ -504,7 +504,7 @@
   "reason.rule": "ルール",
   "reason.target": "ターゲット",
   "saveChanges.addShortcut": "ショートカットを追加",
-  "saveChanges.addShortcutTooltip": "よく使う検索フィルターのショートカットを作成できます",
+  "saveChanges.addShortcutTooltip": "検索フィルターのショートカットを作成できます",
   "saveChanges.deleteShortcut": "ショートカットを削除",
   "saveChanges.editShortcut": "ショートカットを編集",
   "saveChanges.saveChangesBeforeExiting.description": "保存されていない検索フィルターの変更があります。保存せずこのページを離れますか?",
