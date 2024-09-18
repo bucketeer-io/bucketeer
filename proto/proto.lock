@@ -7521,6 +7521,21 @@
                 "id": 10,
                 "name": "system_admin",
                 "type": "bool"
+              },
+              {
+                "id": 11,
+                "name": "projects",
+                "type": "int32"
+              },
+              {
+                "id": 12,
+                "name": "environments",
+                "type": "int32"
+              },
+              {
+                "id": 13,
+                "name": "users",
+                "type": "int32"
               }
             ]
           }

@@ -118,16 +118,16 @@ func (s *EnvironmentService) ListOrganizations(
 	}
 	whereParts := []mysql.WherePart{}
 	if req.Disabled != nil {
-		whereParts = append(whereParts, mysql.NewFilter("disabled", "=", req.Disabled.Value))
+		whereParts = append(whereParts, mysql.NewFilter("o.disabled", "=", req.Disabled.Value))
 	}
 	if req.Archived != nil {
-		whereParts = append(whereParts, mysql.NewFilter("archived", "=", req.Archived.Value))
+		whereParts = append(whereParts, mysql.NewFilter("o.archived", "=", req.Archived.Value))
 	}
 	if req.SearchKeyword != "" {
 		whereParts = append(
 			whereParts,
 			mysql.NewSearchQuery(
-				[]string{"id", "name", "url_code"},
+				[]string{"o.id", "o.name", "o.url_code"},
 				req.SearchKeyword,
 			),
 		)
@@ -192,15 +192,15 @@ func (s *EnvironmentService) newOrganizationListOrders(
 	switch orderBy {
 	case environmentproto.ListOrganizationsRequest_DEFAULT,
 		environmentproto.ListOrganizationsRequest_NAME:
-		column = "name"
+		column = "o.name"
 	case environmentproto.ListOrganizationsRequest_URL_CODE:
-		column = "url_code"
+		column = "o.url_code"
 	case environmentproto.ListOrganizationsRequest_ID:
-		column = "id"
+		column = "o.id"
 	case environmentproto.ListOrganizationsRequest_CREATED_AT:
-		column = "created_at"
+		column = "o.created_at"
 	case environmentproto.ListOrganizationsRequest_UPDATED_AT:
-		column = "updated_at"
+		column = "o.updated_at"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
