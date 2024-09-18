@@ -7524,17 +7524,17 @@
               },
               {
                 "id": 11,
-                "name": "projects",
+                "name": "project_count",
                 "type": "int32"
               },
               {
                 "id": 12,
-                "name": "environments",
+                "name": "environment_count",
                 "type": "int32"
               },
               {
                 "id": 13,
-                "name": "users",
+                "name": "user_count",
                 "type": "int32"
               }
             ]
