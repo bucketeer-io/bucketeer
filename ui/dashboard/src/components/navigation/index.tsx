@@ -1,17 +1,12 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import logo from 'assets/logos/logo-white.svg';
 import { useAuth, getCurrentEnvironment } from 'auth';
-import {
-  PAGE_PATH_AUDIT_LOGS,
-  PAGE_PATH_FEATURES,
-  PAGE_PATH_ROOT,
-  PAGE_PATH_USER_SEGMENTS,
-  PAGE_PATH_DEBUGGER,
-  PAGE_PATH_GOALS,
-  PAGE_PATH_EXPERIMENTS
-} from 'constants/routing';
+import * as ROUTING from 'constants/routing';
 import { useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
+import compact from 'lodash/compact';
+import flatMap from 'lodash/flatMap';
+import { getObjectValues } from 'utils/data-type';
 import { cn } from 'utils/style';
 import * as IconSystem from '@icons';
 import Divider from 'components/divider';
@@ -22,15 +17,72 @@ import UserMenu from './user-menu';
 
 const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
   const { t } = useTranslation(['common']);
-  const [isOpenSetting, onOpenSetting, onCloseSetting] = useToggleOpen(false);
+  const { pathname } = useLocation();
   const { consoleAccount } = useAuth();
+
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const environmentUrlCode = currentEnvironment.urlCode;
+  const envUrlCode = currentEnvironment.urlCode;
+
+  const settingSectionPaths = {
+    general: compact([
+      consoleAccount?.isSystemAdmin && {
+        label: t(`organizations`),
+        icon: IconSystem.IconBuilding,
+        href: ROUTING.PAGE_PATH_ORGANIZATIONS
+      },
+      {
+        label: t(`settings`),
+        icon: IconSystem.IconSetting,
+        href: `/${envUrlCode}${ROUTING.PAGE_PATH_SETTINGS}`
+      },
+      {
+        label: t(`projects`),
+        icon: IconSystem.IconFolder,
+        href: `/${envUrlCode}${ROUTING.PAGE_PATH_PROJECTS}`
+      },
+      {
+        label: t(`usage`),
+        icon: IconSystem.IconUsage,
+        href: `/${envUrlCode}${ROUTING.PAGE_PATH_USAGE}`
+      }
+    ]),
+    access: [
+      {
+        label: t(`members`),
+        icon: IconSystem.IconMember,
+        href: `/${envUrlCode}${ROUTING.PAGE_PATH_MEMBERS}`
+      },
+      {
+        label: t(`API-keys`),
+        icon: IconSystem.IconKey,
+        href: `/${envUrlCode}${ROUTING.PAGE_PATH_APIKEYS}`
+      }
+    ],
+    integrations: [
+      {
+        label: `Slack`,
+        icon: IconSystem.IconSlack,
+        href: `/${envUrlCode}${ROUTING.PAGE_PATH_INTEGRATION_SLACK}`
+      },
+      {
+        label: `FCM`,
+        icon: IconSystem.IconFCM,
+        href: `/${envUrlCode}${ROUTING.PAGE_PATH_INTEGRATION_FCM}`
+      }
+    ]
+  };
+
+  const settingPaths = flatMap(getObjectValues(settingSectionPaths)).map(
+    item => item.href
+  );
+  const [isOpenSetting, onOpenSetting, onCloseSetting] = useToggleOpen(
+    settingPaths.includes(pathname)
+  );
 
   return (
     <div className="fixed h-screen w-[248px] bg-primary-500 z-50 py-8 px-6">
       <div className="flex flex-col h-full relative overflow-hidden">
-        <Link to={PAGE_PATH_ROOT}>
+        <Link to={ROUTING.PAGE_PATH_ROOT}>
           <img src={logo} alt="Bucketer" />
         </Link>
 
@@ -51,60 +103,17 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
             <Divider className="my-5 bg-primary-50 opacity-10" />
             <SectionMenu
               title={t('general')}
-              items={[
-                {
-                  label: t(`organizations`),
-                  icon: IconSystem.IconBuilding,
-                  href: '/organizations'
-                },
-                {
-                  label: t(`settings`),
-                  icon: IconSystem.IconSetting,
-                  href: '/settings'
-                },
-                {
-                  label: t(`projects`),
-                  icon: IconSystem.IconFolder,
-                  href: '/projects'
-                },
-                {
-                  label: t(`usage`),
-                  icon: IconSystem.IconUsage,
-                  href: '/usage'
-                }
-              ]}
+              items={settingSectionPaths.general}
             />
             <SectionMenu
               title={t(`access`)}
               className="mt-5"
-              items={[
-                {
-                  label: t(`members`),
-                  icon: IconSystem.IconMember,
-                  href: '/members'
-                },
-                {
-                  label: t(`API-keys`),
-                  icon: IconSystem.IconKey,
-                  href: '/api-keys'
-                }
-              ]}
+              items={settingSectionPaths.access}
             />
             <SectionMenu
               title={t(`integrations`)}
               className="mt-5"
-              items={[
-                {
-                  label: `Slack`,
-                  icon: IconSystem.IconSlack,
-                  href: '/integrations/slack'
-                },
-                {
-                  label: `FCM`,
-                  icon: IconSystem.IconFCM,
-                  href: '/integrations/fcm'
-                }
-              ]}
+              items={settingSectionPaths.integrations}
             />
           </div>
           <div
@@ -124,22 +133,22 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
                 {
                   label: t(`navigation.audit-logs`),
                   icon: IconSystem.IconLogs,
-                  href: `/${environmentUrlCode}${PAGE_PATH_AUDIT_LOGS}`
+                  href: `/${envUrlCode}${ROUTING.PAGE_PATH_AUDIT_LOGS}`
                 },
                 {
                   label: t(`navigation.feature-flags`),
                   icon: IconSystem.IconSwitch,
-                  href: `/${environmentUrlCode}${PAGE_PATH_FEATURES}`
+                  href: `/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`
                 },
                 {
                   label: t(`navigation.user-segment`),
                   icon: IconSystem.IconUser,
-                  href: `/${environmentUrlCode}${PAGE_PATH_USER_SEGMENTS}`
+                  href: `/${envUrlCode}${ROUTING.PAGE_PATH_USER_SEGMENTS}`
                 },
                 {
                   label: t(`navigation.debugger`),
                   icon: IconSystem.IconDebugger,
-                  href: `/${environmentUrlCode}${PAGE_PATH_DEBUGGER}`
+                  href: `/${envUrlCode}${ROUTING.PAGE_PATH_DEBUGGER}`
                 }
               ]}
               onClickNavLink={onClickNavLink}
@@ -151,12 +160,12 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
                 {
                   label: t(`navigation.goals`),
                   icon: IconSystem.IconNote,
-                  href: `/${environmentUrlCode}${PAGE_PATH_GOALS}`
+                  href: `/${envUrlCode}${ROUTING.PAGE_PATH_GOALS}`
                 },
                 {
                   label: t(`navigation.experiments`),
                   icon: IconSystem.IconProton,
-                  href: `/${environmentUrlCode}${PAGE_PATH_EXPERIMENTS}`
+                  href: `/${envUrlCode}${ROUTING.PAGE_PATH_EXPERIMENTS}`
                 }
               ]}
             />

@@ -1,13 +1,3 @@
-export type OrderBy =
-  | 'DEFAULT'
-  | 'ID'
-  | 'CREATED_AT'
-  | 'UPDATED_AT'
-  | 'NAME'
-  | 'URL_CODE';
-
-export type OrderDirection = 'ASC' | 'DESC';
-
 export type AddonSlot = 'left' | 'right';
 
 // Theme

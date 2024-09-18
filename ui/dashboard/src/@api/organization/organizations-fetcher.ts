@@ -1,13 +1,7 @@
 import axiosClient from '@api/axios-client';
-import { OrderBy, OrderDirection, OrganizationCollection } from '@types';
+import { CollectionParams, OrganizationCollection } from '@types';
 
-export interface OrganizationsFetcherParams {
-  pageSize: number;
-  cursor: string;
-  orderBy: OrderBy;
-  orderDirection: OrderDirection;
-  searchKeyword?: string;
-  disabled: boolean;
+export interface OrganizationsFetcherParams extends CollectionParams {
   archived: boolean;
 }
 

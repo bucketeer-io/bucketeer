@@ -23,6 +23,7 @@ export const ProjectsContent = () => {
     cursor: String(0),
     orderBy: 'DEFAULT',
     orderDirection: 'ASC',
+    searchKeyword: '',
     disabled: false,
     organizationIds: []
   };

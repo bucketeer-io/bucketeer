@@ -24,7 +24,8 @@ import {
   PAGE_PATH_ORGANIZATIONS,
   PAGE_PATH_PROJECTS,
   PAGE_PATH_ROOT,
-  PAGE_PATH_ROOT_ALL
+  PAGE_PATH_ROOT_ALL,
+  PAGE_PATH_SETTINGS
 } from 'constants/routing';
 import { i18n } from 'i18n';
 import { getTokenStorage } from 'storage/token';
@@ -34,6 +35,7 @@ import DashboardPage from 'pages/dashboard';
 import NotFoundPage from 'pages/not-found';
 import OrganizationsPage from 'pages/organizations';
 import ProjectsPage from 'pages/projects';
+import SettingsPage from 'pages/settings';
 import SignInPage from 'pages/signin';
 import SignInEmailPage from 'pages/signin/email';
 import SelectOrganizationPage from 'pages/signin/organization';
@@ -104,11 +106,12 @@ export const Root = memo(() => {
               path={'/:envUrlCode?/*'}
               element={<EnvironmentRoot account={consoleAccount} />}
             />
-            <Route
-              path={`${PAGE_PATH_ORGANIZATIONS}`}
-              element={<OrganizationsPage />}
-            />
-            <Route path={`${PAGE_PATH_PROJECTS}`} element={<ProjectsPage />} />
+            {consoleAccount.isSystemAdmin && (
+              <Route
+                path={`${PAGE_PATH_ORGANIZATIONS}`}
+                element={<OrganizationsPage />}
+              />
+            )}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>
@@ -145,6 +148,8 @@ export const EnvironmentRoot = memo(
           </Route>
         )}
         <Route path={`${PAGE_PATH_FEATURES}`} element={<DashboardPage />} />
+        <Route path={`${PAGE_PATH_SETTINGS}`} element={<SettingsPage />} />
+        <Route path={`${PAGE_PATH_PROJECTS}`} element={<ProjectsPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     );

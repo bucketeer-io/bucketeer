@@ -16,6 +16,9 @@ export interface Organization {
   createdAt: string;
   updatedAt: string;
   systemAdmin: boolean;
+  environmentCount: number;
+  projectCount: number;
+  userCount: number;
 }
 
 export interface OrganizationCollection {

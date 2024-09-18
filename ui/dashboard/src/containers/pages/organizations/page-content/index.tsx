@@ -30,6 +30,7 @@ export const OrganizationsContent = () => {
     cursor: String(0),
     orderBy: 'DEFAULT',
     orderDirection: 'ASC',
+    searchKeyword: '',
     disabled: false,
     archived: false
   };
@@ -49,15 +50,15 @@ export const OrganizationsContent = () => {
         onClick: () => navigate('/organizations/1')
       },
       {
-        text: '-',
+        text: organization.projectCount,
         type: 'text'
       },
       {
-        text: '-',
+        text: organization.environmentCount,
         type: 'text'
       },
       {
-        text: '-',
+        text: organization.userCount,
         type: 'text'
       },
       {
