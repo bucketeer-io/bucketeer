@@ -552,8 +552,6 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       }
     }, [options]);
 
-    console.log(options);
-
     useEffect(() => {
       if (filteredSearchFiltersList.length > 0) {
         let updatedFiltersList = [];
@@ -567,6 +565,9 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
             ...s,
             selected: i + 1 === filteredSearchFiltersList.length
           }));
+          setSelectedSearchFilter(
+            updatedFiltersList[updatedFiltersList.length - 1]
+          );
         } else {
           // Save the changes
           const oldSelectedSearchFilter = searchFiltersList.find(
@@ -728,7 +729,6 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
 
     const handleFormSubmit = useCallback(
       async (data) => {
-        setSelectedSearchFilter(null);
         setOpen(false);
 
         const query = stringifySearchParams({
@@ -771,6 +771,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     const handleDeleteSearchFilter = (id: string) => {
       if (id === selectedSearchFilter?.id || searchFiltersList.length === 1) {
         onChange(defaultOptions);
+        setSelectedSearchFilter(null);
       }
 
       dispatch(
@@ -808,7 +809,6 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
 
     const handleClose = () => {
       setOpen(false);
-      setSelectedSearchFilter(null);
     };
 
     const handleConfirm = (confirmType: ConfirmType) => {
@@ -843,9 +843,6 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     };
 
     const handleNavigation = (nextLocation) => {
-      console.log({
-        nextLocation
-      });
       if (
         location.pathname !== nextLocation.pathname ||
         (location.pathname === nextLocation.pathname && !nextLocation.search) // If the user is trying to go to the same page by clicking on the sidebar menu
@@ -960,7 +957,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                 </Popover.Panel>
               </Popover>
             ))}
-            {(searchFiltersList.length > 0 || unsavedChanges) && (
+            {unsavedChanges && (
               <div className="flex space-x-1">
                 <button
                   className="bg-gray-50 p-[6px] rounded hover:bg-purple-100 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
