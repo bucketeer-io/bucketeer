@@ -1,0 +1,29 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "types": ["node"],
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "target": "es2017",
+    "module": "esnext",
+    "lib": ["es2023"],
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "noFallthroughCasesInSwitch": true,
+    "emitDecoratorMetadata": true,
+    "allowUnreachableCode": false,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "preserveConstEnums": true,
+    "pretty": true
+  },
+  "include": ["./src/**/*.*"],
+  "exclude": ["node_modules", "tmp", "**/*.spec.ts", "**/*.spec.tsx"]
+}

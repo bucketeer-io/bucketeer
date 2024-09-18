@@ -1,0 +1,47 @@
+{
+  "name": "@bucketeer/node-evaluation",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "test",
+    "build": "tsc",
+    "lint": "yarn tsc:strict && yarn eslint && yarn prettier",
+    "lintfix": "yarn eslintfix && yarn prettierfix",
+    "tsc:strict": "tsc --project tsconfig.strict.json",
+    "eslint": "eslint ./src/**/*.{js,ts}",
+    "eslintfix": "eslint --fix ./src/**/*.{js,ts}",
+    "prettier": "prettier . --check",
+    "prettierfix": "prettier . --write"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "google-protobuf": "3.21.2",
+    "prop-types": "^15.6.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.10.0",
+    "@formatjs/cli": "4.2.33",
+    "@types/eslint": "^8.56.10",
+    "@types/eslint__js": "^8.42.3",
+    "@types/node": "^22.5.2",
+    "@types/react-dom": "17.0.2",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "autoprefixer": "9.8.8",
+    "cypress": "6.6.0",
+    "dotenv": "8.2.0",
+    "eslint": "^9.10.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-cypress": "2.11.2",
+    "globals": "^15.9.0",
+    "prettier": "^3.3.2",
+    "protoc-gen-js": "^3.21.2",
+    "ts-node": "9.1.1",
+    "ts-protoc-gen": "^0.15.0",
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.5.0"
+  }
+}

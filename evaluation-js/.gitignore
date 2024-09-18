@@ -1,0 +1,11 @@
+.DS_Store
+
+node_modules
+yarn-error.log
+
+__dist
+__lib
+__test
+__e2e
+dist
+.vscode/launch.json
