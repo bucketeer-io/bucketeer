@@ -3344,13 +3344,13 @@ definitions:
         format: int64
       systemAdmin:
         type: boolean
-      projects:
+      projectCount:
         type: integer
         format: int32
-      environments:
+      environmentCount:
         type: integer
         format: int32
-      users:
+      userCount:
         type: integer
         format: int32
   environmentArchiveEnvironmentV2Command:

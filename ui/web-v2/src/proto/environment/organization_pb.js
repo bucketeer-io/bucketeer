@@ -94,9 +94,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         createdAt: jspb.Message.getFieldWithDefault(msg, 8, 0),
         updatedAt: jspb.Message.getFieldWithDefault(msg, 9, 0),
         systemAdmin: jspb.Message.getBooleanFieldWithDefault(msg, 10, false),
-        projects: jspb.Message.getFieldWithDefault(msg, 11, 0),
-        environments: jspb.Message.getFieldWithDefault(msg, 12, 0),
-        users: jspb.Message.getFieldWithDefault(msg, 13, 0)
+        projectCount: jspb.Message.getFieldWithDefault(msg, 11, 0),
+        environmentCount: jspb.Message.getFieldWithDefault(msg, 12, 0),
+        userCount: jspb.Message.getFieldWithDefault(msg, 13, 0)
       };
 
     if (includeInstance) {
@@ -177,15 +177,15 @@ proto.bucketeer.environment.Organization.deserializeBinaryFromReader =
           break;
         case 11:
           var value = /** @type {number} */ (reader.readInt32());
-          msg.setProjects(value);
+          msg.setProjectCount(value);
           break;
         case 12:
           var value = /** @type {number} */ (reader.readInt32());
-          msg.setEnvironments(value);
+          msg.setEnvironmentCount(value);
           break;
         case 13:
           var value = /** @type {number} */ (reader.readInt32());
-          msg.setUsers(value);
+          msg.setUserCount(value);
           break;
         default:
           reader.skipField();
@@ -261,15 +261,15 @@ proto.bucketeer.environment.Organization.serializeBinaryToWriter = function (
   if (f) {
     writer.writeBool(10, f);
   }
-  f = message.getProjects();
+  f = message.getProjectCount();
   if (f !== 0) {
     writer.writeInt32(11, f);
   }
-  f = message.getEnvironments();
+  f = message.getEnvironmentCount();
   if (f !== 0) {
     writer.writeInt32(12, f);
   }
-  f = message.getUsers();
+  f = message.getUserCount();
   if (f !== 0) {
     writer.writeInt32(13, f);
   }
@@ -462,28 +462,31 @@ proto.bucketeer.environment.Organization.prototype.setSystemAdmin = function (
 };
 
 /**
- * optional int32 projects = 11;
+ * optional int32 project_count = 11;
  * @return {number}
  */
-proto.bucketeer.environment.Organization.prototype.getProjects = function () {
-  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 11, 0));
-};
+proto.bucketeer.environment.Organization.prototype.getProjectCount =
+  function () {
+    return /** @type {number} */ (
+      jspb.Message.getFieldWithDefault(this, 11, 0)
+    );
+  };
 
 /**
  * @param {number} value
  * @return {!proto.bucketeer.environment.Organization} returns this
  */
-proto.bucketeer.environment.Organization.prototype.setProjects = function (
+proto.bucketeer.environment.Organization.prototype.setProjectCount = function (
   value
 ) {
   return jspb.Message.setProto3IntField(this, 11, value);
 };
 
 /**
- * optional int32 environments = 12;
+ * optional int32 environment_count = 12;
  * @return {number}
  */
-proto.bucketeer.environment.Organization.prototype.getEnvironments =
+proto.bucketeer.environment.Organization.prototype.getEnvironmentCount =
   function () {
     return /** @type {number} */ (
       jspb.Message.getFieldWithDefault(this, 12, 0)
@@ -494,17 +497,16 @@ proto.bucketeer.environment.Organization.prototype.getEnvironments =
  * @param {number} value
  * @return {!proto.bucketeer.environment.Organization} returns this
  */
-proto.bucketeer.environment.Organization.prototype.setEnvironments = function (
-  value
-) {
-  return jspb.Message.setProto3IntField(this, 12, value);
-};
+proto.bucketeer.environment.Organization.prototype.setEnvironmentCount =
+  function (value) {
+    return jspb.Message.setProto3IntField(this, 12, value);
+  };
 
 /**
- * optional int32 users = 13;
+ * optional int32 user_count = 13;
  * @return {number}
  */
-proto.bucketeer.environment.Organization.prototype.getUsers = function () {
+proto.bucketeer.environment.Organization.prototype.getUserCount = function () {
   return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 13, 0));
 };
 
@@ -512,7 +514,9 @@ proto.bucketeer.environment.Organization.prototype.getUsers = function () {
  * @param {number} value
  * @return {!proto.bucketeer.environment.Organization} returns this
  */
-proto.bucketeer.environment.Organization.prototype.setUsers = function (value) {
+proto.bucketeer.environment.Organization.prototype.setUserCount = function (
+  value
+) {
   return jspb.Message.setProto3IntField(this, 13, value);
 };
 
