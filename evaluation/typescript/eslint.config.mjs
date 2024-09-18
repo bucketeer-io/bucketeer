@@ -1,24 +1,27 @@
-import eslintConfigPrettier from 'eslint-config-prettier';
+import tsEslint from 'typescript-eslint';
 import tsParser from '@typescript-eslint/parser';
-import tseslint from 'typescript-eslint';
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 
-/** @type {import("eslint").Linter.FlatConfig[]} */
 export default [
   {
-    files: ['src/**/*.ts', 'src/**/*.tsx', 'index.ts']
-  },
-  {
-    ignores: ['src/google/', 'src/protoc-gen-openapiv2/', 'src/proto/']
-  },
-  ...tseslint.configs.recommended,
-  {
+    files: ['src/**/*.ts', 'test/**/*.ts'],
+    ignores: ['**/*.d.ts'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: './tsconfig.json',
-        tsconfigRootDir: __dirname,
-      }
-    }
+        sourceType: 'module',
+        project: [`tsconfig.json`, `tsconfig.test.json`],
+      },
+      globals: {
+        node: true,
+      },
+    },
+    plugins: {
+      ...tsEslint.configs.recommended,
+      eslintPluginPrettierRecommended,
+    },
+    rules: {
+      quotes: ['error', 'single', { avoidEscape: true }],
+    },
   },
-  eslintConfigPrettier
 ];

@@ -16,8 +16,12 @@ class StrategyEvaluator {
       case Strategy.Type.FIXED:
         return this.findVariation(strategy.getFixedStrategy()?.getVariation() || '', variations);
       case Strategy.Type.ROLLOUT:
-        const variationID = this.rollout(strategy.getRolloutStrategy(), userID, featureID, samplingSeed);
-        return this.findVariation(variationID, variations);
+        const rolloutStrategy = strategy.getRolloutStrategy()
+        if (rolloutStrategy !== undefined) {
+          const variationID = this.rollout(rolloutStrategy, userID, featureID, samplingSeed);
+          return this.findVariation(variationID, variations);
+        }
+        throw new Error('Missing rollout strategy');
       default:
         throw new Error('Unsupported strategy');
     }

@@ -52,7 +52,7 @@ class ClauseEvaluator {
           return false
       }
     } catch (error) {
-      console.error('Error evaluating clause:', error.message);
+      console.error('Error evaluating clause:', error);
       throw error
     }
   }

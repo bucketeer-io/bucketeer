@@ -1,25 +1,26 @@
-import { Clause } from "./proto/feature/clause_pb";
-import { Evaluation, UserEvaluations } from "./proto/feature/evaluation_pb";
-import { Feature } from "./proto/feature/feature_pb";
-import { Reason } from "./proto/feature/reason_pb";
-import { SegmentUser } from "./proto/feature/segment_pb";
-import { Variation } from "./proto/feature/variation_pb";
-import { User } from "./proto/user/user/user_pb";
-import { RuleEvaluator } from "./ruleEvaluator";
-import { StrategyEvaluator } from "./strategyEvaluator";
-import { NewUserEvaluations, UserEvaluationsID } from "./userEvaluation";
+import { Clause } from './proto/feature/clause_pb';
+import { Evaluation, UserEvaluations } from './proto/feature/evaluation_pb';
+import { Feature } from './proto/feature/feature_pb';
+import { Reason } from './proto/feature/reason_pb';
+import { SegmentUser } from './proto/feature/segment_pb';
+import { Variation } from './proto/feature/variation_pb';
+import { User } from './proto/user/user/user_pb';
+import { RuleEvaluator } from './ruleEvaluator';
+import { StrategyEvaluator } from './strategyEvaluator';
+import { NewUserEvaluations, UserEvaluationsID } from './userEvaluation';
 
 const SECONDS_TO_RE_EVALUATE_ALL = 30 * 24 * 60 * 60; // 30 days
 const SECONDS_FOR_ADJUSTMENT = 10; // 10 seconds
 
 const EVALUATOR_ERRORS = {
-  DefaultStrategyNotFound: new Error("evaluator: default strategy not found"),
-  FeatureNotFound: new Error("evaluator: feature not found"),
+  StrategyNotFound: new Error('evaluator: strategy not found'),
+  DefaultStrategyNotFound: new Error('evaluator: default strategy not found'),
+  FeatureNotFound: new Error('evaluator: feature not found'),
   PrerequisiteVariationNotFound: new Error(
-    "evaluator: prerequisite variation not found"
+    'evaluator: prerequisite variation not found'
   ),
-  VariationNotFound: new Error("evaluator: variation not found"),
-  UnsupportedStrategy: new Error("evaluator: unsupported strategy"),
+  VariationNotFound: new Error('evaluator: variation not found'),
+  UnsupportedStrategy: new Error('evaluator: unsupported strategy'),
 };
 
 function EvaluationID(
@@ -57,7 +58,7 @@ class Evaluator {
     userAttributesUpdated: boolean,
     targetTag: string
   ): UserEvaluations {
-    if (prevUEID === "") {
+    if (prevUEID === '') {
       return this.evaluate(features, user, mapSegmentUsers, true, targetTag);
     }
 
@@ -122,7 +123,7 @@ class Evaluator {
       // it will return only the evaluations of flags that match the tag configured on the dashboard.
       // When empty, it will return all the evaluations of the flags in the environment.
       if (
-        targetTag !== "" &&
+        targetTag !== '' &&
         !this.tagExist(feature.getTagsList(), targetTag)
       ) {
         continue;
@@ -156,7 +157,7 @@ class Evaluator {
       evaluations.push(evaluation);
     }
 
-    const id = UserEvaluationsID(user.getId(), user.getDataMap(), features);
+    const id = UserEvaluationsID(user.getId(), arrayToRecord(user.getDataMap().toArray()), features);
     const userEvaluations = NewUserEvaluations(
       id,
       evaluations,
@@ -206,7 +207,7 @@ class Evaluator {
         throw EVALUATOR_ERRORS.PrerequisiteVariationNotFound;
       }
       if (pf.getVariationId() !== variation) {
-        if (feature.getOffVariation() != "") {
+        if (feature.getOffVariation() != '') {
           const variation = this.findVariation(
             feature.getOffVariation(),
             feature.getVariationsList()
@@ -218,7 +219,7 @@ class Evaluator {
       }
     }
     // It doesn't assign the user in case of the feature is disabled and OffVariation is not set
-    if (!feature.getEnabled() && feature.getOffVariation() != "") {
+    if (!feature.getEnabled() && feature.getOffVariation() != '') {
       const variation = this.findVariation(
         feature.getOffVariation(),
         feature.getVariationsList()
@@ -250,8 +251,12 @@ class Evaluator {
       flagVariations
     );
     if (rule) {
+      const strategy = rule.getStrategy();
+      if (strategy == undefined) {
+        throw EVALUATOR_ERRORS.StrategyNotFound;
+      }
       const variation = this.strategyEvaluator.evaluate(
-        rule.getStrategy(),
+        strategy,
         user.getId(),
         feature.getVariationsList(),
         feature.getId(),
@@ -264,12 +269,13 @@ class Evaluator {
     }
 
     // use default strategy
-    if (!feature.getDefaultStrategy()) {
+    const defaultStrategy = feature.getDefaultStrategy()
+    if (defaultStrategy == undefined) {
       throw EVALUATOR_ERRORS.DefaultStrategyNotFound;
     }
 
     const variation = this.strategyEvaluator.evaluate(
-      feature.getDefaultStrategy(),
+      defaultStrategy,
       user.getId(),
       feature.getVariationsList(),
       feature.getId(),
@@ -315,7 +321,7 @@ function featureIDsDependsOn(feature: Feature): Array<string> {
   const ids: Array<string> = [];
 
   // Iterate over prerequisites and add their FeatureId
-  this.prerequisitesList.forEach((p) => {
+  feature.getPrerequisitesList().forEach((p) => {
     ids.push(p.getFeatureId());
   });
 
@@ -334,13 +340,13 @@ function featureIDsDependsOn(feature: Feature): Array<string> {
 // Error types
 class ErrCycleExists extends Error {
   constructor() {
-    super("Cycle exists in the graph");
+    super('Cycle exists in the graph');
   }
 }
 
 class ErrFeatureNotFound extends Error {
   constructor() {
-    super("Feature not found");
+    super('Feature not found');
   }
 }
 
@@ -408,8 +414,9 @@ function getFeaturesDependedOnTargets(
     // Get dependent features recursively
     const featureDependencies = featureIDsDependsOn(f);
     featureDependencies.forEach((fid) => {
-      if (all[fid]) {
-        dfs(all[fid]);
+      const target = all.get(fid)
+      if (target !== undefined) {
+        dfs(target);
       }
     });
   };
@@ -441,7 +448,7 @@ function getFeaturesDependsOnTargets(
 
     const featureDependencies = featureIDsDependsOn(f);
     for (const fid of featureDependencies) {
-      const dependentFeature = all[fid];
+      const dependentFeature = all.get(fid);
       if (dependentFeature && dfs(dependentFeature)) {
         // If the feature depends on one of the target features, add it to evals
         evals[f.getId()] = f;
@@ -457,6 +464,13 @@ function getFeaturesDependsOnTargets(
   });
 
   return evals;
+}
+
+function arrayToRecord(arr: Array<[string, string]>): Record<string, string> {
+  return arr.reduce((acc, [key, value]) => {
+    acc[key] = value;
+    return acc;
+  }, {} as Record<string, string>);
 }
 
 export { Evaluator };

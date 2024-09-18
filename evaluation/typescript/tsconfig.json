@@ -1,29 +1,36 @@
 {
-  "compileOnSave": false,
   "compilerOptions": {
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "types": ["node"],
-    "sourceMap": true,
-    "declaration": false,
+    /* Basic Options */
+    "target": "es5", /* Specify ECMAScript target version. */
+    "module": "ESNext", /* Specify module code generation. */
     "moduleResolution": "node",
-    "target": "es2017",
-    "module": "esnext",
-    "lib": ["es2023"],
-    "resolveJsonModule": true,
+    "lib": [
+      "dom",
+      "es6"
+    ],
+    "declaration": true,
     "allowJs": true,
-    "skipLibCheck": true,
-    "skipDefaultLibCheck": true,
-    "esModuleInterop": true,
+    /* Strict Type-Checking Options */
+    "strict": true,
+    /* Additional Checks */
+    // "noUnusedLocals": true, /* Report errors on unused locals. */
     "allowSyntheticDefaultImports": true,
-    "noFallthroughCasesInSwitch": true,
-    "emitDecoratorMetadata": true,
-    "allowUnreachableCode": false,
-    "experimentalDecorators": true,
-    "importHelpers": true,
     "preserveConstEnums": true,
-    "pretty": true
+    "noUnusedParameters": true, /* Report errors on unused parameters. */
+    "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
+    "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
+    "outDir": "./__lib/",
+    "types": [
+      "node"
+    ]
   },
-  "include": ["./src/**/*.*"],
-  "exclude": ["node_modules", "tmp", "**/*.spec.ts", "**/*.spec.tsx"]
+  "include": [
+    "./src/**/*",
+  ],
+  "exclude": [
+    "./src/**/__tests__/*",
+  ],
+  /* Module Resolution Options */
+  /* Advanced Options */
+  "pretty": true,
 }

@@ -1,0 +1,7 @@
+{
+  "extends": ["tslint-config-fluct/config/basic.json"],
+
+  "rules": {
+    "no-implicit-dependencies": [true, "dev"]
+  }
+}

@@ -1,24 +1,76 @@
-.PHONY: all
-all: install lint copy_proto_generated_code build
+NPM_BIN_DIR := $(CURDIR)/node_modules/.bin
+GENFILES_DIR := $(CURDIR)/__lib
 
-####################################
-# Yarn
-####################################
+GIT_REVISION := $(shell git rev-parse --verify HEAD)
 
-.PHONY: install
-install:
-	yarn install
+export PACKAGE_NAME := $(shell node -p "require('./package.json').name")
+export CURRENT_VERSION := $(shell npm view $(PACKAGE_NAME) version 2>/dev/null || echo 0.0.0)
+export LOCAL_VERSION := $(shell node -p "require('./package.json').version")
+
+.PHONY: init
+init:
+	yarn
+
+.PHONY: clean
+clean:
+	rm -rf $(CURDIR)/__test $(CURDIR)/__e2e $(CURDIR)/lib
 
 .PHONY: build
-build:
-	yarn build
+build: clean-build tsc rename-js
+
+.PHONY: clean-build
+clean-build:
+	rm -rf $(GENFILES_DIR)
+
+.PHONY: tsc
+tsc:
+	$(NPM_BIN_DIR)/tsc --project tsconfig.json
+
+.PHONY: rename-js
+rename-js:
+	$(NPM_BIN_DIR)/rename '$(GENFILES_DIR)/**/*.js' '{{f}}.mjs'
+
+.PHONY: test
+test:
+	rm -rf $(CURDIR)/__test
+	$(NPM_BIN_DIR)/babel src --extensions '.ts' --config-file "$(CURDIR)/babel-test.config.js" --out-dir "__test"
+	$(NPM_BIN_DIR)/ava --config ava-test.config.mjs
+
+.PHONY: fmt
+fmt: tsfmt
+
+.PHONY: tsfmt
+tsfmt:
+	$(NPM_BIN_DIR)/prettier --write '$(CURDIR)/src/**/*.ts'
 
 .PHONY: lint
 lint:
-	yarn lint
+	$(NPM_BIN_DIR)/eslint
+
+.PHONY: copy-genfiles
+copy-genfiles:
+	@rm -rf $(CURDIR)/lib
+	$(NPM_BIN_DIR)/cpx '$(GENFILES_DIR)/**/*.{mjs,d.ts}' $(CURDIR)/lib
+	$(NPM_BIN_DIR)/cpx '$(GENFILES_DIR)/bucketeer.*' $(CURDIR)/lib
+	@find $(CURDIR)/lib -type f -exec chmod 644 {} +
+	$(NPM_BIN_DIR)/rename '$(CURDIR)/lib/**/*.js' '{{f}}.mjs'
+	$(NPM_BIN_DIR)/babel lib --extensions '.mjs' --config-file "$(CURDIR)/babel.config.js" --out-dir "lib"
+
+.PHONY: publish-dry
+publish-dry: copy-genfiles
+	npm publish --dry-run
+
+.PHONY: publish
+publish: copy-genfiles
+ifeq ($(shell $(NPM_BIN_DIR)/semver -r ">$(CURRENT_VERSION)" $(LOCAL_VERSION) ),$(LOCAL_VERSION))
+	npm publish --access public
+else
+	@echo "$(LOCAL_VERSION) exists. skip publish."
+endif
+
 
 ####################################
-# Generate proto definition files
+# Copy proto definition files
 ####################################
 
 ROOT_DIR := $(CURDIR)/..

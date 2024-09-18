@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig",
+  "compilerOptions": {
+    /* Basic Options */
+    "target": "es5", /* Specify ECMAScript target version. */
+    "module": "ESNext", /* Specify module code generation. */
+    "moduleResolution": "node",
+    "lib": [
+      "dom",
+      "es6",
+    ],
+    "esModuleInterop": true,
+    "outDir": "./__test/",
+    "types": [
+      "@types/node",
+      "symbol-observable"
+    ]
+  },
+  "exclude": [],
+}

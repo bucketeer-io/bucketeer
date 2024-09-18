@@ -1,6 +1,6 @@
-import { Evaluation, UserEvaluations } from "./proto/feature/evaluation_pb";
-import { Feature } from "./proto/feature/feature_pb";
-import * as crypto from "crypto";
+import { Evaluation, UserEvaluations } from './proto/feature/evaluation_pb';
+import { Feature } from './proto/feature/feature_pb';
+import * as crypto from 'crypto';
 //
 function NewUserEvaluations(
   id: string,
@@ -31,7 +31,7 @@ function GenerateFeaturesID(features: Feature[]): string {
   features.sort((a, b) => a.getId().localeCompare(b.getId()));
 
   // Create a new hash (fnv64a replacement)
-  const hash = crypto.createHash("sha256");
+  const hash = crypto.createHash('sha256');
 
   // Append feature details to the hash
   features.forEach((feature) => {
@@ -39,7 +39,7 @@ function GenerateFeaturesID(features: Feature[]): string {
   });
 
   // Return the hashed value as a string
-  return BigInt("0x" + hash.digest("hex")).toString(10);
+  return BigInt('0x' + hash.digest('hex')).toString(10);
 }
 
 function UserEvaluationsID(
@@ -51,11 +51,11 @@ function UserEvaluationsID(
   features.sort((a, b) => a.getId().localeCompare(b.getId()));
 
   // Use Node.js crypto module to generate a 64-bit hash (as Go's fnv64a hash)
-  const hash = crypto.createHash("sha256"); // Using sha256 as a more common example
+  const hash = crypto.createHash('sha256'); // Using sha256 as a more common example
   hash.update(userID);
 
   // Sort userMetadata keys
-  const keys = this.sortMapKeys(userMetadata);
+  const keys = sortMapKeys(userMetadata);
   keys.forEach((key) => {
     hash.update(`${key}:${userMetadata[key]}`);
   });
@@ -66,7 +66,7 @@ function UserEvaluationsID(
   });
 
   // Return the hashed value
-  return BigInt("0x" + hash.digest("hex")).toString(10);
+  return BigInt('0x' + hash.digest('hex')).toString(10);
 }
 
 export {

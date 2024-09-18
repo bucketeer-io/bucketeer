@@ -1,8 +1,8 @@
-import { Rule } from "./proto/feature/rule_pb";
-import { Clause } from "./proto/feature/clause_pb";
-import { User } from "./proto/user/user/user_pb";
-import { SegmentUser } from "./proto/feature/segment_pb";
-import { ClauseEvaluator } from "./clauseEvaluator";
+import { Rule } from './proto/feature/rule_pb';
+import { Clause } from './proto/feature/clause_pb';
+import { User } from './proto/user/user/user_pb';
+import { SegmentUser } from './proto/feature/segment_pb';
+import { ClauseEvaluator } from './clauseEvaluator';
 //
 class RuleEvaluator {
   private clauseEvaluator: ClauseEvaluator;
@@ -58,14 +58,14 @@ class RuleEvaluator {
     flagVariations: { [key: string]: string }
   ): boolean {
     let targetAttr: string | undefined;
-    if (clause.getAttribute() === "id") {
+    if (clause.getAttribute() === 'id') {
       targetAttr = user.getId();
     } else {
-      targetAttr = user.getDataMap()[clause.getAttribute()];
+      targetAttr = user.getDataMap().get(clause.getAttribute());
     }
 
     return this.clauseEvaluator.evaluate(
-      targetAttr || "", // Handling the case where targetAttr is undefined
+      targetAttr || '', // Handling the case where targetAttr is undefined
       clause,
       user.getId(),
       segmentUsers,
