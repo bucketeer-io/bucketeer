@@ -3,7 +3,7 @@ import { Clause } from "./proto/feature/clause_pb";
 import { User } from "./proto/user/user/user_pb";
 import { SegmentUser } from "./proto/feature/segment_pb";
 import { ClauseEvaluator } from "./clauseEvaluator";
-
+//
 class RuleEvaluator {
   private clauseEvaluator: ClauseEvaluator;
 
@@ -61,7 +61,7 @@ class RuleEvaluator {
     if (clause.getAttribute() === "id") {
       targetAttr = user.getId();
     } else {
-      targetAttr = user.getDataMap().get(clause.getAttribute()); // Assuming user data is stored in a map
+      targetAttr = user.getDataMap()[clause.getAttribute()];
     }
 
     return this.clauseEvaluator.evaluate(

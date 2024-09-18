@@ -3,7 +3,7 @@ import { SegmentUser } from './proto/feature/segment_pb';
 import { SegmentEvaluator } from './segmentEvaluator';
 import { DependencyEvaluator } from './dependencyEvaluator';
 import * as semver from 'semver';
-
+//
 class ClauseEvaluator {
   private segmentEvaluator: SegmentEvaluator;
   private dependencyEvaluator: DependencyEvaluator;

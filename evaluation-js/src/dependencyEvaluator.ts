@@ -1,3 +1,4 @@
+//
 class DependencyEvaluator {
   evaluate(
     featureID: string,

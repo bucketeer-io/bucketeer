@@ -9,7 +9,7 @@ import { RuleEvaluator } from "./ruleEvaluator";
 import { StrategyEvaluator } from "./strategyEvaluator";
 import { NewUserEvaluations, UserEvaluationsID } from "./userEvaluation";
 
-const SECONDS_TO_REEVALUATE_ALL = 30 * 24 * 60 * 60; // 30 days
+const SECONDS_TO_RE_EVALUATE_ALL = 30 * 24 * 60 * 60; // 30 days
 const SECONDS_FOR_ADJUSTMENT = 10; // 10 seconds
 
 const EVALUATOR_ERRORS = {
@@ -62,7 +62,7 @@ class Evaluator {
     }
 
     const now = Math.floor(Date.now() / 1000);
-    if (evaluatedAt < now - SECONDS_TO_REEVALUATE_ALL) {
+    if (evaluatedAt < now - SECONDS_TO_RE_EVALUATE_ALL) {
       return this.evaluate(features, user, mapSegmentUsers, true, targetTag);
     }
 
@@ -73,6 +73,8 @@ class Evaluator {
         (userAttributesUpdated && feature.getRulesList().length > 0)
     );
 
+    // If the UserEvaluationsID has changed, but both User Attributes and Feature Flags have not been updated,
+	  // it is considered unusual and a force update should be performed.
     if (updatedFeatures.length === 0) {
       return this.evaluate(features, user, mapSegmentUsers, true, targetTag);
     }
@@ -89,15 +91,17 @@ class Evaluator {
     targetTag: string
   ): UserEvaluations {
     const flagVariations: { [key: string]: string } = {};
+    // fs need to be sorted in order from upstream to downstream.
     const sortedFeatures = topologicalSort(features);
 
     const evaluations: Evaluation[] = [];
     const archivedIDs: string[] = [];
 
     for (const feature of sortedFeatures) {
-      if (feature.archived) {
+      if (feature.getArchived()) {
+        // To keep response size small, the feature flags archived long time ago are excluded.
         if (!this.isArchivedBeforeLastThirtyDays(feature)) {
-          archivedIDs.push(feature.id);
+          archivedIDs.push(feature.getId());
         }
         continue;
       }
@@ -112,9 +116,11 @@ class Evaluator {
         segmentUsers,
         flagVariations
       );
-
+      // VariationId is used to check if prerequisite flag's result is what user expects it to be.
       flagVariations[feature.getId()] = variation.getId();
-
+      // When the tag is set in the request,
+      // it will return only the evaluations of flags that match the tag configured on the dashboard.
+      // When empty, it will return all the evaluations of the flags in the environment.
       if (
         targetTag !== "" &&
         !this.tagExist(feature.getTagsList(), targetTag)
@@ -135,7 +141,16 @@ class Evaluator {
       evaluation.setVariationId(variation.getId());
       evaluation.setVariationName(variation.getName());
       evaluation.setVariationValue(variation.getValue());
-      evaluation.setVariation(variation);
+      // Deprecated
+			// FIXME: Remove the Variation when is no longer being used.
+			// For security reasons, we should remove the variation description.
+			// We copy the variation object to avoid race conditions when removing
+			// the description directly from the `variation`
+      const copyVariation = new Variation()
+      copyVariation.setId(variation.getId())
+      copyVariation.setName(variation.getName())
+      copyVariation.setValue(variation.getValue())
+      evaluation.setVariation(copyVariation);
       evaluation.setReason(reason);
 
       evaluations.push(evaluation);
@@ -155,12 +170,16 @@ class Evaluator {
     return tags.includes(target);
   }
 
+  /*
+  IsArchivedBeforeLastThirtyDays returns a bool value
+  indicating whether the feature flag was archived within the last thirty days.
+  */
   private isArchivedBeforeLastThirtyDays(feature: Feature): boolean {
     if (!feature.getArchived()) {
       return false;
     }
     const now = Math.floor(Date.now() / 1000);
-    return feature.getUpdatedAt() < now - SECONDS_TO_REEVALUATE_ALL;
+    return feature.getUpdatedAt() < now - SECONDS_TO_RE_EVALUATE_ALL;
   }
 
   private ListSegmentIDs(feature: Feature): string[] {
@@ -187,7 +206,7 @@ class Evaluator {
         throw EVALUATOR_ERRORS.PrerequisiteVariationNotFound;
       }
       if (pf.getVariationId() !== variation) {
-        if (feature.getOffVariation()) {
+        if (feature.getOffVariation() != "") {
           const variation = this.findVariation(
             feature.getOffVariation(),
             feature.getVariationsList()
@@ -198,8 +217,8 @@ class Evaluator {
         }
       }
     }
-
-    if (!feature.getEnabled() && feature.getOffVariation()) {
+    // It doesn't assign the user in case of the feature is disabled and OffVariation is not set
+    if (!feature.getEnabled() && feature.getOffVariation() != "") {
       const variation = this.findVariation(
         feature.getOffVariation(),
         feature.getVariationsList()
@@ -209,6 +228,8 @@ class Evaluator {
       return [reason, variation];
     }
 
+    // evaluate from top to bottom, return if one rule matches
+	  // evaluate targeting rules
     for (const target of feature.getTargetsList()) {
       if (target.getUsersList().includes(user.getId())) {
         const variation = this.findVariation(
@@ -221,6 +242,7 @@ class Evaluator {
       }
     }
 
+	  // evaluate ruleset
     const rule = this.ruleEvaluator.evaluate(
       feature.getRulesList(),
       user,
@@ -241,6 +263,7 @@ class Evaluator {
       return [reason, variation];
     }
 
+    // use default strategy
     if (!feature.getDefaultStrategy()) {
       throw EVALUATOR_ERRORS.DefaultStrategyNotFound;
     }

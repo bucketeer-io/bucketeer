@@ -1,7 +1,7 @@
 import * as crypto from 'crypto';
 import { RolloutStrategy, Strategy } from './proto/feature/strategy_pb';
 import { Variation } from './proto/feature/variation_pb';
-
+//
 const MAX = 0xffffffffffffffff;
 
 class StrategyEvaluator {
