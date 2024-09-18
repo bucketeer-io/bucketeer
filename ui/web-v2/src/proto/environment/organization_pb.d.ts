@@ -34,6 +34,15 @@ export class Organization extends jspb.Message {
   getSystemAdmin(): boolean;
   setSystemAdmin(value: boolean): void;
 
+  getProjectCount(): number;
+  setProjectCount(value: number): void;
+
+  getEnvironmentCount(): number;
+  setEnvironmentCount(value: number): void;
+
+  getUserCount(): number;
+  setUserCount(value: number): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Organization.AsObject;
   static toObject(
@@ -67,5 +76,8 @@ export namespace Organization {
     createdAt: number;
     updatedAt: number;
     systemAdmin: boolean;
+    projectCount: number;
+    environmentCount: number;
+    userCount: number;
   };
 }

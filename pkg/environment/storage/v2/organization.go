@@ -200,6 +200,9 @@ func (s *organizationStorage) ListOrganizations(
 			&organization.SystemAdmin,
 			&organization.CreatedAt,
 			&organization.UpdatedAt,
+			&organization.ProjectCount,
+			&organization.EnvironmentCount,
+			&organization.UserCount,
 		)
 		if err != nil {
 			return nil, 0, 0, err
