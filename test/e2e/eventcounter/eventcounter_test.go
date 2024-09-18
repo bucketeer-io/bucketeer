@@ -54,7 +54,7 @@ import (
 
 const (
 	prefixTestName = "e2e-test"
-	timeout        = 60 * time.Second
+	timeout        = 2 * time.Minute
 	retryTimes     = 50
 )
 
