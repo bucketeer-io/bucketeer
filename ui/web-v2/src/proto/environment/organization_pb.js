@@ -93,7 +93,10 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         trial: jspb.Message.getBooleanFieldWithDefault(msg, 7, false),
         createdAt: jspb.Message.getFieldWithDefault(msg, 8, 0),
         updatedAt: jspb.Message.getFieldWithDefault(msg, 9, 0),
-        systemAdmin: jspb.Message.getBooleanFieldWithDefault(msg, 10, false)
+        systemAdmin: jspb.Message.getBooleanFieldWithDefault(msg, 10, false),
+        projects: jspb.Message.getFieldWithDefault(msg, 11, 0),
+        environments: jspb.Message.getFieldWithDefault(msg, 12, 0),
+        users: jspb.Message.getFieldWithDefault(msg, 13, 0)
       };
 
     if (includeInstance) {
@@ -172,6 +175,18 @@ proto.bucketeer.environment.Organization.deserializeBinaryFromReader =
           var value = /** @type {boolean} */ (reader.readBool());
           msg.setSystemAdmin(value);
           break;
+        case 11:
+          var value = /** @type {number} */ (reader.readInt32());
+          msg.setProjects(value);
+          break;
+        case 12:
+          var value = /** @type {number} */ (reader.readInt32());
+          msg.setEnvironments(value);
+          break;
+        case 13:
+          var value = /** @type {number} */ (reader.readInt32());
+          msg.setUsers(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -245,6 +260,18 @@ proto.bucketeer.environment.Organization.serializeBinaryToWriter = function (
   f = message.getSystemAdmin();
   if (f) {
     writer.writeBool(10, f);
+  }
+  f = message.getProjects();
+  if (f !== 0) {
+    writer.writeInt32(11, f);
+  }
+  f = message.getEnvironments();
+  if (f !== 0) {
+    writer.writeInt32(12, f);
+  }
+  f = message.getUsers();
+  if (f !== 0) {
+    writer.writeInt32(13, f);
   }
 };
 
@@ -432,6 +459,61 @@ proto.bucketeer.environment.Organization.prototype.setSystemAdmin = function (
   value
 ) {
   return jspb.Message.setProto3BooleanField(this, 10, value);
+};
+
+/**
+ * optional int32 projects = 11;
+ * @return {number}
+ */
+proto.bucketeer.environment.Organization.prototype.getProjects = function () {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 11, 0));
+};
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.environment.Organization} returns this
+ */
+proto.bucketeer.environment.Organization.prototype.setProjects = function (
+  value
+) {
+  return jspb.Message.setProto3IntField(this, 11, value);
+};
+
+/**
+ * optional int32 environments = 12;
+ * @return {number}
+ */
+proto.bucketeer.environment.Organization.prototype.getEnvironments =
+  function () {
+    return /** @type {number} */ (
+      jspb.Message.getFieldWithDefault(this, 12, 0)
+    );
+  };
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.environment.Organization} returns this
+ */
+proto.bucketeer.environment.Organization.prototype.setEnvironments = function (
+  value
+) {
+  return jspb.Message.setProto3IntField(this, 12, value);
+};
+
+/**
+ * optional int32 users = 13;
+ * @return {number}
+ */
+proto.bucketeer.environment.Organization.prototype.getUsers = function () {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 13, 0));
+};
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.environment.Organization} returns this
+ */
+proto.bucketeer.environment.Organization.prototype.setUsers = function (value) {
+  return jspb.Message.setProto3IntField(this, 13, value);
 };
 
 goog.object.extend(exports, proto.bucketeer.environment);

@@ -3344,6 +3344,15 @@ definitions:
         format: int64
       systemAdmin:
         type: boolean
+      projects:
+        type: integer
+        format: int32
+      environments:
+        type: integer
+        format: int32
+      users:
+        type: integer
+        format: int32
   environmentArchiveEnvironmentV2Command:
     type: object
   environmentArchiveEnvironmentV2Request:
