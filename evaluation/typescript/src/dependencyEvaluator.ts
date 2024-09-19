@@ -1,3 +1,5 @@
+import { EVALUATOR_ERRORS } from './errors';
+
 //
 class DependencyEvaluator {
   evaluate(
@@ -8,7 +10,7 @@ class DependencyEvaluator {
     const targetVarID = flagVariations[featureID];
 
     if (!targetVarID) {
-      throw new Error('Feature not found'); // Throwing an error if feature is not found
+      throw EVALUATOR_ERRORS.FeatureNotFound; // Throwing an error if feature is not found
     }
 
     for (const varID of variationIDs) {

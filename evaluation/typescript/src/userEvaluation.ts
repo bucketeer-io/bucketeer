@@ -1,6 +1,7 @@
 import { Evaluation, UserEvaluations } from './proto/feature/evaluation_pb';
 import { Feature } from './proto/feature/feature_pb';
-import * as crypto from 'crypto';
+import fnv from 'fnv-plus';
+
 //
 function NewUserEvaluations(
   id: string,
@@ -27,19 +28,20 @@ function sortMapKeys(data: Record<string, string>): string[] {
 }
 
 function GenerateFeaturesID(features: Feature[]): string {
-  // Sort features by ID
-  features.sort((a, b) => a.getId().localeCompare(b.getId()));
+  // Sort features based on the 'id'
+  features.sort((a, b) => (a.getId() < b.getId() ? -1 : 1));
 
-  // Create a new hash (fnv64a replacement)
-  const hash = crypto.createHash('sha256');
+ // Initialize FNV-1a 64-bit hash string
+ let hashInput = '';
 
-  // Append feature details to the hash
-  features.forEach((feature) => {
-    hash.update(`${feature.getId()}:${feature.getVersion()}`);
-  });
+ // Concatenate each feature's 'id' and 'version' into the hash input
+ features.forEach(feature => {
+   hashInput += `${feature.getId()}:${feature.getVersion()}`;
+ });
 
-  // Return the hashed value as a string
-  return BigInt('0x' + hash.digest('hex')).toString(10);
+ // Generate the FNV-1a 64-bit hash and return it as a decimal string
+ const hash = fnv.hash(hashInput, 64);
+ return hash.dec();
 }
 
 function UserEvaluationsID(
@@ -48,25 +50,27 @@ function UserEvaluationsID(
   features: Feature[]
 ): string {
   // Sort features by ID
-  features.sort((a, b) => a.getId().localeCompare(b.getId()));
+  features.sort((a, b) => (a.getId() < b.getId() ? -1 : 1));
 
-  // Use Node.js crypto module to generate a 64-bit hash (as Go's fnv64a hash)
-  const hash = crypto.createHash('sha256'); // Using sha256 as a more common example
-  hash.update(userID);
+  // Initialize FNV-1a 64-bit hash input
+  let hashInput = userID;
 
-  // Sort userMetadata keys
+  // Sort and append userMetadata to the hash input
   const keys = sortMapKeys(userMetadata);
   keys.forEach((key) => {
-    hash.update(`${key}:${userMetadata[key]}`);
+    hashInput += `${key}:${userMetadata[key]}`;
   });
 
-  // Append feature details to the hash
+  // Append feature details to the hash input
   features.forEach((feature) => {
-    hash.update(`${feature.getId()}:${feature.getVersion()}`);
+    hashInput += `${feature.getId()}:${feature.getVersion()}`;
   });
 
-  // Return the hashed value
-  return BigInt('0x' + hash.digest('hex')).toString(10);
+  // Generate the FNV-1a 64-bit hash
+  const hash = fnv.hash(hashInput, 64);
+
+  // Return the hashed value as a decimal string
+  return hash.dec();
 }
 
 export {

@@ -1,3 +1,4 @@
+import { EVALUATOR_ERRORS } from './errors';
 import { Clause } from './proto/feature/clause_pb';
 import { Evaluation, UserEvaluations } from './proto/feature/evaluation_pb';
 import { Feature } from './proto/feature/feature_pb';
@@ -11,17 +12,6 @@ import { NewUserEvaluations, UserEvaluationsID } from './userEvaluation';
 
 const SECONDS_TO_RE_EVALUATE_ALL = 30 * 24 * 60 * 60; // 30 days
 const SECONDS_FOR_ADJUSTMENT = 10; // 10 seconds
-
-const EVALUATOR_ERRORS = {
-  StrategyNotFound: new Error('evaluator: strategy not found'),
-  DefaultStrategyNotFound: new Error('evaluator: default strategy not found'),
-  FeatureNotFound: new Error('evaluator: feature not found'),
-  PrerequisiteVariationNotFound: new Error(
-    'evaluator: prerequisite variation not found'
-  ),
-  VariationNotFound: new Error('evaluator: variation not found'),
-  UnsupportedStrategy: new Error('evaluator: unsupported strategy'),
-};
 
 function EvaluationID(
   featureID: string,

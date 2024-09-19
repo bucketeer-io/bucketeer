@@ -1,4 +1,4 @@
-import { Clause } from './proto/feature/clause_pb'; 
+import { Clause } from './proto/feature/clause_pb';
 import { SegmentUser } from './proto/feature/segment_pb';
 import { SegmentEvaluator } from './segmentEvaluator';
 import { DependencyEvaluator } from './dependencyEvaluator';
@@ -18,7 +18,7 @@ class ClauseEvaluator {
     clause: Clause,
     userID: string,
     segmentUsers: SegmentUser[],
-    flagVariations: { [key: string]: string }
+    flagVariations: { [key: string]: string },
   ): boolean {
     try {
       switch (clause.getOperator()) {
@@ -45,15 +45,19 @@ class ClauseEvaluator {
         case Clause.Operator.AFTER:
           return this.after(targetValue, clause.getValuesList());
         case Clause.Operator.FEATURE_FLAG:
-          return this.dependencyEvaluator.evaluate(clause.getAttribute(), clause.getValuesList(), flagVariations);
+          return this.dependencyEvaluator.evaluate(
+            clause.getAttribute(),
+            clause.getValuesList(),
+            flagVariations,
+          );
         case Clause.Operator.PARTIALLY_MATCH:
           return this.partiallyMatches(targetValue, clause.getValuesList());
         default:
-          return false
+          return false;
       }
     } catch (error) {
       console.error('Error evaluating clause:', error);
-      throw error
+      throw error;
     }
   }
 
@@ -62,7 +66,7 @@ class ClauseEvaluator {
   }
 
   private partiallyMatches(targetValue: string, values: string[]): boolean {
-    return values.some(value => targetValue.includes(value));
+    return values.some((value) => targetValue.includes(value));
   }
 
   private in(targetValue: string, values: string[]): boolean {
@@ -70,90 +74,112 @@ class ClauseEvaluator {
   }
 
   private startsWith(targetValue: string, values: string[]): boolean {
-    return values.some(value => targetValue.startsWith(value));
+    return values.some((value) => targetValue.startsWith(value));
   }
 
   private endsWith(targetValue: string, values: string[]): boolean {
-    return values.some(value => targetValue.endsWith(value));
+    return values.some((value) => targetValue.endsWith(value));
   }
 
   private greater(targetValue: string, values: string[]): boolean {
-    const floatTarget = parseFloat(targetValue);
-    const floatValues = values.map(parseFloat).filter(value => !isNaN(value));
+    const floatTarget = validateAndParseFloat(targetValue);
+    const floatValues = values.map(validateAndParseFloat).filter((value) => !isNaN(value));
 
-    if (!isNaN(floatTarget) && floatValues.length > 0) {
-      return floatValues.some(value => floatTarget > value);
+    if (!isNaN(floatTarget)) {
+      if (floatValues.length == 0) {
+        return false;
+      }
+      return floatValues.some((value) => floatTarget > value);
     }
 
     const semverTarget = semver.valid(targetValue);
     if (semverTarget) {
-      return values.some(value => semver.gt(semverTarget, value));
+      return values.some((value) => {
+        if (semver.valid(value)) {
+          return semver.gt(semverTarget, value);
+        }
+        return false;
+      });
     }
 
-    return values.some(value => targetValue > value);
+    return values.some((value) => targetValue > value);
   }
 
   private greaterOrEqual(targetValue: string, values: string[]): boolean {
-    const floatTarget = parseFloat(targetValue);
-    const floatValues = values.map(parseFloat).filter(value => !isNaN(value));
+    const floatTarget = validateAndParseFloat(targetValue);
+    const floatValues = values.map(validateAndParseFloat).filter((value) => !isNaN(value));
 
     if (!isNaN(floatTarget) && floatValues.length > 0) {
-      return floatValues.some(value => floatTarget >= value);
+      return floatValues.some((value) => floatTarget >= value);
     }
 
     const semverTarget = semver.valid(targetValue);
     if (semverTarget) {
-      return values.some(value => semver.gte(semverTarget, value));
+      return values.some((value) => semver.gte(semverTarget, value));
     }
 
-    return values.some(value => targetValue >= value);
+    return values.some((value) => targetValue >= value);
   }
 
   private less(targetValue: string, values: string[]): boolean {
-    const floatTarget = parseFloat(targetValue);
-    const floatValues = values.map(parseFloat).filter(value => !isNaN(value));
+    const floatTarget = validateAndParseFloat(targetValue);
+    const floatValues = values.map(validateAndParseFloat).filter((value) => !isNaN(value));
 
     if (!isNaN(floatTarget) && floatValues.length > 0) {
-      return floatValues.some(value => floatTarget < value);
+      return floatValues.some((value) => floatTarget < value);
     }
 
     const semverTarget = semver.valid(targetValue);
     if (semverTarget) {
-      return values.some(value => semver.lt(semverTarget, value));
+      return values.some((value) => semver.lt(semverTarget, value));
     }
 
-    return values.some(value => targetValue < value);
+    return values.some((value) => targetValue < value);
   }
 
   private lessOrEqual(targetValue: string, values: string[]): boolean {
-    const floatTarget = parseFloat(targetValue);
-    const floatValues = values.map(parseFloat).filter(value => !isNaN(value));
+    const floatTarget = validateAndParseFloat(targetValue);
+    const floatValues = values.map(validateAndParseFloat).filter((value) => !isNaN(value));
 
     if (!isNaN(floatTarget) && floatValues.length > 0) {
-      return floatValues.some(value => floatTarget <= value);
+      return floatValues.some((value) => floatTarget <= value);
     }
 
     const semverTarget = semver.valid(targetValue);
     if (semverTarget) {
-      return values.some(value => semver.lte(semverTarget, value));
+      return values.some((value) => semver.lte(semverTarget, value));
     }
 
-    return values.some(value => targetValue <= value);
+    return values.some((value) => targetValue <= value);
   }
 
   private before(targetValue: string, values: string[]): boolean {
     const intTarget = parseInt(targetValue, 10);
-    const intValues = values.map(value => parseInt(value, 10)).filter(value => !isNaN(value));
+    const intValues = values.map((value) => parseInt(value, 10)).filter((value) => !isNaN(value));
 
-    return intValues.some(value => intTarget < value);
+    return intValues.some((value) => intTarget < value);
   }
 
   private after(targetValue: string, values: string[]): boolean {
     const intTarget = parseInt(targetValue, 10);
-    const intValues = values.map(value => parseInt(value, 10)).filter(value => !isNaN(value));
+    const intValues = values.map((value) => parseInt(value, 10)).filter((value) => !isNaN(value));
 
-    return intValues.some(value => intTarget > value);
+    return intValues.some((value) => intTarget > value);
   }
+}
+
+function validateAndParseFloat(input: string): number {
+  // Check if the string is a valid number using regex
+  if (!/^-?\d*\.?\d+$/.test(input)) {
+    // Will not allow a string like `1a`, `0b`
+    return NaN;
+  }
+
+  // Parse the string to float
+  const result = parseFloat(input);
+
+  // If parsing fails, return NaN
+  return isNaN(result) ? NaN : result;
 }
 
 export { ClauseEvaluator };
