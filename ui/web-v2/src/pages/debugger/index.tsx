@@ -105,7 +105,7 @@ export const DebuggerIndexPage: FC = memo(() => {
         />
       </div>
       <div className="m-10">
-        <div className="min-w-max bg-white border border-gray-300 rounded-md p-5">
+        <div className="bg-white border border-gray-300 rounded-md p-5">
           <FormProvider {...method}>
             <div className={showResults ? 'hidden' : 'block'}>
               <DebuggerEvaluateForm onSubmit={handleSubmit(handleAddSubmit)} />
