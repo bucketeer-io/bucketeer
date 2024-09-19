@@ -34,6 +34,9 @@ export class EnvironmentV2 extends jspb.Message {
   getRequireComment(): boolean;
   setRequireComment(value: boolean): void;
 
+  getFeatureFlagCount(): number;
+  setFeatureFlagCount(value: number): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EnvironmentV2.AsObject;
   static toObject(
@@ -67,5 +70,6 @@ export namespace EnvironmentV2 {
     updatedAt: number;
     organizationId: string;
     requireComment: boolean;
+    featureFlagCount: number;
   };
 }

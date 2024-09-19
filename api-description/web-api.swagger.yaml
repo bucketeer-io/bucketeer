@@ -3581,6 +3581,9 @@ definitions:
         type: string
       requireComment:
         type: boolean
+      featureFlagCount:
+        type: integer
+        format: int32
   environmentGetEnvironmentV2Request:
     type: object
     properties:
