@@ -15,7 +15,7 @@ metadata:
     envoy: "true"
     metrics: "true"
 spec:
-  type: NodePort
+  type: {{ .Values.service.type }}
   ports:
     - name: service
       port: {{ .Values.service.externalPort }}

@@ -118,7 +118,7 @@ envoy:
   adminPort: 8001
   resources: {}
 service:
-  type: NodePort
+  type: ClusterIP
   grpcPort: 9000
   httpPort: 9003
 health:
@@ -144,3 +144,18 @@ ingress:
           name: web
           port:
             number: 9003
+gcpMultiCluster:
+  configCluster: false
+  enabled: false
+  service:
+    name: web-multi-cluster-service
+  ingress:
+    name: web-multi-cluster-ingress
+    host:
+    staticIPName:
+    secretName:
+    rulePaths:
+      - path: /
+        backend:
+          serviceName: web-multi-cluster-service
+          servicePort: 9003

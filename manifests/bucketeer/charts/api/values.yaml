@@ -62,6 +62,7 @@ envoy:
     maxRequests: 3500
     maxConnections: 3500
 service:
+  type: ClusterIP
   externalPort: 9000
 ingress:
   name: api
@@ -86,3 +87,18 @@ health:
 resources: {}
 serviceAccount:
   annotations: {}
+gcpMultiCluster:
+  configCluster: false
+  enabled: false
+  service:
+    name: api-multi-cluster-service
+  ingress:
+    name: api-multi-cluster-ingress
+    host:
+    staticIPName:
+    secretName:
+    rulePaths:
+      - path: /
+        backend:
+          serviceName: api-multi-cluster-service
+          servicePort: 9000
