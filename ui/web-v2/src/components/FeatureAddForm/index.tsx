@@ -325,13 +325,15 @@ export const VariationAddInput: FC<VariationAddInputProps> = memo(({}) => {
         variations: [
           {
             id: defaultVariationId1,
-            value: type === Feature.VariationType.BOOLEAN ? 'true' : '',
+            value:
+              type === Feature.VariationType.BOOLEAN.toString() ? 'true' : '',
             name: '',
             description: ''
           },
           {
             id: defaultVariationId2,
-            value: type === Feature.VariationType.BOOLEAN ? 'false' : '',
+            value:
+              type === Feature.VariationType.BOOLEAN.toString() ? 'false' : '',
             name: '',
             description: ''
           }
