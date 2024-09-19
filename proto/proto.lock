@@ -7450,6 +7450,11 @@
                 "id": 10,
                 "name": "require_comment",
                 "type": "bool"
+              },
+              {
+                "id": 11,
+                "name": "feature_flag_count",
+                "type": "int32"
               }
             ]
           }
@@ -7607,6 +7612,16 @@
                 "id": 10,
                 "name": "organization_id",
                 "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "environment_count",
+                "type": "int32"
+              },
+              {
+                "id": 12,
+                "name": "feature_flag_count",
+                "type": "int32"
               }
             ]
           }

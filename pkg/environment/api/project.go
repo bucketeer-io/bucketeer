@@ -122,16 +122,16 @@ func (s *EnvironmentService) ListProjects(
 	whereParts := []mysql.WherePart{}
 	if len(req.OrganizationIds) > 0 {
 		oIDs := convToInterfaceSlice(req.OrganizationIds)
-		whereParts = append(whereParts, mysql.NewInFilter("organization_id", oIDs))
+		whereParts = append(whereParts, mysql.NewInFilter("project.organization_id", oIDs))
 	}
 	if req.Disabled != nil {
-		whereParts = append(whereParts, mysql.NewFilter("disabled", "=", req.Disabled.Value))
+		whereParts = append(whereParts, mysql.NewFilter("project.disabled", "=", req.Disabled.Value))
 	}
 	if req.SearchKeyword != "" {
 		whereParts = append(
 			whereParts,
 			mysql.NewSearchQuery(
-				[]string{"id", "name", "url_code", "creator_email"},
+				[]string{"project.id", "project.name", "project.url_code", "project.creator_email"},
 				req.SearchKeyword,
 			),
 		)
@@ -210,15 +210,15 @@ func (s *EnvironmentService) newProjectListOrders(
 	switch orderBy {
 	case environmentproto.ListProjectsRequest_DEFAULT,
 		environmentproto.ListProjectsRequest_NAME:
-		column = "name"
+		column = "project.name"
 	case environmentproto.ListProjectsRequest_URL_CODE:
-		column = "url_code"
+		column = "project.url_code"
 	case environmentproto.ListProjectsRequest_ID:
-		column = "id"
+		column = "project.id"
 	case environmentproto.ListProjectsRequest_CREATED_AT:
-		column = "created_at"
+		column = "project.created_at"
 	case environmentproto.ListProjectsRequest_UPDATED_AT:
-		column = "updated_at"
+		column = "project.updated_at"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

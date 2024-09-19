@@ -3581,6 +3581,9 @@ definitions:
         type: string
       requireComment:
         type: boolean
+      featureFlagCount:
+        type: integer
+        format: int32
   environmentGetEnvironmentV2Request:
     type: object
     properties:
@@ -3782,6 +3785,12 @@ definitions:
         type: string
       organizationId:
         type: string
+      environmentCount:
+        type: integer
+        format: int32
+      featureFlagCount:
+        type: integer
+        format: int32
   environmentRenameEnvironmentV2Command:
     type: object
     properties:
