@@ -209,6 +209,8 @@ func (s *projectStorage) ListProjects(
 			&project.OrganizationId,
 			&project.CreatedAt,
 			&project.UpdatedAt,
+			&project.EnvironmentCount,
+			&project.FeatureFlagCount,
 		)
 		if err != nil {
 			return nil, 0, 0, err
