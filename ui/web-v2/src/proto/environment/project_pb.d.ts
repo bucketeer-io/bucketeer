@@ -34,6 +34,12 @@ export class Project extends jspb.Message {
   getOrganizationId(): string;
   setOrganizationId(value: string): void;
 
+  getEnvironmentCount(): number;
+  setEnvironmentCount(value: number): void;
+
+  getFeatureFlagCount(): number;
+  setFeatureFlagCount(value: number): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Project.AsObject;
   static toObject(includeInstance: boolean, msg: Project): Project.AsObject;
@@ -64,5 +70,7 @@ export namespace Project {
     name: string;
     urlCode: string;
     organizationId: string;
+    environmentCount: number;
+    featureFlagCount: number;
   };
 }
