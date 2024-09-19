@@ -537,6 +537,9 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     const [unsavedChanges, setUnsavedChanges] = useState(false);
     const [nextLocation, setNextLocation] = useState(null);
     const [showSaveChangesDialog, setShowSaveChangesDialog] = useState(false);
+    const [unsavedSearchFilterId, setUnsavedSearchFilterId] = useState(null);
+    const [isAddSearchFilterActive, setIsAddSearchFilterActive] =
+      useState(false);
 
     const history = useHistory();
 
@@ -578,6 +581,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
             selected: oldSelectedSearchFilter?.id === s.id,
             saveChanges: false
           }));
+          setSelectedSearchFilter(updatedFiltersList.find((s) => s.selected));
         }
         setSearchFiltersList(updatedFiltersList);
       } else {
@@ -589,17 +593,19 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       const stringigyOptions = stringifySearchParams(options);
       const query = selectedSearchFilter?.query ?? '';
 
-      // If the selected search filter has changes, mark it as unsaved
-      if (stringigyOptions && query) {
-        setSearchFiltersList(
-          searchFiltersList.map((s) => ({
-            ...s,
-            saveChanges:
-              s.id === selectedSearchFilter.id && query !== stringigyOptions
-                ? true
-                : false
-          }))
-        );
+      if (selectedSearchFilter) {
+        // If the selected search filter has changes, mark it as unsaved
+        if (stringigyOptions && query) {
+          setSearchFiltersList(
+            searchFiltersList.map((s) => ({
+              ...s,
+              saveChanges:
+                s.id === selectedSearchFilter.id && query !== stringigyOptions
+                  ? true
+                  : false
+            }))
+          );
+        }
       }
     }, [selectedSearchFilter, options]);
 
@@ -748,7 +754,13 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
               environmentId,
               organizationId: me.consoleAccount.organization.id
             })
-          ).then(() => refetchMe());
+          ).then(() => {
+            if (unsavedChanges) {
+              handleSaveChanges(selectedSearchFilter.id);
+            } else {
+              refetchMe();
+            }
+          });
         } else {
           dispatch(
             createSearchFilter({
@@ -792,6 +804,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
           searchFiltersList.map((s) => ({ ...s, selected: s.id === id }))
         );
         onChange(parse(findSearchFilter.query));
+        setUnsavedSearchFilterId(null);
       }
     };
 
@@ -814,6 +827,23 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     const handleConfirm = (confirmType: ConfirmType) => {
       setShowSaveChangesDialog(false);
       if (confirmType === ConfirmType.YES) {
+        if (unsavedSearchFilterId) {
+          handleSearchFilter(unsavedSearchFilterId);
+          return;
+        }
+        if (isAddSearchFilterActive) {
+          setOpen(true);
+          setSelectedSearchFilter(null);
+          setSearchFiltersList(
+            filteredSearchFiltersList.map((s) => ({
+              ...s,
+              selected: false,
+              saveChanges: false
+            }))
+          );
+          onChange(defaultOptions);
+          return;
+        }
         setUnsavedChanges(false);
 
         const { pathname: nextPathname } = nextLocation;
@@ -839,6 +869,8 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
             pathname: nextPathname
           });
         }
+      } else {
+        setIsAddSearchFilterActive(false);
       }
     };
 
@@ -898,7 +930,15 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                     searchFilter.selected ? 'bg-purple-100' : 'bg-gray-50'
                   )}
                   onClick={() => {
-                    handleSearchFilter(searchFilter.id);
+                    if (
+                      unsavedChanges &&
+                      searchFilter.id !== selectedSearchFilter?.id
+                    ) {
+                      setShowSaveChangesDialog(true);
+                      setUnsavedSearchFilterId(searchFilter.id);
+                    } else {
+                      handleSearchFilter(searchFilter.id);
+                    }
                   }}
                 >
                   <span className="text-primary truncate max-w-[180px]">
@@ -909,9 +949,14 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                       <SaveSvg />
                     </div>
                   )}
-                  <Popover.Button className="h-full outline-none">
+                  {unsavedChanges &&
+                  searchFilter.id !== selectedSearchFilter?.id ? (
                     <DotsVerticalIcon width={14} className="text-primary" />
-                  </Popover.Button>
+                  ) : (
+                    <Popover.Button className="h-full outline-none">
+                      <DotsVerticalIcon width={14} className="text-primary" />
+                    </Popover.Button>
+                  )}
                 </div>
                 <Popover.Panel className="absolute bg-white left-0 rounded-lg p-1 whitespace-nowrap drop-shadow z-50 top-10">
                   {({ close }) => (
@@ -962,8 +1007,13 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                 <button
                   className="bg-gray-50 p-[6px] rounded hover:bg-purple-100 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => {
-                    setOpen(true);
-                    setSelectedSearchFilter(null);
+                    if (unsavedChanges && selectedSearchFilter) {
+                      setShowSaveChangesDialog(true);
+                      setIsAddSearchFilterActive(true);
+                    } else {
+                      setOpen(true);
+                      setSelectedSearchFilter(null);
+                    }
                   }}
                 >
                   <PlusIcon width={20} className="text-primary" />
@@ -1002,7 +1052,11 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
           )}
           <SaveChangesDialog
             open={showSaveChangesDialog}
-            close={() => setShowSaveChangesDialog(false)}
+            close={() => {
+              setShowSaveChangesDialog(false);
+              setUnsavedSearchFilterId(null);
+              setIsAddSearchFilterActive(false);
+            }}
             onConfirm={handleConfirm}
           />
           <div className="flex-none -mr-2">
