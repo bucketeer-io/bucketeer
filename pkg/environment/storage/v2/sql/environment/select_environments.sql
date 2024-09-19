@@ -1,14 +1,11 @@
 SELECT
-    id,
-    name,
-    url_code,
-    description,
-    project_id,
-    organization_id,
-    archived,
-    require_comment,
-    created_at,
-    updated_at
+    environment_v2.*,
+    COALESCE(COUNT(DISTINCT feature.id), 0) AS feature_count
 FROM
     environment_v2
-%s %s %s
+        LEFT JOIN
+    feature ON environment_v2.id = feature.environment_namespace
+%s
+GROUP BY
+    environment_v2.id
+%s %s

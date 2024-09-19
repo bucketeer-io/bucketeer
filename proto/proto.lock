@@ -7450,6 +7450,11 @@
                 "id": 10,
                 "name": "require_comment",
                 "type": "bool"
+              },
+              {
+                "id": 11,
+                "name": "feature_flag_count",
+                "type": "int32"
               }
             ]
           }

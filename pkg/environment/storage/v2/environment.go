@@ -168,6 +168,7 @@ func (s *environmentStorage) ListEnvironmentsV2(
 			&environment.RequireComment,
 			&environment.CreatedAt,
 			&environment.UpdatedAt,
+			&environment.FeatureFlagCount,
 		)
 		if err != nil {
 			return nil, 0, 0, err
