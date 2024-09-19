@@ -161,7 +161,9 @@ export const DebuggerResult: FC<DebuggerResultProps> = memo(
                     </td>
                     <td>
                       <div className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 flex space-x-3 items-center">
-                        <span>{variationName}</span>
+                        <span className="max-w-[20ch] w-full truncate">
+                          {variationName}
+                        </span>
                       </div>
                     </td>
                     <td>
