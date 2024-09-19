@@ -6,6 +6,8 @@ export interface Project {
   id: string;
   name: string;
   organizationId: string;
+  environmentCount: number;
+  featureFlagCount: number;
   trial: boolean;
   updatedAt: string;
   urlCode: string;

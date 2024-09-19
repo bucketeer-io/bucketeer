@@ -73,7 +73,7 @@ export const orgHeader: TableHeaders = [
     sort: true
   },
   {
-    text: 'ENVIRONMENT',
+    text: 'ENVIRONMENTS',
     sort: true
   },
   {
@@ -97,7 +97,7 @@ export const projectsHeader: TableHeaders = [
     sort: true
   },
   {
-    text: 'ENVIRONMENT',
+    text: 'ENVIRONMENTS',
     sort: true
   },
   {

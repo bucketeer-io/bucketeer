@@ -8,7 +8,6 @@ import {
   useNavigate
 } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import {
   AuthCallbackPage,
   AuthProvider,
@@ -33,7 +32,6 @@ import { v4 as uuid } from 'uuid';
 import { ConsoleAccount } from '@types';
 import DashboardPage from 'pages/dashboard';
 import NotFoundPage from 'pages/not-found';
-import OrganizationsPage from 'pages/organizations';
 import ProjectsPage from 'pages/projects';
 import SettingsPage from 'pages/settings';
 import SignInPage from 'pages/signin';
@@ -41,6 +39,7 @@ import SignInEmailPage from 'pages/signin/email';
 import SelectOrganizationPage from 'pages/signin/organization';
 import Navigation from 'components/navigation';
 import Spinner from 'components/spinner';
+import { OrganizationsRoot } from './routers';
 
 export const AppLoading = () => (
   <div className="flex items-center justify-center h-screen w-full">
@@ -75,7 +74,7 @@ function App() {
             </Routes>
           </AuthProvider>
         </BrowserRouter>
-        <ReactQueryDevtools initialIsOpen={false} />
+        {/* <ReactQueryDevtools initialIsOpen={false} /> */}
       </QueryClientProvider>
     </I18nextProvider>
   );
@@ -101,17 +100,17 @@ export const Root = memo(() => {
         <Navigation onClickNavLink={handleChangePageKey} />
         <div className="flex-grow ml-[248px] shadow-lg overflow-y-auto">
           <Routes>
+            {consoleAccount.isSystemAdmin && (
+              <Route
+                path={`${PAGE_PATH_ORGANIZATIONS}*`}
+                element={<OrganizationsRoot />}
+              />
+            )}
             <Route
               key={pageKey}
               path={'/:envUrlCode?/*'}
               element={<EnvironmentRoot account={consoleAccount} />}
             />
-            {consoleAccount.isSystemAdmin && (
-              <Route
-                path={`${PAGE_PATH_ORGANIZATIONS}`}
-                element={<OrganizationsPage />}
-              />
-            )}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>

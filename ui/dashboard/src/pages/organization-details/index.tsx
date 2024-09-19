@@ -1,26 +1,30 @@
 import { useMemo, useState } from 'react';
 import {
-  IconAddOutlined,
   IconArchiveOutlined,
   IconEditOutlined
 } from 'react-icons-material-design';
 import { ProjectFetcherParams } from '@api/project';
 import { useQueryProjects } from '@queries/projects';
 import { LIST_PAGE_SIZE } from 'constants/app';
-import Filter from 'containers/filter';
+import { PAGE_PATH_ORGANIZATIONS } from 'constants/routing';
+import PageDetailHeader from 'containers/page-details-header';
 import TableContent from 'containers/table-content';
 import { projectsHeader } from 'helpers/layouts/header-table';
-import { commonTabs } from 'helpers/layouts/tab';
+import {
+  environmentTab,
+  projectTab,
+  settingTab,
+  userTab
+} from 'helpers/layouts/tab';
 import { TableRows } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
-import { Button } from 'components/button';
-import Icon from 'components/icon';
 import Spinner from 'components/spinner';
-import Tab from 'components/tab';
 
-export const ProjectsContent = () => {
+const OrganizationDetails = () => {
   const formatDateTime = useFormatDateTime();
-  const [targetTab, setTargetTab] = useState(commonTabs[0].value);
+  const tabs = [projectTab, environmentTab, userTab, settingTab];
+
+  const [targetTab, setTargetTab] = useState(tabs[0].value);
 
   const projectParams: ProjectFetcherParams = {
     pageSize: LIST_PAGE_SIZE,
@@ -77,43 +81,30 @@ export const ProjectsContent = () => {
   }, [data]);
 
   return (
-    <div className="py-8 px-6">
-      <Filter
-        additionalActions={
-          <Button className="flex-1 lg:flex-none">
-            <Icon icon={IconAddOutlined} size="sm" />
-            {`New Project`}
-          </Button>
-        }
+    <div className="flex flex-col size-full overflow-auto">
+      <PageDetailHeader
+        title="Organization Name 1"
+        description="Created 21 hours ago"
+        navigateRoute={PAGE_PATH_ORGANIZATIONS}
+        tabs={tabs}
+        targetTab={targetTab}
+        onSelectTab={setTargetTab}
       />
-      <div className="mt-6">
-        <Tab
-          options={commonTabs}
-          value={targetTab}
-          onSelect={value => setTargetTab(value)}
+      {isLoading ? (
+        <div className="pt-20 flex items-center justify-center">
+          <Spinner />
+        </div>
+      ) : (
+        <TableContent
+          headers={projectsHeader}
+          rows={rows as TableRows}
+          emptyTitle="No registered projects"
+          emptyDescription="There are no registered projects. Add a new one to start managing."
+          className="px-6 pb-8"
         />
-        {isLoading ? (
-          <div className="pt-20 flex items-center justify-center">
-            <Spinner />
-          </div>
-        ) : (
-          <TableContent
-            headers={projectsHeader}
-            rows={rows as TableRows}
-            emptyTitle="No registered projects"
-            emptyDescription="There are no registered projects. Add a new one to start managing."
-            emptyActions={
-              <div className="flex-center">
-                <Button className="w-fit">
-                  <Icon icon={IconAddOutlined} size="sm" />
-                  {`New Project`}
-                </Button>
-              </div>
-            }
-            className="mt-5"
-          />
-        )}
-      </div>
+      )}
     </div>
   );
 };
+
+export default OrganizationDetails;
