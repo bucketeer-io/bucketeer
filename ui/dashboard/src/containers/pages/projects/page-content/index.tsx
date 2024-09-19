@@ -1,5 +1,9 @@
 import { useMemo, useState } from 'react';
-import { IconAddOutlined } from 'react-icons-material-design';
+import {
+  IconAddOutlined,
+  IconArchiveOutlined,
+  IconEditOutlined
+} from 'react-icons-material-design';
 import { ProjectFetcherParams } from '@api/project';
 import { useQueryProjects } from '@queries/projects';
 import { LIST_PAGE_SIZE } from 'constants/app';
@@ -32,13 +36,17 @@ export const ProjectsContent = () => {
     params: projectParams
   });
 
-  const rows: TableRows = useMemo(() => {
+  const rows = useMemo(() => {
     const projects = data?.projects || [];
     return projects.map(item => [
       {
         text: item.name,
         type: item.trial ? 'flag' : 'title',
         status: 'new'
+      },
+      {
+        text: item.creatorEmail,
+        type: 'text'
       },
       {
         text: '-',
@@ -53,10 +61,17 @@ export const ProjectsContent = () => {
         type: 'text'
       },
       {
-        type: 'toggle'
-      },
-      {
-        type: 'icon'
+        type: 'icon',
+        options: [
+          {
+            label: 'Edit Project',
+            icon: IconEditOutlined
+          },
+          {
+            label: 'Archive Project',
+            icon: IconArchiveOutlined
+          }
+        ]
       }
     ]);
   }, [data]);
@@ -84,7 +99,7 @@ export const ProjectsContent = () => {
         ) : (
           <TableContent
             headers={projectsHeader}
-            rows={rows}
+            rows={rows as TableRows}
             emptyTitle="No registered projects"
             emptyDescription="There are no registered projects. Add a new one to start managing."
             emptyActions={

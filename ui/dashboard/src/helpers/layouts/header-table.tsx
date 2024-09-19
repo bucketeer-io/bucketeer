@@ -101,13 +101,14 @@ export const projectsHeader: TableHeaders = [
     sort: true
   },
   {
-    text: 'CREATED AT',
+    text: 'FLAGS',
     sort: true
   },
   {
-    text: 'STATE',
+    text: 'CREATED AT',
     sort: true
   },
+
   { type: 'empty' }
 ];
 

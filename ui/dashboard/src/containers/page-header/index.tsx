@@ -16,9 +16,9 @@ const PageHeader = ({ title, description }: PageHeaderProps) => {
         <div className="flex items-center">
           <h1 className="text-gray-900 typo-head-light-huge">{title}</h1>
         </div>
-        <div className="flex items-center gap-4 text-gray-500">
-          <Icon icon={IconHelpOutlineOutlined} size="xs" />
-          <Icon icon={IconNotificationsNoneOutlined} size="xs" />
+        <div className="flex items-center gap-3 text-gray-500">
+          <Icon icon={IconHelpOutlineOutlined} size="sm" />
+          <Icon icon={IconNotificationsNoneOutlined} size="sm" />
         </div>
       </div>
       <p className="text-gray-600">{description}</p>

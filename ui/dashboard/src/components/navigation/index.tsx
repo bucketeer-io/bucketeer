@@ -5,8 +5,7 @@ import * as ROUTING from 'constants/routing';
 import { useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
-import flatMap from 'lodash/flatMap';
-import { getObjectValues } from 'utils/data-type';
+import flatMapDeep from 'lodash/flatMapDeep';
 import { cn } from 'utils/style';
 import * as IconSystem from '@icons';
 import Divider from 'components/divider';
@@ -23,58 +22,111 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const envUrlCode = currentEnvironment.urlCode;
 
-  const settingSectionPaths = {
-    general: compact([
-      consoleAccount?.isSystemAdmin && {
-        label: t(`organizations`),
-        icon: IconSystem.IconBuilding,
-        href: ROUTING.PAGE_PATH_ORGANIZATIONS
-      },
-      {
-        label: t(`settings`),
-        icon: IconSystem.IconSetting,
-        href: `/${envUrlCode}${ROUTING.PAGE_PATH_SETTINGS}`
-      },
-      {
-        label: t(`projects`),
-        icon: IconSystem.IconFolder,
-        href: `/${envUrlCode}${ROUTING.PAGE_PATH_PROJECTS}`
-      },
-      {
-        label: t(`usage`),
-        icon: IconSystem.IconUsage,
-        href: `/${envUrlCode}${ROUTING.PAGE_PATH_USAGE}`
-      }
-    ]),
-    access: [
-      {
-        label: t(`members`),
-        icon: IconSystem.IconMember,
-        href: `/${envUrlCode}${ROUTING.PAGE_PATH_MEMBERS}`
-      },
-      {
-        label: t(`API-keys`),
-        icon: IconSystem.IconKey,
-        href: `/${envUrlCode}${ROUTING.PAGE_PATH_APIKEYS}`
-      }
-    ],
-    integrations: [
-      {
-        label: `Slack`,
-        icon: IconSystem.IconSlack,
-        href: `/${envUrlCode}${ROUTING.PAGE_PATH_INTEGRATION_SLACK}`
-      },
-      {
-        label: `FCM`,
-        icon: IconSystem.IconFCM,
-        href: `/${envUrlCode}${ROUTING.PAGE_PATH_INTEGRATION_FCM}`
-      }
-    ]
-  };
+  const settingMenuSections = [
+    {
+      title: t('general'),
+      menus: compact([
+        consoleAccount?.isSystemAdmin && {
+          label: t(`organizations`),
+          icon: IconSystem.IconBuilding,
+          href: ROUTING.PAGE_PATH_ORGANIZATIONS
+        },
+        {
+          label: t(`settings`),
+          icon: IconSystem.IconSetting,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_SETTINGS}`
+        },
+        {
+          label: t(`projects`),
+          icon: IconSystem.IconFolder,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_PROJECTS}`
+        },
+        {
+          label: t(`usage`),
+          icon: IconSystem.IconUsage,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_USAGE}`
+        }
+      ])
+    },
+    {
+      title: t('access'),
+      menus: [
+        {
+          label: t(`members`),
+          icon: IconSystem.IconMember,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_MEMBERS}`
+        },
+        {
+          label: t(`API-keys`),
+          icon: IconSystem.IconKey,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_APIKEYS}`
+        }
+      ]
+    },
+    {
+      title: t('integrations'),
+      menus: [
+        {
+          label: `Slack`,
+          icon: IconSystem.IconSlack,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_INTEGRATION_SLACK}`
+        },
+        {
+          label: `FCM`,
+          icon: IconSystem.IconFCM,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_INTEGRATION_FCM}`
+        }
+      ]
+    }
+  ];
 
-  const settingPaths = flatMap(getObjectValues(settingSectionPaths)).map(
-    item => item.href
-  );
+  const mainMenuSections = [
+    {
+      title: t('management'),
+      menus: [
+        {
+          label: t(`navigation.audit-logs`),
+          icon: IconSystem.IconLogs,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_AUDIT_LOGS}`
+        },
+        {
+          label: t(`navigation.feature-flags`),
+          icon: IconSystem.IconSwitch,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`
+        },
+        {
+          label: t(`navigation.user-segment`),
+          icon: IconSystem.IconUser,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_USER_SEGMENTS}`
+        },
+        {
+          label: t(`navigation.debugger`),
+          icon: IconSystem.IconDebugger,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_DEBUGGER}`
+        }
+      ]
+    },
+    {
+      title: t('analysis'),
+      menus: [
+        {
+          label: t(`navigation.goals`),
+          icon: IconSystem.IconNote,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_GOALS}`
+        },
+        {
+          label: t(`navigation.experiments`),
+          icon: IconSystem.IconProton,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_EXPERIMENTS}`
+        }
+      ]
+    }
+  ];
+
+  const settingPaths = flatMapDeep(
+    settingMenuSections.map(section => section.menus)
+  ).map(item => item.href);
+
   const [isOpenSetting, onOpenSetting, onCloseSetting] = useToggleOpen(
     settingPaths.includes(pathname)
   );
@@ -101,20 +153,14 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
               <span>{t(`navigation.back-to-main`)}</span>
             </button>
             <Divider className="my-5 bg-primary-50 opacity-10" />
-            <SectionMenu
-              title={t('general')}
-              items={settingSectionPaths.general}
-            />
-            <SectionMenu
-              title={t(`access`)}
-              className="mt-5"
-              items={settingSectionPaths.access}
-            />
-            <SectionMenu
-              title={t(`integrations`)}
-              className="mt-5"
-              items={settingSectionPaths.integrations}
-            />
+            {settingMenuSections.map((item, index) => (
+              <SectionMenu
+                key={index}
+                className="first:mt-0 mt-4"
+                title={item.title}
+                items={item.menus}
+              />
+            ))}
           </div>
           <div
             className={cn(
@@ -127,48 +173,15 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
             </div>
             <MyProjects />
             <Divider className="my-5 bg-primary-50 opacity-10" />
-            <SectionMenu
-              title={t(`management`)}
-              items={[
-                {
-                  label: t(`navigation.audit-logs`),
-                  icon: IconSystem.IconLogs,
-                  href: `/${envUrlCode}${ROUTING.PAGE_PATH_AUDIT_LOGS}`
-                },
-                {
-                  label: t(`navigation.feature-flags`),
-                  icon: IconSystem.IconSwitch,
-                  href: `/${envUrlCode}${ROUTING.PAGE_PATH_FEATURES}`
-                },
-                {
-                  label: t(`navigation.user-segment`),
-                  icon: IconSystem.IconUser,
-                  href: `/${envUrlCode}${ROUTING.PAGE_PATH_USER_SEGMENTS}`
-                },
-                {
-                  label: t(`navigation.debugger`),
-                  icon: IconSystem.IconDebugger,
-                  href: `/${envUrlCode}${ROUTING.PAGE_PATH_DEBUGGER}`
-                }
-              ]}
-              onClickNavLink={onClickNavLink}
-            />
-            <SectionMenu
-              title={t(`analysis`)}
-              className="mt-4"
-              items={[
-                {
-                  label: t(`navigation.goals`),
-                  icon: IconSystem.IconNote,
-                  href: `/${envUrlCode}${ROUTING.PAGE_PATH_GOALS}`
-                },
-                {
-                  label: t(`navigation.experiments`),
-                  icon: IconSystem.IconProton,
-                  href: `/${envUrlCode}${ROUTING.PAGE_PATH_EXPERIMENTS}`
-                }
-              ]}
-            />
+            {mainMenuSections.map((item, index) => (
+              <SectionMenu
+                key={index}
+                className="first:mt-0 mt-4"
+                title={item.title}
+                items={item.menus}
+                onClickNavLink={onClickNavLink}
+              />
+            ))}
           </div>
         </div>
 
