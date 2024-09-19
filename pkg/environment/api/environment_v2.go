@@ -181,15 +181,15 @@ func (s *EnvironmentService) newEnvironmentV2ListOrders(
 	switch orderBy {
 	case environmentproto.ListEnvironmentsV2Request_DEFAULT,
 		environmentproto.ListEnvironmentsV2Request_NAME:
-		column = "environment_v2name"
+		column = "environment_v2.name"
 	case environmentproto.ListEnvironmentsV2Request_ID:
-		column = "environment_v2id"
+		column = "environment_v2.id"
 	case environmentproto.ListEnvironmentsV2Request_URL_CODE:
-		column = "environment_v2url_code"
+		column = "environment_v2.url_code"
 	case environmentproto.ListEnvironmentsV2Request_CREATED_AT:
-		column = "environment_v2created_at"
+		column = "environment_v2.created_at"
 	case environmentproto.ListEnvironmentsV2Request_UPDATED_AT:
-		column = "environment_v2updated_at"
+		column = "environment_v2.updated_at"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
