@@ -1,6 +1,9 @@
 button.trigger {
   @apply typo-para-medium flex items-center rounded-lg border border-gray-400 bg-gray-50 p-3 text-gray-500;
 }
+button.trigger.icon-only {
+  @apply !border-none !bg-transparent !shadow-none;
+}
 button.trigger.pad-left {
   @apply pl-10;
 }

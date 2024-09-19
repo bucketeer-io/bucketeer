@@ -6,6 +6,7 @@ import type { Color, IconSize } from '@types';
 export interface IconProps {
   color?: Color;
   size?: IconSize | IconSize[];
+  className?: string;
   icon: FunctionComponent;
 }
 
@@ -15,13 +16,14 @@ const getSizeCls = (size: IconSize | IconSize[]) => {
   return cls.join(' ');
 };
 
-const Icon = ({ color, size = 'md', icon: SvgIcon }: IconProps) => {
+const Icon = ({ color, size = 'md', icon: SvgIcon, className }: IconProps) => {
   return (
     <i
       className={clsx(
         'inline-flex',
         color && COLOR_MAPPING[color],
-        getSizeCls(size)
+        getSizeCls(size),
+        className
       )}
     >
       <SvgIcon />

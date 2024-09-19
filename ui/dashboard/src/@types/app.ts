@@ -1,3 +1,5 @@
+export type AddonSlot = 'left' | 'right';
+
 // Theme
 export type Color =
   | 'primary-600'

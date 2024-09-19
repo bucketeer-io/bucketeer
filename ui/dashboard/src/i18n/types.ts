@@ -1,4 +1,4 @@
-export enum LanguageTypes {
+export enum Language {
   JAPANESE = 'ja',
   ENGLISH = 'en'
 }

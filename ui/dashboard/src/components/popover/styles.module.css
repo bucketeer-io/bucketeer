@@ -1,0 +1,28 @@
+button.trigger {
+  @apply typo-para-small flex items-center justify-center gap-x-2 text-gray-700;
+}
+.reverse {
+  @apply flex flex-row-reverse;
+}
+.icon {
+  @apply flex size-5 items-center justify-center text-gray-600;
+}
+.full {
+  @apply flex w-full justify-between;
+}
+.content {
+  @apply max-h-[260px] min-w-[167px] overflow-auto rounded-lg bg-gray-50 p-1 shadow-menu;
+}
+.label {
+  @apply typo-para-small select-none;
+}
+.item {
+  @apply flex cursor-pointer items-center gap-x-2 p-2 text-gray-700 hover:bg-primary-50;
+}
+.item:hover > * {
+  @apply text-primary-500;
+}
+
+button.trigger:hover {
+  @apply text-gray-600 drop-shadow;
+}

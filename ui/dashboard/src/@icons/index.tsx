@@ -1,7 +1,12 @@
+import IconAngleDown from './customized-icons/angle-down.svg?react';
+import IconAngleUp from './customized-icons/angle-up.svg?react';
 import IconBackspace from './customized-icons/backspace.svg?react';
+import IconChecked from './customized-icons/checked.svg?react';
 import IconChevronRight from './customized-icons/chevron-right.svg?react';
 import IconEmail from './customized-icons/email.svg?react';
+import IconFolder2Outlined from './customized-icons/folder2.svg?react';
 import IconInfo from './customized-icons/info.svg?react';
+import IconNumberOutlined from './customized-icons/number.svg?react';
 import IconSearch from './customized-icons/search.svg?react';
 import IconUnion from './customized-icons/union.svg?react';
 import IconBuilding from './sidebar-icons/building.svg?react';
@@ -48,6 +53,11 @@ export {
   IconInfo,
   IconUnion,
   IconEmail,
+  IconFolder2Outlined,
+  IconChecked,
+  IconNumberOutlined,
+  IconAngleDown,
+  IconAngleUp,
   // Special icons
   IconGoal,
   IconGoogle,
