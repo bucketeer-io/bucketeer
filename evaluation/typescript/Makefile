@@ -13,7 +13,7 @@ init:
 
 .PHONY: clean
 clean:
-	rm -rf $(CURDIR)/__test $(CURDIR)/lib
+	rm -rf $(CURDIR)/__test $(CURDIR)/__lib
 
 .PHONY: build
 build: clean-build tsc rename-js
@@ -37,10 +37,7 @@ rename-js:
 	$(NPM_BIN_DIR)/rename '$(GENFILES_DIR)/**/*.js' '{{f}}.mjs'
 
 .PHONY: test
-test:
-	rm -rf $(CURDIR)/__test
-	$(NPM_BIN_DIR)/babel src --extensions '.ts' --config-file "$(CURDIR)/babel-test.config.js" --out-dir "__test"
-	cp -r $(SRC_DIR)/proto __test/
+test: build_test
 	$(NPM_BIN_DIR)/ava --config ava-test.config.mjs
 
 .PHONY: fmt

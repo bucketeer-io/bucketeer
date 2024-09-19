@@ -1,23 +1,31 @@
 {
   "compilerOptions": {
-    /* Basic Options */
-    "target": "es2017", /* Specify ECMAScript target version. */
-    "module": "ESNext", /* Specify module code generation. */
-    "moduleResolution": "node",
-    "lib": [
-      "es2023"
-    ],
-    "declaration": true,
-    "allowJs": true,
-    /* Strict Type-Checking Options */
-    "strict": true,
-    /* Additional Checks */
-    // "noUnusedLocals": true, /* Report errors on unused locals. */
-    "allowSyntheticDefaultImports": true,
-    "preserveConstEnums": true,
-    "noUnusedParameters": true, /* Report errors on unused parameters. */
-    "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
-    "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
+		"module": "node16",
+		"moduleResolution": "node16",
+		"moduleDetection": "force",
+		"target": "ES2022", // Node.js 18
+		"lib": [
+			"DOM",
+			"DOM.Iterable",
+			"ES2022"
+		],
+		"resolveJsonModule": false, // ESM doesn't yet support JSON modules.
+		"jsx": "react",
+		"declaration": true,
+		"newLine": "lf",
+		"stripInternal": true,
+		"strict": true,
+		"noImplicitReturns": true,
+		"noImplicitOverride": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"noEmitOnError": true,
+		"useDefineForClassFields": true,
+		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
     "outDir": "./__lib/",
     "types": [
       "node"

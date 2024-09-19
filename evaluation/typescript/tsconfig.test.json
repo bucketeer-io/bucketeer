@@ -1,13 +1,6 @@
 {
   "extends": "./tsconfig",
   "compilerOptions": {
-    /* Basic Options */
-    "target": "es2017", /* Specify ECMAScript target version. */
-    "module": "ESNext", /* Specify module code generation. */
-    "moduleResolution": "node",
-    "lib": [
-      "es2023",
-    ],
     "esModuleInterop": true,
     "outDir": "./__test/",
     "types": [
