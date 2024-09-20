@@ -109,13 +109,21 @@ class ClauseEvaluator {
     const floatTarget = validateAndParseFloat(targetValue);
     const floatValues = values.map(validateAndParseFloat).filter((value) => !isNaN(value));
 
-    if (!isNaN(floatTarget) && floatValues.length > 0) {
+    if (!isNaN(floatTarget)) {
+      if (floatValues.length == 0) {
+        return false;
+      }
       return floatValues.some((value) => floatTarget >= value);
     }
 
     const semverTarget = semver.valid(targetValue);
     if (semverTarget) {
-      return values.some((value) => semver.gte(semverTarget, value));
+      return values.some((value) => {
+        if (semver.valid(value)) {
+          return semver.gte(semverTarget, value);
+        }
+        return false;
+      });
     }
 
     return values.some((value) => targetValue >= value);
@@ -125,13 +133,21 @@ class ClauseEvaluator {
     const floatTarget = validateAndParseFloat(targetValue);
     const floatValues = values.map(validateAndParseFloat).filter((value) => !isNaN(value));
 
-    if (!isNaN(floatTarget) && floatValues.length > 0) {
+    if (!isNaN(floatTarget)) {
+      if (floatValues.length == 0) {
+        return false
+      }
       return floatValues.some((value) => floatTarget < value);
     }
 
     const semverTarget = semver.valid(targetValue);
     if (semverTarget) {
-      return values.some((value) => semver.lt(semverTarget, value));
+      return values.some((value) => {
+        if (semver.valid(value)) {
+          return semver.lt(semverTarget, value);
+        }
+        return false;
+      });
     }
 
     return values.some((value) => targetValue < value);
@@ -141,21 +157,35 @@ class ClauseEvaluator {
     const floatTarget = validateAndParseFloat(targetValue);
     const floatValues = values.map(validateAndParseFloat).filter((value) => !isNaN(value));
 
-    if (!isNaN(floatTarget) && floatValues.length > 0) {
+    if (!isNaN(floatTarget)) {
+      if (floatValues.length == 0) {
+        return false
+      }
       return floatValues.some((value) => floatTarget <= value);
     }
 
     const semverTarget = semver.valid(targetValue);
     if (semverTarget) {
-      return values.some((value) => semver.lte(semverTarget, value));
+      return values.some((value) => {
+        if (semver.valid(value)) {
+          return semver.lte(semverTarget, value);
+        }
+        return false;
+      });
     }
 
     return values.some((value) => targetValue <= value);
   }
 
   private before(targetValue: string, values: string[]): boolean {
-    const intTarget = parseInt(targetValue, 10);
+    const intTarget = validateAndParseInt(targetValue);
+    if (isNaN(intTarget)) {
+      return false;
+    }
     const intValues = values.map((value) => parseInt(value, 10)).filter((value) => !isNaN(value));
+    if (intValues.length == 0) {
+      return false;
+    }
 
     return intValues.some((value) => intTarget < value);
   }
@@ -168,9 +198,27 @@ class ClauseEvaluator {
   }
 }
 
+function isNumericString(input: string): boolean {
+  return /^-?\d*\.?\d+$/.test(input);
+}
+
+function validateAndParseInt(input: string): number {
+  // Check if the string is a valid number using regex
+  if (!isNumericString(input)) {
+    // Will not allow a string like `1a`, `0b`
+    return NaN;
+  }
+
+  // Parse the string to float
+  const result = parseInt(input, 10);
+
+  // If parsing fails, return NaN
+  return isNaN(result) ? NaN : result;
+}
+
 function validateAndParseFloat(input: string): number {
   // Check if the string is a valid number using regex
-  if (!/^-?\d*\.?\d+$/.test(input)) {
+  if (!isNumericString(input)) {
     // Will not allow a string like `1a`, `0b`
     return NaN;
   }

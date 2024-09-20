@@ -1,4 +1,4 @@
-import { SegmentUser } from './proto/feature/segment_pb'; // Assuming the SegmentUser proto is in this file
+import { SegmentUser } from './proto/feature/segment_pb';
 //
 class SegmentEvaluator {
   evaluate(
