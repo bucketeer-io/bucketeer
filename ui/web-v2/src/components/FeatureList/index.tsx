@@ -538,8 +538,6 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     const [nextLocation, setNextLocation] = useState(null);
     const [showSaveChangesDialog, setShowSaveChangesDialog] = useState(false);
     const [unsavedSearchFilterId, setUnsavedSearchFilterId] = useState(null);
-    const [isAddSearchFilterActive, setIsAddSearchFilterActive] =
-      useState(false);
 
     const history = useHistory();
 
@@ -831,19 +829,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
           handleSearchFilter(unsavedSearchFilterId);
           return;
         }
-        if (isAddSearchFilterActive) {
-          setOpen(true);
-          setSelectedSearchFilter(null);
-          setSearchFiltersList(
-            filteredSearchFiltersList.map((s) => ({
-              ...s,
-              selected: false,
-              saveChanges: false
-            }))
-          );
-          onChange(defaultOptions);
-          return;
-        }
+
         setUnsavedChanges(false);
 
         const { pathname: nextPathname } = nextLocation;
@@ -869,8 +855,6 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
             pathname: nextPathname
           });
         }
-      } else {
-        setIsAddSearchFilterActive(false);
       }
     };
 
@@ -1007,13 +991,8 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                 <button
                   className="bg-gray-50 p-[6px] rounded hover:bg-purple-100 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => {
-                    if (unsavedChanges && selectedSearchFilter) {
-                      setShowSaveChangesDialog(true);
-                      setIsAddSearchFilterActive(true);
-                    } else {
-                      setOpen(true);
-                      setSelectedSearchFilter(null);
-                    }
+                    setOpen(true);
+                    setSelectedSearchFilter(null);
                   }}
                 >
                   <PlusIcon width={20} className="text-primary" />
@@ -1055,7 +1034,6 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
             close={() => {
               setShowSaveChangesDialog(false);
               setUnsavedSearchFilterId(null);
-              setIsAddSearchFilterActive(false);
             }}
             onConfirm={handleConfirm}
           />
