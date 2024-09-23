@@ -90,6 +90,7 @@ type authService struct {
 	googleAuthenticator auth.Authenticator
 	opts                *options
 	logger              *zap.Logger
+	authStorage         accountstotage.AccountStorage
 }
 
 func NewAuthService(
@@ -118,8 +119,9 @@ func NewAuthService(
 		googleAuthenticator: google.NewAuthenticator(
 			&config.GoogleConfig, signer, logger,
 		),
-		opts:   &options,
-		logger: logger,
+		opts:        &options,
+		logger:      logger,
+		authStorage: accountstotage.NewAccountStorage(mysqlClient),
 	}
 	service.PrepareDemoUser()
 	return service
@@ -203,11 +205,28 @@ func (s *authService) ExchangeToken(
 		}
 		return nil, dt.Err()
 	}
+	isNewUser, err := s.authStorage.IsNewUser(ctx, userInfo.Email)
+	if err != nil {
+		s.logger.Error(
+			"Failed to check if user is new",
+			zap.Error(err),
+			zap.String("email", userInfo.Email),
+		)
+		dt, err := auth.StatusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, auth.StatusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
 	token, err := s.generateToken(ctx, userInfo.Email, localizer)
 	if err != nil {
 		return nil, err
 	}
-	return &authproto.ExchangeTokenResponse{Token: token}, nil
+	return &authproto.ExchangeTokenResponse{Token: token, NewUser: isNewUser}, nil
 }
 
 func (s *authService) RefreshToken(

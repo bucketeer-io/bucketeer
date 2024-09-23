@@ -1,6 +1,8 @@
 SELECT
     email,
-    name,
+    first_name,
+    last_name,
+    language,
     avatar_image_url,
     organization_id,
     organization_role,

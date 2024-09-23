@@ -43,6 +43,8 @@ var (
 	countAccountsV2SQL string
 	//go:embed sql/account_v2/select_accounts_with_organization.sql
 	selectAccountsWithOrganizationSQL string
+	//go:embed sql/account_v2/is_new_user.sql
+	isNewUserSQL string
 )
 
 var (
@@ -56,7 +58,9 @@ func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV
 		ctx,
 		insertAccountV2SQL,
 		a.Email,
-		a.Name,
+		a.FirstName,
+		a.LastName,
+		a.Language,
 		a.AvatarImageUrl,
 		a.OrganizationId,
 		int32(a.OrganizationRole),
@@ -78,7 +82,9 @@ func (s *accountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV
 	result, err := s.qe(ctx).ExecContext(
 		ctx,
 		updateAccountV2SQL,
-		a.Name,
+		a.FirstName,
+		a.LastName,
+		a.Language,
 		a.AvatarImageUrl,
 		int32(a.OrganizationRole),
 		mysql.JSONObject{Val: a.EnvironmentRoles},
@@ -131,7 +137,9 @@ func (s *accountStorage) GetAccountV2(ctx context.Context, email, organizationID
 		organizationID,
 	).Scan(
 		&account.Email,
-		&account.Name,
+		&account.FirstName,
+		&account.LastName,
+		&account.Language,
 		&account.AvatarImageUrl,
 		&account.OrganizationId,
 		&organizationRole,
@@ -288,4 +296,13 @@ func (s *accountStorage) ListAccountsV2(
 		return nil, 0, 0, err
 	}
 	return accounts, nextOffset, totalCount, nil
+}
+
+func (s *accountStorage) IsNewUser(ctx context.Context, email string) (bool, error) {
+	var count int
+	err := s.qe(ctx).QueryRowContext(ctx, isNewUserSQL, email).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+	return count == 0, nil
 }
