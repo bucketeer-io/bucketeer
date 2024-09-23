@@ -7541,6 +7541,11 @@
                 "id": 13,
                 "name": "user_count",
                 "type": "int32"
+              },
+              {
+                "id": 14,
+                "name": "owner_email",
+                "type": "string"
               }
             ]
           }

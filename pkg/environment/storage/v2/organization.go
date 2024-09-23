@@ -74,6 +74,7 @@ func (s *organizationStorage) CreateOrganization(ctx context.Context, o *domain.
 		insertOrganizationSQL,
 		o.Id,
 		o.Name,
+		o.OwnerEmail,
 		o.UrlCode,
 		o.Description,
 		o.Disabled,
@@ -97,6 +98,7 @@ func (s *organizationStorage) UpdateOrganization(ctx context.Context, o *domain.
 		ctx,
 		updateOrganizationSQL,
 		o.Name,
+		o.OwnerEmail,
 		o.Description,
 		o.Disabled,
 		o.Archived,
@@ -127,6 +129,7 @@ func (s *organizationStorage) GetOrganization(ctx context.Context, id string) (*
 	).Scan(
 		&organization.Id,
 		&organization.Name,
+		&organization.OwnerEmail,
 		&organization.UrlCode,
 		&organization.Description,
 		&organization.Disabled,
@@ -153,6 +156,7 @@ func (s *organizationStorage) GetSystemAdminOrganization(ctx context.Context) (*
 	).Scan(
 		&organization.Id,
 		&organization.Name,
+		&organization.OwnerEmail,
 		&organization.UrlCode,
 		&organization.Description,
 		&organization.Disabled,
@@ -192,6 +196,7 @@ func (s *organizationStorage) ListOrganizations(
 		err := rows.Scan(
 			&organization.Id,
 			&organization.Name,
+			&organization.OwnerEmail,
 			&organization.UrlCode,
 			&organization.Description,
 			&organization.Disabled,

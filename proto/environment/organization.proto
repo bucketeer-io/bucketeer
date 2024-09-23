@@ -31,4 +31,5 @@ message Organization {
   int32 project_count = 11;
   int32 environment_count = 12;
   int32 user_count = 13;
+  string owner_email = 14;
 }
