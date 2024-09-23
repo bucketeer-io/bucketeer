@@ -5,5 +5,5 @@
 ```make install```
 ```make copy_proto_generated_code```
 
-## Unit test
+## Unit tests
 ```make test```

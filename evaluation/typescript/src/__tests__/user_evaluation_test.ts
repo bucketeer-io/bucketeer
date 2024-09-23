@@ -71,6 +71,8 @@ NewUserEvaluationsTestCases.forEach(({ id, evaluations, archivedFeaturesIds, for
     t.deepEqual(actual.getArchivedFeatureIdsList(), expected.archivedFeaturesIds);
     t.is(actual.getForceUpdate(), expected.forceUpdate);
     t.truthy(actual.getCreatedAt()); // Check if CreatedAt is set, similar to NotZero in Go
+    //TODO: Check me - did Golang test is missing this
+    //t.deepEqual(actual.toObject(), expected);
   });
 });
 

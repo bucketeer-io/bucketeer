@@ -6,7 +6,7 @@ import { Clause } from '../proto/feature/clause_pb';
 import { RuleEvaluator } from '../ruleEvaluator';
 import { User } from '../proto/user/user/user_pb';
 import { SegmentUser } from '../proto/feature/segment_pb';
-import { Variation } from '../proto/feature/variation_pb';
+import { createRule, createSegmentUser, createVariation } from './utils/test_data';
 
 // Define the type for the test cases
 interface TestCase {
@@ -15,7 +15,7 @@ interface TestCase {
 }
 
 // Helper function to create a User instance
-function createUser(id: string, data: Record<string, string> | null): User {
+export function createUser(id: string, data: Record<string, string> | null): User {
   const user = new User();
   user.setId(id);
   let map = user.getDataMap()
@@ -23,22 +23,6 @@ function createUser(id: string, data: Record<string, string> | null): User {
     Object.entries(data).forEach(([key, value]) => map.set(key, value));
   }
   return user;
-}
-
-// Function to create a Variation instance with the provided parameters
-function createVariation(
-  id: string,
-  value: string,
-  name: string,
-  description: string
-): Variation {
-  const variation = new Variation();
-  variation.setId(id);
-  variation.setValue(value);
-  variation.setName(name);
-  variation.setDescription(description);
-
-  return variation;
 }
 
 const TestRuleList = {
@@ -82,30 +66,6 @@ function newTestFeature(): Feature {
     return feature;
 }
 
-function createRule(id: string, attribute: string, operator: Clause.OperatorMap[keyof Clause.OperatorMap], values: string[]): Rule {
-    const rule = new Rule();
-    rule.setId(id);
-
-    const fixedStrategy = new FixedStrategy();
-    fixedStrategy.setVariation('variation-A')
-    const strategy = new Strategy();
-    strategy.setType(Strategy.Type.FIXED);
-    strategy.setFixedStrategy(fixedStrategy);
-    rule.setStrategy(strategy);
-
-    rule.setClausesList([createClause(id, attribute, operator, values)]);
-    return rule;
-}
-
-function createClause(id: string, attribute: string, operator: Clause.OperatorMap[keyof Clause.OperatorMap], values: string[]): Clause {
-    const clause = new Clause();
-    clause.setId(id);
-    clause.setAttribute(attribute);
-    clause.setOperator(operator);
-    clause.setValuesList(values);
-    return clause;
-}
-
 function newSegmentUserIDs(): SegmentUser[] {
     return [
         createSegmentUser('user-id-1', 'segment-id-1', SegmentUser.State.INCLUDED),
@@ -115,14 +75,6 @@ function newSegmentUserIDs(): SegmentUser[] {
         createSegmentUser('user-id-3', 'segment-id-1', SegmentUser.State.INCLUDED),
         createSegmentUser('user-id-4', 'segment-id-2', SegmentUser.State.INCLUDED)
     ];
-}
-
-function createSegmentUser(userId: string, segmentId: string, state: SegmentUser.StateMap[keyof SegmentUser.StateMap]): SegmentUser {
-    const segmentUser = new SegmentUser();
-    segmentUser.setUserId(userId);
-    segmentUser.setSegmentId(segmentId);
-    segmentUser.setState(state);
-    return segmentUser;
 }
 
 // Define test cases

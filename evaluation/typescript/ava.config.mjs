@@ -5,5 +5,5 @@ export default {
 				"src/": "__lib/"
 			},
   },
-  files: ['__test/**/__tests__/*.js'],
+  files: ['/**/__tests__/*.js'],
 };

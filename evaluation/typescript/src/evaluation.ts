@@ -13,7 +13,7 @@ import { NewUserEvaluations, UserEvaluationsID } from './userEvaluation';
 const SECONDS_TO_RE_EVALUATE_ALL = 30 * 24 * 60 * 60; // 30 days
 const SECONDS_FOR_ADJUSTMENT = 10; // 10 seconds
 
-function EvaluationID(
+export function EvaluationID(
   featureID: string,
   featureVersion: number,
   userID: string
