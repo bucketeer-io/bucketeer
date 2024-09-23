@@ -96,7 +96,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         systemAdmin: jspb.Message.getBooleanFieldWithDefault(msg, 10, false),
         projectCount: jspb.Message.getFieldWithDefault(msg, 11, 0),
         environmentCount: jspb.Message.getFieldWithDefault(msg, 12, 0),
-        userCount: jspb.Message.getFieldWithDefault(msg, 13, 0)
+        userCount: jspb.Message.getFieldWithDefault(msg, 13, 0),
+        ownerEmail: jspb.Message.getFieldWithDefault(msg, 14, '')
       };
 
     if (includeInstance) {
@@ -187,6 +188,10 @@ proto.bucketeer.environment.Organization.deserializeBinaryFromReader =
           var value = /** @type {number} */ (reader.readInt32());
           msg.setUserCount(value);
           break;
+        case 14:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOwnerEmail(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -272,6 +277,10 @@ proto.bucketeer.environment.Organization.serializeBinaryToWriter = function (
   f = message.getUserCount();
   if (f !== 0) {
     writer.writeInt32(13, f);
+  }
+  f = message.getOwnerEmail();
+  if (f.length > 0) {
+    writer.writeString(14, f);
   }
 };
 
@@ -518,6 +527,24 @@ proto.bucketeer.environment.Organization.prototype.setUserCount = function (
   value
 ) {
   return jspb.Message.setProto3IntField(this, 13, value);
+};
+
+/**
+ * optional string owner_email = 14;
+ * @return {string}
+ */
+proto.bucketeer.environment.Organization.prototype.getOwnerEmail = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 14, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.environment.Organization} returns this
+ */
+proto.bucketeer.environment.Organization.prototype.setOwnerEmail = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 14, value);
 };
 
 goog.object.extend(exports, proto.bucketeer.environment);

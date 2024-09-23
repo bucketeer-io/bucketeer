@@ -3353,6 +3353,8 @@ definitions:
       userCount:
         type: integer
         format: int32
+      ownerEmail:
+        type: string
   environmentArchiveEnvironmentV2Command:
     type: object
   environmentArchiveEnvironmentV2Request:
