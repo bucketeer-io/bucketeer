@@ -48,6 +48,7 @@ type AccountStorage interface {
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*proto.APIKey, int, int64, error)
+	IsNewUser(ctx context.Context, email string) (bool, error)
 }
 
 const transactionKey = "transaction"

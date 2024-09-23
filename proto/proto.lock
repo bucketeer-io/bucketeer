@@ -167,6 +167,21 @@
                 "name": "search_filters",
                 "type": "SearchFilter",
                 "is_repeated": true
+              },
+              {
+                "id": 11,
+                "name": "first_name",
+                "type": "string"
+              },
+              {
+                "id": 12,
+                "name": "last_name",
+                "type": "string"
+              },
+              {
+                "id": 13,
+                "name": "language",
+                "type": "string"
               }
             ],
             "messages": [
@@ -5143,6 +5158,11 @@
                 "id": 1,
                 "name": "token",
                 "type": "Token"
+              },
+              {
+                "id": 2,
+                "name": "newUser",
+                "type": "bool"
               }
             ]
           },
