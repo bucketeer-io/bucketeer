@@ -2802,6 +2802,12 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/accountSearchFilter'
+      firstName:
+        type: string
+      lastName:
+        type: string
+      language:
+        type: string
   accountAccountV2EnvironmentRole:
     type: object
     properties:
@@ -3328,6 +3334,8 @@ definitions:
     properties:
       token:
         $ref: '#/definitions/authToken'
+      newUser:
+        type: boolean
   authGetAuthenticationURLRequest:
     type: object
     properties:

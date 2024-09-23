@@ -121,6 +121,9 @@ export class ExchangeTokenResponse extends jspb.Message {
   getToken(): proto_auth_token_pb.Token | undefined;
   setToken(value?: proto_auth_token_pb.Token): void;
 
+  getNewuser(): boolean;
+  setNewuser(value: boolean): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ExchangeTokenResponse.AsObject;
   static toObject(
@@ -145,6 +148,7 @@ export class ExchangeTokenResponse extends jspb.Message {
 export namespace ExchangeTokenResponse {
   export type AsObject = {
     token?: proto_auth_token_pb.Token.AsObject;
+    newuser: boolean;
   };
 }
 
