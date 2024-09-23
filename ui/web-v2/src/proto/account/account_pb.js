@@ -585,7 +585,10 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg.getSearchFiltersList(),
           proto_account_search_filter_pb.SearchFilter.toObject,
           includeInstance
-        )
+        ),
+        firstName: jspb.Message.getFieldWithDefault(msg, 11, ''),
+        lastName: jspb.Message.getFieldWithDefault(msg, 12, ''),
+        language: jspb.Message.getFieldWithDefault(msg, 13, '')
       };
 
     if (includeInstance) {
@@ -679,6 +682,18 @@ proto.bucketeer.account.AccountV2.deserializeBinaryFromReader = function (
         );
         msg.addSearchFilters(value);
         break;
+      case 11:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setFirstName(value);
+        break;
+      case 12:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setLastName(value);
+        break;
+      case 13:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setLanguage(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -756,6 +771,18 @@ proto.bucketeer.account.AccountV2.serializeBinaryToWriter = function (
       f,
       proto_account_search_filter_pb.SearchFilter.serializeBinaryToWriter
     );
+  }
+  f = message.getFirstName();
+  if (f.length > 0) {
+    writer.writeString(11, f);
+  }
+  f = message.getLastName();
+  if (f.length > 0) {
+    writer.writeString(12, f);
+  }
+  f = message.getLanguage();
+  if (f.length > 0) {
+    writer.writeString(13, f);
   }
 };
 
@@ -1298,6 +1325,54 @@ proto.bucketeer.account.AccountV2.prototype.clearSearchFiltersList =
   function () {
     return this.setSearchFiltersList([]);
   };
+
+/**
+ * optional string first_name = 11;
+ * @return {string}
+ */
+proto.bucketeer.account.AccountV2.prototype.getFirstName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 11, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.setFirstName = function (value) {
+  return jspb.Message.setProto3StringField(this, 11, value);
+};
+
+/**
+ * optional string last_name = 12;
+ * @return {string}
+ */
+proto.bucketeer.account.AccountV2.prototype.getLastName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 12, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.setLastName = function (value) {
+  return jspb.Message.setProto3StringField(this, 12, value);
+};
+
+/**
+ * optional string language = 13;
+ * @return {string}
+ */
+proto.bucketeer.account.AccountV2.prototype.getLanguage = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 13, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.setLanguage = function (value) {
+  return jspb.Message.setProto3StringField(this, 13, value);
+};
 
 /**
  * List of repeated fields within this message type.
