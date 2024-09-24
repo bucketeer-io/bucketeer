@@ -493,6 +493,7 @@ func (s *authService) PrepareDemoUser() {
 						Id:          config.OrganizationId,
 						Name:        "Demo organization",
 						UrlCode:     "demo",
+						OwnerEmail:  "demo@demo.org",
 						Description: "This organization is for demo users",
 						Disabled:    false,
 						Archived:    false,
