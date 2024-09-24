@@ -43,6 +43,9 @@ export class Organization extends jspb.Message {
   getUserCount(): number;
   setUserCount(value: number): void;
 
+  getOwnerEmail(): string;
+  setOwnerEmail(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Organization.AsObject;
   static toObject(
@@ -79,5 +82,6 @@ export namespace Organization {
     projectCount: number;
     environmentCount: number;
     userCount: number;
+    ownerEmail: string;
   };
 }

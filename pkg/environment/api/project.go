@@ -219,6 +219,11 @@ func (s *EnvironmentService) newProjectListOrders(
 		column = "project.created_at"
 	case environmentproto.ListProjectsRequest_UPDATED_AT:
 		column = "project.updated_at"
+	case environmentproto.ListProjectsRequest_ENVIRONMENT_COUNT:
+		column = "environment_count"
+	case environmentproto.ListProjectsRequest_FEATURE_COUNT:
+		column = "feature_count"
+
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -252,7 +257,14 @@ func (s *EnvironmentService) CreateProject(
 	urlCode := strings.TrimSpace(req.Command.UrlCode)
 	// TODO: Temporary implementations that create Organization at the same time as Project.
 	// This should be removed when the Organization management page is added.
-	organization, err := domain.NewOrganization(name, urlCode, req.Command.Description, false, false)
+	organization, err := domain.NewOrganization(
+		name,
+		urlCode,
+		req.Command.OwnerEmail,
+		req.Command.Description,
+		false,
+		false,
+	)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create organization",
@@ -338,6 +350,16 @@ func validateCreateProjectRequest(req *environmentproto.CreateProjectRequest, lo
 		dt, err := statusInvalidProjectUrlCode.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if !emailRegex.MatchString(req.Command.OwnerEmail) {
+		dt, err := statusInvalidProjectCreatorEmail.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "owner_email"),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -451,7 +473,14 @@ func (s *EnvironmentService) CreateTrialProject(
 	}
 	// TODO: Temporary implementations that create Organization at the same time as Project.
 	// This should be removed when the Organization management page is added.
-	organization, err := domain.NewOrganization(name, urlCode, "", true, false)
+	organization, err := domain.NewOrganization(
+		name,
+		urlCode,
+		req.Command.OwnerEmail,
+		"",
+		true,
+		false,
+	)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create organization",

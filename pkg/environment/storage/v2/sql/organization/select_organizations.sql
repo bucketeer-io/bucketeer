@@ -1,6 +1,7 @@
 SELECT
     organization.id,
     organization.name,
+    organization.owner_email,
     organization.url_code,
     organization.description,
     organization.disabled,
@@ -21,6 +22,7 @@ LEFT JOIN account_v2 ON organization.id = account_v2.organization_id
 GROUP BY
     organization.id,
     organization.name,
+    organization.owner_email,
     organization.url_code,
     organization.description,
     organization.disabled,

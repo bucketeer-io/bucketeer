@@ -1,6 +1,7 @@
 SELECT
     id,
     name,
+    owner_email,
     url_code,
     description,
     disabled,

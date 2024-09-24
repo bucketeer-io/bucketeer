@@ -190,6 +190,8 @@ func (s *EnvironmentService) newEnvironmentV2ListOrders(
 		column = "environment_v2.created_at"
 	case environmentproto.ListEnvironmentsV2Request_UPDATED_AT:
 		column = "environment_v2.updated_at"
+	case environmentproto.ListEnvironmentsV2Request_FEATURE_COUNT:
+		column = "feature_count"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

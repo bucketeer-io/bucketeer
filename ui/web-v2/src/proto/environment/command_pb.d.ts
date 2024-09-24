@@ -181,6 +181,9 @@ export class CreateProjectCommand extends jspb.Message {
   getUrlCode(): string;
   setUrlCode(value: string): void;
 
+  getOwnerEmail(): string;
+  setOwnerEmail(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateProjectCommand.AsObject;
   static toObject(
@@ -208,6 +211,7 @@ export namespace CreateProjectCommand {
     description: string;
     name: string;
     urlCode: string;
+    ownerEmail: string;
   };
 }
 
@@ -223,6 +227,9 @@ export class CreateTrialProjectCommand extends jspb.Message {
 
   getUrlCode(): string;
   setUrlCode(value: string): void;
+
+  getOwnerEmail(): string;
+  setOwnerEmail(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateTrialProjectCommand.AsObject;
@@ -251,6 +258,7 @@ export namespace CreateTrialProjectCommand {
     email: string;
     name: string;
     urlCode: string;
+    ownerEmail: string;
   };
 }
 
@@ -410,6 +418,9 @@ export class CreateOrganizationCommand extends jspb.Message {
   getIsSystemAdmin(): boolean;
   setIsSystemAdmin(value: boolean): void;
 
+  getOwnerEmail(): string;
+  setOwnerEmail(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateOrganizationCommand.AsObject;
   static toObject(
@@ -438,6 +449,7 @@ export namespace CreateOrganizationCommand {
     description: string;
     isTrial: boolean;
     isSystemAdmin: boolean;
+    ownerEmail: string;
   };
 }
 

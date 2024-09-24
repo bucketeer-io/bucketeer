@@ -1436,7 +1436,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
         description: jspb.Message.getFieldWithDefault(msg, 2, ''),
         name: jspb.Message.getFieldWithDefault(msg, 3, ''),
-        urlCode: jspb.Message.getFieldWithDefault(msg, 4, '')
+        urlCode: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        ownerEmail: jspb.Message.getFieldWithDefault(msg, 5, '')
       };
 
     if (includeInstance) {
@@ -1493,6 +1494,10 @@ proto.bucketeer.environment.CreateProjectCommand.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setUrlCode(value);
           break;
+        case 5:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOwnerEmail(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -1540,6 +1545,10 @@ proto.bucketeer.environment.CreateProjectCommand.serializeBinaryToWriter =
     f = message.getUrlCode();
     if (f.length > 0) {
       writer.writeString(4, f);
+    }
+    f = message.getOwnerEmail();
+    if (f.length > 0) {
+      writer.writeString(5, f);
     }
   };
 
@@ -1622,6 +1631,26 @@ proto.bucketeer.environment.CreateProjectCommand.prototype.setUrlCode =
     return jspb.Message.setProto3StringField(this, 4, value);
   };
 
+/**
+ * optional string owner_email = 5;
+ * @return {string}
+ */
+proto.bucketeer.environment.CreateProjectCommand.prototype.getOwnerEmail =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 5, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.environment.CreateProjectCommand} returns this
+ */
+proto.bucketeer.environment.CreateProjectCommand.prototype.setOwnerEmail =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 5, value);
+  };
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -1661,7 +1690,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
         email: jspb.Message.getFieldWithDefault(msg, 2, ''),
         name: jspb.Message.getFieldWithDefault(msg, 3, ''),
-        urlCode: jspb.Message.getFieldWithDefault(msg, 4, '')
+        urlCode: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        ownerEmail: jspb.Message.getFieldWithDefault(msg, 5, '')
       };
 
     if (includeInstance) {
@@ -1717,6 +1747,10 @@ proto.bucketeer.environment.CreateTrialProjectCommand.deserializeBinaryFromReade
           var value = /** @type {string} */ (reader.readString());
           msg.setUrlCode(value);
           break;
+        case 5:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOwnerEmail(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -1764,6 +1798,10 @@ proto.bucketeer.environment.CreateTrialProjectCommand.serializeBinaryToWriter =
     f = message.getUrlCode();
     if (f.length > 0) {
       writer.writeString(4, f);
+    }
+    f = message.getOwnerEmail();
+    if (f.length > 0) {
+      writer.writeString(5, f);
     }
   };
 
@@ -1845,6 +1883,26 @@ proto.bucketeer.environment.CreateTrialProjectCommand.prototype.getUrlCode =
 proto.bucketeer.environment.CreateTrialProjectCommand.prototype.setUrlCode =
   function (value) {
     return jspb.Message.setProto3StringField(this, 4, value);
+  };
+
+/**
+ * optional string owner_email = 5;
+ * @return {string}
+ */
+proto.bucketeer.environment.CreateTrialProjectCommand.prototype.getOwnerEmail =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 5, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.environment.CreateTrialProjectCommand} returns this
+ */
+proto.bucketeer.environment.CreateTrialProjectCommand.prototype.setOwnerEmail =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 5, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -2489,7 +2547,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         urlCode: jspb.Message.getFieldWithDefault(msg, 2, ''),
         description: jspb.Message.getFieldWithDefault(msg, 3, ''),
         isTrial: jspb.Message.getBooleanFieldWithDefault(msg, 4, false),
-        isSystemAdmin: jspb.Message.getBooleanFieldWithDefault(msg, 5, false)
+        isSystemAdmin: jspb.Message.getBooleanFieldWithDefault(msg, 5, false),
+        ownerEmail: jspb.Message.getFieldWithDefault(msg, 6, '')
       };
 
     if (includeInstance) {
@@ -2549,6 +2608,10 @@ proto.bucketeer.environment.CreateOrganizationCommand.deserializeBinaryFromReade
           var value = /** @type {boolean} */ (reader.readBool());
           msg.setIsSystemAdmin(value);
           break;
+        case 6:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOwnerEmail(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -2600,6 +2663,10 @@ proto.bucketeer.environment.CreateOrganizationCommand.serializeBinaryToWriter =
     f = message.getIsSystemAdmin();
     if (f) {
       writer.writeBool(5, f);
+    }
+    f = message.getOwnerEmail();
+    if (f.length > 0) {
+      writer.writeString(6, f);
     }
   };
 
@@ -2701,6 +2768,26 @@ proto.bucketeer.environment.CreateOrganizationCommand.prototype.getIsSystemAdmin
 proto.bucketeer.environment.CreateOrganizationCommand.prototype.setIsSystemAdmin =
   function (value) {
     return jspb.Message.setProto3BooleanField(this, 5, value);
+  };
+
+/**
+ * optional string owner_email = 6;
+ * @return {string}
+ */
+proto.bucketeer.environment.CreateOrganizationCommand.prototype.getOwnerEmail =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 6, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.environment.CreateOrganizationCommand} returns this
+ */
+proto.bucketeer.environment.CreateOrganizationCommand.prototype.setOwnerEmail =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 6, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

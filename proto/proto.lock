@@ -7244,6 +7244,11 @@
                 "id": 4,
                 "name": "url_code",
                 "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "owner_email",
+                "type": "string"
               }
             ]
           },
@@ -7274,6 +7279,11 @@
               {
                 "id": 4,
                 "name": "url_code",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "owner_email",
                 "type": "string"
               }
             ]
@@ -7334,6 +7344,11 @@
                 "id": 5,
                 "name": "is_system_admin",
                 "type": "bool"
+              },
+              {
+                "id": 6,
+                "name": "owner_email",
+                "type": "string"
               }
             ]
           },
@@ -7541,6 +7556,11 @@
                 "id": 13,
                 "name": "user_count",
                 "type": "int32"
+              },
+              {
+                "id": 14,
+                "name": "owner_email",
+                "type": "string"
               }
             ]
           }
@@ -7666,6 +7686,10 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 5
+              },
+              {
+                "name": "FEATURE_COUNT",
+                "integer": 6
               }
             ]
           },
@@ -7706,6 +7730,14 @@
               {
                 "name": "URL_CODE",
                 "integer": 5
+              },
+              {
+                "name": "ENVIRONMENT_COUNT",
+                "integer": 6
+              },
+              {
+                "name": "FEATURE_COUNT",
+                "integer": 7
               }
             ]
           },
@@ -7746,6 +7778,18 @@
               {
                 "name": "URL_CODE",
                 "integer": 5
+              },
+              {
+                "name": "PROJECT_COUNT",
+                "integer": 6
+              },
+              {
+                "name": "ENVIRONMENT_COUNT",
+                "integer": 7
+              },
+              {
+                "name": "USER_COUNT",
+                "integer": 8
               }
             ]
           },
@@ -16632,6 +16676,11 @@
                 "id": 9,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 10,
+                "name": "owner_email",
+                "type": "string"
               }
             ]
           },

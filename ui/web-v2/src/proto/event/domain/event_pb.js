@@ -33062,7 +33062,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         archived: jspb.Message.getBooleanFieldWithDefault(msg, 6, false),
         trial: jspb.Message.getBooleanFieldWithDefault(msg, 7, false),
         createdAt: jspb.Message.getFieldWithDefault(msg, 8, 0),
-        updatedAt: jspb.Message.getFieldWithDefault(msg, 9, 0)
+        updatedAt: jspb.Message.getFieldWithDefault(msg, 9, 0),
+        ownerEmail: jspb.Message.getFieldWithDefault(msg, 10, '')
       };
 
     if (includeInstance) {
@@ -33138,6 +33139,10 @@ proto.bucketeer.event.domain.OrganizationCreatedEvent.deserializeBinaryFromReade
           var value = /** @type {number} */ (reader.readInt64());
           msg.setUpdatedAt(value);
           break;
+        case 10:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOwnerEmail(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -33205,6 +33210,10 @@ proto.bucketeer.event.domain.OrganizationCreatedEvent.serializeBinaryToWriter =
     f = message.getUpdatedAt();
     if (f !== 0) {
       writer.writeInt64(9, f);
+    }
+    f = message.getOwnerEmail();
+    if (f.length > 0) {
+      writer.writeString(10, f);
     }
   };
 
@@ -33382,6 +33391,26 @@ proto.bucketeer.event.domain.OrganizationCreatedEvent.prototype.getUpdatedAt =
 proto.bucketeer.event.domain.OrganizationCreatedEvent.prototype.setUpdatedAt =
   function (value) {
     return jspb.Message.setProto3IntField(this, 9, value);
+  };
+
+/**
+ * optional string owner_email = 10;
+ * @return {string}
+ */
+proto.bucketeer.event.domain.OrganizationCreatedEvent.prototype.getOwnerEmail =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 10, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.event.domain.OrganizationCreatedEvent} returns this
+ */
+proto.bucketeer.event.domain.OrganizationCreatedEvent.prototype.setOwnerEmail =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 10, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

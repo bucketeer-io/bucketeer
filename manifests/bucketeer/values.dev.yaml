@@ -82,6 +82,7 @@ web:
       email: demo@bucketeer.io
       password: demo
       organizationId: demo
+      organizationOwnerEmail: demo@bucketeer.io
       projectId: demo
       environmentId: demo
       isSystemAdmin: true

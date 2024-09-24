@@ -44,13 +44,14 @@ type GoogleConfig struct {
 }
 
 type DemoSignInConfig struct {
-	Enabled        bool   `json:"enabled"`
-	Password       string `json:"password"`
-	Email          string `json:"email"`
-	OrganizationId string `json:"organizationId"`
-	ProjectId      string `json:"projectId"`
-	EnvironmentId  string `json:"environmentId"`
-	IsSystemAdmin  bool   `json:"isSystemAdmin"`
+	Enabled                bool   `json:"enabled"`
+	Password               string `json:"password"`
+	Email                  string `json:"email"`
+	OrganizationId         string `json:"organizationId"`
+	OrganizationOwnerEmail string `json:"organizationOwnerEmail"`
+	ProjectId              string `json:"projectId"`
+	EnvironmentId          string `json:"environmentId"`
+	IsSystemAdmin          bool   `json:"isSystemAdmin"`
 }
 
 type OAuthConfig struct {
