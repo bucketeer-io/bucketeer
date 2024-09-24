@@ -4336,7 +4336,9 @@ proto.bucketeer.environment.ListProjectsRequest.OrderBy = {
   CREATED_AT: 2,
   UPDATED_AT: 3,
   NAME: 4,
-  URL_CODE: 5
+  URL_CODE: 5,
+  ENVIRONMENT_COUNT: 6,
+  FEATURE_COUNT: 7
 };
 
 /**
@@ -7239,7 +7241,10 @@ proto.bucketeer.environment.ListOrganizationsRequest.OrderBy = {
   CREATED_AT: 2,
   UPDATED_AT: 3,
   NAME: 4,
-  URL_CODE: 5
+  URL_CODE: 5,
+  PROJECT_COUNT: 6,
+  ENVIRONMENT_COUNT: 7,
+  USER_COUNT: 8
 };
 
 /**

@@ -627,6 +627,8 @@ export namespace ListProjectsRequest {
     UPDATED_AT: 3;
     NAME: 4;
     URL_CODE: 5;
+    ENVIRONMENT_COUNT: 6;
+    FEATURE_COUNT: 7;
   }
 
   export const OrderBy: OrderByMap;
@@ -1215,6 +1217,9 @@ export namespace ListOrganizationsRequest {
     UPDATED_AT: 3;
     NAME: 4;
     URL_CODE: 5;
+    PROJECT_COUNT: 6;
+    ENVIRONMENT_COUNT: 7;
+    USER_COUNT: 8;
   }
 
   export const OrderBy: OrderByMap;
