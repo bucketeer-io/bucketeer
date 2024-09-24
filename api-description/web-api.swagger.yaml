@@ -3462,6 +3462,8 @@ definitions:
         type: boolean
       isSystemAdmin:
         type: boolean
+      ownerEmail:
+        type: string
   environmentCreateOrganizationRequest:
     type: object
     properties:
@@ -3484,6 +3486,8 @@ definitions:
         type: string
       urlCode:
         type: string
+      ownerEmail:
+        type: string
     description: 'TODO: add organizationID once we support organization create UI.'
   environmentCreateProjectRequest:
     type: object
@@ -3505,6 +3509,8 @@ definitions:
       name:
         type: string
       urlCode:
+        type: string
+      ownerEmail:
         type: string
   environmentCreateTrialProjectRequest:
     type: object
