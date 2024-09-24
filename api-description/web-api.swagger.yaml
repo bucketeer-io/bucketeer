@@ -3651,6 +3651,7 @@ definitions:
       - URL_CODE
       - CREATED_AT
       - UPDATED_AT
+      - FEATURE_COUNT
     default: DEFAULT
   environmentListEnvironmentsV2RequestOrderDirection:
     type: string

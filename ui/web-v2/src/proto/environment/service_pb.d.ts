@@ -145,6 +145,7 @@ export namespace ListEnvironmentsV2Request {
     URL_CODE: 3;
     CREATED_AT: 4;
     UPDATED_AT: 5;
+    FEATURE_COUNT: 6;
   }
 
   export const OrderBy: OrderByMap;

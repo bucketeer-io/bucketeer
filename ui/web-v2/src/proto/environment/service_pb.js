@@ -1966,7 +1966,8 @@ proto.bucketeer.environment.ListEnvironmentsV2Request.OrderBy = {
   NAME: 2,
   URL_CODE: 3,
   CREATED_AT: 4,
-  UPDATED_AT: 5
+  UPDATED_AT: 5,
+  FEATURE_COUNT: 6
 };
 
 /**
