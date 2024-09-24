@@ -7244,6 +7244,11 @@
                 "id": 4,
                 "name": "url_code",
                 "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "owner_email",
+                "type": "string"
               }
             ]
           },
@@ -7274,6 +7279,11 @@
               {
                 "id": 4,
                 "name": "url_code",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "owner_email",
                 "type": "string"
               }
             ]
@@ -7334,6 +7344,11 @@
                 "id": 5,
                 "name": "is_system_admin",
                 "type": "bool"
+              },
+              {
+                "id": 6,
+                "name": "owner_email",
+                "type": "string"
               }
             ]
           },
@@ -16657,6 +16672,11 @@
                 "id": 9,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 10,
+                "name": "owner_email",
+                "type": "string"
               }
             ]
           },

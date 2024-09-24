@@ -25,17 +25,18 @@ var (
 	statusInvalidCursor = gstatus.New(codes.InvalidArgument, "environment: cursor is invalid")
 	// Essentially, the id field is required, but no validation is performed because some older services do not have ID.
 	//statusEnvironmentIDRequired = gstatus.New(codes.InvalidArgument, "environment: environment id must be specified")
-	statusEnvironmentNameRequired    = gstatus.New(codes.InvalidArgument, "environment: environment name must be specified") // nolint:lll
-	statusInvalidEnvironmentName     = gstatus.New(codes.InvalidArgument, "environment: invalid environment name")
-	statusInvalidEnvironmentUrlCode  = gstatus.New(codes.InvalidArgument, "environment: invalid environment url code")
-	statusProjectIDRequired          = gstatus.New(codes.InvalidArgument, "environment: project id must be specified")
-	statusProjectNameRequired        = gstatus.New(codes.InvalidArgument, "environment: project name must be specified")
-	statusInvalidProjectName         = gstatus.New(codes.InvalidArgument, "environment: invalid project name")
-	statusInvalidProjectUrlCode      = gstatus.New(codes.InvalidArgument, "environment: invalid project url code")
-	statusInvalidProjectCreatorEmail = gstatus.New(codes.InvalidArgument, "environment: invalid project creator email")
-	statusInvalidOrderBy             = gstatus.New(codes.InvalidArgument, "environment: order_by is invalid")
-	statusOrganizationIDRequired     = gstatus.New(codes.InvalidArgument, "environment: organization id must be specified")
-	statusOrganizationNameRequired   = gstatus.New(
+	statusEnvironmentNameRequired          = gstatus.New(codes.InvalidArgument, "environment: environment name must be specified") // nolint:lll
+	statusInvalidEnvironmentName           = gstatus.New(codes.InvalidArgument, "environment: invalid environment name")
+	statusInvalidEnvironmentUrlCode        = gstatus.New(codes.InvalidArgument, "environment: invalid environment url code")
+	statusProjectIDRequired                = gstatus.New(codes.InvalidArgument, "environment: project id must be specified")
+	statusProjectNameRequired              = gstatus.New(codes.InvalidArgument, "environment: project name must be specified")
+	statusInvalidProjectName               = gstatus.New(codes.InvalidArgument, "environment: invalid project name")
+	statusInvalidProjectUrlCode            = gstatus.New(codes.InvalidArgument, "environment: invalid project url code")
+	statusInvalidProjectCreatorEmail       = gstatus.New(codes.InvalidArgument, "environment: invalid project creator email")
+	statusInvalidPOrganizationCreatorEmail = gstatus.New(codes.InvalidArgument, "environment: invalid organization creator email")
+	statusInvalidOrderBy                   = gstatus.New(codes.InvalidArgument, "environment: order_by is invalid")
+	statusOrganizationIDRequired           = gstatus.New(codes.InvalidArgument, "environment: organization id must be specified")
+	statusOrganizationNameRequired         = gstatus.New(
 		codes.InvalidArgument,
 		"environment: organization name must be specified",
 	)

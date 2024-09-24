@@ -31,7 +31,7 @@ var (
 	ErrCannotArchiveSystemAdmin = errors.New("environment: cannot archive system admin")
 )
 
-func NewOrganization(name, urlCode, description string, trial, systemAdmin bool) (*Organization, error) {
+func NewOrganization(name, urlCode, ownerEmail, description string, trial, systemAdmin bool) (*Organization, error) {
 	now := time.Now().Unix()
 	uid, err := uuid.NewUUID()
 	if err != nil {
@@ -41,6 +41,7 @@ func NewOrganization(name, urlCode, description string, trial, systemAdmin bool)
 		Id:          uid.String(),
 		Name:        name,
 		UrlCode:     urlCode,
+		OwnerEmail:  ownerEmail,
 		Description: description,
 		Disabled:    false,
 		Archived:    false,

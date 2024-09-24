@@ -80,6 +80,7 @@ func (h *organizationCommandHandler) create(ctx context.Context, cmd *proto.Crea
 		Id:          h.organization.Id,
 		Name:        h.organization.Name,
 		UrlCode:     h.organization.UrlCode,
+		OwnerEmail:  h.organization.OwnerEmail,
 		Description: h.organization.Description,
 		Disabled:    h.organization.Disabled,
 		Archived:    h.organization.Archived,

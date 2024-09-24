@@ -1029,6 +1029,7 @@ message OrganizationCreatedEvent {
   bool trial = 7;
   int64 created_at = 8;
   int64 updated_at = 9;
+  string owner_email = 10;
 }
 
 message OrganizationDescriptionChangedEvent {

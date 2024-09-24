@@ -201,21 +201,9 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 		return st.Err()
 	}
 
-	orgExpected, err := domain.NewOrganization(
-		"name",
-		"url-code",
-		"description",
-		false,
-		false,
-	)
+	orgExpected, err := domain.NewOrganization("name", "url-code", "", "description", false, false)
 	require.NoError(t, err)
-	trialOrgExpected, err := domain.NewOrganization(
-		"name2",
-		"url-code2",
-		"description2",
-		true,
-		false,
-	)
+	trialOrgExpected, err := domain.NewOrganization("name2", "url-code2", "", "description2", true, false)
 	require.NoError(t, err)
 
 	patterns := []struct {

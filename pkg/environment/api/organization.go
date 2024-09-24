@@ -242,6 +242,7 @@ func (s *EnvironmentService) CreateOrganization(
 	organization, err := domain.NewOrganization(
 		name,
 		urlCode,
+		req.Command.OwnerEmail,
 		req.Command.Description,
 		req.Command.IsTrial,
 		req.Command.IsSystemAdmin,
@@ -303,6 +304,16 @@ func (s *EnvironmentService) validateCreateOrganizationRequest(
 		dt, err := statusInvalidOrganizationUrlCode.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if !emailRegex.MatchString(req.Command.OwnerEmail) {
+		dt, err := statusInvalidProjectCreatorEmail.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "owner_email"),
 		})
 		if err != nil {
 			return statusInternal.Err()
