@@ -201,6 +201,13 @@ func (s *EnvironmentService) newOrganizationListOrders(
 		column = "organization.created_at"
 	case environmentproto.ListOrganizationsRequest_UPDATED_AT:
 		column = "organization.updated_at"
+	case environmentproto.ListOrganizationsRequest_ENVIRONMENT_COUNT:
+		column = "environments"
+	case environmentproto.ListOrganizationsRequest_PROJECT_COUNT:
+		column = "projects"
+	case environmentproto.ListOrganizationsRequest_USER_COUNT:
+		column = "users"
+
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

@@ -7711,6 +7711,14 @@
               {
                 "name": "URL_CODE",
                 "integer": 5
+              },
+              {
+                "name": "ENVIRONMENT_COUNT",
+                "integer": 6
+              },
+              {
+                "name": "FEATURE_COUNT",
+                "integer": 7
               }
             ]
           },
@@ -7751,6 +7759,18 @@
               {
                 "name": "URL_CODE",
                 "integer": 5
+              },
+              {
+                "name": "PROJECT_COUNT",
+                "integer": 6
+              },
+              {
+                "name": "ENVIRONMENT_COUNT",
+                "integer": 7
+              },
+              {
+                "name": "USER_COUNT",
+                "integer": 8
               }
             ]
           },

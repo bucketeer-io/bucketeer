@@ -219,6 +219,11 @@ func (s *EnvironmentService) newProjectListOrders(
 		column = "project.created_at"
 	case environmentproto.ListProjectsRequest_UPDATED_AT:
 		column = "project.updated_at"
+	case environmentproto.ListProjectsRequest_ENVIRONMENT_COUNT:
+		column = "environment_count"
+	case environmentproto.ListProjectsRequest_FEATURE_COUNT:
+		column = "feature_count"
+
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
