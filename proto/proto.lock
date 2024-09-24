@@ -7686,6 +7686,10 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 5
+              },
+              {
+                "name": "FEATURE_COUNT",
+                "integer": 6
               }
             ]
           },
