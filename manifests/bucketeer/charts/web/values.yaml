@@ -88,6 +88,7 @@ oauth:
     email:
     password:
     organizationId:
+    organizationOwnerEmail:
     projectId:
     environmentId:
     isSystemAdmin:
