@@ -61,18 +61,19 @@ export function newTestFeature(id: string): Feature {
   };
 
   // Call the second function to create and return the Feature
-  return creatFeature(
-    id,
-    'test feature',
-    1,
-    true,
-    Date.now(),
-    Feature.VariationType.STRING,
-    variations,
-    targets,
-    rules,
-    defaultStrategy
-  );
+  return creatFeature({
+    id: id,
+    name: 'test feature',
+    version: 1,
+    enabled: true,
+    createdAt: Date.now(),
+    variationType: Feature.VariationType.STRING,
+    variations: variations,
+    targets: targets,
+    rules: rules,
+    defaultStrategy: defaultStrategy,
+    prerequisitesList: []
+  });
 }
 
 const findEvaluation = (evaluations: Evaluation[], featureId: string): Evaluation | null => {

@@ -13,11 +13,7 @@ import { NewUserEvaluations, UserEvaluationsID } from './userEvaluation';
 const SECONDS_TO_RE_EVALUATE_ALL = 30 * 24 * 60 * 60; // 30 days
 const SECONDS_FOR_ADJUSTMENT = 10; // 10 seconds
 
-export function EvaluationID(
-  featureID: string,
-  featureVersion: number,
-  userID: string
-): string {
+export function EvaluationID(featureID: string, featureVersion: number, userID: string): string {
   return `${featureID}:${featureVersion}:${userID}`;
 }
 
@@ -34,9 +30,19 @@ class Evaluator {
     features: Feature[],
     user: User,
     mapSegmentUsers: Map<string, SegmentUser[]>,
-    targetTag: string
+    targetTag: string,
   ): Promise<UserEvaluations> {
     return this.evaluate(features, user, mapSegmentUsers, false, targetTag);
+  }
+
+  // GetPrerequisiteDownwards gets the features specified as prerequisite by the targetFeatures.
+  getPrerequisiteDownwards(targetFeatures: Feature[], allFeatures: Feature[]): Feature[] {
+    const allFeaturesMap = new Map<string, Feature>();
+    for (const feature of allFeatures) {
+      allFeaturesMap.set(feature.getId(), feature);
+    }
+    const dependedOnTargets = getFeaturesDependedOnTargets(targetFeatures, allFeaturesMap);
+    return Object.values(dependedOnTargets);
   }
 
   evaluateFeaturesByEvaluatedAt(
@@ -46,7 +52,7 @@ class Evaluator {
     prevUEID: string,
     evaluatedAt: number,
     userAttributesUpdated: boolean,
-    targetTag: string
+    targetTag: string,
   ): UserEvaluations {
     if (prevUEID === '') {
       return this.evaluate(features, user, mapSegmentUsers, true, targetTag);
@@ -61,11 +67,11 @@ class Evaluator {
     const updatedFeatures = features.filter(
       (feature) =>
         feature.getUpdatedAt() > adjustedEvalAt ||
-        (userAttributesUpdated && feature.getRulesList().length > 0)
+        (userAttributesUpdated && feature.getRulesList().length > 0),
     );
 
     // If the UserEvaluationsID has changed, but both User Attributes and Feature Flags have not been updated,
-	  // it is considered unusual and a force update should be performed.
+    // it is considered unusual and a force update should be performed.
     if (updatedFeatures.length === 0) {
       return this.evaluate(features, user, mapSegmentUsers, true, targetTag);
     }
@@ -79,7 +85,7 @@ class Evaluator {
     user: User,
     mapSegmentUsers: Map<string, SegmentUser[]>,
     forceUpdate: boolean,
-    targetTag: string
+    targetTag: string,
   ): UserEvaluations {
     const flagVariations: { [key: string]: string } = {};
     // fs need to be sorted in order from upstream to downstream.
@@ -98,32 +104,20 @@ class Evaluator {
       }
 
       const segmentUsers = this.ListSegmentIDs(feature).flatMap(
-        (id) => mapSegmentUsers.get(id) || []
+        (id) => mapSegmentUsers.get(id) || [],
       );
 
-      const [reason, variation] = this.assignUser(
-        feature,
-        user,
-        segmentUsers,
-        flagVariations
-      );
+      const [reason, variation] = this.assignUser(feature, user, segmentUsers, flagVariations);
       // VariationId is used to check if prerequisite flag's result is what user expects it to be.
       flagVariations[feature.getId()] = variation.getId();
       // When the tag is set in the request,
       // it will return only the evaluations of flags that match the tag configured on the dashboard.
       // When empty, it will return all the evaluations of the flags in the environment.
-      if (
-        targetTag !== '' &&
-        !this.tagExist(feature.getTagsList(), targetTag)
-      ) {
+      if (targetTag !== '' && !this.tagExist(feature.getTagsList(), targetTag)) {
         continue;
       }
 
-      const evaluationID = EvaluationID(
-        feature.getId(),
-        feature.getVersion(),
-        user.getId()
-      );
+      const evaluationID = EvaluationID(feature.getId(), feature.getVersion(), user.getId());
       const evaluation = new Evaluation();
       evaluation.setId(evaluationID);
       evaluation.setFeatureId(feature.getId());
@@ -133,27 +127,26 @@ class Evaluator {
       evaluation.setVariationName(variation.getName());
       evaluation.setVariationValue(variation.getValue());
       // Deprecated
-			// FIXME: Remove the Variation when is no longer being used.
-			// For security reasons, we should remove the variation description.
-			// We copy the variation object to avoid race conditions when removing
-			// the description directly from the `variation`
-      const copyVariation = new Variation()
-      copyVariation.setId(variation.getId())
-      copyVariation.setName(variation.getName())
-      copyVariation.setValue(variation.getValue())
+      // FIXME: Remove the Variation when is no longer being used.
+      // For security reasons, we should remove the variation description.
+      // We copy the variation object to avoid race conditions when removing
+      // the description directly from the `variation`
+      const copyVariation = new Variation();
+      copyVariation.setId(variation.getId());
+      copyVariation.setName(variation.getName());
+      copyVariation.setValue(variation.getValue());
       evaluation.setVariation(copyVariation);
       evaluation.setReason(reason);
 
       evaluations.push(evaluation);
     }
 
-    const id = UserEvaluationsID(user.getId(), arrayToRecord(user.getDataMap().toArray()), features);
-    const userEvaluations = NewUserEvaluations(
-      id,
-      evaluations,
-      archivedIDs,
-      forceUpdate
+    const id = UserEvaluationsID(
+      user.getId(),
+      arrayToRecord(user.getDataMap().toArray()),
+      features,
     );
+    const userEvaluations = NewUserEvaluations(id, evaluations, archivedIDs, forceUpdate);
     return userEvaluations;
   }
 
@@ -189,7 +182,7 @@ class Evaluator {
     feature: Feature,
     user: User,
     segmentUsers: SegmentUser[],
-    flagVariations: { [key: string]: string }
+    flagVariations: { [key: string]: string },
   ): [Reason, Variation] {
     for (const pf of feature.getPrerequisitesList()) {
       const variation = flagVariations[pf.getFeatureId()];
@@ -200,7 +193,7 @@ class Evaluator {
         if (feature.getOffVariation() != '') {
           const variation = this.findVariation(
             feature.getOffVariation(),
-            feature.getVariationsList()
+            feature.getVariationsList(),
           );
           const reason = new Reason();
           reason.setType(Reason.Type.PREREQUISITE);
@@ -210,35 +203,29 @@ class Evaluator {
     }
     // It doesn't assign the user in case of the feature is disabled and OffVariation is not set
     if (!feature.getEnabled() && feature.getOffVariation() != '') {
-      const variation = this.findVariation(
-        feature.getOffVariation(),
-        feature.getVariationsList()
-      );
+      const variation = this.findVariation(feature.getOffVariation(), feature.getVariationsList());
       const reason = new Reason();
       reason.setType(Reason.Type.OFF_VARIATION);
       return [reason, variation];
     }
 
     // evaluate from top to bottom, return if one rule matches
-	  // evaluate targeting rules
+    // evaluate targeting rules
     for (const target of feature.getTargetsList()) {
       if (target.getUsersList().includes(user.getId())) {
-        const variation = this.findVariation(
-          target.getVariation(),
-          feature.getVariationsList()
-        );
+        const variation = this.findVariation(target.getVariation(), feature.getVariationsList());
         const reason = new Reason();
         reason.setType(Reason.Type.TARGET);
         return [reason, variation];
       }
     }
 
-	  // evaluate ruleset
+    // evaluate ruleset
     const rule = this.ruleEvaluator.evaluate(
       feature.getRulesList(),
       user,
       segmentUsers,
-      flagVariations
+      flagVariations,
     );
     if (rule) {
       const strategy = rule.getStrategy();
@@ -250,7 +237,7 @@ class Evaluator {
         user.getId(),
         feature.getVariationsList(),
         feature.getId(),
-        feature.getSamplingSeed()
+        feature.getSamplingSeed(),
       );
       const reason = new Reason();
       reason.setType(Reason.Type.RULE);
@@ -259,7 +246,7 @@ class Evaluator {
     }
 
     // use default strategy
-    const defaultStrategy = feature.getDefaultStrategy()
+    const defaultStrategy = feature.getDefaultStrategy();
     if (defaultStrategy == undefined) {
       throw EVALUATOR_ERRORS.DefaultStrategyNotFound;
     }
@@ -269,17 +256,14 @@ class Evaluator {
       user.getId(),
       feature.getVariationsList(),
       feature.getId(),
-      feature.getSamplingSeed()
+      feature.getSamplingSeed(),
     );
     const reason = new Reason();
     reason.setType(Reason.Type.DEFAULT);
     return [reason, variation];
   }
 
-  private getEvalFeatures(
-    targetFeatures: Feature[],
-    allFeatures: Feature[]
-  ): Feature[] {
+  private getEvalFeatures(targetFeatures: Feature[], allFeatures: Feature[]): Feature[] {
     const allFeaturesMap = new Map<string, Feature>();
     for (const feature of allFeatures) {
       allFeaturesMap.set(feature.getId(), feature);
@@ -390,7 +374,7 @@ function topologicalSort(features: Array<Feature>): Array<Feature> {
 // targetFeatures are included in the result.
 function getFeaturesDependedOnTargets(
   targets: Array<Feature>,
-  all: Map<string, Feature>
+  all: Map<string, Feature>,
 ): { [key: string]: Feature } {
   const evals: { [key: string]: Feature } = {};
 
@@ -404,7 +388,7 @@ function getFeaturesDependedOnTargets(
     // Get dependent features recursively
     const featureDependencies = featureIDsDependsOn(f);
     featureDependencies.forEach((fid) => {
-      const target = all.get(fid)
+      const target = all.get(fid);
       if (target !== undefined) {
         dfs(target);
       }
@@ -421,7 +405,7 @@ function getFeaturesDependedOnTargets(
 // targetFeatures are included in the result.
 function getFeaturesDependsOnTargets(
   targets: Array<Feature>,
-  all: Map<string, Feature>
+  all: Map<string, Feature>,
 ): { [key: string]: Feature } {
   const evals: { [key: string]: Feature } = {};
 
@@ -457,10 +441,13 @@ function getFeaturesDependsOnTargets(
 }
 
 function arrayToRecord(arr: Array<[string, string]>): Record<string, string> {
-  return arr.reduce((acc, [key, value]) => {
-    acc[key] = value;
-    return acc;
-  }, {} as Record<string, string>);
+  return arr.reduce(
+    (acc, [key, value]) => {
+      acc[key] = value;
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
 }
 
 export { Evaluator };

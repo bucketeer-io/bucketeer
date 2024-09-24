@@ -22,50 +22,71 @@ export function createUser(id: string, data: Record<string, string> | null): Use
 }
 
 export function creatFeature(
-  id: string,
-  name: string,
-  version: number,
-  enabled: boolean,
-  createdAt: number,
-  variationType: Feature.VariationTypeMap[keyof Feature.VariationTypeMap],
-  variations: Array<{ id: string; value: string; name: string; description: string }>,
-  targets: Array<{ variation: string; users: string[] }>,
-  rules: Array<{
-    id: string;
-    attribute: string;
-    operator: Clause.OperatorMap[keyof Clause.OperatorMap];
-    values: string[];
-    fixedVariation: string;
-  }>,
-  defaultStrategy: { type: Strategy.TypeMap[keyof Strategy.TypeMap]; variation: string },
-  prerequisitesList: Array<Prerequisite> = [],
+  options: {
+    id?: string,
+    name?: string,
+    version?: number,
+    enabled?: boolean,
+    createdAt?: number,
+    variationType?: Feature.VariationTypeMap[keyof Feature.VariationTypeMap],
+    variations?: Array<{ id: string; value: string; name: string; description: string }>,
+    targets?: Array<{ variation: string; users: string[] }>,
+    rules?: Array<{
+      id: string;
+      attribute: string;
+      operator: Clause.OperatorMap[keyof Clause.OperatorMap];
+      values: string[];
+      fixedVariation: string;
+    }>,
+    defaultStrategy?: { type: Strategy.TypeMap[keyof Strategy.TypeMap]; variation: string } | undefined,
+    prerequisitesList?: Array<Prerequisite>,
+  } = {}
 ): Feature {
+  const defaultOptions = {
+    id: '',
+    name: '',
+    version: 1,
+    enabled: false,
+    createdAt: Date.now(),
+    variationType: Feature.VariationType.STRING,
+    variations: [],
+    targets: [],
+    rules: [],
+    defaultStrategy: undefined,
+    prerequisitesList: [],
+  };
+
+  const finalOptions = { ...defaultOptions, ...options };
+
   const feature = new Feature();
-  feature.setId(id);
-  feature.setName(name);
-  feature.setVersion(version);
-  feature.setEnabled(enabled);
-  feature.setCreatedAt(createdAt);
-  feature.setVariationType(variationType);
+  feature.setId(finalOptions.id);
+  feature.setName(finalOptions.name);
+  feature.setVersion(finalOptions.version);
+  feature.setEnabled(finalOptions.enabled);
+  feature.setCreatedAt(finalOptions.createdAt);
+  feature.setVariationType(finalOptions.variationType);
 
   // Set variations
-  const variationList = variations.map(v => createVariation(v.id, v.value, v.name, v.description));
+  const variationList = finalOptions.variations.map(v => createVariation(v.id, v.value, v.name, v.description));
   feature.setVariationsList(variationList);
 
   // Set targets
-  const targetList = targets.map(t => createTarget(t.variation, t.users));
+  const targetList = finalOptions.targets.map(t => createTarget(t.variation, t.users));
   feature.setTargetsList(targetList);
 
   // Set rules
-  const ruleList = rules.map(r => createRule(r.id, r.attribute, r.operator, r.values));
+  const ruleList = finalOptions.rules.map(r => createRule(r.id, r.attribute, r.operator, r.values));
   feature.setRulesList(ruleList);
 
   // Set default strategy
-  const defaultFixedStrategy = createFixedStrategy(defaultStrategy.variation);
-  const strategy = createStrategy(defaultStrategy.type, defaultFixedStrategy);
-  feature.setDefaultStrategy(strategy);
+  const defaultStrategy = finalOptions.defaultStrategy;
+  if (defaultStrategy !== undefined) {
+    const defaultFixedStrategy = createFixedStrategy(defaultStrategy.variation);
+    const strategy = createStrategy(defaultStrategy.type, defaultFixedStrategy);
+    feature.setDefaultStrategy(strategy);
+  }
 
-  feature.setPrerequisitesList(prerequisitesList);
+  feature.setPrerequisitesList(finalOptions.prerequisitesList);
 
   return feature;
 }
