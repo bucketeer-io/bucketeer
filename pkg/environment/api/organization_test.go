@@ -201,9 +201,23 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 		return st.Err()
 	}
 
-	orgExpected, err := domain.NewOrganization("name", "url-code", "", "description", false, false)
+	orgExpected, err := domain.NewOrganization(
+		"name",
+		"url-code",
+		"test@test.org",
+		"description",
+		false,
+		false,
+	)
 	require.NoError(t, err)
-	trialOrgExpected, err := domain.NewOrganization("name2", "url-code2", "", "description2", true, false)
+	trialOrgExpected, err := domain.NewOrganization(
+		"name2",
+		"url-code2",
+		"test@test.org",
+		"description2",
+		true,
+		false,
+	)
 	require.NoError(t, err)
 
 	patterns := []struct {
@@ -268,7 +282,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 				).Return(v2es.ErrOrganizationAlreadyExists)
 			},
 			req: &proto.CreateOrganizationRequest{
-				Command: &proto.CreateOrganizationCommand{Name: "id-0", UrlCode: "id-0"},
+				Command: &proto.CreateOrganizationCommand{Name: "id-0", UrlCode: "id-0", OwnerEmail: "test@test.org"},
 			},
 			expectedErr: createError(statusOrganizationAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
@@ -281,7 +295,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 				).Return(errors.New("error"))
 			},
 			req: &proto.CreateOrganizationRequest{
-				Command: &proto.CreateOrganizationCommand{Name: "id-1", UrlCode: "id-1"},
+				Command: &proto.CreateOrganizationCommand{Name: "id-1", UrlCode: "id-1", OwnerEmail: "test@test.org"},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
@@ -299,6 +313,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 					UrlCode:     orgExpected.UrlCode,
 					Description: orgExpected.Description,
 					IsTrial:     false,
+					OwnerEmail:  "test@test.org",
 				},
 			},
 			expected:    orgExpected.Organization,
@@ -318,6 +333,7 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 					UrlCode:     trialOrgExpected.UrlCode,
 					Description: trialOrgExpected.Description,
 					IsTrial:     trialOrgExpected.Trial,
+					OwnerEmail:  "test@test.org",
 				},
 			},
 			expected:    trialOrgExpected.Organization,

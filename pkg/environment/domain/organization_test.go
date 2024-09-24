@@ -8,7 +8,14 @@ import (
 
 func TestNewOrganization(t *testing.T) {
 	t.Parallel()
-	organization, err := NewOrganization("organization-name", "organization-code", "", "organization desc", false, false)
+	organization, err := NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		false,
+		false,
+	)
 	assert.NoError(t, err)
 	assert.IsType(t, &Organization{}, organization)
 	assert.NotEqual(t, "organization-name", organization.Id)
@@ -19,7 +26,14 @@ func TestNewOrganization(t *testing.T) {
 
 func TestNewTrialOrganization(t *testing.T) {
 	t.Parallel()
-	organization, err := NewOrganization("organization-name", "organization-code", "", "organization desc", true, false)
+	organization, err := NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		true,
+		false,
+	)
 	assert.NoError(t, err)
 	assert.IsType(t, &Organization{}, organization)
 	assert.NotEqual(t, "organization-name", organization.Id)
@@ -30,7 +44,14 @@ func TestNewTrialOrganization(t *testing.T) {
 
 func TestChangeDescriptionOrganization(t *testing.T) {
 	t.Parallel()
-	organization, err := NewOrganization("organization-name", "organization-code", "", "organization desc", false, false)
+	organization, err := NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		false,
+		false,
+	)
 	assert.NoError(t, err)
 	newDesc := "new org desc"
 	organization.ChangeDescription(newDesc)
@@ -39,7 +60,14 @@ func TestChangeDescriptionOrganization(t *testing.T) {
 
 func TestChangeNameOrganization(t *testing.T) {
 	t.Parallel()
-	organization, err := NewOrganization("organization-name", "organization-code", "", "organization desc", false, false)
+	organization, err := NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		false,
+		false,
+	)
 	assert.NoError(t, err)
 	newName := "new-organization-name"
 	organization.ChangeName(newName)
@@ -48,7 +76,14 @@ func TestChangeNameOrganization(t *testing.T) {
 
 func TestEnableOrganization(t *testing.T) {
 	t.Parallel()
-	organization, err := NewOrganization("organization-name", "organization-code", "", "organization desc", false, false)
+	organization, err := NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		false,
+		false,
+	)
 	assert.NoError(t, err)
 	organization.Disabled = true
 	organization.Enable()
@@ -57,7 +92,14 @@ func TestEnableOrganization(t *testing.T) {
 
 func TestDisableOrganization(t *testing.T) {
 	t.Parallel()
-	organization, err := NewOrganization("organization-name", "organization-code", "", "organization desc", false, false)
+	organization, err := NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		false,
+		false,
+	)
 	assert.NoError(t, err)
 	err = organization.Disable()
 	assert.NoError(t, err)
@@ -66,7 +108,14 @@ func TestDisableOrganization(t *testing.T) {
 
 func TestCannotDisableSystemAdminOrganization(t *testing.T) {
 	t.Parallel()
-	organization, err := NewOrganization("organization-name", "organization-code", "", "organization desc", false, true)
+	organization, err := NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		false,
+		true,
+	)
 	assert.NoError(t, err)
 	err = organization.Disable()
 	assert.Equal(t, ErrCannotDisableSystemAdmin, err)
@@ -74,7 +123,14 @@ func TestCannotDisableSystemAdminOrganization(t *testing.T) {
 
 func TestArchiveOrganization(t *testing.T) {
 	t.Parallel()
-	organization, err := NewOrganization("organization-name", "organization-code", "", "organization desc", false, false)
+	organization, err := NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		false,
+		false,
+	)
 	assert.NoError(t, err)
 	err = organization.Archive()
 	assert.NoError(t, err)
@@ -83,7 +139,14 @@ func TestArchiveOrganization(t *testing.T) {
 
 func TestCannotArchiveSystemAdminOrganization(t *testing.T) {
 	t.Parallel()
-	organization, err := NewOrganization("organization-name", "organization-code", "", "organization desc", false, true)
+	organization, err := NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		false,
+		true,
+	)
 	assert.NoError(t, err)
 	err = organization.Archive()
 	assert.Equal(t, ErrCannotArchiveSystemAdmin, err)
@@ -91,7 +154,14 @@ func TestCannotArchiveSystemAdminOrganization(t *testing.T) {
 
 func TestUnarchiveOrganization(t *testing.T) {
 	t.Parallel()
-	organization, err := NewOrganization("organization-name", "organization-code", "", "organization desc", false, false)
+	organization, err := NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		false,
+		false,
+	)
 	assert.NoError(t, err)
 	organization.Archived = true
 	organization.Unarchive()
@@ -100,7 +170,14 @@ func TestUnarchiveOrganization(t *testing.T) {
 
 func TestConvertTrialOrganization(t *testing.T) {
 	t.Parallel()
-	organization, err := NewOrganization("organization-name", "organization-code", "", "organization desc", false, false)
+	organization, err := NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		false,
+		false,
+	)
 	assert.NoError(t, err)
 	organization.ConvertTrial()
 	assert.False(t, organization.Trial)

@@ -311,7 +311,7 @@ func (s *EnvironmentService) validateCreateOrganizationRequest(
 		return dt.Err()
 	}
 	if !emailRegex.MatchString(req.Command.OwnerEmail) {
-		dt, err := statusInvalidProjectCreatorEmail.WithDetails(&errdetails.LocalizedMessage{
+		dt, err := statusInvalidOrganizationCreatorEmail.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "owner_email"),
 		})

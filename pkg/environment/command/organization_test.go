@@ -19,7 +19,14 @@ func TestHandleCreateOrganizationCommand(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	publisher := publishermock.NewMockPublisher(mockController)
-	organization, err := domain.NewOrganization("organization-name", "organization-code", "", "organization desc", false, false)
+	organization, err := domain.NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		false,
+		false,
+	)
 	assert.NoError(t, err)
 
 	h := newOrganizationCommandHandler(t, publisher, organization)
@@ -34,7 +41,14 @@ func TestHandleChangeNameOrganizationCommand(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	publisher := publishermock.NewMockPublisher(mockController)
-	organization, err := domain.NewOrganization("organization-name", "organization-code", "", "organization desc", false, false)
+	organization, err := domain.NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		false,
+		false,
+	)
 	assert.NoError(t, err)
 
 	h := newOrganizationCommandHandler(t, publisher, organization)
@@ -51,7 +65,14 @@ func TestHandleChangeDescriptionOrganizationCommand(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	publisher := publishermock.NewMockPublisher(mockController)
-	organization, err := domain.NewOrganization("organization-name", "organization-code", "", "organization desc", false, false)
+	organization, err := domain.NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		false,
+		false,
+	)
 	assert.NoError(t, err)
 
 	h := newOrganizationCommandHandler(t, publisher, organization)
@@ -68,7 +89,14 @@ func TestHandleEnableOrganizationCommand(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	publisher := publishermock.NewMockPublisher(mockController)
-	organization, err := domain.NewOrganization("organization-name", "organization-code", "", "organization desc", false, false)
+	organization, err := domain.NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		false,
+		false,
+	)
 	assert.NoError(t, err)
 	organization.Disabled = true
 
@@ -85,7 +113,14 @@ func TestHandleDisableOrganizationCommand(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	publisher := publishermock.NewMockPublisher(mockController)
-	organization, err := domain.NewOrganization("organization-name", "organization-code", "", "organization desc", false, false)
+	organization, err := domain.NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		false,
+		false,
+	)
 	assert.NoError(t, err)
 
 	h := newOrganizationCommandHandler(t, publisher, organization)
@@ -101,7 +136,14 @@ func TestHandleArchiveOrganizationCommand(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	publisher := publishermock.NewMockPublisher(mockController)
-	organization, err := domain.NewOrganization("organization-name", "organization-code", "", "organization desc", false, false)
+	organization, err := domain.NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		false,
+		false,
+	)
 	assert.NoError(t, err)
 
 	h := newOrganizationCommandHandler(t, publisher, organization)
@@ -117,7 +159,14 @@ func TestHandleUnarchiveOrganizationCommand(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	publisher := publishermock.NewMockPublisher(mockController)
-	organization, err := domain.NewOrganization("organization-name", "organization-code", "", "organization desc", false, false)
+	organization, err := domain.NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		false,
+		false,
+	)
 	assert.NoError(t, err)
 	organization.Archive()
 
@@ -134,7 +183,14 @@ func TestHandleConvertTrialOrganizationCommand(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	publisher := publishermock.NewMockPublisher(mockController)
-	organization, err := domain.NewOrganization("organization-name", "organization-code", "", "organization desc", true, false)
+	organization, err := domain.NewOrganization(
+		"organization-name",
+		"organization-code",
+		"test@test.org",
+		"organization desc",
+		true,
+		false,
+	)
 	assert.NoError(t, err)
 
 	h := newOrganizationCommandHandler(t, publisher, organization)
