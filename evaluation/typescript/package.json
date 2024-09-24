@@ -16,7 +16,6 @@
     "prop-types": "^15.6.0"
   },
   "devDependencies": {
-    "@ava/typescript": "^5.0.0",
     "@eslint/js": "^9.8.0",
     "@types/eslint": "^9.6.0",
     "@types/eslint__js": "^8.42.3",

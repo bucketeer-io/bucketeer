@@ -38,7 +38,7 @@ rename-js:
 
 .PHONY: test
 test: build_test
-	$(NPM_BIN_DIR)/ava --config ava-test.config.mjs
+	$(NPM_BIN_DIR)/ava --config ava.config.mjs
 
 .PHONY: fmt
 fmt: tsfmt

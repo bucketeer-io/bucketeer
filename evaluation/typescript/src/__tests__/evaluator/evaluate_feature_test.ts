@@ -1,14 +1,12 @@
 import test from 'ava';
-import { Feature } from '../proto/feature/feature_pb';
-import { EvaluationID, Evaluator } from '../evaluation';
-import { SegmentUser } from '../proto/feature/segment_pb';
-import { Evaluation, UserEvaluations } from '../proto/feature/evaluation_pb';
-import { createUser } from './rule_evaluator_test';
-import { createEvaluation, createPrerequisite, createReason, createVariation, creatFeature } from './utils/test_data';
-import { Strategy } from '../proto/feature/strategy_pb';
-import { Clause } from '../proto/feature/clause_pb';
-import { Reason } from '../proto/feature/reason_pb';
-import { NewUserEvaluations } from '../userEvaluation';
+import { Feature } from '../../proto/feature/feature_pb';
+import { EvaluationID, Evaluator } from '../../evaluation';
+import { SegmentUser } from '../../proto/feature/segment_pb';
+import { Evaluation } from '../../proto/feature/evaluation_pb';
+import { createPrerequisite, createVariation, creatFeature, createUser } from '../../modelFactory';
+import { Strategy } from '../../proto/feature/strategy_pb';
+import { Clause } from '../../proto/feature/clause_pb';
+import { Reason } from '../../proto/feature/reason_pb';
 
 const ErrVariationNotFound = new Error('evaluator: variation not found');
 
@@ -23,7 +21,7 @@ const TestVariations = {
   variationB: createVariation('variation-B', 'B', 'Variation B', 'Thing does B')
 }
 
-function newTestFeature(id: string): Feature {
+export function newTestFeature(id: string): Feature {
   // Variations
   const variations = [
     { id: 'variation-A', value: 'A', name: 'Variation A', description: 'Thing does A' },
@@ -220,109 +218,4 @@ test('EvaluateFeature', async t => {
       }
     }
   }
-});
-
-test('TestEvaluateFeaturesByEvaluatedAt', async t => {
-  const now = new Date();
-  function getTimeAgo(seconds: number): number {
-    return (new Date(now.getTime() - seconds * 1000)).getTime() / 1000;
-  }
-
-  const thirtyOneDaysAgo = getTimeAgo(31 * 24 * 60 * 60);
-  const fiveMinutesAgo = getTimeAgo(5 * 60);
-  // const tenMinutesAgo = getTimeAgo(10 * 60);
-  // const tenMinutesAndNineSecondsAgo = getTimeAgo(609);
-  // const tenMinutesAndElevenSecondsAgo = getTimeAgo(611);
-  // const oneHourAgo = getTimeAgo(60 * 60);
-  const user = createUser ('user-1', {});
-  const segmentUser: Map<string, SegmentUser[]> = new Map<string, SegmentUser[]>();
-  
-  interface Pattern {
-    desc: string;
-    prevUEID: string;
-    evaluatedAt: number;
-    userAttributesUpdated: boolean;
-    tag: string;
-    createFeatures: () => Feature[];
-    expectedEvals: UserEvaluations;
-    expectedEvalFeatureIDs: string[];
-    expectedError: Error | null;
-  }
-  
-  const patterns: Pattern[] = [
-    {
-      desc: 'success: evaluate all features since the previous UserEvaluationsID is empty',
-      prevUEID: '',
-      evaluatedAt: thirtyOneDaysAgo,
-      userAttributesUpdated: false,
-      tag: '',
-      createFeatures: () => {
-        const f1 = newTestFeature('feature1');
-        f1.setUpdatedAt(fiveMinutesAgo);
-  
-        const f2 = newTestFeature('feature2');
-        f2.setUpdatedAt(fiveMinutesAgo);
-  
-        const f3 = newTestFeature('feature3');
-        f3.setUpdatedAt(fiveMinutesAgo);
-        f3.setArchived(true);
-        return [f1, f2, f3];
-      },
-      expectedEvals: NewUserEvaluations(
-        'dummy',
-        [
-          createEvaluation(
-            'feature1:1:user1',
-            'feature1',
-            1,
-            'user1',
-            'variation-B',
-            'B',
-            'Variation B',
-            createReason( '', Reason.Type.DEFAULT),
-          ),
-          createEvaluation(
-            'feature2:1:user1',
-            'feature2',
-            1,
-            'user1',
-            'variation-B',
-            'B',
-            'Variation B',
-            createReason( '', Reason.Type.DEFAULT),
-          ),
-        ],
-        ['feature3'],
-        true
-      ),
-      expectedEvalFeatureIDs: ['feature1', 'feature2'],
-      expectedError: null,
-    },
-  ];
-
-  patterns.forEach(p => {
-    const evaluator = new Evaluator();
-      try {
-        const actual = evaluator.evaluateFeaturesByEvaluatedAt(
-          p.createFeatures(),
-          user,
-          segmentUser,
-          p.prevUEID,
-          p.evaluatedAt,
-          p.userAttributesUpdated,
-          p.tag,
-        );
-      
-        t.deepEqual(p.expectedEvals.getForceUpdate(), actual.getForceUpdate());
-        t.deepEqual(p.expectedEvals.getArchivedFeatureIdsList(), actual.getArchivedFeatureIdsList());
-        t.is(p.expectedEvals.getEvaluationsList().length, actual.getEvaluationsList().length);
-        actual.getEvaluationsList().forEach(e => {
-          t.true(p.expectedEvalFeatureIDs.includes(e.getFeatureId()));
-        });
-        //TODO: Check me - did Golang test is missing this
-        //t.deepEqual(p.expectedEvals.toObject(), actual.toObject());
-      } catch (error) {
-        t.deepEqual(p.expectedError, error);
-      }
-  });
 });

@@ -1,18 +1,25 @@
-import test from 'ava';
-import { Clause } from '../../proto/feature/clause_pb';
-import { Evaluation } from '../../proto/feature/evaluation_pb';
-import { Feature } from '../../proto/feature/feature_pb';
-import { Prerequisite } from '../../proto/feature/prerequisite_pb';
-import { Reason } from '../../proto/feature/reason_pb';
-import { Rule } from '../../proto/feature/rule_pb';
-import { SegmentUser } from '../../proto/feature/segment_pb';
-import { FixedStrategy, Strategy } from '../../proto/feature/strategy_pb';
-import { Target } from '../../proto/feature/target_pb';
-import { Variation } from '../../proto/feature/variation_pb';
+import { Clause } from './proto/feature/clause_pb';
+import { Evaluation } from './proto/feature/evaluation_pb';
+import { Feature } from './proto/feature/feature_pb';
+import { Prerequisite } from './proto/feature/prerequisite_pb';
+import { Reason } from './proto/feature/reason_pb';
+import { Rule } from './proto/feature/rule_pb';
+import { SegmentUser } from './proto/feature/segment_pb';
+import { FixedStrategy, Strategy } from './proto/feature/strategy_pb';
+import { Target } from './proto/feature/target_pb';
+import { Variation } from './proto/feature/variation_pb';
+import { User } from './proto/user/user/user_pb';
 
-test('exampleTest', (t) => {
-  t.pass();
-})
+// Helper function to create a User instance
+export function createUser(id: string, data: Record<string, string> | null): User {
+  const user = new User();
+  user.setId(id);
+  let map = user.getDataMap()
+  if (data != null) {
+    Object.entries(data).forEach(([key, value]) => map.set(key, value));
+  }
+  return user;
+}
 
 export function creatFeature(
   id: string,
@@ -30,7 +37,8 @@ export function creatFeature(
     values: string[];
     fixedVariation: string;
   }>,
-  defaultStrategy: { type: Strategy.TypeMap[keyof Strategy.TypeMap]; variation: string }
+  defaultStrategy: { type: Strategy.TypeMap[keyof Strategy.TypeMap]; variation: string },
+  prerequisitesList: Array<Prerequisite> = [],
 ): Feature {
   const feature = new Feature();
   feature.setId(id);
@@ -56,6 +64,8 @@ export function creatFeature(
   const defaultFixedStrategy = createFixedStrategy(defaultStrategy.variation);
   const strategy = createStrategy(defaultStrategy.type, defaultFixedStrategy);
   feature.setDefaultStrategy(strategy);
+
+  feature.setPrerequisitesList(prerequisitesList);
 
   return feature;
 }

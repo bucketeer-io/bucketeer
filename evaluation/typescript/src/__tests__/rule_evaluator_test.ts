@@ -6,23 +6,13 @@ import { Clause } from '../proto/feature/clause_pb';
 import { RuleEvaluator } from '../ruleEvaluator';
 import { User } from '../proto/user/user/user_pb';
 import { SegmentUser } from '../proto/feature/segment_pb';
-import { createRule, createSegmentUser, createVariation } from './utils/test_data';
+import { createRule, createSegmentUser, createUser, createVariation } from '../modelFactory';
 
 // Define the type for the test cases
 interface TestCase {
     user: User;
     expected: Rule | null;
-}
-
-// Helper function to create a User instance
-export function createUser(id: string, data: Record<string, string> | null): User {
-  const user = new User();
-  user.setId(id);
-  let map = user.getDataMap()
-  if (data != null) {
-    Object.entries(data).forEach(([key, value]) => map.set(key, value));
-  }
-  return user;
+    description: string;
 }
 
 const TestRuleList = {
@@ -81,41 +71,49 @@ function newSegmentUserIDs(): SegmentUser[] {
 const testcases: TestCase[] = [
     {
         user: createUser('user-id-1', { 'full-name': 'bucketeer project' }),
-        expected: TestRuleList.EQUALS
+        expected: TestRuleList.EQUALS,
+        description: 'TestRuleList.EQUALS',
     },
     {
         user: createUser('user-id-1', { 'first-name': 'bucketeer' }),
-        expected: TestRuleList.STARTS_WITH
+        expected: TestRuleList.STARTS_WITH,
+        description: 'TestRuleList.STARTS_WITH',
     },
     {
         user: createUser('user-id-1', { 'last-name': 'project' }),
-        expected: TestRuleList.ENDS_WITH
+        expected: TestRuleList.ENDS_WITH,
+        description: 'TestRuleList.ENDS_WITH',
     },
     {
         user: createUser('user-id-3', { 'email': 'bucketeer@gmail.com' }),
-        expected: TestRuleList.IN
+        expected: TestRuleList.IN,
+        description: 'TestRuleList.IN',
     },
     {
         user: createUser('user-id-1', null),
-        expected: TestRuleList.SEGMENT
+        expected: TestRuleList.SEGMENT,
+        description: 'TestRuleList.SEGMENT - user-id-1',
     },
     {
         user: createUser('user-id-2', null),
-        expected: TestRuleList.SEGMENT
+        expected: TestRuleList.SEGMENT,
+        description: 'TestRuleList.SEGMENT - user-id-2',
     },
     {
         user: createUser('user-id-3', null),
-        expected: null
+        expected: null,
+        description: 'No rule matched - user-id-3',
     },
     {
         user: createUser('user-id-4', null),
-        expected: null
+        expected: null,
+        description: 'No rule matched - user-id-4',
     }
 ];
 
 // Test cases
-testcases.forEach(({ user, expected }, index) => {
-    test(`Test case ${index}`, t => {
+testcases.forEach(({ user, expected, description }) => {
+    test(description, t => {
         const ruleEvaluator = new RuleEvaluator();
         const values = newSegmentUserIDs();
         const actual = ruleEvaluator.evaluate(newTestFeature().getRulesList(), user, values, {});
