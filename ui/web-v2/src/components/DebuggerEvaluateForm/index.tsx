@@ -1,6 +1,7 @@
 import { FC, memo, useCallback, useEffect } from 'react';
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
-
+import { useIntl } from 'react-intl';
+import { messages } from '../../lang/messages';
 import { Select } from '../Select';
 import { useCurrentEnvironment } from '../../modules/me';
 import { AppDispatch } from '../../store';
@@ -23,6 +24,7 @@ export const DebuggerEvaluateForm: FC<DebuggerEvaluateFormProps> = memo(
   ({ onSubmit }) => {
     const currentEnvironment = useCurrentEnvironment();
     const dispatch = useDispatch<AppDispatch>();
+    const { formatMessage: f } = useIntl();
 
     const methods = useFormContext();
     const {
@@ -140,8 +142,14 @@ export const DebuggerEvaluateForm: FC<DebuggerEvaluateFormProps> = memo(
               <div>
                 <p>User Attributes</p>
                 <p className="text-sm">
-                  Nunc vulputate libero et velit interdum, ac aliquet odio
-                  mattis.
+                  <a
+                    href="https://docs.bucketeer.io/feature-flags/creating-feature-flags/targeting#user-attributes"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="link"
+                  >
+                    {f(messages.readMore)}
+                  </a>
                 </p>
               </div>
               <div>
@@ -185,7 +193,7 @@ export const DebuggerEvaluateForm: FC<DebuggerEvaluateFormProps> = memo(
             onClick={handleAddAttribute}
           >
             <PlusIcon width={18} />
-            <span>Add Attribute</span>
+            <span>Add a user attribute</span>
           </button>
         </div>
         <div className="flex">

@@ -2746,6 +2746,10 @@ export const messages = {
       id: 'sideMenu.auditLog',
       defaultMessage: 'Audit Logs'
     }),
+    debugger: defineMessage({
+      id: 'sideMenu.debugger',
+      defaultMessage: 'Debugger'
+    }),
     accounts: defineMessage({
       id: 'sideMenu.accounts',
       defaultMessage: 'Accounts'
@@ -2977,7 +2981,8 @@ export const messages = {
     }),
     description: defineMessage({
       id: 'debugger.description',
-      defaultMessage: 'You can diagnose and troubleshoot problems.'
+      defaultMessage:
+        'The debugger can verify what variation will be assigned to a specific end-user under different conditions in real-time.'
     })
   },
   type: defineMessage({

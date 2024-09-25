@@ -109,7 +109,9 @@ const createMenuItems = (
     iconElement: <MUNotificationsIcon />
   });
   items.push({
-    messageComponent: <span>Debugger</span>,
+    messageComponent: (
+      <span>{intl.formatMessage(messages.sideMenu.debugger)}</span>
+    ),
     path: `/${environmentUrlCode}${PAGE_PATH_DEBUGGER}`,
     external: null,
     target: null,
