@@ -104,7 +104,8 @@ export const FeatureIndexPage: FC = memo(() => {
   const environments = useEnvironments();
   const history = useHistory();
   const searchOptions = useSearchParams();
-  searchOptions.sort = searchOptions.sort ? searchOptions.sort : '-createdAt';
+  // searchOptions.sort = searchOptions.sort ? searchOptions.sort : '-createdAt';
+  // searchOptions.page = '1';
   const { url } = useRouteMatch();
   const { featureId } = useParams<{ featureId: string }>();
   const isNew = `/${url.substring(url.lastIndexOf('/') + 1)}` == PAGE_PATH_NEW;
@@ -253,12 +254,10 @@ export const FeatureIndexPage: FC = memo(() => {
     [dispatch]
   );
 
-  const clearURLParameters = useCallback(() => {
-    history.replace(url);
-  }, [history]);
-
   const updateURL = useCallback(
-    (options: Record<string, string | number | boolean | undefined>) => {
+    (
+      options: Record<string, string | number | boolean | undefined | unknown>
+    ) => {
       history.replace(
         `${url}?${stringifySearchParams({
           ...options
@@ -268,18 +267,23 @@ export const FeatureIndexPage: FC = memo(() => {
     [history]
   );
 
+  const removeEmptyFields = (obj) => {
+    return Object.fromEntries(
+      Object.entries(obj).filter(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        ([_, value]) => value !== '' && value !== undefined && value !== null
+      )
+    );
+  };
+
   const handleSearchOptionsChange = useCallback(
     (options) => {
-      updateURL({ ...options, page: 1 });
-      updateFeatureList(options, 1);
+      const newOptions = removeEmptyFields(options);
+      updateURL(newOptions);
+      updateFeatureList(newOptions, 1);
     },
     [updateURL, updateFeatureList]
   );
-
-  const handleClearSearchOptionsChange = useCallback(() => {
-    clearURLParameters();
-    updateFeatureList(null, 1);
-  }, [updateFeatureList]);
 
   const handlePageChange = useCallback(
     (page: number) => {
@@ -547,7 +551,6 @@ export const FeatureIndexPage: FC = memo(() => {
           onClone={handleClickClone}
           onAdd={handleOpen}
           onChangeSearchOptions={handleSearchOptionsChange}
-          onClearSearchOptions={handleClearSearchOptionsChange}
         />
       </div>
       <Overlay open={open} onClose={handleClose}>

@@ -18,7 +18,7 @@ export interface SortSelectProps {
 }
 
 export const SortSelect: FC<SortSelectProps> = memo(
-  ({ sortKey, sortItems, onChange }) => {
+  ({ sortKey = '-createdAt', sortItems, onChange }) => {
     const { formatMessage: f } = useIntl();
     const selected = sortItems.find((item) => item.key == sortKey);
 
