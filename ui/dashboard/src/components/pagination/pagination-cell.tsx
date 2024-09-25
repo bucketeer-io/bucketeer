@@ -39,6 +39,7 @@ export type PaginationCellProps = {
   checked?: boolean;
   value?: number;
   variant?: PaginationCellType;
+  disabled?: boolean;
   onClick?: (value?: number) => void;
 };
 
@@ -52,6 +53,7 @@ const PaginationCell = ({
   checked,
   value,
   variant = 'number',
+  disabled = false,
   onClick
 }: PaginationCellProps) => {
   const variantRender = useMemo(() => {
@@ -73,9 +75,10 @@ const PaginationCell = ({
     <button
       className={cn(
         cellVariant({ variant }),
-        checked && 'bg-primary-500 text-white typo-para-medium'
+        checked && 'bg-primary-500 text-white typo-para-medium',
+        disabled && 'cursor-not-allowed opacity-80'
       )}
-      onClick={() => onClick && onClick(value)}
+      onClick={() => !disabled && onClick && onClick(value)}
     >
       {variantRender}
     </button>

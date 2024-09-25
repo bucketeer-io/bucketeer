@@ -20,7 +20,9 @@ export const PAGE_PATH_SETTINGS = '/settings';
 export const PAGE_PATH_PUSHES = '/pushes';
 export const PAGE_PATH_NOTIFICATIONS = '/notifications';
 export const PAGE_PATH_PROJECTS = '/projects';
+export const PAGE_PATH_PROJECT_DETAILS = '/project/:projectId';
 export const PAGE_PATH_ORGANIZATIONS = '/organizations';
+export const PAGE_PATH_ORGANIZATION_DETAILS = '/organization/:organizationId';
 export const PAGE_PATH_ENVIRONMENTS = '/environments';
 
 export const PAGE_PATH_FEATURE_CLONE = '/clone';

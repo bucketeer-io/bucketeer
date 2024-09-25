@@ -113,6 +113,17 @@ const colors = {
       100: '#FFFAD6',
       50: '#FDFBE8'
     }
+  },
+  additional: {
+    gray: {
+      50: '#F9F9FB',
+      100: '#F1EFF6',
+      150: '#4B5462',
+      200: '#6D7481',
+      300: '#2F3136',
+      400: '#9FA8B3',
+      500: '#728BA3'
+    }
   }
 };
 
@@ -121,8 +132,9 @@ const theme = {
   colors,
   boxShadow: {
     DEFAULT: '0px 2px 2px rgba(136, 135, 135, 0.25)',
-    menu: '0px 3px 12px 0px rgba(0, 0, 0, 0.08)',
+    menu: '0px 8px 12px rgba(0, 0, 0, 0.08)',
     card: '0px 8px 13px -3px #00000012',
+    dropdown: '0px 4px 8px rgba(35, 35, 35, 0.1)',
     'border-primary-500': `inset 0 0 0 1px ${colors.primary[500]}`,
     'border-primary-600': `inset 0 0 0 1px ${colors.primary[600]}`,
     'border-primary-700': `inset 0 0 0 1px ${colors.primary[700]}`,
@@ -236,11 +248,6 @@ const container = plugin(({ addComponents }) => {
     'size-120': {
       width: '120px',
       height: '120px'
-    },
-    '.flex-center': {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center'
     }
   };
 
@@ -358,6 +365,10 @@ const typography = plugin(({ addComponents }) => {
 
 const iconSize = plugin(({ addComponents }) => {
   const components = {
+    '.icon-size-fit': {
+      width: 'fit-content',
+      height: 'fit-content'
+    },
     '.icon-size-xxs': {
       width: '16px',
       height: '16px',
@@ -403,11 +414,22 @@ const iconSize = plugin(({ addComponents }) => {
   addComponents(components);
 });
 
+const display = plugin(({ addComponents }) => {
+  const components = {
+    '.flex-center': {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }
+  };
+  addComponents(components);
+});
+
 export default {
   mode: 'jit',
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
   theme,
-  plugins: [tailwindCssForm, container, typography, iconSize],
+  plugins: [tailwindCssForm, container, typography, iconSize, display],
   corePlugins: {
     container: false
   },

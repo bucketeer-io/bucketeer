@@ -33,9 +33,10 @@ export type StatusTagType =
 
 export type StatusTagProps = {
   variant: StatusTagType;
+  label?: string;
 };
 
-const StatusTag = ({ variant }: StatusTagProps) => {
+const StatusTag = ({ variant, label }: StatusTagProps) => {
   const name = useMemo(() => {
     switch (variant) {
       case 'inUse':
@@ -50,7 +51,7 @@ const StatusTag = ({ variant }: StatusTagProps) => {
   return (
     <div className={cn(subStatus({ variant }))}>
       {variant === 'noActivity' && <Icon icon={IconInfoFilled} size="xs" />}
-      {name?.replace('_', ' ')}
+      {label || name?.replace('_', ' ')}
     </div>
   );
 };

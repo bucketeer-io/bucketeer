@@ -1,71 +1,95 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { TableProps } from '@types';
 import Pagination from 'components/pagination';
 import ElementOnEmpty from './element-on-empty';
+import TableRoot from './root';
+import TableBody from './table-body';
 import TableHeader from './table-header';
-import TableHeaderItem from './table-header-item';
+import TableHeaderRow from './table-header';
+import TableHeaderItem from './table-header-cell';
 import TableRow from './table-row';
 import TableRowItem from './table-row-item';
 import Flag from './table-row-items/flag';
 import Text from './table-row-items/text';
 import Title from './table-row-items/title';
 
-const Table = ({ headers, rows = [], elementEmpty }: TableProps) => {
+const Table = <T,>({
+  table,
+  elementEmpty,
+  paginationProps,
+  rowsSelected = [],
+  sortingState,
+  spreadColumn,
+  setRowsSelected,
+  onSortingTable
+}: TableProps<T>) => {
   const [isSelectAllRows, setIsSelectAllRows] = useState(false);
-  const [rowsSelected, setRowsSelected] = useState<number[]>([]);
-
   const initLoadedRef = useRef(true);
 
-  const handleSelectRow = useCallback(
-    (rowIndex?: number) => {
-      if (typeof rowIndex !== 'number') return;
-      if (rowsSelected.includes(rowIndex))
-        return setRowsSelected(rowsSelected.filter(item => item !== rowIndex));
-
-      setRowsSelected([...rowsSelected, rowIndex]);
-    },
-    [rowsSelected]
+  const tableRows = useMemo(
+    () => table?.getRowModel()?.rows,
+    [table, paginationProps]
   );
 
-  const handleToggleSelectAllRows = () => {
-    setIsSelectAllRows(!isSelectAllRows);
-    initLoadedRef.current = false;
-  };
+  const handleSelectRow = useCallback(
+    (rowId?: string) => {
+      if (!rowId) return;
+      initLoadedRef.current = false;
+      const newRows = rowsSelected?.includes(rowId)
+        ? rowsSelected.filter(item => item !== rowId)
+        : [...rowsSelected, rowId];
+      if (setRowsSelected) setRowsSelected(newRows);
+      setIsSelectAllRows(newRows.length === tableRows.length ? true : false);
+    },
+    [rowsSelected, tableRows, setRowsSelected]
+  );
 
-  useEffect(() => {
-    if (!initLoadedRef.current) {
-      if (!isSelectAllRows) return setRowsSelected([]);
-      setRowsSelected(rows.map((_, index) => index));
+  const handleToggleSelectAllRows = useCallback(() => {
+    setIsSelectAllRows(!isSelectAllRows);
+    if (setRowsSelected) {
+      if (isSelectAllRows) {
+        return setRowsSelected([]);
+      }
+      return setRowsSelected(tableRows.map(row => row.id));
     }
-  }, [isSelectAllRows]);
+  }, [isSelectAllRows, setRowsSelected]);
 
   return (
-    <div>
-      <table className="border-separate border-spacing-y-3 w-full mb-6">
-        <thead>
-          <TableHeader
-            data={headers}
-            isSelectAllRows={isSelectAllRows}
-            handleToggleSelectAllRows={handleToggleSelectAllRows}
-            handleSortedData={() => {}}
-          />
-        </thead>
-        <tbody>
-          {rows.length > 0 &&
-            rows.map((i, index) => (
+    <div className="w-full">
+      <TableRoot>
+        {tableRows?.length > 0 &&
+          table
+            ?.getHeaderGroups()
+            ?.map(headerGroup => (
+              <TableHeaderRow
+                sortingState={sortingState}
+                key={headerGroup.id}
+                data={headerGroup.headers}
+                isSelectAllRows={isSelectAllRows}
+                handleToggleSelectAllRows={handleToggleSelectAllRows}
+                spreadColumn={spreadColumn}
+                onSortingTable={onSortingTable}
+              />
+            ))}
+        <TableBody>
+          {tableRows?.length > 0 &&
+            tableRows.map((row, index) => (
               <TableRow
                 key={index}
-                data={i}
-                rowIndex={index}
+                row={row}
                 rowsSelected={rowsSelected}
-                tableRows={rows}
+                spreadColumn={spreadColumn}
                 handleSelectRow={handleSelectRow}
               />
             ))}
-        </tbody>
-      </table>
-      {!rows.length && <ElementOnEmpty>{elementEmpty}</ElementOnEmpty>}
-      {rows.length > 0 && <Pagination totalItems={50} itemsPerPage={5} />}
+        </TableBody>
+      </TableRoot>
+      {tableRows?.length > 0 &&
+        paginationProps &&
+        paginationProps?.totalCount > paginationProps?.pageSize && (
+          <Pagination paginationProps={paginationProps} />
+        )}
+      {!tableRows?.length && <ElementOnEmpty>{elementEmpty}</ElementOnEmpty>}
     </div>
   );
 };

@@ -1,7 +1,6 @@
 import { PropsWithChildren } from 'react';
-import clsx from 'clsx';
 import { AddonSlot } from '@types';
-import styles from '../styles.module.css';
+import { cn } from 'utils/style';
 
 type PopoverItemWrapperProps = PropsWithChildren & {
   type: 'trigger' | 'item';
@@ -17,7 +16,12 @@ const PopoverItemWrapper = ({
   if (type === 'trigger') return <>{children}</>;
   return (
     <div
-      className={clsx(styles.item, addonSlot === 'right' && styles['reverse'])}
+      className={cn(
+        'flex cursor-pointer items-center gap-x-2 p-2 text-gray-700 hover:bg-primary-50 [&>*]:hover:text-primary-500',
+        {
+          'flex-row-reverse': addonSlot === 'right'
+        }
+      )}
       onClick={onClick && onClick}
     >
       {children}

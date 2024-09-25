@@ -59,4 +59,13 @@ export type AvatarColor =
   | 'orange'
   | 'red';
 
-export type IconSize = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
+export type IconSize =
+  | 'fit'
+  | 'xxs'
+  | 'xs'
+  | 'sm'
+  | 'md'
+  | 'lg'
+  | 'xl'
+  | '2xl'
+  | '3xl';

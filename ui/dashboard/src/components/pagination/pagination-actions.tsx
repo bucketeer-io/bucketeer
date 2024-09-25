@@ -3,6 +3,7 @@ import PaginationCell from './pagination-cell';
 import PaginationGroup from './pagination-group';
 
 export type PaginationActionsProps = {
+  pageIndex: number;
   totalItems: number;
   itemsPerPage: number;
   onPageChange?: (page: number) => void;
@@ -11,9 +12,10 @@ export type PaginationActionsProps = {
 const PaginationActions = ({
   totalItems,
   itemsPerPage,
+  pageIndex,
   onPageChange
 }: PaginationActionsProps) => {
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(pageIndex);
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const maxVisibleButtons = 5;
 
@@ -79,8 +81,16 @@ const PaginationActions = ({
   return (
     <div className="flex gap-4">
       <PaginationGroup>
-        <PaginationCell variant="first" onClick={handleFirst} />
-        <PaginationCell variant="previous" onClick={handlePrevious} />
+        <PaginationCell
+          variant="first"
+          onClick={handleFirst}
+          disabled={currentPage === 1}
+        />
+        <PaginationCell
+          variant="previous"
+          onClick={handlePrevious}
+          disabled={currentPage === 1}
+        />
       </PaginationGroup>
       <PaginationGroup>
         {renderCell.map((value, index) =>
@@ -99,8 +109,16 @@ const PaginationActions = ({
         )}
       </PaginationGroup>
       <PaginationGroup>
-        <PaginationCell variant="next" onClick={handleNext} />
-        <PaginationCell variant="last" onClick={handleLast} />
+        <PaginationCell
+          variant="next"
+          onClick={handleNext}
+          disabled={currentPage === totalPages}
+        />
+        <PaginationCell
+          variant="last"
+          onClick={handleLast}
+          disabled={currentPage === totalPages}
+        />
       </PaginationGroup>
     </div>
   );

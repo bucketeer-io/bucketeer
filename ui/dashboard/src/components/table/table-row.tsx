@@ -2,25 +2,29 @@ import { TableRowProps } from '@types';
 import Card from 'components/card';
 import TableRowItem from './table-row-item';
 
-const TableRow = ({
-  data = [],
-  rowIndex,
+const TableRow = <T,>({
+  row,
   rowsSelected,
-  tableRows,
-  handleSelectRow
-}: TableRowProps) => {
+  handleSelectRow,
+  spreadColumn
+}: TableRowProps<T>) => {
   return (
     <Card tag="tr" className="relative">
-      {data.map((i, index) => (
-        <TableRowItem
-          {...i}
-          key={index}
-          rowIndex={rowIndex}
-          rowsSelected={rowsSelected}
-          handleSelectRow={handleSelectRow}
-          tableRows={tableRows}
-        />
-      ))}
+      {row.getVisibleCells().map(cell => {
+        const { columnDef } = spreadColumn(cell);
+
+        return (
+          <TableRowItem
+            {...columnDef}
+            cell={cell}
+            key={cell.id}
+            rowId={row.id}
+            rowsSelected={rowsSelected}
+            handleSelectRow={handleSelectRow}
+            spreadColumn={spreadColumn}
+          />
+        );
+      })}
     </Card>
   );
 };

@@ -1,15 +1,23 @@
 import { ReactNode } from 'react';
+import type {
+  Table as TanstackTableType,
+  Cell,
+  Header,
+  Row
+} from '@tanstack/react-table';
+import { SortingType } from 'containers/pages';
+import { ColumnData, SpreadColumn } from 'hooks/use-table';
+import { PaginationProps } from 'components/pagination';
 import { PopoverOption, PopoverValue } from 'components/popover';
 import { FlagProps } from 'components/table/table-row-items/flag';
 import { TextProps } from 'components/table/table-row-items/text';
 import { TitleProps } from 'components/table/table-row-items/title';
 import { OperationType } from 'components/tag/operation-tag';
-import { StatusTagType } from 'components/tag/status-tag';
 import { TagType, TagVariant } from 'components/tag/tag';
 import { VariationGroupProps } from 'components/variation/variation-group';
 import { AddonSlot } from './app';
+import { OrderBy } from './collection';
 
-export type SortedType = 'asc' | 'desc' | '';
 export type TableRowItemType =
   | 'title'
   | 'text'
@@ -24,77 +32,77 @@ export type TableRowItemType =
   | 'flag'
   | 'status';
 
-export type SortedObjType = {
-  colIndex: number;
-  sortedType: SortedType;
-};
-
-export type CellValueType = string | number | Date | boolean;
+export type CellValueType = string | number | Date | boolean | string[];
 export type TableSignature = {
   [key: string]: CellValueType;
 };
-export type TableHeaderItemProps = {
+
+export type TableHeaderCellProps<T> = {
   text?: string;
   sort?: boolean;
-  type?: 'title' | 'checkbox' | 'empty';
-  defaultSortedType?: SortedType;
-  sortedType?: SortedType;
   width?: string;
   isSelectAllRows?: boolean;
   colIndex?: number;
-  sortedObj?: SortedObjType;
-  fieldName?: string;
+  header: Header<T, unknown>;
+  sortingState?: SortingType;
+  spreadColumn: <T>(data: ColumnData<T>) => SpreadColumn<T>;
   handleToggleSelectAllRows?: () => void;
-  handleSortedData?: (colIndex?: number, fieldName?: string) => void;
+  onSortingTable?: (accessorKey: string, sortingKey?: OrderBy) => void;
 };
 
-export type TableRowItemAdditionalProps = {
-  type?: TableRowItemType;
+export type TableRowItemAdditionalProps<T> = {
+  cell?: Cell<T, unknown>;
+  cellType?: TableRowItemType;
   tagType?: TagType;
   tagVariant?: TagVariant;
   operators?: OperationType[];
-  statusTags?: StatusTagType[];
   expandable?: boolean;
   width?: string;
   options?: PopoverOption<PopoverValue>[];
   tooltip?: string;
   addonSlot?: AddonSlot;
   disabled?: boolean;
-  rowIndex?: number;
-  rowsSelected?: number[];
-  tableRows?: TableRows;
-  handleSelectRow?: (rowIndex?: number) => void;
-  onClick?: () => void;
-  onClickPopover?: (value: PopoverValue) => void;
+  rowId?: string;
+  rowsSelected?: string[];
+  descriptionKey?: string;
+  statusKey?: string;
+  handleSelectRow?: (rowId?: string) => void;
+  onClickCell?: (row?: T) => void;
+  onClickPopover?: (value: PopoverValue, row?: T) => void;
+  spreadColumn?: (data: ColumnData<T>) => SpreadColumn<T>;
 };
 
-export type TableRowItemProps = TitleProps &
+export type TableRowItemProps<T> = TitleProps &
   TextProps &
   FlagProps &
   VariationGroupProps &
-  TableRowItemAdditionalProps;
+  TableRowItemAdditionalProps<T>;
 
-export type TableProps = {
-  headers: TableHeaders;
-  rows: TableRows;
-  elementEmpty?: ReactNode;
+export type TableProps<T> = {
+  table: TanstackTableType<T>;
+  elementEmpty: ReactNode;
+  paginationProps?: PaginationProps;
+  rowsSelected?: string[];
+  sortingState?: SortingType;
+  onSortingTable?: (accessorKey: string, sortingKey?: OrderBy) => void;
+  setRowsSelected?: (rows: string[]) => void;
+  spreadColumn: <T>(data: ColumnData<T>) => SpreadColumn<T>;
 };
 
-export type TableHeaderProps = {
-  data: TableHeaderItemProps[];
+export type TableHeaderProps<T> = {
+  data: Header<T, unknown>[];
   isSelectAllRows?: boolean;
-  sortedObj?: SortedObjType;
+  sortingState?: SortingType;
+  spreadColumn: <T>(data: ColumnData<T>) => SpreadColumn<T>;
   handleToggleSelectAllRows?: () => void;
-  handleSortedData?: (colIndex?: number, fieldName?: string) => void;
+  onSortingTable?: (accessorKey: string, sortingKey?: OrderBy) => void;
 };
 
-export type TableRowProps = {
-  tableRows: TableRows;
-  data: TableRowItemProps[];
-  rowIndex: number;
-  rowsSelected: number[];
-  handleSelectRow: (rowIndex?: number) => void;
+export type TableRowProps<T> = {
+  row: Row<T>;
+  rowsSelected: string[];
+  handleSelectRow: (rowId?: string) => void;
+  spreadColumn: <T>(data: ColumnData<T>) => SpreadColumn<T>;
 };
 
-export type TableHeaders = TableHeaderItemProps[];
-export type TableRows = TableRowItemProps[][];
+export type TableHeaders<T> = TableHeaderCellProps<T>[];

@@ -1,3 +1,4 @@
+import { forwardRef, Ref } from 'react';
 import { IconManageAccountsOutlined } from 'react-icons-material-design';
 import { Button } from 'components/button';
 import Icon from 'components/icon';
@@ -17,26 +18,25 @@ export type SubProps = {
   editable?: boolean;
 };
 
-const Flag = ({
-  text,
-  description,
-  status,
-  flagIconType,
-  editable
-}: FlagProps) => {
-  return (
-    <div className="flex gap-2">
-      {flagIconType && <DataTypeTag type={flagIconType} />}
-      <Title
-        text={text}
-        description={description}
-        {...(status
-          ? { sub: <Sub status={status} editable={editable} /> }
-          : {})}
-      />
-    </div>
-  );
-};
+const Flag = forwardRef(
+  (
+    { text, description, status, flagIconType, editable }: FlagProps,
+    ref: Ref<HTMLDivElement>
+  ) => {
+    return (
+      <div ref={ref} className="flex gap-2">
+        {flagIconType && <DataTypeTag type={flagIconType} />}
+        <Title
+          text={text}
+          description={description}
+          {...(status
+            ? { sub: <Sub status={status} editable={editable} /> }
+            : {})}
+        />
+      </div>
+    );
+  }
+);
 
 export const Sub = ({ status, editable }: SubProps) => {
   return (

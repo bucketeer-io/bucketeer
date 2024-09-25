@@ -1,129 +1,224 @@
-import type { FunctionComponent, ReactNode } from 'react';
+import {
+  ComponentPropsWithoutRef,
+  ElementRef,
+  forwardRef,
+  FunctionComponent,
+  ReactNode
+} from 'react';
 import { IconExpandMoreRound } from 'react-icons-material-design';
-import clsx from 'clsx';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import type { DropdownMenuContentProps } from '@radix-ui/react-dropdown-menu';
+import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
+import { cva } from 'class-variance-authority';
 import { cn } from 'utils/style';
+import { IconSearch } from '@icons';
+import Checkbox from 'components/checkbox';
 import Icon from 'components/icon';
-import styles from './styles.module.css';
-
-export type DropdownOption<DropdownValue> = {
-  value: DropdownValue | undefined;
-  icon?: FunctionComponent;
-  label: string;
-  description?: string;
-};
-
-export type DropdownProps<DropdownValue> = {
-  align?: DropdownMenuContentProps['align'];
-  expand?: 'full';
-  addonSlot?: 'left' | 'right';
-  placeholder?: string;
-  icon?: FunctionComponent;
-  title?: string;
-  options: DropdownOption<DropdownValue>[];
-  action?: ReactNode;
-  disabled?: boolean;
-  value?: DropdownValue | undefined;
-  onChange?: (value: DropdownValue, event?: Event) => void;
-  defaultValue?: DropdownValue | undefined;
-  readOnly?: boolean;
-  modal?: boolean;
-  className?: string;
-  triggerType?: 'normal' | 'icon-only';
-};
+import Input, { InputProps } from 'components/input';
 
 export type DropdownValue = number | string;
 
-const Dropdown = <DropdownValue,>({
-  align = 'start',
-  expand,
-  placeholder = 'Select...',
-  icon,
-  title,
+export type DropdownOption = {
+  label: string;
+  value: DropdownValue;
+  icon?: FunctionComponent;
+  description?: boolean;
+  haveCheckbox?: boolean;
+};
+
+const DropdownMenu = DropdownMenuPrimitive.Root;
+
+const DropdownMenuGroup = DropdownMenuPrimitive.Group;
+
+const DropdownMenuPortal = DropdownMenuPrimitive.Portal;
+
+const triggerVariants = cva(
+  [
+    'flex items-center px-3 py-[11px] gap-x-3 w-fit border rounded-lg bg-white',
+    'disabled:cursor-not-allowed disabled:border-gray-400 disabled:bg-gray-100 disabled:!shadow-none'
+  ],
+  {
+    variants: {
+      variant: {
+        primary:
+          'border-primary-500 hover:shadow-border-primary-500 [&>*]:text-primary-500',
+        secondary:
+          'border-gray-400 hover:shadow-border-gray-400 [&_p]:text-gray-700 [&_span]:text-gray-600 [&>i]:text-gray-500'
+      }
+    },
+    defaultVariants: {
+      variant: 'secondary'
+    }
+  }
+);
+
+const DropdownMenuTrigger = forwardRef<
+  ElementRef<typeof DropdownMenuPrimitive.Trigger>,
+  ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Trigger> & {
+    label?: string;
+    description?: string;
+    isExpand?: boolean;
+    placeholder?: string;
+    variant?: 'primary' | 'secondary';
+    showArrow?: boolean;
+    trigger?: ReactNode;
+  }
+>(
+  (
+    {
+      className,
+      variant,
+      label,
+      description,
+      isExpand,
+      placeholder = '',
+      showArrow = true,
+      trigger,
+      ...props
+    },
+    ref
+  ) => (
+    <DropdownMenuPrimitive.Trigger
+      ref={ref}
+      className={cn(
+        triggerVariants({
+          variant
+        }),
+        {
+          'justify-between w-full': isExpand
+        },
+        className
+      )}
+      {...props}
+    >
+      <div className="flex items-center typo-para-medium">
+        {trigger ? (
+          trigger
+        ) : label ? (
+          <p>
+            {label} {description && <span>{description}</span>}
+          </p>
+        ) : (
+          <p className={'text-gray-500'}>{placeholder}</p>
+        )}
+      </div>
+
+      {showArrow && <Icon icon={IconExpandMoreRound} size={'sm'} />}
+    </DropdownMenuPrimitive.Trigger>
+  )
+);
+
+const DropdownMenuContent = forwardRef<
+  ElementRef<typeof DropdownMenuPrimitive.Content>,
+  ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content> & {
+    isExpand?: boolean;
+  }
+>(({ className, sideOffset = 4, isExpand, ...props }, ref) => (
+  <DropdownMenuPrimitive.Portal>
+    <DropdownMenuPrimitive.Content
+      ref={ref}
+      sideOffset={sideOffset}
+      className={cn(
+        'z-50 min-w-[196px] max-h-[252px] overflow-x-hidden overflow-y-auto rounded-lg border bg-white p-1 shadow-dropdown small-scroll',
+        'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
+        { 'dropdown-menu-expand': isExpand },
+        className
+      )}
+      {...props}
+    />
+  </DropdownMenuPrimitive.Portal>
+));
+
+const DropdownMenuItem = forwardRef<
+  React.ElementRef<typeof DropdownMenuPrimitive.Item>,
+  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
+    icon?: FunctionComponent;
+    isMultiselect?: boolean;
+    selected?: boolean;
+    label?: string;
+    value: DropdownValue;
+    description?: string;
+    closeWhenSelected?: boolean;
+    onSelectOption?: (value: DropdownValue, event: Event) => void;
+  }
+>(
+  (
+    {
+      className,
+      icon,
+      isMultiselect = false,
+      selected = false,
+      label,
+      value,
+      description,
+      closeWhenSelected = true,
+      onSelectOption,
+      ...props
+    },
+    ref
+  ) => (
+    <DropdownMenuPrimitive.Item
+      ref={ref}
+      className={cn(
+        'relative flex items-center w-full cursor-pointer select-none rounded-[5px] p-2 gap-x-2 outline-none transition-colors hover:bg-gray-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+        className
+      )}
+      onSelect={
+        onSelectOption
+          ? event => {
+              if (!closeWhenSelected) event.preventDefault();
+              return onSelectOption(value, event);
+            }
+          : undefined
+      }
+      {...props}
+    >
+      {icon && (
+        <div className="flex-center size-5">
+          <Icon icon={icon} size={'xs'} color="gray-600" />
+        </div>
+      )}
+      {isMultiselect && <Checkbox checked={selected} />}
+
+      <div className="flex flex-col gap-y-1.5">
+        <p className="typo-para-medium leading-5 text-gray-700">{label}</p>
+        {description && (
+          <p className="typo-para-small leading-[14px] text-gray-500">
+            {description}
+          </p>
+        )}
+      </div>
+    </DropdownMenuPrimitive.Item>
+  )
+);
+
+type DropdownSearchProps = InputProps;
+
+const DropdownMenuSearch = ({
   value,
   onChange,
-  addonSlot,
-  options,
-  action,
-  disabled,
-  modal = false,
-  className,
-  triggerType = 'normal'
-}: DropdownProps<DropdownValue>) => {
-  const selected = options.find(o => o.value === value);
-
+  ...props
+}: DropdownSearchProps) => {
   return (
-    <DropdownMenu.Root modal={modal}>
-      <DropdownMenu.Trigger
-        className={clsx(
-          styles.trigger,
-          addonSlot === 'left' && styles['pad-left'],
-          addonSlot === 'right' && styles['pad-right'],
-          expand === 'full' && styles.full,
-          triggerType === 'icon-only' && styles['icon-only']
-        )}
-        disabled={disabled}
-      >
-        {icon && (
-          <span className={styles.icon}>
-            <Icon
-              icon={icon}
-              color={triggerType === 'normal' ? 'gray-300' : 'gray-600'}
-            />
-          </span>
-        )}
-        {triggerType === 'normal' && (
-          <>
-            {selected ? (
-              <span className={styles.selected}>{selected.label}</span>
-            ) : (
-              <span className={styles.placeholder}>{placeholder}</span>
-            )}
-            <span className={styles.arrow}>
-              <Icon icon={IconExpandMoreRound} />
-            </span>
-          </>
-        )}
-      </DropdownMenu.Trigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.Content
-          className={cn(styles.content, className)}
-          align={align}
-        >
-          {title && (
-            <DropdownMenu.Label className={styles.label}>
-              {title}
-            </DropdownMenu.Label>
-          )}
-          <DropdownMenu.Group className={styles.group}>
-            {options.map((option, index) => (
-              <DropdownMenu.Item
-                key={index}
-                className={clsx(
-                  styles.item,
-                  value === option.value && styles['item-active'],
-                  option.icon && styles['item-icon']
-                )}
-                onSelect={
-                  onChange ? event => onChange(option.value!, event) : undefined
-                }
-              >
-                {option.icon && <Icon icon={option.icon} />}
-                {option.label}
-                {option.description && (
-                  <div className={styles['item-description']}>
-                    {option.description}
-                  </div>
-                )}
-              </DropdownMenu.Item>
-            ))}
-            {action && <div className={styles.action}>{action}</div>}
-          </DropdownMenu.Group>
-        </DropdownMenu.Content>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Root>
+    <div className="sticky top-0 left-0 right-0 flex items-center w-full px-3 py-[11.5px] gap-x-2 border-b border-gray-200 bg-white z-50">
+      <div className="flex-center size-5">
+        <Icon icon={IconSearch} size={'xs'} color="gray-500" />
+      </div>
+      <Input
+        {...props}
+        value={value}
+        onChange={onChange}
+        className="p-0 border-none"
+        autoFocus={true}
+      />
+    </div>
   );
 };
 
-export default Dropdown;
+export {
+  DropdownMenu,
+  DropdownMenuGroup,
+  DropdownMenuPortal,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSearch
+};

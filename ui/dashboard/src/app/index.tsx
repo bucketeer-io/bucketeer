@@ -20,7 +20,9 @@ import {
   PAGE_PATH_AUTH_SIGNIN,
   PAGE_PATH_FEATURES,
   PAGE_PATH_NEW,
+  PAGE_PATH_ORGANIZATION_DETAILS,
   PAGE_PATH_ORGANIZATIONS,
+  PAGE_PATH_PROJECT_DETAILS,
   PAGE_PATH_PROJECTS,
   PAGE_PATH_ROOT,
   PAGE_PATH_ROOT_ALL,
@@ -32,6 +34,8 @@ import { v4 as uuid } from 'uuid';
 import { ConsoleAccount } from '@types';
 import DashboardPage from 'pages/dashboard';
 import NotFoundPage from 'pages/not-found';
+import OrganizationDetails from 'pages/organization-details';
+import ProjectDetailsPage from 'pages/project-details';
 import ProjectsPage from 'pages/projects';
 import SettingsPage from 'pages/settings';
 import SignInPage from 'pages/signin';
@@ -101,10 +105,16 @@ export const Root = memo(() => {
         <div className="flex-grow ml-[248px] shadow-lg overflow-y-auto">
           <Routes>
             {consoleAccount.isSystemAdmin && (
-              <Route
-                path={`${PAGE_PATH_ORGANIZATIONS}*`}
-                element={<OrganizationsRoot />}
-              />
+              <>
+                <Route
+                  path={`${PAGE_PATH_ORGANIZATIONS}*`}
+                  element={<OrganizationsRoot />}
+                />
+                <Route
+                  path={`${PAGE_PATH_ORGANIZATION_DETAILS}`}
+                  element={<OrganizationDetails />}
+                />
+              </>
             )}
             <Route
               key={pageKey}
@@ -149,6 +159,10 @@ export const EnvironmentRoot = memo(
         <Route path={`${PAGE_PATH_FEATURES}`} element={<DashboardPage />} />
         <Route path={`${PAGE_PATH_SETTINGS}`} element={<SettingsPage />} />
         <Route path={`${PAGE_PATH_PROJECTS}`} element={<ProjectsPage />} />
+        <Route
+          path={`${PAGE_PATH_PROJECT_DETAILS}`}
+          element={<ProjectDetailsPage />}
+        />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     );

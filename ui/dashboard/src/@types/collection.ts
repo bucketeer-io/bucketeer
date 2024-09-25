@@ -8,7 +8,13 @@ export type OrderBy =
   | 'CREATED_AT'
   | 'UPDATED_AT'
   | 'NAME'
-  | 'URL_CODE';
+  | 'URL_CODE'
+  | 'FEATURE_COUNT'
+  | 'ENVIRONMENT_COUNT'
+  | 'PROJECT_COUNT'
+  | 'USER_COUNT'
+  | 'ROLE'
+  | 'EMAIL';
 
 export type OrderDirection = 'ASC' | 'DESC';
 

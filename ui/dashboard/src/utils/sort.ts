@@ -1,43 +1,71 @@
-import { CellValueType, TableSignature } from '@types';
+import { SortingType } from 'containers/pages';
+import { OrderBy } from '@types';
 
-export type SortedType = 'asc' | 'desc' | '';
-
-type SortedProps<T> = {
-  data: T[];
-  sortedType: SortedType;
-  fieldName: string;
+type SortingProps = {
+  accessorKey: string;
+  sortingKey?: OrderBy;
+  sortingState: SortingType;
+  setSortingState: (state: SortingType) => void;
+  cb?: () => void;
 };
-type CompareProps = {
-  a: CellValueType;
-  b: CellValueType;
-  sortedType: SortedType;
-};
+export const sortingFn = ({
+  accessorKey,
+  sortingKey,
+  sortingState,
+  setSortingState,
+  cb
+}: SortingProps) => {
+  if (cb) cb();
+  const { id, orderBy, orderDirection } = sortingState;
+  const isDesc = orderDirection === 'DESC';
 
-const compareFunc = ({ a, b, sortedType }: CompareProps) => {
-  if (a instanceof Date || b instanceof Date) return 0;
-  if (a < b) return sortedType === 'asc' ? -1 : 1;
-  if (a > b) return sortedType === 'asc' ? 1 : -1;
-  return 0;
-};
+  if (sortingKey) {
+    return setSortingState({
+      id: isDesc ? 'default' : accessorKey,
+      orderBy: isDesc ? 'DEFAULT' : sortingKey,
+      orderDirection: orderBy === 'DEFAULT' ? 'ASC' : isDesc ? 'ASC' : 'DESC'
+    });
+  }
+  if (id === accessorKey) {
+    return setSortingState({
+      id: isDesc ? 'default' : accessorKey,
+      orderBy: isDesc ? 'DEFAULT' : orderBy,
+      orderDirection: isDesc ? 'ASC' : 'DESC'
+    });
+  }
 
-const sortedDataFunc = <T extends TableSignature>({
-  data,
-  sortedType,
-  fieldName
-}: SortedProps<T>) => {
-  const sortedData = data.sort((a, b) => {
-    const aValue = a[fieldName];
-    const bValue = b[fieldName];
-    if (!aValue || !bValue) return 0;
-    if (aValue instanceof Date && bValue instanceof Date) {
-      const dateA = new Date(aValue).getTime();
-      const dateB = new Date(bValue).getTime();
-
-      return compareFunc({ a: dateA, b: dateB, sortedType });
-    }
-    return compareFunc({ a: aValue, b: bValue, sortedType });
+  const orderKey = handleOrderKey(accessorKey);
+  setSortingState({
+    id: accessorKey,
+    orderBy: orderKey,
+    orderDirection: 'ASC'
   });
-  return sortedData;
 };
 
-export { sortedDataFunc };
+const handleOrderKey = (accessorKey: string): OrderBy => {
+  switch (accessorKey) {
+    case 'id':
+    case 'name':
+    case 'email':
+      return accessorKey.toUpperCase() as OrderBy;
+
+    case 'createdAt':
+    case 'updatedAt': {
+      const replaceText = accessorKey.replace('At', '');
+
+      return `${replaceText}_at`.toUpperCase() as OrderBy;
+    }
+    case 'urlCode':
+      return 'URL_CODE';
+    case 'userCount':
+    case 'environmentCount':
+    case 'projectCount': {
+      const replaceText = accessorKey.replace('Count', '');
+      return `${replaceText}_count`.toUpperCase() as OrderBy;
+    }
+    case 'featureFlagCount':
+      return 'FEATURE_COUNT';
+    default:
+      return 'ID';
+  }
+};

@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import {
   IconAccessTimeOutlined,
   IconArrowBackFilled
@@ -16,6 +17,7 @@ export type PageDetailHeaderProps = {
   tabs: TabItemProps[];
   targetTab: string;
   navigateRoute: string;
+  titleActions?: ReactNode;
   status?: StatusTagType;
   onSelectTab: (value: string) => void;
 };
@@ -26,6 +28,7 @@ const PageDetailHeader = ({
   tabs,
   targetTab,
   navigateRoute,
+  titleActions,
   status,
   onSelectTab
 }: PageDetailHeaderProps) => {
@@ -52,6 +55,7 @@ const PageDetailHeader = ({
             <h1 className="text-gray-900 typo-head-light-huge">{title}</h1>
             {status && <StatusTag variant={status} />}
           </div>
+          {titleActions}
         </div>
       </div>
       <div>

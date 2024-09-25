@@ -1,28 +1,37 @@
+import { HTMLAttributes } from 'react';
 import { TableHeaderProps } from '@types';
-import TableHeaderItem from './table-header-item';
+import { TableCommonType } from './root';
+import TableHeaderItem from './table-header-cell';
 
-const TableHeader = ({
+const TableHeaderRow = <T,>({
   data = [],
   isSelectAllRows,
-  sortedObj,
+  sortingState,
   handleToggleSelectAllRows,
-  handleSortedData
-}: TableHeaderProps) => {
+  spreadColumn,
+  onSortingTable,
+  ...props
+}: TableHeaderProps<T> &
+  TableCommonType &
+  HTMLAttributes<HTMLTableSectionElement>) => {
   return (
-    <tr>
-      {data.map((i, index) => (
-        <TableHeaderItem
-          {...i}
-          key={index}
-          isSelectAllRows={isSelectAllRows}
-          colIndex={index}
-          sortedObj={sortedObj}
-          handleToggleSelectAllRows={handleToggleSelectAllRows}
-          handleSortedData={handleSortedData}
-        />
-      ))}
-    </tr>
+    <thead {...props}>
+      <tr>
+        {data.map((header, index) => (
+          <TableHeaderItem
+            header={header}
+            key={index}
+            isSelectAllRows={isSelectAllRows}
+            colIndex={index}
+            sortingState={sortingState}
+            handleToggleSelectAllRows={handleToggleSelectAllRows}
+            spreadColumn={spreadColumn}
+            onSortingTable={onSortingTable}
+          />
+        ))}
+      </tr>
+    </thead>
   );
 };
 
-export default TableHeader;
+export default TableHeaderRow;

@@ -1,31 +1,48 @@
-import { ReactNode } from 'react';
+import { KeyboardEvent, ReactNode } from 'react';
 import {
   IconLaunchOutlined,
   IconFilterListOutlined
 } from 'react-icons-material-design';
+import { useTranslation } from 'i18n';
 import { Button } from 'components/button';
 import Icon from 'components/icon';
 import SearchInput from 'components/search-input';
 
-type FilterProps = { additionalActions?: ReactNode };
+type FilterProps = {
+  additionalActions?: ReactNode;
+  searchValue: string;
+  onChangeSearchValue: (value: string) => void;
+  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
+};
 
-const Filter = ({ additionalActions }: FilterProps) => {
+const Filter = ({
+  additionalActions,
+  searchValue,
+  onChangeSearchValue,
+  onKeyDown
+}: FilterProps) => {
+  const { t } = useTranslation(['common', 'form']);
   return (
     <div className="flex lg:items-center justify-between flex-col lg:flex-row">
       <div className="w-full lg:w-[365px]">
-        <SearchInput placeholder="Search Input" value="" onChange={() => {}} />
+        <SearchInput
+          placeholder={`${t('form:placeholder-search-input')}`}
+          value={searchValue}
+          onChange={onChangeSearchValue}
+          onKeyDown={onKeyDown}
+        />
       </div>
       <div className="flex items-center gap-4 mt-3 lg:mt-0">
         <Button variant="text" className="flex-1 lg:flex-none">
           <Icon icon={IconLaunchOutlined} size="sm" />
-          Documentation
+          {t('documentation')}
         </Button>
         <Button
           variant="secondary"
           className="text-gray-600 shadow-border-gray-400 flex-1 lg:flex-none"
         >
           <Icon icon={IconFilterListOutlined} size="sm" />
-          Filter
+          {t('filter')}
         </Button>
         {additionalActions}
       </div>
