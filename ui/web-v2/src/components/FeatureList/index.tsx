@@ -530,6 +530,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     );
     const [selectedSearchFilter, setSelectedSearchFilter] =
       useState<SelectedSearchFilter>();
+    const [isAddNewFilterActive, setIsAddNewFilterActive] = useState(false);
 
     const organizationId = currentEnvironment.organizationId;
 
@@ -743,7 +744,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
         const defaultFilter = false;
         const environmentId = currentEnvironment.id;
 
-        if (selectedSearchFilter) {
+        if (selectedSearchFilter && !isAddNewFilterActive) {
           dispatch(
             changeSearchFilterName({
               id: selectedSearchFilter.id,
@@ -774,8 +775,9 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
             refetchMe();
           });
         }
+        setIsAddNewFilterActive(false);
       },
-      [searchOptions, selectedSearchFilter]
+      [searchOptions, selectedSearchFilter, isAddNewFilterActive]
     );
 
     const handleDeleteSearchFilter = (id: string) => {
@@ -820,6 +822,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
 
     const handleClose = () => {
       setOpen(false);
+      setIsAddNewFilterActive(false);
     };
 
     const handleConfirm = (confirmType: ConfirmType) => {
@@ -992,7 +995,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                   className="bg-gray-50 p-[6px] rounded hover:bg-purple-100 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => {
                     setOpen(true);
-                    setSelectedSearchFilter(null);
+                    setIsAddNewFilterActive(true);
                   }}
                 >
                   <PlusIcon width={20} className="text-primary" />
@@ -1025,7 +1028,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
             <AddEditShortcutModal
               open={open}
               close={handleClose}
-              selectedSearchFilter={selectedSearchFilter}
+              name={isAddNewFilterActive ? '' : selectedSearchFilter?.name}
               handleFormSubmit={handleFormSubmit}
             />
           )}
@@ -1271,14 +1274,14 @@ const SaveChangesDialog = ({
 interface AddEditShortcutModalProps {
   open: boolean;
   close: () => void;
-  selectedSearchFilter?: SelectedSearchFilter;
+  name: string;
   handleFormSubmit: (data: { name: string }) => void;
 }
 
 const AddEditShortcutModal = ({
   open,
   close,
-  selectedSearchFilter,
+  name,
   handleFormSubmit
 }: AddEditShortcutModalProps) => {
   const { formatMessage: f } = useIntl();
@@ -1297,12 +1300,12 @@ const AddEditShortcutModal = ({
   });
 
   useEffect(() => {
-    if (selectedSearchFilter?.name) {
+    if (name) {
       resetShortcut({
-        name: selectedSearchFilter.name
+        name
       });
     }
-  }, [selectedSearchFilter]);
+  }, [name]);
 
   const handleSave = (data) => {
     handleFormSubmit({
@@ -1338,7 +1341,7 @@ const AddEditShortcutModal = ({
               <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all w-[542px]">
                 <div className="flex items-center justify-between px-4 py-5 border-b">
                   <p className="text-xl font-medium">
-                    {selectedSearchFilter?.name
+                    {name
                       ? f(messages.saveChanges.editShortcut)
                       : f(messages.saveChanges.addShortcut)}
                   </p>
