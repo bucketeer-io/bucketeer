@@ -2746,6 +2746,10 @@ export const messages = {
       id: 'sideMenu.auditLog',
       defaultMessage: 'Audit Logs'
     }),
+    debugger: defineMessage({
+      id: 'sideMenu.debugger',
+      defaultMessage: 'Debugger'
+    }),
     accounts: defineMessage({
       id: 'sideMenu.accounts',
       defaultMessage: 'Accounts'
@@ -2968,6 +2972,17 @@ export const messages = {
     fileFormatJson: defineMessage({
       id: 'fileUpload.fileFormat',
       defaultMessage: 'Accepted file type: .json'
+    })
+  },
+  debugger: {
+    title: defineMessage({
+      id: 'debugger.title',
+      defaultMessage: 'Debugger'
+    }),
+    description: defineMessage({
+      id: 'debugger.description',
+      defaultMessage:
+        'The debugger can verify what variation will be assigned to a specific end-user under different conditions in real-time.'
     })
   },
   type: defineMessage({

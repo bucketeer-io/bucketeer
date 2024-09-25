@@ -30,7 +30,8 @@ import {
   PAGE_PATH_ROOT,
   PAGE_PATH_ACCOUNTS,
   PAGE_PATH_SETTINGS,
-  PAGE_PATH_AUTH_SIGNIN
+  PAGE_PATH_AUTH_SIGNIN,
+  PAGE_PATH_DEBUGGER
 } from '../constants/routing';
 import { AppState } from '../modules';
 import {
@@ -52,6 +53,7 @@ import { AccountIndexPage } from './account';
 import { AdminIndexPage } from './admin';
 import { APIKeyIndexPage } from './apiKey';
 import { AuditLogIndexPage } from './auditLog';
+import { DebuggerIndexPage } from './debugger';
 import { AuthCallbackPage } from './auth';
 import Login from './auth/signin';
 import SignIn from './auth/email';
@@ -296,6 +298,9 @@ export const EnvironmentRoot: FC = memo(() => {
       </Route>
       <Route exact path={[`${url}${PAGE_PATH_AUDIT_LOGS}`]}>
         <AuditLogIndexPage />
+      </Route>
+      <Route exact path={[`${url}${PAGE_PATH_DEBUGGER}`]}>
+        <DebuggerIndexPage />
       </Route>
       <Route
         exact

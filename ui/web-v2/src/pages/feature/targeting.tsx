@@ -87,6 +87,8 @@ export const FeatureTargetingPage: FC<FeatureTargetingPageProps> = memo(
     );
     const [isResetTargeting, setIsResetTargeting] = useState(false);
 
+    console.log({ feature });
+
     const getDefaultValues = (
       feature: Feature.AsObject,
       requireComment: boolean
