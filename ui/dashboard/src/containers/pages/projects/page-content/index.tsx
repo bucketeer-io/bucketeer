@@ -136,7 +136,7 @@ export const ProjectsContent = () => {
       {
         accessorKey: 'createdAt',
         id: 'createdAt',
-        header: t('table:Created At'),
+        header: t('table:created-at'),
         size: '15%',
         minSize: 160,
         sorting: true,
