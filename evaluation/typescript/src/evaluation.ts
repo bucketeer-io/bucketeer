@@ -263,7 +263,7 @@ class Evaluator {
     return [reason, variation];
   }
 
-  private getEvalFeatures(targetFeatures: Feature[], allFeatures: Feature[]): Feature[] {
+  getEvalFeatures(targetFeatures: Feature[], allFeatures: Feature[]): Feature[] {
     const allFeaturesMap = new Map<string, Feature>();
     for (const feature of allFeatures) {
       allFeaturesMap.set(feature.getId(), feature);
