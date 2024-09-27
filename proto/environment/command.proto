@@ -85,6 +85,10 @@ message ChangeDescriptionOrganizationCommand {
   string description = 1;
 }
 
+message ChangeOwnerEmailOrganizationCommand {
+  string owner_email = 1;
+}
+
 message ChangeRequireCommentCommand {
   bool require_comment = 1;
 }

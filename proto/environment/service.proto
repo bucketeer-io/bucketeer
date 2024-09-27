@@ -226,6 +226,7 @@ message UpdateOrganizationRequest {
   string id = 1;
   ChangeNameOrganizationCommand rename_command = 2;
   ChangeDescriptionOrganizationCommand change_description_command = 3;
+  ChangeOwnerEmailOrganizationCommand change_owner_email_command = 4;
 }
 
 message UpdateOrganizationResponse {}
