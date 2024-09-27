@@ -16,18 +16,19 @@ const TestFeatureIDs = {
   fID2: 'fID2',
 }
 
-const TestVariations = {
+export const TestVariations = {
   variationA: createVariation('variation-A', 'A', 'Variation A', 'Thing does A'),
-  variationB: createVariation('variation-B', 'B', 'Variation B', 'Thing does B')
+  variationB: createVariation('variation-B', 'B', 'Variation B', 'Thing does B'),
+  variationC: createVariation('variation-C', 'C', 'Variation C', 'Thing does C')
 }
 
 export function newTestFeature(id: string): Feature {
   // Variations
   const variations = [
-    { id: 'variation-A', value: 'A', name: 'Variation A', description: 'Thing does A' },
-    { id: 'variation-B', value: 'B', name: 'Variation B', description: 'Thing does B' },
-    { id: 'variation-C', value: 'C', name: 'Variation C', description: 'Thing does C' }
-  ];
+    TestVariations.variationA.toObject(),
+    TestVariations.variationB.toObject(),
+    TestVariations.variationC.toObject()
+  ]
 
   // Targets
   const targets = [

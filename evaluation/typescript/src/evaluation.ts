@@ -178,7 +178,7 @@ class Evaluator {
     return Array.from(mapIDs);
   }
 
-  private assignUser(
+  assignUser(
     feature: Feature,
     user: User,
     segmentUsers: SegmentUser[],
