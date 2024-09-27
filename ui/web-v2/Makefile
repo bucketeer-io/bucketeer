@@ -50,7 +50,7 @@ gen_proto: clean_proto gen_proto_external_api
 gen_proto_external_api:
 	protoc \
 	--plugin=protoc-gen-ts=$(NPM_BIN_DIR)/protoc-gen-ts \
-	--plugin=protoc-gen-js=$(NPM_BIN_DIR)/protoc-gen-js \6
+	--plugin=protoc-gen-js=$(NPM_BIN_DIR)/protoc-gen-js \
 	--js_out=import_style=commonjs,binary:$(SRC_DIR) \
 	--ts_out=service=grpc-web:$(SRC_DIR) \
 	-I $(PROTOBUF_INCLUDE_DIR) \
