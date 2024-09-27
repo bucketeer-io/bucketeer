@@ -77,7 +77,34 @@ var allFeaturesForPrerequisiteTest = {
     prerequisitesList: [],
   }),
 };
-
+/*
+graph TD;
+  featureA["Feature A"] --> featureE["Feature E"];
+  featureA --> featureF["Feature F"];
+  
+  featureC["Feature C"] --> featureL["Feature L"];
+  
+  featureE --> featureG["Feature G"];
+  
+  featureG["Feature G"] --> featureH["Feature H"];
+  
+  featureH --> featureI["Feature I"];
+  featureH --> featureJ["Feature J"];
+  
+  featureI["Feature I"] --> featureK["Feature K"];
+  
+  featureL --> featureM["Feature M"];
+  featureL --> featureN["Feature N"];
+  
+  featureB["Feature B"] --- NoPrerequisite;
+  featureD["Feature D"] --- NoPrerequisite;
+  featureF --- NoPrerequisite;
+  featureJ --- NoPrerequisite;
+  featureK --- NoPrerequisite;
+  featureM --- NoPrerequisite;
+  featureN --- NoPrerequisite;
+*/
+// The order of the output is a bit diffence with golang test, but the result is the same
 const TestCases = [
   {
     desc: 'success: No prerequisites',
@@ -99,45 +126,46 @@ const TestCases = [
     expected: [
       allFeaturesForPrerequisiteTest.featureA,
       allFeaturesForPrerequisiteTest.featureE,
-      allFeaturesForPrerequisiteTest.featureF,
       allFeaturesForPrerequisiteTest.featureG,
       allFeaturesForPrerequisiteTest.featureH,
       allFeaturesForPrerequisiteTest.featureI,
-      allFeaturesForPrerequisiteTest.featureJ,
       allFeaturesForPrerequisiteTest.featureK,
+      allFeaturesForPrerequisiteTest.featureJ,
+      allFeaturesForPrerequisiteTest.featureF,
     ],
     expectedErr: null,
   },
-  // {
-  //   desc: 'success: Get prerequisites pattern2',
-  //   target: [
-  //     allFeaturesForPrerequisiteTest.featureC,
-  //     allFeaturesForPrerequisiteTest.featureD,
-  //   ],
-  //   expected: [
-  //     allFeaturesForPrerequisiteTest.featureC,
-  //     allFeaturesForPrerequisiteTest.featureD,
-  //     allFeaturesForPrerequisiteTest.featureL,
-  //     allFeaturesForPrerequisiteTest.featureM,
-  //     allFeaturesForPrerequisiteTest.featureN,
-  //   ],
-  //   expectedErr: null,
-  // },
-  // {
-  //   desc: 'success: Get prerequisites pattern3',
-  //   target: [
-  //     allFeaturesForPrerequisiteTest.featureD,
-  //     allFeaturesForPrerequisiteTest.featureH,
-  //   ],
-  //   expected: [
-  //     allFeaturesForPrerequisiteTest.featureD,
-  //     allFeaturesForPrerequisiteTest.featureH,
-  //     allFeaturesForPrerequisiteTest.featureI,
-  //     allFeaturesForPrerequisiteTest.featureJ,
-  //     allFeaturesForPrerequisiteTest.featureK,
-  //   ],
-  //   expectedErr: null,
-  // },
+  {
+    desc: 'success: Get prerequisites pattern2',
+    target: [
+      allFeaturesForPrerequisiteTest.featureC,
+      allFeaturesForPrerequisiteTest.featureD,
+    ],
+    expected: [
+      allFeaturesForPrerequisiteTest.featureC,
+      allFeaturesForPrerequisiteTest.featureL,
+      allFeaturesForPrerequisiteTest.featureM,
+      allFeaturesForPrerequisiteTest.featureN,
+      allFeaturesForPrerequisiteTest.featureD,
+    ],
+    expectedErr: null,
+  },
+  {
+    desc: 'success: Get prerequisites pattern3',
+    target: [
+      allFeaturesForPrerequisiteTest.featureD,
+      allFeaturesForPrerequisiteTest.featureH,
+    ],
+    expected: [
+      allFeaturesForPrerequisiteTest.featureD,
+      allFeaturesForPrerequisiteTest.featureH,
+      allFeaturesForPrerequisiteTest.featureI,
+      allFeaturesForPrerequisiteTest.featureK,
+      allFeaturesForPrerequisiteTest.featureJ,
+
+    ],
+    expectedErr: null,
+  },
 ];
 
 const allFeatures = Object.values(allFeaturesForPrerequisiteTest);
