@@ -519,6 +519,41 @@ export namespace ChangeDescriptionOrganizationCommand {
   };
 }
 
+export class ChangeOwnerEmailOrganizationCommand extends jspb.Message {
+  getOwnerEmail(): string;
+  setOwnerEmail(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): ChangeOwnerEmailOrganizationCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ChangeOwnerEmailOrganizationCommand
+  ): ChangeOwnerEmailOrganizationCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ChangeOwnerEmailOrganizationCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(
+    bytes: Uint8Array
+  ): ChangeOwnerEmailOrganizationCommand;
+  static deserializeBinaryFromReader(
+    message: ChangeOwnerEmailOrganizationCommand,
+    reader: jspb.BinaryReader
+  ): ChangeOwnerEmailOrganizationCommand;
+}
+
+export namespace ChangeOwnerEmailOrganizationCommand {
+  export type AsObject = {
+    ownerEmail: string;
+  };
+}
+
 export class ChangeRequireCommentCommand extends jspb.Message {
   getRequireComment(): boolean;
   setRequireComment(value: boolean): void;

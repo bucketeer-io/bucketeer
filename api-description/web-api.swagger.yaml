@@ -3397,6 +3397,11 @@ definitions:
     properties:
       name:
         type: string
+  environmentChangeOwnerEmailOrganizationCommand:
+    type: object
+    properties:
+      ownerEmail:
+        type: string
   environmentChangeRequireCommentCommand:
     type: object
     properties:
@@ -3859,6 +3864,8 @@ definitions:
         $ref: '#/definitions/environmentChangeNameOrganizationCommand'
       changeDescriptionCommand:
         $ref: '#/definitions/environmentChangeDescriptionOrganizationCommand'
+      changeOwnerEmailCommand:
+        $ref: '#/definitions/environmentChangeOwnerEmailOrganizationCommand'
   environmentUpdateOrganizationResponse:
     type: object
   environmentUpdateProjectRequest:
