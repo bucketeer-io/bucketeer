@@ -425,6 +425,9 @@ func (s *EnvironmentService) getUpdateOrganizationCommands(
 	if req.RenameCommand != nil {
 		commands = append(commands, req.RenameCommand)
 	}
+	if req.ChangeOwnerEmailCommand != nil {
+		commands = append(commands, req.ChangeOwnerEmailCommand)
+	}
 	return commands
 }
 
