@@ -204,6 +204,8 @@ export function createEvaluation(
   return evaluation;
 }
 
+//TODO: should we set the ruleId to empty string as default?
+//TODO: create optional constructor for Reason
 export function createReason(
   ruleId: string,
   type: Reason.TypeMap[keyof Reason.TypeMap],

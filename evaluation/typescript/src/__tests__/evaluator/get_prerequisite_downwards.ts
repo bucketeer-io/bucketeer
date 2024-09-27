@@ -5,6 +5,33 @@ import {
 } from '../../modelFactory';
 import { Evaluator } from '../../evaluation';
 
+/*
+graph TD;
+  featureA["Feature A"] --> featureE["Feature E"];
+  featureA --> featureF["Feature F"];
+  
+  featureC["Feature C"] --> featureL["Feature L"];
+  
+  featureE --> featureG["Feature G"];
+  
+  featureG["Feature G"] --> featureH["Feature H"];
+  
+  featureH --> featureI["Feature I"];
+  featureH --> featureJ["Feature J"];
+  
+  featureI["Feature I"] --> featureK["Feature K"];
+  
+  featureL --> featureM["Feature M"];
+  featureL --> featureN["Feature N"];
+  
+  featureB["Feature B"] --- NoPrerequisite;
+  featureD["Feature D"] --- NoPrerequisite;
+  featureF --- NoPrerequisite;
+  featureJ --- NoPrerequisite;
+  featureK --- NoPrerequisite;
+  featureM --- NoPrerequisite;
+  featureN --- NoPrerequisite;
+*/
 var allFeaturesForPrerequisiteTest = {
   featureA: creatFeature({
     id: 'featureA',
@@ -77,33 +104,7 @@ var allFeaturesForPrerequisiteTest = {
     prerequisitesList: [],
   }),
 };
-/*
-graph TD;
-  featureA["Feature A"] --> featureE["Feature E"];
-  featureA --> featureF["Feature F"];
-  
-  featureC["Feature C"] --> featureL["Feature L"];
-  
-  featureE --> featureG["Feature G"];
-  
-  featureG["Feature G"] --> featureH["Feature H"];
-  
-  featureH --> featureI["Feature I"];
-  featureH --> featureJ["Feature J"];
-  
-  featureI["Feature I"] --> featureK["Feature K"];
-  
-  featureL --> featureM["Feature M"];
-  featureL --> featureN["Feature N"];
-  
-  featureB["Feature B"] --- NoPrerequisite;
-  featureD["Feature D"] --- NoPrerequisite;
-  featureF --- NoPrerequisite;
-  featureJ --- NoPrerequisite;
-  featureK --- NoPrerequisite;
-  featureM --- NoPrerequisite;
-  featureN --- NoPrerequisite;
-*/
+
 // The order of the output is a bit diffence with golang test, but the result is the same
 const TestCases = [
   {

@@ -9,7 +9,7 @@ import { NewUserEvaluations } from '../../userEvaluation';
 import { newTestFeature } from './evaluate_feature_test';
 
 
-interface TestEvaluateFeaturesByEvaluatedAtCase {
+interface TestCase {
   desc: string;
   prevUEID: string; 
   evaluatedAt: number;
@@ -35,7 +35,7 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
   const tenMinutesAndElevenSecondsAgo = getTimeAgo(611);
   const oneHourAgo = getTimeAgo(60 * 60);
 
-  const patterns: TestEvaluateFeaturesByEvaluatedAtCase[] = [
+  const patterns: TestCase[] = [
     {
       desc: 'success: evaluate all features since the previous UserEvaluationsID is empty',
       prevUEID: '',

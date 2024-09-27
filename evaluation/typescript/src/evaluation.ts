@@ -9,6 +9,7 @@ import { User } from './proto/user/user/user_pb';
 import { RuleEvaluator } from './ruleEvaluator';
 import { StrategyEvaluator } from './strategyEvaluator';
 import { NewUserEvaluations, UserEvaluationsID } from './userEvaluation';
+import { createReason } from './modelFactory';
 
 const SECONDS_TO_RE_EVALUATE_ALL = 30 * 24 * 60 * 60; // 30 days
 const SECONDS_FOR_ADJUSTMENT = 10; // 10 seconds
@@ -195,8 +196,7 @@ class Evaluator {
             feature.getOffVariation(),
             feature.getVariationsList(),
           );
-          const reason = new Reason();
-          reason.setType(Reason.Type.PREREQUISITE);
+          const reason = createReason('', Reason.Type.PREREQUISITE);
           return [reason, variation];
         }
       }
@@ -204,8 +204,7 @@ class Evaluator {
     // It doesn't assign the user in case of the feature is disabled and OffVariation is not set
     if (!feature.getEnabled() && feature.getOffVariation() != '') {
       const variation = this.findVariation(feature.getOffVariation(), feature.getVariationsList());
-      const reason = new Reason();
-      reason.setType(Reason.Type.OFF_VARIATION);
+      const reason = createReason('', Reason.Type.OFF_VARIATION);
       return [reason, variation];
     }
 
@@ -214,8 +213,7 @@ class Evaluator {
     for (const target of feature.getTargetsList()) {
       if (target.getUsersList().includes(user.getId())) {
         const variation = this.findVariation(target.getVariation(), feature.getVariationsList());
-        const reason = new Reason();
-        reason.setType(Reason.Type.TARGET);
+        const reason = createReason('', Reason.Type.TARGET);
         return [reason, variation];
       }
     }
@@ -239,9 +237,7 @@ class Evaluator {
         feature.getId(),
         feature.getSamplingSeed(),
       );
-      const reason = new Reason();
-      reason.setType(Reason.Type.RULE);
-      reason.setRuleId(rule.getId());
+      const reason = createReason(rule.getId(), Reason.Type.RULE);
       return [reason, variation];
     }
 
@@ -258,8 +254,7 @@ class Evaluator {
       feature.getId(),
       feature.getSamplingSeed(),
     );
-    const reason = new Reason();
-    reason.setType(Reason.Type.DEFAULT);
+    const reason = createReason('', Reason.Type.DEFAULT);
     return [reason, variation];
   }
 

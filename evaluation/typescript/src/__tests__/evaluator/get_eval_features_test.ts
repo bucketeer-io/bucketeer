@@ -3,14 +3,14 @@ import { createPrerequisite, creatFeature } from '../../modelFactory';
 import { Feature } from '../../proto/feature/feature_pb';
 import { Evaluator } from '../../evaluation';
 
-interface TestCases {
+interface TestCase {
   desc: string;
   targets: Feature[];
   all: Feature[];
   expectedIDs: string[];
 }
 
-const patterns: TestCases[] = [
+const patterns: TestCase[] = [
   {
     desc: 'success: No prerequisites',
     targets: [
