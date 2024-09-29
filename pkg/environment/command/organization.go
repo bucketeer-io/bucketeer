@@ -70,9 +70,23 @@ func (h *organizationCommandHandler) Handle(ctx context.Context, cmd Command) er
 		return h.unarchive(ctx, c)
 	case *proto.ConvertTrialOrganizationCommand:
 		return h.convertTrial(ctx, c)
+	case *proto.ChangeOwnerEmailOrganizationCommand:
+		return h.changeOwnerEmail(ctx, c)
 	default:
 		return errUnknownCommand
 	}
+}
+
+func (h *organizationCommandHandler) changeOwnerEmail(
+	ctx context.Context,
+	cmd *proto.ChangeOwnerEmailOrganizationCommand,
+) error {
+	h.organization.ChangeOwnerEmail(cmd.OwnerEmail)
+	return h.send(ctx, eventproto.Event_ORGANIZATION_OWNER_EMAIL_CHANGED,
+		&eventproto.OrganizationOwnerEmailChangedEvent{
+			Id:         h.organization.Id,
+			OwnerEmail: h.organization.OwnerEmail,
+		})
 }
 
 func (h *organizationCommandHandler) create(ctx context.Context, cmd *proto.CreateOrganizationCommand) error {

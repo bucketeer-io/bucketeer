@@ -7373,6 +7373,16 @@
             ]
           },
           {
+            "name": "ChangeOwnerEmailOrganizationCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "owner_email",
+                "type": "string"
+              }
+            ]
+          },
+          {
             "name": "ChangeRequireCommentCommand",
             "fields": [
               {
@@ -8287,6 +8297,11 @@
                 "id": 3,
                 "name": "change_description_command",
                 "type": "ChangeDescriptionOrganizationCommand"
+              },
+              {
+                "id": 4,
+                "name": "change_owner_email_command",
+                "type": "ChangeOwnerEmailOrganizationCommand"
               }
             ]
           },
@@ -14000,6 +14015,10 @@
                 "integer": 1507
               },
               {
+                "name": "ORGANIZATION_OWNER_EMAIL_CHANGED",
+                "integer": 1508
+              },
+              {
                 "name": "FLAG_TRIGGER_CREATED",
                 "integer": 1601
               },
@@ -16695,6 +16714,21 @@
               {
                 "id": 2,
                 "name": "description",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "OrganizationOwnerEmailChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "owner_email",
                 "type": "string"
               }
             ]

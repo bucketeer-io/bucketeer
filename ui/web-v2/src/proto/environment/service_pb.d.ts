@@ -1371,6 +1371,15 @@ export class UpdateOrganizationRequest extends jspb.Message {
     value?: proto_environment_command_pb.ChangeDescriptionOrganizationCommand
   ): void;
 
+  hasChangeOwnerEmailCommand(): boolean;
+  clearChangeOwnerEmailCommand(): void;
+  getChangeOwnerEmailCommand():
+    | proto_environment_command_pb.ChangeOwnerEmailOrganizationCommand
+    | undefined;
+  setChangeOwnerEmailCommand(
+    value?: proto_environment_command_pb.ChangeOwnerEmailOrganizationCommand
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateOrganizationRequest.AsObject;
   static toObject(
@@ -1397,6 +1406,7 @@ export namespace UpdateOrganizationRequest {
     id: string;
     renameCommand?: proto_environment_command_pb.ChangeNameOrganizationCommand.AsObject;
     changeDescriptionCommand?: proto_environment_command_pb.ChangeDescriptionOrganizationCommand.AsObject;
+    changeOwnerEmailCommand?: proto_environment_command_pb.ChangeOwnerEmailOrganizationCommand.AsObject;
   };
 }
 

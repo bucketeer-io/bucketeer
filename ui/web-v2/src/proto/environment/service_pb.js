@@ -8079,6 +8079,12 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_environment_command_pb.ChangeDescriptionOrganizationCommand.toObject(
             includeInstance,
             f
+          ),
+        changeOwnerEmailCommand:
+          (f = msg.getChangeOwnerEmailCommand()) &&
+          proto_environment_command_pb.ChangeOwnerEmailOrganizationCommand.toObject(
+            includeInstance,
+            f
           )
       };
 
@@ -8143,6 +8149,16 @@ proto.bucketeer.environment.UpdateOrganizationRequest.deserializeBinaryFromReade
           );
           msg.setChangeDescriptionCommand(value);
           break;
+        case 4:
+          var value =
+            new proto_environment_command_pb.ChangeOwnerEmailOrganizationCommand();
+          reader.readMessage(
+            value,
+            proto_environment_command_pb.ChangeOwnerEmailOrganizationCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setChangeOwnerEmailCommand(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -8194,6 +8210,15 @@ proto.bucketeer.environment.UpdateOrganizationRequest.serializeBinaryToWriter =
         3,
         f,
         proto_environment_command_pb.ChangeDescriptionOrganizationCommand
+          .serializeBinaryToWriter
+      );
+    }
+    f = message.getChangeOwnerEmailCommand();
+    if (f != null) {
+      writer.writeMessage(
+        4,
+        f,
+        proto_environment_command_pb.ChangeOwnerEmailOrganizationCommand
           .serializeBinaryToWriter
       );
     }
@@ -8301,6 +8326,48 @@ proto.bucketeer.environment.UpdateOrganizationRequest.prototype.clearChangeDescr
 proto.bucketeer.environment.UpdateOrganizationRequest.prototype.hasChangeDescriptionCommand =
   function () {
     return jspb.Message.getField(this, 3) != null;
+  };
+
+/**
+ * optional ChangeOwnerEmailOrganizationCommand change_owner_email_command = 4;
+ * @return {?proto.bucketeer.environment.ChangeOwnerEmailOrganizationCommand}
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.getChangeOwnerEmailCommand =
+  function () {
+    return /** @type{?proto.bucketeer.environment.ChangeOwnerEmailOrganizationCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_environment_command_pb.ChangeOwnerEmailOrganizationCommand,
+        4
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.environment.ChangeOwnerEmailOrganizationCommand|undefined} value
+ * @return {!proto.bucketeer.environment.UpdateOrganizationRequest} returns this
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.setChangeOwnerEmailCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 4, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.environment.UpdateOrganizationRequest} returns this
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.clearChangeOwnerEmailCommand =
+  function () {
+    return this.setChangeOwnerEmailCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.environment.UpdateOrganizationRequest.prototype.hasChangeOwnerEmailCommand =
+  function () {
+    return jspb.Message.getField(this, 4) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

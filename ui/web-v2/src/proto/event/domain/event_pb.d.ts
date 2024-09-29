@@ -276,6 +276,7 @@ export namespace Event {
     ORGANIZATION_ARCHIVED: 1505;
     ORGANIZATION_UNARCHIVED: 1506;
     ORGANIZATION_TRIAL_CONVERTED: 1507;
+    ORGANIZATION_OWNER_EMAIL_CHANGED: 1508;
     FLAG_TRIGGER_CREATED: 1601;
     FLAG_TRIGGER_RESET: 1602;
     FLAG_TRIGGER_DESCRIPTION_CHANGED: 1603;
@@ -5981,6 +5982,45 @@ export namespace OrganizationDescriptionChangedEvent {
   export type AsObject = {
     id: string;
     description: string;
+  };
+}
+
+export class OrganizationOwnerEmailChangedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getOwnerEmail(): string;
+  setOwnerEmail(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(
+    includeInstance?: boolean
+  ): OrganizationOwnerEmailChangedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: OrganizationOwnerEmailChangedEvent
+  ): OrganizationOwnerEmailChangedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: OrganizationOwnerEmailChangedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(
+    bytes: Uint8Array
+  ): OrganizationOwnerEmailChangedEvent;
+  static deserializeBinaryFromReader(
+    message: OrganizationOwnerEmailChangedEvent,
+    reader: jspb.BinaryReader
+  ): OrganizationOwnerEmailChangedEvent;
+}
+
+export namespace OrganizationOwnerEmailChangedEvent {
+  export type AsObject = {
+    id: string;
+    ownerEmail: string;
   };
 }
 

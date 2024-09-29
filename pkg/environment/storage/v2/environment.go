@@ -180,7 +180,7 @@ func (s *environmentStorage) ListEnvironmentsV2(
 	}
 	nextOffset := offset + len(environments)
 	var totalCount int64
-	countQuery := fmt.Sprintf(countEnvironmentsSQL, whereSQL, orderBySQL)
+	countQuery := fmt.Sprintf(countEnvironmentsSQL, whereSQL)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

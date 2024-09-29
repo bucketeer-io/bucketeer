@@ -219,7 +219,7 @@ func (s *organizationStorage) ListOrganizations(
 	}
 	nextOffset := offset + len(organizations)
 	var totalCount int64
-	countQuery := fmt.Sprintf(countOrganizationsSQL, whereSQL, orderBySQL)
+	countQuery := fmt.Sprintf(countOrganizationsSQL, whereSQL)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

@@ -57,6 +57,11 @@ func (p *Organization) ChangeDescription(description string) {
 	p.Organization.UpdatedAt = time.Now().Unix()
 }
 
+func (p *Organization) ChangeOwnerEmail(ownerEmail string) {
+	p.Organization.OwnerEmail = ownerEmail
+	p.Organization.UpdatedAt = time.Now().Unix()
+}
+
 func (p *Organization) ChangeName(name string) {
 	p.Organization.Name = name
 	p.Organization.UpdatedAt = time.Now().Unix()
