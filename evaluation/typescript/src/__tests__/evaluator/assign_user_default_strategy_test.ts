@@ -11,7 +11,7 @@ test('no default strategy', (t) => {
   const evalator = new Evaluator();
   try {
     evalator.assignUser(f, user, [], {});
-    t.fail('should throw an error "evaluator: strategy not found"');
+    t.fail('should throw an error "evaluator: default strategy not found"');
   } catch (error) {
     t.deepEqual(error, new Error('evaluator: default strategy not found'));
   }
