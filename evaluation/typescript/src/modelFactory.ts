@@ -5,7 +5,7 @@ import { Prerequisite } from './proto/feature/prerequisite_pb';
 import { Reason } from './proto/feature/reason_pb';
 import { Rule } from './proto/feature/rule_pb';
 import { SegmentUser } from './proto/feature/segment_pb';
-import { FixedStrategy, Strategy } from './proto/feature/strategy_pb';
+import { FixedStrategy, RolloutStrategy, Strategy } from './proto/feature/strategy_pb';
 import { Target } from './proto/feature/target_pb';
 import { Variation } from './proto/feature/variation_pb';
 import { User } from './proto/user/user/user_pb';
@@ -75,14 +75,14 @@ export function creatFeature(
   feature.setTargetsList(targetList);
 
   // Set rules
-  const ruleList = finalOptions.rules.map(r => createRule(r.id, r.attribute, r.operator, r.values));
+  const ruleList = finalOptions.rules.map(r => createRule(r.id, r.attribute, r.operator, r.values, r.fixedVariation));
   feature.setRulesList(ruleList);
 
   // Set default strategy
   const defaultStrategy = finalOptions.defaultStrategy;
   if (defaultStrategy !== undefined) {
     const defaultFixedStrategy = createFixedStrategy(defaultStrategy.variation);
-    const strategy = createStrategy(defaultStrategy.type, defaultFixedStrategy);
+    const strategy = createStrategy({ type: defaultStrategy.type, fixedStrategy: defaultFixedStrategy });
     feature.setDefaultStrategy(strategy);
   }
 
@@ -106,27 +106,50 @@ export function createFixedStrategy(
   return fixedStrategy;
 }
 
+export function createRolloutStrategy(
+  options: {
+    variations: Array<{ variation: string; weight: number }>,
+  }
+): RolloutStrategy {
+  const rolloutStrategy = new RolloutStrategy();
+  const variations = options.variations.map(v => {
+    const variation = new RolloutStrategy.Variation();
+    variation.setVariation(v.variation);
+    variation.setWeight(v.weight);
+    return variation;
+  });
+  rolloutStrategy.setVariationsList(variations);
+  return rolloutStrategy;
+}
+
 export function createStrategy(
-  type: Strategy.TypeMap[keyof Strategy.TypeMap],
-  fixedStrategy: FixedStrategy,
+  options:{
+    type: Strategy.TypeMap[keyof Strategy.TypeMap],
+    fixedStrategy?: FixedStrategy,
+    rolloutStrategy?: RolloutStrategy,
+  }
 ): Strategy {
   const strategy = new Strategy();
-  strategy.setType(type);
-  strategy.setFixedStrategy(fixedStrategy);
+  strategy.setType(options.type);
+  strategy.setFixedStrategy(options.fixedStrategy);
+  strategy.setRolloutStrategy(options.rolloutStrategy);
   return strategy;
 }
 
+//TODO: FIX ME - Rule should have a constructor that accepts all the parameters
+//Current is missing many parameters
 export function createRule(
   id: string,
   attribute: string,
   operator: Clause.OperatorMap[keyof Clause.OperatorMap],
   values: string[],
+  fixedVariation: string,
 ): Rule {
   const rule = new Rule();
   rule.setId(id);
 
-  const fixedStrategy = createFixedStrategy('variation-A');
-  const strategy = createStrategy(Strategy.Type.FIXED, fixedStrategy);
+  const fixedStrategy = createFixedStrategy(fixedVariation);
+  const strategy = createStrategy({ type: Strategy.Type.FIXED, fixedStrategy });
   rule.setStrategy(strategy);
 
   rule.setClausesList([createClause(id, attribute, operator, values)]);

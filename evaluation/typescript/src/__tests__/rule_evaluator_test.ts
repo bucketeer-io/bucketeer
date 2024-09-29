@@ -16,11 +16,11 @@ interface TestCase {
 }
 
 const TestRuleList = {
-  EQUALS: createRule('rule-id-1', 'full-name', Clause.Operator.EQUALS, ['bucketeer project']),
-  STARTS_WITH: createRule('rule-id-2', 'first-name', Clause.Operator.STARTS_WITH, ['buck']),
-  ENDS_WITH: createRule('rule-id-3', 'last-name', Clause.Operator.ENDS_WITH, ['ject']),
-  SEGMENT: createRule('rule-id-4', '', Clause.Operator.SEGMENT, ['segment-id-1', 'segment-id-2']),
-  IN: createRule('rule-id-5', 'email', Clause.Operator.IN, ['bucketeer@gmail.com'])
+  EQUALS: createRule('rule-id-1', 'full-name', Clause.Operator.EQUALS, ['bucketeer project'], 'variation-A'),
+  STARTS_WITH: createRule('rule-id-2', 'first-name', Clause.Operator.STARTS_WITH, ['buck'],  'variation-A'),
+  ENDS_WITH: createRule('rule-id-3', 'last-name', Clause.Operator.ENDS_WITH, ['ject'], 'variation-A'),
+  SEGMENT: createRule('rule-id-4', '', Clause.Operator.SEGMENT, ['segment-id-1', 'segment-id-2'], 'variation-B'),
+  IN: createRule('rule-id-5', 'email', Clause.Operator.IN, ['bucketeer@gmail.com'], 'variation-B')
 }
 
 function newTestFeature(): Feature {

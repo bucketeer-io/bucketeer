@@ -186,12 +186,12 @@ class Evaluator {
     flagVariations: { [key: string]: string },
   ): [Reason, Variation] {
     for (const pf of feature.getPrerequisitesList()) {
-      const variation = flagVariations[pf.getFeatureId()];
-      if (!variation) {
+      const variationId = flagVariations[pf.getFeatureId()];
+      if (!variationId) {
         throw EVALUATOR_ERRORS.PrerequisiteVariationNotFound;
       }
-      if (pf.getVariationId() !== variation) {
-        if (feature.getOffVariation() != '') {
+      if (pf.getVariationId() !== variationId) {
+        if (feature.getOffVariation() !== '') {
           const variation = this.findVariation(
             feature.getOffVariation(),
             feature.getVariationsList(),
@@ -202,7 +202,7 @@ class Evaluator {
       }
     }
     // It doesn't assign the user in case of the feature is disabled and OffVariation is not set
-    if (!feature.getEnabled() && feature.getOffVariation() != '') {
+    if (!feature.getEnabled() && feature.getOffVariation() !== '') {
       const variation = this.findVariation(feature.getOffVariation(), feature.getVariationsList());
       const reason = createReason('', Reason.Type.OFF_VARIATION);
       return [reason, variation];
