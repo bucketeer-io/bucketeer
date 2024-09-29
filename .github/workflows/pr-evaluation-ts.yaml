@@ -1,4 +1,4 @@
-name: Evaluation(typescript) package
+name: pr-evaluation-ts
 
 on:
   pull_request:
