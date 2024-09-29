@@ -43,7 +43,7 @@ jobs:
             ${{ steps.yarn-cache-dir-path.outputs.dir }}
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
-            ${{ runner.os }}-yarn-evaluation
+            ${{ runner.os }}-yarn-
       - name: Init
         run: make init
 
@@ -68,7 +68,7 @@ jobs:
             ${{ needs.install-dependencies.outputs.YARN_CACHE_DIR }}
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
-            ${{ runner.os }}-yarn-evaluation
+            ${{ runner.os }}-yarn-
       - name: Format
         run: make fmt
       - name: Lint
@@ -95,7 +95,7 @@ jobs:
             ${{ needs.install-dependencies.outputs.YARN_CACHE_DIR }}
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
-            ${{ runner.os }}-yarn-evaluation
+            ${{ runner.os }}-yarn-
       - name: Unit test
         run: make test
 
@@ -120,6 +120,6 @@ jobs:
             ${{ needs.install-dependencies.outputs.YARN_CACHE_DIR }}
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
-            ${{ runner.os }}-yarn-evaluation
+            ${{ runner.os }}-yarn-
       - name: Package Build
         run: make build
