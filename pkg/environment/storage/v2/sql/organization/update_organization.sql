@@ -2,6 +2,7 @@ UPDATE
     organization
 SET
     name = ?,
+    owner_email = ?,
     description = ?,
     disabled = ?,
     archived = ?,

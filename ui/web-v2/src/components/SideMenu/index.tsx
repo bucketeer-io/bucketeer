@@ -1,5 +1,6 @@
 import logo from '../../assets/logo.png';
 import { clearOrganizationId } from '../../storage/organizationId';
+import DebuggerIcon from '../../assets/svg/debugger.svg';
 import MUAccountCircleIcon from '@material-ui/icons/AccountCircle';
 import MUBarChart from '@material-ui/icons/BarChart';
 import MUFlagIcon from '@material-ui/icons/Flag';
@@ -28,7 +29,8 @@ import {
   PAGE_PATH_ROOT,
   PAGE_PATH_AUDIT_LOGS,
   PAGE_PATH_DOCUMENTATION,
-  PAGE_PATH_SETTINGS
+  PAGE_PATH_SETTINGS,
+  PAGE_PATH_DEBUGGER
 } from '../../constants/routing';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
@@ -36,6 +38,7 @@ import { clearToken } from '../../modules/auth';
 import { clearMe, useCurrentEnvironment, useMe } from '../../modules/me';
 import { AppDispatch } from '../../store';
 import { EnvironmentSelect } from '../EnvironmentSelect';
+import { clearCurrentEnvironmentId } from '../../storage/environment';
 
 export interface MenuItem {
   readonly messageComponent?: ReactNode;
@@ -106,6 +109,15 @@ const createMenuItems = (
     target: null,
     iconElement: <MUNotificationsIcon />
   });
+  items.push({
+    messageComponent: (
+      <span>{intl.formatMessage(messages.sideMenu.debugger)}</span>
+    ),
+    path: `/${environmentUrlCode}${PAGE_PATH_DEBUGGER}`,
+    external: null,
+    target: null,
+    iconElement: <DebuggerIcon />
+  });
   items.push({ messageComponent: null });
   items.push({
     messageComponent: (
@@ -164,11 +176,7 @@ function isMenuItem(item: MenuItem | Divider): item is MenuItem {
   return item.messageComponent !== null;
 }
 
-interface Props {
-  onClickNavLink: () => void;
-}
-
-export const SideMenu: FC<Props> = memo(({ onClickNavLink }) => {
+export const SideMenu: FC = memo(() => {
   const dispatch = useDispatch<AppDispatch>();
   const history = useHistory();
   const { formatMessage: f } = useIntl();
@@ -176,6 +184,7 @@ export const SideMenu: FC<Props> = memo(({ onClickNavLink }) => {
   const currentEnvironment = useCurrentEnvironment();
 
   const handleLogout = useCallback(async () => {
+    clearCurrentEnvironmentId();
     clearOrganizationId();
     dispatch(clearMe());
     dispatch(clearToken());
@@ -200,7 +209,7 @@ export const SideMenu: FC<Props> = memo(({ onClickNavLink }) => {
           (item, i) =>
             isMenuItem(item) ? (
               <div key={i} className="py-1">
-                <SideMenuItem item={item} onClick={onClickNavLink} />
+                <SideMenuItem item={item} />
               </div>
             ) : (
               <div
@@ -228,10 +237,9 @@ export const SideMenu: FC<Props> = memo(({ onClickNavLink }) => {
 
 interface SideMenuItemProps {
   item: MenuItem;
-  onClick: () => void;
 }
 
-const SideMenuItem: FC<SideMenuItemProps> = ({ item, onClick }) => {
+const SideMenuItem: FC<SideMenuItemProps> = ({ item }) => {
   return item.external ? (
     <a href={item.path} target={item.target}>
       <div className="px-3">
@@ -248,7 +256,6 @@ const SideMenuItem: FC<SideMenuItemProps> = ({ item, onClick }) => {
       <NavLink
         to={item.path}
         target={item.target}
-        onClick={onClick}
         className="sidemenu-item flex px-5 py-2.5 rounded-md"
       >
         <div className="flex justify-content items-center">

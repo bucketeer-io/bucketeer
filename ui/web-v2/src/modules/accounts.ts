@@ -15,17 +15,26 @@ import {
   CreateAccountV2Command,
   ChangeAccountV2NameCommand,
   ChangeAccountV2EnvironmentRolesCommand,
-  ChangeAccountV2OrganizationRoleCommand
+  ChangeAccountV2OrganizationRoleCommand,
+  CreateSearchFilterCommand,
+  ChangeSearchFilterNameCommand,
+  ChangeSearchFilterQueryCommand,
+  ChangeDefaultSearchFilterCommand,
+  DeleteSearchFilterCommand
 } from '../proto/account/command_pb';
 import {
   ListAccountsV2Request,
   ListAccountsV2Response,
   GetAccountV2Request,
   CreateAccountV2Request,
-  UpdateAccountV2Request
+  UpdateAccountV2Request,
+  CreateSearchFilterRequest,
+  UpdateSearchFilterRequest,
+  DeleteSearchFilterRequest
 } from '../proto/account/service_pb';
 
 import { AppState } from '.';
+import { FilterTargetTypeMap } from '../proto/account/search_filter_pb';
 
 const MODULE_NAME = 'accounts';
 
@@ -215,6 +224,143 @@ export const updateAccount = createAsyncThunk<
   request.setEmail(params.email);
   request.setOrganizationId(params.organizationId);
   await accountGrpc.updateAccount(request);
+});
+
+export interface CreateSearchFilterParams {
+  name: string;
+  query: string;
+  filterTargetType: FilterTargetTypeMap[keyof FilterTargetTypeMap];
+  environmentId: string;
+  defaultFilter: boolean;
+  organizationId: string;
+  email: string;
+}
+
+export const createSearchFilter = createAsyncThunk<
+  void,
+  CreateSearchFilterParams | undefined,
+  { state: AppState }
+>(`${MODULE_NAME}/create`, async (params) => {
+  const request = new CreateSearchFilterRequest();
+
+  const cmd = new CreateSearchFilterCommand();
+  cmd.setName(params.name);
+  cmd.setQuery(params.query);
+  cmd.setFilterTargetType(params.filterTargetType);
+  cmd.setEnvironmentId(params.environmentId);
+  cmd.setDefaultFilter(params.defaultFilter);
+
+  request.setCommand(cmd);
+  request.setEmail(params.email);
+  request.setEnvironmentId(params.environmentId);
+  request.setOrganizationId(params.organizationId);
+
+  await accountGrpc.createSearchFilter(request);
+});
+
+export interface changeSearchFilterNameParams {
+  id: string;
+  name: string;
+  email: string;
+  environmentId: string;
+  organizationId: string;
+}
+
+export const changeSearchFilterName = createAsyncThunk<
+  void,
+  changeSearchFilterNameParams | undefined,
+  { state: AppState }
+>(`${MODULE_NAME}/name`, async (params) => {
+  const request = new UpdateSearchFilterRequest();
+
+  const cmd = new ChangeSearchFilterNameCommand();
+  cmd.setId(params.id);
+  cmd.setName(params.name);
+
+  request.setEmail(params.email);
+  request.setEnvironmentId(params.environmentId);
+  request.setOrganizationId(params.organizationId);
+  request.setChangeNameCommand(cmd);
+
+  await accountGrpc.updateSearchFilter(request);
+});
+
+export interface changeSearchFilterQueryParams {
+  id: string;
+  query: string;
+  email: string;
+  environmentId: string;
+  organizationId: string;
+}
+
+export const changeSearchFilterQuery = createAsyncThunk<
+  void,
+  changeSearchFilterQueryParams | undefined,
+  { state: AppState }
+>(`${MODULE_NAME}/query`, async (params) => {
+  const request = new UpdateSearchFilterRequest();
+
+  const cmd = new ChangeSearchFilterQueryCommand();
+  cmd.setId(params.id);
+  cmd.setQuery(params.query);
+
+  request.setEmail(params.email);
+  request.setEnvironmentId(params.environmentId);
+  request.setOrganizationId(params.organizationId);
+  request.setChangeQueryCommand(cmd);
+  await accountGrpc.updateSearchFilter(request);
+});
+
+export interface changeDefaultSearchFilterParams {
+  id: string;
+  defaultFilter: boolean;
+  email: string;
+  environmentId: string;
+  organizationId: string;
+}
+
+export const changeDefaultSearchFilter = createAsyncThunk<
+  void,
+  changeDefaultSearchFilterParams | undefined,
+  { state: AppState }
+>(`${MODULE_NAME}/query`, async (params) => {
+  const request = new UpdateSearchFilterRequest();
+
+  const cmd = new ChangeDefaultSearchFilterCommand();
+  cmd.setId(params.id);
+  cmd.setDefaultFilter(params.defaultFilter);
+
+  request.setEmail(params.email);
+  request.setEnvironmentId(params.environmentId);
+  request.setOrganizationId(params.organizationId);
+  request.setChangeDefaultFilterCommand(cmd);
+
+  await accountGrpc.updateSearchFilter(request);
+});
+
+export interface deleteSearchFilterParams {
+  id: string;
+  email: string;
+  environmentId: string;
+  organizationId: string;
+}
+
+export const deleteSearchFilter = createAsyncThunk<
+  void,
+  deleteSearchFilterParams | undefined,
+  { state: AppState }
+>(`${MODULE_NAME}/delete`, async (params) => {
+  const request = new DeleteSearchFilterRequest();
+
+  const cmd = new DeleteSearchFilterCommand();
+  cmd.setId(params.id);
+
+  request.setEmail(params.email);
+  request.setEnvironmentId(params.environmentId);
+  request.setOrganizationId(params.organizationId);
+  request.setCommand(cmd);
+
+  await accountGrpc.deleteSearchFilter(request);
 });
 
 export type AccountsState = typeof initialState;

@@ -11,8 +11,10 @@ func TestNewOrganization(t *testing.T) {
 	organization, err := NewOrganization(
 		"organization-name",
 		"organization-code",
+		"test@test.org",
 		"organization desc",
-		false, false,
+		false,
+		false,
 	)
 	assert.NoError(t, err)
 	assert.IsType(t, &Organization{}, organization)
@@ -27,8 +29,10 @@ func TestNewTrialOrganization(t *testing.T) {
 	organization, err := NewOrganization(
 		"organization-name",
 		"organization-code",
+		"test@test.org",
 		"organization desc",
-		true, false,
+		true,
+		false,
 	)
 	assert.NoError(t, err)
 	assert.IsType(t, &Organization{}, organization)
@@ -43,8 +47,10 @@ func TestChangeDescriptionOrganization(t *testing.T) {
 	organization, err := NewOrganization(
 		"organization-name",
 		"organization-code",
+		"test@test.org",
 		"organization desc",
-		false, false,
+		false,
+		false,
 	)
 	assert.NoError(t, err)
 	newDesc := "new org desc"
@@ -57,8 +63,10 @@ func TestChangeNameOrganization(t *testing.T) {
 	organization, err := NewOrganization(
 		"organization-name",
 		"organization-code",
+		"test@test.org",
 		"organization desc",
-		false, false,
+		false,
+		false,
 	)
 	assert.NoError(t, err)
 	newName := "new-organization-name"
@@ -71,8 +79,10 @@ func TestEnableOrganization(t *testing.T) {
 	organization, err := NewOrganization(
 		"organization-name",
 		"organization-code",
+		"test@test.org",
 		"organization desc",
-		false, false,
+		false,
+		false,
 	)
 	assert.NoError(t, err)
 	organization.Disabled = true
@@ -85,8 +95,10 @@ func TestDisableOrganization(t *testing.T) {
 	organization, err := NewOrganization(
 		"organization-name",
 		"organization-code",
+		"test@test.org",
 		"organization desc",
-		false, false,
+		false,
+		false,
 	)
 	assert.NoError(t, err)
 	err = organization.Disable()
@@ -99,8 +111,10 @@ func TestCannotDisableSystemAdminOrganization(t *testing.T) {
 	organization, err := NewOrganization(
 		"organization-name",
 		"organization-code",
+		"test@test.org",
 		"organization desc",
-		false, true,
+		false,
+		true,
 	)
 	assert.NoError(t, err)
 	err = organization.Disable()
@@ -112,8 +126,10 @@ func TestArchiveOrganization(t *testing.T) {
 	organization, err := NewOrganization(
 		"organization-name",
 		"organization-code",
+		"test@test.org",
 		"organization desc",
-		false, false,
+		false,
+		false,
 	)
 	assert.NoError(t, err)
 	err = organization.Archive()
@@ -126,8 +142,10 @@ func TestCannotArchiveSystemAdminOrganization(t *testing.T) {
 	organization, err := NewOrganization(
 		"organization-name",
 		"organization-code",
+		"test@test.org",
 		"organization desc",
-		false, true,
+		false,
+		true,
 	)
 	assert.NoError(t, err)
 	err = organization.Archive()
@@ -139,8 +157,10 @@ func TestUnarchiveOrganization(t *testing.T) {
 	organization, err := NewOrganization(
 		"organization-name",
 		"organization-code",
+		"test@test.org",
 		"organization desc",
-		false, false,
+		false,
+		false,
 	)
 	assert.NoError(t, err)
 	organization.Archived = true
@@ -153,8 +173,10 @@ func TestConvertTrialOrganization(t *testing.T) {
 	organization, err := NewOrganization(
 		"organization-name",
 		"organization-code",
+		"test@test.org",
 		"organization desc",
-		false, false,
+		false,
+		false,
 	)
 	assert.NoError(t, err)
 	organization.ConvertTrial()

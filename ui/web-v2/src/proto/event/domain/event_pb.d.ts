@@ -5906,6 +5906,9 @@ export class OrganizationCreatedEvent extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getOwnerEmail(): string;
+  setOwnerEmail(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): OrganizationCreatedEvent.AsObject;
   static toObject(
@@ -5938,6 +5941,7 @@ export namespace OrganizationCreatedEvent {
     trial: boolean;
     createdAt: number;
     updatedAt: number;
+    ownerEmail: string;
   };
 }
 

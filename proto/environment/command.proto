@@ -43,6 +43,7 @@ message CreateProjectCommand {
   string description = 2;  // optional
   string name = 3;
   string url_code = 4;
+  string owner_email = 5;
 }
 
 message CreateTrialProjectCommand {
@@ -50,6 +51,7 @@ message CreateTrialProjectCommand {
   string email = 2;
   string name = 3;
   string url_code = 4;
+  string owner_email = 5;
 }
 
 message RenameProjectCommand {
@@ -72,6 +74,7 @@ message CreateOrganizationCommand {
   string description = 3;  // optional
   bool is_trial = 4;
   bool is_system_admin = 5;
+  string owner_email = 6;
 }
 
 message ChangeNameOrganizationCommand {

@@ -121,10 +121,11 @@ export const FilterPopover: FC<FilterPopoverProps> = memo(
                           )}
                           closeMenuOnSelect={isMultiFilter ? false : true}
                           className={classNames(
-                            isMultiFilter && 'min-w-[270px]',
-                            isFilterTypeMaintainer
-                              ? 'min-w-[220px]'
-                              : 'min-w-max'
+                            isMultiFilter
+                              ? 'min-w-[270px]'
+                              : isFilterTypeMaintainer
+                                ? 'min-w-[220px]'
+                                : 'min-w-[106px]'
                           )}
                           options={values}
                           styles={{

@@ -1,4 +1,4 @@
-import React, { FC, useEffect, memo, useState, useCallback } from 'react';
+import React, { FC, useEffect, memo, useState } from 'react';
 import TagManager from 'react-gtm-module';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -9,7 +9,6 @@ import {
   useParams,
   useHistory
 } from 'react-router-dom';
-import { v4 as uuid } from 'uuid';
 
 import { NotFound } from '../components/NotFound';
 import { SideMenu } from '../components/SideMenu';
@@ -30,7 +29,8 @@ import {
   PAGE_PATH_ROOT,
   PAGE_PATH_ACCOUNTS,
   PAGE_PATH_SETTINGS,
-  PAGE_PATH_AUTH_SIGNIN
+  PAGE_PATH_AUTH_SIGNIN,
+  PAGE_PATH_DEBUGGER
 } from '../constants/routing';
 import { AppState } from '../modules';
 import {
@@ -52,6 +52,7 @@ import { AccountIndexPage } from './account';
 import { AdminIndexPage } from './admin';
 import { APIKeyIndexPage } from './apiKey';
 import { AuditLogIndexPage } from './auditLog';
+import { DebuggerIndexPage } from './debugger';
 import { AuthCallbackPage } from './auth';
 import Login from './auth/signin';
 import SignIn from './auth/email';
@@ -95,7 +96,6 @@ export const App: FC = memo(() => {
 
 export const Root: FC = memo(() => {
   const dispatch = useDispatch<AppDispatch>();
-  const [pageKey, setPageKey] = useState<string>(uuid());
   const me = useMe();
   const myOrganization = useSelector<AppState, Organization.AsObject[]>(
     (state) => state.myOrganization.myOrganization
@@ -108,10 +108,6 @@ export const Root: FC = memo(() => {
   const hasToken = token?.accessToken ? true : false;
 
   const [isInitialLoading, setIsInitialLoading] = useState(hasToken);
-
-  const handleChangePageKey = useCallback(() => {
-    setPageKey(uuid());
-  }, [setPageKey]);
 
   useEffect(() => {
     if (hasToken) {
@@ -155,16 +151,12 @@ export const Root: FC = memo(() => {
     return (
       <div className="flex flex-row w-full h-full bg-gray-100">
         <div className="flex-none w-64">
-          <SideMenu onClickNavLink={handleChangePageKey} />{' '}
+          <SideMenu />
         </div>
         <div className="flex-grow min-w-128 shadow-lg overflow-y-auto">
           <Switch>
             <Route path={PAGE_PATH_ADMIN} component={AdminRoot} />
-            <Route
-              key={pageKey}
-              path={'/:environmentUrlCode?'}
-              component={EnvironmentRoot}
-            />
+            <Route path={'/:environmentUrlCode?'} component={EnvironmentRoot} />
             <Route path="*">
               <NotFound />
             </Route>
@@ -296,6 +288,9 @@ export const EnvironmentRoot: FC = memo(() => {
       </Route>
       <Route exact path={[`${url}${PAGE_PATH_AUDIT_LOGS}`]}>
         <AuditLogIndexPage />
+      </Route>
+      <Route exact path={[`${url}${PAGE_PATH_DEBUGGER}`]}>
+        <DebuggerIndexPage />
       </Route>
       <Route
         exact

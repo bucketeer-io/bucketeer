@@ -93,7 +93,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         createdAt: jspb.Message.getFieldWithDefault(msg, 7, 0),
         updatedAt: jspb.Message.getFieldWithDefault(msg, 8, 0),
         organizationId: jspb.Message.getFieldWithDefault(msg, 9, ''),
-        requireComment: jspb.Message.getBooleanFieldWithDefault(msg, 10, false)
+        requireComment: jspb.Message.getBooleanFieldWithDefault(msg, 10, false),
+        featureFlagCount: jspb.Message.getFieldWithDefault(msg, 11, 0)
       };
 
     if (includeInstance) {
@@ -172,6 +173,10 @@ proto.bucketeer.environment.EnvironmentV2.deserializeBinaryFromReader =
           var value = /** @type {boolean} */ (reader.readBool());
           msg.setRequireComment(value);
           break;
+        case 11:
+          var value = /** @type {number} */ (reader.readInt32());
+          msg.setFeatureFlagCount(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -245,6 +250,10 @@ proto.bucketeer.environment.EnvironmentV2.serializeBinaryToWriter = function (
   f = message.getRequireComment();
   if (f) {
     writer.writeBool(10, f);
+  }
+  f = message.getFeatureFlagCount();
+  if (f !== 0) {
+    writer.writeInt32(11, f);
   }
 };
 
@@ -431,6 +440,26 @@ proto.bucketeer.environment.EnvironmentV2.prototype.getRequireComment =
 proto.bucketeer.environment.EnvironmentV2.prototype.setRequireComment =
   function (value) {
     return jspb.Message.setProto3BooleanField(this, 10, value);
+  };
+
+/**
+ * optional int32 feature_flag_count = 11;
+ * @return {number}
+ */
+proto.bucketeer.environment.EnvironmentV2.prototype.getFeatureFlagCount =
+  function () {
+    return /** @type {number} */ (
+      jspb.Message.getFieldWithDefault(this, 11, 0)
+    );
+  };
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.environment.EnvironmentV2} returns this
+ */
+proto.bucketeer.environment.EnvironmentV2.prototype.setFeatureFlagCount =
+  function (value) {
+    return jspb.Message.setProto3IntField(this, 11, value);
   };
 
 goog.object.extend(exports, proto.bucketeer.environment);

@@ -93,7 +93,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         updatedAt: jspb.Message.getFieldWithDefault(msg, 7, 0),
         name: jspb.Message.getFieldWithDefault(msg, 8, ''),
         urlCode: jspb.Message.getFieldWithDefault(msg, 9, ''),
-        organizationId: jspb.Message.getFieldWithDefault(msg, 10, '')
+        organizationId: jspb.Message.getFieldWithDefault(msg, 10, ''),
+        environmentCount: jspb.Message.getFieldWithDefault(msg, 11, 0),
+        featureFlagCount: jspb.Message.getFieldWithDefault(msg, 12, 0)
       };
 
     if (includeInstance) {
@@ -174,6 +176,14 @@ proto.bucketeer.environment.Project.deserializeBinaryFromReader = function (
         var value = /** @type {string} */ (reader.readString());
         msg.setOrganizationId(value);
         break;
+      case 11:
+        var value = /** @type {number} */ (reader.readInt32());
+        msg.setEnvironmentCount(value);
+        break;
+      case 12:
+        var value = /** @type {number} */ (reader.readInt32());
+        msg.setFeatureFlagCount(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -243,6 +253,14 @@ proto.bucketeer.environment.Project.serializeBinaryToWriter = function (
   f = message.getOrganizationId();
   if (f.length > 0) {
     writer.writeString(10, f);
+  }
+  f = message.getEnvironmentCount();
+  if (f !== 0) {
+    writer.writeInt32(11, f);
+  }
+  f = message.getFeatureFlagCount();
+  if (f !== 0) {
+    writer.writeInt32(12, f);
   }
 };
 
@@ -414,6 +432,48 @@ proto.bucketeer.environment.Project.prototype.setOrganizationId = function (
   value
 ) {
   return jspb.Message.setProto3StringField(this, 10, value);
+};
+
+/**
+ * optional int32 environment_count = 11;
+ * @return {number}
+ */
+proto.bucketeer.environment.Project.prototype.getEnvironmentCount =
+  function () {
+    return /** @type {number} */ (
+      jspb.Message.getFieldWithDefault(this, 11, 0)
+    );
+  };
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.environment.Project} returns this
+ */
+proto.bucketeer.environment.Project.prototype.setEnvironmentCount = function (
+  value
+) {
+  return jspb.Message.setProto3IntField(this, 11, value);
+};
+
+/**
+ * optional int32 feature_flag_count = 12;
+ * @return {number}
+ */
+proto.bucketeer.environment.Project.prototype.getFeatureFlagCount =
+  function () {
+    return /** @type {number} */ (
+      jspb.Message.getFieldWithDefault(this, 12, 0)
+    );
+  };
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.environment.Project} returns this
+ */
+proto.bucketeer.environment.Project.prototype.setFeatureFlagCount = function (
+  value
+) {
+  return jspb.Message.setProto3IntField(this, 12, value);
 };
 
 goog.object.extend(exports, proto.bucketeer.environment);

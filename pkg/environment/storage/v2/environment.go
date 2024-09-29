@@ -17,6 +17,7 @@ package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 
@@ -29,6 +30,17 @@ var (
 	ErrEnvironmentAlreadyExists          = errors.New("environment: already exists")
 	ErrEnvironmentNotFound               = errors.New("environment: not found")
 	ErrEnvironmentUnexpectedAffectedRows = errors.New("environment: unexpected affected rows")
+
+	//go:embed sql/environment/insert_environment.sql
+	insertEnvironmentSQL string
+	//go:embed sql/environment/update_environment.sql
+	updateEnvironmentSQL string
+	//go:embed sql/environment/select_environment.sql
+	selectEnvironmentSQL string
+	//go:embed sql/environment/select_environments.sql
+	selectEnvironmentsSQL string
+	//go:embed sql/environment/count_environments.sql
+	countEnvironmentsSQL string
 )
 
 type EnvironmentStorage interface {
@@ -52,25 +64,9 @@ func NewEnvironmentStorage(qe mysql.QueryExecer) EnvironmentStorage {
 }
 
 func (s *environmentStorage) CreateEnvironmentV2(ctx context.Context, e *domain.EnvironmentV2) error {
-	query := `
-		INSERT INTO environment_v2 (
-			id,
-			name,
-			url_code,
-			description,
-			project_id,
-			organization_id,
-			archived,
-			require_comment,
-			created_at,
-			updated_at
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-		)
-	`
 	_, err := s.qe.ExecContext(
 		ctx,
-		query,
+		insertEnvironmentSQL,
 		e.Id,
 		e.Name,
 		e.UrlCode,
@@ -92,22 +88,9 @@ func (s *environmentStorage) CreateEnvironmentV2(ctx context.Context, e *domain.
 }
 
 func (s *environmentStorage) UpdateEnvironmentV2(ctx context.Context, e *domain.EnvironmentV2) error {
-	query := `
-		UPDATE 
-			environment_v2
-		SET
-			name = ?,
-			description = ?,
-			archived = ?,
-			require_comment = ?,
-			created_at = ?,
-			updated_at = ?
-		WHERE
-			id = ?
-	`
 	result, err := s.qe.ExecContext(
 		ctx,
-		query,
+		updateEnvironmentSQL,
 		e.Name,
 		e.Description,
 		e.Archived,
@@ -130,50 +113,34 @@ func (s *environmentStorage) UpdateEnvironmentV2(ctx context.Context, e *domain.
 }
 
 func (s *environmentStorage) GetEnvironmentV2(ctx context.Context, id string) (*domain.EnvironmentV2, error) {
-	e := proto.EnvironmentV2{}
-	query := `
-		SELECT
-			id,
-			name,
-			url_code,
-			description,
-			project_id,
-			organization_id,
-			archived,
-			require_comment,
-			created_at,
-			updated_at
-		FROM
-			environment_v2
-		WHERE
-			id = ?
-	`
+	environment := proto.EnvironmentV2{}
 	err := s.qe.QueryRowContext(
 		ctx,
-		query,
+		selectEnvironmentSQL,
 		id,
 	).Scan(
-		&e.Id,
-		&e.Name,
-		&e.UrlCode,
-		&e.Description,
-		&e.ProjectId,
-		&e.OrganizationId,
-		&e.Archived,
-		&e.RequireComment,
-		&e.CreatedAt,
-		&e.UpdatedAt,
+		&environment.Id,
+		&environment.Name,
+		&environment.UrlCode,
+		&environment.Description,
+		&environment.ProjectId,
+		&environment.OrganizationId,
+		&environment.Archived,
+		&environment.RequireComment,
+		&environment.CreatedAt,
+		&environment.UpdatedAt,
 	)
 	if err != nil {
-		if err == mysql.ErrNoRows {
+		if errors.Is(err, mysql.ErrNoRows) {
 			return nil, ErrEnvironmentNotFound
 		}
 		return nil, err
 	}
-	return &domain.EnvironmentV2{EnvironmentV2: &e}, nil
+	return &domain.EnvironmentV2{EnvironmentV2: &environment}, nil
 }
 
-func (s *environmentStorage) ListEnvironmentsV2(ctx context.Context,
+func (s *environmentStorage) ListEnvironmentsV2(
+	ctx context.Context,
 	whereParts []mysql.WherePart,
 	orders []*mysql.Order,
 	limit, offset int,
@@ -181,23 +148,7 @@ func (s *environmentStorage) ListEnvironmentsV2(ctx context.Context,
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			name,
-			url_code,
-			description,
-			project_id,
-			organization_id,
-			archived,
-			require_comment,
-			created_at,
-			updated_at
-		FROM
-			environment_v2
-		%s %s %s
-		`, whereSQL, orderBySQL, limitOffsetSQL,
-	)
+	query := fmt.Sprintf(selectEnvironmentsSQL, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
@@ -205,37 +156,31 @@ func (s *environmentStorage) ListEnvironmentsV2(ctx context.Context,
 	defer rows.Close()
 	environments := make([]*proto.EnvironmentV2, 0, limit)
 	for rows.Next() {
-		e := proto.EnvironmentV2{}
+		environment := proto.EnvironmentV2{}
 		err := rows.Scan(
-			&e.Id,
-			&e.Name,
-			&e.UrlCode,
-			&e.Description,
-			&e.ProjectId,
-			&e.OrganizationId,
-			&e.Archived,
-			&e.RequireComment,
-			&e.CreatedAt,
-			&e.UpdatedAt,
+			&environment.Id,
+			&environment.Name,
+			&environment.UrlCode,
+			&environment.Description,
+			&environment.ProjectId,
+			&environment.OrganizationId,
+			&environment.Archived,
+			&environment.RequireComment,
+			&environment.CreatedAt,
+			&environment.UpdatedAt,
+			&environment.FeatureFlagCount,
 		)
 		if err != nil {
 			return nil, 0, 0, err
 		}
-		environments = append(environments, &e)
+		environments = append(environments, &environment)
 	}
 	if rows.Err() != nil {
 		return nil, 0, 0, err
 	}
 	nextOffset := offset + len(environments)
 	var totalCount int64
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(1)
-		FROM
-			environment_v2
-		%s %s
-		`, whereSQL, orderBySQL,
-	)
+	countQuery := fmt.Sprintf(countEnvironmentsSQL, whereSQL, orderBySQL)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

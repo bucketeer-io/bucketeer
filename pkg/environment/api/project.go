@@ -122,16 +122,16 @@ func (s *EnvironmentService) ListProjects(
 	whereParts := []mysql.WherePart{}
 	if len(req.OrganizationIds) > 0 {
 		oIDs := convToInterfaceSlice(req.OrganizationIds)
-		whereParts = append(whereParts, mysql.NewInFilter("organization_id", oIDs))
+		whereParts = append(whereParts, mysql.NewInFilter("project.organization_id", oIDs))
 	}
 	if req.Disabled != nil {
-		whereParts = append(whereParts, mysql.NewFilter("disabled", "=", req.Disabled.Value))
+		whereParts = append(whereParts, mysql.NewFilter("project.disabled", "=", req.Disabled.Value))
 	}
 	if req.SearchKeyword != "" {
 		whereParts = append(
 			whereParts,
 			mysql.NewSearchQuery(
-				[]string{"id", "name", "url_code", "creator_email"},
+				[]string{"project.id", "project.name", "project.url_code", "project.creator_email"},
 				req.SearchKeyword,
 			),
 		)
@@ -210,15 +210,20 @@ func (s *EnvironmentService) newProjectListOrders(
 	switch orderBy {
 	case environmentproto.ListProjectsRequest_DEFAULT,
 		environmentproto.ListProjectsRequest_NAME:
-		column = "name"
+		column = "project.name"
 	case environmentproto.ListProjectsRequest_URL_CODE:
-		column = "url_code"
+		column = "project.url_code"
 	case environmentproto.ListProjectsRequest_ID:
-		column = "id"
+		column = "project.id"
 	case environmentproto.ListProjectsRequest_CREATED_AT:
-		column = "created_at"
+		column = "project.created_at"
 	case environmentproto.ListProjectsRequest_UPDATED_AT:
-		column = "updated_at"
+		column = "project.updated_at"
+	case environmentproto.ListProjectsRequest_ENVIRONMENT_COUNT:
+		column = "environment_count"
+	case environmentproto.ListProjectsRequest_FEATURE_COUNT:
+		column = "feature_count"
+
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -252,7 +257,14 @@ func (s *EnvironmentService) CreateProject(
 	urlCode := strings.TrimSpace(req.Command.UrlCode)
 	// TODO: Temporary implementations that create Organization at the same time as Project.
 	// This should be removed when the Organization management page is added.
-	organization, err := domain.NewOrganization(name, urlCode, req.Command.Description, false, false)
+	organization, err := domain.NewOrganization(
+		name,
+		urlCode,
+		req.Command.OwnerEmail,
+		req.Command.Description,
+		false,
+		false,
+	)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create organization",
@@ -338,6 +350,16 @@ func validateCreateProjectRequest(req *environmentproto.CreateProjectRequest, lo
 		dt, err := statusInvalidProjectUrlCode.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if !emailRegex.MatchString(req.Command.OwnerEmail) {
+		dt, err := statusInvalidProjectCreatorEmail.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "owner_email"),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -451,7 +473,14 @@ func (s *EnvironmentService) CreateTrialProject(
 	}
 	// TODO: Temporary implementations that create Organization at the same time as Project.
 	// This should be removed when the Organization management page is added.
-	organization, err := domain.NewOrganization(name, urlCode, "", true, false)
+	organization, err := domain.NewOrganization(
+		name,
+		urlCode,
+		req.Command.OwnerEmail,
+		"",
+		true,
+		false,
+	)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create organization",

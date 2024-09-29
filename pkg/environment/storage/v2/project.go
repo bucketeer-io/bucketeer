@@ -17,6 +17,7 @@ package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 
@@ -29,6 +30,19 @@ var (
 	ErrProjectAlreadyExists          = errors.New("project: already exists")
 	ErrProjectNotFound               = errors.New("project: not found")
 	ErrProjectUnexpectedAffectedRows = errors.New("project: unexpected affected rows")
+
+	//go:embed sql/project/insert_project.sql
+	insertProjectSQL string
+	//go:embed sql/project/update_project.sql
+	updateProjectSQL string
+	//go:embed sql/project/select_project.sql
+	selectProjectSQL string
+	//go:embed sql/project/select_trial_project_by_email.sql
+	selectTrialProjectByEmailSQL string
+	//go:embed sql/project/select_projects.sql
+	selectProjectsSQL string
+	//go:embed sql/project/count_projects.sql
+	countProjectsSQL string
 )
 
 type ProjectStorage interface {
@@ -57,25 +71,9 @@ func NewProjectStorage(qe mysql.QueryExecer) ProjectStorage {
 }
 
 func (s *projectStorage) CreateProject(ctx context.Context, p *domain.Project) error {
-	query := `
-		INSERT INTO project (
-			id,
-			name,
-			url_code,
-			description,
-			disabled,
-			trial,
-			creator_email,
-			organization_id,
-			created_at,
-			updated_at
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-		)
-	`
 	_, err := s.qe.ExecContext(
 		ctx,
-		query,
+		insertProjectSQL,
 		p.Id,
 		p.Name,
 		p.UrlCode,
@@ -97,23 +95,9 @@ func (s *projectStorage) CreateProject(ctx context.Context, p *domain.Project) e
 }
 
 func (s *projectStorage) UpdateProject(ctx context.Context, p *domain.Project) error {
-	query := `
-		UPDATE 
-			project
-		SET
-			name = ?,
-			description = ?,
-			disabled = ?,
-			trial = ?,
-			creator_email = ?,
-			created_at = ?,
-			updated_at = ?
-		WHERE
-			id = ?
-	`
 	result, err := s.qe.ExecContext(
 		ctx,
-		query,
+		updateProjectSQL,
 		p.Name,
 		p.Description,
 		p.Disabled,
@@ -138,26 +122,9 @@ func (s *projectStorage) UpdateProject(ctx context.Context, p *domain.Project) e
 
 func (s *projectStorage) GetProject(ctx context.Context, id string) (*domain.Project, error) {
 	project := proto.Project{}
-	query := `
-		SELECT
-			id,
-			name,
-			url_code,
-			description,
-			disabled,
-			trial,
-			creator_email,
-			organization_id,
-			created_at,
-			updated_at
-		FROM
-			project
-		WHERE
-			id = ?
-	`
 	err := s.qe.QueryRowContext(
 		ctx,
-		query,
+		selectProjectSQL,
 		id,
 	).Scan(
 		&project.Id,
@@ -186,28 +153,9 @@ func (s *projectStorage) GetTrialProjectByEmail(
 	disabled, trial bool,
 ) (*domain.Project, error) {
 	project := proto.Project{}
-	query := `
-		SELECT
-			id,
-			name,
-			url_code,
-			description,
-			disabled,
-			trial,
-			creator_email,
-			organization_id,
-			created_at,
-			updated_at
-		FROM
-			project
-		WHERE
-			creator_email = ? AND
-			disabled = ? AND
-			trial = ?
-	`
 	err := s.qe.QueryRowContext(
 		ctx,
-		query,
+		selectTrialProjectByEmailSQL,
 		email,
 		disabled,
 		trial,
@@ -230,7 +178,6 @@ func (s *projectStorage) GetTrialProjectByEmail(
 		return nil, err
 	}
 	return &domain.Project{Project: &project}, nil
-
 }
 
 func (s *projectStorage) ListProjects(
@@ -242,23 +189,7 @@ func (s *projectStorage) ListProjects(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			name,
-			url_code,
-			description,
-			disabled,
-			trial,
-			creator_email,
-			organization_id,
-			created_at,
-			updated_at
-		FROM
-			project
-		%s %s %s
-		`, whereSQL, orderBySQL, limitOffsetSQL,
-	)
+	query := fmt.Sprintf(selectProjectsSQL, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
@@ -278,6 +209,8 @@ func (s *projectStorage) ListProjects(
 			&project.OrganizationId,
 			&project.CreatedAt,
 			&project.UpdatedAt,
+			&project.EnvironmentCount,
+			&project.FeatureFlagCount,
 		)
 		if err != nil {
 			return nil, 0, 0, err
@@ -289,14 +222,7 @@ func (s *projectStorage) ListProjects(
 	}
 	nextOffset := offset + len(projects)
 	var totalCount int64
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(1)
-		FROM
-			project
-		%s %s
-		`, whereSQL, orderBySQL,
-	)
+	countQuery := fmt.Sprintf(countProjectsSQL, whereSQL, orderBySQL)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

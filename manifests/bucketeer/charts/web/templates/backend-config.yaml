@@ -5,6 +5,9 @@ metadata:
   name: {{ template "web.fullname" . }}
   namespace: {{ .Values.namespace }}
 spec:
+  healthCheck:
+    requestPath: /health
+    type: HTTP2
   timeoutSec: 300
   connectionDraining:
     drainingTimeoutSec: 60

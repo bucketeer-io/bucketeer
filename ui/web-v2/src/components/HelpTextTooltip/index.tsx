@@ -22,7 +22,7 @@ export const HelpTextTooltip: FC<HelpTextTooltipProps> = memo(
             <div
               className={classNames(
                 'border shadow-sm bg-white text-gray-500 p-1',
-                'w-64 text-xs rounded whitespace-normal break-words'
+                'text-xs rounded whitespace-normal break-words w-64'
               )}
             >
               {helpText}

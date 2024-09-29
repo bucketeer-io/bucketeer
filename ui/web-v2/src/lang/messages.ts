@@ -2746,6 +2746,10 @@ export const messages = {
       id: 'sideMenu.auditLog',
       defaultMessage: 'Audit Logs'
     }),
+    debugger: defineMessage({
+      id: 'sideMenu.debugger',
+      defaultMessage: 'Debugger'
+    }),
     accounts: defineMessage({
       id: 'sideMenu.accounts',
       defaultMessage: 'Accounts'
@@ -2968,6 +2972,54 @@ export const messages = {
     fileFormatJson: defineMessage({
       id: 'fileUpload.fileFormat',
       defaultMessage: 'Accepted file type: .json'
+    })
+  },
+  debugger: {
+    title: defineMessage({
+      id: 'debugger.title',
+      defaultMessage: 'Debugger'
+    }),
+    description: defineMessage({
+      id: 'debugger.description',
+      defaultMessage:
+        'The debugger can verify what variation will be assigned to a specific end-user under different conditions in real-time.'
+    })
+  },
+  saveChanges: {
+    addShortcut: defineMessage({
+      id: 'saveChanges.addShortcut',
+      defaultMessage: 'Add shortcut'
+    }),
+    editShortcut: defineMessage({
+      id: 'saveChanges.editShortcut',
+      defaultMessage: 'Edit shortcut'
+    }),
+    deleteShortcut: defineMessage({
+      id: 'saveChanges.deleteShortcut',
+      defaultMessage: 'Delete shortcut'
+    }),
+    shortcutDescription: defineMessage({
+      id: 'saveChanges.shortcutDescription',
+      defaultMessage:
+        'Shortcut will save all search queries and filters you have in the current view so that next time you access this page will not need to apply them every time.'
+    }),
+    setAsDefault: defineMessage({
+      id: 'saveChanges.setAsDefault',
+      defaultMessage: 'Set as Default'
+    }),
+    saveChangesBeforeExiting: {
+      title: defineMessage({
+        id: 'saveChanges.saveChangesBeforeExiting.title',
+        defaultMessage: 'Unsaved Search Filters'
+      }),
+      description: defineMessage({
+        id: 'saveChanges.saveChangesBeforeExiting.description',
+        defaultMessage: `You have unsaved search filter changes. Are you sure you want to leave this page without saving them?`
+      })
+    },
+    addShortcutTooltip: defineMessage({
+      id: 'saveChanges.addShortcutTooltip',
+      defaultMessage: 'Create shortcuts for your most used search filters.'
     })
   },
   type: defineMessage({

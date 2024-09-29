@@ -1,25 +1,44 @@
-import { PlusIcon } from '@heroicons/react/solid';
+import { DotsVerticalIcon, PlusIcon } from '@heroicons/react/solid';
 import MUArchiveIcon from '@material-ui/icons/Archive';
 import MUFileCopyIcon from '@material-ui/icons/FileCopy';
 import MUUnarchiveIcon from '@material-ui/icons/Unarchive';
 import dayjs from 'dayjs';
-import React, { FC, useState, memo, useCallback } from 'react';
+import React, {
+  FC,
+  useState,
+  memo,
+  useCallback,
+  Fragment,
+  useEffect
+} from 'react';
 import { useIntl } from 'react-intl';
-import { shallowEqual, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { shallowEqual, useDispatch, useSelector } from 'react-redux';
+import { Link, useLocation, useHistory, Prompt } from 'react-router-dom';
 
 import { FEATURE_LIST_PAGE_SIZE } from '../../constants/feature';
 import {
   PAGE_PATH_FEATURES,
   PAGE_PATH_FEATURE_TARGETING,
+  PAGE_PATH_NEW,
   PAGE_PATH_ROOT
 } from '../../constants/routing';
 import { intl } from '../../lang';
 import { messages } from '../../lang/messages';
 import { AppState } from '../../modules';
-import { selectAll as selectAllAccounts } from '../../modules/accounts';
+import {
+  createSearchFilter,
+  selectAll as selectAllAccounts,
+  changeSearchFilterName,
+  changeSearchFilterQuery,
+  deleteSearchFilter
+} from '../../modules/accounts';
 import { selectAll as selectAllFeatures } from '../../modules/features';
-import { useCurrentEnvironment, useIsEditable } from '../../modules/me';
+import {
+  fetchMe,
+  useCurrentEnvironment,
+  useIsEditable,
+  useMe
+} from '../../modules/me';
 import { selectAll as selectAllTags } from '../../modules/tags';
 import { AccountV2 } from '../../proto/account/account_pb';
 import { Feature, Tag } from '../../proto/feature/feature_pb';
@@ -43,11 +62,40 @@ import { SearchInput } from '../SearchInput';
 import { SortItem, SortSelect } from '../SortSelect';
 import { Switch } from '../Switch';
 import { TagChips } from '../TagsChips';
+import { Dialog, Popover, Transition } from '@headlessui/react';
+import {
+  InformationCircleIcon,
+  PencilIcon,
+  TrashIcon,
+  XIcon
+} from '@heroicons/react/outline';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { shortcutFormSchema } from '../../pages/feature/formSchema';
+import { AppDispatch } from '../../store';
+import {
+  FilterTargetType,
+  FilterTargetTypeMap
+} from '../../proto/account/search_filter_pb';
+import {
+  stringifySearchParams,
+  useSearchParams
+} from '../../utils/search-params';
+import SaveSvg from '../../assets/svg/save.svg';
+import SaveGraySvg from '../../assets/svg/save-gray.svg';
+import SaveLargeSvg from '../../assets/svg/save-large.svg';
+import { parse } from 'query-string';
+import { HoverPopover } from '../HoverPopover';
 
 export enum FlagStatus {
   NEW, // This flag is new and has not been requested yet.
   RECEIVING_REQUESTS, // It is receiving one more requests in the last 7 days.
   INACTIVE // It is not receiving requests for 7 days.
+}
+
+enum ConfirmType {
+  YES,
+  NO
 }
 
 interface FlagStatusIconProps {
@@ -218,7 +266,6 @@ export interface FeatureListProps {
   onSwitchEnabled: (featureId: string, enabled: boolean) => void;
   onAdd: () => void;
   onChangeSearchOptions: (options: FeatureSearchOptions) => void;
-  onClearSearchOptions: () => void;
   onArchive: (feature: Feature.AsObject) => void;
   onClone: (feature: Feature.AsObject) => void;
 }
@@ -230,7 +277,6 @@ export const FeatureList: FC<FeatureListProps> = memo(
     onSwitchEnabled,
     onAdd,
     onChangeSearchOptions,
-    onClearSearchOptions,
     onArchive,
     onClone
   }) => {
@@ -285,7 +331,6 @@ export const FeatureList: FC<FeatureListProps> = memo(
           <FeatureSearch
             options={searchOptions}
             onChange={onChangeSearchOptions}
-            onClear={onClearSearchOptions}
             onAdd={onAdd}
           />
         </div>
@@ -432,17 +477,43 @@ export const FeatureList: FC<FeatureListProps> = memo(
   }
 );
 
+export interface SearchFilter {
+  id: string;
+  name: string;
+  query: string;
+  filterTargetType: FilterTargetTypeMap[keyof FilterTargetTypeMap];
+  environmentId: string;
+  defaultFilter: boolean;
+  selected: boolean;
+  saveChanges: boolean;
+}
+
+export interface SelectedSearchFilter {
+  id: string;
+  name: string;
+  query: string;
+}
+
 interface FeatureSearchProps {
   options: FeatureSearchOptions;
   onChange: (options: FeatureSearchOptions) => void;
-  onClear: () => void;
   onAdd: () => void;
 }
 
+const defaultOptions = {
+  page: '1',
+  sort: '-createdAt'
+};
+
 const FeatureSearch: FC<FeatureSearchProps> = memo(
-  ({ options, onChange, onClear, onAdd }) => {
+  ({ options, onChange, onAdd }) => {
     const editable = useIsEditable();
     const { formatMessage: f } = useIntl();
+    const dispatch = useDispatch<AppDispatch>();
+    const currentEnvironment = useCurrentEnvironment();
+    const me = useMe();
+    const searchOptions = useSearchParams();
+
     const accounts = useSelector<AppState, AccountV2.AsObject[]>(
       (state) => selectAllAccounts(state.accounts),
       shallowEqual
@@ -452,6 +523,124 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       shallowEqual
     );
     const [filterValues, setFilterValues] = useState<Option[]>([]);
+    const [open, setOpen] = useState(false);
+
+    const [searchFiltersList, setSearchFiltersList] = useState<SearchFilter[]>(
+      []
+    );
+    const [selectedSearchFilter, setSelectedSearchFilter] =
+      useState<SelectedSearchFilter>();
+    const [isAddNewFilterActive, setIsAddNewFilterActive] = useState(false);
+
+    const organizationId = currentEnvironment.organizationId;
+
+    const location = useLocation();
+    const [unsavedChanges, setUnsavedChanges] = useState(false);
+    const [nextLocation, setNextLocation] = useState(null);
+    const [showSaveChangesDialog, setShowSaveChangesDialog] = useState(false);
+    const [unsavedSearchFilterId, setUnsavedSearchFilterId] = useState(null);
+
+    const history = useHistory();
+
+    const filteredSearchFiltersList =
+      me.consoleAccount.searchFiltersList.filter(
+        (s) => s.environmentId === currentEnvironment.id
+      );
+
+    useEffect(() => {
+      // set default options
+      if (Object.keys(options).length === 0) {
+        onChange(defaultOptions);
+      }
+    }, [options]);
+
+    useEffect(() => {
+      if (filteredSearchFiltersList.length > 0) {
+        let updatedFiltersList = [];
+        // Make last search filter selected if new search filter is added
+        if (
+          filteredSearchFiltersList.length > searchFiltersList.length &&
+          Object.keys(options).length > 0 &&
+          JSON.stringify(options) !== JSON.stringify(defaultOptions)
+        ) {
+          updatedFiltersList = filteredSearchFiltersList.map((s, i) => ({
+            ...s,
+            selected: i + 1 === filteredSearchFiltersList.length
+          }));
+          setSelectedSearchFilter(
+            updatedFiltersList[updatedFiltersList.length - 1]
+          );
+        } else {
+          // Save the changes
+          const oldSelectedSearchFilter = searchFiltersList.find(
+            (s) => s.selected
+          );
+          updatedFiltersList = filteredSearchFiltersList.map((s) => ({
+            ...s,
+            selected: oldSelectedSearchFilter?.id === s.id,
+            saveChanges: false
+          }));
+          setSelectedSearchFilter(updatedFiltersList.find((s) => s.selected));
+        }
+        setSearchFiltersList(updatedFiltersList);
+      } else {
+        setSearchFiltersList([]);
+      }
+    }, [me.consoleAccount.searchFiltersList, onChange]);
+
+    useEffect(() => {
+      const stringigyOptions = stringifySearchParams(options);
+      const query = selectedSearchFilter?.query ?? '';
+
+      if (selectedSearchFilter) {
+        // If the selected search filter has changes, mark it as unsaved
+        if (stringigyOptions && query) {
+          setSearchFiltersList(
+            searchFiltersList.map((s) => ({
+              ...s,
+              saveChanges:
+                s.id === selectedSearchFilter.id && query !== stringigyOptions
+                  ? true
+                  : false
+            }))
+          );
+        }
+      }
+    }, [selectedSearchFilter, options]);
+
+    useEffect(() => {
+      // If there are any search filters with changes, mark the page as having unsaved changes
+      const findSaveChanges = searchFiltersList.find((s) => s.saveChanges);
+      setUnsavedChanges(findSaveChanges ? true : false);
+    }, [searchFiltersList]);
+
+    useEffect(() => {
+      // If there are unsaved changes when the user tries to leave the page, show the confirmation dialog
+      const handleBeforeUnload = (e) => {
+        if (unsavedChanges) {
+          // The standard way to trigger the confirmation dialog
+          e.preventDefault();
+          e.returnValue = ''; // For most browsers, this will trigger the default confirmation dialog
+        }
+      };
+
+      window.addEventListener('beforeunload', handleBeforeUnload);
+
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      };
+    }, [unsavedChanges]);
+
+    useEffect(() => {
+      if (
+        !selectedSearchFilter &&
+        JSON.stringify(options) !== JSON.stringify(defaultOptions)
+      ) {
+        setUnsavedChanges(true);
+      } else {
+        setUnsavedChanges(false);
+      }
+    }, [options, selectedSearchFilter]);
 
     const handleFilterKeyChange = useCallback(
       (key: string): void => {
@@ -526,12 +715,162 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
           return;
       }
     };
+
     const handleMultiFilterAdd = (key: string, value: string[]): void => {
       if (key === FilterTypes.TAGS) {
         handleUpdateOption({
           tagIds: value
         });
       }
+    };
+
+    const refetchMe = () => {
+      dispatch(
+        fetchMe({
+          organizationId: currentEnvironment.organizationId
+        })
+      );
+    };
+
+    const handleFormSubmit = useCallback(
+      async (data) => {
+        setOpen(false);
+
+        const query = stringifySearchParams({
+          ...options,
+          page: 1
+        });
+        const filterTargetType = FilterTargetType.FEATURE_FLAG;
+        const defaultFilter = false;
+        const environmentId = currentEnvironment.id;
+
+        if (selectedSearchFilter && !isAddNewFilterActive) {
+          dispatch(
+            changeSearchFilterName({
+              id: selectedSearchFilter.id,
+              name: data.name,
+              email: me.consoleAccount.email,
+              environmentId,
+              organizationId: me.consoleAccount.organization.id
+            })
+          ).then(() => {
+            if (unsavedChanges) {
+              handleSaveChanges(selectedSearchFilter.id);
+            } else {
+              refetchMe();
+            }
+          });
+        } else {
+          dispatch(
+            createSearchFilter({
+              name: data.name,
+              query,
+              filterTargetType,
+              environmentId,
+              defaultFilter,
+              organizationId: currentEnvironment.organizationId,
+              email: me.consoleAccount.email
+            })
+          ).then(() => {
+            refetchMe();
+          });
+        }
+        setIsAddNewFilterActive(false);
+      },
+      [searchOptions, selectedSearchFilter, isAddNewFilterActive]
+    );
+
+    const handleDeleteSearchFilter = (id: string) => {
+      if (id === selectedSearchFilter?.id || searchFiltersList.length === 1) {
+        onChange(defaultOptions);
+        setSelectedSearchFilter(null);
+      }
+
+      dispatch(
+        deleteSearchFilter({
+          id,
+          email: me.consoleAccount.email,
+          organizationId,
+          environmentId: currentEnvironment.id
+        })
+      ).then(() => refetchMe());
+    };
+
+    const handleSearchFilter = (id: string) => {
+      if (selectedSearchFilter?.id !== id) {
+        const findSearchFilter = searchFiltersList.find((s) => s.id === id);
+        setSelectedSearchFilter(findSearchFilter);
+        setSearchFiltersList(
+          searchFiltersList.map((s) => ({ ...s, selected: s.id === id }))
+        );
+        onChange(parse(findSearchFilter.query));
+        setUnsavedSearchFilterId(null);
+      }
+    };
+
+    const handleSaveChanges = (id: string) => {
+      dispatch(
+        changeSearchFilterQuery({
+          id,
+          query: stringifySearchParams(options),
+          email: me.consoleAccount.email,
+          organizationId,
+          environmentId: currentEnvironment.id
+        })
+      ).then(() => refetchMe());
+    };
+
+    const handleClose = () => {
+      setOpen(false);
+      setIsAddNewFilterActive(false);
+    };
+
+    const handleConfirm = (confirmType: ConfirmType) => {
+      setShowSaveChangesDialog(false);
+      if (confirmType === ConfirmType.YES) {
+        if (unsavedSearchFilterId) {
+          handleSearchFilter(unsavedSearchFilterId);
+          return;
+        }
+
+        setUnsavedChanges(false);
+
+        const { pathname: nextPathname } = nextLocation;
+        const isNew =
+          `/${nextPathname.substring(nextPathname.lastIndexOf('/') + 1)}` ==
+          PAGE_PATH_NEW;
+
+        onChange(defaultOptions);
+        setSelectedSearchFilter(null);
+        setSearchFiltersList(
+          filteredSearchFiltersList.map((s) => ({
+            ...s,
+            selected: false,
+            saveChanges: false
+          }))
+        );
+
+        // If the user clicked on the "Add" button, we should show add form
+        if (isNew) {
+          onAdd();
+        } else if (location.pathname !== nextPathname) {
+          history.push({
+            pathname: nextPathname
+          });
+        }
+      }
+    };
+
+    const handleNavigation = (nextLocation) => {
+      if (
+        location.pathname !== nextLocation.pathname ||
+        (location.pathname === nextLocation.pathname && !nextLocation.search) // If the user is trying to go to the same page by clicking on the sidebar menu
+      ) {
+        setNextLocation(nextLocation); // Save the location the user is trying to go to
+        setShowSaveChangesDialog(true); // Show custom confirmation popup
+        return false; // Block navigation for now
+      }
+      return true; // Allow navigation if no unsaved changes
     };
 
     return (
@@ -542,7 +881,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
           'z-10 border-b border-gray-300'
         )}
       >
-        <div className={classNames('w-full min-w-max', 'flex flex-row')}>
+        <div className={classNames('w-full', 'flex flex-row')}>
           <div className="flex-none w-72">
             <SearchInput
               placeholder={f(messages.feature.search.placeholder)}
@@ -563,7 +902,144 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
               onAddMulti={handleMultiFilterAdd}
             />
           </div>
-          <div className="flex-grow" />
+          <div className="flex gap-2 flex-wrap w-full items-center">
+            <Prompt
+              when={unsavedChanges && showSaveChangesDialog === false}
+              message={(location) => {
+                return handleNavigation(location);
+              }}
+            />
+            {searchFiltersList.map((searchFilter) => (
+              <Popover className="relative flex" key={searchFilter.id}>
+                <div
+                  className={classNames(
+                    'flex items-center space-x-1.5 rounded p-[6px] text-sm cursor-pointer transition-colors duration-200',
+                    searchFilter.selected ? 'bg-purple-100' : 'bg-gray-50'
+                  )}
+                  onClick={() => {
+                    if (
+                      unsavedChanges &&
+                      searchFilter.id !== selectedSearchFilter?.id
+                    ) {
+                      setShowSaveChangesDialog(true);
+                      setUnsavedSearchFilterId(searchFilter.id);
+                    } else {
+                      handleSearchFilter(searchFilter.id);
+                    }
+                  }}
+                >
+                  <span className="text-primary truncate max-w-[180px]">
+                    {searchFilter.name}
+                  </span>
+                  {searchFilter.saveChanges && (
+                    <div className="text-primary opacity-80">
+                      <SaveSvg />
+                    </div>
+                  )}
+                  {unsavedChanges &&
+                  searchFilter.id !== selectedSearchFilter?.id ? (
+                    <DotsVerticalIcon width={14} className="text-primary" />
+                  ) : (
+                    <Popover.Button className="h-full outline-none">
+                      <DotsVerticalIcon width={14} className="text-primary" />
+                    </Popover.Button>
+                  )}
+                </div>
+                <Popover.Panel className="absolute bg-white left-0 rounded-lg p-1 whitespace-nowrap drop-shadow z-50 top-10">
+                  {({ close }) => (
+                    <div>
+                      {searchFilter.saveChanges && (
+                        <button
+                          onClick={() => {
+                            close();
+                            handleSaveChanges(searchFilter.id);
+                          }}
+                          className="flex w-full space-x-2 px-2 py-1.5 items-center hover:bg-gray-100"
+                        >
+                          <SaveGraySvg />
+                          <span className="text-sm pl-[2px]">Save Changes</span>
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          setOpen(true);
+                          handleSearchFilter(searchFilter.id);
+                        }}
+                        className="flex w-full space-x-3 px-2 py-1.5 items-center hover:bg-gray-100"
+                      >
+                        <PencilIcon width={18} />
+                        <span className="text-sm">
+                          {f(messages.saveChanges.editShortcut)}
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          close();
+                          handleDeleteSearchFilter(searchFilter.id);
+                        }}
+                        className="flex space-x-3 w-full px-2 py-1.5 items-center hover:bg-gray-100"
+                      >
+                        <TrashIcon width={18} className="text-red-500" />
+                        <span className="text-red-500 text-sm">
+                          {f(messages.saveChanges.deleteShortcut)}
+                        </span>
+                      </button>
+                    </div>
+                  )}
+                </Popover.Panel>
+              </Popover>
+            ))}
+            {unsavedChanges && (
+              <div className="flex space-x-1">
+                <button
+                  className="bg-gray-50 p-[6px] rounded hover:bg-purple-100 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => {
+                    setOpen(true);
+                    setIsAddNewFilterActive(true);
+                  }}
+                >
+                  <PlusIcon width={20} className="text-primary" />
+                </button>
+                <HoverPopover
+                  render={() => {
+                    return (
+                      <div
+                        className={classNames(
+                          'border shadow-sm bg-white text-gray-500 p-1',
+                          'text-xs rounded whitespace-normal break-words w-64'
+                        )}
+                      >
+                        {f(messages.saveChanges.addShortcutTooltip)}
+                      </div>
+                    );
+                  }}
+                >
+                  <div className={classNames('hover:text-gray-500')}>
+                    <InformationCircleIcon
+                      className="w-5 h-5 text-gray-400"
+                      aria-hidden="true"
+                    />
+                  </div>
+                </HoverPopover>
+              </div>
+            )}
+          </div>
+          {open && (
+            <AddEditShortcutModal
+              open={open}
+              close={handleClose}
+              name={isAddNewFilterActive ? '' : selectedSearchFilter?.name}
+              handleFormSubmit={handleFormSubmit}
+            />
+          )}
+          <SaveChangesDialog
+            open={showSaveChangesDialog}
+            close={() => {
+              setShowSaveChangesDialog(false);
+              setUnsavedSearchFilterId(null);
+            }}
+            onConfirm={handleConfirm}
+          />
           <div className="flex-none -mr-2">
             <SortSelect
               sortKey={options.sort}
@@ -692,7 +1168,18 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
               options.hasPrerequisites ||
               options.maintainerId ||
               options.tagIds) && (
-              <FilterRemoveAllButtonProps onClick={onClear} />
+              <FilterRemoveAllButtonProps
+                onClick={() =>
+                  handleUpdateOption({
+                    enabled: null,
+                    archived: null,
+                    hasExperiment: null,
+                    hasPrerequisites: null,
+                    maintainerId: null,
+                    tagIds: null
+                  })
+                }
+              />
             )}
           </div>
         )}
@@ -700,3 +1187,216 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     );
   }
 );
+
+interface SaveChangesDialogProps {
+  open: boolean;
+  close: () => void;
+  onConfirm: (confirmType: ConfirmType) => void;
+}
+
+const SaveChangesDialog = ({
+  open,
+  close,
+  onConfirm
+}: SaveChangesDialogProps) => {
+  const { formatMessage: f } = useIntl();
+
+  return (
+    <Transition.Root show={open} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={close}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        </Transition.Child>
+        <form className="fixed inset-0 z-10 overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enterTo="opacity-100 translate-y-0 sm:scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            >
+              <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all w-[500px]">
+                <div className="flex items-center justify-between px-4 py-5 border-b">
+                  <p className="text-xl font-bold">
+                    {f(messages.saveChanges.saveChangesBeforeExiting.title)}
+                  </p>
+                  <XIcon
+                    width={20}
+                    className="text-gray-400 cursor-pointer"
+                    onClick={close}
+                  />
+                </div>
+                <div className="p-4 space-y-4 py-5 px-11 flex flex-col items-center">
+                  <SaveLargeSvg />
+                  <p className="text-gray-500 text-center">
+                    {f(
+                      messages.saveChanges.saveChangesBeforeExiting.description
+                    )}
+                  </p>
+                </div>
+                <div className="p-4 flex justify-end border-t space-x-4">
+                  <button
+                    type="button"
+                    className="btn-cancel !min-w-max"
+                    disabled={false}
+                    onClick={() => onConfirm(ConfirmType.NO)}
+                  >
+                    {f(messages.no)}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-submit"
+                    onClick={() => onConfirm(ConfirmType.YES)}
+                  >
+                    {f(messages.yes)}
+                  </button>
+                </div>
+              </div>
+            </Transition.Child>
+          </div>
+        </form>
+      </Dialog>
+    </Transition.Root>
+  );
+};
+
+interface AddEditShortcutModalProps {
+  open: boolean;
+  close: () => void;
+  name: string;
+  handleFormSubmit: (data: { name: string }) => void;
+}
+
+const AddEditShortcutModal = ({
+  open,
+  close,
+  name,
+  handleFormSubmit
+}: AddEditShortcutModalProps) => {
+  const { formatMessage: f } = useIntl();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid, isSubmitting },
+    reset: resetShortcut
+  } = useForm({
+    resolver: yupResolver(shortcutFormSchema),
+    defaultValues: {
+      name: ''
+    },
+    mode: 'onChange'
+  });
+
+  useEffect(() => {
+    if (name) {
+      resetShortcut({
+        name
+      });
+    }
+  }, [name]);
+
+  const handleSave = (data) => {
+    handleFormSubmit({
+      name: data.name
+    });
+  };
+
+  return (
+    <Transition.Root show={open} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={close}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+        </Transition.Child>
+        <form className="fixed inset-0 z-10 overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enterTo="opacity-100 translate-y-0 sm:scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            >
+              <div className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all w-[542px]">
+                <div className="flex items-center justify-between px-4 py-5 border-b">
+                  <p className="text-xl font-medium">
+                    {name
+                      ? f(messages.saveChanges.editShortcut)
+                      : f(messages.saveChanges.addShortcut)}
+                  </p>
+                  <XIcon
+                    width={20}
+                    className="text-gray-400 cursor-pointer"
+                    onClick={close}
+                  />
+                </div>
+                <div className="p-4 space-y-4">
+                  <p className="text-gray-500">
+                    {f(messages.saveChanges.shortcutDescription)}
+                  </p>
+                  <div className="space-y-1">
+                    <label htmlFor="name" className="flex items-center">
+                      <span className="input-label">{f({ id: 'name' })}</span>
+                      <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      {...register('name')}
+                      type="text"
+                      name="name"
+                      id="name"
+                      className="input-text w-full"
+                    />
+                    <p className="input-error">
+                      {errors.name && (
+                        <span role="alert">{errors.name.message}</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="p-4 flex justify-end border-t space-x-4">
+                  <button
+                    type="button"
+                    className="btn-cancel"
+                    disabled={false}
+                    onClick={close}
+                  >
+                    {f(messages.button.cancel)}
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-submit"
+                    disabled={!isValid || isSubmitting}
+                    onClick={handleSubmit(handleSave)}
+                  >
+                    {f(messages.button.save)}
+                  </button>
+                </div>
+              </div>
+            </Transition.Child>
+          </div>
+        </form>
+      </Dialog>
+    </Transition.Root>
+  );
+};

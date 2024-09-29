@@ -3344,6 +3344,17 @@ definitions:
         format: int64
       systemAdmin:
         type: boolean
+      projectCount:
+        type: integer
+        format: int32
+      environmentCount:
+        type: integer
+        format: int32
+      userCount:
+        type: integer
+        format: int32
+      ownerEmail:
+        type: string
   environmentArchiveEnvironmentV2Command:
     type: object
   environmentArchiveEnvironmentV2Request:
@@ -3451,6 +3462,8 @@ definitions:
         type: boolean
       isSystemAdmin:
         type: boolean
+      ownerEmail:
+        type: string
   environmentCreateOrganizationRequest:
     type: object
     properties:
@@ -3473,6 +3486,8 @@ definitions:
         type: string
       urlCode:
         type: string
+      ownerEmail:
+        type: string
     description: 'TODO: add organizationID once we support organization create UI.'
   environmentCreateProjectRequest:
     type: object
@@ -3494,6 +3509,8 @@ definitions:
       name:
         type: string
       urlCode:
+        type: string
+      ownerEmail:
         type: string
   environmentCreateTrialProjectRequest:
     type: object
@@ -3572,6 +3589,9 @@ definitions:
         type: string
       requireComment:
         type: boolean
+      featureFlagCount:
+        type: integer
+        format: int32
   environmentGetEnvironmentV2Request:
     type: object
     properties:
@@ -3631,6 +3651,7 @@ definitions:
       - URL_CODE
       - CREATED_AT
       - UPDATED_AT
+      - FEATURE_COUNT
     default: DEFAULT
   environmentListEnvironmentsV2RequestOrderDirection:
     type: string
@@ -3678,6 +3699,9 @@ definitions:
       - UPDATED_AT
       - NAME
       - URL_CODE
+      - PROJECT_COUNT
+      - ENVIRONMENT_COUNT
+      - USER_COUNT
     default: DEFAULT
   environmentListOrganizationsRequestOrderDirection:
     type: string
@@ -3727,6 +3751,8 @@ definitions:
       - UPDATED_AT
       - NAME
       - URL_CODE
+      - ENVIRONMENT_COUNT
+      - FEATURE_COUNT
     default: DEFAULT
   environmentListProjectsRequestOrderDirection:
     type: string
@@ -3773,6 +3799,12 @@ definitions:
         type: string
       organizationId:
         type: string
+      environmentCount:
+        type: integer
+        format: int32
+      featureFlagCount:
+        type: integer
+        format: int32
   environmentRenameEnvironmentV2Command:
     type: object
     properties:

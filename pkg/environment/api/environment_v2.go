@@ -96,18 +96,23 @@ func (s *EnvironmentService) ListEnvironmentsV2(
 	}
 	var whereParts []mysql.WherePart
 	if req.ProjectId != "" {
-		whereParts = append(whereParts, mysql.NewFilter("project_id", "=", req.ProjectId))
+		whereParts = append(whereParts, mysql.NewFilter("environment_v2.project_id", "=", req.ProjectId))
 	}
 	if req.OrganizationId != "" {
-		whereParts = append(whereParts, mysql.NewFilter("organization_id", "=", req.OrganizationId))
+		whereParts = append(whereParts, mysql.NewFilter("environment_v2.organization_id", "=", req.OrganizationId))
 	}
 	if req.Archived != nil {
-		whereParts = append(whereParts, mysql.NewFilter("archived", "=", req.Archived.Value))
+		whereParts = append(whereParts, mysql.NewFilter("environment_v2.archived", "=", req.Archived.Value))
 	}
 	if req.SearchKeyword != "" {
 		whereParts = append(
 			whereParts,
-			mysql.NewSearchQuery([]string{"id", "name", "url_code", "description"},
+			mysql.NewSearchQuery([]string{
+				"environment_v2.id",
+				"environment_v2.name",
+				"environment_v2.url_code",
+				"environment_v2.description",
+			},
 				req.SearchKeyword,
 			),
 		)
@@ -176,15 +181,17 @@ func (s *EnvironmentService) newEnvironmentV2ListOrders(
 	switch orderBy {
 	case environmentproto.ListEnvironmentsV2Request_DEFAULT,
 		environmentproto.ListEnvironmentsV2Request_NAME:
-		column = "name"
+		column = "environment_v2.name"
 	case environmentproto.ListEnvironmentsV2Request_ID:
-		column = "id"
+		column = "environment_v2.id"
 	case environmentproto.ListEnvironmentsV2Request_URL_CODE:
-		column = "url_code"
+		column = "environment_v2.url_code"
 	case environmentproto.ListEnvironmentsV2Request_CREATED_AT:
-		column = "created_at"
+		column = "environment_v2.created_at"
 	case environmentproto.ListEnvironmentsV2Request_UPDATED_AT:
-		column = "updated_at"
+		column = "environment_v2.updated_at"
+	case environmentproto.ListEnvironmentsV2Request_FEATURE_COUNT:
+		column = "feature_count"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
