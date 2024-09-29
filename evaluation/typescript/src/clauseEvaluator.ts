@@ -135,7 +135,7 @@ class ClauseEvaluator {
 
     if (!isNaN(floatTarget)) {
       if (floatValues.length == 0) {
-        return false
+        return false;
       }
       return floatValues.some((value) => floatTarget < value);
     }
@@ -159,7 +159,7 @@ class ClauseEvaluator {
 
     if (!isNaN(floatTarget)) {
       if (floatValues.length == 0) {
-        return false
+        return false;
       }
       return floatValues.some((value) => floatTarget <= value);
     }

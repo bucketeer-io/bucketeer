@@ -10,13 +10,13 @@ class StrategyEvaluator {
     userID: string,
     variations: Variation[],
     featureID: string,
-    samplingSeed: string
+    samplingSeed: string,
   ): Variation {
     switch (strategy.getType()) {
       case Strategy.Type.FIXED:
         return this.findVariation(strategy.getFixedStrategy()?.getVariation() || '', variations);
       case Strategy.Type.ROLLOUT:
-        const rolloutStrategy = strategy.getRolloutStrategy()
+        const rolloutStrategy = strategy.getRolloutStrategy();
         if (rolloutStrategy !== undefined) {
           const variationID = this.rollout(rolloutStrategy, userID, featureID, samplingSeed);
           return this.findVariation(variationID, variations);
@@ -31,7 +31,7 @@ class StrategyEvaluator {
     strategy: RolloutStrategy,
     userID: string,
     featureID: string,
-    samplingSeed: string
+    samplingSeed: string,
   ): string {
     const bucket = this.bucket(userID, featureID, samplingSeed);
 
@@ -48,7 +48,7 @@ class StrategyEvaluator {
   private bucket(userID: string, featureID: string, samplingSeed: string): number {
     try {
       const hash = this.hash(userID, featureID, samplingSeed);
-      const intVal = BigInt('0x' + hash.slice(0, 16));  // Convert the first 16 hex characters to BigInt
+      const intVal = BigInt('0x' + hash.slice(0, 16)); // Convert the first 16 hex characters to BigInt
 
       // Divide the BigInt value by `max` and convert it to a number. Use Number() since we need a float.
       return Number(intVal) / Number(MAX);

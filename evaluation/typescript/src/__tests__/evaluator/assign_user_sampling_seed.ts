@@ -5,18 +5,16 @@ import { Evaluator } from '../../evaluation';
 import { Reason } from '../../proto/feature/reason_pb';
 import { Strategy } from '../../proto/feature/strategy_pb';
 
-test('assign user with sampling seed', t => {
+test('assign user with sampling seed', (t) => {
   const user = createUser('uid', {});
   const f = newTestFeature('fid');
-  const rolloutStrategy = createRolloutStrategy(
-    {
-      variations: [
-        { variation: 'variation-A', weight: 30000 },
-        { variation: 'variation-B', weight: 40000 },
-        { variation: 'variation-C', weight: 30000 },
-      ],
-    },
-  );
+  const rolloutStrategy = createRolloutStrategy({
+    variations: [
+      { variation: 'variation-A', weight: 30000 },
+      { variation: 'variation-B', weight: 40000 },
+      { variation: 'variation-C', weight: 30000 },
+    ],
+  });
   const strategy = createStrategy({
     rolloutStrategy: rolloutStrategy,
     type: Strategy.Type.ROLLOUT,

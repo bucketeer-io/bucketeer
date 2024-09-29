@@ -8,10 +8,9 @@ import { Reason } from '../../proto/feature/reason_pb';
 import { NewUserEvaluations } from '../../userEvaluation';
 import { newTestFeature } from './evaluate_feature_test';
 
-
 interface TestCase {
   desc: string;
-  prevUEID: string; 
+  prevUEID: string;
   evaluatedAt: number;
   userAttributesUpdated: boolean;
   tag: string;
@@ -21,11 +20,10 @@ interface TestCase {
   expectedError: Error | null;
 }
 
-
 function TestEvaluateFeaturesByEvaluatedAtCases() {
   const now = new Date();
   function getTimeAgo(seconds: number): number {
-    return (new Date(now.getTime() - seconds * 1000)).getTime() / 1000;
+    return new Date(now.getTime() - seconds * 1000).getTime() / 1000;
   }
 
   const thirtyOneDaysAgo = getTimeAgo(31 * 24 * 60 * 60);
@@ -45,10 +43,10 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
       createFeatures: () => {
         const f1 = newTestFeature('feature1');
         f1.setUpdatedAt(fiveMinutesAgo);
-  
+
         const f2 = newTestFeature('feature2');
         f2.setUpdatedAt(fiveMinutesAgo);
-  
+
         const f3 = newTestFeature('feature3');
         f3.setUpdatedAt(fiveMinutesAgo);
         f3.setArchived(true);
@@ -65,7 +63,7 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
             'variation-B',
             'B',
             'Variation B',
-            createReason( '', Reason.Type.DEFAULT),
+            createReason('', Reason.Type.DEFAULT),
           ),
           createEvaluation(
             'feature2:1:user1',
@@ -75,11 +73,11 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
             'variation-B',
             'B',
             'Variation B',
-            createReason( '', Reason.Type.DEFAULT),
+            createReason('', Reason.Type.DEFAULT),
           ),
         ],
         ['feature3'],
-        true
+        true,
       ),
       expectedEvalFeatureIDs: ['feature1', 'feature2'],
       expectedError: null,
@@ -93,10 +91,10 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
       createFeatures: () => {
         const f1 = newTestFeature('feature1');
         f1.setUpdatedAt(fiveMinutesAgo);
-    
+
         const f2 = newTestFeature('feature2');
         f2.setUpdatedAt(fiveMinutesAgo);
-    
+
         const f3 = newTestFeature('feature3');
         f3.setUpdatedAt(fiveMinutesAgo);
         f3.setArchived(true);
@@ -127,7 +125,7 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
           ),
         ],
         ['feature3'],
-        true
+        true,
       ),
       expectedEvalFeatureIDs: ['feature1', 'feature2'],
       expectedError: null,
@@ -141,10 +139,10 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
       createFeatures: () => {
         const f1 = newTestFeature('feature-1');
         f1.setUpdatedAt(oneHourAgo);
-    
+
         const f2 = newTestFeature('feature-2');
         f2.setUpdatedAt(oneHourAgo);
-    
+
         const f3 = newTestFeature('feature-3');
         f3.setUpdatedAt(oneHourAgo);
         f3.setArchived(true);
@@ -175,7 +173,7 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
           ),
         ],
         ['feature-3'],
-        true
+        true,
       ),
       expectedEvalFeatureIDs: ['feature-1', 'feature-2'],
       expectedError: null,
@@ -189,14 +187,14 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
       createFeatures: () => {
         const f1 = newTestFeature('feature1');
         f1.setUpdatedAt(fiveMinutesAgo);
-    
+
         const f2 = newTestFeature('feature2');
         f2.setUpdatedAt(oneHourAgo);
-    
+
         const f3 = newTestFeature('feature3');
         f3.setUpdatedAt(fiveMinutesAgo);
         f3.setArchived(true);
-    
+
         const f4 = newTestFeature('feature4');
         f4.setUpdatedAt(oneHourAgo);
         f4.setArchived(true);
@@ -217,7 +215,7 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
           ),
         ],
         ['feature3'],
-        false
+        false,
       ),
       expectedEvalFeatureIDs: ['feature1'],
       expectedError: null,
@@ -231,7 +229,7 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
       createFeatures: () => {
         const f1 = newTestFeature('feature1');
         f1.setUpdatedAt(tenMinutesAndNineSecondsAgo);
-    
+
         const f2 = newTestFeature('feature2');
         f2.setUpdatedAt(tenMinutesAndElevenSecondsAgo);
         return [f1, f2];
@@ -251,7 +249,7 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
           ),
         ],
         [],
-        false
+        false,
       ),
       expectedEvalFeatureIDs: ['feature1'],
       expectedError: null,
@@ -265,11 +263,11 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
       createFeatures: () => {
         const f1 = newTestFeature('feature1');
         f1.setUpdatedAt(thirtyOneDaysAgo);
-    
+
         const f2 = newTestFeature('feature2');
         f2.setUpdatedAt(thirtyOneDaysAgo);
         f2.setRulesList([]);
-    
+
         const f3 = newTestFeature('feature3');
         f3.setUpdatedAt(thirtyOneDaysAgo);
         f3.setArchived(true);
@@ -290,7 +288,7 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
           ),
         ],
         [],
-        false
+        false,
       ),
       expectedEvalFeatureIDs: ['feature1'],
       expectedError: null,
@@ -305,15 +303,15 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
         const f1 = newTestFeature('feature1');
         f1.setUpdatedAt(fiveMinutesAgo);
         f1.setRulesList([]);
-    
+
         const f2 = newTestFeature('feature2');
         f2.setUpdatedAt(thirtyOneDaysAgo);
         f2.setRulesList([]);
-    
+
         const f3 = newTestFeature('feature3');
         f3.setUpdatedAt(fiveMinutesAgo);
         f3.setArchived(true);
-    
+
         const f4 = newTestFeature('feature4');
         f4.setUpdatedAt(fiveMinutesAgo);
         f4.setRulesList([]);
@@ -344,7 +342,7 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
           ),
         ],
         ['feature3'],
-        false
+        false,
       ),
       expectedEvalFeatureIDs: ['feature1', 'feature4'],
       expectedError: null,
@@ -359,13 +357,13 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
         const f1 = newTestFeature('feature1');
         f1.setUpdatedAt(thirtyOneDaysAgo);
         f1.setPrerequisitesList([createPrerequisite('feature4', 'B')]);
-    
+
         const f2 = newTestFeature('feature2');
         f2.setUpdatedAt(thirtyOneDaysAgo);
-    
+
         const f3 = newTestFeature('feature3');
         f3.setUpdatedAt(thirtyOneDaysAgo);
-    
+
         const f4 = newTestFeature('feature4');
         f4.setUpdatedAt(fiveMinutesAgo);
         return [f1, f2, f3, f4];
@@ -395,7 +393,7 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
           ),
         ],
         [],
-        false
+        false,
       ),
       expectedEvalFeatureIDs: ['feature1', 'feature4'],
       expectedError: null,
@@ -410,16 +408,16 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
         const f1 = newTestFeature('feature1');
         f1.setTagsList(['tag1']);
         f1.setUpdatedAt(fiveMinutesAgo);
-    
+
         const f2 = newTestFeature('feature2');
         f2.setTagsList(['tag2']);
         f2.setUpdatedAt(fiveMinutesAgo);
-    
+
         const f3 = newTestFeature('feature3');
         f3.setTagsList(['tag1']);
         f3.setArchived(true);
         f3.setUpdatedAt(fiveMinutesAgo);
-    
+
         const f4 = newTestFeature('feature4');
         f4.setTagsList(['tag2']);
         f4.setArchived(true);
@@ -441,7 +439,7 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
           ),
         ],
         ['feature3', 'feature4'],
-        false
+        false,
       ),
       expectedEvalFeatureIDs: ['feature1'],
       expectedError: null,
@@ -456,14 +454,14 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
         const f1 = newTestFeature('feature1');
         f1.setTagsList(['tag1']);
         f1.setUpdatedAt(fiveMinutesAgo);
-    
+
         const f2 = newTestFeature('feature2');
         f2.setTagsList(['tag2']);
         f2.setUpdatedAt(fiveMinutesAgo);
-    
+
         const f3 = newTestFeature('feature3');
         f3.setUpdatedAt(fiveMinutesAgo);
-    
+
         const f4 = newTestFeature('feature4');
         f4.setTagsList(['tag1', 'tag2']);
         f4.setUpdatedAt(fiveMinutesAgo);
@@ -514,7 +512,7 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
           ),
         ],
         [],
-        false
+        false,
       ),
       expectedEvalFeatureIDs: ['feature1', 'feature2', 'feature3', 'feature4'],
       expectedError: null,
@@ -529,11 +527,11 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
         const f1 = newTestFeature('feature1');
         f1.setUpdatedAt(oneHourAgo);
         f1.setPrerequisitesList([createPrerequisite('feature2', 'B')]);
-    
+
         const f2 = newTestFeature('feature2');
         f2.setUpdatedAt(fiveMinutesAgo);
         f2.setPrerequisitesList([createPrerequisite('feature3', 'B')]);
-    
+
         const f3 = newTestFeature('feature3');
         f3.setUpdatedAt(oneHourAgo);
         return [f1, f2, f3];
@@ -573,7 +571,7 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
           ),
         ],
         [],
-        false
+        false,
       ),
       expectedEvalFeatureIDs: ['feature1', 'feature2', 'feature3'],
       expectedError: null,
@@ -582,9 +580,9 @@ function TestEvaluateFeaturesByEvaluatedAtCases() {
   return patterns;
 }
 
-TestEvaluateFeaturesByEvaluatedAtCases().forEach(p => {
-  test(p.desc, async t => {
-    const user = createUser ('user-1', {});
+TestEvaluateFeaturesByEvaluatedAtCases().forEach((p) => {
+  test(p.desc, async (t) => {
+    const user = createUser('user-1', {});
     const segmentUser: Map<string, SegmentUser[]> = new Map<string, SegmentUser[]>();
     const evaluator = new Evaluator();
     try {
@@ -597,11 +595,11 @@ TestEvaluateFeaturesByEvaluatedAtCases().forEach(p => {
         p.userAttributesUpdated,
         p.tag,
       );
-    
+
       t.deepEqual(p.expectedEvals.getForceUpdate(), actual.getForceUpdate());
       t.deepEqual(p.expectedEvals.getArchivedFeatureIdsList(), actual.getArchivedFeatureIdsList());
       t.is(p.expectedEvals.getEvaluationsList().length, actual.getEvaluationsList().length);
-      actual.getEvaluationsList().forEach(e => {
+      actual.getEvaluationsList().forEach((e) => {
         t.true(p.expectedEvalFeatureIDs.includes(e.getFeatureId()));
       });
       //TODO: Check me - did Golang test is missing this

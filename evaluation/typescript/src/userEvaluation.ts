@@ -7,7 +7,7 @@ function NewUserEvaluations(
   id: string,
   evaluations: Evaluation[],
   archivedFeaturesIds: string[],
-  forceUpdate: boolean
+  forceUpdate: boolean,
 ): UserEvaluations {
   const now = Math.floor(Date.now() / 1000); // Equivalent to Unix time
 
@@ -31,23 +31,23 @@ function GenerateFeaturesID(features: Feature[]): string {
   // Sort features based on the 'id'
   features.sort((a, b) => (a.getId() < b.getId() ? -1 : 1));
 
- // Initialize FNV-1a 64-bit hash string
- let hashInput = '';
+  // Initialize FNV-1a 64-bit hash string
+  let hashInput = '';
 
- // Concatenate each feature's 'id' and 'version' into the hash input
- features.forEach(feature => {
-   hashInput += `${feature.getId()}:${feature.getVersion()}`;
- });
+  // Concatenate each feature's 'id' and 'version' into the hash input
+  features.forEach((feature) => {
+    hashInput += `${feature.getId()}:${feature.getVersion()}`;
+  });
 
- // Generate the FNV-1a 64-bit hash and return it as a decimal string
- const hash = fnv.hash(hashInput, 64);
- return hash.dec();
+  // Generate the FNV-1a 64-bit hash and return it as a decimal string
+  const hash = fnv.hash(hashInput, 64);
+  return hash.dec();
 }
 
 function UserEvaluationsID(
   userID: string,
   userMetadata: Record<string, string>, // equivalent to map[string]string in Go
-  features: Feature[]
+  features: Feature[],
 ): string {
   // Sort features by ID
   features.sort((a, b) => (a.getId() < b.getId() ? -1 : 1));
@@ -73,9 +73,4 @@ function UserEvaluationsID(
   return hash.dec();
 }
 
-export {
-  UserEvaluationsID,
-  GenerateFeaturesID,
-  sortMapKeys,
-  NewUserEvaluations
-}
+export { UserEvaluationsID, GenerateFeaturesID, sortMapKeys, NewUserEvaluations };

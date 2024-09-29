@@ -15,15 +15,10 @@ class RuleEvaluator {
     rules: Rule[],
     user: User,
     segmentUsers: SegmentUser[],
-    flagVariations: { [key: string]: string }
+    flagVariations: { [key: string]: string },
   ): Rule | null {
     for (const rule of rules) {
-      const matched = this.evaluateRule(
-        rule,
-        user,
-        segmentUsers,
-        flagVariations
-      );
+      const matched = this.evaluateRule(rule, user, segmentUsers, flagVariations);
       if (matched) {
         return rule;
       }
@@ -35,15 +30,10 @@ class RuleEvaluator {
     rule: Rule,
     user: User,
     segmentUsers: SegmentUser[],
-    flagVariations: { [key: string]: string }
+    flagVariations: { [key: string]: string },
   ): boolean {
     for (const clause of rule.getClausesList()) {
-      const matched = this.evaluateClause(
-        clause,
-        user,
-        segmentUsers,
-        flagVariations
-      );
+      const matched = this.evaluateClause(clause, user, segmentUsers, flagVariations);
       if (!matched) {
         return false;
       }
@@ -55,7 +45,7 @@ class RuleEvaluator {
     clause: Clause,
     user: User,
     segmentUsers: SegmentUser[],
-    flagVariations: { [key: string]: string }
+    flagVariations: { [key: string]: string },
   ): boolean {
     let targetAttr: string | undefined;
     if (clause.getAttribute() === 'id') {
@@ -69,7 +59,7 @@ class RuleEvaluator {
       clause,
       user.getId(),
       segmentUsers,
-      flagVariations
+      flagVariations,
     );
   }
 }

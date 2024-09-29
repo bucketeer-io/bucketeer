@@ -21,17 +21,17 @@ function NewFeature(id: string, version: number): Feature {
 
 // Define the interface for the test case
 type NewUserEvaluationsTestCase = {
-  id: string,
-  evaluations: Evaluation[],
-  archivedFeaturesIds: string[],
-  forceUpdate: boolean,
+  id: string;
+  evaluations: Evaluation[];
+  archivedFeaturesIds: string[];
+  forceUpdate: boolean;
   expected: {
-    id: string,
-    evaluations: Evaluation[],
-    archivedFeaturesIds: string[],
-    forceUpdate: boolean
-  }
-}
+    id: string;
+    evaluations: Evaluation[];
+    archivedFeaturesIds: string[];
+    forceUpdate: boolean;
+  };
+};
 
 // Test cases pattern similar to the Go version
 const NewUserEvaluationsTestCases: NewUserEvaluationsTestCase[] = [
@@ -58,29 +58,36 @@ const NewUserEvaluationsTestCases: NewUserEvaluationsTestCase[] = [
       archivedFeaturesIds: [],
       forceUpdate: true,
     },
-  }
+  },
 ];
 
 // Iterate over each test case
-NewUserEvaluationsTestCases.forEach(({ id, evaluations, archivedFeaturesIds, forceUpdate, expected }) => {
-  test(`NewUserEvaluations - ${id}`, t => {
-    const actual = userEvaluation.NewUserEvaluations(id, evaluations, archivedFeaturesIds, forceUpdate);
-    
-    t.is(actual.getId(), expected.id);
-    t.deepEqual(actual.getEvaluationsList(), expected.evaluations);
-    t.deepEqual(actual.getArchivedFeatureIdsList(), expected.archivedFeaturesIds);
-    t.is(actual.getForceUpdate(), expected.forceUpdate);
-    t.truthy(actual.getCreatedAt()); // Check if CreatedAt is set, similar to NotZero in Go
-    //TODO: Check me - did Golang test is missing this
-    //t.deepEqual(actual.toObject(), expected);
-  });
-});
+NewUserEvaluationsTestCases.forEach(
+  ({ id, evaluations, archivedFeaturesIds, forceUpdate, expected }) => {
+    test(`NewUserEvaluations - ${id}`, (t) => {
+      const actual = userEvaluation.NewUserEvaluations(
+        id,
+        evaluations,
+        archivedFeaturesIds,
+        forceUpdate,
+      );
+
+      t.is(actual.getId(), expected.id);
+      t.deepEqual(actual.getEvaluationsList(), expected.evaluations);
+      t.deepEqual(actual.getArchivedFeatureIdsList(), expected.archivedFeaturesIds);
+      t.is(actual.getForceUpdate(), expected.forceUpdate);
+      t.truthy(actual.getCreatedAt()); // Check if CreatedAt is set, similar to NotZero in Go
+      //TODO: Check me - did Golang test is missing this
+      //t.deepEqual(actual.toObject(), expected);
+    });
+  },
+);
 
 // Test cases similar to the Go version
 type SortMapKeysTestCase = {
-  input: { [key: string]: string } | null,
-  expected: string[],
-  desc: string
+  input: { [key: string]: string } | null;
+  expected: string[];
+  desc: string;
 };
 
 const SortMapTestCases: SortMapKeysTestCase[] = [
@@ -95,7 +102,7 @@ const SortMapTestCases: SortMapKeysTestCase[] = [
     desc: 'empty',
   },
   {
-    input: { 'b': 'value-b', 'c': 'value-c', 'a': 'value-a', 'd': 'value-d' },
+    input: { b: 'value-b', c: 'value-c', a: 'value-a', d: 'value-d' },
     expected: ['a', 'b', 'c', 'd'],
     desc: 'success',
   },
@@ -103,7 +110,7 @@ const SortMapTestCases: SortMapKeysTestCase[] = [
 
 // Run each test case
 SortMapTestCases.forEach(({ input, expected, desc }) => {
-  test(`sortMapKeys - ${desc}`, t => {
+  test(`sortMapKeys - ${desc}`, (t) => {
     const actual = sortMapKeys(input ?? {});
     t.deepEqual(actual, expected, desc);
   });
@@ -111,9 +118,9 @@ SortMapTestCases.forEach(({ input, expected, desc }) => {
 
 // Define test case structure
 type GenerateFeaturesIDTestCase = {
-  desc: string,
-  input: Feature[] | null,
-  expected: string
+  desc: string;
+  input: Feature[] | null;
+  expected: string;
 };
 
 // Define the test cases
@@ -130,17 +137,14 @@ const GenerateFeaturesIDTestCases: GenerateFeaturesIDTestCase[] = [
   },
   {
     desc: 'success: multiple',
-    input: [
-      NewFeature('id-1', 1),
-      NewFeature('id-2', 2),
-    ],
+    input: [NewFeature('id-1', 1), NewFeature('id-2', 2)],
     expected: '17283374094628184689', // Example expected value
-  }
+  },
 ];
 
 // Run each test case
 GenerateFeaturesIDTestCases.forEach(({ desc, input, expected }) => {
-  test(`GenerateFeaturesID - ${desc}`, t => {
+  test(`GenerateFeaturesID - ${desc}`, (t) => {
     const actual = GenerateFeaturesID(input ?? []);
     t.is(actual, expected, desc);
   });

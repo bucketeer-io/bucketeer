@@ -5,7 +5,7 @@ class DependencyEvaluator {
   evaluate(
     featureID: string,
     variationIDs: string[],
-    flagVariations: { [key: string]: string }
+    flagVariations: { [key: string]: string },
   ): boolean {
     const targetVarID = flagVariations[featureID];
 

@@ -5,7 +5,7 @@ import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 export default [
   {
     files: ['src/**/*.ts', 'test/**/*.ts'],
-    ignores: ['**/*.d.ts'],
+    ignores: ['**/*.d.ts', 'src/google/', 'src/protoc-gen-openapiv2/', 'src/proto/'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {

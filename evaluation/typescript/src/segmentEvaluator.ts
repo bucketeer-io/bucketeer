@@ -1,24 +1,15 @@
 import { SegmentUser } from './proto/feature/segment_pb';
 //
 class SegmentEvaluator {
-  evaluate(
-    segmentIDs: string[],
-    userID: string,
-    segmentUsers: SegmentUser[]
-  ): boolean {
-    return this.findSegmentUser(
-      segmentIDs,
-      userID,
-      SegmentUser.State.INCLUDED,
-      segmentUsers
-    );
+  evaluate(segmentIDs: string[], userID: string, segmentUsers: SegmentUser[]): boolean {
+    return this.findSegmentUser(segmentIDs, userID, SegmentUser.State.INCLUDED, segmentUsers);
   }
 
   private findSegmentUser(
     segmentIDs: string[],
     userID: string,
     state: SegmentUser.StateMap[keyof SegmentUser.StateMap],
-    segmentUsers: SegmentUser[]
+    segmentUsers: SegmentUser[],
   ): boolean {
     for (const segmentID of segmentIDs) {
       if (!this.containsSegmentUser(segmentID, userID, state, segmentUsers)) {
@@ -32,7 +23,7 @@ class SegmentEvaluator {
     segmentID: string,
     userID: string,
     state: SegmentUser.StateMap[keyof SegmentUser.StateMap],
-    segmentUsers: SegmentUser[]
+    segmentUsers: SegmentUser[],
   ): boolean {
     for (const user of segmentUsers) {
       if (user.getSegmentId() !== segmentID) {

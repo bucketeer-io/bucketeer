@@ -4,8 +4,8 @@ import { newTestFeature } from './evaluate_feature_test';
 import { Evaluator } from '../../evaluation';
 import { Reason } from '../../proto/feature/reason_pb';
 
-test('no default strategy', t => {
-  const user = createUser('user-id1', {'name3': 'user3'});
+test('no default strategy', (t) => {
+  const user = createUser('user-id1', { name3: 'user3' });
   const f = newTestFeature('test-feature');
   f.clearDefaultStrategy();
   const evalator = new Evaluator();
@@ -17,8 +17,8 @@ test('no default strategy', t => {
   }
 });
 
-test('with default strategy', t => {
-  const user = createUser('user-id1', {'name3': 'user3'});
+test('with default strategy', (t) => {
+  const user = createUser('user-id1', { name3: 'user3' });
   const f = newTestFeature('test-feature');
   const evalator = new Evaluator();
   const [reason, variation] = evalator.assignUser(f, user, [], {});

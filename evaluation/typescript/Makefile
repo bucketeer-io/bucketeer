@@ -51,6 +51,10 @@ tsfmt:
 lint:
 	$(NPM_BIN_DIR)/eslint
 
+.PHONY: fixLintErrors
+fixLintErrors:
+	$(NPM_BIN_DIR)/eslint --fix
+
 .PHONY: copy-genfiles
 copy-genfiles:
 	@rm -rf $(CURDIR)/lib
@@ -86,7 +90,7 @@ NPM_BIN_DIR := $(CURDIR)/node_modules/.bin
 copy_proto_generated_code: clean_proto
 	cp -r $(WEB_UI_SRC_DIR)/proto/feature $(SRC_DIR)/proto/
 	cp -r $(WEB_UI_SRC_DIR)/proto/user $(SRC_DIR)/proto/	
-	cp -r $(WEB_UI_SRC_DIR)/google $(SRC_DIR)/google
+	cp -r $(WEB_UI_SRC_DIR)/google $(SRC_DIR)/
 
 .PHONY: clean_proto
 clean_proto:

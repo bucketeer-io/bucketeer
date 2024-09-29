@@ -271,7 +271,7 @@ test('TestGreaterOrEqualFloat', (t) => {
   });
 });
 
-test('TestGreaterOrEqualSemver', t => {
+test('TestGreaterOrEqualSemver', (t) => {
   const testcases = [
     {
       targetValue: '1.0.0',
@@ -352,11 +352,15 @@ test('TestGreaterOrEqualSemver', t => {
     clause.setValuesList(tc.values);
 
     const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
-    t.is(result, tc.expected, `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`);
+    t.is(
+      result,
+      tc.expected,
+      `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`,
+    );
   });
 });
 
-test('TestGreaterOrEqualString', t => {
+test('TestGreaterOrEqualString', (t) => {
   const testcases = [
     {
       targetValue: 'b',
@@ -408,11 +412,15 @@ test('TestGreaterOrEqualString', t => {
     clause.setValuesList(tc.values);
 
     const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
-    t.is(result, tc.expected, `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`);
+    t.is(
+      result,
+      tc.expected,
+      `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`,
+    );
   });
 });
 
-test('TestLessThanSemver', t => {
+test('TestLessThanSemver', (t) => {
   const testcases = [
     {
       targetValue: '1.0.0',
@@ -464,11 +472,15 @@ test('TestLessThanSemver', t => {
     clause.setValuesList(tc.values);
 
     const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
-    t.is(result, tc.expected, `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`);
+    t.is(
+      result,
+      tc.expected,
+      `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`,
+    );
   });
 });
 
-test('TestLessFloat', t => {
+test('TestLessFloat', (t) => {
   const testcases = [
     // Int cases
     {
@@ -577,11 +589,15 @@ test('TestLessFloat', t => {
     clause.setValuesList(tc.values);
 
     const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
-    t.is(result, tc.expected, `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`);
+    t.is(
+      result,
+      tc.expected,
+      `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`,
+    );
   });
 });
 
-test('TestLessString', t => {
+test('TestLessString', (t) => {
   const testcases = [
     {
       targetValue: 'c',
@@ -623,11 +639,15 @@ test('TestLessString', t => {
     clause.setValuesList(tc.values);
 
     const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
-    t.is(result, tc.expected, `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`);
+    t.is(
+      result,
+      tc.expected,
+      `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`,
+    );
   });
 });
 
-test('TestLessOrEqualFloat', t => {
+test('TestLessOrEqualFloat', (t) => {
   const testcases = [
     // Int
     {
@@ -761,11 +781,15 @@ test('TestLessOrEqualFloat', t => {
     clause.setValuesList(tc.values);
 
     const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
-    t.is(result, tc.expected, `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`);
+    t.is(
+      result,
+      tc.expected,
+      `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`,
+    );
   });
 });
 
-test('TestLessThanOrEqualSemver', t => {
+test('TestLessThanOrEqualSemver', (t) => {
   const testcases = [
     {
       targetValue: '1.0.1',
@@ -824,7 +848,7 @@ test('TestLessThanOrEqualSemver', t => {
     },
   ];
 
-  const clauseEvaluator = new ClauseEvaluator(); 
+  const clauseEvaluator = new ClauseEvaluator();
 
   testcases.forEach((tc, i) => {
     const clause = new Clause();
@@ -832,11 +856,15 @@ test('TestLessThanOrEqualSemver', t => {
     clause.setValuesList(tc.values);
 
     const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
-    t.is(result, tc.expected, `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`);
+    t.is(
+      result,
+      tc.expected,
+      `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`,
+    );
   });
 });
 
-test('TestLessOrEqualString', t => {
+test('TestLessOrEqualString', (t) => {
   const testcases = [
     {
       targetValue: 'd',
@@ -888,11 +916,15 @@ test('TestLessOrEqualString', t => {
     clause.setValuesList(tc.values);
 
     const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
-    t.is(result, tc.expected, `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`);
+    t.is(
+      result,
+      tc.expected,
+      `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`,
+    );
   });
 });
 
-test('TestBeforeInt', t => {
+test('TestBeforeInt', (t) => {
   const testcases = [
     // Int
     {
@@ -946,11 +978,15 @@ test('TestBeforeInt', t => {
     clause.setValuesList(tc.values);
 
     const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
-    t.is(result, tc.expected, `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`);
+    t.is(
+      result,
+      tc.expected,
+      `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`,
+    );
   });
 });
 
-test('TestAfterInt', t => {
+test('TestAfterInt', (t) => {
   const testcases = [
     // Int
     {
@@ -1000,12 +1036,16 @@ test('TestAfterInt', t => {
     clause.setValuesList(tc.values);
 
     const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
-    t.is(result, tc.expected, `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`);
+    t.is(
+      result,
+      tc.expected,
+      `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`,
+    );
   });
 });
 
 // TestInOperator does not exist on the Go version testcases
-test('TestInOperator', t => {
+test('TestInOperator', (t) => {
   const testcases = [
     // Exact match
     {
@@ -1078,12 +1118,16 @@ test('TestInOperator', t => {
     clause.setValuesList(tc.values);
 
     const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
-    t.is(result, tc.expected, `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`);
+    t.is(
+      result,
+      tc.expected,
+      `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`,
+    );
   });
 });
 
 // TestStartsWithOperator does not exist on the Go version testcases
-test('TestStartsWithOperator', t => {
+test('TestStartsWithOperator', (t) => {
   const testcases = [
     // Exact starts with match
     {
@@ -1189,12 +1233,16 @@ test('TestStartsWithOperator', t => {
     clause.setValuesList(tc.values);
 
     const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
-    t.is(result, tc.expected, `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`);
+    t.is(
+      result,
+      tc.expected,
+      `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`,
+    );
   });
 });
 
 // TestEndsWithOperator does not exist on the Go version testcases
-test('TestEndsWithOperator', t => {
+test('TestEndsWithOperator', (t) => {
   const testcases = [
     // Simple ends with match
     {
@@ -1300,12 +1348,16 @@ test('TestEndsWithOperator', t => {
     clause.setValuesList(tc.values);
 
     const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
-    t.is(result, tc.expected, `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`);
+    t.is(
+      result,
+      tc.expected,
+      `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`,
+    );
   });
 });
 
 // TestEndsWithOperator does not exist on the Go version testcases
-test('TestPartiallyMatchesOperator', t => {
+test('TestPartiallyMatchesOperator', (t) => {
   const testcases = [
     // Simple partial match
     {
@@ -1431,19 +1483,27 @@ test('TestPartiallyMatchesOperator', t => {
     clause.setValuesList(tc.values);
 
     const result = clauseEvaluator.evaluate(tc.targetValue, clause, 'userId', [], {});
-    t.is(result, tc.expected, `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`);
+    t.is(
+      result,
+      tc.expected,
+      `Test case ${i} failed: targetValue ${tc.targetValue} : values ${tc.values}`,
+    );
   });
 });
 
 // TestSegementMatchesOperator does not exist on the Go version testcases
-test('TestSegementMatchesOperator', t => {
+test('TestSegementMatchesOperator', (t) => {
   const clauseEvaluator = new ClauseEvaluator();
-  
+
   SegmentEvaluatorTestCases.forEach((tc, i) => {
     const clause = new Clause();
     clause.setOperator(Clause.Operator.SEGMENT);
-    clause.setValuesList(tc.segmentIDs)
+    clause.setValuesList(tc.segmentIDs);
     const result = clauseEvaluator.evaluate('', clause, tc.userID, tc.segmentUsers, {});
-    t.is(result, tc.expected, `Test case ${i} failed: userID ${tc.userID} : segmentUsers ${tc.segmentUsers}`);
+    t.is(
+      result,
+      tc.expected,
+      `Test case ${i} failed: userID ${tc.userID} : segmentUsers ${tc.segmentUsers}`,
+    );
   });
 });

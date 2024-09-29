@@ -14,27 +14,27 @@ const TestFeatureIDs = {
   fID0: 'fID0',
   fID1: 'fID1',
   fID2: 'fID2',
-}
+};
 
 export const TestVariations = {
   variationA: createVariation('variation-A', 'A', 'Variation A', 'Thing does A'),
   variationB: createVariation('variation-B', 'B', 'Variation B', 'Thing does B'),
-  variationC: createVariation('variation-C', 'C', 'Variation C', 'Thing does C')
-}
+  variationC: createVariation('variation-C', 'C', 'Variation C', 'Thing does C'),
+};
 
 export function newTestFeature(id: string): Feature {
   // Variations
   const variations = [
     TestVariations.variationA.toObject(),
     TestVariations.variationB.toObject(),
-    TestVariations.variationC.toObject()
-  ]
+    TestVariations.variationC.toObject(),
+  ];
 
   // Targets
   const targets = [
     { variation: 'variation-A', users: ['user1'] },
     { variation: 'variation-B', users: ['user2'] },
-    { variation: 'variation-C', users: ['user3'] }
+    { variation: 'variation-C', users: ['user3'] },
   ];
 
   // Rules
@@ -44,21 +44,21 @@ export function newTestFeature(id: string): Feature {
       attribute: 'name',
       operator: Clause.Operator.EQUALS,
       values: ['user1', 'user2'],
-      fixedVariation: 'variation-A'
+      fixedVariation: 'variation-A',
     },
     {
       id: 'rule-2',
       attribute: 'name',
       operator: Clause.Operator.EQUALS,
       values: ['user3', 'user4'],
-      fixedVariation: 'variation-B'
-    }
+      fixedVariation: 'variation-B',
+    },
   ];
 
   // Default Strategy
   const defaultStrategy = {
     type: Strategy.Type.FIXED,
-    variation: 'variation-B'
+    variation: 'variation-B',
   };
 
   // Call the second function to create and return the Feature
@@ -73,17 +73,17 @@ export function newTestFeature(id: string): Feature {
     targets: targets,
     rules: rules,
     defaultStrategy: defaultStrategy,
-    prerequisitesList: []
+    prerequisitesList: [],
   });
 }
 
 const findEvaluation = (evaluations: Evaluation[], featureId: string): Evaluation | null => {
-  return evaluations.find(e => e.getFeatureId() === featureId) || null;
+  return evaluations.find((e) => e.getFeatureId() === featureId) || null;
 };
 
-test('EvaluateFeature', async t => {
+test('EvaluateFeature', async (t) => {
   const f = newTestFeature(TestFeatureIDs.fID0);
-  f.getTagsList().push('tag1')
+  f.getTagsList().push('tag1');
 
   const f1 = newTestFeature(TestFeatureIDs.fID1);
   f1.getTagsList().push('tag1');
@@ -91,7 +91,7 @@ test('EvaluateFeature', async t => {
   f1.setOffVariation(TestVariations.variationA.getId());
 
   const f2 = newTestFeature(TestFeatureIDs.fID2);
-  f2.getTagsList().push('tag1')
+  f2.getTagsList().push('tag1');
 
   const patterns = [
     {
@@ -115,8 +115,8 @@ test('EvaluateFeature', async t => {
         variationId: 'variation-A',
         variationName: 'Variation A',
         variationValue: 'A',
-        variation: { id: 'variation-A', name: 'Variation A', value: 'A', description: '', },
-        reason: { ruleId: '', type: Reason.Type.OFF_VARIATION, },
+        variation: { id: 'variation-A', name: 'Variation A', value: 'A', description: '' },
+        reason: { ruleId: '', type: Reason.Type.OFF_VARIATION },
       },
       expectedError: null,
     },
@@ -133,7 +133,7 @@ test('EvaluateFeature', async t => {
         variationId: 'variation-B',
         variationName: 'Variation B',
         variationValue: 'B',
-        variation: { id: 'variation-B', name: 'Variation B', value: 'B', description: '', },
+        variation: { id: 'variation-B', name: 'Variation B', value: 'B', description: '' },
         reason: { ruleId: '', type: Reason.Type.DEFAULT },
       },
       expectedError: null,
@@ -151,7 +151,7 @@ test('EvaluateFeature', async t => {
         variationId: 'variation-B',
         variationName: 'Variation B',
         variationValue: 'B',
-        variation: { id: 'variation-B', name: 'Variation B', value: 'B', description: '', },
+        variation: { id: 'variation-B', name: 'Variation B', value: 'B', description: '' },
         reason: { ruleId: '', type: Reason.Type.DEFAULT },
       },
       expectedError: null,
@@ -160,9 +160,7 @@ test('EvaluateFeature', async t => {
       enabled: true,
       offVariation: 'variation-A',
       userID: 'uID2',
-      prerequisite: [
-        createPrerequisite(f1.getId(), TestVariations.variationB.getId())
-      ],
+      prerequisite: [createPrerequisite(f1.getId(), TestVariations.variationB.getId())],
       expected: {
         id: EvaluationID(f.getId(), f.getVersion(), 'uID2'),
         featureId: 'fID0',
@@ -171,7 +169,7 @@ test('EvaluateFeature', async t => {
         variationId: 'variation-A',
         variationName: 'Variation A',
         variationValue: 'A',
-        variation: { id: 'variation-A', name: 'Variation A', value: 'A', description: '', },
+        variation: { id: 'variation-A', name: 'Variation A', value: 'A', description: '' },
         reason: { ruleId: '', type: Reason.Type.PREREQUISITE },
       },
       expectedError: null,
@@ -180,9 +178,7 @@ test('EvaluateFeature', async t => {
       enabled: true,
       offVariation: '',
       userID: 'uID2',
-      prerequisite: [
-        createPrerequisite(f2.getId(), TestVariations.variationA.getId())
-      ],
+      prerequisite: [createPrerequisite(f2.getId(), TestVariations.variationA.getId())],
       expected: {
         id: EvaluationID(f.getId(), f.getVersion(), 'uID2'),
         featureId: 'fID0',
@@ -191,7 +187,7 @@ test('EvaluateFeature', async t => {
         variationId: 'variation-B',
         variationName: 'Variation B',
         variationValue: 'B',
-        variation: { id: 'variation-B', name: 'Variation B', value: 'B',  description: '', },
+        variation: { id: 'variation-B', name: 'Variation B', value: 'B', description: '' },
         reason: { ruleId: '', type: Reason.Type.DEFAULT },
       },
       expectedError: null,
@@ -204,7 +200,7 @@ test('EvaluateFeature', async t => {
     f.setEnabled(p.enabled);
     f.setOffVariation(p.offVariation);
     f.setPrerequisitesList(p.prerequisite);
-    
+
     const segmentUser: Map<string, SegmentUser[]> = new Map<string, SegmentUser[]>();
     try {
       const evaluation = await evaluator.evaluateFeatures([f, f1, f2], user, segmentUser, 'tag1');
@@ -212,7 +208,7 @@ test('EvaluateFeature', async t => {
         const actual = findEvaluation(evaluation.getEvaluationsList(), f.getId());
         t.deepEqual(p.expected, actual?.toObject());
       }
-    } catch(error) {
+    } catch (error) {
       if (error instanceof Error || error === null) {
         t.deepEqual(p.expectedError, error);
       } else {

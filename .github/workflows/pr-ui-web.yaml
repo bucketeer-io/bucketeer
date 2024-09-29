@@ -8,7 +8,6 @@ on:
       - "ui/web-v2/**"
       - "!**/**.md"
       - "proto/**"
-      - "evaluation/typescript/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

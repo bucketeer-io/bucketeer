@@ -105,10 +105,7 @@ const patterns: TestCase[] = [
     targets: [
       creatFeature({
         id: 'featureA',
-        prerequisitesList: [
-          createPrerequisite('featureB', ''),
-          createPrerequisite('featureC', ''),
-        ],
+        prerequisitesList: [createPrerequisite('featureB', ''), createPrerequisite('featureC', '')],
       }),
     ],
     all: [
@@ -159,10 +156,7 @@ const patterns: TestCase[] = [
       }),
       creatFeature({
         id: 'featureE',
-        prerequisitesList: [
-          createPrerequisite('featureC', ''),
-          createPrerequisite('featureD', ''),
-        ],
+        prerequisitesList: [createPrerequisite('featureC', ''), createPrerequisite('featureD', '')],
       }),
       creatFeature({
         id: 'featureF',

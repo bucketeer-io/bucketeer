@@ -14,7 +14,7 @@ import { User } from './proto/user/user_pb';
 export function createUser(id: string, data: Record<string, string> | null): User {
   const user = new User();
   user.setId(id);
-  let map = user.getDataMap()
+  let map = user.getDataMap();
   if (data != null) {
     Object.entries(data).forEach(([key, value]) => map.set(key, value));
   }
@@ -23,24 +23,26 @@ export function createUser(id: string, data: Record<string, string> | null): Use
 
 export function creatFeature(
   options: {
-    id?: string,
-    name?: string,
-    version?: number,
-    enabled?: boolean,
-    createdAt?: number,
-    variationType?: Feature.VariationTypeMap[keyof Feature.VariationTypeMap],
-    variations?: Array<{ id: string; value: string; name: string; description: string }>,
-    targets?: Array<{ variation: string; users: string[] }>,
+    id?: string;
+    name?: string;
+    version?: number;
+    enabled?: boolean;
+    createdAt?: number;
+    variationType?: Feature.VariationTypeMap[keyof Feature.VariationTypeMap];
+    variations?: Array<{ id: string; value: string; name: string; description: string }>;
+    targets?: Array<{ variation: string; users: string[] }>;
     rules?: Array<{
       id: string;
       attribute: string;
       operator: Clause.OperatorMap[keyof Clause.OperatorMap];
       values: string[];
       fixedVariation: string;
-    }>,
-    defaultStrategy?: { type: Strategy.TypeMap[keyof Strategy.TypeMap]; variation: string } | undefined,
-    prerequisitesList?: Array<Prerequisite>,
-  } = {}
+    }>;
+    defaultStrategy?:
+      | { type: Strategy.TypeMap[keyof Strategy.TypeMap]; variation: string }
+      | undefined;
+    prerequisitesList?: Array<Prerequisite>;
+  } = {},
 ): Feature {
   const defaultOptions = {
     id: '',
@@ -67,22 +69,29 @@ export function creatFeature(
   feature.setVariationType(finalOptions.variationType);
 
   // Set variations
-  const variationList = finalOptions.variations.map(v => createVariation(v.id, v.value, v.name, v.description));
+  const variationList = finalOptions.variations.map((v) =>
+    createVariation(v.id, v.value, v.name, v.description),
+  );
   feature.setVariationsList(variationList);
 
   // Set targets
-  const targetList = finalOptions.targets.map(t => createTarget(t.variation, t.users));
+  const targetList = finalOptions.targets.map((t) => createTarget(t.variation, t.users));
   feature.setTargetsList(targetList);
 
   // Set rules
-  const ruleList = finalOptions.rules.map(r => createRule(r.id, r.attribute, r.operator, r.values, r.fixedVariation));
+  const ruleList = finalOptions.rules.map((r) =>
+    createRule(r.id, r.attribute, r.operator, r.values, r.fixedVariation),
+  );
   feature.setRulesList(ruleList);
 
   // Set default strategy
   const defaultStrategy = finalOptions.defaultStrategy;
   if (defaultStrategy !== undefined) {
     const defaultFixedStrategy = createFixedStrategy(defaultStrategy.variation);
-    const strategy = createStrategy({ type: defaultStrategy.type, fixedStrategy: defaultFixedStrategy });
+    const strategy = createStrategy({
+      type: defaultStrategy.type,
+      fixedStrategy: defaultFixedStrategy,
+    });
     feature.setDefaultStrategy(strategy);
   }
 
@@ -98,21 +107,17 @@ export function createTarget(variation: string, users: string[]): Target {
   return target;
 }
 
-export function createFixedStrategy(
-  variation: string,
-): FixedStrategy {
+export function createFixedStrategy(variation: string): FixedStrategy {
   const fixedStrategy = new FixedStrategy();
   fixedStrategy.setVariation(variation);
   return fixedStrategy;
 }
 
-export function createRolloutStrategy(
-  options: {
-    variations: Array<{ variation: string; weight: number }>,
-  }
-): RolloutStrategy {
+export function createRolloutStrategy(options: {
+  variations: Array<{ variation: string; weight: number }>;
+}): RolloutStrategy {
   const rolloutStrategy = new RolloutStrategy();
-  const variations = options.variations.map(v => {
+  const variations = options.variations.map((v) => {
     const variation = new RolloutStrategy.Variation();
     variation.setVariation(v.variation);
     variation.setWeight(v.weight);
@@ -122,13 +127,11 @@ export function createRolloutStrategy(
   return rolloutStrategy;
 }
 
-export function createStrategy(
-  options:{
-    type: Strategy.TypeMap[keyof Strategy.TypeMap],
-    fixedStrategy?: FixedStrategy,
-    rolloutStrategy?: RolloutStrategy,
-  }
-): Strategy {
+export function createStrategy(options: {
+  type: Strategy.TypeMap[keyof Strategy.TypeMap];
+  fixedStrategy?: FixedStrategy;
+  rolloutStrategy?: RolloutStrategy;
+}): Strategy {
   const strategy = new Strategy();
   strategy.setType(options.type);
   strategy.setFixedStrategy(options.fixedStrategy);
@@ -194,7 +197,7 @@ export function createVariation(
   id: string,
   value: string,
   name: string,
-  description: string
+  description: string,
 ): Variation {
   const variation = new Variation();
   variation.setId(id);
@@ -229,10 +232,7 @@ export function createEvaluation(
 
 //TODO: should we set the ruleId to empty string as default?
 //TODO: create optional constructor for Reason
-export function createReason(
-  ruleId: string,
-  type: Reason.TypeMap[keyof Reason.TypeMap],
-): Reason {
+export function createReason(ruleId: string, type: Reason.TypeMap[keyof Reason.TypeMap]): Reason {
   const reason = new Reason();
   reason.setType(type);
   reason.setRuleId(ruleId);

@@ -1,8 +1,5 @@
 import test from 'ava';
-import {
-  createPrerequisite,
-  creatFeature,
-} from '../../modelFactory';
+import { createPrerequisite, creatFeature } from '../../modelFactory';
 import { Evaluator } from '../../evaluation';
 
 /*
@@ -109,21 +106,13 @@ var allFeaturesForPrerequisiteTest = {
 const TestCases = [
   {
     desc: 'success: No prerequisites',
-    target: [
-      allFeaturesForPrerequisiteTest.featureB,
-      allFeaturesForPrerequisiteTest.featureD,
-    ],
-    expected: [
-      allFeaturesForPrerequisiteTest.featureB,
-      allFeaturesForPrerequisiteTest.featureD,
-    ],
+    target: [allFeaturesForPrerequisiteTest.featureB, allFeaturesForPrerequisiteTest.featureD],
+    expected: [allFeaturesForPrerequisiteTest.featureB, allFeaturesForPrerequisiteTest.featureD],
     expectedErr: null,
   },
   {
     desc: 'success: Get prerequisites pattern1',
-    target: [
-      allFeaturesForPrerequisiteTest.featureA,
-    ],
+    target: [allFeaturesForPrerequisiteTest.featureA],
     expected: [
       allFeaturesForPrerequisiteTest.featureA,
       allFeaturesForPrerequisiteTest.featureE,
@@ -138,10 +127,7 @@ const TestCases = [
   },
   {
     desc: 'success: Get prerequisites pattern2',
-    target: [
-      allFeaturesForPrerequisiteTest.featureC,
-      allFeaturesForPrerequisiteTest.featureD,
-    ],
+    target: [allFeaturesForPrerequisiteTest.featureC, allFeaturesForPrerequisiteTest.featureD],
     expected: [
       allFeaturesForPrerequisiteTest.featureC,
       allFeaturesForPrerequisiteTest.featureL,
@@ -153,17 +139,13 @@ const TestCases = [
   },
   {
     desc: 'success: Get prerequisites pattern3',
-    target: [
-      allFeaturesForPrerequisiteTest.featureD,
-      allFeaturesForPrerequisiteTest.featureH,
-    ],
+    target: [allFeaturesForPrerequisiteTest.featureD, allFeaturesForPrerequisiteTest.featureH],
     expected: [
       allFeaturesForPrerequisiteTest.featureD,
       allFeaturesForPrerequisiteTest.featureH,
       allFeaturesForPrerequisiteTest.featureI,
       allFeaturesForPrerequisiteTest.featureK,
       allFeaturesForPrerequisiteTest.featureJ,
-
     ],
     expectedErr: null,
   },
