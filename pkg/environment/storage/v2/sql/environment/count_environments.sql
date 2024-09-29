@@ -2,4 +2,4 @@ SELECT
     COUNT(1)
 FROM
     environment_v2
-%s %s
+%s
