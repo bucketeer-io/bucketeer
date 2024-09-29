@@ -4,7 +4,7 @@ import { Feature } from '../proto/feature/feature_pb';
 import { FixedStrategy, Strategy } from '../proto/feature/strategy_pb';
 import { Clause } from '../proto/feature/clause_pb';
 import { RuleEvaluator } from '../ruleEvaluator';
-import { User } from '../proto/user/user/user_pb';
+import { User } from '../proto/user/user_pb';
 import { SegmentUser } from '../proto/feature/segment_pb';
 import { createRule, createSegmentUser, createUser, createVariation } from '../modelFactory';
 

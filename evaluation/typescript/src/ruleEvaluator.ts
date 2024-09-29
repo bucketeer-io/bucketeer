@@ -1,6 +1,6 @@
 import { Rule } from './proto/feature/rule_pb';
 import { Clause } from './proto/feature/clause_pb';
-import { User } from './proto/user/user/user_pb';
+import { User } from './proto/user/user_pb';
 import { SegmentUser } from './proto/feature/segment_pb';
 import { ClauseEvaluator } from './clauseEvaluator';
 //

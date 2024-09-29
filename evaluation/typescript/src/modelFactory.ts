@@ -8,7 +8,7 @@ import { SegmentUser } from './proto/feature/segment_pb';
 import { FixedStrategy, RolloutStrategy, Strategy } from './proto/feature/strategy_pb';
 import { Target } from './proto/feature/target_pb';
 import { Variation } from './proto/feature/variation_pb';
-import { User } from './proto/user/user/user_pb';
+import { User } from './proto/user/user_pb';
 
 // Helper function to create a User instance
 export function createUser(id: string, data: Record<string, string> | null): User {

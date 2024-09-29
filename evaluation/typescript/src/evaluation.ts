@@ -5,7 +5,7 @@ import { Feature } from './proto/feature/feature_pb';
 import { Reason } from './proto/feature/reason_pb';
 import { SegmentUser } from './proto/feature/segment_pb';
 import { Variation } from './proto/feature/variation_pb';
-import { User } from './proto/user/user/user_pb';
+import { User } from './proto/user/user_pb';
 import { RuleEvaluator } from './ruleEvaluator';
 import { StrategyEvaluator } from './strategyEvaluator';
 import { NewUserEvaluations, UserEvaluationsID } from './userEvaluation';

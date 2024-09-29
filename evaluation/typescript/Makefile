@@ -77,17 +77,16 @@ endif
 # Copy proto definition files
 ####################################
 
-ROOT_DIR := $(CURDIR)/..
+ROOT_DIR := $(CURDIR)/../..
 WEB_UI_SRC_DIR := $(ROOT_DIR)/ui/web-v2/src
 SRC_DIR := $(CURDIR)/src
 NPM_BIN_DIR := $(CURDIR)/node_modules/.bin
 
 .PHONY: copy_proto_generated_code
 copy_proto_generated_code: clean_proto
-	cp -r $(WEB_UI_SRC_DIR)/proto/feature $(SRC_DIR)/proto/feature
-	cp -r $(WEB_UI_SRC_DIR)/proto/user $(SRC_DIR)/proto/user	
+	cp -r $(WEB_UI_SRC_DIR)/proto/feature $(SRC_DIR)/proto/
+	cp -r $(WEB_UI_SRC_DIR)/proto/user $(SRC_DIR)/proto/	
 	cp -r $(WEB_UI_SRC_DIR)/google $(SRC_DIR)/google
-	yarn lintfix
 
 .PHONY: clean_proto
 clean_proto:
