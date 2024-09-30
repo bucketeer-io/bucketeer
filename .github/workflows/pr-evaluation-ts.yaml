@@ -45,10 +45,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
       - name: Init
-        run: | 
-        make init
-        make copy_proto_generated_code
-
+        run: make init
+      - name: Copy proto generated code
+        run: make copy_proto_generated_code
+        
   lint:
     name: Lint
     defaults:
