@@ -1,6 +1,6 @@
 import test from 'ava';
-import * as userEvaluation from '../userEvaluation'; // Assuming NewUserEvaluations is exported from here
-import { Evaluation } from '../proto/feature/evaluation_pb'; // Import the generated protobuf class
+import * as userEvaluation from '../userEvaluation';
+import { Evaluation } from '../proto/feature/evaluation_pb';
 import { GenerateFeaturesID, sortMapKeys } from '../userEvaluation';
 import { Feature } from '../proto/feature/feature_pb';
 

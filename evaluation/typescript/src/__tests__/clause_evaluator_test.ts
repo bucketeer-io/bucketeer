@@ -255,10 +255,10 @@ test('TestGreaterOrEqualFloat', (t) => {
     },
   ];
 
-  const clauseEvaluator = new ClauseEvaluator(); // Assuming ClauseEvaluator is defined elsewhere
+  const clauseEvaluator = new ClauseEvaluator();
 
   testcases.forEach((tc, i) => {
-    const clause = new Clause(); // Assuming Clause class is defined elsewhere
+    const clause = new Clause();
     clause.setOperator(Clause.Operator.GREATER_OR_EQUAL); // Greater or Equal operator
     clause.setValuesList(tc.values);
 
@@ -908,10 +908,10 @@ test('TestLessOrEqualString', (t) => {
     },
   ];
 
-  const clauseEvaluator = new ClauseEvaluator(); // Assuming ClauseEvaluator is defined elsewhere
+  const clauseEvaluator = new ClauseEvaluator();
 
   testcases.forEach((tc, i) => {
-    const clause = new Clause(); // Assuming Clause class is defined elsewhere
+    const clause = new Clause();
     clause.setOperator(Clause.Operator.LESS_OR_EQUAL); // LESS_OR_EQUAL operator
     clause.setValuesList(tc.values);
 
@@ -970,10 +970,10 @@ test('TestBeforeInt', (t) => {
     },
   ];
 
-  const clauseEvaluator = new ClauseEvaluator(); // Assuming ClauseEvaluator is defined elsewhere
+  const clauseEvaluator = new ClauseEvaluator();
 
   testcases.forEach((tc, i) => {
-    const clause = new Clause(); // Assuming Clause class is defined elsewhere
+    const clause = new Clause();
     clause.setOperator(Clause.Operator.BEFORE); // BEFORE operator
     clause.setValuesList(tc.values);
 
