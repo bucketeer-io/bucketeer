@@ -153,7 +153,7 @@ func (s *accountStorage) ListAPIKeys(
 	}
 	nextOffset := offset + len(apiKeys)
 	var totalCount int64
-	countQuery := fmt.Sprintf(selectAPIKeyV2CountSQLQuery, whereSQL, orderBySQL)
+	countQuery := fmt.Sprintf(selectAPIKeyV2CountSQLQuery, whereSQL)
 	err = s.qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

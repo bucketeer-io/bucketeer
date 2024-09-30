@@ -138,7 +138,7 @@ func (s *auditLogStorage) ListAuditLogs(
 	}
 	nextOffset := offset + len(auditLogs)
 	var totalCount int64
-	countQuery := fmt.Sprintf(selectAuditLogV2CountSQL, whereSQL, orderBySQL)
+	countQuery := fmt.Sprintf(selectAuditLogV2CountSQL, whereSQL)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

@@ -284,8 +284,8 @@ func (s *goalStorage) ListGoals(
 			)
 		FROM
 			goal
-		%s %s
-		`, countConditionSQL, whereSQL, orderBySQL,
+		%s
+		`, countConditionSQL, whereSQL,
 	)
 	err = s.qe.QueryRowContext(ctx, countQuery, prepareArgs...).Scan(&totalCount)
 	if err != nil {

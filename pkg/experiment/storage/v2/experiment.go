@@ -334,8 +334,8 @@ func (s *experimentStorage) ListExperiments(
 			COUNT(1)
 		FROM
 			experiment
-		%s %s
-		`, whereSQL, orderBySQL,
+		%s
+		`, whereSQL,
 	)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {

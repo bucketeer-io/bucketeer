@@ -125,8 +125,8 @@ func (s *tagStorage) ListTags(
 			COUNT(1)
 		FROM
 			tag
-		%s %s
-		`, whereSQL, orderBySQL,
+		%s
+		`, whereSQL,
 	)
 	var totalCount int64
 	if err := s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount); err != nil {

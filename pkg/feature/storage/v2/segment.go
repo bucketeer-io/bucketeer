@@ -342,8 +342,8 @@ func (s *segmentStorage) ListSegments(
 			)
 		FROM
 			segment
-		%s %s
-		`, countConditionSQL, whereSQL, orderBySQL,
+		%s
+		`, countConditionSQL, whereSQL,
 	)
 	err = s.qe.QueryRowContext(ctx, countQuery, prepareArgs...).Scan(&totalCount)
 	if err != nil {
