@@ -88,11 +88,13 @@ NPM_BIN_DIR := $(CURDIR)/node_modules/.bin
 
 .PHONY: copy_proto_generated_code
 copy_proto_generated_code: clean_proto
+	mkdir -p $(SRC_DIR)/proto/feature
+	mkdir -p $(SRC_DIR)/proto/user
 	cp -r $(WEB_UI_SRC_DIR)/proto/feature $(SRC_DIR)/proto/
 	cp -r $(WEB_UI_SRC_DIR)/proto/user $(SRC_DIR)/proto/	
 	cp -r $(WEB_UI_SRC_DIR)/google $(SRC_DIR)/
 
 .PHONY: clean_proto
 clean_proto:
-	rm -rf $(SRC_DIR)/proto/**/*.{js,ts}
-	rm -rf $(SRC_DIR)/google/**/*.{js,ts}
+	rm -rf $(SRC_DIR)/proto
+	rm -rf $(SRC_DIR)/google
