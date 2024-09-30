@@ -1,6 +1,5 @@
 import { EVALUATOR_ERRORS } from './errors';
 
-//
 class DependencyEvaluator {
   evaluate(
     featureID: string,
