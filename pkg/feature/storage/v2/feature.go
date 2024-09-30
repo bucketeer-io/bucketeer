@@ -353,8 +353,8 @@ func (s *featureStorage) ListFeatures(
 			COUNT(1)
 		FROM
 			feature
-		%s %s
-		`, whereSQL, orderBySQL,
+		%s
+		`, whereSQL,
 	)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
@@ -456,8 +456,8 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 		ON
 			feature.id = experiment.feature_id AND
 			feature.environment_namespace = experiment.environment_namespace
-		%s %s
-		`, whereSQL, orderBySQL,
+		%s
+		`, whereSQL,
 	)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {

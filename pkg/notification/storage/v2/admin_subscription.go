@@ -192,7 +192,7 @@ func (s *adminSubscriptionStorage) ListAdminSubscriptions(
 	}
 	nextOffset := offset + len(subscriptions)
 	var totalCount int64
-	countQuery := fmt.Sprintf(selectAdminSubscriptionV2CountSQLQuery, whereSQL, orderBySQL)
+	countQuery := fmt.Sprintf(selectAdminSubscriptionV2CountSQLQuery, whereSQL)
 
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {

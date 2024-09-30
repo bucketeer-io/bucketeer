@@ -253,7 +253,7 @@ func (f flagTriggerStorage) ListFlagTriggers(
 	}
 	nextOffset := offset + len(flagTriggers)
 	var totalCount int64
-	countQuery := fmt.Sprintf(countFlagTriggersSQL, whereSQL, orderBySQL)
+	countQuery := fmt.Sprintf(countFlagTriggersSQL, whereSQL)
 	if err := f.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount); err != nil {
 		return nil, 0, 0, err
 	}

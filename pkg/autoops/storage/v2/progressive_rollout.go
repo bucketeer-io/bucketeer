@@ -195,7 +195,7 @@ func (s *progressiveRolloutStorage) ListProgressiveRollouts(
 	}
 	nextOffset := offset + len(progressiveRollouts)
 	var totalCount int64
-	countQuery := fmt.Sprintf(countOpsProgressiveRolloutsSQL, whereSQL, orderBySQL)
+	countQuery := fmt.Sprintf(countOpsProgressiveRolloutsSQL, whereSQL)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

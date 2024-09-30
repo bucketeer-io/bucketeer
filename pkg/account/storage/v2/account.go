@@ -282,7 +282,7 @@ func (s *accountStorage) ListAccountsV2(
 	}
 	nextOffset := offset + len(accounts)
 	var totalCount int64
-	countQuery := fmt.Sprintf(countAccountsV2SQL, whereSQL, orderBySQL)
+	countQuery := fmt.Sprintf(countAccountsV2SQL, whereSQL)
 	err = s.qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

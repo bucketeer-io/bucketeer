@@ -209,7 +209,7 @@ func (s *subscriptionStorage) ListSubscriptions(
 	}
 	nextOffset := offset + len(subscriptions)
 	var totalCount int64
-	countQuery := fmt.Sprintf(selectSubscriptionV2CountSQLQuery, whereSQL, orderBySQL)
+	countQuery := fmt.Sprintf(selectSubscriptionV2CountSQLQuery, whereSQL)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

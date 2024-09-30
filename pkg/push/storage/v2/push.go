@@ -222,8 +222,8 @@ func (s *pushStorage) ListPushes(
 			COUNT(1)
 		FROM
 			push
-		%s %s
-		`, whereSQL, orderBySQL,
+		%s
+		`, whereSQL,
 	)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
