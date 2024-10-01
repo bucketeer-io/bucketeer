@@ -160,21 +160,6 @@ func (mr *MockAccountStorageMockRecorder) GetSystemAdminAccountV2(ctx, email any
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSystemAdminAccountV2", reflect.TypeOf((*MockAccountStorage)(nil).GetSystemAdminAccountV2), ctx, email)
 }
 
-// IsNewUser mocks base method.
-func (m *MockAccountStorage) IsNewUser(ctx context.Context, email string) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsNewUser", ctx, email)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// IsNewUser indicates an expected call of IsNewUser.
-func (mr *MockAccountStorageMockRecorder) IsNewUser(ctx, email any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsNewUser", reflect.TypeOf((*MockAccountStorage)(nil).IsNewUser), ctx, email)
-}
-
 // ListAPIKeys mocks base method.
 func (m *MockAccountStorage) ListAPIKeys(ctx context.Context, whereParts []mysql.WherePart, orders []*mysql.Order, limit, offset int) ([]*account.APIKey, int, int64, error) {
 	m.ctrl.T.Helper()

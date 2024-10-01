@@ -2776,8 +2776,6 @@ definitions:
     properties:
       email:
         type: string
-      name:
-        type: string
       avatarImageUrl:
         type: string
       organizationId:
@@ -2846,10 +2844,20 @@ definitions:
           $ref: '#/definitions/accountAccountV2EnvironmentRole'
       writeType:
         $ref: '#/definitions/ChangeAccountV2EnvironmentRolesCommandWriteType'
-  accountChangeAccountV2NameCommand:
+  accountChangeAccountV2FirstNameCommand:
     type: object
     properties:
-      name:
+      firstName:
+        type: string
+  accountChangeAccountV2LanguageCommand:
+    type: object
+    properties:
+      language:
+        type: string
+  accountChangeAccountV2LastNameCommand:
+    type: object
+    properties:
+      lastName:
         type: string
   accountChangeAccountV2OrganizationRoleCommand:
     type: object
@@ -2882,8 +2890,6 @@ definitions:
     properties:
       email:
         type: string
-      name:
-        type: string
       avatarUrl:
         type: string
       isSystemAdmin:
@@ -2902,6 +2908,12 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/accountSearchFilter'
+      firstName:
+        type: string
+      lastName:
+        type: string
+      language:
+        type: string
   accountConsoleAccountEnvironmentRole:
     type: object
     properties:
@@ -2935,8 +2947,6 @@ definitions:
     properties:
       email:
         type: string
-      name:
-        type: string
       avatarImageUrl:
         type: string
       organizationRole:
@@ -2946,6 +2956,12 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/accountAccountV2EnvironmentRole'
+      firstName:
+        type: string
+      lastName:
+        type: string
+      language:
+        type: string
   accountCreateAccountV2Request:
     type: object
     properties:
@@ -3285,14 +3301,18 @@ definitions:
         type: string
       organizationId:
         type: string
-      changeNameCommand:
-        $ref: '#/definitions/accountChangeAccountV2NameCommand'
       changeAvatarUrlCommand:
         $ref: '#/definitions/accountChangeAccountV2AvatarImageUrlCommand'
       changeOrganizationRoleCommand:
         $ref: '#/definitions/accountChangeAccountV2OrganizationRoleCommand'
       changeEnvironmentRolesCommand:
         $ref: '#/definitions/accountChangeAccountV2EnvironmentRolesCommand'
+      changeFirstNameCommand:
+        $ref: '#/definitions/accountChangeAccountV2FirstNameCommand'
+      changeLastNameCommand:
+        $ref: '#/definitions/accountChangeAccountV2LastNameCommand'
+      changeLanguageCommand:
+        $ref: '#/definitions/accountChangeAccountV2LanguageCommand'
   accountUpdateAccountV2Response:
     type: object
   accountUpdateSearchFilterRequest:
@@ -3334,8 +3354,6 @@ definitions:
     properties:
       token:
         $ref: '#/definitions/authToken'
-      newUser:
-        type: boolean
   authGetAuthenticationURLRequest:
     type: object
     properties:

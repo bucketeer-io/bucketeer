@@ -95,7 +95,7 @@ func (c *command) createAccount(
 	req := &accountproto.CreateAccountV2Request{
 		Command: &accountproto.CreateAccountV2Command{
 			Email:            *c.email,
-			Name:             strings.Split(*c.email, "@")[0],
+			FirstName:        strings.Split(*c.email, "@")[0],
 			AvatarImageUrl:   "",
 			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 			EnvironmentRoles: envRoles,
