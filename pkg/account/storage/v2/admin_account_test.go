@@ -85,3 +85,8 @@ func TestGetAdminAccountV2(t *testing.T) {
 		})
 	}
 }
+
+func newAccountStorageWithMock(t *testing.T, mockController *gomock.Controller) *accountStorage {
+	t.Helper()
+	return &accountStorage{mock.NewMockClient(mockController)}
+}

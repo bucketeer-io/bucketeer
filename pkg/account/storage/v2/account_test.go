@@ -16,143 +16,108 @@ package v2
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
+	"regexp"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
-	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
+	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
 func TestNewAccountStorage(t *testing.T) {
 	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	storage := NewAccountStorage(mock.NewMockClient(mockController))
+	client, _, _ := mysql.NewSqlMockClient()
+	storage := NewAccountStorage(client)
 	assert.IsType(t, &accountStorage{}, storage)
 }
 
 func TestCreateAccountV2(t *testing.T) {
 	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
 	patterns := []struct {
 		desc        string
-		setup       func(*accountStorage)
-		input       *domain.AccountV2
+		setup       func(sqlmock.Sqlmock)
+		account     *domain.AccountV2
 		expectedErr error
 	}{
 		{
 			desc: "ErrAccountAlreadyExists",
-			setup: func(s *accountStorage) {
-				s.client.(*mock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, mysql.ErrDuplicateEntry)
+			setup: func(sMock sqlmock.Sqlmock) {
+				sMock.ExpectExec("").WillReturnError(mysql.ErrDuplicateEntry)
 			},
-			input: &domain.AccountV2{
-				AccountV2: &proto.AccountV2{Email: "test@example.com"},
+			account: &domain.AccountV2{
+				AccountV2: &proto.AccountV2{},
 			},
 			expectedErr: ErrAccountAlreadyExists,
 		},
 		{
-			desc: "Error",
-			setup: func(s *accountStorage) {
-				s.client.(*mock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
+			desc: "Err: Other error",
+			setup: func(sMock sqlmock.Sqlmock) {
+				sMock.ExpectExec("").WillReturnError(mysql.ErrTxDone)
 			},
-			input: &domain.AccountV2{
-				AccountV2: &proto.AccountV2{Email: "test@example.com"},
+			account: &domain.AccountV2{
+				AccountV2: &proto.AccountV2{},
 			},
-			expectedErr: errors.New("error"),
+			expectedErr: mysql.ErrTxDone,
 		},
 		{
 			desc: "Success",
-			setup: func(s *accountStorage) {
-				s.client.(*mock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
+			setup: func(sMock sqlmock.Sqlmock) {
+				sMock.
+					ExpectExec(
+						regexp.QuoteMeta(
+							`INSERT INTO account_v2 ( email, name, avatar_image_url, organization_id, organization_role, environment_roles, disabled, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+						),
+					).
+					WithArgs(
+						"email",
+						"name",
+						"avatarImageUrl",
+						"organizationId",
+						3,
+						[]byte(`[{"environment_id":"env-0","role":1}]`),
+						false,
+						1,
+						2,
+					).
+					WillReturnResult(sqlmock.NewResult(1, 1))
 			},
-			input: &domain.AccountV2{
-				AccountV2: &proto.AccountV2{Email: "test@example.com"},
+			account: &domain.AccountV2{
+				AccountV2: &proto.AccountV2{
+					Email:            "email",
+					Name:             "name",
+					AvatarImageUrl:   "avatarImageUrl",
+					OrganizationId:   "organizationId",
+					OrganizationRole: proto.AccountV2_Role_Organization_OWNER,
+					EnvironmentRoles: []*proto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "env-0",
+							Role:          proto.AccountV2_Role_Environment_VIEWER,
+						},
+					},
+					CreatedAt:     1,
+					UpdatedAt:     2,
+					Disabled:      false,
+					SearchFilters: nil,
+				},
 			},
 			expectedErr: nil,
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newAccountStorageWithMock(t, mockController)
-			if p.setup != nil {
-				p.setup(storage)
-			}
-			err := storage.CreateAccountV2(context.Background(), p.input)
-			assert.Equal(t, p.expectedErr, err)
-		})
-	}
-}
+			storage, sMock := newAccountStorageWithMockClient(t)
+			defer storage.client.Close()
 
-func TestUpdateAccountV2(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-	patterns := []struct {
-		desc        string
-		setup       func(*accountStorage)
-		input       *domain.AccountV2
-		expectedErr error
-	}{
-		{
-			desc: "ErrAccountUnexpectedAffectedRows",
-			setup: func(s *accountStorage) {
-				result := mock.NewMockResult(mockController)
-				result.EXPECT().RowsAffected().Return(int64(0), nil)
-				s.client.(*mock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(result, nil)
-			},
-			input: &domain.AccountV2{
-				AccountV2: &proto.AccountV2{Email: "test@example.com"},
-			},
-			expectedErr: ErrAccountUnexpectedAffectedRows,
-		},
-		{
-			desc: "Error",
-			setup: func(s *accountStorage) {
-				s.client.(*mock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
-			},
-			input: &domain.AccountV2{
-				AccountV2: &proto.AccountV2{Email: "test@example.com"},
-			},
-			expectedErr: errors.New("error"),
-		},
-		{
-			desc: "Success",
-			setup: func(s *accountStorage) {
-				result := mock.NewMockResult(mockController)
-				result.EXPECT().RowsAffected().Return(int64(1), nil)
-				s.client.(*mock.MockClient).EXPECT().ExecContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(result, nil)
-			},
-			input: &domain.AccountV2{
-				AccountV2: &proto.AccountV2{Email: "test@example.com"},
-			},
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			storage := newAccountStorageWithMock(t, mockController)
 			if p.setup != nil {
-				p.setup(storage)
+				p.setup(sMock)
 			}
-			err := storage.UpdateAccountV2(context.Background(), p.input)
+			err := storage.CreateAccountV2(context.Background(), p.account)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
@@ -160,257 +125,566 @@ func TestUpdateAccountV2(t *testing.T) {
 
 func TestGetAccountV2(t *testing.T) {
 	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
 	patterns := []struct {
-		desc           string
-		setup          func(*accountStorage)
-		email          string
-		organizationID string
-		expectedErr    error
+		desc            string
+		setup           func(sqlmock.Sqlmock)
+		account         *domain.AccountV2
+		expectedAccount *domain.AccountV2
+		expectedErr     error
 	}{
 		{
 			desc: "ErrAccountNotFound",
-			setup: func(s *accountStorage) {
-				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+			setup: func(sMock sqlmock.Sqlmock) {
+				sMock.ExpectQuery("").WillReturnError(mysql.ErrNoRows)
 			},
-			email:          "test@example.com",
-			organizationID: "org-0",
-			expectedErr:    ErrAccountNotFound,
+			account: &domain.AccountV2{
+				AccountV2: &proto.AccountV2{},
+			},
+			expectedAccount: nil,
+			expectedErr:     ErrAccountNotFound,
 		},
 		{
-			desc: "Error",
-			setup: func(s *accountStorage) {
-				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+			desc: "Error: Other error",
+			setup: func(sMock sqlmock.Sqlmock) {
+				sMock.ExpectQuery("").WillReturnError(mysql.ErrTxDone)
 			},
-			email:          "test@example.com",
-			organizationID: "org-0",
-			expectedErr:    errors.New("error"),
+			account: &domain.AccountV2{
+				AccountV2: &proto.AccountV2{},
+			},
+			expectedAccount: nil,
+			expectedErr:     mysql.ErrTxDone,
 		},
 		{
 			desc: "Success",
-			setup: func(s *accountStorage) {
-				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+			setup: func(sMock sqlmock.Sqlmock) {
+				columns := []string{
+					"email",
+					"name",
+					"avatar_image_url",
+					"organization_id",
+					"organization_role",
+					"environment_roles",
+					"disabled",
+					"created_at",
+					"updated_at",
+					"search_filters",
+				}
+
+				mockRow := sqlmock.
+					NewRows(columns).
+					AddRow(
+						"email",
+						"name",
+						"avatarImageUrl",
+						"organizationId",
+						3,
+						[]byte(`[{"environment_id":"env-0","role":2}]`),
+						false,
+						1,
+						2,
+						nil,
+					)
+				sMock.ExpectQuery(
+					regexp.QuoteMeta(
+						`SELECT email, name, avatar_image_url, organization_id, organization_role, environment_roles, disabled, created_at, updated_at, search_filters FROM account_v2 WHERE email = ? AND organization_id = ?`,
+					),
+				).WithArgs(
+					"email",
+					"organizationId",
+				).WillReturnRows(mockRow)
 			},
-			email:          "test@example.com",
-			organizationID: "org-0",
-			expectedErr:    nil,
+			account: &domain.AccountV2{
+				AccountV2: &proto.AccountV2{
+					Email:          "email",
+					OrganizationId: "organizationId",
+				},
+			},
+			expectedErr: nil,
+			expectedAccount: &domain.AccountV2{
+				AccountV2: &proto.AccountV2{
+					Email:            "email",
+					Name:             "name",
+					OrganizationId:   "organizationId",
+					OrganizationRole: proto.AccountV2_Role_Organization_OWNER,
+					AvatarImageUrl:   "avatarImageUrl",
+					EnvironmentRoles: []*proto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "env-0",
+							Role:          proto.AccountV2_Role_Environment_EDITOR,
+						},
+					},
+					Disabled:      false,
+					CreatedAt:     1,
+					UpdatedAt:     2,
+					SearchFilters: nil,
+				},
+			},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newAccountStorageWithMock(t, mockController)
+			storage, sMock := newAccountStorageWithMockClient(t)
+			defer storage.client.Close()
+
 			if p.setup != nil {
-				p.setup(storage)
+				p.setup(sMock)
 			}
-			_, err := storage.GetAccountV2(context.Background(), p.email, p.organizationID)
+			account, err := storage.GetAccountV2(context.Background(), p.account.Email, p.account.OrganizationId)
 			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expectedAccount, account)
 		})
 	}
 }
 
 func TestGetAccountV2ByEnvironmentID(t *testing.T) {
 	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
 	patterns := []struct {
-		desc          string
-		setup         func(*accountStorage)
-		email         string
-		environmentID string
-		expectedErr   error
+		desc            string
+		setup           func(sqlmock.Sqlmock)
+		account         *domain.AccountV2
+		expectedAccount *domain.AccountV2
+		expectedErr     error
 	}{
 		{
 			desc: "ErrAccountNotFound",
-			setup: func(s *accountStorage) {
-				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+			setup: func(sMock sqlmock.Sqlmock) {
+				sMock.ExpectQuery("").WillReturnError(mysql.ErrNoRows)
 			},
-			email:         "test@example.com",
-			environmentID: "env-0",
-			expectedErr:   ErrAccountNotFound,
+			account: &domain.AccountV2{
+				AccountV2: &proto.AccountV2{},
+			},
+			expectedAccount: nil,
+			expectedErr:     ErrAccountNotFound,
 		},
 		{
-			desc: "Error",
-			setup: func(s *accountStorage) {
-				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
-				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+			desc: "Error: Other error",
+			setup: func(sMock sqlmock.Sqlmock) {
+				sMock.ExpectQuery("").WillReturnError(mysql.ErrTxDone)
 			},
-			email:         "test@example.com",
-			environmentID: "env-0",
-			expectedErr:   errors.New("error"),
+			account: &domain.AccountV2{
+				AccountV2: &proto.AccountV2{},
+			},
+			expectedAccount: nil,
+			expectedErr:     mysql.ErrTxDone,
 		},
 		{
 			desc: "Success",
-			setup: func(s *accountStorage) {
-				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+			setup: func(sMock sqlmock.Sqlmock) {
+				columns := []string{
+					"email",
+					"name",
+					"avatar_image_url",
+					"organization_id",
+					"organization_role",
+					"environment_roles",
+					"disabled",
+					"created_at",
+					"updated_at",
+					"search_filters",
+				}
+
+				mockRow := sqlmock.
+					NewRows(columns).
+					AddRow(
+						"email",
+						"name",
+						"avatarImageUrl",
+						"organizationId",
+						3,
+						[]byte(`[{"environment_id":"env-0","role":2}]`),
+						false,
+						1,
+						2,
+						nil,
+					)
+				sMock.ExpectQuery(
+					regexp.QuoteMeta(
+						`SELECT a.email, a.name, a.avatar_image_url, a.organization_id, a.organization_role, a.environment_roles, a.disabled, a.created_at, a.updated_at, a.search_filters FROM account_v2 AS a INNER JOIN environment_v2 AS e ON a.organization_id = e.organization_id WHERE a.email = ? AND e.id = ?`,
+					),
+				).WithArgs(
+					"email",
+					"organizationId",
+				).WillReturnRows(mockRow)
 			},
-			email:         "test@example.com",
-			environmentID: "env-0",
-			expectedErr:   nil,
+			account: &domain.AccountV2{
+				AccountV2: &proto.AccountV2{
+					Email:          "email",
+					OrganizationId: "organizationId",
+				},
+			},
+			expectedErr: nil,
+			expectedAccount: &domain.AccountV2{
+				AccountV2: &proto.AccountV2{
+					Email:            "email",
+					Name:             "name",
+					OrganizationId:   "organizationId",
+					OrganizationRole: proto.AccountV2_Role_Organization_OWNER,
+					AvatarImageUrl:   "avatarImageUrl",
+					EnvironmentRoles: []*proto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "env-0",
+							Role:          proto.AccountV2_Role_Environment_EDITOR,
+						},
+					},
+					Disabled:      false,
+					CreatedAt:     1,
+					UpdatedAt:     2,
+					SearchFilters: nil,
+				},
+			},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newAccountStorageWithMock(t, mockController)
+			storage, sMock := newAccountStorageWithMockClient(t)
+			defer storage.client.Close()
+
 			if p.setup != nil {
-				p.setup(storage)
+				p.setup(sMock)
 			}
-			_, err := storage.GetAccountV2ByEnvironmentID(context.Background(), p.email, p.environmentID)
+			account, err := storage.GetAccountV2ByEnvironmentID(context.Background(), p.account.Email, p.account.OrganizationId)
 			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expectedAccount, account)
 		})
 	}
 }
 
 func TestGetAccountsWithOrganization(t *testing.T) {
 	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
+	query := `SELECT a.email, a.name, a.avatar_image_url, a.organization_id, a.organization_role, a.environment_roles, a.disabled, a.created_at, a.updated_at, a.search_filters, o.id, o.name, o.url_code, o.description, o.disabled, o.archived, o.trial, o.system_admin, o.created_at, o.updated_at FROM account_v2 AS a INNER JOIN organization AS o ON a.organization_id=o.id WHERE email=?`
+
 	patterns := []struct {
 		desc        string
-		setup       func(*accountStorage)
+		setup       func(sqlmock.Sqlmock)
 		email       string
+		expected    []*domain.AccountWithOrganization
 		expectedErr error
 	}{
 		{
-			desc: "Error",
-			setup: func(s *accountStorage) {
-				s.client.(*mock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
+			desc: "ErrNoRows",
+			setup: func(sMock sqlmock.Sqlmock) {
+				sMock.ExpectQuery("").WithArgs("email").WillReturnError(mysql.ErrNoRows)
 			},
-			email:       "test@example.com",
-			expectedErr: errors.New("error"),
+			email:       "email",
+			expected:    nil,
+			expectedErr: mysql.ErrNoRows,
+		},
+		{
+			desc: "Success: No Rows",
+			setup: func(sMock sqlmock.Sqlmock) {
+				sMock.ExpectQuery(query).WillReturnRows(sqlmock.NewRows([]string{}))
+			},
+			email:       "email",
+			expected:    []*domain.AccountWithOrganization{},
+			expectedErr: nil,
 		},
 		{
 			desc: "Success",
-			setup: func(s *accountStorage) {
-				rows := mock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.client.(*mock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
+			setup: func(sMock sqlmock.Sqlmock) {
+				columns := []string{
+					"email",
+					"name",
+					"avatar_image_url",
+					"organization_id",
+					"organization_role",
+					"environment_roles",
+					"disabled",
+					"created_at",
+					"updated_at",
+					"search_filters",
+					"organization_id",
+					"organization_name",
+					"url_code",
+					"description",
+					"organization_disabled",
+					"archived",
+					"trial",
+					"system_admin",
+					"organization_created_at",
+					"organization_updated_at",
+				}
+
+				mockRow := sqlmock.
+					NewRows(columns).
+					AddRow(
+						"email",
+						"name",
+						"avatarImageUrl",
+						"organizationId",
+						3,
+						[]byte(`[{"environment_id":"env-0","role":2}]`),
+						false,
+						1,
+						2,
+						nil,
+						"organizationId",
+						"organizationName",
+						"urlCode",
+						"description",
+						false,
+						false,
+						false,
+						false,
+						4,
+						5,
+					)
+				sMock.ExpectQuery(regexp.QuoteMeta(query)).
+					WithArgs("email").WillReturnRows(mockRow)
 			},
-			email:       "test@example.com",
+			email:       "email",
 			expectedErr: nil,
+			expected: []*domain.AccountWithOrganization{
+				{
+					AccountV2: &proto.AccountV2{
+						Email:            "email",
+						Name:             "name",
+						OrganizationId:   "organizationId",
+						OrganizationRole: proto.AccountV2_Role_Organization_OWNER,
+						AvatarImageUrl:   "avatarImageUrl",
+						EnvironmentRoles: []*proto.AccountV2_EnvironmentRole{
+							{
+								EnvironmentId: "env-0",
+								Role:          proto.AccountV2_Role_Environment_EDITOR,
+							},
+						},
+						Disabled:      false,
+						CreatedAt:     1,
+						UpdatedAt:     2,
+						SearchFilters: nil,
+					},
+					Organization: &environmentproto.Organization{
+						Id:          "organizationId",
+						Name:        "organizationName",
+						UrlCode:     "urlCode",
+						Description: "description",
+						Disabled:    false,
+						Archived:    false,
+						Trial:       false,
+						SystemAdmin: false,
+						CreatedAt:   4,
+						UpdatedAt:   5,
+					},
+				},
+			},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newAccountStorageWithMock(t, mockController)
+			storage, sMock := newAccountStorageWithMockClient(t)
+			defer storage.client.Close()
+
 			if p.setup != nil {
-				p.setup(storage)
+				p.setup(sMock)
 			}
-			_, err := storage.GetAccountsWithOrganization(context.Background(), p.email)
+			organizations, err := storage.GetAccountsWithOrganization(context.Background(), p.email)
 			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expected, organizations)
 		})
 	}
 }
 
 func TestListAccountsV2(t *testing.T) {
 	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
+
 	patterns := []struct {
-		desc           string
-		setup          func(*accountStorage)
-		whereParts     []mysql.WherePart
-		orders         []*mysql.Order
-		limit          int
-		offset         int
-		expected       []*proto.AccountV2
-		expectedCursor int
-		expectedErr    error
+		desc               string
+		whereParts         []mysql.WherePart
+		orders             []*mysql.Order
+		limit              int
+		offset             int
+		setup              func(sqlmock.Sqlmock)
+		expected           []*proto.AccountV2
+		expectedCursor     int
+		expectedErr        error
+		expectedTotalCount int64
 	}{
 		{
-			desc: "Error",
-			setup: func(s *accountStorage) {
-				s.client.(*mock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
+			desc:       "Error: Select Accounts",
+			whereParts: nil,
+			orders:     nil,
+			limit:      0,
+			offset:     0,
+			setup: func(sMock sqlmock.Sqlmock) {
+				sMock.ExpectQuery("").WillReturnError(errors.New("error"))
 			},
-			whereParts:     nil,
-			orders:         nil,
-			limit:          0,
-			offset:         0,
-			expected:       nil,
-			expectedCursor: 0,
-			expectedErr:    errors.New("error"),
+			expected:           nil,
+			expectedCursor:     0,
+			expectedTotalCount: 0,
+			expectedErr:        errors.New("error"),
 		},
 		{
-			desc: "Success",
-			setup: func(s *accountStorage) {
-				rows := mock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.client.(*mock.MockClient).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mock.NewMockRow(mockController)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(row)
+			whereParts: nil,
+			orders:     nil,
+			limit:      0,
+			offset:     0,
+			desc:       "Error: TotalCount Select",
+			setup: func(sMock sqlmock.Sqlmock) {
+				sMock.ExpectQuery("").WillReturnRows(sqlmock.NewRows([]string{}))
+				sMock.ExpectQuery("").WillReturnError(errors.New("error"))
 			},
+			expected:           nil,
+			expectedCursor:     0,
+			expectedTotalCount: 0,
+			expectedErr:        errors.New("error"),
+		},
+		{
+			desc: "Success: No Rows",
 			whereParts: []mysql.WherePart{
 				mysql.NewFilter("num", ">=", 5),
 			},
 			orders: []*mysql.Order{
 				mysql.NewOrder("id", mysql.OrderDirectionAsc),
 			},
-			limit:          10,
-			offset:         5,
-			expected:       []*proto.AccountV2{},
-			expectedCursor: 5,
-			expectedErr:    nil,
+			limit:  10,
+			offset: 0,
+			setup: func(sMock sqlmock.Sqlmock) {
+				sMock.ExpectQuery("").WillReturnRows(sqlmock.NewRows([]string{}))
+				sMock.ExpectQuery("").WillReturnRows(sqlmock.NewRows([]string{"totalCount"}).AddRow(0))
+			},
+			expected:           []*proto.AccountV2{},
+			expectedCursor:     0,
+			expectedTotalCount: 0,
+			expectedErr:        nil,
+		},
+		{
+			desc: "Success",
+			whereParts: []mysql.WherePart{
+				mysql.NewFilter("num", ">=", 5),
+			},
+			orders: []*mysql.Order{
+				mysql.NewOrder("id", mysql.OrderDirectionAsc),
+			},
+			limit:  10,
+			offset: 5,
+			setup: func(sMock sqlmock.Sqlmock) {
+				selectColumns := []string{
+					"email",
+					"name",
+					"avatar_image_url",
+					"organization_id",
+					"organization_role",
+					"environment_roles",
+					"disabled",
+					"created_at",
+					"updated_at",
+					"search_filters",
+				}
+				selectMock1 := []driver.Value{
+					"email",
+					"name",
+					"avatarImageUrl",
+					"organizationId",
+					3,
+					[]byte(`[{"environment_id":"env-0","role":2}]`),
+					false,
+					1,
+					2,
+					nil,
+				}
+				selectMock2 := []driver.Value{
+					"email2",
+					"name2",
+					"avatarImageUrl2",
+					"organizationId2",
+					1,
+					[]byte(`[{"environment_id":"env-2","role":1}]`),
+					true,
+					7,
+					8,
+					[]byte(`[{"id":"searchId", "name":"searchName", "query": "searchQuery", "filter_target_type": 1, "environment_id": "envId", "default_filter": false }]`),
+				}
+
+				selectRows := sqlmock.NewRows(selectColumns).AddRows(selectMock1, selectMock2)
+
+				selectQuery := `SELECT email, name, avatar_image_url, organization_id, organization_role, environment_roles, disabled, created_at, updated_at, search_filters FROM account_v2 WHERE num >= ? ORDER BY id ASC LIMIT 10 OFFSET 5`
+				sMock.ExpectQuery(regexp.QuoteMeta(selectQuery)).
+					WithArgs(5).
+					WillReturnRows(selectRows)
+
+				totalCountQuery := `SELECT COUNT(1) FROM account_v2 WHERE num >= ? ORDER BY id ASC`
+				totalCountRows := sqlmock.NewRows([]string{"totalCount"}).AddRows([]driver.Value{7})
+				sMock.ExpectQuery(regexp.QuoteMeta(totalCountQuery)).
+					WithArgs(5).
+					WillReturnRows(totalCountRows)
+			},
+			expectedErr:        nil,
+			expectedCursor:     7,
+			expectedTotalCount: 7,
+			expected: []*proto.AccountV2{
+				{
+					Email:            "email",
+					Name:             "name",
+					OrganizationId:   "organizationId",
+					OrganizationRole: proto.AccountV2_Role_Organization_OWNER,
+					AvatarImageUrl:   "avatarImageUrl",
+					EnvironmentRoles: []*proto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "env-0",
+							Role:          proto.AccountV2_Role_Environment_EDITOR,
+						},
+					},
+					Disabled:      false,
+					CreatedAt:     1,
+					UpdatedAt:     2,
+					SearchFilters: nil,
+				},
+				{
+					Email:            "email2",
+					Name:             "name2",
+					OrganizationId:   "organizationId2",
+					OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
+					AvatarImageUrl:   "avatarImageUrl2",
+					EnvironmentRoles: []*proto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "env-2",
+							Role:          proto.AccountV2_Role_Environment_VIEWER,
+						},
+					},
+					Disabled:  true,
+					CreatedAt: 7,
+					UpdatedAt: 8,
+					SearchFilters: []*proto.SearchFilter{
+						{
+							Id:               "searchId",
+							Name:             "searchName",
+							Query:            "searchQuery",
+							FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
+							EnvironmentId:    "envId",
+							DefaultFilter:    false,
+						},
+					},
+				},
+			},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			storage := newAccountStorageWithMock(t, mockController)
+			storage, sMock := newAccountStorageWithMockClient(t)
+			defer storage.client.Close()
+
 			if p.setup != nil {
-				p.setup(storage)
+				p.setup(sMock)
 			}
-			accounts, cursor, _, err := storage.ListAccountsV2(
+			accounts, cursor, totalCount, err := storage.ListAccountsV2(
 				context.Background(),
 				p.whereParts,
 				p.orders,
 				p.limit,
 				p.offset,
 			)
+			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, accounts)
 			assert.Equal(t, p.expectedCursor, cursor)
-			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expectedTotalCount, totalCount)
 		})
 	}
 }
 
-func newAccountStorageWithMock(t *testing.T, mockController *gomock.Controller) *accountStorage {
+func newAccountStorageWithMockClient(t *testing.T) (*accountStorage, sqlmock.Sqlmock) {
 	t.Helper()
-	return &accountStorage{mock.NewMockClient(mockController)}
+	client, sqlMock, err := mysql.NewSqlMockClient()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	return &accountStorage{client}, sqlMock
 }
