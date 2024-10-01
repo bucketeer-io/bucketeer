@@ -43,8 +43,6 @@ var (
 	countAccountsV2SQL string
 	//go:embed sql/account_v2/select_accounts_with_organization.sql
 	selectAccountsWithOrganizationSQL string
-	//go:embed sql/account_v2/is_new_user.sql
-	isNewUserSQL string
 )
 
 var (
@@ -172,7 +170,9 @@ func (s *accountStorage) GetAccountV2ByEnvironmentID(
 		environmentID,
 	).Scan(
 		&account.Email,
-		&account.Name,
+		&account.FirstName,
+		&account.LastName,
+		&account.Language,
 		&account.AvatarImageUrl,
 		&account.OrganizationId,
 		&organizationRole,
@@ -208,7 +208,9 @@ func (s *accountStorage) GetAccountsWithOrganization(
 		var organizationRole int32
 		err := rows.Scan(
 			&account.Email,
-			&account.Name,
+			&account.FirstName,
+			&account.LastName,
+			&account.Language,
 			&account.AvatarImageUrl,
 			&account.OrganizationId,
 			&organizationRole,
@@ -269,7 +271,9 @@ func (s *accountStorage) ListAccountsV2(
 		var organizationRole int32
 		err := rows.Scan(
 			&account.Email,
-			&account.Name,
+			&account.FirstName,
+			&account.LastName,
+			&account.Language,
 			&account.AvatarImageUrl,
 			&account.OrganizationId,
 			&organizationRole,
@@ -296,13 +300,4 @@ func (s *accountStorage) ListAccountsV2(
 		return nil, 0, 0, err
 	}
 	return accounts, nextOffset, totalCount, nil
-}
-
-func (s *accountStorage) IsNewUser(ctx context.Context, email string) (bool, error) {
-	var count int
-	err := s.qe(ctx).QueryRowContext(ctx, isNewUserSQL, email).Scan(&count)
-	if err != nil {
-		return false, err
-	}
-	return count == 0, nil
 }

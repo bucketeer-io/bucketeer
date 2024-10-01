@@ -5158,11 +5158,6 @@
                 "id": 1,
                 "name": "token",
                 "type": "Token"
-              },
-              {
-                "id": 2,
-                "name": "newUser",
-                "type": "bool"
               }
             ]
           },
