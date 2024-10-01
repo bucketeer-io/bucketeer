@@ -47,7 +47,6 @@ message ExchangeTokenRequest {
 
 message ExchangeTokenResponse {
   Token token = 1;
-  bool newUser = 2;
 }
 
 message RefreshTokenRequest {
