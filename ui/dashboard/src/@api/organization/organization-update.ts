@@ -8,6 +8,9 @@ export interface OrganizationUpdateParams {
   changeDescriptionCommand: {
     description: string;
   };
+  changeOwnerEmailCommand: {
+    ownerEmail: string;
+  };
 }
 
 export const organizationUpdate = async (params?: OrganizationUpdateParams) => {

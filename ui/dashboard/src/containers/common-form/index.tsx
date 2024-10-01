@@ -36,6 +36,7 @@ export type FormFieldProps = {
   isExpand?: boolean;
   isReadOnly?: boolean;
   isDisabled?: boolean;
+  defaultValue?: boolean | string | number;
   dropdownOptions?: DropdownOption[];
   render?: (field: ControllerRenderProps<FieldValues, string>) => ReactNode;
   renderTrigger?: (value: string | number | boolean) => ReactNode;
@@ -74,7 +75,7 @@ const CommonForm = ({
     const obj = {};
     formFields.forEach(item =>
       Object.assign(obj, {
-        [item.name]: ''
+        [item.name]: item.defaultValue || ''
       })
     );
     return obj;

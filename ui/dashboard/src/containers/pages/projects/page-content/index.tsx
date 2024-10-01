@@ -48,7 +48,7 @@ export type SortingType = {
 };
 
 export const ProjectsContent = () => {
-  const { consoleAccount } = useAuth();
+  const { consoleAccount, myOrganizations } = useAuth();
   const { notify } = useToast();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { t } = useTranslation(['common', 'form', 'table']);
@@ -65,7 +65,9 @@ export const ProjectsContent = () => {
       searchKeyword: '',
       disabled: false,
       archived: false,
-      organizationIds: []
+      organizationIds: !consoleAccount?.isSystemAdmin
+        ? [myOrganizations[0].id]
+        : []
     }),
     []
   );

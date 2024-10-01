@@ -22,6 +22,7 @@ import {
   OrganizationCreatorCommand
 } from '@api/organization/organization-creator';
 import { organizationUpdate } from '@api/organization/organization-update';
+import { useQueryAccounts } from '@queries/accounts';
 import { useQueryOrganizations } from '@queries/organizations';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { FormFieldProps } from 'containers/common-form';
@@ -38,6 +39,7 @@ import { OrderBy, Organization, OrganizationCollection } from '@types';
 import { sortingFn } from 'utils/sort';
 import { IconInfo } from '@icons';
 import { Button } from 'components/button';
+import Checkbox from 'components/checkbox';
 import Icon from 'components/icon';
 import { PopoverValue } from 'components/popover';
 import Tab from 'components/tab';
@@ -110,6 +112,19 @@ export const OrganizationsContent = () => {
 
   const { data, isLoading, refetch } = useQueryOrganizations({
     params: organizationParams
+  });
+
+  const { data: accounts } = useQueryAccounts({
+    params: {
+      cursor: String(0),
+      searchKeyword: '',
+      orderBy: 'DEFAULT',
+      orderDirection: 'ASC',
+      disabled: false,
+      pageSize: LIST_PAGE_SIZE,
+      organizationId: orgSelected?.id
+    },
+    enabled: !!orgSelected?.id
   });
 
   const columns = useMemo<ColumnType<Organization>[]>(
@@ -222,14 +237,34 @@ export const OrganizationsContent = () => {
       },
       {
         name: 'ownerEmail',
-        label: `${t('form:owner')}`,
+        label: `${t('form:owner-email')}`,
         placeholder: `${t('form:placeholder-email')}`,
         isRequired: true,
         isExpand: true,
-        fieldType: 'input'
+        fieldType: submitType === 'updated' ? 'dropdown' : 'input',
+        dropdownOptions: accounts?.accounts?.map(item => ({
+          label: item.email,
+          value: item.email
+        }))
+      },
+      {
+        name: 'isTrial',
+        isExpand: true,
+        fieldType: 'additional',
+        defaultValue: true,
+        render: field => (
+          <div className="flex flex-col w-full gap-y-5">
+            <Checkbox
+              onCheckedChange={checked => field.onChange(checked)}
+              checked={field.value}
+              title={`${t(`form:trial`)}`}
+              {...field}
+            />
+          </div>
+        )
       }
     ],
-    [submitType]
+    [submitType, accounts]
   );
 
   const formSchema = useMemo(
@@ -260,7 +295,7 @@ export const OrganizationsContent = () => {
       return (
         submitType === 'created'
           ? organizationCreator({
-              command: { ...formValues, isSystemAdmin: true, isTrial: true }
+              command: { ...formValues, isSystemAdmin: false }
             })
           : organizationUpdate({
               id: orgSelected?.id as string,
@@ -269,6 +304,9 @@ export const OrganizationsContent = () => {
               },
               renameCommand: {
                 name: formValues.name
+              },
+              changeOwnerEmailCommand: {
+                ownerEmail: formValues.ownerEmail
               }
             })
       )

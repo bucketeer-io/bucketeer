@@ -210,8 +210,8 @@ export const User = ({ organizationId }: ContentDetailsProps) => {
         data={
           accountData?.accounts?.length ? accountData.accounts : data?.accounts
         }
-        emptyTitle={t('table:user-title')}
-        emptyDescription={t('table:user-desc')}
+        emptyTitle={t('table:empty.user-title')}
+        emptyDescription={t('table:empty.user-desc')}
         paginationProps={{
           cursor,
           pageSize: LIST_PAGE_SIZE,

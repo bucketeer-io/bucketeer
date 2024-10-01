@@ -7,6 +7,7 @@ export interface OrganizationCreatorCommand {
   description: string;
   isTrial: boolean;
   isSystemAdmin: boolean;
+  ownerEmail: string;
 }
 
 export interface OrganizationCreatorParams {
