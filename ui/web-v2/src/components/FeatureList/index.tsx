@@ -874,9 +874,10 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
 
     const handleNavigation = (nextLocation) => {
       if (
-        (nextLocation.pathname !== PAGE_PATH_ROOT &&
+        selectedSearchFilter &&
+        ((nextLocation.pathname !== PAGE_PATH_ROOT &&
           location.pathname !== nextLocation.pathname) ||
-        (location.pathname === nextLocation.pathname && !nextLocation.search) // If the user is trying to go to the same page by clicking on the sidebar menu
+          (location.pathname === nextLocation.pathname && !nextLocation.search)) // If the user is trying to go to the same page by clicking on the sidebar menu
       ) {
         setNextLocation(nextLocation); // Save the location the user is trying to go to
         setShowSaveChangesDialog(true); // Show custom confirmation popup
