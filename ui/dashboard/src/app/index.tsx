@@ -32,7 +32,7 @@ import { i18n } from 'i18n';
 import { getTokenStorage } from 'storage/token';
 import { v4 as uuid } from 'uuid';
 import { ConsoleAccount } from '@types';
-import DashboardPage from 'pages/dashboard';
+import FeatureFlagsPage from 'pages/feature-flags';
 import NotFoundPage from 'pages/not-found';
 import OrganizationDetails from 'pages/organization-details';
 import ProjectDetailsPage from 'pages/project-details';
@@ -156,7 +156,7 @@ export const EnvironmentRoot = memo(
             <h3>{`403 Access denied`}</h3>
           </Route>
         )}
-        <Route path={`${PAGE_PATH_FEATURES}`} element={<DashboardPage />} />
+        <Route path={`${PAGE_PATH_FEATURES}`} element={<FeatureFlagsPage />} />
         <Route path={`${PAGE_PATH_SETTINGS}`} element={<SettingsPage />} />
         <Route path={`${PAGE_PATH_PROJECTS}`} element={<ProjectsPage />} />
         <Route
