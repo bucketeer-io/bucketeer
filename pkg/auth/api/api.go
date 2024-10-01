@@ -575,7 +575,9 @@ func (s *authService) PrepareDemoUser() {
 				AccountV2: &acproto.AccountV2{
 					OrganizationId:   config.OrganizationId,
 					Email:            config.Email,
-					Name:             "Demo Account",
+					FirstName:        "Bucketeer",
+					LastName:         "Demo",
+					Language:         "en",
 					OrganizationRole: acproto.AccountV2_Role_Organization_ADMIN,
 					EnvironmentRoles: []*acproto.AccountV2_EnvironmentRole{
 						{
