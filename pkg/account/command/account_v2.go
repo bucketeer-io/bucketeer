@@ -107,7 +107,10 @@ func (h *accountV2CommandHandler) create(ctx context.Context, cmd *accountproto.
 	})
 }
 
-func (h *accountV2CommandHandler) changeFirstName(ctx context.Context, cmd *accountproto.ChangeAccountV2FirstNameCommand) error {
+func (h *accountV2CommandHandler) changeFirstName(
+	ctx context.Context,
+	cmd *accountproto.ChangeAccountV2FirstNameCommand,
+) error {
 	if err := h.account.ChangeFirstName(cmd.FirstName); err != nil {
 		return err
 	}
@@ -117,7 +120,10 @@ func (h *accountV2CommandHandler) changeFirstName(ctx context.Context, cmd *acco
 	})
 }
 
-func (h *accountV2CommandHandler) changeLastName(ctx context.Context, cmd *accountproto.ChangeAccountV2LastNameCommand) error {
+func (h *accountV2CommandHandler) changeLastName(
+	ctx context.Context,
+	cmd *accountproto.ChangeAccountV2LastNameCommand,
+) error {
 	if err := h.account.ChangeLastName(cmd.LastName); err != nil {
 		return err
 	}
@@ -127,7 +133,10 @@ func (h *accountV2CommandHandler) changeLastName(ctx context.Context, cmd *accou
 	})
 }
 
-func (h *accountV2CommandHandler) changeLanguage(ctx context.Context, cmd *accountproto.ChangeAccountV2LanguageCommand) error {
+func (h *accountV2CommandHandler) changeLanguage(
+	ctx context.Context,
+	cmd *accountproto.ChangeAccountV2LanguageCommand,
+) error {
 	if err := h.account.ChangeLanguage(cmd.Language); err != nil {
 		return err
 	}
@@ -245,10 +254,14 @@ func (h *accountV2CommandHandler) changeSearchFilerName(
 	if err := h.account.ChangeSearchFilterName(cmd.Id, cmd.Name); err != nil {
 		return err
 	}
-	return h.send(ctx, eventproto.Event_ACCOUNT_V2_SEARCH_FILTER_NANE_CHANGED, &eventproto.SearchFilterNameChangedEvent{
-		Id:   cmd.Id,
-		Name: cmd.Name,
-	})
+	return h.send(
+		ctx,
+		eventproto.Event_ACCOUNT_V2_SEARCH_FILTER_NANE_CHANGED,
+		&eventproto.SearchFilterNameChangedEvent{
+			Id:   cmd.Id,
+			Name: cmd.Name,
+		},
+	)
 }
 
 func (h *accountV2CommandHandler) changeSearchFilterQuery(
@@ -257,10 +270,14 @@ func (h *accountV2CommandHandler) changeSearchFilterQuery(
 	if err := h.account.ChangeSearchFilterQuery(cmd.Id, cmd.Query); err != nil {
 		return err
 	}
-	return h.send(ctx, eventproto.Event_ACCOUNT_V2_SEARCH_FILTER_QUERY_CHANGED, &eventproto.SearchFilterQueryChangedEvent{
-		Id:    cmd.Id,
-		Query: cmd.Query,
-	})
+	return h.send(
+		ctx,
+		eventproto.Event_ACCOUNT_V2_SEARCH_FILTER_QUERY_CHANGED,
+		&eventproto.SearchFilterQueryChangedEvent{
+			Id:    cmd.Id,
+			Query: cmd.Query,
+		},
+	)
 }
 
 func (h *accountV2CommandHandler) changeDefaultSearchFilter(

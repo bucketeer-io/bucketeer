@@ -64,8 +64,8 @@ func (a *AccountV2) ChangeFirstName(newFirstName string) error {
 	return nil
 }
 
-func (a *AccountV2) ChangeLastName(newlastName string) error {
-	a.AccountV2.FirstName = newlastName
+func (a *AccountV2) ChangeLastName(newLastName string) error {
+	a.AccountV2.LastName = newLastName
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
