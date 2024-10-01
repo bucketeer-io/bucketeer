@@ -122,11 +122,6 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "name",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "avatar_image_url",
                 "type": "string"
@@ -184,6 +179,9 @@
                 "type": "string"
               }
             ],
+            "reserved_ids": [
+              2
+            ],
             "messages": [
               {
                 "name": "Role"
@@ -211,11 +209,6 @@
               {
                 "id": 1,
                 "name": "email",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "name",
                 "type": "string"
               },
               {
@@ -249,7 +242,25 @@
                 "name": "search_filters",
                 "type": "SearchFilter",
                 "is_repeated": true
+              },
+              {
+                "id": 9,
+                "name": "first_name",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "last_name",
+                "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "language",
+                "type": "string"
               }
+            ],
+            "reserved_ids": [
+              2
             ],
             "messages": [
               {
@@ -464,11 +475,6 @@
                 "type": "string"
               },
               {
-                "id": 2,
-                "name": "name",
-                "type": "string"
-              },
-              {
                 "id": 3,
                 "name": "avatar_image_url",
                 "type": "string"
@@ -483,15 +489,53 @@
                 "name": "environment_roles",
                 "type": "account.AccountV2.EnvironmentRole",
                 "is_repeated": true
+              },
+              {
+                "id": 6,
+                "name": "first_name",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "last_name",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "language",
+                "type": "string"
+              }
+            ],
+            "reserved_ids": [
+              2
+            ]
+          },
+          {
+            "name": "ChangeAccountV2FirstNameCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "first_name",
+                "type": "string"
               }
             ]
           },
           {
-            "name": "ChangeAccountV2NameCommand",
+            "name": "ChangeAccountV2LastNameCommand",
             "fields": [
               {
                 "id": 1,
-                "name": "name",
+                "name": "last_name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ChangeAccountV2LanguageCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "language",
                 "type": "string"
               }
             ]
@@ -967,11 +1011,6 @@
                 "type": "string"
               },
               {
-                "id": 3,
-                "name": "change_name_command",
-                "type": "ChangeAccountV2NameCommand"
-              },
-              {
                 "id": 4,
                 "name": "change_avatar_url_command",
                 "type": "ChangeAccountV2AvatarImageUrlCommand"
@@ -985,7 +1024,25 @@
                 "id": 6,
                 "name": "change_environment_roles_command",
                 "type": "ChangeAccountV2EnvironmentRolesCommand"
+              },
+              {
+                "id": 7,
+                "name": "change_first_name_command",
+                "type": "ChangeAccountV2FirstNameCommand"
+              },
+              {
+                "id": 8,
+                "name": "change_last_name_command",
+                "type": "ChangeAccountV2LastNameCommand"
+              },
+              {
+                "id": 9,
+                "name": "change_language_command",
+                "type": "ChangeAccountV2LanguageCommand"
               }
+            ],
+            "reserved_ids": [
+              3
             ]
           },
           {
@@ -13989,6 +14046,18 @@
                 "integer": 317
               },
               {
+                "name": "ACCOUNT_V2_FIRST_NAME_CHANGED",
+                "integer": 318
+              },
+              {
+                "name": "ACCOUNT_V2_LAST_NAME_CHANGED",
+                "integer": 319
+              },
+              {
+                "name": "ACCOUNT_V2_LANGUAGE_CHANGED",
+                "integer": 320
+              },
+              {
                 "name": "APIKEY_CREATED",
                 "integer": 400
               },
@@ -15557,6 +15626,21 @@
                 "id": 9,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 10,
+                "name": "first_name",
+                "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "last_name",
+                "type": "string"
+              },
+              {
+                "id": 12,
+                "name": "language",
+                "type": "string"
               }
             ]
           },
@@ -17311,6 +17395,51 @@
                 "id": 5,
                 "name": "trigger_times",
                 "type": "int32"
+              }
+            ]
+          },
+          {
+            "name": "AccountV2FirstNameChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "first_name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "AccountV2LastNameChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "last_name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "AccountV2LanguageChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "language",
+                "type": "string"
               }
             ]
           }

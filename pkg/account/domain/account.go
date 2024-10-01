@@ -37,14 +37,13 @@ type AccountWithOrganization struct {
 }
 
 func NewAccountV2(
-	email, name, avatarImageURL, organizationID string,
+	email, firstName, lastName, language, avatarImageURL, organizationID string,
 	organizationRole proto.AccountV2_Role_Organization,
 	environmentRoles []*proto.AccountV2_EnvironmentRole,
 ) *AccountV2 {
 	now := time.Now().Unix()
 	return &AccountV2{&proto.AccountV2{
 		Email:            email,
-		Name:             name,
 		AvatarImageUrl:   avatarImageURL,
 		OrganizationId:   organizationID,
 		OrganizationRole: organizationRole,
@@ -53,11 +52,26 @@ func NewAccountV2(
 		CreatedAt:        now,
 		UpdatedAt:        now,
 		SearchFilters:    nil,
+		FirstName:        firstName,
+		LastName:         lastName,
+		Language:         language,
 	}}
 }
 
-func (a *AccountV2) ChangeName(newName string) error {
-	a.AccountV2.Name = newName
+func (a *AccountV2) ChangeFirstName(newFirstName string) error {
+	a.AccountV2.FirstName = newFirstName
+	a.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (a *AccountV2) ChangeLastName(newlastName string) error {
+	a.AccountV2.FirstName = newlastName
+	a.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (a *AccountV2) ChangeLanguage(newLanguage string) error {
+	a.AccountV2.Language = newLanguage
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }

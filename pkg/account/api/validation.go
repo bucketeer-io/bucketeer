@@ -173,20 +173,50 @@ func validateCreateAccountV2Request(req *accountproto.CreateAccountV2Request, lo
 		}
 		return dt.Err()
 	}
-	if req.Command.Name == "" {
-		dt, err := statusNameIsEmpty.WithDetails(&errdetails.LocalizedMessage{
+	if req.Command.FirstName == "" {
+		dt, err := statusFirstNameIsEmpty.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "first_name"),
 		})
 		if err != nil {
 			return statusInternal.Err()
 		}
 		return dt.Err()
 	}
-	if len(req.Command.Name) > maxAccountNameLength {
-		dt, err := statusInvalidName.WithDetails(&errdetails.LocalizedMessage{
+	if len(req.Command.FirstName) > maxAccountNameLength {
+		dt, err := statusInvalidFirstName.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "first_name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.Command.LastName == "" {
+		dt, err := statusLastNameIsEmpty.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "last_name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if len(req.Command.LastName) > maxAccountNameLength {
+		dt, err := statusInvalidLastName.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "last_name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.Command.Language == "" {
+		dt, err := statusLanguageIsEmpty.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "language"),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -252,22 +282,57 @@ func validateUpdateAccountV2Request(
 		return dt.Err()
 	}
 	for _, cmd := range commands {
-		if c, ok := cmd.(*accountproto.ChangeAccountV2NameCommand); ok {
-			newName := strings.TrimSpace(c.Name)
-			if newName == "" {
-				dt, err := statusNameIsEmpty.WithDetails(&errdetails.LocalizedMessage{
+		if c, ok := cmd.(*accountproto.ChangeAccountV2FirstNameCommand); ok {
+			newFirstName := strings.TrimSpace(c.FirstName)
+			if newFirstName == "" {
+				dt, err := statusFirstNameIsEmpty.WithDetails(&errdetails.LocalizedMessage{
 					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+					Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "first_name"),
 				})
 				if err != nil {
 					return statusInternal.Err()
 				}
 				return dt.Err()
 			}
-			if len(newName) > maxAccountNameLength {
-				dt, err := statusInvalidName.WithDetails(&errdetails.LocalizedMessage{
+			if len(newFirstName) > maxAccountNameLength {
+				dt, err := statusInvalidFirstName.WithDetails(&errdetails.LocalizedMessage{
 					Locale:  localizer.GetLocale(),
-					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "first_name"),
+				})
+				if err != nil {
+					return statusInternal.Err()
+				}
+				return dt.Err()
+			}
+		}
+		if c, ok := cmd.(*accountproto.ChangeAccountV2LastNameCommand); ok {
+			newLastName := strings.TrimSpace(c.LastName)
+			if newLastName == "" {
+				dt, err := statusLastNameIsEmpty.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "last_name"),
+				})
+				if err != nil {
+					return statusInternal.Err()
+				}
+				return dt.Err()
+			}
+			if len(newLastName) > maxAccountNameLength {
+				dt, err := statusInvalidLastName.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "last_name"),
+				})
+				if err != nil {
+					return statusInternal.Err()
+				}
+				return dt.Err()
+			}
+		}
+		if c, ok := cmd.(*accountproto.ChangeAccountV2LanguageCommand); ok {
+			if c.Language == "" {
+				dt, err := statusLanguageIsEmpty.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "language"),
 				})
 				if err != nil {
 					return statusInternal.Err()
