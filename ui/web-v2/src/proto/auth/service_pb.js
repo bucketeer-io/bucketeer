@@ -798,8 +798,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         token:
           (f = msg.getToken()) &&
-          proto_auth_token_pb.Token.toObject(includeInstance, f),
-        newuser: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
+          proto_auth_token_pb.Token.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -848,10 +847,6 @@ proto.bucketeer.auth.ExchangeTokenResponse.deserializeBinaryFromReader =
           );
           msg.setToken(value);
           break;
-        case 2:
-          var value = /** @type {boolean} */ (reader.readBool());
-          msg.setNewuser(value);
-          break;
         default:
           reader.skipField();
           break;
@@ -894,10 +889,6 @@ proto.bucketeer.auth.ExchangeTokenResponse.serializeBinaryToWriter = function (
       proto_auth_token_pb.Token.serializeBinaryToWriter
     );
   }
-  f = message.getNewuser();
-  if (f) {
-    writer.writeBool(2, f);
-  }
 };
 
 /**
@@ -934,26 +925,6 @@ proto.bucketeer.auth.ExchangeTokenResponse.prototype.clearToken = function () {
  */
 proto.bucketeer.auth.ExchangeTokenResponse.prototype.hasToken = function () {
   return jspb.Message.getField(this, 1) != null;
-};
-
-/**
- * optional bool newUser = 2;
- * @return {boolean}
- */
-proto.bucketeer.auth.ExchangeTokenResponse.prototype.getNewuser = function () {
-  return /** @type {boolean} */ (
-    jspb.Message.getBooleanFieldWithDefault(this, 2, false)
-  );
-};
-
-/**
- * @param {boolean} value
- * @return {!proto.bucketeer.auth.ExchangeTokenResponse} returns this
- */
-proto.bucketeer.auth.ExchangeTokenResponse.prototype.setNewuser = function (
-  value
-) {
-  return jspb.Message.setProto3BooleanField(this, 2, value);
 };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
