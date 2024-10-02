@@ -756,7 +756,7 @@ func TestListAccountsV2(t *testing.T) {
 					WithArgs(5).
 					WillReturnRows(selectRows)
 
-				totalCountQuery := `SELECT COUNT(1) FROM account_v2 WHERE num >= ? ORDER BY id ASC`
+				totalCountQuery := `SELECT COUNT(1) FROM account_v2 WHERE num >= ?`
 				totalCountRows := sqlmock.NewRows([]string{"totalCount"}).AddRows([]driver.Value{7})
 				sMock.ExpectQuery(regexp.QuoteMeta(totalCountQuery)).
 					WithArgs(5).
