@@ -1,5 +1,6 @@
 SELECT
     email,
+    name,
     first_name,
     last_name,
     language,
