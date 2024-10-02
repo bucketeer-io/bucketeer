@@ -123,6 +123,157 @@ func TestCreateAccountV2(t *testing.T) {
 	}
 }
 
+func TestUpdateAccountV2(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc        string
+		setup       func(sqlmock.Sqlmock)
+		account     *domain.AccountV2
+		expectedErr error
+	}{
+		{
+			desc: "ErrTxDone",
+			setup: func(sMock sqlmock.Sqlmock) {
+				sMock.ExpectExec("").WillReturnError(mysql.ErrTxDone)
+			},
+			account: &domain.AccountV2{
+				AccountV2: &proto.AccountV2{},
+			},
+			expectedErr: mysql.ErrTxDone,
+		},
+		{
+			desc: "ErrAccountUnexpectedAffectedRows",
+			setup: func(sMock sqlmock.Sqlmock) {
+				sMock.ExpectExec("").WillReturnResult(sqlmock.NewResult(0, 0))
+			},
+			account: &domain.AccountV2{
+				AccountV2: &proto.AccountV2{},
+			},
+			expectedErr: ErrAccountUnexpectedAffectedRows,
+		},
+		{
+			desc: "Success",
+			setup: func(sMock sqlmock.Sqlmock) {
+				sMock.ExpectExec(
+					regexp.QuoteMeta(`UPDATE account_v2 SET name = ?, avatar_image_url = ?, organization_role = ?, environment_roles = ?, disabled = ?, updated_at = ?, search_filters = ? WHERE email = ? AND organization_id = ?`),
+				).WithArgs(
+					"name",
+					"avatarImageUrl",
+					3,
+					[]byte(`[{"environment_id":"env-0","role":1}]`),
+					false,
+					2,
+					[]byte(`[{"id":"searchId","name":"searchName","query":"searchQuery","filter_target_type":1,"environment_id":"envId","default_filter":false}]`),
+					"email",
+					"organizationId",
+				).WillReturnResult(sqlmock.NewResult(1, 1))
+			},
+			account: &domain.AccountV2{
+				AccountV2: &proto.AccountV2{
+					Email:            "email",
+					Name:             "name",
+					AvatarImageUrl:   "avatarImageUrl",
+					OrganizationId:   "organizationId",
+					OrganizationRole: proto.AccountV2_Role_Organization_OWNER,
+					EnvironmentRoles: []*proto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "env-0",
+							Role:          proto.AccountV2_Role_Environment_VIEWER,
+						},
+					},
+					CreatedAt: 1,
+					UpdatedAt: 2,
+					Disabled:  false,
+					SearchFilters: []*proto.SearchFilter{
+						{
+							Id:               "searchId",
+							Name:             "searchName",
+							Query:            "searchQuery",
+							FilterTargetType: proto.FilterTargetType_FEATURE_FLAG,
+							EnvironmentId:    "envId",
+							DefaultFilter:    false,
+						},
+					},
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage, sMock := newAccountStorageWithMockClient(t)
+			defer storage.client.Close()
+
+			if p.setup != nil {
+				p.setup(sMock)
+			}
+			err := storage.UpdateAccountV2(context.Background(), p.account)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestDeleteAccountV2(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc        string
+		setup       func(sqlmock.Sqlmock)
+		account     *domain.AccountV2
+		expectedErr error
+	}{
+		{
+			desc: "ErrTxDone",
+			setup: func(sMock sqlmock.Sqlmock) {
+				sMock.ExpectExec("").WillReturnError(mysql.ErrTxDone)
+			},
+			account: &domain.AccountV2{
+				AccountV2: &proto.AccountV2{},
+			},
+			expectedErr: mysql.ErrTxDone,
+		},
+		{
+			desc: "ErrAccountUnexpectedAffectedRows",
+			setup: func(sMock sqlmock.Sqlmock) {
+				sMock.ExpectExec("").WillReturnResult(sqlmock.NewResult(0, 0))
+			},
+			account: &domain.AccountV2{
+				AccountV2: &proto.AccountV2{},
+			},
+			expectedErr: ErrAccountUnexpectedAffectedRows,
+		},
+		{
+			desc: "Success",
+			setup: func(sMock sqlmock.Sqlmock) {
+				sMock.ExpectExec(
+					regexp.QuoteMeta(`DELETE FROM account_v2 WHERE email = ? AND organization_id = ?`),
+				).WithArgs(
+					"email",
+					"organizationId",
+				).WillReturnResult(sqlmock.NewResult(1, 1))
+			},
+			account: &domain.AccountV2{
+				AccountV2: &proto.AccountV2{
+					Email:          "email",
+					OrganizationId: "organizationId",
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage, sMock := newAccountStorageWithMockClient(t)
+			defer storage.client.Close()
+
+			if p.setup != nil {
+				p.setup(sMock)
+			}
+			err := storage.DeleteAccountV2(context.Background(), p.account)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func TestGetAccountV2(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
