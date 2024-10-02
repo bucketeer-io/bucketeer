@@ -122,6 +122,11 @@
                 "type": "string"
               },
               {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
                 "id": 3,
                 "name": "avatar_image_url",
                 "type": "string"
@@ -179,9 +184,6 @@
                 "type": "string"
               }
             ],
-            "reserved_ids": [
-              2
-            ],
             "messages": [
               {
                 "name": "Role"
@@ -209,6 +211,11 @@
               {
                 "id": 1,
                 "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
                 "type": "string"
               },
               {
@@ -258,9 +265,6 @@
                 "name": "language",
                 "type": "string"
               }
-            ],
-            "reserved_ids": [
-              2
             ],
             "messages": [
               {

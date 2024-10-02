@@ -1,5 +1,6 @@
 INSERT INTO account_v2 (
     email,
+    name,
     first_name,
     last_name,
     language,

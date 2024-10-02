@@ -59,7 +59,7 @@ message AccountV2 {
     Role.Environment role = 2;
   }
   string email = 1;
-  reserved 2;
+  string name = 2;
   string avatar_image_url = 3;
   string organization_id = 4;
   Role.Organization organization_role = 5;
@@ -80,7 +80,7 @@ message ConsoleAccount {
     AccountV2.Role.Environment role = 3;
   }
   string email = 1;
-  reserved 2;
+  string name = 2;
   string avatar_url = 3;
   bool is_system_admin = 4;
   environment.Organization organization = 5;
