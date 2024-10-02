@@ -64,13 +64,6 @@ func (s *SqlMockClient) RunInTransaction(ctx context.Context, tx Transaction, f 
 		err = tx.Commit()
 	}
 	return err
-
-	//tx, err := s.BeginTx(ctx)
-	//if err != nil {
-	//	return fmt.Errorf("account: begin tx: %w", err)
-	//}
-	//ctx = context.WithValue(ctx, "transaction", tx)
-	//return s.RunInTransaction(ctx, tx, f)
 }
 
 func (s *SqlMockClient) TearDown() error {
