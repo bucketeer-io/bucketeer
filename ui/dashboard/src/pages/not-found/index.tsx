@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { PAGE_PATH_ROOT } from 'constants/routing';
-import { Button } from 'components/button';
+import Button from 'components/button';
 
 const NotFoundPage = () => {
   const navigate = useNavigate();

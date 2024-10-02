@@ -9,7 +9,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from 'i18n';
 import { AnyObject, ObjectSchema } from 'yup';
 import { cn } from 'utils/style';
-import { Button } from 'components/button';
+import Button from 'components/button';
 import Card from 'components/card';
 import {
   DropdownMenuContent,

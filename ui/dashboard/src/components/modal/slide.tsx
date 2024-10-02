@@ -2,7 +2,7 @@ import { ReactNode, useCallback } from 'react';
 import { IconCloseRound } from 'react-icons-material-design';
 import * as Dialog from '@radix-ui/react-dialog';
 import { cn } from 'utils/style';
-import { Button } from 'components/button';
+import Button from 'components/button';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
 

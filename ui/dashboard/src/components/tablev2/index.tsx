@@ -1,0 +1,81 @@
+import * as React from 'react';
+
+const TableRoot = React.forwardRef<
+  HTMLTableElement,
+  React.HTMLAttributes<HTMLTableElement>
+>(({ ...props }, ref) => (
+  <table
+    className="border-separate border-spacing-y-3 w-full mb-6"
+    ref={ref}
+    {...props}
+  />
+));
+TableRoot.displayName = 'Table';
+
+const TableHeader = React.forwardRef<
+  HTMLTableSectionElement,
+  React.HTMLAttributes<HTMLTableSectionElement>
+>(({ ...props }, ref) => <thead ref={ref} {...props} />);
+TableHeader.displayName = 'TableHeader';
+
+const TableBody = React.forwardRef<
+  HTMLTableSectionElement,
+  React.HTMLAttributes<HTMLTableSectionElement>
+>(({ ...props }, ref) => <tbody ref={ref} {...props} />);
+TableBody.displayName = 'TableBody';
+
+const TableFooter = React.forwardRef<
+  HTMLTableSectionElement,
+  React.HTMLAttributes<HTMLTableSectionElement>
+>(({ ...props }, ref) => <tfoot ref={ref} {...props} />);
+TableFooter.displayName = 'TableFooter';
+
+const TableRow = React.forwardRef<
+  HTMLTableRowElement,
+  React.HTMLAttributes<HTMLTableRowElement>
+>(({ ...props }, ref) => <tr ref={ref} {...props} />);
+TableRow.displayName = 'TableRow';
+
+const TableHead = React.forwardRef<
+  HTMLTableCellElement,
+  React.ThHTMLAttributes<HTMLTableCellElement>
+>(({ align, ...props }, ref) => (
+  <th
+    className="h-[60px] px-4 py-5 cursor-pointer"
+    ref={ref}
+    {...props}
+    align={align ? align : 'left'}
+  />
+));
+TableHead.displayName = 'TableHead';
+
+const TableCell = React.forwardRef<
+  HTMLTableCellElement,
+  React.TdHTMLAttributes<HTMLTableCellElement>
+>(({ ...props }, ref) => (
+  <td
+    className="h-[60px] px-4 py-1.5 first:rounded-l-md last:rounded-r-md bg-white"
+    ref={ref}
+    {...props}
+  />
+));
+TableCell.displayName = 'TableCell';
+
+const TableCaption = React.forwardRef<
+  HTMLTableCaptionElement,
+  React.HTMLAttributes<HTMLTableCaptionElement>
+>(({ ...props }, ref) => <caption ref={ref} {...props} />);
+TableCaption.displayName = 'TableCaption';
+
+const Table = {
+  Root: TableRoot,
+  Header: TableHeader,
+  Head: TableHead,
+  Body: TableBody,
+  Row: TableRow,
+  Footer: TableFooter,
+  Cell: TableCell,
+  Caption: TableCaption
+};
+
+export default Table;

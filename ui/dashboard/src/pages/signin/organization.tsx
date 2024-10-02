@@ -6,7 +6,7 @@ import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { setOrgIdStorage } from 'storage/organization';
 import * as yup from 'yup';
-import { Button } from 'components/button';
+import Button from 'components/button';
 import {
   DropdownMenu,
   DropdownMenuContent,

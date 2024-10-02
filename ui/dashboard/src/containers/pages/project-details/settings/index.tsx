@@ -11,7 +11,7 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Project } from '@types';
-import { Button } from 'components/button';
+import Button from 'components/button';
 import Icon from 'components/icon';
 
 export const Settings = ({ projectData }: { projectData?: Project }) => {

@@ -36,7 +36,7 @@ import * as yup from 'yup';
 import { Environment, EnvironmentCollection, OrderBy } from '@types';
 import { sortingFn } from 'utils/sort';
 import { IconInfo } from '@icons';
-import { Button } from 'components/button';
+import Button from 'components/button';
 import Checkbox from 'components/checkbox';
 import Divider from 'components/divider';
 import Icon from 'components/icon';

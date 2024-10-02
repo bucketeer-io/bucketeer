@@ -4,7 +4,7 @@ import {
   IconFilterListOutlined
 } from 'react-icons-material-design';
 import { useTranslation } from 'i18n';
-import { Button } from 'components/button';
+import Button from 'components/button';
 import Icon from 'components/icon';
 import SearchInput from 'components/search-input';
 

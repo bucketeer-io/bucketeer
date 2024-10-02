@@ -8,6 +8,7 @@ export type TableCommonType = {
 
 export type TableProps = TableCommonType &
   TableHTMLAttributes<HTMLTableElement>;
+
 const TableRoot = ({ children, className, ...props }: TableProps) => {
   return (
     <table

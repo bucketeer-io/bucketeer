@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 import CommonForm, { CommonFormProps } from 'containers/common-form';
 import { useTranslation } from 'i18n';
-import { Button } from 'components/button';
+import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import SlideModal, { SliderProps } from 'components/modal/slide';
 

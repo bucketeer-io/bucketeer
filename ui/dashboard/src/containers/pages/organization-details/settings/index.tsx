@@ -81,6 +81,9 @@ export const Setting = ({ organizationId }: ContentDetailsProps) => {
         },
         renameCommand: {
           name: formValues.name
+        },
+        changeOwnerEmailCommand: {
+          ownerEmail: formValues.ownerEmail
         }
       })
         .then(() => {

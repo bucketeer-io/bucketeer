@@ -4,7 +4,7 @@ import {
   IconArrowBackFilled
 } from 'react-icons-material-design';
 import { useNavigate } from 'react-router-dom';
-import { Button } from 'components/button';
+import Button from 'components/button';
 import Icon from 'components/icon';
 import Tab from 'components/tab';
 import { TabItemProps } from 'components/tab/tab-item';

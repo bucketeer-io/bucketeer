@@ -1,6 +1,6 @@
 import { forwardRef, Ref } from 'react';
 import { IconManageAccountsOutlined } from 'react-icons-material-design';
-import { Button } from 'components/button';
+import Button from 'components/button';
 import Icon from 'components/icon';
 import { DataTypeTag, StatusTag } from 'components/tag';
 import { DataTypeTagType } from 'components/tag/data-type-tag';
