@@ -23,6 +23,9 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
+
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -32,8 +35,9 @@ import (
 
 func TestNewAccountStorage(t *testing.T) {
 	t.Parallel()
-	client, _, _ := mysql.NewSqlMockClient()
-	storage := NewAccountStorage(client)
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	storage := NewAccountStorage(mock.NewMockClient(mockController))
 	assert.IsType(t, &accountStorage{}, storage)
 }
 
@@ -833,9 +837,14 @@ func TestListAccountsV2(t *testing.T) {
 
 func newAccountStorageWithMockClient(t *testing.T) (*accountStorage, sqlmock.Sqlmock) {
 	t.Helper()
-	client, sqlMock, err := mysql.NewSqlMockClient()
+	db, sqlMock, err := sqlmock.New()
 	if err != nil {
 		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+
+	client, err := mysql.NewClientWithDB(context.Background(), db)
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when creating a new client", err)
 	}
 	return &accountStorage{client}, sqlMock
 }

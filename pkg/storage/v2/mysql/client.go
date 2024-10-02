@@ -152,6 +152,35 @@ func NewClient(
 	}, nil
 }
 
+func NewClientWithDB(
+	ctx context.Context,
+	db *sql.DB,
+	opts ...Option,
+) (Client, error) {
+	dopts := defaultOptions()
+	for _, opt := range opts {
+		opt(dopts)
+	}
+	if dopts.metrics != nil {
+		registerMetrics(dopts.metrics)
+	}
+	logger := dopts.logger.Named("mysql")
+
+	db.SetConnMaxLifetime(dopts.connMaxLifetime)
+	db.SetConnMaxIdleTime(dopts.connMaxIdleTime)
+	db.SetMaxOpenConns(dopts.maxOpenConns)
+	db.SetMaxIdleConns(dopts.maxIdleConns)
+	if err := db.PingContext(ctx); err != nil {
+		logger.Error("Failed to ping db", zap.Error(err))
+		return nil, err
+	}
+	return &client{
+		db:     db,
+		opts:   dopts,
+		logger: logger,
+	}, nil
+}
+
 func (c *client) Close() error {
 	return c.db.Close()
 }
