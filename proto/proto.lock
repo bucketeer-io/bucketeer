@@ -7814,6 +7814,54 @@
                 "integer": 1
               }
             ]
+          },
+          {
+            "name": "ListProjectsV2Request.OrderBy",
+            "enum_fields": [
+              {
+                "name": "DEFAULT"
+              },
+              {
+                "name": "ID",
+                "integer": 1
+              },
+              {
+                "name": "CREATED_AT",
+                "integer": 2
+              },
+              {
+                "name": "UPDATED_AT",
+                "integer": 3
+              },
+              {
+                "name": "NAME",
+                "integer": 4
+              },
+              {
+                "name": "URL_CODE",
+                "integer": 5
+              },
+              {
+                "name": "ENVIRONMENT_COUNT",
+                "integer": 6
+              },
+              {
+                "name": "FEATURE_COUNT",
+                "integer": 7
+              }
+            ]
+          },
+          {
+            "name": "ListProjectsV2Request.OrderDirection",
+            "enum_fields": [
+              {
+                "name": "ASC"
+              },
+              {
+                "name": "DESC",
+                "integer": 1
+              }
+            ]
           }
         ],
         "messages": [
@@ -8397,6 +8445,68 @@
           },
           {
             "name": "ConvertTrialOrganizationResponse"
+          },
+          {
+            "name": "ListProjectsV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "order_by",
+                "type": "OrderBy"
+              },
+              {
+                "id": 4,
+                "name": "order_direction",
+                "type": "OrderDirection"
+              },
+              {
+                "id": 5,
+                "name": "search_keyword",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 7,
+                "name": "organization_ids",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
+            "name": "ListProjectsV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "projects",
+                "type": "Project",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
           }
         ],
         "services": [
@@ -12311,6 +12421,182 @@
                       {
                         "name": "operation_id",
                         "value": "web.v1.environment.convert_trial_organization"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "403"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request does not have permission to access the resource."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":7,\"message\":\"not authorized\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListProjectsV2",
+                "in_type": "ListProjectsV2Request",
+                "out_type": "ListProjectsV2Response",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/environment/list_projects_v2"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List Projects V2"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List projects with V2 API. To call this API, you need at least a MEMBER role in the specified organizations."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Project"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.environment.list_projects_v2"
                       },
                       {
                         "name": "responses",

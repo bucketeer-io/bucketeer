@@ -29,6 +29,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	"github.com/bucketeer-io/bucketeer/pkg/role"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
@@ -83,6 +84,68 @@ func (s *EnvironmentService) checkSystemAdminRole(
 	localizer locale.Localizer,
 ) (*eventproto.Editor, error) {
 	editor, err := role.CheckSystemAdminRole(ctx)
+	if err != nil {
+		switch status.Code(err) {
+		case codes.Unauthenticated:
+			s.logger.Info(
+				"Unauthenticated",
+				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+			dt, err := statusUnauthenticated.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.UnauthenticatedError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		case codes.PermissionDenied:
+			s.logger.Info(
+				"Permission denied",
+				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.PermissionDenied),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		default:
+			s.logger.Error(
+				"Failed to check role",
+				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+	}
+	return editor, nil
+}
+
+func (s *EnvironmentService) checkOrganizationRole(
+	ctx context.Context,
+	organizationID string,
+	requiredRole accountproto.AccountV2_Role_Organization,
+	localizer locale.Localizer,
+) (*eventproto.Editor, error) {
+	editor, err := role.CheckOrganizationRole(
+		ctx,
+		requiredRole,
+		func(email string) (*accountproto.GetAccountV2Response, error) {
+			return s.accountClient.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+				Email:          email,
+				OrganizationId: organizationID,
+			})
+		},
+	)
 	if err != nil {
 		switch status.Code(err) {
 		case codes.Unauthenticated:
