@@ -1772,3 +1772,130 @@ export class ConvertTrialOrganizationResponse extends jspb.Message {
 export namespace ConvertTrialOrganizationResponse {
   export type AsObject = {};
 }
+
+export class ListProjectsV2Request extends jspb.Message {
+  getPageSize(): number;
+  setPageSize(value: number): void;
+
+  getCursor(): string;
+  setCursor(value: string): void;
+
+  getOrderBy(): ListProjectsV2Request.OrderByMap[keyof ListProjectsV2Request.OrderByMap];
+  setOrderBy(
+    value: ListProjectsV2Request.OrderByMap[keyof ListProjectsV2Request.OrderByMap]
+  ): void;
+
+  getOrderDirection(): ListProjectsV2Request.OrderDirectionMap[keyof ListProjectsV2Request.OrderDirectionMap];
+  setOrderDirection(
+    value: ListProjectsV2Request.OrderDirectionMap[keyof ListProjectsV2Request.OrderDirectionMap]
+  ): void;
+
+  getSearchKeyword(): string;
+  setSearchKeyword(value: string): void;
+
+  hasDisabled(): boolean;
+  clearDisabled(): void;
+  getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  clearOrganizationIdsList(): void;
+  getOrganizationIdsList(): Array<string>;
+  setOrganizationIdsList(value: Array<string>): void;
+  addOrganizationIds(value: string, index?: number): string;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ListProjectsV2Request.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ListProjectsV2Request
+  ): ListProjectsV2Request.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ListProjectsV2Request,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ListProjectsV2Request;
+  static deserializeBinaryFromReader(
+    message: ListProjectsV2Request,
+    reader: jspb.BinaryReader
+  ): ListProjectsV2Request;
+}
+
+export namespace ListProjectsV2Request {
+  export type AsObject = {
+    pageSize: number;
+    cursor: string;
+    orderBy: ListProjectsV2Request.OrderByMap[keyof ListProjectsV2Request.OrderByMap];
+    orderDirection: ListProjectsV2Request.OrderDirectionMap[keyof ListProjectsV2Request.OrderDirectionMap];
+    searchKeyword: string;
+    disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    organizationIdsList: Array<string>;
+  };
+
+  export interface OrderByMap {
+    DEFAULT: 0;
+    ID: 1;
+    CREATED_AT: 2;
+    UPDATED_AT: 3;
+    NAME: 4;
+    URL_CODE: 5;
+    ENVIRONMENT_COUNT: 6;
+    FEATURE_COUNT: 7;
+  }
+
+  export const OrderBy: OrderByMap;
+
+  export interface OrderDirectionMap {
+    ASC: 0;
+    DESC: 1;
+  }
+
+  export const OrderDirection: OrderDirectionMap;
+}
+
+export class ListProjectsV2Response extends jspb.Message {
+  clearProjectsList(): void;
+  getProjectsList(): Array<proto_environment_project_pb.Project>;
+  setProjectsList(value: Array<proto_environment_project_pb.Project>): void;
+  addProjects(
+    value?: proto_environment_project_pb.Project,
+    index?: number
+  ): proto_environment_project_pb.Project;
+
+  getCursor(): string;
+  setCursor(value: string): void;
+
+  getTotalCount(): number;
+  setTotalCount(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ListProjectsV2Response.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ListProjectsV2Response
+  ): ListProjectsV2Response.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ListProjectsV2Response,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ListProjectsV2Response;
+  static deserializeBinaryFromReader(
+    message: ListProjectsV2Response,
+    reader: jspb.BinaryReader
+  ): ListProjectsV2Response;
+}
+
+export namespace ListProjectsV2Response {
+  export type AsObject = {
+    projectsList: Array<proto_environment_project_pb.Project.AsObject>;
+    cursor: string;
+    totalCount: number;
+  };
+}

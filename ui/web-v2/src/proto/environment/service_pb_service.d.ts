@@ -211,6 +211,15 @@ type EnvironmentServiceConvertTrialOrganization = {
   readonly responseType: typeof proto_environment_service_pb.ConvertTrialOrganizationResponse;
 };
 
+type EnvironmentServiceListProjectsV2 = {
+  readonly methodName: string;
+  readonly service: typeof EnvironmentService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_environment_service_pb.ListProjectsV2Request;
+  readonly responseType: typeof proto_environment_service_pb.ListProjectsV2Response;
+};
+
 export class EnvironmentService {
   static readonly serviceName: string;
   static readonly GetEnvironmentV2: EnvironmentServiceGetEnvironmentV2;
@@ -236,6 +245,7 @@ export class EnvironmentService {
   static readonly ArchiveOrganization: EnvironmentServiceArchiveOrganization;
   static readonly UnarchiveOrganization: EnvironmentServiceUnarchiveOrganization;
   static readonly ConvertTrialOrganization: EnvironmentServiceConvertTrialOrganization;
+  static readonly ListProjectsV2: EnvironmentServiceListProjectsV2;
 }
 
 export type ServiceError = {
@@ -626,6 +636,21 @@ export class EnvironmentServiceClient {
     callback: (
       error: ServiceError | null,
       responseMessage: proto_environment_service_pb.ConvertTrialOrganizationResponse | null
+    ) => void
+  ): UnaryResponse;
+  listProjectsV2(
+    requestMessage: proto_environment_service_pb.ListProjectsV2Request,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_environment_service_pb.ListProjectsV2Response | null
+    ) => void
+  ): UnaryResponse;
+  listProjectsV2(
+    requestMessage: proto_environment_service_pb.ListProjectsV2Request,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_environment_service_pb.ListProjectsV2Response | null
     ) => void
   ): UnaryResponse;
 }

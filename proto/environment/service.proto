@@ -266,6 +266,36 @@ message ConvertTrialOrganizationRequest {
 
 message ConvertTrialOrganizationResponse {}
 
+message ListProjectsV2Request {
+  enum OrderBy {
+    DEFAULT = 0;
+    ID = 1;
+    CREATED_AT = 2;
+    UPDATED_AT = 3;
+    NAME = 4;
+    URL_CODE = 5;
+    ENVIRONMENT_COUNT = 6;
+    FEATURE_COUNT = 7;
+  }
+  enum OrderDirection {
+    ASC = 0;
+    DESC = 1;
+  }
+  int64 page_size = 1;
+  string cursor = 2;
+  OrderBy order_by = 3;
+  OrderDirection order_direction = 4;
+  string search_keyword = 5;
+  google.protobuf.BoolValue disabled = 6;
+  repeated string organization_ids = 7;
+}
+
+message ListProjectsV2Response {
+  repeated Project projects = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
 service EnvironmentService {
   rpc GetEnvironmentV2(GetEnvironmentV2Request)
       returns (GetEnvironmentV2Response) {
@@ -1286,6 +1316,52 @@ service EnvironmentService {
       description: "Convert a trial organization to a paid one. To call this API, you need an `SYSTEM_ADMIN` role.",
       tags: "Organization",
       operation_id: "web.v1.environment.convert_trial_organization",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+
+  rpc ListProjectsV2(ListProjectsV2Request) returns (ListProjectsV2Response) {
+    option (google.api.http) = {
+      post: "/v1/environment/list_projects_v2"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List Projects V2",
+      description: "List projects with V2 API. To call this API, you need at least a MEMBER role in the specified organizations.",
+      tags: "Project",
+      operation_id: "web.v1.environment.list_projects_v2",
       responses: {
         key: "400"
         value: {

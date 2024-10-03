@@ -950,3 +950,140 @@ func validateConvertTrialProjectRequest(
 	}
 	return nil
 }
+
+func (s *EnvironmentService) ListProjectsV2(
+	ctx context.Context,
+	req *environmentproto.ListProjectsV2Request,
+) (*environmentproto.ListProjectsV2Response, error) {
+	localizer := locale.NewLocalizer(ctx)
+	// Check if the user has at least Member role in each requested organization
+	for _, orgID := range req.OrganizationIds {
+		_, err := s.checkOrganizationRole(
+			ctx,
+			orgID,
+			accountproto.AccountV2_Role_Organization_MEMBER,
+			localizer,
+		)
+		if err != nil {
+			s.logger.Error(
+				"Failed to check organization role",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationID", orgID),
+					zap.String("requiredRole", accountproto.AccountV2_Role_Organization_MEMBER.String()),
+				)...,
+			)
+			return nil, err
+		}
+	}
+	var whereParts []mysql.WherePart
+	if len(req.OrganizationIds) > 0 {
+		oIDs := convToInterfaceSlice(req.OrganizationIds)
+		whereParts = append(whereParts, mysql.NewInFilter("project.organization_id", oIDs))
+	}
+	if req.Disabled != nil {
+		whereParts = append(whereParts, mysql.NewFilter("project.disabled", "=", req.Disabled.Value))
+	}
+	if req.SearchKeyword != "" {
+		whereParts = append(
+			whereParts,
+			mysql.NewSearchQuery(
+				[]string{"project.id", "project.name", "project.url_code", "project.creator_email"},
+				req.SearchKeyword,
+			),
+		)
+	}
+	orders, err := s.newProjectListV2Orders(req.OrderBy, req.OrderDirection, localizer)
+	if err != nil {
+		s.logger.Error(
+			"Invalid argument",
+			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
+		)
+		return nil, err
+	}
+	limit := int(req.PageSize)
+	cursor := req.Cursor
+	if cursor == "" {
+		cursor = "0"
+	}
+	offset, err := strconv.Atoi(cursor)
+	if err != nil {
+		dt, err := statusInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	projectStorage := v2es.NewProjectStorage(s.mysqlClient)
+	projects, nextCursor, totalCount, err := projectStorage.ListProjects(
+		ctx,
+		whereParts,
+		orders,
+		limit,
+		offset,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to list projects",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &environmentproto.ListProjectsV2Response{
+		Projects:   projects,
+		Cursor:     strconv.Itoa(nextCursor),
+		TotalCount: totalCount,
+	}, nil
+}
+
+func (s *EnvironmentService) newProjectListV2Orders(
+	orderBy environmentproto.ListProjectsV2Request_OrderBy,
+	orderDirection environmentproto.ListProjectsV2Request_OrderDirection,
+	localizer locale.Localizer,
+) ([]*mysql.Order, error) {
+	var column string
+	switch orderBy {
+	case environmentproto.ListProjectsV2Request_DEFAULT,
+		environmentproto.ListProjectsV2Request_NAME:
+		column = "project.name"
+	case environmentproto.ListProjectsV2Request_URL_CODE:
+		column = "project.url_code"
+	case environmentproto.ListProjectsV2Request_ID:
+		column = "project.id"
+	case environmentproto.ListProjectsV2Request_CREATED_AT:
+		column = "project.created_at"
+	case environmentproto.ListProjectsV2Request_UPDATED_AT:
+		column = "project.updated_at"
+	case environmentproto.ListProjectsV2Request_ENVIRONMENT_COUNT:
+		column = "environment_count"
+	case environmentproto.ListProjectsV2Request_FEATURE_COUNT:
+		column = "feature_count"
+
+	default:
+		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	direction := mysql.OrderDirectionAsc
+	if orderDirection == environmentproto.ListProjectsV2Request_DESC {
+		direction = mysql.OrderDirectionDesc
+	}
+	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
+}
