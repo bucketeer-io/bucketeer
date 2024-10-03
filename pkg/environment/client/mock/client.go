@@ -414,6 +414,26 @@ func (mr *MockClientMockRecorder) ListProjects(ctx, in any, opts ...any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProjects", reflect.TypeOf((*MockClient)(nil).ListProjects), varargs...)
 }
 
+// ListProjectsV2 mocks base method.
+func (m *MockClient) ListProjectsV2(ctx context.Context, in *environment.ListProjectsV2Request, opts ...grpc.CallOption) (*environment.ListProjectsV2Response, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ListProjectsV2", varargs...)
+	ret0, _ := ret[0].(*environment.ListProjectsV2Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListProjectsV2 indicates an expected call of ListProjectsV2.
+func (mr *MockClientMockRecorder) ListProjectsV2(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListProjectsV2", reflect.TypeOf((*MockClient)(nil).ListProjectsV2), varargs...)
+}
+
 // UnarchiveEnvironmentV2 mocks base method.
 func (m *MockClient) UnarchiveEnvironmentV2(ctx context.Context, in *environment.UnarchiveEnvironmentV2Request, opts ...grpc.CallOption) (*environment.UnarchiveEnvironmentV2Response, error) {
 	m.ctrl.T.Helper()

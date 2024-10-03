@@ -2372,6 +2372,64 @@ paths:
             $ref: '#/definitions/environmentListProjectsRequest'
       tags:
         - Project
+  /v1/environment/list_projects_v2:
+    post:
+      summary: List Projects V2
+      description: List projects with V2 API. To call this API, you need at least a MEMBER role in the specified organizations.
+      operationId: web.v1.environment.list_projects_v2
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/environmentListProjectsV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/environmentListProjectsV2Request'
+      tags:
+        - Project
   /v1/environment/unarchive_environment:
     post:
       summary: Unarchive
@@ -3766,6 +3824,57 @@ definitions:
       - DESC
     default: ASC
   environmentListProjectsResponse:
+    type: object
+    properties:
+      projects:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/environmentProject'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  environmentListProjectsV2Request:
+    type: object
+    properties:
+      pageSize:
+        type: string
+        format: int64
+      cursor:
+        type: string
+      orderBy:
+        $ref: '#/definitions/environmentListProjectsV2RequestOrderBy'
+      orderDirection:
+        $ref: '#/definitions/environmentListProjectsV2RequestOrderDirection'
+      searchKeyword:
+        type: string
+      disabled:
+        type: boolean
+      organizationIds:
+        type: array
+        items:
+          type: string
+  environmentListProjectsV2RequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - ID
+      - CREATED_AT
+      - UPDATED_AT
+      - NAME
+      - URL_CODE
+      - ENVIRONMENT_COUNT
+      - FEATURE_COUNT
+    default: DEFAULT
+  environmentListProjectsV2RequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  environmentListProjectsV2Response:
     type: object
     properties:
       projects:
