@@ -9,6 +9,6 @@ export const projectsFetcher = async (
   params?: ProjectFetcherParams
 ): Promise<ProjectCollection> => {
   return axiosClient
-    .post<ProjectCollection>('/v1/environment/list_projects', params)
+    .post<ProjectCollection>('/v1/environment/list_projects_v2', params)
     .then(response => response.data);
 };
