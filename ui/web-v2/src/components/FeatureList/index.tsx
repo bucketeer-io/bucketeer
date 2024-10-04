@@ -84,7 +84,7 @@ import {
 import SaveSvg from '../../assets/svg/save.svg';
 import SaveGraySvg from '../../assets/svg/save-gray.svg';
 import SaveLargeSvg from '../../assets/svg/save-large.svg';
-import { parse } from 'query-string';
+import { parse, stringify } from 'query-string';
 import { HoverPopover } from '../HoverPopover';
 
 export enum FlagStatus {
@@ -589,21 +589,32 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     }, [me.consoleAccount.searchFiltersList, onChange]);
 
     useEffect(() => {
-      const stringigyOptions = stringifySearchParams(options);
+      const stringyOptions = stringifySearchParams(options);
       const query = selectedSearchFilter?.query ?? '';
 
       if (selectedSearchFilter) {
-        // If the selected search filter has changes, mark it as unsaved
-        if (stringigyOptions && query) {
-          setSearchFiltersList(
-            searchFiltersList.map((s) => ({
-              ...s,
-              saveChanges:
-                s.id === selectedSearchFilter.id && query !== stringigyOptions
-                  ? true
-                  : false
-            }))
-          );
+        if (stringyOptions && query) {
+          // If the user has clicked on a Feature flag navbar
+          if (stringyOptions === stringify(defaultOptions)) {
+            setSelectedSearchFilter(null);
+            setSearchFiltersList(
+              searchFiltersList.map((s) => ({
+                ...s,
+                selected: false,
+                saveChanges: false
+              }))
+            );
+          } else {
+            setSearchFiltersList(
+              searchFiltersList.map((s) => ({
+                ...s,
+                saveChanges:
+                  s.id === selectedSearchFilter.id && query !== stringyOptions
+                    ? true
+                    : false
+              }))
+            );
+          }
         }
       }
     }, [selectedSearchFilter, options]);
@@ -863,8 +874,10 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
 
     const handleNavigation = (nextLocation) => {
       if (
-        location.pathname !== nextLocation.pathname ||
-        (location.pathname === nextLocation.pathname && !nextLocation.search) // If the user is trying to go to the same page by clicking on the sidebar menu
+        selectedSearchFilter &&
+        ((nextLocation.pathname !== PAGE_PATH_ROOT &&
+          location.pathname !== nextLocation.pathname) ||
+          (location.pathname === nextLocation.pathname && !nextLocation.search)) // If the user is trying to go to the same page by clicking on the sidebar menu
       ) {
         setNextLocation(nextLocation); // Save the location the user is trying to go to
         setShowSaveChangesDialog(true); // Show custom confirmation popup
