@@ -77,15 +77,31 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 func (c *command) scanAndCopyBatch(src, dst v3.Client, logger *zap.Logger) error {
 	var cursor uint64
 	batchSize := int64(100)
+	totalCopied := 0
 
 	for {
 		nextCursor, keys, err := src.Scan(cursor, "*", batchSize)
 		if err != nil {
+			logger.Error(
+				"Error scanning keys from source Redis",
+				zap.Error(err),
+				zap.Uint64("cursor", cursor),
+			)
 			return fmt.Errorf("error scanning keys from source Redis: %v", err)
 		}
 
-		if err := c.copyBatch(src, dst, keys); err != nil {
-			logger.Error("Error copying batch", zap.Error(err))
+		copiedKeys, err := c.copyBatch(src, dst, keys)
+		if err != nil {
+			logger.Error("Error copying batch", zap.Error(err), zap.Uint64(
+				"cursor",
+				cursor,
+			), zap.Int("copiedKeys", copiedKeys))
+		} else {
+			totalCopied += copiedKeys
+			logger.Info("Successfully copied batch", zap.Uint64(
+				"cursor",
+				cursor,
+			), zap.Int("copiedKeys", copiedKeys), zap.Int("totalCopied", totalCopied))
 		}
 
 		if nextCursor == 0 {
@@ -97,7 +113,8 @@ func (c *command) scanAndCopyBatch(src, dst v3.Client, logger *zap.Logger) error
 	return nil
 }
 
-func (c *command) copyBatch(src, dst v3.Client, keys []string) error {
+func (c *command) copyBatch(src, dst v3.Client, keys []string) (int, error) {
+	copiedKeys := 0
 	for _, key := range keys {
 		value, err := src.Get(key)
 		if err != nil {
@@ -105,15 +122,16 @@ func (c *command) copyBatch(src, dst v3.Client, keys []string) error {
 				log.Printf("Key not found: %s", key)
 				continue
 			}
-			return fmt.Errorf("error getting value for key %s: %v", key, err)
+			return copiedKeys, fmt.Errorf("error getting value for key %s: %v", key, err)
 		}
 
 		err = dst.Set(key, value, 0)
 		if err != nil {
-			return fmt.Errorf("error setting value for key %s: %v", key, err)
+			return copiedKeys, fmt.Errorf("error setting value for key %s: %v", key, err)
 		}
+		copiedKeys++
 	}
 
-	log.Printf("Successfully copied batch of %d keys", len(keys))
-	return nil
+	log.Printf("Successfully copied batch of %d keys", copiedKeys)
+	return copiedKeys, nil
 }
