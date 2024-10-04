@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: redis-data-copy
+  labels:
+    app: redis-data-copy
+spec:
+  containers:
+  - name: redis-data-copy
+    image: redis-data-copy:latest
+    args:
+      - copy
+      - --source
+      - <source_redis_address>
+      - --destination
+      - <destination_redis_address>
+      - --src-password
+      - <source_password>
+      - --dst-password
+      - <destination_password>
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+  restartPolicy: OnFailure

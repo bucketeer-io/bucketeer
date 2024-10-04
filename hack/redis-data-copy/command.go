@@ -92,16 +92,20 @@ func (c *command) scanAndCopyBatch(src, dst v3.Client, logger *zap.Logger) error
 
 		copiedKeys, err := c.copyBatch(src, dst, keys)
 		if err != nil {
-			logger.Error("Error copying batch", zap.Error(err), zap.Uint64(
-				"cursor",
-				cursor,
-			), zap.Int("copiedKeys", copiedKeys))
+			logger.Error(
+				"Error copying batch",
+				zap.Error(err),
+				zap.Uint64("cursor", cursor),
+				zap.Int("copiedKeys", copiedKeys),
+			)
 		} else {
 			totalCopied += copiedKeys
-			logger.Info("Successfully copied batch", zap.Uint64(
-				"cursor",
-				cursor,
-			), zap.Int("copiedKeys", copiedKeys), zap.Int("totalCopied", totalCopied))
+			logger.Info(
+				"Successfully copied batch",
+				zap.Uint64("cursor", cursor),
+				zap.Int("copiedKeys", copiedKeys),
+				zap.Int("totalCopied", totalCopied),
+			)
 		}
 
 		if nextCursor == 0 {
