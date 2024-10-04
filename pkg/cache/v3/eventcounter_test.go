@@ -17,7 +17,7 @@ package v3
 import (
 	"testing"
 
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 )
 

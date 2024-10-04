@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strconv"
 
-	goredis "github.com/go-redis/redis"
+	goredis "github.com/redis/go-redis/v9"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 )

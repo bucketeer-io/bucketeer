@@ -16,7 +16,6 @@ require (
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/go-gota/gota v0.12.0
 	github.com/go-jose/go-jose/v4 v4.0.4
-	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/go-resty/resty/v2 v2.15.3
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/golang/protobuf v1.5.4
@@ -31,6 +30,7 @@ require (
 	github.com/mna/redisc v1.4.0
 	github.com/nicksnyder/go-i18n/v2 v2.4.0
 	github.com/prometheus/client_golang v1.20.4
+	github.com/redis/go-redis/v9 v9.6.1
 	github.com/slack-go/slack v0.14.0
 	github.com/stretchr/testify v1.9.0
 	github.com/tkuchiki/go-timezone v0.2.3
@@ -116,7 +116,6 @@ require (
 	github.com/prometheus/common v0.55.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/prometheus/prometheus v0.35.0 // indirect
-	github.com/redis/go-redis/v9 v9.6.1 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.54.0 // indirect

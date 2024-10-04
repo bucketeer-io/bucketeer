@@ -22,7 +22,7 @@ import (
 	"strconv"
 	"time"
 
-	goredis "github.com/go-redis/redis"
+	goredis "github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 

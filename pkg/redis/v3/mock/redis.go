@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 	time "time"
 
-	redis0 "github.com/go-redis/redis"
+	redis0 "github.com/redis/go-redis/v9"
 	gomock "go.uber.org/mock/gomock"
 
 	health "github.com/bucketeer-io/bucketeer/pkg/health"
