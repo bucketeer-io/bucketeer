@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"go.uber.org/zap"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -18,6 +19,8 @@ type command struct {
 	*kingpin.CmdClause
 	sourceRedisAddress      *string
 	destinationRedisAddress *string
+	srcPassword             *string
+	dstPassword             *string
 }
 
 func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
@@ -26,6 +29,8 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		CmdClause:               cmd,
 		sourceRedisAddress:      cmd.Flag("source", "Source Redis address").Required().String(),
 		destinationRedisAddress: cmd.Flag("destination", "Destination Redis address").Required().String(),
+		srcPassword:             cmd.Flag("src-password", "Source Redis password").String(),
+		dstPassword:             cmd.Flag("dst-password", "Destination Redis password").String(),
 	}
 	r.RegisterCommand(command)
 	return command
@@ -34,6 +39,11 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Logger) error {
 	srcClient, err := v3.NewClient(*c.sourceRedisAddress,
 		v3.WithLogger(logger),
+		v3.WithPassword(*c.srcPassword),
+		v3.WithPoolSize(10),
+		v3.WithMinIdleConns(5),
+		v3.WithMaxRetries(3),
+		v3.WithDialTimeout(5*time.Second),
 	)
 	if err != nil {
 		logger.Error("Error creating source Redis client", zap.Error(err))
@@ -43,6 +53,11 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 
 	dstClient, err := v3.NewClient(*c.destinationRedisAddress,
 		v3.WithLogger(logger),
+		v3.WithPassword(*c.dstPassword),
+		v3.WithPoolSize(10),
+		v3.WithMinIdleConns(5),
+		v3.WithMaxRetries(3),
+		v3.WithDialTimeout(5*time.Second),
 	)
 	if err != nil {
 		logger.Error("Error creating destination Redis client", zap.Error(err))
