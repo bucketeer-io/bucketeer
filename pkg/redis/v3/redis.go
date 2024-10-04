@@ -116,7 +116,6 @@ type options struct {
 	serverName   string
 	metrics      metrics.Registerer
 	logger       *zap.Logger
-	useCluster   bool // New option to indicate if we should use a cluster client
 }
 
 func defaultOptions() *options {
@@ -127,7 +126,6 @@ func defaultOptions() *options {
 		minIdleConns: 5,
 		poolTimeout:  5 * time.Second,
 		logger:       zap.NewNop(),
-		useCluster:   false,
 	}
 }
 
@@ -184,12 +182,6 @@ func WithMetrics(r metrics.Registerer) Option {
 func WithLogger(logger *zap.Logger) Option {
 	return func(opts *options) {
 		opts.logger = logger
-	}
-}
-
-func WithUseCluster(useCluster bool) Option {
-	return func(opts *options) {
-		opts.useCluster = useCluster
 	}
 }
 
@@ -266,7 +258,7 @@ func (c *client) Close() error {
 func (c *client) Check(ctx context.Context) health.Status {
 	resultCh := make(chan health.Status, 1)
 	go func() {
-		_, err := c.rc.Ping(context.TODO()).Result() // Updated to include context
+		_, err := c.rc.Ping(context.TODO()).Result()
 		if err != nil {
 			c.logger.Error("Unhealthy", zap.Error(err))
 			resultCh <- health.Unhealthy
@@ -290,7 +282,7 @@ func (c *client) Stats() redis.PoolStats {
 func (c *client) Scan(cursor uint64, key string, count int64) (uint64, []string, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, scanCmdName).Inc()
-	keys, cursor, err := c.rc.Scan(context.TODO(), cursor, key, count).Result() // Updated to include context
+	keys, cursor, err := c.rc.Scan(context.TODO(), cursor, key, count).Result()
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -307,7 +299,7 @@ func (c *client) Scan(cursor uint64, key string, count int64) (uint64, []string,
 func (c *client) Get(key string) ([]byte, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, getCmdName).Inc()
-	reply, err := c.rc.Get(context.TODO(), key).Bytes() // Updated to include context
+	reply, err := c.rc.Get(context.TODO(), key).Bytes()
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -324,7 +316,7 @@ func (c *client) Get(key string) ([]byte, error) {
 func (c *client) GetMulti(keys []string) ([]interface{}, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, getMultiCmdName).Inc()
-	reply, err := c.rc.MGet(context.TODO(), keys...).Result() // Updated to include context
+	reply, err := c.rc.MGet(context.TODO(), keys...).Result()
 	code := redis.CodeFail
 	values := make([]interface{}, 0, len(reply))
 	switch err {
@@ -352,7 +344,7 @@ func (c *client) GetMulti(keys []string) ([]interface{}, error) {
 func (c *client) Set(key string, val interface{}, expiration time.Duration) error {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, setCmdName).Inc()
-	err := c.rc.Set(context.TODO(), key, val, expiration).Err() // Updated to include context
+	err := c.rc.Set(context.TODO(), key, val, expiration).Err()
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -369,7 +361,7 @@ func (c *client) Set(key string, val interface{}, expiration time.Duration) erro
 func (c *client) PFAdd(key string, els ...string) (int64, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, pfAddCmdName).Inc()
-	result, err := c.rc.PFAdd(context.TODO(), key, els).Result() // Updated to include context
+	result, err := c.rc.PFAdd(context.TODO(), key, els).Result()
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -384,7 +376,7 @@ func (c *client) PFAdd(key string, els ...string) (int64, error) {
 func (c *client) PFMerge(dest string, keys ...string) error {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName).Inc()
-	_, err := c.rc.PFMerge(context.TODO(), dest, keys...).Result() // Updated to include context
+	_, err := c.rc.PFMerge(context.TODO(), dest, keys...).Result()
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -399,7 +391,7 @@ func (c *client) PFMerge(dest string, keys ...string) error {
 func (c *client) PFCount(keys ...string) (int64, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, pfCountCmdName).Inc()
-	count, err := c.rc.PFCount(context.TODO(), keys...).Result() // Updated to include context
+	count, err := c.rc.PFCount(context.TODO(), keys...).Result()
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -414,7 +406,7 @@ func (c *client) PFCount(keys ...string) (int64, error) {
 func (c *client) IncrByFloat(key string, value float64) (float64, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, incrByFloatCmdName).Inc()
-	v, err := c.rc.IncrByFloat(context.TODO(), key, value).Result() // Updated to include context
+	v, err := c.rc.IncrByFloat(context.TODO(), key, value).Result()
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -429,7 +421,7 @@ func (c *client) IncrByFloat(key string, value float64) (float64, error) {
 func (c *client) Del(key string) error {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, delCmdName).Inc()
-	_, err := c.rc.Del(context.TODO(), key).Result() // Updated to include context
+	_, err := c.rc.Del(context.TODO(), key).Result()
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -446,7 +438,7 @@ func (c *client) Del(key string) error {
 func (c *client) Incr(key string) (int64, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, incrCmdName).Inc()
-	v, err := c.rc.Incr(context.TODO(), key).Result() // Updated to include context
+	v, err := c.rc.Incr(context.TODO(), key).Result()
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -461,7 +453,7 @@ func (c *client) Incr(key string) (int64, error) {
 func (c *client) Expire(key string, expiration time.Duration) (bool, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, expireCmdName).Inc()
-	v, err := c.rc.Expire(context.TODO(), key, expiration).Result() // Updated to include context
+	v, err := c.rc.Expire(context.TODO(), key, expiration).Result()
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -477,7 +469,7 @@ func (c *client) SetNX(ctx context.Context, key string, value interface{}, expir
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, SetNXCmdName).Inc()
 
-	result, err := c.rc.SetNX(context.TODO(), key, value, expiration).Result() // Updated to include context
+	result, err := c.rc.SetNX(context.TODO(), key, value, expiration).Result()
 
 	code := redis.CodeFail
 	if err == nil {
@@ -492,7 +484,7 @@ func (c *client) SetNX(ctx context.Context, key string, value interface{}, expir
 }
 
 func (c *client) Eval(ctx context.Context, script string, keys []string, args ...interface{}) *goredis.Cmd {
-	return c.rc.Eval(context.TODO(), script, keys, args...) // Updated to include context
+	return c.rc.Eval(context.TODO(), script, keys, args...)
 }
 
 func (c *client) Pipeline() PipeClient {
@@ -506,17 +498,17 @@ func (c *client) Pipeline() PipeClient {
 
 func (c *pipeClient) Incr(key string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, incrCmdName)
-	return c.pipe.Incr(context.TODO(), key) // Updated to include context
+	return c.pipe.Incr(context.TODO(), key)
 }
 
 func (c *pipeClient) PFAdd(key string, els ...string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, pfAddCmdName)
-	return c.pipe.PFAdd(context.TODO(), key, els) // Updated to include context
+	return c.pipe.PFAdd(context.TODO(), key, els)
 }
 
 func (c *pipeClient) TTL(key string) *goredis.DurationCmd {
 	c.cmds = append(c.cmds, ttlCmdName)
-	return c.pipe.TTL(context.TODO(), key) // Updated to include context
+	return c.pipe.TTL(context.TODO(), key)
 }
 
 func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
@@ -526,7 +518,7 @@ func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
 		cmdName += fmt.Sprintf("_%s", cmd)
 	}
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, cmdName).Inc()
-	v, err := c.pipe.Exec(context.TODO()) // Updated to include context
+	v, err := c.pipe.Exec(context.TODO())
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -542,15 +534,15 @@ func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
 
 func (c *pipeClient) PFCount(keys ...string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, pfCountCmdName)
-	return c.pipe.PFCount(context.TODO(), keys...) // Updated to include context
+	return c.pipe.PFCount(context.TODO(), keys...)
 }
 
 func (c *pipeClient) Get(key string) *goredis.StringCmd {
 	c.cmds = append(c.cmds, getCmdName)
-	return c.pipe.Get(context.TODO(), key) // Updated to include context
+	return c.pipe.Get(context.TODO(), key)
 }
 
 func (c *pipeClient) Del(key string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, pfCountCmdName)
-	return c.pipe.Del(context.TODO(), key) // Updated to include context
+	return c.pipe.Del(context.TODO(), key)
 }
