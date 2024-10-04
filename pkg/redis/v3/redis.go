@@ -200,8 +200,21 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 	}
 	logger := options.logger.Named("redis-v3")
 
+	standardClientOpts := &goredis.Options{
+		Addr:         addr,
+		Password:     options.password,
+		MaxRetries:   options.maxRetries,
+		DialTimeout:  options.dialTimeout,
+		PoolSize:     options.poolSize,
+		MinIdleConns: options.minIdleConns,
+		PoolTimeout:  options.poolTimeout,
+	}
+
+	tmpClient := goredis.NewClient(standardClientOpts)
+	defer tmpClient.Close()
+
 	var rc goredis.UniversalClient
-	if options.useCluster {
+	if _, err := tmpClient.ClusterInfo().Result(); err == nil {
 		rc = goredis.NewClusterClient(&goredis.ClusterOptions{
 			Addrs:        []string{addr},
 			Password:     options.password,
@@ -212,15 +225,7 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 			PoolTimeout:  options.poolTimeout,
 		})
 	} else {
-		rc = goredis.NewClient(&goredis.Options{
-			Addr:         addr,
-			Password:     options.password,
-			MaxRetries:   options.maxRetries,
-			DialTimeout:  options.dialTimeout,
-			PoolSize:     options.poolSize,
-			MinIdleConns: options.minIdleConns,
-			PoolTimeout:  options.poolTimeout,
-		})
+		rc = goredis.NewClient(standardClientOpts)
 	}
 	_, err := rc.Ping().Result()
 	if err != nil {
