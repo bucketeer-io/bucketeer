@@ -215,6 +215,14 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 
 	var rc goredis.UniversalClient
 	if _, err := tmpClient.ClusterInfo().Result(); err == nil {
+		logger.Debug("Redis cluster detected, creating cluster client",
+			zap.String("addr", addr),
+			zap.Int("maxRetries", options.maxRetries),
+			zap.Duration("dialTimeout", options.dialTimeout),
+			zap.Int("poolSize", options.poolSize),
+			zap.Int("minIdleConns", options.minIdleConns),
+			zap.Duration("poolTimeout", options.poolTimeout),
+		)
 		rc = goredis.NewClusterClient(&goredis.ClusterOptions{
 			Addrs:        []string{addr},
 			Password:     options.password,
@@ -225,6 +233,14 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 			PoolTimeout:  options.poolTimeout,
 		})
 	} else {
+		logger.Debug("Redis standalone detected, creating standard client",
+			zap.String("addr", addr),
+			zap.Int("maxRetries", options.maxRetries),
+			zap.Duration("dialTimeout", options.dialTimeout),
+			zap.Int("poolSize", options.poolSize),
+			zap.Int("minIdleConns", options.minIdleConns),
+			zap.Duration("poolTimeout", options.poolTimeout),
+		)
 		rc = goredis.NewClient(standardClientOpts)
 	}
 	_, err := rc.Ping().Result()
