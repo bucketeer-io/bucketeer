@@ -46,6 +46,10 @@ jobs:
             ${{ runner.os }}-yarn-
       - name: Init
         run: make init
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+      - name: Generated proto code
+        run: make gen_proto
         
   lint:
     name: Lint
@@ -96,8 +100,6 @@ jobs:
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-yarn-
-      - name: Generated proto code
-        run: make gen_proto
       - name: Unit test
         run: make test
 
@@ -123,7 +125,5 @@ jobs:
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-yarn-
-      - name: Generated proto code
-        run: make gen_proto
       - name: Package Build
         run: make build
