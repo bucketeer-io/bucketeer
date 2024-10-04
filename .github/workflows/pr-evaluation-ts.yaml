@@ -96,8 +96,8 @@ jobs:
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-yarn-
-      - name: Copy proto generated code
-        run: make copy_proto_generated_code
+      - name: Generated proto code
+        run: make gen_proto
       - name: Unit test
         run: make test
 
@@ -123,7 +123,7 @@ jobs:
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-yarn-
-      - name: Copy proto generated code
-        run: make copy_proto_generated_code
+      - name: Generated proto code
+        run: make gen_proto
       - name: Package Build
         run: make build
