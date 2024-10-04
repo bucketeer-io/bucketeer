@@ -15,9 +15,10 @@
 package v3
 
 import (
+	"context"
 	"testing"
 
-	"github.com/go-redis/redis"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -96,10 +97,10 @@ func TestGetUserValues(t *testing.T) {
 		{
 			desc: "success",
 			cmds: []*redis.IntCmd{
-				redis.NewIntCmd(),
-				redis.NewIntCmd(),
-				redis.NewIntCmd(),
-				redis.NewIntCmd(),
+				redis.NewIntCmd(context.TODO()),
+				redis.NewIntCmd(context.TODO()),
+				redis.NewIntCmd(context.TODO()),
+				redis.NewIntCmd(context.TODO()),
 			},
 			expected: []float64{
 				0, 0, 0, 0,
