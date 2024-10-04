@@ -100,8 +100,6 @@ spec:
               value: /usr/local/certs/service/tls.crt
             - name: BUCKETEER_API_KEY
               value: /usr/local/certs/service/tls.key
-            - name: BUCKETEER_API_REDIS_USE_CLUSTER
-              value: "{{ .Values.env.redis.useCluster }}"
           volumeMounts:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service

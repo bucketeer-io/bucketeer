@@ -146,10 +146,7 @@ spec:
               value: "{{ .Values.env.experimentLockTTL }}"
             - name: BUCKETEER_BATCH_STAN_MODEL_ID
               value: "{{ .Values.httpstan.modelId }}"
-            - name: BUCKETEER_BATCH_PERSISTENT_REDIS_USE_CLUSTER
-              value: "{{ .Values.env.persistentRedis.useCluster }}"
-            - name: BUCKETEER_BATCH_NON_PERSISTENT_REDIS_USE_CLUSTER
-              value: "{{ .Values.env.nonPersistentRedis.useCluster }}"
+
           volumeMounts:
             - name: service-cert-secret
               mountPath: /usr/local/certs/service

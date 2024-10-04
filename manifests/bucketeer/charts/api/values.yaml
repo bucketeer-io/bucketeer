@@ -19,7 +19,6 @@ env:
     poolMaxIdle: 25
     poolMaxActive: 25
     addr:
-    useCluster: false
   oldestEventTimestamp:
   furthestEventTimestamp:
   logLevel: info

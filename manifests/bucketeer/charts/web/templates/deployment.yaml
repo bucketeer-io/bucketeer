@@ -116,8 +116,6 @@ spec:
               value: "{{ .Values.env.mysqlPort }}"
             - name: BUCKETEER_WEB_MYSQL_DB_NAME
               value: "{{ .Values.env.mysqlDbName }}"
-            - name: BUCKETEER_WEB_PERSISTENT_REDIS_USE_CLUSTER
-              value: "{{ .Values.env.persistentRedis.useCluster }}"
             - name: BUCKETEER_WEB_PERSISTENT_REDIS_SERVER_NAME
               value: "{{ .Values.env.persistentRedis.serverName }}"
             - name: BUCKETEER_WEB_PERSISTENT_REDIS_ADDR
@@ -130,8 +128,6 @@ spec:
               value: "{{ .Values.env.nonPersistentRedis.serverName }}"
             - name: BUCKETEER_WEB_NON_PERSISTENT_REDIS_ADDR
               value: "{{ .Values.env.nonPersistentRedis.addr }}"
-            - name: BUCKETEER_WEB_NON_PERSISTENT_REDIS_USE_CLUSTER
-              value: "{{ .Values.env.nonPersistentRedis.useCluster }}"
             - name: BUCKETEER_WEB_NON_PERSISTENT_REDIS_POOL_MAX_IDLE
               value: "{{ .Values.env.nonPersistentRedis.poolMaxIdle }}"
             - name: BUCKETEER_WEB_NON_PERSISTENT_REDIS_POOL_MAX_ACTIVE

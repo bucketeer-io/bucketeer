@@ -92,9 +92,6 @@ type server struct {
 	nonPersistentRedisAddr          *string
 	nonPersistentRedisPoolMaxIdle   *int
 	nonPersistentRedisPoolMaxActive *int
-	// Redis cluster
-	persistentRedisUseCluster    *bool
-	nonPersistentRedisUseCluster *bool
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -197,14 +194,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"non-persistent-redis-pool-max-active",
 			"Maximum number of connections allocated by the non-persistent redis connections pool at a given time.",
 		).Default("10").Int(),
-		persistentRedisUseCluster: cmd.Flag(
-			"persistent-redis-use-cluster",
-			"Use Redis cluster mode for persistent Redis.",
-		).Default("false").Bool(),
-		nonPersistentRedisUseCluster: cmd.Flag(
-			"non-persistent-redis-use-cluster",
-			"Use Redis cluster mode for non-persistent Redis.",
-		).Default("false").Bool(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -289,7 +278,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithServerName(*s.nonPersistentRedisServerName),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
-		redisv3.WithUseCluster(*s.nonPersistentRedisUseCluster),
 	)
 	if err != nil {
 		return err
@@ -303,7 +291,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithServerName(*s.persistentRedisServerName),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
-		redisv3.WithUseCluster(*s.persistentRedisUseCluster),
 	)
 	if err != nil {
 		return err

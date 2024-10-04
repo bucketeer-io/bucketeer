@@ -61,7 +61,6 @@ type server struct {
 	redisPoolMaxActive     *int
 	oldestEventTimestamp   *time.Duration
 	furthestEventTimestamp *time.Duration
-	redisUseCluster        *bool
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -123,10 +122,6 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"furthest-event-timestamp",
 			"The duration of furthest event timestamp from processing time to allow.",
 		).Default("24h").Duration(),
-		redisUseCluster: cmd.Flag(
-			"redis-use-cluster",
-			"Use Redis cluster mode.",
-		).Default("false").Bool(),
 	}
 	r.RegisterCommand(server)
 	return server
@@ -236,7 +231,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithServerName(*s.redisServerName),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
-		redisv3.WithUseCluster(*s.redisUseCluster),
 	)
 	if err != nil {
 		return err
