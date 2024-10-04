@@ -8,7 +8,7 @@ import PageLayout from 'elements/page-layout';
 import PageLoader from './page-loader';
 
 const OrganizationPage = () => {
-  const { t } = useTranslation(['common', 'form', 'table']);
+  const { t } = useTranslation(['common']);
 
   return (
     <PageLayout.Root title="Organizations">
