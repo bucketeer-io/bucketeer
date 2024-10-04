@@ -130,6 +130,10 @@ spec:
               value: "{{ .Values.env.nonPersistentRedis.poolMaxIdle }}"
             - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_POOL_MAX_ACTIVE
               value: "{{ .Values.env.nonPersistentRedis.poolMaxActive }}"
+            - name: BUCKETEER_SUBSCRIBER_PERSISTENT_REDIS_USE_CLUSTER
+              value: "{{ .Values.env.persistentRedis.useCluster }}"
+            - name: BUCKETEER_SUBSCRIBER_NON_PERSISTENT_REDIS_USE_CLUSTER
+              value: "{{ .Values.env.nonPersistentRedis.useCluster }}"
 
           volumeMounts:
             - name: service-cert-secret

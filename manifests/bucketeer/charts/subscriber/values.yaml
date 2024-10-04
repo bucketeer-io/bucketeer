@@ -35,11 +35,13 @@ env:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
+    useCluster: false
   nonPersistentRedis:
     serverName:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
+    useCluster: false
 
 affinity: {}
 

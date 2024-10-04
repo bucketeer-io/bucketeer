@@ -88,11 +88,13 @@ type server struct {
 	persistentRedisAddr          *string
 	persistentRedisPoolMaxIdle   *int
 	persistentRedisPoolMaxActive *int
+	persistentRedisUseCluster    *bool
 	// Non Persistent Redis
 	nonPersistentRedisServerName    *string
 	nonPersistentRedisAddr          *string
 	nonPersistentRedisPoolMaxIdle   *int
 	nonPersistentRedisPoolMaxActive *int
+	nonPersistentRedisUseCluster    *bool
 	// BigQuery
 	bigQueryDataSet      *string
 	bigQueryDataLocation *string
@@ -158,6 +160,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"persistent-redis-pool-max-active",
 			"Maximum number of connections allocated by the persistent redis connections pool at a given time.",
 		).Default("10").Int(),
+		persistentRedisUseCluster: cmd.Flag(
+			"persistent-redis-use-cluster",
+			"Use Redis cluster mode for persistent Redis.",
+		).Default("false").Bool(),
 		nonPersistentRedisServerName: cmd.Flag(
 			"non-persistent-redis-server-name",
 			"Name of the non-persistent redis.",
@@ -174,6 +180,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"non-persistent-redis-pool-max-active",
 			"Maximum number of connections allocated by the non-persistent redis connections pool at a given time.",
 		).Default("10").Int(),
+		nonPersistentRedisUseCluster: cmd.Flag(
+			"non-persistent-redis-use-cluster",
+			"Use Redis cluster mode for non-persistent Redis.",
+		).Default("false").Bool(),
 		bigQueryDataSet:      cmd.Flag("bigquery-data-set", "BigQuery DataSet Name").String(),
 		bigQueryDataLocation: cmd.Flag("bigquery-data-location", "BigQuery DataSet Location").String(),
 		domainTopic: cmd.Flag(
@@ -332,6 +342,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithServerName(*s.persistentRedisServerName),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
+		redisv3.WithUseCluster(*s.persistentRedisUseCluster),
 	)
 	if err != nil {
 		return err
@@ -345,6 +356,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		redisv3.WithServerName(*s.nonPersistentRedisServerName),
 		redisv3.WithMetrics(registerer),
 		redisv3.WithLogger(logger),
+		redisv3.WithUseCluster(*s.nonPersistentRedisUseCluster),
 	)
 	if err != nil {
 		return err

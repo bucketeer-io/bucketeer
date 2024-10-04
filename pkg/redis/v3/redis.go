@@ -84,7 +84,7 @@ type Client interface {
 }
 
 type client struct {
-	rc     *goredis.Client
+	rc     goredis.UniversalClient
 	opts   *options
 	logger *zap.Logger
 }
@@ -116,6 +116,7 @@ type options struct {
 	serverName   string
 	metrics      metrics.Registerer
 	logger       *zap.Logger
+	useCluster   bool // New option to indicate if we should use a cluster client
 }
 
 func defaultOptions() *options {
@@ -126,6 +127,7 @@ func defaultOptions() *options {
 		minIdleConns: 5,
 		poolTimeout:  5 * time.Second,
 		logger:       zap.NewNop(),
+		useCluster:   false,
 	}
 }
 
@@ -185,21 +187,41 @@ func WithLogger(logger *zap.Logger) Option {
 	}
 }
 
+func WithUseCluster(useCluster bool) Option {
+	return func(opts *options) {
+		opts.useCluster = useCluster
+	}
+}
+
 func NewClient(addr string, opts ...Option) (Client, error) {
 	options := defaultOptions()
 	for _, opt := range opts {
 		opt(options)
 	}
 	logger := options.logger.Named("redis-v3")
-	rc := goredis.NewClient(&goredis.Options{
-		Addr:         addr,
-		Password:     options.password,
-		MaxRetries:   options.maxRetries,
-		DialTimeout:  options.dialTimeout,
-		PoolSize:     options.poolSize,
-		MinIdleConns: options.minIdleConns,
-		PoolTimeout:  options.poolTimeout,
-	})
+
+	var rc goredis.UniversalClient
+	if options.useCluster {
+		rc = goredis.NewClusterClient(&goredis.ClusterOptions{
+			Addrs:        []string{addr},
+			Password:     options.password,
+			MaxRetries:   options.maxRetries,
+			DialTimeout:  options.dialTimeout,
+			PoolSize:     options.poolSize,
+			MinIdleConns: options.minIdleConns,
+			PoolTimeout:  options.poolTimeout,
+		})
+	} else {
+		rc = goredis.NewClient(&goredis.Options{
+			Addr:         addr,
+			Password:     options.password,
+			MaxRetries:   options.maxRetries,
+			DialTimeout:  options.dialTimeout,
+			PoolSize:     options.poolSize,
+			MinIdleConns: options.minIdleConns,
+			PoolTimeout:  options.poolTimeout,
+		})
+	}
 	_, err := rc.Ping().Result()
 	if err != nil {
 		logger.Error("Failed to ping", zap.Error(err))
@@ -241,7 +263,14 @@ func (c *client) Check(ctx context.Context) health.Status {
 }
 
 func (c *client) Stats() redis.PoolStats {
-	return (*poolStats)(c.rc.PoolStats())
+	switch v := c.rc.(type) {
+	case *goredis.Client:
+		return (*poolStats)(v.PoolStats())
+	case *goredis.ClusterClient:
+		return (*poolStats)(v.PoolStats())
+	default:
+		return &poolStats{}
+	}
 }
 
 func (c *client) Scan(cursor uint64, key string, count int64) (uint64, []string, error) {
