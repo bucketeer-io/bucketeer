@@ -39,7 +39,7 @@ const PageLoader = () => {
 
   const isEmpty = collection?.Organizations.length === 0;
 
-  if (isEmpty) {
+  if (!isEmpty) {
     return (
       <PageLayout.EmptyState>
         <EmptyCollection onAdd={onOpenAddModal} />
@@ -48,9 +48,7 @@ const PageLoader = () => {
   }
   return (
     <>
-      <PageContent
-      //   onAdd={onOpenAddModal}
-      />
+      <PageContent />
     </>
   );
 };

@@ -1,18 +1,23 @@
 import { IconAddOutlined } from 'react-icons-material-design';
+import { useTranslation } from 'i18n';
 import EmptyState from 'elements/empty-state';
 
 export const EmptyCollection = ({ onAdd }: { onAdd: () => void }) => {
+  const { t } = useTranslation(['common', 'table']);
+
   return (
-    <EmptyState.Root variant="no-data" size="md">
+    <EmptyState.Root variant="no-data" size="lg">
       <EmptyState.Illustration />
       <EmptyState.Body>
-        <EmptyState.Title>{`No organizations yet!`}</EmptyState.Title>
-        <EmptyState.Description>{`Your created organizations will appear here.`}</EmptyState.Description>
+        <EmptyState.Title>{t(`table:empty.org-title`)}</EmptyState.Title>
+        <EmptyState.Description>
+          {t(`table:empty.org-desc`)}
+        </EmptyState.Description>
       </EmptyState.Body>
       <EmptyState.Actions>
         <EmptyState.ActionButton variant="primary" onClick={onAdd}>
           <IconAddOutlined />
-          {`Add organization`}
+          {t(`new-org`)}
         </EmptyState.ActionButton>
       </EmptyState.Actions>
     </EmptyState.Root>

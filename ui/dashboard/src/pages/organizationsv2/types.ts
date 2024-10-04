@@ -1,3 +1,3 @@
-export interface CompaniesFilters {
+export interface OrganizationFilters {
   searchQuery: string;
 }

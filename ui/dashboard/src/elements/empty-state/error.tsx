@@ -8,7 +8,7 @@ interface ErrorStateProps {
 }
 
 export const ErrorState = ({
-  size = 'md',
+  size = 'lg',
   title = `Oops! Something went wrong`,
   description = `We're on it. Please try again later.`,
   onRetry

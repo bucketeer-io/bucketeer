@@ -1,4 +1,7 @@
 import type { PropsWithChildren, ReactNode } from 'react';
+import emptyStateError from 'assets/empty-state/error.svg';
+import emptyStateNoData from 'assets/empty-state/no-data.svg';
+import emptyStateNoSearch from 'assets/empty-state/no-search.svg';
 import { createContext } from 'utils/create-context';
 import Button, { type ButtonProps } from 'components/button';
 
@@ -19,7 +22,7 @@ const [EmptyStateProvider, useEmptyState] =
 const EmptyStateRoot = ({ variant, size, children }: EmptyStateProps) => {
   return (
     <EmptyStateProvider value={{ variant, size }}>
-      <div>{children}</div>
+      <div className="flex flex-col items-center gap-4">{children}</div>
     </EmptyStateProvider>
   );
 };
@@ -29,30 +32,40 @@ const EmptyStateIllustration = () => {
 
   switch (variant) {
     case 'error':
-      return <img alt="Error" src="/assets/empty-state-error.svg" />;
+      return <img alt="Error" className="w-fit" src={emptyStateError} />;
 
     case 'no-data':
-      return <img alt="No Data" src="/assets/empty-state-no-data.svg" />;
+      return <img alt="No Data" className="w-fit" src={emptyStateNoData} />;
 
     case 'no-search':
-      return <img alt="No Search" src="/assets/empty-state-no-search.svg" />;
+      return <img alt="No Search" className="w-fit" src={emptyStateNoSearch} />;
   }
 };
 
 const EmptyStateBody = ({ children }: PropsWithChildren) => {
-  return <div className="max-w-80 text-center mx-auto mt-10">{children}</div>;
+  return (
+    <div className="max-w-[350px] flex flex-col gap-2 text-center mx-auto">
+      {children}
+    </div>
+  );
 };
 
 const EmptyStateTitle = ({ children }: { children: string }) => {
-  return <div>{children}</div>;
+  return (
+    <div className="text-additional-gray-300 typo-head-bold-medium">
+      {children}
+    </div>
+  );
 };
 
 const EmptyStateDescription = ({ children }: { children: string }) => {
-  return <div>{children}</div>;
+  return (
+    <div className="text-additional-gray-200 typo-para-small">{children}</div>
+  );
 };
 
 const EmptyStateActions = ({ children }: PropsWithChildren) => {
-  return <div className="flex justify-center mt-10 gap-3">{children}</div>;
+  return <div className="flex justify-center mt-3 gap-3">{children}</div>;
 };
 
 const EmptyStateActionButton = (props: Omit<ButtonProps, 'size'>) => {

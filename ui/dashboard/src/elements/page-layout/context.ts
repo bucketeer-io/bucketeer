@@ -1,10 +1,8 @@
 import { createContext } from 'utils/create-context';
 import type { PageLayoutProps } from '.';
 
-type PageLayoutContextValue = Pick<PageLayoutProps, 'title' | 'totalSteps'> & {
-  step?: number;
-  onChangeStep?: (step: number) => void;
-};
+type PageLayoutContextValue = Pick<PageLayoutProps, 'title'>;
+
 export const [PageLayoutProvider, usePageLayout] =
   createContext<PageLayoutContextValue>({
     name: 'PageLayoutProvider',

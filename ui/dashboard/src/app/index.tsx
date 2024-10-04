@@ -105,7 +105,7 @@ export const Root = memo(() => {
     return (
       <div className="flex flex-row w-full h-full">
         <Navigation onClickNavLink={handleChangePageKey} />
-        <div className="flex-grow ml-[248px] shadow-lg overflow-y-auto">
+        <div className="w-full ml-[248px] shadow-lg overflow-y-auto">
           <Routes>
             {consoleAccount.isSystemAdmin && (
               <>

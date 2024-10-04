@@ -1,4 +1,4 @@
-import { type PropsWithChildren, type ReactNode, useState } from 'react';
+import { type PropsWithChildren, type ReactNode } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { QueryErrorResetBoundary } from '@tanstack/react-query';
 import Spinner from 'components/spinner';
@@ -7,47 +7,26 @@ import { PageLayoutProvider } from './context';
 
 export interface PageLayoutProps {
   title: string;
-  showNavBar?: boolean;
-  noNavLinks?: boolean;
-  totalSteps?: number;
-  initialStep?: number;
   children: ReactNode;
 }
 
-const PageLayoutRoot = ({
-  title,
-  totalSteps,
-  initialStep,
-  children
-}: PageLayoutProps) => {
-  const [step, setStep] = useState<number | undefined>(
-    initialStep || undefined
-  );
-
+const PageLayoutRoot = ({ title, children }: PageLayoutProps) => {
   return (
-    <PageLayoutProvider
-      value={{ title, totalSteps, step, onChangeStep: setStep }}
-    >
-      {/* <Flex flexDir='column' h='screen' bg='bg.primary'> */}
-      {/* {showNavBar && (
-					<Box pos='relative' flex='initial' zIndex={10}>
-						<PageNavBar noNavLinks={noNavLinks} />
-					</Box>
-				)} */}
-
-      <QueryErrorResetBoundary>
-        {({ reset }) => (
-          <ErrorBoundary
-            fallbackRender={({ resetErrorBoundary }) => (
-              <PageLayout.ErrorState onRetry={resetErrorBoundary} />
-            )}
-            onReset={reset}
-          >
-            {children}
-          </ErrorBoundary>
-        )}
-      </QueryErrorResetBoundary>
-      {/* </Flex> */}
+    <PageLayoutProvider value={{ title }}>
+      <div className="flex flex-col h-screen">
+        <QueryErrorResetBoundary>
+          {({ reset }) => (
+            <ErrorBoundary
+              fallbackRender={({ resetErrorBoundary }) => (
+                <PageLayout.ErrorState onRetry={resetErrorBoundary} />
+              )}
+              onReset={reset}
+            >
+              {children}
+            </ErrorBoundary>
+          )}
+        </QueryErrorResetBoundary>
+      </div>
     </PageLayoutProvider>
   );
 };
