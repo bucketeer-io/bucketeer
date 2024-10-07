@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 import OrganizationDetailPage from 'pages/organization-details';
-import OrganizationsPage from 'pages/organizationsv2';
+import OrganizationsPage from 'pages/organizations';
 
 export const OrganizationsRoot = () => {
   return (

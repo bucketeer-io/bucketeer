@@ -8,7 +8,7 @@ import {
   SortingState,
   getSortedRowModel
 } from '@tanstack/react-table';
-import { IconAngleDown, IconAngleUp, IconSorting } from '@icons';
+import { IconSorting, IconSortingDown, IconSortingUp } from '@icons';
 import Table from 'components/tablev2';
 
 export interface DataTableProps<TData, TValue> {
@@ -59,8 +59,8 @@ export const DataTable = <TData, TValue>({
                       )}
                       {
                         {
-                          asc: <IconAngleUp />,
-                          desc: <IconAngleDown />,
+                          asc: <IconSortingUp />,
+                          desc: <IconSortingDown />,
                           false: header.column.columnDef.enableSorting !==
                             false && <IconSorting />
                         }[header.column.getIsSorted() as string]
