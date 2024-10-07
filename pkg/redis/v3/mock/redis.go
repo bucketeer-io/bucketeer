@@ -87,6 +87,21 @@ func (mr *MockClientMockRecorder) Del(key any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Del", reflect.TypeOf((*MockClient)(nil).Del), key)
 }
 
+// Dump mocks base method.
+func (m *MockClient) Dump(key string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Dump", key)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Dump indicates an expected call of Dump.
+func (mr *MockClientMockRecorder) Dump(key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Dump", reflect.TypeOf((*MockClient)(nil).Dump), key)
+}
+
 // Eval mocks base method.
 func (m *MockClient) Eval(ctx context.Context, script string, keys []string, args ...any) *redis0.Cmd {
 	m.ctrl.T.Helper()
@@ -251,6 +266,20 @@ func (m *MockClient) Pipeline() v3.PipeClient {
 func (mr *MockClientMockRecorder) Pipeline() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pipeline", reflect.TypeOf((*MockClient)(nil).Pipeline))
+}
+
+// Restore mocks base method.
+func (m *MockClient) Restore(key string, ttl int64, value string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Restore", key, ttl, value)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Restore indicates an expected call of Restore.
+func (mr *MockClientMockRecorder) Restore(key, ttl, value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Restore", reflect.TypeOf((*MockClient)(nil).Restore), key, ttl, value)
 }
 
 // Scan mocks base method.
