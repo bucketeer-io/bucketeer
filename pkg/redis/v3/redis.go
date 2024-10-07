@@ -89,6 +89,8 @@ type Client interface {
 	Expire(key string, expiration time.Duration) (bool, error)
 	SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) (bool, error)
 	Eval(ctx context.Context, script string, keys []string, args ...interface{}) *goredis.Cmd
+	Dump(key string) (string, error)
+	Restore(key string, ttl int64, value string) error
 }
 
 type client struct {
@@ -716,4 +718,14 @@ func (c *pipeClient) Get(key string) *goredis.StringCmd {
 func (c *pipeClient) Del(key string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, pfCountCmdName)
 	return c.pipe.Del(context.TODO(), key)
+}
+
+func (c *client) Dump(key string) (string, error) {
+	result, err := c.rc.Dump(context.TODO(), key).Result()
+	return result, err
+}
+
+func (c *client) Restore(key string, ttl int64, value string) error {
+	_, err := c.rc.Restore(context.TODO(), key, time.Duration(ttl)*time.Millisecond, value).Result()
+	return err
 }

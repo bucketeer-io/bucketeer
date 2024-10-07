@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	"go.uber.org/zap"
@@ -90,7 +89,7 @@ func (c *command) scanAndCopyBatch(src, dst v3.Client, logger *zap.Logger) error
 			return fmt.Errorf("error scanning keys from source Redis: %v", err)
 		}
 
-		copiedKeys, err := c.copyBatch(src, dst, keys)
+		copiedKeys, err := c.copyBatch(src, dst, keys, logger)
 		if err != nil {
 			logger.Error(
 				"Error copying batch",
@@ -107,35 +106,36 @@ func (c *command) scanAndCopyBatch(src, dst v3.Client, logger *zap.Logger) error
 				zap.Int("totalCopied", totalCopied),
 			)
 		}
-
 		if nextCursor == 0 {
 			break
 		}
 		cursor = nextCursor
 	}
-
+	logger.Info(
+		"Successfully copied total keys",
+		zap.Int("totalCopied", totalCopied),
+	)
 	return nil
 }
 
-func (c *command) copyBatch(src, dst v3.Client, keys []string) (int, error) {
+func (c *command) copyBatch(src, dst v3.Client, keys []string, logger *zap.Logger) (int, error) {
 	copiedKeys := 0
 	for _, key := range keys {
-		value, err := src.Get(key)
+		dumpedValue, err := src.Dump(key)
 		if err != nil {
 			if errors.Is(err, v3.ErrNil) {
-				log.Printf("Key not found: %s", key)
+				logger.Info("Key not found", zap.String("key", key))
 				continue
 			}
-			return copiedKeys, fmt.Errorf("error getting value for key %s: %v", key, err)
+			return copiedKeys, fmt.Errorf("error dumping key %s: %v", key, err)
 		}
 
-		err = dst.Set(key, value, 0)
+		err = dst.Restore(key, 0, dumpedValue)
 		if err != nil {
-			return copiedKeys, fmt.Errorf("error setting value for key %s: %v", key, err)
+			return copiedKeys, fmt.Errorf("error restoring key %s: %v", key, err)
 		}
 		copiedKeys++
 	}
 
-	log.Printf("Successfully copied batch of %d keys", copiedKeys)
 	return copiedKeys, nil
 }
