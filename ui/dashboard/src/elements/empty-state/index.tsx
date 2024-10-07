@@ -1,7 +1,6 @@
 import type { PropsWithChildren, ReactNode } from 'react';
 import emptyStateError from 'assets/empty-state/error.svg';
 import emptyStateNoData from 'assets/empty-state/no-data.svg';
-import emptyStateNoSearch from 'assets/empty-state/no-search.svg';
 import { createContext } from 'utils/create-context';
 import Button, { type ButtonProps } from 'components/button';
 
@@ -38,7 +37,7 @@ const EmptyStateIllustration = () => {
       return <img alt="No Data" className="w-fit" src={emptyStateNoData} />;
 
     case 'no-search':
-      return <img alt="No Search" className="w-fit" src={emptyStateNoSearch} />;
+      return <img alt="No Search" className="w-fit" src={emptyStateNoData} />;
   }
 };
 

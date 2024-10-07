@@ -6,17 +6,7 @@ import PageBody from './page-body';
 const PageContent = () => {
   return (
     <PageLayout.Content>
-      <PageLayout.Header>
-        {/* <SubPageHeader.Root variant="title">
-          <SubPageHeader.Content>
-            <SubPageHeader.TitleText>{`Organization management`}</SubPageHeader.TitleText>
-            <SubPageHeader.ActionButton variant="primary" onPress={onAdd}>
-              <IconAddOutlined />
-              {`Add organization`}
-            </SubPageHeader.ActionButton>
-          </SubPageHeader.Content>
-        </SubPageHeader.Root> */}
-      </PageLayout.Header>
+      <PageLayout.Header></PageLayout.Header>
 
       <PageLayout.Body>
         <PageBody />

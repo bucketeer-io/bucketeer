@@ -33,6 +33,7 @@
   "new-env": "New Environment",
   "update-env": "Update Environment",
   "create-env": "Create Environment",
+  "organization-subtitle": "You can see all your clients data",
   "navigation": {
     "my-projects": "My projects",
     "audit-logs": "Audit logs",

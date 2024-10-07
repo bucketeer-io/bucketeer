@@ -13,7 +13,7 @@ export interface PageLayoutProps {
 const PageLayoutRoot = ({ title, children }: PageLayoutProps) => {
   return (
     <PageLayoutProvider value={{ title }}>
-      <div className="flex flex-col h-screen">
+      <div className="flex flex-col min-h-screen">
         <QueryErrorResetBoundary>
           {({ reset }) => (
             <ErrorBoundary
@@ -33,7 +33,7 @@ const PageLayoutRoot = ({ title, children }: PageLayoutProps) => {
 
 const PageLayoutLoadingState = () => {
   return (
-    <div className="h-full flex-center">
+    <div className="h-full flex-grow flex-center">
       <Spinner />
     </div>
   );
@@ -41,14 +41,14 @@ const PageLayoutLoadingState = () => {
 
 const PageLayoutErrorState = ({ onRetry }: { onRetry?: () => void }) => {
   return (
-    <div className="h-full flex-center">
+    <div className="h-full flex-grow flex-center">
       <ErrorState onRetry={onRetry} />
     </div>
   );
 };
 
 const PageLayoutEmptyState = ({ children }: PropsWithChildren) => {
-  return <div className="h-full flex-center">{children}</div>;
+  return <div className="h-full flex-grow flex-center">{children}</div>;
 };
 
 const PageLayoutHeader = ({ children }: PropsWithChildren) => {

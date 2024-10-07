@@ -1,4 +1,4 @@
-import { IconArrowForwardIosOutlined } from 'react-icons-material-design';
+import { IconMoreHorizOutlined } from 'react-icons-material-design';
 import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Organization } from '@types';
@@ -78,10 +78,11 @@ export const useColumns = (): ColumnDef<Organization>[] => {
         align: 'center',
         style: { textAlign: 'center', fitContent: true }
       },
+      enableSorting: false,
       cell: () => {
         return (
           <div className="px-4">
-            <IconArrowForwardIosOutlined />
+            <IconMoreHorizOutlined />
           </div>
         );
       }

@@ -13,10 +13,10 @@ const OrganizationPage = () => {
   return (
     <PageLayout.Root title="Organizations">
       <PageHeader
-        title="Organizations"
-        description="You can see all your clients data"
+        title={t('organizations')}
+        description={t('organization-subtitle')}
       />
-      <div className="py-8 px-6">
+      <div className="p-6 flex flex-col flex-1">
         <Filter
           additionalActions={
             <Button className="flex-1 lg:flex-none" onClick={() => {}}>
@@ -28,8 +28,8 @@ const OrganizationPage = () => {
           onChangeSearchValue={() => {}}
           onKeyDown={() => {}}
         />
+        <PageLoader />
       </div>
-      <PageLoader />
     </PageLayout.Root>
   );
 };

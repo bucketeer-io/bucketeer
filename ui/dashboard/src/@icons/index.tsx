@@ -9,6 +9,7 @@ import IconFolder2Outlined from './customized-icons/folder2.svg?react';
 import IconInfo from './customized-icons/info.svg?react';
 import IconNumberOutlined from './customized-icons/number.svg?react';
 import IconSearch from './customized-icons/search.svg?react';
+import IconSorting from './customized-icons/sorting.svg?react';
 import IconToastError from './customized-icons/toast-error.svg?react';
 import IconToastInfo from './customized-icons/toast-info.svg?react';
 import IconToastSuccess from './customized-icons/toast-success.svg?react';
@@ -68,6 +69,7 @@ export {
   IconToastSuccess,
   IconToastWarning,
   IconClose,
+  IconSorting,
   // Special icons
   IconGoal,
   IconGoogle,
