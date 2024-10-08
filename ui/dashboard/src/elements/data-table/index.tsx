@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   type ColumnDef,
   type TableState,
@@ -8,6 +8,7 @@ import {
   SortingState,
   getSortedRowModel
 } from '@tanstack/react-table';
+import { cn } from 'utils/style';
 import { IconSorting, IconSortingDown, IconSortingUp } from '@icons';
 import Table from 'components/tablev2';
 
@@ -16,13 +17,15 @@ export interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   state?: Partial<TableState>;
   onRowClick?: (data: TData) => void;
+  onSortingChange?: (v: SortingState) => void;
 }
 
 export const DataTable = <TData, TValue>({
   data,
   columns,
   state,
-  onRowClick
+  onRowClick,
+  onSortingChange
 }: DataTableProps<TData, TValue>) => {
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -36,40 +39,42 @@ export const DataTable = <TData, TValue>({
     manualSorting: true
   });
 
+  useEffect(() => {
+    onSortingChange?.(sorting);
+  }, [sorting]);
+
   return (
     <Table.Root>
       <Table.Header>
         {table.getHeaderGroups().map(headerGroup => (
           <Table.Row key={headerGroup.id}>
-            {headerGroup.headers.map(header => {
-              console.log('test', header.column.columnDef.enableSorting);
-
-              return (
-                <Table.Head
-                  key={header.id}
-                  // align={header.column.columnDef.meta?.align}
-                  // data-fit-content={header.column.columnDef.meta?.fitContent}
-                  onClick={header.column.getToggleSortingHandler()}
-                >
-                  {header.isPlaceholder ? null : (
-                    <div className="flex items-center gap-3">
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
+            {headerGroup.headers.map(header => (
+              <Table.Head
+                key={header.id}
+                // align={header.column.columnDef.meta?.align}
+                // data-fit-content={header.column.columnDef.meta?.fitContent}
+                onClick={header.column.getToggleSortingHandler()}
+                className={cn({
+                  'cursor-pointer select-none':
+                    header.column.columnDef.enableSorting !== false
+                })}
+              >
+                {header.isPlaceholder ? null : (
+                  <div className="flex items-center gap-3">
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                    {header.column.columnDef.enableSorting !== false &&
                       {
-                        {
-                          asc: <IconSortingUp />,
-                          desc: <IconSortingDown />,
-                          false: header.column.columnDef.enableSorting !==
-                            false && <IconSorting />
-                        }[header.column.getIsSorted() as string]
-                      }
-                    </div>
-                  )}
-                </Table.Head>
-              );
-            })}
+                        asc: <IconSortingUp />,
+                        desc: <IconSortingDown />,
+                        false: <IconSorting />
+                      }[header.column.getIsSorted() as string]}
+                  </div>
+                )}
+              </Table.Head>
+            ))}
           </Table.Row>
         ))}
       </Table.Header>

@@ -2,6 +2,20 @@ import { UseQueryOptions } from '@tanstack/react-query';
 
 export type QueryOptionsRespond<T> = Omit<UseQueryOptions<T>, 'queryKey'>;
 
+export type SortingFields =
+  | 'default'
+  | 'id'
+  | 'name'
+  | 'name'
+  | 'role'
+  | 'urlCode'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'userCount'
+  | 'environmentCount'
+  | 'projectCount'
+  | 'featureFlagCount';
+
 export type OrderBy =
   | 'DEFAULT'
   | 'ID'

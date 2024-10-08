@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { IconAngleDown, IconAngleUp } from '@icons';
-import Icon from 'components/icon';
+import { cn } from 'utils/style';
 
 const TableRoot = React.forwardRef<
   HTMLTableElement,
@@ -41,9 +40,9 @@ TableRow.displayName = 'TableRow';
 const TableHead = React.forwardRef<
   HTMLTableCellElement,
   React.ThHTMLAttributes<HTMLTableCellElement>
->(({ align, ...props }, ref) => (
+>(({ align, className, ...props }, ref) => (
   <th
-    className="text-gray-500 p-4 typo-para-small uppercase"
+    className={cn('text-gray-500 p-4 typo-para-small uppercase', className)}
     ref={ref}
     {...props}
     align={align ? align : 'left'}
@@ -69,16 +68,6 @@ const TableCaption = React.forwardRef<
 >(({ ...props }, ref) => <caption ref={ref} {...props} />);
 TableCaption.displayName = 'TableCaption';
 
-const TableHeadSort = () => {
-  return (
-    <div className="flex flex-col gap-y-0.5">
-      <Icon icon={IconAngleUp} size="fit" color="gray-300" />
-      <Icon icon={IconAngleDown} size="fit" color="gray-300" />
-    </div>
-  );
-};
-TableHeadSort.displayName = 'TableHeadSort';
-
 const Table = {
   Root: TableRoot,
   Header: TableHeader,
@@ -87,8 +76,7 @@ const Table = {
   Row: TableRow,
   Footer: TableFooter,
   Cell: TableCell,
-  Caption: TableCaption,
-  HeadSort: TableHeadSort
+  Caption: TableCaption
 };
 
 export default Table;

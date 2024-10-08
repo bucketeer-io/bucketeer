@@ -1,3 +1,4 @@
+import { SortingState } from '@tanstack/react-table';
 import { Organization } from '@types';
 
 export interface ItemProps {
@@ -11,5 +12,6 @@ export interface ItemProps {
 
 export interface CollectionProps {
   isLoading?: boolean;
+  onSortingChange: (v: SortingState) => void;
   organizations: Organization[];
 }
