@@ -49,7 +49,7 @@ func (c *inMemoryCache) Put(key interface{}, value interface{}, expiration time.
 	return nil
 }
 
-func (c *inMemoryCache) GetMulti(keys interface{}) ([]interface{}, error) {
+func (c *inMemoryCache) GetMulti(keys interface{}, ignoreNotFound bool) ([]interface{}, error) {
 	// TODO: implement
 	return nil, nil
 }
