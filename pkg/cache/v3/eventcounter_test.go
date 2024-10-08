@@ -15,105 +15,133 @@
 package v3
 
 import (
-	"context"
 	"testing"
 
-	"github.com/redis/go-redis/v9"
+	"github.com/bucketeer-io/bucketeer/pkg/cache/mock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestGetEventValues(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
 		desc     string
-		cmds     []*redis.StringCmd
+		input    []interface{}
 		expected []float64
-		inValid  bool
+		isValid  bool
 	}{
 		{
-			desc:     "success",
-			cmds:     []*redis.StringCmd{},
+			desc:     "success: empty input",
+			input:    []interface{}{},
 			expected: []float64{},
-			inValid:  false,
+			isValid:  true,
 		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			c := &eventCounterCache{}
-			actual, err := c.getEventValues(p.cmds)
-			assert.Equal(t, p.expected, actual)
-			if p.inValid {
-				assert.Error(t, err)
-			}
-		})
-	}
-}
-
-func TestGetEventValuesV2(t *testing.T) {
-	t.Parallel()
-	patterns := []struct {
-		desc     string
-		cmds     [][]*redis.StringCmd
-		expected []float64
-		inValid  bool
-	}{
 		{
-			desc: "success",
-			cmds: [][]*redis.StringCmd{
-				{},
-				{},
-				{},
-				{},
-			},
-			expected: []float64{
-				0, 0, 0, 0,
-			},
-			inValid: false,
+			desc:     "success: valid input",
+			input:    []interface{}{[]byte("1.5"), []byte("2.7"), []byte("3.0")},
+			expected: []float64{1.5, 2.7, 3.0},
+			isValid:  true,
+		},
+		{
+			desc:     "failure: invalid input",
+			input:    []interface{}{[]byte("not a number")},
+			expected: nil,
+			isValid:  false,
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			c := &eventCounterCache{}
-			actual, err := c.getEventValuesV2(p.cmds)
-			assert.Equal(t, p.expected, actual)
-			assert.NoError(t, err)
-			if p.inValid {
-				assert.Error(t, err)
+			actual, err := c.getEventValues(p.input)
+			if p.isValid {
+				assert.NoError(t, err)
+				assert.Equal(t, p.expected, actual)
 			} else {
-				assert.Nil(t, err)
+				assert.Error(t, err)
 			}
 		})
 	}
 }
 
-func TestGetUserValues(t *testing.T) {
+func TestGetEventCounts(t *testing.T) {
 	t.Parallel()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockCache := mock.NewMockMultiGetDeleteCountCache(ctrl)
+	c := &eventCounterCache{cache: mockCache}
+
 	patterns := []struct {
 		desc     string
-		cmds     []*redis.IntCmd
+		keys     []string
+		mockResp []interface{}
 		expected []float64
-		inValid  bool
+		isValid  bool
 	}{
 		{
-			desc: "success",
-			cmds: []*redis.IntCmd{
-				redis.NewIntCmd(context.TODO()),
-				redis.NewIntCmd(context.TODO()),
-				redis.NewIntCmd(context.TODO()),
-				redis.NewIntCmd(context.TODO()),
-			},
-			expected: []float64{
-				0, 0, 0, 0,
-			},
-			inValid: false,
+			desc:     "success: valid input",
+			keys:     []string{"key1", "key2", "key3"},
+			mockResp: []interface{}{[]byte("1.5"), []byte("2.7"), []byte("3.0")},
+			expected: []float64{1.5, 2.7, 3.0},
+			isValid:  true,
+		},
+		{
+			desc:     "failure: invalid input",
+			keys:     []string{"key1"},
+			mockResp: []interface{}{[]byte("not a number")},
+			expected: nil,
+			isValid:  false,
 		},
 	}
+
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			c := &eventCounterCache{}
-			actual, err := c.getUserValues(p.cmds)
-			assert.Equal(t, p.expected, actual)
-			if p.inValid {
+			mockCache.EXPECT().GetMulti(p.keys).Return(p.mockResp, nil)
+			actual, err := c.GetEventCounts(p.keys)
+			if p.isValid {
+				assert.NoError(t, err)
+				assert.Equal(t, p.expected, actual)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestGetUserCounts(t *testing.T) {
+	t.Parallel()
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockCache := mock.NewMockMultiGetDeleteCountCache(ctrl)
+	c := &eventCounterCache{cache: mockCache}
+
+	patterns := []struct {
+		desc     string
+		keys     []string
+		mockResp []int64
+		expected []float64
+		isValid  bool
+	}{
+		{
+			desc:     "success: valid input",
+			keys:     []string{"key1", "key2", "key3"},
+			mockResp: []int64{10, 20, 30},
+			expected: []float64{10, 20, 30},
+			isValid:  true,
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			for i, key := range p.keys {
+				mockCache.EXPECT().PFCount(key).Return(p.mockResp[i], nil)
+			}
+			actual, err := c.GetUserCounts(p.keys)
+			if p.isValid {
+				assert.NoError(t, err)
+				assert.Equal(t, p.expected, actual)
+			} else {
 				assert.Error(t, err)
 			}
 		})

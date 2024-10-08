@@ -22,7 +22,6 @@ import (
 	"strconv"
 	"time"
 
-	goredis "github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
@@ -255,18 +254,11 @@ func (r *redisCounterDeleter) chunkSlice(slice []string, chunkSize int) [][]stri
 	return chunks
 }
 
-// To avoid making too many requests, we use Pipeline to delete all the keys in one request
 func (r *redisCounterDeleter) deleteKeys(keys []string) error {
-	pipe := r.cache.Pipeline()
 	for _, key := range keys {
-		pipe.Del(key)
-	}
-	_, err := pipe.Exec()
-	if err != nil {
-		// Exec returns error of the first failed command.
-		// https://pkg.go.dev/github.com/redis/go-redis/v9#Pipeline.Exec
-		if err != goredis.Nil {
-			return fmt.Errorf("err: %s", err.Error())
+		err := r.cache.Delete(key)
+		if err != nil && !errors.Is(err, cache.ErrNotFound) {
+			return fmt.Errorf("failed to delete key %s: %w", key, err)
 		}
 	}
 	return nil
