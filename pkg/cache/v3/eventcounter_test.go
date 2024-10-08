@@ -17,9 +17,10 @@ package v3
 import (
 	"testing"
 
-	"github.com/bucketeer-io/bucketeer/pkg/cache/mock"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+
+	"github.com/bucketeer-io/bucketeer/pkg/cache/mock"
 )
 
 func TestGetEventValues(t *testing.T) {
