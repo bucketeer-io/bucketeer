@@ -42,7 +42,7 @@ func NewEventCountCache(c cache.MultiGetDeleteCountCache) EventCounterCache {
 }
 
 func (c *eventCounterCache) GetEventCounts(keys []string) ([]float64, error) {
-	values, err := c.cache.GetMulti(keys)
+	values, err := c.cache.GetMulti(keys, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get multiple keys: %w", err)
 	}
@@ -68,7 +68,7 @@ func (*eventCounterCache) getEventValues(values []interface{}) ([]float64, error
 func (c *eventCounterCache) GetEventCountsV2(keys [][]string) ([]float64, error) {
 	eventVals := make([]float64, 0, len(keys))
 	for _, day := range keys {
-		values, err := c.cache.GetMulti(day)
+		values, err := c.cache.GetMulti(day, true)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get multiple keys: %w", err)
 		}

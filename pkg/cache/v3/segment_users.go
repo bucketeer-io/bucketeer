@@ -67,7 +67,7 @@ func (c *segmentUsersCache) GetAll(environmentNamespace string) ([]*featureproto
 	if err != nil {
 		return nil, err
 	}
-	users, err := c.cache.GetMulti(keys)
+	users, err := c.cache.GetMulti(keys, false)
 	if err != nil {
 		return nil, err
 	}

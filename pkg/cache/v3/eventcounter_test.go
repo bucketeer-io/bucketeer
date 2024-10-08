@@ -97,7 +97,7 @@ func TestGetEventCounts(t *testing.T) {
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			mockCache.EXPECT().GetMulti(p.keys).Return(p.mockResp, nil)
+			mockCache.EXPECT().GetMulti(p.keys, true).Return(p.mockResp, nil)
 			actual, err := c.GetEventCounts(p.keys)
 			if p.isValid {
 				assert.NoError(t, err)
