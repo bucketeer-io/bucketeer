@@ -14,12 +14,6 @@ import { ListCollection } from '../collection-layout/list-collection';
 
 // import type { OrganizationFilters } from '../types';
 
-// interface CollectionLoaderProps {
-//   filters?: OrganizationFilters;
-//   setFilters?: (values: Partial<OrganizationFilters>) => void;
-//   onAdd?: () => void;
-// }
-
 interface OrganizationParams {
   orderBy: OrderBy;
   orderDirection: OrderDirection;
