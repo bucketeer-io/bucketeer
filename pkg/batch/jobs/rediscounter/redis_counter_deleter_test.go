@@ -21,7 +21,6 @@ import (
 	"testing"
 	"time"
 
-	goredis "github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
@@ -32,7 +31,6 @@ import (
 
 	cachemock "github.com/bucketeer-io/bucketeer/pkg/cache/mock"
 	evmock "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
-	redismock "github.com/bucketeer-io/bucketeer/pkg/redis/v3/mock"
 	evproto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
@@ -107,22 +105,20 @@ func TestRun(t *testing.T) {
 			},
 		},
 		{
-			desc: "error while calling Exec() pipeline",
+			desc: "error while deleting keys",
 			setup: func(r *redisCounterDeleter) {
 				r.envClient.(*evmock.MockClient).EXPECT().ListEnvironmentsV2(gomock.Any(), inputRequest).Return(
 					&evproto.ListEnvironmentsV2Response{
 						Environments: inputEnvironments,
 					}, nil)
 				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(0), "dev:uc:*", redisScanMaxSize).Return(
-					uint64(0), makeDummyKeys(t, "dev", "uc", 31, 100), nil)
+					uint64(0), makeDummyKeys(t, "dev", "uc", 31, 1), nil)
 
-				redisMock := redismock.NewMockPipeClient(mockController)
-				redisMock.EXPECT().Del(gomock.Any()).Times(100)
-				redisMock.EXPECT().Exec().Return(nil, errors.New("internal error"))
-
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Pipeline().Return(redisMock)
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Delete(gomock.Any()).Return(errors.New("delete error")).AnyTimes()
 			},
-			expected: errors.New("err: internal error"),
+			expected: fmt.Errorf("failed to delete key %s: %w",
+				fmt.Sprintf("dev:uc:%d:feature_id_0:variation_id_0", time.Now().Unix()-(31*24*60*60)),
+				errors.New("delete error")),
 		},
 		{
 			desc: "success: no keys older than 31 days",
@@ -166,11 +162,7 @@ func TestRun(t *testing.T) {
 				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Scan(uint64(0), "prd:ec:*", redisScanMaxSize).Return(
 					uint64(0), makeDummyKeys(t, "prd", "ec", 31, 150), nil)
 
-				redisMock := redismock.NewMockPipeClient(mockController)
-				redisMock.EXPECT().Del(gomock.Any()).Times(450)
-				redisMock.EXPECT().Exec().Times(5)
-
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Pipeline().Return(redisMock).Times(5)
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Delete(gomock.Any()).Return(nil).Times(450)
 			},
 			expected: nil,
 		},
@@ -181,7 +173,11 @@ func TestRun(t *testing.T) {
 			deleter := newMockRedisCounterDeleter(t, mockController)
 			p.setup(deleter)
 			err := deleter.Run(ctx)
-			assert.Equal(t, p.expected, err)
+			if p.expected == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, p.expected.Error())
+			}
 		})
 	}
 }
@@ -425,37 +421,19 @@ func TestDeleteKeys(t *testing.T) {
 		expected error
 	}{
 		{
-			desc: "internal error while calling Exec() pipeline",
+			desc: "error while deleting keys",
 			setup: func(r *redisCounterDeleter) {
-				redisMock := redismock.NewMockPipeClient(mockController)
-				redisMock.EXPECT().Del(gomock.Any()).Times(100)
-				redisMock.EXPECT().Exec().Return(nil, errors.New("internal error"))
-
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Pipeline().Return(redisMock)
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Delete(gomock.Any()).Return(errors.New("delete error")).AnyTimes()
 			},
-			input:    makeDummyKeys(t, "prd", "ec", 31, 100),
-			expected: errors.New("err: internal error"),
-		},
-		{
-			desc: "redis error while calling Exec() pipeline",
-			setup: func(r *redisCounterDeleter) {
-				redisMock := redismock.NewMockPipeClient(mockController)
-				redisMock.EXPECT().Del(gomock.Any()).Times(100)
-				redisMock.EXPECT().Exec().Return(nil, goredis.Nil)
-
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Pipeline().Return(redisMock)
-			},
-			input:    makeDummyKeys(t, "prd", "ec", 31, 100),
-			expected: nil,
+			input: makeDummyKeys(t, "prd", "ec", 31, 100),
+			expected: fmt.Errorf("failed to delete key %s: %w",
+				fmt.Sprintf("prd:ec:%d:feature_id_0:variation_id_0", time.Now().Unix()-(31*24*60*60)),
+				errors.New("delete error")),
 		},
 		{
 			desc: "success",
 			setup: func(r *redisCounterDeleter) {
-				redisMock := redismock.NewMockPipeClient(mockController)
-				redisMock.EXPECT().Del(gomock.Any()).Times(150)
-				redisMock.EXPECT().Exec()
-
-				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Pipeline().Return(redisMock)
+				r.cache.(*cachemock.MockMultiGetDeleteCountCache).EXPECT().Delete(gomock.Any()).Return(nil).Times(150)
 			},
 			input:    makeDummyKeys(t, "prd", "ec", 31, 150),
 			expected: nil,
@@ -467,7 +445,11 @@ func TestDeleteKeys(t *testing.T) {
 			deleter := newMockRedisCounterDeleter(t, mockController)
 			p.setup(deleter)
 			err := deleter.deleteKeys(p.input)
-			assert.Equal(t, p.expected, err)
+			if p.expected == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, p.expected.Error())
+			}
 		})
 	}
 }

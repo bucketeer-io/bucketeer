@@ -58,7 +58,7 @@ type PFGetter interface {
 }
 
 type MultiGetter interface {
-	GetMulti(keys interface{}) ([]interface{}, error)
+	GetMulti(keys interface{}, ignoreNotFound bool) ([]interface{}, error)
 	Scan(cursor, key, count interface{}) (uint64, []string, error)
 }
 

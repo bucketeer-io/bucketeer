@@ -69,7 +69,7 @@ type Client interface {
 	Stats() redis.PoolStats
 	Scan(cursor uint64, key string, count int64) (uint64, []string, error)
 	Get(key string) ([]byte, error)
-	GetMulti(keys []string) ([]interface{}, error)
+	GetMulti(keys []string, ignoreNotFound bool) ([]interface{}, error)
 	Set(key string, val interface{}, expiration time.Duration) error
 	PFAdd(key string, els ...string) (int64, error)
 	PFCount(keys ...string) (int64, error)
@@ -313,7 +313,7 @@ func (c *client) Get(key string) ([]byte, error) {
 	return reply, err
 }
 
-func (c *client) GetMulti(keys []string) ([]interface{}, error) {
+func (c *client) GetMulti(keys []string, ignoreNotFound bool) ([]interface{}, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, getMultiCmdName).Inc()
 	reply, err := c.rc.MGet(context.TODO(), keys...).Result()
@@ -323,6 +323,16 @@ func (c *client) GetMulti(keys []string) ([]interface{}, error) {
 	case nil:
 		code = redis.CodeSuccess
 		for _, r := range reply {
+			if r == nil {
+				if ignoreNotFound {
+					values = append(values, "")
+					continue
+				}
+				code = redis.CodeNotFound
+				values = nil
+				err = ErrNil
+				break
+			}
 			s, ok := r.(string)
 			if !ok {
 				code = redis.CodeInvalidType

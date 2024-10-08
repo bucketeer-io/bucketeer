@@ -119,7 +119,7 @@ func TestGetAllSegmentUser(t *testing.T) {
 			setup: func(sc *segmentUsersCache) {
 				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Scan(cursor, key, segmentUsersMaxSize).Return(
 					cursor, keys, nil)
-				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().GetMulti(keys).Return(nil, cache.ErrNotFound)
+				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().GetMulti(keys, false).Return(nil, cache.ErrNotFound)
 			},
 			expectedErr: cache.ErrNotFound,
 		},
@@ -128,7 +128,7 @@ func TestGetAllSegmentUser(t *testing.T) {
 			setup: func(sc *segmentUsersCache) {
 				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Scan(cursor, key, segmentUsersMaxSize).Return(
 					cursor, keys, nil)
-				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().GetMulti(keys).Return([]interface{}{"test"}, nil)
+				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().GetMulti(keys, false).Return([]interface{}{"test"}, nil)
 			},
 			expectedErr: cache.ErrInvalidType,
 		},
@@ -137,7 +137,7 @@ func TestGetAllSegmentUser(t *testing.T) {
 			setup: func(sc *segmentUsersCache) {
 				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().Scan(cursor, key, segmentUsersMaxSize).Return(
 					cursor, keys, nil)
-				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().GetMulti(keys).Return([]interface{}{dataSegmentUsers}, nil)
+				sc.cache.(*cachemock.MockMultiGetCache).EXPECT().GetMulti(keys, false).Return([]interface{}{dataSegmentUsers}, nil)
 			},
 			expectedErr: nil,
 		},

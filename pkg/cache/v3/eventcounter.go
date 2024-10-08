@@ -19,8 +19,6 @@ import (
 	"fmt"
 	"strconv"
 
-	goredis "github.com/redis/go-redis/v9"
-
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 )
 
@@ -44,36 +42,31 @@ func NewEventCountCache(c cache.MultiGetDeleteCountCache) EventCounterCache {
 }
 
 func (c *eventCounterCache) GetEventCounts(keys []string) ([]float64, error) {
-	pipe := c.cache.Pipeline()
-	sCmds := make([]*goredis.StringCmd, 0, len(keys))
-	for _, k := range keys {
-		c := pipe.Get(k)
-		sCmds = append(sCmds, c)
-	}
-	_, err := pipe.Exec()
+	values, err := c.cache.GetMulti(keys, true)
 	if err != nil {
-		// Exec returns error of the first failed command.
-		// https://pkg.go.dev/github.com/redis/go-redis/v9#Pipeline.Exec
-		if err != goredis.Nil {
-			return []float64{}, fmt.Errorf("err: %s, keys: %v", err.Error(), keys)
-		}
+		return nil, fmt.Errorf("failed to get multiple keys: %w", err)
 	}
-	return c.getEventValues(sCmds)
+	return c.getEventValues(values)
 }
 
-func (*eventCounterCache) getEventValues(cmds []*goredis.StringCmd) ([]float64, error) {
-	eventVals := make([]float64, 0, len(cmds))
-	for _, c := range cmds {
-		str, err := c.Result()
-		if err != nil {
-			if err != goredis.Nil {
-				return []float64{}, err
-			}
+func (*eventCounterCache) getEventValues(values []interface{}) ([]float64, error) {
+	eventVals := make([]float64, 0, len(values))
+	for _, v := range values {
+		var str string
+		switch v := v.(type) {
+		case []byte:
+			str = string(v)
+		case string:
+			str = v
+		default:
+			return nil, fmt.Errorf("unexpected value type: %v", v)
+		}
+		if str == "" {
 			str = "0"
 		}
 		float, err := strconv.ParseFloat(str, 64)
 		if err != nil {
-			return []float64{}, err
+			return nil, fmt.Errorf("failed to parse float: %w", err)
 		}
 		eventVals = append(eventVals, float)
 	}
@@ -81,44 +74,19 @@ func (*eventCounterCache) getEventValues(cmds []*goredis.StringCmd) ([]float64, 
 }
 
 func (c *eventCounterCache) GetEventCountsV2(keys [][]string) ([]float64, error) {
-	pipe := c.cache.Pipeline()
-	stringCmds := make([][]*goredis.StringCmd, 0, len(keys))
+	eventVals := make([]float64, 0, len(keys))
 	for _, day := range keys {
-		hourlyCmds := []*goredis.StringCmd{}
-		for _, hour := range day {
-			c := pipe.Get(hour)
-			hourlyCmds = append(hourlyCmds, c)
+		values, err := c.cache.GetMulti(day, true)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get multiple keys: %w", err)
 		}
-		stringCmds = append(stringCmds, hourlyCmds)
-	}
-	_, err := pipe.Exec()
-	if err != nil {
-		// Exec returns error of the first failed command.
-		// https://pkg.go.dev/github.com/redis/go-redis/v9#Pipeline.Exec
-		if err != goredis.Nil {
-			return []float64{}, fmt.Errorf("err: %s, keys: %v", err, keys)
+		dayTotal, err := c.getEventValues(values)
+		if err != nil {
+			return nil, err
 		}
-	}
-	return c.getEventValuesV2(stringCmds)
-}
-
-func (*eventCounterCache) getEventValuesV2(cmds [][]*goredis.StringCmd) ([]float64, error) {
-	eventVals := make([]float64, 0, len(cmds))
-	for _, day := range cmds {
 		var totalVal float64
-		for _, hour := range day {
-			str, err := hour.Result()
-			if err != nil {
-				if err != goredis.Nil {
-					return []float64{}, err
-				}
-				str = "0"
-			}
-			float, err := strconv.ParseFloat(str, 64)
-			if err != nil {
-				return []float64{}, err
-			}
-			totalVal += float
+		for _, v := range dayTotal {
+			totalVal += v
 		}
 		eventVals = append(eventVals, totalVal)
 	}
@@ -130,78 +98,39 @@ func (c *eventCounterCache) GetUserCount(key string) (int64, error) {
 }
 
 func (c *eventCounterCache) GetUserCounts(keys []string) ([]float64, error) {
-	pipe := c.cache.Pipeline()
-	iCmds := make([]*goredis.IntCmd, 0, len(keys))
-	for _, k := range keys {
-		c := pipe.PFCount(k)
-		iCmds = append(iCmds, c)
-	}
-	_, err := pipe.Exec()
-	if err != nil {
-		return []float64{}, fmt.Errorf("err: %v, keys: %v", err, keys)
-	}
-	return c.getUserValues(iCmds)
-}
-
-func (*eventCounterCache) getUserValues(cmds []*goredis.IntCmd) ([]float64, error) {
-	userVals := make([]float64, 0, len(cmds))
-	for _, c := range cmds {
-		val, err := c.Result()
+	userVals := make([]float64, 0, len(keys))
+	for _, key := range keys {
+		count, err := c.cache.PFCount(key)
 		if err != nil {
-			return []float64{}, err
+			return nil, fmt.Errorf("failed to get PFCount for key %s: %w", key, err)
 		}
-		userVals = append(userVals, float64(val))
+		userVals = append(userVals, float64(count))
 	}
 	return userVals, nil
 }
 
-func (c *eventCounterCache) GetUserCountsV2(
-	keys []string,
-) ([]float64, error) {
-	count, err := c.getUserCountsV2(keys)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"err: %v, keys: %v",
-			err, keys,
-		)
-	}
-	return count, nil
-}
-
-func (c *eventCounterCache) getUserCountsV2(
-	keys []string,
-) ([]float64, error) {
-	pipe := c.cache.Pipeline()
-	iCmds := make([]*goredis.IntCmd, 0, len(keys))
-	for _, k := range keys {
-		c := pipe.PFCount(k)
-		iCmds = append(iCmds, c)
-	}
-	_, err := pipe.Exec()
-	if err != nil {
-		return nil, err
-	}
-	return c.getUserValues(iCmds)
+func (c *eventCounterCache) GetUserCountsV2(keys []string) ([]float64, error) {
+	return c.GetUserCounts(keys)
 }
 
 func (c *eventCounterCache) UpdateUserCount(key, userID string) error {
 	_, err := c.cache.PFAdd(key, userID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to update user count: %w", err)
 	}
 	return nil
 }
 
 func (c *eventCounterCache) MergeMultiKeys(dest string, keys []string) error {
 	if err := c.cache.PFMerge(dest, keys...); err != nil {
-		return fmt.Errorf("err: %s, dest: %v, keys: %v", err, dest, keys)
+		return fmt.Errorf("failed to merge keys: %w", err)
 	}
 	return nil
 }
 
 func (c *eventCounterCache) DeleteKey(key string) error {
 	if err := c.cache.Delete(key); err != nil {
-		return err
+		return fmt.Errorf("failed to delete key: %w", err)
 	}
 	return nil
 }

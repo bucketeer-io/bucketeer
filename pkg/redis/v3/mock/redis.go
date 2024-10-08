@@ -137,18 +137,18 @@ func (mr *MockClientMockRecorder) Get(key any) *gomock.Call {
 }
 
 // GetMulti mocks base method.
-func (m *MockClient) GetMulti(keys []string) ([]any, error) {
+func (m *MockClient) GetMulti(keys []string, ignoreNotFound bool) ([]any, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMulti", keys)
+	ret := m.ctrl.Call(m, "GetMulti", keys, ignoreNotFound)
 	ret0, _ := ret[0].([]any)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetMulti indicates an expected call of GetMulti.
-func (mr *MockClientMockRecorder) GetMulti(keys any) *gomock.Call {
+func (mr *MockClientMockRecorder) GetMulti(keys, ignoreNotFound any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMulti", reflect.TypeOf((*MockClient)(nil).GetMulti), keys)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMulti", reflect.TypeOf((*MockClient)(nil).GetMulti), keys, ignoreNotFound)
 }
 
 // Incr mocks base method.
