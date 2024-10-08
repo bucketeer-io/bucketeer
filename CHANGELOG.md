@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.4.9](https://github.com/bucketeer-io/bucketeer/compare/v0.4.8...v0.4.9) (2024-10-08)
+
+
+### Features
+
+* add flag count for project API ([#1246](https://github.com/bucketeer-io/bucketeer/issues/1246)) ([d1da171](https://github.com/bucketeer-io/bucketeer/commit/d1da1714851e6439123b175e723a40e3e067fadd))
+* add organization creator email ([#1255](https://github.com/bucketeer-io/bucketeer/issues/1255)) ([c8dc8f7](https://github.com/bucketeer-io/bucketeer/commit/c8dc8f70457f7dcfb732a755162a82e21b300430))
+* add project environement and user count organization list API ([#1244](https://github.com/bucketeer-io/bucketeer/issues/1244)) ([d6cb3d6](https://github.com/bucketeer-io/bucketeer/commit/d6cb3d6befe5db194e40e011fb7910bb043f74f9))
+* save search filter options ([#1231](https://github.com/bucketeer-io/bucketeer/issues/1231)) ([f24d53a](https://github.com/bucketeer-io/bucketeer/commit/f24d53a2f3f330300b518c9960d17ed47223e274))
+* support redis cluster ([#1268](https://github.com/bucketeer-io/bucketeer/issues/1268)) ([4c1ce3e](https://github.com/bucketeer-io/bucketeer/commit/4c1ce3ec07074bcbb099ee66688a219164d0a39d))
+* **ui:** debugger feature ([#1233](https://github.com/bucketeer-io/bucketeer/issues/1233)) ([09d18f5](https://github.com/bucketeer-io/bucketeer/commit/09d18f5d296a4a38f88bc6308a4f0b46b3ef515d))
+
+
+### Bug Fixes
+
+* organiztion API ([#1261](https://github.com/bucketeer-io/bucketeer/issues/1261)) ([50e1d1c](https://github.com/bucketeer-io/bucketeer/commit/50e1d1c769f994a3b7aaef46f2b801419c6bd73b))
+* **ui:** unable to create boolean type feature flag ([#1247](https://github.com/bucketeer-io/bucketeer/issues/1247)) ([ff1b300](https://github.com/bucketeer-io/bucketeer/commit/ff1b300da2e26c7fe1515289e96f83401abc4b43))
+* **ui:** unsaved search filters popup being shown when logging in ([#1263](https://github.com/bucketeer-io/bucketeer/issues/1263)) ([6a8bb86](https://github.com/bucketeer-io/bucketeer/commit/6a8bb862d9d03c1a461dfde38d4108c21125bf7f))
+
+
+### Miscellaneous
+
+* add list projects v2 for the new console ([#1267](https://github.com/bucketeer-io/bucketeer/issues/1267)) ([36dd128](https://github.com/bucketeer-io/bucketeer/commit/36dd128227160d7b7764e33b9141cfdb545e4430))
+* add log for error metrics from sdk client ([#1270](https://github.com/bucketeer-io/bucketeer/issues/1270)) ([c6d3521](https://github.com/bucketeer-io/bucketeer/commit/c6d3521a2174b6eb5d90565359338c4516d7a545))
+* remove order by clause from count sql ([#1262](https://github.com/bucketeer-io/bucketeer/issues/1262)) ([d3a2867](https://github.com/bucketeer-io/bucketeer/commit/d3a28675a562dc82acdb5dd340f1736a21954f84))
+* remove redis pipeline command usage ([#1271](https://github.com/bucketeer-io/bucketeer/issues/1271)) ([b3f3667](https://github.com/bucketeer-io/bucketeer/commit/b3f36670cd7467dc877590b62362f31b26e39918))
+* support gcp multi cluster ingress ([#1198](https://github.com/bucketeer-io/bucketeer/issues/1198)) ([ce278c5](https://github.com/bucketeer-io/bucketeer/commit/ce278c51660ed513e8d51ab3e9856c4fab879141))
+
+
+### Build System
+
+* **deps-dev:** bump vite from 5.4.2 to 5.4.6 in /ui/dashboard ([#1241](https://github.com/bucketeer-io/bucketeer/issues/1241)) ([25883c3](https://github.com/bucketeer-io/bucketeer/commit/25883c301f9094a9c2ba6f8245af33bda0370dbe))
+* **deps:** bump express from 4.19.2 to 4.21.0 in /ui/web-v2 ([#1242](https://github.com/bucketeer-io/bucketeer/issues/1242)) ([ca100b2](https://github.com/bucketeer-io/bucketeer/commit/ca100b263546acf25b7fe82da6dc2f0dcc9eebd1))
+* **deps:** bump rollup from 4.21.2 to 4.22.4 in /ui/dashboard ([#1256](https://github.com/bucketeer-io/bucketeer/issues/1256)) ([fa6d61c](https://github.com/bucketeer-io/bucketeer/commit/fa6d61c58f6e21be628487c6c0c292b799ab689e))
+* **deps:** bump the dependencies group across 1 directory with 20 updates ([#1265](https://github.com/bucketeer-io/bucketeer/issues/1265)) ([fd01afc](https://github.com/bucketeer-io/bucketeer/commit/fd01afc1a7bc87751e14056e8c2d411ab5ac8827))
+
 ## [0.4.8](https://github.com/bucketeer-io/bucketeer/compare/v0.4.7...v0.4.8) (2024-09-17)
 
 
