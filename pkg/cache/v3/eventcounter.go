@@ -52,7 +52,15 @@ func (c *eventCounterCache) GetEventCounts(keys []string) ([]float64, error) {
 func (*eventCounterCache) getEventValues(values []interface{}) ([]float64, error) {
 	eventVals := make([]float64, 0, len(values))
 	for _, v := range values {
-		str := string(v.([]byte))
+		var str string
+		switch v := v.(type) {
+		case []byte:
+			str = string(v)
+		case string:
+			str = v
+		default:
+			return nil, fmt.Errorf("unexpected value type: %v", v)
+		}
 		if str == "" {
 			str = "0"
 		}
