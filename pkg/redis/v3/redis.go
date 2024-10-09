@@ -63,6 +63,13 @@ func (ps *poolStats) IdleCount() int {
 	return int(ps.IdleConns)
 }
 
+type ClientType int
+
+const (
+	ClientTypeStandard ClientType = iota
+	ClientTypeCluster
+)
+
 type Client interface {
 	Close() error
 	Check(context.Context) health.Status
@@ -84,9 +91,10 @@ type Client interface {
 }
 
 type client struct {
-	rc     goredis.UniversalClient
-	opts   *options
-	logger *zap.Logger
+	rc         goredis.UniversalClient
+	opts       *options
+	logger     *zap.Logger
+	clientType ClientType
 }
 
 type PipeClient interface {
@@ -206,6 +214,7 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 	defer tmpClient.Close()
 
 	var rc goredis.UniversalClient
+	var clientType ClientType
 	if _, err := tmpClient.ClusterInfo(context.TODO()).Result(); err == nil {
 		logger.Debug("Redis cluster detected, creating cluster client",
 			zap.String("addr", addr),
@@ -224,6 +233,7 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 			MinIdleConns: options.minIdleConns,
 			PoolTimeout:  options.poolTimeout,
 		})
+		clientType = ClientTypeCluster
 	} else {
 		logger.Debug("Redis standalone detected, creating standard client",
 			zap.String("addr", addr),
@@ -234,6 +244,7 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 			zap.Duration("poolTimeout", options.poolTimeout),
 		)
 		rc = goredis.NewClient(standardClientOpts)
+		clientType = ClientTypeStandard
 	}
 	_, err := rc.Ping(context.TODO()).Result()
 	if err != nil {
@@ -241,9 +252,10 @@ func NewClient(addr string, opts ...Option) (Client, error) {
 		return nil, err
 	}
 	client := &client{
-		rc:     rc,
-		opts:   options,
-		logger: logger,
+		rc:         rc,
+		opts:       options,
+		logger:     logger,
+		clientType: clientType,
 	}
 	if options.metrics != nil {
 		redis.RegisterMetrics(options.metrics, clientVersion, options.serverName, client)
@@ -316,7 +328,38 @@ func (c *client) Get(key string) ([]byte, error) {
 func (c *client) GetMulti(keys []string, ignoreNotFound bool) ([]interface{}, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, getMultiCmdName).Inc()
-	reply, err := c.rc.MGet(context.TODO(), keys...).Result()
+
+	var reply []interface{}
+	var err error
+
+	if c.clientType == ClientTypeCluster {
+		// Use cluster-aware approach
+		slotMap := make(map[int64][]string)
+		for _, key := range keys {
+			slot, err := c.rc.ClusterKeySlot(context.TODO(), key).Result()
+			if err != nil {
+				err = fmt.Errorf("failed to get slot for key %s: %w", key, err)
+				break
+			}
+			slotMap[slot] = append(slotMap[slot], key)
+		}
+
+		reply = make([]interface{}, len(keys))
+		for _, slotKeys := range slotMap {
+			slotReply, slotErr := c.rc.MGet(context.TODO(), slotKeys...).Result()
+			if slotErr != nil {
+				err = slotErr
+				break
+			}
+			for i, r := range slotReply {
+				reply[i] = r
+			}
+		}
+	} else {
+		// Use standard approach for non-cluster client
+		reply, err = c.rc.MGet(context.TODO(), keys...).Result()
+	}
+
 	code := redis.CodeFail
 	values := make([]interface{}, 0, len(reply))
 	switch err {
