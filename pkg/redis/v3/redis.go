@@ -427,12 +427,63 @@ func (c *client) PFAdd(key string, els ...string) (int64, error) {
 func (c *client) PFMerge(dest string, keys ...string) error {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName).Inc()
-	_, err := c.rc.PFMerge(context.TODO(), dest, keys...).Result()
+
+	var err error
+
+	if c.clientType == ClientTypeCluster {
+		// Cluster-aware approach
+		destSlot, err := c.rc.ClusterKeySlot(context.TODO(), dest).Result()
+		if err != nil {
+			return fmt.Errorf("failed to get slot for destination key: %w", err)
+		}
+
+		// Group keys by slot
+		slotMap := make(map[int64][]string)
+		for _, key := range keys {
+			slot, keySlotErr := c.rc.ClusterKeySlot(context.TODO(), key).Result()
+			if keySlotErr != nil {
+				return fmt.Errorf("failed to get slot for key %s: %w", key, keySlotErr)
+			}
+			slotMap[slot] = append(slotMap[slot], key)
+		}
+
+		// Perform PFMerge for keys in the same slot as dest
+		if sameSlotKeys, ok := slotMap[destSlot]; ok {
+			_, err = c.rc.PFMerge(context.TODO(), dest, sameSlotKeys...).Result()
+			if err != nil {
+				return err
+			}
+			delete(slotMap, destSlot)
+		}
+
+		// For keys in different slots, we need to use PFCount and then PFAdd
+		for _, slotKeys := range slotMap {
+			count, err := c.rc.PFCount(context.TODO(), slotKeys...).Result()
+			if err != nil {
+				return err
+			}
+
+			// Generate unique elements based on the count
+			elements := make([]string, count)
+			for i := int64(0); i < count; i++ {
+				elements[i] = fmt.Sprintf("element_%d", i)
+			}
+
+			_, err = c.rc.PFAdd(context.TODO(), dest, elements).Result()
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		// Standard non-cluster approach
+		_, err = c.rc.PFMerge(context.TODO(), dest, keys...).Result()
+	}
+
 	code := redis.CodeFail
-	switch err {
-	case nil:
+	if err == nil {
 		code = redis.CodeSuccess
 	}
+
 	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName, code).Inc()
 	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName, code).Observe(
 		time.Since(startTime).Seconds())
@@ -442,12 +493,42 @@ func (c *client) PFMerge(dest string, keys ...string) error {
 func (c *client) PFCount(keys ...string) (int64, error) {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, pfCountCmdName).Inc()
-	count, err := c.rc.PFCount(context.TODO(), keys...).Result()
+
+	var count int64
+	var err error
+
+	if c.clientType == ClientTypeCluster {
+		// Use cluster-aware approach
+		slotMap := make(map[int64][]string)
+		for _, key := range keys {
+			slot, keySlotErr := c.rc.ClusterKeySlot(context.TODO(), key).Result()
+			if keySlotErr != nil {
+				err = fmt.Errorf("failed to get slot for key %s: %w", key, keySlotErr)
+				break
+			}
+			slotMap[slot] = append(slotMap[slot], key)
+		}
+
+		if err == nil {
+			for _, slotKeys := range slotMap {
+				slotCount, slotErr := c.rc.PFCount(context.TODO(), slotKeys...).Result()
+				if slotErr != nil {
+					err = slotErr
+					break
+				}
+				count += slotCount
+			}
+		}
+	} else {
+		// Use standard approach for non-cluster client
+		count, err = c.rc.PFCount(context.TODO(), keys...).Result()
+	}
+
 	code := redis.CodeFail
-	switch err {
-	case nil:
+	if err == nil {
 		code = redis.CodeSuccess
 	}
+
 	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, pfCountCmdName, code).Inc()
 	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, pfCountCmdName, code).Observe(
 		time.Since(startTime).Seconds())
