@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   type ColumnDef,
   type TableState,
@@ -6,7 +6,8 @@ import {
   getCoreRowModel,
   useReactTable,
   SortingState,
-  getSortedRowModel
+  getSortedRowModel,
+  Updater
 } from '@tanstack/react-table';
 import { cn } from 'utils/style';
 import { IconSorting, IconSortingDown, IconSortingUp } from '@icons';
@@ -29,19 +30,28 @@ export const DataTable = <TData, TValue>({
 }: DataTableProps<TData, TValue>) => {
   const [sorting, setSorting] = useState<SortingState>([]);
 
+  const onSortingChangeHandler = useCallback(
+    (updater: Updater<SortingState>) => {
+      const newSorting =
+        typeof updater === 'function' ? updater(sorting) : updater;
+
+      setSorting(newSorting);
+      onSortingChange?.(newSorting);
+    },
+    [sorting, onSortingChange]
+  );
+
   const table = useReactTable({
     data,
     columns,
     state: { ...state, sorting },
-    onSortingChange: setSorting,
+    onSortingChange: onSortingChangeHandler,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     manualSorting: true
   });
 
-  useEffect(() => {
-    onSortingChange?.(sorting);
-  }, [sorting]);
+  console.log('data', data);
 
   return (
     <Table.Root>
@@ -54,6 +64,7 @@ export const DataTable = <TData, TValue>({
                 // align={header.column.columnDef.meta?.align}
                 // data-fit-content={header.column.columnDef.meta?.fitContent}
                 onClick={header.column.getToggleSortingHandler()}
+                style={{ width: header.column.columnDef.size }}
                 className={cn({
                   'cursor-pointer select-none':
                     header.column.columnDef.enableSorting !== false
@@ -90,6 +101,7 @@ export const DataTable = <TData, TValue>({
               {row.getVisibleCells().map(cell => (
                 <Table.Cell
                   key={cell.id}
+                  style={{ width: cell.column.columnDef.size }}
                   // align={cell.column.columnDef.meta?.align}
                   // data-fit-content={cell.column.columnDef.meta?.fitContent}
                 >

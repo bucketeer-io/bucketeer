@@ -11,6 +11,7 @@ export const useColumns = (): ColumnDef<Organization>[] => {
     {
       accessorKey: 'name',
       header: 'Name',
+      size: 300,
       cell: ({ row }) => {
         const organization = row.original;
         return (
@@ -26,6 +27,7 @@ export const useColumns = (): ColumnDef<Organization>[] => {
     {
       accessorKey: 'projectCount',
       header: 'Projects',
+      size: 150,
       cell: ({ row }) => {
         const organization = row.original;
         return (
@@ -38,6 +40,7 @@ export const useColumns = (): ColumnDef<Organization>[] => {
     {
       accessorKey: 'environmentCount',
       header: 'Environments',
+      size: 150,
       cell: ({ row }) => {
         const organization = row.original;
         return (
@@ -50,6 +53,7 @@ export const useColumns = (): ColumnDef<Organization>[] => {
     {
       accessorKey: 'userCount',
       header: 'Users',
+      size: 150,
       cell: ({ row }) => {
         const organization = row.original;
         return (
@@ -62,6 +66,7 @@ export const useColumns = (): ColumnDef<Organization>[] => {
     {
       accessorKey: 'createdAt',
       header: 'Created at',
+      size: 150,
       cell: ({ row }) => {
         const organization = row.original;
         return (
@@ -73,6 +78,7 @@ export const useColumns = (): ColumnDef<Organization>[] => {
     },
     {
       accessorKey: 'action',
+      size: 50,
       header: '',
       meta: {
         align: 'center',

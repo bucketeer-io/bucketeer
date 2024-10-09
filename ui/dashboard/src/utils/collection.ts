@@ -1,17 +1,8 @@
-import { OrderBy, OrderDirection } from '@types';
+import { OrderBy } from '@types';
 
 interface SortingListFields {
   [x: string]: OrderBy;
 }
-
-interface OrderDirectionType {
-  [x: string]: OrderDirection;
-}
-
-export const orderDirectionType: OrderDirectionType = {
-  asc: 'ASC',
-  desc: 'DESC'
-};
 
 export const sortingListFields: SortingListFields = {
   default: 'DEFAULT',

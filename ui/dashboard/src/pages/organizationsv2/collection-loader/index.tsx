@@ -1,16 +1,14 @@
 // import { CollectionWrapper } from '~/elements/collection/collection-wrapper';
 import { useState } from 'react';
 // import { useNavigate, useLocation } from 'react-router-dom';
-import { OrganizationsFetcherParams } from '@api/organization';
-import { useQueryOrganizations } from '@queries/organizations';
 import { SortingState } from '@tanstack/react-table';
-import { LIST_PAGE_SIZE } from 'constants/app';
 import { OrderBy, OrderDirection } from '@types';
-import { orderDirectionType, sortingListFields } from 'utils/collection';
+import { sortingListFields } from 'utils/collection';
 import PageLayout from 'elements/page-layout';
 // import { getInfiniteCollectionData } from '~/utils/collection';
 // import { EmptyCollection } from '../collection-layout/empty-collection';
 import { ListCollection } from '../collection-layout/list-collection';
+import { useFetchOrganizations } from './use-fetch-organizations';
 
 // import type { OrganizationFilters } from '../types';
 
@@ -25,28 +23,19 @@ const CollectionLoader = () => {
   // const navigate = useNavigate();
   // const { pathname } = useLocation();
 
-  const [params, seParams] = useState<OrganizationParams>({
-    orderBy: sortingListFields.default,
-    orderDirection: orderDirectionType.asc,
+  const [params, setParams] = useState<OrganizationParams>({
+    orderBy: 'DEFAULT',
+    orderDirection: 'ASC',
     searchKeyword: '',
     archived: false
   });
-
-  const defaultParams: OrganizationsFetcherParams = {
-    pageSize: LIST_PAGE_SIZE,
-    cursor: String(0),
-    disabled: false,
-    ...params
-  };
 
   const {
     data: collection,
     isLoading,
     refetch,
     isError
-  } = useQueryOrganizations({
-    params: defaultParams
-  });
+  } = useFetchOrganizations({ ...params });
 
   // const onUpdateURL = useCallback(
   //   (options: Record<string, string | number | boolean | undefined>) => {
@@ -58,28 +47,23 @@ const CollectionLoader = () => {
   // );
 
   const onSortingChangeHandler = (sorting: SortingState) => {
-    if (sorting.length > 0) {
-      seParams({
-        ...params,
-        orderBy: sortingListFields[sorting[0].id],
-        orderDirection: sorting[0].desc ? 'DESC' : 'ASC'
-      });
-    } else {
-      seParams({
-        ...params,
-        orderBy: sortingListFields.default,
-        orderDirection: orderDirectionType.asc
-      });
-    }
+    const updateOrderBy =
+      sorting.length > 0
+        ? sortingListFields[sorting[0].id]
+        : sortingListFields.default;
+
+    setParams({
+      ...params,
+      orderBy: updateOrderBy,
+      orderDirection: sorting[0]?.desc ? 'DESC' : 'ASC'
+    });
   };
 
   const organizations = collection?.Organizations || [];
 
   return (
     <>
-      {isLoading ? (
-        <PageLayout.LoadingState />
-      ) : isError ? (
+      {isError ? (
         <PageLayout.ErrorState onRetry={refetch} />
       ) : (
         // <CollectionWrapper
@@ -95,6 +79,7 @@ const CollectionLoader = () => {
         // >
         <ListCollection
           organizations={organizations}
+          isLoading={isLoading}
           onSortingChange={onSortingChangeHandler}
         />
         // </CollectionWrapper>

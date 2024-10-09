@@ -3,11 +3,13 @@ import type { CollectionProps } from './types';
 
 export const ListCollection = ({
   organizations,
-  onSortingChange
+  onSortingChange,
+  isLoading
 }: CollectionProps) => {
   return (
     <ListTableCollection
       organizations={organizations}
+      isLoading={isLoading}
       onSortingChange={onSortingChange}
     />
   );

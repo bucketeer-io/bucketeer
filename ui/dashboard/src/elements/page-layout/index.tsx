@@ -33,7 +33,7 @@ const PageLayoutRoot = ({ title, children }: PageLayoutProps) => {
 
 const PageLayoutLoadingState = () => {
   return (
-    <div className="h-full flex-grow flex-center">
+    <div className="w-full flex-center py-20">
       <Spinner />
     </div>
   );
