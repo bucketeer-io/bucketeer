@@ -351,7 +351,7 @@ func (c *client) GetMulti(keys []string, ignoreNotFound bool) ([]interface{}, er
 				err = slotErr
 				break
 			}
-			copy(reply, slotReply)
+			reply = append(reply, slotReply...)
 		}
 	} else {
 		// Use standard approach for non-cluster client
