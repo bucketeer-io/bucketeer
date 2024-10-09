@@ -336,9 +336,9 @@ func (c *client) GetMulti(keys []string, ignoreNotFound bool) ([]interface{}, er
 		// Use cluster-aware approach
 		slotMap := make(map[int64][]string)
 		for _, key := range keys {
-			slot, err := c.rc.ClusterKeySlot(context.TODO(), key).Result()
-			if err != nil {
-				err = fmt.Errorf("failed to get slot for key %s: %w", key, err)
+			slot, keySlotErr := c.rc.ClusterKeySlot(context.TODO(), key).Result()
+			if keySlotErr != nil {
+				err = fmt.Errorf("failed to get slot for key %s: %w", key, keySlotErr)
 				break
 			}
 			slotMap[slot] = append(slotMap[slot], key)
@@ -351,9 +351,7 @@ func (c *client) GetMulti(keys []string, ignoreNotFound bool) ([]interface{}, er
 				err = slotErr
 				break
 			}
-			for i, r := range slotReply {
-				reply[i] = r
-			}
+			copy(reply, slotReply)
 		}
 	} else {
 		// Use standard approach for non-cluster client
