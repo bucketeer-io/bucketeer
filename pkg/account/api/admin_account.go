@@ -134,13 +134,15 @@ func (s *AccountService) GetMe(
 		adminEnvRoles := s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
 		return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
 			Email:            sysAdminAccount.Email,
-			Name:             sysAdminAccount.Name,
 			AvatarUrl:        sysAdminAccount.AvatarImageUrl,
 			IsSystemAdmin:    true,
 			Organization:     organization,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 			EnvironmentRoles: adminEnvRoles,
 			SearchFilters:    sysAdminAccount.SearchFilters,
+			FirstName:        sysAdminAccount.FirstName,
+			LastName:         sysAdminAccount.LastName,
+			Language:         sysAdminAccount.Language,
 		}}, nil
 	}
 	// non admin account response
@@ -151,13 +153,15 @@ func (s *AccountService) GetMe(
 	envRoles := s.getConsoleAccountEnvironmentRoles(account.EnvironmentRoles, environments, projects)
 	return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
 		Email:            account.Email,
-		Name:             account.Name,
 		AvatarUrl:        account.AvatarImageUrl,
 		IsSystemAdmin:    false,
 		Organization:     organization,
 		OrganizationRole: account.OrganizationRole,
 		EnvironmentRoles: envRoles,
 		SearchFilters:    account.SearchFilters,
+		FirstName:        account.FirstName,
+		LastName:         account.LastName,
+		Language:         account.Language,
 	}}, nil
 }
 
