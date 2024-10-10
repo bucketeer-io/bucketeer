@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Organization } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
+import Icon from 'components/icon';
 
 export const useColumns = (): ColumnDef<Organization>[] => {
   const formatDateTime = useFormatDateTime();
@@ -87,8 +88,8 @@ export const useColumns = (): ColumnDef<Organization>[] => {
       enableSorting: false,
       cell: () => {
         return (
-          <button>
-            <IconMoreHorizOutlined />
+          <button className="flex-center text-gray-600">
+            <Icon icon={IconMoreHorizOutlined} size="sm" />
           </button>
         );
       }

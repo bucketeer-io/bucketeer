@@ -102,6 +102,7 @@ export const DataTable = <TData, TValue>({
               data-state={row.getIsSelected() && 'selected'}
               data-hoverable={!!onRowClick}
               onClick={() => onRowClick?.(row.original)}
+              className="shadow-card rounded-lg bg-white"
             >
               {row.getVisibleCells().map(cell => (
                 <Table.Cell
