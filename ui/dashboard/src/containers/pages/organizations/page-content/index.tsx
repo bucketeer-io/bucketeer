@@ -1,5 +1,4 @@
 import {
-  KeyboardEvent,
   ReactNode,
   useCallback,
   useEffect,
@@ -284,10 +283,6 @@ export const OrganizationsContent = () => {
     []
   );
 
-  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleChangeSearchValue.cancel();
-  }, []);
-
   const handleOnClickSubmit = useCallback(
     (formValues: OrganizationCreatorCommand) => {
       setIsLoadingCreator(true);
@@ -391,7 +386,7 @@ export const OrganizationsContent = () => {
   return (
     <div className="py-8 px-6">
       <Filter
-        additionalActions={
+        action={
           <Button
             className="flex-1 lg:flex-none"
             onClick={() => {
@@ -404,8 +399,7 @@ export const OrganizationsContent = () => {
           </Button>
         }
         searchValue={searchValue}
-        onChangeSearchValue={handleChangeSearchValue}
-        onKeyDown={handleKeyDown}
+        onSearchChange={handleChangeSearchValue}
       />
       <div className="mt-6">
         <Tab

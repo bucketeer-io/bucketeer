@@ -12,6 +12,6 @@ export const accountsFetcher = async (
   params?: AccountsFetcherParams
 ): Promise<AccountCollection> => {
   return axiosClient
-    .post<AccountCollection>('/v1/account/list_accounts_v2', params)
+    .post<AccountCollection>('/v1/account/list_accounts', params)
     .then(response => response.data);
 };

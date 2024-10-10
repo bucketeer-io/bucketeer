@@ -33,7 +33,7 @@ const PageLoader = () => {
   }
   return (
     <>
-      <PageContent />
+      <PageContent onAdd={onOpenAddModal} />
     </>
   );
 };

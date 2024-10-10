@@ -1,4 +1,4 @@
-import { KeyboardEvent, ReactNode } from 'react';
+import { ReactNode } from 'react';
 import {
   IconLaunchOutlined,
   IconFilterListOutlined
@@ -8,19 +8,13 @@ import Button from 'components/button';
 import Icon from 'components/icon';
 import SearchInput from 'components/search-input';
 
-type FilterProps = {
-  additionalActions?: ReactNode;
+interface FilterProps {
+  action?: ReactNode;
   searchValue: string;
-  onChangeSearchValue: (value: string) => void;
-  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
-};
+  onSearchChange: (value: string) => void;
+}
 
-const Filter = ({
-  additionalActions,
-  searchValue,
-  onChangeSearchValue,
-  onKeyDown
-}: FilterProps) => {
+const Filter = ({ action, searchValue, onSearchChange }: FilterProps) => {
   const { t } = useTranslation(['common', 'form']);
   return (
     <div className="flex lg:items-center justify-between flex-col lg:flex-row">
@@ -28,8 +22,7 @@ const Filter = ({
         <SearchInput
           placeholder={`${t('form:placeholder-search-input')}`}
           value={searchValue}
-          onChange={onChangeSearchValue}
-          onKeyDown={onKeyDown}
+          onChange={onSearchChange}
         />
       </div>
       <div className="flex items-center gap-4 mt-3 lg:mt-0">
@@ -44,7 +37,7 @@ const Filter = ({
           <Icon icon={IconFilterListOutlined} size="sm" />
           {t('filter')}
         </Button>
-        {additionalActions}
+        {action}
       </div>
     </div>
   );

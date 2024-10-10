@@ -4,6 +4,7 @@ import type { CollectionProps } from '../types';
 import { useColumns } from './data-table';
 
 export const ListTableCollection = ({
+  isLoading,
   organizations,
   onSortingChange
 }: CollectionProps) => {
@@ -12,6 +13,7 @@ export const ListTableCollection = ({
 
   return (
     <DataTable
+      isLoading={isLoading}
       data={organizations}
       columns={columns}
       // onRowClick={organization =>

@@ -12,11 +12,13 @@ import {
 import { cn } from 'utils/style';
 import { IconSorting, IconSortingDown, IconSortingUp } from '@icons';
 import Table from 'components/tablev2';
+import PageLayout from 'elements/page-layout';
 
 export interface DataTableProps<TData, TValue> {
   data: TData[];
   columns: ColumnDef<TData, TValue>[];
   state?: Partial<TableState>;
+  isLoading?: boolean;
   onRowClick?: (data: TData) => void;
   onSortingChange?: (v: SortingState) => void;
 }
@@ -25,6 +27,7 @@ export const DataTable = <TData, TValue>({
   data,
   columns,
   state,
+  isLoading,
   onRowClick,
   onSortingChange
 }: DataTableProps<TData, TValue>) => {
@@ -51,8 +54,6 @@ export const DataTable = <TData, TValue>({
     manualSorting: true
   });
 
-  console.log('data', data);
-
   return (
     <Table.Root>
       <Table.Header>
@@ -61,8 +62,6 @@ export const DataTable = <TData, TValue>({
             {headerGroup.headers.map(header => (
               <Table.Head
                 key={header.id}
-                // align={header.column.columnDef.meta?.align}
-                // data-fit-content={header.column.columnDef.meta?.fitContent}
                 onClick={header.column.getToggleSortingHandler()}
                 style={{ width: header.column.columnDef.size }}
                 className={cn({
@@ -90,7 +89,13 @@ export const DataTable = <TData, TValue>({
         ))}
       </Table.Header>
       <Table.Body>
-        {table.getRowModel().rows?.length ? (
+        {isLoading ? (
+          <Table.Row>
+            <Table.Cell colSpan={columns.length}>
+              <PageLayout.LoadingState className="py-10" />
+            </Table.Cell>
+          </Table.Row>
+        ) : table.getRowModel().rows?.length ? (
           table.getRowModel().rows.map(row => (
             <Table.Row
               key={row.id}
@@ -102,8 +107,6 @@ export const DataTable = <TData, TValue>({
                 <Table.Cell
                   key={cell.id}
                   style={{ width: cell.column.columnDef.size }}
-                  // align={cell.column.columnDef.meta?.align}
-                  // data-fit-content={cell.column.columnDef.meta?.fitContent}
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </Table.Cell>

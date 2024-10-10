@@ -1,11 +1,4 @@
-import {
-  KeyboardEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   IconAddOutlined,
   IconArchiveOutlined,
@@ -223,10 +216,6 @@ export const ProjectsContent = () => {
     []
   );
 
-  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleChangeSearchValue.cancel();
-  }, []);
-
   const handleOnSubmit = useCallback(
     (formValues: ProjectCreatorCommand) => {
       setIsLoadingSubmit(true);
@@ -312,7 +301,7 @@ export const ProjectsContent = () => {
   return (
     <div className="py-8 px-6">
       <Filter
-        additionalActions={
+        action={
           <Button
             className="flex-1 lg:flex-none"
             onClick={() => {
@@ -325,8 +314,7 @@ export const ProjectsContent = () => {
           </Button>
         }
         searchValue={searchValue}
-        onChangeSearchValue={handleChangeSearchValue}
-        onKeyDown={handleKeyDown}
+        onSearchChange={handleChangeSearchValue}
       />
       <div className="mt-6">
         <Tab

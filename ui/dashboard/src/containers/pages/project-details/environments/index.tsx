@@ -1,11 +1,4 @@
-import {
-  KeyboardEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   IconAddOutlined,
   IconArchiveOutlined,
@@ -248,10 +241,6 @@ export const ProjectEnvironments = ({ projectId }: { projectId?: string }) => {
     []
   );
 
-  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') handleChangeSearchValue.cancel();
-  }, []);
-
   const handleOnSubmit = useCallback(
     (formValues: EnvironmentCreatorCommand) => {
       setIsLoadingSubmit(true);
@@ -357,9 +346,8 @@ export const ProjectEnvironments = ({ projectId }: { projectId?: string }) => {
     <div>
       <Filter
         searchValue={searchValue}
-        onChangeSearchValue={handleChangeSearchValue}
-        onKeyDown={handleKeyDown}
-        additionalActions={
+        onSearchChange={handleChangeSearchValue}
+        action={
           <Button
             className="flex-1 lg:flex-none"
             onClick={() => {

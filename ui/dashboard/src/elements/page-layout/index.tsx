@@ -1,6 +1,7 @@
 import { type PropsWithChildren, type ReactNode } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { QueryErrorResetBoundary } from '@tanstack/react-query';
+import { cn } from 'utils/style';
 import Spinner from 'components/spinner';
 import { ErrorState } from '../empty-state/error';
 import { PageLayoutProvider } from './context';
@@ -31,9 +32,9 @@ const PageLayoutRoot = ({ title, children }: PageLayoutProps) => {
   );
 };
 
-const PageLayoutLoadingState = () => {
+const PageLayoutLoadingState = ({ className }: { className?: string }) => {
   return (
-    <div className="w-full flex-center py-20">
+    <div className={cn('w-full flex-center py-20', className)}>
       <Spinner />
     </div>
   );
@@ -52,34 +53,17 @@ const PageLayoutEmptyState = ({ children }: PropsWithChildren) => {
 };
 
 const PageLayoutHeader = ({ children }: PropsWithChildren) => {
-  return <div>{children}</div>;
+  return <div className="p-6 border-b border-gray-200">{children}</div>;
 };
 
 const PageLayoutContent = ({ children }: PropsWithChildren) => {
-  return <div className="h-full flex flex-col">{children}</div>;
-};
-
-const PageLayoutBody = ({
-  children,
-  withContainer = true
-}: PropsWithChildren & { withContainer?: boolean }) => {
-  if (withContainer) {
-    return <div className="flex-1 container">{children}</div>;
-  }
-
-  return <div className="flex-1 pb-4">{children}</div>;
-};
-
-const PageLayoutFooter = ({ children }: PropsWithChildren) => {
-  return <div className="flex-initial">{children}</div>;
+  return <div className="p-6 flex flex-col h-full">{children}</div>;
 };
 
 const PageLayout = {
   Root: PageLayoutRoot,
   Header: PageLayoutHeader,
   Content: PageLayoutContent,
-  Body: PageLayoutBody,
-  Footer: PageLayoutFooter,
   LoadingState: PageLayoutLoadingState,
   ErrorState: PageLayoutErrorState,
   EmptyState: PageLayoutEmptyState

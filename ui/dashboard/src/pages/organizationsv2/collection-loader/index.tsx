@@ -2,8 +2,8 @@
 import { useState } from 'react';
 // import { useNavigate, useLocation } from 'react-router-dom';
 import { SortingState } from '@tanstack/react-table';
+import { sortingListFields } from 'constants/collection';
 import { OrderBy, OrderDirection } from '@types';
-import { sortingListFields } from 'utils/collection';
 import PageLayout from 'elements/page-layout';
 // import { getInfiniteCollectionData } from '~/utils/collection';
 // import { EmptyCollection } from '../collection-layout/empty-collection';
