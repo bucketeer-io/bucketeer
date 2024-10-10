@@ -334,13 +334,9 @@ func (c *client) GetMulti(keys []string, ignoreNotFound bool) ([]interface{}, er
 
 	if c.clientType == ClientTypeCluster {
 		// Use cluster-aware approach
-		slotMap := make(map[int64][]string)
+		slotMap := make(map[int][]string)
 		for _, key := range keys {
-			slot, keySlotErr := c.rc.ClusterKeySlot(context.TODO(), key).Result()
-			if keySlotErr != nil {
-				err = fmt.Errorf("failed to get slot for key %s: %w", key, keySlotErr)
-				break
-			}
+			slot := keyHashSlot(key)
 			slotMap[slot] = append(slotMap[slot], key)
 		}
 
@@ -432,18 +428,12 @@ func (c *client) PFMerge(dest string, keys ...string) error {
 
 	if c.clientType == ClientTypeCluster {
 		// Cluster-aware approach
-		destSlot, err := c.rc.ClusterKeySlot(context.TODO(), dest).Result()
-		if err != nil {
-			return fmt.Errorf("failed to get slot for destination key: %w", err)
-		}
+		destSlot := keyHashSlot(dest)
 
 		// Group keys by slot
-		slotMap := make(map[int64][]string)
+		slotMap := make(map[int][]string)
 		for _, key := range keys {
-			slot, keySlotErr := c.rc.ClusterKeySlot(context.TODO(), key).Result()
-			if keySlotErr != nil {
-				return fmt.Errorf("failed to get slot for key %s: %w", key, keySlotErr)
-			}
+			slot := keyHashSlot(key)
 			slotMap[slot] = append(slotMap[slot], key)
 		}
 
@@ -499,25 +489,19 @@ func (c *client) PFCount(keys ...string) (int64, error) {
 
 	if c.clientType == ClientTypeCluster {
 		// Use cluster-aware approach
-		slotMap := make(map[int64][]string)
+		slotMap := make(map[int][]string)
 		for _, key := range keys {
-			slot, keySlotErr := c.rc.ClusterKeySlot(context.TODO(), key).Result()
-			if keySlotErr != nil {
-				err = fmt.Errorf("failed to get slot for key %s: %w", key, keySlotErr)
-				break
-			}
+			slot := keyHashSlot(key)
 			slotMap[slot] = append(slotMap[slot], key)
 		}
 
-		if err == nil {
-			for _, slotKeys := range slotMap {
-				slotCount, slotErr := c.rc.PFCount(context.TODO(), slotKeys...).Result()
-				if slotErr != nil {
-					err = slotErr
-					break
-				}
-				count += slotCount
+		for _, slotKeys := range slotMap {
+			slotCount, slotErr := c.rc.PFCount(context.TODO(), slotKeys...).Result()
+			if slotErr != nil {
+				err = slotErr
+				break
 			}
+			count += slotCount
 		}
 	} else {
 		// Use standard approach for non-cluster client
