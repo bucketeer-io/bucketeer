@@ -227,7 +227,7 @@ create-api-key:
 		--cert=${WEB_GATEWAY_CERT_PATH} \
 		--web-gateway=${WEB_GATEWAY_URL}:443 \
 		--service-token=${SERVICE_TOKEN_PATH} \
-		--name=$$(date +%s) \
+		--name=${API_KEY_NAME} \
 		--role=${API_KEY_ROLE} \
 		--output=${API_KEY_PATH} \
 		--environment-namespace=${ENVIRONMENT_NAMESPACE} \
