@@ -340,14 +340,27 @@ func (c *client) GetMulti(keys []string, ignoreNotFound bool) ([]interface{}, er
 			slotMap[slot] = append(slotMap[slot], key)
 		}
 
-		reply = make([]interface{}, len(keys))
+		// Create a map to store results temporarily
+		resultMap := make(map[string]interface{}, len(keys))
+
 		for _, slotKeys := range slotMap {
 			slotReply, slotErr := c.rc.MGet(context.TODO(), slotKeys...).Result()
 			if slotErr != nil {
 				err = slotErr
 				break
 			}
-			reply = append(reply, slotReply...)
+			// Store results in the map
+			for i, key := range slotKeys {
+				resultMap[key] = slotReply[i]
+			}
+		}
+
+		if err == nil {
+			// Populate the reply slice in the original order
+			reply = make([]interface{}, len(keys))
+			for i, key := range keys {
+				reply[i] = resultMap[key]
+			}
 		}
 	} else {
 		// Use standard approach for non-cluster client
@@ -356,8 +369,7 @@ func (c *client) GetMulti(keys []string, ignoreNotFound bool) ([]interface{}, er
 
 	code := redis.CodeFail
 	values := make([]interface{}, 0, len(reply))
-	switch err {
-	case nil:
+	if err == nil {
 		code = redis.CodeSuccess
 		for _, r := range reply {
 			if r == nil {
@@ -366,22 +378,23 @@ func (c *client) GetMulti(keys []string, ignoreNotFound bool) ([]interface{}, er
 					continue
 				}
 				code = redis.CodeNotFound
-				values = nil
 				err = ErrNil
+				values = nil
 				break
 			}
 			s, ok := r.(string)
 			if !ok {
 				code = redis.CodeInvalidType
-				values = nil
 				err = ErrInvalidType
+				values = nil
 				break
 			}
 			values = append(values, []byte(s))
 		}
-	case ErrNil:
+	} else if err == ErrNil {
 		code = redis.CodeNotFound
 	}
+
 	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, getMultiCmdName, code).Inc()
 	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, getMultiCmdName, code).Observe(
 		time.Since(startTime).Seconds())
