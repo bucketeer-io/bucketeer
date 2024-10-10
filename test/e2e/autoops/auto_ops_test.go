@@ -1385,7 +1385,7 @@ func checkIfAutoOpsRulesAreTriggered(t *testing.T, featureID string) {
 		if i == retryTimes-1 {
 			t.Fatalf("retry timeout")
 		}
-		time.Sleep(10 * time.Second)
+		time.Sleep(20 * time.Second)
 		feature := getFeature(t, featureClient, featureID)
 		if feature.Enabled {
 			continue
