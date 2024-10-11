@@ -1,4 +1,6 @@
 {
+  "active": "Active",
+  "archived": "Archived",
   "continue": "Continue",
   "projects": "Projects",
   "environment": "Environment",

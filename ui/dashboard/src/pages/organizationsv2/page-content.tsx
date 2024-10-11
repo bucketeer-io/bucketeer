@@ -1,21 +1,21 @@
-import { useState } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import Filter from 'containers/filter';
-import { commonTabs } from 'helpers/tab';
 import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
+import { CollectionStatusType } from '@types';
 import Button from 'components/button';
 import Icon from 'components/icon';
-import Tab from 'components/tab';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from 'components/tabs/tabs';
 import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
+import { OrganizationFilters } from './types';
 
 const PageContent = ({ onAdd }: { onAdd: () => void }) => {
   const { t } = useTranslation(['common']);
 
-  const [targetTab, setTargetTab] = useState(commonTabs[0].value);
-  const [filters, setFilters] = usePartialState({
-    searchQuery: ''
+  const [filters, setFilters] = usePartialState<OrganizationFilters>({
+    searchQuery: '',
+    status: 'ACTIVE'
   });
 
   return (
@@ -30,14 +30,21 @@ const PageContent = ({ onAdd }: { onAdd: () => void }) => {
         searchValue={filters.searchQuery}
         onSearchChange={v => setFilters({ ...filters, searchQuery: v })}
       />
-      <div className="mt-6">
-        <Tab
-          options={commonTabs}
-          value={targetTab}
-          onSelect={value => setTargetTab(value)}
-        />
-        <CollectionLoader />
-      </div>
+      <Tabs
+        defaultValue={filters.status}
+        onValueChange={v =>
+          setFilters({ ...filters, status: v as CollectionStatusType })
+        }
+        className="mt-6"
+      >
+        <TabsList>
+          <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
+          <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
+        </TabsList>
+        <TabsContent value={filters.status}>
+          <CollectionLoader />
+        </TabsContent>
+      </Tabs>
     </PageLayout.Content>
   );
 };
