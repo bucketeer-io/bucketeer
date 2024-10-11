@@ -111,6 +111,10 @@ func (s subscriber) Run(ctx context.Context) {
 	ctx, cancel := context.WithCancel(ctx)
 	s.cancel = cancel
 	rateLimiterPuller := s.createPuller(ctx)
+	if rateLimiterPuller == nil {
+		s.logger.Error("Failed to create puller, stopping subscriber", zap.String("name", s.name))
+		return
+	}
 	group := errgroup.Group{}
 	group.Go(func() error {
 		return rateLimiterPuller.Run(ctx)
