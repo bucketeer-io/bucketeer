@@ -396,7 +396,7 @@ func TestGrpcGetEvaluationsFullState(t *testing.T) {
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
 	createFeatureWithTag(t, tag, featureID)
-	featureID2 := fmt.Sprintf("%s-feature-id-%s", prefixTestName, newUUID(t))
+	featureID2 := newFeatureID(t, newUUID(t))
 	createFeatureWithTag(t, tag, featureID2)
 	response := grpcGetEvaluations(t, tag, userID)
 	if response.State != featureproto.UserEvaluations_FULL {
@@ -421,7 +421,7 @@ func TestGrpcGetEvaluationsByEvaluatedAt(t *testing.T) {
 	featureID := newFeatureID(t, uuid)
 	createFeatureWithTag(t, tag, featureID)
 	time.Sleep(10 * time.Second) // It must be equal or higher than the `secondsForAdjustment`
-	featureID2 := fmt.Sprintf("%s-feature-id-%s", prefixTestName, newUUID(t))
+	featureID2 := newFeatureID(t, newUUID(t))
 	cmd := createFeatureWithTag(t, tag, featureID2)
 	prevEvalAt := time.Now().Unix()
 	response := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, "userEvaluationsID", prevEvalAt, false)
@@ -527,7 +527,7 @@ func TestGrpcGetEvaluationsByUserAttributesUpdated(t *testing.T) {
 	featureID := newFeatureID(t, uuid)
 	createFeatureWithTag(t, tag, featureID)
 	time.Sleep(10 * time.Second) // It must be equal or higher than the `secondsForAdjustment`
-	featureID2 := fmt.Sprintf("%s-feature-id-%s", prefixTestName, newUUID(t))
+	featureID2 := newFeatureID(t, newUUID(t))
 	createFeatureWithRule(t, tag, featureID2)
 	prevEvalAt := time.Now().Unix()
 	response := grpcGetEvaluationsByEvaluatedAt(t, tag, userID, "userEvaluationsID", prevEvalAt, true)
@@ -655,7 +655,7 @@ func TestGrpcGetEvaluation(t *testing.T) {
 	userID := newUserID(t, uuid)
 	featureID := newFeatureID(t, uuid)
 	createFeatureWithTag(t, tag, featureID)
-	featureID2 := fmt.Sprintf("%s-feature-id-%s", prefixTestName, newUUID(t))
+	featureID2 := newFeatureID(t, newUUID(t))
 	createFeatureWithTag(t, tag, featureID2)
 	response := grpcGetEvaluation(t, tag, featureID2, userID)
 	if response.Evaluation == nil {

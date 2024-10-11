@@ -92,7 +92,9 @@ func TestChangeSegmentName(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	client := newFeatureClient(t)
-	id := createSegment(ctx, t, client).Id
+	seg := createSegment(ctx, t, client)
+	id := seg.Id
+	name := seg.Name
 	cmd := &featureproto.ChangeSegmentNameCommand{
 		Name: fmt.Sprintf("%s-change-name", prefixSegment),
 	}
@@ -112,6 +114,27 @@ func TestChangeSegmentName(t *testing.T) {
 	assert.NoError(t, err)
 	segment := getSegment(ctx, t, client, id)
 	assert.Equal(t, cmd.Name, segment.Name)
+
+	// After confirming that the name has changed correctly,
+	// We must change back the original name, so this e2e test
+	// can be deleted correctly when running the delete e2e data workflow
+	cmd = &featureproto.ChangeSegmentNameCommand{
+		Name: name,
+	}
+	cmdChange, err = ptypes.MarshalAny(cmd)
+	assert.NoError(t, err)
+	res, err = client.UpdateSegment(
+		ctx,
+		&featureproto.UpdateSegmentRequest{
+			Id: id,
+			Commands: []*featureproto.Command{
+				{Command: cmdChange},
+			},
+			EnvironmentNamespace: *environmentNamespace,
+		},
+	)
+	assert.NotNil(t, res)
+	assert.NoError(t, err)
 }
 
 func TestChangeSegmentDescription(t *testing.T) {
