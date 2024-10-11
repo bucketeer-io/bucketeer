@@ -1384,15 +1384,17 @@ func (s *grpcGatewayService) RegisterEvents(
 	allowedRoles := []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT, accountproto.APIKey_SDK_SERVER}
 	envAPIKey, err := s.checkRequest(ctx, allowedRoles)
 	// TODO: Revert this after debugging
-	if err != nil && !errors.Is(err, ErrInvalidAPIKey) {
-		s.logger.Error("Failed to check RegisterEvents request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.Any("events", req.Events),
-				zap.Any("sourceId", req.SourceId),
-				zap.String("sdkVersion", req.SdkVersion),
-			)...,
-		)
+	if err != nil {
+		if !errors.Is(err, ErrInvalidAPIKey) {
+			s.logger.Error("Failed to check RegisterEvents request",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.Any("events", req.Events),
+					zap.Any("sourceId", req.SourceId),
+					zap.String("sdkVersion", req.SdkVersion),
+				)...,
+			)
+		}
 		return nil, err
 	}
 	requestTotal.WithLabelValues(
