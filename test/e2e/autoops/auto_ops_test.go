@@ -55,7 +55,7 @@ const (
 	metricsEventType
 	prefixTestName   = "e2e-test"
 	retryTimes       = 30
-	timeout          = 5 * time.Minute
+	timeout          = 2 * time.Minute
 	prefixID         = "e2e-test"
 	version          = "/v1"
 	service          = "/gateway"
@@ -1385,7 +1385,7 @@ func checkIfAutoOpsRulesAreTriggered(t *testing.T, featureID string) {
 		if i == retryTimes-1 {
 			t.Fatalf("retry timeout")
 		}
-		time.Sleep(20 * time.Second)
+		time.Sleep(10 * time.Second)
 		feature := getFeature(t, featureClient, featureID)
 		if feature.Enabled {
 			continue
