@@ -1,12 +1,10 @@
-import { KeyboardEvent } from 'react';
 import Filter from 'containers/filter';
 import TableContent, { TableContentProps } from 'containers/table-content';
 
 type Props<T> = TableContentProps<T> & {
   isLoading?: boolean;
   searchValue: string;
-  onChangeSearchValue: (value: string) => void;
-  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
+  onSearchChange: (value: string) => void;
 };
 
 const FilterLayout = <T,>({
@@ -19,16 +17,11 @@ const FilterLayout = <T,>({
   sortingState,
   searchValue,
   onSortingTable,
-  onChangeSearchValue,
-  onKeyDown
+  onSearchChange
 }: Props<T>) => {
   return (
     <div>
-      <Filter
-        searchValue={searchValue}
-        onChangeSearchValue={onChangeSearchValue}
-        onKeyDown={onKeyDown}
-      />
+      <Filter searchValue={searchValue} onSearchChange={onSearchChange} />
       <TableContent
         isLoading={isLoading}
         columns={columns}

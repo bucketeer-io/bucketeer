@@ -3,7 +3,9 @@ import {
   OrganizationsFetcherParams
 } from '@api/organization';
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
+import pickBy from 'lodash/pickby';
 import type { OrganizationCollection, QueryOptionsRespond } from '@types';
+import { isNotEmpty } from 'utils/data-type';
 
 type QueryOptions = QueryOptionsRespond<OrganizationCollection> & {
   params?: OrganizationsFetcherParams;
@@ -12,11 +14,12 @@ type QueryOptions = QueryOptionsRespond<OrganizationCollection> & {
 export const ORGANIZATIONS_QUERY_KEY = 'organizations';
 
 export const useQueryOrganizations = (options?: QueryOptions) => {
-  const { params, ...queryOptions } = options || {};
+  const { params: _params, ...queryOptions } = options || {};
+  const params = pickBy(_params, v => isNotEmpty(v));
   const query = useQuery({
     queryKey: [ORGANIZATIONS_QUERY_KEY, params],
     queryFn: async () => {
-      return organizationsFetcher(params);
+      return organizationsFetcher(_params);
     },
     ...queryOptions
   });

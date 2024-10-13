@@ -5,7 +5,7 @@ import { useTranslation } from 'i18n';
 import { CollectionStatusType } from '@types';
 import Button from 'components/button';
 import Icon from 'components/icon';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from 'components/tabs/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from 'components/tabs';
 import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
 import { OrganizationFilters } from './types';
@@ -14,6 +14,8 @@ const PageContent = ({ onAdd }: { onAdd: () => void }) => {
   const { t } = useTranslation(['common']);
 
   const [filters, setFilters] = usePartialState<OrganizationFilters>({
+    orderBy: 'DEFAULT',
+    orderDirection: 'ASC',
     searchQuery: '',
     status: 'ACTIVE'
   });
@@ -28,21 +30,20 @@ const PageContent = ({ onAdd }: { onAdd: () => void }) => {
           </Button>
         }
         searchValue={filters.searchQuery}
-        onSearchChange={v => setFilters({ ...filters, searchQuery: v })}
+        onSearchChange={searchQuery => setFilters({ searchQuery })}
       />
       <Tabs
         defaultValue={filters.status}
         onValueChange={v =>
           setFilters({ ...filters, status: v as CollectionStatusType })
         }
-        className="mt-6"
       >
         <TabsList>
           <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
           <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
         </TabsList>
         <TabsContent value={filters.status}>
-          <CollectionLoader />
+          <CollectionLoader filters={filters} setFilters={setFilters} />
         </TabsContent>
       </Tabs>
     </PageLayout.Content>

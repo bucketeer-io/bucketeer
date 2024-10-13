@@ -1,76 +1,55 @@
-import { Children, useCallback } from 'react';
-import type { ReactNode, ReactElement } from 'react';
-import clsx from 'clsx';
-import * as RadixTabs from '@radix-ui/react-tabs';
-import TabsList from './list';
-import TabsPane from './pane';
-import TabsPanes from './panes';
-import { TabContext } from './tabs-context';
-import TabsTrigger from './trigger';
-import type { TabContainedValue } from './types';
+import * as React from 'react';
+import * as TabsPrimitive from '@radix-ui/react-tabs';
+import { cn } from 'utils/style';
 
-export type TabsProps<TabValue> = {
-  className?: string;
-  space?: 'full';
-  overflow?: 'hidden';
-  padded?: boolean;
-  contained?: TabContainedValue;
-  children: ReactNode[];
-} & (
-  | {
-      defaultValue: TabValue;
-      value?: never;
-      onChange?: never;
-    }
-  | {
-      defaultValue?: never;
-      value: TabValue | undefined;
-      onChange: (tab: TabValue) => void;
-    }
-);
+const Tabs = TabsPrimitive.Root;
 
-const Tabs = <TabValue extends string>({
-  className,
-  space,
-  overflow,
-  padded = true,
-  contained,
-  defaultValue,
-  value,
-  onChange: _onChange,
-  children
-}: TabsProps<TabValue>) => {
-  const childs = Children.toArray(children) as ReactElement[];
-  const tabList = childs.find(item => item.type === TabsList);
-  const tabPanes = childs.filter(item => item.type === TabsPanes);
-  const tabPaneItems = childs.filter(item => item.type === TabsPane);
-  const onChange = useCallback((v: string) => {
-    if (!_onChange) return;
-    _onChange(v as TabValue);
-  }, []);
+const TabsList = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.List>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.List
+    ref={ref}
+    className={cn(
+      'mt-6 inline-flex w-full border-b border-gray-300 items-center',
+      className
+    )}
+    {...props}
+  />
+));
+TabsList.displayName = TabsPrimitive.List.displayName;
 
-  return (
-    <TabContext.Provider value={{ space, overflow, padded, contained }}>
-      <RadixTabs.Root
-        className={clsx(
-          space === 'full' ? 'flex h-full flex-col' : '',
-          className
-        )}
-        defaultValue={defaultValue}
-        value={value}
-        onValueChange={onChange}
-        orientation="vertical"
-      >
-        {tabList}
-        {tabPanes.length ? tabPanes : tabPaneItems}
-      </RadixTabs.Root>
-    </TabContext.Provider>
-  );
-};
+const TabsTrigger = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Trigger
+    ref={ref}
+    className={cn(
+      'flex-center whitespace-nowrap typo-para-medium text-gray-500',
+      'border-b-2 data-[state=active]:border-primary-500',
+      'disabled:opacity-50 border-transparent py-1 px-4',
+      'transition-all data-[state=active]:text-primary-500',
+      className
+    )}
+    {...props}
+  />
+));
+TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
 
-Tabs.List = TabsList;
-Tabs.Panes = TabsPanes;
-Tabs.Pane = TabsPane;
-Tabs.Trigger = TabsTrigger;
+const TabsContent = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Content
+    ref={ref}
+    className={cn(
+      'mt-4 ring-offset-background focus-visible:outline-none',
+      className
+    )}
+    {...props}
+  />
+));
+TabsContent.displayName = TabsPrimitive.Content.displayName;
 
-export default Tabs;
+export { Tabs, TabsList, TabsTrigger, TabsContent };

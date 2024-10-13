@@ -1,6 +1,9 @@
-import { CollectionStatusType } from '@types';
+import { CollectionStatusType, OrderBy, OrderDirection } from '@types';
 
 export interface OrganizationFilters {
-  searchQuery: string;
+  orderBy: OrderBy;
+  orderDirection: OrderDirection;
   status: CollectionStatusType;
+  searchQuery: string;
+  disabled?: boolean;
 }

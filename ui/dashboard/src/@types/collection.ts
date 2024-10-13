@@ -31,6 +31,6 @@ export interface CollectionParams {
   cursor: string;
   orderBy: OrderBy;
   orderDirection: OrderDirection;
-  disabled: boolean;
   searchKeyword?: string;
+  disabled?: boolean;
 }
