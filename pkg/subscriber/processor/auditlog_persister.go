@@ -17,6 +17,7 @@ package processor
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	pb "github.com/golang/protobuf/proto"
@@ -122,9 +123,9 @@ func (a auditLogPersister) flushChunk(chunk map[string]*puller.Message) {
 	)
 	defer cancel()
 	// Environment audit logs
-	a.createAuditLogsMySQL(ctx, auditlogs, messages, a.mysqlStorage.CreateAuditLogs)
+	a.createAuditLogsMySQL(ctx, auditlogs, messages, a.mysqlStorage.CreateAuditLog)
 	// Admin audit logs
-	a.createAuditLogsMySQL(ctx, adminAuditLogs, adminMessages, a.mysqlAdminStorage.CreateAdminAuditLogs)
+	a.createAuditLogsMySQL(ctx, adminAuditLogs, adminMessages, a.mysqlAdminStorage.CreateAdminAuditLog)
 }
 
 func (a auditLogPersister) extractAuditLogs(
@@ -153,21 +154,21 @@ func (a auditLogPersister) createAuditLogsMySQL(
 	ctx context.Context,
 	auditlogs []*domain.AuditLog,
 	messages []*puller.Message,
-	createFunc func(ctx context.Context, auditLogs []*domain.AuditLog) error,
+	createFunc func(ctx context.Context, auditLog *domain.AuditLog) error,
 ) {
-	if len(auditlogs) == 0 {
-		return
-	}
-	if err := createFunc(ctx, auditlogs); err != nil {
-		a.logger.Error("Failed to put admin audit logs", zap.Error(err))
-		for _, msg := range messages {
-			subscriberHandledCounter.WithLabelValues(subscriberAuditLog, codes.RepeatableError.String()).Inc()
-			msg.Nack()
+	for i, aud := range auditlogs {
+		if err := createFunc(ctx, aud); err != nil {
+			a.logger.Error("Failed to put audit logs", zap.Error(err))
+			if errors.Is(err, v2als.ErrAuditLogAlreadyExists) {
+				subscriberHandledCounter.WithLabelValues(subscriberAuditLog, codes.NonRepeatableError.String()).Inc()
+				messages[i].Ack()
+			} else {
+				subscriberHandledCounter.WithLabelValues(subscriberAuditLog, codes.RepeatableError.String()).Inc()
+				messages[i].Nack()
+			}
+			continue
 		}
-		return
-	}
-	for _, msg := range messages {
 		subscriberHandledCounter.WithLabelValues(subscriberAuditLog, codes.OK.String()).Inc()
-		msg.Ack()
+		messages[i].Ack()
 	}
 }

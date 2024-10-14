@@ -1,4 +1,4 @@
-INSERT INTO admin_audit_log (
+INSERT INTO audit_log (
     id,
     timestamp,
     entity_type,
@@ -7,6 +7,7 @@ INSERT INTO admin_audit_log (
     event,
     editor,
     options,
+    environment_namespace,
     entity_data,
     previous_entity_data
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+) VALUES

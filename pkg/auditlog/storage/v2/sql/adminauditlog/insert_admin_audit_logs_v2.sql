@@ -9,4 +9,4 @@ INSERT INTO admin_audit_log (
     options,
     entity_data,
     previous_entity_data
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+) VALUES

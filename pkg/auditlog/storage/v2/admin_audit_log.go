@@ -31,6 +31,8 @@ import (
 var (
 	ErrAdminAuditLogAlreadyExists = errors.New("auditlog: admin auditlog already exists")
 
+	//go:embed sql/adminauditlog/insert_admin_audit_logs_v2.sql
+	insertAdminAuditLogsV2SQL string
 	//go:embed sql/adminauditlog/insert_admin_audit_log_v2.sql
 	insertAdminAuditLogV2SQL string
 	//go:embed sql/adminauditlog/select_admin_audit_log_v2.sql
@@ -41,6 +43,7 @@ var (
 
 type AdminAuditLogStorage interface {
 	CreateAdminAuditLogs(ctx context.Context, auditLogs []*domain.AuditLog) error
+	CreateAdminAuditLog(ctx context.Context, auditLog *domain.AuditLog) error
 	ListAdminAuditLogs(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
@@ -67,7 +70,7 @@ func (s *adminAuditLogStorage) CreateAdminAuditLogs(ctx context.Context, auditLo
 		if i != 0 {
 			query.WriteString(",")
 		} else {
-			query.WriteString(insertAdminAuditLogV2SQL)
+			query.WriteString(insertAdminAuditLogsV2SQL)
 		}
 		query.WriteString(" (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 		args = append(
@@ -85,6 +88,30 @@ func (s *adminAuditLogStorage) CreateAdminAuditLogs(ctx context.Context, auditLo
 		)
 	}
 	_, err := s.qe.ExecContext(ctx, query.String(), args...)
+	if err != nil {
+		if err == mysql.ErrDuplicateEntry {
+			return ErrAdminAuditLogAlreadyExists
+		}
+		return err
+	}
+	return nil
+}
+
+func (s *adminAuditLogStorage) CreateAdminAuditLog(ctx context.Context, auditLog *domain.AuditLog) error {
+	_, err := s.qe.ExecContext(
+		ctx,
+		insertAdminAuditLogV2SQL,
+		auditLog.Id,
+		auditLog.Timestamp,
+		int32(auditLog.EntityType),
+		auditLog.EntityId,
+		int32(auditLog.Type),
+		mysql.JSONObject{Val: auditLog.Event},
+		mysql.JSONObject{Val: auditLog.Editor},
+		mysql.JSONObject{Val: auditLog.Options},
+		auditLog.EntityData,
+		auditLog.PreviousEntityData,
+	)
 	if err != nil {
 		if err == mysql.ErrDuplicateEntry {
 			return ErrAdminAuditLogAlreadyExists
