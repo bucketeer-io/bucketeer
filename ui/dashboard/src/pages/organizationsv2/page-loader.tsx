@@ -10,7 +10,7 @@ const PageLoader = () => {
     isLoading,
     refetch,
     isError
-  } = useFetchOrganizations();
+  } = useFetchOrganizations({ pageSize: 1 });
 
   const [, onOpenAddModal] = useToggleOpen(false);
 

@@ -29,8 +29,8 @@ export interface Collection<T> {
 export interface CollectionParams {
   pageSize: number;
   cursor: string;
-  orderBy: OrderBy;
-  orderDirection: OrderDirection;
+  orderBy?: OrderBy;
+  orderDirection?: OrderDirection;
   searchKeyword?: string;
   disabled?: boolean;
 }
