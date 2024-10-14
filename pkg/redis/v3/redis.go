@@ -444,16 +444,14 @@ func (c *client) PFMerge(dest string, keys ...string) error {
 		// Cluster-aware approach
 		var allK []string
 
-		// Fetch all HLL objects via GET and store them client side as strings
-		allHLLObjects := make([]string, 0, len(keys))
-		for _, hllKey := range keys {
-			hllObj, err := c.rc.Get(context.TODO(), hllKey).Result()
-			if err != nil && !errors.Is(err, goredis.Nil) {
-				return err
-			}
-			if !errors.Is(err, goredis.Nil) {
-				allHLLObjects = append(allHLLObjects, hllObj)
-			}
+		// Fetch all HLL objects via GetMulti and store them client side as strings
+		hllObjects, err := c.GetMulti(keys, false)
+		if err != nil {
+			return err
+		}
+		allHLLObjects := make([]string, 0, len(hllObjects))
+		for _, hllObj := range hllObjects {
+			allHLLObjects = append(allHLLObjects, string(hllObj.([]byte)))
 		}
 
 		// Randomize a keyslot hash
@@ -468,14 +466,16 @@ func (c *client) PFMerge(dest string, keys ...string) error {
 			allHLLObjects = append(allHLLObjects, destData)
 		}
 
-		// SET all stored HLL objects with SET {RandomHash}RandomKey hll_obj
+		// MSet all stored HLL objects with {RandomHash}RandomKey hll_obj
+		pairs := make([]interface{}, 0, len(allHLLObjects)*2)
 		for _, hllObject := range allHLLObjects {
 			k := c.randomHashSlotKey(randomHashSlot)
 			allK = append(allK, k)
-			err = c.rc.Set(context.TODO(), k, hllObject, 0).Err()
-			if err != nil {
-				return err
-			}
+			pairs = append(pairs, k, hllObject)
+		}
+		err = c.rc.MSet(context.TODO(), pairs...).Err()
+		if err != nil {
+			return err
 		}
 
 		// Do regular PFMERGE operation and store value in random key in {RandomHash}
