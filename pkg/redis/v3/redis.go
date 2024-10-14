@@ -445,13 +445,15 @@ func (c *client) PFMerge(dest string, keys ...string) error {
 		var allK []string
 
 		// Fetch all HLL objects via GetMulti and store them client side as strings
-		hllObjects, err := c.GetMulti(keys, false)
+		hllObjects, err := c.GetMulti(keys, true)
 		if err != nil {
 			return err
 		}
 		allHLLObjects := make([]string, 0, len(hllObjects))
 		for _, hllObj := range hllObjects {
-			allHLLObjects = append(allHLLObjects, string(hllObj.([]byte)))
+			if obj, ok := hllObj.([]byte); ok {
+				allHLLObjects = append(allHLLObjects, string(obj))
+			}
 		}
 
 		// Randomize a keyslot hash
