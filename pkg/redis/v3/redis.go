@@ -475,9 +475,11 @@ func (c *client) PFMerge(dest string, keys ...string) error {
 			allK = append(allK, k)
 			pairs = append(pairs, k, hllObject)
 		}
-		err = c.rc.MSet(context.TODO(), pairs...).Err()
-		if err != nil {
-			return err
+		if len(pairs) > 0 {
+			err = c.rc.MSet(context.TODO(), pairs...).Err()
+			if err != nil {
+				return err
+			}
 		}
 
 		// Do regular PFMERGE operation and store value in random key in {RandomHash}
