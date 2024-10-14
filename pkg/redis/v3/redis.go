@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	goredis "github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
@@ -441,38 +442,67 @@ func (c *client) PFMerge(dest string, keys ...string) error {
 
 	if c.clientType == ClientTypeCluster {
 		// Cluster-aware approach
-		destSlot := keyHashSlot(dest)
+		var allK []string
 
-		// Group keys by slot
-		slotMap := make(map[int][]string)
-		for _, key := range keys {
-			slot := keyHashSlot(key)
-			slotMap[slot] = append(slotMap[slot], key)
+		// Fetch all HLL objects via GET and store them client side as strings
+		allHLLObjects := make([]string, 0, len(keys))
+		for _, hllKey := range keys {
+			hllObj, err := c.rc.Get(context.TODO(), hllKey).Result()
+			if err != nil && !errors.Is(err, goredis.Nil) {
+				return err
+			}
+			if !errors.Is(err, goredis.Nil) {
+				allHLLObjects = append(allHLLObjects, hllObj)
+			}
 		}
 
-		// Perform PFMerge for keys in the same slot as dest
-		if sameSlotKeys, ok := slotMap[destSlot]; ok {
-			_, err = c.rc.PFMerge(context.TODO(), dest, sameSlotKeys...).Result()
+		// Randomize a keyslot hash
+		randomHashSlot := c.randomID()
+
+		// Special handling of dest variable if it already exists
+		destData, err := c.rc.Get(context.TODO(), dest).Result()
+		if err != nil && !errors.Is(err, goredis.Nil) {
+			return err
+		}
+		if !errors.Is(err, goredis.Nil) {
+			allHLLObjects = append(allHLLObjects, destData)
+		}
+
+		// SET all stored HLL objects with SET {RandomHash}RandomKey hll_obj
+		for _, hllObject := range allHLLObjects {
+			k := c.randomHashSlotKey(randomHashSlot)
+			allK = append(allK, k)
+			err = c.rc.Set(context.TODO(), k, hllObject, 0).Err()
 			if err != nil {
 				return err
 			}
-			delete(slotMap, destSlot)
 		}
 
-		// For keys in different slots, we need to use PFCount and then PFAdd
-		for _, slotKeys := range slotMap {
-			count, err := c.rc.PFCount(context.TODO(), slotKeys...).Result()
-			if err != nil {
-				return err
-			}
+		// Do regular PFMERGE operation and store value in random key in {RandomHash}
+		tmpDest := c.randomHashSlotKey(randomHashSlot)
+		_, err = c.rc.PFMerge(context.TODO(), tmpDest, allK...).Result()
+		if err != nil {
+			return err
+		}
 
-			// Generate unique elements based on the count
-			elements := make([]string, count)
-			for i := int64(0); i < count; i++ {
-				elements[i] = fmt.Sprintf("element_%d", i)
-			}
+		// Do GET and SET so that result will be stored in the destination object anywhere in the cluster
+		parsedDest, err := c.rc.Get(context.TODO(), tmpDest).Result()
+		if err != nil {
+			return err
+		}
+		err = c.rc.Set(context.TODO(), dest, parsedDest, 0).Err()
+		if err != nil {
+			return err
+		}
 
-			_, err = c.rc.PFAdd(context.TODO(), dest, elements).Result()
+		// Cleanup tmp variables
+		err = c.rc.Del(context.TODO(), tmpDest).Err()
+		if err != nil {
+			return err
+		}
+
+		for _, k := range allK {
+			err = c.rc.Del(context.TODO(), k).Err()
 			if err != nil {
 				return err
 			}
@@ -491,6 +521,14 @@ func (c *client) PFMerge(dest string, keys ...string) error {
 	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName, code).Observe(
 		time.Since(startTime).Seconds())
 	return err
+}
+
+func (c *client) randomID() string {
+	return uuid.New().String()
+}
+
+func (c *client) randomHashSlotKey(randomHashSlot string) string {
+	return fmt.Sprintf("{%s}%s", randomHashSlot, uuid.New().String())
 }
 
 func (c *client) PFCount(keys ...string) (int64, error) {
