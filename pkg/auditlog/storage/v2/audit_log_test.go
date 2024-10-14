@@ -110,6 +110,76 @@ func TestCreateAuditLogs(t *testing.T) {
 	}
 }
 
+func TestCreateAuditLog(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	id0 := "id-0"
+	patterns := []struct {
+		desc        string
+		setup       func(*auditLogStorage)
+		input       *domain.AuditLog
+		expectedErr error
+	}{
+		{
+			desc: "ErrAuditLogAlreadyExists",
+			setup: func(s *auditLogStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, mysql.ErrDuplicateEntry)
+			},
+			input: &domain.AuditLog{
+				AuditLog: &proto.AuditLog{Id: id0},
+			},
+			expectedErr: ErrAuditLogAlreadyExists,
+		},
+		{
+			desc: "Error",
+			setup: func(s *auditLogStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("error"))
+			},
+			input: &domain.AuditLog{
+				AuditLog: &proto.AuditLog{Id: id0},
+			},
+			expectedErr: errors.New("error"),
+		},
+		{
+			desc: "success",
+			setup: func(s *auditLogStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+					gomock.Any(),
+					gomock.Any(),
+					id0, int64(1), int32(2), "e0", int32(3), gomock.Any(), gomock.Any(), gomock.Any(), "ns0", gomock.Any(), gomock.Any(),
+				).Return(nil, nil)
+			},
+			input: &domain.AuditLog{
+				AuditLog: &proto.AuditLog{
+					Id:         id0,
+					Timestamp:  1,
+					EntityType: 2,
+					EntityId:   "e0",
+					Type:       3,
+				},
+				EnvironmentNamespace: "ns0",
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := newAuditLogStorageWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			err := storage.CreateAuditLog(context.Background(), p.input)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func TestListAuditLogs(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
