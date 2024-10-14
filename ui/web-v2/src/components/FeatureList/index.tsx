@@ -847,6 +847,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
         setUnsavedChanges(false);
 
         const { pathname: nextPathname } = nextLocation;
+
         const isNew =
           `/${nextPathname.substring(nextPathname.lastIndexOf('/') + 1)}` ==
           PAGE_PATH_NEW;
@@ -866,18 +867,24 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
           onAdd();
         } else if (location.pathname !== nextPathname) {
           history.push({
-            pathname: nextPathname
+            pathname: nextPathname + nextLocation.search
           });
         }
       }
     };
 
     const handleNavigation = (nextLocation) => {
+      const newPathname = location.pathname.split('/').slice(1, 3).join('/');
+      const newNextPathname = nextLocation.pathname
+        .split('/')
+        .slice(1, 3)
+        .join('/');
+
+      const targetingPathname = `/${nextLocation.pathname.split('/')?.[4]}`;
+
       if (
-        selectedSearchFilter &&
-        ((nextLocation.pathname !== PAGE_PATH_ROOT &&
-          location.pathname !== nextLocation.pathname) ||
-          (location.pathname === nextLocation.pathname && !nextLocation.search)) // If the user is trying to go to the same page by clicking on the sidebar menu
+        newPathname !== newNextPathname || // If the user is trying to go to a different page
+        targetingPathname === PAGE_PATH_FEATURE_TARGETING // If the user is trying to go to a targeting page
       ) {
         setNextLocation(nextLocation); // Save the location the user is trying to go to
         setShowSaveChangesDialog(true); // Show custom confirmation popup
@@ -929,17 +936,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                     'flex items-center space-x-1.5 rounded p-[6px] text-sm cursor-pointer transition-colors duration-200',
                     searchFilter.selected ? 'bg-purple-100' : 'bg-gray-50'
                   )}
-                  onClick={() => {
-                    if (
-                      unsavedChanges &&
-                      searchFilter.id !== selectedSearchFilter?.id
-                    ) {
-                      setShowSaveChangesDialog(true);
-                      setUnsavedSearchFilterId(searchFilter.id);
-                    } else {
-                      handleSearchFilter(searchFilter.id);
-                    }
-                  }}
+                  onClick={() => handleSearchFilter(searchFilter.id)}
                 >
                   <span className="text-primary truncate max-w-[180px]">
                     {searchFilter.name}
