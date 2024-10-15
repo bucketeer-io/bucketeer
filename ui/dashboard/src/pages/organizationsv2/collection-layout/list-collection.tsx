@@ -1,15 +1,19 @@
-import { ListTableCollection } from './list-table-collection';
-import type { CollectionProps } from './types';
+import { DataTable } from 'elements/data-table';
+import { CollectionProps } from '../types';
+import { useColumns } from './data-collection';
 
 export const ListCollection = ({
   organizations,
   onSortingChange,
   isLoading
 }: CollectionProps) => {
+  const columns = useColumns();
+
   return (
-    <ListTableCollection
-      organizations={organizations}
+    <DataTable
       isLoading={isLoading}
+      data={organizations}
+      columns={columns}
       onSortingChange={onSortingChange}
     />
   );

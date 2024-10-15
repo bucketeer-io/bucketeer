@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { ReactElement, useCallback, useState } from 'react';
 import {
   type ColumnDef,
   type TableState,
@@ -18,6 +18,7 @@ export interface DataTableProps<TData, TValue> {
   data: TData[];
   columns: ColumnDef<TData, TValue>[];
   state?: Partial<TableState>;
+  emptyCollection?: ReactElement;
   isLoading?: boolean;
   onRowClick?: (data: TData) => void;
   onSortingChange?: (v: SortingState) => void;
@@ -27,6 +28,7 @@ export const DataTable = <TData, TValue>({
   data,
   columns,
   state,
+  emptyCollection,
   isLoading,
   onRowClick,
   onSortingChange
@@ -116,8 +118,8 @@ export const DataTable = <TData, TValue>({
           ))
         ) : (
           <Table.Row>
-            <Table.Cell colSpan={columns.length} className="h-24 text-center">
-              {`No results.`}
+            <Table.Cell className="pt-32" colSpan={columns.length}>
+              {emptyCollection}
             </Table.Cell>
           </Table.Row>
         )}

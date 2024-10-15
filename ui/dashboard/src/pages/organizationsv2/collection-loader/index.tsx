@@ -1,18 +1,23 @@
 import { SortingState } from '@tanstack/react-table';
 import { sortingListFields } from 'constants/collection';
+import CollectionEmpty from 'elements/collection/collection-empty';
+import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
-// import { EmptyCollection } from '../collection-layout/empty-collection';
-import { ListCollection } from '../collection-layout/list-collection';
+import { useColumns } from '../collection-layout/data-collection';
+import { EmptyCollection } from '../collection-layout/empty-collection';
 import { OrganizationFilters } from '../types';
 import { useFetchOrganizations } from './use-fetch-organizations';
 
 const CollectionLoader = ({
+  onAdd,
   filters,
   setFilters
 }: {
+  onAdd: () => void;
   filters: OrganizationFilters;
   setFilters: (values: Partial<OrganizationFilters>) => void;
 }) => {
+  const columns = useColumns();
   const {
     data: collection,
     isLoading,
@@ -34,28 +39,27 @@ const CollectionLoader = ({
 
   const organizations = collection?.Organizations || [];
 
+  const emptyState = (
+    <CollectionEmpty
+      data={organizations}
+      searchQuery={filters.searchQuery}
+      onClear={() => setFilters({ searchQuery: '' })}
+      empty={<EmptyCollection onAdd={onAdd} />}
+    />
+  );
+
   return (
     <>
       {isError ? (
         <PageLayout.ErrorState onRetry={refetch} />
       ) : (
-        // <CollectionWrapper
-        // 	items={companies}
-        // 	empty={<EmptyCollection onAdd={onAdd} />}
-        // 	filtersTypes={COMPANIES_FILTERS_TYPES}
-        // 	searchQuery={filters.searchQuery}
-        // 	onClear={() => setFilters({ searchQuery: '' })}
-        // 	infiniteLoadMore
-        // 	isLoadingMore={isFetchingNextPage}
-        // 	canLoadMore={!!hasNextPage}
-        // 	onLoadMore={fetchNextPage}
-        // >
-        <ListCollection
-          organizations={organizations}
+        <DataTable
           isLoading={isLoading}
+          data={organizations}
+          columns={columns}
           onSortingChange={onSortingChangeHandler}
+          emptyCollection={emptyState}
         />
-        // </CollectionWrapper>
       )}
     </>
   );

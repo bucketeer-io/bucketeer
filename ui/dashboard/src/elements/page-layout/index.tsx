@@ -57,7 +57,7 @@ const PageLayoutHeader = ({ children }: PropsWithChildren) => {
 };
 
 const PageLayoutContent = ({ children }: PropsWithChildren) => {
-  return <div className="p-6 flex flex-col h-full">{children}</div>;
+  return <div className="p-6 flex flex-1 flex-col h-full">{children}</div>;
 };
 
 const PageLayout = {

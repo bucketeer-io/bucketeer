@@ -1,13 +1,11 @@
-import { useCallback } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
-import { useNavigate, useLocation } from 'react-router-dom';
 import Filter from 'containers/filter';
 import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickby';
 import { CollectionStatusType, OrderBy, OrderDirection } from '@types';
 import { isNotEmpty } from 'utils/data-type';
-import { stringifySearchParams, useSearchParams } from 'utils/search-params';
+import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
 import Icon from 'components/icon';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from 'components/tabs';
@@ -17,11 +15,9 @@ import { OrganizationFilters } from './types';
 
 const PageContent = ({ onAdd }: { onAdd: () => void }) => {
   const { t } = useTranslation(['common']);
-  const navigate = useNavigate();
-  const { pathname } = useLocation();
 
   // NOTE: Need improve search options
-  const searchOptions = useSearchParams();
+  const { searchOptions, onChangSearchParams } = useSearchParams();
 
   const [filters, setFilters] = usePartialState<OrganizationFilters>({
     orderBy: (searchOptions.orderBy as OrderBy) || 'DEFAULT',
@@ -30,18 +26,9 @@ const PageContent = ({ onAdd }: { onAdd: () => void }) => {
     status: (searchOptions.status as CollectionStatusType) || 'ACTIVE'
   });
 
-  const onUpdateURL = useCallback(
-    (options: Record<string, string | number | boolean>) => {
-      navigate(`${pathname}?${stringifySearchParams(options)}`, {
-        replace: true
-      });
-    },
-    [navigate]
-  );
-
   const onChangeFilters = (values: Partial<OrganizationFilters>) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
-    onUpdateURL(options);
+    onChangSearchParams(options);
     setFilters({ ...values });
   };
 
@@ -58,6 +45,7 @@ const PageContent = ({ onAdd }: { onAdd: () => void }) => {
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
       <Tabs
+        className="flex-1 flex h-full flex-col"
         defaultValue={filters.status}
         onValueChange={value =>
           onChangeFilters({ status: value as CollectionStatusType })
@@ -68,7 +56,11 @@ const PageContent = ({ onAdd }: { onAdd: () => void }) => {
           <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
         </TabsList>
         <TabsContent value={filters.status}>
-          <CollectionLoader filters={filters} setFilters={onChangeFilters} />
+          <CollectionLoader
+            onAdd={onAdd}
+            filters={filters}
+            setFilters={onChangeFilters}
+          />
         </TabsContent>
       </Tabs>
     </PageLayout.Content>
