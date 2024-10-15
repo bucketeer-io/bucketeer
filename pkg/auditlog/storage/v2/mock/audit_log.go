@@ -43,6 +43,20 @@ func (m *MockAuditLogStorage) EXPECT() *MockAuditLogStorageMockRecorder {
 	return m.recorder
 }
 
+// CreateAuditLog mocks base method.
+func (m *MockAuditLogStorage) CreateAuditLog(ctx context.Context, auditLog *domain.AuditLog) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateAuditLog", ctx, auditLog)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateAuditLog indicates an expected call of CreateAuditLog.
+func (mr *MockAuditLogStorageMockRecorder) CreateAuditLog(ctx, auditLog any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAuditLog", reflect.TypeOf((*MockAuditLogStorage)(nil).CreateAuditLog), ctx, auditLog)
+}
+
 // CreateAuditLogs mocks base method.
 func (m *MockAuditLogStorage) CreateAuditLogs(ctx context.Context, auditLogs []*domain.AuditLog) error {
 	m.ctrl.T.Helper()
