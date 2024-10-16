@@ -13,7 +13,9 @@ export interface OrganizationUpdateParams {
   };
 }
 
-export const organizationUpdate = async (params?: OrganizationUpdateParams) => {
+export const organizationUpdater = async (
+  params?: OrganizationUpdateParams
+) => {
   return axiosClient
     .post('/v1/environment/update_organization', params)
     .then(response => response.data);

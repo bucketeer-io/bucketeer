@@ -50,17 +50,11 @@ const EmptyStateBody = ({ children }: PropsWithChildren) => {
 };
 
 const EmptyStateTitle = ({ children }: { children: string }) => {
-  return (
-    <div className="text-additional-gray-300 typo-head-bold-medium">
-      {children}
-    </div>
-  );
+  return <div className="text-gray-900 typo-head-bold-medium">{children}</div>;
 };
 
 const EmptyStateDescription = ({ children }: { children: string }) => {
-  return (
-    <div className="text-additional-gray-200 typo-para-small">{children}</div>
-  );
+  return <div className="text-gray-600 typo-para-small">{children}</div>;
 };
 
 const EmptyStateActions = ({ children }: PropsWithChildren) => {

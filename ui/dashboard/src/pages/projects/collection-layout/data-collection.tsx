@@ -1,12 +1,11 @@
 import { IconMoreHorizOutlined } from 'react-icons-material-design';
-import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslation } from 'i18n';
-import { Organization } from '@types';
+import { Project } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import Icon from 'components/icon';
 
-export const useColumns = (): ColumnDef<Organization>[] => {
+export const useColumns = (): ColumnDef<Project>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
 
@@ -14,28 +13,25 @@ export const useColumns = (): ColumnDef<Organization>[] => {
     {
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 400,
+      size: 250,
       cell: ({ row }) => {
-        const organization = row.original;
+        const project = row.original;
         return (
-          <Link
-            to={`/organizations/${organization.id}`}
-            className="underline text-primary-500 typo-para-medium"
-          >
-            {organization.name}
-          </Link>
+          <div className="underline text-primary-500 typo-para-medium">
+            {project.name}
+          </div>
         );
       }
     },
     {
-      accessorKey: 'projectCount',
-      header: `${t('projects')}`,
-      size: 170,
+      accessorKey: 'creatorEmail',
+      header: `${t('maintainer')}`,
+      size: 350,
       cell: ({ row }) => {
-        const organization = row.original;
+        const project = row.original;
         return (
           <div className="text-gray-700 typo-para-medium">
-            {organization.projectCount}
+            {project.creatorEmail}
           </div>
         );
       }
@@ -43,25 +39,25 @@ export const useColumns = (): ColumnDef<Organization>[] => {
     {
       accessorKey: 'environmentCount',
       header: `${t('environments')}`,
-      size: 170,
+      size: 120,
       cell: ({ row }) => {
-        const organization = row.original;
+        const project = row.original;
         return (
           <div className="text-gray-700 typo-para-medium">
-            {organization.environmentCount}
+            {project.environmentCount}
           </div>
         );
       }
     },
     {
-      accessorKey: 'userCount',
-      header: `${t('users')}`,
-      size: 160,
+      accessorKey: 'featureFlagCount',
+      header: t('table:flags'),
+      size: 100,
       cell: ({ row }) => {
-        const organization = row.original;
+        const project = row.original;
         return (
           <div className="text-gray-700 typo-para-medium">
-            {organization.userCount}
+            {project.featureFlagCount}
           </div>
         );
       }
@@ -69,12 +65,12 @@ export const useColumns = (): ColumnDef<Organization>[] => {
     {
       accessorKey: 'createdAt',
       header: `${t('table:created-at')}`,
-      size: 180,
+      size: 160,
       cell: ({ row }) => {
-        const organization = row.original;
+        const project = row.original;
         return (
           <div className="text-gray-700 typo-para-medium">
-            {formatDateTime(organization.createdAt)}
+            {formatDateTime(project.createdAt)}
           </div>
         );
       }
