@@ -1,9 +1,9 @@
-import { projectsFetcher, ProjectFetcherParams } from '@api/project';
+import { projectsFetcher, ProjectsFetcherParams } from '@api/project';
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ProjectCollection, QueryOptionsRespond } from '@types';
 
 type QueryOptions = QueryOptionsRespond<ProjectCollection> & {
-  params?: ProjectFetcherParams;
+  params?: ProjectsFetcherParams;
 };
 
 export const PROJECTS_QUERY_KEY = 'projects';
