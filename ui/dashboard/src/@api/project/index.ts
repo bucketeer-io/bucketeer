@@ -1,3 +1,3 @@
-export * from './project-fetcher';
+export * from './projects-fetcher';
 export * from './project-creator';
-export * from './project-update';
+export * from './project-updater';
