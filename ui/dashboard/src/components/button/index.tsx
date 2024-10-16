@@ -5,7 +5,7 @@ import { cn } from 'utils/style';
 import Spinner from 'components/spinner';
 
 const buttonVariants = cva(
-  'inline-flex animate-fade gap-2 items-center justify-center duration-300 ease-out',
+  'inline-flex animate-fade gap-2 items-center justify-center duration-300 ease-out whitespace-nowrap',
   {
     variants: {
       variant: {
@@ -93,4 +93,4 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   }
 );
 
-export { Button };
+export default Button;

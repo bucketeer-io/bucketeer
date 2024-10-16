@@ -8,7 +8,7 @@ import { setCookieState } from 'cookie';
 import { useSubmit } from 'hooks';
 import { useTranslation } from 'i18n';
 import { IconEmail, IconGoogle } from '@icons';
-import { Button } from 'components/button';
+import Button from 'components/button';
 import Icon from 'components/icon';
 import AuthWrapper from './elements/auth-wrapper';
 

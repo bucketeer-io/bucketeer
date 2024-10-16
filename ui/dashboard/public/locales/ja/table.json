@@ -1,0 +1,25 @@
+{
+  "flags": "Flags",
+  "created-at": "Created At",
+  "popover": {
+    "edit-project": "Edit Project",
+    "archive-project": "Archive Project",
+    "edit-env": "Edit Environment",
+    "archive-env": "Archive Environment",
+    "edit-org": "Edit Organization",
+    "archive-org": "Archive Organization",
+    "edit-user": "Edit User",
+    "archive-user": "Archive User"
+  },
+  "empty": {
+    "project-title": "No registered projects",
+    "project-desc": "There are no registered projects. Add a new one to start managing.",
+    "project-org-desc": "There are no registered projects for this organization.",
+    "org-title": "No registered organizations",
+    "org-desc": "There are no registered organizations. Add a new one to start managing.",
+    "env-title": "No registered environments",
+    "env-desc": "There are no registered environments for this organization.",
+    "user-title": "No registered users",
+    "user-desc": "There are no registered users for this organization."
+  }
+}
