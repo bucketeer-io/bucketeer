@@ -1,7 +1,7 @@
 import { IconAddOutlined } from 'react-icons-material-design';
 import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
-import pickBy from 'lodash/pickby';
+import pickBy from 'lodash/pickBy';
 import { CollectionStatusType, OrderBy, OrderDirection } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';

@@ -4,32 +4,28 @@ import pickBy from 'lodash/pickBy';
 import { OrderBy, OrderDirection } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
-import CollectionLoader from 'pages/projects/collection-loader';
-import { ProjectsFilters } from 'pages/projects/types';
 import Filter from 'elements/filter';
-import { OrganizationProjectFilters } from '../types';
+import { OrganizationUsersFilters } from '../types';
+import CollectionLoader from './collection-loader';
 
-const OrganizationProjects = () => {
+const OrganizationUsers = () => {
   const { organizationId } = useParams();
   const { searchOptions, onChangSearchParams } = useSearchParams();
 
-  const [filters, setFilters] = usePartialState<OrganizationProjectFilters>({
+  const [filters, setFilters] = usePartialState<OrganizationUsersFilters>({
     page: Number(searchOptions.page) || 1,
     orderBy: (searchOptions.orderBy as OrderBy) || 'DEFAULT',
     orderDirection: (searchOptions.orderDirection as OrderDirection) || 'ASC',
     searchQuery: (searchOptions.searchQuery as string) || ''
   });
 
-  const onChangeFilters = (values: Partial<OrganizationProjectFilters>) => {
+  const onChangeFilters = (values: Partial<OrganizationUsersFilters>) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
     setFilters({ ...values });
   };
 
-  const filterParams: ProjectsFilters = {
-    ...filters,
-    organizationIds: [organizationId!]
-  };
+  const filterParams = { ...filters, organizationId };
 
   return (
     <>
@@ -42,4 +38,4 @@ const OrganizationProjects = () => {
   );
 };
 
-export default OrganizationProjects;
+export default OrganizationUsers;
