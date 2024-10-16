@@ -20,6 +20,7 @@ const PageContent = ({ onAdd }: { onAdd: () => void }) => {
   const { searchOptions, onChangSearchParams } = useSearchParams();
 
   const [filters, setFilters] = usePartialState<OrganizationFilters>({
+    page: Number(searchOptions.page) || 1,
     orderBy: (searchOptions.orderBy as OrderBy) || 'DEFAULT',
     orderDirection: (searchOptions.orderDirection as OrderDirection) || 'ASC',
     searchQuery: (searchOptions.searchQuery as string) || '',

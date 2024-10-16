@@ -1,5 +1,7 @@
 import { SortingState } from '@tanstack/react-table';
+import { LIST_PAGE_SIZE } from 'constants/app';
 import { sortingListFields } from 'constants/collection';
+import Pagination from 'components/pagination/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
@@ -38,6 +40,7 @@ const CollectionLoader = ({
   };
 
   const organizations = collection?.Organizations || [];
+  const totalCount = Number(collection?.totalCount) || 0;
 
   const emptyState = (
     <CollectionEmpty
@@ -48,17 +51,22 @@ const CollectionLoader = ({
     />
   );
 
-  return (
+  return isError ? (
+    <PageLayout.ErrorState onRetry={refetch} />
+  ) : (
     <>
-      {isError ? (
-        <PageLayout.ErrorState onRetry={refetch} />
-      ) : (
-        <DataTable
-          isLoading={isLoading}
-          data={organizations}
-          columns={columns}
-          onSortingChange={onSortingChangeHandler}
-          emptyCollection={emptyState}
+      <DataTable
+        isLoading={isLoading}
+        data={organizations}
+        columns={columns}
+        onSortingChange={onSortingChangeHandler}
+        emptyCollection={emptyState}
+      />
+      {totalCount > LIST_PAGE_SIZE && !isLoading && (
+        <Pagination
+          page={filters.page}
+          totalCount={totalCount}
+          onChange={page => setFilters({ page })}
         />
       )}
     </>

@@ -7,6 +7,7 @@ import {
 } from '@types';
 
 export interface OrganizationFilters {
+  page: number;
   orderBy: OrderBy;
   orderDirection: OrderDirection;
   status: CollectionStatusType;

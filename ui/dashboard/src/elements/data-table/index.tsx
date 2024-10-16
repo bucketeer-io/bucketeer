@@ -41,7 +41,7 @@ export const DataTable = <TData, TValue>({
         typeof updater === 'function' ? updater(sorting) : updater;
 
       setSorting(newSorting);
-      onSortingChange?.(newSorting);
+      if (data.length > 0) onSortingChange?.(newSorting);
     },
     [sorting, onSortingChange]
   );
