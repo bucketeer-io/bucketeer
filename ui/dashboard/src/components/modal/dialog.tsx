@@ -2,11 +2,20 @@ import { ReactNode, useCallback } from 'react';
 import { IconCloseRound } from 'react-icons-material-design';
 import * as Dialog from '@radix-ui/react-dialog';
 import { cn } from 'utils/style';
-import { Button } from 'components/button';
+import Button from 'components/button';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
 
 export type ModalSize = 'sm' | 'md';
+export type ModalProps = {
+  size?: ModalSize;
+  title: string;
+  isOpen: boolean;
+  onClose: () => void;
+  closeOnPressEscape?: boolean;
+  closeOnClickOutside?: boolean;
+  children?: ReactNode;
+};
 
 const widthBySize: Record<ModalSize, number> = { sm: 496, md: 780 };
 
@@ -18,15 +27,7 @@ const DialogModal = ({
   closeOnPressEscape = true,
   closeOnClickOutside = true,
   children
-}: {
-  size?: ModalSize;
-  title: string;
-  isOpen: boolean;
-  onClose: () => void;
-  closeOnPressEscape?: boolean;
-  closeOnClickOutside?: boolean;
-  children: ReactNode;
-}) => {
+}: ModalProps) => {
   const onOpenChange = useCallback((v: boolean) => {
     if (v === false) onClose();
   }, []);
@@ -59,6 +60,7 @@ const DialogModal = ({
                 <Dialog.Title className="typo-head-bold-huge">
                   {title}
                 </Dialog.Title>
+                <Dialog.Description className="hidden" />
                 <Dialog.Close asChild>
                   <Button size="icon-sm" variant="grey" onClick={onClose}>
                     <Icon icon={IconCloseRound} />

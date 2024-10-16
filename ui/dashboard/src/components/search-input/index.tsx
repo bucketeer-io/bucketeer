@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { KeyboardEvent, useEffect, useRef, useState } from 'react';
 import { IconSearch } from '@icons';
 import Icon from 'components/icon';
 import Input from 'components/input';
@@ -7,15 +7,17 @@ import InputGroup from 'components/input-group';
 export interface SearchBarProps {
   placeholder: string;
   value: string;
-  onChange: (value: string) => void;
   disabled?: boolean;
+  onChange: (value: string) => void;
+  onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void;
 }
 
 const SearchInput = ({
   placeholder,
   value: defaultValue,
+  disabled,
   onChange,
-  disabled
+  onKeyDown
 }: SearchBarProps) => {
   const [searchValue, setSearchValue] = useState(defaultValue);
   const searchValueRef = useRef(false);
@@ -53,8 +55,9 @@ const SearchInput = ({
         <Input
           placeholder={placeholder}
           value={searchValue}
-          onChange={setSearchValue}
           disabled={disabled}
+          onChange={setSearchValue}
+          onKeyDown={e => onKeyDown && onKeyDown(e)}
         />
       </InputGroup>
     </form>
