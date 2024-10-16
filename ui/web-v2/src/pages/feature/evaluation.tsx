@@ -24,7 +24,7 @@ export const FeatureEvaluationPage: FC<FeatureEvaluationPageProps> = memo(
       shallowEqual
     );
     const [selectedTimeRange, setSelectedTimeRange] = useState(
-      timeRangeOptions[0]
+      timeRangeOptions[2]
     );
 
     useEffect(() => {
@@ -32,7 +32,7 @@ export const FeatureEvaluationPage: FC<FeatureEvaluationPageProps> = memo(
         getEvaluationTimeseriesCount({
           featureId: featureId,
           environmentNamespace: currentEnvironment.id,
-          timeRange: TimeRange.LAST_THIRTY_DAYS
+          timeRange: TimeRange.SEVEN_DAYS
         })
       );
     }, [dispatch, featureId, currentEnvironment]);
