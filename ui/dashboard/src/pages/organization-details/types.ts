@@ -6,3 +6,11 @@ export interface OrganizationProjectFilters {
   orderDirection: OrderDirection;
   searchQuery: string;
 }
+
+export interface OrganizationUsersFilters {
+  page: number;
+  orderBy: OrderBy;
+  orderDirection: OrderDirection;
+  searchQuery: string;
+  organizationId?: string;
+}

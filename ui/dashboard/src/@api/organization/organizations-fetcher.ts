@@ -1,5 +1,5 @@
 import axiosClient from '@api/axios-client';
-import pickBy from 'lodash/pickby';
+import pickBy from 'lodash/pickBy';
 import { CollectionParams, OrganizationCollection } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 
