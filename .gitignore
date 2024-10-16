@@ -11,3 +11,5 @@ venv
 *.swp
 tools/dev/cert/api_key_client
 tools/dev/cert/api_key_server
+.idea
+.vscode
