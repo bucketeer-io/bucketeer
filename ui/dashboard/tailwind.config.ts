@@ -121,14 +121,20 @@ const theme = {
   colors,
   boxShadow: {
     DEFAULT: '0px 2px 2px rgba(136, 135, 135, 0.25)',
-    menu: '0px 3px 12px 0px rgba(0, 0, 0, 0.08)',
+    menu: '0px 8px 12px rgba(0, 0, 0, 0.08)',
+    card: '0px 8px 13px -3px rgba(0, 0, 0, 0.07)',
+    dropdown: '0px 4px 8px rgba(35, 35, 35, 0.1)',
     'border-primary-500': `inset 0 0 0 1px ${colors.primary[500]}`,
     'border-primary-600': `inset 0 0 0 1px ${colors.primary[600]}`,
+    'border-primary-700': `inset 0 0 0 1px ${colors.primary[700]}`,
     'border-gray-200': `inset 0 0 0 1px ${colors.gray[200]}`,
     'border-gray-300': `inset 0 0 0 1px ${colors.gray[300]}`,
+    'border-gray-400': `inset 0 0 0 1px ${colors.gray[400]}`,
     'border-gray-500': `inset 0 0 0 1px ${colors.gray[500]}`,
     'border-accent-red-500': `inset 0 0 0 1px ${colors.accent.red[500]}`,
-    none: 'none'
+    none: 'none',
+    tooltip:
+      'rgba(29, 29, 29, 0.35) 0px 10px 38px -10px, rgba(29, 29, 29, 0.20) 0px 10px 20px -15px'
   },
   fontFamily: {
     'sofia-pro': ['Sofia Pro', 'sans-serif']
@@ -231,6 +237,11 @@ const container = plugin(({ addComponents }) => {
     'size-120': {
       width: '120px',
       height: '120px'
+    },
+    '.flex-center': {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
     }
   };
 
@@ -348,6 +359,10 @@ const typography = plugin(({ addComponents }) => {
 
 const iconSize = plugin(({ addComponents }) => {
   const components = {
+    '.icon-size-fit': {
+      width: 'fit-content',
+      height: 'fit-content'
+    },
     '.icon-size-xxs': {
       width: '16px',
       height: '16px',
