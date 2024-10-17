@@ -91,6 +91,7 @@ type Client interface {
 	Eval(ctx context.Context, script string, keys []string, args ...interface{}) *goredis.Cmd
 	Dump(key string) (string, error)
 	Restore(key string, ttl int64, value string) error
+	Exists(key string) (int64, error)
 }
 
 type client struct {
@@ -728,4 +729,8 @@ func (c *client) Dump(key string) (string, error) {
 func (c *client) Restore(key string, ttl int64, value string) error {
 	_, err := c.rc.Restore(context.TODO(), key, time.Duration(ttl)*time.Millisecond, value).Result()
 	return err
+}
+
+func (c *client) Exists(key string) (int64, error) {
+	return c.rc.Exists(context.TODO(), key).Result()
 }

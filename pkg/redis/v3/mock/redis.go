@@ -121,6 +121,21 @@ func (mr *MockClientMockRecorder) Eval(ctx, script, keys any, args ...any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Eval", reflect.TypeOf((*MockClient)(nil).Eval), varargs...)
 }
 
+// Exists mocks base method.
+func (m *MockClient) Exists(key string) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Exists", key)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Exists indicates an expected call of Exists.
+func (mr *MockClientMockRecorder) Exists(key any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Exists", reflect.TypeOf((*MockClient)(nil).Exists), key)
+}
+
 // Expire mocks base method.
 func (m *MockClient) Expire(key string, expiration time.Duration) (bool, error) {
 	m.ctrl.T.Helper()

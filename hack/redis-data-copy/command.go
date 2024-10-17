@@ -20,6 +20,7 @@ type command struct {
 	destinationRedisAddress *string
 	srcPassword             *string
 	dstPassword             *string
+	overrideDestKey         *bool
 }
 
 func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
@@ -30,6 +31,9 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 		destinationRedisAddress: cmd.Flag("destination", "Destination Redis address").Required().String(),
 		srcPassword:             cmd.Flag("src-password", "Source Redis password").String(),
 		dstPassword:             cmd.Flag("dst-password", "Destination Redis password").String(),
+		overrideDestKey: cmd.Flag("override-dest-key", "Override existing keys in destination Redis").
+			Default("false").
+			Bool(),
 	}
 	r.RegisterCommand(command)
 	return command
@@ -128,6 +132,22 @@ func (c *command) copyBatch(src, dst v3.Client, keys []string, logger *zap.Logge
 				continue
 			}
 			return copiedKeys, fmt.Errorf("error dumping key %s: %v", key, err)
+		}
+
+		exists, err := dst.Exists(key)
+		if err != nil {
+			return copiedKeys, fmt.Errorf("error checking key existence %s: %v", key, err)
+		}
+
+		if exists == 1 {
+			if *c.overrideDestKey {
+				if err := dst.Del(key); err != nil {
+					return copiedKeys, fmt.Errorf("error deleting existing key %s: %v", key, err)
+				}
+			} else {
+				logger.Info("Skipping existing key", zap.String("key", key))
+				continue
+			}
 		}
 
 		err = dst.Restore(key, 0, dumpedValue)

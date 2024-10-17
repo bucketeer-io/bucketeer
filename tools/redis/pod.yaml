@@ -19,6 +19,8 @@ spec:
         - <source_password>
         - --dst-password
         - <destination_password>
+        - --override-dest-key
+        - <override_destination_key>
       resources:
         limits:
           memory: "128Mi"
