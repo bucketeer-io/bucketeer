@@ -16,22 +16,22 @@ import (
 
 type command struct {
 	*kingpin.CmdClause
-	sourceRedisAddress      *string
-	destinationRedisAddress *string
-	srcPassword             *string
-	dstPassword             *string
-	overrideDestKey         *bool
+	srcAddress      *string
+	destAddress     *string
+	srcPassword     *string
+	destPassword    *string
+	overrideDestKey *bool
 }
 
 func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 	cmd := p.Command("copy", "Copy data from source Redis to destination Redis")
 	command := &command{
-		CmdClause:               cmd,
-		sourceRedisAddress:      cmd.Flag("source", "Source Redis address").Required().String(),
-		destinationRedisAddress: cmd.Flag("destination", "Destination Redis address").Required().String(),
-		srcPassword:             cmd.Flag("src-password", "Source Redis password").String(),
-		dstPassword:             cmd.Flag("dst-password", "Destination Redis password").String(),
-		overrideDestKey: cmd.Flag("override-dest-key", "Override existing keys in destination Redis").
+		CmdClause:    cmd,
+		srcAddress:   cmd.Flag("src-address", "Source Redis address").Required().String(),
+		destAddress:  cmd.Flag("dest-address", "Destination Redis address").Required().String(),
+		srcPassword:  cmd.Flag("src-password", "Source Redis password").String(),
+		destPassword: cmd.Flag("dest-password", "Destination Redis password").String(),
+		overrideDestKey: cmd.Flag("override-dest-key", "Override existing keys in the destination Redis").
 			Default("false").
 			Bool(),
 	}
@@ -40,13 +40,13 @@ func registerCommand(r cli.CommandRegistry, p cli.ParentCommand) *command {
 }
 
 func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.Logger) error {
-	srcClient, err := v3.NewClient(*c.sourceRedisAddress,
+	srcClient, err := v3.NewClient(*c.srcAddress,
 		v3.WithLogger(logger),
 		v3.WithPassword(*c.srcPassword),
 		v3.WithPoolSize(10),
 		v3.WithMinIdleConns(5),
 		v3.WithMaxRetries(3),
-		v3.WithDialTimeout(5*time.Second),
+		v3.WithDialTimeout(10*time.Second),
 	)
 	if err != nil {
 		logger.Error("Error creating source Redis client", zap.Error(err))
@@ -54,21 +54,21 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	}
 	defer srcClient.Close()
 
-	dstClient, err := v3.NewClient(*c.destinationRedisAddress,
+	destClient, err := v3.NewClient(*c.destAddress,
 		v3.WithLogger(logger),
-		v3.WithPassword(*c.dstPassword),
+		v3.WithPassword(*c.destPassword),
 		v3.WithPoolSize(10),
 		v3.WithMinIdleConns(5),
 		v3.WithMaxRetries(3),
-		v3.WithDialTimeout(5*time.Second),
+		v3.WithDialTimeout(10*time.Second),
 	)
 	if err != nil {
 		logger.Error("Error creating destination Redis client", zap.Error(err))
 		return err
 	}
-	defer dstClient.Close()
+	defer destClient.Close()
 
-	if err := c.scanAndCopyBatch(srcClient, dstClient, logger); err != nil {
+	if err := c.scanAndCopyBatch(srcClient, destClient, logger); err != nil {
 		logger.Error("Error during scan and copy process", zap.Error(err))
 		return err
 	}
@@ -77,9 +77,9 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 	return nil
 }
 
-func (c *command) scanAndCopyBatch(src, dst v3.Client, logger *zap.Logger) error {
+func (c *command) scanAndCopyBatch(src, dest v3.Client, logger *zap.Logger) error {
 	var cursor uint64
-	batchSize := int64(100)
+	batchSize := int64(1000)
 	totalCopied := 0
 
 	for {
@@ -93,7 +93,7 @@ func (c *command) scanAndCopyBatch(src, dst v3.Client, logger *zap.Logger) error
 			return fmt.Errorf("error scanning keys from source Redis: %v", err)
 		}
 
-		copiedKeys, err := c.copyBatch(src, dst, keys, logger)
+		copiedKeys, err := c.copyBatch(src, dest, keys, logger)
 		if err != nil {
 			logger.Error(
 				"Error copying batch",
@@ -122,7 +122,7 @@ func (c *command) scanAndCopyBatch(src, dst v3.Client, logger *zap.Logger) error
 	return nil
 }
 
-func (c *command) copyBatch(src, dst v3.Client, keys []string, logger *zap.Logger) (int, error) {
+func (c *command) copyBatch(src, dest v3.Client, keys []string, logger *zap.Logger) (int, error) {
 	copiedKeys := 0
 	for _, key := range keys {
 		dumpedValue, err := src.Dump(key)
@@ -134,14 +134,14 @@ func (c *command) copyBatch(src, dst v3.Client, keys []string, logger *zap.Logge
 			return copiedKeys, fmt.Errorf("error dumping key %s: %v", key, err)
 		}
 
-		exists, err := dst.Exists(key)
+		exists, err := dest.Exists(key)
 		if err != nil {
 			return copiedKeys, fmt.Errorf("error checking key existence %s: %v", key, err)
 		}
 
 		if exists == 1 {
 			if *c.overrideDestKey {
-				if err := dst.Del(key); err != nil {
+				if err := dest.Del(key); err != nil {
 					return copiedKeys, fmt.Errorf("error deleting existing key %s: %v", key, err)
 				}
 			} else {
@@ -150,7 +150,8 @@ func (c *command) copyBatch(src, dst v3.Client, keys []string, logger *zap.Logge
 			}
 		}
 
-		err = dst.Restore(key, 0, dumpedValue)
+		err = dest.Restore(key, 0, dumpedValue)
+
 		if err != nil {
 			return copiedKeys, fmt.Errorf("error restoring key %s: %v", key, err)
 		}

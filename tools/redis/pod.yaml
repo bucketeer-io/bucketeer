@@ -9,18 +9,18 @@ spec:
     - name: redis-data-copy
       image: ghcr.io/bucketeer-io/redis-data-copy:0.0.1
       imagePullPolicy: Always
-      args:
-        - copy
-        - --source
-        - <source_redis_address>
-        - --destination
-        - <destination_redis_address>
-        - --src-password
-        - <source_password>
-        - --dst-password
-        - <destination_password>
-        - --override-dest-key
-        - <override_destination_key>
+      env:
+        - name: REDIS_DATA_COPY_SRC_ADDRESS
+          value: ""
+        - name: REDIS_DATA_COPY_DEST_ADDRESS
+          value: ""
+        - name: REDIS_DATA_COPY_SRC_PASSWORD
+          value: ""
+        - name: REDIS_DATA_COPY_DEST_PASSWORD
+          value: ""
+        - name: REDIS_DATA_COPY_OVERRIDE_DEST_KEY
+          value: "false"
+      args: ["copy"]
       resources:
         limits:
           memory: "128Mi"
