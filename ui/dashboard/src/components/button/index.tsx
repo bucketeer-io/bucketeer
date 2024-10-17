@@ -13,7 +13,7 @@ const buttonVariants = cva(
           'bg-primary-500 text-gray-50',
           'rounded-lg px-6 py-2',
           'hover:bg-primary-700',
-          'disabled:bg-primary-100 disabled:text-primary-50'
+          'disabled:bg-primary-200 disabled:text-primary-50'
         ],
         secondary: [
           'text-primary-500 shadow-border-primary-500',

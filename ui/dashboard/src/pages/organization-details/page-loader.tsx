@@ -30,7 +30,7 @@ const PageLoader = () => {
             title={organization.name}
             description={`Created ${formatDateTime(organization.createdAt)}`}
           />
-          <PageContent />
+          <PageContent organization={organization} />
         </>
       )}
     </>

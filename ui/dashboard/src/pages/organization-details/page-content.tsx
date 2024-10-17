@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useTranslation } from 'i18n';
+import { Organization } from '@types';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from 'components/tabs';
 import PageLayout from 'elements/page-layout';
 import OrganizationProjects from './projects';
 import OrganizationSettings from './settings';
 import OrganizationUsers from './users';
 
-const PageContent = () => {
+const PageContent = ({ organization }: { organization: Organization }) => {
   const { t } = useTranslation(['common']);
   const [selectedTab, setSelectedTab] = useState('PROJECTS');
 
@@ -19,7 +20,7 @@ const PageContent = () => {
         return <OrganizationUsers />;
 
       case 'SETTINGS':
-        return <OrganizationSettings />;
+        return <OrganizationSettings organization={organization} />;
 
       default:
         return null;
