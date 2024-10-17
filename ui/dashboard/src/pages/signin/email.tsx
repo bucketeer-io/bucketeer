@@ -18,7 +18,7 @@ import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { SignInForm } from '@types';
 import { IconBackspace } from '@icons';
-import { Button } from 'components/button';
+import Button from 'components/button';
 import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';

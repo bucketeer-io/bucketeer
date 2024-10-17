@@ -2,9 +2,20 @@ import { ReactNode, useCallback } from 'react';
 import { IconCloseRound } from 'react-icons-material-design';
 import * as Dialog from '@radix-ui/react-dialog';
 import { cn } from 'utils/style';
-import { Button } from 'components/button';
+import Button from 'components/button';
 import Divider from 'components/divider';
 import Icon from 'components/icon';
+
+export type SliderType = 'create' | 'edit';
+
+export type SliderProps = {
+  direction?: 'slide-up' | 'slide-left';
+  title: string;
+  isOpen: boolean;
+  children?: ReactNode;
+  shouldCloseOnOverlayClick?: boolean;
+  onClose: () => void;
+};
 
 const SlideModal = ({
   direction = 'slide-left',
@@ -13,14 +24,7 @@ const SlideModal = ({
   onClose,
   children,
   shouldCloseOnOverlayClick = true
-}: {
-  direction?: 'slide-up' | 'slide-left';
-  title: string;
-  isOpen: boolean;
-  onClose: () => void;
-  children: ReactNode;
-  shouldCloseOnOverlayClick?: boolean;
-}) => {
+}: SliderProps) => {
   const onOpenChange = useCallback((v: boolean) => {
     if (v === false && shouldCloseOnOverlayClick) onClose();
   }, []);
@@ -28,11 +32,11 @@ const SlideModal = ({
   return (
     <Dialog.Root open={isOpen} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 h-full w-full animate-fade bg-overlay" />
+        <Dialog.Overlay className="fixed inset-0 z-50 h-full w-full animate-fade bg-overlay" />
         <Dialog.Content>
           <div
             className={cn(
-              'fixed flex h-full w-full flex-col rounded-l-lg bg-gray-50 max-w-[542px]',
+              'fixed z-50 flex h-full w-full flex-col rounded-l-lg bg-gray-50 max-w-[542px]',
               direction === 'slide-left' && 'right-0 top-0 animate-slide-left',
               direction === 'slide-up' && 'bottom-0 left-0 animate-slide-up'
             )}
@@ -44,6 +48,7 @@ const SlideModal = ({
                 <Dialog.Title className="typo-head-bold-huge">
                   {title}
                 </Dialog.Title>
+                <Dialog.Description className="hidden" />
                 <Dialog.Close asChild>
                   <Button size="icon-sm" variant="grey" onClick={onClose}>
                     <Icon icon={IconCloseRound} />

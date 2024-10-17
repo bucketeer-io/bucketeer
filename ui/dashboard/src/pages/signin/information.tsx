@@ -3,7 +3,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { UserInfoForm } from '@types';
-import { Button } from 'components/button';
+import Button from 'components/button';
 import Form from 'components/form';
 import Input from 'components/input';
 import AuthWrapper from './elements/auth-wrapper';

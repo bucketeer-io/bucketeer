@@ -6,8 +6,13 @@ import { PAGE_PATH_ROOT } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { setOrgIdStorage } from 'storage/organization';
 import * as yup from 'yup';
-import { Button } from 'components/button';
-import Dropdown from 'components/dropdown';
+import Button from 'components/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from 'components/dropdown';
 import Form from 'components/form';
 import AuthWrapper from './elements/auth-wrapper';
 
@@ -49,24 +54,34 @@ const SelectOrganization = () => {
           <Form.Field
             control={form.control}
             name="organization"
-            render={() => (
+            render={({ field }) => (
               <Form.Item>
                 <Form.Label required>{t(`organization`)}</Form.Label>
                 <Form.Control>
-                  <Dropdown
-                    expand="full"
-                    className="w-[442px]"
-                    placeholder={t(`organization-placeholder`)}
-                    options={myOrganizations.map(org => ({
-                      label: org.name,
-                      value: org.id
-                    }))}
-                    onChange={i => {
-                      form.clearErrors();
-                      form.setValue('organization', i);
-                    }}
-                    value={form.getValues('organization')}
-                  />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      label={
+                        myOrganizations.find(
+                          org => org.id === form.getValues('organization')
+                        )?.name || t(`organization-placeholder`)
+                      }
+                      isExpand
+                    />
+                    <DropdownMenuContent className="w-[442px]">
+                      {myOrganizations.map((org, index) => (
+                        <DropdownMenuItem
+                          {...field}
+                          key={index}
+                          label={org.name}
+                          value={org.id}
+                          onSelectOption={value => {
+                            form.clearErrors();
+                            form.setValue('organization', value as string);
+                          }}
+                        />
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </Form.Control>
                 <Form.Message />
               </Form.Item>

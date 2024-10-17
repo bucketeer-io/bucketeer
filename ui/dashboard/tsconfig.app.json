@@ -10,7 +10,6 @@
     ],
     "module": "ESNext",
     "skipLibCheck": true,
-    "importsNotUsedAsValues": "error",
     "ignoreDeprecations": "5.0",
     /* Bundler mode */
     "moduleResolution": "bundler",
