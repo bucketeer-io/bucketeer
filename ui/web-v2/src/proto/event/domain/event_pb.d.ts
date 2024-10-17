@@ -194,6 +194,9 @@ export namespace Event {
     ACCOUNT_V2_SEARCH_FILTER_QUERY_CHANGED: 315;
     ACCOUNT_V2_SEARCH_FILTER_DEFAULT_CHANGED: 316;
     ACCOUNT_V2_SEARCH_FILTER_DELETED: 317;
+    ACCOUNT_V2_FIRST_NAME_CHANGED: 318;
+    ACCOUNT_V2_LAST_NAME_CHANGED: 319;
+    ACCOUNT_V2_LANGUAGE_CHANGED: 320;
     APIKEY_CREATED: 400;
     APIKEY_NAME_CHANGED: 401;
     APIKEY_ENABLED: 402;
@@ -2514,6 +2517,15 @@ export class AccountV2CreatedEvent extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getFirstName(): string;
+  setFirstName(value: string): void;
+
+  getLastName(): string;
+  setLastName(value: string): void;
+
+  getLanguage(): string;
+  setLanguage(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AccountV2CreatedEvent.AsObject;
   static toObject(
@@ -2546,6 +2558,9 @@ export namespace AccountV2CreatedEvent {
     disabled: boolean;
     createdAt: number;
     updatedAt: number;
+    firstName: string;
+    lastName: string;
+    language: string;
   };
 }
 
@@ -6532,5 +6547,110 @@ export namespace FlagTriggerUsageUpdatedEvent {
     environmentNamespace: string;
     lastTriggeredAt: number;
     triggerTimes: number;
+  };
+}
+
+export class AccountV2FirstNameChangedEvent extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getFirstName(): string;
+  setFirstName(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AccountV2FirstNameChangedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: AccountV2FirstNameChangedEvent
+  ): AccountV2FirstNameChangedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: AccountV2FirstNameChangedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): AccountV2FirstNameChangedEvent;
+  static deserializeBinaryFromReader(
+    message: AccountV2FirstNameChangedEvent,
+    reader: jspb.BinaryReader
+  ): AccountV2FirstNameChangedEvent;
+}
+
+export namespace AccountV2FirstNameChangedEvent {
+  export type AsObject = {
+    email: string;
+    firstName: string;
+  };
+}
+
+export class AccountV2LastNameChangedEvent extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getLastName(): string;
+  setLastName(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AccountV2LastNameChangedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: AccountV2LastNameChangedEvent
+  ): AccountV2LastNameChangedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: AccountV2LastNameChangedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): AccountV2LastNameChangedEvent;
+  static deserializeBinaryFromReader(
+    message: AccountV2LastNameChangedEvent,
+    reader: jspb.BinaryReader
+  ): AccountV2LastNameChangedEvent;
+}
+
+export namespace AccountV2LastNameChangedEvent {
+  export type AsObject = {
+    email: string;
+    lastName: string;
+  };
+}
+
+export class AccountV2LanguageChangedEvent extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getLanguage(): string;
+  setLanguage(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AccountV2LanguageChangedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: AccountV2LanguageChangedEvent
+  ): AccountV2LanguageChangedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: AccountV2LanguageChangedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): AccountV2LanguageChangedEvent;
+  static deserializeBinaryFromReader(
+    message: AccountV2LanguageChangedEvent,
+    reader: jspb.BinaryReader
+  ): AccountV2LanguageChangedEvent;
+}
+
+export namespace AccountV2LanguageChangedEvent {
+  export type AsObject = {
+    email: string;
+    language: string;
   };
 }
