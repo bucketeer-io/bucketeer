@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: redis-data-copy
+  labels:
+    app: redis-data-copy
+spec:
+  containers:
+    - name: redis-data-copy
+      image: ghcr.io/bucketeer-io/redis-data-copy:0.0.1
+      imagePullPolicy: Always
+      env:
+        - name: REDIS_DATA_COPY_SRC_ADDRESS
+          value: ""
+        - name: REDIS_DATA_COPY_DEST_ADDRESS
+          value: ""
+        - name: REDIS_DATA_COPY_SRC_PASSWORD
+          value: ""
+        - name: REDIS_DATA_COPY_DEST_PASSWORD
+          value: ""
+        - name: REDIS_DATA_COPY_OVERRIDE_DEST_KEY
+          value: "false"
+      args: ["copy"]
+      resources:
+        limits:
+          memory: "128Mi"
+          cpu: "500m"
+  restartPolicy: OnFailure
