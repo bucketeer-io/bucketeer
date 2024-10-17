@@ -6,7 +6,7 @@ export interface OrganizationUpdateParams {
     name: string;
   };
   changeDescriptionCommand: {
-    description: string;
+    description?: string;
   };
   changeOwnerEmailCommand: {
     ownerEmail: string;

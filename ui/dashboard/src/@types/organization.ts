@@ -19,6 +19,7 @@ export interface Organization {
   environmentCount: number;
   projectCount: number;
   userCount: number;
+  ownerEmail: string;
 }
 
 export interface OrganizationCollection {

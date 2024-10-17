@@ -88,7 +88,7 @@ const DropdownMenuTrigger = forwardRef<
       )}
       {...props}
     >
-      <div className="flex items-center typo-para-medium">
+      <div className="flex items-center w-full justify-between typo-para-medium">
         {trigger ? (
           trigger
         ) : label ? (
@@ -96,11 +96,11 @@ const DropdownMenuTrigger = forwardRef<
             {label} {description && <span>{description}</span>}
           </p>
         ) : (
-          <p className={'text-gray-500'}>{placeholder}</p>
+          <p className={'!text-gray-500'}>{placeholder}</p>
         )}
       </div>
 
-      {showArrow && <Icon icon={IconExpandMoreRound} size={'sm'} />}
+      {showArrow && <Icon icon={IconExpandMoreRound} size={'md'} />}
     </DropdownMenuPrimitive.Trigger>
   )
 );
