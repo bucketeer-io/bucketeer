@@ -58,6 +58,8 @@ func (h *accountV2CommandHandler) Handle(ctx context.Context, cmd Command) error
 	switch c := cmd.(type) {
 	case *accountproto.CreateAccountV2Command:
 		return h.create(ctx, c)
+	case *accountproto.ChangeAccountV2NameCommand:
+		return h.changeName(ctx, c)
 	case *accountproto.ChangeAccountV2FirstNameCommand:
 		return h.changeFirstName(ctx, c)
 	case *accountproto.ChangeAccountV2LastNameCommand:
@@ -104,6 +106,19 @@ func (h *accountV2CommandHandler) create(ctx context.Context, cmd *accountproto.
 		Disabled:         h.account.Disabled,
 		CreatedAt:        h.account.CreatedAt,
 		UpdatedAt:        h.account.UpdatedAt,
+	})
+}
+
+func (h *accountV2CommandHandler) changeName(
+	ctx context.Context,
+	cmd *accountproto.ChangeAccountV2NameCommand,
+) error {
+	if err := h.account.ChangeName(cmd.Name); err != nil {
+		return err
+	}
+	return h.send(ctx, eventproto.Event_ACCOUNT_V2_NAME_CHANGED, &eventproto.AccountV2NameChangedEvent{
+		Email: h.account.Email,
+		Name:  cmd.Name,
 	})
 }
 

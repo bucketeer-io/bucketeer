@@ -479,6 +479,11 @@
                 "type": "string"
               },
               {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
                 "id": 3,
                 "name": "avatar_image_url",
                 "type": "string"
@@ -509,9 +514,16 @@
                 "name": "language",
                 "type": "string"
               }
-            ],
-            "reserved_ids": [
-              2
+            ]
+          },
+          {
+            "name": "ChangeAccountV2NameCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "string"
+              }
             ]
           },
           {

@@ -56,6 +56,7 @@ func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV
 		ctx,
 		insertAccountV2SQL,
 		a.Email,
+		a.Name,
 		a.FirstName,
 		a.LastName,
 		a.Language,
@@ -80,6 +81,7 @@ func (s *accountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV
 	result, err := s.qe(ctx).ExecContext(
 		ctx,
 		updateAccountV2SQL,
+		a.Name,
 		a.FirstName,
 		a.LastName,
 		a.Language,
@@ -135,6 +137,7 @@ func (s *accountStorage) GetAccountV2(ctx context.Context, email, organizationID
 		organizationID,
 	).Scan(
 		&account.Email,
+		&account.Name,
 		&account.FirstName,
 		&account.LastName,
 		&account.Language,
@@ -170,6 +173,7 @@ func (s *accountStorage) GetAccountV2ByEnvironmentID(
 		environmentID,
 	).Scan(
 		&account.Email,
+		&account.Name,
 		&account.FirstName,
 		&account.LastName,
 		&account.Language,
@@ -208,6 +212,7 @@ func (s *accountStorage) GetAccountsWithOrganization(
 		var organizationRole int32
 		err := rows.Scan(
 			&account.Email,
+			&account.Name,
 			&account.FirstName,
 			&account.LastName,
 			&account.Language,
@@ -271,6 +276,7 @@ func (s *accountStorage) ListAccountsV2(
 		var organizationRole int32
 		err := rows.Scan(
 			&account.Email,
+			&account.Name,
 			&account.FirstName,
 			&account.LastName,
 			&account.Language,
