@@ -10,3 +10,9 @@ export interface Environment {
   updatedAt: string;
   urlCode: string;
 }
+
+export interface EnvironmentCollection {
+  environments: Array<Environment>;
+  cursor: string;
+  totalCount: string;
+}

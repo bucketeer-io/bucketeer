@@ -1,4 +1,5 @@
 export const ICON_SIZE_MAPPING = {
+  fit: 'icon-size-fit',
   xxs: 'icon-size-xxs',
   xs: 'icon-size-xs',
   sm: 'icon-size-sm',
