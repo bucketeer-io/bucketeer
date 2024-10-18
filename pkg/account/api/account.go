@@ -59,6 +59,7 @@ func (s *AccountService) CreateAccountV2(
 	}
 	account := domain.NewAccountV2(
 		req.Command.Email,
+		req.Command.Name,
 		req.Command.FirstName,
 		req.Command.LastName,
 		req.Command.Language,

@@ -1,6 +1,7 @@
 UPDATE
     account_v2
 SET
+    name = ?,
     first_name = ?,
     last_name = ?,
     language = ?,

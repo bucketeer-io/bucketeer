@@ -24,8 +24,19 @@ import (
 )
 
 func TestNewAccountV2(t *testing.T) {
-	a := NewAccountV2("email", "John", "Doe", "en", "avatarImageURL", "organizationID", proto.AccountV2_Role_Organization_MEMBER, []*proto.AccountV2_EnvironmentRole{})
+	a := NewAccountV2(
+		"email",
+		"name",
+		"John",
+		"Doe",
+		"en",
+		"avatarImageURL",
+		"organizationID",
+		proto.AccountV2_Role_Organization_MEMBER,
+		[]*proto.AccountV2_EnvironmentRole{},
+	)
 	assert.Equal(t, "email", a.Email)
+	assert.Equal(t, "name", a.Name)
 	assert.Equal(t, "John", a.FirstName)
 	assert.Equal(t, "Doe", a.LastName)
 	assert.Equal(t, "en", a.Language)
@@ -36,31 +47,81 @@ func TestNewAccountV2(t *testing.T) {
 }
 
 func TestChangeFirstName(t *testing.T) {
-	a := NewAccountV2("email", "name", "", "", "avatarImageURL", "organizationID", proto.AccountV2_Role_Organization_MEMBER, []*proto.AccountV2_EnvironmentRole{})
+	a := NewAccountV2(
+		"email",
+		"name",
+		"fname",
+		"lname",
+		"en",
+		"avatarImageURL",
+		"organizationID",
+		proto.AccountV2_Role_Organization_MEMBER,
+		[]*proto.AccountV2_EnvironmentRole{},
+	)
 	a.ChangeFirstName("newName")
 	assert.Equal(t, "newName", a.FirstName)
 }
 
 func TestChangeLastName(t *testing.T) {
-	a := NewAccountV2("email", "name", "", "", "avatarImageURL", "organizationID", proto.AccountV2_Role_Organization_MEMBER, []*proto.AccountV2_EnvironmentRole{})
+	a := NewAccountV2(
+		"email",
+		"name",
+		"fname",
+		"lname",
+		"en",
+		"avatarImageURL",
+		"organizationID",
+		proto.AccountV2_Role_Organization_MEMBER,
+		[]*proto.AccountV2_EnvironmentRole{},
+	)
 	a.ChangeLastName("newLastName")
 	assert.Equal(t, "newLastName", a.LastName)
 }
 
 func TestChangeAvatarImageURL(t *testing.T) {
-	a := NewAccountV2("email", "John", "Doe", "en", "avatarImageURL", "organizationID", proto.AccountV2_Role_Organization_MEMBER, []*proto.AccountV2_EnvironmentRole{})
+	a := NewAccountV2(
+		"email",
+		"name",
+		"fname",
+		"lname",
+		"en",
+		"avatarImageURL",
+		"organizationID",
+		proto.AccountV2_Role_Organization_MEMBER,
+		[]*proto.AccountV2_EnvironmentRole{},
+	)
 	a.ChangeAvatarImageURL("newURL")
 	assert.Equal(t, "newURL", a.AvatarImageUrl)
 }
 
 func TestChangeOrganizationRole(t *testing.T) {
-	a := NewAccountV2("email", "name", "", "", "avatarImageURL", "organizationID", proto.AccountV2_Role_Organization_MEMBER, []*proto.AccountV2_EnvironmentRole{})
+	a := NewAccountV2(
+		"email",
+		"name",
+		"fname",
+		"lname",
+		"en",
+		"avatarImageURL",
+		"organizationID",
+		proto.AccountV2_Role_Organization_MEMBER,
+		[]*proto.AccountV2_EnvironmentRole{},
+	)
 	a.ChangeOrganizationRole(proto.AccountV2_Role_Organization_ADMIN)
 	assert.Equal(t, proto.AccountV2_Role_Organization_ADMIN, a.OrganizationRole)
 }
 
 func TestChangeEnvironmentRole(t *testing.T) {
-	a := NewAccountV2("email", "name", "", "", "avatarImageURL", "organizationID", proto.AccountV2_Role_Organization_MEMBER, []*proto.AccountV2_EnvironmentRole{})
+	a := NewAccountV2(
+		"email",
+		"name",
+		"fname",
+		"lname",
+		"en",
+		"avatarImageURL",
+		"organizationID",
+		proto.AccountV2_Role_Organization_MEMBER,
+		[]*proto.AccountV2_EnvironmentRole{},
+	)
 	a.ChangeEnvironmentRole([]*proto.AccountV2_EnvironmentRole{
 		{
 			EnvironmentId: "environmentID",
@@ -173,16 +234,25 @@ func TestPatchEnvironmentRole(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			a := NewAccountV2("email", "name", "", "", "avatarImageURL", "organizationID", proto.AccountV2_Role_Organization_MEMBER, []*proto.AccountV2_EnvironmentRole{
-				{
-					EnvironmentId: "environmentID",
-					Role:          proto.AccountV2_Role_Environment_VIEWER,
-				},
-				{
-					EnvironmentId: "environmentID2",
-					Role:          proto.AccountV2_Role_Environment_EDITOR,
-				},
-			})
+			a := NewAccountV2(
+				"email",
+				"name",
+				"fname",
+				"lname",
+				"en",
+				"avatarImageURL",
+				"organizationID",
+				proto.AccountV2_Role_Organization_MEMBER,
+				[]*proto.AccountV2_EnvironmentRole{
+					{
+						EnvironmentId: "environmentID",
+						Role:          proto.AccountV2_Role_Environment_VIEWER,
+					},
+					{
+						EnvironmentId: "environmentID2",
+						Role:          proto.AccountV2_Role_Environment_EDITOR,
+					},
+				})
 			a.PatchEnvironmentRole(p.envRoles)
 			assert.Equal(t, p.expected, a.EnvironmentRoles)
 		})
@@ -190,14 +260,34 @@ func TestPatchEnvironmentRole(t *testing.T) {
 }
 
 func TestEnableV2(t *testing.T) {
-	a := NewAccountV2("email", "name", "", "", "avatarImageURL", "organizationID", proto.AccountV2_Role_Organization_MEMBER, []*proto.AccountV2_EnvironmentRole{})
+	a := NewAccountV2(
+		"email",
+		"name",
+		"fname",
+		"lname",
+		"en",
+		"avatarImageURL",
+		"organizationID",
+		proto.AccountV2_Role_Organization_MEMBER,
+		[]*proto.AccountV2_EnvironmentRole{},
+	)
 	a.Disabled = true
 	a.Enable()
 	assert.Equal(t, false, a.Disabled)
 }
 
 func TestDisableV2(t *testing.T) {
-	a := NewAccountV2("email", "name", "", "", "avatarImageURL", "organizationID", proto.AccountV2_Role_Organization_MEMBER, []*proto.AccountV2_EnvironmentRole{})
+	a := NewAccountV2(
+		"email",
+		"name",
+		"fname",
+		"lname",
+		"en",
+		"avatarImageURL",
+		"organizationID",
+		proto.AccountV2_Role_Organization_MEMBER,
+		[]*proto.AccountV2_EnvironmentRole{},
+	)
 	a.Disable()
 	assert.Equal(t, true, a.Disabled)
 }
@@ -276,12 +366,21 @@ func TestAddSearchFilter(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			a := NewAccountV2(account.Email, account.FirstName, account.LastName, account.Language, account.AvatarImageUrl, account.OrganizationId, account.OrganizationRole, account.EnvironmentRoles)
+			a := NewAccountV2(
+				account.Email,
+				account.Name,
+				account.FirstName,
+				account.LastName,
+				account.Language,
+				account.AvatarImageUrl,
+				account.OrganizationId,
+				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.expectedFilters {
 				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
 			}
 			// account has not changed.
+			assert.Equal(t, account.Name, a.Name)
 			assert.Equal(t, account.FirstName, a.FirstName)
 			assert.Equal(t, account.LastName, a.LastName)
 			assert.Equal(t, account.Language, a.Language)
@@ -425,7 +524,15 @@ func TestChangeSearchFilterName(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			a := NewAccountV2(account.Email, account.FirstName, account.LastName, account.Language, account.AvatarImageUrl, account.OrganizationId, account.OrganizationRole, account.EnvironmentRoles)
+			a := NewAccountV2(
+				account.Email,
+				account.Name,
+				account.FirstName,
+				account.LastName,
+				account.Language,
+				account.AvatarImageUrl,
+				account.OrganizationId,
+				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.existingFilters {
 				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
@@ -438,6 +545,7 @@ func TestChangeSearchFilterName(t *testing.T) {
 			assert.Equal(t, err, p.error)
 
 			// account has not changed.
+			assert.Equal(t, account.Name, a.Name)
 			assert.Equal(t, account.FirstName, a.FirstName)
 			assert.Equal(t, account.LastName, a.LastName)
 			assert.Equal(t, account.Language, a.Language)
@@ -569,7 +677,15 @@ func TestChangeSearchFilterQuery(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			a := NewAccountV2(account.Email, account.FirstName, account.LastName, account.Language, account.AvatarImageUrl, account.OrganizationId, account.OrganizationRole, account.EnvironmentRoles)
+			a := NewAccountV2(
+				account.Email,
+				account.Name,
+				account.FirstName,
+				account.LastName,
+				account.Language,
+				account.AvatarImageUrl,
+				account.OrganizationId,
+				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.existingFilters {
 				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
@@ -582,6 +698,7 @@ func TestChangeSearchFilterQuery(t *testing.T) {
 			assert.Equal(t, err, p.error)
 
 			// account has not changed.
+			assert.Equal(t, account.Name, a.Name)
 			assert.Equal(t, account.FirstName, a.FirstName)
 			assert.Equal(t, account.LastName, a.LastName)
 			assert.Equal(t, account.Language, a.Language)
@@ -713,7 +830,15 @@ func TestChangeDefaultSearchFilter(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			a := NewAccountV2(account.Email, account.FirstName, account.LastName, account.Language, account.AvatarImageUrl, account.OrganizationId, account.OrganizationRole, account.EnvironmentRoles)
+			a := NewAccountV2(
+				account.Email,
+				account.Name,
+				account.FirstName,
+				account.LastName,
+				account.Language,
+				account.AvatarImageUrl,
+				account.OrganizationId,
+				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.existingFilters {
 				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
@@ -732,6 +857,7 @@ func TestChangeDefaultSearchFilter(t *testing.T) {
 			assert.Equal(t, err, p.error)
 
 			// account has not changed.
+			assert.Equal(t, account.Name, a.Name)
 			assert.Equal(t, account.FirstName, a.FirstName)
 			assert.Equal(t, account.LastName, a.LastName)
 			assert.Equal(t, account.Language, a.Language)
@@ -844,7 +970,15 @@ func TestDeleteSearchFilter(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			a := NewAccountV2(account.Email, account.FirstName, account.LastName, account.Language, account.AvatarImageUrl, account.OrganizationId, account.OrganizationRole, account.EnvironmentRoles)
+			a := NewAccountV2(
+				account.Email,
+				account.Name,
+				account.FirstName,
+				account.LastName,
+				account.Language,
+				account.AvatarImageUrl,
+				account.OrganizationId,
+				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.existingFilters {
 				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
@@ -857,6 +991,7 @@ func TestDeleteSearchFilter(t *testing.T) {
 			assert.Equal(t, err, p.error)
 
 			// account has not changed.
+			assert.Equal(t, account.Name, a.Name)
 			assert.Equal(t, account.FirstName, a.FirstName)
 			assert.Equal(t, account.LastName, a.LastName)
 			assert.Equal(t, account.Language, a.Language)

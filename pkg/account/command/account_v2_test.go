@@ -49,7 +49,17 @@ func TestHandleV2(t *testing.T) {
 		{
 			desc: "CreateAccountV2Command: success",
 			setup: func(h *accountV2CommandHandler) {
-				a := domain.NewAccountV2("email", "fname", "lname", "en", "avatarImageURL", "organizationID", accountproto.AccountV2_Role_Organization_MEMBER, []*accountproto.AccountV2_EnvironmentRole{})
+				a := domain.NewAccountV2(
+					"email",
+					"name",
+					"fname",
+					"lname",
+					"en",
+					"avatarImageURL",
+					"organizationID",
+					accountproto.AccountV2_Role_Organization_MEMBER,
+					[]*accountproto.AccountV2_EnvironmentRole{},
+				)
 				h.account = a
 				prev := &domain.AccountV2{}
 				err := copier.Copy(prev, a)
@@ -63,7 +73,17 @@ func TestHandleV2(t *testing.T) {
 		{
 			desc: "ChangeAccountV2FirstNameCommand: success",
 			setup: func(h *accountV2CommandHandler) {
-				a := domain.NewAccountV2("email", "fname", "lname", "en", "avatarImageURL", "organizationID", accountproto.AccountV2_Role_Organization_MEMBER, []*accountproto.AccountV2_EnvironmentRole{})
+				a := domain.NewAccountV2(
+					"email",
+					"name",
+					"fname",
+					"lname",
+					"en",
+					"avatarImageURL",
+					"organizationID",
+					accountproto.AccountV2_Role_Organization_MEMBER,
+					[]*accountproto.AccountV2_EnvironmentRole{},
+				)
 				h.account = a
 				prev := &domain.AccountV2{}
 				err := copier.Copy(prev, a)
@@ -77,7 +97,17 @@ func TestHandleV2(t *testing.T) {
 		{
 			desc: "ChangeAccountV2LastNameCommand: success",
 			setup: func(h *accountV2CommandHandler) {
-				a := domain.NewAccountV2("email", "fname", "lname", "en", "avatarImageURL", "organizationID", accountproto.AccountV2_Role_Organization_MEMBER, []*accountproto.AccountV2_EnvironmentRole{})
+				a := domain.NewAccountV2(
+					"email",
+					"name",
+					"fname",
+					"lname",
+					"en",
+					"avatarImageURL",
+					"organizationID",
+					accountproto.AccountV2_Role_Organization_MEMBER,
+					[]*accountproto.AccountV2_EnvironmentRole{},
+				)
 				h.account = a
 				prev := &domain.AccountV2{}
 				err := copier.Copy(prev, a)
@@ -91,7 +121,17 @@ func TestHandleV2(t *testing.T) {
 		{
 			desc: "ChangeAccountV2LanguageCommand: success",
 			setup: func(h *accountV2CommandHandler) {
-				a := domain.NewAccountV2("email", "fname", "lname", "en", "avatarImageURL", "organizationID", accountproto.AccountV2_Role_Organization_MEMBER, []*accountproto.AccountV2_EnvironmentRole{})
+				a := domain.NewAccountV2(
+					"email",
+					"name",
+					"fname",
+					"lname",
+					"en",
+					"avatarImageURL",
+					"organizationID",
+					accountproto.AccountV2_Role_Organization_MEMBER,
+					[]*accountproto.AccountV2_EnvironmentRole{},
+				)
 				h.account = a
 				prev := &domain.AccountV2{}
 				err := copier.Copy(prev, a)
@@ -105,7 +145,17 @@ func TestHandleV2(t *testing.T) {
 		{
 			desc: "ChangeAccountV2AvatarImageURLCommand: success",
 			setup: func(h *accountV2CommandHandler) {
-				a := domain.NewAccountV2("email", "fname", "lname", "en", "avatarImageURL", "organizationID", accountproto.AccountV2_Role_Organization_MEMBER, []*accountproto.AccountV2_EnvironmentRole{})
+				a := domain.NewAccountV2(
+					"email",
+					"name",
+					"fname",
+					"lname",
+					"en",
+					"avatarImageURL",
+					"organizationID",
+					accountproto.AccountV2_Role_Organization_MEMBER,
+					[]*accountproto.AccountV2_EnvironmentRole{},
+				)
 				h.account = a
 				prev := &domain.AccountV2{}
 				err := copier.Copy(prev, a)
@@ -119,7 +169,17 @@ func TestHandleV2(t *testing.T) {
 		{
 			desc: "ChangeAccountV2OrganizationRoleCommand: success",
 			setup: func(h *accountV2CommandHandler) {
-				a := domain.NewAccountV2("email", "fname", "lname", "en", "avatarImageURL", "organizationID", accountproto.AccountV2_Role_Organization_MEMBER, []*accountproto.AccountV2_EnvironmentRole{})
+				a := domain.NewAccountV2(
+					"email",
+					"name",
+					"fname",
+					"lname",
+					"en",
+					"avatarImageURL",
+					"organizationID",
+					accountproto.AccountV2_Role_Organization_MEMBER,
+					[]*accountproto.AccountV2_EnvironmentRole{},
+				)
 				h.account = a
 				prev := &domain.AccountV2{}
 				err := copier.Copy(prev, a)
@@ -133,12 +193,22 @@ func TestHandleV2(t *testing.T) {
 		{
 			desc: "ChangeAccountV2EnvironmentRolesCommand: WriteType:override success",
 			setup: func(h *accountV2CommandHandler) {
-				a := domain.NewAccountV2("email", "fname", "lname", "en", "avatarImageURL", "organizationID", accountproto.AccountV2_Role_Organization_MEMBER, []*accountproto.AccountV2_EnvironmentRole{
-					{
-						EnvironmentId: "env0",
-						Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+				a := domain.NewAccountV2(
+					"email",
+					"name",
+					"fname",
+					"lname",
+					"en",
+					"avatarImageURL",
+					"organizationID",
+					accountproto.AccountV2_Role_Organization_MEMBER,
+					[]*accountproto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "env0",
+							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						},
 					},
-				})
+				)
 				h.account = a
 				prev := &domain.AccountV2{}
 				err := copier.Copy(prev, a)
@@ -160,12 +230,22 @@ func TestHandleV2(t *testing.T) {
 		{
 			desc: "ChangeAccountV2EnvironmentRolesCommand: WriteType:patch success",
 			setup: func(h *accountV2CommandHandler) {
-				a := domain.NewAccountV2("email", "fname", "lname", "en", "avatarImageURL", "organizationID", accountproto.AccountV2_Role_Organization_MEMBER, []*accountproto.AccountV2_EnvironmentRole{
-					{
-						EnvironmentId: "env0",
-						Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+				a := domain.NewAccountV2(
+					"email",
+					"name",
+					"fname",
+					"lname",
+					"en",
+					"avatarImageURL",
+					"organizationID",
+					accountproto.AccountV2_Role_Organization_MEMBER,
+					[]*accountproto.AccountV2_EnvironmentRole{
+						{
+							EnvironmentId: "env0",
+							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						},
 					},
-				})
+				)
 				h.account = a
 				prev := &domain.AccountV2{}
 				err := copier.Copy(prev, a)
@@ -187,7 +267,17 @@ func TestHandleV2(t *testing.T) {
 		{
 			desc: "EnableAccountV2Command: success",
 			setup: func(h *accountV2CommandHandler) {
-				a := domain.NewAccountV2("email", "fname", "lname", "en", "avatarImageURL", "organizationID", accountproto.AccountV2_Role_Organization_MEMBER, []*accountproto.AccountV2_EnvironmentRole{})
+				a := domain.NewAccountV2(
+					"email",
+					"name",
+					"fname",
+					"lname",
+					"en",
+					"avatarImageURL",
+					"organizationID",
+					accountproto.AccountV2_Role_Organization_MEMBER,
+					[]*accountproto.AccountV2_EnvironmentRole{},
+				)
 				h.account = a
 				prev := &domain.AccountV2{}
 				err := copier.Copy(prev, a)
@@ -201,7 +291,17 @@ func TestHandleV2(t *testing.T) {
 		{
 			desc: "DisableAccountV2Command: success",
 			setup: func(h *accountV2CommandHandler) {
-				a := domain.NewAccountV2("email", "fname", "lname", "en", "avatarImageURL", "organizationID", accountproto.AccountV2_Role_Organization_MEMBER, []*accountproto.AccountV2_EnvironmentRole{})
+				a := domain.NewAccountV2(
+					"email",
+					"name",
+					"fname",
+					"lname",
+					"en",
+					"avatarImageURL",
+					"organizationID",
+					accountproto.AccountV2_Role_Organization_MEMBER,
+					[]*accountproto.AccountV2_EnvironmentRole{},
+				)
 				h.account = a
 				prev := &domain.AccountV2{}
 				err := copier.Copy(prev, a)
@@ -215,7 +315,17 @@ func TestHandleV2(t *testing.T) {
 		{
 			desc: "DeleteAccountV2Command: success",
 			setup: func(h *accountV2CommandHandler) {
-				a := domain.NewAccountV2("email", "fname", "lname", "en", "avatarImageURL", "organizationID", accountproto.AccountV2_Role_Organization_MEMBER, []*accountproto.AccountV2_EnvironmentRole{})
+				a := domain.NewAccountV2(
+					"email",
+					"name",
+					"fname",
+					"lname",
+					"en",
+					"avatarImageURL",
+					"organizationID",
+					accountproto.AccountV2_Role_Organization_MEMBER,
+					[]*accountproto.AccountV2_EnvironmentRole{},
+				)
 				h.account = a
 				prev := &domain.AccountV2{}
 				err := copier.Copy(prev, a)

@@ -80,7 +80,7 @@ func (x ChangeAccountV2EnvironmentRolesCommand_WriteType) Number() protoreflect.
 
 // Deprecated: Use ChangeAccountV2EnvironmentRolesCommand_WriteType.Descriptor instead.
 func (ChangeAccountV2EnvironmentRolesCommand_WriteType) EnumDescriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{6, 0}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{7, 0}
 }
 
 type CreateAccountV2Command struct {
@@ -89,6 +89,7 @@ type CreateAccountV2Command struct {
 	unknownFields protoimpl.UnknownFields
 
 	Email            string                       `protobuf:"bytes,1,opt,name=email,proto3" json:"email"`
+	Name             string                       `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
 	AvatarImageUrl   string                       `protobuf:"bytes,3,opt,name=avatar_image_url,json=avatarImageUrl,proto3" json:"avatar_image_url"`
 	OrganizationRole AccountV2_Role_Organization  `protobuf:"varint,4,opt,name=organization_role,json=organizationRole,proto3,enum=bucketeer.account.AccountV2_Role_Organization" json:"organization_role"`
 	EnvironmentRoles []*AccountV2_EnvironmentRole `protobuf:"bytes,5,rep,name=environment_roles,json=environmentRoles,proto3" json:"environment_roles"`
@@ -136,6 +137,13 @@ func (x *CreateAccountV2Command) GetEmail() string {
 	return ""
 }
 
+func (x *CreateAccountV2Command) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
 func (x *CreateAccountV2Command) GetAvatarImageUrl() string {
 	if x != nil {
 		return x.AvatarImageUrl
@@ -178,6 +186,53 @@ func (x *CreateAccountV2Command) GetLanguage() string {
 	return ""
 }
 
+type ChangeAccountV2NameCommand struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name"`
+}
+
+func (x *ChangeAccountV2NameCommand) Reset() {
+	*x = ChangeAccountV2NameCommand{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_account_command_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *ChangeAccountV2NameCommand) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangeAccountV2NameCommand) ProtoMessage() {}
+
+func (x *ChangeAccountV2NameCommand) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_account_command_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangeAccountV2NameCommand.ProtoReflect.Descriptor instead.
+func (*ChangeAccountV2NameCommand) Descriptor() ([]byte, []int) {
+	return file_proto_account_command_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ChangeAccountV2NameCommand) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
 type ChangeAccountV2FirstNameCommand struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -189,7 +244,7 @@ type ChangeAccountV2FirstNameCommand struct {
 func (x *ChangeAccountV2FirstNameCommand) Reset() {
 	*x = ChangeAccountV2FirstNameCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[1]
+		mi := &file_proto_account_command_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -202,7 +257,7 @@ func (x *ChangeAccountV2FirstNameCommand) String() string {
 func (*ChangeAccountV2FirstNameCommand) ProtoMessage() {}
 
 func (x *ChangeAccountV2FirstNameCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[1]
+	mi := &file_proto_account_command_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -215,7 +270,7 @@ func (x *ChangeAccountV2FirstNameCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangeAccountV2FirstNameCommand.ProtoReflect.Descriptor instead.
 func (*ChangeAccountV2FirstNameCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{1}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ChangeAccountV2FirstNameCommand) GetFirstName() string {
@@ -236,7 +291,7 @@ type ChangeAccountV2LastNameCommand struct {
 func (x *ChangeAccountV2LastNameCommand) Reset() {
 	*x = ChangeAccountV2LastNameCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[2]
+		mi := &file_proto_account_command_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -249,7 +304,7 @@ func (x *ChangeAccountV2LastNameCommand) String() string {
 func (*ChangeAccountV2LastNameCommand) ProtoMessage() {}
 
 func (x *ChangeAccountV2LastNameCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[2]
+	mi := &file_proto_account_command_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -262,7 +317,7 @@ func (x *ChangeAccountV2LastNameCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangeAccountV2LastNameCommand.ProtoReflect.Descriptor instead.
 func (*ChangeAccountV2LastNameCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{2}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ChangeAccountV2LastNameCommand) GetLastName() string {
@@ -283,7 +338,7 @@ type ChangeAccountV2LanguageCommand struct {
 func (x *ChangeAccountV2LanguageCommand) Reset() {
 	*x = ChangeAccountV2LanguageCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[3]
+		mi := &file_proto_account_command_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -296,7 +351,7 @@ func (x *ChangeAccountV2LanguageCommand) String() string {
 func (*ChangeAccountV2LanguageCommand) ProtoMessage() {}
 
 func (x *ChangeAccountV2LanguageCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[3]
+	mi := &file_proto_account_command_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -309,7 +364,7 @@ func (x *ChangeAccountV2LanguageCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangeAccountV2LanguageCommand.ProtoReflect.Descriptor instead.
 func (*ChangeAccountV2LanguageCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{3}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ChangeAccountV2LanguageCommand) GetLanguage() string {
@@ -330,7 +385,7 @@ type ChangeAccountV2AvatarImageUrlCommand struct {
 func (x *ChangeAccountV2AvatarImageUrlCommand) Reset() {
 	*x = ChangeAccountV2AvatarImageUrlCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[4]
+		mi := &file_proto_account_command_proto_msgTypes[5]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -343,7 +398,7 @@ func (x *ChangeAccountV2AvatarImageUrlCommand) String() string {
 func (*ChangeAccountV2AvatarImageUrlCommand) ProtoMessage() {}
 
 func (x *ChangeAccountV2AvatarImageUrlCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[4]
+	mi := &file_proto_account_command_proto_msgTypes[5]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -356,7 +411,7 @@ func (x *ChangeAccountV2AvatarImageUrlCommand) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use ChangeAccountV2AvatarImageUrlCommand.ProtoReflect.Descriptor instead.
 func (*ChangeAccountV2AvatarImageUrlCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{4}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ChangeAccountV2AvatarImageUrlCommand) GetAvatarImageUrl() string {
@@ -377,7 +432,7 @@ type ChangeAccountV2OrganizationRoleCommand struct {
 func (x *ChangeAccountV2OrganizationRoleCommand) Reset() {
 	*x = ChangeAccountV2OrganizationRoleCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[5]
+		mi := &file_proto_account_command_proto_msgTypes[6]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -390,7 +445,7 @@ func (x *ChangeAccountV2OrganizationRoleCommand) String() string {
 func (*ChangeAccountV2OrganizationRoleCommand) ProtoMessage() {}
 
 func (x *ChangeAccountV2OrganizationRoleCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[5]
+	mi := &file_proto_account_command_proto_msgTypes[6]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -403,7 +458,7 @@ func (x *ChangeAccountV2OrganizationRoleCommand) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use ChangeAccountV2OrganizationRoleCommand.ProtoReflect.Descriptor instead.
 func (*ChangeAccountV2OrganizationRoleCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{5}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ChangeAccountV2OrganizationRoleCommand) GetRole() AccountV2_Role_Organization {
@@ -425,7 +480,7 @@ type ChangeAccountV2EnvironmentRolesCommand struct {
 func (x *ChangeAccountV2EnvironmentRolesCommand) Reset() {
 	*x = ChangeAccountV2EnvironmentRolesCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[6]
+		mi := &file_proto_account_command_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -438,7 +493,7 @@ func (x *ChangeAccountV2EnvironmentRolesCommand) String() string {
 func (*ChangeAccountV2EnvironmentRolesCommand) ProtoMessage() {}
 
 func (x *ChangeAccountV2EnvironmentRolesCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[6]
+	mi := &file_proto_account_command_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -451,7 +506,7 @@ func (x *ChangeAccountV2EnvironmentRolesCommand) ProtoReflect() protoreflect.Mes
 
 // Deprecated: Use ChangeAccountV2EnvironmentRolesCommand.ProtoReflect.Descriptor instead.
 func (*ChangeAccountV2EnvironmentRolesCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{6}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ChangeAccountV2EnvironmentRolesCommand) GetRoles() []*AccountV2_EnvironmentRole {
@@ -477,7 +532,7 @@ type EnableAccountV2Command struct {
 func (x *EnableAccountV2Command) Reset() {
 	*x = EnableAccountV2Command{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[7]
+		mi := &file_proto_account_command_proto_msgTypes[8]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -490,7 +545,7 @@ func (x *EnableAccountV2Command) String() string {
 func (*EnableAccountV2Command) ProtoMessage() {}
 
 func (x *EnableAccountV2Command) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[7]
+	mi := &file_proto_account_command_proto_msgTypes[8]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -503,7 +558,7 @@ func (x *EnableAccountV2Command) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnableAccountV2Command.ProtoReflect.Descriptor instead.
 func (*EnableAccountV2Command) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{7}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{8}
 }
 
 type DisableAccountV2Command struct {
@@ -515,7 +570,7 @@ type DisableAccountV2Command struct {
 func (x *DisableAccountV2Command) Reset() {
 	*x = DisableAccountV2Command{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[8]
+		mi := &file_proto_account_command_proto_msgTypes[9]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -528,7 +583,7 @@ func (x *DisableAccountV2Command) String() string {
 func (*DisableAccountV2Command) ProtoMessage() {}
 
 func (x *DisableAccountV2Command) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[8]
+	mi := &file_proto_account_command_proto_msgTypes[9]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -541,7 +596,7 @@ func (x *DisableAccountV2Command) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableAccountV2Command.ProtoReflect.Descriptor instead.
 func (*DisableAccountV2Command) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{8}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{9}
 }
 
 type DeleteAccountV2Command struct {
@@ -553,7 +608,7 @@ type DeleteAccountV2Command struct {
 func (x *DeleteAccountV2Command) Reset() {
 	*x = DeleteAccountV2Command{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[9]
+		mi := &file_proto_account_command_proto_msgTypes[10]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -566,7 +621,7 @@ func (x *DeleteAccountV2Command) String() string {
 func (*DeleteAccountV2Command) ProtoMessage() {}
 
 func (x *DeleteAccountV2Command) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[9]
+	mi := &file_proto_account_command_proto_msgTypes[10]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -579,7 +634,7 @@ func (x *DeleteAccountV2Command) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAccountV2Command.ProtoReflect.Descriptor instead.
 func (*DeleteAccountV2Command) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{9}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{10}
 }
 
 type CreateAPIKeyCommand struct {
@@ -594,7 +649,7 @@ type CreateAPIKeyCommand struct {
 func (x *CreateAPIKeyCommand) Reset() {
 	*x = CreateAPIKeyCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[10]
+		mi := &file_proto_account_command_proto_msgTypes[11]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -607,7 +662,7 @@ func (x *CreateAPIKeyCommand) String() string {
 func (*CreateAPIKeyCommand) ProtoMessage() {}
 
 func (x *CreateAPIKeyCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[10]
+	mi := &file_proto_account_command_proto_msgTypes[11]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -620,7 +675,7 @@ func (x *CreateAPIKeyCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAPIKeyCommand.ProtoReflect.Descriptor instead.
 func (*CreateAPIKeyCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{10}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *CreateAPIKeyCommand) GetName() string {
@@ -648,7 +703,7 @@ type ChangeAPIKeyNameCommand struct {
 func (x *ChangeAPIKeyNameCommand) Reset() {
 	*x = ChangeAPIKeyNameCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[11]
+		mi := &file_proto_account_command_proto_msgTypes[12]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -661,7 +716,7 @@ func (x *ChangeAPIKeyNameCommand) String() string {
 func (*ChangeAPIKeyNameCommand) ProtoMessage() {}
 
 func (x *ChangeAPIKeyNameCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[11]
+	mi := &file_proto_account_command_proto_msgTypes[12]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -674,7 +729,7 @@ func (x *ChangeAPIKeyNameCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangeAPIKeyNameCommand.ProtoReflect.Descriptor instead.
 func (*ChangeAPIKeyNameCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{11}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ChangeAPIKeyNameCommand) GetName() string {
@@ -693,7 +748,7 @@ type EnableAPIKeyCommand struct {
 func (x *EnableAPIKeyCommand) Reset() {
 	*x = EnableAPIKeyCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[12]
+		mi := &file_proto_account_command_proto_msgTypes[13]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -706,7 +761,7 @@ func (x *EnableAPIKeyCommand) String() string {
 func (*EnableAPIKeyCommand) ProtoMessage() {}
 
 func (x *EnableAPIKeyCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[12]
+	mi := &file_proto_account_command_proto_msgTypes[13]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -719,7 +774,7 @@ func (x *EnableAPIKeyCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnableAPIKeyCommand.ProtoReflect.Descriptor instead.
 func (*EnableAPIKeyCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{12}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{13}
 }
 
 type DisableAPIKeyCommand struct {
@@ -731,7 +786,7 @@ type DisableAPIKeyCommand struct {
 func (x *DisableAPIKeyCommand) Reset() {
 	*x = DisableAPIKeyCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[13]
+		mi := &file_proto_account_command_proto_msgTypes[14]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -744,7 +799,7 @@ func (x *DisableAPIKeyCommand) String() string {
 func (*DisableAPIKeyCommand) ProtoMessage() {}
 
 func (x *DisableAPIKeyCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[13]
+	mi := &file_proto_account_command_proto_msgTypes[14]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -757,7 +812,7 @@ func (x *DisableAPIKeyCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisableAPIKeyCommand.ProtoReflect.Descriptor instead.
 func (*DisableAPIKeyCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{13}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{14}
 }
 
 type CreateSearchFilterCommand struct {
@@ -775,7 +830,7 @@ type CreateSearchFilterCommand struct {
 func (x *CreateSearchFilterCommand) Reset() {
 	*x = CreateSearchFilterCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[14]
+		mi := &file_proto_account_command_proto_msgTypes[15]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -788,7 +843,7 @@ func (x *CreateSearchFilterCommand) String() string {
 func (*CreateSearchFilterCommand) ProtoMessage() {}
 
 func (x *CreateSearchFilterCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[14]
+	mi := &file_proto_account_command_proto_msgTypes[15]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -801,7 +856,7 @@ func (x *CreateSearchFilterCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateSearchFilterCommand.ProtoReflect.Descriptor instead.
 func (*CreateSearchFilterCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{14}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *CreateSearchFilterCommand) GetName() string {
@@ -851,7 +906,7 @@ type ChangeSearchFilterNameCommand struct {
 func (x *ChangeSearchFilterNameCommand) Reset() {
 	*x = ChangeSearchFilterNameCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[15]
+		mi := &file_proto_account_command_proto_msgTypes[16]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -864,7 +919,7 @@ func (x *ChangeSearchFilterNameCommand) String() string {
 func (*ChangeSearchFilterNameCommand) ProtoMessage() {}
 
 func (x *ChangeSearchFilterNameCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[15]
+	mi := &file_proto_account_command_proto_msgTypes[16]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -877,7 +932,7 @@ func (x *ChangeSearchFilterNameCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangeSearchFilterNameCommand.ProtoReflect.Descriptor instead.
 func (*ChangeSearchFilterNameCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{15}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ChangeSearchFilterNameCommand) GetId() string {
@@ -906,7 +961,7 @@ type ChangeSearchFilterQueryCommand struct {
 func (x *ChangeSearchFilterQueryCommand) Reset() {
 	*x = ChangeSearchFilterQueryCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[16]
+		mi := &file_proto_account_command_proto_msgTypes[17]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -919,7 +974,7 @@ func (x *ChangeSearchFilterQueryCommand) String() string {
 func (*ChangeSearchFilterQueryCommand) ProtoMessage() {}
 
 func (x *ChangeSearchFilterQueryCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[16]
+	mi := &file_proto_account_command_proto_msgTypes[17]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -932,7 +987,7 @@ func (x *ChangeSearchFilterQueryCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangeSearchFilterQueryCommand.ProtoReflect.Descriptor instead.
 func (*ChangeSearchFilterQueryCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{16}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ChangeSearchFilterQueryCommand) GetId() string {
@@ -961,7 +1016,7 @@ type ChangeDefaultSearchFilterCommand struct {
 func (x *ChangeDefaultSearchFilterCommand) Reset() {
 	*x = ChangeDefaultSearchFilterCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[17]
+		mi := &file_proto_account_command_proto_msgTypes[18]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -974,7 +1029,7 @@ func (x *ChangeDefaultSearchFilterCommand) String() string {
 func (*ChangeDefaultSearchFilterCommand) ProtoMessage() {}
 
 func (x *ChangeDefaultSearchFilterCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[17]
+	mi := &file_proto_account_command_proto_msgTypes[18]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -987,7 +1042,7 @@ func (x *ChangeDefaultSearchFilterCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ChangeDefaultSearchFilterCommand.ProtoReflect.Descriptor instead.
 func (*ChangeDefaultSearchFilterCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{17}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ChangeDefaultSearchFilterCommand) GetId() string {
@@ -1015,7 +1070,7 @@ type DeleteSearchFilterCommand struct {
 func (x *DeleteSearchFilterCommand) Reset() {
 	*x = DeleteSearchFilterCommand{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_proto_account_command_proto_msgTypes[18]
+		mi := &file_proto_account_command_proto_msgTypes[19]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1028,7 +1083,7 @@ func (x *DeleteSearchFilterCommand) String() string {
 func (*DeleteSearchFilterCommand) ProtoMessage() {}
 
 func (x *DeleteSearchFilterCommand) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_account_command_proto_msgTypes[18]
+	mi := &file_proto_account_command_proto_msgTypes[19]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1041,7 +1096,7 @@ func (x *DeleteSearchFilterCommand) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteSearchFilterCommand.ProtoReflect.Descriptor instead.
 func (*DeleteSearchFilterCommand) Descriptor() ([]byte, []int) {
-	return file_proto_account_command_proto_rawDescGZIP(), []int{18}
+	return file_proto_account_command_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *DeleteSearchFilterCommand) GetId() string {
@@ -1062,30 +1117,34 @@ var file_proto_account_command_proto_rawDesc = []byte{
 	0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2f, 0x61, 0x70, 0x69,
 	0x5f, 0x6b, 0x65, 0x79, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x21, 0x70, 0x72, 0x6f, 0x74,
 	0x6f, 0x2f, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2f, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68,
-	0x5f, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xee, 0x02,
+	0x5f, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0xfc, 0x02,
 	0x0a, 0x16, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56,
 	0x32, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x65, 0x6d, 0x61, 0x69,
-	0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x12, 0x28,
-	0x0a, 0x10, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72, 0x5f, 0x69, 0x6d, 0x61, 0x67, 0x65, 0x5f, 0x75,
-	0x72, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72,
-	0x49, 0x6d, 0x61, 0x67, 0x65, 0x55, 0x72, 0x6c, 0x12, 0x5b, 0x0a, 0x11, 0x6f, 0x72, 0x67, 0x61,
-	0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x72, 0x6f, 0x6c, 0x65, 0x18, 0x04, 0x20,
-	0x01, 0x28, 0x0e, 0x32, 0x2e, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e,
-	0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56,
-	0x32, 0x2e, 0x52, 0x6f, 0x6c, 0x65, 0x2e, 0x4f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74,
-	0x69, 0x6f, 0x6e, 0x52, 0x10, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f,
-	0x6e, 0x52, 0x6f, 0x6c, 0x65, 0x12, 0x59, 0x0a, 0x11, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e,
-	0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x72, 0x6f, 0x6c, 0x65, 0x73, 0x18, 0x05, 0x20, 0x03, 0x28, 0x0b,
-	0x32, 0x2c, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2e, 0x61, 0x63, 0x63,
-	0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32, 0x2e, 0x45,
-	0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x6f, 0x6c, 0x65, 0x52, 0x10,
-	0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x6f, 0x6c, 0x65, 0x73,
-	0x12, 0x1d, 0x0a, 0x0a, 0x66, 0x69, 0x72, 0x73, 0x74, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x06,
-	0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x66, 0x69, 0x72, 0x73, 0x74, 0x4e, 0x61, 0x6d, 0x65, 0x12,
-	0x1b, 0x0a, 0x09, 0x6c, 0x61, 0x73, 0x74, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x07, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x08, 0x6c, 0x61, 0x73, 0x74, 0x4e, 0x61, 0x6d, 0x65, 0x12, 0x1a, 0x0a, 0x08,
-	0x6c, 0x61, 0x6e, 0x67, 0x75, 0x61, 0x67, 0x65, 0x18, 0x08, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08,
-	0x6c, 0x61, 0x6e, 0x67, 0x75, 0x61, 0x67, 0x65, 0x4a, 0x04, 0x08, 0x02, 0x10, 0x03, 0x22, 0x40,
+	0x6c, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x65, 0x6d, 0x61, 0x69, 0x6c, 0x12, 0x12,
+	0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61,
+	0x6d, 0x65, 0x12, 0x28, 0x0a, 0x10, 0x61, 0x76, 0x61, 0x74, 0x61, 0x72, 0x5f, 0x69, 0x6d, 0x61,
+	0x67, 0x65, 0x5f, 0x75, 0x72, 0x6c, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0e, 0x61, 0x76,
+	0x61, 0x74, 0x61, 0x72, 0x49, 0x6d, 0x61, 0x67, 0x65, 0x55, 0x72, 0x6c, 0x12, 0x5b, 0x0a, 0x11,
+	0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x5f, 0x72, 0x6f, 0x6c,
+	0x65, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x2e, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74,
+	0x65, 0x65, 0x72, 0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x41, 0x63, 0x63, 0x6f,
+	0x75, 0x6e, 0x74, 0x56, 0x32, 0x2e, 0x52, 0x6f, 0x6c, 0x65, 0x2e, 0x4f, 0x72, 0x67, 0x61, 0x6e,
+	0x69, 0x7a, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x10, 0x6f, 0x72, 0x67, 0x61, 0x6e, 0x69, 0x7a,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x6f, 0x6c, 0x65, 0x12, 0x59, 0x0a, 0x11, 0x65, 0x6e, 0x76,
+	0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x5f, 0x72, 0x6f, 0x6c, 0x65, 0x73, 0x18, 0x05,
+	0x20, 0x03, 0x28, 0x0b, 0x32, 0x2c, 0x2e, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72,
+	0x2e, 0x61, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x2e, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74,
+	0x56, 0x32, 0x2e, 0x45, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x6f,
+	0x6c, 0x65, 0x52, 0x10, 0x65, 0x6e, 0x76, 0x69, 0x72, 0x6f, 0x6e, 0x6d, 0x65, 0x6e, 0x74, 0x52,
+	0x6f, 0x6c, 0x65, 0x73, 0x12, 0x1d, 0x0a, 0x0a, 0x66, 0x69, 0x72, 0x73, 0x74, 0x5f, 0x6e, 0x61,
+	0x6d, 0x65, 0x18, 0x06, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x66, 0x69, 0x72, 0x73, 0x74, 0x4e,
+	0x61, 0x6d, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x6c, 0x61, 0x73, 0x74, 0x5f, 0x6e, 0x61, 0x6d, 0x65,
+	0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x6c, 0x61, 0x73, 0x74, 0x4e, 0x61, 0x6d, 0x65,
+	0x12, 0x1a, 0x0a, 0x08, 0x6c, 0x61, 0x6e, 0x67, 0x75, 0x61, 0x67, 0x65, 0x18, 0x08, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x08, 0x6c, 0x61, 0x6e, 0x67, 0x75, 0x61, 0x67, 0x65, 0x22, 0x30, 0x0a, 0x1a,
+	0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56, 0x32, 0x4e,
+	0x61, 0x6d, 0x65, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61,
+	0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x22, 0x40,
 	0x0a, 0x1f, 0x43, 0x68, 0x61, 0x6e, 0x67, 0x65, 0x41, 0x63, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x56,
 	0x32, 0x46, 0x69, 0x72, 0x73, 0x74, 0x4e, 0x61, 0x6d, 0x65, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e,
 	0x64, 0x12, 0x1d, 0x0a, 0x0a, 0x66, 0x69, 0x72, 0x73, 0x74, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x18,
@@ -1196,41 +1255,42 @@ func file_proto_account_command_proto_rawDescGZIP() []byte {
 }
 
 var file_proto_account_command_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_proto_account_command_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_proto_account_command_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_proto_account_command_proto_goTypes = []interface{}{
 	(ChangeAccountV2EnvironmentRolesCommand_WriteType)(0), // 0: bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.WriteType
 	(*CreateAccountV2Command)(nil),                        // 1: bucketeer.account.CreateAccountV2Command
-	(*ChangeAccountV2FirstNameCommand)(nil),               // 2: bucketeer.account.ChangeAccountV2FirstNameCommand
-	(*ChangeAccountV2LastNameCommand)(nil),                // 3: bucketeer.account.ChangeAccountV2LastNameCommand
-	(*ChangeAccountV2LanguageCommand)(nil),                // 4: bucketeer.account.ChangeAccountV2LanguageCommand
-	(*ChangeAccountV2AvatarImageUrlCommand)(nil),          // 5: bucketeer.account.ChangeAccountV2AvatarImageUrlCommand
-	(*ChangeAccountV2OrganizationRoleCommand)(nil),        // 6: bucketeer.account.ChangeAccountV2OrganizationRoleCommand
-	(*ChangeAccountV2EnvironmentRolesCommand)(nil),        // 7: bucketeer.account.ChangeAccountV2EnvironmentRolesCommand
-	(*EnableAccountV2Command)(nil),                        // 8: bucketeer.account.EnableAccountV2Command
-	(*DisableAccountV2Command)(nil),                       // 9: bucketeer.account.DisableAccountV2Command
-	(*DeleteAccountV2Command)(nil),                        // 10: bucketeer.account.DeleteAccountV2Command
-	(*CreateAPIKeyCommand)(nil),                           // 11: bucketeer.account.CreateAPIKeyCommand
-	(*ChangeAPIKeyNameCommand)(nil),                       // 12: bucketeer.account.ChangeAPIKeyNameCommand
-	(*EnableAPIKeyCommand)(nil),                           // 13: bucketeer.account.EnableAPIKeyCommand
-	(*DisableAPIKeyCommand)(nil),                          // 14: bucketeer.account.DisableAPIKeyCommand
-	(*CreateSearchFilterCommand)(nil),                     // 15: bucketeer.account.CreateSearchFilterCommand
-	(*ChangeSearchFilterNameCommand)(nil),                 // 16: bucketeer.account.ChangeSearchFilterNameCommand
-	(*ChangeSearchFilterQueryCommand)(nil),                // 17: bucketeer.account.ChangeSearchFilterQueryCommand
-	(*ChangeDefaultSearchFilterCommand)(nil),              // 18: bucketeer.account.ChangeDefaultSearchFilterCommand
-	(*DeleteSearchFilterCommand)(nil),                     // 19: bucketeer.account.DeleteSearchFilterCommand
-	(AccountV2_Role_Organization)(0),                      // 20: bucketeer.account.AccountV2.Role.Organization
-	(*AccountV2_EnvironmentRole)(nil),                     // 21: bucketeer.account.AccountV2.EnvironmentRole
-	(APIKey_Role)(0),                                      // 22: bucketeer.account.APIKey.Role
-	(FilterTargetType)(0),                                 // 23: bucketeer.account.FilterTargetType
+	(*ChangeAccountV2NameCommand)(nil),                    // 2: bucketeer.account.ChangeAccountV2NameCommand
+	(*ChangeAccountV2FirstNameCommand)(nil),               // 3: bucketeer.account.ChangeAccountV2FirstNameCommand
+	(*ChangeAccountV2LastNameCommand)(nil),                // 4: bucketeer.account.ChangeAccountV2LastNameCommand
+	(*ChangeAccountV2LanguageCommand)(nil),                // 5: bucketeer.account.ChangeAccountV2LanguageCommand
+	(*ChangeAccountV2AvatarImageUrlCommand)(nil),          // 6: bucketeer.account.ChangeAccountV2AvatarImageUrlCommand
+	(*ChangeAccountV2OrganizationRoleCommand)(nil),        // 7: bucketeer.account.ChangeAccountV2OrganizationRoleCommand
+	(*ChangeAccountV2EnvironmentRolesCommand)(nil),        // 8: bucketeer.account.ChangeAccountV2EnvironmentRolesCommand
+	(*EnableAccountV2Command)(nil),                        // 9: bucketeer.account.EnableAccountV2Command
+	(*DisableAccountV2Command)(nil),                       // 10: bucketeer.account.DisableAccountV2Command
+	(*DeleteAccountV2Command)(nil),                        // 11: bucketeer.account.DeleteAccountV2Command
+	(*CreateAPIKeyCommand)(nil),                           // 12: bucketeer.account.CreateAPIKeyCommand
+	(*ChangeAPIKeyNameCommand)(nil),                       // 13: bucketeer.account.ChangeAPIKeyNameCommand
+	(*EnableAPIKeyCommand)(nil),                           // 14: bucketeer.account.EnableAPIKeyCommand
+	(*DisableAPIKeyCommand)(nil),                          // 15: bucketeer.account.DisableAPIKeyCommand
+	(*CreateSearchFilterCommand)(nil),                     // 16: bucketeer.account.CreateSearchFilterCommand
+	(*ChangeSearchFilterNameCommand)(nil),                 // 17: bucketeer.account.ChangeSearchFilterNameCommand
+	(*ChangeSearchFilterQueryCommand)(nil),                // 18: bucketeer.account.ChangeSearchFilterQueryCommand
+	(*ChangeDefaultSearchFilterCommand)(nil),              // 19: bucketeer.account.ChangeDefaultSearchFilterCommand
+	(*DeleteSearchFilterCommand)(nil),                     // 20: bucketeer.account.DeleteSearchFilterCommand
+	(AccountV2_Role_Organization)(0),                      // 21: bucketeer.account.AccountV2.Role.Organization
+	(*AccountV2_EnvironmentRole)(nil),                     // 22: bucketeer.account.AccountV2.EnvironmentRole
+	(APIKey_Role)(0),                                      // 23: bucketeer.account.APIKey.Role
+	(FilterTargetType)(0),                                 // 24: bucketeer.account.FilterTargetType
 }
 var file_proto_account_command_proto_depIdxs = []int32{
-	20, // 0: bucketeer.account.CreateAccountV2Command.organization_role:type_name -> bucketeer.account.AccountV2.Role.Organization
-	21, // 1: bucketeer.account.CreateAccountV2Command.environment_roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
-	20, // 2: bucketeer.account.ChangeAccountV2OrganizationRoleCommand.role:type_name -> bucketeer.account.AccountV2.Role.Organization
-	21, // 3: bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
+	21, // 0: bucketeer.account.CreateAccountV2Command.organization_role:type_name -> bucketeer.account.AccountV2.Role.Organization
+	22, // 1: bucketeer.account.CreateAccountV2Command.environment_roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
+	21, // 2: bucketeer.account.ChangeAccountV2OrganizationRoleCommand.role:type_name -> bucketeer.account.AccountV2.Role.Organization
+	22, // 3: bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.roles:type_name -> bucketeer.account.AccountV2.EnvironmentRole
 	0,  // 4: bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.write_type:type_name -> bucketeer.account.ChangeAccountV2EnvironmentRolesCommand.WriteType
-	22, // 5: bucketeer.account.CreateAPIKeyCommand.role:type_name -> bucketeer.account.APIKey.Role
-	23, // 6: bucketeer.account.CreateSearchFilterCommand.filter_target_type:type_name -> bucketeer.account.FilterTargetType
+	23, // 5: bucketeer.account.CreateAPIKeyCommand.role:type_name -> bucketeer.account.APIKey.Role
+	24, // 6: bucketeer.account.CreateSearchFilterCommand.filter_target_type:type_name -> bucketeer.account.FilterTargetType
 	7,  // [7:7] is the sub-list for method output_type
 	7,  // [7:7] is the sub-list for method input_type
 	7,  // [7:7] is the sub-list for extension type_name
@@ -1260,7 +1320,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ChangeAccountV2FirstNameCommand); i {
+			switch v := v.(*ChangeAccountV2NameCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1272,7 +1332,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ChangeAccountV2LastNameCommand); i {
+			switch v := v.(*ChangeAccountV2FirstNameCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1284,7 +1344,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ChangeAccountV2LanguageCommand); i {
+			switch v := v.(*ChangeAccountV2LastNameCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1296,7 +1356,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ChangeAccountV2AvatarImageUrlCommand); i {
+			switch v := v.(*ChangeAccountV2LanguageCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1308,7 +1368,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ChangeAccountV2OrganizationRoleCommand); i {
+			switch v := v.(*ChangeAccountV2AvatarImageUrlCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1320,7 +1380,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ChangeAccountV2EnvironmentRolesCommand); i {
+			switch v := v.(*ChangeAccountV2OrganizationRoleCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1332,7 +1392,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*EnableAccountV2Command); i {
+			switch v := v.(*ChangeAccountV2EnvironmentRolesCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1344,7 +1404,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[8].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DisableAccountV2Command); i {
+			switch v := v.(*EnableAccountV2Command); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1356,7 +1416,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[9].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteAccountV2Command); i {
+			switch v := v.(*DisableAccountV2Command); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1368,7 +1428,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateAPIKeyCommand); i {
+			switch v := v.(*DeleteAccountV2Command); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1380,7 +1440,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ChangeAPIKeyNameCommand); i {
+			switch v := v.(*CreateAPIKeyCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1392,7 +1452,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[12].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*EnableAPIKeyCommand); i {
+			switch v := v.(*ChangeAPIKeyNameCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1404,7 +1464,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[13].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DisableAPIKeyCommand); i {
+			switch v := v.(*EnableAPIKeyCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1416,7 +1476,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[14].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*CreateSearchFilterCommand); i {
+			switch v := v.(*DisableAPIKeyCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1428,7 +1488,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[15].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ChangeSearchFilterNameCommand); i {
+			switch v := v.(*CreateSearchFilterCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1440,7 +1500,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[16].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ChangeSearchFilterQueryCommand); i {
+			switch v := v.(*ChangeSearchFilterNameCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1452,7 +1512,7 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[17].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ChangeDefaultSearchFilterCommand); i {
+			switch v := v.(*ChangeSearchFilterQueryCommand); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -1464,6 +1524,18 @@ func file_proto_account_command_proto_init() {
 			}
 		}
 		file_proto_account_command_proto_msgTypes[18].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ChangeDefaultSearchFilterCommand); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_account_command_proto_msgTypes[19].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteSearchFilterCommand); i {
 			case 0:
 				return &v.state
@@ -1482,7 +1554,7 @@ func file_proto_account_command_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_account_command_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   19,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
