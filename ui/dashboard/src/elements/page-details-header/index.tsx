@@ -2,18 +2,20 @@ import {
   IconAccessTimeOutlined,
   IconArrowBackFilled
 } from 'react-icons-material-design';
-import { useNavigate } from 'react-router-dom';
 import { cn } from 'utils/style';
 import Icon from 'components/icon';
 
-export type PageDetailHeaderProps = {
+export type PageDetailsHeaderProps = {
   title: string;
   description: string;
+  onBack: () => void;
 };
 
-const PageDetailHeader = ({ title, description }: PageDetailHeaderProps) => {
-  const navigate = useNavigate();
-
+const PageDetailsHeader = ({
+  title,
+  description,
+  onBack
+}: PageDetailsHeaderProps) => {
   return (
     <header className="grid pt-7 px-6">
       <button
@@ -21,7 +23,7 @@ const PageDetailHeader = ({ title, description }: PageDetailHeaderProps) => {
           'size-6 flex-center rounded hover:shadow-border-gray-500',
           'shadow-border-gray-400 text-gray-600'
         )}
-        onClick={() => navigate(-1)}
+        onClick={onBack}
       >
         <Icon icon={IconArrowBackFilled} size="xxs" />
       </button>
@@ -34,4 +36,4 @@ const PageDetailHeader = ({ title, description }: PageDetailHeaderProps) => {
   );
 };
 
-export default PageDetailHeader;
+export default PageDetailsHeader;

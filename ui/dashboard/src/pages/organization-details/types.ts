@@ -14,3 +14,8 @@ export interface OrganizationUsersFilters {
   searchQuery: string;
   organizationId?: string;
 }
+
+export interface TabItem {
+  readonly title: string;
+  readonly to: string;
+}
