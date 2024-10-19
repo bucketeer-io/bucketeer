@@ -11,6 +11,7 @@ SELECT
     disabled,
     created_at,
     updated_at,
+    last_seen,
     search_filters
 FROM
     account_v2

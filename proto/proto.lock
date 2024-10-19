@@ -182,6 +182,11 @@
                 "id": 13,
                 "name": "language",
                 "type": "string"
+              },
+              {
+                "id": 14,
+                "name": "last_seen",
+                "type": "int64"
               }
             ],
             "messages": [
@@ -1027,6 +1032,11 @@
                 "type": "string"
               },
               {
+                "id": 3,
+                "name": "change_name_command",
+                "type": "ChangeAccountV2NameCommand"
+              },
+              {
                 "id": 4,
                 "name": "change_avatar_url_command",
                 "type": "ChangeAccountV2AvatarImageUrlCommand"
@@ -1056,9 +1066,6 @@
                 "name": "change_language_command",
                 "type": "ChangeAccountV2LanguageCommand"
               }
-            ],
-            "reserved_ids": [
-              3
             ]
           },
           {

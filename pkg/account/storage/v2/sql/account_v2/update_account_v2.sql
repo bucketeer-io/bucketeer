@@ -10,6 +10,7 @@ SET
     environment_roles = ?,
     disabled = ?,
     updated_at = ?,
+    last_seen = ?,
     search_filters = ?
 WHERE
     email = ?

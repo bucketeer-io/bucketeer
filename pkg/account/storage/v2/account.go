@@ -90,6 +90,7 @@ func (s *accountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV
 		mysql.JSONObject{Val: a.EnvironmentRoles},
 		a.Disabled,
 		a.UpdatedAt,
+		a.LastSeen,
 		mysql.JSONObject{Val: a.SearchFilters},
 		a.Email,
 		a.OrganizationId,
@@ -184,6 +185,7 @@ func (s *accountStorage) GetAccountV2ByEnvironmentID(
 		&account.Disabled,
 		&account.CreatedAt,
 		&account.UpdatedAt,
+		&account.LastSeen,
 		&mysql.JSONObject{Val: &account.SearchFilters},
 	)
 	if err != nil {
