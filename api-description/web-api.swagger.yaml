@@ -2776,6 +2776,8 @@ definitions:
     properties:
       email:
         type: string
+      name:
+        type: string
       avatarImageUrl:
         type: string
       organizationId:
@@ -2806,6 +2808,9 @@ definitions:
         type: string
       language:
         type: string
+      lastSeen:
+        type: string
+        format: int64
   accountAccountV2EnvironmentRole:
     type: object
     properties:
@@ -2859,6 +2864,17 @@ definitions:
     properties:
       lastName:
         type: string
+  accountChangeAccountV2LastSeenCommand:
+    type: object
+    properties:
+      lastSeen:
+        type: string
+        format: int64
+  accountChangeAccountV2NameCommand:
+    type: object
+    properties:
+      name:
+        type: string
   accountChangeAccountV2OrganizationRoleCommand:
     type: object
     properties:
@@ -2889,6 +2905,8 @@ definitions:
     type: object
     properties:
       email:
+        type: string
+      name:
         type: string
       avatarUrl:
         type: string
@@ -2946,6 +2964,8 @@ definitions:
     type: object
     properties:
       email:
+        type: string
+      name:
         type: string
       avatarImageUrl:
         type: string
@@ -3301,6 +3321,8 @@ definitions:
         type: string
       organizationId:
         type: string
+      changeNameCommand:
+        $ref: '#/definitions/accountChangeAccountV2NameCommand'
       changeAvatarUrlCommand:
         $ref: '#/definitions/accountChangeAccountV2AvatarImageUrlCommand'
       changeOrganizationRoleCommand:
@@ -3313,6 +3335,8 @@ definitions:
         $ref: '#/definitions/accountChangeAccountV2LastNameCommand'
       changeLanguageCommand:
         $ref: '#/definitions/accountChangeAccountV2LanguageCommand'
+      changeLastSeenCommand:
+        $ref: '#/definitions/accountChangeAccountV2LastSeenCommand'
   accountUpdateAccountV2Response:
     type: object
   accountUpdateSearchFilterRequest:

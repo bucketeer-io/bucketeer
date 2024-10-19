@@ -88,6 +88,8 @@ func (h *accountV2CommandHandler) Handle(ctx context.Context, cmd Command) error
 		return h.changeDefaultSearchFilter(ctx, c)
 	case *accountproto.DeleteSearchFilterCommand:
 		return h.deleteSearchFiler(ctx, c)
+	case *accountproto.ChangeAccountV2LastSeenCommand:
+		return h.changeLastSeen(ctx, c)
 	default:
 		return ErrBadCommand
 	}
