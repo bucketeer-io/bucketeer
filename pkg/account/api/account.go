@@ -187,6 +187,9 @@ func (s *AccountService) UpdateAccountV2(
 
 func (s *AccountService) getUpdateAccountV2Commands(req *accountproto.UpdateAccountV2Request) []command.Command {
 	commands := make([]command.Command, 0)
+	if req.ChangeNameCommand != nil {
+		commands = append(commands, req.ChangeNameCommand)
+	}
 	if req.ChangeFirstNameCommand != nil {
 		commands = append(commands, req.ChangeFirstNameCommand)
 	}

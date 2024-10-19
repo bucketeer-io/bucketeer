@@ -84,7 +84,7 @@ message DeleteAccountV2Response {}
 message UpdateAccountV2Request {
   string email = 1;
   string organization_id = 2;
-  reserved 3;
+  ChangeAccountV2NameCommand change_name_command = 3;
   ChangeAccountV2AvatarImageUrlCommand change_avatar_url_command = 4;
   ChangeAccountV2OrganizationRoleCommand change_organization_role_command = 5;
   ChangeAccountV2EnvironmentRolesCommand change_environment_roles_command = 6;

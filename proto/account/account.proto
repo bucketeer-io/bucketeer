@@ -71,6 +71,7 @@ message AccountV2 {
   string first_name = 11;
   string last_name = 12;
   string language = 13;
+  int64 last_seen = 14;
 }
 
 message ConsoleAccount {
