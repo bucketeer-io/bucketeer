@@ -76,6 +76,9 @@ export class AccountV2 extends jspb.Message {
   getEmail(): string;
   setEmail(value: string): void;
 
+  getName(): string;
+  setName(value: string): void;
+
   getAvatarImageUrl(): string;
   setAvatarImageUrl(value: string): void;
 
@@ -123,6 +126,9 @@ export class AccountV2 extends jspb.Message {
   getLanguage(): string;
   setLanguage(value: string): void;
 
+  getLastSeen(): number;
+  setLastSeen(value: number): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AccountV2.AsObject;
   static toObject(includeInstance: boolean, msg: AccountV2): AccountV2.AsObject;
@@ -144,6 +150,7 @@ export class AccountV2 extends jspb.Message {
 export namespace AccountV2 {
   export type AsObject = {
     email: string;
+    name: string;
     avatarImageUrl: string;
     organizationId: string;
     organizationRole: AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap];
@@ -155,6 +162,7 @@ export namespace AccountV2 {
     firstName: string;
     lastName: string;
     language: string;
+    lastSeen: number;
   };
 
   export class Role extends jspb.Message {
@@ -239,6 +247,9 @@ export class ConsoleAccount extends jspb.Message {
   getEmail(): string;
   setEmail(value: string): void;
 
+  getName(): string;
+  setName(value: string): void;
+
   getAvatarUrl(): string;
   setAvatarUrl(value: string): void;
 
@@ -306,6 +317,7 @@ export class ConsoleAccount extends jspb.Message {
 export namespace ConsoleAccount {
   export type AsObject = {
     email: string;
+    name: string;
     avatarUrl: string;
     isSystemAdmin: boolean;
     organization?: proto_environment_organization_pb.Organization.AsObject;

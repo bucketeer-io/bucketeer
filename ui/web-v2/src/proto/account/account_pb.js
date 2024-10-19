@@ -569,6 +569,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         email: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        name: jspb.Message.getFieldWithDefault(msg, 2, ''),
         avatarImageUrl: jspb.Message.getFieldWithDefault(msg, 3, ''),
         organizationId: jspb.Message.getFieldWithDefault(msg, 4, ''),
         organizationRole: jspb.Message.getFieldWithDefault(msg, 5, 0),
@@ -587,7 +588,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         ),
         firstName: jspb.Message.getFieldWithDefault(msg, 11, ''),
         lastName: jspb.Message.getFieldWithDefault(msg, 12, ''),
-        language: jspb.Message.getFieldWithDefault(msg, 13, '')
+        language: jspb.Message.getFieldWithDefault(msg, 13, ''),
+        lastSeen: jspb.Message.getFieldWithDefault(msg, 14, 0)
       };
 
     if (includeInstance) {
@@ -631,6 +633,10 @@ proto.bucketeer.account.AccountV2.deserializeBinaryFromReader = function (
       case 1:
         var value = /** @type {string} */ (reader.readString());
         msg.setEmail(value);
+        break;
+      case 2:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setName(value);
         break;
       case 3:
         var value = /** @type {string} */ (reader.readString());
@@ -689,6 +695,10 @@ proto.bucketeer.account.AccountV2.deserializeBinaryFromReader = function (
         var value = /** @type {string} */ (reader.readString());
         msg.setLanguage(value);
         break;
+      case 14:
+        var value = /** @type {number} */ (reader.readInt64());
+        msg.setLastSeen(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -722,6 +732,10 @@ proto.bucketeer.account.AccountV2.serializeBinaryToWriter = function (
   f = message.getEmail();
   if (f.length > 0) {
     writer.writeString(1, f);
+  }
+  f = message.getName();
+  if (f.length > 0) {
+    writer.writeString(2, f);
   }
   f = message.getAvatarImageUrl();
   if (f.length > 0) {
@@ -774,6 +788,10 @@ proto.bucketeer.account.AccountV2.serializeBinaryToWriter = function (
   f = message.getLanguage();
   if (f.length > 0) {
     writer.writeString(13, f);
+  }
+  f = message.getLastSeen();
+  if (f !== 0) {
+    writer.writeInt64(14, f);
   }
 };
 
@@ -1093,6 +1111,22 @@ proto.bucketeer.account.AccountV2.prototype.setEmail = function (value) {
 };
 
 /**
+ * optional string name = 2;
+ * @return {string}
+ */
+proto.bucketeer.account.AccountV2.prototype.getName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.setName = function (value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+/**
  * optional string avatar_image_url = 3;
  * @return {string}
  */
@@ -1350,6 +1384,22 @@ proto.bucketeer.account.AccountV2.prototype.setLanguage = function (value) {
 };
 
 /**
+ * optional int64 last_seen = 14;
+ * @return {number}
+ */
+proto.bucketeer.account.AccountV2.prototype.getLastSeen = function () {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 14, 0));
+};
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.setLastSeen = function (value) {
+  return jspb.Message.setProto3IntField(this, 14, value);
+};
+
+/**
  * List of repeated fields within this message type.
  * @private {!Array<number>}
  * @const
@@ -1394,6 +1444,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         email: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        name: jspb.Message.getFieldWithDefault(msg, 2, ''),
         avatarUrl: jspb.Message.getFieldWithDefault(msg, 3, ''),
         isSystemAdmin: jspb.Message.getBooleanFieldWithDefault(msg, 4, false),
         organization:
@@ -1459,6 +1510,10 @@ proto.bucketeer.account.ConsoleAccount.deserializeBinaryFromReader = function (
       case 1:
         var value = /** @type {string} */ (reader.readString());
         msg.setEmail(value);
+        break;
+      case 2:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setName(value);
         break;
       case 3:
         var value = /** @type {string} */ (reader.readString());
@@ -1548,6 +1603,10 @@ proto.bucketeer.account.ConsoleAccount.serializeBinaryToWriter = function (
   f = message.getEmail();
   if (f.length > 0) {
     writer.writeString(1, f);
+  }
+  f = message.getName();
+  if (f.length > 0) {
+    writer.writeString(2, f);
   }
   f = message.getAvatarUrl();
   if (f.length > 0) {
@@ -1881,6 +1940,22 @@ proto.bucketeer.account.ConsoleAccount.prototype.getEmail = function () {
  */
 proto.bucketeer.account.ConsoleAccount.prototype.setEmail = function (value) {
   return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+/**
+ * optional string name = 2;
+ * @return {string}
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.getName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.ConsoleAccount} returns this
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.setName = function (value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 /**

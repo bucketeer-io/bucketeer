@@ -10,6 +10,9 @@ export class CreateAccountV2Command extends jspb.Message {
   getEmail(): string;
   setEmail(value: string): void;
 
+  getName(): string;
+  setName(value: string): void;
+
   getAvatarImageUrl(): string;
   setAvatarImageUrl(value: string): void;
 
@@ -61,12 +64,44 @@ export class CreateAccountV2Command extends jspb.Message {
 export namespace CreateAccountV2Command {
   export type AsObject = {
     email: string;
+    name: string;
     avatarImageUrl: string;
     organizationRole: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
     environmentRolesList: Array<proto_account_account_pb.AccountV2.EnvironmentRole.AsObject>;
     firstName: string;
     lastName: string;
     language: string;
+  };
+}
+
+export class ChangeAccountV2NameCommand extends jspb.Message {
+  getName(): string;
+  setName(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ChangeAccountV2NameCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ChangeAccountV2NameCommand
+  ): ChangeAccountV2NameCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ChangeAccountV2NameCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ChangeAccountV2NameCommand;
+  static deserializeBinaryFromReader(
+    message: ChangeAccountV2NameCommand,
+    reader: jspb.BinaryReader
+  ): ChangeAccountV2NameCommand;
+}
+
+export namespace ChangeAccountV2NameCommand {
+  export type AsObject = {
+    name: string;
   };
 }
 
@@ -195,6 +230,37 @@ export class ChangeAccountV2AvatarImageUrlCommand extends jspb.Message {
 export namespace ChangeAccountV2AvatarImageUrlCommand {
   export type AsObject = {
     avatarImageUrl: string;
+  };
+}
+
+export class ChangeAccountV2LastSeenCommand extends jspb.Message {
+  getLastSeen(): number;
+  setLastSeen(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ChangeAccountV2LastSeenCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ChangeAccountV2LastSeenCommand
+  ): ChangeAccountV2LastSeenCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ChangeAccountV2LastSeenCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ChangeAccountV2LastSeenCommand;
+  static deserializeBinaryFromReader(
+    message: ChangeAccountV2LastSeenCommand,
+    reader: jspb.BinaryReader
+  ): ChangeAccountV2LastSeenCommand;
+}
+
+export namespace ChangeAccountV2LastSeenCommand {
+  export type AsObject = {
+    lastSeen: number;
   };
 }
 
