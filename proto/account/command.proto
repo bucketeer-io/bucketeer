@@ -52,6 +52,10 @@ message ChangeAccountV2AvatarImageUrlCommand {
   string avatar_image_url = 1;
 }
 
+message ChangeAccountV2LastSeenCommand {
+  int64 last_seen = 1;
+}
+
 message ChangeAccountV2OrganizationRoleCommand {
   account.AccountV2.Role.Organization role = 1;
 }

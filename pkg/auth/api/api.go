@@ -209,15 +209,15 @@ func (s *authService) ExchangeToken(
 		return nil, err
 	}
 
-	err = s.updateUserInfoForOrganizations(ctx, userInfo, organizations)
-	if err != nil {
-		s.logger.Error("Failed to update user info for organizations", zap.Error(err))
-	}
+	s.updateUserInfoForOrganizations(ctx, userInfo, organizations)
 
 	token, err := s.generateToken(ctx, userInfo.Email, organizations, localizer)
 	if err != nil {
 		return nil, err
 	}
+
+	s.updateLastSeen(ctx, userInfo, organizations)
+
 	return &authproto.ExchangeTokenResponse{Token: token}, nil
 }
 
@@ -335,7 +335,7 @@ func (s *authService) updateUserInfoForOrganizations(
 	ctx context.Context,
 	userInfo *auth.UserInfo,
 	organizations []*envproto.Organization,
-) error {
+) {
 	for _, org := range organizations {
 		account, err := s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
 			Email:          userInfo.Email,
@@ -352,7 +352,7 @@ func (s *authService) updateUserInfoForOrganizations(
 			}
 		}
 
-		if account == nil || account.Account.LastSeen == 0 {
+		if account.Account.LastSeen == 0 {
 			updateReq := &acproto.UpdateAccountV2Request{
 				Email:          userInfo.Email,
 				OrganizationId: org.Id,
@@ -369,14 +369,39 @@ func (s *authService) updateUserInfoForOrganizations(
 			_, err = s.accountClient.UpdateAccountV2(ctx, updateReq)
 			if err != nil {
 				s.logger.Error(
-					"Failed to update account",
+					"Failed to update account first name, last name or avatar",
 					zap.Error(err),
+					zap.String("email", userInfo.Email),
 					zap.String("organizationId", org.Id),
 				)
 			}
 		}
 	}
-	return nil
+}
+
+func (s *authService) updateLastSeen(
+	ctx context.Context,
+	userInfo *auth.UserInfo,
+	organizations []*envproto.Organization,
+) {
+	for _, org := range organizations {
+		updateReq := &acproto.UpdateAccountV2Request{
+			Email:          userInfo.Email,
+			OrganizationId: org.Id,
+			ChangeLastSeenCommand: &acproto.ChangeAccountV2LastSeenCommand{
+				LastSeen: time.Now().Unix(),
+			},
+		}
+		_, err := s.accountClient.UpdateAccountV2(ctx, updateReq)
+		if err != nil {
+			s.logger.Error(
+				"Failed to update account last seen",
+				zap.Error(err),
+				zap.String("email", userInfo.Email),
+				zap.String("organizationId", org.Id),
+			)
+		}
+	}
 }
 
 func (s *authService) generateToken(

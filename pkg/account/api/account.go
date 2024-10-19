@@ -208,6 +208,9 @@ func (s *AccountService) getUpdateAccountV2Commands(req *accountproto.UpdateAcco
 	if req.ChangeEnvironmentRolesCommand != nil {
 		commands = append(commands, req.ChangeEnvironmentRolesCommand)
 	}
+	if req.ChangeLastSeenCommand != nil {
+		commands = append(commands, req.ChangeLastSeenCommand)
+	}
 	return commands
 }
 

@@ -242,6 +242,13 @@ func (h *accountV2CommandHandler) delete(ctx context.Context, _ *accountproto.De
 	})
 }
 
+func (h *accountV2CommandHandler) changeLastSeen(
+	ctx context.Context,
+	cmd *accountproto.ChangeAccountV2LastSeenCommand,
+) error {
+	return h.account.ChangeLastSeen(cmd.LastSeen)
+}
+
 func (h *accountV2CommandHandler) createSearchFilter(
 	ctx context.Context,
 	cmd *accountproto.CreateSearchFilterCommand) error {
