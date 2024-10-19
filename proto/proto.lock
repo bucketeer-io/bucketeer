@@ -572,6 +572,16 @@
             ]
           },
           {
+            "name": "ChangeAccountV2LastSeenCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "last_seen",
+                "type": "int64"
+              }
+            ]
+          },
+          {
             "name": "ChangeAccountV2OrganizationRoleCommand",
             "fields": [
               {
@@ -1065,6 +1075,11 @@
                 "id": 9,
                 "name": "change_language_command",
                 "type": "ChangeAccountV2LanguageCommand"
+              },
+              {
+                "id": 10,
+                "name": "change_last_seen_command",
+                "type": "ChangeAccountV2LastSeenCommand"
               }
             ]
           },

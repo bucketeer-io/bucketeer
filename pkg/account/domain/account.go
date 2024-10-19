@@ -114,6 +114,12 @@ func (a *AccountV2) PatchEnvironmentRole(patchRoles []*proto.AccountV2_Environme
 	return nil
 }
 
+func (a *AccountV2) ChangeLastSeen(lastSeen int64) error {
+	a.AccountV2.LastSeen = lastSeen
+	a.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
 func getEnvironmentRole(roles []*proto.AccountV2_EnvironmentRole, envID string) *proto.AccountV2_EnvironmentRole {
 	for _, r := range roles {
 		if r.EnvironmentId == envID {
