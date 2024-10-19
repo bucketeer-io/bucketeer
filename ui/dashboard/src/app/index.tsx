@@ -111,7 +111,7 @@ export const Root = memo(() => {
                   element={<OrganizationsRoot />}
                 />
                 <Route
-                  path={`${PAGE_PATH_ORGANIZATION_DETAILS}`}
+                  path={`${PAGE_PATH_ORGANIZATION_DETAILS}*`}
                   element={<OrganizationDetails />}
                 />
               </>

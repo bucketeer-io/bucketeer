@@ -71,4 +71,8 @@
   .sidebar-menu.active {
     @apply bg-primary-400 opacity-100;
   }
+
+  .tab-item.active {
+    @apply border-primary-500 text-primary-500;
+  }
 }
