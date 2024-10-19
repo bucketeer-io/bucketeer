@@ -1,12 +1,13 @@
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useQueryOrganizationDetails } from '@queries/organization-details';
+import { PAGE_PATH_ORGANIZATIONS } from 'constants/routing';
 import { useFormatDateTime } from 'utils/date-time';
-import InvalidMessage from 'elements/invalid-message';
-import PageDetailHeader from 'elements/page-details-header';
+import PageDetailsHeader from 'elements/page-details-header';
 import PageLayout from 'elements/page-layout';
 import PageContent from './page-content';
 
 const PageLoader = () => {
+  const navigate = useNavigate();
   const formatDateTime = useFormatDateTime();
   const { organizationId } = useParams();
 
@@ -15,20 +16,20 @@ const PageLoader = () => {
   });
 
   const organization = data?.organization;
+  const isErrorState = isError || !organization;
 
   return (
     <>
       {isLoading ? (
         <PageLayout.LoadingState />
-      ) : isError ? (
+      ) : isErrorState ? (
         <PageLayout.ErrorState onRetry={refetch} />
-      ) : !organization ? (
-        <InvalidMessage>{`Invalid data`}</InvalidMessage>
       ) : (
         <>
-          <PageDetailHeader
+          <PageDetailsHeader
             title={organization.name}
             description={`Created ${formatDateTime(organization.createdAt)}`}
+            onBack={() => navigate(`${PAGE_PATH_ORGANIZATIONS}`)}
           />
           <PageContent organization={organization} />
         </>
