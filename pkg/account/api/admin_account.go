@@ -134,6 +134,7 @@ func (s *AccountService) GetMe(
 		adminEnvRoles := s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
 		return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
 			Email:            sysAdminAccount.Email,
+			Name:             sysAdminAccount.Name,
 			AvatarUrl:        sysAdminAccount.AvatarImageUrl,
 			IsSystemAdmin:    true,
 			Organization:     organization,
@@ -153,6 +154,7 @@ func (s *AccountService) GetMe(
 	envRoles := s.getConsoleAccountEnvironmentRoles(account.EnvironmentRoles, environments, projects)
 	return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
 		Email:            account.Email,
+		Name:             account.Name,
 		AvatarUrl:        account.AvatarImageUrl,
 		IsSystemAdmin:    false,
 		Organization:     organization,
