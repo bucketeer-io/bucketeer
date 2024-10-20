@@ -883,8 +883,9 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       const targetingPathname = `/${nextLocation.pathname.split('/')?.[4]}`;
 
       if (
-        newPathname !== newNextPathname || // If the user is trying to go to a different page
-        targetingPathname === PAGE_PATH_FEATURE_TARGETING // If the user is trying to go to a targeting page
+        newNextPathname && // If the user is logged out and re login
+        (newPathname !== newNextPathname || // If the user is trying to go to a different page
+          targetingPathname === PAGE_PATH_FEATURE_TARGETING) // If the user is trying to go to a targeting page
       ) {
         setNextLocation(nextLocation); // Save the location the user is trying to go to
         setShowSaveChangesDialog(true); // Show custom confirmation popup
