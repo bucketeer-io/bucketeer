@@ -28,7 +28,9 @@ message CreatePushRequest {
   bytes fcm_service_account = 5;
 }
 
-message CreatePushResponse {}
+message CreatePushResponse {
+  Push push = 1;
+}
 
 message ListPushesRequest {
   enum OrderBy {

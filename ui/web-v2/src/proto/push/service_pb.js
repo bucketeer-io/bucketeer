@@ -602,7 +602,11 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {};
+      obj = {
+        push:
+          (f = msg.getPush()) &&
+          proto_push_push_pb.Push.toObject(includeInstance, f)
+      };
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -642,6 +646,14 @@ proto.bucketeer.push.CreatePushResponse.deserializeBinaryFromReader = function (
     }
     var field = reader.getFieldNumber();
     switch (field) {
+      case 1:
+        var value = new proto_push_push_pb.Push();
+        reader.readMessage(
+          value,
+          proto_push_push_pb.Push.deserializeBinaryFromReader
+        );
+        msg.setPush(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -676,6 +688,44 @@ proto.bucketeer.push.CreatePushResponse.serializeBinaryToWriter = function (
   writer
 ) {
   var f = undefined;
+  f = message.getPush();
+  if (f != null) {
+    writer.writeMessage(1, f, proto_push_push_pb.Push.serializeBinaryToWriter);
+  }
+};
+
+/**
+ * optional Push push = 1;
+ * @return {?proto.bucketeer.push.Push}
+ */
+proto.bucketeer.push.CreatePushResponse.prototype.getPush = function () {
+  return /** @type{?proto.bucketeer.push.Push} */ (
+    jspb.Message.getWrapperField(this, proto_push_push_pb.Push, 1)
+  );
+};
+
+/**
+ * @param {?proto.bucketeer.push.Push|undefined} value
+ * @return {!proto.bucketeer.push.CreatePushResponse} returns this
+ */
+proto.bucketeer.push.CreatePushResponse.prototype.setPush = function (value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.push.CreatePushResponse} returns this
+ */
+proto.bucketeer.push.CreatePushResponse.prototype.clearPush = function () {
+  return this.setPush(undefined);
+};
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.push.CreatePushResponse.prototype.hasPush = function () {
+  return jspb.Message.getField(this, 1) != null;
 };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

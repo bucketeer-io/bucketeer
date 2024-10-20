@@ -21,6 +21,7 @@ import (
 	"errors"
 	"strconv"
 
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -29,6 +30,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -240,7 +242,9 @@ func (s *PushService) CreatePush(
 		}
 		return nil, dt.Err()
 	}
-	return &pushproto.CreatePushResponse{}, nil
+	return &pushproto.CreatePushResponse{
+		Push: push.Push,
+	}, nil
 }
 
 // CreatePushV2 implement logic without command
@@ -319,38 +323,10 @@ func (s *PushService) CreatePushV2(
 		}
 		return nil, dt.Err()
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		pushStorage := v2ps.NewPushStorage(tx)
-		if err := pushStorage.CreatePush(ctx, push, req.EnvironmentNamespace); err != nil {
-			return err
-		}
-		handler, err := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentNamespace)
-		if err != nil {
-			return err
-		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
-			return err
-		}
-		return nil
 
-	})
+	var event *eventproto.Event
+	pushStorage := v2ps.NewPushStorage(s.mysqlClient)
+	err = pushStorage.CreatePush(ctx, push, req.EnvironmentNamespace)
 	if err != nil {
 		if err == v2ps.ErrPushAlreadyExists {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
@@ -378,7 +354,34 @@ func (s *PushService) CreatePushV2(
 		}
 		return nil, dt.Err()
 	}
-	return &pushproto.CreatePushResponse{}, nil
+	prev := &domain.Push{}
+	if err = copier.Copy(prev, push); err != nil {
+		return nil, err
+	}
+	event, err = domainevent.NewEvent(
+		editor,
+		eventproto.Event_PUSH,
+		push.Id,
+		eventproto.Event_PUSH_CREATED,
+		&eventproto.PushCreatedEvent{
+			FcmServiceAccount: push.FcmServiceAccount,
+			Tags:              push.Tags,
+			Name:              push.Name,
+		},
+		req.EnvironmentNamespace,
+		push,
+		prev,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err = s.publisher.Publish(ctx, event); err != nil {
+		return nil, err
+	}
+
+	return &pushproto.CreatePushResponse{
+		Push: push.Push,
+	}, nil
 }
 
 func (s *PushService) validateCreatePushRequest(req *pushproto.CreatePushRequest, localizer locale.Localizer) error {

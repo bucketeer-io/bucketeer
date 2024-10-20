@@ -26591,7 +26591,14 @@
             ]
           },
           {
-            "name": "CreatePushResponse"
+            "name": "CreatePushResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "push",
+                "type": "Push"
+              }
+            ]
           },
           {
             "name": "ListPushesRequest",

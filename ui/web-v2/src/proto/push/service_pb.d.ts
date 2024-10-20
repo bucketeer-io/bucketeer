@@ -59,6 +59,11 @@ export namespace CreatePushRequest {
 }
 
 export class CreatePushResponse extends jspb.Message {
+  hasPush(): boolean;
+  clearPush(): void;
+  getPush(): proto_push_push_pb.Push | undefined;
+  setPush(value?: proto_push_push_pb.Push): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreatePushResponse.AsObject;
   static toObject(
@@ -81,7 +86,9 @@ export class CreatePushResponse extends jspb.Message {
 }
 
 export namespace CreatePushResponse {
-  export type AsObject = {};
+  export type AsObject = {
+    push?: proto_push_push_pb.Push.AsObject;
+  };
 }
 
 export class ListPushesRequest extends jspb.Message {
