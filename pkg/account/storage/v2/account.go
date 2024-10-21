@@ -57,6 +57,9 @@ func (s *accountStorage) CreateAccountV2(ctx context.Context, a *domain.AccountV
 		insertAccountV2SQL,
 		a.Email,
 		a.Name,
+		a.FirstName,
+		a.LastName,
+		a.Language,
 		a.AvatarImageUrl,
 		a.OrganizationId,
 		int32(a.OrganizationRole),
@@ -79,11 +82,15 @@ func (s *accountStorage) UpdateAccountV2(ctx context.Context, a *domain.AccountV
 		ctx,
 		updateAccountV2SQL,
 		a.Name,
+		a.FirstName,
+		a.LastName,
+		a.Language,
 		a.AvatarImageUrl,
 		int32(a.OrganizationRole),
 		mysql.JSONObject{Val: a.EnvironmentRoles},
 		a.Disabled,
 		a.UpdatedAt,
+		a.LastSeen,
 		mysql.JSONObject{Val: a.SearchFilters},
 		a.Email,
 		a.OrganizationId,
@@ -132,6 +139,9 @@ func (s *accountStorage) GetAccountV2(ctx context.Context, email, organizationID
 	).Scan(
 		&account.Email,
 		&account.Name,
+		&account.FirstName,
+		&account.LastName,
+		&account.Language,
 		&account.AvatarImageUrl,
 		&account.OrganizationId,
 		&organizationRole,
@@ -139,6 +149,7 @@ func (s *accountStorage) GetAccountV2(ctx context.Context, email, organizationID
 		&account.Disabled,
 		&account.CreatedAt,
 		&account.UpdatedAt,
+		&account.LastSeen,
 		&mysql.JSONObject{Val: &account.SearchFilters},
 	)
 	if err != nil {
@@ -165,6 +176,9 @@ func (s *accountStorage) GetAccountV2ByEnvironmentID(
 	).Scan(
 		&account.Email,
 		&account.Name,
+		&account.FirstName,
+		&account.LastName,
+		&account.Language,
 		&account.AvatarImageUrl,
 		&account.OrganizationId,
 		&organizationRole,
@@ -172,6 +186,7 @@ func (s *accountStorage) GetAccountV2ByEnvironmentID(
 		&account.Disabled,
 		&account.CreatedAt,
 		&account.UpdatedAt,
+		&account.LastSeen,
 		&mysql.JSONObject{Val: &account.SearchFilters},
 	)
 	if err != nil {
@@ -201,6 +216,9 @@ func (s *accountStorage) GetAccountsWithOrganization(
 		err := rows.Scan(
 			&account.Email,
 			&account.Name,
+			&account.FirstName,
+			&account.LastName,
+			&account.Language,
 			&account.AvatarImageUrl,
 			&account.OrganizationId,
 			&organizationRole,
@@ -262,6 +280,9 @@ func (s *accountStorage) ListAccountsV2(
 		err := rows.Scan(
 			&account.Email,
 			&account.Name,
+			&account.FirstName,
+			&account.LastName,
+			&account.Language,
 			&account.AvatarImageUrl,
 			&account.OrganizationId,
 			&organizationRole,

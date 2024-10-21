@@ -117,6 +117,18 @@ export class AccountV2 extends jspb.Message {
     index?: number
   ): proto_account_search_filter_pb.SearchFilter;
 
+  getFirstName(): string;
+  setFirstName(value: string): void;
+
+  getLastName(): string;
+  setLastName(value: string): void;
+
+  getLanguage(): string;
+  setLanguage(value: string): void;
+
+  getLastSeen(): number;
+  setLastSeen(value: number): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AccountV2.AsObject;
   static toObject(includeInstance: boolean, msg: AccountV2): AccountV2.AsObject;
@@ -147,6 +159,10 @@ export namespace AccountV2 {
     createdAt: number;
     updatedAt: number;
     searchFiltersList: Array<proto_account_search_filter_pb.SearchFilter.AsObject>;
+    firstName: string;
+    lastName: string;
+    language: string;
+    lastSeen: number;
   };
 
   export class Role extends jspb.Message {
@@ -268,6 +284,15 @@ export class ConsoleAccount extends jspb.Message {
     index?: number
   ): proto_account_search_filter_pb.SearchFilter;
 
+  getFirstName(): string;
+  setFirstName(value: string): void;
+
+  getLastName(): string;
+  setLastName(value: string): void;
+
+  getLanguage(): string;
+  setLanguage(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ConsoleAccount.AsObject;
   static toObject(
@@ -299,6 +324,9 @@ export namespace ConsoleAccount {
     organizationRole: AccountV2.Role.OrganizationMap[keyof AccountV2.Role.OrganizationMap];
     environmentRolesList: Array<ConsoleAccount.EnvironmentRole.AsObject>;
     searchFiltersList: Array<proto_account_search_filter_pb.SearchFilter.AsObject>;
+    firstName: string;
+    lastName: string;
+    language: string;
   };
 
   export class EnvironmentRole extends jspb.Message {
