@@ -342,14 +342,13 @@ func (s *authService) updateUserInfoForOrganizations(
 			OrganizationId: org.Id,
 		})
 		if err != nil {
-			if status.Code(err) != codes.NotFound {
-				s.logger.Error(
-					"Failed to get account",
-					zap.Error(err),
-					zap.String("organizationId", org.Id),
-				)
-				continue
-			}
+			s.logger.Error(
+				"Failed to get account",
+				zap.Error(err),
+				zap.String("email", userInfo.Email),
+				zap.String("organizationId", org.Id),
+			)
+			continue
 		}
 
 		if account.Account.LastSeen == 0 {
