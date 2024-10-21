@@ -537,6 +537,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     const location = useLocation();
     const [unsavedChanges, setUnsavedChanges] = useState(false);
     const [nextLocation, setNextLocation] = useState(null);
+    const [isFilterLoading, setIsFilterLoading] = useState(false);
     const [showSaveChangesDialog, setShowSaveChangesDialog] = useState(false);
     const [unsavedSearchFilterId, setUnsavedSearchFilterId] = useState(null);
 
@@ -740,11 +741,12 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
         fetchMe({
           organizationId: currentEnvironment.organizationId
         })
-      );
+      ).then(() => setIsFilterLoading(false));
     };
 
     const handleFormSubmit = useCallback(
       async (data) => {
+        setIsFilterLoading(true);
         setOpen(false);
 
         const query = stringifySearchParams({
@@ -792,6 +794,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     );
 
     const handleDeleteSearchFilter = (id: string) => {
+      setIsFilterLoading(true);
       if (id === selectedSearchFilter?.id || searchFiltersList.length === 1) {
         onChange(defaultOptions);
         setSelectedSearchFilter(null);
@@ -820,6 +823,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     };
 
     const handleSaveChanges = (id: string) => {
+      setIsFilterLoading(true);
       dispatch(
         changeSearchFilterQuery({
           id,
@@ -883,8 +887,9 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
       const targetingPathname = `/${nextLocation.pathname.split('/')?.[4]}`;
 
       if (
-        newPathname !== newNextPathname || // If the user is trying to go to a different page
-        targetingPathname === PAGE_PATH_FEATURE_TARGETING // If the user is trying to go to a targeting page
+        newNextPathname && // If the user is logged out and re login
+        (newPathname !== newNextPathname || // If the user is trying to go to a different page
+          targetingPathname === PAGE_PATH_FEATURE_TARGETING) // If the user is trying to go to a targeting page
       ) {
         setNextLocation(nextLocation); // Save the location the user is trying to go to
         setShowSaveChangesDialog(true); // Show custom confirmation popup
@@ -1033,6 +1038,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
                 </HoverPopover>
               </div>
             )}
+            {isFilterLoading && <div className="spinner" />}
           </div>
           {open && (
             <AddEditShortcutModal
