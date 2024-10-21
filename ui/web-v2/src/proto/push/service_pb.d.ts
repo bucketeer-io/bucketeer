@@ -14,6 +14,19 @@ export class CreatePushRequest extends jspb.Message {
   getCommand(): proto_push_command_pb.CreatePushCommand | undefined;
   setCommand(value?: proto_push_command_pb.CreatePushCommand): void;
 
+  clearTagsList(): void;
+  getTagsList(): Array<string>;
+  setTagsList(value: Array<string>): void;
+  addTags(value: string, index?: number): string;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getFcmServiceAccount(): Uint8Array | string;
+  getFcmServiceAccount_asU8(): Uint8Array;
+  getFcmServiceAccount_asB64(): string;
+  setFcmServiceAccount(value: Uint8Array | string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreatePushRequest.AsObject;
   static toObject(
@@ -39,10 +52,18 @@ export namespace CreatePushRequest {
   export type AsObject = {
     environmentNamespace: string;
     command?: proto_push_command_pb.CreatePushCommand.AsObject;
+    tagsList: Array<string>;
+    name: string;
+    fcmServiceAccount: Uint8Array | string;
   };
 }
 
 export class CreatePushResponse extends jspb.Message {
+  hasPush(): boolean;
+  clearPush(): void;
+  getPush(): proto_push_push_pb.Push | undefined;
+  setPush(value?: proto_push_push_pb.Push): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreatePushResponse.AsObject;
   static toObject(
@@ -65,7 +86,9 @@ export class CreatePushResponse extends jspb.Message {
 }
 
 export namespace CreatePushResponse {
-  export type AsObject = {};
+  export type AsObject = {
+    push?: proto_push_push_pb.Push.AsObject;
+  };
 }
 
 export class ListPushesRequest extends jspb.Message {

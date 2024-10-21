@@ -26564,12 +26564,41 @@
               {
                 "id": 2,
                 "name": "command",
-                "type": "CreatePushCommand"
+                "type": "CreatePushCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "fcm_service_account",
+                "type": "bytes"
               }
             ]
           },
           {
-            "name": "CreatePushResponse"
+            "name": "CreatePushResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "push",
+                "type": "Push"
+              }
+            ]
           },
           {
             "name": "ListPushesRequest",

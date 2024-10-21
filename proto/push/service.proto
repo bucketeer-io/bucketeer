@@ -22,10 +22,15 @@ import "proto/push/command.proto";
 
 message CreatePushRequest {
   string environment_namespace = 1;
-  CreatePushCommand command = 2;
+  CreatePushCommand command = 2 [deprecated = true];
+  repeated string tags = 3;
+  string name = 4;
+  bytes fcm_service_account = 5;
 }
 
-message CreatePushResponse {}
+message CreatePushResponse {
+  Push push = 1;
+}
 
 message ListPushesRequest {
   enum OrderBy {
