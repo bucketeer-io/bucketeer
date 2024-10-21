@@ -8,6 +8,7 @@
     "archive-env": "Archive Environment",
     "edit-org": "Edit Organization",
     "archive-org": "Archive Organization",
+    "unarchive-org": "UnArchive Organization",
     "edit-user": "Edit User",
     "archive-user": "Archive User"
   },
