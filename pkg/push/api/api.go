@@ -241,6 +241,10 @@ func (s *PushService) CreatePush(
 		}
 		return nil, dt.Err()
 	}
+
+	// For security reasons we remove the service account from the API response
+	push.Push.FcmServiceAccount = ""
+
 	return &pushproto.CreatePushResponse{
 		Push: push.Push,
 	}, nil
@@ -253,7 +257,7 @@ func (s *PushService) createPushNoCommand(
 	localizer locale.Localizer,
 	editor *eventproto.Editor,
 ) (*pushproto.CreatePushResponse, error) {
-	if err := s.validateCreatePushRequestV2(req, localizer); err != nil {
+	if err := s.validateCreatePushNoCommand(req, localizer); err != nil {
 		return nil, err
 	}
 	push, err := domain.NewPush(
@@ -267,6 +271,7 @@ func (s *PushService) createPushNoCommand(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("name", req.Name),
 				zap.Strings("tags", req.Tags),
 			)...,
 		)
@@ -310,6 +315,7 @@ func (s *PushService) createPushNoCommand(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("name", req.Name),
 				zap.Strings("tags", req.Tags),
 			)...,
 		)
@@ -324,8 +330,55 @@ func (s *PushService) createPushNoCommand(
 	}
 
 	var event *eventproto.Event
-	pushStorage := v2ps.NewPushStorage(s.mysqlClient)
-	err = pushStorage.CreatePush(ctx, push, req.EnvironmentNamespace)
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		pushStorage := v2ps.NewPushStorage(tx)
+		if err := pushStorage.CreatePush(ctx, push, req.EnvironmentNamespace); err != nil {
+			return err
+		}
+		prev := &domain.Push{}
+		if err = copier.Copy(prev, push); err != nil {
+			return err
+		}
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_PUSH,
+			push.Id,
+			eventproto.Event_PUSH_CREATED,
+			&eventproto.PushCreatedEvent{
+				FcmServiceAccount: push.FcmServiceAccount,
+				Tags:              push.Tags,
+				Name:              push.Name,
+			},
+			req.EnvironmentNamespace,
+			push,
+			prev,
+		)
+		if err != nil {
+			return err
+		}
+		if err = s.publisher.Publish(ctx, event); err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		if err == v2ps.ErrPushAlreadyExists {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
@@ -342,6 +395,7 @@ func (s *PushService) createPushNoCommand(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("name", req.Name),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -353,30 +407,9 @@ func (s *PushService) createPushNoCommand(
 		}
 		return nil, dt.Err()
 	}
-	prev := &domain.Push{}
-	if err = copier.Copy(prev, push); err != nil {
-		return nil, err
-	}
-	event, err = domainevent.NewEvent(
-		editor,
-		eventproto.Event_PUSH,
-		push.Id,
-		eventproto.Event_PUSH_CREATED,
-		&eventproto.PushCreatedEvent{
-			FcmServiceAccount: push.FcmServiceAccount,
-			Tags:              push.Tags,
-			Name:              push.Name,
-		},
-		req.EnvironmentNamespace,
-		push,
-		prev,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if err = s.publisher.Publish(ctx, event); err != nil {
-		return nil, err
-	}
+
+	// For security reasons we remove the service account from the API response
+	push.Push.FcmServiceAccount = ""
 
 	return &pushproto.CreatePushResponse{
 		Push: push.Push,
@@ -417,7 +450,7 @@ func (s *PushService) validateCreatePushRequest(req *pushproto.CreatePushRequest
 	return nil
 }
 
-func (s *PushService) validateCreatePushRequestV2(req *pushproto.CreatePushRequest, localizer locale.Localizer) error {
+func (s *PushService) validateCreatePushNoCommand(req *pushproto.CreatePushRequest, localizer locale.Localizer) error {
 	if string(req.FcmServiceAccount) == "" {
 		dt, err := statusFCMServiceAccountRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

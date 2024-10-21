@@ -216,7 +216,7 @@ func TestCreatePushMySQL(t *testing.T) {
 	}
 }
 
-func TestCreatePushV2MySQL(t *testing.T) {
+func TestCreatePushNoCommandMySQL(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -281,9 +281,10 @@ func TestCreatePushV2MySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, v2ps.ErrPushAlreadyExists)
+				).Return(v2ps.ErrPushAlreadyExists)
 			},
 			req: &pushproto.CreatePushRequest{
 				EnvironmentNamespace: "ns0",
@@ -308,11 +309,9 @@ func TestCreatePushV2MySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, nil)
-				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
-					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req: &pushproto.CreatePushRequest{
