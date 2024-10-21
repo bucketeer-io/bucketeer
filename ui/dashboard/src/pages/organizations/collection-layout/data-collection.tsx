@@ -19,7 +19,7 @@ export const useColumns = (): ColumnDef<Organization>[] => {
         const organization = row.original;
         return (
           <Link
-            to={`/organizations/${organization.id}`}
+            to={`${organization.id}`}
             className="underline text-primary-500 typo-para-medium"
           >
             {organization.name}

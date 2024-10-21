@@ -3,7 +3,7 @@ import PageHeader from 'elements/page-header';
 import PageLayout from 'elements/page-layout';
 import PageLoader from './page-loader';
 
-const OrganizationPage = () => {
+const OrganizationsPage = () => {
   const { t } = useTranslation(['common']);
 
   return (
@@ -17,4 +17,4 @@ const OrganizationPage = () => {
   );
 };
 
-export default OrganizationPage;
+export default OrganizationsPage;
