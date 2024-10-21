@@ -1,14 +1,13 @@
 import { IconAddOutlined } from 'react-icons-material-design';
-import { PAGE_PATH_ORGANIZATIONS } from 'constants/routing';
 import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
-import { OrderBy, OrderDirection } from '@types';
+import { CollectionStatusType, OrderBy, OrderDirection } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
 import Icon from 'components/icon';
-import { Tabs, TabsList, TabsContent, TabsLink } from 'components/tabs-link';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from 'components/tabs';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
@@ -24,7 +23,8 @@ const PageContent = ({ onAdd }: { onAdd: () => void }) => {
     page: Number(searchOptions.page) || 1,
     orderBy: (searchOptions.orderBy as OrderBy) || 'DEFAULT',
     orderDirection: (searchOptions.orderDirection as OrderDirection) || 'ASC',
-    searchQuery: (searchOptions.searchQuery as string) || ''
+    searchQuery: (searchOptions.searchQuery as string) || '',
+    status: (searchOptions.status as CollectionStatusType) || 'ACTIVE'
   });
 
   const onChangeFilters = (values: Partial<OrganizationFilters>) => {
@@ -45,17 +45,19 @@ const PageContent = ({ onAdd }: { onAdd: () => void }) => {
         searchValue={filters.searchQuery}
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
-      <Tabs className="mt-6">
+      <Tabs
+        className="flex-1 flex h-full flex-col mt-6"
+        defaultValue={filters.status}
+        onValueChange={value =>
+          onChangeFilters({ status: value as CollectionStatusType })
+        }
+      >
         <TabsList>
-          <TabsLink to={`${PAGE_PATH_ORGANIZATIONS}/active`}>
-            {t(`active`)}
-          </TabsLink>
-          <TabsLink to={`${PAGE_PATH_ORGANIZATIONS}/archived`}>
-            {t(`archived`)}
-          </TabsLink>
+          <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
+          <TabsTrigger value="ARCHIVED">{t(`archived`)}</TabsTrigger>
         </TabsList>
 
-        <TabsContent className="mt-4">
+        <TabsContent value={filters.status}>
           <CollectionLoader
             onAdd={onAdd}
             filters={filters}

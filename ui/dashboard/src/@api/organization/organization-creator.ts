@@ -4,8 +4,8 @@ import { Organization } from '@types';
 export interface OrganizationCreatorCommand {
   name: string;
   urlCode: string;
-  description: string;
-  isTrial: boolean;
+  description?: string;
+  isTrial?: boolean;
   isSystemAdmin: boolean;
   ownerEmail: string;
 }
