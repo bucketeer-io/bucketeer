@@ -149,6 +149,7 @@ func (s *accountStorage) GetAccountV2(ctx context.Context, email, organizationID
 		&account.Disabled,
 		&account.CreatedAt,
 		&account.UpdatedAt,
+		&account.LastSeen,
 		&mysql.JSONObject{Val: &account.SearchFilters},
 	)
 	if err != nil {
