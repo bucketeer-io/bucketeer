@@ -18,7 +18,7 @@ export type OrderBy =
 
 export type OrderDirection = 'ASC' | 'DESC';
 
-export type CollectionStatusType = 'active' | 'archived';
+export type CollectionStatusType = 'ACTIVE' | 'ARCHIVED';
 
 export interface Collection<T> {
   data: T[];

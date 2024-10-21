@@ -5,7 +5,7 @@ export const isEmpty = (data: number | string | undefined | null | boolean) =>
   data === undefined || data === '' || data === null;
 
 export const isNotEmpty = (
-  data: number | string | undefined | null | boolean
+  data: number | string | undefined | null | boolean | string[]
 ) => data !== undefined && data !== '' && data !== null;
 
 export const isEmptyObject = (data: object) => Object.keys(data).length === 0;

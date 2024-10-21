@@ -16,8 +16,8 @@ import OrganizationUsers from './users';
 
 const PageContent = ({ organization }: { organization: Organization }) => {
   const { t } = useTranslation(['common']);
-  const { organizationStatus, organizationId } = useParams();
-  const url = `${PAGE_PATH_ORGANIZATIONS}/${organizationStatus}/${organizationId}`;
+  const { organizationId } = useParams();
+  const url = `${PAGE_PATH_ORGANIZATIONS}/${organizationId}`;
 
   const organizationTabs: Array<TabItem> = [
     {

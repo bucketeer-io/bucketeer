@@ -1,4 +1,3 @@
-import { useParams } from 'react-router-dom';
 import { SortingState } from '@tanstack/react-table';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { sortingListFields } from 'constants/collection';
@@ -20,17 +19,13 @@ const CollectionLoader = ({
   filters: OrganizationFilters;
   setFilters: (values: Partial<OrganizationFilters>) => void;
 }) => {
-  const { organizationStatus } = useParams();
   const columns = useColumns();
   const {
     data: collection,
     isLoading,
     refetch,
     isError
-  } = useFetchOrganizations({
-    ...filters,
-    archived: organizationStatus === 'archived'
-  });
+  } = useFetchOrganizations({ ...filters });
 
   const onSortingChangeHandler = (sorting: SortingState) => {
     const updateOrderBy =

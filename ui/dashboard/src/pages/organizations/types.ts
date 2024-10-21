@@ -1,10 +1,16 @@
 import { SortingState } from '@tanstack/react-table';
-import { OrderBy, OrderDirection, Organization } from '@types';
+import {
+  CollectionStatusType,
+  OrderBy,
+  OrderDirection,
+  Organization
+} from '@types';
 
 export interface OrganizationFilters {
   page: number;
   orderBy: OrderBy;
   orderDirection: OrderDirection;
+  status: CollectionStatusType;
   searchQuery: string;
   disabled?: boolean;
 }
