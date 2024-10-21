@@ -11,7 +11,7 @@ import * as yup from 'yup';
 import { IconGoal } from '@icons';
 import { AvatarIcon, AvatarImage } from 'components/avatar';
 import { Badge } from 'components/badge';
-import { Button } from 'components/button';
+import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
 import Form from 'components/form';

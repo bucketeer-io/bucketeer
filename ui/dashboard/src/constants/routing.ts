@@ -10,6 +10,8 @@ export const PAGE_PATH_GOALS = '/goals';
 export const PAGE_PATH_APIKEYS = '/api-keys';
 export const PAGE_PATH_USER_SEGMENTS = '/segments';
 export const PAGE_PATH_USERS = '/users';
+export const PAGE_PATH_USAGE = '/usage';
+export const PAGE_PATH_MEMBERS = '/members';
 export const PAGE_PATH_AUDIT_LOGS = '/audit-logs';
 export const PAGE_PATH_DEBUGGER = '/debugger';
 export const PAGE_PATH_ACCOUNTS = '/accounts';
@@ -18,6 +20,8 @@ export const PAGE_PATH_SETTINGS = '/settings';
 export const PAGE_PATH_PUSHES = '/pushes';
 export const PAGE_PATH_NOTIFICATIONS = '/notifications';
 export const PAGE_PATH_PROJECTS = '/projects';
+export const PAGE_PATH_PROJECT_DETAILS = '/project/:projectId';
+export const PAGE_PATH_ORGANIZATIONS = '/organizations';
 export const PAGE_PATH_ENVIRONMENTS = '/environments';
 
 export const PAGE_PATH_FEATURE_CLONE = '/clone';
@@ -32,3 +36,6 @@ export const PAGE_PATH_FEATURE_HISTORY = '/history';
 
 export const PAGE_PATH_AUTH_CALLBACK = '/auth/callback';
 export const PAGE_PATH_AUTH_SIGNIN = '/auth/signin';
+
+export const PAGE_PATH_INTEGRATION_SLACK = '/integration/slack';
+export const PAGE_PATH_INTEGRATION_FCM = '/integration/fcm';
