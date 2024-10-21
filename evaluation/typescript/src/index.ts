@@ -1,4 +1,6 @@
 import { Evaluator } from './evaluation';
+import { SegmentUser, SegmentUsers } from './proto/feature/segment_pb';
+import { Feature } from './proto/feature/feature_pb';
 import { NewUserEvaluations } from './userEvaluation';
 import {
   createClause,
@@ -18,6 +20,7 @@ import {
 
 export { Evaluator };
 export { NewUserEvaluations };
+export { SegmentUser, SegmentUsers, Feature };
 export {
   createClause,
   createFixedStrategy,
@@ -33,3 +36,4 @@ export {
   createUser,
   createVariation
 };
+
