@@ -213,7 +213,6 @@ func (s *PushService) CreatePush(
 			return err
 		}
 		return nil
-
 	})
 	if err != nil {
 		if err == v2ps.ErrPushAlreadyExists {
