@@ -111,7 +111,7 @@ func (s *PushService) CreatePush(
 		return nil, err
 	}
 	if req.Command == nil {
-		return s.CreatePushV2(ctx, req, localizer, editor)
+		return s.createPushNoCommand(ctx, req, localizer, editor)
 	}
 
 	if err := s.validateCreatePushRequest(req, localizer); err != nil {
@@ -246,8 +246,8 @@ func (s *PushService) CreatePush(
 	}, nil
 }
 
-// CreatePushV2 implement logic without command
-func (s *PushService) CreatePushV2(
+// createPushNoCommand implement logic without command
+func (s *PushService) createPushNoCommand(
 	ctx context.Context,
 	req *pushproto.CreatePushRequest,
 	localizer locale.Localizer,
