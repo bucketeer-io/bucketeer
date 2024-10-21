@@ -42,6 +42,7 @@ func (s *accountStorage) GetSystemAdminAccountV2(ctx context.Context, email stri
 		email,
 	).Scan(
 		&account.Email,
+		&account.Name,
 		&account.FirstName,
 		&account.LastName,
 		&account.Language,
