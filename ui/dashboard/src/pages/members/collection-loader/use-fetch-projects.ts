@@ -1,12 +1,11 @@
 import { useQueryProjects } from '@queries/projects';
 import { LIST_PAGE_SIZE } from 'constants/app';
-import { CollectionStatusType, OrderBy, OrderDirection } from '@types';
+import { OrderBy, OrderDirection } from '@types';
 
 export const useFetchProjects = ({
   page = 1,
   pageSize,
   orderBy,
-  status,
   searchQuery,
   orderDirection,
   organizationIds
@@ -15,7 +14,6 @@ export const useFetchProjects = ({
   page?: number;
   searchQuery?: string;
   orderBy?: OrderBy;
-  status?: CollectionStatusType;
   orderDirection?: OrderDirection;
   organizationIds?: string[];
 } = {}) => {
@@ -28,7 +26,6 @@ export const useFetchProjects = ({
       orderBy,
       orderDirection,
       searchKeyword: searchQuery,
-      archived: status ? status === 'ARCHIVED' : undefined,
       organizationIds
     }
   });

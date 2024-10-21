@@ -16,8 +16,8 @@ import OrganizationUsers from './users';
 
 const PageContent = ({ organization }: { organization: Organization }) => {
   const { t } = useTranslation(['common']);
-  const { organizationId } = useParams();
-  const url = `${PAGE_PATH_ORGANIZATIONS}/${organizationId}`;
+  const { organizationStatus, organizationId } = useParams();
+  const url = `${PAGE_PATH_ORGANIZATIONS}/${organizationStatus}/${organizationId}`;
 
   const organizationTabs: Array<TabItem> = [
     {
@@ -36,7 +36,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
 
   return (
     <PageLayout.Content className="pt-4">
-      <Tabs className="flex-1 flex h-full flex-col">
+      <Tabs>
         <TabsList>
           {organizationTabs.map((item, index) => (
             <TabsLink key={index} to={`${url}${item.to}`}>

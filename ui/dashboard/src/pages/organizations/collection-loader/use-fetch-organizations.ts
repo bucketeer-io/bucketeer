@@ -1,12 +1,12 @@
 import { useQueryOrganizations } from '@queries/organizations';
 import { LIST_PAGE_SIZE } from 'constants/app';
-import { CollectionStatusType, OrderBy, OrderDirection } from '@types';
+import { OrderBy, OrderDirection } from '@types';
 
 export const useFetchOrganizations = ({
   page = 1,
   pageSize,
   orderBy,
-  status,
+  archived,
   searchQuery,
   orderDirection
 }: {
@@ -14,7 +14,7 @@ export const useFetchOrganizations = ({
   page?: number;
   searchQuery?: string;
   orderBy?: OrderBy;
-  status?: CollectionStatusType;
+  archived?: boolean;
   orderDirection?: OrderDirection;
 } = {}) => {
   const cursor = (page - 1) * LIST_PAGE_SIZE;
@@ -25,8 +25,8 @@ export const useFetchOrganizations = ({
       cursor: String(cursor),
       orderBy,
       orderDirection,
-      searchKeyword: searchQuery,
-      archived: status ? status === 'ARCHIVED' : undefined
+      archived,
+      searchKeyword: searchQuery
     }
   });
 };

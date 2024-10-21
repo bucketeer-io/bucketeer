@@ -9,7 +9,7 @@ import PageContent from './page-content';
 const PageLoader = () => {
   const navigate = useNavigate();
   const formatDateTime = useFormatDateTime();
-  const { organizationId } = useParams();
+  const { organizationStatus, organizationId } = useParams();
 
   const { data, isLoading, refetch, isError } = useQueryOrganizationDetails({
     params: { id: organizationId! }
@@ -29,7 +29,9 @@ const PageLoader = () => {
           <PageDetailsHeader
             title={organization.name}
             description={`Created ${formatDateTime(organization.createdAt)}`}
-            onBack={() => navigate(`${PAGE_PATH_ORGANIZATIONS}`)}
+            onBack={() =>
+              navigate(`${PAGE_PATH_ORGANIZATIONS}/${organizationStatus}`)
+            }
           />
           <PageContent organization={organization} />
         </>

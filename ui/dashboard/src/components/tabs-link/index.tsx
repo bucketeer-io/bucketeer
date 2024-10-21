@@ -27,8 +27,8 @@ const TabsList = React.forwardRef<
   />
 ));
 
-const TabsLink = React.forwardRef<HTMLLinkElement, NavLinkProps>(
-  ({ className, to, ...props }) => (
+const TabsLink = React.forwardRef<HTMLAnchorElement, NavLinkProps>(
+  ({ className, to, ...props }, ref) => (
     <NavLink
       to={to}
       className={cn(
@@ -37,6 +37,7 @@ const TabsLink = React.forwardRef<HTMLLinkElement, NavLinkProps>(
         className
       )}
       {...props}
+      ref={ref}
     />
   )
 );
