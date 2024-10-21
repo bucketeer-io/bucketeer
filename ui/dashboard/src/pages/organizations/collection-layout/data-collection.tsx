@@ -1,12 +1,22 @@
-import { IconMoreHorizOutlined } from 'react-icons-material-design';
+import {
+  IconArchiveOutlined,
+  IconEditOutlined,
+  IconMoreHorizOutlined
+} from 'react-icons-material-design';
 import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslation } from 'i18n';
 import { Organization } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
-import Icon from 'components/icon';
+import { useSearchParams } from 'utils/search-params';
+import { Popover } from 'components/popover';
 
-export const useColumns = (): ColumnDef<Organization>[] => {
+export const useColumns = ({
+  onActionHandler
+}: {
+  onActionHandler: (type: string, v: Organization) => void;
+}): ColumnDef<Organization>[] => {
+  const { searchOptions } = useSearchParams();
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
 
@@ -88,11 +98,33 @@ export const useColumns = (): ColumnDef<Organization>[] => {
         style: { textAlign: 'center', fitContent: true }
       },
       enableSorting: false,
-      cell: () => {
+      cell: ({ row }) => {
+        const organization = row.original;
+
         return (
-          <button className="flex-center text-gray-600">
-            <Icon icon={IconMoreHorizOutlined} size="sm" />
-          </button>
+          <Popover
+            options={[
+              {
+                label: `${t('table:popover.edit-org')}`,
+                icon: IconEditOutlined,
+                value: 'EDIT_ORGANIZATION'
+              },
+              searchOptions.status === 'ARCHIVED'
+                ? {
+                    label: `${t('table:popover.unarchive-org')}`,
+                    icon: IconArchiveOutlined,
+                    value: 'UNARCHIVE_ORGANIZATION'
+                  }
+                : {
+                    label: `${t('table:popover.archive-org')}`,
+                    icon: IconArchiveOutlined,
+                    value: 'ARCHIVED_ORGANIZATION'
+                  }
+            ]}
+            icon={IconMoreHorizOutlined}
+            onClick={value => onActionHandler(value as string, organization)}
+            align="end"
+          />
         );
       }
     }

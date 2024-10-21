@@ -1,8 +1,16 @@
 import { IconAddOutlined } from 'react-icons-material-design';
+import { organizationArchive, organizationUnArchive } from '@api/organization';
+import { invalidateOrganizations } from '@queries/organizations';
+import { useQueryClient } from '@tanstack/react-query';
 import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
-import { CollectionStatusType, OrderBy, OrderDirection } from '@types';
+import {
+  CollectionStatusType,
+  OrderBy,
+  OrderDirection,
+  Organization
+} from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
@@ -13,7 +21,14 @@ import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
 import { OrganizationFilters } from './types';
 
-const PageContent = ({ onAdd }: { onAdd: () => void }) => {
+const PageContent = ({
+  onAdd,
+  onEdit
+}: {
+  onAdd: () => void;
+  onEdit: (v: Organization) => void;
+}) => {
+  const queryClient = useQueryClient();
   const { t } = useTranslation(['common']);
 
   // NOTE: Need improve search options
@@ -31,6 +46,34 @@ const PageContent = ({ onAdd }: { onAdd: () => void }) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
     setFilters({ ...values });
+  };
+
+  const onArchivedOrganization = (organization: Organization) => {
+    organizationArchive({
+      id: organization.id,
+      command: {}
+    }).then(() => {
+      invalidateOrganizations(queryClient);
+    });
+  };
+
+  const onUnArchiveOrganization = (organization: Organization) => {
+    organizationUnArchive({
+      id: organization.id,
+      command: {}
+    }).then(() => {
+      invalidateOrganizations(queryClient);
+    });
+  };
+
+  const onActionHandler = (type: string, organization: Organization) => {
+    if (type === 'ARCHIVED_ORGANIZATION') {
+      onArchivedOrganization(organization);
+    } else if (type === 'UNARCHIVE_ORGANIZATION') {
+      onUnArchiveOrganization(organization);
+    } else {
+      onEdit(organization);
+    }
   };
 
   return (
@@ -62,6 +105,7 @@ const PageContent = ({ onAdd }: { onAdd: () => void }) => {
             onAdd={onAdd}
             filters={filters}
             setFilters={onChangeFilters}
+            onActionHandler={onActionHandler}
           />
         </TabsContent>
       </Tabs>

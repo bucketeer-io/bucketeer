@@ -1,45 +1,50 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { organizationCreator } from '@api/organization';
+import { organizationUpdater } from '@api/organization';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useQueryAccounts } from '@queries/accounts';
 import { invalidateOrganizations } from '@queries/organizations';
 import { useQueryClient } from '@tanstack/react-query';
+import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
-import { onGenerateSlug } from 'utils/converts';
+import { Organization } from '@types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
-import Checkbox from 'components/checkbox';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from 'components/dropdown';
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
 
-interface AddOrganizationModalProps {
+interface EditOrganizationModalProps {
   isOpen: boolean;
   onClose: () => void;
+  organization: Organization;
 }
 
-export interface AddOrganizationForm {
+export interface EditOrganizationForm {
   name: string;
-  urlCode: string;
   ownerEmail: string;
-  isTrial?: boolean;
   description?: string;
 }
 
 const formSchema = yup.object().shape({
   name: yup.string().required(),
-  urlCode: yup.string().required(),
   description: yup.string(),
-  ownerEmail: yup.string().email().required(),
-  isTrial: yup.bool()
+  ownerEmail: yup.string().email().required()
 });
 
-const AddOrganizationModal = ({
+const EditOrganizationModal = ({
   isOpen,
-  onClose
-}: AddOrganizationModalProps) => {
+  onClose,
+  organization
+}: EditOrganizationModalProps) => {
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
@@ -47,24 +52,39 @@ const AddOrganizationModal = ({
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
-      name: '',
-      urlCode: '',
-      description: '',
-      ownerEmail: '',
-      isTrial: true
+      name: organization.name,
+      description: organization.description,
+      ownerEmail: organization.ownerEmail
     }
   });
 
-  const onSubmit: SubmitHandler<AddOrganizationForm> = values => {
-    return organizationCreator({
-      command: { ...values, isSystemAdmin: false }
+  const { data: accounts } = useQueryAccounts({
+    params: {
+      cursor: String(0),
+      pageSize: LIST_PAGE_SIZE,
+      organizationId: organization.id
+    }
+  });
+
+  const onSubmit: SubmitHandler<EditOrganizationForm> = values => {
+    return organizationUpdater({
+      id: organization.id,
+      changeDescriptionCommand: {
+        description: values.description
+      },
+      renameCommand: {
+        name: values.name
+      },
+      changeOwnerEmailCommand: {
+        ownerEmail: values.ownerEmail
+      }
     }).then(() => {
       notify({
         toastType: 'toast',
         messageType: 'success',
         message: (
           <span>
-            <b>{values.name}</b> {`has been successfully created!`}
+            <b>{values.name}</b> {`has been successfully updated!`}
           </span>
         )
       });
@@ -74,7 +94,7 @@ const AddOrganizationModal = ({
   };
 
   return (
-    <SlideModal title={t('new-org')} isOpen={isOpen} onClose={onClose}>
+    <SlideModal title={t('update-org')} isOpen={isOpen} onClose={onClose}>
       <div className="w-full p-5">
         <p className="text-gray-800 typo-head-bold-small">
           {t('form:general-info')}
@@ -91,32 +111,25 @@ const AddOrganizationModal = ({
                     <Input
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
-                      onChange={value => {
-                        field.onChange(value);
-                        form.setValue('urlCode', onGenerateSlug(value));
-                      }}
                     />
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>
               )}
             />
-            <Form.Field
-              control={form.control}
-              name="urlCode"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Label required>{t('form:url-code')}</Form.Label>
-                  <Form.Control>
-                    <Input
-                      placeholder={`${t('form:placeholder-code')}`}
-                      {...field}
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
+
+            <Form.Item>
+              <Form.Label required>{t('form:url-code')}</Form.Label>
+              <Form.Control>
+                <Input
+                  value={organization.urlCode}
+                  placeholder={`${t('form:placeholder-code')}`}
+                  disabled
+                />
+              </Form.Control>
+              <Form.Message />
+            </Form.Item>
+
             <Form.Field
               control={form.control}
               name="description"
@@ -134,6 +147,7 @@ const AddOrganizationModal = ({
                 </Form.Item>
               )}
             />
+
             <Form.Field
               control={form.control}
               name="ownerEmail"
@@ -141,26 +155,31 @@ const AddOrganizationModal = ({
                 <Form.Item>
                   <Form.Label required>{t('form:owner-email')}</Form.Label>
                   <Form.Control className="w-full">
-                    <Input
-                      placeholder={`${t('form:placeholder-email')}`}
-                      {...field}
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-            <Form.Field
-              control={form.control}
-              name="isTrial"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Control>
-                    <Checkbox
-                      onCheckedChange={checked => field.onChange(checked)}
-                      checked={field.value}
-                      title={`${t(`form:trial`)}`}
-                    />
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        placeholder={t('form:owner-email')}
+                        label={
+                          accounts?.accounts.find(
+                            item => item.email === field.value
+                          )?.email
+                        }
+                        variant="secondary"
+                        className="w-full"
+                      />
+                      <DropdownMenuContent align="start" {...field}>
+                        {accounts?.accounts?.map((item, index) => (
+                          <DropdownMenuItem
+                            {...field}
+                            key={index}
+                            value={item.email}
+                            label={item.email}
+                            onSelectOption={value => {
+                              field.onChange(value);
+                            }}
+                          />
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>
@@ -176,7 +195,7 @@ const AddOrganizationModal = ({
                 }
                 secondaryButton={
                   <Button type="submit" loading={form.formState.isSubmitting}>
-                    {t(`create-org`)}
+                    {t(`update-org`)}
                   </Button>
                 }
               />
@@ -188,4 +207,4 @@ const AddOrganizationModal = ({
   );
 };
 
-export default AddOrganizationModal;
+export default EditOrganizationModal;

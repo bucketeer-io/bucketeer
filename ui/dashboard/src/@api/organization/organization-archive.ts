@@ -1,13 +1,13 @@
 import axiosClient from '@api/axios-client';
 import { AnyObject } from 'yup';
 
-export interface OrganizationArchiverParams {
+export interface OrganizationArchiveParams {
   id: string;
   command: AnyObject;
 }
 
-export const organizationArchiver = async (
-  params?: OrganizationArchiverParams
+export const organizationArchive = async (
+  params?: OrganizationArchiveParams
 ) => {
   return axiosClient
     .post('/v1/environment/archive_organization', params)
