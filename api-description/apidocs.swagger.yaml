@@ -641,6 +641,245 @@ paths:
           type: string
       tags:
         - Feature Flags
+  /v1/pushes:
+    get:
+      summary: List
+      description: List pushes. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.pushes.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayListPushesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Pushes
+    post:
+      summary: Create
+      description: Create a new Push notification through Google Firebase Cloud Messaging (FCM). To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.pushes.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreatePushResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreatePushRequest'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Pushes
+    patch:
+      summary: Update
+      description: Update a Push notification. To call this API, you a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.pushes.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdatePushResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdatePushRequest'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Pushes
+  /v1/pushes/{id}:
+    delete:
+      summary: Delete
+      description: Delete a Push notification. To call this API, you a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.pushes.delete
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayDeletePushResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Pushes
 definitions:
   ClauseOperator:
     type: string
@@ -775,6 +1014,25 @@ definitions:
     properties:
       feature:
         $ref: '#/definitions/featureFeature'
+  bucketeergatewayCreatePushRequest:
+    type: object
+    properties:
+      tags:
+        type: array
+        items:
+          type: string
+      name:
+        type: string
+      fcmServiceAccount:
+        type: string
+        format: byte
+  bucketeergatewayCreatePushResponse:
+    type: object
+    properties:
+      push:
+        $ref: '#/definitions/pushPush'
+  bucketeergatewayDeletePushResponse:
+    type: object
   bucketeergatewayGetFeatureResponse:
     type: object
     properties:
@@ -788,11 +1046,44 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/featureFeature'
+  bucketeergatewayListPushesResponse:
+    type: object
+    properties:
+      pushes:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/pushPush'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
   bucketeergatewayUpdateFeatureResponse:
     type: object
     properties:
       feature:
         $ref: '#/definitions/featureFeature'
+  bucketeergatewayUpdatePushRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      DeletePushTags:
+        type: array
+        items:
+          type: string
+      AddPushTags:
+        type: array
+        items:
+          type: string
+      name:
+        type: string
+  bucketeergatewayUpdatePushResponse:
+    type: object
+    properties:
+      push:
+        $ref: '#/definitions/pushPush'
   clientEvent:
     type: object
     properties:
@@ -1356,6 +1647,41 @@ definitions:
             "@type": "type.googleapis.com/google.protobuf.Duration",
             "value": "1.212s"
           }
+  pushListPushesRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  pushListPushesRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  pushPush:
+    type: object
+    properties:
+      id:
+        type: string
+      tags:
+        type: array
+        items:
+          type: string
+      deleted:
+        type: boolean
+      name:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      fcmServiceAccount:
+        type: string
   userUser:
     type: object
     properties:
