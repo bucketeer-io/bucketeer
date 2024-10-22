@@ -12,9 +12,15 @@ interface FilterProps {
   action?: ReactNode;
   searchValue: string;
   onSearchChange: (value: string) => void;
+  onOpenFilter?: () => void;
 }
 
-const Filter = ({ action, searchValue, onSearchChange }: FilterProps) => {
+const Filter = ({
+  action,
+  searchValue,
+  onSearchChange,
+  onOpenFilter
+}: FilterProps) => {
   const { t } = useTranslation(['common', 'form']);
   return (
     <div className="flex lg:items-center justify-between flex-col lg:flex-row">
@@ -32,6 +38,7 @@ const Filter = ({ action, searchValue, onSearchChange }: FilterProps) => {
         </Button>
         <Button
           variant="secondary"
+          onClick={onOpenFilter}
           className="text-gray-600 shadow-border-gray-400 flex-1 lg:flex-none"
         >
           <Icon icon={IconFilterListOutlined} size="sm" />

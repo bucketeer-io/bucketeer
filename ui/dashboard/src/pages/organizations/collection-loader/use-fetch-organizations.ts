@@ -7,6 +7,7 @@ export const useFetchOrganizations = ({
   pageSize,
   orderBy,
   status,
+  disabled,
   searchQuery,
   orderDirection
 }: {
@@ -14,6 +15,7 @@ export const useFetchOrganizations = ({
   page?: number;
   searchQuery?: string;
   orderBy?: OrderBy;
+  disabled?: boolean;
   status?: CollectionStatusType;
   orderDirection?: OrderDirection;
 } = {}) => {
@@ -25,6 +27,7 @@ export const useFetchOrganizations = ({
       cursor: String(cursor),
       orderBy,
       orderDirection,
+      disabled,
       searchKeyword: searchQuery,
       archived: status ? status === 'ARCHIVED' : undefined
     }
