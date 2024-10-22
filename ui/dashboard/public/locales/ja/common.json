@@ -21,6 +21,8 @@
   "cancel": "Cancel",
   "delete": "Delete",
   "filter": "Filter",
+  "filters": "Filters",
+  "add-filter": "Add Filter",
   "maintainer": "Maintainer",
   "name": "Name",
   "email": "Email",

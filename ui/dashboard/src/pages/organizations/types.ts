@@ -12,7 +12,7 @@ export interface OrganizationFilters {
   orderDirection: OrderDirection;
   status: CollectionStatusType;
   searchQuery: string;
-  disabled?: boolean;
+  disabled: boolean;
 }
 
 export interface CollectionProps {
