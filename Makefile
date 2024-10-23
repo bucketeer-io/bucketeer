@@ -262,7 +262,10 @@ e2e:
 		-gateway-cert=${GATEWAY_CERT_PATH} \
 		-service-token=${SERVICE_TOKEN_PATH} \
 		-environment-namespace=${ENVIRONMENT_NAMESPACE} \
-		-test-id=${TEST_ID}
+		-test-id=${TEST_ID}	
+
+.PHONY: delete-dev-container-mysql-data
+delete-dev-container-mysql-data:
 	MYSQL_USER=bucketeer \
 	MYSQL_PASS=bucketeer \
 	MYSQL_HOST=$$(minikube ip) \

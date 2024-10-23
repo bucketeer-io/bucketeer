@@ -108,3 +108,9 @@ API_KEY_SERVER_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_server \
 ENVIRONMENT_NAMESPACE=e2e \
 make e2e
 ```
+
+### Delete E2E data
+
+```shell
+make delete-dev-container-mysql-data
+```
