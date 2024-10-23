@@ -73,7 +73,9 @@ message UpdatePushRequest {
   RenamePushCommand rename_push_command = 5;
 }
 
-message UpdatePushResponse {}
+message UpdatePushResponse {
+  Push push = 1;
+}
 
 service PushService {
   rpc ListPushes(ListPushesRequest) returns (ListPushesResponse) {}

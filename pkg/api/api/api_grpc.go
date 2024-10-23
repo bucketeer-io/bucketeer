@@ -156,6 +156,7 @@ type grpcGatewayService struct {
 func NewGrpcGatewayService(
 	featureClient featureclient.Client,
 	accountClient accountclient.Client,
+	pushClient pushclient.Client,
 	gp publisher.Publisher,
 	ep publisher.Publisher,
 	up publisher.Publisher,
@@ -172,6 +173,7 @@ func NewGrpcGatewayService(
 	return &grpcGatewayService{
 		featureClient:          featureClient,
 		accountClient:          accountClient,
+		pushClient:             pushClient,
 		goalPublisher:          gp,
 		evaluationPublisher:    ep,
 		userPublisher:          up,
@@ -1138,7 +1140,7 @@ func (s *grpcGatewayService) CreatePush(
 		)
 		return nil, err
 	}
-	_, err = s.pushClient.CreatePush(
+	res, err := s.pushClient.CreatePush(
 		ctx,
 		&pushproto.CreatePushRequest{
 			EnvironmentNamespace: envAPIKey.Environment.Id,
@@ -1152,7 +1154,13 @@ func (s *grpcGatewayService) CreatePush(
 	if err != nil {
 		return nil, err
 	}
-	return &gwproto.CreatePushResponse{}, nil
+
+	// For security reasons we remove the service account from the API response
+	res.Push.FcmServiceAccount = ""
+
+	return &gwproto.CreatePushResponse{
+		Push: res.Push,
+	}, nil
 }
 
 func (s *grpcGatewayService) DeletePush(
@@ -1203,7 +1211,7 @@ func (s *grpcGatewayService) UpdatePush(
 		)
 		return nil, err
 	}
-	_, err = s.pushClient.UpdatePush(
+	res, err := s.pushClient.UpdatePush(
 		ctx,
 		&pushproto.UpdatePushRequest{
 			EnvironmentNamespace: envAPIKey.Environment.Id,
@@ -1219,8 +1227,16 @@ func (s *grpcGatewayService) UpdatePush(
 			},
 		},
 	)
+	if err != nil {
+		return nil, err
+	}
 
-	return &gwproto.UpdatePushResponse{}, nil
+	// For security reasons we remove the service account from the API response
+	res.Push.FcmServiceAccount = ""
+
+	return &gwproto.UpdatePushResponse{
+		Push: res.Push,
+	}, nil
 }
 
 func (s *grpcGatewayService) getTargetFeatures(fs []*featureproto.Feature, id string) ([]*featureproto.Feature, error) {

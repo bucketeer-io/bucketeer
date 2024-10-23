@@ -27108,7 +27108,14 @@
             ]
           },
           {
-            "name": "UpdatePushResponse"
+            "name": "UpdatePushResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "push",
+                "type": "Push"
+              }
+            ]
           }
         ],
         "services": [

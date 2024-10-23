@@ -39,6 +39,7 @@ import (
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
+	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
 	"github.com/bucketeer-io/bucketeer/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
@@ -51,6 +52,7 @@ import (
 type gatewayService struct {
 	featureClient          featureclient.Client
 	accountClient          accountclient.Client
+	pushClient             pushclient.Client
 	goalPublisher          publisher.Publisher
 	evaluationPublisher    publisher.Publisher
 	userPublisher          publisher.Publisher
@@ -66,6 +68,7 @@ type gatewayService struct {
 func NewGatewayService(
 	featureClient featureclient.Client,
 	accountClient accountclient.Client,
+	pushClient pushclient.Client,
 	gp publisher.Publisher,
 	ep publisher.Publisher,
 	up publisher.Publisher,
@@ -83,6 +86,7 @@ func NewGatewayService(
 	return &gatewayService{
 		featureClient:          featureClient,
 		accountClient:          accountClient,
+		pushClient:             pushClient,
 		goalPublisher:          gp,
 		evaluationPublisher:    ep,
 		userPublisher:          up,
