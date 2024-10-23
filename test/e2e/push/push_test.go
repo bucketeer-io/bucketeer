@@ -64,6 +64,49 @@ var (
 	}`
 )
 
+func TestCreateAndListPush_NoCommand(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	featureClient := newFeatureClient(t)
+	defer featureClient.Close()
+	pushClient := newPushClient(t)
+	defer pushClient.Close()
+
+	featureID := newFeatureID(t)
+	tag := fmt.Sprintf("%s-tag-%s", prefixTestName, newUUID(t))
+	fcmServiceAccount := fmt.Sprintf(fcmServiceAccountDummy, prefixTestName, newUUID(t))
+
+	createFeature(ctx, t, featureClient, featureID, tag)
+	createPushNoCommand(ctx, t, pushClient, []byte(fcmServiceAccount), tag)
+	pushes := listPushes(t, pushClient)
+	var push *pushproto.Push
+	for _, p := range pushes {
+		// Search the push by tag
+		for _, t := range p.Tags {
+			if t == tag {
+				push = p
+				break
+			}
+		}
+	}
+	if push == nil {
+		t.Fatalf("Push not found")
+	}
+	if push.FcmServiceAccount != "" {
+		t.Fatalf("The FCM service account must be empty. Actual: %s", push.FcmServiceAccount)
+	}
+	if len(push.Tags) != 1 {
+		t.Fatalf("The number of tags is incorrect. Expected: %d actual: %d", 1, len(push.Tags))
+	}
+	if push.Tags[0] != tag {
+		t.Fatalf("Incorrect tag. Expected: %s actual: %s", tag, push.Tags[0])
+	}
+	if push.Deleted != false {
+		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, push.Deleted)
+	}
+}
+
 func TestCreateAndListPush(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -216,6 +259,24 @@ func createPush(
 	createReq := &pushproto.CreatePushRequest{
 		EnvironmentNamespace: *environmentNamespace,
 		Command:              cmd,
+	}
+	if _, err := client.CreatePush(ctx, createReq); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func createPushNoCommand(
+	ctx context.Context,
+	t *testing.T,
+	client pushclient.Client,
+	fcmServiceAccount []byte,
+	tag string,
+) {
+	t.Helper()
+	createReq := &pushproto.CreatePushRequest{
+		EnvironmentNamespace: *environmentNamespace,
+		Tags:                 []string{tag},
+		FcmServiceAccount:    fcmServiceAccount,
 	}
 	if _, err := client.CreatePush(ctx, createReq); err != nil {
 		t.Fatal(err)
