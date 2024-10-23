@@ -77,7 +77,7 @@ Please note that you only need to create them once.
 WEB_GATEWAY_URL=web-gateway.bucketeer.io \
 WEB_GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
-API_KEY_NAME="e2e-test-$$(date +%s)-client" \
+API_KEY_NAME="e2e-test-$(date +%s)-client" \
 API_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_client \
 API_KEY_ROLE=SDK_CLIENT \
 ENVIRONMENT_NAMESPACE=e2e \
@@ -88,7 +88,7 @@ make create-api-key
 WEB_GATEWAY_URL=web-gateway.bucketeer.io \
 WEB_GATEWAY_CERT_PATH=/workspaces/bucketeer/tools/dev/cert/tls.crt \
 SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
-API_KEY_NAME="e2e-test-$$(date +%s)-server" \
+API_KEY_NAME="e2e-test-$(date +%s)-server" \
 API_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_server \
 API_KEY_ROLE=SDK_SERVER \
 ENVIRONMENT_NAMESPACE=e2e \
@@ -107,4 +107,10 @@ API_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_client \
 API_KEY_SERVER_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_server \
 ENVIRONMENT_NAMESPACE=e2e \
 make e2e
+```
+
+### Delete E2E data
+
+```shell
+make delete-dev-container-mysql-data
 ```
