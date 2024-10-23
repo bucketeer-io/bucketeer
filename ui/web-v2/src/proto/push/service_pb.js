@@ -56,7 +56,14 @@ goog.exportSymbol('proto.bucketeer.push.UpdatePushResponse', null, global);
  * @constructor
  */
 proto.bucketeer.push.CreatePushRequest = function (opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(
+    this,
+    opt_data,
+    0,
+    -1,
+    proto.bucketeer.push.CreatePushRequest.repeatedFields_,
+    null
+  );
 };
 goog.inherits(proto.bucketeer.push.CreatePushRequest, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -229,6 +236,13 @@ if (goog.DEBUG && !COMPILED) {
     'proto.bucketeer.push.UpdatePushResponse';
 }
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.push.CreatePushRequest.repeatedFields_ = [3];
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -269,7 +283,11 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         environmentNamespace: jspb.Message.getFieldWithDefault(msg, 1, ''),
         command:
           (f = msg.getCommand()) &&
-          proto_push_command_pb.CreatePushCommand.toObject(includeInstance, f)
+          proto_push_command_pb.CreatePushCommand.toObject(includeInstance, f),
+        tagsList:
+          (f = jspb.Message.getRepeatedField(msg, 3)) == null ? undefined : f,
+        name: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        fcmServiceAccount: msg.getFcmServiceAccount_asB64()
       };
 
     if (includeInstance) {
@@ -322,6 +340,18 @@ proto.bucketeer.push.CreatePushRequest.deserializeBinaryFromReader = function (
         );
         msg.setCommand(value);
         break;
+      case 3:
+        var value = /** @type {string} */ (reader.readString());
+        msg.addTags(value);
+        break;
+      case 4:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setName(value);
+        break;
+      case 5:
+        var value = /** @type {!Uint8Array} */ (reader.readBytes());
+        msg.setFcmServiceAccount(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -363,6 +393,18 @@ proto.bucketeer.push.CreatePushRequest.serializeBinaryToWriter = function (
       f,
       proto_push_command_pb.CreatePushCommand.serializeBinaryToWriter
     );
+  }
+  f = message.getTagsList();
+  if (f.length > 0) {
+    writer.writeRepeatedString(3, f);
+  }
+  f = message.getName();
+  if (f.length > 0) {
+    writer.writeString(4, f);
+  }
+  f = message.getFcmServiceAccount_asU8();
+  if (f.length > 0) {
+    writer.writeBytes(5, f);
   }
 };
 
@@ -424,6 +466,106 @@ proto.bucketeer.push.CreatePushRequest.prototype.hasCommand = function () {
   return jspb.Message.getField(this, 2) != null;
 };
 
+/**
+ * repeated string tags = 3;
+ * @return {!Array<string>}
+ */
+proto.bucketeer.push.CreatePushRequest.prototype.getTagsList = function () {
+  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 3));
+};
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.bucketeer.push.CreatePushRequest} returns this
+ */
+proto.bucketeer.push.CreatePushRequest.prototype.setTagsList = function (
+  value
+) {
+  return jspb.Message.setField(this, 3, value || []);
+};
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.push.CreatePushRequest} returns this
+ */
+proto.bucketeer.push.CreatePushRequest.prototype.addTags = function (
+  value,
+  opt_index
+) {
+  return jspb.Message.addToRepeatedField(this, 3, value, opt_index);
+};
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.push.CreatePushRequest} returns this
+ */
+proto.bucketeer.push.CreatePushRequest.prototype.clearTagsList = function () {
+  return this.setTagsList([]);
+};
+
+/**
+ * optional string name = 4;
+ * @return {string}
+ */
+proto.bucketeer.push.CreatePushRequest.prototype.getName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.push.CreatePushRequest} returns this
+ */
+proto.bucketeer.push.CreatePushRequest.prototype.setName = function (value) {
+  return jspb.Message.setProto3StringField(this, 4, value);
+};
+
+/**
+ * optional bytes fcm_service_account = 5;
+ * @return {!(string|Uint8Array)}
+ */
+proto.bucketeer.push.CreatePushRequest.prototype.getFcmServiceAccount =
+  function () {
+    return /** @type {!(string|Uint8Array)} */ (
+      jspb.Message.getFieldWithDefault(this, 5, '')
+    );
+  };
+
+/**
+ * optional bytes fcm_service_account = 5;
+ * This is a type-conversion wrapper around `getFcmServiceAccount()`
+ * @return {string}
+ */
+proto.bucketeer.push.CreatePushRequest.prototype.getFcmServiceAccount_asB64 =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.bytesAsB64(this.getFcmServiceAccount())
+    );
+  };
+
+/**
+ * optional bytes fcm_service_account = 5;
+ * Note that Uint8Array is not supported on all browsers.
+ * @see http://caniuse.com/Uint8Array
+ * This is a type-conversion wrapper around `getFcmServiceAccount()`
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.push.CreatePushRequest.prototype.getFcmServiceAccount_asU8 =
+  function () {
+    return /** @type {!Uint8Array} */ (
+      jspb.Message.bytesAsU8(this.getFcmServiceAccount())
+    );
+  };
+
+/**
+ * @param {!(string|Uint8Array)} value
+ * @return {!proto.bucketeer.push.CreatePushRequest} returns this
+ */
+proto.bucketeer.push.CreatePushRequest.prototype.setFcmServiceAccount =
+  function (value) {
+    return jspb.Message.setProto3BytesField(this, 5, value);
+  };
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -460,7 +602,11 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {};
+      obj = {
+        push:
+          (f = msg.getPush()) &&
+          proto_push_push_pb.Push.toObject(includeInstance, f)
+      };
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -500,6 +646,14 @@ proto.bucketeer.push.CreatePushResponse.deserializeBinaryFromReader = function (
     }
     var field = reader.getFieldNumber();
     switch (field) {
+      case 1:
+        var value = new proto_push_push_pb.Push();
+        reader.readMessage(
+          value,
+          proto_push_push_pb.Push.deserializeBinaryFromReader
+        );
+        msg.setPush(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -534,6 +688,44 @@ proto.bucketeer.push.CreatePushResponse.serializeBinaryToWriter = function (
   writer
 ) {
   var f = undefined;
+  f = message.getPush();
+  if (f != null) {
+    writer.writeMessage(1, f, proto_push_push_pb.Push.serializeBinaryToWriter);
+  }
+};
+
+/**
+ * optional Push push = 1;
+ * @return {?proto.bucketeer.push.Push}
+ */
+proto.bucketeer.push.CreatePushResponse.prototype.getPush = function () {
+  return /** @type{?proto.bucketeer.push.Push} */ (
+    jspb.Message.getWrapperField(this, proto_push_push_pb.Push, 1)
+  );
+};
+
+/**
+ * @param {?proto.bucketeer.push.Push|undefined} value
+ * @return {!proto.bucketeer.push.CreatePushResponse} returns this
+ */
+proto.bucketeer.push.CreatePushResponse.prototype.setPush = function (value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.push.CreatePushResponse} returns this
+ */
+proto.bucketeer.push.CreatePushResponse.prototype.clearPush = function () {
+  return this.setPush(undefined);
+};
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.push.CreatePushResponse.prototype.hasPush = function () {
+  return jspb.Message.getField(this, 1) != null;
 };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

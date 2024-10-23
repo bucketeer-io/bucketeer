@@ -21,6 +21,7 @@ import (
 	"errors"
 	"strconv"
 
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -29,6 +30,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	experimentclient "github.com/bucketeer-io/bucketeer/pkg/experiment/client"
 	featureclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -108,6 +110,10 @@ func (s *PushService) CreatePush(
 	if err != nil {
 		return nil, err
 	}
+	if req.Command == nil {
+		return s.createPushNoCommand(ctx, req, localizer, editor)
+	}
+
 	if err := s.validateCreatePushRequest(req, localizer); err != nil {
 		return nil, err
 	}
@@ -207,7 +213,6 @@ func (s *PushService) CreatePush(
 			return err
 		}
 		return nil
-
 	})
 	if err != nil {
 		if err == v2ps.ErrPushAlreadyExists {
@@ -236,20 +241,182 @@ func (s *PushService) CreatePush(
 		}
 		return nil, dt.Err()
 	}
-	return &pushproto.CreatePushResponse{}, nil
+
+	// For security reasons we remove the service account from the API response
+	push.Push.FcmServiceAccount = ""
+
+	return &pushproto.CreatePushResponse{
+		Push: push.Push,
+	}, nil
+}
+
+// createPushNoCommand implement logic without command
+func (s *PushService) createPushNoCommand(
+	ctx context.Context,
+	req *pushproto.CreatePushRequest,
+	localizer locale.Localizer,
+	editor *eventproto.Editor,
+) (*pushproto.CreatePushResponse, error) {
+	if err := s.validateCreatePushNoCommand(req, localizer); err != nil {
+		return nil, err
+	}
+	push, err := domain.NewPush(
+		req.Name,
+		string(req.FcmServiceAccount),
+		req.Tags,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create a new push",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("name", req.Name),
+				zap.Strings("tags", req.Tags),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	pushes, err := s.listAllPushes(ctx, req.EnvironmentNamespace, localizer)
+	if err != nil {
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	if err := s.checkFCMServiceAccount(ctx, pushes, req.FcmServiceAccount, localizer); err != nil {
+		return nil, err
+	}
+	err = s.containsTags(pushes, req.Tags, localizer)
+	if err != nil {
+		if status.Code(err) == codes.AlreadyExists {
+			dt, err := statusTagAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to validate tag existence",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("name", req.Name),
+				zap.Strings("tags", req.Tags),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	var event *eventproto.Event
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		pushStorage := v2ps.NewPushStorage(tx)
+		if err := pushStorage.CreatePush(ctx, push, req.EnvironmentNamespace); err != nil {
+			return err
+		}
+		prev := &domain.Push{}
+		if err = copier.Copy(prev, push); err != nil {
+			return err
+		}
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_PUSH,
+			push.Id,
+			eventproto.Event_PUSH_CREATED,
+			&eventproto.PushCreatedEvent{
+				FcmServiceAccount: push.FcmServiceAccount,
+				Tags:              push.Tags,
+				Name:              push.Name,
+			},
+			req.EnvironmentNamespace,
+			push,
+			prev,
+		)
+		if err != nil {
+			return err
+		}
+		if err = s.publisher.Publish(ctx, event); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		if err == v2ps.ErrPushAlreadyExists {
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to create push",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("name", req.Name),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	// For security reasons we remove the service account from the API response
+	push.Push.FcmServiceAccount = ""
+
+	return &pushproto.CreatePushResponse{
+		Push: push.Push,
+	}, nil
 }
 
 func (s *PushService) validateCreatePushRequest(req *pushproto.CreatePushRequest, localizer locale.Localizer) error {
-	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	if string(req.Command.FcmServiceAccount) == "" {
 		dt, err := statusFCMServiceAccountRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -271,6 +438,40 @@ func (s *PushService) validateCreatePushRequest(req *pushproto.CreatePushRequest
 		return dt.Err()
 	}
 	if req.Command.Name == "" {
+		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
+
+func (s *PushService) validateCreatePushNoCommand(req *pushproto.CreatePushRequest, localizer locale.Localizer) error {
+	if string(req.FcmServiceAccount) == "" {
+		dt, err := statusFCMServiceAccountRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fcm_service_account"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if len(req.Tags) == 0 {
+		dt, err := statusTagsRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.Name == "" {
 		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),

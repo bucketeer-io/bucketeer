@@ -105,14 +105,15 @@ func TestCreatePushMySQL(t *testing.T) {
 		req         *pushproto.CreatePushRequest
 		expectedErr error
 	}{
-		{
-			desc:  "err: ErrNoCommand",
-			setup: nil,
-			req: &pushproto.CreatePushRequest{
-				Command: nil,
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
+		// command is deprecating
+		//{
+		//	desc:  "err: ErrNoCommand",
+		//	setup: nil,
+		//	req: &pushproto.CreatePushRequest{
+		//		Command: nil,
+		//	},
+		//	expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+		//},
 		{
 			desc:  "err: ErrFCMServiceAccountRequired",
 			setup: nil,
@@ -203,6 +204,126 @@ func TestCreatePushMySQL(t *testing.T) {
 			expectedErr: nil,
 		},
 	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := newPushServiceWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			_, err := service.CreatePush(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestCreatePushNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken(t, true)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*PushService)
+		req         *pushproto.CreatePushRequest
+		expectedErr error
+	}{
+		{
+			desc:  "err: ErrFCMServiceAccountRequired",
+			setup: nil,
+			req: &pushproto.CreatePushRequest{
+				FcmServiceAccount: nil,
+			},
+			expectedErr: createError(statusFCMServiceAccountRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "fcm_service_account")),
+		},
+		{
+			desc:  "err: ErrTagsRequired",
+			setup: nil,
+			req: &pushproto.CreatePushRequest{
+				FcmServiceAccount: fcmServiceAccountDummy,
+			},
+			expectedErr: createError(statusTagsRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag")),
+		},
+		{
+			desc:  "err: ErrNameRequired",
+			setup: nil,
+			req: &pushproto.CreatePushRequest{
+				FcmServiceAccount: fcmServiceAccountDummy,
+				Tags:              []string{"tag-0"},
+			},
+			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+		},
+		{
+			desc: "err: ErrAlreadyExists",
+			setup: func(s *PushService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(v2ps.ErrPushAlreadyExists)
+			},
+			req: &pushproto.CreatePushRequest{
+				EnvironmentNamespace: "ns0",
+				FcmServiceAccount:    fcmServiceAccountDummy,
+				Tags:                 []string{"tag-0"},
+				Name:                 "name-1",
+			},
+			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *PushService) {
+				rows := mysqlmock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(rows, nil)
+				row := mysqlmock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &pushproto.CreatePushRequest{
+				EnvironmentNamespace: "ns0",
+				FcmServiceAccount:    fcmServiceAccountDummy,
+				Tags:                 []string{"tag-0"},
+				Name:                 "name-1",
+			},
+			expectedErr: nil,
+		},
+	}
+
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			service := newPushServiceWithMock(t, mockController)
