@@ -24125,13 +24125,13 @@
               },
               {
                 "id": 2,
-                "name": "DeletePushTags",
+                "name": "delete_push_tags",
                 "type": "string",
                 "is_repeated": true
               },
               {
                 "id": 3,
-                "name": "AddPushTags",
+                "name": "add_push_tags",
                 "type": "string",
                 "is_repeated": true
               },
@@ -25058,7 +25058,7 @@
                     "aggregated": [
                       {
                         "name": "patch",
-                        "value": "/v1/pushes"
+                        "value": "/v1/pushes/{id}"
                       },
                       {
                         "name": "body",

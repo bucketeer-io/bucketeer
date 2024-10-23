@@ -516,6 +516,7 @@ func (s *PushService) UpdatePush(
 		}
 		return nil, dt.Err()
 	}
+	var updatedPushPb *pushproto.Push
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		pushStorage := v2ps.NewPushStorage(tx)
 		push, err := pushStorage.GetPush(ctx, req.Id, req.EnvironmentNamespace)
@@ -531,6 +532,7 @@ func (s *PushService) UpdatePush(
 				return err
 			}
 		}
+		updatedPushPb = push.Push
 		return pushStorage.UpdatePush(ctx, push, req.EnvironmentNamespace)
 	})
 	if err != nil {
@@ -561,7 +563,9 @@ func (s *PushService) UpdatePush(
 		}
 		return nil, dt.Err()
 	}
-	return &pushproto.UpdatePushResponse{}, nil
+	return &pushproto.UpdatePushResponse{
+		Push: updatedPushPb,
+	}, nil
 }
 
 func (s *PushService) validateUpdatePushRequest(

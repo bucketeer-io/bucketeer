@@ -1087,6 +1087,7 @@ func (s *grpcGatewayService) ListPushes(
 	req *gwproto.ListPushesRequest,
 ) (*gwproto.ListPushesResponse, error) {
 	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
+		accountproto.APIKey_PUBLIC_API_READ_ONLY,
 		accountproto.APIKey_PUBLIC_API_WRITE,
 		accountproto.APIKey_PUBLIC_API_ADMIN,
 	})
@@ -1155,8 +1156,10 @@ func (s *grpcGatewayService) CreatePush(
 		return nil, err
 	}
 
-	// For security reasons we remove the service account from the API response
-	res.Push.FcmServiceAccount = ""
+	if res.Push != nil {
+		// For security reasons we remove the service account from the API response
+		res.Push.FcmServiceAccount = ""
+	}
 
 	return &gwproto.CreatePushResponse{
 		Push: res.Push,
@@ -1185,6 +1188,7 @@ func (s *grpcGatewayService) DeletePush(
 		&pushproto.DeletePushRequest{
 			EnvironmentNamespace: envAPIKey.Environment.Id,
 			Id:                   req.Id,
+			Command:              &pushproto.DeletePushCommand{},
 		},
 	)
 	if err != nil {
@@ -1211,17 +1215,28 @@ func (s *grpcGatewayService) UpdatePush(
 		)
 		return nil, err
 	}
+
+	var addPushTagsCommand *pushproto.AddPushTagsCommand
+	if len(req.AddPushTags) > 0 {
+		addPushTagsCommand = &pushproto.AddPushTagsCommand{
+			Tags: req.AddPushTags,
+		}
+	}
+
+	var deletePushTagsCommand *pushproto.DeletePushTagsCommand
+	if len(req.DeletePushTags) > 0 {
+		deletePushTagsCommand = &pushproto.DeletePushTagsCommand{
+			Tags: req.DeletePushTags,
+		}
+	}
+
 	res, err := s.pushClient.UpdatePush(
 		ctx,
 		&pushproto.UpdatePushRequest{
-			EnvironmentNamespace: envAPIKey.Environment.Id,
-			Id:                   req.Id,
-			AddPushTagsCommand: &pushproto.AddPushTagsCommand{
-				Tags: req.AddPushTags,
-			},
-			DeletePushTagsCommand: &pushproto.DeletePushTagsCommand{
-				Tags: req.DeletePushTags,
-			},
+			EnvironmentNamespace:  envAPIKey.Environment.Id,
+			Id:                    req.Id,
+			AddPushTagsCommand:    addPushTagsCommand,
+			DeletePushTagsCommand: deletePushTagsCommand,
 			RenamePushCommand: &pushproto.RenamePushCommand{
 				Name: req.Name,
 			},
@@ -1231,8 +1246,10 @@ func (s *grpcGatewayService) UpdatePush(
 		return nil, err
 	}
 
-	// For security reasons we remove the service account from the API response
-	res.Push.FcmServiceAccount = ""
+	if res.Push != nil {
+		// For security reasons we remove the service account from the API response
+		res.Push.FcmServiceAccount = ""
+	}
 
 	return &gwproto.UpdatePushResponse{
 		Push: res.Push,

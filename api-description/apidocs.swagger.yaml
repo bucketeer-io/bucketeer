@@ -774,59 +774,6 @@ paths:
           type: string
       tags:
         - Pushes
-    patch:
-      summary: Update
-      description: Update a Push notification. To call this API, you a `WRITE` or `ADMIN` API Key role.
-      operationId: api.gateway.v1.pushes.update
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/bucketeergatewayUpdatePushResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/bucketeergatewayUpdatePushRequest'
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
-      tags:
-        - Pushes
   /v1/pushes/{id}:
     delete:
       summary: Delete
@@ -873,6 +820,63 @@ paths:
           in: path
           required: true
           type: string
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Pushes
+    patch:
+      summary: Update
+      description: Update a Push notification. To call this API, you a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.pushes.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdatePushResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/GatewayUpdatePushBody'
         - name: authorization
           description: The API Key generated on the Admin Console.
           in: header
@@ -947,6 +951,19 @@ definitions:
       defaultStrategy:
         $ref: '#/definitions/featureStrategy'
       offVariation:
+        type: string
+  GatewayUpdatePushBody:
+    type: object
+    properties:
+      deletePushTags:
+        type: array
+        items:
+          type: string
+      addPushTags:
+        type: array
+        items:
+          type: string
+      name:
         type: string
   GetEvaluationsRequestUserEvaluationCondition:
     type: object
@@ -1064,21 +1081,6 @@ definitions:
     properties:
       feature:
         $ref: '#/definitions/featureFeature'
-  bucketeergatewayUpdatePushRequest:
-    type: object
-    properties:
-      id:
-        type: string
-      DeletePushTags:
-        type: array
-        items:
-          type: string
-      AddPushTags:
-        type: array
-        items:
-          type: string
-      name:
-        type: string
   bucketeergatewayUpdatePushResponse:
     type: object
     properties:

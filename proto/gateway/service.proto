@@ -214,8 +214,8 @@ message DeletePushResponse {}
 
 message UpdatePushRequest {
   string id = 1;
-  repeated string DeletePushTags = 2;
-  repeated string AddPushTags = 3;
+  repeated string delete_push_tags = 2;
+  repeated string add_push_tags = 3;
   string name = 4;
 }
 
@@ -553,7 +553,7 @@ service Gateway {
   }
   rpc UpdatePush(UpdatePushRequest) returns (UpdatePushResponse) {
     option (google.api.http) = {
-      patch: "/v1/pushes"
+      patch: "/v1/pushes/{id}"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
