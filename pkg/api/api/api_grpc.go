@@ -38,6 +38,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
+	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
@@ -45,6 +46,7 @@ import (
 	serviceeventproto "github.com/bucketeer-io/bucketeer/proto/event/service"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
+	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
 
@@ -139,6 +141,7 @@ func WithLogger(l *zap.Logger) Option {
 type grpcGatewayService struct {
 	featureClient          featureclient.Client
 	accountClient          accountclient.Client
+	pushClient             pushclient.Client
 	goalPublisher          publisher.Publisher
 	evaluationPublisher    publisher.Publisher
 	userPublisher          publisher.Publisher
@@ -1075,6 +1078,149 @@ func (s *grpcGatewayService) UpdateFeature(
 	return &gwproto.UpdateFeatureResponse{
 		Feature: res.Feature,
 	}, nil
+}
+
+func (s *grpcGatewayService) ListPushes(
+	ctx context.Context,
+	req *gwproto.ListPushesRequest,
+) (*gwproto.ListPushesResponse, error) {
+	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
+		accountproto.APIKey_PUBLIC_API_WRITE,
+		accountproto.APIKey_PUBLIC_API_ADMIN,
+	})
+	if err != nil {
+		s.logger.Error("Failed to check ListPushes request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, err
+	}
+	pushes, err := s.pushClient.ListPushes(
+		ctx,
+		&pushproto.ListPushesRequest{
+			EnvironmentNamespace: envAPIKey.Environment.Id,
+			PageSize:             req.PageSize,
+			Cursor:               req.Cursor,
+			OrderBy:              req.OrderBy,
+			OrderDirection:       req.OrderDirection,
+			SearchKeyword:        req.SearchKeyword,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// For security reasons we remove the service account from the API response
+	for _, p := range pushes.Pushes {
+		p.FcmServiceAccount = ""
+	}
+
+	return &gwproto.ListPushesResponse{
+		Pushes: pushes.Pushes,
+	}, nil
+}
+
+func (s *grpcGatewayService) CreatePush(
+	ctx context.Context,
+	req *gwproto.CreatePushRequest,
+) (*gwproto.CreatePushResponse, error) {
+	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
+		accountproto.APIKey_PUBLIC_API_WRITE,
+		accountproto.APIKey_PUBLIC_API_ADMIN,
+	})
+	if err != nil {
+		s.logger.Error("Failed to check CreatePush request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("name", req.Name),
+			)...,
+		)
+		return nil, err
+	}
+	_, err = s.pushClient.CreatePush(
+		ctx,
+		&pushproto.CreatePushRequest{
+			EnvironmentNamespace: envAPIKey.Environment.Id,
+			Command: &pushproto.CreatePushCommand{
+				Name:              req.Name,
+				Tags:              req.Tags,
+				FcmServiceAccount: req.FcmServiceAccount,
+			},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &gwproto.CreatePushResponse{}, nil
+}
+
+func (s *grpcGatewayService) DeletePush(
+	ctx context.Context,
+	req *gwproto.DeletePushRequest,
+) (*gwproto.DeletePushResponse, error) {
+	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
+		accountproto.APIKey_PUBLIC_API_WRITE,
+		accountproto.APIKey_PUBLIC_API_ADMIN,
+	})
+	if err != nil {
+		s.logger.Error("Failed to check DeletePush request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("pushId", req.Id),
+			)...,
+		)
+		return nil, err
+	}
+	_, err = s.pushClient.DeletePush(
+		ctx,
+		&pushproto.DeletePushRequest{
+			EnvironmentNamespace: envAPIKey.Environment.Id,
+			Id:                   req.Id,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &gwproto.DeletePushResponse{}, nil
+}
+
+func (s *grpcGatewayService) UpdatePush(
+	ctx context.Context,
+	req *gwproto.UpdatePushRequest,
+) (*gwproto.UpdatePushResponse, error) {
+	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
+		accountproto.APIKey_PUBLIC_API_WRITE,
+		accountproto.APIKey_PUBLIC_API_ADMIN,
+	})
+	if err != nil {
+		s.logger.Error("Failed to check UpdatePush request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("pushId", req.Id),
+				zap.String("name", req.Name),
+			)...,
+		)
+		return nil, err
+	}
+	_, err = s.pushClient.UpdatePush(
+		ctx,
+		&pushproto.UpdatePushRequest{
+			EnvironmentNamespace: envAPIKey.Environment.Id,
+			Id:                   req.Id,
+			AddPushTagsCommand: &pushproto.AddPushTagsCommand{
+				Tags: req.AddPushTags,
+			},
+			DeletePushTagsCommand: &pushproto.DeletePushTagsCommand{
+				Tags: req.DeletePushTags,
+			},
+			RenamePushCommand: &pushproto.RenamePushCommand{
+				Name: req.Name,
+			},
+		},
+	)
+
+	return &gwproto.UpdatePushResponse{}, nil
 }
 
 func (s *grpcGatewayService) getTargetFeatures(fs []*featureproto.Feature, id string) ([]*featureproto.Feature, error) {
