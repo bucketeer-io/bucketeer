@@ -275,6 +275,7 @@ func createPushNoCommand(
 	t.Helper()
 	createReq := &pushproto.CreatePushRequest{
 		EnvironmentNamespace: *environmentNamespace,
+		Name:                 newPushName(t),
 		Tags:                 []string{tag},
 		FcmServiceAccount:    fcmServiceAccount,
 	}
