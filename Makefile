@@ -199,12 +199,13 @@ build-migration-chart:
 
 .PHONY: delete-e2e-data-mysql
 delete-e2e-data-mysql:
-	go run ./hack/delete-e2e-data-mysql delete \
+	make -C hack/delete-e2e-data-mysql clean build
+	./hack/delete-e2e-data-mysql/delete-e2e-data-mysql delete \
 		--mysql-user=${MYSQL_USER} \
 		--mysql-pass=${MYSQL_PASS} \
-		--mysql-host=mysql-${ENV}.bucketeer.private \
-		--mysql-port=3306 \
-		--mysql-db-name=master \
+		--mysql-host=${MYSQL_HOST} \
+		--mysql-port=${MYSQL_PORT} \
+		--mysql-db-name=${MYSQL_DB_NAME} \
 		--test-id=${TEST_ID} \
 		--no-profile \
 		--no-gcp-trace-enabled
@@ -262,6 +263,12 @@ e2e:
 		-service-token=${SERVICE_TOKEN_PATH} \
 		-environment-namespace=${ENVIRONMENT_NAMESPACE} \
 		-test-id=${TEST_ID}
+	MYSQL_USER=bucketeer \
+	MYSQL_PASS=bucketeer \
+	MYSQL_HOST=$$(minikube ip) \
+	MYSQL_PORT=32000 \
+	MYSQL_DB_NAME=bucketeer \
+	make -C ./ delete-e2e-data-mysql
 
 .PHONY: update-copyright
 update-copyright:
