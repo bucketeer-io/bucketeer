@@ -884,14 +884,6 @@ data:
                                   retry_on: 5xx
                                   num_retries: 3
                             - match:
-                                prefix: /
-                              route:
-                                cluster: web_console
-                                timeout: 15s
-                                retry_policy:
-                                  retry_on: 5xx
-                                  num_retries: 3
-                            - match:
                                 prefix: /v3/
                               route:
                                 cluster: dashboard
@@ -905,6 +897,14 @@ data:
                               route:
                                 cluster: dashboard
                                 prefix_rewrite: /
+                                timeout: 15s
+                                retry_policy:
+                                  retry_on: 5xx
+                                  num_retries: 3
+                            - match:
+                                prefix: /
+                              route:
+                                cluster: web_console
                                 timeout: 15s
                                 retry_policy:
                                   retry_on: 5xx
