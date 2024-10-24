@@ -10,16 +10,12 @@ export interface OrganizationCreatorCommand {
   ownerEmail: string;
 }
 
-export interface OrganizationCreatorParams {
-  command: OrganizationCreatorCommand;
-}
-
 export interface OrganizationResponse {
   organization: Array<Organization>;
 }
 
 export const organizationCreator = async (
-  params?: OrganizationCreatorParams
+  params?: OrganizationCreatorCommand
 ): Promise<OrganizationResponse> => {
   return axiosClient
     .post<OrganizationResponse>('/v1/environment/create_organization', params)
