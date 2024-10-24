@@ -11,6 +11,16 @@ export interface PageLayoutProps {
   children: ReactNode;
 }
 
+export interface PageLayoutErrorState {
+  onRetry?: () => void;
+  className?: string;
+}
+
+export interface PageLayoutContentProps {
+  children: ReactNode;
+  className?: string;
+}
+
 const PageLayoutRoot = ({ title, children }: PageLayoutProps) => {
   return (
     <PageLayoutProvider value={{ title }}>
@@ -40,9 +50,9 @@ const PageLayoutLoadingState = ({ className }: { className?: string }) => {
   );
 };
 
-const PageLayoutErrorState = ({ onRetry }: { onRetry?: () => void }) => {
+const PageLayoutErrorState = ({ onRetry, className }: PageLayoutErrorState) => {
   return (
-    <div className="h-full flex-grow flex-center">
+    <div className={cn('h-full flex-grow flex-center', className)}>
       <ErrorState onRetry={onRetry} />
     </div>
   );
@@ -56,10 +66,7 @@ const PageLayoutHeader = ({ children }: PropsWithChildren) => {
   return <div className="p-6 border-b border-gray-200">{children}</div>;
 };
 
-const PageLayoutContent = ({
-  children,
-  className
-}: PropsWithChildren & { className?: string }) => {
+const PageLayoutContent = ({ children, className }: PageLayoutContentProps) => {
   return (
     <div className={cn('p-6 flex flex-1 flex-col h-full', className)}>
       {children}
