@@ -58,7 +58,17 @@ func NewWebConsoleService(consoleEnvJSPath string) WebConsoleService {
 
 func (c WebConsoleService) Register(mux *http.ServeMux) {
 	mux.HandleFunc("/", webConsoleHandler().ServeHTTP)
-	mux.HandleFunc("/v3", dashboardHandler().ServeHTTP)
 	mux.HandleFunc("/static/js/",
 		http.StripPrefix("/static/js/", webConsoleEnvJSHandler(c.consoleEnvJSPath)).ServeHTTP)
+}
+
+type DashboardService struct {
+}
+
+func NewDashboardService() DashboardService {
+	return DashboardService{}
+}
+
+func (d DashboardService) Register(mux *http.ServeMux) {
+	mux.HandleFunc("/", dashboardHandler().ServeHTTP)
 }

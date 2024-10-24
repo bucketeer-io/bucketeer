@@ -164,6 +164,8 @@ spec:
               value: "{{ .Values.env.pushServicePort }}"
             - name: BUCKETEER_WEB_WEB_CONSOLE_SERVICE_PORT
               value: "{{ .Values.env.webConsoleServicePort }}"
+            - name: BUCKETEER_WEB_DASHBOARD_SERVICE_PORT
+              value: "{{ .Values.env.dashboardServicePort }}"
             - name: BUCKETEER_WEB_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
             - name: BUCKETEER_WEB_AUTH_SERVICE
