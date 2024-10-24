@@ -70,5 +70,5 @@ func NewDashboardService() DashboardService {
 }
 
 func (d DashboardService) Register(mux *http.ServeMux) {
-	mux.HandleFunc("/", dashboardHandler().ServeHTTP)
+	mux.HandleFunc("/v3/", http.StripPrefix("/v3/", dashboardHandler()).ServeHTTP)
 }
