@@ -59,7 +59,7 @@ function App() {
   return (
     <I18nextProvider i18n={i18n}>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
+        <BrowserRouter basename="/v3">
           <AuthProvider>
             <Routes>
               <Route
