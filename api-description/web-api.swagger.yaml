@@ -3527,11 +3527,25 @@ definitions:
         type: boolean
       ownerEmail:
         type: string
+    title: Deprecated
   environmentCreateOrganizationRequest:
     type: object
     properties:
       command:
         $ref: '#/definitions/environmentCreateOrganizationCommand'
+      name:
+        type: string
+      urlCode:
+        type: string
+      description:
+        type: string
+        title: optional
+      isTrial:
+        type: boolean
+      isSystemAdmin:
+        type: boolean
+      ownerEmail:
+        type: string
   environmentCreateOrganizationResponse:
     type: object
     properties:
