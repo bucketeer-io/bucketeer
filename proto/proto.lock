@@ -8314,7 +8314,43 @@
               {
                 "id": 1,
                 "name": "command",
-                "type": "CreateOrganizationCommand"
+                "type": "CreateOrganizationCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "url_code",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "is_trial",
+                "type": "bool"
+              },
+              {
+                "id": 6,
+                "name": "is_system_admin",
+                "type": "bool"
+              },
+              {
+                "id": 7,
+                "name": "owner_email",
+                "type": "string"
               }
             ]
           },

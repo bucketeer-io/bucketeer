@@ -215,7 +215,13 @@ message ListOrganizationsResponse {
 }
 
 message CreateOrganizationRequest {
-  CreateOrganizationCommand command = 1;
+  CreateOrganizationCommand command = 1 [deprecated = true];
+  string name = 2;
+  string url_code = 3;
+  string description = 4;  // optional
+  bool is_trial = 5;
+  bool is_system_admin = 6;
+  string owner_email = 7;
 }
 
 message CreateOrganizationResponse {

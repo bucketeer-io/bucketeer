@@ -68,6 +68,7 @@ message DisableProjectCommand {}
 
 message ConvertTrialProjectCommand {}
 
+// Deprecated
 message CreateOrganizationCommand {
   string name = 1;
   string url_code = 2;
