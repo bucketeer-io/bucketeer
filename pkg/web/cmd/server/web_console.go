@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/bucketeer-io/bucketeer/ui/dashboard"
 	webv2 "github.com/bucketeer-io/bucketeer/ui/web-v2"
 )
 
@@ -33,8 +34,14 @@ func (fs *spaFileSystem) Open(name string) (http.File, error) {
 	return f, err
 }
 
+// webConsoleHandler returns a http.Handler for the old web console UI.
 func webConsoleHandler() http.Handler {
 	return http.FileServer(&spaFileSystem{http.FS(webv2.FS)})
+}
+
+// dashboardHandler returns a http.Handler for the new dashboard UI.
+func dashboardHandler() http.Handler {
+	return http.FileServer(&spaFileSystem{http.FS(dashboard.FS)})
 }
 
 func webConsoleEnvJSHandler(path string) http.Handler {
@@ -51,6 +58,7 @@ func NewWebConsoleService(consoleEnvJSPath string) WebConsoleService {
 
 func (c WebConsoleService) Register(mux *http.ServeMux) {
 	mux.HandleFunc("/", webConsoleHandler().ServeHTTP)
+	mux.HandleFunc("/v3", dashboardHandler().ServeHTTP)
 	mux.HandleFunc("/static/js/",
 		http.StripPrefix("/static/js/", webConsoleEnvJSHandler(c.consoleEnvJSPath)).ServeHTTP)
 }
