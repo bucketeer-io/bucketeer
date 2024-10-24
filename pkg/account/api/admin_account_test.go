@@ -138,7 +138,9 @@ func TestGetMeMySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "test",
+						LastName:         "test",
+						Language:         "en",
 						AvatarImageUrl:   "",
 						OrganizationId:   "org0",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
@@ -243,7 +245,6 @@ func TestGetMeMySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
 						AvatarImageUrl:   "",
 						OrganizationId:   "org0",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
@@ -253,12 +254,17 @@ func TestGetMeMySQL(t *testing.T) {
 								Role:          accountproto.AccountV2_Role_Environment_EDITOR,
 							},
 						},
-						Disabled: false,
+						Disabled:  false,
+						CreatedAt: 0,
+						UpdatedAt: 0,
 						SearchFilters: []*accountproto.SearchFilter{
 							{
 								Id: "search-filter-id",
 							},
 						},
+						FirstName: "test",
+						LastName:  "test",
+						Language:  "en",
 					},
 				}, nil)
 			},
@@ -268,7 +274,9 @@ func TestGetMeMySQL(t *testing.T) {
 			expected: &accountproto.GetMeResponse{
 				Account: &accountproto.ConsoleAccount{
 					Email:            "bucketeer@example.com",
-					Name:             "test",
+					FirstName:        "test",
+					LastName:         "test",
+					Language:         "en",
 					AvatarUrl:        "",
 					Organization:     &org,
 					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,

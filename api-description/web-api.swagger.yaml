@@ -2802,6 +2802,15 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/accountSearchFilter'
+      firstName:
+        type: string
+      lastName:
+        type: string
+      language:
+        type: string
+      lastSeen:
+        type: string
+        format: int64
   accountAccountV2EnvironmentRole:
     type: object
     properties:
@@ -2840,6 +2849,27 @@ definitions:
           $ref: '#/definitions/accountAccountV2EnvironmentRole'
       writeType:
         $ref: '#/definitions/ChangeAccountV2EnvironmentRolesCommandWriteType'
+  accountChangeAccountV2FirstNameCommand:
+    type: object
+    properties:
+      firstName:
+        type: string
+  accountChangeAccountV2LanguageCommand:
+    type: object
+    properties:
+      language:
+        type: string
+  accountChangeAccountV2LastNameCommand:
+    type: object
+    properties:
+      lastName:
+        type: string
+  accountChangeAccountV2LastSeenCommand:
+    type: object
+    properties:
+      lastSeen:
+        type: string
+        format: int64
   accountChangeAccountV2NameCommand:
     type: object
     properties:
@@ -2896,6 +2926,12 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/accountSearchFilter'
+      firstName:
+        type: string
+      lastName:
+        type: string
+      language:
+        type: string
   accountConsoleAccountEnvironmentRole:
     type: object
     properties:
@@ -2940,6 +2976,12 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/accountAccountV2EnvironmentRole'
+      firstName:
+        type: string
+      lastName:
+        type: string
+      language:
+        type: string
   accountCreateAccountV2Request:
     type: object
     properties:
@@ -3287,6 +3329,14 @@ definitions:
         $ref: '#/definitions/accountChangeAccountV2OrganizationRoleCommand'
       changeEnvironmentRolesCommand:
         $ref: '#/definitions/accountChangeAccountV2EnvironmentRolesCommand'
+      changeFirstNameCommand:
+        $ref: '#/definitions/accountChangeAccountV2FirstNameCommand'
+      changeLastNameCommand:
+        $ref: '#/definitions/accountChangeAccountV2LastNameCommand'
+      changeLanguageCommand:
+        $ref: '#/definitions/accountChangeAccountV2LanguageCommand'
+      changeLastSeenCommand:
+        $ref: '#/definitions/accountChangeAccountV2LastSeenCommand'
   accountUpdateAccountV2Response:
     type: object
   accountUpdateSearchFilterRequest:
