@@ -40,7 +40,7 @@ export const AppLoading = () => (
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/v3">
       <AuthProvider>
         <Routes>
           <Route
