@@ -57,7 +57,8 @@ const AddOrganizationModal = ({
 
   const onSubmit: SubmitHandler<AddOrganizationForm> = values => {
     return organizationCreator({
-      command: { ...values, isSystemAdmin: false }
+      ...values,
+      isSystemAdmin: false
     }).then(() => {
       notify({
         toastType: 'toast',
