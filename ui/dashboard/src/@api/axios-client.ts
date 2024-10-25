@@ -42,6 +42,7 @@ axiosClient.interceptors.response.use(
           const newAccessToken = response.token.accessToken;
           setTokenStorage(response.token);
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          return axiosClient(originalRequest);
         })
         .catch(err => {
           clearOrgIdStorage();
@@ -49,7 +50,6 @@ axiosClient.interceptors.response.use(
           window.location.href = PAGE_PATH_ROOT;
           return Promise.reject(err);
         });
-      return axiosClient(originalRequest);
     }
     return Promise.reject(error);
   }

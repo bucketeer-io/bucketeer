@@ -1,8 +1,18 @@
 import IconBackspace from './customized-icons/backspace.svg?react';
+import IconChecked from './customized-icons/checked.svg?react';
 import IconChevronRight from './customized-icons/chevron-right.svg?react';
+import IconClose from './customized-icons/close.svg?react';
 import IconEmail from './customized-icons/email.svg?react';
 import IconInfo from './customized-icons/info.svg?react';
 import IconSearch from './customized-icons/search.svg?react';
+import IconSortingDown from './customized-icons/sorting-down.svg?react';
+import IconSortingUp from './customized-icons/sorting-up.svg?react';
+import IconSorting from './customized-icons/sorting.svg?react';
+import IconToastError from './customized-icons/toast-error.svg?react';
+import IconToastInfo from './customized-icons/toast-info.svg?react';
+import IconToastSuccess from './customized-icons/toast-success.svg?react';
+import IconToastWarning from './customized-icons/toast-warning.svg?react';
+import IconTrash from './customized-icons/trash.svg?react';
 import IconUnion from './customized-icons/union.svg?react';
 import IconBuilding from './sidebar-icons/building.svg?react';
 import IconDebugger from './sidebar-icons/debugger.svg?react';
@@ -48,6 +58,16 @@ export {
   IconInfo,
   IconUnion,
   IconEmail,
+  IconChecked,
+  IconToastError,
+  IconToastInfo,
+  IconToastSuccess,
+  IconToastWarning,
+  IconClose,
+  IconSorting,
+  IconSortingUp,
+  IconSortingDown,
+  IconTrash,
   // Special icons
   IconGoal,
   IconGoogle,
