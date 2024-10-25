@@ -1,9 +1,9 @@
 import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 import {
+  PAGE_PATH_MEMBERS,
   PAGE_PATH_ORGANIZATIONS,
   PAGE_PATH_PROJECTS,
-  PAGE_PATH_SETTINGS,
-  PAGE_PATH_USERS
+  PAGE_PATH_SETTINGS
 } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { Organization } from '@types';
@@ -26,7 +26,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
     },
     {
       title: t(`members`),
-      to: PAGE_PATH_USERS
+      to: PAGE_PATH_MEMBERS
     },
     {
       title: t(`settings`),
@@ -55,7 +55,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
               path={PAGE_PATH_PROJECTS}
               element={<OrganizationProjects />}
             />
-            <Route path={PAGE_PATH_USERS} element={<OrganizationUsers />} />
+            <Route path={PAGE_PATH_MEMBERS} element={<OrganizationUsers />} />
             <Route
               path={PAGE_PATH_SETTINGS}
               element={<OrganizationSettings organization={organization} />}
