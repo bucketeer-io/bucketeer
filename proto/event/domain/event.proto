@@ -181,6 +181,7 @@ message Event {
     PUSH_TAGS_ADDED = 902;
     PUSH_TAGS_DELETED = 903;
     PUSH_RENAMED = 904;
+    PUSH_TAGS_UPDATED = 905;
     SUBSCRIPTION_CREATED = 1000;
     SUBSCRIPTION_DELETED = 1001;
     SUBSCRIPTION_ENABLED = 1002;
@@ -888,6 +889,10 @@ message PushTagsDeletedEvent {
 
 message PushRenamedEvent {
   string name = 2;
+}
+
+message PushTagsUpdatedEvent {
+  repeated string tags = 2;
 }
 
 message SubscriptionCreatedEvent {

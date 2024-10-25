@@ -362,17 +362,20 @@ func TestUpdatePushMySQL(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc:        "err: ErrIDRequired",
-			req:         &pushproto.UpdatePushRequest{},
+			desc: "err: ErrIDRequired",
+			req: &pushproto.UpdatePushRequest{
+				RenamePushCommand: &pushproto.RenamePushCommand{},
+			},
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
-		{
-			desc: "err: ErrNoCommand",
-			req: &pushproto.UpdatePushRequest{
-				Id: "key-0",
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
+		// command is deprecating
+		//{
+		//	desc: "err: ErrNoCommand",
+		//	req: &pushproto.UpdatePushRequest{
+		//		Id: "key-0",
+		//	},
+		//	expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+		//},
 		{
 			desc: "err: ErrTagsRequired: delete",
 			req: &pushproto.UpdatePushRequest{
@@ -522,6 +525,98 @@ func TestUpdatePushMySQL(t *testing.T) {
 	}
 }
 
+func TestUpdatePushNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx := createContextWithToken(t, true)
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*PushService)
+		req         *pushproto.UpdatePushRequest
+		expectedErr error
+	}{
+		{
+			desc:        "err: ErrIDRequired",
+			req:         &pushproto.UpdatePushRequest{},
+			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+		},
+		{
+			desc: "err: ErrTagsRequired",
+			req: &pushproto.UpdatePushRequest{
+				Id:   "key-0",
+				Name: "push-0",
+				Tags: []string{},
+			},
+			expectedErr: createError(statusTagsRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag")),
+		},
+		{
+			desc: "err: ErrNameRequired: add",
+			req: &pushproto.UpdatePushRequest{
+				Id:   "key-0",
+				Name: "",
+				Tags: []string{"tag-0"},
+			},
+			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+		},
+		{
+			desc: "err: ErrNotFound",
+			setup: func(s *PushService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(v2ps.ErrPushNotFound)
+			},
+			req: &pushproto.UpdatePushRequest{
+				Id:   "key-1",
+				Name: "push-0",
+				Tags: []string{"tag-0"},
+			},
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *PushService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &pushproto.UpdatePushRequest{
+				EnvironmentNamespace: "ns0",
+				Id:                   "key-0",
+				Name:                 "name-1",
+				Tags:                 []string{"tag-0"},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			service := newPushServiceWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			_, err := service.UpdatePush(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func TestCheckFCMServiceAccount(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -629,13 +724,14 @@ func TestDeletePushMySQL(t *testing.T) {
 			req:         &pushproto.DeletePushRequest{},
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
-		{
-			desc: "err: ErrNoCommand",
-			req: &pushproto.DeletePushRequest{
-				Id: "key-0",
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
+		// command is deprecating
+		//{
+		//	desc: "err: ErrNoCommand",
+		//	req: &pushproto.DeletePushRequest{
+		//		Id: "key-0",
+		//	},
+		//	expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+		//},
 		{
 			desc: "err: ErrNotFound",
 			setup: func(s *PushService) {

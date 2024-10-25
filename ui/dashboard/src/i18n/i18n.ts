@@ -16,6 +16,9 @@ i18n
     fallbackLng: 'en',
     ns: 'common',
     defaultNS: 'common',
+    backend: {
+      loadPath: '/v3/locales/{{lng}}/{{ns}}.json'
+    },
     interpolation: {
       escapeValue: false
     }

@@ -495,9 +495,16 @@ func (s *PushService) UpdatePush(
 	if err != nil {
 		return nil, err
 	}
+
+	if s.isNoUpdatePushCommand(req) {
+		return s.updatePushNoCommand(ctx, req, localizer, editor)
+	}
+
 	if err := s.validateUpdatePushRequest(ctx, req, localizer); err != nil {
 		return nil, err
 	}
+
+	var updatedPushPb *pushproto.Push
 	commands := s.createUpdatePushCommands(req)
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
@@ -564,8 +571,129 @@ func (s *PushService) UpdatePush(
 		return nil, dt.Err()
 	}
 
-	// For security reasons we remove the service account from the API response
 	if updatedPushPb != nil {
+		// For security reasons we remove the service account from the API response
+		updatedPushPb.FcmServiceAccount = ""
+	}
+	return &pushproto.UpdatePushResponse{
+		Push: updatedPushPb,
+	}, nil
+}
+
+func (s *PushService) updatePushNoCommand(
+	ctx context.Context,
+	req *pushproto.UpdatePushRequest,
+	localizer locale.Localizer,
+	editor *eventproto.Editor,
+) (*pushproto.UpdatePushResponse, error) {
+	if err := s.validateUpdatePushRequestNoCommand(ctx, req, localizer); err != nil {
+		return nil, err
+	}
+	var updatedPushPb *pushproto.Push
+	var updatePushTagsEvent *eventproto.Event
+	var updatePushNameEvent *eventproto.Event
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		pushStorage := v2ps.NewPushStorage(tx)
+		push, err := pushStorage.GetPush(ctx, req.Id, req.EnvironmentNamespace)
+		if err != nil {
+			return err
+		}
+		prev := &domain.Push{}
+		if err = copier.Copy(prev, push); err != nil {
+			return err
+		}
+		push.Name = req.Name
+		push.Tags = req.Tags
+		updatedPushPb = push.Push
+
+		updatePushNameEvent, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_PUSH,
+			push.Id,
+			eventproto.Event_PUSH_RENAMED,
+			&eventproto.PushRenamedEvent{
+				Name: req.Name,
+			},
+			req.EnvironmentNamespace,
+			push,
+			prev,
+		)
+		if err != nil {
+			return err
+		}
+		if err = s.publisher.Publish(ctx, updatePushNameEvent); err != nil {
+			return err
+		}
+
+		updatePushTagsEvent, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_PUSH,
+			push.Id,
+			eventproto.Event_PUSH_TAGS_UPDATED,
+			&eventproto.PushTagsUpdatedEvent{
+				Tags: req.Tags,
+			},
+			req.EnvironmentNamespace,
+			push,
+			prev,
+		)
+		if err != nil {
+			return err
+		}
+		if err = s.publisher.Publish(ctx, updatePushTagsEvent); err != nil {
+			return err
+		}
+
+		return pushStorage.UpdatePush(ctx, push, req.EnvironmentNamespace)
+	})
+	if err != nil {
+		if err == v2ps.ErrPushNotFound || err == v2ps.ErrPushUnexpectedAffectedRows {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to update push",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("id", req.Id),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	if updatedPushPb != nil {
+		// For security reasons we remove the service account from the API response
 		updatedPushPb.FcmServiceAccount = ""
 	}
 
@@ -583,16 +711,6 @@ func (s *PushService) validateUpdatePushRequest(
 		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if s.isNoUpdatePushCommand(req) {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -622,6 +740,45 @@ func (s *PushService) validateUpdatePushRequest(
 		}
 		return dt.Err()
 	}
+	return nil
+}
+
+func (s *PushService) validateUpdatePushRequestNoCommand(
+	ctx context.Context,
+	req *pushproto.UpdatePushRequest,
+	localizer locale.Localizer,
+) error {
+	if req.Id == "" {
+		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.Name == "" {
+		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if len(req.Tags) == 0 {
+		dt, err := statusTagsRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+
 	return nil
 }
 
@@ -707,6 +864,8 @@ func (s *PushService) DeletePush(
 	if err := validateDeletePushRequest(req, localizer); err != nil {
 		return nil, err
 	}
+
+	var event *eventproto.Event
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
 		s.logger.Error(
@@ -730,11 +889,29 @@ func (s *PushService) DeletePush(
 		if err != nil {
 			return err
 		}
-		handler, err := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentNamespace)
+		prev := &domain.Push{}
+		if err = copier.Copy(prev, push); err != nil {
+			return err
+		}
+		push.Deleted = true
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_PUSH,
+			push.Id,
+			eventproto.Event_PUSH_CREATED,
+			&eventproto.PushCreatedEvent{
+				FcmServiceAccount: push.FcmServiceAccount,
+				Tags:              push.Tags,
+				Name:              push.Name,
+			},
+			req.EnvironmentNamespace,
+			push,
+			prev,
+		)
 		if err != nil {
 			return err
 		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
+		if err = s.publisher.Publish(ctx, event); err != nil {
 			return err
 		}
 		return pushStorage.UpdatePush(ctx, push, req.EnvironmentNamespace)
@@ -775,16 +952,6 @@ func validateDeletePushRequest(req *pushproto.DeletePushRequest, localizer local
 		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
 		})
 		if err != nil {
 			return statusInternal.Err()
