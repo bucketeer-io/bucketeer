@@ -1,7 +1,6 @@
-import { useState } from 'react';
-import { IconAddOutlined } from 'react-icons-material-design';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'i18n';
-import { IconTrash } from '@icons';
+import { isNotEmpty } from 'utils/data-type';
 import { OrganizationFilters } from 'pages/organizations/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -12,7 +11,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from 'components/dropdown';
-import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
 
 export type FilterProps = {
@@ -20,6 +18,7 @@ export type FilterProps = {
   isOpen: boolean;
   onClose: () => void;
   onClearFilters: () => void;
+  filters?: Partial<OrganizationFilters>;
 };
 
 export interface Option {
@@ -53,7 +52,8 @@ const FilterOrganizationModal = ({
   onSubmit,
   isOpen,
   onClose,
-  onClearFilters
+  onClearFilters,
+  filters
 }: FilterProps) => {
   const { t } = useTranslation(['common']);
   const [selectedFilterType, setSelectedFilterType] = useState<Option>();
@@ -69,11 +69,15 @@ const FilterOrganizationModal = ({
     }
   };
 
-  const onClearHandler = () => {
-    onClearFilters();
-    setSelectedFilterType(undefined);
-    setValueOption(undefined);
-  };
+  useEffect(() => {
+    if (isNotEmpty(filters?.disabled)) {
+      setSelectedFilterType(filterOptions[0]);
+      setValueOption(enabledOptions[filters?.disabled ? 1 : 0]);
+    } else {
+      setSelectedFilterType(undefined);
+      setValueOption(undefined);
+    }
+  }, [filters]);
 
   return (
     <DialogModal
@@ -126,15 +130,15 @@ const FilterOrganizationModal = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button variant={'text'} size={'icon'} className="p-0 size-5">
+          {/* <Button variant={'text'} size={'icon'} className="p-0 size-5">
             <Icon icon={IconTrash} size={'fit'} />
-          </Button>
+          </Button> */}
         </div>
 
-        <Button variant={'text'} size={'sm'} className="px-0 typo-para-medium">
+        {/* <Button variant={'text'} size={'sm'} className="px-0 typo-para-medium">
           <Icon icon={IconAddOutlined} size="sm" />
           {t('add-filter')}
-        </Button>
+        </Button> */}
       </div>
 
       <ButtonBar
@@ -143,7 +147,7 @@ const FilterOrganizationModal = ({
         }
         primaryButton={
           <Button
-            onClick={onClearHandler}
+            onClick={onClearFilters}
             variant="secondary"
           >{`Clear`}</Button>
         }

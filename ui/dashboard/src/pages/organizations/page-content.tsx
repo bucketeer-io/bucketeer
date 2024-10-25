@@ -97,20 +97,24 @@ const PageContent = ({
           </Button>
         }
         searchValue={filters.searchQuery}
+        filterCount={isNotEmpty(filters.disabled) ? 1 : undefined}
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
-      <FilterOrganizationModal
-        isOpen={openFilterModal}
-        onClose={onCloseFilterModal}
-        onSubmit={value => {
-          onChangeFilters(value);
-          onCloseFilterModal();
-        }}
-        onClearFilters={() => {
-          onChangeFilters({ disabled: undefined });
-          onCloseFilterModal();
-        }}
-      />
+      {openFilterModal && (
+        <FilterOrganizationModal
+          isOpen={openFilterModal}
+          filters={filters}
+          onClose={onCloseFilterModal}
+          onSubmit={value => {
+            onChangeFilters(value);
+            onCloseFilterModal();
+          }}
+          onClearFilters={() => {
+            onChangeFilters({ disabled: undefined });
+            onCloseFilterModal();
+          }}
+        />
+      )}
       <Tabs
         className="flex-1 flex h-full flex-col mt-6"
         value={filters.status}

@@ -11,6 +11,7 @@ import SearchInput from 'components/search-input';
 interface FilterProps {
   action?: ReactNode;
   searchValue: string;
+  filterCount?: number;
   onSearchChange: (value: string) => void;
   onOpenFilter?: () => void;
 }
@@ -18,6 +19,7 @@ interface FilterProps {
 const Filter = ({
   action,
   searchValue,
+  filterCount,
   onSearchChange,
   onOpenFilter
 }: FilterProps) => {
@@ -43,6 +45,11 @@ const Filter = ({
         >
           <Icon icon={IconFilterListOutlined} size="sm" />
           {t('filter')}
+          {filterCount && (
+            <div className="size-5 flex-center rounded-full bg-gray-200 text-[11px] text-gray-700">
+              {filterCount}
+            </div>
+          )}
         </Button>
         {action}
       </div>
