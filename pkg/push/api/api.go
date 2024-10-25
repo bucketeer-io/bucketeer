@@ -504,7 +504,6 @@ func (s *PushService) UpdatePush(
 		return nil, err
 	}
 
-	var updatedPushPb *pushproto.Push
 	commands := s.createUpdatePushCommands(req)
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
