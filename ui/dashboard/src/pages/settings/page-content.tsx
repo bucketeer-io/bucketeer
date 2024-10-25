@@ -157,7 +157,11 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                         variant="secondary"
                         className="w-full"
                       />
-                      <DropdownMenuContent align="start" {...field}>
+                      <DropdownMenuContent
+                        className="w-[400px]"
+                        align="start"
+                        {...field}
+                      >
                         {accounts?.accounts?.map((item, index) => (
                           <DropdownMenuItem
                             {...field}

@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
-import { onGenerateSlug } from 'utils/converts';
+import { onGenerateSlug, onValidSlug } from 'utils/converts';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
@@ -93,8 +93,14 @@ const AddOrganizationModal = ({
                       placeholder={`${t('form:placeholder-name')}`}
                       {...field}
                       onChange={value => {
+                        const isUrlCodeDirty =
+                          form.getFieldState('urlCode').isDirty;
+                        const urlCode = form.getValues('urlCode');
                         field.onChange(value);
-                        form.setValue('urlCode', onGenerateSlug(value));
+                        form.setValue(
+                          'urlCode',
+                          isUrlCodeDirty ? urlCode : onGenerateSlug(value)
+                        );
                       }}
                     />
                   </Form.Control>
@@ -112,6 +118,9 @@ const AddOrganizationModal = ({
                     <Input
                       placeholder={`${t('form:placeholder-code')}`}
                       {...field}
+                      onChange={value => {
+                        field.onChange(onValidSlug(value));
+                      }}
                     />
                   </Form.Control>
                   <Form.Message />

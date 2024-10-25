@@ -95,7 +95,7 @@ const FilterOrganizationModal = ({
               variant="secondary"
               className="w-full"
             />
-            <DropdownMenuContent align="start">
+            <DropdownMenuContent className="w-[235px]" align="start">
               {filterOptions.map((item, index) => (
                 <DropdownMenuItem
                   key={index}
@@ -114,7 +114,7 @@ const FilterOrganizationModal = ({
               variant="secondary"
               className="w-full"
             />
-            <DropdownMenuContent align="start">
+            <DropdownMenuContent className="w-[235px]" align="start">
               {enabledOptions.map((item, index) => (
                 <DropdownMenuItem
                   key={index}
