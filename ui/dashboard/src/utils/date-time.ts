@@ -1,6 +1,7 @@
-import { formatDistance, Locale } from 'date-fns';
+import { Locale } from 'date-fns';
 import { enUS as enCH, ja as jaCH } from 'date-fns/locale';
 import { Language, getLanguage } from 'i18n';
+import { format } from 'timeago.js';
 
 export type FormatDateTimeOptions = { pattern: DTPattern };
 
@@ -35,9 +36,7 @@ export const useFormatDateTime = () => {
     try {
       const date = new Date(Number(value) * 1000);
 
-      return formatDistance(date, new Date(), {
-        addSuffix: true
-      });
+      return format(date);
     } catch (e) {
       console.error(e);
       return value;

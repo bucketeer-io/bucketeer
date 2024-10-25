@@ -54,6 +54,7 @@
     "react-icons-material-design": "^1.0.4",
     "react-router-dom": "^6.26.0",
     "tailwind-merge": "^2.4.0",
+    "timeago.js": "^4.0.2",
     "web-vitals": "^4.2.3",
     "yup": "^1.4.0"
   },

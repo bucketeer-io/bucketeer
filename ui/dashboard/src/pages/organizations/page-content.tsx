@@ -114,9 +114,10 @@ const PageContent = ({
       <Tabs
         className="flex-1 flex h-full flex-col mt-6"
         value={filters.status}
-        onValueChange={value =>
-          onChangeFilters({ status: value as CollectionStatusType })
-        }
+        onValueChange={value => {
+          const status = value as CollectionStatusType;
+          onChangeFilters({ status, searchQuery: '', disabled: undefined });
+        }}
       >
         <TabsList>
           <TabsTrigger value="ACTIVE">{t(`active`)}</TabsTrigger>
