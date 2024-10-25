@@ -654,6 +654,7 @@ func (*ConvertTrialProjectCommand) Descriptor() ([]byte, []int) {
 	return file_proto_environment_command_proto_rawDescGZIP(), []int{11}
 }
 
+// Deprecated
 type CreateOrganizationCommand struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

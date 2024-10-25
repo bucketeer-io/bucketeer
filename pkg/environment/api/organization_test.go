@@ -227,12 +227,13 @@ func TestCreateOrganizationMySQL(t *testing.T) {
 		expected    *proto.Organization
 		expectedErr error
 	}{
-		{
-			desc:        "err: ErrNoCommand",
-			setup:       nil,
-			req:         &proto.CreateOrganizationRequest{},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
+		// Deprecated
+		// {
+		// 	desc:        "err: ErrNoCommand",
+		// 	setup:       nil,
+		// 	req:         &proto.CreateOrganizationRequest{},
+		// 	expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+		// },
 		{
 			desc:  "err: ErrInvalidOrganizationName: empty name",
 			setup: nil,
