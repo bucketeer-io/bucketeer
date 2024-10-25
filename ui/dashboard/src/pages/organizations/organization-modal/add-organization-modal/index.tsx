@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
-import { onGenerateSlug, onValidSlug } from 'utils/converts';
+import { onGenerateSlug } from 'utils/converts';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
@@ -30,7 +30,13 @@ export interface AddOrganizationForm {
 
 const formSchema = yup.object().shape({
   name: yup.string().required(),
-  urlCode: yup.string().required(),
+  urlCode: yup
+    .string()
+    .required()
+    .matches(
+      /^[a-zA-Z0-9][a-zA-Z0-9-]*$/,
+      "urlCode must start with a letter or number and only contain letters, numbers, or '-'"
+    ),
   description: yup.string(),
   ownerEmail: yup.string().email().required(),
   isTrial: yup.bool()
@@ -118,9 +124,6 @@ const AddOrganizationModal = ({
                     <Input
                       placeholder={`${t('form:placeholder-code')}`}
                       {...field}
-                      onChange={value => {
-                        field.onChange(onValidSlug(value));
-                      }}
                     />
                   </Form.Control>
                   <Form.Message />
