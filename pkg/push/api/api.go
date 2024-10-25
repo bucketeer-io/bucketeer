@@ -563,6 +563,10 @@ func (s *PushService) UpdatePush(
 		}
 		return nil, dt.Err()
 	}
+
+	// For security reasons we remove the service account from the API response
+	updatedPushPb.FcmServiceAccount = ""
+
 	return &pushproto.UpdatePushResponse{
 		Push: updatedPushPb,
 	}, nil
