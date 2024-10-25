@@ -14,8 +14,8 @@ const OrganizationUsers = () => {
 
   const [filters, setFilters] = usePartialState<OrganizationUsersFilters>({
     page: Number(searchOptions.page) || 1,
-    orderBy: (searchOptions.orderBy as OrderBy) || 'DEFAULT',
-    orderDirection: (searchOptions.orderDirection as OrderDirection) || 'ASC',
+    orderBy: (searchOptions.orderBy as OrderBy) || 'CREATED_AT',
+    orderDirection: (searchOptions.orderDirection as OrderDirection) || 'DESC',
     searchQuery: (searchOptions.searchQuery as string) || ''
   });
 

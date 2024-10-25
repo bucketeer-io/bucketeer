@@ -34,8 +34,8 @@ const PageContent = ({
 
   const defaultFilters = {
     page: 1,
-    orderBy: 'DEFAULT',
-    orderDirection: 'ASC',
+    orderBy: 'CREATED_AT',
+    orderDirection: 'DESC',
     status: 'ACTIVE',
     ...searchFilters
   } as OrganizationFilters;

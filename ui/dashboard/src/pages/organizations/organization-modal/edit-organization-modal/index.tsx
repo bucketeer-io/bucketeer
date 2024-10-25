@@ -166,7 +166,11 @@ const EditOrganizationModal = ({
                         variant="secondary"
                         className="w-full"
                       />
-                      <DropdownMenuContent align="start" {...field}>
+                      <DropdownMenuContent
+                        className="w-[500px]"
+                        align="start"
+                        {...field}
+                      >
                         {accounts?.accounts?.map((item, index) => (
                           <DropdownMenuItem
                             {...field}
