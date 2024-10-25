@@ -58,7 +58,7 @@ const TableCell = React.forwardRef<
   React.TdHTMLAttributes<HTMLTableCellElement>
 >(({ ...props }, ref) => (
   <td
-    className="p-4 h-[60px] first:rounded-l-lg last:rounded-r-lg"
+    className="px-4 py-2 h-[60px] first:rounded-l-lg last:rounded-r-lg"
     ref={ref}
     {...props}
   />

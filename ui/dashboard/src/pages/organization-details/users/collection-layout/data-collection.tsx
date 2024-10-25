@@ -11,14 +11,19 @@ export const useColumns = (): ColumnDef<Account>[] => {
 
   return [
     {
-      accessorKey: 'name',
+      accessorKey: 'email',
       header: `${t('name')}`,
-      size: 300,
+      size: 350,
       cell: ({ row }) => {
         const account = row.original;
         return (
-          <div className="underline text-primary-500 typo-para-medium">
-            {account.name}
+          <div className="flex flex-col gap-0.5">
+            <div className="underline text-primary-500 typo-para-medium">
+              {account.name}
+            </div>
+            <div className="typo-para-medium text-gray-700">
+              {account.email}
+            </div>
           </div>
         );
       }
@@ -26,7 +31,7 @@ export const useColumns = (): ColumnDef<Account>[] => {
     {
       accessorKey: 'organizationRole',
       header: `${t('role')}`,
-      size: 350,
+      size: 300,
       cell: ({ row }) => {
         const account = row.original;
         return (
