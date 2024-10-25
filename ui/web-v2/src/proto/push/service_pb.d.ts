@@ -331,6 +331,11 @@ export namespace UpdatePushRequest {
 }
 
 export class UpdatePushResponse extends jspb.Message {
+  hasPush(): boolean;
+  clearPush(): void;
+  getPush(): proto_push_push_pb.Push | undefined;
+  setPush(value?: proto_push_push_pb.Push): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdatePushResponse.AsObject;
   static toObject(
@@ -353,5 +358,7 @@ export class UpdatePushResponse extends jspb.Message {
 }
 
 export namespace UpdatePushResponse {
-  export type AsObject = {};
+  export type AsObject = {
+    push?: proto_push_push_pb.Push.AsObject;
+  };
 }

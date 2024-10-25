@@ -86,6 +86,8 @@ spec:
               value: "{{ .Values.env.featureService }}"
             - name: BUCKETEER_API_ACCOUNT_SERVICE
               value: "{{ .Values.env.accountService }}"
+            - name: BUCKETEER_API_PUSH_SERVICE
+              value: "{{ .Values.env.pushService }}"
             - name: BUCKETEER_API_PORT
               value: "{{ .Values.env.port }}"
             - name: BUCKETEER_API_METRICS_PORT
