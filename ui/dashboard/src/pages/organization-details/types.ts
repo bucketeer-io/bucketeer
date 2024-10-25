@@ -7,7 +7,7 @@ export interface OrganizationProjectFilters {
   searchQuery: string;
 }
 
-export interface OrganizationUsersFilters {
+export interface OrganizationMembersFilters {
   page: number;
   orderBy: OrderBy;
   orderDirection: OrderDirection;

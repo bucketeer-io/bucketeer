@@ -1,7 +1,7 @@
 import { SortingState } from '@tanstack/react-table';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { sortingListFields } from 'constants/collection';
-import { OrganizationUsersFilters } from 'pages/organization-details/types';
+import { OrganizationMembersFilters } from 'pages/organization-details/types';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
@@ -14,8 +14,8 @@ const CollectionLoader = ({
   filters,
   setFilters
 }: {
-  filters: OrganizationUsersFilters;
-  setFilters: (values: Partial<OrganizationUsersFilters>) => void;
+  filters: OrganizationMembersFilters;
+  setFilters: (values: Partial<OrganizationMembersFilters>) => void;
 }) => {
   const columns = useColumns();
   const {

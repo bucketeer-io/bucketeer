@@ -198,7 +198,11 @@ const EditOrganizationModal = ({
                   </Button>
                 }
                 secondaryButton={
-                  <Button type="submit" loading={form.formState.isSubmitting}>
+                  <Button
+                    type="submit"
+                    disabled={!form.formState.isDirty}
+                    loading={form.formState.isSubmitting}
+                  >
                     {t(`update-org`)}
                   </Button>
                 }

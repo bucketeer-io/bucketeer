@@ -9,10 +9,10 @@ import { useTranslation } from 'i18n';
 import { Organization } from '@types';
 import { Tabs, TabsList, TabsContent, TabsLink } from 'components/tabs-link';
 import PageLayout from 'elements/page-layout';
+import OrganizationUsers from './members';
 import OrganizationProjects from './projects';
 import OrganizationSettings from './settings';
 import { TabItem } from './types';
-import OrganizationUsers from './users';
 
 const PageContent = ({ organization }: { organization: Organization }) => {
   const { t } = useTranslation(['common']);
@@ -25,7 +25,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
       to: PAGE_PATH_PROJECTS
     },
     {
-      title: t(`users`),
+      title: t(`members`),
       to: PAGE_PATH_USERS
     },
     {

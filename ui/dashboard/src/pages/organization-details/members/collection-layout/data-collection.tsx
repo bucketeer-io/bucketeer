@@ -36,7 +36,7 @@ export const useColumns = (): ColumnDef<Account>[] => {
         const account = row.original;
         return (
           <div className="text-gray-700 typo-para-medium">
-            {account.environmentRoles[0].role?.split('_')[1]}
+            {String(account.organizationRole).split('_')[1]}
           </div>
         );
       }

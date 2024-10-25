@@ -5,21 +5,21 @@ import { OrderBy, OrderDirection } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import Filter from 'elements/filter';
-import { OrganizationUsersFilters } from '../types';
+import { OrganizationMembersFilters } from '../types';
 import CollectionLoader from './collection-loader';
 
-const OrganizationUsers = () => {
+const OrganizationMembers = () => {
   const { organizationId } = useParams();
   const { searchOptions, onChangSearchParams } = useSearchParams();
 
-  const [filters, setFilters] = usePartialState<OrganizationUsersFilters>({
+  const [filters, setFilters] = usePartialState<OrganizationMembersFilters>({
     page: Number(searchOptions.page) || 1,
     orderBy: (searchOptions.orderBy as OrderBy) || 'CREATED_AT',
     orderDirection: (searchOptions.orderDirection as OrderDirection) || 'DESC',
     searchQuery: (searchOptions.searchQuery as string) || ''
   });
 
-  const onChangeFilters = (values: Partial<OrganizationUsersFilters>) => {
+  const onChangeFilters = (values: Partial<OrganizationMembersFilters>) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
     setFilters({ ...values });
@@ -38,4 +38,4 @@ const OrganizationUsers = () => {
   );
 };
 
-export default OrganizationUsers;
+export default OrganizationMembers;
