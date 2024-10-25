@@ -30,7 +30,6 @@ var (
 	statusFCMServiceAccountInvalid       = gstatus.New(codes.InvalidArgument, "push: fcm service account is invalid")
 	statusTagsRequired                   = gstatus.New(codes.InvalidArgument, "push: tags must be specified")
 	statusInvalidCursor                  = gstatus.New(codes.InvalidArgument, "push: cursor is invalid")
-	statusNoCommand                      = gstatus.New(codes.InvalidArgument, "push: no command")
 	statusInvalidOrderBy                 = gstatus.New(codes.InvalidArgument, "push: order_by is invalid")
 	statusNotFound                       = gstatus.New(codes.NotFound, "push: not found")
 	statusAlreadyExists                  = gstatus.New(codes.AlreadyExists, "push: already exists")

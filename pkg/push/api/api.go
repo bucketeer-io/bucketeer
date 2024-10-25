@@ -767,7 +767,7 @@ func (s *PushService) validateUpdatePushRequestNoCommand(
 		}
 		return dt.Err()
 	}
-	if req.Tags == nil || len(req.Tags) == 0 {
+	if len(req.Tags) == 0 {
 		dt, err := statusTagsRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag"),
