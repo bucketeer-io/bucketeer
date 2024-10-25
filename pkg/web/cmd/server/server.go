@@ -111,6 +111,7 @@ type server struct {
 	notificationServicePort *int
 	pushServicePort         *int
 	webConsoleServicePort   *int
+	dashboardServicePort    *int
 	// Service
 	accountService     *string
 	authService        *string
@@ -228,6 +229,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"web-console-service-port",
 			"Port to bind to console service.",
 		).Default("9102").Int(),
+		dashboardServicePort: cmd.Flag(
+			"dashboard-service-port",
+			"Port to bind to dashboard service.",
+		).Default("9103").Int(),
 		accountService: cmd.Flag(
 			"account-service",
 			"bucketeer-account-service address.",
@@ -640,6 +645,14 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		rest.WithMetrics(registerer),
 	)
 	go webConsoleServer.Run()
+	dashboardServer := rest.NewServer(
+		*s.certPath, *s.keyPath,
+		rest.WithLogger(logger),
+		rest.WithPort(*s.dashboardServicePort),
+		rest.WithService(NewDashboardService()),
+		rest.WithMetrics(registerer),
+	)
+	go dashboardServer.Run()
 	// To detach this pod from Kubernetes Service before the app servers stop, we stop the health check service first.
 	// Then, after 10 seconds of sleep, the app servers can be shut down, as no new requests are expected to be sent.
 	// In this case, the Readiness prove must fail within 10 seconds and the pod must be detached.

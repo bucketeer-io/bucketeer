@@ -49,6 +49,7 @@ env:
   notificationServicePort: 9100
   pushServicePort: 9101
   webConsoleServicePort: 9102
+  dashboardServicePort: 9103
   metricsPort: 9002
   timezone: UTC
   emailFilter:
