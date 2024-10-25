@@ -39,6 +39,17 @@ export const AppLoading = () => (
 );
 
 function App() {
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = '/static/js/env.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
   return (
     <BrowserRouter basename="/v3">
       <AuthProvider>
