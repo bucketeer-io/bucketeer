@@ -986,6 +986,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.Push),
 			),
 		}
+	case proto.Event_PUSH_TAGS_UPDATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.NameUpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Push),
+			),
+		}
 	case proto.Event_SUBSCRIPTION_CREATED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),
