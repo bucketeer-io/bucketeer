@@ -614,19 +614,13 @@ func (s *PushService) updatePushNoCommand(
 		if err != nil {
 			return err
 		}
-		push.Name = req.Name
-		push.Tags = req.Tags
-		updatedPushPb = push.Push
-
-		err = pushStorage.UpdatePush(ctx, push, req.EnvironmentNamespace)
-		if err != nil {
-			return err
-		}
-
 		prev := &domain.Push{}
 		if err = copier.Copy(prev, push); err != nil {
 			return err
 		}
+		push.Name = req.Name
+		push.Tags = req.Tags
+		updatedPushPb = push.Push
 
 		updatePushNameEvent, err = domainevent.NewEvent(
 			editor,
@@ -643,8 +637,7 @@ func (s *PushService) updatePushNoCommand(
 		if err != nil {
 			return err
 		}
-		err = s.publisher.Publish(ctx, updatePushNameEvent)
-		if err != nil {
+		if err = s.publisher.Publish(ctx, updatePushNameEvent); err != nil {
 			return err
 		}
 
@@ -663,7 +656,11 @@ func (s *PushService) updatePushNoCommand(
 		if err != nil {
 			return err
 		}
-		return s.publisher.Publish(ctx, updatePushTagsEvent)
+		if err = s.publisher.Publish(ctx, updatePushTagsEvent); err != nil {
+			return err
+		}
+
+		return pushStorage.UpdatePush(ctx, push, req.EnvironmentNamespace)
 	})
 	if err != nil {
 		if err == v2ps.ErrPushNotFound || err == v2ps.ErrPushUnexpectedAffectedRows {
@@ -866,6 +863,8 @@ func (s *PushService) DeletePush(
 	if err := validateDeletePushRequest(req, localizer); err != nil {
 		return nil, err
 	}
+
+	var event *eventproto.Event
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
 		s.logger.Error(
@@ -889,11 +888,29 @@ func (s *PushService) DeletePush(
 		if err != nil {
 			return err
 		}
-		handler, err := command.NewPushCommandHandler(editor, push, s.publisher, req.EnvironmentNamespace)
+		prev := &domain.Push{}
+		if err = copier.Copy(prev, push); err != nil {
+			return err
+		}
+		push.Deleted = true
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_PUSH,
+			push.Id,
+			eventproto.Event_PUSH_CREATED,
+			&eventproto.PushCreatedEvent{
+				FcmServiceAccount: push.FcmServiceAccount,
+				Tags:              push.Tags,
+				Name:              push.Name,
+			},
+			req.EnvironmentNamespace,
+			push,
+			prev,
+		)
 		if err != nil {
 			return err
 		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
+		if err = s.publisher.Publish(ctx, event); err != nil {
 			return err
 		}
 		return pushStorage.UpdatePush(ctx, push, req.EnvironmentNamespace)
@@ -934,16 +951,6 @@ func validateDeletePushRequest(req *pushproto.DeletePushRequest, localizer local
 		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
 		})
 		if err != nil {
 			return statusInternal.Err()

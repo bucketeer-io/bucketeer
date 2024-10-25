@@ -368,7 +368,8 @@ func TestUpdatePushMySQL(t *testing.T) {
 			},
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
-		//{ // command is deprecating
+		// command is deprecating
+		//{
 		//	desc: "err: ErrNoCommand",
 		//	req: &pushproto.UpdatePushRequest{
 		//		Id: "key-0",
@@ -723,13 +724,14 @@ func TestDeletePushMySQL(t *testing.T) {
 			req:         &pushproto.DeletePushRequest{},
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
-		{
-			desc: "err: ErrNoCommand",
-			req: &pushproto.DeletePushRequest{
-				Id: "key-0",
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
+		// command is deprecating
+		//{
+		//	desc: "err: ErrNoCommand",
+		//	req: &pushproto.DeletePushRequest{
+		//		Id: "key-0",
+		//	},
+		//	expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+		//},
 		{
 			desc: "err: ErrNotFound",
 			setup: func(s *PushService) {
