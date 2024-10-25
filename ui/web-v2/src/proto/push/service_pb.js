@@ -202,7 +202,14 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.bucketeer.push.UpdatePushRequest = function (opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(
+    this,
+    opt_data,
+    0,
+    -1,
+    proto.bucketeer.push.UpdatePushRequest.repeatedFields_,
+    null
+  );
 };
 goog.inherits(proto.bucketeer.push.UpdatePushRequest, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -1601,6 +1608,13 @@ proto.bucketeer.push.DeletePushResponse.serializeBinaryToWriter = function (
   var f = undefined;
 };
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.push.UpdatePushRequest.repeatedFields_ = [6];
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -1651,7 +1665,10 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           ),
         renamePushCommand:
           (f = msg.getRenamePushCommand()) &&
-          proto_push_command_pb.RenamePushCommand.toObject(includeInstance, f)
+          proto_push_command_pb.RenamePushCommand.toObject(includeInstance, f),
+        tagsList:
+          (f = jspb.Message.getRepeatedField(msg, 6)) == null ? undefined : f,
+        name: jspb.Message.getFieldWithDefault(msg, 7, '')
       };
 
     if (includeInstance) {
@@ -1725,6 +1742,14 @@ proto.bucketeer.push.UpdatePushRequest.deserializeBinaryFromReader = function (
         );
         msg.setRenamePushCommand(value);
         break;
+      case 6:
+        var value = /** @type {string} */ (reader.readString());
+        msg.addTags(value);
+        break;
+      case 7:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setName(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -1786,6 +1811,14 @@ proto.bucketeer.push.UpdatePushRequest.serializeBinaryToWriter = function (
       f,
       proto_push_command_pb.RenamePushCommand.serializeBinaryToWriter
     );
+  }
+  f = message.getTagsList();
+  if (f.length > 0) {
+    writer.writeRepeatedString(6, f);
+  }
+  f = message.getName();
+  if (f.length > 0) {
+    writer.writeString(7, f);
   }
 };
 
@@ -1951,6 +1984,60 @@ proto.bucketeer.push.UpdatePushRequest.prototype.hasRenamePushCommand =
     return jspb.Message.getField(this, 5) != null;
   };
 
+/**
+ * repeated string tags = 6;
+ * @return {!Array<string>}
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.getTagsList = function () {
+  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 6));
+};
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.bucketeer.push.UpdatePushRequest} returns this
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.setTagsList = function (
+  value
+) {
+  return jspb.Message.setField(this, 6, value || []);
+};
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.push.UpdatePushRequest} returns this
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.addTags = function (
+  value,
+  opt_index
+) {
+  return jspb.Message.addToRepeatedField(this, 6, value, opt_index);
+};
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.push.UpdatePushRequest} returns this
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.clearTagsList = function () {
+  return this.setTagsList([]);
+};
+
+/**
+ * optional string name = 7;
+ * @return {string}
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.getName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 7, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.push.UpdatePushRequest} returns this
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.setName = function (value) {
+  return jspb.Message.setProto3StringField(this, 7, value);
+};
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -1987,7 +2074,11 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {};
+      obj = {
+        push:
+          (f = msg.getPush()) &&
+          proto_push_push_pb.Push.toObject(includeInstance, f)
+      };
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -2027,6 +2118,14 @@ proto.bucketeer.push.UpdatePushResponse.deserializeBinaryFromReader = function (
     }
     var field = reader.getFieldNumber();
     switch (field) {
+      case 1:
+        var value = new proto_push_push_pb.Push();
+        reader.readMessage(
+          value,
+          proto_push_push_pb.Push.deserializeBinaryFromReader
+        );
+        msg.setPush(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -2061,6 +2160,44 @@ proto.bucketeer.push.UpdatePushResponse.serializeBinaryToWriter = function (
   writer
 ) {
   var f = undefined;
+  f = message.getPush();
+  if (f != null) {
+    writer.writeMessage(1, f, proto_push_push_pb.Push.serializeBinaryToWriter);
+  }
+};
+
+/**
+ * optional Push push = 1;
+ * @return {?proto.bucketeer.push.Push}
+ */
+proto.bucketeer.push.UpdatePushResponse.prototype.getPush = function () {
+  return /** @type{?proto.bucketeer.push.Push} */ (
+    jspb.Message.getWrapperField(this, proto_push_push_pb.Push, 1)
+  );
+};
+
+/**
+ * @param {?proto.bucketeer.push.Push|undefined} value
+ * @return {!proto.bucketeer.push.UpdatePushResponse} returns this
+ */
+proto.bucketeer.push.UpdatePushResponse.prototype.setPush = function (value) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.push.UpdatePushResponse} returns this
+ */
+proto.bucketeer.push.UpdatePushResponse.prototype.clearPush = function () {
+  return this.setPush(undefined);
+};
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.push.UpdatePushResponse.prototype.hasPush = function () {
+  return jspb.Message.getField(this, 1) != null;
 };
 
 goog.object.extend(exports, proto.bucketeer.push);

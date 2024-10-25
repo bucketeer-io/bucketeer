@@ -299,6 +299,14 @@ export class UpdatePushRequest extends jspb.Message {
   getRenamePushCommand(): proto_push_command_pb.RenamePushCommand | undefined;
   setRenamePushCommand(value?: proto_push_command_pb.RenamePushCommand): void;
 
+  clearTagsList(): void;
+  getTagsList(): Array<string>;
+  setTagsList(value: Array<string>): void;
+  addTags(value: string, index?: number): string;
+
+  getName(): string;
+  setName(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdatePushRequest.AsObject;
   static toObject(
@@ -327,10 +335,17 @@ export namespace UpdatePushRequest {
     addPushTagsCommand?: proto_push_command_pb.AddPushTagsCommand.AsObject;
     deletePushTagsCommand?: proto_push_command_pb.DeletePushTagsCommand.AsObject;
     renamePushCommand?: proto_push_command_pb.RenamePushCommand.AsObject;
+    tagsList: Array<string>;
+    name: string;
   };
 }
 
 export class UpdatePushResponse extends jspb.Message {
+  hasPush(): boolean;
+  clearPush(): void;
+  getPush(): proto_push_push_pb.Push | undefined;
+  setPush(value?: proto_push_push_pb.Push): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdatePushResponse.AsObject;
   static toObject(
@@ -353,5 +368,7 @@ export class UpdatePushResponse extends jspb.Message {
 }
 
 export namespace UpdatePushResponse {
-  export type AsObject = {};
+  export type AsObject = {
+    push?: proto_push_push_pb.Push.AsObject;
+  };
 }

@@ -14169,6 +14169,10 @@
                 "integer": 904
               },
               {
+                "name": "PUSH_TAGS_UPDATED",
+                "integer": 905
+              },
+              {
                 "name": "SUBSCRIPTION_CREATED",
                 "integer": 1000
               },
@@ -16537,6 +16541,17 @@
                 "id": 2,
                 "name": "name",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "PushTagsUpdatedEvent",
+            "fields": [
+              {
+                "id": 2,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },
@@ -26672,7 +26687,13 @@
               {
                 "id": 3,
                 "name": "command",
-                "type": "DeletePushCommand"
+                "type": "DeletePushCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               }
             ]
           },
@@ -26695,22 +26716,58 @@
               {
                 "id": 3,
                 "name": "add_push_tags_command",
-                "type": "AddPushTagsCommand"
+                "type": "AddPushTagsCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 4,
                 "name": "delete_push_tags_command",
-                "type": "DeletePushTagsCommand"
+                "type": "DeletePushTagsCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 5,
                 "name": "rename_push_command",
-                "type": "RenamePushCommand"
+                "type": "RenamePushCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 6,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "name",
+                "type": "string"
               }
             ]
           },
           {
-            "name": "UpdatePushResponse"
+            "name": "UpdatePushResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "push",
+                "type": "Push"
+              }
+            ]
           }
         ],
         "services": [
