@@ -104,7 +104,7 @@ class Evaluator {
         continue;
       }
 
-      const segmentUsers = this.ListSegmentIDs(feature).flatMap(
+      const segmentUsers = this.listSegmentIDs(feature).flatMap(
         (id) => mapSegmentUsers.get(id) || [],
       );
 
@@ -167,7 +167,7 @@ class Evaluator {
     return feature.getUpdatedAt() < now - SECONDS_TO_RE_EVALUATE_ALL;
   }
 
-  private ListSegmentIDs(feature: Feature): string[] {
+  listSegmentIDs(feature: Feature): string[] {
     const mapIDs = new Set<string>();
     for (const rule of feature.getRulesList()) {
       for (const clause of rule.getClausesList()) {

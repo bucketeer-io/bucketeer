@@ -15,8 +15,16 @@ import {
   createStrategy,
   createTarget,
   createUser,
-  createVariation
+  createVariation,
 } from './modelFactory';
+import {
+  GetFeatureFlagsRequest,
+  GetFeatureFlagsResponse,
+  GetSegmentUsersRequest,
+  GetSegmentUsersResponse,
+} from './proto/gateway/service_pb';
+import { SourceId } from './proto/event/client/event_pb';
+import { GatewayClient, ServiceError } from './proto/gateway/service_pb_service';
 
 export { Evaluator };
 export { NewUserEvaluations };
@@ -34,6 +42,13 @@ export {
   createStrategy,
   createTarget,
   createUser,
-  createVariation
+  createVariation,
 };
-
+export {
+  GetFeatureFlagsRequest,
+  GetFeatureFlagsResponse,
+  GetSegmentUsersRequest,
+  GetSegmentUsersResponse,
+};
+export { SourceId };
+export { GatewayClient, ServiceError };
