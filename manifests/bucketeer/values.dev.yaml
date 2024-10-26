@@ -77,6 +77,7 @@ web:
       clientSecret:
       redirectUrls:
         - https://localhost:9000/auth/callback
+        - https://localhost:9000/v3/auth/callback
     demoSignIn:
       enabled: true
       email: demo@bucketeer.io

@@ -17,24 +17,46 @@ package server
 import (
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/bucketeer-io/bucketeer/ui/dashboard"
 	webv2 "github.com/bucketeer-io/bucketeer/ui/web-v2"
 )
 
 type spaFileSystem struct {
-	root http.FileSystem
+	root   http.FileSystem
+	prefix string
 }
 
+// Open method for spaFileSystem
 func (fs *spaFileSystem) Open(name string) (http.File, error) {
+	// First try with original path
 	f, err := fs.root.Open(name)
-	if os.IsNotExist(err) {
-		return fs.root.Open("index.html")
+	if !os.IsNotExist(err) {
+		return f, err
 	}
-	return f, err
+
+	// If file not found and we have a prefix, try stripping it
+	if fs.prefix != "" && strings.HasPrefix(name, fs.prefix) {
+		strippedName := strings.TrimPrefix(name, fs.prefix)
+		f, err = fs.root.Open(strippedName)
+		if !os.IsNotExist(err) {
+			return f, err
+		}
+	}
+
+	// If still not found, return index.html
+	return fs.root.Open("index.html")
 }
 
+// webConsoleHandler returns a http.Handler for the old web console UI.
 func webConsoleHandler() http.Handler {
-	return http.FileServer(&spaFileSystem{http.FS(webv2.FS)})
+	return http.FileServer(&spaFileSystem{root: http.FS(webv2.FS)})
+}
+
+// dashboardHandler returns a http.Handler for the new dashboard UI.
+func dashboardHandler() http.Handler {
+	return http.FileServer(&spaFileSystem{root: http.FS(dashboard.FS), prefix: "/v3/"})
 }
 
 func webConsoleEnvJSHandler(path string) http.Handler {
@@ -53,4 +75,15 @@ func (c WebConsoleService) Register(mux *http.ServeMux) {
 	mux.HandleFunc("/", webConsoleHandler().ServeHTTP)
 	mux.HandleFunc("/static/js/",
 		http.StripPrefix("/static/js/", webConsoleEnvJSHandler(c.consoleEnvJSPath)).ServeHTTP)
+}
+
+type DashboardService struct {
+}
+
+func NewDashboardService() DashboardService {
+	return DashboardService{}
+}
+
+func (d DashboardService) Register(mux *http.ServeMux) {
+	mux.HandleFunc("/", dashboardHandler().ServeHTTP)
 }
