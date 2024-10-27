@@ -16,7 +16,7 @@ clean:
 	rm -rf $(CURDIR)/__test $(CURDIR)/__lib
 
 .PHONY: build
-build: clean-build tsc rename-js
+build: clean-build tsc copy-proto-external-api-files-to-lib rename-js
 
 .PHONY: clean-build
 clean-build:
@@ -53,7 +53,12 @@ lint:
 
 .PHONY: fixLintErrors
 fixLintErrors:
-	$(NPM_BIN_DIR)/eslint --fix
+	$(NPM_BIN_DIR)/eslint . --fix
+
+.PHONY: copy-proto-external-api-files-to-lib
+copy-proto-external-api-files-to-lib:
+	$(NPM_BIN_DIR)/cpx '$(SRC_DIR)/protoc-gen-openapiv2/**/*.{js,d.ts}' $(GENFILES_DIR)/protoc-gen-openapiv2
+	$(NPM_BIN_DIR)/cpx '$(SRC_DIR)/google/**/*.{js,d.ts}' $(GENFILES_DIR)/google
 
 .PHONY: copy-genfiles
 copy-genfiles:

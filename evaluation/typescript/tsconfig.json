@@ -36,7 +36,6 @@
   ],
   "exclude": [
     "./src/**/__tests__/*",
-    "./src/**/proto/*",
   ],
   /* Module Resolution Options */
   /* Advanced Options */
