@@ -24118,7 +24118,7 @@
             ]
           },
           {
-            "name": "DeletePushRequest",
+            "name": "GetPushRequest",
             "fields": [
               {
                 "id": 1,
@@ -24128,7 +24128,14 @@
             ]
           },
           {
-            "name": "DeletePushResponse"
+            "name": "GetPushResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "push",
+                "type": "push.Push"
+              }
+            ]
           },
           {
             "name": "UpdatePushRequest",
@@ -24140,20 +24147,34 @@
               },
               {
                 "id": 2,
-                "name": "delete_push_tags",
+                "name": "tags",
                 "type": "string",
                 "is_repeated": true
               },
               {
                 "id": 3,
-                "name": "add_push_tags",
-                "type": "string",
-                "is_repeated": true
+                "name": "name",
+                "type": "string"
               },
               {
                 "id": 4,
-                "name": "name",
-                "type": "string"
+                "name": "deleted",
+                "type": "google.protobuf.BoolValue",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "title",
+                        "value": "deleted"
+                      },
+                      {
+                        "name": "description",
+                        "value": "if true, the push notification will be deleted and other fields will be ignored."
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           },
@@ -24943,7 +24964,7 @@
                     "aggregated": [
                       {
                         "name": "post",
-                        "value": "/v1/pushes"
+                        "value": "/v1/push"
                       },
                       {
                         "name": "body",
@@ -25001,16 +25022,16 @@
                 ]
               },
               {
-                "name": "DeletePush",
-                "in_type": "DeletePushRequest",
-                "out_type": "DeletePushResponse",
+                "name": "GetPush",
+                "in_type": "GetPushRequest",
+                "out_type": "GetPushResponse",
                 "options": [
                   {
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "delete",
-                        "value": "/v1/pushes/{id}"
+                        "name": "get",
+                        "value": "/v1/push/{id}"
                       }
                     ]
                   },
@@ -25019,11 +25040,11 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Delete"
+                        "value": "Get"
                       },
                       {
                         "name": "description",
-                        "value": "Delete a Push notification. To call this API, you a `WRITE` or `ADMIN` API Key role."
+                        "value": "Get a Push notification. To call this API, you need a `READ` API Key role."
                       },
                       {
                         "name": "tags",
@@ -25031,7 +25052,7 @@
                       },
                       {
                         "name": "operation_id",
-                        "value": "api.gateway.v1.pushes.delete"
+                        "value": "api.gateway.v1.pushes.get"
                       },
                       {
                         "name": "parameters",
@@ -25073,7 +25094,7 @@
                     "aggregated": [
                       {
                         "name": "patch",
-                        "value": "/v1/pushes/{id}"
+                        "value": "/v1/push/{id}"
                       },
                       {
                         "name": "body",
@@ -27166,6 +27187,31 @@
                 "type": "Push"
               }
             ]
+          },
+          {
+            "name": "GetPushRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetPushResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "push",
+                "type": "Push"
+              }
+            ]
           }
         ],
         "services": [
@@ -27191,6 +27237,11 @@
                 "name": "UpdatePush",
                 "in_type": "UpdatePushRequest",
                 "out_type": "UpdatePushResponse"
+              },
+              {
+                "name": "GetPush",
+                "in_type": "GetPushRequest",
+                "out_type": "GetPushResponse"
               }
             ]
           }

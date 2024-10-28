@@ -79,9 +79,19 @@ message UpdatePushResponse {
   Push push = 1;
 }
 
+message GetPushRequest {
+  string environment_namespace = 1;
+  string id = 2;
+}
+
+message GetPushResponse {
+  Push push = 1;
+}
+
 service PushService {
   rpc ListPushes(ListPushesRequest) returns (ListPushesResponse) {}
   rpc CreatePush(CreatePushRequest) returns (CreatePushResponse) {}
   rpc DeletePush(DeletePushRequest) returns (DeletePushResponse) {}
   rpc UpdatePush(UpdatePushRequest) returns (UpdatePushResponse) {}
+  rpc GetPush(GetPushRequest) returns (GetPushResponse) {}
 }

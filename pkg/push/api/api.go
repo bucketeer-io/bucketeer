@@ -946,6 +946,65 @@ func (s *PushService) DeletePush(
 	return &pushproto.DeletePushResponse{}, nil
 }
 
+func (s *PushService) GetPush(
+	ctx context.Context,
+	req *pushproto.GetPushRequest,
+) (*pushproto.GetPushResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	if err := s.validateGetPushRequest(req, localizer); err != nil {
+		return nil, err
+	}
+
+	pushStorage := v2ps.NewPushStorage(s.mysqlClient)
+	push, err := pushStorage.GetPush(ctx, req.Id, req.EnvironmentNamespace)
+	if err != nil {
+		if err == v2ps.ErrPushNotFound {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			s.logger.Error(
+				"Failed to get feature",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("id", req.Id),
+					zap.String("environmentNamespace", req.EnvironmentNamespace),
+				)...,
+			)
+			return nil, dt.Err()
+		}
+	}
+
+	if push.Push != nil {
+		// For security reasons we remove the service account from the API response
+		push.Push.FcmServiceAccount = ""
+	}
+
+	return &pushproto.GetPushResponse{
+		Push: push.Push,
+	}, nil
+}
+
+func (s *PushService) validateGetPushRequest(
+	req *pushproto.GetPushRequest,
+	localizer locale.Localizer,
+) error {
+	if req.Id == "" {
+		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
+
 func validateDeletePushRequest(req *pushproto.DeletePushRequest, localizer locale.Localizer) error {
 	if req.Id == "" {
 		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{

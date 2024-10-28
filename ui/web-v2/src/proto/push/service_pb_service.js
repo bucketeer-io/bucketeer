@@ -46,6 +46,15 @@ PushService.UpdatePush = {
   responseType: proto_push_service_pb.UpdatePushResponse
 };
 
+PushService.GetPush = {
+  methodName: 'GetPush',
+  service: PushService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_push_service_pb.GetPushRequest,
+  responseType: proto_push_service_pb.GetPushResponse
+};
+
 exports.PushService = PushService;
 
 function PushServiceClient(serviceHost, options) {
@@ -167,6 +176,41 @@ PushServiceClient.prototype.updatePush = function updatePush(
     callback = arguments[1];
   }
   var client = grpc.unary(PushService.UpdatePush, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+PushServiceClient.prototype.getPush = function getPush(
+  requestMessage,
+  metadata,
+  callback
+) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(PushService.GetPush, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,

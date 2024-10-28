@@ -206,17 +206,23 @@ message CreatePushResponse {
   push.Push push = 1;
 }
 
-message DeletePushRequest {
+message GetPushRequest {
   string id = 1;
 }
 
-message DeletePushResponse {}
+message GetPushResponse {
+  push.Push push = 1;
+}
 
 message UpdatePushRequest {
   string id = 1;
-  repeated string delete_push_tags = 2;
-  repeated string add_push_tags = 3;
-  string name = 4;
+  repeated string tags = 2;
+  string name = 3;
+  google.protobuf.BoolValue deleted = 4 [(grpc.gateway.protoc_gen_openapiv2
+                                              .options.openapiv2_field) = {
+    title: "deleted"
+    description: "if true, the push notification will be deleted and other fields will be ignored."
+  }];
 }
 
 message UpdatePushResponse {
@@ -514,7 +520,7 @@ service Gateway {
   }
   rpc CreatePush(CreatePushRequest) returns (CreatePushResponse) {
     option (google.api.http) = {
-      post: "/v1/pushes"
+      post: "/v1/push"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
@@ -532,15 +538,15 @@ service Gateway {
       }
     };
   }
-  rpc DeletePush(DeletePushRequest) returns (DeletePushResponse) {
+  rpc GetPush(GetPushRequest) returns (GetPushResponse) {
     option (google.api.http) = {
-      delete: "/v1/pushes/{id}"
+      get: "/v1/push/{id}"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Delete",
-      description: "Delete a Push notification. To call this API, you a `WRITE` or `ADMIN` API Key role."
+      summary: "Get",
+      description: "Get a Push notification. To call this API, you need a `READ` API Key role.",
       tags: "Pushes",
-      operation_id: "api.gateway.v1.pushes.delete",
+      operation_id: "api.gateway.v1.pushes.get",
       parameters: {
         headers: {
           name: "authorization"
@@ -553,7 +559,7 @@ service Gateway {
   }
   rpc UpdatePush(UpdatePushRequest) returns (UpdatePushResponse) {
     option (google.api.http) = {
-      patch: "/v1/pushes/{id}"
+      patch: "/v1/push/{id}"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {

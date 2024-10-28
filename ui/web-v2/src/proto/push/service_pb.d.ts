@@ -372,3 +372,71 @@ export namespace UpdatePushResponse {
     push?: proto_push_push_pb.Push.AsObject;
   };
 }
+
+export class GetPushRequest extends jspb.Message {
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  getId(): string;
+  setId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetPushRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: GetPushRequest
+  ): GetPushRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: GetPushRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): GetPushRequest;
+  static deserializeBinaryFromReader(
+    message: GetPushRequest,
+    reader: jspb.BinaryReader
+  ): GetPushRequest;
+}
+
+export namespace GetPushRequest {
+  export type AsObject = {
+    environmentNamespace: string;
+    id: string;
+  };
+}
+
+export class GetPushResponse extends jspb.Message {
+  hasPush(): boolean;
+  clearPush(): void;
+  getPush(): proto_push_push_pb.Push | undefined;
+  setPush(value?: proto_push_push_pb.Push): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetPushResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: GetPushResponse
+  ): GetPushResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: GetPushResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): GetPushResponse;
+  static deserializeBinaryFromReader(
+    message: GetPushResponse,
+    reader: jspb.BinaryReader
+  ): GetPushResponse;
+}
+
+export namespace GetPushResponse {
+  export type AsObject = {
+    push?: proto_push_push_pb.Push.AsObject;
+  };
+}

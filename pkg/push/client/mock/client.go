@@ -94,6 +94,26 @@ func (mr *MockClientMockRecorder) DeletePush(ctx, in any, opts ...any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePush", reflect.TypeOf((*MockClient)(nil).DeletePush), varargs...)
 }
 
+// GetPush mocks base method.
+func (m *MockClient) GetPush(ctx context.Context, in *push.GetPushRequest, opts ...grpc.CallOption) (*push.GetPushResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetPush", varargs...)
+	ret0, _ := ret[0].(*push.GetPushResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPush indicates an expected call of GetPush.
+func (mr *MockClientMockRecorder) GetPush(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPush", reflect.TypeOf((*MockClient)(nil).GetPush), varargs...)
+}
+
 // ListPushes mocks base method.
 func (m *MockClient) ListPushes(ctx context.Context, in *push.ListPushesRequest, opts ...grpc.CallOption) (*push.ListPushesResponse, error) {
 	m.ctrl.T.Helper()
