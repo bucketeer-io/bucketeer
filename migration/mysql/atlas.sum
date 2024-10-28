@@ -1,4 +1,4 @@
-h1:4nKDaGsoVgDy9YoQUWW3GyfQOic4Zs5DK7+JUW5Sj+4=
+h1:9wo673Ths79dPcKmvtNWbDDlrhFu0PGPeD5OZWeXrgk=
 20240626022133_initialization.sql h1:u9qmPkwWX7PN92qEcDDfR92lrMpwadQSMxUJgv6LjQ0=
 20240708065726_update_audit_log_table.sql h1:k7gK8Njv1yHMsYXAQtSgMaSbXy4lxyZ9MPzbJyMyyoM=
 20240815043128_update_auto_ops_rule_table.sql h1:6ib+XfS1uu9AUO3qESvkpUfOu3qUsLwHm9KHcrGEz0E=
@@ -8,3 +8,4 @@ h1:4nKDaGsoVgDy9YoQUWW3GyfQOic4Zs5DK7+JUW5Sj+4=
 20240822110001_update_push_table.sql h1:NG45/qGmJDgDlFrKhKLDqmLXMp94S9GOlQ8k/HObCe4=
 20240827085123_update_environment_id_table.sql h1:VbtGa+UP5wjRjrffXtLTg9eWSZZH047MzMaT4c3JJSE=
 20240923154451_update_organization_table.sql h1:AmFazbhx6ZzuW+JMcrpX2kyAKx7TUMUnASJIePRuvBk=
+20241028031327_add_org_url_unique.sql h1:Xn0Pilm+RRseqZZXdsIdXulwy+R69xIC6ygA8MD19CM=
