@@ -202,6 +202,9 @@ func (s *AccountService) getUpdateAccountV2Commands(req *accountproto.UpdateAcco
 	if req.ChangeAvatarUrlCommand != nil {
 		commands = append(commands, req.ChangeAvatarUrlCommand)
 	}
+	if req.ChangeAvatarCommand != nil {
+		commands = append(commands, req.ChangeAvatarCommand)
+	}
 	if req.ChangeOrganizationRoleCommand != nil {
 		commands = append(commands, req.ChangeOrganizationRoleCommand)
 	}

@@ -6,6 +6,8 @@ SET
     last_name = ?,
     language = ?,
     avatar_image_url = ?,
+    avatar_file_type = ?,
+    avatar_image = ?,
     organization_role = ?,
     environment_roles = ?,
     disabled = ?,

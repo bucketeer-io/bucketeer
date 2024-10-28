@@ -72,6 +72,8 @@ message AccountV2 {
   string last_name = 12;
   string language = 13;
   int64 last_seen = 14;
+  string avatar_file_type = 15;
+  bytes avatar_image = 16;
 }
 
 message ConsoleAccount {
@@ -91,4 +93,6 @@ message ConsoleAccount {
   string first_name = 9;
   string last_name = 10;
   string language = 11;
+  string avatar_file_type = 12;
+  bytes avatar_image = 13;
 }

@@ -15,8 +15,12 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"fmt"
+	"io"
+	"net/http"
 	"regexp"
 	"time"
 
@@ -352,6 +356,20 @@ func (s *authService) updateUserInfoForOrganizations(
 		}
 
 		if account.Account.LastSeen == 0 {
+			// Download avatar image if URL exists
+			var avatarBytes []byte
+			if userInfo.Avatar != "" {
+				avatarBytes, err = s.downloadAvatar(ctx, userInfo.Avatar)
+				if err != nil {
+					s.logger.Error(
+						"Failed to download avatar image",
+						zap.Error(err),
+						zap.String("avatarUrl", userInfo.Avatar),
+					)
+					// Continue with update even if avatar download fails
+				}
+			}
+
 			updateReq := &acproto.UpdateAccountV2Request{
 				Email:          userInfo.Email,
 				OrganizationId: org.Id,
@@ -363,6 +381,10 @@ func (s *authService) updateUserInfoForOrganizations(
 				},
 				ChangeAvatarUrlCommand: &acproto.ChangeAccountV2AvatarImageUrlCommand{
 					AvatarImageUrl: userInfo.Avatar,
+				},
+				ChangeAvatarCommand: &acproto.ChangeAccountV2AvatarCommand{
+					AvatarImage:    avatarBytes,
+					AvatarFileType: "image/png",
 				},
 			}
 			_, err = s.accountClient.UpdateAccountV2(ctx, updateReq)
@@ -376,6 +398,35 @@ func (s *authService) updateUserInfoForOrganizations(
 			}
 		}
 	}
+}
+
+func (s *authService) downloadAvatar(ctx context.Context, url string) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to download avatar: status code %d", resp.StatusCode)
+	}
+
+	// Read response body into byte slice
+	var buf bytes.Buffer
+	if _, err := io.Copy(&buf, resp.Body); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
 
 func (s *authService) updateLastSeen(

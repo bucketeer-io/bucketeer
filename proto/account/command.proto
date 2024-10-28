@@ -52,6 +52,11 @@ message ChangeAccountV2AvatarImageUrlCommand {
   string avatar_image_url = 1;
 }
 
+message ChangeAccountV2AvatarCommand {
+  bytes avatar_image = 1;
+  string avatar_file_type = 2;
+}
+
 message ChangeAccountV2LastSeenCommand {
   int64 last_seen = 1;
 }

@@ -90,6 +90,8 @@ func (h *accountV2CommandHandler) Handle(ctx context.Context, cmd Command) error
 		return h.deleteSearchFiler(ctx, c)
 	case *accountproto.ChangeAccountV2LastSeenCommand:
 		return h.changeLastSeen(ctx, c)
+	case *accountproto.ChangeAccountV2AvatarCommand:
+		return h.changeAvatar(ctx, c)
 	default:
 		return ErrBadCommand
 	}
@@ -249,6 +251,13 @@ func (h *accountV2CommandHandler) changeLastSeen(
 	cmd *accountproto.ChangeAccountV2LastSeenCommand,
 ) error {
 	return h.account.ChangeLastSeen(cmd.LastSeen)
+}
+
+func (h *accountV2CommandHandler) changeAvatar(
+	ctx context.Context,
+	cmd *accountproto.ChangeAccountV2AvatarCommand,
+) error {
+	return h.account.ChangeAvatar(cmd.AvatarImage, cmd.AvatarFileType)
 }
 
 func (h *accountV2CommandHandler) createSearchFilter(

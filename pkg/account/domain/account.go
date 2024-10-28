@@ -89,6 +89,13 @@ func (a *AccountV2) ChangeAvatarImageURL(url string) error {
 	return nil
 }
 
+func (a *AccountV2) ChangeAvatar(image []byte, fileType string) error {
+	a.AccountV2.AvatarImage = image
+	a.AccountV2.AvatarFileType = fileType
+	a.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
 func (a *AccountV2) ChangeOrganizationRole(role proto.AccountV2_Role_Organization) error {
 	a.AccountV2.OrganizationRole = role
 	a.UpdatedAt = time.Now().Unix()

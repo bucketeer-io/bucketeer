@@ -92,6 +92,7 @@ message UpdateAccountV2Request {
   ChangeAccountV2LastNameCommand change_last_name_command = 8;
   ChangeAccountV2LanguageCommand change_language_command = 9;
   ChangeAccountV2LastSeenCommand change_last_seen_command = 10;
+  ChangeAccountV2AvatarCommand change_avatar_command = 11;
 }
 
 message UpdateAccountV2Response {}

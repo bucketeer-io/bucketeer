@@ -5,6 +5,8 @@ SELECT
     a.last_name,
     a.language,
     a.avatar_image_url,
+    a.avatar_file_type,
+    a.avatar_image,
     a.organization_id,
     a.organization_role,
     a.environment_roles,
