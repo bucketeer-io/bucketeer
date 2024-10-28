@@ -26768,6 +26768,31 @@
                 "type": "Push"
               }
             ]
+          },
+          {
+            "name": "GetPushRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetPushResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "push",
+                "type": "Push"
+              }
+            ]
           }
         ],
         "services": [
@@ -26793,6 +26818,11 @@
                 "name": "UpdatePush",
                 "in_type": "UpdatePushRequest",
                 "out_type": "UpdatePushResponse"
+              },
+              {
+                "name": "GetPush",
+                "in_type": "GetPushRequest",
+                "out_type": "GetPushResponse"
               }
             ]
           }
