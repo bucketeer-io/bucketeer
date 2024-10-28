@@ -2811,6 +2811,11 @@ definitions:
       lastSeen:
         type: string
         format: int64
+      avatarFileType:
+        type: string
+      avatarImage:
+        type: string
+        format: byte
   accountAccountV2EnvironmentRole:
     type: object
     properties:
@@ -2834,6 +2839,14 @@ definitions:
         type: string
   accountChangeAPIKeyNameResponse:
     type: object
+  accountChangeAccountV2AvatarCommand:
+    type: object
+    properties:
+      avatarImage:
+        type: string
+        format: byte
+      avatarFileType:
+        type: string
   accountChangeAccountV2AvatarImageUrlCommand:
     type: object
     properties:
@@ -2932,6 +2945,11 @@ definitions:
         type: string
       language:
         type: string
+      avatarFileType:
+        type: string
+      avatarImage:
+        type: string
+        format: byte
   accountConsoleAccountEnvironmentRole:
     type: object
     properties:
@@ -3337,6 +3355,8 @@ definitions:
         $ref: '#/definitions/accountChangeAccountV2LanguageCommand'
       changeLastSeenCommand:
         $ref: '#/definitions/accountChangeAccountV2LastSeenCommand'
+      changeAvatarCommand:
+        $ref: '#/definitions/accountChangeAccountV2AvatarCommand'
   accountUpdateAccountV2Response:
     type: object
   accountUpdateSearchFilterRequest:

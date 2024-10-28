@@ -233,6 +233,43 @@ export namespace ChangeAccountV2AvatarImageUrlCommand {
   };
 }
 
+export class ChangeAccountV2AvatarCommand extends jspb.Message {
+  getAvatarImage(): Uint8Array | string;
+  getAvatarImage_asU8(): Uint8Array;
+  getAvatarImage_asB64(): string;
+  setAvatarImage(value: Uint8Array | string): void;
+
+  getAvatarFileType(): string;
+  setAvatarFileType(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ChangeAccountV2AvatarCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ChangeAccountV2AvatarCommand
+  ): ChangeAccountV2AvatarCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ChangeAccountV2AvatarCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ChangeAccountV2AvatarCommand;
+  static deserializeBinaryFromReader(
+    message: ChangeAccountV2AvatarCommand,
+    reader: jspb.BinaryReader
+  ): ChangeAccountV2AvatarCommand;
+}
+
+export namespace ChangeAccountV2AvatarCommand {
+  export type AsObject = {
+    avatarImage: Uint8Array | string;
+    avatarFileType: string;
+  };
+}
+
 export class ChangeAccountV2LastSeenCommand extends jspb.Message {
   getLastSeen(): number;
   setLastSeen(value: number): void;

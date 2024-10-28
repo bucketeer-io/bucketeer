@@ -129,6 +129,14 @@ export class AccountV2 extends jspb.Message {
   getLastSeen(): number;
   setLastSeen(value: number): void;
 
+  getAvatarFileType(): string;
+  setAvatarFileType(value: string): void;
+
+  getAvatarImage(): Uint8Array | string;
+  getAvatarImage_asU8(): Uint8Array;
+  getAvatarImage_asB64(): string;
+  setAvatarImage(value: Uint8Array | string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AccountV2.AsObject;
   static toObject(includeInstance: boolean, msg: AccountV2): AccountV2.AsObject;
@@ -163,6 +171,8 @@ export namespace AccountV2 {
     lastName: string;
     language: string;
     lastSeen: number;
+    avatarFileType: string;
+    avatarImage: Uint8Array | string;
   };
 
   export class Role extends jspb.Message {
@@ -293,6 +303,14 @@ export class ConsoleAccount extends jspb.Message {
   getLanguage(): string;
   setLanguage(value: string): void;
 
+  getAvatarFileType(): string;
+  setAvatarFileType(value: string): void;
+
+  getAvatarImage(): Uint8Array | string;
+  getAvatarImage_asU8(): Uint8Array;
+  getAvatarImage_asB64(): string;
+  setAvatarImage(value: Uint8Array | string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ConsoleAccount.AsObject;
   static toObject(
@@ -327,6 +345,8 @@ export namespace ConsoleAccount {
     firstName: string;
     lastName: string;
     language: string;
+    avatarFileType: string;
+    avatarImage: Uint8Array | string;
   };
 
   export class EnvironmentRole extends jspb.Message {

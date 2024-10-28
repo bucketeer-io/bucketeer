@@ -3385,6 +3385,12 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_account_command_pb.ChangeAccountV2LastSeenCommand.toObject(
             includeInstance,
             f
+          ),
+        changeAvatarCommand:
+          (f = msg.getChangeAvatarCommand()) &&
+          proto_account_command_pb.ChangeAccountV2AvatarCommand.toObject(
+            includeInstance,
+            f
           )
       };
 
@@ -3513,6 +3519,16 @@ proto.bucketeer.account.UpdateAccountV2Request.deserializeBinaryFromReader =
           );
           msg.setChangeLastSeenCommand(value);
           break;
+        case 11:
+          var value =
+            new proto_account_command_pb.ChangeAccountV2AvatarCommand();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.ChangeAccountV2AvatarCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setChangeAvatarCommand(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -3622,6 +3638,15 @@ proto.bucketeer.account.UpdateAccountV2Request.serializeBinaryToWriter =
         10,
         f,
         proto_account_command_pb.ChangeAccountV2LastSeenCommand
+          .serializeBinaryToWriter
+      );
+    }
+    f = message.getChangeAvatarCommand();
+    if (f != null) {
+      writer.writeMessage(
+        11,
+        f,
+        proto_account_command_pb.ChangeAccountV2AvatarCommand
           .serializeBinaryToWriter
       );
     }
@@ -4002,6 +4027,48 @@ proto.bucketeer.account.UpdateAccountV2Request.prototype.clearChangeLastSeenComm
 proto.bucketeer.account.UpdateAccountV2Request.prototype.hasChangeLastSeenCommand =
   function () {
     return jspb.Message.getField(this, 10) != null;
+  };
+
+/**
+ * optional ChangeAccountV2AvatarCommand change_avatar_command = 11;
+ * @return {?proto.bucketeer.account.ChangeAccountV2AvatarCommand}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.getChangeAvatarCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.ChangeAccountV2AvatarCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.ChangeAccountV2AvatarCommand,
+        11
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.ChangeAccountV2AvatarCommand|undefined} value
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.setChangeAvatarCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 11, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.clearChangeAvatarCommand =
+  function () {
+    return this.setChangeAvatarCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.hasChangeAvatarCommand =
+  function () {
+    return jspb.Message.getField(this, 11) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

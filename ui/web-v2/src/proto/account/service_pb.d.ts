@@ -521,6 +521,15 @@ export class UpdateAccountV2Request extends jspb.Message {
     value?: proto_account_command_pb.ChangeAccountV2LastSeenCommand
   ): void;
 
+  hasChangeAvatarCommand(): boolean;
+  clearChangeAvatarCommand(): void;
+  getChangeAvatarCommand():
+    | proto_account_command_pb.ChangeAccountV2AvatarCommand
+    | undefined;
+  setChangeAvatarCommand(
+    value?: proto_account_command_pb.ChangeAccountV2AvatarCommand
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateAccountV2Request.AsObject;
   static toObject(
@@ -554,6 +563,7 @@ export namespace UpdateAccountV2Request {
     changeLastNameCommand?: proto_account_command_pb.ChangeAccountV2LastNameCommand.AsObject;
     changeLanguageCommand?: proto_account_command_pb.ChangeAccountV2LanguageCommand.AsObject;
     changeLastSeenCommand?: proto_account_command_pb.ChangeAccountV2LastSeenCommand.AsObject;
+    changeAvatarCommand?: proto_account_command_pb.ChangeAccountV2AvatarCommand.AsObject;
   };
 }
 
