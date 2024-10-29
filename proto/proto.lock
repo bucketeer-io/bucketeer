@@ -26755,7 +26755,7 @@
               {
                 "id": 7,
                 "name": "name",
-                "type": "string"
+                "type": "google.protobuf.StringValue"
               }
             ]
           },
@@ -26828,6 +26828,9 @@
           }
         ],
         "imports": [
+          {
+            "path": "google/protobuf/wrappers.proto"
+          },
           {
             "path": "proto/push/push.proto"
           },

@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"testing"
 	"time"
 
@@ -556,24 +557,6 @@ func TestUpdatePushNoCommandMySQL(t *testing.T) {
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			desc: "err: ErrTagsRequired",
-			req: &pushproto.UpdatePushRequest{
-				Id:   "key-0",
-				Name: "push-0",
-				Tags: []string{},
-			},
-			expectedErr: createError(statusTagsRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag")),
-		},
-		{
-			desc: "err: ErrNameRequired: add",
-			req: &pushproto.UpdatePushRequest{
-				Id:   "key-0",
-				Name: "",
-				Tags: []string{"tag-0"},
-			},
-			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
-		},
-		{
 			desc: "err: ErrNotFound",
 			setup: func(s *PushService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
@@ -583,10 +566,38 @@ func TestUpdatePushNoCommandMySQL(t *testing.T) {
 			},
 			req: &pushproto.UpdatePushRequest{
 				Id:   "key-1",
-				Name: "push-0",
+				Name: wrapperspb.String("push-0"),
 				Tags: []string{"tag-0"},
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+		{
+			desc: "success update name",
+			setup: func(s *PushService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &pushproto.UpdatePushRequest{
+				Id:   "key-0",
+				Name: wrapperspb.String("push-0"),
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success update tags",
+			setup: func(s *PushService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &pushproto.UpdatePushRequest{
+				Id:   "key-0",
+				Tags: []string{"tag-0"},
+			},
+			expectedErr: nil,
 		},
 		{
 			desc: "success",
@@ -599,7 +610,7 @@ func TestUpdatePushNoCommandMySQL(t *testing.T) {
 			req: &pushproto.UpdatePushRequest{
 				EnvironmentNamespace: "ns0",
 				Id:                   "key-0",
-				Name:                 "name-1",
+				Name:                 wrapperspb.String("name-1"),
 				Tags:                 []string{"tag-0"},
 			},
 			expectedErr: nil,

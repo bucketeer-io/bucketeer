@@ -23,6 +23,8 @@ var global =
   }.call(null) ||
   Function('return this')();
 
+var google_protobuf_wrappers_pb = require('google-protobuf/google/protobuf/wrappers_pb.js');
+goog.object.extend(proto, google_protobuf_wrappers_pb);
 var proto_push_push_pb = require('../../proto/push/push_pb.js');
 goog.object.extend(proto, proto_push_push_pb);
 var proto_push_command_pb = require('../../proto/push/command_pb.js');
@@ -1714,7 +1716,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_push_command_pb.RenamePushCommand.toObject(includeInstance, f),
         tagsList:
           (f = jspb.Message.getRepeatedField(msg, 6)) == null ? undefined : f,
-        name: jspb.Message.getFieldWithDefault(msg, 7, '')
+        name:
+          (f = msg.getName()) &&
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -1793,7 +1797,11 @@ proto.bucketeer.push.UpdatePushRequest.deserializeBinaryFromReader = function (
         msg.addTags(value);
         break;
       case 7:
-        var value = /** @type {string} */ (reader.readString());
+        var value = new google_protobuf_wrappers_pb.StringValue();
+        reader.readMessage(
+          value,
+          google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
+        );
         msg.setName(value);
         break;
       default:
@@ -1863,8 +1871,12 @@ proto.bucketeer.push.UpdatePushRequest.serializeBinaryToWriter = function (
     writer.writeRepeatedString(6, f);
   }
   f = message.getName();
-  if (f.length > 0) {
-    writer.writeString(7, f);
+  if (f != null) {
+    writer.writeMessage(
+      7,
+      f,
+      google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
+    );
   }
 };
 
@@ -2069,19 +2081,41 @@ proto.bucketeer.push.UpdatePushRequest.prototype.clearTagsList = function () {
 };
 
 /**
- * optional string name = 7;
- * @return {string}
+ * optional google.protobuf.StringValue name = 7;
+ * @return {?proto.google.protobuf.StringValue}
  */
 proto.bucketeer.push.UpdatePushRequest.prototype.getName = function () {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 7, ''));
+  return /** @type{?proto.google.protobuf.StringValue} */ (
+    jspb.Message.getWrapperField(
+      this,
+      google_protobuf_wrappers_pb.StringValue,
+      7
+    )
+  );
 };
 
 /**
- * @param {string} value
+ * @param {?proto.google.protobuf.StringValue|undefined} value
  * @return {!proto.bucketeer.push.UpdatePushRequest} returns this
  */
 proto.bucketeer.push.UpdatePushRequest.prototype.setName = function (value) {
-  return jspb.Message.setProto3StringField(this, 7, value);
+  return jspb.Message.setWrapperField(this, 7, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.push.UpdatePushRequest} returns this
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.clearName = function () {
+  return this.setName(undefined);
+};
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.hasName = function () {
+  return jspb.Message.getField(this, 7) != null;
 };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

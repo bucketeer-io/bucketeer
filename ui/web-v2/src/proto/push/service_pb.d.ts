@@ -2,6 +2,7 @@
 // file: proto/push/service.proto
 
 import * as jspb from 'google-protobuf';
+import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
 import * as proto_push_push_pb from '../../proto/push/push_pb';
 import * as proto_push_command_pb from '../../proto/push/command_pb';
 
@@ -304,8 +305,10 @@ export class UpdatePushRequest extends jspb.Message {
   setTagsList(value: Array<string>): void;
   addTags(value: string, index?: number): string;
 
-  getName(): string;
-  setName(value: string): void;
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdatePushRequest.AsObject;
@@ -336,7 +339,7 @@ export namespace UpdatePushRequest {
     deletePushTagsCommand?: proto_push_command_pb.DeletePushTagsCommand.AsObject;
     renamePushCommand?: proto_push_command_pb.RenamePushCommand.AsObject;
     tagsList: Array<string>;
-    name: string;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
   };
 }
 

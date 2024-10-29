@@ -618,47 +618,52 @@ func (s *PushService) updatePushNoCommand(
 		if err = copier.Copy(prev, push); err != nil {
 			return err
 		}
-		push.Name = req.Name
-		push.Tags = req.Tags
+
+		if req.Name != nil {
+			push.Name = req.Name.Value
+			updatePushNameEvent, err = domainevent.NewEvent(
+				editor,
+				eventproto.Event_PUSH,
+				push.Id,
+				eventproto.Event_PUSH_RENAMED,
+				&eventproto.PushRenamedEvent{
+					Name: req.Name.Value,
+				},
+				req.EnvironmentNamespace,
+				push,
+				prev,
+			)
+			if err != nil {
+				return err
+			}
+			if err = s.publisher.Publish(ctx, updatePushNameEvent); err != nil {
+				return err
+			}
+
+		}
+
+		if req.Tags != nil {
+			push.Tags = req.Tags
+			updatePushTagsEvent, err = domainevent.NewEvent(
+				editor,
+				eventproto.Event_PUSH,
+				push.Id,
+				eventproto.Event_PUSH_TAGS_UPDATED,
+				&eventproto.PushTagsUpdatedEvent{
+					Tags: req.Tags,
+				},
+				req.EnvironmentNamespace,
+				push,
+				prev,
+			)
+			if err != nil {
+				return err
+			}
+			if err = s.publisher.Publish(ctx, updatePushTagsEvent); err != nil {
+				return err
+			}
+		}
 		updatedPushPb = push.Push
-
-		updatePushNameEvent, err = domainevent.NewEvent(
-			editor,
-			eventproto.Event_PUSH,
-			push.Id,
-			eventproto.Event_PUSH_RENAMED,
-			&eventproto.PushRenamedEvent{
-				Name: req.Name,
-			},
-			req.EnvironmentNamespace,
-			push,
-			prev,
-		)
-		if err != nil {
-			return err
-		}
-		if err = s.publisher.Publish(ctx, updatePushNameEvent); err != nil {
-			return err
-		}
-
-		updatePushTagsEvent, err = domainevent.NewEvent(
-			editor,
-			eventproto.Event_PUSH,
-			push.Id,
-			eventproto.Event_PUSH_TAGS_UPDATED,
-			&eventproto.PushTagsUpdatedEvent{
-				Tags: req.Tags,
-			},
-			req.EnvironmentNamespace,
-			push,
-			prev,
-		)
-		if err != nil {
-			return err
-		}
-		if err = s.publisher.Publish(ctx, updatePushTagsEvent); err != nil {
-			return err
-		}
 
 		return pushStorage.UpdatePush(ctx, push, req.EnvironmentNamespace)
 	})
@@ -751,26 +756,6 @@ func (s *PushService) validateUpdatePushRequestNoCommand(
 		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Name == "" {
-		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if len(req.Tags) == 0 {
-		dt, err := statusTagsRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag"),
 		})
 		if err != nil {
 			return statusInternal.Err()
