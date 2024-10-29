@@ -836,12 +836,15 @@ func (s *EnvironmentService) updateOrganization(
 		}
 		return dt.Err()
 	}
+	var prevOwnerEmail string
+	var newOwnerEmail string
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		orgStorage := v2es.NewOrganizationStorage(tx)
 		organization, err := orgStorage.GetOrganization(ctx, id)
 		if err != nil {
 			return err
 		}
+		prevOwnerEmail = organization.OwnerEmail
 		handler, err := command.NewOrganizationCommandHandler(editor, organization, s.publisher)
 		if err != nil {
 			return err
@@ -850,6 +853,10 @@ func (s *EnvironmentService) updateOrganization(
 			if err := handler.Handle(ctx, c); err != nil {
 				return err
 			}
+		}
+		// Set the new owner email if it changes
+		if prevOwnerEmail != organization.OwnerEmail {
+			newOwnerEmail = organization.OwnerEmail
 		}
 		return orgStorage.UpdateOrganization(ctx, organization)
 	})
@@ -888,6 +895,55 @@ func (s *EnvironmentService) updateOrganization(
 			return statusInternal.Err()
 		}
 		return dt.Err()
+	}
+	// Update the organization role when the owner email changes
+	if prevOwnerEmail != "" && newOwnerEmail != "" {
+		if err := s.updateOwnerRole(ctx, id, prevOwnerEmail, newOwnerEmail); err != nil {
+			s.logger.Error("Failed to update the new owner's role",
+				zap.Error(err),
+				zap.String("organizationId", id),
+				zap.String("prevOwnerEmail", prevOwnerEmail),
+				zap.String("newOwnerEmail", newOwnerEmail),
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+	}
+	return nil
+}
+
+func (s *EnvironmentService) updateOwnerRole(
+	ctx context.Context,
+	organizationID, prevOwnerEmail, newOwnerEmail string,
+) error {
+	accStorage := v2acc.NewAccountStorage(s.mysqlClient)
+	// Update the old owner organization role
+	prevOwnerAcc, err := accStorage.GetAccountV2(ctx, prevOwnerEmail, organizationID)
+	if err != nil {
+		return err
+	}
+	if err := prevOwnerAcc.ChangeOrganizationRole(accountproto.AccountV2_Role_Organization_ADMIN); err != nil {
+		return err
+	}
+	if err := accStorage.UpdateAccountV2(ctx, prevOwnerAcc); err != nil {
+		return err
+	}
+	// Update the new owner organization role
+	newOwnerAcc, err := accStorage.GetAccountV2(ctx, newOwnerEmail, organizationID)
+	if err != nil {
+		return err
+	}
+	if err := newOwnerAcc.ChangeOrganizationRole(accountproto.AccountV2_Role_Organization_OWNER); err != nil {
+		return err
+	}
+	if err := accStorage.UpdateAccountV2(ctx, newOwnerAcc); err != nil {
+		return err
 	}
 	return nil
 }
