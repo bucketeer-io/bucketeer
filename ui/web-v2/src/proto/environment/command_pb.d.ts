@@ -169,20 +169,17 @@ export namespace UnarchiveEnvironmentV2Command {
 }
 
 export class CreateProjectCommand extends jspb.Message {
-  getId(): string;
-  setId(value: string): void;
-
-  getDescription(): string;
-  setDescription(value: string): void;
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
 
   getName(): string;
   setName(value: string): void;
 
+  getDescription(): string;
+  setDescription(value: string): void;
+
   getUrlCode(): string;
   setUrlCode(value: string): void;
-
-  getOwnerEmail(): string;
-  setOwnerEmail(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateProjectCommand.AsObject;
@@ -207,11 +204,10 @@ export class CreateProjectCommand extends jspb.Message {
 
 export namespace CreateProjectCommand {
   export type AsObject = {
-    id: string;
-    description: string;
+    organizationId: string;
     name: string;
+    description: string;
     urlCode: string;
-    ownerEmail: string;
   };
 }
 

@@ -3554,18 +3554,15 @@ definitions:
   environmentCreateProjectCommand:
     type: object
     properties:
-      id:
+      organizationId:
+        type: string
+      name:
         type: string
       description:
         type: string
         title: optional
-      name:
-        type: string
       urlCode:
         type: string
-      ownerEmail:
-        type: string
-    description: 'TODO: add organizationID once we support organization create UI.'
   environmentCreateProjectRequest:
     type: object
     properties:
