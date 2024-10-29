@@ -17,7 +17,6 @@ package api
 import (
 	"context"
 	"errors"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 	"testing"
 	"time"
 
@@ -28,6 +27,7 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 
