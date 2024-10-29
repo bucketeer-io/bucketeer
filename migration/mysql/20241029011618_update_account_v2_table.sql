@@ -1,0 +1,2 @@
+-- Modify "account_v2" table
+ALTER TABLE `account_v2` ADD COLUMN `first_name` varchar(255) NULL, ADD COLUMN `last_name` varchar(255) NULL, ADD COLUMN `language` varchar(10) NULL, ADD COLUMN `last_seen` bigint NOT NULL DEFAULT 0, ADD COLUMN `avatar_file_type` varchar(50) NULL, ADD COLUMN `avatar_image` mediumblob NULL;
