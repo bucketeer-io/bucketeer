@@ -5,7 +5,6 @@ import { isNotEmpty } from 'utils/data-type';
 
 export interface ProjectsFetcherParams extends CollectionParams {
   organizationIds?: string[];
-  archived?: boolean;
 }
 
 export const projectsFetcher = async (

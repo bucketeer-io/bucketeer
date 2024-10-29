@@ -96,7 +96,7 @@ export const Root = memo(() => {
     return <AppLoading />;
   }
 
-  if (isLogin && consoleAccount) {
+  if (isLogin && consoleAccount && consoleAccount.environmentRoles.length > 0) {
     return (
       <div className="flex flex-row w-full h-full">
         <Navigation onClickNavLink={handleChangePageKey} />

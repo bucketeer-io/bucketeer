@@ -69,7 +69,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       .then(response => {
         setConsoleAccount(response.account);
         setIsLogin(true);
-        if (!environmentId) {
+        if (!environmentId && response.account.environmentRoles.length > 0) {
           setCurrentEnvIdStorage(
             response.account.environmentRoles[0].environment.id
           );

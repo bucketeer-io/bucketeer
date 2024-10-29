@@ -1,6 +1,7 @@
 import { SortingState } from '@tanstack/react-table';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { sortingListFields } from 'constants/collection';
+import { Project } from '@types';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
@@ -13,19 +14,23 @@ import { useFetchProjects } from './use-fetch-projects';
 const CollectionLoader = ({
   onAdd,
   filters,
-  setFilters
+  setFilters,
+  organizationIds,
+  onActionHandler
 }: {
   onAdd?: () => void;
   filters: ProjectsFilters;
   setFilters: (values: Partial<ProjectsFilters>) => void;
+  organizationIds?: string[];
+  onActionHandler: (value: Project) => void;
 }) => {
-  const columns = useColumns();
+  const columns = useColumns({ onActionHandler });
   const {
     data: collection,
     isLoading,
     refetch,
     isError
-  } = useFetchProjects({ ...filters });
+  } = useFetchProjects({ ...filters, organizationIds });
 
   const onSortingChangeHandler = (sorting: SortingState) => {
     const updateOrderBy =

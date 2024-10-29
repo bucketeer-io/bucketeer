@@ -5,7 +5,7 @@ export interface ProjectCreatorCommand {
   id: string;
   name: string;
   urlCode: string;
-  description: string;
+  description?: string;
 }
 
 export interface ProjectCreatorParams {

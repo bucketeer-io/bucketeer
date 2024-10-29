@@ -1,11 +1,18 @@
-import { IconMoreHorizOutlined } from 'react-icons-material-design';
+import {
+  IconEditOutlined,
+  IconMoreHorizOutlined
+} from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslation } from 'i18n';
 import { Project } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
-import Icon from 'components/icon';
+import { Popover } from 'components/popover';
 
-export const useColumns = (): ColumnDef<Project>[] => {
+export const useColumns = ({
+  onActionHandler
+}: {
+  onActionHandler: (value: Project) => void;
+}): ColumnDef<Project>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
 
@@ -84,11 +91,22 @@ export const useColumns = (): ColumnDef<Project>[] => {
         style: { textAlign: 'center', fitContent: true }
       },
       enableSorting: false,
-      cell: () => {
+      cell: ({ row }) => {
+        const project = row.original;
+
         return (
-          <button className="flex-center text-gray-600">
-            <Icon icon={IconMoreHorizOutlined} size="sm" />
-          </button>
+          <Popover
+            options={[
+              {
+                label: `${t('table:popover.edit-project')}`,
+                icon: IconEditOutlined,
+                value: 'EDIT_PROJECT'
+              }
+            ]}
+            icon={IconMoreHorizOutlined}
+            onClick={() => onActionHandler(project)}
+            align="end"
+          />
         );
       }
     }

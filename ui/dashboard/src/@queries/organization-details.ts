@@ -50,8 +50,11 @@ export const prefetchOrganizationDetails = (
   });
 };
 
-export const invalidateOrganizationDetails = (queryClient: QueryClient) => {
+export const invalidateOrganizationDetails = (
+  queryClient: QueryClient,
+  params: OrganizationDetailsFetcherParams
+) => {
   queryClient.invalidateQueries({
-    queryKey: [ORGANIZATION_DETAILS_QUERY_KEY]
+    queryKey: [ORGANIZATION_DETAILS_QUERY_KEY, params]
   });
 };
