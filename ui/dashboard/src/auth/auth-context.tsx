@@ -67,13 +67,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const onMeFetcher = (payload: MeFetcherPayload) => {
     return accountMeFetcher(payload)
       .then(response => {
-        setConsoleAccount(response.account);
-        setIsLogin(true);
-        if (!environmentId && response.account.environmentRoles.length > 0) {
-          setCurrentEnvIdStorage(
-            response.account.environmentRoles[0].environment.id
-          );
-        }
+        const environmentRoles = response.account.environmentRoles;
+
+        if (environmentRoles.length > 0) {
+          setConsoleAccount(response.account);
+          setIsLogin(true);
+          if (!environmentId) {
+            setCurrentEnvIdStorage(environmentRoles[0].environment.id);
+          }
+        } else logout();
       })
       .finally(() => setIsInitialLoading(false));
   };

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -22,6 +23,9 @@ const PageContent = ({
   onEdit: (v: Project) => void;
 }) => {
   const { t } = useTranslation(['common']);
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const isSystemAdmin = consoleAccount?.isSystemAdmin;
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<ProjectsFilters> = searchOptions;
@@ -90,6 +94,7 @@ const PageContent = ({
           filters={filters}
           setFilters={onChangeFilters}
           onActionHandler={onActionHandler}
+          organizationIds={!isSystemAdmin ? [currentEnvironment.id] : []}
         />
       </div>
     </PageLayout.Content>
