@@ -11179,7 +11179,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Get an organization. To call this API, you need an `SYSTEM_ADMIN` role."
+                        "value": "Get an organization. To call this API, you need at least a MEMBER role."
                       },
                       {
                         "name": "tags",
@@ -11707,7 +11707,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Update an organization. To call this API, you need an `SYSTEM_ADMIN` role."
+                        "value": "Update an organization. To call this API, you need an `ADMIN` role."
                       },
                       {
                         "name": "tags",

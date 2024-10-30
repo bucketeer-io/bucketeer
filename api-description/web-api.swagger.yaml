@@ -2085,7 +2085,7 @@ paths:
   /v1/environment/get_organization:
     post:
       summary: Get
-      description: Get an organization. To call this API, you need an `SYSTEM_ADMIN` role.
+      description: Get an organization. To call this API, you need at least a MEMBER role.
       operationId: web.v1.environment.get_organization
       responses:
         "200":
@@ -2607,7 +2607,7 @@ paths:
   /v1/environment/update_organization:
     post:
       summary: Update
-      description: Update an organization. To call this API, you need an `SYSTEM_ADMIN` role.
+      description: Update an organization. To call this API, you need an `ADMIN` role.
       operationId: web.v1.environment.update_organization
       responses:
         "200":
