@@ -59,7 +59,7 @@ const AddProjectModal = ({ isOpen, onClose }: AddProjectModalProps) => {
 
   const onSubmit: SubmitHandler<AddProjectForm> = values => {
     return projectCreator({
-      command: { ...values, id: currentEnvironment.organizationId }
+      command: { ...values, organizationId: currentEnvironment.organizationId }
     }).then(() => {
       notify({
         toastType: 'toast',
