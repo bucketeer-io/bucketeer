@@ -613,10 +613,6 @@ func (s *PushService) updatePushNoCommand(
 		if err != nil {
 			return err
 		}
-		prev := &domain.Push{}
-		if err = copier.Copy(prev, push); err != nil {
-			return err
-		}
 
 		updated, err := push.Update(req.Name, req.Tags)
 		if err != nil {
@@ -632,7 +628,7 @@ func (s *PushService) updatePushNoCommand(
 			},
 			req.EnvironmentNamespace,
 			updated,
-			prev,
+			push,
 		)
 		if err != nil {
 			return err
