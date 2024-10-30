@@ -736,9 +736,13 @@ func (s *EnvironmentService) UpdateOrganization(
 	req *environmentproto.UpdateOrganizationRequest,
 ) (*environmentproto.UpdateOrganizationResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	editor, err := s.checkOrganizationRole(ctx, req.Id, accountproto.AccountV2_Role_Organization_OWNER, localizer)
+	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
-		return nil, err
+		// If not system admin, check if user is organization owner
+		editor, err = s.checkOrganizationRole(ctx, req.Id, accountproto.AccountV2_Role_Organization_OWNER, localizer)
+		if err != nil {
+			return nil, err
+		}
 	}
 	commands := s.getUpdateOrganizationCommands(req)
 	if err := s.validateUpdateOrganizationRequest(req.Id, commands, localizer); err != nil {
