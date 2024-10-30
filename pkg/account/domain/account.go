@@ -37,7 +37,7 @@ type AccountWithOrganization struct {
 }
 
 func NewAccountV2(
-	email, name, avatarImageURL, organizationID string,
+	email, name, firstName, lastName, language, avatarImageURL, organizationID string,
 	organizationRole proto.AccountV2_Role_Organization,
 	environmentRoles []*proto.AccountV2_EnvironmentRole,
 ) *AccountV2 {
@@ -53,6 +53,9 @@ func NewAccountV2(
 		CreatedAt:        now,
 		UpdatedAt:        now,
 		SearchFilters:    nil,
+		FirstName:        firstName,
+		LastName:         lastName,
+		Language:         language,
 	}}
 }
 
@@ -62,8 +65,33 @@ func (a *AccountV2) ChangeName(newName string) error {
 	return nil
 }
 
+func (a *AccountV2) ChangeFirstName(newFirstName string) error {
+	a.AccountV2.FirstName = newFirstName
+	a.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (a *AccountV2) ChangeLastName(newLastName string) error {
+	a.AccountV2.LastName = newLastName
+	a.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (a *AccountV2) ChangeLanguage(newLanguage string) error {
+	a.AccountV2.Language = newLanguage
+	a.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
 func (a *AccountV2) ChangeAvatarImageURL(url string) error {
 	a.AccountV2.AvatarImageUrl = url
+	a.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (a *AccountV2) ChangeAvatar(image []byte, fileType string) error {
+	a.AccountV2.AvatarImage = image
+	a.AccountV2.AvatarFileType = fileType
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
@@ -89,6 +117,12 @@ func (a *AccountV2) PatchEnvironmentRole(patchRoles []*proto.AccountV2_Environme
 		}
 		e.Role = p.Role
 	}
+	a.UpdatedAt = time.Now().Unix()
+	return nil
+}
+
+func (a *AccountV2) ChangeLastSeen(lastSeen int64) error {
+	a.AccountV2.LastSeen = lastSeen
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }

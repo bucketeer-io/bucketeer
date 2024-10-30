@@ -75,7 +75,9 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -94,7 +96,9 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -113,7 +117,9 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -128,7 +134,8 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -140,7 +147,9 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 			req: &accountproto.CreateAccountV2Request{
 				Command: &accountproto.CreateAccountV2Command{
 					Email:            "bucketeer_environment@example.com",
-					Name:             "name",
+					FirstName:        "Test",
+					LastName:         "User",
+					Language:         "en",
 					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 				},
 				OrganizationId: "org0",
@@ -155,7 +164,9 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -167,7 +178,9 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 			req: &accountproto.CreateAccountV2Request{
 				Command: &accountproto.CreateAccountV2Command{
 					Email:            "bucketeer@example.com",
-					Name:             "name",
+					FirstName:        "Test",
+					LastName:         "User",
+					Language:         "en",
 					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 				},
 				OrganizationId: "org0",
@@ -182,7 +195,9 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -194,7 +209,9 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 			req: &accountproto.CreateAccountV2Request{
 				Command: &accountproto.CreateAccountV2Command{
 					Email:            "bucketeer@example.com",
-					Name:             "name",
+					FirstName:        "Test",
+					LastName:         "User",
+					Language:         "en",
 					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 				},
 				OrganizationId: "org0",
@@ -249,7 +266,9 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -267,7 +286,8 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -275,8 +295,11 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@",
 				OrganizationId: "org0",
-				ChangeNameCommand: &accountproto.ChangeAccountV2NameCommand{
-					Name: "newName",
+				ChangeFirstNameCommand: &accountproto.ChangeAccountV2FirstNameCommand{
+					FirstName: "newFirstName",
+				},
+				ChangeLastNameCommand: &accountproto.ChangeAccountV2LastNameCommand{
+					LastName: "newLastName",
 				},
 			},
 			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
@@ -289,15 +312,20 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
 			},
 			req: &accountproto.UpdateAccountV2Request{
 				Email: "bucketeer@example.com",
-				ChangeNameCommand: &accountproto.ChangeAccountV2NameCommand{
-					Name: "newName",
+				ChangeFirstNameCommand: &accountproto.ChangeAccountV2FirstNameCommand{
+					FirstName: "newFirstName",
+				},
+				ChangeLastNameCommand: &accountproto.ChangeAccountV2LastNameCommand{
+					LastName: "newLastName",
 				},
 			},
 			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
@@ -310,7 +338,9 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -329,7 +359,9 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -337,11 +369,11 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
-				ChangeNameCommand: &accountproto.ChangeAccountV2NameCommand{
-					Name: strings.Repeat("a", 251),
+				ChangeFirstNameCommand: &accountproto.ChangeAccountV2FirstNameCommand{
+					FirstName: strings.Repeat("a", 251),
 				},
 			},
-			expectedErr: createError(statusInvalidName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name")),
+			expectedErr: createError(statusInvalidFirstName, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "first_name")),
 		},
 		{
 			desc: "errInvalidNewOrganizationRole",
@@ -351,7 +383,9 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -373,7 +407,9 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -385,8 +421,11 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
-				ChangeNameCommand: &accountproto.ChangeAccountV2NameCommand{
-					Name: "newName",
+				ChangeFirstNameCommand: &accountproto.ChangeAccountV2FirstNameCommand{
+					FirstName: "newFirstName",
+				},
+				ChangeLastNameCommand: &accountproto.ChangeAccountV2LastNameCommand{
+					LastName: "newLastName",
 				},
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
@@ -399,7 +438,9 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -411,8 +452,11 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
-				ChangeNameCommand: &accountproto.ChangeAccountV2NameCommand{
-					Name: "newName",
+				ChangeFirstNameCommand: &accountproto.ChangeAccountV2FirstNameCommand{
+					FirstName: "newFirstName",
+				},
+				ChangeLastNameCommand: &accountproto.ChangeAccountV2LastNameCommand{
+					LastName: "newLastName",
 				},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
@@ -425,7 +469,9 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -437,8 +483,11 @@ func TestUpdateAccountV2MySQL(t *testing.T) {
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
-				ChangeNameCommand: &accountproto.ChangeAccountV2NameCommand{
-					Name: "newName",
+				ChangeFirstNameCommand: &accountproto.ChangeAccountV2FirstNameCommand{
+					FirstName: "newFirstName",
+				},
+				ChangeLastNameCommand: &accountproto.ChangeAccountV2LastNameCommand{
+					LastName: "newLastName",
 				},
 			},
 			expectedErr: nil,
@@ -491,7 +540,8 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -509,7 +559,8 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -528,7 +579,8 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -546,7 +598,8 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -565,7 +618,8 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -589,7 +643,8 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -613,7 +668,8 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -677,7 +733,8 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -695,7 +752,8 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -714,7 +772,8 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -732,7 +791,8 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -751,7 +811,8 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -775,7 +836,8 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -799,7 +861,8 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -863,7 +926,8 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -881,7 +945,8 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -900,7 +965,8 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -918,7 +984,8 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -937,7 +1004,8 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -961,7 +1029,8 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -985,7 +1054,8 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -1045,11 +1115,12 @@ func TestGetAccountV2ByEnvironmentIDMySQL(t *testing.T) {
 			desc: "errInvalidEmail",
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+					gomock.Any(), "email", gomock.Any(),
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
-						Email:            "bucketeer@example.com",
-						Name:             "test",
+						Email:            "email",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -1068,7 +1139,8 @@ func TestGetAccountV2ByEnvironmentIDMySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "email",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -1091,7 +1163,8 @@ func TestGetAccountV2ByEnvironmentIDMySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "email",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -1114,7 +1187,8 @@ func TestGetAccountV2ByEnvironmentIDMySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "email",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -1124,7 +1198,8 @@ func TestGetAccountV2ByEnvironmentIDMySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -1183,7 +1258,8 @@ func TestListAccountsV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -1200,7 +1276,8 @@ func TestListAccountsV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -1221,7 +1298,8 @@ func TestListAccountsV2MySQL(t *testing.T) {
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "bucketeer@example.com",
-						Name:             "test",
+						FirstName:        "Test",
+						LastName:         "User",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)

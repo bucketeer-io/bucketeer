@@ -58,8 +58,15 @@ func (s *AccountService) CreateAccountV2(
 		return nil, err
 	}
 	account := domain.NewAccountV2(
-		req.Command.Email, req.Command.Name, req.Command.AvatarImageUrl, req.OrganizationId,
-		req.Command.OrganizationRole, req.Command.EnvironmentRoles,
+		req.Command.Email,
+		req.Command.Name,
+		req.Command.FirstName,
+		req.Command.LastName,
+		req.Command.Language,
+		req.Command.AvatarImageUrl,
+		req.OrganizationId,
+		req.Command.OrganizationRole,
+		req.Command.EnvironmentRoles,
 	)
 	err = s.accountStorage.RunInTransaction(ctx, func() error {
 		// TODO: temporary implementation: double write account v2 ---
@@ -183,14 +190,29 @@ func (s *AccountService) getUpdateAccountV2Commands(req *accountproto.UpdateAcco
 	if req.ChangeNameCommand != nil {
 		commands = append(commands, req.ChangeNameCommand)
 	}
+	if req.ChangeFirstNameCommand != nil {
+		commands = append(commands, req.ChangeFirstNameCommand)
+	}
+	if req.ChangeLastNameCommand != nil {
+		commands = append(commands, req.ChangeLastNameCommand)
+	}
+	if req.ChangeLanguageCommand != nil {
+		commands = append(commands, req.ChangeLanguageCommand)
+	}
 	if req.ChangeAvatarUrlCommand != nil {
 		commands = append(commands, req.ChangeAvatarUrlCommand)
+	}
+	if req.ChangeAvatarCommand != nil {
+		commands = append(commands, req.ChangeAvatarCommand)
 	}
 	if req.ChangeOrganizationRoleCommand != nil {
 		commands = append(commands, req.ChangeOrganizationRoleCommand)
 	}
 	if req.ChangeEnvironmentRolesCommand != nil {
 		commands = append(commands, req.ChangeEnvironmentRolesCommand)
+	}
+	if req.ChangeLastSeenCommand != nil {
+		commands = append(commands, req.ChangeLastSeenCommand)
 	}
 	return commands
 }

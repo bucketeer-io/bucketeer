@@ -585,7 +585,13 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg.getSearchFiltersList(),
           proto_account_search_filter_pb.SearchFilter.toObject,
           includeInstance
-        )
+        ),
+        firstName: jspb.Message.getFieldWithDefault(msg, 11, ''),
+        lastName: jspb.Message.getFieldWithDefault(msg, 12, ''),
+        language: jspb.Message.getFieldWithDefault(msg, 13, ''),
+        lastSeen: jspb.Message.getFieldWithDefault(msg, 14, 0),
+        avatarFileType: jspb.Message.getFieldWithDefault(msg, 15, ''),
+        avatarImage: msg.getAvatarImage_asB64()
       };
 
     if (includeInstance) {
@@ -679,6 +685,30 @@ proto.bucketeer.account.AccountV2.deserializeBinaryFromReader = function (
         );
         msg.addSearchFilters(value);
         break;
+      case 11:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setFirstName(value);
+        break;
+      case 12:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setLastName(value);
+        break;
+      case 13:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setLanguage(value);
+        break;
+      case 14:
+        var value = /** @type {number} */ (reader.readInt64());
+        msg.setLastSeen(value);
+        break;
+      case 15:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setAvatarFileType(value);
+        break;
+      case 16:
+        var value = /** @type {!Uint8Array} */ (reader.readBytes());
+        msg.setAvatarImage(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -756,6 +786,30 @@ proto.bucketeer.account.AccountV2.serializeBinaryToWriter = function (
       f,
       proto_account_search_filter_pb.SearchFilter.serializeBinaryToWriter
     );
+  }
+  f = message.getFirstName();
+  if (f.length > 0) {
+    writer.writeString(11, f);
+  }
+  f = message.getLastName();
+  if (f.length > 0) {
+    writer.writeString(12, f);
+  }
+  f = message.getLanguage();
+  if (f.length > 0) {
+    writer.writeString(13, f);
+  }
+  f = message.getLastSeen();
+  if (f !== 0) {
+    writer.writeInt64(14, f);
+  }
+  f = message.getAvatarFileType();
+  if (f.length > 0) {
+    writer.writeString(15, f);
+  }
+  f = message.getAvatarImage_asU8();
+  if (f.length > 0) {
+    writer.writeBytes(16, f);
   }
 };
 
@@ -1300,6 +1354,128 @@ proto.bucketeer.account.AccountV2.prototype.clearSearchFiltersList =
   };
 
 /**
+ * optional string first_name = 11;
+ * @return {string}
+ */
+proto.bucketeer.account.AccountV2.prototype.getFirstName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 11, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.setFirstName = function (value) {
+  return jspb.Message.setProto3StringField(this, 11, value);
+};
+
+/**
+ * optional string last_name = 12;
+ * @return {string}
+ */
+proto.bucketeer.account.AccountV2.prototype.getLastName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 12, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.setLastName = function (value) {
+  return jspb.Message.setProto3StringField(this, 12, value);
+};
+
+/**
+ * optional string language = 13;
+ * @return {string}
+ */
+proto.bucketeer.account.AccountV2.prototype.getLanguage = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 13, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.setLanguage = function (value) {
+  return jspb.Message.setProto3StringField(this, 13, value);
+};
+
+/**
+ * optional int64 last_seen = 14;
+ * @return {number}
+ */
+proto.bucketeer.account.AccountV2.prototype.getLastSeen = function () {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 14, 0));
+};
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.setLastSeen = function (value) {
+  return jspb.Message.setProto3IntField(this, 14, value);
+};
+
+/**
+ * optional string avatar_file_type = 15;
+ * @return {string}
+ */
+proto.bucketeer.account.AccountV2.prototype.getAvatarFileType = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 15, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.setAvatarFileType = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 15, value);
+};
+
+/**
+ * optional bytes avatar_image = 16;
+ * @return {!(string|Uint8Array)}
+ */
+proto.bucketeer.account.AccountV2.prototype.getAvatarImage = function () {
+  return /** @type {!(string|Uint8Array)} */ (
+    jspb.Message.getFieldWithDefault(this, 16, '')
+  );
+};
+
+/**
+ * optional bytes avatar_image = 16;
+ * This is a type-conversion wrapper around `getAvatarImage()`
+ * @return {string}
+ */
+proto.bucketeer.account.AccountV2.prototype.getAvatarImage_asB64 = function () {
+  return /** @type {string} */ (jspb.Message.bytesAsB64(this.getAvatarImage()));
+};
+
+/**
+ * optional bytes avatar_image = 16;
+ * Note that Uint8Array is not supported on all browsers.
+ * @see http://caniuse.com/Uint8Array
+ * This is a type-conversion wrapper around `getAvatarImage()`
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.AccountV2.prototype.getAvatarImage_asU8 = function () {
+  return /** @type {!Uint8Array} */ (
+    jspb.Message.bytesAsU8(this.getAvatarImage())
+  );
+};
+
+/**
+ * @param {!(string|Uint8Array)} value
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.setAvatarImage = function (value) {
+  return jspb.Message.setProto3BytesField(this, 16, value);
+};
+
+/**
  * List of repeated fields within this message type.
  * @private {!Array<number>}
  * @const
@@ -1363,7 +1539,12 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           msg.getSearchFiltersList(),
           proto_account_search_filter_pb.SearchFilter.toObject,
           includeInstance
-        )
+        ),
+        firstName: jspb.Message.getFieldWithDefault(msg, 9, ''),
+        lastName: jspb.Message.getFieldWithDefault(msg, 10, ''),
+        language: jspb.Message.getFieldWithDefault(msg, 11, ''),
+        avatarFileType: jspb.Message.getFieldWithDefault(msg, 12, ''),
+        avatarImage: msg.getAvatarImage_asB64()
       };
 
     if (includeInstance) {
@@ -1455,6 +1636,26 @@ proto.bucketeer.account.ConsoleAccount.deserializeBinaryFromReader = function (
         );
         msg.addSearchFilters(value);
         break;
+      case 9:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setFirstName(value);
+        break;
+      case 10:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setLastName(value);
+        break;
+      case 11:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setLanguage(value);
+        break;
+      case 12:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setAvatarFileType(value);
+        break;
+      case 13:
+        var value = /** @type {!Uint8Array} */ (reader.readBytes());
+        msg.setAvatarImage(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -1529,6 +1730,26 @@ proto.bucketeer.account.ConsoleAccount.serializeBinaryToWriter = function (
       f,
       proto_account_search_filter_pb.SearchFilter.serializeBinaryToWriter
     );
+  }
+  f = message.getFirstName();
+  if (f.length > 0) {
+    writer.writeString(9, f);
+  }
+  f = message.getLastName();
+  if (f.length > 0) {
+    writer.writeString(10, f);
+  }
+  f = message.getLanguage();
+  if (f.length > 0) {
+    writer.writeString(11, f);
+  }
+  f = message.getAvatarFileType();
+  if (f.length > 0) {
+    writer.writeString(12, f);
+  }
+  f = message.getAvatarImage_asU8();
+  if (f.length > 0) {
+    writer.writeBytes(13, f);
   }
 };
 
@@ -2030,5 +2251,126 @@ proto.bucketeer.account.ConsoleAccount.prototype.clearSearchFiltersList =
   function () {
     return this.setSearchFiltersList([]);
   };
+
+/**
+ * optional string first_name = 9;
+ * @return {string}
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.getFirstName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 9, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.ConsoleAccount} returns this
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.setFirstName = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 9, value);
+};
+
+/**
+ * optional string last_name = 10;
+ * @return {string}
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.getLastName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 10, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.ConsoleAccount} returns this
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.setLastName = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 10, value);
+};
+
+/**
+ * optional string language = 11;
+ * @return {string}
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.getLanguage = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 11, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.ConsoleAccount} returns this
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.setLanguage = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 11, value);
+};
+
+/**
+ * optional string avatar_file_type = 12;
+ * @return {string}
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.getAvatarFileType =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 12, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.ConsoleAccount} returns this
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.setAvatarFileType = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 12, value);
+};
+
+/**
+ * optional bytes avatar_image = 13;
+ * @return {!(string|Uint8Array)}
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.getAvatarImage = function () {
+  return /** @type {!(string|Uint8Array)} */ (
+    jspb.Message.getFieldWithDefault(this, 13, '')
+  );
+};
+
+/**
+ * optional bytes avatar_image = 13;
+ * This is a type-conversion wrapper around `getAvatarImage()`
+ * @return {string}
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.getAvatarImage_asB64 =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.bytesAsB64(this.getAvatarImage())
+    );
+  };
+
+/**
+ * optional bytes avatar_image = 13;
+ * Note that Uint8Array is not supported on all browsers.
+ * @see http://caniuse.com/Uint8Array
+ * This is a type-conversion wrapper around `getAvatarImage()`
+ * @return {!Uint8Array}
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.getAvatarImage_asU8 =
+  function () {
+    return /** @type {!Uint8Array} */ (
+      jspb.Message.bytesAsU8(this.getAvatarImage())
+    );
+  };
+
+/**
+ * @param {!(string|Uint8Array)} value
+ * @return {!proto.bucketeer.account.ConsoleAccount} returns this
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.setAvatarImage = function (
+  value
+) {
+  return jspb.Message.setProto3BytesField(this, 13, value);
+};
 
 goog.object.extend(exports, proto.bucketeer.account);

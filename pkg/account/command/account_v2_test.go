@@ -52,6 +52,9 @@ func TestHandleV2(t *testing.T) {
 				a := domain.NewAccountV2(
 					"email",
 					"name",
+					"fname",
+					"lname",
+					"en",
 					"avatarImageURL",
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
@@ -68,11 +71,14 @@ func TestHandleV2(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "ChangeAccountV2NameCommand: success",
+			desc: "ChangeAccountV2FirstNameCommand: success",
 			setup: func(h *accountV2CommandHandler) {
 				a := domain.NewAccountV2(
 					"email",
 					"name",
+					"fname",
+					"lname",
+					"en",
 					"avatarImageURL",
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
@@ -85,7 +91,55 @@ func TestHandleV2(t *testing.T) {
 				h.previousAccount = prev
 				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
 			},
-			input:       &accountproto.ChangeAccountV2NameCommand{},
+			input:       &accountproto.ChangeAccountV2FirstNameCommand{},
+			expectedErr: nil,
+		},
+		{
+			desc: "ChangeAccountV2LastNameCommand: success",
+			setup: func(h *accountV2CommandHandler) {
+				a := domain.NewAccountV2(
+					"email",
+					"name",
+					"fname",
+					"lname",
+					"en",
+					"avatarImageURL",
+					"organizationID",
+					accountproto.AccountV2_Role_Organization_MEMBER,
+					[]*accountproto.AccountV2_EnvironmentRole{},
+				)
+				h.account = a
+				prev := &domain.AccountV2{}
+				err := copier.Copy(prev, a)
+				require.NoError(t, err)
+				h.previousAccount = prev
+				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			input:       &accountproto.ChangeAccountV2LastNameCommand{},
+			expectedErr: nil,
+		},
+		{
+			desc: "ChangeAccountV2LanguageCommand: success",
+			setup: func(h *accountV2CommandHandler) {
+				a := domain.NewAccountV2(
+					"email",
+					"name",
+					"fname",
+					"lname",
+					"en",
+					"avatarImageURL",
+					"organizationID",
+					accountproto.AccountV2_Role_Organization_MEMBER,
+					[]*accountproto.AccountV2_EnvironmentRole{},
+				)
+				h.account = a
+				prev := &domain.AccountV2{}
+				err := copier.Copy(prev, a)
+				require.NoError(t, err)
+				h.previousAccount = prev
+				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			input:       &accountproto.ChangeAccountV2LanguageCommand{},
 			expectedErr: nil,
 		},
 		{
@@ -94,6 +148,9 @@ func TestHandleV2(t *testing.T) {
 				a := domain.NewAccountV2(
 					"email",
 					"name",
+					"fname",
+					"lname",
+					"en",
 					"avatarImageURL",
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
@@ -115,6 +172,9 @@ func TestHandleV2(t *testing.T) {
 				a := domain.NewAccountV2(
 					"email",
 					"name",
+					"fname",
+					"lname",
+					"en",
 					"avatarImageURL",
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
@@ -136,6 +196,9 @@ func TestHandleV2(t *testing.T) {
 				a := domain.NewAccountV2(
 					"email",
 					"name",
+					"fname",
+					"lname",
+					"en",
 					"avatarImageURL",
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
@@ -170,6 +233,9 @@ func TestHandleV2(t *testing.T) {
 				a := domain.NewAccountV2(
 					"email",
 					"name",
+					"fname",
+					"lname",
+					"en",
 					"avatarImageURL",
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
@@ -199,32 +265,14 @@ func TestHandleV2(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "ChangeAccountV2NameCommand: success",
-			setup: func(h *accountV2CommandHandler) {
-				a := domain.NewAccountV2(
-					"email",
-					"name",
-					"avatarImageURL",
-					"organizationID",
-					accountproto.AccountV2_Role_Organization_MEMBER,
-					[]*accountproto.AccountV2_EnvironmentRole{},
-				)
-				h.account = a
-				prev := &domain.AccountV2{}
-				err := copier.Copy(prev, a)
-				require.NoError(t, err)
-				h.previousAccount = prev
-				h.publisher.(*publishermock.MockPublisher).EXPECT().Publish(gomock.Any(), gomock.Any()).Return(nil)
-			},
-			input:       &accountproto.ChangeAccountV2NameCommand{},
-			expectedErr: nil,
-		},
-		{
 			desc: "EnableAccountV2Command: success",
 			setup: func(h *accountV2CommandHandler) {
 				a := domain.NewAccountV2(
 					"email",
 					"name",
+					"fname",
+					"lname",
+					"en",
 					"avatarImageURL",
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
@@ -246,6 +294,9 @@ func TestHandleV2(t *testing.T) {
 				a := domain.NewAccountV2(
 					"email",
 					"name",
+					"fname",
+					"lname",
+					"en",
 					"avatarImageURL",
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,
@@ -267,6 +318,9 @@ func TestHandleV2(t *testing.T) {
 				a := domain.NewAccountV2(
 					"email",
 					"name",
+					"fname",
+					"lname",
+					"en",
 					"avatarImageURL",
 					"organizationID",
 					accountproto.AccountV2_Role_Organization_MEMBER,

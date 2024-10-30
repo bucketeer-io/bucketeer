@@ -68,6 +68,12 @@ message AccountV2 {
   int64 created_at = 8;
   int64 updated_at = 9;
   repeated SearchFilter search_filters = 10;
+  string first_name = 11;
+  string last_name = 12;
+  string language = 13;
+  int64 last_seen = 14;
+  string avatar_file_type = 15;
+  bytes avatar_image = 16;
 }
 
 message ConsoleAccount {
@@ -84,4 +90,9 @@ message ConsoleAccount {
   AccountV2.Role.Organization organization_role = 6;
   repeated EnvironmentRole environment_roles = 7;
   repeated SearchFilter search_filters = 8;
+  string first_name = 9;
+  string last_name = 10;
+  string language = 11;
+  string avatar_file_type = 12;
+  bytes avatar_image = 13;
 }

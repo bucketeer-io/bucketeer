@@ -53,7 +53,11 @@ func (s *authService) SignIn(
 		}
 		return nil, dt.Err()
 	}
-	token, err := s.generateToken(ctx, config.Email, localizer)
+	organizations, err := s.getOrganizationsByEmail(ctx, config.Email, localizer)
+	if err != nil {
+		return nil, err
+	}
+	token, err := s.generateToken(ctx, config.Email, organizations, localizer)
 	if err != nil {
 		return nil, err
 	}

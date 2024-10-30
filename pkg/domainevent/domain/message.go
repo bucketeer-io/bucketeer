@@ -597,6 +597,30 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.AccountSearchFilter),
 			),
 		}
+	case proto.Event_ACCOUNT_V2_FIRST_NAME_CHANGED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.ChangedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.AccountFirstName),
+			),
+		}
+	case proto.Event_ACCOUNT_V2_LAST_NAME_CHANGED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.ChangedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.AccountLastName),
+			),
+		}
+	case proto.Event_ACCOUNT_V2_LANGUAGE_CHANGED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.ChangedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.AccountLanguage),
+			),
+		}
 	case proto.Event_APIKEY_CREATED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),
