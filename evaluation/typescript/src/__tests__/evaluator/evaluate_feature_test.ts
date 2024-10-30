@@ -3,7 +3,7 @@ import { Feature } from '../../proto/feature/feature_pb';
 import { EvaluationID, Evaluator } from '../../evaluation';
 import { SegmentUser } from '../../proto/feature/segment_pb';
 import { Evaluation } from '../../proto/feature/evaluation_pb';
-import { createPrerequisite, createVariation, creatFeature, createUser } from '../../modelFactory';
+import { createPrerequisite, createVariation, createFeature, createUser } from '../../modelFactory';
 import { Strategy } from '../../proto/feature/strategy_pb';
 import { Clause } from '../../proto/feature/clause_pb';
 import { Reason } from '../../proto/feature/reason_pb';
@@ -62,7 +62,7 @@ export function newTestFeature(id: string): Feature {
   };
 
   // Call the second function to create and return the Feature
-  return creatFeature({
+  return createFeature({
     id: id,
     name: 'test feature',
     version: 1,

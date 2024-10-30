@@ -21,7 +21,7 @@ export function createUser(id: string, data: Record<string, string> | null): Use
   return user;
 }
 
-export function creatFeature(
+export function createFeature(
   options: {
     id?: string;
     name?: string;

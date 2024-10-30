@@ -1,5 +1,5 @@
 import test from 'ava';
-import { createPrerequisite, creatFeature } from '../../modelFactory';
+import { createPrerequisite, createFeature } from '../../modelFactory';
 import { Evaluator } from '../../evaluation';
 
 /*
@@ -30,72 +30,72 @@ graph TD;
   featureN --- NoPrerequisite;
 */
 var allFeaturesForPrerequisiteTest = {
-  featureA: creatFeature({
+  featureA: createFeature({
     id: 'featureA',
     name: 'featureA',
     prerequisitesList: [createPrerequisite('featureE', ''), createPrerequisite('featureF', '')],
   }),
-  featureB: creatFeature({
+  featureB: createFeature({
     id: 'featureB',
     name: 'featureB',
     prerequisitesList: [],
   }),
-  featureC: creatFeature({
+  featureC: createFeature({
     id: 'featureC',
     name: 'featureC',
     prerequisitesList: [createPrerequisite('featureL', '')],
   }),
-  featureD: creatFeature({
+  featureD: createFeature({
     id: 'featureD',
     name: 'featureD',
     prerequisitesList: [],
   }),
-  featureE: creatFeature({
+  featureE: createFeature({
     id: 'featureE',
     name: 'featureE',
     prerequisitesList: [createPrerequisite('featureG', '')],
   }),
-  featureF: creatFeature({
+  featureF: createFeature({
     id: 'featureF',
     name: 'featureF',
     prerequisitesList: [],
   }),
-  featureG: creatFeature({
+  featureG: createFeature({
     id: 'featureG',
     name: 'featureG',
     prerequisitesList: [createPrerequisite('featureH', '')],
   }),
-  featureH: creatFeature({
+  featureH: createFeature({
     id: 'featureH',
     name: 'featureH',
     prerequisitesList: [createPrerequisite('featureI', ''), createPrerequisite('featureJ', '')],
   }),
-  featureI: creatFeature({
+  featureI: createFeature({
     id: 'featureI',
     name: 'featureI',
     prerequisitesList: [createPrerequisite('featureK', '')],
   }),
-  featureJ: creatFeature({
+  featureJ: createFeature({
     id: 'featureJ',
     name: 'featureJ',
     prerequisitesList: [],
   }),
-  featureK: creatFeature({
+  featureK: createFeature({
     id: 'featureK',
     name: 'featureK',
     prerequisitesList: [],
   }),
-  featureL: creatFeature({
+  featureL: createFeature({
     id: 'featureL',
     name: 'featureL',
     prerequisitesList: [createPrerequisite('featureM', ''), createPrerequisite('featureN', '')],
   }),
-  featureM: creatFeature({
+  featureM: createFeature({
     id: 'featureM',
     name: 'featureM',
     prerequisitesList: [],
   }),
-  featureN: creatFeature({
+  featureN: createFeature({
     id: 'featureN',
     name: 'featureN',
     prerequisitesList: [],

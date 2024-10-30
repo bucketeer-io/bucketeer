@@ -1,5 +1,5 @@
 import test from 'ava';
-import { createPrerequisite, creatFeature } from '../../modelFactory';
+import { createPrerequisite, createFeature } from '../../modelFactory';
 import { Feature } from '../../proto/feature/feature_pb';
 import { Evaluator } from '../../evaluation';
 
@@ -14,15 +14,15 @@ const patterns: TestCase[] = [
   {
     desc: 'success: No prerequisites',
     targets: [
-      creatFeature({
+      createFeature({
         id: 'featureA',
       }),
     ],
     all: [
-      creatFeature({
+      createFeature({
         id: 'featureA',
       }),
-      creatFeature({
+      createFeature({
         id: 'featureB',
       }),
     ],
@@ -31,19 +31,19 @@ const patterns: TestCase[] = [
   {
     desc: 'success: one feature depends on target',
     targets: [
-      creatFeature({
+      createFeature({
         id: 'featureA',
       }),
     ],
     all: [
-      creatFeature({
+      createFeature({
         id: 'featureA',
       }),
-      creatFeature({
+      createFeature({
         id: 'featureB',
         prerequisitesList: [createPrerequisite('featureA', '')],
       }),
-      creatFeature({
+      createFeature({
         id: 'featureC',
       }),
     ],
@@ -52,27 +52,27 @@ const patterns: TestCase[] = [
   {
     desc: 'success: multiple features depends on target',
     targets: [
-      creatFeature({
+      createFeature({
         id: 'featureA',
       }),
     ],
     all: [
-      creatFeature({
+      createFeature({
         id: 'featureA',
       }),
-      creatFeature({
+      createFeature({
         id: 'featureB',
         prerequisitesList: [createPrerequisite('featureA', '')],
       }),
-      creatFeature({
+      createFeature({
         id: 'featureC',
         prerequisitesList: [createPrerequisite('featureB', '')],
       }),
-      creatFeature({
+      createFeature({
         id: 'featureD',
         prerequisitesList: [createPrerequisite('featureA', '')],
       }),
-      creatFeature({
+      createFeature({
         id: 'featureE',
       }),
     ],
@@ -81,20 +81,20 @@ const patterns: TestCase[] = [
   {
     desc: 'success: target depends on one feature',
     targets: [
-      creatFeature({
+      createFeature({
         id: 'featureA',
         prerequisitesList: [createPrerequisite('featureB', '')],
       }),
     ],
     all: [
-      creatFeature({
+      createFeature({
         id: 'featureA',
         prerequisitesList: [createPrerequisite('featureB', '')],
       }),
-      creatFeature({
+      createFeature({
         id: 'featureB',
       }),
-      creatFeature({
+      createFeature({
         id: 'featureC',
       }),
     ],
@@ -103,27 +103,27 @@ const patterns: TestCase[] = [
   {
     desc: 'success: target depends on multiple features',
     targets: [
-      creatFeature({
+      createFeature({
         id: 'featureA',
         prerequisitesList: [createPrerequisite('featureB', ''), createPrerequisite('featureC', '')],
       }),
     ],
     all: [
-      creatFeature({
+      createFeature({
         id: 'featureA',
         prerequisitesList: [createPrerequisite('featureB', '')],
       }),
-      creatFeature({
+      createFeature({
         id: 'featureB',
         prerequisitesList: [createPrerequisite('featureD', '')],
       }),
-      creatFeature({
+      createFeature({
         id: 'featureC',
       }),
-      creatFeature({
+      createFeature({
         id: 'featureD',
       }),
-      creatFeature({
+      createFeature({
         id: 'featureE',
       }),
     ],
@@ -133,40 +133,40 @@ const patterns: TestCase[] = [
   {
     desc: 'success: complex pattern 1',
     targets: [
-      creatFeature({
+      createFeature({
         id: 'featureD',
         prerequisitesList: [createPrerequisite('featureB', '')],
       }),
     ],
     all: [
-      creatFeature({
+      createFeature({
         id: 'featureA',
       }),
-      creatFeature({
+      createFeature({
         id: 'featureB',
         prerequisitesList: [createPrerequisite('featureA', '')],
       }),
-      creatFeature({
+      createFeature({
         id: 'featureC',
         prerequisitesList: [createPrerequisite('featureB', '')],
       }),
-      creatFeature({
+      createFeature({
         id: 'featureD',
         prerequisitesList: [createPrerequisite('featureB', '')],
       }),
-      creatFeature({
+      createFeature({
         id: 'featureE',
         prerequisitesList: [createPrerequisite('featureC', ''), createPrerequisite('featureD', '')],
       }),
-      creatFeature({
+      createFeature({
         id: 'featureF',
         prerequisitesList: [createPrerequisite('featureE', '')],
       }),
-      creatFeature({
+      createFeature({
         id: 'featureG',
         prerequisitesList: [createPrerequisite('featureA', '')],
       }),
-      creatFeature({
+      createFeature({
         id: 'featureH',
       }),
     ],
