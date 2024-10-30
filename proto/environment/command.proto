@@ -37,13 +37,11 @@ message ArchiveEnvironmentV2Command {}
 
 message UnarchiveEnvironmentV2Command {}
 
-// TODO: add organizationID once we support organization create UI.
 message CreateProjectCommand {
-  string id = 1 [deprecated = true];
-  string description = 2;  // optional
-  string name = 3;
+  string organization_id = 1;
+  string name = 2;
+  string description = 3;  // optional
   string url_code = 4;
-  string owner_email = 5;
 }
 
 message CreateTrialProjectCommand {

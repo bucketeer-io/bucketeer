@@ -7221,33 +7221,22 @@
             "fields": [
               {
                 "id": 1,
-                "name": "id",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
+                "name": "organization_id",
+                "type": "string"
               },
               {
                 "id": 2,
-                "name": "description",
+                "name": "name",
                 "type": "string"
               },
               {
                 "id": 3,
-                "name": "name",
+                "name": "description",
                 "type": "string"
               },
               {
                 "id": 4,
                 "name": "url_code",
-                "type": "string"
-              },
-              {
-                "id": 5,
-                "name": "owner_email",
                 "type": "string"
               }
             ]
