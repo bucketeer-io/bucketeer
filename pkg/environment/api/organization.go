@@ -52,8 +52,8 @@ func (s *EnvironmentService) GetOrganization(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
-		// If not system admin, check if user is organization owner
-		_, err = s.checkOrganizationRole(ctx, req.Id, accountproto.AccountV2_Role_Organization_OWNER, localizer)
+		// A member can access the organization details but can't update it
+		_, err = s.checkOrganizationRole(ctx, req.Id, accountproto.AccountV2_Role_Organization_MEMBER, localizer)
 		if err != nil {
 			return nil, err
 		}
