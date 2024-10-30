@@ -34,6 +34,9 @@ const (
 	defaultOrganizationID   = "e2e"
 	e2eAccountAddressPrefix = "e2e-test"
 	timeout                 = 60 * time.Second
+	firstName               = "first-name"
+	lastName                = "last-name"
+	language                = "language"
 )
 
 var (
@@ -63,6 +66,9 @@ func TestGetAccount(t *testing.T) {
 		Command: &accountproto.CreateAccountV2Command{
 			Name:             name,
 			Email:            email,
+			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+			Language:         language,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 		},
 	})
@@ -97,6 +103,9 @@ func TestListAccounts(t *testing.T) {
 		Command: &accountproto.CreateAccountV2Command{
 			Name:             name,
 			Email:            email,
+			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+			Language:         language,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 		},
 	})
@@ -130,6 +139,9 @@ func TestUpdateAccount(t *testing.T) {
 		Command: &accountproto.CreateAccountV2Command{
 			Name:             name,
 			Email:            email,
+			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+			Language:         language,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 		},
 	})
@@ -137,12 +149,20 @@ func TestUpdateAccount(t *testing.T) {
 		t.Fatal(err)
 	}
 	newName := fmt.Sprintf("name-%v", time.Now().Unix())
+	newFirstName := fmt.Sprintf("first-name-%v", time.Now().Unix())
+	newLastName := fmt.Sprintf("last-name-%v", time.Now().Unix())
 	newAvatarURL := fmt.Sprintf("https://example.com/avatar-%v.png", time.Now().Unix())
 	_, err = c.UpdateAccountV2(ctx, &accountproto.UpdateAccountV2Request{
 		Email:          email,
 		OrganizationId: defaultOrganizationID,
 		ChangeNameCommand: &accountproto.ChangeAccountV2NameCommand{
 			Name: newName,
+		},
+		ChangeFirstNameCommand: &accountproto.ChangeAccountV2FirstNameCommand{
+			FirstName: newFirstName,
+		},
+		ChangeLastNameCommand: &accountproto.ChangeAccountV2LastNameCommand{
+			LastName: newLastName,
 		},
 		ChangeAvatarUrlCommand: &accountproto.ChangeAccountV2AvatarImageUrlCommand{
 			AvatarImageUrl: newAvatarURL,
@@ -167,6 +187,12 @@ func TestUpdateAccount(t *testing.T) {
 	if getResp.Account.Name != newName {
 		t.Fatalf("different name, expected: %v, actual: %v", newName, getResp.Account.Name)
 	}
+	if getResp.Account.FirstName != newFirstName {
+		t.Fatalf("different first name, expected: %v, actual: %v", newFirstName, getResp.Account.FirstName)
+	}
+	if getResp.Account.LastName != newLastName {
+		t.Fatalf("different last name, expected: %v, actual: %v", newLastName, getResp.Account.LastName)
+	}
 	if getResp.Account.AvatarImageUrl != newAvatarURL {
 		t.Fatalf("different avatar url, expected: %v, actual: %v", newAvatarURL, getResp.Account.AvatarImageUrl)
 	}
@@ -185,6 +211,9 @@ func TestEnableAndDisableAccount(t *testing.T) {
 		Command: &accountproto.CreateAccountV2Command{
 			Name:             name,
 			Email:            email,
+			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+			Language:         language,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 		},
 	})
@@ -243,6 +272,9 @@ func TestDeleteAccount(t *testing.T) {
 		Command: &accountproto.CreateAccountV2Command{
 			Name:             name,
 			Email:            email,
+			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+			Language:         language,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 		},
 	})
@@ -286,6 +318,9 @@ func TestCreateSearchFilter(t *testing.T) {
 		Command: &accountproto.CreateAccountV2Command{
 			Name:             name,
 			Email:            email,
+			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+			Language:         language,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 		},
 	})
@@ -362,6 +397,9 @@ func TestUpdateSearchFilter(t *testing.T) {
 		Command: &accountproto.CreateAccountV2Command{
 			Name:             name,
 			Email:            email,
+			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+			Language:         language,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 		},
 	})
@@ -489,6 +527,9 @@ func TestDeleteSearchFilter(t *testing.T) {
 		Command: &accountproto.CreateAccountV2Command{
 			Name:             name,
 			Email:            email,
+			FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+			Language:         language,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 		},
 	})

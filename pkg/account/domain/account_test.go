@@ -27,6 +27,9 @@ func TestNewAccountV2(t *testing.T) {
 	a := NewAccountV2(
 		"email",
 		"name",
+		"John",
+		"Doe",
+		"en",
 		"avatarImageURL",
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
@@ -34,29 +37,54 @@ func TestNewAccountV2(t *testing.T) {
 	)
 	assert.Equal(t, "email", a.Email)
 	assert.Equal(t, "name", a.Name)
+	assert.Equal(t, "John", a.FirstName)
+	assert.Equal(t, "Doe", a.LastName)
+	assert.Equal(t, "en", a.Language)
 	assert.Equal(t, "avatarImageURL", a.AvatarImageUrl)
 	assert.Equal(t, "organizationID", a.OrganizationId)
 	assert.Equal(t, proto.AccountV2_Role_Organization_MEMBER, a.OrganizationRole)
 	assert.Equal(t, []*proto.AccountV2_EnvironmentRole{}, a.EnvironmentRoles)
 }
 
-func TestChangeName(t *testing.T) {
+func TestChangeFirstName(t *testing.T) {
 	a := NewAccountV2(
 		"email",
 		"name",
+		"fname",
+		"lname",
+		"en",
 		"avatarImageURL",
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
 		[]*proto.AccountV2_EnvironmentRole{},
 	)
-	a.ChangeName("newName")
-	assert.Equal(t, "newName", a.Name)
+	a.ChangeFirstName("newName")
+	assert.Equal(t, "newName", a.FirstName)
+}
+
+func TestChangeLastName(t *testing.T) {
+	a := NewAccountV2(
+		"email",
+		"name",
+		"fname",
+		"lname",
+		"en",
+		"avatarImageURL",
+		"organizationID",
+		proto.AccountV2_Role_Organization_MEMBER,
+		[]*proto.AccountV2_EnvironmentRole{},
+	)
+	a.ChangeLastName("newLastName")
+	assert.Equal(t, "newLastName", a.LastName)
 }
 
 func TestChangeAvatarImageURL(t *testing.T) {
 	a := NewAccountV2(
 		"email",
 		"name",
+		"fname",
+		"lname",
+		"en",
 		"avatarImageURL",
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
@@ -70,6 +98,9 @@ func TestChangeOrganizationRole(t *testing.T) {
 	a := NewAccountV2(
 		"email",
 		"name",
+		"fname",
+		"lname",
+		"en",
 		"avatarImageURL",
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
@@ -83,6 +114,9 @@ func TestChangeEnvironmentRole(t *testing.T) {
 	a := NewAccountV2(
 		"email",
 		"name",
+		"fname",
+		"lname",
+		"en",
 		"avatarImageURL",
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
@@ -203,6 +237,9 @@ func TestPatchEnvironmentRole(t *testing.T) {
 			a := NewAccountV2(
 				"email",
 				"name",
+				"fname",
+				"lname",
+				"en",
 				"avatarImageURL",
 				"organizationID",
 				proto.AccountV2_Role_Organization_MEMBER,
@@ -215,8 +252,7 @@ func TestPatchEnvironmentRole(t *testing.T) {
 						EnvironmentId: "environmentID2",
 						Role:          proto.AccountV2_Role_Environment_EDITOR,
 					},
-				},
-			)
+				})
 			a.PatchEnvironmentRole(p.envRoles)
 			assert.Equal(t, p.expected, a.EnvironmentRoles)
 		})
@@ -227,6 +263,9 @@ func TestEnableV2(t *testing.T) {
 	a := NewAccountV2(
 		"email",
 		"name",
+		"fname",
+		"lname",
+		"en",
 		"avatarImageURL",
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
@@ -241,6 +280,9 @@ func TestDisableV2(t *testing.T) {
 	a := NewAccountV2(
 		"email",
 		"name",
+		"fname",
+		"lname",
+		"en",
 		"avatarImageURL",
 		"organizationID",
 		proto.AccountV2_Role_Organization_MEMBER,
@@ -253,7 +295,8 @@ func TestDisableV2(t *testing.T) {
 func TestAddSearchFilter(t *testing.T) {
 	account := proto.AccountV2{
 		Email:            "email",
-		Name:             "name",
+		FirstName:        "John",
+		LastName:         "Doe",
 		AvatarImageUrl:   "avatarImageURL",
 		OrganizationId:   "organizationID",
 		OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
@@ -326,17 +369,21 @@ func TestAddSearchFilter(t *testing.T) {
 			a := NewAccountV2(
 				account.Email,
 				account.Name,
+				account.FirstName,
+				account.LastName,
+				account.Language,
 				account.AvatarImageUrl,
 				account.OrganizationId,
-				account.OrganizationRole,
-				account.EnvironmentRoles,
-			)
+				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.expectedFilters {
 				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
 			}
 			// account has not changed.
 			assert.Equal(t, account.Name, a.Name)
+			assert.Equal(t, account.FirstName, a.FirstName)
+			assert.Equal(t, account.LastName, a.LastName)
+			assert.Equal(t, account.Language, a.Language)
 			assert.Equal(t, account.Email, a.Email)
 			assert.Equal(t, account.AvatarImageUrl, a.AvatarImageUrl)
 			assert.Equal(t, account.OrganizationId, a.OrganizationId)
@@ -371,7 +418,9 @@ func TestAddSearchFilter(t *testing.T) {
 func TestChangeSearchFilterName(t *testing.T) {
 	account := proto.AccountV2{
 		Email:            "email",
-		Name:             "name",
+		FirstName:        "John",
+		LastName:         "Doe",
+		Language:         "en",
 		AvatarImageUrl:   "avatarImageURL",
 		OrganizationId:   "organizationID",
 		OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
@@ -478,11 +527,12 @@ func TestChangeSearchFilterName(t *testing.T) {
 			a := NewAccountV2(
 				account.Email,
 				account.Name,
+				account.FirstName,
+				account.LastName,
+				account.Language,
 				account.AvatarImageUrl,
 				account.OrganizationId,
-				account.OrganizationRole,
-				account.EnvironmentRoles,
-			)
+				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.existingFilters {
 				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
@@ -496,6 +546,9 @@ func TestChangeSearchFilterName(t *testing.T) {
 
 			// account has not changed.
 			assert.Equal(t, account.Name, a.Name)
+			assert.Equal(t, account.FirstName, a.FirstName)
+			assert.Equal(t, account.LastName, a.LastName)
+			assert.Equal(t, account.Language, a.Language)
 			assert.Equal(t, account.Email, a.Email)
 			assert.Equal(t, account.AvatarImageUrl, a.AvatarImageUrl)
 			assert.Equal(t, account.OrganizationId, a.OrganizationId)
@@ -518,7 +571,9 @@ func TestChangeSearchFilterName(t *testing.T) {
 func TestChangeSearchFilterQuery(t *testing.T) {
 	account := proto.AccountV2{
 		Email:            "email",
-		Name:             "name",
+		FirstName:        "John",
+		LastName:         "Doe",
+		Language:         "en",
 		AvatarImageUrl:   "avatarImageURL",
 		OrganizationId:   "organizationID",
 		OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
@@ -625,11 +680,12 @@ func TestChangeSearchFilterQuery(t *testing.T) {
 			a := NewAccountV2(
 				account.Email,
 				account.Name,
+				account.FirstName,
+				account.LastName,
+				account.Language,
 				account.AvatarImageUrl,
 				account.OrganizationId,
-				account.OrganizationRole,
-				account.EnvironmentRoles,
-			)
+				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.existingFilters {
 				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
@@ -643,6 +699,9 @@ func TestChangeSearchFilterQuery(t *testing.T) {
 
 			// account has not changed.
 			assert.Equal(t, account.Name, a.Name)
+			assert.Equal(t, account.FirstName, a.FirstName)
+			assert.Equal(t, account.LastName, a.LastName)
+			assert.Equal(t, account.Language, a.Language)
 			assert.Equal(t, account.Email, a.Email)
 			assert.Equal(t, account.AvatarImageUrl, a.AvatarImageUrl)
 			assert.Equal(t, account.OrganizationId, a.OrganizationId)
@@ -665,7 +724,9 @@ func TestChangeSearchFilterQuery(t *testing.T) {
 func TestChangeDefaultSearchFilter(t *testing.T) {
 	account := proto.AccountV2{
 		Email:            "email",
-		Name:             "name",
+		FirstName:        "John",
+		LastName:         "Doe",
+		Language:         "en",
 		AvatarImageUrl:   "avatarImageURL",
 		OrganizationId:   "organizationID",
 		OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
@@ -772,11 +833,12 @@ func TestChangeDefaultSearchFilter(t *testing.T) {
 			a := NewAccountV2(
 				account.Email,
 				account.Name,
+				account.FirstName,
+				account.LastName,
+				account.Language,
 				account.AvatarImageUrl,
 				account.OrganizationId,
-				account.OrganizationRole,
-				account.EnvironmentRoles,
-			)
+				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.existingFilters {
 				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
@@ -796,6 +858,9 @@ func TestChangeDefaultSearchFilter(t *testing.T) {
 
 			// account has not changed.
 			assert.Equal(t, account.Name, a.Name)
+			assert.Equal(t, account.FirstName, a.FirstName)
+			assert.Equal(t, account.LastName, a.LastName)
+			assert.Equal(t, account.Language, a.Language)
 			assert.Equal(t, account.Email, a.Email)
 			assert.Equal(t, account.AvatarImageUrl, a.AvatarImageUrl)
 			assert.Equal(t, account.OrganizationId, a.OrganizationId)
@@ -818,7 +883,9 @@ func TestChangeDefaultSearchFilter(t *testing.T) {
 func TestDeleteSearchFilter(t *testing.T) {
 	account := proto.AccountV2{
 		Email:            "email",
-		Name:             "name",
+		FirstName:        "John",
+		LastName:         "Doe",
+		Language:         "en",
 		AvatarImageUrl:   "avatarImageURL",
 		OrganizationId:   "organizationID",
 		OrganizationRole: proto.AccountV2_Role_Organization_MEMBER,
@@ -906,11 +973,12 @@ func TestDeleteSearchFilter(t *testing.T) {
 			a := NewAccountV2(
 				account.Email,
 				account.Name,
+				account.FirstName,
+				account.LastName,
+				account.Language,
 				account.AvatarImageUrl,
 				account.OrganizationId,
-				account.OrganizationRole,
-				account.EnvironmentRoles,
-			)
+				account.OrganizationRole, account.EnvironmentRoles)
 			for _, f := range p.existingFilters {
 				_, err := a.AddSearchFilter(f.Name, f.Query, f.FilterTargetType, f.EnvironmentId, f.DefaultFilter)
 				assert.Nil(t, err)
@@ -924,6 +992,9 @@ func TestDeleteSearchFilter(t *testing.T) {
 
 			// account has not changed.
 			assert.Equal(t, account.Name, a.Name)
+			assert.Equal(t, account.FirstName, a.FirstName)
+			assert.Equal(t, account.LastName, a.LastName)
+			assert.Equal(t, account.Language, a.Language)
 			assert.Equal(t, account.Email, a.Email)
 			assert.Equal(t, account.AvatarImageUrl, a.AvatarImageUrl)
 			assert.Equal(t, account.OrganizationId, a.OrganizationId)

@@ -31,6 +31,15 @@ export class CreateAccountV2Command extends jspb.Message {
     index?: number
   ): proto_account_account_pb.AccountV2.EnvironmentRole;
 
+  getFirstName(): string;
+  setFirstName(value: string): void;
+
+  getLastName(): string;
+  setLastName(value: string): void;
+
+  getLanguage(): string;
+  setLanguage(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateAccountV2Command.AsObject;
   static toObject(
@@ -59,6 +68,9 @@ export namespace CreateAccountV2Command {
     avatarImageUrl: string;
     organizationRole: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
     environmentRolesList: Array<proto_account_account_pb.AccountV2.EnvironmentRole.AsObject>;
+    firstName: string;
+    lastName: string;
+    language: string;
   };
 }
 
@@ -90,6 +102,99 @@ export class ChangeAccountV2NameCommand extends jspb.Message {
 export namespace ChangeAccountV2NameCommand {
   export type AsObject = {
     name: string;
+  };
+}
+
+export class ChangeAccountV2FirstNameCommand extends jspb.Message {
+  getFirstName(): string;
+  setFirstName(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ChangeAccountV2FirstNameCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ChangeAccountV2FirstNameCommand
+  ): ChangeAccountV2FirstNameCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ChangeAccountV2FirstNameCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ChangeAccountV2FirstNameCommand;
+  static deserializeBinaryFromReader(
+    message: ChangeAccountV2FirstNameCommand,
+    reader: jspb.BinaryReader
+  ): ChangeAccountV2FirstNameCommand;
+}
+
+export namespace ChangeAccountV2FirstNameCommand {
+  export type AsObject = {
+    firstName: string;
+  };
+}
+
+export class ChangeAccountV2LastNameCommand extends jspb.Message {
+  getLastName(): string;
+  setLastName(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ChangeAccountV2LastNameCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ChangeAccountV2LastNameCommand
+  ): ChangeAccountV2LastNameCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ChangeAccountV2LastNameCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ChangeAccountV2LastNameCommand;
+  static deserializeBinaryFromReader(
+    message: ChangeAccountV2LastNameCommand,
+    reader: jspb.BinaryReader
+  ): ChangeAccountV2LastNameCommand;
+}
+
+export namespace ChangeAccountV2LastNameCommand {
+  export type AsObject = {
+    lastName: string;
+  };
+}
+
+export class ChangeAccountV2LanguageCommand extends jspb.Message {
+  getLanguage(): string;
+  setLanguage(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ChangeAccountV2LanguageCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ChangeAccountV2LanguageCommand
+  ): ChangeAccountV2LanguageCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ChangeAccountV2LanguageCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ChangeAccountV2LanguageCommand;
+  static deserializeBinaryFromReader(
+    message: ChangeAccountV2LanguageCommand,
+    reader: jspb.BinaryReader
+  ): ChangeAccountV2LanguageCommand;
+}
+
+export namespace ChangeAccountV2LanguageCommand {
+  export type AsObject = {
+    language: string;
   };
 }
 
@@ -125,6 +230,74 @@ export class ChangeAccountV2AvatarImageUrlCommand extends jspb.Message {
 export namespace ChangeAccountV2AvatarImageUrlCommand {
   export type AsObject = {
     avatarImageUrl: string;
+  };
+}
+
+export class ChangeAccountV2AvatarCommand extends jspb.Message {
+  getAvatarImage(): Uint8Array | string;
+  getAvatarImage_asU8(): Uint8Array;
+  getAvatarImage_asB64(): string;
+  setAvatarImage(value: Uint8Array | string): void;
+
+  getAvatarFileType(): string;
+  setAvatarFileType(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ChangeAccountV2AvatarCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ChangeAccountV2AvatarCommand
+  ): ChangeAccountV2AvatarCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ChangeAccountV2AvatarCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ChangeAccountV2AvatarCommand;
+  static deserializeBinaryFromReader(
+    message: ChangeAccountV2AvatarCommand,
+    reader: jspb.BinaryReader
+  ): ChangeAccountV2AvatarCommand;
+}
+
+export namespace ChangeAccountV2AvatarCommand {
+  export type AsObject = {
+    avatarImage: Uint8Array | string;
+    avatarFileType: string;
+  };
+}
+
+export class ChangeAccountV2LastSeenCommand extends jspb.Message {
+  getLastSeen(): number;
+  setLastSeen(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): ChangeAccountV2LastSeenCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: ChangeAccountV2LastSeenCommand
+  ): ChangeAccountV2LastSeenCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: ChangeAccountV2LastSeenCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): ChangeAccountV2LastSeenCommand;
+  static deserializeBinaryFromReader(
+    message: ChangeAccountV2LastSeenCommand,
+    reader: jspb.BinaryReader
+  ): ChangeAccountV2LastSeenCommand;
+}
+
+export namespace ChangeAccountV2LastSeenCommand {
+  export type AsObject = {
+    lastSeen: number;
   };
 }
 
