@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
 )
@@ -191,6 +192,42 @@ func TestRename(t *testing.T) {
 			err := p.origin.Rename(p.input)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected, p.origin.Name)
+		})
+	}
+}
+
+func TestUpdatePush(t *testing.T) {
+	t.Parallel()
+
+	patterns := []struct {
+		desc        string
+		origin      *Push
+		inputName   *wrapperspb.StringValue
+		inputTags   []string
+		expectedErr error
+		expected    *Push
+	}{
+		{
+			desc: "success",
+			origin: &Push{&pushproto.Push{
+				Name: "a",
+				Tags: []string{"tag-0"},
+			}},
+			inputName:   &wrapperspb.StringValue{Value: "b"},
+			inputTags:   []string{"tag-0", "tag-1"},
+			expectedErr: nil,
+			expected: &Push{&pushproto.Push{
+				Name: "b",
+				Tags: []string{"tag-0", "tag-1"},
+			}},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			updatedPush, err := p.origin.Update(p.inputName, p.inputTags)
+			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expected.Name, updatedPush.Name)
+			assert.Equal(t, p.expected.Tags, updatedPush.Tags)
 		})
 	}
 }
