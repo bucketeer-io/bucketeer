@@ -589,8 +589,7 @@ func (s *PushService) updatePushNoCommand(
 		return nil, err
 	}
 	var updatedPushPb *pushproto.Push
-	var updatePushTagsEvent *eventproto.Event
-	var updatePushNameEvent *eventproto.Event
+	var updatePushEvent *eventproto.Event
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
 		s.logger.Error(
@@ -619,51 +618,29 @@ func (s *PushService) updatePushNoCommand(
 			return err
 		}
 
-		if req.Name != nil {
-			push.Name = req.Name.Value
-			updatePushNameEvent, err = domainevent.NewEvent(
-				editor,
-				eventproto.Event_PUSH,
-				push.Id,
-				eventproto.Event_PUSH_RENAMED,
-				&eventproto.PushRenamedEvent{
-					Name: req.Name.Value,
-				},
-				req.EnvironmentNamespace,
-				push,
-				prev,
-			)
-			if err != nil {
-				return err
-			}
-			if err = s.publisher.Publish(ctx, updatePushNameEvent); err != nil {
-				return err
-			}
-
+		updated, err := push.Update(req.Name, req.Tags)
+		if err != nil {
+			return err
 		}
-
-		if req.Tags != nil {
-			push.Tags = req.Tags
-			updatePushTagsEvent, err = domainevent.NewEvent(
-				editor,
-				eventproto.Event_PUSH,
-				push.Id,
-				eventproto.Event_PUSH_TAGS_UPDATED,
-				&eventproto.PushTagsUpdatedEvent{
-					Tags: req.Tags,
-				},
-				req.EnvironmentNamespace,
-				push,
-				prev,
-			)
-			if err != nil {
-				return err
-			}
-			if err = s.publisher.Publish(ctx, updatePushTagsEvent); err != nil {
-				return err
-			}
+		updatePushEvent, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_PUSH,
+			push.Id,
+			eventproto.Event_PUSH_UPDATED,
+			&eventproto.PushTagsUpdatedEvent{
+				Tags: req.Tags,
+			},
+			req.EnvironmentNamespace,
+			updated,
+			prev,
+		)
+		if err != nil {
+			return err
 		}
-		updatedPushPb = push.Push
+		if err = s.publisher.Publish(ctx, updatePushEvent); err != nil {
+			return err
+		}
+		updatedPushPb = updated.Push
 
 		return pushStorage.UpdatePush(ctx, push, req.EnvironmentNamespace)
 	})

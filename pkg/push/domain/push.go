@@ -18,11 +18,16 @@ import (
 	"errors"
 	"time"
 
+	"github.com/jinzhu/copier"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/push"
 )
 
 var (
+	ErrNameRequired     = errors.New("push: name is required")
+	ErrTagRequired      = errors.New("push: tag is required")
 	ErrTagDuplicated    = errors.New("push: tag is duplicated")
 	ErrTagAlreadyExists = errors.New("push: tag already exists")
 	ErrTagNotFound      = errors.New("push: tag not found")
@@ -51,6 +56,28 @@ func NewPush(name, fcmServiceAccount string, tags []string) (*Push, error) {
 		UpdatedAt:         now,
 	}}
 	return p, nil
+}
+
+func (p *Push) Update(
+	name *wrapperspb.StringValue,
+	tags []string,
+) (*Push, error) {
+	updated := &Push{}
+	if err := copier.Copy(updated, p); err != nil {
+		return nil, err
+	}
+	if name != nil {
+		updated.Name = name.Value
+	}
+	if len(tags) > 0 {
+		updated.Tags = tags
+	}
+
+	updated.UpdatedAt = time.Now().Unix()
+	if err := validate(updated.Push); err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
 
 func (p *Push) Rename(name string) error {
@@ -122,4 +149,14 @@ func (p *Push) ExistTag(findTag string) bool {
 		}
 	}
 	return false
+}
+
+func validate(p *proto.Push) error {
+	if p.Name == "" {
+		return ErrNameRequired
+	}
+	if p.Tags == nil {
+		return ErrTagRequired
+	}
+	return nil
 }
