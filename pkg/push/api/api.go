@@ -642,7 +642,7 @@ func (s *PushService) updatePushNoCommand(
 		}
 		updatedPushPb = updated.Push
 
-		return pushStorage.UpdatePush(ctx, push, req.EnvironmentNamespace)
+		return pushStorage.UpdatePush(ctx, updated, req.EnvironmentNamespace)
 	})
 	if err != nil {
 		if err == v2ps.ErrPushNotFound || err == v2ps.ErrPushUnexpectedAffectedRows {
