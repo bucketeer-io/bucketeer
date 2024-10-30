@@ -1465,11 +1465,10 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        id: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        description: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        name: jspb.Message.getFieldWithDefault(msg, 3, ''),
-        urlCode: jspb.Message.getFieldWithDefault(msg, 4, ''),
-        ownerEmail: jspb.Message.getFieldWithDefault(msg, 5, '')
+        organizationId: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        name: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        description: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        urlCode: jspb.Message.getFieldWithDefault(msg, 4, '')
       };
 
     if (includeInstance) {
@@ -1512,23 +1511,19 @@ proto.bucketeer.environment.CreateProjectCommand.deserializeBinaryFromReader =
       switch (field) {
         case 1:
           var value = /** @type {string} */ (reader.readString());
-          msg.setId(value);
+          msg.setOrganizationId(value);
           break;
         case 2:
           var value = /** @type {string} */ (reader.readString());
-          msg.setDescription(value);
+          msg.setName(value);
           break;
         case 3:
           var value = /** @type {string} */ (reader.readString());
-          msg.setName(value);
+          msg.setDescription(value);
           break;
         case 4:
           var value = /** @type {string} */ (reader.readString());
           msg.setUrlCode(value);
-          break;
-        case 5:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setOwnerEmail(value);
           break;
         default:
           reader.skipField();
@@ -1562,15 +1557,15 @@ proto.bucketeer.environment.CreateProjectCommand.prototype.serializeBinary =
 proto.bucketeer.environment.CreateProjectCommand.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getId();
+    f = message.getOrganizationId();
     if (f.length > 0) {
       writer.writeString(1, f);
     }
-    f = message.getDescription();
+    f = message.getName();
     if (f.length > 0) {
       writer.writeString(2, f);
     }
-    f = message.getName();
+    f = message.getDescription();
     if (f.length > 0) {
       writer.writeString(3, f);
     }
@@ -1578,35 +1573,33 @@ proto.bucketeer.environment.CreateProjectCommand.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(4, f);
     }
-    f = message.getOwnerEmail();
-    if (f.length > 0) {
-      writer.writeString(5, f);
-    }
   };
 
 /**
- * optional string id = 1;
+ * optional string organization_id = 1;
  * @return {string}
  */
-proto.bucketeer.environment.CreateProjectCommand.prototype.getId = function () {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ''));
-};
+proto.bucketeer.environment.CreateProjectCommand.prototype.getOrganizationId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 1, '')
+    );
+  };
 
 /**
  * @param {string} value
  * @return {!proto.bucketeer.environment.CreateProjectCommand} returns this
  */
-proto.bucketeer.environment.CreateProjectCommand.prototype.setId = function (
-  value
-) {
-  return jspb.Message.setProto3StringField(this, 1, value);
-};
+proto.bucketeer.environment.CreateProjectCommand.prototype.setOrganizationId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 1, value);
+  };
 
 /**
- * optional string description = 2;
+ * optional string name = 2;
  * @return {string}
  */
-proto.bucketeer.environment.CreateProjectCommand.prototype.getDescription =
+proto.bucketeer.environment.CreateProjectCommand.prototype.getName =
   function () {
     return /** @type {string} */ (
       jspb.Message.getFieldWithDefault(this, 2, '')
@@ -1617,16 +1610,17 @@ proto.bucketeer.environment.CreateProjectCommand.prototype.getDescription =
  * @param {string} value
  * @return {!proto.bucketeer.environment.CreateProjectCommand} returns this
  */
-proto.bucketeer.environment.CreateProjectCommand.prototype.setDescription =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 2, value);
-  };
+proto.bucketeer.environment.CreateProjectCommand.prototype.setName = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
 
 /**
- * optional string name = 3;
+ * optional string description = 3;
  * @return {string}
  */
-proto.bucketeer.environment.CreateProjectCommand.prototype.getName =
+proto.bucketeer.environment.CreateProjectCommand.prototype.getDescription =
   function () {
     return /** @type {string} */ (
       jspb.Message.getFieldWithDefault(this, 3, '')
@@ -1637,11 +1631,10 @@ proto.bucketeer.environment.CreateProjectCommand.prototype.getName =
  * @param {string} value
  * @return {!proto.bucketeer.environment.CreateProjectCommand} returns this
  */
-proto.bucketeer.environment.CreateProjectCommand.prototype.setName = function (
-  value
-) {
-  return jspb.Message.setProto3StringField(this, 3, value);
-};
+proto.bucketeer.environment.CreateProjectCommand.prototype.setDescription =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 3, value);
+  };
 
 /**
  * optional string url_code = 4;
@@ -1661,26 +1654,6 @@ proto.bucketeer.environment.CreateProjectCommand.prototype.getUrlCode =
 proto.bucketeer.environment.CreateProjectCommand.prototype.setUrlCode =
   function (value) {
     return jspb.Message.setProto3StringField(this, 4, value);
-  };
-
-/**
- * optional string owner_email = 5;
- * @return {string}
- */
-proto.bucketeer.environment.CreateProjectCommand.prototype.getOwnerEmail =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 5, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.environment.CreateProjectCommand} returns this
- */
-proto.bucketeer.environment.CreateProjectCommand.prototype.setOwnerEmail =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 5, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

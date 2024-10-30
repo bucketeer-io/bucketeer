@@ -1,5 +1,62 @@
 # Changelog
 
+## [0.4.9](https://github.com/bucketeer-io/bucketeer/compare/v0.4.8...v0.4.9) (2024-10-28)
+
+
+### Features
+
+* add flag count for project API ([#1246](https://github.com/bucketeer-io/bucketeer/issues/1246)) ([d1da171](https://github.com/bucketeer-io/bucketeer/commit/d1da1714851e6439123b175e723a40e3e067fadd))
+* add organization creator email ([#1255](https://github.com/bucketeer-io/bucketeer/issues/1255)) ([c8dc8f7](https://github.com/bucketeer-io/bucketeer/commit/c8dc8f70457f7dcfb732a755162a82e21b300430))
+* add project environement and user count organization list API ([#1244](https://github.com/bucketeer-io/bucketeer/issues/1244)) ([d6cb3d6](https://github.com/bucketeer-io/bucketeer/commit/d6cb3d6befe5db194e40e011fb7910bb043f74f9))
+* add redis copy hack script ([#1269](https://github.com/bucketeer-io/bucketeer/issues/1269)) ([cc0b874](https://github.com/bucketeer-io/bucketeer/commit/cc0b874f183613007321687fdd89095ef80ec458))
+* implement file server for v3 dashboard ([#1295](https://github.com/bucketeer-io/bucketeer/issues/1295)) ([6448663](https://github.com/bucketeer-io/bucketeer/commit/64486633aa65d835e96744306dbcd96bcdc665b8))
+* save search filter options ([#1231](https://github.com/bucketeer-io/bucketeer/issues/1231)) ([f24d53a](https://github.com/bucketeer-io/bucketeer/commit/f24d53a2f3f330300b518c9960d17ed47223e274))
+* support non-command for web create Push API ([#1289](https://github.com/bucketeer-io/bucketeer/issues/1289)) ([58d7287](https://github.com/bucketeer-io/bucketeer/commit/58d7287afecc6f3ea8aeed9f13a99bf921660d98))
+* support redis cluster ([#1268](https://github.com/bucketeer-io/bucketeer/issues/1268)) ([4c1ce3e](https://github.com/bucketeer-io/bucketeer/commit/4c1ce3ec07074bcbb099ee66688a219164d0a39d))
+* **ui:** add a temporary route rule for v3 console ([#1296](https://github.com/bucketeer-io/bucketeer/issues/1296)) ([4bfc1b7](https://github.com/bucketeer-io/bucketeer/commit/4bfc1b7253f778459ba67ae9fe1e226655f78acd))
+* **ui:** debugger feature ([#1233](https://github.com/bucketeer-io/bucketeer/issues/1233)) ([09d18f5](https://github.com/bucketeer-io/bucketeer/commit/09d18f5d296a4a38f88bc6308a4f0b46b3ef515d))
+* **ui:** organization dashboard ([#1286](https://github.com/bucketeer-io/bucketeer/issues/1286)) ([348c914](https://github.com/bucketeer-io/bucketeer/commit/348c9146fc3147f07ac2cdcf03dce0d126db1c2c))
+
+
+### Bug Fixes
+
+* audit log pubg message not being acknowledged ([#1279](https://github.com/bucketeer-io/bucketeer/issues/1279)) ([6a2dc67](https://github.com/bucketeer-io/bucketeer/commit/6a2dc67606e88c996ada4de9132a37c84bd5683b))
+* nil pointer when the pubsub puller creation failed ([#1278](https://github.com/bucketeer-io/bucketeer/issues/1278)) ([a5d1c8b](https://github.com/bucketeer-io/bucketeer/commit/a5d1c8ba5975cecd6ce7719ab8bcf96937305b09))
+* organiztion API ([#1261](https://github.com/bucketeer-io/bucketeer/issues/1261)) ([50e1d1c](https://github.com/bucketeer-io/bucketeer/commit/50e1d1c769f994a3b7aaef46f2b801419c6bd73b))
+* panic when checking register event request ([#1277](https://github.com/bucketeer-io/bucketeer/issues/1277)) ([6616f54](https://github.com/bucketeer-io/bucketeer/commit/6616f5489e462d0398d5eb9059078da3b5c5babb))
+* redis cluster pfmerge ([#1281](https://github.com/bucketeer-io/bucketeer/issues/1281)) ([719f78f](https://github.com/bucketeer-io/bucketeer/commit/719f78fe4220d1d45d10677e97b4114635d28fdc))
+* **ui:** save filter popup being shown upon re-login ([#1288](https://github.com/bucketeer-io/bucketeer/issues/1288)) ([f9076d7](https://github.com/bucketeer-io/bucketeer/commit/f9076d7ee630890869fb90f3499c5b3af5c56ea0))
+* **ui:** show save filter popup while navigating to the targeting page ([#1282](https://github.com/bucketeer-io/bucketeer/issues/1282)) ([6fb9a96](https://github.com/bucketeer-io/bucketeer/commit/6fb9a9616cafe9fbd56d88a4a0d5eebb27329285))
+* **ui:** unable to create boolean type feature flag ([#1247](https://github.com/bucketeer-io/bucketeer/issues/1247)) ([ff1b300](https://github.com/bucketeer-io/bucketeer/commit/ff1b300da2e26c7fe1515289e96f83401abc4b43))
+* **ui:** unsaved search filters popup being shown when logging in ([#1263](https://github.com/bucketeer-io/bucketeer/issues/1263)) ([6a8bb86](https://github.com/bucketeer-io/bucketeer/commit/6a8bb862d9d03c1a461dfde38d4108c21125bf7f))
+
+
+### Miscellaneous
+
+* add list projects v2 for the new console ([#1267](https://github.com/bucketeer-io/bucketeer/issues/1267)) ([36dd128](https://github.com/bucketeer-io/bucketeer/commit/36dd128227160d7b7764e33b9141cfdb545e4430))
+* add log for error metrics from sdk client ([#1270](https://github.com/bucketeer-io/bucketeer/issues/1270)) ([c6d3521](https://github.com/bucketeer-io/bucketeer/commit/c6d3521a2174b6eb5d90565359338c4516d7a545))
+* add make cmd to delete dev container mysql data ([#1293](https://github.com/bucketeer-io/bucketeer/issues/1293)) ([a526aca](https://github.com/bucketeer-io/bucketeer/commit/a526acaf2a65a2621f418fb121d36f1c876780e7))
+* add organization_id to project unique key ([#1302](https://github.com/bucketeer-io/bucketeer/issues/1302)) ([7c15b95](https://github.com/bucketeer-io/bucketeer/commit/7c15b954c10275052e2ddf80f4b4256f8f1390b0))
+* change create organization api to create default environment ([#1297](https://github.com/bucketeer-io/bucketeer/issues/1297)) ([0a6cfd4](https://github.com/bucketeer-io/bucketeer/commit/0a6cfd40c8c6d4de57be11e947d4f8f4877fcaff))
+* change the default time range when getting evaluation count to 7 days ([#1283](https://github.com/bucketeer-io/bucketeer/issues/1283)) ([e5bb28c](https://github.com/bucketeer-io/bucketeer/commit/e5bb28c83e19b19457be118cfdea47796a5edb2f))
+* get key slot when using redis cluster ([#1273](https://github.com/bucketeer-io/bucketeer/issues/1273)) ([3cce246](https://github.com/bucketeer-io/bucketeer/commit/3cce2465a2124108bc94996f8b214b654ab8c1a2))
+* remove order by clause from count sql ([#1262](https://github.com/bucketeer-io/bucketeer/issues/1262)) ([d3a2867](https://github.com/bucketeer-io/bucketeer/commit/d3a28675a562dc82acdb5dd340f1736a21954f84))
+* remove redis pipeline command usage ([#1271](https://github.com/bucketeer-io/bucketeer/issues/1271)) ([b3f3667](https://github.com/bucketeer-io/bucketeer/commit/b3f36670cd7467dc877590b62362f31b26e39918))
+* stop error logging when checking register event request for debugging ([#1276](https://github.com/bucketeer-io/bucketeer/issues/1276)) ([628f888](https://github.com/bucketeer-io/bucketeer/commit/628f88837dcf6a4e01af622914f2c252b80b8595))
+* support gcp multi cluster ingress ([#1198](https://github.com/bucketeer-io/bucketeer/issues/1198)) ([ce278c5](https://github.com/bucketeer-io/bucketeer/commit/ce278c51660ed513e8d51ab3e9856c4fab879141))
+* update delete e2e image tag ([#1274](https://github.com/bucketeer-io/bucketeer/issues/1274)) ([c8fedff](https://github.com/bucketeer-io/bucketeer/commit/c8fedff3a97f36365b6e55c81507265470895563))
+* update dev container feature version ([#1294](https://github.com/bucketeer-io/bucketeer/issues/1294)) ([ed20f93](https://github.com/bucketeer-io/bucketeer/commit/ed20f934ec176a007d4e1e4df0744db7157e14aa))
+* update dev container node version ([#1301](https://github.com/bucketeer-io/bucketeer/issues/1301)) ([ca77fc0](https://github.com/bucketeer-io/bucketeer/commit/ca77fc07f965b6668fd71fd35159be78caac2482))
+* updgrade go version in devcontainer ([#1287](https://github.com/bucketeer-io/bucketeer/issues/1287)) ([5e20c9a](https://github.com/bucketeer-io/bucketeer/commit/5e20c9a9c9830553cee2c57a38d6b937db9cc9f7))
+
+
+### Build System
+
+* **deps-dev:** bump vite from 5.4.2 to 5.4.6 in /ui/dashboard ([#1241](https://github.com/bucketeer-io/bucketeer/issues/1241)) ([25883c3](https://github.com/bucketeer-io/bucketeer/commit/25883c301f9094a9c2ba6f8245af33bda0370dbe))
+* **deps:** bump express from 4.19.2 to 4.21.0 in /ui/web-v2 ([#1242](https://github.com/bucketeer-io/bucketeer/issues/1242)) ([ca100b2](https://github.com/bucketeer-io/bucketeer/commit/ca100b263546acf25b7fe82da6dc2f0dcc9eebd1))
+* **deps:** bump rollup from 4.21.2 to 4.22.4 in /ui/dashboard ([#1256](https://github.com/bucketeer-io/bucketeer/issues/1256)) ([fa6d61c](https://github.com/bucketeer-io/bucketeer/commit/fa6d61c58f6e21be628487c6c0c292b799ab689e))
+* **deps:** bump the dependencies group across 1 directory with 20 updates ([#1265](https://github.com/bucketeer-io/bucketeer/issues/1265)) ([fd01afc](https://github.com/bucketeer-io/bucketeer/commit/fd01afc1a7bc87751e14056e8c2d411ab5ac8827))
+
 ## [0.4.8](https://github.com/bucketeer-io/bucketeer/compare/v0.4.7...v0.4.8) (2024-09-17)
 
 

@@ -3527,11 +3527,25 @@ definitions:
         type: boolean
       ownerEmail:
         type: string
+    title: Deprecated
   environmentCreateOrganizationRequest:
     type: object
     properties:
       command:
         $ref: '#/definitions/environmentCreateOrganizationCommand'
+      name:
+        type: string
+      urlCode:
+        type: string
+      description:
+        type: string
+        title: optional
+      isTrial:
+        type: boolean
+      isSystemAdmin:
+        type: boolean
+      ownerEmail:
+        type: string
   environmentCreateOrganizationResponse:
     type: object
     properties:
@@ -3540,18 +3554,15 @@ definitions:
   environmentCreateProjectCommand:
     type: object
     properties:
-      id:
+      organizationId:
+        type: string
+      name:
         type: string
       description:
         type: string
         title: optional
-      name:
-        type: string
       urlCode:
         type: string
-      ownerEmail:
-        type: string
-    description: 'TODO: add organizationID once we support organization create UI.'
   environmentCreateProjectRequest:
     type: object
     properties:
