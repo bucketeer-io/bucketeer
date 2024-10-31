@@ -873,7 +873,7 @@ func (s *PushService) DeletePush(
 			editor,
 			eventproto.Event_PUSH,
 			push.Id,
-			eventproto.Event_PUSH_CREATED,
+			eventproto.Event_PUSH_DELETED,
 			&eventproto.PushCreatedEvent{
 				FcmServiceAccount: push.FcmServiceAccount,
 				Tags:              push.Tags,
