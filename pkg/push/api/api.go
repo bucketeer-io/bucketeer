@@ -892,7 +892,8 @@ func (s *PushService) DeletePush(
 		return pushStorage.UpdatePush(ctx, push, req.EnvironmentNamespace)
 	})
 	if err != nil {
-		if errors.Is(err, v2ps.ErrPushNotFound) || errors.Is(err, v2ps.ErrPushUnexpectedAffectedRows) {
+		switch {
+		case errors.Is(err, v2ps.ErrPushNotFound):
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -901,6 +902,8 @@ func (s *PushService) DeletePush(
 				return nil, statusInternal.Err()
 			}
 			return nil, dt.Err()
+		case errors.Is(err, v2ps.ErrPushUnexpectedAffectedRows):
+			return &pushproto.DeletePushResponse{}, nil
 		}
 		s.logger.Error(
 			"Failed to delete push",
