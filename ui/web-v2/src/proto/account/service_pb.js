@@ -341,7 +341,14 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.bucketeer.account.CreateAccountV2Request = function (opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(
+    this,
+    opt_data,
+    0,
+    -1,
+    proto.bucketeer.account.CreateAccountV2Request.repeatedFields_,
+    null
+  );
 };
 goog.inherits(proto.bucketeer.account.CreateAccountV2Request, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -1893,6 +1900,13 @@ proto.bucketeer.account.GetMyOrganizationsResponse.prototype.clearOrganizationsL
     return this.setOrganizationsList([]);
   };
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.account.CreateAccountV2Request.repeatedFields_ = [7];
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -1936,7 +1950,19 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_account_command_pb.CreateAccountV2Command.toObject(
             includeInstance,
             f
-          )
+          ),
+        email: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        name: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        avatarImageUrl: jspb.Message.getFieldWithDefault(msg, 5, ''),
+        organizationRole: jspb.Message.getFieldWithDefault(msg, 6, 0),
+        environmentRolesList: jspb.Message.toObjectList(
+          msg.getEnvironmentRolesList(),
+          proto_account_account_pb.AccountV2.EnvironmentRole.toObject,
+          includeInstance
+        ),
+        firstName: jspb.Message.getFieldWithDefault(msg, 8, ''),
+        lastName: jspb.Message.getFieldWithDefault(msg, 9, ''),
+        language: jspb.Message.getFieldWithDefault(msg, 10, '')
       };
 
     if (includeInstance) {
@@ -1990,6 +2016,46 @@ proto.bucketeer.account.CreateAccountV2Request.deserializeBinaryFromReader =
           );
           msg.setCommand(value);
           break;
+        case 3:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEmail(value);
+          break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setName(value);
+          break;
+        case 5:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setAvatarImageUrl(value);
+          break;
+        case 6:
+          var value =
+            /** @type {!proto.bucketeer.account.AccountV2.Role.Organization} */ (
+              reader.readEnum()
+            );
+          msg.setOrganizationRole(value);
+          break;
+        case 7:
+          var value = new proto_account_account_pb.AccountV2.EnvironmentRole();
+          reader.readMessage(
+            value,
+            proto_account_account_pb.AccountV2.EnvironmentRole
+              .deserializeBinaryFromReader
+          );
+          msg.addEnvironmentRoles(value);
+          break;
+        case 8:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setFirstName(value);
+          break;
+        case 9:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setLastName(value);
+          break;
+        case 10:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setLanguage(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -2033,6 +2099,43 @@ proto.bucketeer.account.CreateAccountV2Request.serializeBinaryToWriter =
         f,
         proto_account_command_pb.CreateAccountV2Command.serializeBinaryToWriter
       );
+    }
+    f = message.getEmail();
+    if (f.length > 0) {
+      writer.writeString(3, f);
+    }
+    f = message.getName();
+    if (f.length > 0) {
+      writer.writeString(4, f);
+    }
+    f = message.getAvatarImageUrl();
+    if (f.length > 0) {
+      writer.writeString(5, f);
+    }
+    f = message.getOrganizationRole();
+    if (f !== 0.0) {
+      writer.writeEnum(6, f);
+    }
+    f = message.getEnvironmentRolesList();
+    if (f.length > 0) {
+      writer.writeRepeatedMessage(
+        7,
+        f,
+        proto_account_account_pb.AccountV2.EnvironmentRole
+          .serializeBinaryToWriter
+      );
+    }
+    f = message.getFirstName();
+    if (f.length > 0) {
+      writer.writeString(8, f);
+    }
+    f = message.getLastName();
+    if (f.length > 0) {
+      writer.writeString(9, f);
+    }
+    f = message.getLanguage();
+    if (f.length > 0) {
+      writer.writeString(10, f);
     }
   };
 
@@ -2097,6 +2200,194 @@ proto.bucketeer.account.CreateAccountV2Request.prototype.clearCommand =
 proto.bucketeer.account.CreateAccountV2Request.prototype.hasCommand =
   function () {
     return jspb.Message.getField(this, 2) != null;
+  };
+
+/**
+ * optional string email = 3;
+ * @return {string}
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.getEmail =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 3, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.CreateAccountV2Request} returns this
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.setEmail = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 3, value);
+};
+
+/**
+ * optional string name = 4;
+ * @return {string}
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.getName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.CreateAccountV2Request} returns this
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.setName = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 4, value);
+};
+
+/**
+ * optional string avatar_image_url = 5;
+ * @return {string}
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.getAvatarImageUrl =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 5, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.CreateAccountV2Request} returns this
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.setAvatarImageUrl =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 5, value);
+  };
+
+/**
+ * optional AccountV2.Role.Organization organization_role = 6;
+ * @return {!proto.bucketeer.account.AccountV2.Role.Organization}
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.getOrganizationRole =
+  function () {
+    return /** @type {!proto.bucketeer.account.AccountV2.Role.Organization} */ (
+      jspb.Message.getFieldWithDefault(this, 6, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.account.AccountV2.Role.Organization} value
+ * @return {!proto.bucketeer.account.CreateAccountV2Request} returns this
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.setOrganizationRole =
+  function (value) {
+    return jspb.Message.setProto3EnumField(this, 6, value);
+  };
+
+/**
+ * repeated AccountV2.EnvironmentRole environment_roles = 7;
+ * @return {!Array<!proto.bucketeer.account.AccountV2.EnvironmentRole>}
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.getEnvironmentRolesList =
+  function () {
+    return /** @type{!Array<!proto.bucketeer.account.AccountV2.EnvironmentRole>} */ (
+      jspb.Message.getRepeatedWrapperField(
+        this,
+        proto_account_account_pb.AccountV2.EnvironmentRole,
+        7
+      )
+    );
+  };
+
+/**
+ * @param {!Array<!proto.bucketeer.account.AccountV2.EnvironmentRole>} value
+ * @return {!proto.bucketeer.account.CreateAccountV2Request} returns this
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.setEnvironmentRolesList =
+  function (value) {
+    return jspb.Message.setRepeatedWrapperField(this, 7, value);
+  };
+
+/**
+ * @param {!proto.bucketeer.account.AccountV2.EnvironmentRole=} opt_value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.account.AccountV2.EnvironmentRole}
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.addEnvironmentRoles =
+  function (opt_value, opt_index) {
+    return jspb.Message.addToRepeatedWrapperField(
+      this,
+      7,
+      opt_value,
+      proto.bucketeer.account.AccountV2.EnvironmentRole,
+      opt_index
+    );
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.account.CreateAccountV2Request} returns this
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.clearEnvironmentRolesList =
+  function () {
+    return this.setEnvironmentRolesList([]);
+  };
+
+/**
+ * optional string first_name = 8;
+ * @return {string}
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.getFirstName =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 8, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.CreateAccountV2Request} returns this
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.setFirstName =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 8, value);
+  };
+
+/**
+ * optional string last_name = 9;
+ * @return {string}
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.getLastName =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 9, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.CreateAccountV2Request} returns this
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.setLastName =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 9, value);
+  };
+
+/**
+ * optional string language = 10;
+ * @return {string}
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.getLanguage =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 10, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.CreateAccountV2Request} returns this
+ */
+proto.bucketeer.account.CreateAccountV2Request.prototype.setLanguage =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 10, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

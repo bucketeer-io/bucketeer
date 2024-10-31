@@ -3007,6 +3007,25 @@ definitions:
         type: string
       command:
         $ref: '#/definitions/accountCreateAccountV2Command'
+      email:
+        type: string
+      name:
+        type: string
+      avatarImageUrl:
+        type: string
+      organizationRole:
+        $ref: '#/definitions/AccountV2RoleOrganization'
+      environmentRoles:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountAccountV2EnvironmentRole'
+      firstName:
+        type: string
+      lastName:
+        type: string
+      language:
+        type: string
   accountCreateAccountV2Response:
     type: object
     properties:

@@ -50,7 +50,15 @@ message GetMyOrganizationsResponse {
 
 message CreateAccountV2Request {
   string organization_id = 1;
-  CreateAccountV2Command command = 2;
+  CreateAccountV2Command command = 2 [deprecated = true];
+  string email = 3;
+  string name = 4;
+  string avatar_image_url = 5;
+  account.AccountV2.Role.Organization organization_role = 6;
+  repeated account.AccountV2.EnvironmentRole environment_roles = 7;
+  string first_name = 8;
+  string last_name = 9;
+  string language = 10;
 }
 
 message CreateAccountV2Response {

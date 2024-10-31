@@ -47,6 +47,9 @@ func (s *AccountService) CreateAccountV2(
 	if err != nil {
 		return nil, err
 	}
+	if req.Command == nil {
+		return s.createAccountV2NoCommand(ctx, req, localizer, editor)
+	}
 	if err := validateCreateAccountV2Request(req, localizer); err != nil {
 		s.logger.Error(
 			"Failed to create account",
@@ -126,6 +129,48 @@ func (s *AccountService) CreateAccountV2(
 		return nil, dt.Err()
 	}
 	return &accountproto.CreateAccountV2Response{Account: account.AccountV2}, nil
+}
+
+func (s *AccountService) createAccountV2NoCommand(
+	ctx context.Context,
+	req *accountproto.CreateAccountV2Request,
+	localizer locale.Localizer,
+	editor *eventproto.Editor,
+) (*accountproto.CreateAccountV2Response, error) {
+	err := validateCreateAccountV2NoCommandRequest(req, localizer)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create account",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+			)...,
+		)
+		return nil, err
+	}
+	account := domain.NewAccountV2(
+		req.Email,
+		req.Name,
+		req.FirstName,
+		req.LastName,
+		req.Language,
+		req.AvatarImageUrl,
+		req.OrganizationId,
+		req.OrganizationRole,
+		req.EnvironmentRoles,
+	)
+	err = s.accountStorage.RunInTransaction(ctx, func() error {
+		// TODO: temporary implementation: double write account v2 ---
+		exist, err := s.accountStorage.GetAccountV2(ctx, account.Email, req.OrganizationId)
+		if err != nil && !errors.Is(err, v2as.ErrAccountNotFound) {
+			return err
+		}
+		if exist != nil {
+
+		}
+		// TODO: temporary implementation end ---
+		return nil
+	}
 }
 
 func (s *AccountService) UpdateAccountV2(

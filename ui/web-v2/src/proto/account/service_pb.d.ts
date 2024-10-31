@@ -180,6 +180,39 @@ export class CreateAccountV2Request extends jspb.Message {
   getCommand(): proto_account_command_pb.CreateAccountV2Command | undefined;
   setCommand(value?: proto_account_command_pb.CreateAccountV2Command): void;
 
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getAvatarImageUrl(): string;
+  setAvatarImageUrl(value: string): void;
+
+  getOrganizationRole(): proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
+  setOrganizationRole(
+    value: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap]
+  ): void;
+
+  clearEnvironmentRolesList(): void;
+  getEnvironmentRolesList(): Array<proto_account_account_pb.AccountV2.EnvironmentRole>;
+  setEnvironmentRolesList(
+    value: Array<proto_account_account_pb.AccountV2.EnvironmentRole>
+  ): void;
+  addEnvironmentRoles(
+    value?: proto_account_account_pb.AccountV2.EnvironmentRole,
+    index?: number
+  ): proto_account_account_pb.AccountV2.EnvironmentRole;
+
+  getFirstName(): string;
+  setFirstName(value: string): void;
+
+  getLastName(): string;
+  setLastName(value: string): void;
+
+  getLanguage(): string;
+  setLanguage(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateAccountV2Request.AsObject;
   static toObject(
@@ -205,6 +238,14 @@ export namespace CreateAccountV2Request {
   export type AsObject = {
     organizationId: string;
     command?: proto_account_command_pb.CreateAccountV2Command.AsObject;
+    email: string;
+    name: string;
+    avatarImageUrl: string;
+    organizationRole: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
+    environmentRolesList: Array<proto_account_account_pb.AccountV2.EnvironmentRole.AsObject>;
+    firstName: string;
+    lastName: string;
+    language: string;
   };
 }
 

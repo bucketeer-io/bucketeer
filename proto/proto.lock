@@ -980,7 +980,54 @@
               {
                 "id": 2,
                 "name": "command",
-                "type": "CreateAccountV2Command"
+                "type": "CreateAccountV2Command",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "avatar_image_url",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "organization_role",
+                "type": "account.AccountV2.Role.Organization"
+              },
+              {
+                "id": 7,
+                "name": "environment_roles",
+                "type": "account.AccountV2.EnvironmentRole",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "first_name",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "last_name",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "language",
+                "type": "string"
               }
             ]
           },
