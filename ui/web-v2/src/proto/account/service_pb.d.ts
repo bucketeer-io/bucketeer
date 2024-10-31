@@ -820,6 +820,8 @@ export namespace ListAccountsV2Request {
     EMAIL: 1;
     CREATED_AT: 2;
     UPDATED_AT: 3;
+    ORGANIZATION_ROLE: 4;
+    ENVIRONMENT_COUNT: 5;
   }
 
   export const OrderBy: OrderByMap;
