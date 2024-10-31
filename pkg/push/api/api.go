@@ -542,7 +542,8 @@ func (s *PushService) UpdatePush(
 		return pushStorage.UpdatePush(ctx, push, req.EnvironmentNamespace)
 	})
 	if err != nil {
-		if err == v2ps.ErrPushNotFound || err == v2ps.ErrPushUnexpectedAffectedRows {
+		switch err {
+		case v2ps.ErrPushNotFound:
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -551,6 +552,14 @@ func (s *PushService) UpdatePush(
 				return nil, statusInternal.Err()
 			}
 			return nil, dt.Err()
+		case v2ps.ErrPushUnexpectedAffectedRows:
+			if updatedPushPb != nil {
+				// For security reasons we remove the service account from the API response
+				updatedPushPb.FcmServiceAccount = ""
+			}
+			return &pushproto.UpdatePushResponse{
+				Push: updatedPushPb,
+			}, nil
 		}
 		s.logger.Error(
 			"Failed to update push",
@@ -641,7 +650,8 @@ func (s *PushService) updatePushNoCommand(
 		return pushStorage.UpdatePush(ctx, updated, req.EnvironmentNamespace)
 	})
 	if err != nil {
-		if err == v2ps.ErrPushNotFound || err == v2ps.ErrPushUnexpectedAffectedRows {
+		switch err {
+		case v2ps.ErrPushNotFound:
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -650,6 +660,14 @@ func (s *PushService) updatePushNoCommand(
 				return nil, statusInternal.Err()
 			}
 			return nil, dt.Err()
+		case v2ps.ErrPushUnexpectedAffectedRows:
+			if updatedPushPb != nil {
+				// For security reasons we remove the service account from the API response
+				updatedPushPb.FcmServiceAccount = ""
+			}
+			return &pushproto.UpdatePushResponse{
+				Push: updatedPushPb,
+			}, nil
 		}
 		s.logger.Error(
 			"Failed to update push",
