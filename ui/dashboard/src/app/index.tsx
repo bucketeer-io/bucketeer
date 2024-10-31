@@ -23,7 +23,6 @@ import {
   PAGE_PATH_ORGANIZATIONS,
   PAGE_PATH_PROJECTS,
   PAGE_PATH_ROOT,
-  PAGE_PATH_ROOT_ALL,
   PAGE_PATH_SETTINGS
 } from 'constants/routing';
 import { i18n } from 'i18n';
@@ -32,14 +31,13 @@ import { v4 as uuid } from 'uuid';
 import { ConsoleAccount } from '@types';
 import FeatureFlagsPage from 'pages/feature-flags';
 import NotFoundPage from 'pages/not-found';
-import ProjectsPage from 'pages/projects';
 import SettingsPage from 'pages/settings';
 import SignInPage from 'pages/signin';
 import SignInEmailPage from 'pages/signin/email';
 import SelectOrganizationPage from 'pages/signin/organization';
 import Navigation from 'components/navigation';
 import Spinner from 'components/spinner';
-import { OrganizationsRoot } from './routers';
+import { OrganizationsRoot, ProjectsRoot } from './routers';
 
 export const AppLoading = () => (
   <div className="flex items-center justify-center h-screen w-full">
@@ -70,7 +68,7 @@ function App() {
                 path={PAGE_PATH_AUTH_SIGNIN}
                 element={<SignInEmailPage />}
               />
-              <Route path={PAGE_PATH_ROOT_ALL} element={<Root />} />
+              <Route path={`${PAGE_PATH_ROOT}*`} element={<Root />} />
             </Routes>
           </AuthProvider>
         </BrowserRouter>
@@ -150,7 +148,7 @@ export const EnvironmentRoot = memo(
         )}
         <Route path={`${PAGE_PATH_FEATURES}`} element={<FeatureFlagsPage />} />
         <Route path={`${PAGE_PATH_SETTINGS}`} element={<SettingsPage />} />
-        <Route path={`${PAGE_PATH_PROJECTS}`} element={<ProjectsPage />} />
+        <Route path={`${PAGE_PATH_PROJECTS}/*`} element={<ProjectsRoot />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     );

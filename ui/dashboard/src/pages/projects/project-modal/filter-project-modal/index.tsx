@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'i18n';
 import { isNotEmpty } from 'utils/data-type';
-import { OrganizationFilters } from 'pages/organizations/types';
+import { ProjectFilters } from 'pages/projects/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
@@ -14,11 +14,11 @@ import {
 import DialogModal from 'components/modal/dialog';
 
 export type FilterProps = {
-  onSubmit: (v: Partial<OrganizationFilters>) => void;
+  onSubmit: (v: Partial<ProjectFilters>) => void;
   isOpen: boolean;
   onClose: () => void;
   onClearFilters: () => void;
-  filters?: Partial<OrganizationFilters>;
+  filters?: Partial<ProjectFilters>;
 };
 
 export interface Option {

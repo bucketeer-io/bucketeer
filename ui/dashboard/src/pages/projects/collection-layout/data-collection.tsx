@@ -2,7 +2,10 @@ import {
   IconEditOutlined,
   IconMoreHorizOutlined
 } from 'react-icons-material-design';
+import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
+import { getCurrentEnvironment, useAuth } from 'auth';
+import { PAGE_PATH_PROJECTS } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { Project } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
@@ -16,6 +19,9 @@ export const useColumns = ({
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
 
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
   return [
     {
       accessorKey: 'name',
@@ -24,9 +30,12 @@ export const useColumns = ({
       cell: ({ row }) => {
         const project = row.original;
         return (
-          <div className="underline text-primary-500 typo-para-medium">
+          <Link
+            to={`/${currentEnvironment.urlCode}${PAGE_PATH_PROJECTS}/${project.id}`}
+            className="underline text-primary-500 typo-para-medium"
+          >
             {project.name}
-          </div>
+          </Link>
         );
       }
     },
