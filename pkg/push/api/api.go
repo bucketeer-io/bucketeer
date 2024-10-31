@@ -215,7 +215,7 @@ func (s *PushService) CreatePush(
 		return nil
 	})
 	if err != nil {
-		if err == v2ps.ErrPushAlreadyExists {
+		if errors.Is(err, v2ps.ErrPushAlreadyExists) {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
@@ -380,7 +380,7 @@ func (s *PushService) createPushNoCommand(
 		return nil
 	})
 	if err != nil {
-		if err == v2ps.ErrPushAlreadyExists {
+		if errors.Is(err, v2ps.ErrPushAlreadyExists) {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
@@ -542,8 +542,8 @@ func (s *PushService) UpdatePush(
 		return pushStorage.UpdatePush(ctx, push, req.EnvironmentNamespace)
 	})
 	if err != nil {
-		switch err {
-		case v2ps.ErrPushNotFound:
+		switch {
+		case errors.Is(err, v2ps.ErrPushNotFound):
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -552,7 +552,7 @@ func (s *PushService) UpdatePush(
 				return nil, statusInternal.Err()
 			}
 			return nil, dt.Err()
-		case v2ps.ErrPushUnexpectedAffectedRows:
+		case errors.Is(err, v2ps.ErrPushUnexpectedAffectedRows):
 			if updatedPushPb != nil {
 				// For security reasons we remove the service account from the API response
 				updatedPushPb.FcmServiceAccount = ""
@@ -650,8 +650,8 @@ func (s *PushService) updatePushNoCommand(
 		return pushStorage.UpdatePush(ctx, updated, req.EnvironmentNamespace)
 	})
 	if err != nil {
-		switch err {
-		case v2ps.ErrPushNotFound:
+		switch {
+		case errors.Is(err, v2ps.ErrPushNotFound):
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -660,7 +660,7 @@ func (s *PushService) updatePushNoCommand(
 				return nil, statusInternal.Err()
 			}
 			return nil, dt.Err()
-		case v2ps.ErrPushUnexpectedAffectedRows:
+		case errors.Is(err, v2ps.ErrPushUnexpectedAffectedRows):
 			if updatedPushPb != nil {
 				// For security reasons we remove the service account from the API response
 				updatedPushPb.FcmServiceAccount = ""
@@ -892,7 +892,7 @@ func (s *PushService) DeletePush(
 		return pushStorage.UpdatePush(ctx, push, req.EnvironmentNamespace)
 	})
 	if err != nil {
-		if err == v2ps.ErrPushNotFound || err == v2ps.ErrPushUnexpectedAffectedRows {
+		if errors.Is(err, v2ps.ErrPushNotFound) || errors.Is(err, v2ps.ErrPushUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -934,7 +934,7 @@ func (s *PushService) GetPush(
 	pushStorage := v2ps.NewPushStorage(s.mysqlClient)
 	push, err := pushStorage.GetPush(ctx, req.Id, req.EnvironmentNamespace)
 	if err != nil {
-		if err == v2ps.ErrPushNotFound {
+		if errors.Is(err, v2ps.ErrPushNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
