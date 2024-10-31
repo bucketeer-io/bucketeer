@@ -20,14 +20,17 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
+	"github.com/bucketeer-io/bucketeer/pkg/storage"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
@@ -166,11 +169,118 @@ func (s *AccountService) createAccountV2NoCommand(
 			return err
 		}
 		if exist != nil {
-
+			return s.changeExistedAccountV2EnvironmentRoles(ctx, req, exist, editor)
 		}
 		// TODO: temporary implementation end ---
-		return nil
+
+		createAccountEvent, err := domainevent.NewEvent(
+			editor,
+			eventproto.Event_PUSH,
+			account.Email,
+			eventproto.Event_ACCOUNT_V2_CREATED,
+			&eventproto.AccountV2CreatedEvent{
+				Email:            account.Email,
+				FirstName:        account.FirstName,
+				LastName:         account.LastName,
+				Language:         account.Language,
+				AvatarImageUrl:   account.AvatarImageUrl,
+				OrganizationId:   account.OrganizationId,
+				OrganizationRole: account.OrganizationRole,
+				EnvironmentRoles: account.EnvironmentRoles,
+				Disabled:         account.Disabled,
+				CreatedAt:        account.CreatedAt,
+				UpdatedAt:        account.UpdatedAt,
+			},
+			storage.AdminEnvironmentNamespace,
+			account,
+			nil,
+		)
+		if err != nil {
+			return err
+		}
+		if err = s.publisher.Publish(ctx, createAccountEvent); err != nil {
+			return err
+		}
+		return s.accountStorage.CreateAccountV2(ctx, account)
+	})
+	if err != nil {
+		if errors.Is(err, v2as.ErrAccountAlreadyExists) {
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to create account",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
+
+	return &accountproto.CreateAccountV2Response{Account: account.AccountV2}, nil
+}
+
+func (s *AccountService) changeExistedAccountV2EnvironmentRoles(
+	ctx context.Context,
+	req *accountproto.CreateAccountV2Request,
+	account *domain.AccountV2,
+	editor *eventproto.Editor,
+) error {
+	var updateAccountEvent *eventproto.Event
+	updated := &domain.AccountV2{}
+	if err := copier.Copy(updated, account); err != nil {
+		return err
+	}
+	err := updated.PatchEnvironmentRole(req.EnvironmentRoles)
+	if err != nil {
+		return err
+	}
+
+	updateAccountEvent, err = domainevent.NewEvent(
+		editor,
+		eventproto.Event_PUSH,
+		updated.Email,
+		eventproto.Event_ACCOUNT_V2_ENVIRONMENT_ROLES_CHANGED,
+		&eventproto.AccountV2EnvironmentRolesChangedEvent{
+			Email:            updated.Email,
+			EnvironmentRoles: updated.EnvironmentRoles,
+		},
+		storage.AdminEnvironmentNamespace,
+		updated,
+		account,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create update account event",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("email", req.Email),
+			)...,
+		)
+		return err
+	}
+	if err = s.publisher.Publish(ctx, updateAccountEvent); err != nil {
+		return err
+	}
+	err = s.accountStorage.UpdateAccountV2(ctx, updated)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *AccountService) UpdateAccountV2(

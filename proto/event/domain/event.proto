@@ -135,6 +135,7 @@ message Event {
     ACCOUNT_V2_FIRST_NAME_CHANGED = 318;
     ACCOUNT_V2_LAST_NAME_CHANGED = 319;
     ACCOUNT_V2_LANGUAGE_CHANGED = 320;
+    ACCOUNT_V2_UPDATED = 321;
     APIKEY_CREATED = 400;
     APIKEY_NAME_CHANGED = 401;
     APIKEY_ENABLED = 402;
@@ -575,6 +576,21 @@ message AccountV2CreatedEvent {
   string first_name = 10;
   string last_name = 11;
   string language = 12;
+}
+
+message AccountV2UpdatedEvent {
+  google.protobuf.StringValue email = 1;
+  google.protobuf.StringValue name = 2;
+  google.protobuf.StringValue avatar_image_url = 3;
+  google.protobuf.StringValue organization_id = 4;
+  bucketeer.account.AccountV2.Role.Organization organization_role = 5;
+  repeated bucketeer.account.AccountV2.EnvironmentRole environment_roles = 6;
+  google.protobuf.BoolValue disabled = 7;
+  google.protobuf.Int64Value created_at = 8;
+  google.protobuf.Int64Value updated_at = 9;
+  google.protobuf.StringValue first_name = 10;
+  google.protobuf.StringValue last_name = 11;
+  google.protobuf.StringValue language = 12;
 }
 
 message AccountV2NameChangedEvent {

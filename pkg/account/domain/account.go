@@ -79,7 +79,7 @@ func NewAccountV2(
 	}}
 }
 
-func (a *AccountV2) UpdateAccount(
+func (a *AccountV2) Update(
 	email, name, firstName, lastName, language, avatarImageURL, organizationID string,
 	organizationRole proto.AccountV2_Role_Organization,
 	environmentRoles []*proto.AccountV2_EnvironmentRole,

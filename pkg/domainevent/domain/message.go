@@ -621,6 +621,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.AccountLanguage),
 			),
 		}
+	case proto.Event_ACCOUNT_V2_UPDATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.UpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Account),
+			),
+		}
 	case proto.Event_APIKEY_CREATED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),

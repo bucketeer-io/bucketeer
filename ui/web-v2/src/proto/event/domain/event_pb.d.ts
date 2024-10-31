@@ -197,6 +197,7 @@ export namespace Event {
     ACCOUNT_V2_FIRST_NAME_CHANGED: 318;
     ACCOUNT_V2_LAST_NAME_CHANGED: 319;
     ACCOUNT_V2_LANGUAGE_CHANGED: 320;
+    ACCOUNT_V2_UPDATED: 321;
     APIKEY_CREATED: 400;
     APIKEY_NAME_CHANGED: 401;
     APIKEY_ENABLED: 402;
@@ -2561,6 +2562,110 @@ export namespace AccountV2CreatedEvent {
     firstName: string;
     lastName: string;
     language: string;
+  };
+}
+
+export class AccountV2UpdatedEvent extends jspb.Message {
+  hasEmail(): boolean;
+  clearEmail(): void;
+  getEmail(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setEmail(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasAvatarImageUrl(): boolean;
+  clearAvatarImageUrl(): void;
+  getAvatarImageUrl(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setAvatarImageUrl(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasOrganizationId(): boolean;
+  clearOrganizationId(): void;
+  getOrganizationId(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setOrganizationId(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  getOrganizationRole(): proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
+  setOrganizationRole(
+    value: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap]
+  ): void;
+
+  clearEnvironmentRolesList(): void;
+  getEnvironmentRolesList(): Array<proto_account_account_pb.AccountV2.EnvironmentRole>;
+  setEnvironmentRolesList(
+    value: Array<proto_account_account_pb.AccountV2.EnvironmentRole>
+  ): void;
+  addEnvironmentRoles(
+    value?: proto_account_account_pb.AccountV2.EnvironmentRole,
+    index?: number
+  ): proto_account_account_pb.AccountV2.EnvironmentRole;
+
+  hasDisabled(): boolean;
+  clearDisabled(): void;
+  getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  hasCreatedAt(): boolean;
+  clearCreatedAt(): void;
+  getCreatedAt(): google_protobuf_wrappers_pb.Int64Value | undefined;
+  setCreatedAt(value?: google_protobuf_wrappers_pb.Int64Value): void;
+
+  hasUpdatedAt(): boolean;
+  clearUpdatedAt(): void;
+  getUpdatedAt(): google_protobuf_wrappers_pb.Int64Value | undefined;
+  setUpdatedAt(value?: google_protobuf_wrappers_pb.Int64Value): void;
+
+  hasFirstName(): boolean;
+  clearFirstName(): void;
+  getFirstName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setFirstName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasLastName(): boolean;
+  clearLastName(): void;
+  getLastName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setLastName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasLanguage(): boolean;
+  clearLanguage(): void;
+  getLanguage(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setLanguage(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AccountV2UpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: AccountV2UpdatedEvent
+  ): AccountV2UpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: AccountV2UpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): AccountV2UpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: AccountV2UpdatedEvent,
+    reader: jspb.BinaryReader
+  ): AccountV2UpdatedEvent;
+}
+
+export namespace AccountV2UpdatedEvent {
+  export type AsObject = {
+    email?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    avatarImageUrl?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    organizationId?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    organizationRole: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
+    environmentRolesList: Array<proto_account_account_pb.AccountV2.EnvironmentRole.AsObject>;
+    disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    createdAt?: google_protobuf_wrappers_pb.Int64Value.AsObject;
+    updatedAt?: google_protobuf_wrappers_pb.Int64Value.AsObject;
+    firstName?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    lastName?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    language?: google_protobuf_wrappers_pb.StringValue.AsObject;
   };
 }
 
