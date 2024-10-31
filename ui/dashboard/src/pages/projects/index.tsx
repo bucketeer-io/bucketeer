@@ -1,13 +1,16 @@
+import { useTranslation } from 'i18n';
 import PageHeader from 'elements/page-header';
+import PageLayout from 'elements/page-layout';
+import PageLoader from './page-loader';
 
 const ProjectsPage = () => {
+  const { t } = useTranslation(['common']);
+
   return (
-    <div className="flex flex-col size-full overflow-auto">
-      <PageHeader
-        title="Projects"
-        description="Manage all projects for this environment."
-      />
-    </div>
+    <PageLayout.Root title={t('projects')}>
+      <PageHeader title={t('projects')} description={t('project-subtitle')} />
+      <PageLoader />
+    </PageLayout.Root>
   );
 };
 

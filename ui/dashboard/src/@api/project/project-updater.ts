@@ -3,7 +3,7 @@ import axiosClient from '@api/axios-client';
 export interface ProjectUpdaterParams {
   id: string;
   changeDescriptionCommand: {
-    description: string;
+    description?: string;
   };
   renameCommand: {
     name: string;

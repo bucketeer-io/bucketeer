@@ -48,7 +48,7 @@ export const enabledOptions: Option[] = [
   }
 ];
 
-const FilterOrganizationModal = ({
+const FilterProjectModal = ({
   onSubmit,
   isOpen,
   onClose,
@@ -129,16 +129,7 @@ const FilterOrganizationModal = ({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-
-          {/* <Button variant={'text'} size={'icon'} className="p-0 size-5">
-            <Icon icon={IconTrash} size={'fit'} />
-          </Button> */}
         </div>
-
-        {/* <Button variant={'text'} size={'sm'} className="px-0 typo-para-medium">
-          <Icon icon={IconAddOutlined} size="sm" />
-          {t('add-filter')}
-        </Button> */}
       </div>
 
       <ButtonBar
@@ -155,4 +146,4 @@ const FilterOrganizationModal = ({
   );
 };
 
-export default FilterOrganizationModal;
+export default FilterProjectModal;

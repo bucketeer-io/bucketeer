@@ -2,7 +2,9 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom';
 import { organizationUpdater } from '@api/organization';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useQueryAccounts } from '@queries/accounts';
+import { invalidateAccounts, useQueryAccounts } from '@queries/accounts';
+import { invalidateOrganizationDetails } from '@queries/organization-details';
+import { useQueryClient } from '@tanstack/react-query';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -39,13 +41,15 @@ const OrganizationSettings = ({
   organization: Organization;
 }) => {
   const { notify } = useToast();
-  const { organizationId } = useParams();
+  const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
+  const params = useParams();
+  const orgDetailsId = params.organizationId!;
   const { data: accounts } = useQueryAccounts({
     params: {
       cursor: String(0),
       pageSize: LIST_PAGE_SIZE,
-      organizationId
+      organizationId: orgDetailsId
     }
   });
 
@@ -61,7 +65,7 @@ const OrganizationSettings = ({
 
   const onSubmit: SubmitHandler<OrganizationSettingsForm> = values => {
     return organizationUpdater({
-      id: organizationId!,
+      id: orgDetailsId,
       changeDescriptionCommand: {
         description: values.description
       },
@@ -72,6 +76,8 @@ const OrganizationSettings = ({
         ownerEmail: values.ownerEmail
       }
     }).then(() => {
+      invalidateOrganizationDetails(queryClient, { id: orgDetailsId });
+      invalidateAccounts(queryClient);
       notify({
         toastType: 'toast',
         messageType: 'success',

@@ -47,7 +47,7 @@ axiosClient.interceptors.response.use(
         .catch(err => {
           clearOrgIdStorage();
           clearTokenStorage();
-          window.location.href = PAGE_PATH_ROOT;
+          window.location.href = `${PAGE_PATH_ROOT}/v3`; // TODO: Remove the `/v3` when the new console is released
           return Promise.reject(err);
         });
     }

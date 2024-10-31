@@ -2,10 +2,10 @@ import axiosClient from '@api/axios-client';
 import { Project } from '@types';
 
 export interface ProjectCreatorCommand {
-  id: string;
   name: string;
   urlCode: string;
-  description: string;
+  organizationId: string;
+  description?: string;
 }
 
 export interface ProjectCreatorParams {

@@ -7,7 +7,6 @@ export interface ProjectsFilters {
   orderDirection: OrderDirection;
   searchQuery: string;
   disabled?: boolean;
-  organizationIds?: string[];
 }
 
 export interface CollectionProps {
