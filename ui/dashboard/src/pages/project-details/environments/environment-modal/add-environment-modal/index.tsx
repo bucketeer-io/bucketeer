@@ -143,11 +143,11 @@ const AddEnvironmentModal = ({ isOpen, onClose }: AddEnvironmentModalProps) => {
               name="projectId"
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label required>{`${t(`form:project-id`)}`}</Form.Label>
+                  <Form.Label required>{`${t(`project`)}`}</Form.Label>
                   <Form.Control className="w-full">
                     <DropdownMenu>
                       <DropdownMenuTrigger
-                        placeholder={`${t(`form:project-id`)}`}
+                        placeholder={`${t(`project`)}`}
                         label={
                           projectList?.projects.find(
                             item => item.id === field.value

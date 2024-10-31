@@ -123,11 +123,11 @@ const EditEnvironmentModal = ({
             </Form.Item>
 
             <Form.Item>
-              <Form.Label required>{`${t(`form:project-id`)}`}</Form.Label>
+              <Form.Label required>{`${t(`project`)}`}</Form.Label>
               <Form.Control>
                 <Input
                   value={project?.name || ''}
-                  placeholder={`${t(`form:project-id`)}`}
+                  placeholder={`${t(`project`)}`}
                   disabled
                 />
               </Form.Control>
