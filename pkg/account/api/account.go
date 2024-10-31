@@ -683,6 +683,10 @@ func (s *AccountService) newAccountV2ListOrders(
 		column = "created_at"
 	case accountproto.ListAccountsV2Request_UPDATED_AT:
 		column = "updated_at"
+	case accountproto.ListAccountsV2Request_ORGANIZATION_ROLE:
+		column = "organization_role"
+	case accountproto.ListAccountsV2Request_ENVIRONMENT_COUNT:
+		column = "environment_count"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

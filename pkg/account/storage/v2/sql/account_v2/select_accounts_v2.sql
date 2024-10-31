@@ -1,4 +1,4 @@
-SELECT
+SELECT 
     email,
     name,
     first_name,
@@ -13,5 +13,9 @@ SELECT
     disabled,
     created_at,
     updated_at,
-    search_filters
-FROM account_v2 %s %s %s
+    search_filters,
+    JSON_LENGTH(environment_roles) as environment_count
+FROM account_v2
+%s  
+%s  
+%s  
