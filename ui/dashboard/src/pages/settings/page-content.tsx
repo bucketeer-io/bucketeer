@@ -1,8 +1,8 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { useParams } from 'react-router-dom';
 import { organizationUpdater } from '@api/organization';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQueryAccounts } from '@queries/accounts';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -36,13 +36,14 @@ export interface PageContentForm {
 
 const PageContent = ({ organization }: { organization: Organization }) => {
   const { notify } = useToast();
-  const { organizationId } = useParams();
+  const { consoleAccount } = useAuth();
+  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
   const { t } = useTranslation(['common', 'form']);
   const { data: accounts } = useQueryAccounts({
     params: {
       cursor: String(0),
       pageSize: LIST_PAGE_SIZE,
-      organizationId
+      organizationId: currenEnvironment.organizationId
     }
   });
 
@@ -58,7 +59,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
 
   const onSubmit: SubmitHandler<PageContentForm> = values => {
     return organizationUpdater({
-      id: organizationId!,
+      id: currenEnvironment.organizationId,
       changeDescriptionCommand: {
         description: values.description
       },
