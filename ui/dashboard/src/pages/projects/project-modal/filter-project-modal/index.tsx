@@ -89,12 +89,12 @@ const FilterProjectModal = ({
       <div className="flex flex-col w-full items-start p-5 gap-y-4">
         <div className="flex items-center w-full h-12 gap-x-4">
           <div className="typo-para-small text-center py-[3px] px-4 rounded text-accent-pink-500 bg-accent-pink-50">
-            {`If`}
+            {t(`if`)}
           </div>
           <Divider vertical={true} className="border-primary-500" />
           <DropdownMenu>
             <DropdownMenuTrigger
-              placeholder={`Select type`}
+              placeholder={t(`select-type`)}
               label={selectedFilterType?.label}
               variant="secondary"
               className="w-full"
@@ -113,7 +113,7 @@ const FilterProjectModal = ({
           <p className="typo-para-medium text-gray-600">{`is`}</p>
           <DropdownMenu>
             <DropdownMenuTrigger
-              placeholder={`Select value`}
+              placeholder={t(`select-value`)}
               label={valueOption?.label}
               variant="secondary"
               className="w-full"
@@ -134,13 +134,12 @@ const FilterProjectModal = ({
 
       <ButtonBar
         secondaryButton={
-          <Button onClick={onConfirmHandler}>{`Confirm`}</Button>
+          <Button onClick={onConfirmHandler}>{t(`confirm`)}</Button>
         }
         primaryButton={
-          <Button
-            onClick={onClearFilters}
-            variant="secondary"
-          >{`Clear`}</Button>
+          <Button onClick={onClearFilters} variant="secondary">
+            {t(`clear`)}
+          </Button>
         }
       />
     </DialogModal>
