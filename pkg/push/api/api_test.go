@@ -288,10 +288,10 @@ func TestCreatePushNoCommandMySQL(t *testing.T) {
 				).Return(v2ps.ErrPushAlreadyExists)
 			},
 			req: &pushproto.CreatePushRequest{
-				EnvironmentNamespace: "ns0",
-				FcmServiceAccount:    fcmServiceAccountDummy,
-				Tags:                 []string{"tag-0"},
-				Name:                 "name-1",
+				EnvironmentId:     "ns0",
+				FcmServiceAccount: fcmServiceAccountDummy,
+				Tags:              []string{"tag-0"},
+				Name:              "name-1",
 			},
 			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
@@ -316,10 +316,10 @@ func TestCreatePushNoCommandMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &pushproto.CreatePushRequest{
-				EnvironmentNamespace: "ns0",
-				FcmServiceAccount:    fcmServiceAccountDummy,
-				Tags:                 []string{"tag-0"},
-				Name:                 "name-1",
+				EnvironmentId:     "ns0",
+				FcmServiceAccount: fcmServiceAccountDummy,
+				Tags:              []string{"tag-0"},
+				Name:              "name-1",
 			},
 			expectedErr: nil,
 		},
@@ -608,10 +608,10 @@ func TestUpdatePushNoCommandMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &pushproto.UpdatePushRequest{
-				EnvironmentNamespace: "ns0",
-				Id:                   "key-0",
-				Name:                 wrapperspb.String("name-1"),
-				Tags:                 []string{"tag-0"},
+				EnvironmentId: "ns0",
+				Id:            "key-0",
+				Name:          wrapperspb.String("name-1"),
+				Tags:          []string{"tag-0"},
 			},
 			expectedErr: nil,
 		},

@@ -163,7 +163,7 @@ func TestCreateAuditLog(t *testing.T) {
 					EntityId:   "e0",
 					Type:       3,
 				},
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},

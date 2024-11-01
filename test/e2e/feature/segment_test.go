@@ -130,7 +130,7 @@ func TestChangeSegmentName(t *testing.T) {
 			Commands: []*featureproto.Command{
 				{Command: cmdChange},
 			},
-			EnvironmentNamespace: *environmentNamespace,
+			EnvironmentId: *environmentNamespace,
 		},
 	)
 	assert.NotNil(t, res)

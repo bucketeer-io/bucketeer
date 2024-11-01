@@ -4,7 +4,7 @@ SELECT
 FROM
     environment_v2
         LEFT JOIN
-    feature ON environment_v2.id = feature.environment_namespace
+    feature ON environment_v2.id = feature.environment_id
 %s
 GROUP BY
     environment_v2.id

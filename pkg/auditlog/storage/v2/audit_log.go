@@ -109,7 +109,7 @@ func (s *auditLogStorage) CreateAuditLog(ctx context.Context, auditLog *domain.A
 		mysql.JSONObject{Val: auditLog.Event},
 		mysql.JSONObject{Val: auditLog.Editor},
 		mysql.JSONObject{Val: auditLog.Options},
-		auditLog.EnvironmentNamespace,
+		auditLog.EnvironmentId,
 		auditLog.EntityData,
 		auditLog.PreviousEntityData,
 	)

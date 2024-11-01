@@ -165,7 +165,7 @@ func TestCreateAdminAuditLog(t *testing.T) {
 					EntityData:         "ed",
 					PreviousEntityData: "ped",
 				},
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},

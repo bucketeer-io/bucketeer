@@ -270,7 +270,7 @@ func (s *PushService) createPushNoCommand(
 			"Failed to create a new push",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.String("name", req.Name),
 				zap.Strings("tags", req.Tags),
 			)...,
@@ -284,7 +284,7 @@ func (s *PushService) createPushNoCommand(
 		}
 		return nil, dt.Err()
 	}
-	pushes, err := s.listAllPushes(ctx, req.EnvironmentNamespace, localizer)
+	pushes, err := s.listAllPushes(ctx, req.EnvironmentId, localizer)
 	if err != nil {
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -314,7 +314,7 @@ func (s *PushService) createPushNoCommand(
 			"Failed to validate tag existence",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.String("name", req.Name),
 				zap.Strings("tags", req.Tags),
 			)...,
@@ -349,7 +349,7 @@ func (s *PushService) createPushNoCommand(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		pushStorage := v2ps.NewPushStorage(tx)
-		if err := pushStorage.CreatePush(ctx, push, req.EnvironmentNamespace); err != nil {
+		if err := pushStorage.CreatePush(ctx, push, req.EnvironmentId); err != nil {
 			return err
 		}
 		prev := &domain.Push{}
@@ -366,7 +366,7 @@ func (s *PushService) createPushNoCommand(
 				Tags:              push.Tags,
 				Name:              push.Name,
 			},
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 			push,
 			prev,
 		)
@@ -394,7 +394,7 @@ func (s *PushService) createPushNoCommand(
 			"Failed to create push",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.String("name", req.Name),
 			)...,
 		)
@@ -565,7 +565,7 @@ func (s *PushService) UpdatePush(
 			"Failed to update push",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
 			)...,
 		)
@@ -618,7 +618,7 @@ func (s *PushService) updatePushNoCommand(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		pushStorage := v2ps.NewPushStorage(tx)
-		push, err := pushStorage.GetPush(ctx, req.Id, req.EnvironmentNamespace)
+		push, err := pushStorage.GetPush(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -636,7 +636,7 @@ func (s *PushService) updatePushNoCommand(
 				Name: req.Name,
 				Tags: req.Tags,
 			},
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 			updated,
 			push,
 		)
@@ -648,7 +648,7 @@ func (s *PushService) updatePushNoCommand(
 		}
 		updatedPushPb = updated.Push
 
-		return pushStorage.UpdatePush(ctx, updated, req.EnvironmentNamespace)
+		return pushStorage.UpdatePush(ctx, updated, req.EnvironmentId)
 	})
 	if err != nil {
 		switch {

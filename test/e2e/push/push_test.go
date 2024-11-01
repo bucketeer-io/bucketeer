@@ -274,10 +274,10 @@ func createPushNoCommand(
 ) {
 	t.Helper()
 	createReq := &pushproto.CreatePushRequest{
-		EnvironmentNamespace: *environmentNamespace,
-		Name:                 newPushName(t),
-		Tags:                 []string{tag},
-		FcmServiceAccount:    fcmServiceAccount,
+		EnvironmentId:     *environmentNamespace,
+		Name:              newPushName(t),
+		Tags:              []string{tag},
+		FcmServiceAccount: fcmServiceAccount,
 	}
 	if _, err := client.CreatePush(ctx, createReq); err != nil {
 		t.Fatal(err)
