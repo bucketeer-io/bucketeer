@@ -1,36 +1,36 @@
+import { useParams } from 'react-router-dom';
 import { SortingState } from '@tanstack/react-table';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { sortingListFields } from 'constants/collection';
-import { Project } from '@types';
+import { Environment } from '@types';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
-import { ProjectFilters } from '../types';
-import { useFetchProjects } from './use-fetch-projects';
+import { EnvironmentFilters } from '../types';
+import { useFetchEnvironments } from './use-fetch-environments';
 
 const CollectionLoader = ({
   onAdd,
   filters,
   setFilters,
-  organizationIds,
   onActionHandler
 }: {
   onAdd?: () => void;
-  filters: ProjectFilters;
-  setFilters: (values: Partial<ProjectFilters>) => void;
-  organizationIds?: string[];
-  onActionHandler: (value: Project) => void;
+  filters: EnvironmentFilters;
+  setFilters: (values: Partial<EnvironmentFilters>) => void;
+  onActionHandler: (type: string, v: Environment) => void;
 }) => {
+  const { projectId } = useParams();
   const columns = useColumns({ onActionHandler });
   const {
     data: collection,
     isLoading,
     refetch,
     isError
-  } = useFetchProjects({ ...filters, organizationIds });
+  } = useFetchEnvironments({ ...filters, projectId });
 
   const onSortingChangeHandler = (sorting: SortingState) => {
     const updateOrderBy =
@@ -44,12 +44,12 @@ const CollectionLoader = ({
     });
   };
 
-  const projects = collection?.projects || [];
+  const environments = collection?.environments || [];
   const totalCount = Number(collection?.totalCount) || 0;
 
   const emptyState = (
     <CollectionEmpty
-      data={projects}
+      data={environments}
       searchQuery={filters.searchQuery}
       onClear={() => setFilters({ searchQuery: '' })}
       empty={<EmptyCollection onAdd={onAdd} />}
@@ -62,7 +62,7 @@ const CollectionLoader = ({
     <>
       <DataTable
         isLoading={isLoading}
-        data={projects}
+        data={environments}
         columns={columns}
         onSortingChange={onSortingChangeHandler}
         emptyCollection={emptyState}

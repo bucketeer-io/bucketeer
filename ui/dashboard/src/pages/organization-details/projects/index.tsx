@@ -5,21 +5,21 @@ import { OrderBy, OrderDirection } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import CollectionLoader from 'pages/projects/collection-loader';
-import { ProjectsFilters } from 'pages/projects/types';
+import { ProjectFilters } from 'pages/projects/types';
 import Filter from 'elements/filter';
 
 const OrganizationProjects = () => {
   const { organizationId } = useParams();
   const { searchOptions, onChangSearchParams } = useSearchParams();
 
-  const [filters, setFilters] = usePartialState<ProjectsFilters>({
+  const [filters, setFilters] = usePartialState<ProjectFilters>({
     page: Number(searchOptions.page) || 1,
     orderBy: (searchOptions.orderBy as OrderBy) || 'CREATED_AT',
     orderDirection: (searchOptions.orderDirection as OrderDirection) || 'DESC',
     searchQuery: (searchOptions.searchQuery as string) || ''
   });
 
-  const onChangeFilters = (values: Partial<ProjectsFilters>) => {
+  const onChangeFilters = (values: Partial<ProjectFilters>) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
     setFilters({ ...values });

@@ -13,7 +13,7 @@ import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
 import FilterProjectModal from './project-modal/filter-project-modal';
-import { ProjectsFilters } from './types';
+import { ProjectFilters } from './types';
 
 const PageContent = ({
   onAdd,
@@ -28,22 +28,21 @@ const PageContent = ({
   const isSystemAdmin = consoleAccount?.isSystemAdmin;
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
-  const searchFilters: Partial<ProjectsFilters> = searchOptions;
+  const searchFilters: Partial<ProjectFilters> = searchOptions;
 
   const defaultFilters = {
     page: 1,
     orderBy: 'CREATED_AT',
     orderDirection: 'DESC',
     ...searchFilters
-  } as ProjectsFilters;
+  } as ProjectFilters;
 
   const [openFilterModal, onOpenFilterModal, onCloseFilterModal] =
     useToggleOpen(false);
 
-  const [filters, setFilters] =
-    usePartialState<ProjectsFilters>(defaultFilters);
+  const [filters, setFilters] = usePartialState<ProjectFilters>(defaultFilters);
 
-  const onChangeFilters = (values: Partial<ProjectsFilters>) => {
+  const onChangeFilters = (values: Partial<ProjectFilters>) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
     setFilters({ ...values });

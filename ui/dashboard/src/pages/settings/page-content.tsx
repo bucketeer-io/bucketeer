@@ -39,7 +39,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
   const { consoleAccount } = useAuth();
   const currenEnvironment = getCurrentEnvironment(consoleAccount!);
   const { t } = useTranslation(['common', 'form']);
-  const { data: accounts } = useQueryAccounts({
+  const { data: accounts, isLoading: isLoadingAccounts } = useQueryAccounts({
     params: {
       cursor: String(0),
       pageSize: LIST_PAGE_SIZE,
@@ -157,6 +157,7 @@ const PageContent = ({ organization }: { organization: Organization }) => {
                         }
                         variant="secondary"
                         className="w-full"
+                        disabled={isLoadingAccounts}
                       />
                       <DropdownMenuContent
                         className="w-[400px]"

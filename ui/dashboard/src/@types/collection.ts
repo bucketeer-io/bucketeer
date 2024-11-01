@@ -14,6 +14,7 @@ export type OrderBy =
   | 'PROJECT_COUNT'
   | 'USER_COUNT'
   | 'ROLE'
+  | 'ORGANIZATION_ROLE'
   | 'EMAIL';
 
 export type OrderDirection = 'ASC' | 'DESC';
