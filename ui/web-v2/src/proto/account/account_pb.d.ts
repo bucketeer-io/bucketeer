@@ -137,6 +137,9 @@ export class AccountV2 extends jspb.Message {
   getAvatarImage_asB64(): string;
   setAvatarImage(value: Uint8Array | string): void;
 
+  getEnvironmentCount(): number;
+  setEnvironmentCount(value: number): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AccountV2.AsObject;
   static toObject(includeInstance: boolean, msg: AccountV2): AccountV2.AsObject;
@@ -173,6 +176,7 @@ export namespace AccountV2 {
     lastSeen: number;
     avatarFileType: string;
     avatarImage: Uint8Array | string;
+    environmentCount: number;
   };
 
   export class Role extends jspb.Message {

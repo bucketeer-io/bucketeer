@@ -74,6 +74,7 @@ message AccountV2 {
   int64 last_seen = 14;
   string avatar_file_type = 15;
   bytes avatar_image = 16;
+  int32 environment_count = 17;
 }
 
 message ConsoleAccount {

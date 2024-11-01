@@ -591,7 +591,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         language: jspb.Message.getFieldWithDefault(msg, 13, ''),
         lastSeen: jspb.Message.getFieldWithDefault(msg, 14, 0),
         avatarFileType: jspb.Message.getFieldWithDefault(msg, 15, ''),
-        avatarImage: msg.getAvatarImage_asB64()
+        avatarImage: msg.getAvatarImage_asB64(),
+        environmentCount: jspb.Message.getFieldWithDefault(msg, 17, 0)
       };
 
     if (includeInstance) {
@@ -709,6 +710,10 @@ proto.bucketeer.account.AccountV2.deserializeBinaryFromReader = function (
         var value = /** @type {!Uint8Array} */ (reader.readBytes());
         msg.setAvatarImage(value);
         break;
+      case 17:
+        var value = /** @type {number} */ (reader.readInt32());
+        msg.setEnvironmentCount(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -810,6 +815,10 @@ proto.bucketeer.account.AccountV2.serializeBinaryToWriter = function (
   f = message.getAvatarImage_asU8();
   if (f.length > 0) {
     writer.writeBytes(16, f);
+  }
+  f = message.getEnvironmentCount();
+  if (f !== 0) {
+    writer.writeInt32(17, f);
   }
 };
 
@@ -1473,6 +1482,24 @@ proto.bucketeer.account.AccountV2.prototype.getAvatarImage_asU8 = function () {
  */
 proto.bucketeer.account.AccountV2.prototype.setAvatarImage = function (value) {
   return jspb.Message.setProto3BytesField(this, 16, value);
+};
+
+/**
+ * optional int32 environment_count = 17;
+ * @return {number}
+ */
+proto.bucketeer.account.AccountV2.prototype.getEnvironmentCount = function () {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 17, 0));
+};
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.account.AccountV2} returns this
+ */
+proto.bucketeer.account.AccountV2.prototype.setEnvironmentCount = function (
+  value
+) {
+  return jspb.Message.setProto3IntField(this, 17, value);
 };
 
 /**
