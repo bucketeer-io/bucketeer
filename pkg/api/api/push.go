@@ -131,7 +131,6 @@ func (s *grpcGatewayService) UpdatePush(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("pushId", req.Id),
-				zap.String("name", req.Name),
 			)...,
 		)
 		return nil, err
