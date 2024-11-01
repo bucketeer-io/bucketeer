@@ -17,6 +17,8 @@ syntax = "proto3";
 package bucketeer.push;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/push";
 
+import "google/protobuf/wrappers.proto";
+
 import "proto/push/push.proto";
 import "proto/push/command.proto";
 
@@ -60,7 +62,7 @@ message ListPushesResponse {
 message DeletePushRequest {
   string environment_namespace = 1;
   string id = 2;
-  DeletePushCommand command = 3;
+  DeletePushCommand command = 3 [deprecated = true];
 }
 
 message DeletePushResponse {}
@@ -68,16 +70,30 @@ message DeletePushResponse {}
 message UpdatePushRequest {
   string environment_namespace = 1;
   string id = 2;
-  AddPushTagsCommand add_push_tags_command = 3;
-  DeletePushTagsCommand delete_push_tags_command = 4;
-  RenamePushCommand rename_push_command = 5;
+  AddPushTagsCommand add_push_tags_command = 3 [deprecated = true];
+  DeletePushTagsCommand delete_push_tags_command = 4 [deprecated = true];
+  RenamePushCommand rename_push_command = 5 [deprecated = true];
+  repeated string tags = 6;
+  google.protobuf.StringValue name = 7;
 }
 
-message UpdatePushResponse {}
+message UpdatePushResponse {
+  Push push = 1;
+}
+
+message GetPushRequest {
+  string environment_namespace = 1;
+  string id = 2;
+}
+
+message GetPushResponse {
+  Push push = 1;
+}
 
 service PushService {
   rpc ListPushes(ListPushesRequest) returns (ListPushesResponse) {}
   rpc CreatePush(CreatePushRequest) returns (CreatePushResponse) {}
   rpc DeletePush(DeletePushRequest) returns (DeletePushResponse) {}
   rpc UpdatePush(UpdatePushRequest) returns (UpdatePushResponse) {}
+  rpc GetPush(GetPushRequest) returns (GetPushResponse) {}
 }

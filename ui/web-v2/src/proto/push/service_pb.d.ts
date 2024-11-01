@@ -2,6 +2,7 @@
 // file: proto/push/service.proto
 
 import * as jspb from 'google-protobuf';
+import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
 import * as proto_push_push_pb from '../../proto/push/push_pb';
 import * as proto_push_command_pb from '../../proto/push/command_pb';
 
@@ -299,6 +300,16 @@ export class UpdatePushRequest extends jspb.Message {
   getRenamePushCommand(): proto_push_command_pb.RenamePushCommand | undefined;
   setRenamePushCommand(value?: proto_push_command_pb.RenamePushCommand): void;
 
+  clearTagsList(): void;
+  getTagsList(): Array<string>;
+  setTagsList(value: Array<string>): void;
+  addTags(value: string, index?: number): string;
+
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdatePushRequest.AsObject;
   static toObject(
@@ -327,10 +338,17 @@ export namespace UpdatePushRequest {
     addPushTagsCommand?: proto_push_command_pb.AddPushTagsCommand.AsObject;
     deletePushTagsCommand?: proto_push_command_pb.DeletePushTagsCommand.AsObject;
     renamePushCommand?: proto_push_command_pb.RenamePushCommand.AsObject;
+    tagsList: Array<string>;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
   };
 }
 
 export class UpdatePushResponse extends jspb.Message {
+  hasPush(): boolean;
+  clearPush(): void;
+  getPush(): proto_push_push_pb.Push | undefined;
+  setPush(value?: proto_push_push_pb.Push): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdatePushResponse.AsObject;
   static toObject(
@@ -353,5 +371,75 @@ export class UpdatePushResponse extends jspb.Message {
 }
 
 export namespace UpdatePushResponse {
-  export type AsObject = {};
+  export type AsObject = {
+    push?: proto_push_push_pb.Push.AsObject;
+  };
+}
+
+export class GetPushRequest extends jspb.Message {
+  getEnvironmentNamespace(): string;
+  setEnvironmentNamespace(value: string): void;
+
+  getId(): string;
+  setId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetPushRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: GetPushRequest
+  ): GetPushRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: GetPushRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): GetPushRequest;
+  static deserializeBinaryFromReader(
+    message: GetPushRequest,
+    reader: jspb.BinaryReader
+  ): GetPushRequest;
+}
+
+export namespace GetPushRequest {
+  export type AsObject = {
+    environmentNamespace: string;
+    id: string;
+  };
+}
+
+export class GetPushResponse extends jspb.Message {
+  hasPush(): boolean;
+  clearPush(): void;
+  getPush(): proto_push_push_pb.Push | undefined;
+  setPush(value?: proto_push_push_pb.Push): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetPushResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: GetPushResponse
+  ): GetPushResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: GetPushResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): GetPushResponse;
+  static deserializeBinaryFromReader(
+    message: GetPushResponse,
+    reader: jspb.BinaryReader
+  ): GetPushResponse;
+}
+
+export namespace GetPushResponse {
+  export type AsObject = {
+    push?: proto_push_push_pb.Push.AsObject;
+  };
 }
