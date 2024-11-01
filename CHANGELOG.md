@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.0.0](https://github.com/bucketeer-io/bucketeer/compare/v0.4.9...v1.0.0) (2024-11-01)
+
+
+### Features
+
+* add new order by clauses for list accounts api ([#1312](https://github.com/bucketeer-io/bucketeer/issues/1312)) ([95aa13c](https://github.com/bucketeer-io/bucketeer/commit/95aa13c3aa4eb3021bcaea450c3c003ab987b360))
+* implement update push API support no command and deprecate command in delete push API ([#1298](https://github.com/bucketeer-io/bucketeer/issues/1298)) ([2199576](https://github.com/bucketeer-io/bucketeer/commit/21995762569c72d6a21e6aa8601eda12c53a3ef1))
+* save user info from google ([#1254](https://github.com/bucketeer-io/bucketeer/issues/1254)) ([898a084](https://github.com/bucketeer-io/bucketeer/commit/898a084477f1604b2631d0e0ba09b64f196b998f))
+* **ui:** add new project dashboard ([#1306](https://github.com/bucketeer-io/bucketeer/issues/1306)) ([f6a5946](https://github.com/bucketeer-io/bucketeer/commit/f6a594602b6fbf776387928565cc6d65f24b8838))
+* **ui:** project details and environments dashbaord ([#1313](https://github.com/bucketeer-io/bucketeer/issues/1313)) ([67be248](https://github.com/bucketeer-io/bucketeer/commit/67be2488977d243f1f5a6288ea1aaabd2973fe09))
+
+
+### Bug Fixes
+
+* a member cannot see the organization details ([#1311](https://github.com/bucketeer-io/bucketeer/issues/1311)) ([d354f69](https://github.com/bucketeer-io/bucketeer/commit/d354f6980914339a13ff2ecf53bfdebecdf55abd))
+* err is nil when the flag is not found in the update feature api ([7fa2280](https://github.com/bucketeer-io/bucketeer/commit/7fa22802f8fc0470e62898cb1a275c9351c16353))
+* owner organization role not being updated ([#1303](https://github.com/bucketeer-io/bucketeer/issues/1303)) ([96622e5](https://github.com/bucketeer-io/bucketeer/commit/96622e51647f820c1fd53b105314bcb06acc5204))
+
+
+### Miscellaneous
+
+* change create project api to support the new console ([#1308](https://github.com/bucketeer-io/bucketeer/issues/1308)) ([3100929](https://github.com/bucketeer-io/bucketeer/commit/310092915dd9b1acbe3ae30fbd6adf65cdc911c8))
+* update organization api permission check for owner role ([#1310](https://github.com/bucketeer-io/bucketeer/issues/1310)) ([8bb46c1](https://github.com/bucketeer-io/bucketeer/commit/8bb46c1f2d610203ec7709bde8587256a263872c))
+
 ## [0.4.9](https://github.com/bucketeer-io/bucketeer/compare/v0.4.8...v0.4.9) (2024-10-28)
 
 
