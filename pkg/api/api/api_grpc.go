@@ -27,7 +27,6 @@ import (
 	"google.golang.org/grpc/codes"
 	gmetadata "google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	evaluation "github.com/bucketeer-io/bucketeer/evaluation/go"
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
@@ -69,6 +68,7 @@ var (
 	ErrContextCanceled    = status.Error(codes.Canceled, "gateway: context canceled")
 	ErrFeatureNotFound    = status.Error(codes.NotFound, "gateway: feature not found")
 	ErrEvaluationNotFound = status.Error(codes.NotFound, "gateway: evaluation not found")
+	ErrPushNotFound       = status.Error(codes.NotFound, "gateway: push not found")
 	ErrMissingAPIKey      = status.Error(codes.Unauthenticated, "gateway: missing APIKey")
 	ErrInvalidAPIKey      = status.Error(codes.PermissionDenied, "gateway: invalid APIKey")
 	ErrDisabledAPIKey     = status.Error(codes.PermissionDenied, "gateway: disabled APIKey")
@@ -939,145 +939,6 @@ func (s *grpcGatewayService) emptyGetSegmentUsersResponse() (*gwproto.GetSegment
 		DeletedSegmentIds: make([]string, 0),
 		RequestedAt:       time.Now().Unix(),
 		ForceUpdate:       true,
-	}, nil
-}
-
-func (s *grpcGatewayService) CreateFeature(
-	ctx context.Context,
-	req *gwproto.CreateFeatureRequest,
-) (*gwproto.CreateFeatureResponse, error) {
-	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
-		accountproto.APIKey_PUBLIC_API_WRITE,
-		accountproto.APIKey_PUBLIC_API_ADMIN,
-	})
-	if err != nil {
-		s.logger.Error("Failed to check CreateFeature request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("featureId", req.Id),
-			)...,
-		)
-		return nil, err
-	}
-	res, err := s.featureClient.CreateFeature(ctx, &featureproto.CreateFeatureRequest{
-		EnvironmentNamespace: envAPIKey.Environment.Id,
-		Command: &featureproto.CreateFeatureCommand{
-			Id:                       req.Id,
-			Name:                     req.Name,
-			Description:              req.Description,
-			Variations:               req.Variations,
-			Tags:                     req.Tags,
-			DefaultOnVariationIndex:  &wrapperspb.Int32Value{Value: req.OnVariationIndex},
-			DefaultOffVariationIndex: &wrapperspb.Int32Value{Value: req.OffVariationIndex},
-			VariationType:            req.VariationType,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	return &gwproto.CreateFeatureResponse{Feature: res.Feature}, nil
-}
-
-func (s *grpcGatewayService) GetFeature(
-	ctx context.Context,
-	req *gwproto.GetFeatureRequest,
-) (*gwproto.GetFeatureResponse, error) {
-	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
-		accountproto.APIKey_PUBLIC_API_READ_ONLY,
-		accountproto.APIKey_PUBLIC_API_WRITE,
-		accountproto.APIKey_PUBLIC_API_ADMIN,
-	})
-	if err != nil {
-		s.logger.Error("Failed to check GetFeature request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("featureId", req.Id),
-			)...,
-		)
-		return nil, err
-	}
-	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
-		EnvironmentNamespace: envAPIKey.Environment.Id,
-		Id:                   req.Id,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return &gwproto.GetFeatureResponse{
-		Feature: resp.Feature,
-	}, nil
-}
-
-func (s *grpcGatewayService) ListFeatures(
-	ctx context.Context,
-	req *gwproto.ListFeaturesRequest,
-) (*gwproto.ListFeaturesResponse, error) {
-	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
-		accountproto.APIKey_PUBLIC_API_READ_ONLY,
-		accountproto.APIKey_PUBLIC_API_WRITE,
-		accountproto.APIKey_PUBLIC_API_ADMIN,
-	})
-	if err != nil {
-		s.logger.Error("Failed to check ListFeatures request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		return nil, err
-	}
-	resp, err := s.featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
-		EnvironmentNamespace: envAPIKey.Environment.Id,
-		PageSize:             req.PageSize,
-		Cursor:               req.Cursor,
-		OrderBy:              req.OrderBy,
-		OrderDirection:       req.OrderDirection,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return &gwproto.ListFeaturesResponse{
-		Features: resp.Features,
-	}, nil
-}
-
-func (s *grpcGatewayService) UpdateFeature(
-	ctx context.Context,
-	req *gwproto.UpdateFeatureRequest,
-) (*gwproto.UpdateFeatureResponse, error) {
-	envAPIKey, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
-		accountproto.APIKey_PUBLIC_API_WRITE,
-		accountproto.APIKey_PUBLIC_API_ADMIN,
-	})
-	if err != nil {
-		s.logger.Error("Failed to check GetFeature request",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("featureId", req.Id),
-			)...,
-		)
-		return nil, err
-	}
-	res, err := s.featureClient.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
-		Comment:         req.Comment,
-		EnvironmentId:   envAPIKey.Environment.Id,
-		Id:              req.Id,
-		Name:            req.Name,
-		Description:     req.Description,
-		Tags:            req.Tags,
-		Enabled:         req.Enabled,
-		Archived:        req.Archived,
-		Variations:      req.Variations,
-		Prerequisites:   req.Prerequisites,
-		Targets:         req.Targets,
-		Rules:           req.Rules,
-		DefaultStrategy: req.DefaultStrategy,
-		OffVariation:    req.OffVariation,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return &gwproto.UpdateFeatureResponse{
-		Feature: res.Feature,
 	}, nil
 }
 

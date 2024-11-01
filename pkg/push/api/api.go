@@ -946,7 +946,7 @@ func (s *PushService) GetPush(
 				return nil, statusInternal.Err()
 			}
 			s.logger.Error(
-				"Failed to get feature",
+				"Failed to get push",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", req.Id),

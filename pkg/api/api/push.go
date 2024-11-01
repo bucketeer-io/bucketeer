@@ -28,7 +28,7 @@ func (s *grpcGatewayService) ListPushes(
 		)
 		return nil, err
 	}
-	pushes, err := s.pushClient.ListPushes(
+	res, err := s.pushClient.ListPushes(
 		ctx,
 		&pushproto.ListPushesRequest{
 			EnvironmentNamespace: envAPIKey.Environment.Id,
@@ -42,9 +42,15 @@ func (s *grpcGatewayService) ListPushes(
 	if err != nil {
 		return nil, err
 	}
+	if res == nil {
+		s.logger.Error("Push not found")
+		return nil, ErrPushNotFound
+	}
 
 	return &gwproto.ListPushesResponse{
-		Pushes: pushes.Pushes,
+		Pushes:     res.Pushes,
+		Cursor:     res.Cursor,
+		TotalCount: res.TotalCount,
 	}, nil
 }
 
@@ -76,6 +82,14 @@ func (s *grpcGatewayService) CreatePush(
 	)
 	if err != nil {
 		return nil, err
+	}
+	if res == nil {
+		s.logger.Error("Not found created push",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("name", req.Name),
+			)...,
+		)
+		return nil, errInternal
 	}
 
 	return &gwproto.CreatePushResponse{
@@ -111,6 +125,14 @@ func (s *grpcGatewayService) GetPush(
 	)
 	if err != nil {
 		return nil, err
+	}
+	if res == nil {
+		s.logger.Error("Push not found",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("name", req.Id),
+			)...,
+		)
+		return nil, ErrPushNotFound
 	}
 
 	return &gwproto.GetPushResponse{
@@ -162,6 +184,14 @@ func (s *grpcGatewayService) UpdatePush(
 	)
 	if err != nil {
 		return nil, err
+	}
+	if res == nil {
+		s.logger.Error("Not found updated push",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("pushId", req.Id),
+			)...,
+		)
+		return nil, errInternal
 	}
 
 	return &gwproto.UpdatePushResponse{
