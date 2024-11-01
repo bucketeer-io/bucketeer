@@ -29,8 +29,8 @@ import (
 )
 
 var (
+	maxAccountNameLength = 250
 	// nolint:lll
-	maxAccountNameLength        = 250
 	emailRegex                  = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 	ErrSearchFilterNotFound     = errors.New("account: search filter not found")
 	statusMissingOrganizationID = gstatus.New(

@@ -297,6 +297,9 @@ func (s *AccountService) UpdateAccountV2(
 	if err != nil {
 		return nil, err
 	}
+	if isNoUpdateAccountV2Command(req) {
+		return s.updateAccountV2NoCommand(ctx, req, localizer, editor)
+	}
 	commands := s.getUpdateAccountV2Commands(req)
 	if err := validateUpdateAccountV2Request(req, commands, localizer); err != nil {
 		s.logger.Error(
@@ -338,6 +341,27 @@ func (s *AccountService) UpdateAccountV2(
 		return nil, dt.Err()
 	}
 	return &accountproto.UpdateAccountV2Response{}, nil
+}
+
+func (s *AccountService) updateAccountV2NoCommand(
+	ctx context.Context,
+	req *accountproto.UpdateAccountV2Request,
+	localizer locale.Localizer,
+	editor *eventproto.Editor,
+) (*accountproto.UpdateAccountV2Response, error) {
+	return nil, nil
+}
+
+func isNoUpdateAccountV2Command(req *accountproto.UpdateAccountV2Request) bool {
+	return req.ChangeNameCommand == nil &&
+		req.ChangeFirstNameCommand == nil &&
+		req.ChangeLastNameCommand == nil &&
+		req.ChangeLanguageCommand == nil &&
+		req.ChangeAvatarUrlCommand == nil &&
+		req.ChangeAvatarCommand == nil &&
+		req.ChangeOrganizationRoleCommand == nil &&
+		req.ChangeEnvironmentRolesCommand == nil &&
+		req.ChangeLastSeenCommand == nil
 }
 
 func (s *AccountService) getUpdateAccountV2Commands(req *accountproto.UpdateAccountV2Request) []command.Command {

@@ -2743,6 +2743,14 @@ definitions:
       - Environment_VIEWER
       - Environment_EDITOR
     default: Environment_UNASSIGNED
+  UpdateAccountV2RequestAccountV2Avatar:
+    type: object
+    properties:
+      avatarImage:
+        type: string
+        format: byte
+      avatarFileType:
+        type: string
   accountAPIKey:
     type: object
     properties:
@@ -3376,8 +3384,33 @@ definitions:
         $ref: '#/definitions/accountChangeAccountV2LastSeenCommand'
       changeAvatarCommand:
         $ref: '#/definitions/accountChangeAccountV2AvatarCommand'
+      name:
+        type: string
+      avatarImageUrl:
+        type: string
+      organizationRole:
+        $ref: '#/definitions/AccountV2RoleOrganization'
+      environmentRoles:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountAccountV2EnvironmentRole'
+      firstName:
+        type: string
+      lastName:
+        type: string
+      language:
+        type: string
+      lastSeen:
+        type: string
+        format: int64
+      avatar:
+        $ref: '#/definitions/UpdateAccountV2RequestAccountV2Avatar'
   accountUpdateAccountV2Response:
     type: object
+    properties:
+      account:
+        $ref: '#/definitions/accountAccountV2'
   accountUpdateSearchFilterRequest:
     type: object
     properties:

@@ -226,7 +226,10 @@ func validateCreateAccountV2Request(req *accountproto.CreateAccountV2Request, lo
 	return nil
 }
 
-func validateCreateAccountV2NoCommandRequest(req *accountproto.CreateAccountV2Request, localizer locale.Localizer) error {
+func validateCreateAccountV2NoCommandRequest(
+	req *accountproto.CreateAccountV2Request,
+	localizer locale.Localizer,
+) error {
 	if req.OrganizationId == "" {
 		dt, err := statusMissingOrganizationID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -450,6 +453,89 @@ func validateUpdateAccountV2Request(
 				}
 				return dt.Err()
 			}
+		}
+	}
+	return nil
+}
+
+func validateUpdateAccountV2NoCommandRequest(
+	req *accountproto.UpdateAccountV2Request,
+	localizer locale.Localizer,
+) error {
+	if req.Email == "" {
+		dt, err := statusEmailIsEmpty.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if !verifyEmailFormat(req.Email) {
+		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.OrganizationId == "" {
+		dt, err := statusMissingOrganizationID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.FirstName != nil {
+		newFirstName := strings.TrimSpace(req.FirstName.Value)
+		if newFirstName == "" {
+			dt, err := statusFirstNameIsEmpty.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "first_name"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		if len(newFirstName) > maxAccountNameLength {
+			dt, err := statusInvalidFirstName.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "first_name"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+	}
+	if req.LastName != nil {
+		newLastName := strings.TrimSpace(req.LastName.Value)
+		if newLastName == "" {
+			dt, err := statusLastNameIsEmpty.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "first_name"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		if len(newLastName) > maxAccountNameLength {
+			dt, err := statusInvalidLastName.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "last_name"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
 		}
 	}
 	return nil
