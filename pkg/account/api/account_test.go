@@ -63,27 +63,28 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 		req         *accountproto.CreateAccountV2Request
 		expectedErr error
 	}{
-		{
-			desc: "errNoCommand",
-			req: &accountproto.CreateAccountV2Request{
-				Command:        nil,
-				OrganizationId: "org0",
-			},
-			setup: func(s *AccountService) {
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.AccountV2{
-					AccountV2: &accountproto.AccountV2{
-						Email:            "bucketeer@example.com",
-						FirstName:        "Test",
-						LastName:         "User",
-						Language:         "en",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-					},
-				}, nil)
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
+		// deprecating command
+		//{
+		//	desc: "errNoCommand",
+		//	req: &accountproto.CreateAccountV2Request{
+		//		Command:        nil,
+		//		OrganizationId: "org0",
+		//	},
+		//	setup: func(s *AccountService) {
+		//		s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+		//			gomock.Any(), gomock.Any(), gomock.Any(),
+		//		).Return(&domain.AccountV2{
+		//			AccountV2: &accountproto.AccountV2{
+		//				Email:            "bucketeer@example.com",
+		//				FirstName:        "Test",
+		//				LastName:         "User",
+		//				Language:         "en",
+		//				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+		//			},
+		//		}, nil)
+		//	},
+		//	expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+		//},
 		{
 			desc: "errEmailIsEmpty",
 			req: &accountproto.CreateAccountV2Request{
@@ -215,6 +216,173 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 				},
 				OrganizationId: "org0",
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			ctx = setToken(ctx, false)
+			service := createAccountService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			_, err := service.CreateAccountV2(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err, p.desc)
+		})
+	}
+}
+
+func TestCreateAccountV2NoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+	patterns := []struct {
+		desc        string
+		setup       func(*AccountService)
+		req         *accountproto.CreateAccountV2Request
+		expectedErr error
+	}{
+		{
+			desc: "errEmailIsEmpty",
+			req: &accountproto.CreateAccountV2Request{
+				Email:          "",
+				OrganizationId: "org0",
+			},
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
+			expectedErr: createError(statusEmailIsEmpty, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "email")),
+		},
+		{
+			desc: "errInvalidEmail",
+			req: &accountproto.CreateAccountV2Request{
+				Email:          "bucketeer@",
+				OrganizationId: "org0",
+			},
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+			},
+			expectedErr: createError(statusInvalidEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+		},
+		{
+			desc: "errAccountAlreadyExists",
+			req: &accountproto.CreateAccountV2Request{
+				Email:            "bucketeer_environment@example.com",
+				FirstName:        "Test",
+				LastName:         "User",
+				Language:         "en",
+				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				OrganizationId:   "org0",
+			},
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						FirstName:        "Test",
+						LastName:         "User",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
+				).Return(v2as.ErrAccountAlreadyExists)
+			},
+			expectedErr: createError(statusAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
+		},
+		{
+			desc: "errInternal",
+			req: &accountproto.CreateAccountV2Request{
+				Email:            "bucketeer@example.com",
+				FirstName:        "Test",
+				LastName:         "User",
+				Language:         "en",
+				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+				OrganizationId:   "org0",
+			},
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("test"))
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success",
+			req: &accountproto.CreateAccountV2Request{
+				Email:            "bucketeer@example.com",
+				FirstName:        "Test",
+				LastName:         "User",
+				Language:         "en",
+				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+				OrganizationId:   "org0",
+			},
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
 			},
 			expectedErr: nil,
 		},
