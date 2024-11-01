@@ -15,93 +15,92 @@ ALTER TABLE segment_user DROP FOREIGN KEY foreign_segment_user_segment_id_enviro
 ALTER TABLE feature_last_used_info
 DROP PRIMARY KEY,
   ADD PRIMARY KEY (id, environment_id),
-  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL;
-
+  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT "";
 ALTER TABLE mau
 DROP PRIMARY KEY,
   ADD PRIMARY KEY (user_id, yearmonth, source_id, environment_id),
-  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL;
+  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT "";
 
 ALTER TABLE ops_count
 DROP PRIMARY KEY,
   ADD PRIMARY KEY (id, environment_id),
-  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL;
+  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT "";
 
 ALTER TABLE ops_progressive_rollout
 DROP PRIMARY KEY,
   ADD PRIMARY KEY (id, environment_id),
-  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL;
+  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT "";
 
 ALTER TABLE segment_user
 DROP PRIMARY KEY,
   ADD PRIMARY KEY (id, environment_id),
-  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL;
+  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT "";
 
 -- For other tables:
 ALTER TABLE feature
 DROP PRIMARY KEY,
   ADD PRIMARY KEY (id, environment_id),
-  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL;
+  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT "";
 
 ALTER TABLE account
 DROP PRIMARY KEY,
   ADD PRIMARY KEY (id, environment_id),
-  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL;
+  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT "";
 
 ALTER TABLE api_key
 DROP PRIMARY KEY,
   ADD PRIMARY KEY (id, environment_id),
-  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL;
+  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT "";
 
 ALTER TABLE audit_log
 DROP PRIMARY KEY,
   ADD PRIMARY KEY (id, environment_id),
-  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL;
+  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT "";
 
 ALTER TABLE auto_ops_rule
 DROP PRIMARY KEY,
   ADD PRIMARY KEY (id, environment_id),
-  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL;
+  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT "";
 
 ALTER TABLE experiment
 DROP PRIMARY KEY,
   ADD PRIMARY KEY (id, environment_id),
-  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL;
+  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT "";
 
 ALTER TABLE experiment_result
 DROP PRIMARY KEY,
   ADD PRIMARY KEY (id, environment_id),
-  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL;
+  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT "";
 
 ALTER TABLE flag_trigger
 DROP PRIMARY KEY,
   ADD PRIMARY KEY (id, environment_id),
-  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL;
+  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT "";
 
 ALTER TABLE goal
 DROP PRIMARY KEY,
   ADD PRIMARY KEY (id, environment_id),
-  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL;
+  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT "";
 
 ALTER TABLE push
 DROP PRIMARY KEY,
   ADD PRIMARY KEY (id, environment_id),
-  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL;
+  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT "";
 
 ALTER TABLE segment
 DROP PRIMARY KEY,
   ADD PRIMARY KEY (id, environment_id),
-  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL;
+  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT "";
 
 ALTER TABLE subscription
 DROP PRIMARY KEY,
   ADD PRIMARY KEY (id, environment_id),
-  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL;
+  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT "";
 
 ALTER TABLE tag
 DROP PRIMARY KEY,
   ADD PRIMARY KEY (id, environment_id),
-  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL;
+  MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NULL DEFAULT "";
 
 -- Step 3: Populate environment_id with values from environment_namespace
 UPDATE feature SET environment_id = environment_namespace WHERE environment_id IS NULL;
