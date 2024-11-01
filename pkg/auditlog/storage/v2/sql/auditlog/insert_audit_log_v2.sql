@@ -9,5 +9,5 @@ INSERT INTO audit_log (
     options,
     environment_id,
     entity_data,
-    previous_entity_data,
+    previous_entity_data
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
