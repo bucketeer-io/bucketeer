@@ -919,8 +919,8 @@ func TestGetPushMySQL(t *testing.T) {
 				).Return(row)
 			},
 			req: &pushproto.GetPushRequest{
-				EnvironmentNamespace: "ns0",
-				Id:                   "key-1",
+				EnvironmentId: "ns0",
+				Id:            "key-1",
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -934,8 +934,8 @@ func TestGetPushMySQL(t *testing.T) {
 				).Return(row)
 			},
 			req: &pushproto.GetPushRequest{
-				EnvironmentNamespace: "ns0",
-				Id:                   "key-1",
+				EnvironmentId: "ns0",
+				Id:            "key-1",
 			},
 			expectedErr: nil,
 		},

@@ -27999,7 +27999,7 @@
             "fields": [
               {
                 "id": 1,
-                "name": "environment_namespace",
+                "name": "environment_id",
                 "type": "string"
               },
               {

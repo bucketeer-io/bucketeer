@@ -86,7 +86,7 @@ message UpdatePushResponse {
 }
 
 message GetPushRequest {
-  string environment_namespace = 1;
+  string environment_id = 1;
   string id = 2;
 }
 

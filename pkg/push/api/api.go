@@ -936,7 +936,7 @@ func (s *PushService) GetPush(
 	}
 
 	pushStorage := v2ps.NewPushStorage(s.mysqlClient)
-	push, err := pushStorage.GetPush(ctx, req.Id, req.EnvironmentNamespace)
+	push, err := pushStorage.GetPush(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2ps.ErrPushNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -951,7 +951,7 @@ func (s *PushService) GetPush(
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", req.Id),
-					zap.String("environmentNamespace", req.EnvironmentNamespace),
+					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
 			return nil, dt.Err()

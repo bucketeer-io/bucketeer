@@ -50,7 +50,7 @@ export const DebuggerEvaluateForm: FC<DebuggerEvaluateFormProps> = memo(
     useEffect(() => {
       dispatch(
         listFeatures({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           pageSize: 0,
           cursor: '',
           tags: [],
