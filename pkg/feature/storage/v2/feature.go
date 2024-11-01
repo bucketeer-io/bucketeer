@@ -456,7 +456,7 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 		ON
 			feature.id = experiment.feature_id AND
 			feature.environment_id = experiment.environment_id
-		%s %s
+		%s 
 		`, whereSQL,
 	)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
