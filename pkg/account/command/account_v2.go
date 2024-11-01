@@ -60,6 +60,12 @@ func (h *accountV2CommandHandler) Handle(ctx context.Context, cmd Command) error
 		return h.create(ctx, c)
 	case *accountproto.ChangeAccountV2NameCommand:
 		return h.changeName(ctx, c)
+	case *accountproto.ChangeAccountV2FirstNameCommand:
+		return h.changeFirstName(ctx, c)
+	case *accountproto.ChangeAccountV2LastNameCommand:
+		return h.changeLastName(ctx, c)
+	case *accountproto.ChangeAccountV2LanguageCommand:
+		return h.changeLanguage(ctx, c)
 	case *accountproto.ChangeAccountV2AvatarImageUrlCommand:
 		return h.changeAvatarImageURL(ctx, c)
 	case *accountproto.ChangeAccountV2OrganizationRoleCommand:
@@ -82,6 +88,10 @@ func (h *accountV2CommandHandler) Handle(ctx context.Context, cmd Command) error
 		return h.changeDefaultSearchFilter(ctx, c)
 	case *accountproto.DeleteSearchFilterCommand:
 		return h.deleteSearchFiler(ctx, c)
+	case *accountproto.ChangeAccountV2LastSeenCommand:
+		return h.changeLastSeen(ctx, c)
+	case *accountproto.ChangeAccountV2AvatarCommand:
+		return h.changeAvatar(ctx, c)
 	default:
 		return ErrBadCommand
 	}
@@ -90,7 +100,9 @@ func (h *accountV2CommandHandler) Handle(ctx context.Context, cmd Command) error
 func (h *accountV2CommandHandler) create(ctx context.Context, cmd *accountproto.CreateAccountV2Command) error {
 	return h.send(ctx, eventproto.Event_ACCOUNT_V2_CREATED, &eventproto.AccountV2CreatedEvent{
 		Email:            h.account.Email,
-		Name:             h.account.Name,
+		FirstName:        h.account.FirstName,
+		LastName:         h.account.LastName,
+		Language:         h.account.Language,
 		AvatarImageUrl:   h.account.AvatarImageUrl,
 		OrganizationId:   h.account.OrganizationId,
 		OrganizationRole: h.account.OrganizationRole,
@@ -101,13 +113,55 @@ func (h *accountV2CommandHandler) create(ctx context.Context, cmd *accountproto.
 	})
 }
 
-func (h *accountV2CommandHandler) changeName(ctx context.Context, cmd *accountproto.ChangeAccountV2NameCommand) error {
+func (h *accountV2CommandHandler) changeName(
+	ctx context.Context,
+	cmd *accountproto.ChangeAccountV2NameCommand,
+) error {
 	if err := h.account.ChangeName(cmd.Name); err != nil {
 		return err
 	}
 	return h.send(ctx, eventproto.Event_ACCOUNT_V2_NAME_CHANGED, &eventproto.AccountV2NameChangedEvent{
 		Email: h.account.Email,
 		Name:  cmd.Name,
+	})
+}
+
+func (h *accountV2CommandHandler) changeFirstName(
+	ctx context.Context,
+	cmd *accountproto.ChangeAccountV2FirstNameCommand,
+) error {
+	if err := h.account.ChangeFirstName(cmd.FirstName); err != nil {
+		return err
+	}
+	return h.send(ctx, eventproto.Event_ACCOUNT_V2_FIRST_NAME_CHANGED, &eventproto.AccountV2FirstNameChangedEvent{
+		Email:     h.account.Email,
+		FirstName: cmd.FirstName,
+	})
+}
+
+func (h *accountV2CommandHandler) changeLastName(
+	ctx context.Context,
+	cmd *accountproto.ChangeAccountV2LastNameCommand,
+) error {
+	if err := h.account.ChangeLastName(cmd.LastName); err != nil {
+		return err
+	}
+	return h.send(ctx, eventproto.Event_ACCOUNT_V2_LAST_NAME_CHANGED, &eventproto.AccountV2LastNameChangedEvent{
+		Email:    h.account.Email,
+		LastName: cmd.LastName,
+	})
+}
+
+func (h *accountV2CommandHandler) changeLanguage(
+	ctx context.Context,
+	cmd *accountproto.ChangeAccountV2LanguageCommand,
+) error {
+	if err := h.account.ChangeLanguage(cmd.Language); err != nil {
+		return err
+	}
+	return h.send(ctx, eventproto.Event_ACCOUNT_V2_LANGUAGE_CHANGED, &eventproto.AccountV2LanguageChangedEvent{
+		Email:    h.account.Email,
+		Language: cmd.Language,
 	})
 }
 
@@ -192,6 +246,20 @@ func (h *accountV2CommandHandler) delete(ctx context.Context, _ *accountproto.De
 	})
 }
 
+func (h *accountV2CommandHandler) changeLastSeen(
+	ctx context.Context,
+	cmd *accountproto.ChangeAccountV2LastSeenCommand,
+) error {
+	return h.account.ChangeLastSeen(cmd.LastSeen)
+}
+
+func (h *accountV2CommandHandler) changeAvatar(
+	ctx context.Context,
+	cmd *accountproto.ChangeAccountV2AvatarCommand,
+) error {
+	return h.account.ChangeAvatar(cmd.AvatarImage, cmd.AvatarFileType)
+}
+
 func (h *accountV2CommandHandler) createSearchFilter(
 	ctx context.Context,
 	cmd *accountproto.CreateSearchFilterCommand) error {
@@ -219,10 +287,14 @@ func (h *accountV2CommandHandler) changeSearchFilerName(
 	if err := h.account.ChangeSearchFilterName(cmd.Id, cmd.Name); err != nil {
 		return err
 	}
-	return h.send(ctx, eventproto.Event_ACCOUNT_V2_SEARCH_FILTER_NANE_CHANGED, &eventproto.SearchFilterNameChangedEvent{
-		Id:   cmd.Id,
-		Name: cmd.Name,
-	})
+	return h.send(
+		ctx,
+		eventproto.Event_ACCOUNT_V2_SEARCH_FILTER_NANE_CHANGED,
+		&eventproto.SearchFilterNameChangedEvent{
+			Id:   cmd.Id,
+			Name: cmd.Name,
+		},
+	)
 }
 
 func (h *accountV2CommandHandler) changeSearchFilterQuery(
@@ -231,10 +303,14 @@ func (h *accountV2CommandHandler) changeSearchFilterQuery(
 	if err := h.account.ChangeSearchFilterQuery(cmd.Id, cmd.Query); err != nil {
 		return err
 	}
-	return h.send(ctx, eventproto.Event_ACCOUNT_V2_SEARCH_FILTER_QUERY_CHANGED, &eventproto.SearchFilterQueryChangedEvent{
-		Id:    cmd.Id,
-		Query: cmd.Query,
-	})
+	return h.send(
+		ctx,
+		eventproto.Event_ACCOUNT_V2_SEARCH_FILTER_QUERY_CHANGED,
+		&eventproto.SearchFilterQueryChangedEvent{
+			Id:    cmd.Id,
+			Query: cmd.Query,
+		},
+	)
 }
 
 func (h *accountV2CommandHandler) changeDefaultSearchFilter(

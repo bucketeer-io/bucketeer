@@ -3361,6 +3361,36 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand.toObject(
             includeInstance,
             f
+          ),
+        changeFirstNameCommand:
+          (f = msg.getChangeFirstNameCommand()) &&
+          proto_account_command_pb.ChangeAccountV2FirstNameCommand.toObject(
+            includeInstance,
+            f
+          ),
+        changeLastNameCommand:
+          (f = msg.getChangeLastNameCommand()) &&
+          proto_account_command_pb.ChangeAccountV2LastNameCommand.toObject(
+            includeInstance,
+            f
+          ),
+        changeLanguageCommand:
+          (f = msg.getChangeLanguageCommand()) &&
+          proto_account_command_pb.ChangeAccountV2LanguageCommand.toObject(
+            includeInstance,
+            f
+          ),
+        changeLastSeenCommand:
+          (f = msg.getChangeLastSeenCommand()) &&
+          proto_account_command_pb.ChangeAccountV2LastSeenCommand.toObject(
+            includeInstance,
+            f
+          ),
+        changeAvatarCommand:
+          (f = msg.getChangeAvatarCommand()) &&
+          proto_account_command_pb.ChangeAccountV2AvatarCommand.toObject(
+            includeInstance,
+            f
           )
       };
 
@@ -3449,6 +3479,56 @@ proto.bucketeer.account.UpdateAccountV2Request.deserializeBinaryFromReader =
           );
           msg.setChangeEnvironmentRolesCommand(value);
           break;
+        case 7:
+          var value =
+            new proto_account_command_pb.ChangeAccountV2FirstNameCommand();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.ChangeAccountV2FirstNameCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setChangeFirstNameCommand(value);
+          break;
+        case 8:
+          var value =
+            new proto_account_command_pb.ChangeAccountV2LastNameCommand();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.ChangeAccountV2LastNameCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setChangeLastNameCommand(value);
+          break;
+        case 9:
+          var value =
+            new proto_account_command_pb.ChangeAccountV2LanguageCommand();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.ChangeAccountV2LanguageCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setChangeLanguageCommand(value);
+          break;
+        case 10:
+          var value =
+            new proto_account_command_pb.ChangeAccountV2LastSeenCommand();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.ChangeAccountV2LastSeenCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setChangeLastSeenCommand(value);
+          break;
+        case 11:
+          var value =
+            new proto_account_command_pb.ChangeAccountV2AvatarCommand();
+          reader.readMessage(
+            value,
+            proto_account_command_pb.ChangeAccountV2AvatarCommand
+              .deserializeBinaryFromReader
+          );
+          msg.setChangeAvatarCommand(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -3522,6 +3602,51 @@ proto.bucketeer.account.UpdateAccountV2Request.serializeBinaryToWriter =
         6,
         f,
         proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand
+          .serializeBinaryToWriter
+      );
+    }
+    f = message.getChangeFirstNameCommand();
+    if (f != null) {
+      writer.writeMessage(
+        7,
+        f,
+        proto_account_command_pb.ChangeAccountV2FirstNameCommand
+          .serializeBinaryToWriter
+      );
+    }
+    f = message.getChangeLastNameCommand();
+    if (f != null) {
+      writer.writeMessage(
+        8,
+        f,
+        proto_account_command_pb.ChangeAccountV2LastNameCommand
+          .serializeBinaryToWriter
+      );
+    }
+    f = message.getChangeLanguageCommand();
+    if (f != null) {
+      writer.writeMessage(
+        9,
+        f,
+        proto_account_command_pb.ChangeAccountV2LanguageCommand
+          .serializeBinaryToWriter
+      );
+    }
+    f = message.getChangeLastSeenCommand();
+    if (f != null) {
+      writer.writeMessage(
+        10,
+        f,
+        proto_account_command_pb.ChangeAccountV2LastSeenCommand
+          .serializeBinaryToWriter
+      );
+    }
+    f = message.getChangeAvatarCommand();
+    if (f != null) {
+      writer.writeMessage(
+        11,
+        f,
+        proto_account_command_pb.ChangeAccountV2AvatarCommand
           .serializeBinaryToWriter
       );
     }
@@ -3734,6 +3859,216 @@ proto.bucketeer.account.UpdateAccountV2Request.prototype.clearChangeEnvironmentR
 proto.bucketeer.account.UpdateAccountV2Request.prototype.hasChangeEnvironmentRolesCommand =
   function () {
     return jspb.Message.getField(this, 6) != null;
+  };
+
+/**
+ * optional ChangeAccountV2FirstNameCommand change_first_name_command = 7;
+ * @return {?proto.bucketeer.account.ChangeAccountV2FirstNameCommand}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.getChangeFirstNameCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.ChangeAccountV2FirstNameCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.ChangeAccountV2FirstNameCommand,
+        7
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.ChangeAccountV2FirstNameCommand|undefined} value
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.setChangeFirstNameCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 7, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.clearChangeFirstNameCommand =
+  function () {
+    return this.setChangeFirstNameCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.hasChangeFirstNameCommand =
+  function () {
+    return jspb.Message.getField(this, 7) != null;
+  };
+
+/**
+ * optional ChangeAccountV2LastNameCommand change_last_name_command = 8;
+ * @return {?proto.bucketeer.account.ChangeAccountV2LastNameCommand}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.getChangeLastNameCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.ChangeAccountV2LastNameCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.ChangeAccountV2LastNameCommand,
+        8
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.ChangeAccountV2LastNameCommand|undefined} value
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.setChangeLastNameCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 8, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.clearChangeLastNameCommand =
+  function () {
+    return this.setChangeLastNameCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.hasChangeLastNameCommand =
+  function () {
+    return jspb.Message.getField(this, 8) != null;
+  };
+
+/**
+ * optional ChangeAccountV2LanguageCommand change_language_command = 9;
+ * @return {?proto.bucketeer.account.ChangeAccountV2LanguageCommand}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.getChangeLanguageCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.ChangeAccountV2LanguageCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.ChangeAccountV2LanguageCommand,
+        9
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.ChangeAccountV2LanguageCommand|undefined} value
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.setChangeLanguageCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 9, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.clearChangeLanguageCommand =
+  function () {
+    return this.setChangeLanguageCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.hasChangeLanguageCommand =
+  function () {
+    return jspb.Message.getField(this, 9) != null;
+  };
+
+/**
+ * optional ChangeAccountV2LastSeenCommand change_last_seen_command = 10;
+ * @return {?proto.bucketeer.account.ChangeAccountV2LastSeenCommand}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.getChangeLastSeenCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.ChangeAccountV2LastSeenCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.ChangeAccountV2LastSeenCommand,
+        10
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.ChangeAccountV2LastSeenCommand|undefined} value
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.setChangeLastSeenCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 10, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.clearChangeLastSeenCommand =
+  function () {
+    return this.setChangeLastSeenCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.hasChangeLastSeenCommand =
+  function () {
+    return jspb.Message.getField(this, 10) != null;
+  };
+
+/**
+ * optional ChangeAccountV2AvatarCommand change_avatar_command = 11;
+ * @return {?proto.bucketeer.account.ChangeAccountV2AvatarCommand}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.getChangeAvatarCommand =
+  function () {
+    return /** @type{?proto.bucketeer.account.ChangeAccountV2AvatarCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_account_command_pb.ChangeAccountV2AvatarCommand,
+        11
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.ChangeAccountV2AvatarCommand|undefined} value
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.setChangeAvatarCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 11, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.clearChangeAvatarCommand =
+  function () {
+    return this.setChangeAvatarCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.hasChangeAvatarCommand =
+  function () {
+    return jspb.Message.getField(this, 11) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

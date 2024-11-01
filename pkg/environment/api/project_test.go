@@ -289,14 +289,10 @@ func TestCreateProjectMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(v2es.ErrProjectAlreadyExists)
 			},
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Name: "id-0", UrlCode: "id-0", OwnerEmail: "test@test.org"},
+				Command: &proto.CreateProjectCommand{OrganizationId: "organization-id", Name: "id-0", UrlCode: "id-0"},
 			},
 			expectedErr: createError(statusProjectAlreadyExists, localizer.MustLocalize(locale.AlreadyExistsError)),
 		},
@@ -309,7 +305,7 @@ func TestCreateProjectMySQL(t *testing.T) {
 				).Return(errors.New("error"))
 			},
 			req: &proto.CreateProjectRequest{
-				Command: &proto.CreateProjectCommand{Name: "id-1", UrlCode: "id-1", OwnerEmail: "test@test.org"},
+				Command: &proto.CreateProjectCommand{OrganizationId: "organization-id", Name: "id-1", UrlCode: "id-1"},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
@@ -320,17 +316,13 @@ func TestCreateProjectMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil)
 			},
 			req: &proto.CreateProjectRequest{
 				Command: &proto.CreateProjectCommand{
-					Name:        projExpected.Name,
-					UrlCode:     projExpected.UrlCode,
-					Description: projExpected.Description,
-					OwnerEmail:  "test@test.org",
+					OrganizationId: "organization-id",
+					Name:           projExpected.Name,
+					UrlCode:        projExpected.UrlCode,
+					Description:    projExpected.Description,
 				},
 			},
 			expected:    projExpected.Project,
@@ -439,7 +431,7 @@ func TestCreateTrialProjectMySQL(t *testing.T) {
 			req: &proto.CreateTrialProjectRequest{
 				Command: &proto.CreateTrialProjectCommand{Name: "id-0", Email: "email"},
 			},
-			expectedErr: createError(statusInvalidProjectCreatorEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "email")),
+			expectedErr: createError(statusInvalidProjectCreatorEmail, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "owner_email")),
 		},
 		{
 			desc: "err: ErrProjectAlreadyExists: trial exists",

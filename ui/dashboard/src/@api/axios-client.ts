@@ -42,14 +42,14 @@ axiosClient.interceptors.response.use(
           const newAccessToken = response.token.accessToken;
           setTokenStorage(response.token);
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          return axiosClient(originalRequest);
         })
         .catch(err => {
           clearOrgIdStorage();
           clearTokenStorage();
-          window.location.href = PAGE_PATH_ROOT;
+          window.location.href = `${PAGE_PATH_ROOT}/v3`; // TODO: Remove the `/v3` when the new console is released
           return Promise.reject(err);
         });
-      return axiosClient(originalRequest);
     }
     return Promise.reject(error);
   }

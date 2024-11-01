@@ -17,19 +17,25 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
+	accdomain "github.com/bucketeer-io/bucketeer/pkg/account/domain"
+	v2acc "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/command"
 	"github.com/bucketeer-io/bucketeer/pkg/environment/domain"
 	v2es "github.com/bucketeer-io/bucketeer/pkg/environment/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
@@ -46,7 +52,11 @@ func (s *EnvironmentService) GetOrganization(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
-		return nil, err
+		// A member can access the organization details but can't update it
+		_, err = s.checkOrganizationRole(ctx, req.Id, accountproto.AccountV2_Role_Organization_MEMBER, localizer)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if err := s.validateGetOrganizationRequest(req, localizer); err != nil {
 		return nil, err
@@ -234,6 +244,14 @@ func (s *EnvironmentService) CreateOrganization(
 	if err != nil {
 		return nil, err
 	}
+	if req.Command == nil {
+		return s.createOrganizationNoCommand(
+			ctx,
+			req,
+			editor,
+			localizer,
+		)
+	}
 	if err := s.validateCreateOrganizationRequest(req, localizer); err != nil {
 		return nil, err
 	}
@@ -249,12 +267,12 @@ func (s *EnvironmentService) CreateOrganization(
 	)
 	if err != nil {
 		s.logger.Error(
-			"Failed to create organization",
+			"Failed to create an organization",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
 		)
-		return nil, err
+		return nil, statusInternal.Err()
 	}
 	if err := s.createOrganization(ctx, req.Command, organization, editor, localizer); err != nil {
 		return nil, err
@@ -323,6 +341,232 @@ func (s *EnvironmentService) validateCreateOrganizationRequest(
 	return nil
 }
 
+func (s *EnvironmentService) createOrganizationNoCommand(
+	ctx context.Context,
+	req *environmentproto.CreateOrganizationRequest,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) (*environmentproto.CreateOrganizationResponse, error) {
+	if err := s.validateCreateOrganizationRequestNoCommand(req, localizer); err != nil {
+		return nil, err
+	}
+	// Create the organization
+	name := strings.TrimSpace(req.Name)
+	urlCode := strings.TrimSpace(req.UrlCode)
+	organization, err := domain.NewOrganization(
+		name,
+		urlCode,
+		req.OwnerEmail,
+		req.Description,
+		req.IsTrial,
+		req.IsSystemAdmin,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create an organization",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, statusInternal.Err()
+	}
+	var envRoles []*accountproto.AccountV2_EnvironmentRole
+	// Begin the SQL transaction
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		orgStorage := v2es.NewOrganizationStorage(tx)
+		// Check if there is already a system admin organization
+		if organization.Organization.SystemAdmin {
+			org, err := orgStorage.GetSystemAdminOrganization(ctx)
+			if err != nil {
+				return err
+			}
+			if org != nil {
+				return v2es.ErrOrganizationAlreadyExists
+			}
+		}
+		if err := orgStorage.CreateOrganization(ctx, organization); err != nil {
+			return err
+		}
+		// Create a default project
+		project, err := s.createDefaultProject(
+			ctx,
+			tx,
+			organization.Id,
+			organization.OwnerEmail,
+		)
+		if err != nil {
+			s.logger.Error(
+				"Failed to create the default project",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+				)...,
+			)
+			return err
+		}
+		// Create default environments
+		envRoles, err = s.createDefaultEnvironments(
+			ctx,
+			tx,
+			organization.Id,
+			project,
+		)
+		if err != nil {
+			s.logger.Error(
+				"Failed to create the default environments",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+				)...,
+			)
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		if errors.Is(err, v2es.ErrOrganizationAlreadyExists) {
+			dt, err := statusOrganizationAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to create an organization",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	// Create the admin account using the environment roles created in the last step
+	// Because the account storage has a different implementation,
+	// we can't create the account using the same transaction when creating the organization
+	if err := s.createOwnerAccount(
+		ctx,
+		organization.Id,
+		organization.OwnerEmail,
+		envRoles,
+	); err != nil {
+		s.logger.Error(
+			"Failed to create the owner account",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, statusInternal.Err()
+	}
+	// Publish the auditlog event
+	prev := &domain.Organization{}
+	if err = copier.Copy(prev, organization); err != nil {
+		return nil, statusInternal.Err()
+	}
+	event, err := domainevent.NewAdminEvent(
+		editor,
+		eventproto.Event_ORGANIZATION,
+		organization.Id,
+		eventproto.Event_ORGANIZATION_CREATED,
+		&eventproto.OrganizationCreatedEvent{
+			Id:          organization.Id,
+			Name:        organization.Name,
+			UrlCode:     organization.UrlCode,
+			OwnerEmail:  organization.OwnerEmail,
+			Description: organization.Description,
+			Disabled:    organization.Disabled,
+			Archived:    organization.Archived,
+			Trial:       organization.Trial,
+			CreatedAt:   organization.CreatedAt,
+			UpdatedAt:   organization.UpdatedAt,
+		},
+		organization,
+		prev,
+	)
+	if err != nil {
+		return nil, statusInternal.Err()
+	}
+	if err = s.publisher.Publish(ctx, event); err != nil {
+		return nil, statusInternal.Err()
+	}
+	return &environmentproto.CreateOrganizationResponse{
+		Organization: organization.Organization,
+	}, nil
+}
+
+func (s *EnvironmentService) validateCreateOrganizationRequestNoCommand(
+	req *environmentproto.CreateOrganizationRequest,
+	localizer locale.Localizer,
+) error {
+	name := strings.TrimSpace(req.Name)
+	if name == "" {
+		dt, err := statusOrganizationNameRequired.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if len(name) > maxOrganizationNameLength {
+		dt, err := statusInvalidOrganizationName.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	urlCode := strings.TrimSpace(req.UrlCode)
+	if !organizationUrlCodeRegex.MatchString(urlCode) {
+		dt, err := statusInvalidOrganizationUrlCode.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "url_code"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if !emailRegex.MatchString(req.OwnerEmail) {
+		dt, err := statusInvalidOrganizationCreatorEmail.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "owner_email"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
+
+// Deprecated
 func (s *EnvironmentService) createOrganization(
 	ctx context.Context,
 	cmd command.Command,
@@ -396,6 +640,97 @@ func (s *EnvironmentService) createOrganization(
 	return nil
 }
 
+// Create a default project.
+// We must create a project when creating an Organization
+// because we also need to create the organization owner in the account table.
+// To create it we need the project, so we can also create the environment.
+func (s *EnvironmentService) createDefaultProject(
+	ctx context.Context,
+	tx mysql.Transaction,
+	organizationID, email string,
+) (*domain.Project, error) {
+	project, err := domain.NewProject(
+		"Default Project",
+		"default",
+		"",
+		email,
+		organizationID,
+		true,
+	)
+	if err != nil {
+		return nil, err
+	}
+	projectStorage := v2es.NewProjectStorage(tx)
+	if err := projectStorage.CreateProject(ctx, project); err != nil {
+		return nil, err
+	}
+	return project, nil
+}
+
+// Create Development and Production default environments.
+// We must create the environment when creating an Organization
+// because we also need to create the organization owner in the account table
+// and to create it we need the organization and environment roles.
+func (s *EnvironmentService) createDefaultEnvironments(
+	ctx context.Context,
+	tx mysql.Transaction,
+	organizationID string,
+	project *domain.Project,
+) ([]*accountproto.AccountV2_EnvironmentRole, error) {
+	envRoles := make([]*accountproto.AccountV2_EnvironmentRole, 0, 2)
+	envNames := []string{
+		"Development",
+		"Production",
+	}
+	for _, name := range envNames {
+		envURLCode := fmt.Sprintf("%s-%s", project.UrlCode, strings.ToLower(name))
+		env, err := domain.NewEnvironmentV2(
+			name,
+			envURLCode,
+			"",
+			project.Id,
+			organizationID,
+			false,
+			s.logger,
+		)
+		if err != nil {
+			return nil, err
+		}
+		environmentStorage := v2es.NewEnvironmentStorage(tx)
+		if err := environmentStorage.CreateEnvironmentV2(ctx, env); err != nil {
+			return nil, err
+		}
+		envRoles = append(envRoles, &accountproto.AccountV2_EnvironmentRole{
+			EnvironmentId: env.Id,
+			Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+		})
+	}
+	return envRoles, nil
+}
+
+func (s *EnvironmentService) createOwnerAccount(
+	ctx context.Context,
+	organizationID, ownerEmail string,
+	envRoles []*accountproto.AccountV2_EnvironmentRole,
+) error {
+	account := accdomain.NewAccountV2(
+		ownerEmail,
+		strings.Split(ownerEmail, "@")[0],
+		"",
+		"",
+		"",
+		"",
+		organizationID,
+		accountproto.AccountV2_Role_Organization_OWNER,
+		envRoles,
+	)
+	accountStorage := v2acc.NewAccountStorage(s.mysqlClient)
+	if err := accountStorage.CreateAccountV2(ctx, account); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *EnvironmentService) UpdateOrganization(
 	ctx context.Context,
 	req *environmentproto.UpdateOrganizationRequest,
@@ -403,7 +738,11 @@ func (s *EnvironmentService) UpdateOrganization(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
-		return nil, err
+		// If not system admin, check if user is organization owner
+		editor, err = s.checkOrganizationRole(ctx, req.Id, accountproto.AccountV2_Role_Organization_OWNER, localizer)
+		if err != nil {
+			return nil, err
+		}
 	}
 	commands := s.getUpdateOrganizationCommands(req)
 	if err := s.validateUpdateOrganizationRequest(req.Id, commands, localizer); err != nil {
@@ -508,12 +847,15 @@ func (s *EnvironmentService) updateOrganization(
 		}
 		return dt.Err()
 	}
+	var prevOwnerEmail string
+	var newOwnerEmail string
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		orgStorage := v2es.NewOrganizationStorage(tx)
 		organization, err := orgStorage.GetOrganization(ctx, id)
 		if err != nil {
 			return err
 		}
+		prevOwnerEmail = organization.OwnerEmail
 		handler, err := command.NewOrganizationCommandHandler(editor, organization, s.publisher)
 		if err != nil {
 			return err
@@ -522,6 +864,10 @@ func (s *EnvironmentService) updateOrganization(
 			if err := handler.Handle(ctx, c); err != nil {
 				return err
 			}
+		}
+		// Set the new owner email if it changes
+		if prevOwnerEmail != organization.OwnerEmail {
+			newOwnerEmail = organization.OwnerEmail
 		}
 		return orgStorage.UpdateOrganization(ctx, organization)
 	})
@@ -560,6 +906,55 @@ func (s *EnvironmentService) updateOrganization(
 			return statusInternal.Err()
 		}
 		return dt.Err()
+	}
+	// Update the organization role when the owner email changes
+	if prevOwnerEmail != "" && newOwnerEmail != "" {
+		if err := s.updateOwnerRole(ctx, id, prevOwnerEmail, newOwnerEmail); err != nil {
+			s.logger.Error("Failed to update the new owner's role",
+				zap.Error(err),
+				zap.String("organizationId", id),
+				zap.String("prevOwnerEmail", prevOwnerEmail),
+				zap.String("newOwnerEmail", newOwnerEmail),
+			)
+			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.InternalServerError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+	}
+	return nil
+}
+
+func (s *EnvironmentService) updateOwnerRole(
+	ctx context.Context,
+	organizationID, prevOwnerEmail, newOwnerEmail string,
+) error {
+	accStorage := v2acc.NewAccountStorage(s.mysqlClient)
+	// Update the old owner organization role
+	prevOwnerAcc, err := accStorage.GetAccountV2(ctx, prevOwnerEmail, organizationID)
+	if err != nil {
+		return err
+	}
+	if err := prevOwnerAcc.ChangeOrganizationRole(accountproto.AccountV2_Role_Organization_ADMIN); err != nil {
+		return err
+	}
+	if err := accStorage.UpdateAccountV2(ctx, prevOwnerAcc); err != nil {
+		return err
+	}
+	// Update the new owner organization role
+	newOwnerAcc, err := accStorage.GetAccountV2(ctx, newOwnerEmail, organizationID)
+	if err != nil {
+		return err
+	}
+	if err := newOwnerAcc.ChangeOrganizationRole(accountproto.AccountV2_Role_Organization_OWNER); err != nil {
+		return err
+	}
+	if err := accStorage.UpdateAccountV2(ctx, newOwnerAcc); err != nil {
+		return err
 	}
 	return nil
 }

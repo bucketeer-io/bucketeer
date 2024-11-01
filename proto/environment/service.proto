@@ -215,7 +215,13 @@ message ListOrganizationsResponse {
 }
 
 message CreateOrganizationRequest {
-  CreateOrganizationCommand command = 1;
+  CreateOrganizationCommand command = 1 [deprecated = true];
+  string name = 2;
+  string url_code = 3;
+  string description = 4;  // optional
+  bool is_trial = 5;
+  bool is_system_admin = 6;
+  string owner_email = 7;
 }
 
 message CreateOrganizationResponse {
@@ -945,7 +951,7 @@ service EnvironmentService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get",
-      description: "Get an organization. To call this API, you need an `SYSTEM_ADMIN` role.",
+      description: "Get an organization. To call this API, you need at least a MEMBER role.",
       tags: "Organization",
       operation_id: "web.v1.environment.get_organization",
       responses: {
@@ -1083,7 +1089,7 @@ service EnvironmentService {
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Update",
-      description: "Update an organization. To call this API, you need an `SYSTEM_ADMIN` role.",
+      description: "Update an organization. To call this API, you need an `ADMIN` role.",
       tags: "Organization",
       operation_id: "web.v1.environment.update_organization",
       responses: {

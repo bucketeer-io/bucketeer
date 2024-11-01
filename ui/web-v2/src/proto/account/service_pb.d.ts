@@ -485,6 +485,51 @@ export class UpdateAccountV2Request extends jspb.Message {
     value?: proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand
   ): void;
 
+  hasChangeFirstNameCommand(): boolean;
+  clearChangeFirstNameCommand(): void;
+  getChangeFirstNameCommand():
+    | proto_account_command_pb.ChangeAccountV2FirstNameCommand
+    | undefined;
+  setChangeFirstNameCommand(
+    value?: proto_account_command_pb.ChangeAccountV2FirstNameCommand
+  ): void;
+
+  hasChangeLastNameCommand(): boolean;
+  clearChangeLastNameCommand(): void;
+  getChangeLastNameCommand():
+    | proto_account_command_pb.ChangeAccountV2LastNameCommand
+    | undefined;
+  setChangeLastNameCommand(
+    value?: proto_account_command_pb.ChangeAccountV2LastNameCommand
+  ): void;
+
+  hasChangeLanguageCommand(): boolean;
+  clearChangeLanguageCommand(): void;
+  getChangeLanguageCommand():
+    | proto_account_command_pb.ChangeAccountV2LanguageCommand
+    | undefined;
+  setChangeLanguageCommand(
+    value?: proto_account_command_pb.ChangeAccountV2LanguageCommand
+  ): void;
+
+  hasChangeLastSeenCommand(): boolean;
+  clearChangeLastSeenCommand(): void;
+  getChangeLastSeenCommand():
+    | proto_account_command_pb.ChangeAccountV2LastSeenCommand
+    | undefined;
+  setChangeLastSeenCommand(
+    value?: proto_account_command_pb.ChangeAccountV2LastSeenCommand
+  ): void;
+
+  hasChangeAvatarCommand(): boolean;
+  clearChangeAvatarCommand(): void;
+  getChangeAvatarCommand():
+    | proto_account_command_pb.ChangeAccountV2AvatarCommand
+    | undefined;
+  setChangeAvatarCommand(
+    value?: proto_account_command_pb.ChangeAccountV2AvatarCommand
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateAccountV2Request.AsObject;
   static toObject(
@@ -514,6 +559,11 @@ export namespace UpdateAccountV2Request {
     changeAvatarUrlCommand?: proto_account_command_pb.ChangeAccountV2AvatarImageUrlCommand.AsObject;
     changeOrganizationRoleCommand?: proto_account_command_pb.ChangeAccountV2OrganizationRoleCommand.AsObject;
     changeEnvironmentRolesCommand?: proto_account_command_pb.ChangeAccountV2EnvironmentRolesCommand.AsObject;
+    changeFirstNameCommand?: proto_account_command_pb.ChangeAccountV2FirstNameCommand.AsObject;
+    changeLastNameCommand?: proto_account_command_pb.ChangeAccountV2LastNameCommand.AsObject;
+    changeLanguageCommand?: proto_account_command_pb.ChangeAccountV2LanguageCommand.AsObject;
+    changeLastSeenCommand?: proto_account_command_pb.ChangeAccountV2LastSeenCommand.AsObject;
+    changeAvatarCommand?: proto_account_command_pb.ChangeAccountV2AvatarCommand.AsObject;
   };
 }
 

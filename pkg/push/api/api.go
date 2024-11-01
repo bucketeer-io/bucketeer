@@ -215,7 +215,7 @@ func (s *PushService) CreatePush(
 		return nil
 	})
 	if err != nil {
-		if err == v2ps.ErrPushAlreadyExists {
+		if errors.Is(err, v2ps.ErrPushAlreadyExists) {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
@@ -380,7 +380,7 @@ func (s *PushService) createPushNoCommand(
 		return nil
 	})
 	if err != nil {
-		if err == v2ps.ErrPushAlreadyExists {
+		if errors.Is(err, v2ps.ErrPushAlreadyExists) {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
@@ -504,6 +504,7 @@ func (s *PushService) UpdatePush(
 		return nil, err
 	}
 
+	var updatedPushPb *pushproto.Push
 	commands := s.createUpdatePushCommands(req)
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
@@ -522,7 +523,6 @@ func (s *PushService) UpdatePush(
 		}
 		return nil, dt.Err()
 	}
-	var updatedPushPb *pushproto.Push
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		pushStorage := v2ps.NewPushStorage(tx)
 		push, err := pushStorage.GetPush(ctx, req.Id, req.EnvironmentNamespace)
@@ -542,7 +542,8 @@ func (s *PushService) UpdatePush(
 		return pushStorage.UpdatePush(ctx, push, req.EnvironmentNamespace)
 	})
 	if err != nil {
-		if err == v2ps.ErrPushNotFound || err == v2ps.ErrPushUnexpectedAffectedRows {
+		switch {
+		case errors.Is(err, v2ps.ErrPushNotFound):
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -551,6 +552,14 @@ func (s *PushService) UpdatePush(
 				return nil, statusInternal.Err()
 			}
 			return nil, dt.Err()
+		case errors.Is(err, v2ps.ErrPushUnexpectedAffectedRows):
+			if updatedPushPb != nil {
+				// For security reasons we remove the service account from the API response
+				updatedPushPb.FcmServiceAccount = ""
+			}
+			return &pushproto.UpdatePushResponse{
+				Push: updatedPushPb,
+			}, nil
 		}
 		s.logger.Error(
 			"Failed to update push",
@@ -589,8 +598,7 @@ func (s *PushService) updatePushNoCommand(
 		return nil, err
 	}
 	var updatedPushPb *pushproto.Push
-	var updatePushTagsEvent *eventproto.Event
-	var updatePushNameEvent *eventproto.Event
+	var updatePushEvent *eventproto.Event
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
 		s.logger.Error(
@@ -614,56 +622,36 @@ func (s *PushService) updatePushNoCommand(
 		if err != nil {
 			return err
 		}
-		prev := &domain.Push{}
-		if err = copier.Copy(prev, push); err != nil {
-			return err
-		}
-		push.Name = req.Name
-		push.Tags = req.Tags
-		updatedPushPb = push.Push
 
-		updatePushNameEvent, err = domainevent.NewEvent(
-			editor,
-			eventproto.Event_PUSH,
-			push.Id,
-			eventproto.Event_PUSH_RENAMED,
-			&eventproto.PushRenamedEvent{
-				Name: req.Name,
-			},
-			req.EnvironmentNamespace,
-			push,
-			prev,
-		)
+		updated, err := push.Update(req.Name, req.Tags)
 		if err != nil {
 			return err
 		}
-		if err = s.publisher.Publish(ctx, updatePushNameEvent); err != nil {
-			return err
-		}
-
-		updatePushTagsEvent, err = domainevent.NewEvent(
+		updatePushEvent, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_PUSH,
 			push.Id,
-			eventproto.Event_PUSH_TAGS_UPDATED,
+			eventproto.Event_PUSH_UPDATED,
 			&eventproto.PushTagsUpdatedEvent{
 				Tags: req.Tags,
 			},
 			req.EnvironmentNamespace,
+			updated,
 			push,
-			prev,
 		)
 		if err != nil {
 			return err
 		}
-		if err = s.publisher.Publish(ctx, updatePushTagsEvent); err != nil {
+		if err = s.publisher.Publish(ctx, updatePushEvent); err != nil {
 			return err
 		}
+		updatedPushPb = updated.Push
 
-		return pushStorage.UpdatePush(ctx, push, req.EnvironmentNamespace)
+		return pushStorage.UpdatePush(ctx, updated, req.EnvironmentNamespace)
 	})
 	if err != nil {
-		if err == v2ps.ErrPushNotFound || err == v2ps.ErrPushUnexpectedAffectedRows {
+		switch {
+		case errors.Is(err, v2ps.ErrPushNotFound):
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -672,6 +660,14 @@ func (s *PushService) updatePushNoCommand(
 				return nil, statusInternal.Err()
 			}
 			return nil, dt.Err()
+		case errors.Is(err, v2ps.ErrPushUnexpectedAffectedRows):
+			if updatedPushPb != nil {
+				// For security reasons we remove the service account from the API response
+				updatedPushPb.FcmServiceAccount = ""
+			}
+			return &pushproto.UpdatePushResponse{
+				Push: updatedPushPb,
+			}, nil
 		}
 		s.logger.Error(
 			"Failed to update push",
@@ -751,26 +747,6 @@ func (s *PushService) validateUpdatePushRequestNoCommand(
 		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Name == "" {
-		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if len(req.Tags) == 0 {
-		dt, err := statusTagsRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "tag"),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -897,7 +873,7 @@ func (s *PushService) DeletePush(
 			editor,
 			eventproto.Event_PUSH,
 			push.Id,
-			eventproto.Event_PUSH_CREATED,
+			eventproto.Event_PUSH_DELETED,
 			&eventproto.PushCreatedEvent{
 				FcmServiceAccount: push.FcmServiceAccount,
 				Tags:              push.Tags,
@@ -916,7 +892,8 @@ func (s *PushService) DeletePush(
 		return pushStorage.UpdatePush(ctx, push, req.EnvironmentNamespace)
 	})
 	if err != nil {
-		if err == v2ps.ErrPushNotFound || err == v2ps.ErrPushUnexpectedAffectedRows {
+		switch {
+		case errors.Is(err, v2ps.ErrPushNotFound):
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -925,6 +902,8 @@ func (s *PushService) DeletePush(
 				return nil, statusInternal.Err()
 			}
 			return nil, dt.Err()
+		case errors.Is(err, v2ps.ErrPushUnexpectedAffectedRows):
+			return &pushproto.DeletePushResponse{}, nil
 		}
 		s.logger.Error(
 			"Failed to delete push",
@@ -958,7 +937,7 @@ func (s *PushService) GetPush(
 	pushStorage := v2ps.NewPushStorage(s.mysqlClient)
 	push, err := pushStorage.GetPush(ctx, req.Id, req.EnvironmentNamespace)
 	if err != nil {
-		if err == v2ps.ErrPushNotFound {
+		if errors.Is(err, v2ps.ErrPushNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),

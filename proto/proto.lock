@@ -167,6 +167,36 @@
                 "name": "search_filters",
                 "type": "SearchFilter",
                 "is_repeated": true
+              },
+              {
+                "id": 11,
+                "name": "first_name",
+                "type": "string"
+              },
+              {
+                "id": 12,
+                "name": "last_name",
+                "type": "string"
+              },
+              {
+                "id": 13,
+                "name": "language",
+                "type": "string"
+              },
+              {
+                "id": 14,
+                "name": "last_seen",
+                "type": "int64"
+              },
+              {
+                "id": 15,
+                "name": "avatar_file_type",
+                "type": "string"
+              },
+              {
+                "id": 16,
+                "name": "avatar_image",
+                "type": "bytes"
               }
             ],
             "messages": [
@@ -234,6 +264,31 @@
                 "name": "search_filters",
                 "type": "SearchFilter",
                 "is_repeated": true
+              },
+              {
+                "id": 9,
+                "name": "first_name",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "last_name",
+                "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "language",
+                "type": "string"
+              },
+              {
+                "id": 12,
+                "name": "avatar_file_type",
+                "type": "string"
+              },
+              {
+                "id": 13,
+                "name": "avatar_image",
+                "type": "bytes"
               }
             ],
             "messages": [
@@ -468,6 +523,21 @@
                 "name": "environment_roles",
                 "type": "account.AccountV2.EnvironmentRole",
                 "is_repeated": true
+              },
+              {
+                "id": 6,
+                "name": "first_name",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "last_name",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "language",
+                "type": "string"
               }
             ]
           },
@@ -482,12 +552,67 @@
             ]
           },
           {
+            "name": "ChangeAccountV2FirstNameCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "first_name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ChangeAccountV2LastNameCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "last_name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ChangeAccountV2LanguageCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "language",
+                "type": "string"
+              }
+            ]
+          },
+          {
             "name": "ChangeAccountV2AvatarImageUrlCommand",
             "fields": [
               {
                 "id": 1,
                 "name": "avatar_image_url",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ChangeAccountV2AvatarCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "avatar_image",
+                "type": "bytes"
+              },
+              {
+                "id": 2,
+                "name": "avatar_file_type",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ChangeAccountV2LastSeenCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "last_seen",
+                "type": "int64"
               }
             ]
           },
@@ -970,6 +1095,31 @@
                 "id": 6,
                 "name": "change_environment_roles_command",
                 "type": "ChangeAccountV2EnvironmentRolesCommand"
+              },
+              {
+                "id": 7,
+                "name": "change_first_name_command",
+                "type": "ChangeAccountV2FirstNameCommand"
+              },
+              {
+                "id": 8,
+                "name": "change_last_name_command",
+                "type": "ChangeAccountV2LastNameCommand"
+              },
+              {
+                "id": 9,
+                "name": "change_language_command",
+                "type": "ChangeAccountV2LanguageCommand"
+              },
+              {
+                "id": 10,
+                "name": "change_last_seen_command",
+                "type": "ChangeAccountV2LastSeenCommand"
+              },
+              {
+                "id": 11,
+                "name": "change_avatar_command",
+                "type": "ChangeAccountV2AvatarCommand"
               }
             ]
           },
@@ -7221,33 +7371,22 @@
             "fields": [
               {
                 "id": 1,
-                "name": "id",
-                "type": "string",
-                "options": [
-                  {
-                    "name": "deprecated",
-                    "value": "true"
-                  }
-                ]
+                "name": "organization_id",
+                "type": "string"
               },
               {
                 "id": 2,
-                "name": "description",
+                "name": "name",
                 "type": "string"
               },
               {
                 "id": 3,
-                "name": "name",
+                "name": "description",
                 "type": "string"
               },
               {
                 "id": 4,
                 "name": "url_code",
-                "type": "string"
-              },
-              {
-                "id": 5,
-                "name": "owner_email",
                 "type": "string"
               }
             ]
@@ -8314,7 +8453,43 @@
               {
                 "id": 1,
                 "name": "command",
-                "type": "CreateOrganizationCommand"
+                "type": "CreateOrganizationCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "url_code",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "description",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "is_trial",
+                "type": "bool"
+              },
+              {
+                "id": 6,
+                "name": "is_system_admin",
+                "type": "bool"
+              },
+              {
+                "id": 7,
+                "name": "owner_email",
+                "type": "string"
               }
             ]
           },
@@ -11004,7 +11179,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Get an organization. To call this API, you need an `SYSTEM_ADMIN` role."
+                        "value": "Get an organization. To call this API, you need at least a MEMBER role."
                       },
                       {
                         "name": "tags",
@@ -11532,7 +11707,7 @@
                       },
                       {
                         "name": "description",
-                        "value": "Update an organization. To call this API, you need an `SYSTEM_ADMIN` role."
+                        "value": "Update an organization. To call this API, you need an `ADMIN` role."
                       },
                       {
                         "name": "tags",
@@ -13949,6 +14124,18 @@
                 "integer": 317
               },
               {
+                "name": "ACCOUNT_V2_FIRST_NAME_CHANGED",
+                "integer": 318
+              },
+              {
+                "name": "ACCOUNT_V2_LAST_NAME_CHANGED",
+                "integer": 319
+              },
+              {
+                "name": "ACCOUNT_V2_LANGUAGE_CHANGED",
+                "integer": 320
+              },
+              {
                 "name": "APIKEY_CREATED",
                 "integer": 400
               },
@@ -14169,7 +14356,7 @@
                 "integer": 904
               },
               {
-                "name": "PUSH_TAGS_UPDATED",
+                "name": "PUSH_UPDATED",
                 "integer": 905
               },
               {
@@ -15521,6 +15708,21 @@
                 "id": 9,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 10,
+                "name": "first_name",
+                "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "last_name",
+                "type": "string"
+              },
+              {
+                "id": 12,
+                "name": "language",
+                "type": "string"
               }
             ]
           },
@@ -17286,6 +17488,51 @@
                 "id": 5,
                 "name": "trigger_times",
                 "type": "int32"
+              }
+            ]
+          },
+          {
+            "name": "AccountV2FirstNameChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "first_name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "AccountV2LastNameChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "last_name",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "AccountV2LanguageChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "language",
+                "type": "string"
               }
             ]
           }
@@ -24034,159 +24281,6 @@
                 "type": "feature.Feature"
               }
             ]
-          },
-          {
-            "name": "ListPushesRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "page_size",
-                "type": "int64"
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "order_by",
-                "type": "push.ListPushesRequest.OrderBy"
-              },
-              {
-                "id": 4,
-                "name": "order_direction",
-                "type": "push.ListPushesRequest.OrderDirection"
-              },
-              {
-                "id": 5,
-                "name": "search_keyword",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "ListPushesResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "pushes",
-                "type": "push.Push",
-                "is_repeated": true
-              },
-              {
-                "id": 2,
-                "name": "cursor",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "total_count",
-                "type": "int64"
-              }
-            ]
-          },
-          {
-            "name": "CreatePushRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "tags",
-                "type": "string",
-                "is_repeated": true
-              },
-              {
-                "id": 2,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "fcm_service_account",
-                "type": "bytes"
-              }
-            ]
-          },
-          {
-            "name": "CreatePushResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "push",
-                "type": "push.Push"
-              }
-            ]
-          },
-          {
-            "name": "GetPushRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "GetPushResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "push",
-                "type": "push.Push"
-              }
-            ]
-          },
-          {
-            "name": "UpdatePushRequest",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "tags",
-                "type": "string",
-                "is_repeated": true
-              },
-              {
-                "id": 3,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 4,
-                "name": "deleted",
-                "type": "google.protobuf.BoolValue",
-                "options": [
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
-                    "aggregated": [
-                      {
-                        "name": "title",
-                        "value": "deleted"
-                      },
-                      {
-                        "name": "description",
-                        "value": "if true, the push notification will be deleted and other fields will be ignored."
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "name": "UpdatePushResponse",
-            "fields": [
-              {
-                "id": 1,
-                "name": "push",
-                "type": "push.Push"
-              }
-            ]
           }
         ],
         "services": [
@@ -24890,266 +24984,6 @@
                     ]
                   }
                 ]
-              },
-              {
-                "name": "ListPushes",
-                "in_type": "ListPushesRequest",
-                "out_type": "ListPushesResponse",
-                "options": [
-                  {
-                    "name": "(google.api.http)",
-                    "aggregated": [
-                      {
-                        "name": "get",
-                        "value": "/v1/pushes"
-                      }
-                    ]
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
-                    "aggregated": [
-                      {
-                        "name": "summary",
-                        "value": "List"
-                      },
-                      {
-                        "name": "description",
-                        "value": "List pushes. To call this API, you need a `READ` API Key role."
-                      },
-                      {
-                        "name": "tags",
-                        "value": "Pushes"
-                      },
-                      {
-                        "name": "operation_id",
-                        "value": "api.gateway.v1.pushes.list"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "CreatePush",
-                "in_type": "CreatePushRequest",
-                "out_type": "CreatePushResponse",
-                "options": [
-                  {
-                    "name": "(google.api.http)",
-                    "aggregated": [
-                      {
-                        "name": "post",
-                        "value": "/v1/push"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
-                      }
-                    ]
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
-                    "aggregated": [
-                      {
-                        "name": "summary",
-                        "value": "Create"
-                      },
-                      {
-                        "name": "description",
-                        "value": "Create a new Push notification through Google Firebase Cloud Messaging (FCM). To call this API, you need a `WRITE` or `ADMIN` API Key role."
-                      },
-                      {
-                        "name": "tags",
-                        "value": "Pushes"
-                      },
-                      {
-                        "name": "operation_id",
-                        "value": "api.gateway.v1.pushes.create"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "GetPush",
-                "in_type": "GetPushRequest",
-                "out_type": "GetPushResponse",
-                "options": [
-                  {
-                    "name": "(google.api.http)",
-                    "aggregated": [
-                      {
-                        "name": "get",
-                        "value": "/v1/push/{id}"
-                      }
-                    ]
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
-                    "aggregated": [
-                      {
-                        "name": "summary",
-                        "value": "Get"
-                      },
-                      {
-                        "name": "description",
-                        "value": "Get a Push notification. To call this API, you need a `READ` API Key role."
-                      },
-                      {
-                        "name": "tags",
-                        "value": "Pushes"
-                      },
-                      {
-                        "name": "operation_id",
-                        "value": "api.gateway.v1.pushes.get"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "name": "UpdatePush",
-                "in_type": "UpdatePushRequest",
-                "out_type": "UpdatePushResponse",
-                "options": [
-                  {
-                    "name": "(google.api.http)",
-                    "aggregated": [
-                      {
-                        "name": "patch",
-                        "value": "/v1/push/{id}"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
-                      }
-                    ]
-                  },
-                  {
-                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
-                    "aggregated": [
-                      {
-                        "name": "summary",
-                        "value": "Update"
-                      },
-                      {
-                        "name": "description",
-                        "value": "Update a Push notification. To call this API, you a `WRITE` or `ADMIN` API Key role."
-                      },
-                      {
-                        "name": "tags",
-                        "value": "Pushes"
-                      },
-                      {
-                        "name": "operation_id",
-                        "value": "api.gateway.v1.pushes.update"
-                      },
-                      {
-                        "name": "parameters",
-                        "aggregated": [
-                          {
-                            "name": "headers",
-                            "aggregated": [
-                              {
-                                "name": "name",
-                                "value": "authorization"
-                              },
-                              {
-                                "name": "description",
-                                "value": "The API Key generated on the Admin Console."
-                              },
-                              {
-                                "name": "type",
-                                "value": "STRING"
-                              },
-                              {
-                                "name": "required",
-                                "value": "true"
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
               }
             ]
           }
@@ -25193,12 +25027,6 @@
           },
           {
             "path": "proto/feature/segment.proto"
-          },
-          {
-            "path": "proto/push/push.proto"
-          },
-          {
-            "path": "proto/push/service.proto"
           },
           {
             "path": "proto/event/client/event.proto"
@@ -27174,7 +27002,7 @@
               {
                 "id": 7,
                 "name": "name",
-                "type": "string"
+                "type": "google.protobuf.StringValue"
               }
             ]
           },
@@ -27247,6 +27075,9 @@
           }
         ],
         "imports": [
+          {
+            "path": "google/protobuf/wrappers.proto"
+          },
           {
             "path": "proto/push/push.proto"
           },

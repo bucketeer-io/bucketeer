@@ -7800,7 +7800,13 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_environment_command_pb.CreateOrganizationCommand.toObject(
             includeInstance,
             f
-          )
+          ),
+        name: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        urlCode: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        description: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        isTrial: jspb.Message.getBooleanFieldWithDefault(msg, 5, false),
+        isSystemAdmin: jspb.Message.getBooleanFieldWithDefault(msg, 6, false),
+        ownerEmail: jspb.Message.getFieldWithDefault(msg, 7, '')
       };
 
     if (includeInstance) {
@@ -7850,6 +7856,30 @@ proto.bucketeer.environment.CreateOrganizationRequest.deserializeBinaryFromReade
           );
           msg.setCommand(value);
           break;
+        case 2:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setName(value);
+          break;
+        case 3:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setUrlCode(value);
+          break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setDescription(value);
+          break;
+        case 5:
+          var value = /** @type {boolean} */ (reader.readBool());
+          msg.setIsTrial(value);
+          break;
+        case 6:
+          var value = /** @type {boolean} */ (reader.readBool());
+          msg.setIsSystemAdmin(value);
+          break;
+        case 7:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOwnerEmail(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -7890,6 +7920,30 @@ proto.bucketeer.environment.CreateOrganizationRequest.serializeBinaryToWriter =
         proto_environment_command_pb.CreateOrganizationCommand
           .serializeBinaryToWriter
       );
+    }
+    f = message.getName();
+    if (f.length > 0) {
+      writer.writeString(2, f);
+    }
+    f = message.getUrlCode();
+    if (f.length > 0) {
+      writer.writeString(3, f);
+    }
+    f = message.getDescription();
+    if (f.length > 0) {
+      writer.writeString(4, f);
+    }
+    f = message.getIsTrial();
+    if (f) {
+      writer.writeBool(5, f);
+    }
+    f = message.getIsSystemAdmin();
+    if (f) {
+      writer.writeBool(6, f);
+    }
+    f = message.getOwnerEmail();
+    if (f.length > 0) {
+      writer.writeString(7, f);
     }
   };
 
@@ -7933,6 +7987,126 @@ proto.bucketeer.environment.CreateOrganizationRequest.prototype.clearCommand =
 proto.bucketeer.environment.CreateOrganizationRequest.prototype.hasCommand =
   function () {
     return jspb.Message.getField(this, 1) != null;
+  };
+
+/**
+ * optional string name = 2;
+ * @return {string}
+ */
+proto.bucketeer.environment.CreateOrganizationRequest.prototype.getName =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 2, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.environment.CreateOrganizationRequest} returns this
+ */
+proto.bucketeer.environment.CreateOrganizationRequest.prototype.setName =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 2, value);
+  };
+
+/**
+ * optional string url_code = 3;
+ * @return {string}
+ */
+proto.bucketeer.environment.CreateOrganizationRequest.prototype.getUrlCode =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 3, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.environment.CreateOrganizationRequest} returns this
+ */
+proto.bucketeer.environment.CreateOrganizationRequest.prototype.setUrlCode =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 3, value);
+  };
+
+/**
+ * optional string description = 4;
+ * @return {string}
+ */
+proto.bucketeer.environment.CreateOrganizationRequest.prototype.getDescription =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.environment.CreateOrganizationRequest} returns this
+ */
+proto.bucketeer.environment.CreateOrganizationRequest.prototype.setDescription =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 4, value);
+  };
+
+/**
+ * optional bool is_trial = 5;
+ * @return {boolean}
+ */
+proto.bucketeer.environment.CreateOrganizationRequest.prototype.getIsTrial =
+  function () {
+    return /** @type {boolean} */ (
+      jspb.Message.getBooleanFieldWithDefault(this, 5, false)
+    );
+  };
+
+/**
+ * @param {boolean} value
+ * @return {!proto.bucketeer.environment.CreateOrganizationRequest} returns this
+ */
+proto.bucketeer.environment.CreateOrganizationRequest.prototype.setIsTrial =
+  function (value) {
+    return jspb.Message.setProto3BooleanField(this, 5, value);
+  };
+
+/**
+ * optional bool is_system_admin = 6;
+ * @return {boolean}
+ */
+proto.bucketeer.environment.CreateOrganizationRequest.prototype.getIsSystemAdmin =
+  function () {
+    return /** @type {boolean} */ (
+      jspb.Message.getBooleanFieldWithDefault(this, 6, false)
+    );
+  };
+
+/**
+ * @param {boolean} value
+ * @return {!proto.bucketeer.environment.CreateOrganizationRequest} returns this
+ */
+proto.bucketeer.environment.CreateOrganizationRequest.prototype.setIsSystemAdmin =
+  function (value) {
+    return jspb.Message.setProto3BooleanField(this, 6, value);
+  };
+
+/**
+ * optional string owner_email = 7;
+ * @return {string}
+ */
+proto.bucketeer.environment.CreateOrganizationRequest.prototype.getOwnerEmail =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 7, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.environment.CreateOrganizationRequest} returns this
+ */
+proto.bucketeer.environment.CreateOrganizationRequest.prototype.setOwnerEmail =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 7, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

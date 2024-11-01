@@ -1289,6 +1289,24 @@ export class CreateOrganizationRequest extends jspb.Message {
     value?: proto_environment_command_pb.CreateOrganizationCommand
   ): void;
 
+  getName(): string;
+  setName(value: string): void;
+
+  getUrlCode(): string;
+  setUrlCode(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  getIsTrial(): boolean;
+  setIsTrial(value: boolean): void;
+
+  getIsSystemAdmin(): boolean;
+  setIsSystemAdmin(value: boolean): void;
+
+  getOwnerEmail(): string;
+  setOwnerEmail(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateOrganizationRequest.AsObject;
   static toObject(
@@ -1313,6 +1331,12 @@ export class CreateOrganizationRequest extends jspb.Message {
 export namespace CreateOrganizationRequest {
   export type AsObject = {
     command?: proto_environment_command_pb.CreateOrganizationCommand.AsObject;
+    name: string;
+    urlCode: string;
+    description: string;
+    isTrial: boolean;
+    isSystemAdmin: boolean;
+    ownerEmail: string;
   };
 }
 

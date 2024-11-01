@@ -17,6 +17,8 @@ syntax = "proto3";
 package bucketeer.push;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/push";
 
+import "google/protobuf/wrappers.proto";
+
 import "proto/push/push.proto";
 import "proto/push/command.proto";
 
@@ -72,7 +74,7 @@ message UpdatePushRequest {
   DeletePushTagsCommand delete_push_tags_command = 4 [deprecated = true];
   RenamePushCommand rename_push_command = 5 [deprecated = true];
   repeated string tags = 6;
-  string name = 7;
+  google.protobuf.StringValue name = 7;
 }
 
 message UpdatePushResponse {

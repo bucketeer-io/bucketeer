@@ -38,7 +38,7 @@
       "version": "1.22.5"
     },
     "ghcr.io/devcontainers/features/node:1.6.1": {
-      "version": "18.20.3"
+      "version": "v20.18.0"
     },
     "./local-features/setup-user": "latest"
   },

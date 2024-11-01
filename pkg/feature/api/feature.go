@@ -740,15 +740,22 @@ func (s *FeatureService) UpdateFeature(
 			}
 		}
 		if feature == nil {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
 			s.logger.Error(
 				"Failed to find feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
+					zap.Error(dt.Err()),
 					zap.String("id", req.Id),
 					zap.String("environmentId", req.EnvironmentId),
 				)...,
 			)
-			return err
+			return dt.Err()
 		}
 		updated, err := feature.Update(
 			req.Name,

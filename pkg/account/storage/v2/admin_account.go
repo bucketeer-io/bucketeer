@@ -43,7 +43,12 @@ func (s *accountStorage) GetSystemAdminAccountV2(ctx context.Context, email stri
 	).Scan(
 		&account.Email,
 		&account.Name,
+		&account.FirstName,
+		&account.LastName,
+		&account.Language,
 		&account.AvatarImageUrl,
+		&account.AvatarFileType,
+		&account.AvatarImage,
 		&account.OrganizationId,
 		&organizationRole,
 		&mysql.JSONObject{Val: &account.EnvironmentRoles},

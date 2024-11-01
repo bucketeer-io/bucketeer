@@ -20,7 +20,9 @@ export const currentEnvironmentRole = (
 };
 
 export const getCurrentEnvironment = (account: ConsoleAccount): Environment => {
-  return currentEnvironmentRole(account).environment;
+  const envRole = currentEnvironmentRole(account);
+
+  return envRole.environment;
 };
 
 export const hasEditable = (account: ConsoleAccount): boolean => {

@@ -132,6 +132,9 @@ message Event {
     ACCOUNT_V2_SEARCH_FILTER_QUERY_CHANGED = 315;
     ACCOUNT_V2_SEARCH_FILTER_DEFAULT_CHANGED = 316;
     ACCOUNT_V2_SEARCH_FILTER_DELETED = 317;
+    ACCOUNT_V2_FIRST_NAME_CHANGED = 318;
+    ACCOUNT_V2_LAST_NAME_CHANGED = 319;
+    ACCOUNT_V2_LANGUAGE_CHANGED = 320;
     APIKEY_CREATED = 400;
     APIKEY_NAME_CHANGED = 401;
     APIKEY_ENABLED = 402;
@@ -181,7 +184,7 @@ message Event {
     PUSH_TAGS_ADDED = 902;
     PUSH_TAGS_DELETED = 903;
     PUSH_RENAMED = 904;
-    PUSH_TAGS_UPDATED = 905;
+    PUSH_UPDATED = 905;
     SUBSCRIPTION_CREATED = 1000;
     SUBSCRIPTION_DELETED = 1001;
     SUBSCRIPTION_ENABLED = 1002;
@@ -570,6 +573,9 @@ message AccountV2CreatedEvent {
   bool disabled = 7;
   int64 created_at = 8;
   int64 updated_at = 9;
+  string first_name = 10;
+  string last_name = 11;
+  string language = 12;
 }
 
 message AccountV2NameChangedEvent {
@@ -1123,4 +1129,19 @@ message FlagTriggerUsageUpdatedEvent {
   string environment_namespace = 3;
   int64 last_triggered_at = 4;
   int32 trigger_times = 5;
+}
+
+message AccountV2FirstNameChangedEvent {
+  string email = 1;
+  string first_name = 2;
+}
+
+message AccountV2LastNameChangedEvent {
+  string email = 1;
+  string last_name = 2;
+}
+
+message AccountV2LanguageChangedEvent {
+  string email = 1;
+  string language = 2;
 }

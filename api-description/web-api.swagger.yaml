@@ -2085,7 +2085,7 @@ paths:
   /v1/environment/get_organization:
     post:
       summary: Get
-      description: Get an organization. To call this API, you need an `SYSTEM_ADMIN` role.
+      description: Get an organization. To call this API, you need at least a MEMBER role.
       operationId: web.v1.environment.get_organization
       responses:
         "200":
@@ -2607,7 +2607,7 @@ paths:
   /v1/environment/update_organization:
     post:
       summary: Update
-      description: Update an organization. To call this API, you need an `SYSTEM_ADMIN` role.
+      description: Update an organization. To call this API, you need an `ADMIN` role.
       operationId: web.v1.environment.update_organization
       responses:
         "200":
@@ -2802,6 +2802,20 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/accountSearchFilter'
+      firstName:
+        type: string
+      lastName:
+        type: string
+      language:
+        type: string
+      lastSeen:
+        type: string
+        format: int64
+      avatarFileType:
+        type: string
+      avatarImage:
+        type: string
+        format: byte
   accountAccountV2EnvironmentRole:
     type: object
     properties:
@@ -2825,6 +2839,14 @@ definitions:
         type: string
   accountChangeAPIKeyNameResponse:
     type: object
+  accountChangeAccountV2AvatarCommand:
+    type: object
+    properties:
+      avatarImage:
+        type: string
+        format: byte
+      avatarFileType:
+        type: string
   accountChangeAccountV2AvatarImageUrlCommand:
     type: object
     properties:
@@ -2840,6 +2862,27 @@ definitions:
           $ref: '#/definitions/accountAccountV2EnvironmentRole'
       writeType:
         $ref: '#/definitions/ChangeAccountV2EnvironmentRolesCommandWriteType'
+  accountChangeAccountV2FirstNameCommand:
+    type: object
+    properties:
+      firstName:
+        type: string
+  accountChangeAccountV2LanguageCommand:
+    type: object
+    properties:
+      language:
+        type: string
+  accountChangeAccountV2LastNameCommand:
+    type: object
+    properties:
+      lastName:
+        type: string
+  accountChangeAccountV2LastSeenCommand:
+    type: object
+    properties:
+      lastSeen:
+        type: string
+        format: int64
   accountChangeAccountV2NameCommand:
     type: object
     properties:
@@ -2896,6 +2939,17 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/accountSearchFilter'
+      firstName:
+        type: string
+      lastName:
+        type: string
+      language:
+        type: string
+      avatarFileType:
+        type: string
+      avatarImage:
+        type: string
+        format: byte
   accountConsoleAccountEnvironmentRole:
     type: object
     properties:
@@ -2940,6 +2994,12 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/accountAccountV2EnvironmentRole'
+      firstName:
+        type: string
+      lastName:
+        type: string
+      language:
+        type: string
   accountCreateAccountV2Request:
     type: object
     properties:
@@ -3287,6 +3347,16 @@ definitions:
         $ref: '#/definitions/accountChangeAccountV2OrganizationRoleCommand'
       changeEnvironmentRolesCommand:
         $ref: '#/definitions/accountChangeAccountV2EnvironmentRolesCommand'
+      changeFirstNameCommand:
+        $ref: '#/definitions/accountChangeAccountV2FirstNameCommand'
+      changeLastNameCommand:
+        $ref: '#/definitions/accountChangeAccountV2LastNameCommand'
+      changeLanguageCommand:
+        $ref: '#/definitions/accountChangeAccountV2LanguageCommand'
+      changeLastSeenCommand:
+        $ref: '#/definitions/accountChangeAccountV2LastSeenCommand'
+      changeAvatarCommand:
+        $ref: '#/definitions/accountChangeAccountV2AvatarCommand'
   accountUpdateAccountV2Response:
     type: object
   accountUpdateSearchFilterRequest:
@@ -3527,11 +3597,25 @@ definitions:
         type: boolean
       ownerEmail:
         type: string
+    title: Deprecated
   environmentCreateOrganizationRequest:
     type: object
     properties:
       command:
         $ref: '#/definitions/environmentCreateOrganizationCommand'
+      name:
+        type: string
+      urlCode:
+        type: string
+      description:
+        type: string
+        title: optional
+      isTrial:
+        type: boolean
+      isSystemAdmin:
+        type: boolean
+      ownerEmail:
+        type: string
   environmentCreateOrganizationResponse:
     type: object
     properties:
@@ -3540,18 +3624,15 @@ definitions:
   environmentCreateProjectCommand:
     type: object
     properties:
-      id:
+      organizationId:
+        type: string
+      name:
         type: string
       description:
         type: string
         title: optional
-      name:
-        type: string
       urlCode:
         type: string
-      ownerEmail:
-        type: string
-    description: 'TODO: add organizationID once we support organization create UI.'
   environmentCreateProjectRequest:
     type: object
     properties:
