@@ -23,5 +23,13 @@
     "env-desc": "There are no registered environments for this project.",
     "user-title": "No registered users",
     "user-desc": "There are no registered users for this organization."
+  },
+  "organization": {
+    "confirm-archive-desc": "The organization <bold>{{name}}</bold> is going to be archived. Are you sure you want to proceed?",
+    "confirm-unarchive-desc": "The organization <bold>{{name}}</bold> is going to be unarchived. Are you sure you want to proceed?"
+  },
+  "environment": {
+    "confirm-archive-desc": "The environment <bold>{{name}}</bold> is going to be archived. Are you sure you want to proceed?",
+    "confirm-unarchive-desc": "The environment <bold>{{name}}</bold> is going to be unarchived. Are you sure you want to proceed?"
   }
 }

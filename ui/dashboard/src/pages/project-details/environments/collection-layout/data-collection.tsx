@@ -9,11 +9,12 @@ import { Environment } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { useSearchParams } from 'utils/search-params';
 import { Popover } from 'components/popover';
+import { EnvironmentActionsType } from '../types';
 
 export const useColumns = ({
-  onActionHandler
+  onActions
 }: {
-  onActionHandler: (type: string, v: Environment) => void;
+  onActions: (item: Environment, type: EnvironmentActionsType) => void;
 }): ColumnDef<Environment>[] => {
   const { searchOptions } = useSearchParams();
   const { t } = useTranslation(['common', 'table']);
@@ -77,22 +78,24 @@ export const useColumns = ({
               {
                 label: `${t('table:popover.edit-env')}`,
                 icon: IconEditOutlined,
-                value: 'EDIT_ENVIRONMENT'
+                value: 'EDIT'
               },
               searchOptions.status === 'ARCHIVED'
                 ? {
                     label: `${t('table:popover.unarchive-env')}`,
                     icon: IconArchiveOutlined,
-                    value: 'UNARCHIVE_ENVIRONMENT'
+                    value: 'UNARCHIVE'
                   }
                 : {
                     label: `${t('table:popover.archive-env')}`,
                     icon: IconArchiveOutlined,
-                    value: 'ARCHIVED_ENVIRONMENT'
+                    value: 'ARCHIVE'
                   }
             ]}
             icon={IconMoreHorizOutlined}
-            onClick={value => onActionHandler(value as string, environment)}
+            onClick={value =>
+              onActions(environment, value as EnvironmentActionsType)
+            }
             align="end"
           />
         );
