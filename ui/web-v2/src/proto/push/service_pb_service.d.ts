@@ -40,12 +40,22 @@ type PushServiceUpdatePush = {
   readonly responseType: typeof proto_push_service_pb.UpdatePushResponse;
 };
 
+type PushServiceGetPush = {
+  readonly methodName: string;
+  readonly service: typeof PushService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_push_service_pb.GetPushRequest;
+  readonly responseType: typeof proto_push_service_pb.GetPushResponse;
+};
+
 export class PushService {
   static readonly serviceName: string;
   static readonly ListPushes: PushServiceListPushes;
   static readonly CreatePush: PushServiceCreatePush;
   static readonly DeletePush: PushServiceDeletePush;
   static readonly UpdatePush: PushServiceUpdatePush;
+  static readonly GetPush: PushServiceGetPush;
 }
 
 export type ServiceError = {
@@ -151,6 +161,21 @@ export class PushServiceClient {
     callback: (
       error: ServiceError | null,
       responseMessage: proto_push_service_pb.UpdatePushResponse | null
+    ) => void
+  ): UnaryResponse;
+  getPush(
+    requestMessage: proto_push_service_pb.GetPushRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_push_service_pb.GetPushResponse | null
+    ) => void
+  ): UnaryResponse;
+  getPush(
+    requestMessage: proto_push_service_pb.GetPushRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_push_service_pb.GetPushResponse | null
     ) => void
   ): UnaryResponse;
 }

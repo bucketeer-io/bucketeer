@@ -5,30 +5,24 @@ import { OrderBy, OrderDirection } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import CollectionLoader from 'pages/projects/collection-loader';
-import { ProjectsFilters } from 'pages/projects/types';
+import { ProjectFilters } from 'pages/projects/types';
 import Filter from 'elements/filter';
-import { OrganizationProjectFilters } from '../types';
 
 const OrganizationProjects = () => {
   const { organizationId } = useParams();
   const { searchOptions, onChangSearchParams } = useSearchParams();
 
-  const [filters, setFilters] = usePartialState<OrganizationProjectFilters>({
+  const [filters, setFilters] = usePartialState<ProjectFilters>({
     page: Number(searchOptions.page) || 1,
     orderBy: (searchOptions.orderBy as OrderBy) || 'CREATED_AT',
     orderDirection: (searchOptions.orderDirection as OrderDirection) || 'DESC',
     searchQuery: (searchOptions.searchQuery as string) || ''
   });
 
-  const onChangeFilters = (values: Partial<OrganizationProjectFilters>) => {
+  const onChangeFilters = (values: Partial<ProjectFilters>) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
     setFilters({ ...values });
-  };
-
-  const filterParams: ProjectsFilters = {
-    ...filters,
-    organizationIds: [organizationId!]
   };
 
   return (
@@ -37,7 +31,12 @@ const OrganizationProjects = () => {
         searchValue={filters.searchQuery}
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
-      <CollectionLoader filters={filterParams} setFilters={onChangeFilters} />
+      <CollectionLoader
+        filters={filters}
+        organizationIds={[organizationId!]}
+        setFilters={onChangeFilters}
+        onActionHandler={() => {}}
+      />
     </>
   );
 };

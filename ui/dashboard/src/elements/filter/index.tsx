@@ -38,19 +38,21 @@ const Filter = ({
           <Icon icon={IconLaunchOutlined} size="sm" />
           {t('documentation')}
         </Button>
-        <Button
-          variant="secondary"
-          onClick={onOpenFilter}
-          className="text-gray-600 shadow-border-gray-400 flex-1 lg:flex-none"
-        >
-          <Icon icon={IconFilterListOutlined} size="sm" />
-          {t('filter')}
-          {filterCount && (
-            <div className="size-5 flex-center rounded-full bg-gray-200 text-[11px] text-gray-700">
-              {filterCount}
-            </div>
-          )}
-        </Button>
+        {onOpenFilter && (
+          <Button
+            variant="secondary"
+            onClick={onOpenFilter}
+            className="text-gray-600 shadow-border-gray-400 flex-1 lg:flex-none"
+          >
+            <Icon icon={IconFilterListOutlined} size="sm" />
+            {t('filter')}
+            {filterCount && (
+              <div className="size-5 flex-center rounded-full bg-gray-200 text-[11px] text-gray-700">
+                {filterCount}
+              </div>
+            )}
+          </Button>
+        )}
         {action}
       </div>
     </div>

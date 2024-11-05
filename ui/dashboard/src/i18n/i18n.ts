@@ -14,7 +14,7 @@ i18n
     supportedLngs: ['en', 'ja'],
     lng: savedLanguage,
     fallbackLng: 'en',
-    ns: 'common',
+    ns: ['common'],
     defaultNS: 'common',
     backend: {
       loadPath: '/v3/locales/{{lng}}/{{ns}}.json'

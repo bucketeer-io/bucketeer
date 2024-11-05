@@ -197,6 +197,11 @@
                 "id": 16,
                 "name": "avatar_image",
                 "type": "bytes"
+              },
+              {
+                "id": 17,
+                "name": "environment_count",
+                "type": "int32"
               }
             ],
             "messages": [
@@ -876,6 +881,14 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 3
+              },
+              {
+                "name": "ORGANIZATION_ROLE",
+                "integer": 4
+              },
+              {
+                "name": "ENVIRONMENT_COUNT",
+                "integer": 5
               }
             ]
           },
@@ -14477,6 +14490,10 @@
                 "integer": 904
               },
               {
+                "name": "PUSH_UPDATED",
+                "integer": 905
+              },
+              {
                 "name": "SUBSCRIPTION_CREATED",
                 "integer": 1000
               },
@@ -16926,6 +16943,17 @@
                 "id": 2,
                 "name": "name",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "PushTagsUpdatedEvent",
+            "fields": [
+              {
+                "id": 2,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
               }
             ]
           },
@@ -27106,7 +27134,13 @@
               {
                 "id": 3,
                 "name": "command",
-                "type": "DeletePushCommand"
+                "type": "DeletePushCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               }
             ]
           },
@@ -27129,22 +27163,83 @@
               {
                 "id": 3,
                 "name": "add_push_tags_command",
-                "type": "AddPushTagsCommand"
+                "type": "AddPushTagsCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 4,
                 "name": "delete_push_tags_command",
-                "type": "DeletePushTagsCommand"
+                "type": "DeletePushTagsCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 5,
                 "name": "rename_push_command",
-                "type": "RenamePushCommand"
+                "type": "RenamePushCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 6,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
               }
             ]
           },
           {
-            "name": "UpdatePushResponse"
+            "name": "UpdatePushResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "push",
+                "type": "Push"
+              }
+            ]
+          },
+          {
+            "name": "GetPushRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_namespace",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetPushResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "push",
+                "type": "Push"
+              }
+            ]
           }
         ],
         "services": [
@@ -27170,11 +27265,19 @@
                 "name": "UpdatePush",
                 "in_type": "UpdatePushRequest",
                 "out_type": "UpdatePushResponse"
+              },
+              {
+                "name": "GetPush",
+                "in_type": "GetPushRequest",
+                "out_type": "GetPushResponse"
               }
             ]
           }
         ],
         "imports": [
+          {
+            "path": "google/protobuf/wrappers.proto"
+          },
           {
             "path": "proto/push/push.proto"
           },

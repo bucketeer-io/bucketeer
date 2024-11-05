@@ -303,6 +303,7 @@ func (s *accountStorage) ListAccountsV2(
 			&account.CreatedAt,
 			&account.UpdatedAt,
 			&mysql.JSONObject{Val: &account.SearchFilters},
+			&account.EnvironmentCount,
 		)
 		if err != nil {
 			return nil, 0, 0, err

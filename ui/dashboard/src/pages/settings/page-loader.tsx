@@ -1,13 +1,14 @@
 import { useQueryOrganizationDetails } from '@queries/organization-details';
-import { getOrgIdStorage } from 'storage/organization';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import PageLayout from 'elements/page-layout';
 import PageContent from './page-content';
 
 const PageLoader = () => {
-  const organizationId = getOrgIdStorage();
+  const { consoleAccount } = useAuth();
+  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const { data, isLoading, refetch, isError } = useQueryOrganizationDetails({
-    params: { id: organizationId! }
+    params: { id: currenEnvironment.organizationId }
   });
 
   const organization = data?.organization;

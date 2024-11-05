@@ -38,5 +38,5 @@ export const DEMO_SIGN_IN_EMAIL =
 
 export const DEMO_SIGN_IN_PASSWORD =
   releaseMode !== 'prod'
-    ? import.meta.env.VITE_DEMO_SIGN_IN_ENABLED
+    ? import.meta.env.VITE_DEMO_SIGN_IN_PASSWORD
     : window.env?.DEMO_SIGN_IN_PASSWORD;

@@ -247,6 +247,7 @@ export namespace Event {
     PUSH_TAGS_ADDED: 902;
     PUSH_TAGS_DELETED: 903;
     PUSH_RENAMED: 904;
+    PUSH_UPDATED: 905;
     SUBSCRIPTION_CREATED: 1000;
     SUBSCRIPTION_DELETED: 1001;
     SUBSCRIPTION_ENABLED: 1002;
@@ -4920,6 +4921,39 @@ export class PushRenamedEvent extends jspb.Message {
 export namespace PushRenamedEvent {
   export type AsObject = {
     name: string;
+  };
+}
+
+export class PushTagsUpdatedEvent extends jspb.Message {
+  clearTagsList(): void;
+  getTagsList(): Array<string>;
+  setTagsList(value: Array<string>): void;
+  addTags(value: string, index?: number): string;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): PushTagsUpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: PushTagsUpdatedEvent
+  ): PushTagsUpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: PushTagsUpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): PushTagsUpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: PushTagsUpdatedEvent,
+    reader: jspb.BinaryReader
+  ): PushTagsUpdatedEvent;
+}
+
+export namespace PushTagsUpdatedEvent {
+  export type AsObject = {
+    tagsList: Array<string>;
   };
 }
 
