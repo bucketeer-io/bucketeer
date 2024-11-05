@@ -312,7 +312,8 @@ func (s *AccountService) UpdateAccountV2(
 		)
 		return nil, err
 	}
-	if err := s.updateAccountV2MySQL(ctx, editor, commands, req.Email, req.OrganizationId); err != nil {
+	updatedAccountPb, err := s.updateAccountV2MySQL(ctx, editor, commands, req.Email, req.OrganizationId)
+	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
@@ -340,7 +341,9 @@ func (s *AccountService) UpdateAccountV2(
 		}
 		return nil, dt.Err()
 	}
-	return &accountproto.UpdateAccountV2Response{}, nil
+	return &accountproto.UpdateAccountV2Response{
+		Account: updatedAccountPb,
+	}, nil
 }
 
 func (s *AccountService) updateAccountV2NoCommand(
@@ -349,7 +352,81 @@ func (s *AccountService) updateAccountV2NoCommand(
 	localizer locale.Localizer,
 	editor *eventproto.Editor,
 ) (*accountproto.UpdateAccountV2Response, error) {
-	return nil, nil
+	err := validateUpdateAccountV2NoCommandRequest(req, localizer)
+	if err != nil {
+		return nil, err
+	}
+	var updatedAccountPb *accountproto.AccountV2
+	err = s.accountStorage.RunInTransaction(ctx, func() error {
+		account, err := s.accountStorage.GetAccountV2(ctx, req.Email, req.OrganizationId)
+		if err != nil {
+			return err
+		}
+		updated, err := account.Update(
+			req.Name,
+			req.FirstName,
+			req.LastName,
+			req.Language,
+			req.AvatarImageUrl,
+			req.Avatar,
+			req.OrganizationRole,
+			req.EnvironmentRoles,
+		)
+		if err != nil {
+			return err
+		}
+		updateAccountV2Event, err := domainevent.NewAdminEvent(
+			editor,
+			eventproto.Event_ACCOUNT,
+			account.Email,
+			eventproto.Event_ACCOUNT_V2_UPDATED,
+			&eventproto.AccountV2UpdatedEvent{
+				Email:          updated.Email,
+				OrganizationId: updated.OrganizationId,
+			},
+			updated,
+			account,
+		)
+		if err != nil {
+			return err
+		}
+		if err = s.publisher.Publish(ctx, updateAccountV2Event); err != nil {
+			return err
+		}
+		updatedAccountPb = updated.AccountV2
+		return s.accountStorage.UpdateAccountV2(ctx, updated)
+	})
+	if err != nil {
+		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to update account",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+				zap.String("email", req.Email),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &accountproto.UpdateAccountV2Response{
+		Account: updatedAccountPb,
+	}, nil
 }
 
 func isNoUpdateAccountV2Command(req *accountproto.UpdateAccountV2Request) bool {
@@ -421,7 +498,7 @@ func (s *AccountService) EnableAccountV2(
 		)
 		return nil, err
 	}
-	err = s.updateAccountV2MySQL(
+	_, err = s.updateAccountV2MySQL(
 		ctx,
 		editor,
 		[]command.Command{req.Command},
@@ -484,7 +561,7 @@ func (s *AccountService) DisableAccountV2(
 		)
 		return nil, err
 	}
-	err = s.updateAccountV2MySQL(
+	_, err = s.updateAccountV2MySQL(
 		ctx,
 		editor,
 		[]command.Command{req.Command},
@@ -527,8 +604,9 @@ func (s *AccountService) updateAccountV2MySQL(
 	editor *eventproto.Editor,
 	commands []command.Command,
 	email, organizationID string,
-) error {
-	return s.accountStorage.RunInTransaction(ctx, func() error {
+) (*accountproto.AccountV2, error) {
+	var updatedAccountPb *accountproto.AccountV2
+	err := s.accountStorage.RunInTransaction(ctx, func() error {
 		account, err := s.accountStorage.GetAccountV2(ctx, email, organizationID)
 		if err != nil {
 			return err
@@ -542,8 +620,10 @@ func (s *AccountService) updateAccountV2MySQL(
 				return err
 			}
 		}
+		updatedAccountPb = account.AccountV2
 		return s.accountStorage.UpdateAccountV2(ctx, account)
 	})
+	return updatedAccountPb, err
 }
 
 func (s *AccountService) DeleteAccountV2(

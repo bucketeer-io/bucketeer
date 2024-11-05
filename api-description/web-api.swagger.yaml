@@ -2751,6 +2751,11 @@ definitions:
         format: byte
       avatarFileType:
         type: string
+  UpdateAccountV2RequestOrganizationRoleValue:
+    type: object
+    properties:
+      role:
+        $ref: '#/definitions/AccountV2RoleOrganization'
   accountAPIKey:
     type: object
     properties:
@@ -3394,7 +3399,7 @@ definitions:
       avatarImageUrl:
         type: string
       organizationRole:
-        $ref: '#/definitions/AccountV2RoleOrganization'
+        $ref: '#/definitions/UpdateAccountV2RequestOrganizationRoleValue'
       environmentRoles:
         type: array
         items:

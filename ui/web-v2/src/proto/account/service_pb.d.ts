@@ -581,9 +581,13 @@ export class UpdateAccountV2Request extends jspb.Message {
   getAvatarImageUrl(): google_protobuf_wrappers_pb.StringValue | undefined;
   setAvatarImageUrl(value?: google_protobuf_wrappers_pb.StringValue): void;
 
-  getOrganizationRole(): proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
+  hasOrganizationRole(): boolean;
+  clearOrganizationRole(): void;
+  getOrganizationRole():
+    | UpdateAccountV2Request.OrganizationRoleValue
+    | undefined;
   setOrganizationRole(
-    value: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap]
+    value?: UpdateAccountV2Request.OrganizationRoleValue
   ): void;
 
   clearEnvironmentRolesList(): void;
@@ -657,7 +661,7 @@ export namespace UpdateAccountV2Request {
     changeAvatarCommand?: proto_account_command_pb.ChangeAccountV2AvatarCommand.AsObject;
     name?: google_protobuf_wrappers_pb.StringValue.AsObject;
     avatarImageUrl?: google_protobuf_wrappers_pb.StringValue.AsObject;
-    organizationRole: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
+    organizationRole?: UpdateAccountV2Request.OrganizationRoleValue.AsObject;
     environmentRolesList: Array<proto_account_account_pb.AccountV2.EnvironmentRole.AsObject>;
     firstName?: google_protobuf_wrappers_pb.StringValue.AsObject;
     lastName?: google_protobuf_wrappers_pb.StringValue.AsObject;
@@ -700,6 +704,39 @@ export namespace UpdateAccountV2Request {
     export type AsObject = {
       avatarImage: Uint8Array | string;
       avatarFileType: string;
+    };
+  }
+
+  export class OrganizationRoleValue extends jspb.Message {
+    getRole(): proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
+    setRole(
+      value: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap]
+    ): void;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): OrganizationRoleValue.AsObject;
+    static toObject(
+      includeInstance: boolean,
+      msg: OrganizationRoleValue
+    ): OrganizationRoleValue.AsObject;
+    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+    static extensionsBinary: {
+      [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+    };
+    static serializeBinaryToWriter(
+      message: OrganizationRoleValue,
+      writer: jspb.BinaryWriter
+    ): void;
+    static deserializeBinary(bytes: Uint8Array): OrganizationRoleValue;
+    static deserializeBinaryFromReader(
+      message: OrganizationRoleValue,
+      reader: jspb.BinaryReader
+    ): OrganizationRoleValue;
+  }
+
+  export namespace OrganizationRoleValue {
+    export type AsObject = {
+      role: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
     };
   }
 }

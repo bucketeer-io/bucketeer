@@ -22,6 +22,7 @@ import (
 	"github.com/jinzhu/copier"
 	"google.golang.org/grpc/codes"
 	gstatus "google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
@@ -80,23 +81,41 @@ func NewAccountV2(
 }
 
 func (a *AccountV2) Update(
-	email, name, firstName, lastName, language, avatarImageURL, organizationID string,
-	organizationRole proto.AccountV2_Role_Organization,
+	name, firstName, lastName, language, avatarImageURL *wrapperspb.StringValue,
+	avatar *proto.UpdateAccountV2Request_AccountV2Avatar,
+	organizationRole *proto.UpdateAccountV2Request_OrganizationRoleValue,
 	environmentRoles []*proto.AccountV2_EnvironmentRole,
 ) (*AccountV2, error) {
 	updated := &AccountV2{}
 	if err := copier.Copy(updated, a); err != nil {
 		return nil, err
 	}
-	updated.Email = email
-	updated.Name = name
-	updated.FirstName = firstName
-	updated.LastName = lastName
-	updated.Language = language
-	updated.AvatarImageUrl = avatarImageURL
-	updated.OrganizationId = organizationID
-	updated.OrganizationRole = organizationRole
-	updated.EnvironmentRoles = environmentRoles
+
+	if name != nil {
+		updated.Name = name.Value
+	}
+	if firstName != nil {
+		updated.FirstName = firstName.Value
+	}
+	if lastName != nil {
+		updated.LastName = lastName.Value
+	}
+	if language != nil {
+		updated.Language = language.Value
+	}
+	if avatarImageURL != nil {
+		updated.AvatarImageUrl = avatarImageURL.Value
+	}
+	if avatar != nil {
+		updated.AvatarImage = avatar.AvatarImage
+		updated.AvatarFileType = avatar.AvatarFileType
+	}
+	if organizationRole != nil {
+		updated.OrganizationRole = organizationRole.Role
+	}
+	if len(updated.EnvironmentRoles) > 0 {
+		updated.EnvironmentRoles = environmentRoles
+	}
 	updated.UpdatedAt = time.Now().Unix()
 	if err := validate(updated); err != nil {
 		return nil, err

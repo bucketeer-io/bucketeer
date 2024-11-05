@@ -520,7 +520,7 @@ func validateUpdateAccountV2NoCommandRequest(
 		if newLastName == "" {
 			dt, err := statusLastNameIsEmpty.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "first_name"),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "last_name"),
 			})
 			if err != nil {
 				return statusInternal.Err()
@@ -537,6 +537,28 @@ func validateUpdateAccountV2NoCommandRequest(
 			}
 			return dt.Err()
 		}
+	}
+	if req.Language != nil {
+		if req.Language.Value == "" {
+			dt, err := statusLanguageIsEmpty.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "language"),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+	}
+	if req.OrganizationRole != nil && req.OrganizationRole.Role == accountproto.AccountV2_Role_Organization_UNASSIGNED {
+		dt, err := statusInvalidOrganizationRole.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "organization_role"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
 	}
 	return nil
 }

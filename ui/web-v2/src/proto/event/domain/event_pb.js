@@ -2318,14 +2318,7 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.bucketeer.event.domain.AccountV2UpdatedEvent = function (opt_data) {
-  jspb.Message.initialize(
-    this,
-    opt_data,
-    0,
-    -1,
-    proto.bucketeer.event.domain.AccountV2UpdatedEvent.repeatedFields_,
-    null
-  );
+  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
 };
 goog.inherits(proto.bucketeer.event.domain.AccountV2UpdatedEvent, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -17457,13 +17450,6 @@ proto.bucketeer.event.domain.AccountV2CreatedEvent.prototype.setLanguage =
     return jspb.Message.setProto3StringField(this, 12, value);
   };
 
-/**
- * List of repeated fields within this message type.
- * @private {!Array<number>}
- * @const
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.repeatedFields_ = [6];
-
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -17500,42 +17486,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        email:
-          (f = msg.getEmail()) &&
-          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
-        name:
-          (f = msg.getName()) &&
-          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
-        avatarImageUrl:
-          (f = msg.getAvatarImageUrl()) &&
-          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
-        organizationId:
-          (f = msg.getOrganizationId()) &&
-          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
-        organizationRole: jspb.Message.getFieldWithDefault(msg, 5, 0),
-        environmentRolesList: jspb.Message.toObjectList(
-          msg.getEnvironmentRolesList(),
-          proto_account_account_pb.AccountV2.EnvironmentRole.toObject,
-          includeInstance
-        ),
-        disabled:
-          (f = msg.getDisabled()) &&
-          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
-        createdAt:
-          (f = msg.getCreatedAt()) &&
-          google_protobuf_wrappers_pb.Int64Value.toObject(includeInstance, f),
-        updatedAt:
-          (f = msg.getUpdatedAt()) &&
-          google_protobuf_wrappers_pb.Int64Value.toObject(includeInstance, f),
-        firstName:
-          (f = msg.getFirstName()) &&
-          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
-        lastName:
-          (f = msg.getLastName()) &&
-          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
-        language:
-          (f = msg.getLanguage()) &&
-          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f)
+        email: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        organizationId: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -17576,100 +17528,12 @@ proto.bucketeer.event.domain.AccountV2UpdatedEvent.deserializeBinaryFromReader =
       var field = reader.getFieldNumber();
       switch (field) {
         case 1:
-          var value = new google_protobuf_wrappers_pb.StringValue();
-          reader.readMessage(
-            value,
-            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
-          );
+          var value = /** @type {string} */ (reader.readString());
           msg.setEmail(value);
           break;
         case 2:
-          var value = new google_protobuf_wrappers_pb.StringValue();
-          reader.readMessage(
-            value,
-            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
-          );
-          msg.setName(value);
-          break;
-        case 3:
-          var value = new google_protobuf_wrappers_pb.StringValue();
-          reader.readMessage(
-            value,
-            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
-          );
-          msg.setAvatarImageUrl(value);
-          break;
-        case 4:
-          var value = new google_protobuf_wrappers_pb.StringValue();
-          reader.readMessage(
-            value,
-            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
-          );
+          var value = /** @type {string} */ (reader.readString());
           msg.setOrganizationId(value);
-          break;
-        case 5:
-          var value =
-            /** @type {!proto.bucketeer.account.AccountV2.Role.Organization} */ (
-              reader.readEnum()
-            );
-          msg.setOrganizationRole(value);
-          break;
-        case 6:
-          var value = new proto_account_account_pb.AccountV2.EnvironmentRole();
-          reader.readMessage(
-            value,
-            proto_account_account_pb.AccountV2.EnvironmentRole
-              .deserializeBinaryFromReader
-          );
-          msg.addEnvironmentRoles(value);
-          break;
-        case 7:
-          var value = new google_protobuf_wrappers_pb.BoolValue();
-          reader.readMessage(
-            value,
-            google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader
-          );
-          msg.setDisabled(value);
-          break;
-        case 8:
-          var value = new google_protobuf_wrappers_pb.Int64Value();
-          reader.readMessage(
-            value,
-            google_protobuf_wrappers_pb.Int64Value.deserializeBinaryFromReader
-          );
-          msg.setCreatedAt(value);
-          break;
-        case 9:
-          var value = new google_protobuf_wrappers_pb.Int64Value();
-          reader.readMessage(
-            value,
-            google_protobuf_wrappers_pb.Int64Value.deserializeBinaryFromReader
-          );
-          msg.setUpdatedAt(value);
-          break;
-        case 10:
-          var value = new google_protobuf_wrappers_pb.StringValue();
-          reader.readMessage(
-            value,
-            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
-          );
-          msg.setFirstName(value);
-          break;
-        case 11:
-          var value = new google_protobuf_wrappers_pb.StringValue();
-          reader.readMessage(
-            value,
-            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
-          );
-          msg.setLastName(value);
-          break;
-        case 12:
-          var value = new google_protobuf_wrappers_pb.StringValue();
-          reader.readMessage(
-            value,
-            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
-          );
-          msg.setLanguage(value);
           break;
         default:
           reader.skipField();
@@ -17704,587 +17568,53 @@ proto.bucketeer.event.domain.AccountV2UpdatedEvent.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
     f = message.getEmail();
-    if (f != null) {
-      writer.writeMessage(
-        1,
-        f,
-        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
-      );
-    }
-    f = message.getName();
-    if (f != null) {
-      writer.writeMessage(
-        2,
-        f,
-        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
-      );
-    }
-    f = message.getAvatarImageUrl();
-    if (f != null) {
-      writer.writeMessage(
-        3,
-        f,
-        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
-      );
+    if (f.length > 0) {
+      writer.writeString(1, f);
     }
     f = message.getOrganizationId();
-    if (f != null) {
-      writer.writeMessage(
-        4,
-        f,
-        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
-      );
-    }
-    f = message.getOrganizationRole();
-    if (f !== 0.0) {
-      writer.writeEnum(5, f);
-    }
-    f = message.getEnvironmentRolesList();
     if (f.length > 0) {
-      writer.writeRepeatedMessage(
-        6,
-        f,
-        proto_account_account_pb.AccountV2.EnvironmentRole
-          .serializeBinaryToWriter
-      );
-    }
-    f = message.getDisabled();
-    if (f != null) {
-      writer.writeMessage(
-        7,
-        f,
-        google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
-      );
-    }
-    f = message.getCreatedAt();
-    if (f != null) {
-      writer.writeMessage(
-        8,
-        f,
-        google_protobuf_wrappers_pb.Int64Value.serializeBinaryToWriter
-      );
-    }
-    f = message.getUpdatedAt();
-    if (f != null) {
-      writer.writeMessage(
-        9,
-        f,
-        google_protobuf_wrappers_pb.Int64Value.serializeBinaryToWriter
-      );
-    }
-    f = message.getFirstName();
-    if (f != null) {
-      writer.writeMessage(
-        10,
-        f,
-        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
-      );
-    }
-    f = message.getLastName();
-    if (f != null) {
-      writer.writeMessage(
-        11,
-        f,
-        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
-      );
-    }
-    f = message.getLanguage();
-    if (f != null) {
-      writer.writeMessage(
-        12,
-        f,
-        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
-      );
+      writer.writeString(2, f);
     }
   };
 
 /**
- * optional google.protobuf.StringValue email = 1;
- * @return {?proto.google.protobuf.StringValue}
+ * optional string email = 1;
+ * @return {string}
  */
 proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.getEmail =
   function () {
-    return /** @type{?proto.google.protobuf.StringValue} */ (
-      jspb.Message.getWrapperField(
-        this,
-        google_protobuf_wrappers_pb.StringValue,
-        1
-      )
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 1, '')
     );
   };
 
 /**
- * @param {?proto.google.protobuf.StringValue|undefined} value
+ * @param {string} value
  * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
  */
 proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.setEmail =
   function (value) {
-    return jspb.Message.setWrapperField(this, 1, value);
+    return jspb.Message.setProto3StringField(this, 1, value);
   };
 
 /**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.clearEmail =
-  function () {
-    return this.setEmail(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.hasEmail =
-  function () {
-    return jspb.Message.getField(this, 1) != null;
-  };
-
-/**
- * optional google.protobuf.StringValue name = 2;
- * @return {?proto.google.protobuf.StringValue}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.getName =
-  function () {
-    return /** @type{?proto.google.protobuf.StringValue} */ (
-      jspb.Message.getWrapperField(
-        this,
-        google_protobuf_wrappers_pb.StringValue,
-        2
-      )
-    );
-  };
-
-/**
- * @param {?proto.google.protobuf.StringValue|undefined} value
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.setName =
-  function (value) {
-    return jspb.Message.setWrapperField(this, 2, value);
-  };
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.clearName =
-  function () {
-    return this.setName(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.hasName =
-  function () {
-    return jspb.Message.getField(this, 2) != null;
-  };
-
-/**
- * optional google.protobuf.StringValue avatar_image_url = 3;
- * @return {?proto.google.protobuf.StringValue}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.getAvatarImageUrl =
-  function () {
-    return /** @type{?proto.google.protobuf.StringValue} */ (
-      jspb.Message.getWrapperField(
-        this,
-        google_protobuf_wrappers_pb.StringValue,
-        3
-      )
-    );
-  };
-
-/**
- * @param {?proto.google.protobuf.StringValue|undefined} value
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.setAvatarImageUrl =
-  function (value) {
-    return jspb.Message.setWrapperField(this, 3, value);
-  };
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.clearAvatarImageUrl =
-  function () {
-    return this.setAvatarImageUrl(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.hasAvatarImageUrl =
-  function () {
-    return jspb.Message.getField(this, 3) != null;
-  };
-
-/**
- * optional google.protobuf.StringValue organization_id = 4;
- * @return {?proto.google.protobuf.StringValue}
+ * optional string organization_id = 2;
+ * @return {string}
  */
 proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.getOrganizationId =
   function () {
-    return /** @type{?proto.google.protobuf.StringValue} */ (
-      jspb.Message.getWrapperField(
-        this,
-        google_protobuf_wrappers_pb.StringValue,
-        4
-      )
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 2, '')
     );
   };
 
 /**
- * @param {?proto.google.protobuf.StringValue|undefined} value
+ * @param {string} value
  * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
  */
 proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.setOrganizationId =
   function (value) {
-    return jspb.Message.setWrapperField(this, 4, value);
-  };
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.clearOrganizationId =
-  function () {
-    return this.setOrganizationId(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.hasOrganizationId =
-  function () {
-    return jspb.Message.getField(this, 4) != null;
-  };
-
-/**
- * optional bucketeer.account.AccountV2.Role.Organization organization_role = 5;
- * @return {!proto.bucketeer.account.AccountV2.Role.Organization}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.getOrganizationRole =
-  function () {
-    return /** @type {!proto.bucketeer.account.AccountV2.Role.Organization} */ (
-      jspb.Message.getFieldWithDefault(this, 5, 0)
-    );
-  };
-
-/**
- * @param {!proto.bucketeer.account.AccountV2.Role.Organization} value
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.setOrganizationRole =
-  function (value) {
-    return jspb.Message.setProto3EnumField(this, 5, value);
-  };
-
-/**
- * repeated bucketeer.account.AccountV2.EnvironmentRole environment_roles = 6;
- * @return {!Array<!proto.bucketeer.account.AccountV2.EnvironmentRole>}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.getEnvironmentRolesList =
-  function () {
-    return /** @type{!Array<!proto.bucketeer.account.AccountV2.EnvironmentRole>} */ (
-      jspb.Message.getRepeatedWrapperField(
-        this,
-        proto_account_account_pb.AccountV2.EnvironmentRole,
-        6
-      )
-    );
-  };
-
-/**
- * @param {!Array<!proto.bucketeer.account.AccountV2.EnvironmentRole>} value
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.setEnvironmentRolesList =
-  function (value) {
-    return jspb.Message.setRepeatedWrapperField(this, 6, value);
-  };
-
-/**
- * @param {!proto.bucketeer.account.AccountV2.EnvironmentRole=} opt_value
- * @param {number=} opt_index
- * @return {!proto.bucketeer.account.AccountV2.EnvironmentRole}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.addEnvironmentRoles =
-  function (opt_value, opt_index) {
-    return jspb.Message.addToRepeatedWrapperField(
-      this,
-      6,
-      opt_value,
-      proto.bucketeer.account.AccountV2.EnvironmentRole,
-      opt_index
-    );
-  };
-
-/**
- * Clears the list making it empty but non-null.
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.clearEnvironmentRolesList =
-  function () {
-    return this.setEnvironmentRolesList([]);
-  };
-
-/**
- * optional google.protobuf.BoolValue disabled = 7;
- * @return {?proto.google.protobuf.BoolValue}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.getDisabled =
-  function () {
-    return /** @type{?proto.google.protobuf.BoolValue} */ (
-      jspb.Message.getWrapperField(
-        this,
-        google_protobuf_wrappers_pb.BoolValue,
-        7
-      )
-    );
-  };
-
-/**
- * @param {?proto.google.protobuf.BoolValue|undefined} value
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.setDisabled =
-  function (value) {
-    return jspb.Message.setWrapperField(this, 7, value);
-  };
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.clearDisabled =
-  function () {
-    return this.setDisabled(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.hasDisabled =
-  function () {
-    return jspb.Message.getField(this, 7) != null;
-  };
-
-/**
- * optional google.protobuf.Int64Value created_at = 8;
- * @return {?proto.google.protobuf.Int64Value}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.getCreatedAt =
-  function () {
-    return /** @type{?proto.google.protobuf.Int64Value} */ (
-      jspb.Message.getWrapperField(
-        this,
-        google_protobuf_wrappers_pb.Int64Value,
-        8
-      )
-    );
-  };
-
-/**
- * @param {?proto.google.protobuf.Int64Value|undefined} value
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.setCreatedAt =
-  function (value) {
-    return jspb.Message.setWrapperField(this, 8, value);
-  };
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.clearCreatedAt =
-  function () {
-    return this.setCreatedAt(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.hasCreatedAt =
-  function () {
-    return jspb.Message.getField(this, 8) != null;
-  };
-
-/**
- * optional google.protobuf.Int64Value updated_at = 9;
- * @return {?proto.google.protobuf.Int64Value}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.getUpdatedAt =
-  function () {
-    return /** @type{?proto.google.protobuf.Int64Value} */ (
-      jspb.Message.getWrapperField(
-        this,
-        google_protobuf_wrappers_pb.Int64Value,
-        9
-      )
-    );
-  };
-
-/**
- * @param {?proto.google.protobuf.Int64Value|undefined} value
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.setUpdatedAt =
-  function (value) {
-    return jspb.Message.setWrapperField(this, 9, value);
-  };
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.clearUpdatedAt =
-  function () {
-    return this.setUpdatedAt(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.hasUpdatedAt =
-  function () {
-    return jspb.Message.getField(this, 9) != null;
-  };
-
-/**
- * optional google.protobuf.StringValue first_name = 10;
- * @return {?proto.google.protobuf.StringValue}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.getFirstName =
-  function () {
-    return /** @type{?proto.google.protobuf.StringValue} */ (
-      jspb.Message.getWrapperField(
-        this,
-        google_protobuf_wrappers_pb.StringValue,
-        10
-      )
-    );
-  };
-
-/**
- * @param {?proto.google.protobuf.StringValue|undefined} value
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.setFirstName =
-  function (value) {
-    return jspb.Message.setWrapperField(this, 10, value);
-  };
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.clearFirstName =
-  function () {
-    return this.setFirstName(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.hasFirstName =
-  function () {
-    return jspb.Message.getField(this, 10) != null;
-  };
-
-/**
- * optional google.protobuf.StringValue last_name = 11;
- * @return {?proto.google.protobuf.StringValue}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.getLastName =
-  function () {
-    return /** @type{?proto.google.protobuf.StringValue} */ (
-      jspb.Message.getWrapperField(
-        this,
-        google_protobuf_wrappers_pb.StringValue,
-        11
-      )
-    );
-  };
-
-/**
- * @param {?proto.google.protobuf.StringValue|undefined} value
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.setLastName =
-  function (value) {
-    return jspb.Message.setWrapperField(this, 11, value);
-  };
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.clearLastName =
-  function () {
-    return this.setLastName(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.hasLastName =
-  function () {
-    return jspb.Message.getField(this, 11) != null;
-  };
-
-/**
- * optional google.protobuf.StringValue language = 12;
- * @return {?proto.google.protobuf.StringValue}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.getLanguage =
-  function () {
-    return /** @type{?proto.google.protobuf.StringValue} */ (
-      jspb.Message.getWrapperField(
-        this,
-        google_protobuf_wrappers_pb.StringValue,
-        12
-      )
-    );
-  };
-
-/**
- * @param {?proto.google.protobuf.StringValue|undefined} value
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.setLanguage =
-  function (value) {
-    return jspb.Message.setWrapperField(this, 12, value);
-  };
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.event.domain.AccountV2UpdatedEvent} returns this
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.clearLanguage =
-  function () {
-    return this.setLanguage(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.event.domain.AccountV2UpdatedEvent.prototype.hasLanguage =
-  function () {
-    return jspb.Message.getField(this, 12) != null;
+    return jspb.Message.setProto3StringField(this, 2, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

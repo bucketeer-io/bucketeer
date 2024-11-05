@@ -2567,70 +2567,11 @@ export namespace AccountV2CreatedEvent {
 }
 
 export class AccountV2UpdatedEvent extends jspb.Message {
-  hasEmail(): boolean;
-  clearEmail(): void;
-  getEmail(): google_protobuf_wrappers_pb.StringValue | undefined;
-  setEmail(value?: google_protobuf_wrappers_pb.StringValue): void;
+  getEmail(): string;
+  setEmail(value: string): void;
 
-  hasName(): boolean;
-  clearName(): void;
-  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
-  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
-
-  hasAvatarImageUrl(): boolean;
-  clearAvatarImageUrl(): void;
-  getAvatarImageUrl(): google_protobuf_wrappers_pb.StringValue | undefined;
-  setAvatarImageUrl(value?: google_protobuf_wrappers_pb.StringValue): void;
-
-  hasOrganizationId(): boolean;
-  clearOrganizationId(): void;
-  getOrganizationId(): google_protobuf_wrappers_pb.StringValue | undefined;
-  setOrganizationId(value?: google_protobuf_wrappers_pb.StringValue): void;
-
-  getOrganizationRole(): proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
-  setOrganizationRole(
-    value: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap]
-  ): void;
-
-  clearEnvironmentRolesList(): void;
-  getEnvironmentRolesList(): Array<proto_account_account_pb.AccountV2.EnvironmentRole>;
-  setEnvironmentRolesList(
-    value: Array<proto_account_account_pb.AccountV2.EnvironmentRole>
-  ): void;
-  addEnvironmentRoles(
-    value?: proto_account_account_pb.AccountV2.EnvironmentRole,
-    index?: number
-  ): proto_account_account_pb.AccountV2.EnvironmentRole;
-
-  hasDisabled(): boolean;
-  clearDisabled(): void;
-  getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
-  setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
-
-  hasCreatedAt(): boolean;
-  clearCreatedAt(): void;
-  getCreatedAt(): google_protobuf_wrappers_pb.Int64Value | undefined;
-  setCreatedAt(value?: google_protobuf_wrappers_pb.Int64Value): void;
-
-  hasUpdatedAt(): boolean;
-  clearUpdatedAt(): void;
-  getUpdatedAt(): google_protobuf_wrappers_pb.Int64Value | undefined;
-  setUpdatedAt(value?: google_protobuf_wrappers_pb.Int64Value): void;
-
-  hasFirstName(): boolean;
-  clearFirstName(): void;
-  getFirstName(): google_protobuf_wrappers_pb.StringValue | undefined;
-  setFirstName(value?: google_protobuf_wrappers_pb.StringValue): void;
-
-  hasLastName(): boolean;
-  clearLastName(): void;
-  getLastName(): google_protobuf_wrappers_pb.StringValue | undefined;
-  setLastName(value?: google_protobuf_wrappers_pb.StringValue): void;
-
-  hasLanguage(): boolean;
-  clearLanguage(): void;
-  getLanguage(): google_protobuf_wrappers_pb.StringValue | undefined;
-  setLanguage(value?: google_protobuf_wrappers_pb.StringValue): void;
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AccountV2UpdatedEvent.AsObject;
@@ -2655,18 +2596,8 @@ export class AccountV2UpdatedEvent extends jspb.Message {
 
 export namespace AccountV2UpdatedEvent {
   export type AsObject = {
-    email?: google_protobuf_wrappers_pb.StringValue.AsObject;
-    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
-    avatarImageUrl?: google_protobuf_wrappers_pb.StringValue.AsObject;
-    organizationId?: google_protobuf_wrappers_pb.StringValue.AsObject;
-    organizationRole: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
-    environmentRolesList: Array<proto_account_account_pb.AccountV2.EnvironmentRole.AsObject>;
-    disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
-    createdAt?: google_protobuf_wrappers_pb.Int64Value.AsObject;
-    updatedAt?: google_protobuf_wrappers_pb.Int64Value.AsObject;
-    firstName?: google_protobuf_wrappers_pb.StringValue.AsObject;
-    lastName?: google_protobuf_wrappers_pb.StringValue.AsObject;
-    language?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    email: string;
+    organizationId: string;
   };
 }
 
