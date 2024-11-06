@@ -1,7 +1,7 @@
 import { SortingState } from '@tanstack/react-table';
 import { OrderBy, OrderDirection, Project } from '@types';
 
-export interface ProjectsFilters {
+export interface ProjectFilters {
   page: number;
   orderBy: OrderBy;
   orderDirection: OrderDirection;

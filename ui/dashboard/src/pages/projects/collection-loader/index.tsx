@@ -8,7 +8,7 @@ import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
-import { ProjectsFilters } from '../types';
+import { ProjectFilters } from '../types';
 import { useFetchProjects } from './use-fetch-projects';
 
 const CollectionLoader = ({
@@ -19,8 +19,8 @@ const CollectionLoader = ({
   onActionHandler
 }: {
   onAdd?: () => void;
-  filters: ProjectsFilters;
-  setFilters: (values: Partial<ProjectsFilters>) => void;
+  filters: ProjectFilters;
+  setFilters: (values: Partial<ProjectFilters>) => void;
   organizationIds?: string[];
   onActionHandler: (value: Project) => void;
 }) => {

@@ -197,6 +197,11 @@
                 "id": 16,
                 "name": "avatar_image",
                 "type": "bytes"
+              },
+              {
+                "id": 17,
+                "name": "environment_count",
+                "type": "int32"
               }
             ],
             "messages": [
@@ -876,6 +881,14 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 3
+              },
+              {
+                "name": "ORGANIZATION_ROLE",
+                "integer": 4
+              },
+              {
+                "name": "ENVIRONMENT_COUNT",
+                "integer": 5
               }
             ]
           },

@@ -7,6 +7,7 @@ export interface Environment {
   organizationId: string;
   projectId: string;
   requireComment: boolean;
+  featureFlagCount: number;
   updatedAt: string;
   urlCode: string;
 }

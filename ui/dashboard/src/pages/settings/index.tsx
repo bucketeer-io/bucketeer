@@ -14,8 +14,11 @@ const SettingsPage = () => {
   const { t } = useTranslation(['common']);
 
   return (
-    <PageLayout.Root title={t('settings')}>
-      <PageHeader title={t(`settings`)} description={t(`setting-subtitle`)} />
+    <PageLayout.Root title={t('organization-settings')}>
+      <PageHeader
+        title={t(`organization-settings`)}
+        description={t(`setting-subtitle`)}
+      />
       <PageLoader />
     </PageLayout.Root>
   );

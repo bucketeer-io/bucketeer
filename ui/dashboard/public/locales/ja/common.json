@@ -3,6 +3,7 @@
   "archived": "Archived",
   "continue": "Continue",
   "projects": "Projects",
+  "project": "Project",
   "environment": "Environment",
   "environments": "Environments",
   "organizations": "Organizations",
@@ -48,6 +49,7 @@
   "organization-subtitle": "You can see all your clients data",
   "setting-subtitle": "Manage settings about the current organization",
   "project-subtitle": "Manage all projects for this environment.",
+  "organization-settings": "Organization settings",
   "navigation": {
     "my-projects": "My projects",
     "audit-logs": "Audit logs",

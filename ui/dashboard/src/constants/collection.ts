@@ -16,5 +16,6 @@ export const sortingListFields: SortingListFields = {
   userCount: 'USER_COUNT',
   environmentCount: 'ENVIRONMENT_COUNT',
   projectCount: 'PROJECT_COUNT',
+  organizationRole: 'ORGANIZATION_ROLE',
   featureFlagCount: 'FEATURE_COUNT'
 };

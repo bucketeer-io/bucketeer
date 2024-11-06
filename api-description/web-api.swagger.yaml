@@ -2816,6 +2816,9 @@ definitions:
       avatarImage:
         type: string
         format: byte
+      environmentCount:
+        type: integer
+        format: int32
   accountAccountV2EnvironmentRole:
     type: object
     properties:
@@ -3297,6 +3300,8 @@ definitions:
       - EMAIL
       - CREATED_AT
       - UPDATED_AT
+      - ORGANIZATION_ROLE
+      - ENVIRONMENT_COUNT
     default: DEFAULT
   accountListAccountsV2RequestOrderDirection:
     type: string
