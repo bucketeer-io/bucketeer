@@ -23,6 +23,7 @@ import (
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
@@ -356,46 +357,21 @@ func (s *AccountService) updateAccountV2NoCommand(
 	if err != nil {
 		return nil, err
 	}
-	var updatedAccountPb *accountproto.AccountV2
-	err = s.accountStorage.RunInTransaction(ctx, func() error {
-		account, err := s.accountStorage.GetAccountV2(ctx, req.Email, req.OrganizationId)
-		if err != nil {
-			return err
-		}
-		updated, err := account.Update(
-			req.Name,
-			req.FirstName,
-			req.LastName,
-			req.Language,
-			req.AvatarImageUrl,
-			req.Avatar,
-			req.OrganizationRole,
-			req.EnvironmentRoles,
-		)
-		if err != nil {
-			return err
-		}
-		updateAccountV2Event, err := domainevent.NewAdminEvent(
-			editor,
-			eventproto.Event_ACCOUNT,
-			account.Email,
-			eventproto.Event_ACCOUNT_V2_UPDATED,
-			&eventproto.AccountV2UpdatedEvent{
-				Email:          updated.Email,
-				OrganizationId: updated.OrganizationId,
-			},
-			updated,
-			account,
-		)
-		if err != nil {
-			return err
-		}
-		if err = s.publisher.Publish(ctx, updateAccountV2Event); err != nil {
-			return err
-		}
-		updatedAccountPb = updated.AccountV2
-		return s.accountStorage.UpdateAccountV2(ctx, updated)
-	})
+	updatedAccountPb, err := s.updateAccountV2NoCommandMysql(
+		ctx,
+		editor,
+		req.Email,
+		req.OrganizationId,
+		req.Name,
+		req.FirstName,
+		req.LastName,
+		req.Language,
+		req.AvatarImageUrl,
+		req.Avatar,
+		req.OrganizationRole,
+		req.EnvironmentRoles,
+		nil,
+	)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -498,12 +474,20 @@ func (s *AccountService) EnableAccountV2(
 		)
 		return nil, err
 	}
-	_, err = s.updateAccountV2MySQL(
+	accountV2Pb, err := s.updateAccountV2NoCommandMysql(
 		ctx,
 		editor,
-		[]command.Command{req.Command},
 		req.Email,
 		req.OrganizationId,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		wrapperspb.Bool(false),
 	)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
@@ -533,7 +517,9 @@ func (s *AccountService) EnableAccountV2(
 		}
 		return nil, dt.Err()
 	}
-	return &accountproto.EnableAccountV2Response{}, nil
+	return &accountproto.EnableAccountV2Response{
+		Account: accountV2Pb,
+	}, nil
 }
 
 func (s *AccountService) DisableAccountV2(
@@ -561,12 +547,20 @@ func (s *AccountService) DisableAccountV2(
 		)
 		return nil, err
 	}
-	_, err = s.updateAccountV2MySQL(
+	accountV2Pb, err := s.updateAccountV2NoCommandMysql(
 		ctx,
 		editor,
-		[]command.Command{req.Command},
 		req.Email,
 		req.OrganizationId,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		nil,
+		wrapperspb.Bool(true),
 	)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {
@@ -596,7 +590,9 @@ func (s *AccountService) DisableAccountV2(
 		}
 		return nil, dt.Err()
 	}
-	return &accountproto.DisableAccountV2Response{}, nil
+	return &accountproto.DisableAccountV2Response{
+		Account: accountV2Pb,
+	}, nil
 }
 
 func (s *AccountService) updateAccountV2MySQL(
@@ -623,6 +619,64 @@ func (s *AccountService) updateAccountV2MySQL(
 		updatedAccountPb = account.AccountV2
 		return s.accountStorage.UpdateAccountV2(ctx, account)
 	})
+	return updatedAccountPb, err
+}
+
+// updateAccountV2NoCommandMysql updates account properties, if the value is nil, it will not be updated.
+func (s *AccountService) updateAccountV2NoCommandMysql(
+	ctx context.Context,
+	editor *eventproto.Editor,
+	email, organizationID string,
+	name, firstName, lastName, language, avatarImageURL *wrapperspb.StringValue,
+	avatar *accountproto.UpdateAccountV2Request_AccountV2Avatar,
+	organizationRole *accountproto.UpdateAccountV2Request_OrganizationRoleValue,
+	environmentRoles []*accountproto.AccountV2_EnvironmentRole,
+	isDisabled *wrapperspb.BoolValue,
+) (*accountproto.AccountV2, error) {
+	var updatedAccountPb *accountproto.AccountV2
+	err := s.accountStorage.RunInTransaction(ctx, func() error {
+		account, err := s.accountStorage.GetAccountV2(ctx, email, organizationID)
+		if err != nil {
+			return err
+		}
+		updated, err := account.Update(
+			name,
+			firstName,
+			lastName,
+			language,
+			avatarImageURL,
+			avatar,
+			organizationRole,
+			environmentRoles,
+			isDisabled,
+		)
+		if err != nil {
+			return err
+		}
+		updateAccountV2Event, err := domainevent.NewAdminEvent(
+			editor,
+			eventproto.Event_ACCOUNT,
+			account.Email,
+			eventproto.Event_ACCOUNT_V2_UPDATED,
+			&eventproto.AccountV2UpdatedEvent{
+				Email:          updated.Email,
+				OrganizationId: updated.OrganizationId,
+			},
+			updated,
+			account,
+		)
+		if err != nil {
+			return err
+		}
+		if err = s.publisher.Publish(ctx, updateAccountV2Event); err != nil {
+			return err
+		}
+		updatedAccountPb = updated.AccountV2
+		return s.accountStorage.UpdateAccountV2(ctx, updated)
+	})
+	if err != nil {
+		return nil, err
+	}
 	return updatedAccountPb, err
 }
 
@@ -656,11 +710,26 @@ func (s *AccountService) DeleteAccountV2(
 		if err != nil {
 			return err
 		}
-		handler, err := command.NewAccountV2CommandHandler(editor, account, s.publisher, req.OrganizationId)
+		deleteAccount := &domain.AccountV2{}
+		if err := copier.Copy(deleteAccount, account); err != nil {
+			return err
+		}
+		deleteAccountV2Event, err := domainevent.NewAdminEvent(
+			editor,
+			eventproto.Event_ACCOUNT,
+			account.Email,
+			eventproto.Event_ACCOUNT_V2_DELETED,
+			&eventproto.AccountV2UpdatedEvent{
+				Email:          account.Email,
+				OrganizationId: account.OrganizationId,
+			},
+			deleteAccount,
+			account,
+		)
 		if err != nil {
 			return err
 		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
+		if err = s.publisher.Publish(ctx, deleteAccountV2Event); err != nil {
 			return err
 		}
 		return s.accountStorage.DeleteAccountV2(ctx, account)

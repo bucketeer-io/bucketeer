@@ -594,16 +594,6 @@ func validateEnableAccountV2Request(req *accountproto.EnableAccountV2Request, lo
 		}
 		return dt.Err()
 	}
-	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	return nil
 }
 
@@ -638,16 +628,6 @@ func validateDisableAccountV2Request(req *accountproto.DisableAccountV2Request, 
 		}
 		return dt.Err()
 	}
-	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	return nil
 }
 
@@ -676,16 +656,6 @@ func validateDeleteAccountV2Request(req *accountproto.DeleteAccountV2Request, lo
 		dt, err := statusMissingOrganizationID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
 		})
 		if err != nil {
 			return statusInternal.Err()

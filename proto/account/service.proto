@@ -68,23 +68,27 @@ message CreateAccountV2Response {
 message EnableAccountV2Request {
   string email = 1;
   string organization_id = 2;
-  EnableAccountV2Command command = 3;
+  EnableAccountV2Command command = 3 [deprecated = true];
 }
 
-message EnableAccountV2Response {}
+message EnableAccountV2Response {
+  AccountV2 account = 1;
+}
 
 message DisableAccountV2Request {
   string email = 1;
   string organization_id = 2;
-  DisableAccountV2Command command = 3;
+  DisableAccountV2Command command = 3 [deprecated = true];
 }
 
-message DisableAccountV2Response {}
+message DisableAccountV2Response {
+  AccountV2 account = 1;
+}
 
 message DeleteAccountV2Request {
   string email = 1;
   string organization_id = 2;
-  DeleteAccountV2Command command = 3;
+  DeleteAccountV2Command command = 3 [deprecated = true];
 }
 
 message DeleteAccountV2Response {}

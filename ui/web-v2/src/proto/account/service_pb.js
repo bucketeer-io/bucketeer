@@ -2898,7 +2898,11 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {};
+      obj = {
+        account:
+          (f = msg.getAccount()) &&
+          proto_account_account_pb.AccountV2.toObject(includeInstance, f)
+      };
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -2938,6 +2942,14 @@ proto.bucketeer.account.EnableAccountV2Response.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
+        case 1:
+          var value = new proto_account_account_pb.AccountV2();
+          reader.readMessage(
+            value,
+            proto_account_account_pb.AccountV2.deserializeBinaryFromReader
+          );
+          msg.setAccount(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -2970,6 +2982,52 @@ proto.bucketeer.account.EnableAccountV2Response.prototype.serializeBinary =
 proto.bucketeer.account.EnableAccountV2Response.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
+    f = message.getAccount();
+    if (f != null) {
+      writer.writeMessage(
+        1,
+        f,
+        proto_account_account_pb.AccountV2.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional AccountV2 account = 1;
+ * @return {?proto.bucketeer.account.AccountV2}
+ */
+proto.bucketeer.account.EnableAccountV2Response.prototype.getAccount =
+  function () {
+    return /** @type{?proto.bucketeer.account.AccountV2} */ (
+      jspb.Message.getWrapperField(this, proto_account_account_pb.AccountV2, 1)
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.AccountV2|undefined} value
+ * @return {!proto.bucketeer.account.EnableAccountV2Response} returns this
+ */
+proto.bucketeer.account.EnableAccountV2Response.prototype.setAccount =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 1, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.EnableAccountV2Response} returns this
+ */
+proto.bucketeer.account.EnableAccountV2Response.prototype.clearAccount =
+  function () {
+    return this.setAccount(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.EnableAccountV2Response.prototype.hasAccount =
+  function () {
+    return jspb.Message.getField(this, 1) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -3241,7 +3299,11 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {};
+      obj = {
+        account:
+          (f = msg.getAccount()) &&
+          proto_account_account_pb.AccountV2.toObject(includeInstance, f)
+      };
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -3281,6 +3343,14 @@ proto.bucketeer.account.DisableAccountV2Response.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
+        case 1:
+          var value = new proto_account_account_pb.AccountV2();
+          reader.readMessage(
+            value,
+            proto_account_account_pb.AccountV2.deserializeBinaryFromReader
+          );
+          msg.setAccount(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -3313,6 +3383,52 @@ proto.bucketeer.account.DisableAccountV2Response.prototype.serializeBinary =
 proto.bucketeer.account.DisableAccountV2Response.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
+    f = message.getAccount();
+    if (f != null) {
+      writer.writeMessage(
+        1,
+        f,
+        proto_account_account_pb.AccountV2.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional AccountV2 account = 1;
+ * @return {?proto.bucketeer.account.AccountV2}
+ */
+proto.bucketeer.account.DisableAccountV2Response.prototype.getAccount =
+  function () {
+    return /** @type{?proto.bucketeer.account.AccountV2} */ (
+      jspb.Message.getWrapperField(this, proto_account_account_pb.AccountV2, 1)
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.account.AccountV2|undefined} value
+ * @return {!proto.bucketeer.account.DisableAccountV2Response} returns this
+ */
+proto.bucketeer.account.DisableAccountV2Response.prototype.setAccount =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 1, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.DisableAccountV2Response} returns this
+ */
+proto.bucketeer.account.DisableAccountV2Response.prototype.clearAccount =
+  function () {
+    return this.setAccount(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.DisableAccountV2Response.prototype.hasAccount =
+  function () {
+    return jspb.Message.getField(this, 1) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

@@ -1016,26 +1016,27 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 			},
 			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
 		},
-		{
-			desc: "errNoCommand",
-			setup: func(s *AccountService) {
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.AccountV2{
-					AccountV2: &accountproto.AccountV2{
-						Email:            "bucketeer@example.com",
-						FirstName:        "Test",
-						LastName:         "User",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-					},
-				}, nil)
-			},
-			req: &accountproto.EnableAccountV2Request{
-				Email:          "bucketeer@example.com",
-				OrganizationId: "org0",
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
+		// deprecating command
+		//{
+		//	desc: "errNoCommand",
+		//	setup: func(s *AccountService) {
+		//		s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+		//			gomock.Any(), gomock.Any(), gomock.Any(),
+		//		).Return(&domain.AccountV2{
+		//			AccountV2: &accountproto.AccountV2{
+		//				Email:            "bucketeer@example.com",
+		//				FirstName:        "Test",
+		//				LastName:         "User",
+		//				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+		//			},
+		//		}, nil)
+		//	},
+		//	req: &accountproto.EnableAccountV2Request{
+		//		Email:          "bucketeer@example.com",
+		//		OrganizationId: "org0",
+		//	},
+		//	expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+		//},
 		{
 			desc: "errAccountNotFound",
 			setup: func(s *AccountService) {
@@ -1057,7 +1058,6 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 			req: &accountproto.EnableAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
-				Command:        &accountproto.EnableAccountV2Command{},
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -1082,7 +1082,6 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 			req: &accountproto.EnableAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
-				Command:        &accountproto.EnableAccountV2Command{},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
@@ -1107,7 +1106,6 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 			req: &accountproto.EnableAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
-				Command:        &accountproto.EnableAccountV2Command{},
 			},
 			expectedErr: nil,
 		},
@@ -1209,26 +1207,27 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 			},
 			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
 		},
-		{
-			desc: "errNoCommand",
-			setup: func(s *AccountService) {
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.AccountV2{
-					AccountV2: &accountproto.AccountV2{
-						Email:            "bucketeer@example.com",
-						FirstName:        "Test",
-						LastName:         "User",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-					},
-				}, nil)
-			},
-			req: &accountproto.DisableAccountV2Request{
-				Email:          "bucketeer@example.com",
-				OrganizationId: "org0",
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
+		// deprecating command
+		//{
+		//	desc: "errNoCommand",
+		//	setup: func(s *AccountService) {
+		//		s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+		//			gomock.Any(), gomock.Any(), gomock.Any(),
+		//		).Return(&domain.AccountV2{
+		//			AccountV2: &accountproto.AccountV2{
+		//				Email:            "bucketeer@example.com",
+		//				FirstName:        "Test",
+		//				LastName:         "User",
+		//				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+		//			},
+		//		}, nil)
+		//	},
+		//	req: &accountproto.DisableAccountV2Request{
+		//		Email:          "bucketeer@example.com",
+		//		OrganizationId: "org0",
+		//	},
+		//	expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+		//},
 		{
 			desc: "errAccountNotFound",
 			setup: func(s *AccountService) {
@@ -1250,7 +1249,6 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 			req: &accountproto.DisableAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
-				Command:        &accountproto.DisableAccountV2Command{},
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -1275,7 +1273,6 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 			req: &accountproto.DisableAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
-				Command:        &accountproto.DisableAccountV2Command{},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
@@ -1300,7 +1297,6 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 			req: &accountproto.DisableAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
-				Command:        &accountproto.DisableAccountV2Command{},
 			},
 			expectedErr: nil,
 		},
@@ -1402,26 +1398,27 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 			},
 			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
 		},
-		{
-			desc: "errNoCommand",
-			setup: func(s *AccountService) {
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(&domain.AccountV2{
-					AccountV2: &accountproto.AccountV2{
-						Email:            "bucketeer@example.com",
-						FirstName:        "Test",
-						LastName:         "User",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-					},
-				}, nil)
-			},
-			req: &accountproto.DeleteAccountV2Request{
-				Email:          "bucketeer@example.com",
-				OrganizationId: "org0",
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
+		// deprecating command
+		//{
+		//	desc: "errNoCommand",
+		//	setup: func(s *AccountService) {
+		//		s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+		//			gomock.Any(), gomock.Any(), gomock.Any(),
+		//		).Return(&domain.AccountV2{
+		//			AccountV2: &accountproto.AccountV2{
+		//				Email:            "bucketeer@example.com",
+		//				FirstName:        "Test",
+		//				LastName:         "User",
+		//				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+		//			},
+		//		}, nil)
+		//	},
+		//	req: &accountproto.DeleteAccountV2Request{
+		//		Email:          "bucketeer@example.com",
+		//		OrganizationId: "org0",
+		//	},
+		//	expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
+		//},
 		{
 			desc: "errAccountNotFound",
 			setup: func(s *AccountService) {
@@ -1443,7 +1440,6 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 			req: &accountproto.DeleteAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
-				Command:        &accountproto.DeleteAccountV2Command{},
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -1468,7 +1464,6 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 			req: &accountproto.DeleteAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
-				Command:        &accountproto.DeleteAccountV2Command{},
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
@@ -1493,7 +1488,6 @@ func TestDeleteAccountV2MySQL(t *testing.T) {
 			req: &accountproto.DeleteAccountV2Request{
 				Email:          "bucketeer@example.com",
 				OrganizationId: "org0",
-				Command:        &accountproto.DeleteAccountV2Command{},
 			},
 			expectedErr: nil,
 		},

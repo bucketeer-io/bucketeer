@@ -1070,12 +1070,25 @@
               {
                 "id": 3,
                 "name": "command",
-                "type": "EnableAccountV2Command"
+                "type": "EnableAccountV2Command",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               }
             ]
           },
           {
-            "name": "EnableAccountV2Response"
+            "name": "EnableAccountV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "account",
+                "type": "AccountV2"
+              }
+            ]
           },
           {
             "name": "DisableAccountV2Request",
@@ -1093,12 +1106,25 @@
               {
                 "id": 3,
                 "name": "command",
-                "type": "DisableAccountV2Command"
+                "type": "DisableAccountV2Command",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               }
             ]
           },
           {
-            "name": "DisableAccountV2Response"
+            "name": "DisableAccountV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "account",
+                "type": "AccountV2"
+              }
+            ]
           },
           {
             "name": "DeleteAccountV2Request",
@@ -1116,7 +1142,13 @@
               {
                 "id": 3,
                 "name": "command",
-                "type": "DeleteAccountV2Command"
+                "type": "DeleteAccountV2Command",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               }
             ]
           },

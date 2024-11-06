@@ -20,6 +20,7 @@ import (
 	"encoding/base32"
 	"flag"
 	"fmt"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"io"
 	"strings"
 	"testing"
@@ -195,6 +196,122 @@ func TestUpdateAccount(t *testing.T) {
 	}
 	if getResp.Account.AvatarImageUrl != newAvatarURL {
 		t.Fatalf("different avatar url, expected: %v, actual: %v", newAvatarURL, getResp.Account.AvatarImageUrl)
+	}
+}
+
+func TestUpdateAccountThenDeleteAccountNoCommand(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	c := newAccountClient(t)
+	defer c.Close()
+	email := fmt.Sprintf("%s-%s-%v-%s@example.com", e2eAccountAddressPrefix, *testID, time.Now().Unix(), randomString())
+	name := fmt.Sprintf("name-%v-%v", time.Now().Unix(), randomString())
+	_, err := c.CreateAccountV2(ctx, &accountproto.CreateAccountV2Request{
+		OrganizationId:   defaultOrganizationID,
+		Name:             name,
+		Email:            email,
+		FirstName:        fmt.Sprintf("%s-%v", firstName, time.Now().Unix()),
+		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
+		Language:         language,
+		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	newName := fmt.Sprintf("name-%v", time.Now().Unix())
+	newFirstName := fmt.Sprintf("first-name-%v", time.Now().Unix())
+	newLastName := fmt.Sprintf("last-name-%v", time.Now().Unix())
+	newAvatarURL := fmt.Sprintf("https://example.com/avatar-%v.png", time.Now().Unix())
+	_, err = c.UpdateAccountV2(ctx, &accountproto.UpdateAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+		Name:           wrapperspb.String(newName),
+		FirstName:      wrapperspb.String(newFirstName),
+		LastName:       wrapperspb.String(newLastName),
+		AvatarImageUrl: wrapperspb.String(newAvatarURL),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	getResp, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if getResp.Account.Email != email {
+		t.Fatalf("different email, expected: %v, actual: %v", email, getResp.Account.Email)
+	}
+	if getResp.Account.OrganizationId != defaultOrganizationID {
+		t.Fatalf("different organization id, expected: %v, actual: %v", defaultOrganizationID, getResp.Account.OrganizationId)
+	}
+	if getResp.Account.Name != newName {
+		t.Fatalf("different name, expected: %v, actual: %v", newName, getResp.Account.Name)
+	}
+	if getResp.Account.FirstName != newFirstName {
+		t.Fatalf("different first name, expected: %v, actual: %v", newFirstName, getResp.Account.FirstName)
+	}
+	if getResp.Account.LastName != newLastName {
+		t.Fatalf("different last name, expected: %v, actual: %v", newLastName, getResp.Account.LastName)
+	}
+	if getResp.Account.AvatarImageUrl != newAvatarURL {
+		t.Fatalf("different avatar url, expected: %v, actual: %v", newAvatarURL, getResp.Account.AvatarImageUrl)
+	}
+
+	// disable then enable account
+	_, err = c.DisableAccountV2(ctx, &accountproto.DisableAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	getResp1, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !getResp1.Account.Disabled {
+		t.Fatalf("different enabled, expected: %v, actual: %v", true, getResp1.Account.Disabled)
+	}
+
+	_, err = c.EnableAccountV2(ctx, &accountproto.EnableAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	getResp2, err := c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if getResp2.Account.Disabled {
+		t.Fatalf("different enabled, expected: %v, actual: %v", false, getResp2.Account.Disabled)
+	}
+
+	// delete account
+	_, err = c.DeleteAccountV2(ctx, &accountproto.DeleteAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+		Command:        &accountproto.DeleteAccountV2Command{},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = c.GetAccountV2(ctx, &accountproto.GetAccountV2Request{
+		Email:          email,
+		OrganizationId: defaultOrganizationID,
+	})
+	if err == nil {
+		t.Fatal("account is not deleted")
 	}
 }
 

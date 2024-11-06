@@ -1054,6 +1054,7 @@ func TestAccountV2_Update(t *testing.T) {
 				EnvironmentId: "default",
 			},
 		},
+		nil,
 	)
 	if err != nil {
 		t.Fatal(err)

@@ -3130,6 +3130,9 @@ definitions:
         $ref: '#/definitions/accountDisableAccountV2Command'
   accountDisableAccountV2Response:
     type: object
+    properties:
+      account:
+        $ref: '#/definitions/accountAccountV2'
   accountEnableAPIKeyCommand:
     type: object
   accountEnableAPIKeyRequest:
@@ -3156,6 +3159,9 @@ definitions:
         $ref: '#/definitions/accountEnableAccountV2Command'
   accountEnableAccountV2Response:
     type: object
+    properties:
+      account:
+        $ref: '#/definitions/accountAccountV2'
   accountEnvironmentAPIKey:
     type: object
     properties:

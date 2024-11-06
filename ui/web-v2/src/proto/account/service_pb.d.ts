@@ -324,6 +324,11 @@ export namespace EnableAccountV2Request {
 }
 
 export class EnableAccountV2Response extends jspb.Message {
+  hasAccount(): boolean;
+  clearAccount(): void;
+  getAccount(): proto_account_account_pb.AccountV2 | undefined;
+  setAccount(value?: proto_account_account_pb.AccountV2): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EnableAccountV2Response.AsObject;
   static toObject(
@@ -346,7 +351,9 @@ export class EnableAccountV2Response extends jspb.Message {
 }
 
 export namespace EnableAccountV2Response {
-  export type AsObject = {};
+  export type AsObject = {
+    account?: proto_account_account_pb.AccountV2.AsObject;
+  };
 }
 
 export class DisableAccountV2Request extends jspb.Message {
@@ -391,6 +398,11 @@ export namespace DisableAccountV2Request {
 }
 
 export class DisableAccountV2Response extends jspb.Message {
+  hasAccount(): boolean;
+  clearAccount(): void;
+  getAccount(): proto_account_account_pb.AccountV2 | undefined;
+  setAccount(value?: proto_account_account_pb.AccountV2): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DisableAccountV2Response.AsObject;
   static toObject(
@@ -413,7 +425,9 @@ export class DisableAccountV2Response extends jspb.Message {
 }
 
 export namespace DisableAccountV2Response {
-  export type AsObject = {};
+  export type AsObject = {
+    account?: proto_account_account_pb.AccountV2.AsObject;
+  };
 }
 
 export class DeleteAccountV2Request extends jspb.Message {

@@ -85,6 +85,7 @@ func (a *AccountV2) Update(
 	avatar *proto.UpdateAccountV2Request_AccountV2Avatar,
 	organizationRole *proto.UpdateAccountV2Request_OrganizationRoleValue,
 	environmentRoles []*proto.AccountV2_EnvironmentRole,
+	isDisabled *wrapperspb.BoolValue,
 ) (*AccountV2, error) {
 	updated := &AccountV2{}
 	if err := copier.Copy(updated, a); err != nil {
@@ -115,6 +116,9 @@ func (a *AccountV2) Update(
 	}
 	if len(updated.EnvironmentRoles) > 0 {
 		updated.EnvironmentRoles = environmentRoles
+	}
+	if isDisabled != nil {
+		updated.Disabled = isDisabled.Value
 	}
 	updated.UpdatedAt = time.Now().Unix()
 	if err := validate(updated); err != nil {
