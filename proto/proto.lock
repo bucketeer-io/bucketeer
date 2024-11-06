@@ -16758,6 +16758,22 @@
             ]
           },
           {
+            "name": "PushUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 2,
+                "name": "tags",
+                "type": "string",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
             "name": "SubscriptionCreatedEvent",
             "fields": [
               {

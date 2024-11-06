@@ -632,7 +632,8 @@ func (s *PushService) updatePushNoCommand(
 			eventproto.Event_PUSH,
 			push.Id,
 			eventproto.Event_PUSH_UPDATED,
-			&eventproto.PushTagsUpdatedEvent{
+			&eventproto.PushUpdatedEvent{
+				Name: req.Name,
 				Tags: req.Tags,
 			},
 			req.EnvironmentNamespace,
