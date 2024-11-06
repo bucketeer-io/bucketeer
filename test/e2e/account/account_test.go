@@ -20,11 +20,12 @@ import (
 	"encoding/base32"
 	"flag"
 	"fmt"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 	"io"
 	"strings"
 	"testing"
 	"time"
+
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountclient "github.com/bucketeer-io/bucketeer/pkg/account/client"
 	rpcclient "github.com/bucketeer-io/bucketeer/pkg/rpc/client"
