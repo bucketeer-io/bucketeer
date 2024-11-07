@@ -57,7 +57,12 @@ func (s *grpcGatewayService) ListPushes(
 		return nil, err
 	}
 	if res == nil {
-		s.logger.Error("Push not found")
+		s.logger.Error("Failed to list pushes: nil response",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("environment_namespace", envAPIKey.Environment.Id),
+				zap.String("search_keyword", req.SearchKeyword),
+			)...,
+		)
 		return nil, ErrPushNotFound
 	}
 
