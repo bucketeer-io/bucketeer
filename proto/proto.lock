@@ -1171,47 +1171,101 @@
               {
                 "id": 3,
                 "name": "change_name_command",
-                "type": "ChangeAccountV2NameCommand"
+                "type": "ChangeAccountV2NameCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 4,
                 "name": "change_avatar_url_command",
-                "type": "ChangeAccountV2AvatarImageUrlCommand"
+                "type": "ChangeAccountV2AvatarImageUrlCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 5,
                 "name": "change_organization_role_command",
-                "type": "ChangeAccountV2OrganizationRoleCommand"
+                "type": "ChangeAccountV2OrganizationRoleCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 6,
                 "name": "change_environment_roles_command",
-                "type": "ChangeAccountV2EnvironmentRolesCommand"
+                "type": "ChangeAccountV2EnvironmentRolesCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 7,
                 "name": "change_first_name_command",
-                "type": "ChangeAccountV2FirstNameCommand"
+                "type": "ChangeAccountV2FirstNameCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 8,
                 "name": "change_last_name_command",
-                "type": "ChangeAccountV2LastNameCommand"
+                "type": "ChangeAccountV2LastNameCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 9,
                 "name": "change_language_command",
-                "type": "ChangeAccountV2LanguageCommand"
+                "type": "ChangeAccountV2LanguageCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 10,
                 "name": "change_last_seen_command",
-                "type": "ChangeAccountV2LastSeenCommand"
+                "type": "ChangeAccountV2LastSeenCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 11,
                 "name": "change_avatar_command",
-                "type": "ChangeAccountV2AvatarCommand"
+                "type": "ChangeAccountV2AvatarCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 12,

@@ -103,15 +103,22 @@ message UpdateAccountV2Request {
   }
   string email = 1;
   string organization_id = 2;
-  ChangeAccountV2NameCommand change_name_command = 3;
-  ChangeAccountV2AvatarImageUrlCommand change_avatar_url_command = 4;
-  ChangeAccountV2OrganizationRoleCommand change_organization_role_command = 5;
-  ChangeAccountV2EnvironmentRolesCommand change_environment_roles_command = 6;
-  ChangeAccountV2FirstNameCommand change_first_name_command = 7;
-  ChangeAccountV2LastNameCommand change_last_name_command = 8;
-  ChangeAccountV2LanguageCommand change_language_command = 9;
-  ChangeAccountV2LastSeenCommand change_last_seen_command = 10;
-  ChangeAccountV2AvatarCommand change_avatar_command = 11;
+  ChangeAccountV2NameCommand change_name_command = 3 [deprecated = true];
+  ChangeAccountV2AvatarImageUrlCommand change_avatar_url_command = 4
+      [deprecated = true];
+  ChangeAccountV2OrganizationRoleCommand change_organization_role_command = 5
+      [deprecated = true];
+  ChangeAccountV2EnvironmentRolesCommand change_environment_roles_command = 6
+      [deprecated = true];
+  ChangeAccountV2FirstNameCommand change_first_name_command = 7
+      [deprecated = true];
+  ChangeAccountV2LastNameCommand change_last_name_command = 8
+      [deprecated = true];
+  ChangeAccountV2LanguageCommand change_language_command = 9
+      [deprecated = true];
+  ChangeAccountV2LastSeenCommand change_last_seen_command = 10
+      [deprecated = true];
+  ChangeAccountV2AvatarCommand change_avatar_command = 11 [deprecated = true];
   google.protobuf.StringValue name = 12;
   google.protobuf.StringValue avatar_image_url = 13;
   OrganizationRoleValue organization_role = 14;
