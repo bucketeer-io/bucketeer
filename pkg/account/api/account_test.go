@@ -722,28 +722,6 @@ func TestUpdateAccountV2NoCommandMySQL(t *testing.T) {
 			},
 			expectedErr: createError(statusMissingOrganizationID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id")),
 		},
-		// deprecating command
-		//{
-		//	desc: "errNoCommand",
-		//	setup: func(s *AccountService) {
-		//		s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
-		//			gomock.Any(), gomock.Any(), gomock.Any(),
-		//		).Return(&domain.AccountV2{
-		//			AccountV2: &accountproto.AccountV2{
-		//				Email:            "bucketeer@example.com",
-		//				FirstName:        "Test",
-		//				LastName:         "User",
-		//				Language:         "en",
-		//				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
-		//			},
-		//		}, nil)
-		//	},
-		//	req: &accountproto.UpdateAccountV2Request{
-		//		Email:          "bucketeer@example.com",
-		//		OrganizationId: "org0",
-		//	},
-		//	expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		//},
 		{
 			desc: "errInvalidNewName",
 			setup: func(s *AccountService) {
