@@ -42,6 +42,7 @@ export function createFeature(
       | { type: Strategy.TypeMap[keyof Strategy.TypeMap]; variation: string }
       | undefined;
     prerequisitesList?: Array<Prerequisite>;
+    tagList?: Array<string>;
   } = {},
 ): Feature {
   const defaultOptions = {
@@ -56,6 +57,7 @@ export function createFeature(
     rules: [],
     defaultStrategy: undefined,
     prerequisitesList: [],
+    tagList: [],
   };
 
   const finalOptions = { ...defaultOptions, ...options };
@@ -96,6 +98,7 @@ export function createFeature(
   }
 
   feature.setPrerequisitesList(finalOptions.prerequisitesList);
+  feature.setTagsList(finalOptions.tagList);
 
   return feature;
 }
