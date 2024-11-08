@@ -6,6 +6,7 @@ import { User } from './proto/user/user_pb';
 import { Evaluation, UserEvaluations } from './proto/feature/evaluation_pb';
 import { Strategy } from './proto/feature/strategy_pb';
 import { Clause } from './proto/feature/clause_pb';
+import { Reason } from './proto/feature/reason_pb';
 import {
   createClause,
   createFixedStrategy,
@@ -32,7 +33,7 @@ import { GatewayClient, ServiceError } from './proto/gateway/service_pb_service'
 
 export { Evaluator, NewUserEvaluations, Evaluation, UserEvaluations };
 export { User, SegmentUser, SegmentUsers, Feature };
-export { Strategy, Clause };
+export { Strategy, Clause, Reason };
 export {
   createClause,
   createFixedStrategy,

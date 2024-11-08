@@ -49,7 +49,7 @@ export function createFeature(
   const defaultOptions = {
     id: '',
     name: '',
-    version: 1,
+    version: 0,
     enabled: false,
     createdAt: Date.now(),
     variationType: Feature.VariationType.STRING,
