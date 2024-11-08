@@ -86,6 +86,10 @@ import SaveGraySvg from '../../assets/svg/save-gray.svg';
 import SaveLargeSvg from '../../assets/svg/save-large.svg';
 import { parse, stringify } from 'query-string';
 import { HoverPopover } from '../HoverPopover';
+import {
+  getSearchFilterDialogShown,
+  setSearchFilterDialogShown
+} from '../../storage/searchFilterDialog';
 
 export enum FlagStatus {
   NEW, // This flag is new and has not been requested yet.
@@ -542,6 +546,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     const [unsavedSearchFilterId, setUnsavedSearchFilterId] = useState(null);
 
     const history = useHistory();
+    const isSearchFilterDialogShown = getSearchFilterDialogShown();
 
     const filteredSearchFiltersList =
       me.consoleAccount.searchFiltersList.filter(
@@ -627,21 +632,23 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     }, [searchFiltersList]);
 
     useEffect(() => {
-      // If there are unsaved changes when the user tries to leave the page, show the confirmation dialog
-      const handleBeforeUnload = (e) => {
-        if (unsavedChanges) {
-          // The standard way to trigger the confirmation dialog
-          e.preventDefault();
-          e.returnValue = ''; // For most browsers, this will trigger the default confirmation dialog
-        }
-      };
+      if (!isSearchFilterDialogShown) {
+        // If there are unsaved changes when the user tries to leave the page, show the confirmation dialog
+        const handleBeforeUnload = (e) => {
+          if (unsavedChanges) {
+            // The standard way to trigger the confirmation dialog
+            e.preventDefault();
+            e.returnValue = ''; // For most browsers, this will trigger the default confirmation dialog
+          }
+        };
 
-      window.addEventListener('beforeunload', handleBeforeUnload);
+        window.addEventListener('beforeunload', handleBeforeUnload);
 
-      return () => {
-        window.removeEventListener('beforeunload', handleBeforeUnload);
-      };
-    }, [unsavedChanges]);
+        return () => {
+          window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+      }
+    }, [unsavedChanges, isSearchFilterDialogShown]);
 
     useEffect(() => {
       if (
@@ -841,6 +848,7 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
     };
 
     const handleConfirm = (confirmType: ConfirmType) => {
+      setSearchFilterDialogShown(true);
       setShowSaveChangesDialog(false);
       if (confirmType === ConfirmType.YES) {
         if (unsavedSearchFilterId) {
@@ -928,12 +936,6 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
             />
           </div>
           <div className="flex gap-2 flex-wrap w-full items-center">
-            <Prompt
-              when={unsavedChanges && showSaveChangesDialog === false}
-              message={(location) => {
-                return handleNavigation(location);
-              }}
-            />
             {searchFiltersList.map((searchFilter) => (
               <Popover className="relative flex" key={searchFilter.id}>
                 <div
@@ -1048,14 +1050,25 @@ const FeatureSearch: FC<FeatureSearchProps> = memo(
               handleFormSubmit={handleFormSubmit}
             />
           )}
-          <SaveChangesDialog
-            open={showSaveChangesDialog}
-            close={() => {
-              setShowSaveChangesDialog(false);
-              setUnsavedSearchFilterId(null);
-            }}
-            onConfirm={handleConfirm}
-          />
+          {!isSearchFilterDialogShown && (
+            <>
+              <Prompt
+                when={unsavedChanges && showSaveChangesDialog === false}
+                message={(location) => {
+                  return handleNavigation(location);
+                }}
+              />
+              <SaveChangesDialog
+                open={showSaveChangesDialog}
+                close={() => {
+                  setShowSaveChangesDialog(false);
+                  setUnsavedSearchFilterId(null);
+                  setSearchFilterDialogShown(true);
+                }}
+                onConfirm={handleConfirm}
+              />
+            </>
+          )}
           <div className="flex-none -mr-2">
             <SortSelect
               sortKey={options.sort}
