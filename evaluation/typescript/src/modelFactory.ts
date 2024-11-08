@@ -43,6 +43,7 @@ export function createFeature(
       | undefined;
     prerequisitesList?: Array<Prerequisite>;
     tagList?: Array<string>;
+    offVariation?: string;
   } = {},
 ): Feature {
   const defaultOptions = {
@@ -58,6 +59,7 @@ export function createFeature(
     defaultStrategy: undefined,
     prerequisitesList: [],
     tagList: [],
+    offVariation: undefined,
   };
 
   const finalOptions = { ...defaultOptions, ...options };
@@ -100,6 +102,10 @@ export function createFeature(
   feature.setPrerequisitesList(finalOptions.prerequisitesList);
   feature.setTagsList(finalOptions.tagList);
 
+  if (finalOptions.offVariation !== undefined) {
+    feature.setOffVariation(finalOptions.offVariation);
+  }
+  
   return feature;
 }
 
