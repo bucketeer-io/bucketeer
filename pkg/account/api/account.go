@@ -176,7 +176,7 @@ func (s *AccountService) createAccountV2NoCommand(
 
 		createAccountEvent, err := domainevent.NewEvent(
 			editor,
-			eventproto.Event_PUSH,
+			eventproto.Event_ACCOUNT,
 			account.Email,
 			eventproto.Event_ACCOUNT_V2_CREATED,
 			&eventproto.AccountV2CreatedEvent{
