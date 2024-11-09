@@ -1,5 +1,5 @@
 {
-  "name": "@bucketeer/node-evaluation",
+  "name": "@bucketeer/evaluation",
   "version": "0.0.1",
   "description": "",
   "main": "lib/index.js",
