@@ -30,6 +30,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
+	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
 	redisv3 "github.com/bucketeer-io/bucketeer/pkg/redis/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/rest"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
@@ -52,6 +53,7 @@ type server struct {
 	publishTimeout         *time.Duration
 	featureService         *string
 	accountService         *string
+	pushService            *string
 	redisServerName        *string
 	redisAddr              *string
 	certPath               *string
@@ -101,6 +103,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"account-service",
 			"bucketeer-account-service address.",
 		).Default("account:9090").String(),
+		pushService: cmd.Flag(
+			"push-service",
+			"bucketeer-push-service address.",
+		).Default("push:9090").String(),
 		redisServerName:  cmd.Flag("redis-server-name", "Name of the redis.").Required().String(),
 		redisAddr:        cmd.Flag("redis-addr", "Address of the redis.").Required().String(),
 		certPath:         cmd.Flag("cert", "Path to TLS certificate.").Required().String(),
@@ -224,6 +230,18 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer accountClient.Close()
 
+	pushClient, err := pushclient.NewClient(*s.pushService, *s.certPath,
+		client.WithPerRPCCredentials(creds),
+		client.WithDialTimeout(30*time.Second),
+		client.WithBlock(),
+		client.WithMetrics(registerer),
+		client.WithLogger(logger),
+	)
+	if err != nil {
+		return err
+	}
+	defer pushClient.Close()
+
 	redisV3Client, err := redisv3.NewClient(
 		*s.redisAddr,
 		redisv3.WithPoolSize(*s.redisPoolMaxActive),
@@ -241,6 +259,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	service := api.NewGrpcGatewayService(
 		featureClient,
 		accountClient,
+		pushClient,
 		goalPublisher,
 		evaluationPublisher,
 		userPublisher,
@@ -280,6 +299,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	gatewayService := api.NewGatewayService(
 		featureClient,
 		accountClient,
+		pushClient,
 		goalPublisher,
 		evaluationPublisher,
 		userPublisher,
