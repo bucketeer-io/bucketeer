@@ -901,6 +901,11 @@ message PushTagsUpdatedEvent {
   repeated string tags = 2;
 }
 
+message PushUpdatedEvent {
+  google.protobuf.StringValue name = 1;
+  repeated string tags = 2;
+}
+
 message SubscriptionCreatedEvent {
   repeated bucketeer.notification.Subscription.SourceType source_types = 1;
   bucketeer.notification.Recipient recipient = 2;

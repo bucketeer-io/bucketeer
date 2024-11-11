@@ -31,6 +31,8 @@ import "proto/feature/rule.proto";
 import "proto/feature/strategy.proto";
 import "proto/feature/target.proto";
 import "proto/feature/segment.proto";
+import "proto/push/push.proto";
+import "proto/push/service.proto";
 import "proto/event/client/event.proto";
 
 message PingRequest {}
@@ -178,6 +180,53 @@ message UpdateFeatureRequest {
 
 message UpdateFeatureResponse {
   feature.Feature feature = 1;
+}
+
+message ListPushesRequest {
+  int64 page_size = 1;
+  string cursor = 2;
+  push.ListPushesRequest.OrderBy order_by = 3;
+  push.ListPushesRequest.OrderDirection order_direction = 4;
+  string search_keyword = 5;
+}
+
+message ListPushesResponse {
+  repeated push.Push pushes = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+message CreatePushRequest {
+  repeated string tags = 1;
+  string name = 2;
+  bytes fcm_service_account = 3;
+}
+
+message CreatePushResponse {
+  push.Push push = 1;
+}
+
+message GetPushRequest {
+  string id = 1;
+}
+
+message GetPushResponse {
+  push.Push push = 1;
+}
+
+message UpdatePushRequest {
+  string id = 1;
+  repeated string tags = 2;
+  google.protobuf.StringValue name = 3;
+  google.protobuf.BoolValue deleted = 4 [(grpc.gateway.protoc_gen_openapiv2
+                                              .options.openapiv2_field) = {
+    title: "deleted"
+    description: "if true, the push notification will be deleted and other fields will be ignored."
+  }];
+}
+
+message UpdatePushResponse {
+  push.Push push = 1;
 }
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
@@ -450,4 +499,82 @@ service Gateway {
       security: {},
     };
   };
+  rpc ListPushes(ListPushesRequest) returns (ListPushesResponse) {
+    option (google.api.http) = {
+      get: "/v1/pushes"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List",
+      description: "List pushes. To call this API, you need a `READ` API Key role.",
+      tags: "Pushes",
+      operation_id: "api.gateway.v1.pushes.list",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc CreatePush(CreatePushRequest) returns (CreatePushResponse) {
+    option (google.api.http) = {
+      post: "/v1/push"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create",
+      description: "Create a new Push notification through Google Firebase Cloud Messaging (FCM). To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Pushes",
+      operation_id: "api.gateway.v1.pushes.create",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc GetPush(GetPushRequest) returns (GetPushResponse) {
+    option (google.api.http) = {
+      get: "/v1/push/{id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get a Push notification. To call this API, you need a `READ` API Key role.",
+      tags: "Pushes",
+      operation_id: "api.gateway.v1.pushes.get",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc UpdatePush(UpdatePushRequest) returns (UpdatePushResponse) {
+    option (google.api.http) = {
+      patch: "/v1/push/{id}"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update",
+      description: "Update a Push notification. To call this API, you a `WRITE` or `ADMIN` API Key role.",
+      tags: "Pushes",
+      operation_id: "api.gateway.v1.pushes.update",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
 }

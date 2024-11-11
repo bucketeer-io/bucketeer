@@ -4852,6 +4852,45 @@ export namespace PushTagsUpdatedEvent {
   };
 }
 
+export class PushUpdatedEvent extends jspb.Message {
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  clearTagsList(): void;
+  getTagsList(): Array<string>;
+  setTagsList(value: Array<string>): void;
+  addTags(value: string, index?: number): string;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): PushUpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: PushUpdatedEvent
+  ): PushUpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: PushUpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): PushUpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: PushUpdatedEvent,
+    reader: jspb.BinaryReader
+  ): PushUpdatedEvent;
+}
+
+export namespace PushUpdatedEvent {
+  export type AsObject = {
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    tagsList: Array<string>;
+  };
+}
+
 export class SubscriptionCreatedEvent extends jspb.Message {
   clearSourceTypesList(): void;
   getSourceTypesList(): Array<

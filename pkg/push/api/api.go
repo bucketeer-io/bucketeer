@@ -632,7 +632,8 @@ func (s *PushService) updatePushNoCommand(
 			eventproto.Event_PUSH,
 			push.Id,
 			eventproto.Event_PUSH_UPDATED,
-			&eventproto.PushTagsUpdatedEvent{
+			&eventproto.PushUpdatedEvent{
+				Name: req.Name,
 				Tags: req.Tags,
 			},
 			req.EnvironmentNamespace,
@@ -946,7 +947,7 @@ func (s *PushService) GetPush(
 				return nil, statusInternal.Err()
 			}
 			s.logger.Error(
-				"Failed to get feature",
+				"Failed to get push",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("id", req.Id),
