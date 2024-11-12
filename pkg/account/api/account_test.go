@@ -21,7 +21,6 @@ import (
 	"testing"
 	"time"
 
-	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -34,6 +33,7 @@ import (
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
 	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	"github.com/bucketeer-io/bucketeer/pkg/token"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
