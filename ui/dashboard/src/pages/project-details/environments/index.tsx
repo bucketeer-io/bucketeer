@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Trans } from 'react-i18next';
-import { environmentArchive, environmentUnArchive } from '@api/environment';
+import { environmentArchive, environmentUnarchive } from '@api/environment';
 import { invalidateEnvironments } from '@queries/environments';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToggleOpen } from 'hooks/use-toggle-open';
@@ -42,7 +42,7 @@ const ProjectEnvironments = () => {
     mutationFn: async (id: string) => {
       const archiveMutation = isArchiving
         ? environmentArchive
-        : environmentUnArchive;
+        : environmentUnarchive;
 
       return archiveMutation({ id, command: {} });
     },

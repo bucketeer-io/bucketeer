@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Trans } from 'react-i18next';
-import { organizationArchive, organizationUnArchive } from '@api/organization';
+import { organizationArchive, organizationUnarchive } from '@api/organization';
 import { invalidateOrganizations } from '@queries/organizations';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToggleOpen } from 'hooks/use-toggle-open';
@@ -44,7 +44,7 @@ const PageLoader = () => {
     mutationFn: async (id: string) => {
       const archiveMutation = isArchiving
         ? organizationArchive
-        : organizationUnArchive;
+        : organizationUnarchive;
 
       return archiveMutation({ id, command: {} });
     },

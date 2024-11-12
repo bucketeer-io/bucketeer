@@ -6,10 +6,10 @@
     "archive-project": "Archive Project",
     "edit-env": "Edit Environment",
     "archive-env": "Archive Environment",
-    "unarchive-env": "UnArchive Environment",
+    "unarchive-env": "Unarchive Environment",
     "edit-org": "Edit Organization",
     "archive-org": "Archive Organization",
-    "unarchive-org": "UnArchive Organization",
+    "unarchive-org": "Unarchive Organization",
     "edit-user": "Edit User",
     "archive-user": "Archive User"
   },
@@ -25,11 +25,11 @@
     "user-desc": "There are no registered users for this organization."
   },
   "organization": {
-    "confirm-archive-desc": "The organization <bold>{{name}}</bold> will be archived. Are you sure you want to proceed?",
-    "confirm-unarchive-desc": "The organization <bold>{{name}}</bold> will be unarchived. Are you sure you want to proceed?"
+    "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
+    "confirm-unarchive-desc": "The organization \"<bold>{{name}}</bold>\" will be unarchived. Are you sure you want to proceed?"
   },
   "environment": {
-    "confirm-archive-desc": "The environment <bold>{{name}}</bold> will be archived. Are you sure you want to proceed?",
-    "confirm-unarchive-desc": "The environment <bold>{{name}}</bold> will be unarchived. Are you sure you want to proceed?"
+    "confirm-archive-desc": "The environment \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
+    "confirm-unarchive-desc": "The environment \"<bold>{{name}}</bold>\" will be unarchived. Are you sure you want to proceed?"
   }
 }
