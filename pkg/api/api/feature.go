@@ -44,7 +44,7 @@ func (s *grpcGatewayService) CreateFeature(
 		return nil, err
 	}
 	res, err := s.featureClient.CreateFeature(ctx, &featureproto.CreateFeatureRequest{
-		EnvironmentNamespace: envAPIKey.Environment.Id,
+		EnvironmentId: envAPIKey.Environment.Id,
 		Command: &featureproto.CreateFeatureCommand{
 			Id:                       req.Id,
 			Name:                     req.Name,
@@ -81,8 +81,8 @@ func (s *grpcGatewayService) GetFeature(
 		return nil, err
 	}
 	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
-		EnvironmentNamespace: envAPIKey.Environment.Id,
-		Id:                   req.Id,
+		EnvironmentId: envAPIKey.Environment.Id,
+		Id:            req.Id,
 	})
 	if err != nil {
 		return nil, err
@@ -110,11 +110,11 @@ func (s *grpcGatewayService) ListFeatures(
 		return nil, err
 	}
 	resp, err := s.featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
-		EnvironmentNamespace: envAPIKey.Environment.Id,
-		PageSize:             req.PageSize,
-		Cursor:               req.Cursor,
-		OrderBy:              req.OrderBy,
-		OrderDirection:       req.OrderDirection,
+		EnvironmentId:  envAPIKey.Environment.Id,
+		PageSize:       req.PageSize,
+		Cursor:         req.Cursor,
+		OrderBy:        req.OrderBy,
+		OrderDirection: req.OrderDirection,
 	})
 	if err != nil {
 		return nil, err
