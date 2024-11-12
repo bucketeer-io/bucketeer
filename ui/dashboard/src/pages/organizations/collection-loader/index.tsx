@@ -8,21 +8,21 @@ import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
-import { OrganizationFilters } from '../types';
+import { OrganizationActionsType, OrganizationFilters } from '../types';
 import { useFetchOrganizations } from './use-fetch-organizations';
 
 const CollectionLoader = ({
   onAdd,
   filters,
   setFilters,
-  onActionHandler
+  onActions
 }: {
   onAdd: () => void;
   filters: OrganizationFilters;
   setFilters: (values: Partial<OrganizationFilters>) => void;
-  onActionHandler: (type: string, v: Organization) => void;
+  onActions: (item: Organization, type: OrganizationActionsType) => void;
 }) => {
-  const columns = useColumns({ onActionHandler });
+  const columns = useColumns({ onActions });
   const {
     data: collection,
     isLoading,

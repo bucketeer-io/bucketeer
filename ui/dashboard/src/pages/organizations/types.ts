@@ -20,3 +20,5 @@ export interface CollectionProps {
   onSortingChange: (v: SortingState) => void;
   organizations: Organization[];
 }
+
+export type OrganizationActionsType = 'EDIT' | 'ARCHIVE' | 'UNARCHIVE';
