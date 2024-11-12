@@ -136,6 +136,7 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 						Email:            "bucketeer@example.com",
 						FirstName:        "Test",
 						LastName:         "User",
+						Language:         "en",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
@@ -147,9 +148,6 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 			req: &accountproto.CreateAccountV2Request{
 				Command: &accountproto.CreateAccountV2Command{
 					Email:            "bucketeer_environment@example.com",
-					FirstName:        "Test",
-					LastName:         "User",
-					Language:         "en",
 					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 				},
 				OrganizationId: "org0",
@@ -178,9 +176,6 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 			req: &accountproto.CreateAccountV2Request{
 				Command: &accountproto.CreateAccountV2Command{
 					Email:            "bucketeer@example.com",
-					FirstName:        "Test",
-					LastName:         "User",
-					Language:         "en",
 					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 				},
 				OrganizationId: "org0",
@@ -209,9 +204,6 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 			req: &accountproto.CreateAccountV2Request{
 				Command: &accountproto.CreateAccountV2Command{
 					Email:            "bucketeer@example.com",
-					FirstName:        "Test",
-					LastName:         "User",
-					Language:         "en",
 					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 				},
 				OrganizationId: "org0",
