@@ -210,56 +210,6 @@ func validateCreateAccountV2NoCommandRequest(
 		}
 		return dt.Err()
 	}
-	if req.FirstName == "" {
-		dt, err := statusFirstNameIsEmpty.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "first_name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if len(req.FirstName) > maxAccountNameLength {
-		dt, err := statusInvalidFirstName.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "first_name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.LastName == "" {
-		dt, err := statusLastNameIsEmpty.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "last_name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if len(req.LastName) > maxAccountNameLength {
-		dt, err := statusInvalidLastName.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "last_name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Language == "" {
-		dt, err := statusLanguageIsEmpty.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "language"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	if req.OrganizationRole == accountproto.AccountV2_Role_Organization_UNASSIGNED {
 		dt, err := statusInvalidOrganizationRole.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
