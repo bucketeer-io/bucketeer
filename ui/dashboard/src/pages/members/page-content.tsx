@@ -1,10 +1,9 @@
 import { useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
-import { getCurrentEnvironment, useAuth } from 'auth';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
-import { Project } from '@types';
+import { Account } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
@@ -12,43 +11,38 @@ import Icon from 'components/icon';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
-import FilterProjectModal from './project-modal/filter-project-modal';
-import { ProjectFilters } from './types';
+import FilterMemberModal from './member-modal/filter-member-modal';
+import { MemberActionsType, MembersFilters } from './types';
 
 const PageContent = ({
   onAdd,
-  onEdit
+  onHandleActions
 }: {
   onAdd: () => void;
-  onEdit: (v: Project) => void;
+  onHandleActions: (item: Account, type: MemberActionsType) => void;
 }) => {
   const { t } = useTranslation(['common']);
-  const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
-  const searchFilters: Partial<ProjectFilters> = searchOptions;
+  const searchFilters: Partial<MembersFilters> = searchOptions;
 
   const defaultFilters = {
     page: 1,
     orderBy: 'CREATED_AT',
     orderDirection: 'DESC',
+    status: 'ACTIVE',
     ...searchFilters
-  } as ProjectFilters;
+  } as MembersFilters;
+
+  const [filters, setFilters] = usePartialState<MembersFilters>(defaultFilters);
 
   const [openFilterModal, onOpenFilterModal, onCloseFilterModal] =
     useToggleOpen(false);
 
-  const [filters, setFilters] = usePartialState<ProjectFilters>(defaultFilters);
-
-  const onChangeFilters = (values: Partial<ProjectFilters>) => {
+  const onChangeFilters = (values: Partial<MembersFilters>) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
     setFilters({ ...values });
-  };
-
-  const onActionHandler = (project: Project) => {
-    onEdit(project);
   };
 
   useEffect(() => {
@@ -64,7 +58,7 @@ const PageContent = ({
         action={
           <Button className="flex-1 lg:flex-none" onClick={onAdd}>
             <Icon icon={IconAddOutlined} size="sm" />
-            {t(`new-project`)}
+            {t(`new-member`)}
           </Button>
         }
         searchValue={filters.searchQuery}
@@ -72,7 +66,7 @@ const PageContent = ({
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
       {openFilterModal && (
-        <FilterProjectModal
+        <FilterMemberModal
           isOpen={openFilterModal}
           filters={filters}
           onClose={onCloseFilterModal}
@@ -86,13 +80,12 @@ const PageContent = ({
           }}
         />
       )}
-      <div className="mt-5 flex flex-col flex-1">
+      <div className="mt-5">
         <CollectionLoader
           onAdd={onAdd}
           filters={filters}
           setFilters={onChangeFilters}
-          onActionHandler={onActionHandler}
-          organizationIds={[currentEnvironment.organizationId]}
+          onActions={onHandleActions}
         />
       </div>
     </PageLayout.Content>

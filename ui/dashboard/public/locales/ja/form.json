@@ -33,5 +33,10 @@
     "public-api-write-desc": "This role allows you to read and write the data in Bucketeer.",
     "public-api-admin": "Public API (Admin)",
     "public-api-admin-desc": "This role allows you to read and write the data including admin settings in Bucketeer."
-  }
+  },
+  "enter-first-name": "Enter first name",
+  "enter-last-name": "Enter last name",
+  "select-language": "Select language",
+  "select-role": "Select role",
+  "select-environment": "Select environment"
 }

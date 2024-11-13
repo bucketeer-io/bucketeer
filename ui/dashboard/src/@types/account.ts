@@ -4,9 +4,14 @@ import { OrganizationRole } from './organization';
 export interface Account {
   email: string;
   name: string;
+  firstName: string;
+  lastName: string;
+  language: string;
+  lastSeen: number;
   avatarImageUrl: string;
   organizationId: string;
   organizationRole: OrganizationRole;
+  environmentCount: boolean;
   environmentRoles: [
     {
       environmentId: string;

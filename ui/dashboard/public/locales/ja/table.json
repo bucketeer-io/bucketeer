@@ -3,16 +3,17 @@
   "created-at": "Created At",
   "popover": {
     "edit-project": "Edit Project",
-    "archive-project": "Archive Project",
     "edit-env": "Edit Environment",
     "archive-env": "Archive Environment",
     "unarchive-env": "Unarchive Environment",
     "edit-org": "Edit Organization",
     "archive-org": "Archive Organization",
     "unarchive-org": "Unarchive Organization",
-    "edit-user": "Edit User",
-    "archive-user": "Archive User",
-    "edit-api-key": "Edit API Key"
+    "edit-api-key": "Edit API Key",
+    "edit-member": "Edit Member",
+    "delete-member": "Delete Member",
+    "disable-member": "Disable Member",
+    "add-to-env": "Add to Environment"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -22,10 +23,10 @@
     "org-desc": "There are no registered organizations. Add a new one to start managing.",
     "env-title": "No registered environments",
     "env-desc": "There are no registered environments for this project.",
-    "user-title": "No registered users",
-    "user-desc": "There are no registered users for this organization.",
     "api-key-title": "No registered API keys",
-    "api-key-desc": "There are no registered API keys. Add a new one to start managing."
+    "api-key-desc": "There are no registered API keys. Add a new one to start managing.",
+    "member-title": "No registered members",
+    "member-desc": "There are no registered members for this organization."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",

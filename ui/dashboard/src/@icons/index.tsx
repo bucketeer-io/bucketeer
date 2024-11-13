@@ -2,6 +2,7 @@ import IconBackspace from './customized-icons/backspace.svg?react';
 import IconChecked from './customized-icons/checked.svg?react';
 import IconChevronRight from './customized-icons/chevron-right.svg?react';
 import IconClose from './customized-icons/close.svg?react';
+import IconDisable from './customized-icons/disable.svg?react';
 import IconEmail from './customized-icons/email.svg?react';
 import IconInfo from './customized-icons/info.svg?react';
 import IconSearch from './customized-icons/search.svg?react';
@@ -69,6 +70,7 @@ export {
   IconSortingUp,
   IconSortingDown,
   IconTrash,
+  IconDisable,
   // Special icons
   IconGoal,
   IconGoogle,

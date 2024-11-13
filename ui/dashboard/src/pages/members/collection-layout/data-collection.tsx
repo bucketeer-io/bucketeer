@@ -1,37 +1,58 @@
-import { IconMoreHorizOutlined } from 'react-icons-material-design';
+import {
+  IconAddOutlined,
+  IconEditOutlined,
+  IconMoreHorizOutlined
+} from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
+import primaryAvatar from 'assets/avatars/primary.svg';
 import { useTranslation } from 'i18n';
-import { Project } from '@types';
+import { Account } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
-import Icon from 'components/icon';
+import { joinName } from 'utils/name';
+import { IconTrash } from '@icons';
+import { AvatarImage } from 'components/avatar';
+import { Popover } from 'components/popover';
+import { MemberActionsType } from '../types';
 
-export const useColumns = (): ColumnDef<Project>[] => {
+export const useColumns = ({
+  onActions
+}: {
+  onActions: (item: Account, type: MemberActionsType) => void;
+}): ColumnDef<Account>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
 
   return [
     {
-      accessorKey: 'name',
+      accessorKey: 'email',
       header: `${t('name')}`,
-      size: 250,
+      size: 350,
       cell: ({ row }) => {
-        const project = row.original;
+        const account = row.original;
         return (
-          <div className="underline text-primary-500 typo-para-medium">
-            {project.name}
+          <div className="flex gap-2">
+            <AvatarImage image={account?.avatarImageUrl || primaryAvatar} />
+            <div className="flex flex-col gap-0.5">
+              <div className="underline text-primary-500 typo-para-medium">
+                {joinName(account.firstName, account.lastName) || account.name}
+              </div>
+              <div className="typo-para-medium text-gray-700">
+                {account.email}
+              </div>
+            </div>
           </div>
         );
       }
     },
     {
-      accessorKey: 'creatorEmail',
-      header: `${t('maintainer')}`,
-      size: 350,
+      accessorKey: 'organizationRole',
+      header: `${t('role')}`,
+      size: 300,
       cell: ({ row }) => {
-        const project = row.original;
+        const account = row.original;
         return (
           <div className="text-gray-700 typo-para-medium">
-            {project.creatorEmail}
+            {String(account.organizationRole).split('_')[1]}
           </div>
         );
       }
@@ -41,23 +62,10 @@ export const useColumns = (): ColumnDef<Project>[] => {
       header: `${t('environments')}`,
       size: 120,
       cell: ({ row }) => {
-        const project = row.original;
+        const account = row.original;
         return (
           <div className="text-gray-700 typo-para-medium">
-            {project.environmentCount}
-          </div>
-        );
-      }
-    },
-    {
-      accessorKey: 'featureFlagCount',
-      header: t('table:flags'),
-      size: 100,
-      cell: ({ row }) => {
-        const project = row.original;
-        return (
-          <div className="text-gray-700 typo-para-medium">
-            {project.featureFlagCount}
+            {account.environmentRoles.length}
           </div>
         );
       }
@@ -65,12 +73,12 @@ export const useColumns = (): ColumnDef<Project>[] => {
     {
       accessorKey: 'createdAt',
       header: `${t('table:created-at')}`,
-      size: 160,
+      size: 180,
       cell: ({ row }) => {
-        const project = row.original;
+        const account = row.original;
         return (
           <div className="text-gray-700 typo-para-medium">
-            {formatDateTime(project.createdAt)}
+            {formatDateTime(account.createdAt)}
           </div>
         );
       }
@@ -84,11 +92,34 @@ export const useColumns = (): ColumnDef<Project>[] => {
         style: { textAlign: 'center', fitContent: true }
       },
       enableSorting: false,
-      cell: () => {
+      cell: ({ row }) => {
+        const organization = row.original;
+
         return (
-          <button className="flex-center text-gray-600">
-            <Icon icon={IconMoreHorizOutlined} size="sm" />
-          </button>
+          <Popover
+            options={[
+              {
+                label: `${t('table:popover.edit-member')}`,
+                icon: IconEditOutlined,
+                value: 'EDIT'
+              },
+              {
+                label: `${t('table:popover.add-to-env')}`,
+                icon: IconAddOutlined,
+                value: 'ADD_ENV'
+              },
+              {
+                label: `${t('table:popover.delete-member')}`,
+                icon: IconTrash,
+                value: 'DELETE'
+              }
+            ]}
+            icon={IconMoreHorizOutlined}
+            onClick={value =>
+              onActions(organization, value as MemberActionsType)
+            }
+            align="end"
+          />
         );
       }
     }

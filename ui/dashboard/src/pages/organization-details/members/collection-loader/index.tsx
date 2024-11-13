@@ -8,7 +8,7 @@ import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
-import { useFetchUsers } from './use-fetch-users';
+import { useFetchMembers } from './use-fetch-members';
 
 const CollectionLoader = ({
   filters,
@@ -23,7 +23,7 @@ const CollectionLoader = ({
     isLoading,
     refetch,
     isError
-  } = useFetchUsers({ ...filters });
+  } = useFetchMembers({ ...filters });
 
   const onSortingChangeHandler = (sorting: SortingState) => {
     const updateOrderBy =

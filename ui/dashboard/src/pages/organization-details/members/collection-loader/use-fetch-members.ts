@@ -2,7 +2,7 @@ import { useQueryAccounts } from '@queries/accounts';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { OrderBy, OrderDirection } from '@types';
 
-export const useFetchUsers = ({
+export const useFetchMembers = ({
   page = 1,
   pageSize,
   orderBy,
