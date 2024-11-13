@@ -32,9 +32,12 @@ export const useColumns = ({
           <div className="flex gap-2">
             <AvatarImage image={account?.avatarImageUrl || primaryAvatar} />
             <div className="flex flex-col gap-0.5">
-              <div className="underline text-primary-500 typo-para-medium">
+              <button
+                onClick={() => onActions(account, 'DETAILS')}
+                className="underline text-primary-500 typo-para-medium text-left"
+              >
                 {joinName(account.firstName, account.lastName) || account.name}
-              </div>
+              </button>
               <div className="typo-para-medium text-gray-700">
                 {account.email}
               </div>
@@ -92,7 +95,7 @@ export const useColumns = ({
       },
       enableSorting: false,
       cell: ({ row }) => {
-        const organization = row.original;
+        const account = row.original;
 
         return (
           <Popover
@@ -114,9 +117,7 @@ export const useColumns = ({
               }
             ]}
             icon={IconMoreHorizOutlined}
-            onClick={value =>
-              onActions(organization, value as MemberActionsType)
-            }
+            onClick={value => onActions(account, value as MemberActionsType)}
             align="end"
           />
         );

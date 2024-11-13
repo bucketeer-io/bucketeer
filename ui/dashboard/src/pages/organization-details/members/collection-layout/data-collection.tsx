@@ -8,7 +8,11 @@ import { joinName } from 'utils/name';
 import { AvatarImage } from 'components/avatar';
 import Icon from 'components/icon';
 
-export const useColumns = (): ColumnDef<Account>[] => {
+export const useColumns = ({
+  onActions
+}: {
+  onActions: (value: Account) => void;
+}): ColumnDef<Account>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
 
@@ -21,11 +25,14 @@ export const useColumns = (): ColumnDef<Account>[] => {
         const account = row.original;
         return (
           <div className="flex gap-2">
-            <AvatarImage image={primaryAvatar} />
+            <AvatarImage image={account?.avatarImageUrl || primaryAvatar} />
             <div className="flex flex-col gap-0.5">
-              <div className="underline text-primary-500 typo-para-medium">
+              <button
+                onClick={() => onActions(account)}
+                className="underline text-primary-500 typo-para-medium text-left"
+              >
                 {joinName(account.firstName, account.lastName) || account.name}
-              </div>
+              </button>
               <div className="typo-para-medium text-gray-700">
                 {account.email}
               </div>

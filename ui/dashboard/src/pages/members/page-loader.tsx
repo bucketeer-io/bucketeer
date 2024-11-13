@@ -12,6 +12,7 @@ import { useFetchMembers } from './collection-loader/use-fetch-members';
 import AddMemberModal from './member-modal/add-member-modal';
 import DeleteMemberModal from './member-modal/delete-member-modal';
 import EditMemberModal from './member-modal/edit-member-modal';
+import MemberDetailsModal from './member-modal/member-details-modal';
 import PageContent from './page-content';
 import { MemberActionsType } from './types';
 
@@ -34,6 +35,9 @@ const PageLoader = () => {
   const [selectedMember, setSelectedMember] = useState<Account>();
 
   const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
+    useToggleOpen(false);
+
+  const [isOpenDetailsModal, onOpenDetailsModal, onCloseDetailsModal] =
     useToggleOpen(false);
 
   const [isOpenDeleteModal, onOpenDeleteModal, onCloseDeleteModal] =
@@ -78,6 +82,8 @@ const PageLoader = () => {
       onOpenEditModal();
     } else if (type === 'DELETE') {
       onOpenDeleteModal();
+    } else if (type === 'DETAILS') {
+      onOpenDetailsModal();
     }
     setSelectedMember(member);
   };
@@ -117,6 +123,13 @@ const PageLoader = () => {
               member={selectedMember!}
               loading={mutation.isPending}
               onSubmit={onDeleteMember}
+            />
+          )}
+          {isOpenDetailsModal && (
+            <MemberDetailsModal
+              isOpen={isOpenDetailsModal}
+              onClose={onCloseDetailsModal}
+              member={selectedMember!}
             />
           )}
         </>

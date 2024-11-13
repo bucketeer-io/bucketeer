@@ -17,7 +17,7 @@
   "optional": "Optional",
   "require-comments-flag": "Require comments for flag changes",
   "invite-member": "Invite Member",
-  "user-details": "User Details",
+  "member-details": "Member Details",
   "add-to-env": "Add to Environment",
   "env-access": "Environment Access",
   "env-settings": "Environment Settings",
