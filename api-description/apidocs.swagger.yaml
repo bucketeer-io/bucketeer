@@ -400,6 +400,270 @@ paths:
           format: double
       tags:
         - Client and Server SDKs
+  /v1/account:
+    get:
+      summary: Get
+      description: Get an Account. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.accounts.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetAccountV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: email
+          in: query
+          required: false
+          type: string
+        - name: organizationId
+          in: query
+          required: false
+          type: string
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Accounts
+    post:
+      summary: Create
+      description: Create a new Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.accounts.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateAccountV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateAccountV2Request'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Accounts
+  /v1/account/{id}:
+    patch:
+      summary: Update
+      description: Update an Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.accounts.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateAccountV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/GatewayUpdateAccountV2Body'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Accounts
+  /v1/accounts:
+    get:
+      summary: List
+      description: Get list Accounts. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.accounts.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayListAccountsV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - EMAIL
+            - CREATED_AT
+            - UPDATED_AT
+            - ORGANIZATION_ROLE
+            - ENVIRONMENT_COUNT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: disabled
+          in: query
+          required: false
+          type: boolean
+        - name: organizationRole
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: environmentRole
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Accounts
   /v1/features:
     get:
       summary: List
@@ -641,6 +905,63 @@ paths:
           type: string
       tags:
         - Feature Flags
+  /v1/get-account-by-environment-id:
+    get:
+      summary: Get
+      description: Get an Account by Environment ID. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.accounts.get_by_environment_id
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetAccountV2ByEnvironmentIDResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: email
+          in: query
+          required: false
+          type: string
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Accounts
   /v1/push:
     post:
       summary: Create
@@ -886,6 +1207,14 @@ paths:
       tags:
         - Pushes
 definitions:
+  AccountV2RoleOrganization:
+    type: string
+    enum:
+      - Organization_UNASSIGNED
+      - Organization_MEMBER
+      - Organization_ADMIN
+      - Organization_OWNER
+    default: Organization_UNASSIGNED
   ClauseOperator:
     type: string
     enum:
@@ -912,6 +1241,35 @@ definitions:
       - NUMBER
       - JSON
     default: STRING
+  GatewayUpdateAccountV2Body:
+    type: object
+    properties:
+      name:
+        type: string
+      firstName:
+        type: string
+      lastName:
+        type: string
+      language:
+        type: string
+      avatarImageUrl:
+        type: string
+      lastSeen:
+        type: string
+        format: int64
+      organizationRole:
+        $ref: '#/definitions/UpdateAccountV2RequestOrganizationRoleValue'
+      environmentRoles:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountAccountV2EnvironmentRole'
+      disabled:
+        type: boolean
+      deleted:
+        type: boolean
+        description: if true, the account will be deleted and other fields will be ignored.
+        title: deleted
   GatewayUpdateFeatureBody:
     type: object
     properties:
@@ -981,6 +1339,18 @@ definitions:
         type: boolean
       message:
         type: string
+  RoleEnvironment:
+    type: string
+    enum:
+      - Environment_UNASSIGNED
+      - Environment_VIEWER
+      - Environment_EDITOR
+    default: Environment_UNASSIGNED
+  UpdateAccountV2RequestOrganizationRoleValue:
+    type: object
+    properties:
+      role:
+        $ref: '#/definitions/AccountV2RoleOrganization'
   UserData:
     type: object
     properties:
@@ -988,6 +1358,98 @@ definitions:
         type: object
         additionalProperties:
           type: string
+  accountAccountV2:
+    type: object
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      avatarImageUrl:
+        type: string
+      organizationId:
+        type: string
+      organizationRole:
+        $ref: '#/definitions/AccountV2RoleOrganization'
+      environmentRoles:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountAccountV2EnvironmentRole'
+      disabled:
+        type: boolean
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      searchFilters:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountSearchFilter'
+      firstName:
+        type: string
+      lastName:
+        type: string
+      language:
+        type: string
+      lastSeen:
+        type: string
+        format: int64
+      avatarFileType:
+        type: string
+      avatarImage:
+        type: string
+        format: byte
+      environmentCount:
+        type: integer
+        format: int32
+  accountAccountV2EnvironmentRole:
+    type: object
+    properties:
+      environmentId:
+        type: string
+      role:
+        $ref: '#/definitions/RoleEnvironment'
+  accountFilterTargetType:
+    type: string
+    enum:
+      - UNKNOWN
+      - FEATURE_FLAG
+    default: UNKNOWN
+  accountListAccountsV2RequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - EMAIL
+      - CREATED_AT
+      - UPDATED_AT
+      - ORGANIZATION_ROLE
+      - ENVIRONMENT_COUNT
+    default: DEFAULT
+  accountListAccountsV2RequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  accountSearchFilter:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      query:
+        type: string
+      filterTargetType:
+        $ref: '#/definitions/accountFilterTargetType'
+      environmentId:
+        type: string
+      defaultFilter:
+        type: boolean
   bucketeerfeatureVariation:
     type: object
     properties:
@@ -1001,6 +1463,33 @@ definitions:
         title: number or even json object
       description:
         type: string
+  bucketeergatewayCreateAccountV2Request:
+    type: object
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      avatarImageUrl:
+        type: string
+      organizationRole:
+        $ref: '#/definitions/AccountV2RoleOrganization'
+      environmentRoles:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountAccountV2EnvironmentRole'
+      firstName:
+        type: string
+      lastName:
+        type: string
+      language:
+        type: string
+  bucketeergatewayCreateAccountV2Response:
+    type: object
+    properties:
+      account:
+        $ref: '#/definitions/accountAccountV2'
   bucketeergatewayCreateFeatureRequest:
     type: object
     properties:
@@ -1049,6 +1538,16 @@ definitions:
     properties:
       push:
         $ref: '#/definitions/pushPush'
+  bucketeergatewayGetAccountV2ByEnvironmentIDResponse:
+    type: object
+    properties:
+      account:
+        $ref: '#/definitions/accountAccountV2'
+  bucketeergatewayGetAccountV2Response:
+    type: object
+    properties:
+      account:
+        $ref: '#/definitions/accountAccountV2'
   bucketeergatewayGetFeatureResponse:
     type: object
     properties:
@@ -1059,6 +1558,19 @@ definitions:
     properties:
       push:
         $ref: '#/definitions/pushPush'
+  bucketeergatewayListAccountsV2Response:
+    type: object
+    properties:
+      accounts:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountAccountV2'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
   bucketeergatewayListFeaturesResponse:
     type: object
     properties:
@@ -1080,6 +1592,11 @@ definitions:
       totalCount:
         type: string
         format: int64
+  bucketeergatewayUpdateAccountV2Response:
+    type: object
+    properties:
+      account:
+        $ref: '#/definitions/accountAccountV2'
   bucketeergatewayUpdateFeatureResponse:
     type: object
     properties:

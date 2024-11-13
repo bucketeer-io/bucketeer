@@ -33,6 +33,8 @@ import "proto/feature/target.proto";
 import "proto/feature/segment.proto";
 import "proto/push/push.proto";
 import "proto/push/service.proto";
+import "proto/account/service.proto";
+import "proto/account/account.proto";
 import "proto/event/client/event.proto";
 
 message PingRequest {}
@@ -227,6 +229,81 @@ message UpdatePushRequest {
 
 message UpdatePushResponse {
   push.Push push = 1;
+}
+
+message CreateAccountV2Request {
+  string email = 1;
+  string name = 2;
+  string avatar_image_url = 3;
+  account.AccountV2.Role.Organization organization_role = 4;
+  repeated account.AccountV2.EnvironmentRole environment_roles = 5;
+  string first_name = 6;
+  string last_name = 7;
+  string language = 8;
+}
+
+message CreateAccountV2Response {
+  account.AccountV2 account = 1;
+}
+
+message GetAccountV2Request {
+  string email = 1;
+  string organization_id = 2;
+}
+
+message GetAccountV2Response {
+  account.AccountV2 account = 1;
+}
+
+message GetAccountV2ByEnvironmentIDRequest {
+  string email = 1;
+  string environment_id = 2;
+}
+
+message GetAccountV2ByEnvironmentIDResponse {
+  account.AccountV2 account = 1;
+}
+
+message UpdateAccountV2Request {
+  message OrganizationRoleValue {
+    account.AccountV2.Role.Organization role = 1;
+  }
+  string id = 1;
+  google.protobuf.StringValue name = 2;
+  google.protobuf.StringValue first_name = 3;
+  google.protobuf.StringValue last_name = 4;
+  google.protobuf.StringValue language = 5;
+  google.protobuf.StringValue avatar_image_url = 6;
+  google.protobuf.Int64Value last_seen = 7;
+  OrganizationRoleValue organization_role = 8;
+  repeated account.AccountV2.EnvironmentRole environment_roles = 9;
+  google.protobuf.BoolValue disabled = 10;
+  google.protobuf.BoolValue deleted = 11 [(grpc.gateway.protoc_gen_openapiv2
+                                               .options.openapiv2_field) = {
+    title: "deleted"
+    description: "if true, the account will be deleted and other fields will be ignored."
+  }];
+}
+
+message UpdateAccountV2Response {
+  account.AccountV2 account = 1;
+}
+
+message ListAccountsV2Request {
+  int64 page_size = 1;
+  string cursor = 2;
+  account.ListAccountsV2Request.OrderBy order_by = 3;
+  account.ListAccountsV2Request.OrderDirection order_direction = 4;
+  string search_keyword = 5;
+  google.protobuf.BoolValue disabled = 7;
+  google.protobuf.Int32Value organization_role = 8;
+  google.protobuf.Int32Value environment_role = 9;
+}
+
+message ListAccountsV2Response {
+  repeated account.AccountV2 accounts = 1;
+  string cursor = 2;
+  int64 total_count = 3;
 }
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
@@ -567,6 +644,106 @@ service Gateway {
       description: "Update a Push notification. To call this API, you a `WRITE` or `ADMIN` API Key role.",
       tags: "Pushes",
       operation_id: "api.gateway.v1.pushes.update",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc CreateAccountV2(CreateAccountV2Request)
+      returns (CreateAccountV2Response) {
+    option (google.api.http) = {
+      post: "/v1/account"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create",
+      description: "Create a new Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Accounts",
+      operation_id: "api.gateway.v1.accounts.create",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc GetAccountV2(GetAccountV2Request) returns (GetAccountV2Response) {
+    option (google.api.http) = {
+      get: "/v1/account"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get an Account. To call this API, you need a `READ` API Key role.",
+      tags: "Accounts",
+      operation_id: "api.gateway.v1.accounts.get",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc GetAccountV2ByEnvironmentID(GetAccountV2ByEnvironmentIDRequest)
+      returns (GetAccountV2ByEnvironmentIDResponse) {
+    option (google.api.http) = {
+      get: "/v1/get-account-by-environment-id"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get an Account by Environment ID. To call this API, you need a `READ` API Key role.",
+      tags: "Accounts",
+      operation_id: "api.gateway.v1.accounts.get_by_environment_id",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc UpdateAccountV2(UpdateAccountV2Request)
+      returns (UpdateAccountV2Response) {
+    option (google.api.http) = {
+      patch: "/v1/account/{id}"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update",
+      description: "Update an Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Accounts",
+      operation_id: "api.gateway.v1.accounts.update",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc ListAccountsV2(ListAccountsV2Request) returns (ListAccountsV2Response) {
+    option (google.api.http) = {
+      get: "/v1/accounts"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List",
+      description: "Get list Accounts. To call this API, you need a `READ` API Key role.",
+      tags: "Accounts",
+      operation_id: "api.gateway.v1.accounts.list",
       parameters: {
         headers: {
           name: "authorization"
