@@ -35,5 +35,8 @@
   "environment": {
     "confirm-archive-desc": "The environment \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
     "confirm-unarchive-desc": "The environment \"<bold>{{name}}</bold>\" will be unarchived. Are you sure you want to proceed?"
+  },
+  "members": {
+    "delete-member-desc": "The member \"<bold>{{email}}</bold>\" will be deleted permanently. Are you sure you want to proceed?"
   }
 }

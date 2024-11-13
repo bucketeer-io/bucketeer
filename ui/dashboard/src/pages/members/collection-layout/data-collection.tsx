@@ -1,5 +1,4 @@
 import {
-  IconAddOutlined,
   IconEditOutlined,
   IconMoreHorizOutlined
 } from 'react-icons-material-design';
@@ -103,11 +102,11 @@ export const useColumns = ({
                 icon: IconEditOutlined,
                 value: 'EDIT'
               },
-              {
-                label: `${t('table:popover.add-to-env')}`,
-                icon: IconAddOutlined,
-                value: 'ADD_ENV'
-              },
+              // {
+              //   label: `${t('table:popover.add-to-env')}`,
+              //   icon: IconAddOutlined,
+              //   value: 'ADD_ENV'
+              // },
               {
                 label: `${t('table:popover.delete-member')}`,
                 icon: IconTrash,

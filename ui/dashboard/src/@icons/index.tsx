@@ -29,6 +29,7 @@ import IconSetting from './sidebar-icons/setting.svg?react';
 import IconSwitch from './sidebar-icons/switch.svg?react';
 import IconUsage from './sidebar-icons/usage.svg?react';
 import IconUser from './sidebar-icons/user.svg?react';
+import IconDelete from './special-icons/delete.svg?react';
 import IconFCM from './special-icons/fcm.svg?react';
 import IconGithub from './special-icons/github.svg?react';
 import IconGoal from './special-icons/goal.svg?react';
@@ -78,5 +79,6 @@ export {
   IconSlack,
   IconFCM,
   IconNoData,
-  IconLogoutConfirm
+  IconLogoutConfirm,
+  IconDelete
 };
