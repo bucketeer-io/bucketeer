@@ -9,22 +9,22 @@ import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
-import { EnvironmentFilters } from '../types';
+import { EnvironmentActionsType, EnvironmentFilters } from '../types';
 import { useFetchEnvironments } from './use-fetch-environments';
 
 const CollectionLoader = ({
   onAdd,
   filters,
   setFilters,
-  onActionHandler
+  onActions
 }: {
   onAdd?: () => void;
   filters: EnvironmentFilters;
   setFilters: (values: Partial<EnvironmentFilters>) => void;
-  onActionHandler: (type: string, v: Environment) => void;
+  onActions: (item: Environment, type: EnvironmentActionsType) => void;
 }) => {
   const { projectId } = useParams();
-  const columns = useColumns({ onActionHandler });
+  const columns = useColumns({ onActions });
   const {
     data: collection,
     isLoading,

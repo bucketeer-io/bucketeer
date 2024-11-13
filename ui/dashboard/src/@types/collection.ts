@@ -15,7 +15,8 @@ export type OrderBy =
   | 'USER_COUNT'
   | 'ROLE'
   | 'ORGANIZATION_ROLE'
-  | 'EMAIL';
+  | 'EMAIL'
+  | 'CREATOR_EMAIL';
 
 export type OrderDirection = 'ASC' | 'DESC';
 

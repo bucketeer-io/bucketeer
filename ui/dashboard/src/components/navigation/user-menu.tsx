@@ -1,15 +1,29 @@
 import * as Popover from '@radix-ui/react-popover';
 import primaryAvatar from 'assets/avatars/primary.svg';
 import { useAuth } from 'auth';
+import { useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { IconBuilding, IconChevronRight, IconLogout, IconUser } from '@icons';
 import { AvatarImage } from 'components/avatar';
+import LogoutConfirmModal from './logout-confirm';
 import MenuItemComponent from './menu-item';
 
 const UserMenu = () => {
   const { t } = useTranslation(['common']);
   const { logout, myOrganizations, consoleAccount } = useAuth();
+
+  const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
+    useToggleOpen(false);
+
+  const avatar = consoleAccount?.avatarUrl
+    ? consoleAccount.avatarUrl
+    : primaryAvatar;
+
+  const onHandleLogout = () => {
+    logout();
+    onCloseConfirmModal();
+  };
 
   const menuItems = compact([
     {
@@ -26,7 +40,7 @@ const UserMenu = () => {
     {
       label: t(`navigation.logout`),
       icon: IconLogout,
-      onClick: logout
+      onClick: onOpenConfirmModal
     }
   ]);
 
@@ -40,8 +54,16 @@ const UserMenu = () => {
         </div>
       </Popover.Content>
       <Popover.Trigger>
-        <AvatarImage size="sm" image={primaryAvatar} />
+        <AvatarImage image={avatar} size="sm" />
       </Popover.Trigger>
+
+      {openConfirmModal && (
+        <LogoutConfirmModal
+          isOpen={openConfirmModal}
+          onClose={onCloseConfirmModal}
+          onSubmit={onHandleLogout}
+        />
+      )}
     </Popover.Root>
   );
 };

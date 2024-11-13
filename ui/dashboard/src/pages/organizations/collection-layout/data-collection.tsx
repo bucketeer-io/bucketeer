@@ -10,11 +10,12 @@ import { Organization } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { useSearchParams } from 'utils/search-params';
 import { Popover } from 'components/popover';
+import { OrganizationActionsType } from '../types';
 
 export const useColumns = ({
-  onActionHandler
+  onActions
 }: {
-  onActionHandler: (type: string, v: Organization) => void;
+  onActions: (item: Organization, type: OrganizationActionsType) => void;
 }): ColumnDef<Organization>[] => {
   const { searchOptions } = useSearchParams();
   const { t } = useTranslation(['common', 'table']);
@@ -107,22 +108,24 @@ export const useColumns = ({
               {
                 label: `${t('table:popover.edit-org')}`,
                 icon: IconEditOutlined,
-                value: 'EDIT_ORGANIZATION'
+                value: 'EDIT'
               },
               searchOptions.status === 'ARCHIVED'
                 ? {
                     label: `${t('table:popover.unarchive-org')}`,
                     icon: IconArchiveOutlined,
-                    value: 'UNARCHIVE_ORGANIZATION'
+                    value: 'UNARCHIVE'
                   }
                 : {
                     label: `${t('table:popover.archive-org')}`,
                     icon: IconArchiveOutlined,
-                    value: 'ARCHIVED_ORGANIZATION'
+                    value: 'ARCHIVE'
                   }
             ]}
             icon={IconMoreHorizOutlined}
-            onClick={value => onActionHandler(value as string, organization)}
+            onClick={value =>
+              onActions(organization, value as OrganizationActionsType)
+            }
             align="end"
           />
         );

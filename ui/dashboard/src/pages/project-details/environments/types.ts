@@ -14,3 +14,5 @@ export interface CollectionProps {
   onSortingChange: (v: SortingState) => void;
   projects: Project[];
 }
+
+export type EnvironmentActionsType = 'EDIT' | 'ARCHIVE' | 'UNARCHIVE';

@@ -57,14 +57,16 @@ const FilterOrganizationModal = ({
 }: FilterProps) => {
   const { t } = useTranslation(['common']);
   const [selectedFilterType, setSelectedFilterType] = useState<Option>();
-  const [valueOption, setValueOption] = useState<Option>();
+  const [selectedValue, setSelectedValue] = useState<Option>();
 
   const onConfirmHandler = () => {
     switch (selectedFilterType?.value) {
       case FilterTypes.ENABLED:
-        onSubmit({
-          disabled: valueOption?.value === 'no'
-        });
+        if (selectedValue) {
+          onSubmit({
+            disabled: selectedValue?.value === 'no'
+          });
+        }
         return;
     }
   };
@@ -72,10 +74,10 @@ const FilterOrganizationModal = ({
   useEffect(() => {
     if (isNotEmpty(filters?.disabled)) {
       setSelectedFilterType(filterOptions[0]);
-      setValueOption(enabledOptions[filters?.disabled ? 1 : 0]);
+      setSelectedValue(enabledOptions[filters?.disabled ? 1 : 0]);
     } else {
       setSelectedFilterType(undefined);
-      setValueOption(undefined);
+      setSelectedValue(undefined);
     }
   }, [filters]);
 
@@ -94,7 +96,7 @@ const FilterOrganizationModal = ({
           <Divider vertical={true} className="border-primary-500" />
           <DropdownMenu>
             <DropdownMenuTrigger
-              placeholder={t(`select-type`)}
+              placeholder={t(`select-filter`)}
               label={selectedFilterType?.label}
               variant="secondary"
               className="w-full"
@@ -114,8 +116,9 @@ const FilterOrganizationModal = ({
           <DropdownMenu>
             <DropdownMenuTrigger
               placeholder={t(`select-value`)}
-              label={valueOption?.label}
+              label={selectedValue?.label}
               variant="secondary"
+              disabled={!selectedFilterType}
               className="w-full"
             />
             <DropdownMenuContent className="w-[235px]" align="start">
@@ -124,7 +127,7 @@ const FilterOrganizationModal = ({
                   key={index}
                   value={item.value}
                   label={item.label}
-                  onSelectOption={() => setValueOption(item)}
+                  onSelectOption={() => setSelectedValue(item)}
                 />
               ))}
             </DropdownMenuContent>

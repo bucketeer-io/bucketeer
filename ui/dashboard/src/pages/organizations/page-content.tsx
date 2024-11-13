@@ -1,8 +1,5 @@
 import { useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
-import { organizationArchive, organizationUnArchive } from '@api/organization';
-import { invalidateOrganizations } from '@queries/organizations';
-import { useQueryClient } from '@tanstack/react-query';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -16,16 +13,15 @@ import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
 import FilterOrganizationModal from './organization-modal/filter-organization-modal';
-import { OrganizationFilters } from './types';
+import { OrganizationActionsType, OrganizationFilters } from './types';
 
 const PageContent = ({
   onAdd,
-  onEdit
+  onHandleActions
 }: {
   onAdd: () => void;
-  onEdit: (v: Organization) => void;
+  onHandleActions: (item: Organization, type: OrganizationActionsType) => void;
 }) => {
-  const queryClient = useQueryClient();
   const { t } = useTranslation(['common']);
 
   // NOTE: Need improve search options
@@ -50,34 +46,6 @@ const PageContent = ({
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
     setFilters({ ...values });
-  };
-
-  const onArchivedOrganization = (organization: Organization) => {
-    organizationArchive({
-      id: organization.id,
-      command: {}
-    }).then(() => {
-      invalidateOrganizations(queryClient);
-    });
-  };
-
-  const onUnArchiveOrganization = (organization: Organization) => {
-    organizationUnArchive({
-      id: organization.id,
-      command: {}
-    }).then(() => {
-      invalidateOrganizations(queryClient);
-    });
-  };
-
-  const onActionHandler = (type: string, organization: Organization) => {
-    if (type === 'ARCHIVED_ORGANIZATION') {
-      onArchivedOrganization(organization);
-    } else if (type === 'UNARCHIVE_ORGANIZATION') {
-      onUnArchiveOrganization(organization);
-    } else {
-      onEdit(organization);
-    }
   };
 
   useEffect(() => {
@@ -133,7 +101,7 @@ const PageContent = ({
             onAdd={onAdd}
             filters={filters}
             setFilters={onChangeFilters}
-            onActionHandler={onActionHandler}
+            onActions={onHandleActions}
           />
         </TabsContent>
       </Tabs>

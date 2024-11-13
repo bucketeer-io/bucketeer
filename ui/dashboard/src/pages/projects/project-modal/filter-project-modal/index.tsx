@@ -62,9 +62,11 @@ const FilterProjectModal = ({
   const onConfirmHandler = () => {
     switch (selectedFilterType?.value) {
       case FilterTypes.ENABLED:
-        onSubmit({
-          disabled: valueOption?.value === 'no'
-        });
+        if (valueOption?.value) {
+          onSubmit({
+            disabled: valueOption?.value === 'no'
+          });
+        }
         return;
     }
   };
@@ -94,7 +96,7 @@ const FilterProjectModal = ({
           <Divider vertical={true} className="border-primary-500" />
           <DropdownMenu>
             <DropdownMenuTrigger
-              placeholder={t(`select-type`)}
+              placeholder={t(`select-filter`)}
               label={selectedFilterType?.label}
               variant="secondary"
               className="w-full"
@@ -115,6 +117,7 @@ const FilterProjectModal = ({
             <DropdownMenuTrigger
               placeholder={t(`select-value`)}
               label={valueOption?.label}
+              disabled={!selectedFilterType}
               variant="secondary"
               className="w-full"
             />

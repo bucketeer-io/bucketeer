@@ -1,8 +1,5 @@
 import { useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
-import { environmentArchive, environmentUnArchive } from '@api/environment';
-import { invalidateEnvironments } from '@queries/environments';
-import { useQueryClient } from '@tanstack/react-query';
 import { usePartialState } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -14,16 +11,15 @@ import Icon from 'components/icon';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from 'components/tabs';
 import Filter from 'elements/filter';
 import CollectionLoader from './collection-loader';
-import { EnvironmentFilters } from './types';
+import { EnvironmentActionsType, EnvironmentFilters } from './types';
 
 const PageContent = ({
   onAdd,
-  onEdit
+  onActionHandler
 }: {
   onAdd: () => void;
-  onEdit: (v: Environment) => void;
+  onActionHandler: (item: Environment, type: EnvironmentActionsType) => void;
 }) => {
-  const queryClient = useQueryClient();
   const { t } = useTranslation(['common']);
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<EnvironmentFilters> = searchOptions;
@@ -43,34 +39,6 @@ const PageContent = ({
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
     setFilters({ ...values });
-  };
-
-  const onArchivedEnvironment = (environment: Environment) => {
-    environmentArchive({
-      id: environment.id,
-      command: {}
-    }).then(() => {
-      invalidateEnvironments(queryClient);
-    });
-  };
-
-  const onUnArchiveEnvironment = (environment: Environment) => {
-    environmentUnArchive({
-      id: environment.id,
-      command: {}
-    }).then(() => {
-      invalidateEnvironments(queryClient);
-    });
-  };
-
-  const onActionHandler = (type: string, environment: Environment) => {
-    if (type === 'ARCHIVED_ENVIRONMENT') {
-      onArchivedEnvironment(environment);
-    } else if (type === 'UNARCHIVE_ENVIRONMENT') {
-      onUnArchiveEnvironment(environment);
-    } else {
-      onEdit(environment);
-    }
   };
 
   useEffect(() => {
@@ -109,7 +77,7 @@ const PageContent = ({
             onAdd={onAdd}
             filters={filters}
             setFilters={onChangeFilters}
-            onActionHandler={onActionHandler}
+            onActions={onActionHandler}
           />
         </TabsContent>
       </Tabs>

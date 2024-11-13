@@ -1,7 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { usePartialState } from 'hooks';
 import pickBy from 'lodash/pickBy';
-import { OrderBy, OrderDirection } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import Filter from 'elements/filter';
@@ -10,14 +9,19 @@ import CollectionLoader from './collection-loader';
 
 const OrganizationMembers = () => {
   const { organizationId } = useParams();
-  const { searchOptions, onChangSearchParams } = useSearchParams();
 
-  const [filters, setFilters] = usePartialState<OrganizationMembersFilters>({
-    page: Number(searchOptions.page) || 1,
-    orderBy: (searchOptions.orderBy as OrderBy) || 'CREATED_AT',
-    orderDirection: (searchOptions.orderDirection as OrderDirection) || 'DESC',
-    searchQuery: (searchOptions.searchQuery as string) || ''
-  });
+  const { searchOptions, onChangSearchParams } = useSearchParams();
+  const searchFilters: Partial<OrganizationMembersFilters> = searchOptions;
+
+  const defaultFilters = {
+    page: 1,
+    orderBy: 'CREATED_AT',
+    orderDirection: 'DESC',
+    ...searchFilters
+  } as OrganizationMembersFilters;
+
+  const [filters, setFilters] =
+    usePartialState<OrganizationMembersFilters>(defaultFilters);
 
   const onChangeFilters = (values: Partial<OrganizationMembersFilters>) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
