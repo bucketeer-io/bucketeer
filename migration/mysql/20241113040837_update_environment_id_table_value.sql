@@ -1,9 +1,9 @@
 -- Step 1: Drop all foreign keys referencing environment_namespace
 ALTER TABLE auto_ops_rule DROP FOREIGN KEY foreign_auto_ops_rule_feature_id_environment_namespace;
 ALTER TABLE experiment DROP FOREIGN KEY foreign_experiment_feature_id_environment_namespace;
-ALTER TABLE ops_count
+ALTER TABLE ops_count 
 DROP FOREIGN KEY foreign_ops_count_feature_id_environment_namespace,
-  DROP FOREIGN KEY foreign_ops_count_auto_ops_rule_id_environment_namespace;
+DROP FOREIGN KEY foreign_ops_count_auto_ops_rule_id_environment_namespace;
 ALTER TABLE ops_progressive_rollout DROP FOREIGN KEY foreign_progressive_rollout_feature_id_environment_namespace;
 ALTER TABLE flag_trigger DROP FOREIGN KEY foreign_flag_trigger_feature_id_environment_namespace;
 ALTER TABLE segment_user DROP FOREIGN KEY foreign_segment_user_segment_id_environment_namespace;
@@ -29,115 +29,92 @@ UPDATE subscription SET environment_id = environment_namespace;
 UPDATE tag SET environment_id = environment_namespace;
 
 -- Step 3: Change PRIMARY KEY to use environment_id instead of environment_namespace
--- and allow environment_namespace to be NULL
-
--- For tables with special consideration:
 ALTER TABLE feature_last_used_info
 ALGORITHM=INPLACE,
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (id, environment_id),
-MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ADD PRIMARY KEY (id, environment_id);
 
 ALTER TABLE mau
 ALGORITHM=INPLACE,
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (user_id, yearmonth, source_id, environment_id),
-MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ADD PRIMARY KEY (user_id, yearmonth, source_id, environment_id);
 
 ALTER TABLE ops_count
 ALGORITHM=INPLACE,
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (id, environment_id),
-MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ADD PRIMARY KEY (id, environment_id);
 
 ALTER TABLE ops_progressive_rollout
 ALGORITHM=INPLACE,
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (id, environment_id),
-MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ADD PRIMARY KEY (id, environment_id);
 
 ALTER TABLE segment_user
 ALGORITHM=INPLACE,
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (id, environment_id),
-MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ADD PRIMARY KEY (id, environment_id);
 
--- For other tables:
 ALTER TABLE feature
 ALGORITHM=INPLACE,
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (id, environment_id),
-MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ADD PRIMARY KEY (id, environment_id);
 
 ALTER TABLE account
 ALGORITHM=INPLACE,
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (id, environment_id),
-MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ADD PRIMARY KEY (id, environment_id);
 
 ALTER TABLE api_key
 ALGORITHM=INPLACE,
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (id, environment_id),
-MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ADD PRIMARY KEY (id, environment_id);
 
 ALTER TABLE audit_log
 ALGORITHM=INPLACE,
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (id, environment_id),
-MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ADD PRIMARY KEY (id, environment_id);
 
 ALTER TABLE auto_ops_rule
 ALGORITHM=INPLACE,
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (id, environment_id),
-MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ADD PRIMARY KEY (id, environment_id);
 
 ALTER TABLE experiment
 ALGORITHM=INPLACE,
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (id, environment_id),
-MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ADD PRIMARY KEY (id, environment_id);
 
 ALTER TABLE experiment_result
 ALGORITHM=INPLACE,
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (id, environment_id),
-MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ADD PRIMARY KEY (id, environment_id);
 
 ALTER TABLE flag_trigger
 ALGORITHM=INPLACE,
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (id, environment_id),
-MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ADD PRIMARY KEY (id, environment_id);
 
 ALTER TABLE goal
 ALGORITHM=INPLACE,
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (id, environment_id),
-MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ADD PRIMARY KEY (id, environment_id);
 
 ALTER TABLE push
 ALGORITHM=INPLACE,
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (id, environment_id),
-MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ADD PRIMARY KEY (id, environment_id);
 
 ALTER TABLE segment
 ALGORITHM=INPLACE,
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (id, environment_id),
-MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ADD PRIMARY KEY (id, environment_id);
 
 ALTER TABLE subscription
 ALGORITHM=INPLACE,
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (id, environment_id),
-MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ADD PRIMARY KEY (id, environment_id);
 
 ALTER TABLE tag
 ALGORITHM=INPLACE,
 DROP PRIMARY KEY,
-ADD PRIMARY KEY (id, environment_id),
-MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
-
+ADD PRIMARY KEY (id, environment_id);
