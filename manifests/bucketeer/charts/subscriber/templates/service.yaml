@@ -1,3 +1,4 @@
+{{- if .Values.global.services.subscriber.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -23,3 +24,4 @@ spec:
   selector:
     app: {{ template "subscriber.name" . }}
     release: {{ template "subscriber.fullname" . }}
+{{- end }}

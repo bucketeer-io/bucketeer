@@ -1,3 +1,4 @@
+{{- if .Values.global.services.subscriber.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -213,3 +214,4 @@ spec:
 {{ toYaml .Values.envoy.resources | indent 12 }}
   strategy:
     type: RollingUpdate
+{{- end }}

@@ -1,3 +1,4 @@
+{{- if and .Values.global.services.batch.enabled }}
 {{- range $.Values.cronjob.jobs }}
 ---
 apiVersion: batch/v1
@@ -59,4 +60,5 @@ spec:
                     exit 1
                   fi
           restartPolicy: Never
+{{- end }}
 {{- end }}

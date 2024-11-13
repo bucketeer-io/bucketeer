@@ -1,4 +1,4 @@
-{{ if .Values.pdb.enabled }}
+{{- if and .Values.global.services.batch.enabled .Values.pdb.enabled }}
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
@@ -9,4 +9,4 @@ spec:
   selector:
     matchLabels:
       app: {{ template "batch-server.name" . }}
-{{ end }}
+{{- end }}

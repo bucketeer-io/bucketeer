@@ -3,6 +3,12 @@ global:
     tag: v1.0.0 # x-release-please-version
     imagePullSecrets:
 
+  services:
+    batch:
+      enabled: true
+    subscriber:
+      enabled: true
+
 migration:
   image:
     repository: ghcr.io/bucketeer-io/bucketeer-migration
