@@ -30,7 +30,9 @@ descriptor_file="proto_descriptor.pb"
 # api-gateway
 api_gateway_values_path="./manifests/bucketeer/charts/api/values.yaml"
 encoded_descriptor=$(cat ${DESCRIPTOR_PATH}/gateway/${descriptor_file} | base64 | tr -d \\n)
-yq eval ".envoy.descriptor = \"${encoded_descriptor}\"" -i ${api_gateway_values_path}
+echo $encoded_descriptor > encoded_descriptor.txt
+yq eval ".envoy.descriptor = load(\"encoded_descriptor.txt\")" -i ${api_gateway_values_path}
+rm encoded_descriptor.txt
 
 # web-gateway
 web_gateway_values_path="./manifests/bucketeer/charts/web/values.yaml"
