@@ -90,6 +90,8 @@ func (c *client) QueryExecer(ctx context.Context) mysql.QueryExecer {
 }
 
 ````
+#### Transaction flow between different storages
+<img width="1119" alt="_9___API層_MySQL依存解消" src="https://github.com/user-attachments/assets/1612123b-e484-453f-8eaf-8a3208588a7e">
 
 ## Solution for issue 2
 Assembling the Where clause and Order clause is done at the API layer.
