@@ -80,7 +80,7 @@ const PageContent = ({
           }}
         />
       )}
-      <div className="mt-5">
+      <div className="mt-5 flex flex-col flex-1">
         <CollectionLoader
           onAdd={onAdd}
           filters={filters}

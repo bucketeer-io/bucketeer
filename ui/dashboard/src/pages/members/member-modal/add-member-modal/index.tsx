@@ -12,7 +12,6 @@ import { useToast } from 'hooks';
 import { Language, useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { OrganizationRole } from '@types';
-import { joinName } from 'utils/name';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -46,10 +45,6 @@ export const organizationRoles: organizationRoleOption[] = [
   {
     value: 'Organization_ADMIN',
     label: 'Admin'
-  },
-  {
-    value: 'Organization_OWNER',
-    label: 'Owner'
   }
 ];
 
@@ -64,17 +59,11 @@ export const languageList: LanguageItem[] = [
 ];
 
 export interface AddMemberForm {
-  firstName: string;
-  lastName: string;
-  language: string;
   email: string;
   role: string;
 }
 
 export const formSchema = yup.object().shape({
-  firstName: yup.string().required(),
-  lastName: yup.string().required(),
-  language: yup.string().required(),
   email: yup.string().email().required(),
   role: yup.string().required()
 });
@@ -89,9 +78,6 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
-      firstName: '',
-      lastName: '',
-      language: '',
       email: '',
       role: undefined
     }
@@ -116,9 +102,6 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
       organizationId: currentEnvironment.organizationId,
       command: {
         email: values.email,
-        firstName: values.firstName,
-        lastName: values.lastName,
-        language: values.language,
         organizationRole: values.role as OrganizationRole,
         environmentRoles:
           memberEnvironments.length > 0 ? memberEnvironments : undefined
@@ -129,8 +112,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
         messageType: 'success',
         message: (
           <span>
-            <b>{joinName(values.firstName, values.lastName)}</b>
-            {` has been successfully created!`}
+            <b>{values.email}</b> {` has been successfully created!`}{' '}
           </span>
         )
       });
@@ -149,38 +131,6 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
           <Form onSubmit={form.handleSubmit(onSubmit)}>
             <Form.Field
               control={form.control}
-              name="firstName"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Label required>{t('first-name')}</Form.Label>
-                  <Form.Control>
-                    <Input
-                      placeholder={`${t('form:enter-first-name')}`}
-                      {...field}
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-            <Form.Field
-              control={form.control}
-              name="lastName"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Label required>{t('last-name')}</Form.Label>
-                  <Form.Control>
-                    <Input
-                      placeholder={`${t('form:enter-first-name')}`}
-                      {...field}
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-            <Form.Field
-              control={form.control}
               name="email"
               render={({ field }) => (
                 <Form.Item>
@@ -190,46 +140,6 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                       placeholder={t('form:placeholder-email')}
                       {...field}
                     />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-            <Form.Field
-              control={form.control}
-              name="language"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Label required>{t('language')}</Form.Label>
-                  <Form.Control className="w-full">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        placeholder={t('form:select-language')}
-                        label={
-                          languageList.find(item => item.value === field.value)
-                            ?.label
-                        }
-                        variant="secondary"
-                        className="w-full"
-                      />
-                      <DropdownMenuContent
-                        className="w-[500px]"
-                        align="start"
-                        {...field}
-                      >
-                        {languageList.map((item, index) => (
-                          <DropdownMenuItem
-                            {...field}
-                            key={index}
-                            value={item.value}
-                            label={item.label}
-                            onSelectOption={value => {
-                              field.onChange(value);
-                            }}
-                          />
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>

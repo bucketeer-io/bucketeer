@@ -54,7 +54,7 @@ const UserMenu = () => {
         </div>
       </Popover.Content>
       <Popover.Trigger>
-        <AvatarImage image={avatar} size="sm" />
+        <AvatarImage image={avatar} size="sm" alt="user-avatar" />
       </Popover.Trigger>
 
       {openConfirmModal && (

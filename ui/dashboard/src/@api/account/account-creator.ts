@@ -8,10 +8,6 @@ export interface EnvironmentRoleItem {
 
 export interface AccountCreatorCommand {
   email: string;
-  firstName: string;
-  lastName: string;
-  language: string;
-  avatarImageUrl?: string;
   organizationRole: OrganizationRole;
   environmentRoles?: EnvironmentRoleItem[];
 }

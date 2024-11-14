@@ -18,24 +18,37 @@ export const useColumns = ({
 
   return [
     {
-      accessorKey: 'email',
+      accessorKey: 'name',
       header: `${t('name')}`,
       size: 350,
       cell: ({ row }) => {
         const account = row.original;
+        const isPendingInvite = Number(account.lastSeen) < 1;
+
         return (
           <div className="flex gap-2">
-            <AvatarImage image={account?.avatarImageUrl || primaryAvatar} />
+            <AvatarImage
+              image={account?.avatarImageUrl || primaryAvatar}
+              alt="member-avatar"
+            />
             <div className="flex flex-col gap-0.5">
-              <button
-                onClick={() => onActions(account)}
-                className="underline text-primary-500 typo-para-medium text-left"
-              >
-                {joinName(account.firstName, account.lastName) || account.name}
-              </button>
+              {!isPendingInvite && (
+                <button
+                  onClick={() => onActions(account)}
+                  className="underline text-primary-500 typo-para-medium text-left"
+                >
+                  {joinName(account.firstName, account.lastName) ||
+                    account.name}
+                </button>
+              )}
               <div className="typo-para-medium text-gray-700">
                 {account.email}
               </div>
+              {isPendingInvite && (
+                <div className="py-[3px] px-2 w-fit rounded bg-accent-orange-50 typo-para-small text-accent-orange-500">
+                  {`Pending invite`}
+                </div>
+              )}
             </div>
           </div>
         );
