@@ -64,6 +64,13 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
     }
   });
 
+  const isInvalidEnvironments = () => {
+    const invalidEnv = memberEnvironments.find(
+      item => !item.environmentId || item.role === 'Environment_UNASSIGNED'
+    );
+    return memberEnvironments.length > 0 && !!invalidEnv;
+  };
+
   const [memberEnvironments, setMemberEnvironments] = useState<
     EnvironmentRoleItem[]
   >(member.environmentRoles || []);
@@ -255,7 +262,9 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!form.formState.isDirty}
+                    disabled={
+                      !form.formState.isDirty || isInvalidEnvironments()
+                    }
                     loading={form.formState.isSubmitting}
                   >
                     {t(`update-member`)}

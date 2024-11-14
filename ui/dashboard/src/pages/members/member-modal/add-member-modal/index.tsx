@@ -94,7 +94,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
     const invalidEnv = memberEnvironments.find(
       item => !item.environmentId || item.role === 'Environment_UNASSIGNED'
     );
-    return !!invalidEnv;
+    return memberEnvironments.length > 0 && !!invalidEnv;
   };
 
   const onSubmit: SubmitHandler<AddMemberForm> = values => {
