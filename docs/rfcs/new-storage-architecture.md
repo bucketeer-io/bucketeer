@@ -23,6 +23,8 @@ RunTransaction, Begin, etc. are called and transaction processing is performed a
 - Define the necessary API for each storage layer using Interface and abstract the storage layer.
     - In the storage layer, embed the interface for each storage and move the implementation necessary for DB operations to the storage layer.
     - The API layer calls the above Interface and does not directly perform DB operations.
+- If transaction processing is required in the API layer, use RunTransactionAPI provided in the DB client to perform transaction processing.
+    - If we want your API layer to handle transactions across different storages, we can do so by creating storage instances using the same DB client instance.
 ````
 // Define the API required for storage with an interface
 type AccountStorage interface {
@@ -49,6 +51,44 @@ func (s *AccountService) updateAccount(
   // No DB operations such as transaction processing are performed, just call Update.
 	return s.accountStorage.UpdateAccount(ctx, account)
 }
+
+type Client interface {
+  // Use when transaction processing is required
+	RunInTransaction(ctx context.Context, tx Transaction, f func() error) error
+}
+
+func (c *client) RunInTransaction(ctx context.Context, f func() error) error {
+	tx, err := c.BeginTx(ctx)
+	if err != nil {
+		return fmt.Errorf("client: begin tx: %w", err)
+	}
+	ctx = context.WithValue(ctx, transactionKey, tx)
+	return c.runInTransaction(ctx, tx, f)
+}
+
+func (c *client) runInTransaction(ctx context.Context, tx Transaction, f func() error) error {
+	var err error
+	defer record()(operationRunInTransaction, &err)
+	defer func() {
+		if err != nil {
+			tx.Rollback() // nolint:errcheck
+		}
+	}()
+	if err = f(); err == nil {
+		err = tx.Commit()
+	}
+	return err
+}
+
+// Called when executing a query on the storage layer
+func (c *client) QueryExecer(ctx context.Context) mysql.QueryExecer {
+	tx, ok := ctx.Value(transactionKey).(mysql.Transaction)
+	if ok {
+		return tx
+	}
+	return c
+}
+
 ````
 
 ## Solution for issue 2
@@ -164,41 +204,36 @@ https://github.com/bucketeer-io/bucketeer/blob/main/pkg/account/storage/v2/stora
   }
 
   func (s *accountStorage) UpdateAccount(ctx context.Context, a *domain.AccountV2) error {
-  	return s.runInTransaction(ctx, func() error {   // Perform transactional operations within the storage layer
-  		result, err := s.qe(ctx).ExecContext(
-  			ctx,
-  			updateAccountV2SQL,
-  			a.Name,
-  			a.AvatarImageUrl,
-  			int32(a.OrganizationRole),
-  			mysql.JSONObject{Val: a.EnvironmentRoles},
-  			a.Disabled,
-  			a.UpdatedAt,
-  			mysql.JSONObject{Val: a.SearchFilters},
-  			a.Email,
-  			a.OrganizationId,
-  		)
-  		if err != nil {
-  			return err
-  		}
-  		rowsAffected, err := result.RowsAffected()
-  		if err != nil {
-  			return err
-  		}
-  		if rowsAffected != 1 {
-  			return ErrAccountUnexpectedAffectedRows
-  		}
-  		return nil
-  	}
-  }
-
-  func (s *accountStorage) runInTransaction(ctx context.Context, f func() error) error {
-  	tx, err := s.client.BeginTx(ctx)
-  	if err != nil {
-  		return fmt.Errorf("account: begin tx: %w", err)
-  	}
-  	ctx = context.WithValue(ctx, transactionKey, tx)
-  	return s.client.RunInTransaction(ctx, tx, f)
+    result, err := s.client.QueryExecer(ctx).ExecContext(
+                             ctx,
+                             updateAccountV2SQL,
+                             a.Name,
+                             a.FirstName,
+                             a.LastName,
+                             a.Language,
+                             a.AvatarImageUrl,
+                             a.AvatarFileType,
+                             a.AvatarImage,
+                             int32(a.OrganizationRole),
+                             mysql.JSONObject{Val: a.EnvironmentRoles},
+                             a.Disabled,
+                             a.UpdatedAt,
+                             a.LastSeen,
+                             mysql.JSONObject{Val: a.SearchFilters},
+                             a.Email,
+                             a.OrganizationId,
+                             )
+    if err != nil {
+      return err
+    }
+    rowsAffected, err := result.RowsAffected()
+    if err != nil {
+      return err
+    }
+    if rowsAffected != 1 {
+      return ErrAccountUnexpectedAffectedRows
+    }
+    return nil
   }
   ````
 
