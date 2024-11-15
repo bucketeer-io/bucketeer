@@ -67,7 +67,7 @@ func (s *AccountService) CreateSearchFilter(
 		orgID = sysAdminAccount.OrganizationId
 	}
 
-	if err := s.updateAccountV2MySQL(
+	if _, err := s.updateAccountV2MySQL(
 		ctx,
 		editor,
 		[]command.Command{req.Command},
@@ -144,7 +144,7 @@ func (s *AccountService) UpdateSearchFilter(
 		orgID = sysAdminAccount.OrganizationId
 	}
 
-	if err := s.updateAccountV2MySQL(
+	if _, err := s.updateAccountV2MySQL(
 		ctx,
 		editor,
 		commands,
@@ -238,7 +238,7 @@ func (s *AccountService) DeleteSearchFilter(
 		orgID = sysAdminAccount.OrganizationId
 	}
 
-	if err := s.updateAccountV2MySQL(
+	if _, err := s.updateAccountV2MySQL(
 		ctx,
 		editor,
 		[]command.Command{req.Command},

@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
 )
@@ -1017,4 +1018,60 @@ func TestDeleteSearchFilter(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAccountV2_Update(t *testing.T) {
+	account := NewAccountV2(
+		"bucketeer@gmail.com",
+		"name",
+		"firstName",
+		"lastName",
+		"en",
+		"avatarImageURL",
+		"organizationID",
+		proto.AccountV2_Role_Organization_MEMBER,
+		[]*proto.AccountV2_EnvironmentRole{
+			{
+				EnvironmentId: "e2e",
+			},
+		},
+	)
+	updated, err := account.Update(
+		wrapperspb.String("newName"),
+		wrapperspb.String("newFirstName"),
+		wrapperspb.String("newLastName"),
+		wrapperspb.String("ja"),
+		wrapperspb.String("newAvatarImageURL"),
+		nil,
+		&proto.UpdateAccountV2Request_OrganizationRoleValue{
+			Role: proto.AccountV2_Role_Organization_ADMIN,
+		},
+		[]*proto.AccountV2_EnvironmentRole{
+			{
+				EnvironmentId: "e2e",
+			},
+			{
+				EnvironmentId: "default",
+			},
+		},
+		nil,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assert.Equal(t, "newName", updated.Name)
+	assert.Equal(t, "newFirstName", updated.FirstName)
+	assert.Equal(t, "newLastName", updated.LastName)
+	assert.Equal(t, "ja", updated.Language)
+	assert.Equal(t, "newAvatarImageURL", updated.AvatarImageUrl)
+	assert.Equal(t, "organizationID", updated.OrganizationId)
+	assert.Equal(t, proto.AccountV2_Role_Organization_ADMIN, updated.OrganizationRole)
+	assert.Equal(t, []*proto.AccountV2_EnvironmentRole{
+		{
+			EnvironmentId: "e2e",
+		},
+		{
+			EnvironmentId: "default",
+		},
+	}, updated.EnvironmentRoles)
 }

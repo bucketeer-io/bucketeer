@@ -16,7 +16,13 @@ package domain
 
 import (
 	"errors"
+	"regexp"
 	"time"
+
+	"github.com/jinzhu/copier"
+	"google.golang.org/grpc/codes"
+	gstatus "google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
@@ -24,7 +30,22 @@ import (
 )
 
 var (
-	ErrSearchFilterNotFound = errors.New("account: search filter not found")
+	maxAccountNameLength = 250
+	// nolint:lll
+	emailRegex                  = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	ErrSearchFilterNotFound     = errors.New("account: search filter not found")
+	statusMissingOrganizationID = gstatus.New(
+		codes.InvalidArgument,
+		"account: organization id must be specified",
+	)
+	statusEmailIsEmpty            = gstatus.New(codes.InvalidArgument, "account: email is empty")
+	statusInvalidEmail            = gstatus.New(codes.InvalidArgument, "account: invalid email format")
+	statusFirstNameIsEmpty        = gstatus.New(codes.InvalidArgument, "account: first name is empty")
+	statusInvalidFirstName        = gstatus.New(codes.InvalidArgument, "account: invalid first name format")
+	statusLastNameIsEmpty         = gstatus.New(codes.InvalidArgument, "account: last name is empty")
+	statusInvalidLastName         = gstatus.New(codes.InvalidArgument, "account: invalid last name format")
+	statusLanguageIsEmpty         = gstatus.New(codes.InvalidArgument, "account: language is empty")
+	statusInvalidOrganizationRole = gstatus.New(codes.InvalidArgument, "account: invalid organization role")
 )
 
 type AccountV2 struct {
@@ -57,6 +78,53 @@ func NewAccountV2(
 		LastName:         lastName,
 		Language:         language,
 	}}
+}
+
+func (a *AccountV2) Update(
+	name, firstName, lastName, language, avatarImageURL *wrapperspb.StringValue,
+	avatar *proto.UpdateAccountV2Request_AccountV2Avatar,
+	organizationRole *proto.UpdateAccountV2Request_OrganizationRoleValue,
+	environmentRoles []*proto.AccountV2_EnvironmentRole,
+	isDisabled *wrapperspb.BoolValue,
+) (*AccountV2, error) {
+	updated := &AccountV2{}
+	if err := copier.Copy(updated, a); err != nil {
+		return nil, err
+	}
+
+	if name != nil {
+		updated.Name = name.Value
+	}
+	if firstName != nil {
+		updated.FirstName = firstName.Value
+	}
+	if lastName != nil {
+		updated.LastName = lastName.Value
+	}
+	if language != nil {
+		updated.Language = language.Value
+	}
+	if avatarImageURL != nil {
+		updated.AvatarImageUrl = avatarImageURL.Value
+	}
+	if avatar != nil {
+		updated.AvatarImage = avatar.AvatarImage
+		updated.AvatarFileType = avatar.AvatarFileType
+	}
+	if organizationRole != nil {
+		updated.OrganizationRole = organizationRole.Role
+	}
+	if len(updated.EnvironmentRoles) > 0 {
+		updated.EnvironmentRoles = environmentRoles
+	}
+	if isDisabled != nil {
+		updated.Disabled = isDisabled.Value
+	}
+	updated.UpdatedAt = time.Now().Unix()
+	if err := validate(updated); err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
 
 func (a *AccountV2) ChangeName(newName string) error {
@@ -235,4 +303,35 @@ func (a *AccountV2) resetDefaultFilter(targetFilter proto.FilterTargetType, envi
 			f.DefaultFilter = false
 		}
 	}
+}
+
+func validate(a *AccountV2) error {
+	if a.OrganizationId == "" {
+		return statusMissingOrganizationID.Err()
+	}
+	if a.Email == "" {
+		return statusEmailIsEmpty.Err()
+	}
+	if !emailRegex.MatchString(a.Email) {
+		return statusInvalidEmail.Err()
+	}
+	if a.FirstName == "" {
+		return statusFirstNameIsEmpty.Err()
+	}
+	if len(a.FirstName) > maxAccountNameLength {
+		return statusInvalidFirstName.Err()
+	}
+	if a.LastName == "" {
+		return statusLastNameIsEmpty.Err()
+	}
+	if len(a.LastName) > maxAccountNameLength {
+		return statusInvalidLastName.Err()
+	}
+	if a.Language == "" {
+		return statusLanguageIsEmpty.Err()
+	}
+	if a.OrganizationRole == proto.AccountV2_Role_Organization_UNASSIGNED {
+		return statusInvalidOrganizationRole.Err()
+	}
+	return nil
 }

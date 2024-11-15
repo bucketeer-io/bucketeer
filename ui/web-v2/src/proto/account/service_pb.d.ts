@@ -180,6 +180,39 @@ export class CreateAccountV2Request extends jspb.Message {
   getCommand(): proto_account_command_pb.CreateAccountV2Command | undefined;
   setCommand(value?: proto_account_command_pb.CreateAccountV2Command): void;
 
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getAvatarImageUrl(): string;
+  setAvatarImageUrl(value: string): void;
+
+  getOrganizationRole(): proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
+  setOrganizationRole(
+    value: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap]
+  ): void;
+
+  clearEnvironmentRolesList(): void;
+  getEnvironmentRolesList(): Array<proto_account_account_pb.AccountV2.EnvironmentRole>;
+  setEnvironmentRolesList(
+    value: Array<proto_account_account_pb.AccountV2.EnvironmentRole>
+  ): void;
+  addEnvironmentRoles(
+    value?: proto_account_account_pb.AccountV2.EnvironmentRole,
+    index?: number
+  ): proto_account_account_pb.AccountV2.EnvironmentRole;
+
+  getFirstName(): string;
+  setFirstName(value: string): void;
+
+  getLastName(): string;
+  setLastName(value: string): void;
+
+  getLanguage(): string;
+  setLanguage(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateAccountV2Request.AsObject;
   static toObject(
@@ -205,6 +238,14 @@ export namespace CreateAccountV2Request {
   export type AsObject = {
     organizationId: string;
     command?: proto_account_command_pb.CreateAccountV2Command.AsObject;
+    email: string;
+    name: string;
+    avatarImageUrl: string;
+    organizationRole: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
+    environmentRolesList: Array<proto_account_account_pb.AccountV2.EnvironmentRole.AsObject>;
+    firstName: string;
+    lastName: string;
+    language: string;
   };
 }
 
@@ -283,6 +324,11 @@ export namespace EnableAccountV2Request {
 }
 
 export class EnableAccountV2Response extends jspb.Message {
+  hasAccount(): boolean;
+  clearAccount(): void;
+  getAccount(): proto_account_account_pb.AccountV2 | undefined;
+  setAccount(value?: proto_account_account_pb.AccountV2): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EnableAccountV2Response.AsObject;
   static toObject(
@@ -305,7 +351,9 @@ export class EnableAccountV2Response extends jspb.Message {
 }
 
 export namespace EnableAccountV2Response {
-  export type AsObject = {};
+  export type AsObject = {
+    account?: proto_account_account_pb.AccountV2.AsObject;
+  };
 }
 
 export class DisableAccountV2Request extends jspb.Message {
@@ -350,6 +398,11 @@ export namespace DisableAccountV2Request {
 }
 
 export class DisableAccountV2Response extends jspb.Message {
+  hasAccount(): boolean;
+  clearAccount(): void;
+  getAccount(): proto_account_account_pb.AccountV2 | undefined;
+  setAccount(value?: proto_account_account_pb.AccountV2): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DisableAccountV2Response.AsObject;
   static toObject(
@@ -372,7 +425,9 @@ export class DisableAccountV2Response extends jspb.Message {
 }
 
 export namespace DisableAccountV2Response {
-  export type AsObject = {};
+  export type AsObject = {
+    account?: proto_account_account_pb.AccountV2.AsObject;
+  };
 }
 
 export class DeleteAccountV2Request extends jspb.Message {
@@ -530,6 +585,60 @@ export class UpdateAccountV2Request extends jspb.Message {
     value?: proto_account_command_pb.ChangeAccountV2AvatarCommand
   ): void;
 
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasAvatarImageUrl(): boolean;
+  clearAvatarImageUrl(): void;
+  getAvatarImageUrl(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setAvatarImageUrl(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasOrganizationRole(): boolean;
+  clearOrganizationRole(): void;
+  getOrganizationRole():
+    | UpdateAccountV2Request.OrganizationRoleValue
+    | undefined;
+  setOrganizationRole(
+    value?: UpdateAccountV2Request.OrganizationRoleValue
+  ): void;
+
+  clearEnvironmentRolesList(): void;
+  getEnvironmentRolesList(): Array<proto_account_account_pb.AccountV2.EnvironmentRole>;
+  setEnvironmentRolesList(
+    value: Array<proto_account_account_pb.AccountV2.EnvironmentRole>
+  ): void;
+  addEnvironmentRoles(
+    value?: proto_account_account_pb.AccountV2.EnvironmentRole,
+    index?: number
+  ): proto_account_account_pb.AccountV2.EnvironmentRole;
+
+  hasFirstName(): boolean;
+  clearFirstName(): void;
+  getFirstName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setFirstName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasLastName(): boolean;
+  clearLastName(): void;
+  getLastName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setLastName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasLanguage(): boolean;
+  clearLanguage(): void;
+  getLanguage(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setLanguage(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasLastSeen(): boolean;
+  clearLastSeen(): void;
+  getLastSeen(): google_protobuf_wrappers_pb.Int64Value | undefined;
+  setLastSeen(value?: google_protobuf_wrappers_pb.Int64Value): void;
+
+  hasAvatar(): boolean;
+  clearAvatar(): void;
+  getAvatar(): UpdateAccountV2Request.AccountV2Avatar | undefined;
+  setAvatar(value?: UpdateAccountV2Request.AccountV2Avatar): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateAccountV2Request.AsObject;
   static toObject(
@@ -564,10 +673,94 @@ export namespace UpdateAccountV2Request {
     changeLanguageCommand?: proto_account_command_pb.ChangeAccountV2LanguageCommand.AsObject;
     changeLastSeenCommand?: proto_account_command_pb.ChangeAccountV2LastSeenCommand.AsObject;
     changeAvatarCommand?: proto_account_command_pb.ChangeAccountV2AvatarCommand.AsObject;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    avatarImageUrl?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    organizationRole?: UpdateAccountV2Request.OrganizationRoleValue.AsObject;
+    environmentRolesList: Array<proto_account_account_pb.AccountV2.EnvironmentRole.AsObject>;
+    firstName?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    lastName?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    language?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    lastSeen?: google_protobuf_wrappers_pb.Int64Value.AsObject;
+    avatar?: UpdateAccountV2Request.AccountV2Avatar.AsObject;
   };
+
+  export class AccountV2Avatar extends jspb.Message {
+    getAvatarImage(): Uint8Array | string;
+    getAvatarImage_asU8(): Uint8Array;
+    getAvatarImage_asB64(): string;
+    setAvatarImage(value: Uint8Array | string): void;
+
+    getAvatarFileType(): string;
+    setAvatarFileType(value: string): void;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): AccountV2Avatar.AsObject;
+    static toObject(
+      includeInstance: boolean,
+      msg: AccountV2Avatar
+    ): AccountV2Avatar.AsObject;
+    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+    static extensionsBinary: {
+      [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+    };
+    static serializeBinaryToWriter(
+      message: AccountV2Avatar,
+      writer: jspb.BinaryWriter
+    ): void;
+    static deserializeBinary(bytes: Uint8Array): AccountV2Avatar;
+    static deserializeBinaryFromReader(
+      message: AccountV2Avatar,
+      reader: jspb.BinaryReader
+    ): AccountV2Avatar;
+  }
+
+  export namespace AccountV2Avatar {
+    export type AsObject = {
+      avatarImage: Uint8Array | string;
+      avatarFileType: string;
+    };
+  }
+
+  export class OrganizationRoleValue extends jspb.Message {
+    getRole(): proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
+    setRole(
+      value: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap]
+    ): void;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): OrganizationRoleValue.AsObject;
+    static toObject(
+      includeInstance: boolean,
+      msg: OrganizationRoleValue
+    ): OrganizationRoleValue.AsObject;
+    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+    static extensionsBinary: {
+      [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+    };
+    static serializeBinaryToWriter(
+      message: OrganizationRoleValue,
+      writer: jspb.BinaryWriter
+    ): void;
+    static deserializeBinary(bytes: Uint8Array): OrganizationRoleValue;
+    static deserializeBinaryFromReader(
+      message: OrganizationRoleValue,
+      reader: jspb.BinaryReader
+    ): OrganizationRoleValue;
+  }
+
+  export namespace OrganizationRoleValue {
+    export type AsObject = {
+      role: proto_account_account_pb.AccountV2.Role.OrganizationMap[keyof proto_account_account_pb.AccountV2.Role.OrganizationMap];
+    };
+  }
 }
 
 export class UpdateAccountV2Response extends jspb.Message {
+  hasAccount(): boolean;
+  clearAccount(): void;
+  getAccount(): proto_account_account_pb.AccountV2 | undefined;
+  setAccount(value?: proto_account_account_pb.AccountV2): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateAccountV2Response.AsObject;
   static toObject(
@@ -590,7 +783,9 @@ export class UpdateAccountV2Response extends jspb.Message {
 }
 
 export namespace UpdateAccountV2Response {
-  export type AsObject = {};
+  export type AsObject = {
+    account?: proto_account_account_pb.AccountV2.AsObject;
+  };
 }
 
 export class GetAccountV2Request extends jspb.Message {

@@ -2743,6 +2743,19 @@ definitions:
       - Environment_VIEWER
       - Environment_EDITOR
     default: Environment_UNASSIGNED
+  UpdateAccountV2RequestAccountV2Avatar:
+    type: object
+    properties:
+      avatarImage:
+        type: string
+        format: byte
+      avatarFileType:
+        type: string
+  UpdateAccountV2RequestOrganizationRoleValue:
+    type: object
+    properties:
+      role:
+        $ref: '#/definitions/AccountV2RoleOrganization'
   accountAPIKey:
     type: object
     properties:
@@ -3010,6 +3023,25 @@ definitions:
         type: string
       command:
         $ref: '#/definitions/accountCreateAccountV2Command'
+      email:
+        type: string
+      name:
+        type: string
+      avatarImageUrl:
+        type: string
+      organizationRole:
+        $ref: '#/definitions/AccountV2RoleOrganization'
+      environmentRoles:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountAccountV2EnvironmentRole'
+      firstName:
+        type: string
+      lastName:
+        type: string
+      language:
+        type: string
   accountCreateAccountV2Response:
     type: object
     properties:
@@ -3098,6 +3130,9 @@ definitions:
         $ref: '#/definitions/accountDisableAccountV2Command'
   accountDisableAccountV2Response:
     type: object
+    properties:
+      account:
+        $ref: '#/definitions/accountAccountV2'
   accountEnableAPIKeyCommand:
     type: object
   accountEnableAPIKeyRequest:
@@ -3124,6 +3159,9 @@ definitions:
         $ref: '#/definitions/accountEnableAccountV2Command'
   accountEnableAccountV2Response:
     type: object
+    properties:
+      account:
+        $ref: '#/definitions/accountAccountV2'
   accountEnvironmentAPIKey:
     type: object
     properties:
@@ -3362,8 +3400,33 @@ definitions:
         $ref: '#/definitions/accountChangeAccountV2LastSeenCommand'
       changeAvatarCommand:
         $ref: '#/definitions/accountChangeAccountV2AvatarCommand'
+      name:
+        type: string
+      avatarImageUrl:
+        type: string
+      organizationRole:
+        $ref: '#/definitions/UpdateAccountV2RequestOrganizationRoleValue'
+      environmentRoles:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountAccountV2EnvironmentRole'
+      firstName:
+        type: string
+      lastName:
+        type: string
+      language:
+        type: string
+      lastSeen:
+        type: string
+        format: int64
+      avatar:
+        $ref: '#/definitions/UpdateAccountV2RequestAccountV2Avatar'
   accountUpdateAccountV2Response:
     type: object
+    properties:
+      account:
+        $ref: '#/definitions/accountAccountV2'
   accountUpdateSearchFilterRequest:
     type: object
     properties:
