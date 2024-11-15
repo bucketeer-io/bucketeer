@@ -197,6 +197,7 @@ export namespace Event {
     ACCOUNT_V2_FIRST_NAME_CHANGED: 318;
     ACCOUNT_V2_LAST_NAME_CHANGED: 319;
     ACCOUNT_V2_LANGUAGE_CHANGED: 320;
+    ACCOUNT_V2_UPDATED: 321;
     APIKEY_CREATED: 400;
     APIKEY_NAME_CHANGED: 401;
     APIKEY_ENABLED: 402;
@@ -2562,6 +2563,41 @@ export namespace AccountV2CreatedEvent {
     firstName: string;
     lastName: string;
     language: string;
+  };
+}
+
+export class AccountV2UpdatedEvent extends jspb.Message {
+  getEmail(): string;
+  setEmail(value: string): void;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): AccountV2UpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: AccountV2UpdatedEvent
+  ): AccountV2UpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: AccountV2UpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): AccountV2UpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: AccountV2UpdatedEvent,
+    reader: jspb.BinaryReader
+  ): AccountV2UpdatedEvent;
+}
+
+export namespace AccountV2UpdatedEvent {
+  export type AsObject = {
+    email: string;
+    organizationId: string;
   };
 }
 

@@ -1,3 +1,4 @@
+{{- if eq (include "subscriber.deploy" .) "true" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -19,4 +20,5 @@ data:
     {{ toJson .Values.processors }}
 
   onDemandProcessors.json: |-
-      {{ toJson .Values.onDemandProcessors }}
+    {{ toJson .Values.onDemandProcessors }}
+{{- end }}

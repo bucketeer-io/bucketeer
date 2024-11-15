@@ -1,0 +1,19 @@
+-- Modify environment_namespace column to allow default value
+ALTER TABLE feature_last_used_info MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ALTER TABLE mau MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ALTER TABLE ops_count MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ALTER TABLE ops_progressive_rollout MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ALTER TABLE segment_user MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ALTER TABLE feature MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ALTER TABLE account MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ALTER TABLE api_key MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ALTER TABLE audit_log MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ALTER TABLE auto_ops_rule MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ALTER TABLE experiment MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ALTER TABLE experiment_result MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ALTER TABLE flag_trigger MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ALTER TABLE goal MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ALTER TABLE push MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ALTER TABLE segment MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ALTER TABLE subscription MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";
+ALTER TABLE tag MODIFY COLUMN environment_namespace VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL DEFAULT "";

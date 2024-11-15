@@ -993,7 +993,54 @@
               {
                 "id": 2,
                 "name": "command",
-                "type": "CreateAccountV2Command"
+                "type": "CreateAccountV2Command",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "avatar_image_url",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "organization_role",
+                "type": "account.AccountV2.Role.Organization"
+              },
+              {
+                "id": 7,
+                "name": "environment_roles",
+                "type": "account.AccountV2.EnvironmentRole",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "first_name",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "last_name",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "language",
+                "type": "string"
               }
             ]
           },
@@ -1023,12 +1070,25 @@
               {
                 "id": 3,
                 "name": "command",
-                "type": "EnableAccountV2Command"
+                "type": "EnableAccountV2Command",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               }
             ]
           },
           {
-            "name": "EnableAccountV2Response"
+            "name": "EnableAccountV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "account",
+                "type": "AccountV2"
+              }
+            ]
           },
           {
             "name": "DisableAccountV2Request",
@@ -1046,12 +1106,25 @@
               {
                 "id": 3,
                 "name": "command",
-                "type": "DisableAccountV2Command"
+                "type": "DisableAccountV2Command",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               }
             ]
           },
           {
-            "name": "DisableAccountV2Response"
+            "name": "DisableAccountV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "account",
+                "type": "AccountV2"
+              }
+            ]
           },
           {
             "name": "DeleteAccountV2Request",
@@ -1069,7 +1142,13 @@
               {
                 "id": 3,
                 "name": "command",
-                "type": "DeleteAccountV2Command"
+                "type": "DeleteAccountV2Command",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               }
             ]
           },
@@ -1092,52 +1171,186 @@
               {
                 "id": 3,
                 "name": "change_name_command",
-                "type": "ChangeAccountV2NameCommand"
+                "type": "ChangeAccountV2NameCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 4,
                 "name": "change_avatar_url_command",
-                "type": "ChangeAccountV2AvatarImageUrlCommand"
+                "type": "ChangeAccountV2AvatarImageUrlCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 5,
                 "name": "change_organization_role_command",
-                "type": "ChangeAccountV2OrganizationRoleCommand"
+                "type": "ChangeAccountV2OrganizationRoleCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 6,
                 "name": "change_environment_roles_command",
-                "type": "ChangeAccountV2EnvironmentRolesCommand"
+                "type": "ChangeAccountV2EnvironmentRolesCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 7,
                 "name": "change_first_name_command",
-                "type": "ChangeAccountV2FirstNameCommand"
+                "type": "ChangeAccountV2FirstNameCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 8,
                 "name": "change_last_name_command",
-                "type": "ChangeAccountV2LastNameCommand"
+                "type": "ChangeAccountV2LastNameCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 9,
                 "name": "change_language_command",
-                "type": "ChangeAccountV2LanguageCommand"
+                "type": "ChangeAccountV2LanguageCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 10,
                 "name": "change_last_seen_command",
-                "type": "ChangeAccountV2LastSeenCommand"
+                "type": "ChangeAccountV2LastSeenCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 11,
                 "name": "change_avatar_command",
-                "type": "ChangeAccountV2AvatarCommand"
+                "type": "ChangeAccountV2AvatarCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 12,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 13,
+                "name": "avatar_image_url",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 14,
+                "name": "organization_role",
+                "type": "OrganizationRoleValue"
+              },
+              {
+                "id": 15,
+                "name": "environment_roles",
+                "type": "account.AccountV2.EnvironmentRole",
+                "is_repeated": true
+              },
+              {
+                "id": 16,
+                "name": "first_name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 17,
+                "name": "last_name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 18,
+                "name": "language",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 19,
+                "name": "last_seen",
+                "type": "google.protobuf.Int64Value"
+              },
+              {
+                "id": 20,
+                "name": "avatar",
+                "type": "AccountV2Avatar"
+              }
+            ],
+            "messages": [
+              {
+                "name": "AccountV2Avatar",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "avatar_image",
+                    "type": "bytes"
+                  },
+                  {
+                    "id": 2,
+                    "name": "avatar_file_type",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "name": "OrganizationRoleValue",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "role",
+                    "type": "account.AccountV2.Role.Organization"
+                  }
+                ]
               }
             ]
           },
           {
-            "name": "UpdateAccountV2Response"
+            "name": "UpdateAccountV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "account",
+                "type": "AccountV2"
+              }
+            ]
           },
           {
             "name": "GetAccountV2Request",
@@ -14149,6 +14362,10 @@
                 "integer": 320
               },
               {
+                "name": "ACCOUNT_V2_UPDATED",
+                "integer": 321
+              },
+              {
                 "name": "APIKEY_CREATED",
                 "integer": 400
               },
@@ -15735,6 +15952,21 @@
               {
                 "id": 12,
                 "name": "language",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "AccountV2UpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
                 "type": "string"
               }
             ]
