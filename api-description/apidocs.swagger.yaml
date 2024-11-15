@@ -619,6 +619,10 @@ paths:
           in: query
           required: false
           type: string
+        - name: organizationId
+          in: query
+          required: false
+          type: string
         - name: orderBy
           in: query
           required: false
@@ -652,6 +656,10 @@ paths:
           required: false
           type: integer
           format: int32
+        - name: environmentId
+          in: query
+          required: false
+          type: string
         - name: environmentRole
           in: query
           required: false
@@ -905,7 +913,7 @@ paths:
           type: string
       tags:
         - Feature Flags
-  /v1/get-account-by-environment-id:
+  /v1/get-account-by-environment:
     get:
       summary: Get
       description: Get an Account by Environment ID. To call this API, you need a `READ` API Key role.
@@ -1258,7 +1266,7 @@ definitions:
         type: string
         format: int64
       organizationRole:
-        $ref: '#/definitions/UpdateAccountV2RequestOrganizationRoleValue'
+        $ref: '#/definitions/bucketeergatewayUpdateAccountV2RequestOrganizationRoleValue'
       environmentRoles:
         type: array
         items:
@@ -1346,11 +1354,6 @@ definitions:
       - Environment_VIEWER
       - Environment_EDITOR
     default: Environment_UNASSIGNED
-  UpdateAccountV2RequestOrganizationRoleValue:
-    type: object
-    properties:
-      role:
-        $ref: '#/definitions/AccountV2RoleOrganization'
   UserData:
     type: object
     properties:
@@ -1592,6 +1595,11 @@ definitions:
       totalCount:
         type: string
         format: int64
+  bucketeergatewayUpdateAccountV2RequestOrganizationRoleValue:
+    type: object
+    properties:
+      role:
+        $ref: '#/definitions/AccountV2RoleOrganization'
   bucketeergatewayUpdateAccountV2Response:
     type: object
     properties:

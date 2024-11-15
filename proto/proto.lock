@@ -24915,16 +24915,21 @@
               },
               {
                 "id": 3,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 4,
                 "name": "order_by",
                 "type": "account.ListAccountsV2Request.OrderBy"
               },
               {
-                "id": 4,
+                "id": 5,
                 "name": "order_direction",
                 "type": "account.ListAccountsV2Request.OrderDirection"
               },
               {
-                "id": 5,
+                "id": 6,
                 "name": "search_keyword",
                 "type": "string"
               },
@@ -24940,6 +24945,11 @@
               },
               {
                 "id": 9,
+                "name": "environment_id",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 10,
                 "name": "environment_role",
                 "type": "google.protobuf.Int32Value"
               }
@@ -26069,7 +26079,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/get-account-by-environment-id"
+                        "value": "/v1/get-account-by-environment"
                       }
                     ]
                   },

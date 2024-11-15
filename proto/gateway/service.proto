@@ -292,12 +292,14 @@ message UpdateAccountV2Response {
 message ListAccountsV2Request {
   int64 page_size = 1;
   string cursor = 2;
-  account.ListAccountsV2Request.OrderBy order_by = 3;
-  account.ListAccountsV2Request.OrderDirection order_direction = 4;
-  string search_keyword = 5;
+  string organization_id = 3;
+  account.ListAccountsV2Request.OrderBy order_by = 4;
+  account.ListAccountsV2Request.OrderDirection order_direction = 5;
+  string search_keyword = 6;
   google.protobuf.BoolValue disabled = 7;
   google.protobuf.Int32Value organization_role = 8;
-  google.protobuf.Int32Value environment_role = 9;
+  google.protobuf.StringValue environment_id = 9;
+  google.protobuf.Int32Value environment_role = 10;
 }
 
 message ListAccountsV2Response {
@@ -697,7 +699,7 @@ service Gateway {
   rpc GetAccountV2ByEnvironmentID(GetAccountV2ByEnvironmentIDRequest)
       returns (GetAccountV2ByEnvironmentIDResponse) {
     option (google.api.http) = {
-      get: "/v1/get-account-by-environment-id"
+      get: "/v1/get-account-by-environment"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get",
