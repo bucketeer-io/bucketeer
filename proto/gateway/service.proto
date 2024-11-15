@@ -264,6 +264,14 @@ message GetAccountV2ByEnvironmentIDResponse {
   account.AccountV2 account = 1;
 }
 
+message GetMeRequest {
+  string organization_id = 1;
+}
+
+message GetMeResponse {
+  account.ConsoleAccount account = 1;
+}
+
 message UpdateAccountV2Request {
   message OrganizationRoleValue {
     account.AccountV2.Role.Organization role = 1;
@@ -665,8 +673,8 @@ service Gateway {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Create",
       description: "Create a new Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
-      tags: "Accounts",
-      operation_id: "api.gateway.v1.accounts.create",
+      tags: "Account",
+      operation_id: "api.gateway.v1.account.create",
       parameters: {
         headers: {
           name: "authorization"
@@ -684,8 +692,8 @@ service Gateway {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get",
       description: "Get an Account. To call this API, you need a `READ` API Key role.",
-      tags: "Accounts",
-      operation_id: "api.gateway.v1.accounts.get",
+      tags: "Account",
+      operation_id: "api.gateway.v1.account.get",
       parameters: {
         headers: {
           name: "authorization"
@@ -704,8 +712,27 @@ service Gateway {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get",
       description: "Get an Account by Environment ID. To call this API, you need a `READ` API Key role.",
-      tags: "Accounts",
-      operation_id: "api.gateway.v1.accounts.get_by_environment_id",
+      tags: "Account",
+      operation_id: "api.gateway.v1.account.get_by_environment_id",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc GetMe(GetMeRequest) returns (GetMeResponse) {
+    option (google.api.http) = {
+      get: "/v1/account/me"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get the current Account. To call this API, you need a `READ` API Key role.",
+      tags: "Account",
+      operation_id: "api.gateway.v1.account.get_me",
       parameters: {
         headers: {
           name: "authorization"
@@ -725,8 +752,8 @@ service Gateway {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Update",
       description: "Update an Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
-      tags: "Accounts",
-      operation_id: "api.gateway.v1.accounts.update",
+      tags: "Account",
+      operation_id: "api.gateway.v1.account.update",
       parameters: {
         headers: {
           name: "authorization"
@@ -744,8 +771,8 @@ service Gateway {
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List",
       description: "Get list Accounts. To call this API, you need a `READ` API Key role.",
-      tags: "Accounts",
-      operation_id: "api.gateway.v1.accounts.list",
+      tags: "Account",
+      operation_id: "api.gateway.v1.account.list",
       parameters: {
         headers: {
           name: "authorization"

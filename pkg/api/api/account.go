@@ -110,6 +110,47 @@ func (s *grpcGatewayService) GetAccountV2ByEnvironmentID(
 	}, nil
 }
 
+func (s *grpcGatewayService) GetMe(
+	ctx context.Context,
+	request *gwproto.GetMeRequest,
+) (*gwproto.GetMeResponse, error) {
+	_, err := s.checkRequest(ctx, []accountproto.APIKey_Role{
+		accountproto.APIKey_PUBLIC_API_READ_ONLY,
+		accountproto.APIKey_PUBLIC_API_WRITE,
+		accountproto.APIKey_PUBLIC_API_ADMIN,
+	})
+	if err != nil {
+		s.logger.Error("Failed to check get my account request",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		return nil, err
+	}
+
+	res, err := s.accountClient.GetMe(
+		ctx,
+		&accountproto.GetMeRequest{
+			OrganizationId: request.OrganizationId,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if res == nil {
+		s.logger.Error("Account not found",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("organizationId", request.OrganizationId),
+			)...,
+		)
+		return nil, ErrAccountNotFound
+	}
+
+	return &gwproto.GetMeResponse{
+		Account: res.Account,
+	}, nil
+}
+
 func (s *grpcGatewayService) UpdateAccountV2(
 	ctx context.Context,
 	request *gwproto.UpdateAccountV2Request,

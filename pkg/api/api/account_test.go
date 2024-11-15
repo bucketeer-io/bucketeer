@@ -235,6 +235,114 @@ func TestGrpcGetAccountV2ByEnvironmentID(t *testing.T) {
 	}
 }
 
+func TestGrpcGetMe(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		ctx         context.Context
+		setup       func(*grpcGatewayService)
+		expected    *gwproto.GetMeResponse
+		expectedErr error
+	}{
+		{
+			desc: "fails: bad role",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_SDK_CLIENT,
+							Disabled: false,
+						},
+					}, nil)
+			},
+			expected:    nil,
+			expectedErr: ErrBadRole,
+		},
+		{
+			desc: "Internal account grpc error",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
+							Disabled: false,
+						},
+					}, nil)
+				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetMe(gomock.Any(), gomock.Any()).Return(
+					nil, ErrInternal)
+			},
+			expected:    nil,
+			expectedErr: ErrInternal,
+		},
+		{
+			desc: "Account not found",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
+							Disabled: false,
+						},
+					}, nil)
+				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetMe(gomock.Any(), gomock.Any()).Return(
+					nil, nil)
+			},
+			expected:    nil,
+			expectedErr: ErrAccountNotFound,
+		},
+		{
+			desc: "Success",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_PUBLIC_API_READ_ONLY,
+							Disabled: false,
+						},
+					}, nil)
+				gs.accountClient.(*accountclientmock.MockClient).EXPECT().GetMe(gomock.Any(), gomock.Any()).Return(
+					&accountproto.GetMeResponse{
+						Account: &accountproto.ConsoleAccount{
+							Email:            "demo@bucketeer.io",
+							Name:             "demo",
+							OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						},
+					}, nil)
+			},
+			expected: &gwproto.GetMeResponse{
+				Account: &accountproto.ConsoleAccount{
+					Email:            "demo@bucketeer.io",
+					Name:             "demo",
+					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+				},
+			},
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			gs := newGrpcGatewayServiceWithMock(t, mockController)
+			p.setup(gs)
+			ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
+				"authorization": []string{"test-key"},
+			})
+			actual, err := gs.GetMe(ctx, &gwproto.GetMeRequest{})
+			assert.Equal(t, p.expected, actual, "%s", p.desc)
+			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
+		})
+	}
+}
+
 func TestGrpcListAccountsV2(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)

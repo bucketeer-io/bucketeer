@@ -404,7 +404,7 @@ paths:
     get:
       summary: Get
       description: Get an Account. To call this API, you need a `READ` API Key role.
-      operationId: api.gateway.v1.accounts.get
+      operationId: api.gateway.v1.account.get
       responses:
         "200":
           description: A successful response.
@@ -456,11 +456,11 @@ paths:
           required: true
           type: string
       tags:
-        - Accounts
+        - Account
     post:
       summary: Create
       description: Create a new Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.
-      operationId: api.gateway.v1.accounts.create
+      operationId: api.gateway.v1.account.create
       responses:
         "200":
           description: A successful response.
@@ -509,12 +509,65 @@ paths:
           required: true
           type: string
       tags:
-        - Accounts
+        - Account
+  /v1/account/me:
+    get:
+      summary: Get
+      description: Get the current Account. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.account.get_me
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetMeResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: organizationId
+          in: query
+          required: false
+          type: string
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Account
   /v1/account/{id}:
     patch:
       summary: Update
       description: Update an Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.
-      operationId: api.gateway.v1.accounts.update
+      operationId: api.gateway.v1.account.update
       responses:
         "200":
           description: A successful response.
@@ -567,12 +620,12 @@ paths:
           required: true
           type: string
       tags:
-        - Accounts
+        - Account
   /v1/accounts:
     get:
       summary: List
       description: Get list Accounts. To call this API, you need a `READ` API Key role.
-      operationId: api.gateway.v1.accounts.list
+      operationId: api.gateway.v1.account.list
       responses:
         "200":
           description: A successful response.
@@ -671,7 +724,7 @@ paths:
           required: true
           type: string
       tags:
-        - Accounts
+        - Account
   /v1/features:
     get:
       summary: List
@@ -917,7 +970,7 @@ paths:
     get:
       summary: Get
       description: Get an Account by Environment ID. To call this API, you need a `READ` API Key role.
-      operationId: api.gateway.v1.accounts.get_by_environment_id
+      operationId: api.gateway.v1.account.get_by_environment_id
       responses:
         "200":
           description: A successful response.
@@ -969,7 +1022,7 @@ paths:
           required: true
           type: string
       tags:
-        - Accounts
+        - Account
   /v1/push:
     post:
       summary: Create
@@ -1416,6 +1469,51 @@ definitions:
         type: string
       role:
         $ref: '#/definitions/RoleEnvironment'
+  accountConsoleAccount:
+    type: object
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      avatarUrl:
+        type: string
+      isSystemAdmin:
+        type: boolean
+      organization:
+        $ref: '#/definitions/bucketeerenvironmentOrganization'
+      organizationRole:
+        $ref: '#/definitions/AccountV2RoleOrganization'
+      environmentRoles:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountConsoleAccountEnvironmentRole'
+      searchFilters:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/accountSearchFilter'
+      firstName:
+        type: string
+      lastName:
+        type: string
+      language:
+        type: string
+      avatarFileType:
+        type: string
+      avatarImage:
+        type: string
+        format: byte
+  accountConsoleAccountEnvironmentRole:
+    type: object
+    properties:
+      environment:
+        $ref: '#/definitions/environmentEnvironmentV2'
+      project:
+        $ref: '#/definitions/environmentProject'
+      role:
+        $ref: '#/definitions/RoleEnvironment'
   accountFilterTargetType:
     type: string
     enum:
@@ -1453,6 +1551,43 @@ definitions:
         type: string
       defaultFilter:
         type: boolean
+  bucketeerenvironmentOrganization:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      urlCode:
+        type: string
+      description:
+        type: string
+        title: optional
+      disabled:
+        type: boolean
+      archived:
+        type: boolean
+      trial:
+        type: boolean
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      systemAdmin:
+        type: boolean
+      projectCount:
+        type: integer
+        format: int32
+      environmentCount:
+        type: integer
+        format: int32
+      userCount:
+        type: integer
+        format: int32
+      ownerEmail:
+        type: string
   bucketeerfeatureVariation:
     type: object
     properties:
@@ -1556,6 +1691,11 @@ definitions:
     properties:
       feature:
         $ref: '#/definitions/featureFeature'
+  bucketeergatewayGetMeResponse:
+    type: object
+    properties:
+      account:
+        $ref: '#/definitions/accountConsoleAccount'
   bucketeergatewayGetPushResponse:
     type: object
     properties:
@@ -1636,6 +1776,67 @@ definitions:
       - NODE_SERVER
       - JAVASCRIPT
     default: UNKNOWN
+  environmentEnvironmentV2:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      urlCode:
+        type: string
+      description:
+        type: string
+        title: optional
+      projectId:
+        type: string
+      archived:
+        type: boolean
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      organizationId:
+        type: string
+      requireComment:
+        type: boolean
+      featureFlagCount:
+        type: integer
+        format: int32
+  environmentProject:
+    type: object
+    properties:
+      id:
+        type: string
+      description:
+        type: string
+        title: optional
+      disabled:
+        type: boolean
+      trial:
+        type: boolean
+      creatorEmail:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      name:
+        type: string
+      urlCode:
+        type: string
+      organizationId:
+        type: string
+      environmentCount:
+        type: integer
+        format: int32
+      featureFlagCount:
+        type: integer
+        format: int32
   featureClause:
     type: object
     properties:

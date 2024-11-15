@@ -24803,6 +24803,26 @@
             ]
           },
           {
+            "name": "GetMeRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "organization_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetMeResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "account",
+                "type": "account.ConsoleAccount"
+              }
+            ]
+          },
+          {
             "name": "UpdateAccountV2Request",
             "fields": [
               {
@@ -25970,11 +25990,11 @@
                       },
                       {
                         "name": "tags",
-                        "value": "Accounts"
+                        "value": "Account"
                       },
                       {
                         "name": "operation_id",
-                        "value": "api.gateway.v1.accounts.create"
+                        "value": "api.gateway.v1.account.create"
                       },
                       {
                         "name": "parameters",
@@ -26033,11 +26053,11 @@
                       },
                       {
                         "name": "tags",
-                        "value": "Accounts"
+                        "value": "Account"
                       },
                       {
                         "name": "operation_id",
-                        "value": "api.gateway.v1.accounts.get"
+                        "value": "api.gateway.v1.account.get"
                       },
                       {
                         "name": "parameters",
@@ -26096,11 +26116,74 @@
                       },
                       {
                         "name": "tags",
-                        "value": "Accounts"
+                        "value": "Account"
                       },
                       {
                         "name": "operation_id",
-                        "value": "api.gateway.v1.accounts.get_by_environment_id"
+                        "value": "api.gateway.v1.account.get_by_environment_id"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetMe",
+                "in_type": "GetMeRequest",
+                "out_type": "GetMeResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/account/me"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get the current Account. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Account"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.account.get_me"
                       },
                       {
                         "name": "parameters",
@@ -26163,11 +26246,11 @@
                       },
                       {
                         "name": "tags",
-                        "value": "Accounts"
+                        "value": "Account"
                       },
                       {
                         "name": "operation_id",
-                        "value": "api.gateway.v1.accounts.update"
+                        "value": "api.gateway.v1.account.update"
                       },
                       {
                         "name": "parameters",
@@ -26226,11 +26309,11 @@
                       },
                       {
                         "name": "tags",
-                        "value": "Accounts"
+                        "value": "Account"
                       },
                       {
                         "name": "operation_id",
-                        "value": "api.gateway.v1.accounts.list"
+                        "value": "api.gateway.v1.account.list"
                       },
                       {
                         "name": "parameters",
