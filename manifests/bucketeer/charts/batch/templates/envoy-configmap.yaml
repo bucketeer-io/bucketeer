@@ -1,4 +1,4 @@
-{{- if eq (include "batch.shouldDeploy" .) "true" }}
+{{- if eq (include "batch.deploy" .) "true" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

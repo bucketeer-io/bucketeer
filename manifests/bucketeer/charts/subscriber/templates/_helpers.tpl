@@ -56,7 +56,7 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 {{- end -}}
 
-{{- define "subscriber.shouldDeploy" -}}
+{{- define "subscriber.deploy" -}}
 {{- if not .Values.gcpMultiCluster.enabled }}
   {{- true }}
 {{- else if and .Values.gcpMultiCluster.enabled .Values.gcpMultiCluster.configCluster }}

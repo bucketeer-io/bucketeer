@@ -1,4 +1,4 @@
-{{- if and (eq (include "subscriber.shouldDeploy" .) "true") .Values.hpa.enabled }}
+{{- if and (eq (include "subscriber.deploy" .) "true") .Values.hpa.enabled }}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:

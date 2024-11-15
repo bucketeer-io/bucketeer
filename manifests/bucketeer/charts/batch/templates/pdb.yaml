@@ -1,4 +1,4 @@
-{{- if and (eq (include "batch.shouldDeploy" .) "true") .Values.pdb.enabled }}
+{{- if and (eq (include "batch.deploy" .) "true") .Values.pdb.enabled }}
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
