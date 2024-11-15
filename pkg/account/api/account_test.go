@@ -368,6 +368,10 @@ func TestCreateAccountV2NoCommandMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
@@ -852,13 +856,38 @@ func TestUpdateAccountV2NoCommandMySQL(t *testing.T) {
 						FirstName:        "Test",
 						LastName:         "User",
 						Language:         "en",
+						OrganizationId:   "org0",
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
 
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
+						OrganizationId:   "org0",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
+
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func() error) {
+					err := fn()
+					require.NoError(t, err)
+				}).Return(nil)
 			},
 			req: &accountproto.UpdateAccountV2Request{
 				Email:          "bucketeer@example.com",
@@ -1027,10 +1056,33 @@ func TestEnableAccountV2MySQL(t *testing.T) {
 						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 					},
 				}, nil)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
+						OrganizationId:   "org0",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
 
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(),
-				).Return(nil)
+				).Do(func(ctx context.Context, fn func() error) {
+					err := fn()
+					require.NoError(t, err)
+				}).Return(nil)
 			},
 			req: &accountproto.EnableAccountV2Request{
 				Email:          "bucketeer@example.com",
@@ -1198,9 +1250,33 @@ func TestDisableAccountV2MySQL(t *testing.T) {
 					},
 				}, nil)
 
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(&domain.AccountV2{
+					AccountV2: &accountproto.AccountV2{
+						Email:            "bucketeer@example.com",
+						FirstName:        "Test",
+						LastName:         "User",
+						Language:         "en",
+						OrganizationId:   "org0",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
+				}, nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
+
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func() error) {
+					err := fn()
+					require.NoError(t, err)
+				}).Return(nil)
 			},
 			req: &accountproto.DisableAccountV2Request{
 				Email:          "bucketeer@example.com",
