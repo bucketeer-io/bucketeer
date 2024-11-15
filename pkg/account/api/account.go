@@ -163,6 +163,7 @@ func (s *AccountService) createAccountV2NoCommand(
 		req.OrganizationRole,
 		req.EnvironmentRoles,
 	)
+	var createAccountEvent *eventproto.Event
 	err = s.accountStorage.RunInTransaction(ctx, func() error {
 		// TODO: temporary implementation: double write account v2 ---
 		exist, err := s.accountStorage.GetAccountV2(ctx, account.Email, req.OrganizationId)
@@ -174,7 +175,7 @@ func (s *AccountService) createAccountV2NoCommand(
 		}
 		// TODO: temporary implementation end ---
 
-		createAccountEvent, err := domainevent.NewEvent(
+		createAccountEvent, err = domainevent.NewEvent(
 			editor,
 			eventproto.Event_ACCOUNT,
 			account.Email,
@@ -199,9 +200,6 @@ func (s *AccountService) createAccountV2NoCommand(
 		if err != nil {
 			return err
 		}
-		if err = s.publisher.Publish(ctx, createAccountEvent); err != nil {
-			return err
-		}
 		return s.accountStorage.CreateAccountV2(ctx, account)
 	})
 	if err != nil {
@@ -220,6 +218,7 @@ func (s *AccountService) createAccountV2NoCommand(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("organizationID", req.OrganizationId),
+				zap.String("email", req.Email),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -230,6 +229,18 @@ func (s *AccountService) createAccountV2NoCommand(
 			return nil, statusInternal.Err()
 		}
 		return nil, dt.Err()
+	}
+
+	if err = s.publisher.Publish(ctx, createAccountEvent); err != nil {
+		s.logger.Error(
+			"Failed to publish create account event",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+				zap.String("email", req.Email),
+			)...,
+		)
+		return nil, err
 	}
 
 	return &accountproto.CreateAccountV2Response{Account: account.AccountV2}, nil
@@ -634,6 +645,7 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 	isDisabled *wrapperspb.BoolValue,
 ) (*accountproto.AccountV2, error) {
 	var updatedAccountPb *accountproto.AccountV2
+	var updateAccountV2Event *eventproto.Event
 	err := s.accountStorage.RunInTransaction(ctx, func() error {
 		account, err := s.accountStorage.GetAccountV2(ctx, email, organizationID)
 		if err != nil {
@@ -653,7 +665,7 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 		if err != nil {
 			return err
 		}
-		updateAccountV2Event, err := domainevent.NewAdminEvent(
+		updateAccountV2Event, err = domainevent.NewAdminEvent(
 			editor,
 			eventproto.Event_ACCOUNT,
 			account.Email,
@@ -668,13 +680,21 @@ func (s *AccountService) updateAccountV2NoCommandMysql(
 		if err != nil {
 			return err
 		}
-		if err = s.publisher.Publish(ctx, updateAccountV2Event); err != nil {
-			return err
-		}
 		updatedAccountPb = updated.AccountV2
 		return s.accountStorage.UpdateAccountV2(ctx, updated)
 	})
 	if err != nil {
+		return nil, err
+	}
+	if err = s.publisher.Publish(ctx, updateAccountV2Event); err != nil {
+		s.logger.Error(
+			"Failed to publish update account event",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", organizationID),
+				zap.String("email", email),
+			)...,
+		)
 		return nil, err
 	}
 	return updatedAccountPb, err
