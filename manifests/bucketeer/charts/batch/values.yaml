@@ -109,6 +109,10 @@ service:
   clusterIP: None
   externalPort: 9000
 
+gcpMultiCluster:
+  configCluster: false
+  enabled: false
+
 health:
   livenessProbe:
     initialDelaySeconds: 10

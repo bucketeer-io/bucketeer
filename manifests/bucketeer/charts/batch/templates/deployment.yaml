@@ -1,3 +1,4 @@
+{{- if eq (include "batch.deploy" .) "true" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -253,3 +254,4 @@ spec:
 {{ toYaml .Values.httpstan.resources | indent 12 }}
   strategy:
     type: RollingUpdate
+{{- end }}

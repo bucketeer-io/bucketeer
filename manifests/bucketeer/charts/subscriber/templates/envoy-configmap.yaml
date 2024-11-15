@@ -1,3 +1,4 @@
+{{- if eq (include "subscriber.deploy" .) "true" }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -241,3 +242,4 @@ data:
             '@type': type.googleapis.com/envoy.extensions.resource_monitors.downstream_connections.v3.DownstreamConnectionsConfig
             # We want disable the warning without setting a limit. So, we set a large number.
             max_active_downstream_connections: 100000
+{{- end }}
