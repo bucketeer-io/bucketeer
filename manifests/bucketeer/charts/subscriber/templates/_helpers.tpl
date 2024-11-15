@@ -55,3 +55,13 @@ Create chart name and version as used by the chart label.
 {{ template "subscriber.fullname" . }}-issuer-cert
 {{- end -}}
 {{- end -}}
+
+{{- define "subscriber.shouldDeploy" -}}
+{{- if not .Values.gcpMultiCluster.enabled }}
+  {{- true }}
+{{- else if and .Values.gcpMultiCluster.enabled .Values.gcpMultiCluster.configCluster }}
+  {{- true }}
+{{- else }}
+  {{- false }}
+{{- end }}
+{{- end -}}

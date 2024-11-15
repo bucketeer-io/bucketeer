@@ -80,6 +80,10 @@ service:
   type: ClusterIP
   clusterIP: None
 
+gcpMultiCluster:
+  configCluster: false
+  enabled: false
+
 health:
   livenessProbe:
     initialDelaySeconds: 10

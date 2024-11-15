@@ -1,4 +1,4 @@
-{{- if and .Values.global.services.batch.enabled }}
+{{- if eq (include "batch.shouldDeploy" .) "true" }}
 {{- range $.Values.cronjob.jobs }}
 ---
 apiVersion: batch/v1

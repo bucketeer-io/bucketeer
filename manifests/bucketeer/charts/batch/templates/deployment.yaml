@@ -1,4 +1,4 @@
-{{- if .Values.global.services.batch.enabled }}
+{{- if eq (include "batch.shouldDeploy" .) "true" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

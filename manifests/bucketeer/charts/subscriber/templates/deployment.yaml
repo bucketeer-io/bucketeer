@@ -1,4 +1,4 @@
-{{- if .Values.global.services.subscriber.enabled }}
+{{- if eq (include "subscriber.shouldDeploy" .) "true" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:

@@ -1,4 +1,4 @@
-{{- if and .Values.global.services.batch.enabled .Values.hpa.enabled }}
+{{- if eq (include "batch.shouldDeploy" .) "true" }}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
