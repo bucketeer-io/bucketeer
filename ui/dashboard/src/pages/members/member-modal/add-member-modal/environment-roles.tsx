@@ -1,3 +1,4 @@
+import { useFormContext } from 'react-hook-form';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { EnvironmentRoleItem } from '@api/account/account-creator';
 import { useTranslation } from 'i18n';
@@ -18,6 +19,11 @@ interface environmentRoleOption {
   label: string;
 }
 
+export const defaultEnvironmentRole: EnvironmentRoleItem = {
+  environmentId: '',
+  role: 'Environment_UNASSIGNED'
+};
+
 const environmentRoles: environmentRoleOption[] = [
   {
     value: 'Environment_EDITOR',
@@ -32,13 +38,16 @@ const environmentRoles: environmentRoleOption[] = [
 const EnvironmentRoles = ({
   environments,
   memberEnvironments,
-  setMemberEnvironments
+  onChangeEnvironments
 }: {
   environments: Environment[];
   memberEnvironments: EnvironmentRoleItem[];
-  setMemberEnvironments: (v: EnvironmentRoleItem[]) => void;
+  onChangeEnvironments: (v: EnvironmentRoleItem[]) => void;
 }) => {
   const { t } = useTranslation(['common', 'form']);
+
+  const methods = useFormContext();
+  const { control } = methods;
 
   const selectedEnvs = memberEnvironments.map(item => item.environmentId);
   const environmentsOptions = environments.filter(
@@ -46,17 +55,15 @@ const EnvironmentRoles = ({
   );
 
   const onAddEnvironment = () => {
-    memberEnvironments.push({
-      environmentId: '',
-      role: 'Environment_UNASSIGNED'
-    });
-    setMemberEnvironments([...memberEnvironments]);
+    memberEnvironments.push(defaultEnvironmentRole);
+    onChangeEnvironments([...memberEnvironments]);
   };
 
   const onDeleteEnvironment = (itemIndex: number) => {
-    setMemberEnvironments(
-      memberEnvironments.filter((_item, index) => itemIndex !== index)
+    const environments = memberEnvironments.filter(
+      (_item, index) => itemIndex !== index
     );
+    onChangeEnvironments([...environments]);
   };
 
   return (
@@ -73,69 +80,100 @@ const EnvironmentRoles = ({
       </Button>
 
       {memberEnvironments.map((environment, envIndex) => (
-        <div key={envIndex} className="flex items-center w-full pb-4 gap-x-4">
+        <div key={envIndex} className="flex items-start w-full pb-4 gap-x-4">
           <div className="flex-1">
-            <Form.Label required>{t('environment')}</Form.Label>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                placeholder={t(`form:select-environment`)}
-                label={
-                  environments.find(
-                    item => item.id === environment.environmentId
-                  )?.name
-                }
-                variant="secondary"
-                className="w-full"
-              />
-              <DropdownMenuContent className="w-[310px]" align="start">
-                {environmentsOptions.map((item, index) => (
-                  <DropdownMenuItem
-                    key={index}
-                    value={item.id}
-                    label={item.name}
-                    onSelectOption={() => {
-                      memberEnvironments[envIndex].environmentId = item.id;
-                      setMemberEnvironments([...memberEnvironments]);
-                    }}
-                  />
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Form.Field
+              control={control}
+              name={`environmentRoles.${envIndex}.environmentId`}
+              render={({ field }) => (
+                <Form.Item>
+                  <Form.Label required>{t('environment')}</Form.Label>
+                  <Form.Control>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        placeholder={t(`form:select-environment`)}
+                        label={
+                          environments.find(
+                            item => item.id === environment.environmentId
+                          )?.name
+                        }
+                        variant="secondary"
+                        className="w-full"
+                      />
+                      <DropdownMenuContent
+                        className="w-[310px]"
+                        align="start"
+                        {...field}
+                      >
+                        {environmentsOptions.map((item, index) => (
+                          <DropdownMenuItem
+                            {...field}
+                            key={index}
+                            value={item.id}
+                            label={item.name}
+                            onSelectOption={value => {
+                              field.onChange(value);
+                            }}
+                          />
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
           </div>
 
-          <div className="w-[140px]">
-            <Form.Label required>{t('role')}</Form.Label>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                placeholder={t(`form:select-role`)}
-                label={
-                  environmentRoles.find(item => item.value === environment.role)
-                    ?.label
-                }
-                variant="secondary"
-                className="w-full"
-              />
-              <DropdownMenuContent className="min-w-[140px]" align="start">
-                {environmentRoles.map((item, index) => (
-                  <DropdownMenuItem
-                    key={index}
-                    value={item.value}
-                    label={item.label}
-                    onSelectOption={() => {
-                      memberEnvironments[envIndex].role = item.value;
-                      setMemberEnvironments([...memberEnvironments]);
-                    }}
-                  />
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <div className="w-[140px] h-full">
+            <Form.Field
+              control={control}
+              name={`environmentRoles.${envIndex}.role`}
+              render={({ field }) => (
+                <Form.Item>
+                  <Form.Label required>{t('role')}</Form.Label>
+                  <Form.Control>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        placeholder={t(`form:select-role`)}
+                        label={
+                          environmentRoles.find(
+                            item => item.value === environment.role
+                          )?.label
+                        }
+                        variant="secondary"
+                        className="w-full"
+                      />
+                      <DropdownMenuContent
+                        className="min-w-[140px]"
+                        align="start"
+                        {...field}
+                      >
+                        {environmentRoles.map((item, index) => (
+                          <DropdownMenuItem
+                            {...field}
+                            key={index}
+                            value={item.value}
+                            label={item.label}
+                            onSelectOption={value => {
+                              field.onChange(value);
+                            }}
+                          />
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
           </div>
 
           <Button
             variant="text"
             size="icon"
             type="button"
-            className="p-0 size-5 mt-5"
+            className="p-0 size-5 mt-5 self-center"
             onClick={() => onDeleteEnvironment(envIndex)}
           >
             <Icon icon={IconTrash} size="sm" color="gray-600" />

@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { EnvironmentRoleItem } from '@api/account/account-creator';
 import { accountUpdater } from '@api/account/account-updater';
@@ -9,7 +8,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
-import { Account, OrganizationRole } from '@types';
+import { Account, EnvironmentRoleType, OrganizationRole } from '@types';
 import { joinName } from 'utils/name';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
@@ -38,13 +37,24 @@ export interface EditMemberForm {
   lastName: string;
   language: string;
   role: string;
+  environmentRoles: EnvironmentRoleItem[];
 }
 
 export const formSchema = yup.object().shape({
   firstName: yup.string().required(),
   lastName: yup.string().required(),
   language: yup.string().required(),
-  role: yup.string().required()
+  role: yup.string().required(),
+  environmentRoles: yup
+    .array()
+    .required()
+    .min(1)
+    .of(
+      yup.object().shape({
+        environmentId: yup.string().required(),
+        role: yup.mixed<EnvironmentRoleType>().required()
+      })
+    )
 });
 
 const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
@@ -60,20 +70,16 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
       firstName: member.firstName,
       lastName: member.lastName,
       language: member.language,
-      role: member.organizationRole
+      role: member.organizationRole,
+      environmentRoles: member.environmentRoles
     }
   });
 
-  const isInvalidEnvironments = () => {
-    const invalidEnv = memberEnvironments.find(
-      item => !item.environmentId || item.role === 'Environment_UNASSIGNED'
-    );
-    return memberEnvironments.length > 0 && !!invalidEnv;
-  };
-
-  const [memberEnvironments, setMemberEnvironments] = useState<
-    EnvironmentRoleItem[]
-  >(member.environmentRoles || []);
+  const {
+    watch,
+    formState: { isDirty, isSubmitting }
+  } = form;
+  const memberEnvironments = watch('environmentRoles');
 
   const { data: collection } = useFetchEnvironments();
   const environments = collection?.environments || [];
@@ -246,12 +252,23 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
               )}
             />
             <Divider className="mt-1 mb-3" />
-            <EnvironmentRoles
-              environments={environments}
-              memberEnvironments={memberEnvironments}
-              setMemberEnvironments={setMemberEnvironments}
+            <Form.Field
+              control={form.control}
+              name="environmentRoles"
+              render={({ field }) => (
+                <Form.Item>
+                  <Form.Control>
+                    <EnvironmentRoles
+                      environments={environments}
+                      memberEnvironments={memberEnvironments}
+                      onChangeEnvironments={values => {
+                        field.onChange(values);
+                      }}
+                    />
+                  </Form.Control>
+                </Form.Item>
+              )}
             />
-
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar
                 primaryButton={
@@ -262,10 +279,8 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={
-                      !form.formState.isDirty || isInvalidEnvironments()
-                    }
-                    loading={form.formState.isSubmitting}
+                    disabled={!isDirty}
+                    loading={isSubmitting}
                   >
                     {t(`update-member`)}
                   </Button>

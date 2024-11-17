@@ -9,7 +9,7 @@ export interface EnvironmentRoleItem {
 export interface AccountCreatorCommand {
   email: string;
   organizationRole: OrganizationRole;
-  environmentRoles?: EnvironmentRoleItem[];
+  environmentRoles: EnvironmentRoleItem[];
 }
 
 export interface AccountCreatorParams {

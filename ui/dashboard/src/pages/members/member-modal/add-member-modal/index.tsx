@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import {
   accountCreator,
@@ -11,7 +11,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { Language, useTranslation } from 'i18n';
 import * as yup from 'yup';
-import { OrganizationRole } from '@types';
+import { EnvironmentRoleType, OrganizationRole } from '@types';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -25,7 +25,7 @@ import {
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
-import EnvironmentRoles from './environment-roles';
+import EnvironmentRoles, { defaultEnvironmentRole } from './environment-roles';
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -60,12 +60,23 @@ export const languageList: LanguageItem[] = [
 
 export interface AddMemberForm {
   email: string;
-  role: string;
+  role: OrganizationRole;
+  environmentRoles: EnvironmentRoleItem[];
 }
 
 export const formSchema = yup.object().shape({
   email: yup.string().email().required(),
-  role: yup.string().required()
+  role: yup.mixed<OrganizationRole>().required(),
+  environmentRoles: yup
+    .array()
+    .required()
+    .min(1)
+    .of(
+      yup.object().shape({
+        environmentId: yup.string().required(),
+        role: yup.mixed<EnvironmentRoleType>().required()
+      })
+    )
 });
 
 const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
@@ -79,32 +90,37 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
     resolver: yupResolver(formSchema),
     defaultValues: {
       email: '',
-      role: undefined
+      role: undefined,
+      environmentRoles: [defaultEnvironmentRole]
     }
   });
 
-  const [memberEnvironments, setMemberEnvironments] = useState<
-    EnvironmentRoleItem[]
-  >([]);
+  const {
+    watch,
+    formState: { dirtyFields, isValid, isSubmitting }
+  } = form;
+  const memberEnvironments = watch('environmentRoles');
 
   const { data: collection } = useFetchEnvironments();
   const environments = collection?.environments || [];
 
-  const isInvalidEnvironments = () => {
-    const invalidEnv = memberEnvironments.find(
-      item => !item.environmentId || item.role === 'Environment_UNASSIGNED'
+  const checkSubmitBtnDisabled = useCallback(() => {
+    const checkEnvironments = memberEnvironments.every(
+      item => item.environmentId && item.role !== 'Environment_UNASSIGNED'
     );
-    return memberEnvironments.length > 0 && !!invalidEnv;
-  };
+    if (!checkEnvironments || !isValid) {
+      return true;
+    }
+    return false;
+  }, [dirtyFields, isValid, memberEnvironments]);
 
   const onSubmit: SubmitHandler<AddMemberForm> = values => {
     return accountCreator({
       organizationId: currentEnvironment.organizationId,
       command: {
         email: values.email,
-        organizationRole: values.role as OrganizationRole,
-        environmentRoles:
-          memberEnvironments.length > 0 ? memberEnvironments : undefined
+        organizationRole: values.role,
+        environmentRoles: values.environmentRoles
       }
     }).then(() => {
       notify({
@@ -187,12 +203,24 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
               )}
             />
             <Divider className="mt-1 mb-3" />
-            <EnvironmentRoles
-              environments={environments}
-              memberEnvironments={memberEnvironments}
-              setMemberEnvironments={setMemberEnvironments}
+            <Form.Field
+              control={form.control}
+              name="environmentRoles"
+              render={({ field }) => (
+                <Form.Item>
+                  <Form.Control>
+                    <EnvironmentRoles
+                      environments={environments}
+                      memberEnvironments={memberEnvironments}
+                      onChangeEnvironments={values => {
+                        field.onChange(values);
+                      }}
+                    />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
             />
-
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar
                 primaryButton={
@@ -203,10 +231,8 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={
-                      !form.formState.isValid || isInvalidEnvironments()
-                    }
-                    loading={form.formState.isSubmitting}
+                    disabled={checkSubmitBtnDisabled()}
+                    loading={isSubmitting}
                   >
                     {t(`create-member`)}
                   </Button>
