@@ -101,38 +101,33 @@ const PageLoader = () => {
           <EmptyCollection onAdd={onOpenAddModal} />
         </PageLayout.EmptyState>
       ) : (
-        <>
-          <PageContent
-            onAdd={onOpenAddModal}
-            onHandleActions={onHandleActions}
-          />
-          {isOpenAddModal && (
-            <AddMemberModal isOpen={isOpenAddModal} onClose={onCloseAddModal} />
-          )}
-          {isOpenEditModal && (
-            <EditMemberModal
-              isOpen={isOpenEditModal}
-              onClose={onCloseEditModal}
-              member={selectedMember!}
-            />
-          )}
-          {isOpenDeleteModal && (
-            <DeleteMemberModal
-              isOpen={isOpenDeleteModal}
-              onClose={onCloseDeleteModal}
-              member={selectedMember!}
-              loading={mutation.isPending}
-              onSubmit={onDeleteMember}
-            />
-          )}
-          {isOpenDetailsModal && (
-            <MemberDetailsModal
-              isOpen={isOpenDetailsModal}
-              onClose={onCloseDetailsModal}
-              member={selectedMember!}
-            />
-          )}
-        </>
+        <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
+      )}
+      {isOpenAddModal && (
+        <AddMemberModal isOpen={isOpenAddModal} onClose={onCloseAddModal} />
+      )}
+      {isOpenEditModal && (
+        <EditMemberModal
+          isOpen={isOpenEditModal}
+          onClose={onCloseEditModal}
+          member={selectedMember!}
+        />
+      )}
+      {isOpenDeleteModal && (
+        <DeleteMemberModal
+          isOpen={isOpenDeleteModal}
+          onClose={onCloseDeleteModal}
+          member={selectedMember!}
+          loading={mutation.isPending}
+          onSubmit={onDeleteMember}
+        />
+      )}
+      {isOpenDetailsModal && (
+        <MemberDetailsModal
+          isOpen={isOpenDetailsModal}
+          onClose={onCloseDetailsModal}
+          member={selectedMember!}
+        />
       )}
     </>
   );

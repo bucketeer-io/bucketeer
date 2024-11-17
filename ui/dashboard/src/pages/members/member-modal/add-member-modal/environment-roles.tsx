@@ -80,13 +80,13 @@ const EnvironmentRoles = ({
       </Button>
 
       {memberEnvironments.map((environment, envIndex) => (
-        <div key={envIndex} className="flex items-start w-full pb-4 gap-x-4">
+        <div key={envIndex} className="flex items-start w-full gap-x-4">
           <div className="flex-1">
             <Form.Field
               control={control}
               name={`environmentRoles.${envIndex}.environmentId`}
               render={({ field }) => (
-                <Form.Item>
+                <Form.Item className="py-2">
                   <Form.Label required>{t('environment')}</Form.Label>
                   <Form.Control>
                     <DropdownMenu>
@@ -130,7 +130,7 @@ const EnvironmentRoles = ({
               control={control}
               name={`environmentRoles.${envIndex}.role`}
               render={({ field }) => (
-                <Form.Item>
+                <Form.Item className="py-2">
                   <Form.Label required>{t('role')}</Form.Label>
                   <Form.Control>
                     <DropdownMenu>

@@ -282,7 +282,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                     disabled={!isDirty}
                     loading={isSubmitting}
                   >
-                    {t(`update-member`)}
+                    {t(`save`)}
                   </Button>
                 }
               />

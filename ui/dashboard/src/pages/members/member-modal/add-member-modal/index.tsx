@@ -138,7 +138,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   };
 
   return (
-    <SlideModal title={t('new-member')} isOpen={isOpen} onClose={onClose}>
+    <SlideModal title={t('invite-member')} isOpen={isOpen} onClose={onClose}>
       <div className="w-full p-5 pb-28">
         <p className="text-gray-800 typo-head-bold-small">
           {t('form:general-info')}
@@ -234,7 +234,7 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
                     disabled={checkSubmitBtnDisabled()}
                     loading={isSubmitting}
                   >
-                    {t(`create-member`)}
+                    {t(`invite-member`)}
                   </Button>
                 }
               />

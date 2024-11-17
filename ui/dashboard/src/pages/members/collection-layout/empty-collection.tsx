@@ -17,7 +17,7 @@ export const EmptyCollection = ({ onAdd }: { onAdd: () => void }) => {
       <EmptyState.Actions>
         <EmptyState.ActionButton variant="primary" onClick={onAdd}>
           <IconAddOutlined />
-          {t(`new-member`)}
+          {t(`invite-member`)}
         </EmptyState.ActionButton>
       </EmptyState.Actions>
     </EmptyState.Root>
