@@ -42,7 +42,6 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	serviceeventproto "github.com/bucketeer-io/bucketeer/proto/event/service"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
@@ -349,7 +348,7 @@ func (s *grpcGatewayService) GetEvaluations(
 			envAPIKey.Environment.UrlCode, req.Tag, codeBadRequest).Inc()
 		return nil, err
 	}
-	s.publishUser(ctx, environmentId, req.Tag, req.User, req.SourceId)
+
 	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluations.GetFeatures")
 	f, err, _ := s.flightgroup.Do(
 		environmentId,
@@ -539,7 +538,7 @@ func (s *grpcGatewayService) GetEvaluation(
 		)
 		return nil, err
 	}
-	s.publishUser(ctx, envAPIKey.Environment.Id, req.Tag, req.User, req.SourceId)
+
 	ctx, spanGetFeatures := trace.StartSpan(ctx, "bucketeerGRPCGatewayService.GetEvaluation.GetFeatures")
 	f, err, _ := s.flightgroup.Do(
 		envAPIKey.Environment.Id,
@@ -989,60 +988,6 @@ func (s *grpcGatewayService) validateGetEvaluationRequest(req *gwproto.GetEvalua
 		return ErrFeatureIDRequired
 	}
 	return nil
-}
-
-func (s *grpcGatewayService) publishUser(
-	ctx context.Context,
-	environmentId,
-	tag string,
-	user *userproto.User,
-	sourceID eventproto.SourceId,
-) {
-	// TODO: using buffered channel to reduce the number of go routines
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), s.opts.pubsubTimeout)
-		defer cancel()
-		if err := s.publishUserEvent(ctx, user, tag, environmentId, sourceID); err != nil {
-			s.logger.Error(
-				"Failed to publish UserEvent",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentID", environmentId),
-				)...,
-			)
-		}
-	}()
-}
-
-func (s *grpcGatewayService) publishUserEvent(
-	ctx context.Context,
-	user *userproto.User,
-	tag, environmentId string,
-	sourceID eventproto.SourceId,
-) error {
-	id, err := uuid.NewUUID()
-	if err != nil {
-		return err
-	}
-	userEvent := &serviceeventproto.UserEvent{
-		Id:            id.String(),
-		SourceId:      sourceID,
-		Tag:           tag,
-		UserId:        user.Id,
-		LastSeen:      time.Now().Unix(),
-		Data:          nil, // We set nil until we decide again what to do with the user metadata.
-		EnvironmentId: environmentId,
-	}
-	ue, err := ptypes.MarshalAny(userEvent)
-	if err != nil {
-		return err
-	}
-	event := &eventproto.Event{
-		Id:            id.String(),
-		Event:         ue,
-		EnvironmentId: environmentId,
-	}
-	return s.userPublisher.Publish(ctx, event)
 }
 
 func (s *grpcGatewayService) getFeatures(
