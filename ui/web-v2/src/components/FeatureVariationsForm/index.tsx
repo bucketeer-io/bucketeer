@@ -74,7 +74,7 @@ export const FeatureVariationsForm: FC<FeatureVariationsFormProps> = memo(
       dispatch(
         listProgressiveRollout({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.id
+          environmentId: currentEnvironment.id
         })
       );
     }, []);

@@ -52,9 +52,9 @@ func TestHandle(t *testing.T) {
 					nil, errors.New("test"))
 			},
 			input: &senderproto.NotificationEvent{
-				Id:                   "id",
-				EnvironmentNamespace: "ns0",
-				SourceType:           notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT,
+				Id:            "id",
+				EnvironmentId: "ns0",
+				SourceType:    notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT,
 				Notification: &senderproto.Notification{
 					Type:                    senderproto.Notification_DomainEvent,
 					DomainEventNotification: &senderproto.DomainEventNotification{},
@@ -70,9 +70,9 @@ func TestHandle(t *testing.T) {
 					&notificationproto.ListEnabledSubscriptionsResponse{}, nil)
 			},
 			input: &senderproto.NotificationEvent{
-				Id:                   "id",
-				EnvironmentNamespace: "ns0",
-				SourceType:           notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT,
+				Id:            "id",
+				EnvironmentId: "ns0",
+				SourceType:    notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT,
 				Notification: &senderproto.Notification{
 					Type:                    senderproto.Notification_DomainEvent,
 					DomainEventNotification: &senderproto.DomainEventNotification{},
@@ -88,9 +88,9 @@ func TestHandle(t *testing.T) {
 					&notificationproto.ListEnabledAdminSubscriptionsResponse{}, nil)
 			},
 			input: &senderproto.NotificationEvent{
-				Id:                   "id",
-				EnvironmentNamespace: storage.AdminEnvironmentNamespace,
-				SourceType:           notificationproto.Subscription_DOMAIN_EVENT_ENVIRONMENT,
+				Id:            "id",
+				EnvironmentId: storage.AdminEnvironmentID,
+				SourceType:    notificationproto.Subscription_DOMAIN_EVENT_ENVIRONMENT,
 				Notification: &senderproto.Notification{
 					Type:                    senderproto.Notification_DomainEvent,
 					DomainEventNotification: &senderproto.DomainEventNotification{},
@@ -109,9 +109,9 @@ func TestHandle(t *testing.T) {
 				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(errors.New("test"))
 			},
 			input: &senderproto.NotificationEvent{
-				Id:                   "id",
-				EnvironmentNamespace: "ns0",
-				SourceType:           notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT,
+				Id:            "id",
+				EnvironmentId: "ns0",
+				SourceType:    notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT,
 				Notification: &senderproto.Notification{
 					Type:                    senderproto.Notification_DomainEvent,
 					DomainEventNotification: &senderproto.DomainEventNotification{},
@@ -130,9 +130,9 @@ func TestHandle(t *testing.T) {
 				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input: &senderproto.NotificationEvent{
-				Id:                   "id",
-				EnvironmentNamespace: "ns0",
-				SourceType:           notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT,
+				Id:            "id",
+				EnvironmentId: "ns0",
+				SourceType:    notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT,
 				Notification: &senderproto.Notification{
 					Type:                    senderproto.Notification_DomainEvent,
 					DomainEventNotification: &senderproto.DomainEventNotification{},
@@ -151,9 +151,9 @@ func TestHandle(t *testing.T) {
 				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(2)
 			},
 			input: &senderproto.NotificationEvent{
-				Id:                   "id",
-				EnvironmentNamespace: "ns0",
-				SourceType:           notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT,
+				Id:            "id",
+				EnvironmentId: "ns0",
+				SourceType:    notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT,
 				Notification: &senderproto.Notification{
 					Type:                    senderproto.Notification_DomainEvent,
 					DomainEventNotification: &senderproto.DomainEventNotification{},
@@ -172,9 +172,9 @@ func TestHandle(t *testing.T) {
 				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 			},
 			input: &senderproto.NotificationEvent{
-				Id:                   "id",
-				EnvironmentNamespace: storage.AdminEnvironmentNamespace,
-				SourceType:           notificationproto.Subscription_DOMAIN_EVENT_PROJECT,
+				Id:            "id",
+				EnvironmentId: storage.AdminEnvironmentID,
+				SourceType:    notificationproto.Subscription_DOMAIN_EVENT_PROJECT,
 				Notification: &senderproto.Notification{
 					Type:                    senderproto.Notification_DomainEvent,
 					DomainEventNotification: &senderproto.DomainEventNotification{},
@@ -193,9 +193,9 @@ func TestHandle(t *testing.T) {
 				s.notifiers[0].(*nmock.MockNotifier).EXPECT().Notify(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).Times(2)
 			},
 			input: &senderproto.NotificationEvent{
-				Id:                   "id",
-				EnvironmentNamespace: storage.AdminEnvironmentNamespace,
-				SourceType:           notificationproto.Subscription_DOMAIN_EVENT_PROJECT,
+				Id:            "id",
+				EnvironmentId: storage.AdminEnvironmentID,
+				SourceType:    notificationproto.Subscription_DOMAIN_EVENT_PROJECT,
 				Notification: &senderproto.Notification{
 					Type:                    senderproto.Notification_DomainEvent,
 					DomainEventNotification: &senderproto.DomainEventNotification{},
@@ -234,10 +234,10 @@ func TestListEnabledSubscriptions(t *testing.T) {
 			desc: "error",
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), &notificationproto.ListEnabledSubscriptionsRequest{
-					EnvironmentNamespace: "ns0",
-					SourceTypes:          []notificationproto.Subscription_SourceType{notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT},
-					PageSize:             listRequestSize,
-					Cursor:               "",
+					EnvironmentId: "ns0",
+					SourceTypes:   []notificationproto.Subscription_SourceType{notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT},
+					PageSize:      listRequestSize,
+					Cursor:        "",
 				}).Return(nil, errors.New("test"))
 			},
 			input:       notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT,
@@ -248,10 +248,10 @@ func TestListEnabledSubscriptions(t *testing.T) {
 			desc: "success: 0 entity",
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), &notificationproto.ListEnabledSubscriptionsRequest{
-					EnvironmentNamespace: "ns0",
-					SourceTypes:          []notificationproto.Subscription_SourceType{notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT},
-					PageSize:             listRequestSize,
-					Cursor:               "",
+					EnvironmentId: "ns0",
+					SourceTypes:   []notificationproto.Subscription_SourceType{notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT},
+					PageSize:      listRequestSize,
+					Cursor:        "",
 				}).Return(
 					&notificationproto.ListEnabledSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{}}, nil)
 			},
@@ -263,10 +263,10 @@ func TestListEnabledSubscriptions(t *testing.T) {
 			desc: "success: 1 entity",
 			setup: func(t *testing.T, s *sender) {
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), &notificationproto.ListEnabledSubscriptionsRequest{
-					EnvironmentNamespace: "ns0",
-					SourceTypes:          []notificationproto.Subscription_SourceType{notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT},
-					PageSize:             listRequestSize,
-					Cursor:               "",
+					EnvironmentId: "ns0",
+					SourceTypes:   []notificationproto.Subscription_SourceType{notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT},
+					PageSize:      listRequestSize,
+					Cursor:        "",
 				}).Return(
 					&notificationproto.ListEnabledSubscriptionsResponse{Subscriptions: []*notificationproto.Subscription{
 						{Id: "sid0"},
@@ -281,16 +281,16 @@ func TestListEnabledSubscriptions(t *testing.T) {
 			setup: func(t *testing.T, s *sender) {
 				subs := createSubscriptions(t, listRequestSize+1)
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), &notificationproto.ListEnabledSubscriptionsRequest{
-					EnvironmentNamespace: "ns0",
-					SourceTypes:          []notificationproto.Subscription_SourceType{notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT},
-					PageSize:             listRequestSize,
-					Cursor:               "",
+					EnvironmentId: "ns0",
+					SourceTypes:   []notificationproto.Subscription_SourceType{notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT},
+					PageSize:      listRequestSize,
+					Cursor:        "",
 				}).Return(&notificationproto.ListEnabledSubscriptionsResponse{Subscriptions: subs[:listRequestSize]}, nil)
 				s.notificationClient.(*ncmock.MockClient).EXPECT().ListEnabledSubscriptions(gomock.Any(), &notificationproto.ListEnabledSubscriptionsRequest{
-					EnvironmentNamespace: "ns0",
-					SourceTypes:          []notificationproto.Subscription_SourceType{notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT},
-					PageSize:             listRequestSize,
-					Cursor:               "",
+					EnvironmentId: "ns0",
+					SourceTypes:   []notificationproto.Subscription_SourceType{notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT},
+					PageSize:      listRequestSize,
+					Cursor:        "",
 				}).Return(&notificationproto.ListEnabledSubscriptionsResponse{Subscriptions: subs[listRequestSize : listRequestSize+1]}, nil)
 			},
 			input:       notificationproto.Subscription_DOMAIN_EVENT_ACCOUNT,

@@ -60,15 +60,15 @@ func (mr *MockOpsCountStorageMockRecorder) ListOpsCounts(ctx, whereParts, orders
 }
 
 // UpsertOpsCount mocks base method.
-func (m *MockOpsCountStorage) UpsertOpsCount(ctx context.Context, environmentNamespace string, oc *domain.OpsCount) error {
+func (m *MockOpsCountStorage) UpsertOpsCount(ctx context.Context, environmentId string, oc *domain.OpsCount) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertOpsCount", ctx, environmentNamespace, oc)
+	ret := m.ctrl.Call(m, "UpsertOpsCount", ctx, environmentId, oc)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpsertOpsCount indicates an expected call of UpsertOpsCount.
-func (mr *MockOpsCountStorageMockRecorder) UpsertOpsCount(ctx, environmentNamespace, oc any) *gomock.Call {
+func (mr *MockOpsCountStorageMockRecorder) UpsertOpsCount(ctx, environmentId, oc any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertOpsCount", reflect.TypeOf((*MockOpsCountStorage)(nil).UpsertOpsCount), ctx, environmentNamespace, oc)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertOpsCount", reflect.TypeOf((*MockOpsCountStorage)(nil).UpsertOpsCount), ctx, environmentId, oc)
 }

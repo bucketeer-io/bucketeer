@@ -40,7 +40,7 @@ export const flagTriggersAdapter = createEntityAdapter({
 export const { selectAll, selectById } = flagTriggersAdapter.getSelectors();
 
 interface CreateFlagTriggerParams {
-  environmentNamespace: string;
+  environmentId: string;
   featureId: string;
   action: FlagTrigger.ActionMap[keyof FlagTrigger.ActionMap];
   triggerType: FlagTrigger.TypeMap[keyof FlagTrigger.TypeMap];
@@ -54,7 +54,7 @@ export const createFlagTrigger = createAsyncThunk<
 >(`${MODULE_NAME}/create`, async (params) => {
   const request = new CreateFlagTriggerRequest();
   const command = new CreateFlagTriggerCommand();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
 
   command.setFeatureId(params.featureId);
   command.setAction(params.action);
@@ -67,7 +67,7 @@ export const createFlagTrigger = createAsyncThunk<
 });
 
 export interface ListFlagTriggersParams {
-  environmentNamespace: string;
+  environmentId: string;
   featureId: string;
 }
 
@@ -77,7 +77,7 @@ export const listFlagTriggers = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/list`, async (params) => {
   const request = new ListFlagTriggersRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setFeatureId(params.featureId);
   request.setOrderDirection(ListFlagTriggersRequest.OrderDirection.DESC);
   const result = await flagTriggersGrpc.listFlagTriggers(request);
@@ -85,7 +85,7 @@ export const listFlagTriggers = createAsyncThunk<
 });
 
 export interface UpdateFlagTriggerParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
   description: string;
 }
@@ -99,7 +99,7 @@ export const updateFlagTrigger = createAsyncThunk<
   command.setDescription(params.description);
 
   const request = new UpdateFlagTriggerRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setChangeFlagTriggerDescriptionCommand(command);
 
@@ -107,7 +107,7 @@ export const updateFlagTrigger = createAsyncThunk<
 });
 
 export interface DeleteFlagTriggerParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -118,14 +118,14 @@ export const deleteFlagTrigger = createAsyncThunk<
 >(`${MODULE_NAME}/delete`, async (params) => {
   const request = new DeleteFlagTriggerRequest();
   request.setId(params.id);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   const command = new DeleteFlagTriggerCommand();
   request.setDeleteFlagTriggerCommand(command);
   await flagTriggersGrpc.deleteFlagTrigger(request);
 });
 
 export interface ResetFlagTriggerParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -136,7 +136,7 @@ export const resetFlagTrigger = createAsyncThunk<
 >(`${MODULE_NAME}/reset`, async (params) => {
   const request = new ResetFlagTriggerRequest();
   request.setId(params.id);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   const command = new ResetFlagTriggerCommand();
   request.setResetFlagTriggerCommand(command);
   const result = await flagTriggersGrpc.resetFlagTrigger(request);
@@ -144,7 +144,7 @@ export const resetFlagTrigger = createAsyncThunk<
 });
 
 export interface EnableFlagTriggerParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -155,14 +155,14 @@ export const enableFlagTrigger = createAsyncThunk<
 >(`${MODULE_NAME}/enable`, async (params) => {
   const request = new EnableFlagTriggerRequest();
   request.setId(params.id);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   const command = new EnableFlagTriggerCommand();
   request.setEnableFlagTriggerCommand(command);
   await flagTriggersGrpc.enableFlagTrigger(request);
 });
 
 export interface DisableFlagTriggerParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -173,7 +173,7 @@ export const disableFlagTrigger = createAsyncThunk<
 >(`${MODULE_NAME}/disable`, async (params) => {
   const request = new DisableFlagTriggerRequest();
   request.setId(params.id);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   const command = new DisableFlagTriggerCommand();
   request.setDisableFlagTriggerCommand(command);
   await flagTriggersGrpc.disableFlagTrigger(request);

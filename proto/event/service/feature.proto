@@ -25,6 +25,6 @@ message EvaluationRequestEvent {
   bucketeer.user.User user = 3;
   reserved 4;  // repeated bucketeer.feature.Feature features = 4 [deprecated =
                // true];
-  string environment_namespace = 5;
+  reserved 5;
   string tag = 6;
 }

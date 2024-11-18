@@ -54,7 +54,7 @@ export type OrderDirection =
   ListSubscriptionsRequest.OrderDirectionMap[keyof ListSubscriptionsRequest.OrderDirectionMap];
 
 interface ListNotificationParams {
-  environmentNamespace: string;
+  environmentId: string;
   pageSize: number;
   cursor: string;
   orderBy?: OrderBy;
@@ -69,7 +69,7 @@ export const listNotification = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/list`, async (params) => {
   const request = new ListSubscriptionsRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setPageSize(params.pageSize);
   request.setCursor(params.cursor);
   request.setOrderBy(params.orderBy);
@@ -82,7 +82,7 @@ export const listNotification = createAsyncThunk<
 });
 
 export interface CreateNotificationParams {
-  environmentNamespace: string;
+  environmentId: string;
   name: string;
   sourceTypes: Array<
     Subscription.SourceTypeMap[keyof Subscription.SourceTypeMap]
@@ -113,13 +113,13 @@ export const createNotification = createAsyncThunk<
   cmd.setRecipient(recipient);
 
   const request = new CreateSubscriptionRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setCommand(cmd);
   await subscriptionGrpc.createSubscription(request);
 });
 
 export interface UpdateNotificationParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
   name: string;
   currentSourceTypes: Array<
@@ -136,7 +136,7 @@ export const updateNotification = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/update`, async (params) => {
   const request = new UpdateSubscriptionRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
 
   if (params.name) {
@@ -168,7 +168,7 @@ export const updateNotification = createAsyncThunk<
 });
 
 export interface EnableNotificationParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -178,14 +178,14 @@ export const enableNotification = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/enable`, async (params) => {
   const request = new EnableSubscriptionRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setCommand(new EnableSubscriptionCommand());
   await subscriptionGrpc.enableSubscription(request);
 });
 
 export interface DisableNotificationParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -195,14 +195,14 @@ export const disableNotification = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/disable`, async (params) => {
   const request = new DisableSubscriptionRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setCommand(new DisableSubscriptionCommand());
   await subscriptionGrpc.disableSubscription(request);
 });
 
 export interface DeleteNotificationParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -212,7 +212,7 @@ export const deleteNotification = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/delete`, async (params) => {
   const request = new DeleteSubscriptionRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setCommand(new DeleteSubscriptionCommand());
   await subscriptionGrpc.deleteSubscription(request);

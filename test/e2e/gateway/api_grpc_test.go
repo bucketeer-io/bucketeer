@@ -1073,8 +1073,8 @@ func createFeature(
 ) *featureproto.CreateFeatureCommand {
 	t.Helper()
 	createReq := &featureproto.CreateFeatureRequest{
-		Command:              cmd,
-		EnvironmentNamespace: *environmentNamespace,
+		Command:       cmd,
+		EnvironmentId: *environmentNamespace,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1087,8 +1087,8 @@ func createFeature(
 func getFeature(t *testing.T, featureID string, client featureclient.Client) *featureproto.Feature {
 	t.Helper()
 	getReq := &featureproto.GetFeatureRequest{
-		Id:                   featureID,
-		EnvironmentNamespace: *environmentNamespace,
+		Id:            featureID,
+		EnvironmentId: *environmentNamespace,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1106,7 +1106,7 @@ func addTag(t *testing.T, tag string, featureID string, client featureclient.Cli
 		AddTagCommands: []*featureproto.AddTagCommand{
 			{Tag: tag},
 		},
-		EnvironmentNamespace: *environmentNamespace,
+		EnvironmentId: *environmentNamespace,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1125,9 +1125,9 @@ func addRule(t *testing.T, featureID, variationID string, client featureclient.C
 func enableFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
 	enableReq := &featureproto.EnableFeatureRequest{
-		Id:                   featureID,
-		Command:              &featureproto.EnableFeatureCommand{},
-		EnvironmentNamespace: *environmentNamespace,
+		Id:            featureID,
+		Command:       &featureproto.EnableFeatureCommand{},
+		EnvironmentId: *environmentNamespace,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1139,9 +1139,9 @@ func enableFeature(t *testing.T, featureID string, client featureclient.Client) 
 func archiveFeature(t *testing.T, featureID string, client featureclient.Client) {
 	t.Helper()
 	req := &featureproto.ArchiveFeatureRequest{
-		Id:                   featureID,
-		Command:              &featureproto.ArchiveFeatureCommand{},
-		EnvironmentNamespace: *environmentNamespace,
+		Id:            featureID,
+		Command:       &featureproto.ArchiveFeatureCommand{},
+		EnvironmentId: *environmentNamespace,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -1278,8 +1278,8 @@ func updateFeatureTargeting(t *testing.T, client featureclient.Client, cmd *any.
 		Commands: []*featureproto.Command{
 			{Command: cmd},
 		},
-		EnvironmentNamespace: *environmentNamespace,
-		From:                 featureproto.UpdateFeatureTargetingRequest_USER,
+		EnvironmentId: *environmentNamespace,
+		From:          featureproto.UpdateFeatureTargetingRequest_USER,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()

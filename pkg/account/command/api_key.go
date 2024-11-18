@@ -28,29 +28,29 @@ import (
 )
 
 type apiKeyCommandHandler struct {
-	editor               *eventproto.Editor
-	apiKey               *domain.APIKey
-	previousAPIKey       *domain.APIKey
-	publisher            publisher.Publisher
-	environmentNamespace string
+	editor         *eventproto.Editor
+	apiKey         *domain.APIKey
+	previousAPIKey *domain.APIKey
+	publisher      publisher.Publisher
+	environmentID  string
 }
 
 func NewAPIKeyCommandHandler(
 	editor *eventproto.Editor,
 	apiKey *domain.APIKey,
 	p publisher.Publisher,
-	environmentNamespace string,
+	environmentID string,
 ) (Handler, error) {
 	prev := &domain.APIKey{}
 	if err := copier.Copy(prev, apiKey); err != nil {
 		return nil, err
 	}
 	return &apiKeyCommandHandler{
-		editor:               editor,
-		apiKey:               apiKey,
-		previousAPIKey:       prev,
-		publisher:            p,
-		environmentNamespace: environmentNamespace,
+		editor:         editor,
+		apiKey:         apiKey,
+		previousAPIKey: prev,
+		publisher:      p,
+		environmentID:  environmentID,
 	}, nil
 }
 
@@ -119,7 +119,7 @@ func (h *apiKeyCommandHandler) send(ctx context.Context, eventType eventproto.Ev
 		h.apiKey.Id,
 		eventType,
 		event,
-		h.environmentNamespace,
+		h.environmentID,
 		h.apiKey.APIKey,
 		prev,
 	)

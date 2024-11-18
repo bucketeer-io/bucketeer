@@ -59,16 +59,16 @@ func TestCreateSegmentMySQL(t *testing.T) {
 	}
 
 	testcases := []struct {
-		setup                func(*FeatureService)
-		cmd                  *featureproto.CreateSegmentCommand
-		environmentNamespace string
-		expected             error
+		setup         func(*FeatureService)
+		cmd           *featureproto.CreateSegmentCommand
+		environmentId string
+		expected      error
 	}{
 		{
-			setup:                nil,
-			cmd:                  nil,
-			environmentNamespace: "ns0",
-			expected:             createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
+			setup:         nil,
+			cmd:           nil,
+			environmentId: "ns0",
+			expected:      createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
 			setup: nil,
@@ -76,8 +76,8 @@ func TestCreateSegmentMySQL(t *testing.T) {
 				Name:        "",
 				Description: "description",
 			},
-			environmentNamespace: "ns0",
-			expected:             createError(statusMissingName, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+			environmentId: "ns0",
+			expected:      createError(statusMissingName, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -90,8 +90,8 @@ func TestCreateSegmentMySQL(t *testing.T) {
 				Name:        "name",
 				Description: "description",
 			},
-			environmentNamespace: "ns0",
-			expected:             nil,
+			environmentId: "ns0",
+			expected:      nil,
 		},
 	}
 	for _, tc := range testcases {
@@ -100,7 +100,7 @@ func TestCreateSegmentMySQL(t *testing.T) {
 			tc.setup(service)
 		}
 		ctx = setToken(ctx)
-		req := &featureproto.CreateSegmentRequest{Command: tc.cmd, EnvironmentNamespace: tc.environmentNamespace}
+		req := &featureproto.CreateSegmentRequest{Command: tc.cmd, EnvironmentId: tc.environmentId}
 		_, err := service.CreateSegment(ctx, req)
 		assert.Equal(t, tc.expected, err)
 	}
@@ -127,25 +127,25 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 	}
 
 	testcases := []struct {
-		setup                func(*FeatureService)
-		id                   string
-		cmd                  *featureproto.DeleteSegmentCommand
-		environmentNamespace string
-		expected             error
+		setup         func(*FeatureService)
+		id            string
+		cmd           *featureproto.DeleteSegmentCommand
+		environmentId string
+		expected      error
 	}{
 		{
-			setup:                nil,
-			id:                   "",
-			cmd:                  nil,
-			environmentNamespace: "ns0",
-			expected:             createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			setup:         nil,
+			id:            "",
+			cmd:           nil,
+			environmentId: "ns0",
+			expected:      createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			setup:                nil,
-			id:                   "id",
-			cmd:                  nil,
-			environmentNamespace: "ns0",
-			expected:             createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
+			setup:         nil,
+			id:            "id",
+			cmd:           nil,
+			environmentId: "ns0",
+			expected:      createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -166,10 +166,10 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(v2fs.ErrSegmentNotFound)
 			},
-			id:                   "id",
-			cmd:                  &featureproto.DeleteSegmentCommand{},
-			environmentNamespace: "ns0",
-			expected:             createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+			id:            "id",
+			cmd:           &featureproto.DeleteSegmentCommand{},
+			environmentId: "ns0",
+			expected:      createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -190,10 +190,10 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			id:                   "id",
-			cmd:                  &featureproto.DeleteSegmentCommand{},
-			environmentNamespace: "ns0",
-			expected:             nil,
+			id:            "id",
+			cmd:           &featureproto.DeleteSegmentCommand{},
+			environmentId: "ns0",
+			expected:      nil,
 		},
 	}
 	for _, tc := range testcases {
@@ -203,9 +203,9 @@ func TestDeleteSegmentMySQL(t *testing.T) {
 		}
 		ctx = setToken(ctx)
 		req := &featureproto.DeleteSegmentRequest{
-			Id:                   tc.id,
-			Command:              tc.cmd,
-			EnvironmentNamespace: tc.environmentNamespace,
+			Id:            tc.id,
+			Command:       tc.cmd,
+			EnvironmentId: tc.environmentId,
 		}
 		_, err := service.DeleteSegment(ctx, req)
 		assert.Equal(t, tc.expected, err)
@@ -235,25 +235,25 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 	changeSegmentNameCmd, err := ptypes.MarshalAny(&featureproto.ChangeSegmentNameCommand{Name: "name"})
 	require.NoError(t, err)
 	testcases := []struct {
-		setup                func(*FeatureService)
-		id                   string
-		cmds                 []*featureproto.Command
-		environmentNamespace string
-		expected             error
+		setup         func(*FeatureService)
+		id            string
+		cmds          []*featureproto.Command
+		environmentId string
+		expected      error
 	}{
 		{
-			setup:                nil,
-			id:                   "",
-			cmds:                 nil,
-			environmentNamespace: "ns0",
-			expected:             createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+			setup:         nil,
+			id:            "",
+			cmds:          nil,
+			environmentId: "ns0",
+			expected:      createError(statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			setup:                nil,
-			id:                   "id",
-			cmds:                 nil,
-			environmentNamespace: "ns0",
-			expected:             createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
+			setup:         nil,
+			id:            "id",
+			cmds:          nil,
+			environmentId: "ns0",
+			expected:      createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
 			setup: func(s *FeatureService) {
@@ -266,8 +266,8 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 			cmds: []*featureproto.Command{
 				{Command: changeSegmentNameCmd},
 			},
-			environmentNamespace: "ns0",
-			expected:             nil,
+			environmentId: "ns0",
+			expected:      nil,
 		},
 	}
 	for _, tc := range testcases {
@@ -277,9 +277,9 @@ func TestUpdateSegmentMySQL(t *testing.T) {
 		}
 		ctx = setToken(ctx)
 		req := &featureproto.UpdateSegmentRequest{
-			Id:                   tc.id,
-			Commands:             tc.cmds,
-			EnvironmentNamespace: tc.environmentNamespace,
+			Id:            tc.id,
+			Commands:      tc.cmds,
+			EnvironmentId: tc.environmentId,
 		}
 		_, err := service.UpdateSegment(ctx, req)
 		assert.Equal(t, tc.expected, err)
@@ -292,13 +292,13 @@ func TestGetSegmentMySQL(t *testing.T) {
 	defer mockController.Finish()
 
 	testcases := []struct {
-		desc                 string
-		setup                func(*FeatureService)
-		service              *FeatureService
-		context              context.Context
-		id                   string
-		environmentNamespace string
-		getExpectedErr       func(localizer locale.Localizer) error
+		desc           string
+		setup          func(*FeatureService)
+		service        *FeatureService
+		context        context.Context
+		id             string
+		environmentId  string
+		getExpectedErr func(localizer locale.Localizer) error
 	}{
 		{
 			desc:    "error: missing id",
@@ -307,9 +307,9 @@ func TestGetSegmentMySQL(t *testing.T) {
 				createContextWithToken(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
-			setup:                nil,
-			id:                   "",
-			environmentNamespace: "ns0",
+			setup:         nil,
+			id:            "",
+			environmentId: "ns0",
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(t, statusMissingID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"), localizer)
 			},
@@ -328,8 +328,8 @@ func TestGetSegmentMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			id:                   "id",
-			environmentNamespace: "ns0",
+			id:            "id",
+			environmentId: "ns0",
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(t, statusNotFound, localizer.MustLocalize(locale.NotFoundError), localizer)
 			},
@@ -355,8 +355,8 @@ func TestGetSegmentMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			id:                   "id",
-			environmentNamespace: "ns0",
+			id:            "id",
+			environmentId: "ns0",
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
 			},
@@ -382,8 +382,8 @@ func TestGetSegmentMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
-			id:                   "id",
-			environmentNamespace: "ns0",
+			id:            "id",
+			environmentId: "ns0",
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
 			},
@@ -395,9 +395,9 @@ func TestGetSegmentMySQL(t *testing.T) {
 				createContextWithTokenRoleUnassigned(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
-			setup:                func(s *FeatureService) {},
-			id:                   "id",
-			environmentNamespace: "ns0",
+			setup:         func(s *FeatureService) {},
+			id:            "id",
+			environmentId: "ns0",
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
 			},
@@ -412,7 +412,7 @@ func TestGetSegmentMySQL(t *testing.T) {
 			ctx := tc.context
 			localizer := locale.NewLocalizer(ctx)
 
-			req := &featureproto.GetSegmentRequest{Id: tc.id, EnvironmentNamespace: tc.environmentNamespace}
+			req := &featureproto.GetSegmentRequest{Id: tc.id, EnvironmentId: tc.environmentId}
 			_, err := service.GetSegment(ctx, req)
 			assert.Equal(t, tc.getExpectedErr(localizer), err)
 		})
@@ -425,13 +425,13 @@ func TestListSegmentsMySQL(t *testing.T) {
 	defer mockController.Finish()
 
 	testcases := []struct {
-		desc                 string
-		service              *FeatureService
-		context              context.Context
-		setup                func(*FeatureService)
-		pageSize             int64
-		environmentNamespace string
-		getExpectedErr       func(localizer locale.Localizer) error
+		desc           string
+		service        *FeatureService
+		context        context.Context
+		setup          func(*FeatureService)
+		pageSize       int64
+		environmentId  string
+		getExpectedErr func(localizer locale.Localizer) error
 	}{
 		{
 			desc:    "error: exceeded max page size per request",
@@ -440,9 +440,9 @@ func TestListSegmentsMySQL(t *testing.T) {
 				createContextWithTokenRoleUnassigned(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
-			setup:                nil,
-			pageSize:             int64(maxPageSizePerRequest + 1),
-			environmentNamespace: "ns0",
+			setup:         nil,
+			pageSize:      int64(maxPageSizePerRequest + 1),
+			environmentId: "ns0",
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(t, statusExceededMaxPageSizePerRequest, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "page_size"), localizer)
 			},
@@ -468,8 +468,8 @@ func TestListSegmentsMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row).Times(2)
 			},
-			pageSize:             int64(maxPageSizePerRequest),
-			environmentNamespace: "ns0",
+			pageSize:      int64(maxPageSizePerRequest),
+			environmentId: "ns0",
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
 			},
@@ -495,8 +495,8 @@ func TestListSegmentsMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row).Times(2)
 			},
-			pageSize:             int64(maxPageSizePerRequest),
-			environmentNamespace: "ns0",
+			pageSize:      int64(maxPageSizePerRequest),
+			environmentId: "ns0",
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
 			},
@@ -508,9 +508,9 @@ func TestListSegmentsMySQL(t *testing.T) {
 				createContextWithTokenRoleUnassigned(),
 				metadata.MD{"accept-language": []string{"ja"}},
 			),
-			setup:                func(s *FeatureService) {},
-			pageSize:             int64(maxPageSizePerRequest),
-			environmentNamespace: "ns0",
+			setup:         func(s *FeatureService) {},
+			pageSize:      int64(maxPageSizePerRequest),
+			environmentId: "ns0",
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(t, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied), localizer)
 			},
@@ -525,7 +525,7 @@ func TestListSegmentsMySQL(t *testing.T) {
 			ctx := tc.context
 			localizer := locale.NewLocalizer(ctx)
 
-			req := &featureproto.ListSegmentsRequest{PageSize: tc.pageSize, EnvironmentNamespace: tc.environmentNamespace}
+			req := &featureproto.ListSegmentsRequest{PageSize: tc.pageSize, EnvironmentId: tc.environmentId}
 			_, err := service.ListSegments(ctx, req)
 			assert.Equal(t, tc.getExpectedErr(localizer), err)
 		})

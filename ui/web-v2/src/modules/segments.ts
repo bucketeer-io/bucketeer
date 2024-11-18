@@ -45,7 +45,7 @@ export type OrderDirection =
   ListSegmentsRequest.OrderDirectionMap[keyof ListSegmentsRequest.OrderDirectionMap];
 
 export interface ListSegmentsParams {
-  environmentNamespace: string;
+  environmentId: string;
   pageSize?: number;
   cursor: string;
   orderBy?: OrderBy;
@@ -60,7 +60,7 @@ export const listSegments = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/list`, async (params) => {
   const request = new ListSegmentsRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setCursor(params.cursor);
   if (params.pageSize) {
     request.setPageSize(params.pageSize);
@@ -75,7 +75,7 @@ export const listSegments = createAsyncThunk<
 });
 
 export interface GetSegmentParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -85,7 +85,7 @@ export const getSegment = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/get`, async (params) => {
   const request = new GetSegmentRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   const result = await segmentGrpc.getSegment(request);
   return result.response.toObject().segment;
@@ -93,7 +93,7 @@ export const getSegment = createAsyncThunk<
 
 export interface BulkDownloadSegmentUsersParams {
   segmentId: string;
-  environmentNamespace: string;
+  environmentId: string;
 }
 
 export const bulkDownloadSegmentUsers = createAsyncThunk<
@@ -102,14 +102,14 @@ export const bulkDownloadSegmentUsers = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/download`, async (params) => {
   const request = new BulkDownloadSegmentUsersRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setSegmentId(params.segmentId);
   const result = await segmentGrpc.bulkDownloadSegmentUsers(request);
   return result.response.toObject().data;
 });
 
 export interface BulkUploadSegmentUsersParams {
-  environmentNamespace: string;
+  environmentId: string;
   segmentId: string;
   data: Uint8Array;
 }
@@ -122,14 +122,14 @@ export const bulkUploadSegmentUsers = createAsyncThunk<
   const cmd = new BulkUploadSegmentUsersCommand();
   cmd.setData(params.data);
   const request = new BulkUploadSegmentUsersRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setSegmentId(params.segmentId);
   request.setCommand(cmd);
   await segmentGrpc.bulkUploadSegmentUsers(request);
 });
 
 export interface CreateSegmentParams {
-  environmentNamespace: string;
+  environmentId: string;
   name: string;
   description: string;
 }
@@ -143,7 +143,7 @@ export const createSegment = createAsyncThunk<
   cmd.setName(params.name);
   cmd.setDescription(params.description);
   const request = new CreateSegmentRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setCommand(cmd);
   const result = await segmentGrpc.createSegment(request);
   return result.response.toObject().segment.id;
@@ -162,7 +162,7 @@ const convertCommandToAny = (
 };
 
 export interface UpdateSegmentParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
   name: string;
   description: string;
@@ -185,7 +185,7 @@ export const updateSegment = createAsyncThunk<
     cmdList.push(convertCommandToAny(cmd, 'ChangeSegmentDescriptionCommand'));
   }
   const request = new UpdateSegmentRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setCommandsList(cmdList);
   await segmentGrpc.updateSegment(request);
@@ -193,7 +193,7 @@ export const updateSegment = createAsyncThunk<
 
 export interface DeleteSegmentUsersParams {
   id: string;
-  environmentNamespace: string;
+  environmentId: string;
 }
 
 export const deleteSegmentUser = createAsyncThunk<
@@ -202,7 +202,7 @@ export const deleteSegmentUser = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/delete`, async (params) => {
   const request = new DeleteSegmentRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setCommand(new DeleteSegmentCommand());
   await segmentGrpc.deleteSegment(request);

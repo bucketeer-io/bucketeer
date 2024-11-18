@@ -45,12 +45,12 @@ func (s *grpcGatewayService) ListPushes(
 	res, err := s.pushClient.ListPushes(
 		ctx,
 		&pushproto.ListPushesRequest{
-			EnvironmentNamespace: envAPIKey.Environment.Id,
-			PageSize:             req.PageSize,
-			Cursor:               req.Cursor,
-			OrderBy:              req.OrderBy,
-			OrderDirection:       req.OrderDirection,
-			SearchKeyword:        req.SearchKeyword,
+			EnvironmentId:  envAPIKey.Environment.Id,
+			PageSize:       req.PageSize,
+			Cursor:         req.Cursor,
+			OrderBy:        req.OrderBy,
+			OrderDirection: req.OrderDirection,
+			SearchKeyword:  req.SearchKeyword,
 		},
 	)
 	if err != nil {
@@ -93,10 +93,10 @@ func (s *grpcGatewayService) CreatePush(
 	res, err := s.pushClient.CreatePush(
 		ctx,
 		&pushproto.CreatePushRequest{
-			EnvironmentNamespace: envAPIKey.Environment.Id,
-			Name:                 req.Name,
-			Tags:                 req.Tags,
-			FcmServiceAccount:    req.FcmServiceAccount,
+			EnvironmentId:     envAPIKey.Environment.Id,
+			Name:              req.Name,
+			Tags:              req.Tags,
+			FcmServiceAccount: req.FcmServiceAccount,
 		},
 	)
 	if err != nil {
@@ -138,8 +138,8 @@ func (s *grpcGatewayService) GetPush(
 	res, err := s.pushClient.GetPush(
 		ctx,
 		&pushproto.GetPushRequest{
-			EnvironmentNamespace: envAPIKey.Environment.Id,
-			Id:                   req.Id,
+			EnvironmentId: envAPIKey.Environment.Id,
+			Id:            req.Id,
 		},
 	)
 	if err != nil {
@@ -181,8 +181,8 @@ func (s *grpcGatewayService) UpdatePush(
 		_, err := s.pushClient.DeletePush(
 			ctx,
 			&pushproto.DeletePushRequest{
-				EnvironmentNamespace: envAPIKey.Environment.Id,
-				Id:                   req.Id,
+				EnvironmentId: envAPIKey.Environment.Id,
+				Id:            req.Id,
 			},
 		)
 		if err != nil {
@@ -195,10 +195,10 @@ func (s *grpcGatewayService) UpdatePush(
 	res, err := s.pushClient.UpdatePush(
 		ctx,
 		&pushproto.UpdatePushRequest{
-			EnvironmentNamespace: envAPIKey.Environment.Id,
-			Id:                   req.Id,
-			Name:                 req.Name,
-			Tags:                 req.Tags,
+			EnvironmentId: envAPIKey.Environment.Id,
+			Id:            req.Id,
+			Name:          req.Name,
+			Tags:          req.Tags,
 		},
 	)
 	if err != nil {

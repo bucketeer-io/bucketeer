@@ -17,8 +17,8 @@ export class Event extends jspb.Message {
   getEvent(): google_protobuf_any_pb.Any | undefined;
   setEvent(value?: google_protobuf_any_pb.Any): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Event.AsObject;
@@ -42,7 +42,7 @@ export namespace Event {
   export type AsObject = {
     id: string;
     event?: google_protobuf_any_pb.Any.AsObject;
-    environmentNamespace: string;
+    environmentId: string;
   };
 }
 

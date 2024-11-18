@@ -24,6 +24,7 @@ import (
 
 const (
 	AdminEnvironmentNamespace = ""
+	AdminEnvironmentID        = ""
 
 	OrderDirectionAsc  OrderDirection = 0
 	OrderDirectionDesc OrderDirection = 1
@@ -75,11 +76,11 @@ type Key struct {
 	Kind string
 	// If it is empty string, query will be executed in admin namespace.
 	// If not, query will be executed in namespace for target environment.
-	EnvironmentNamespace string
+	EnvironmentId string
 }
 
-func NewKey(id, kind, environmentNamespace string) *Key {
-	return &Key{ID: id, Kind: kind, EnvironmentNamespace: environmentNamespace}
+func NewKey(id, kind, environmentId string) *Key {
+	return &Key{ID: id, Kind: kind, EnvironmentId: environmentId}
 }
 
 type Iterator interface {
@@ -110,7 +111,7 @@ type Query struct {
 	Filters     []*Filter
 	// If it is empty string, query will be executed in admin namespace.
 	// If not, query will be executed in namespace for target environment.
-	EnvironmentNamespace string
+	EnvironmentId string
 }
 
 type Filter struct {
@@ -180,7 +181,7 @@ type Bucket interface {
 }
 
 type Object interface {
-	Writer(ctx context.Context, environmentNamespace, filename string, CRC32C uint32) (Writer, error)
-	Reader(ctx context.Context, environmentNamespace, filename string) (Reader, error)
+	Writer(ctx context.Context, environmentId, filename string, CRC32C uint32) (Writer, error)
+	Reader(ctx context.Context, environmentId, filename string) (Reader, error)
 	Deleter
 }

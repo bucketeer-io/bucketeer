@@ -35,8 +35,8 @@ const (
 )
 
 type SegmentUserStorage interface {
-	UpsertSegmentUsers(ctx context.Context, users []*proto.SegmentUser, environmentNamespace string) error
-	GetSegmentUser(ctx context.Context, id, environmentNamespace string) (*domain.SegmentUser, error)
+	UpsertSegmentUsers(ctx context.Context, users []*proto.SegmentUser, environmentId string) error
+	GetSegmentUser(ctx context.Context, id, environmentId string) (*domain.SegmentUser, error)
 	ListSegmentUsers(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
@@ -56,7 +56,7 @@ func NewSegmentUserStorage(qe mysql.QueryExecer) SegmentUserStorage {
 func (s *segmentUserStorage) UpsertSegmentUsers(
 	ctx context.Context,
 	users []*proto.SegmentUser,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	// Upsert the users in batches
 	for i := 0; i < len(users); i += batchSize {
@@ -67,7 +67,7 @@ func (s *segmentUserStorage) UpsertSegmentUsers(
 		if err := s.upsertSegmentUsers(
 			ctx,
 			users[i:j],
-			environmentNamespace,
+			environmentId,
 		); err != nil {
 			return err
 		}
@@ -78,7 +78,7 @@ func (s *segmentUserStorage) UpsertSegmentUsers(
 func (s *segmentUserStorage) upsertSegmentUsers(
 	ctx context.Context,
 	users []*proto.SegmentUser,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	var query strings.Builder
 	query.WriteString(`
@@ -88,7 +88,7 @@ func (s *segmentUserStorage) upsertSegmentUsers(
 			user_id,
 			state,
 			deleted,
-			environment_namespace
+			environment_id
 		) VALUES
 	`)
 	args := []interface{}{}
@@ -104,7 +104,7 @@ func (s *segmentUserStorage) upsertSegmentUsers(
 			u.UserId,
 			int32(u.State),
 			u.Deleted,
-			environmentNamespace,
+			environmentId,
 		)
 	}
 	query.WriteString(`
@@ -127,7 +127,7 @@ func (s *segmentUserStorage) upsertSegmentUsers(
 
 func (s *segmentUserStorage) GetSegmentUser(
 	ctx context.Context,
-	id, environmentNamespace string,
+	id, environmentId string,
 ) (*domain.SegmentUser, error) {
 	segmentUser := proto.SegmentUser{}
 	var state int32
@@ -142,13 +142,13 @@ func (s *segmentUserStorage) GetSegmentUser(
 			segment_user
 		WHERE
 			id = ? AND
-			environment_namespace = ?
+			environment_id = ?
 	`
 	err := s.qe.QueryRowContext(
 		ctx,
 		query,
 		id,
-		environmentNamespace,
+		environmentId,
 	).Scan(
 		&segmentUser.Id,
 		&segmentUser.SegmentId,

@@ -77,7 +77,7 @@ func (c *command) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.
 			Name: *c.name,
 			Role: accountproto.APIKey_Role(role),
 		},
-		EnvironmentNamespace: *c.environmentNamespace,
+		EnvironmentId: *c.environmentNamespace,
 	})
 	if err != nil {
 		logger.Error("Failed to create api key", zap.Error(err))

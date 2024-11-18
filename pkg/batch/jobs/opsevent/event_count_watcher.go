@@ -123,11 +123,11 @@ func (w *eventCountWatcher) listEnvironments(ctx context.Context) ([]*envproto.E
 
 func (w *eventCountWatcher) listAutoOpsRules(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*autoopsproto.AutoOpsRule, error) {
 	resp, err := w.aoClient.ListAutoOpsRules(ctx, &autoopsproto.ListAutoOpsRulesRequest{
-		PageSize:             0,
-		EnvironmentNamespace: environmentNamespace,
+		PageSize:      0,
+		EnvironmentId: environmentId,
 	})
 	if err != nil {
 		return nil, err
@@ -137,22 +137,22 @@ func (w *eventCountWatcher) listAutoOpsRules(
 
 func (w *eventCountWatcher) getExecuteClauseId(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 	a *autoopsdomain.AutoOpsRule,
 ) (string, error) {
 	opsEventRateClauses, err := a.ExtractOpsEventRateClauses()
 	if err != nil {
 		w.logger.Error("Failed to extract ops event rate clauses", zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 			zap.String("featureId", a.FeatureId),
 			zap.String("autoOpsRuleId", a.Id),
 		)
 		return "", err
 	}
-	featureVersion, err := w.getLatestFeatureVersion(ctx, a.FeatureId, environmentNamespace)
+	featureVersion, err := w.getLatestFeatureVersion(ctx, a.FeatureId, environmentId)
 	if err != nil {
 		w.logger.Error("Failed to get the latest feature version", zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 			zap.String("featureId", a.FeatureId),
 			zap.String("autoOpsRuleId", a.Id),
 		)
@@ -162,7 +162,7 @@ func (w *eventCountWatcher) getExecuteClauseId(
 	for id, c := range opsEventRateClauses {
 		logFunc := func(msg string) {
 			w.logger.Debug(msg,
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 				zap.String("featureId", a.FeatureId),
 				zap.String("autoOpsRuleId", a.Id),
 				zap.Any("opsEventRateClause", c),
@@ -170,7 +170,7 @@ func (w *eventCountWatcher) getExecuteClauseId(
 		}
 		evaluationCount, err := w.getTargetOpsEvaluationCount(ctx,
 			logFunc,
-			environmentNamespace,
+			environmentId,
 			a.Id,
 			id,
 			a.FeatureId,
@@ -187,7 +187,7 @@ func (w *eventCountWatcher) getExecuteClauseId(
 		opsEventCount, err := w.getTargetOpsGoalEventCount(
 			ctx,
 			logFunc,
-			environmentNamespace,
+			environmentId,
 			a.Id,
 			id,
 			a.FeatureId,
@@ -202,13 +202,13 @@ func (w *eventCountWatcher) getExecuteClauseId(
 			continue
 		}
 		opsCount := opseventdomain.NewOpsCount(a.FeatureId, a.Id, id, opsEventCount, evaluationCount)
-		if err = w.persistOpsCount(ctx, environmentNamespace, opsCount); err != nil {
+		if err = w.persistOpsCount(ctx, environmentId, opsCount); err != nil {
 			lastErr = err
 			continue
 		}
 		if asmt := w.assessRule(c, evaluationCount, opsEventCount); asmt {
 			w.logger.Info("Clause satisfies condition",
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 				zap.String("featureId", a.FeatureId),
 				zap.String("autoOpsRuleId", a.Id),
 				zap.Any("opsEventRateClause", c),
@@ -221,11 +221,11 @@ func (w *eventCountWatcher) getExecuteClauseId(
 
 func (w *eventCountWatcher) getLatestFeatureVersion(
 	ctx context.Context,
-	featureID, environmentNamespace string,
+	featureID, environmentId string,
 ) (int32, error) {
 	req := &ftproto.GetFeatureRequest{
-		Id:                   featureID,
-		EnvironmentNamespace: environmentNamespace,
+		Id:            featureID,
+		EnvironmentId: environmentId,
 	}
 	resp, err := w.featureClient.GetFeature(ctx, req)
 	if err != nil {
@@ -258,12 +258,12 @@ func (w *eventCountWatcher) assessRule(
 func (w *eventCountWatcher) getTargetOpsEvaluationCount(
 	ctx context.Context,
 	logFunc func(string),
-	environmentNamespace, ruleID, clauseID, FeatureID, variationID string,
+	environmentId, ruleID, clauseID, FeatureID, variationID string,
 	featureVersion int32,
 ) (int64, error) {
 	count, err := w.getEvaluationCount(
 		ctx,
-		environmentNamespace,
+		environmentId,
 		ruleID,
 		clauseID,
 		FeatureID,
@@ -281,20 +281,20 @@ func (w *eventCountWatcher) getTargetOpsEvaluationCount(
 
 func (w *eventCountWatcher) getEvaluationCount(
 	ctx context.Context,
-	environmentNamespace, ruleID, clauseID, FeatureID, variationID string,
+	environmentId, ruleID, clauseID, FeatureID, variationID string,
 	featureVersion int32,
 ) (int64, error) {
 	resp, err := w.eventCounterClient.GetOpsEvaluationUserCount(ctx, &ecproto.GetOpsEvaluationUserCountRequest{
-		EnvironmentNamespace: environmentNamespace,
-		OpsRuleId:            ruleID,
-		ClauseId:             clauseID,
-		FeatureId:            FeatureID,
-		FeatureVersion:       featureVersion,
-		VariationId:          variationID,
+		EnvironmentId:  environmentId,
+		OpsRuleId:      ruleID,
+		ClauseId:       clauseID,
+		FeatureId:      FeatureID,
+		FeatureVersion: featureVersion,
+		VariationId:    variationID,
 	})
 	if err != nil {
 		w.logger.Error("Failed to get ops evaluation count", zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 			zap.String("ruleId", ruleID),
 			zap.String("clauseId", clauseID),
 			zap.String("featureId", FeatureID),
@@ -309,12 +309,12 @@ func (w *eventCountWatcher) getEvaluationCount(
 func (w *eventCountWatcher) getTargetOpsGoalEventCount(
 	ctx context.Context,
 	logFunc func(string),
-	environmentNamespace, ruleID, clauseID, FeatureID, variationID string,
+	environmentId, ruleID, clauseID, FeatureID, variationID string,
 	featureVersion int32,
 ) (int64, error) {
 	count, err := w.getOpsGoalEventCount(
 		ctx,
-		environmentNamespace,
+		environmentId,
 		ruleID,
 		clauseID,
 		FeatureID,
@@ -332,20 +332,20 @@ func (w *eventCountWatcher) getTargetOpsGoalEventCount(
 
 func (w *eventCountWatcher) getOpsGoalEventCount(
 	ctx context.Context,
-	environmentNamespace, ruleID, clauseID, FeatureID, variationID string,
+	environmentId, ruleID, clauseID, FeatureID, variationID string,
 	featureVersion int32,
 ) (int64, error) {
 	resp, err := w.eventCounterClient.GetOpsGoalUserCount(ctx, &ecproto.GetOpsGoalUserCountRequest{
-		EnvironmentNamespace: environmentNamespace,
-		OpsRuleId:            ruleID,
-		ClauseId:             clauseID,
-		FeatureId:            FeatureID,
-		FeatureVersion:       featureVersion,
-		VariationId:          variationID,
+		EnvironmentId:  environmentId,
+		OpsRuleId:      ruleID,
+		ClauseId:       clauseID,
+		FeatureId:      FeatureID,
+		FeatureVersion: featureVersion,
+		VariationId:    variationID,
 	})
 	if err != nil {
 		w.logger.Error("Failed to get ops goal count", zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 			zap.String("ruleId", ruleID),
 			zap.String("clauseId", clauseID),
 			zap.String("featureId", FeatureID),
@@ -359,15 +359,15 @@ func (w *eventCountWatcher) getOpsGoalEventCount(
 
 func (w *eventCountWatcher) persistOpsCount(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 	oc *opseventdomain.OpsCount,
 ) error {
 	opsCountStorage := v2os.NewOpsCountStorage(w.mysqlClient)
-	if err := opsCountStorage.UpsertOpsCount(ctx, environmentNamespace, oc); err != nil {
+	if err := opsCountStorage.UpsertOpsCount(ctx, environmentId, oc); err != nil {
 		w.logger.Error("Failed to upsert ops count", zap.Error(err),
 			zap.String("autoOpsRuleId", oc.AutoOpsRuleId),
 			zap.String("clauseId", oc.ClauseId),
-			zap.String("environmentNamespace", environmentNamespace))
+			zap.String("environmentId", environmentId))
 		return err
 	}
 	return nil

@@ -109,9 +109,9 @@ func (w *featureStaleWatcher) createNotificationEvent(
 		return nil, err
 	}
 	ne := &senderproto.NotificationEvent{
-		Id:                   id.String(),
-		EnvironmentNamespace: environment.Id,
-		SourceType:           notificationproto.Subscription_FEATURE_STALE,
+		Id:            id.String(),
+		EnvironmentId: environment.Id,
+		SourceType:    notificationproto.Subscription_FEATURE_STALE,
 		Notification: &senderproto.Notification{
 			Type: senderproto.Notification_FeatureStale,
 			FeatureStaleNotification: &senderproto.FeatureStaleNotification{
@@ -148,16 +148,16 @@ func (w *featureStaleWatcher) listEnvironments(ctx context.Context) ([]*environm
 
 func (w *featureStaleWatcher) listFeatures(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*featureproto.Feature, error) {
 	var features []*featureproto.Feature
 	cursor := ""
 	for {
 		resp, err := w.featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
-			PageSize:             listRequestSize,
-			Cursor:               cursor,
-			EnvironmentNamespace: environmentNamespace,
-			Archived:             &wrappers.BoolValue{Value: false},
+			PageSize:      listRequestSize,
+			Cursor:        cursor,
+			EnvironmentId: environmentId,
+			Archived:      &wrappers.BoolValue{Value: false},
 		})
 		if err != nil {
 			return nil, err

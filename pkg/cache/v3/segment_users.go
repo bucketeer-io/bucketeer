@@ -31,9 +31,9 @@ const (
 )
 
 type SegmentUsersCache interface {
-	Get(segmentID, environmentNamespace string) (*featureproto.SegmentUsers, error)
-	GetAll(environmentNamespace string) ([]*featureproto.SegmentUsers, error)
-	Put(segmentUsers *featureproto.SegmentUsers, environmentNamespace string) error
+	Get(segmentID, environmentId string) (*featureproto.SegmentUsers, error)
+	GetAll(environmentId string) ([]*featureproto.SegmentUsers, error)
+	Put(segmentUsers *featureproto.SegmentUsers, environmentId string) error
 }
 
 type segmentUsersCache struct {
@@ -44,8 +44,8 @@ func NewSegmentUsersCache(c cache.MultiGetCache) SegmentUsersCache {
 	return &segmentUsersCache{cache: c}
 }
 
-func (c *segmentUsersCache) Get(segmentID, environmentNamespace string) (*featureproto.SegmentUsers, error) {
-	key := c.key(segmentID, environmentNamespace)
+func (c *segmentUsersCache) Get(segmentID, environmentId string) (*featureproto.SegmentUsers, error) {
+	key := c.key(segmentID, environmentId)
 	value, err := c.cache.Get(key)
 	if err != nil {
 		return nil, err
@@ -62,8 +62,8 @@ func (c *segmentUsersCache) Get(segmentID, environmentNamespace string) (*featur
 	return segmentUsers, nil
 }
 
-func (c *segmentUsersCache) GetAll(environmentNamespace string) ([]*featureproto.SegmentUsers, error) {
-	keys, err := c.scan(environmentNamespace)
+func (c *segmentUsersCache) GetAll(environmentId string) ([]*featureproto.SegmentUsers, error) {
+	keys, err := c.scan(environmentId)
 	if err != nil {
 		return nil, err
 	}
@@ -87,17 +87,17 @@ func (c *segmentUsersCache) GetAll(environmentNamespace string) ([]*featureproto
 	return segmentUsers, nil
 }
 
-func (c *segmentUsersCache) Put(segmentUsers *featureproto.SegmentUsers, environmentNamespace string) error {
+func (c *segmentUsersCache) Put(segmentUsers *featureproto.SegmentUsers, environmentId string) error {
 	buffer, err := proto.Marshal(segmentUsers)
 	if err != nil {
 		return err
 	}
-	key := c.key(segmentUsers.SegmentId, environmentNamespace)
+	key := c.key(segmentUsers.SegmentId, environmentId)
 	return c.cache.Put(key, buffer, segmentUsersTTL)
 }
 
-func (c *segmentUsersCache) scan(environmentNamespace string) ([]string, error) {
-	keyPrefix := cache.MakeKeyPrefix(segmentUsersKind, environmentNamespace)
+func (c *segmentUsersCache) scan(environmentId string) ([]string, error) {
+	keyPrefix := cache.MakeKeyPrefix(segmentUsersKind, environmentId)
 	key := keyPrefix + "*"
 	var cursor uint64
 	var k []string
@@ -119,6 +119,6 @@ func (c *segmentUsersCache) scan(environmentNamespace string) ([]string, error) 
 	return keys, nil
 }
 
-func (c *segmentUsersCache) key(segmentID, environmentNamespace string) string {
-	return cache.MakeKey(segmentUsersKind, segmentID, environmentNamespace)
+func (c *segmentUsersCache) key(segmentID, environmentId string) string {
+	return cache.MakeKey(segmentUsersKind, segmentID, environmentId)
 }

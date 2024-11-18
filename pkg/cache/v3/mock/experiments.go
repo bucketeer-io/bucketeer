@@ -41,30 +41,30 @@ func (m *MockExperimentsCache) EXPECT() *MockExperimentsCacheMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockExperimentsCache) Get(environmentNamespace string) (*experiment.Experiments, error) {
+func (m *MockExperimentsCache) Get(environmentId string) (*experiment.Experiments, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", environmentNamespace)
+	ret := m.ctrl.Call(m, "Get", environmentId)
 	ret0, _ := ret[0].(*experiment.Experiments)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockExperimentsCacheMockRecorder) Get(environmentNamespace any) *gomock.Call {
+func (mr *MockExperimentsCacheMockRecorder) Get(environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockExperimentsCache)(nil).Get), environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockExperimentsCache)(nil).Get), environmentId)
 }
 
 // Put mocks base method.
-func (m *MockExperimentsCache) Put(experiments *experiment.Experiments, environmentNamespace string) error {
+func (m *MockExperimentsCache) Put(experiments *experiment.Experiments, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", experiments, environmentNamespace)
+	ret := m.ctrl.Call(m, "Put", experiments, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Put indicates an expected call of Put.
-func (mr *MockExperimentsCacheMockRecorder) Put(experiments, environmentNamespace any) *gomock.Call {
+func (mr *MockExperimentsCacheMockRecorder) Put(experiments, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockExperimentsCache)(nil).Put), experiments, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockExperimentsCache)(nil).Put), experiments, environmentId)
 }

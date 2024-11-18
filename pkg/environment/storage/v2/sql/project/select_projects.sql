@@ -7,7 +7,7 @@ FROM
         LEFT JOIN
     environment_v2 ON project.id = environment_v2.project_id
         LEFT JOIN
-    feature ON environment_v2.id = feature.environment_namespace
+    feature ON environment_v2.id = feature.environment_id
 %s 
 GROUP BY
     project.id

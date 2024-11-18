@@ -23,7 +23,7 @@ export const debuggerAdapter = createEntityAdapter({
 export const { selectAll, selectById } = debuggerAdapter.getSelectors();
 
 interface evaluateFeaturesParams {
-  environmentNamespace: string;
+  environmentId: string;
   flag: string;
   userId: string;
   userAttributes: Array<[string, string]>;
@@ -43,7 +43,7 @@ export const evaluateFeatures = createAsyncThunk<
   }
 
   request.setFeatureId(params.flag);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setUser(user);
   const result = await featuresGrpc.evaluateFeatures(request);
   return result.response.toObject();

@@ -60,7 +60,7 @@ export interface VariationParams {
   description: string;
 }
 export interface CreateFeatureParams {
-  environmentNamespace: string;
+  environmentId: string;
   name: string;
   id: string;
   description: string;
@@ -88,7 +88,7 @@ export const createFeature = createAsyncThunk<
     variations.push(variation);
   });
 
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   cmd.setName(params.name);
   cmd.setId(params.id);
   cmd.setDescription(params.description);
@@ -111,9 +111,9 @@ export const createFeature = createAsyncThunk<
 });
 
 export interface CloneFeatureParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
-  destinationEnvironmentNamespace: string;
+  destinationenvironmentId: string;
 }
 
 export const cloneFeature = createAsyncThunk<
@@ -123,8 +123,8 @@ export const cloneFeature = createAsyncThunk<
 >(`${MODULE_NAME}/clone`, async (params) => {
   const request = new CloneFeatureRequest();
   const cmd = new CloneFeatureCommand();
-  cmd.setEnvironmentNamespace(params.destinationEnvironmentNamespace);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  cmd.setEnvironmentId(params.destinationenvironmentId);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setCommand(cmd);
   await featureGrpc.cloneFeature(request);
@@ -137,7 +137,7 @@ export type OrderDirection =
   ListFeaturesRequest.OrderDirectionMap[keyof ListFeaturesRequest.OrderDirectionMap];
 
 export interface ListFeaturesParams {
-  environmentNamespace: string;
+  environmentId: string;
   pageSize: number;
   cursor: string;
   tags: string[];
@@ -157,7 +157,7 @@ export const listFeatures = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/list`, async (params) => {
   const request = new ListFeaturesRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setPageSize(params.pageSize);
   request.setCursor(params.cursor);
   request.setTagsList(params.tags);
@@ -190,7 +190,7 @@ export const listTags = createAsyncThunk<
 });
 
 export interface GetFeatureParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -200,7 +200,7 @@ export const getFeature = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/get`, async (params) => {
   const request = new GetFeatureRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   const result = await featureGrpc.getFeature(request);
   return result.response.toObject().feature;
@@ -219,7 +219,7 @@ const initialState = featuresAdapter.getInitialState<{
 });
 
 export interface UpdateFeatureDetailsParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
   comment: string;
   updateDetailCommands: UpdateDetailCommands;
@@ -237,7 +237,7 @@ export const updateFeatureDetails = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/updateDetails`, async (params) => {
   const request = new UpdateFeatureDetailsRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setComment(params.comment);
 
@@ -264,7 +264,7 @@ export const updateFeatureDetails = createAsyncThunk<
 });
 
 export interface UpdateFeatureTargetingParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
   comment: string;
   commands: Command[];
@@ -276,7 +276,7 @@ export const updateFeatureTargeting = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/updateTargeting`, async (params) => {
   const request = new UpdateFeatureTargetingRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setComment(params.comment);
   request.setCommandsList(params.commands);
@@ -285,7 +285,7 @@ export const updateFeatureTargeting = createAsyncThunk<
 });
 
 export interface UpdateFeatureVariationsParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
   comment: string;
   commands: Command[];
@@ -297,7 +297,7 @@ export const updateFeatureVariations = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/updateVariations`, async (params) => {
   const request = new UpdateFeatureVariationsRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setComment(params.comment);
   request.setCommandsList(params.commands);
@@ -305,7 +305,7 @@ export const updateFeatureVariations = createAsyncThunk<
 });
 
 export interface EnableFeatureParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
   comment: string;
 }
@@ -316,7 +316,7 @@ export const enableFeature = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/enable`, async (params) => {
   const request = new EnableFeatureRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setComment(params.comment);
   request.setCommand(new EnableFeatureCommand());
@@ -324,7 +324,7 @@ export const enableFeature = createAsyncThunk<
 });
 
 export interface DisableFeatureParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
   comment?: string;
 }
@@ -335,7 +335,7 @@ export const disableFeature = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/disable`, async (params) => {
   const request = new DisableFeatureRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   if (params.comment) {
     request.setComment(params.comment);
@@ -345,7 +345,7 @@ export const disableFeature = createAsyncThunk<
 });
 
 export interface ArchiveFeatureParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
   comment: string;
 }
@@ -356,7 +356,7 @@ export const archiveFeature = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/archive`, async (params) => {
   const request = new ArchiveFeatureRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setComment(params.comment);
   request.setCommand(new ArchiveFeatureCommand());
@@ -364,7 +364,7 @@ export const archiveFeature = createAsyncThunk<
 });
 
 export interface UnarchiveFeatureParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
   comment: string;
 }
@@ -375,7 +375,7 @@ export const unarchiveFeature = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/unarchive`, async (params) => {
   const request = new UnarchiveFeatureRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setComment(params.comment);
   request.setCommand(new UnarchiveFeatureCommand());

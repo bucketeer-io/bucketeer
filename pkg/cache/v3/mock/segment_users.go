@@ -41,45 +41,45 @@ func (m *MockSegmentUsersCache) EXPECT() *MockSegmentUsersCacheMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockSegmentUsersCache) Get(segmentID, environmentNamespace string) (*feature.SegmentUsers, error) {
+func (m *MockSegmentUsersCache) Get(segmentID, environmentId string) (*feature.SegmentUsers, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", segmentID, environmentNamespace)
+	ret := m.ctrl.Call(m, "Get", segmentID, environmentId)
 	ret0, _ := ret[0].(*feature.SegmentUsers)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockSegmentUsersCacheMockRecorder) Get(segmentID, environmentNamespace any) *gomock.Call {
+func (mr *MockSegmentUsersCacheMockRecorder) Get(segmentID, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockSegmentUsersCache)(nil).Get), segmentID, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockSegmentUsersCache)(nil).Get), segmentID, environmentId)
 }
 
 // GetAll mocks base method.
-func (m *MockSegmentUsersCache) GetAll(environmentNamespace string) ([]*feature.SegmentUsers, error) {
+func (m *MockSegmentUsersCache) GetAll(environmentId string) ([]*feature.SegmentUsers, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAll", environmentNamespace)
+	ret := m.ctrl.Call(m, "GetAll", environmentId)
 	ret0, _ := ret[0].([]*feature.SegmentUsers)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAll indicates an expected call of GetAll.
-func (mr *MockSegmentUsersCacheMockRecorder) GetAll(environmentNamespace any) *gomock.Call {
+func (mr *MockSegmentUsersCacheMockRecorder) GetAll(environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockSegmentUsersCache)(nil).GetAll), environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockSegmentUsersCache)(nil).GetAll), environmentId)
 }
 
 // Put mocks base method.
-func (m *MockSegmentUsersCache) Put(segmentUsers *feature.SegmentUsers, environmentNamespace string) error {
+func (m *MockSegmentUsersCache) Put(segmentUsers *feature.SegmentUsers, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", segmentUsers, environmentNamespace)
+	ret := m.ctrl.Call(m, "Put", segmentUsers, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Put indicates an expected call of Put.
-func (mr *MockSegmentUsersCacheMockRecorder) Put(segmentUsers, environmentNamespace any) *gomock.Call {
+func (mr *MockSegmentUsersCacheMockRecorder) Put(segmentUsers, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockSegmentUsersCache)(nil).Put), segmentUsers, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockSegmentUsersCache)(nil).Put), segmentUsers, environmentId)
 }

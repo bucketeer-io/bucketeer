@@ -106,37 +106,37 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 		{
 			desc: "error: ErrStartAtRequired",
 			input: &ecproto.GetExperimentEvaluationCountRequest{
-				EnvironmentNamespace: ns,
-				FeatureId:            fID,
-				EndAt:                correctEndAtUnix,
+				EnvironmentId: ns,
+				FeatureId:     fID,
+				EndAt:         correctEndAtUnix,
 			},
 			expectedErr: createError(statusStartAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "start_at")),
 		},
 		{
 			desc: "error: ErrEndAtRequired",
 			input: &ecproto.GetExperimentEvaluationCountRequest{
-				EnvironmentNamespace: ns,
-				FeatureId:            fID,
-				StartAt:              correctStartAtUnix,
+				EnvironmentId: ns,
+				FeatureId:     fID,
+				StartAt:       correctStartAtUnix,
 			},
 			expectedErr: createError(statusEndAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "end_at")),
 		},
 		{
 			desc: "error: ErrStartAtIsAfterEndAt",
 			input: &ecproto.GetExperimentEvaluationCountRequest{
-				EnvironmentNamespace: ns,
-				FeatureId:            fID,
-				StartAt:              now.Unix(),
-				EndAt:                now.Add(-31 * 24 * time.Hour).Unix(),
+				EnvironmentId: ns,
+				FeatureId:     fID,
+				StartAt:       now.Unix(),
+				EndAt:         now.Add(-31 * 24 * time.Hour).Unix(),
 			},
 			expectedErr: createError(statusStartAtIsAfterEndAt, localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEndAt)),
 		},
 		{
 			desc: "error: ErrFeatureIDRequired",
 			input: &ecproto.GetExperimentEvaluationCountRequest{
-				EnvironmentNamespace: ns,
-				StartAt:              correctStartAtUnix,
-				EndAt:                correctEndAtUnix,
+				EnvironmentId: ns,
+				StartAt:       correctStartAtUnix,
+				EndAt:         correctEndAtUnix,
 			},
 			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
 		},
@@ -145,12 +145,12 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			input: &ecproto.GetExperimentEvaluationCountRequest{
-				EnvironmentNamespace: ns,
-				StartAt:              correctStartAtUnix,
-				EndAt:                correctEndAtUnix,
-				FeatureId:            fID,
-				FeatureVersion:       fVersion,
-				VariationIds:         []string{vID1},
+				EnvironmentId:  ns,
+				StartAt:        correctStartAtUnix,
+				EndAt:          correctEndAtUnix,
+				FeatureId:      fID,
+				FeatureVersion: fVersion,
+				VariationIds:   []string{vID1},
 			},
 			expected:    nil,
 			expectedErr: createError(statusPermissionDenied, localizer.MustLocalizeWithTemplate(locale.PermissionDenied)),
@@ -172,12 +172,12 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 				)
 			},
 			input: &ecproto.GetExperimentEvaluationCountRequest{
-				EnvironmentNamespace: ns,
-				StartAt:              correctStartAtUnix,
-				EndAt:                correctEndAtUnix,
-				FeatureId:            fID,
-				FeatureVersion:       fVersion,
-				VariationIds:         []string{vID1},
+				EnvironmentId:  ns,
+				StartAt:        correctStartAtUnix,
+				EndAt:          correctEndAtUnix,
+				FeatureId:      fID,
+				FeatureVersion: fVersion,
+				VariationIds:   []string{vID1},
 			},
 			expected: &ecproto.GetExperimentEvaluationCountResponse{
 				FeatureId:      fID,
@@ -211,12 +211,12 @@ func TestGetExperimentEvaluationCount(t *testing.T) {
 					nil)
 			},
 			input: &ecproto.GetExperimentEvaluationCountRequest{
-				EnvironmentNamespace: ns,
-				StartAt:              correctStartAtUnix,
-				EndAt:                correctEndAtUnix,
-				FeatureId:            fID,
-				FeatureVersion:       fVersion,
-				VariationIds:         []string{vID1, vID2},
+				EnvironmentId:  ns,
+				StartAt:        correctStartAtUnix,
+				EndAt:          correctEndAtUnix,
+				FeatureId:      fID,
+				FeatureVersion: fVersion,
+				VariationIds:   []string{vID1, vID2},
 			},
 			expected: &ecproto.GetExperimentEvaluationCountResponse{
 				FeatureId:      fID,
@@ -256,54 +256,54 @@ func TestListExperiments(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		desc                 string
-		setup                func(*eventCounterService)
-		inputFeatureID       string
-		inputFeatureVersion  *wrappers.Int32Value
-		expected             []*experimentproto.Experiment
-		environmentNamespace string
-		expectedErr          error
+		desc                string
+		setup               func(*eventCounterService)
+		inputFeatureID      string
+		inputFeatureVersion *wrappers.Int32Value
+		expected            []*experimentproto.Experiment
+		environmentId       string
+		expectedErr         error
 	}{
 		{
 			desc: "no error",
 			setup: func(s *eventCounterService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), &experimentproto.ListExperimentsRequest{
-					FeatureId:            "fid",
-					FeatureVersion:       &wrappers.Int32Value{Value: int32(1)},
-					PageSize:             listRequestPageSize,
-					Cursor:               "",
-					EnvironmentNamespace: "ns0",
+					FeatureId:      "fid",
+					FeatureVersion: &wrappers.Int32Value{Value: int32(1)},
+					PageSize:       listRequestPageSize,
+					Cursor:         "",
+					EnvironmentId:  "ns0",
 				}).Return(&experimentproto.ListExperimentsResponse{}, nil)
 			},
-			inputFeatureID:       "fid",
-			inputFeatureVersion:  &wrappers.Int32Value{Value: int32(1)},
-			environmentNamespace: "ns0",
-			expected:             []*experimentproto.Experiment{},
-			expectedErr:          nil,
+			inputFeatureID:      "fid",
+			inputFeatureVersion: &wrappers.Int32Value{Value: int32(1)},
+			environmentId:       "ns0",
+			expected:            []*experimentproto.Experiment{},
+			expectedErr:         nil,
 		},
 		{
 			desc: "error",
 			setup: func(s *eventCounterService) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().ListExperiments(gomock.Any(), &experimentproto.ListExperimentsRequest{
-					FeatureId:            "fid",
-					FeatureVersion:       &wrappers.Int32Value{Value: int32(1)},
-					PageSize:             listRequestPageSize,
-					Cursor:               "",
-					EnvironmentNamespace: "ns0",
+					FeatureId:      "fid",
+					FeatureVersion: &wrappers.Int32Value{Value: int32(1)},
+					PageSize:       listRequestPageSize,
+					Cursor:         "",
+					EnvironmentId:  "ns0",
 				}).Return(nil, errors.New("test"))
 			},
-			inputFeatureID:       "fid",
-			inputFeatureVersion:  &wrappers.Int32Value{Value: int32(1)},
-			environmentNamespace: "ns0",
-			expected:             nil,
-			expectedErr:          errors.New("test"),
+			inputFeatureID:      "fid",
+			inputFeatureVersion: &wrappers.Int32Value{Value: int32(1)},
+			environmentId:       "ns0",
+			expected:            nil,
+			expectedErr:         errors.New("test"),
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			s := newEventCounterService(t, mockController, nil, nil, nil)
 			p.setup(s)
-			actual, err := s.listExperiments(context.Background(), p.inputFeatureID, p.inputFeatureVersion, p.environmentNamespace)
+			actual, err := s.listExperiments(context.Background(), p.inputFeatureID, p.inputFeatureVersion, p.environmentId)
 			assert.Equal(t, p.expected, actual)
 			assert.Equal(t, p.expectedErr, err)
 		})
@@ -339,7 +339,7 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 	}{
 		{
 			desc:        "error: ErrExperimentIDRequired",
-			input:       &ecproto.GetExperimentResultRequest{EnvironmentNamespace: "ns0"},
+			input:       &ecproto.GetExperimentResultRequest{EnvironmentId: "ns0"},
 			expectedErr: createError(statusExperimentIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "experiment_id")),
 		},
 		{
@@ -350,8 +350,8 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 				).Return(nil, v2ecs.ErrExperimentResultNotFound)
 			},
 			input: &ecproto.GetExperimentResultRequest{
-				ExperimentId:         "eid",
-				EnvironmentNamespace: "ns0",
+				ExperimentId:  "eid",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
 		},
@@ -360,8 +360,8 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			input: &ecproto.GetExperimentResultRequest{
-				ExperimentId:         "eid",
-				EnvironmentNamespace: "ns0",
+				ExperimentId:  "eid",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusPermissionDenied, localizer.MustLocalizeWithTemplate(locale.PermissionDenied)),
 		},
@@ -375,8 +375,8 @@ func TestGetExperimentResultMySQL(t *testing.T) {
 				).Return(&domain.ExperimentResult{}, nil)
 			},
 			input: &ecproto.GetExperimentResultRequest{
-				ExperimentId:         "eid",
-				EnvironmentNamespace: "ns0",
+				ExperimentId:  "eid",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},
@@ -426,7 +426,7 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 	}{
 		{
 			desc:        "error: ErrFeatureIDRequired",
-			input:       &ecproto.ListExperimentResultsRequest{EnvironmentNamespace: "ns0"},
+			input:       &ecproto.ListExperimentResultsRequest{EnvironmentId: "ns0"},
 			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
 		},
 		{
@@ -437,8 +437,8 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 				).Return(nil, storage.ErrKeyNotFound)
 			},
 			input: &ecproto.ListExperimentResultsRequest{
-				FeatureId:            "fid",
-				EnvironmentNamespace: "ns0",
+				FeatureId:     "fid",
+				EnvironmentId: "ns0",
 			},
 			expected:    nil,
 			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
@@ -451,9 +451,9 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 				).Return(nil, errors.New("test"))
 			},
 			input: &ecproto.ListExperimentResultsRequest{
-				FeatureId:            "fid",
-				FeatureVersion:       &wrappers.Int32Value{Value: int32(1)},
-				EnvironmentNamespace: "ns0",
+				FeatureId:      "fid",
+				FeatureVersion: &wrappers.Int32Value{Value: int32(1)},
+				EnvironmentId:  "ns0",
 			},
 			expected:    nil,
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
@@ -463,9 +463,9 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			input: &ecproto.ListExperimentResultsRequest{
-				FeatureId:            "fid",
-				FeatureVersion:       &wrappers.Int32Value{Value: int32(1)},
-				EnvironmentNamespace: "ns0",
+				FeatureId:      "fid",
+				FeatureVersion: &wrappers.Int32Value{Value: int32(1)},
+				EnvironmentId:  "ns0",
 			},
 			expected:    nil,
 			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
@@ -495,9 +495,9 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 				).Return(nil, v2ecs.ErrExperimentResultNotFound)
 			},
 			input: &ecproto.ListExperimentResultsRequest{
-				FeatureId:            "fid",
-				FeatureVersion:       &wrappers.Int32Value{Value: int32(1)},
-				EnvironmentNamespace: "ns0",
+				FeatureId:      "fid",
+				FeatureVersion: &wrappers.Int32Value{Value: int32(1)},
+				EnvironmentId:  "ns0",
 			},
 			expected: &ecproto.ListExperimentResultsResponse{
 				Results: make(map[string]*ecproto.ExperimentResult, 0),
@@ -535,9 +535,9 @@ func TestListExperimentResultsMySQL(t *testing.T) {
 				)
 			},
 			input: &ecproto.ListExperimentResultsRequest{
-				FeatureId:            "fid",
-				FeatureVersion:       &wrappers.Int32Value{Value: int32(1)},
-				EnvironmentNamespace: "ns0",
+				FeatureId:      "fid",
+				FeatureVersion: &wrappers.Int32Value{Value: int32(1)},
+				EnvironmentId:  "ns0",
 			},
 			expected: &ecproto.ListExperimentResultsResponse{
 				Results: map[string]*ecproto.ExperimentResult{
@@ -603,51 +603,51 @@ func TestGetExperimentGoalCount(t *testing.T) {
 		{
 			desc: "error: ErrStartAtRequired",
 			input: &ecproto.GetExperimentGoalCountRequest{
-				EnvironmentNamespace: ns,
-				FeatureId:            fID,
-				GoalId:               gID,
-				EndAt:                correctEndAtUnix,
+				EnvironmentId: ns,
+				FeatureId:     fID,
+				GoalId:        gID,
+				EndAt:         correctEndAtUnix,
 			},
 			expectedErr: createError(statusStartAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "start_at")),
 		},
 		{
 			desc: "error: ErrEndAtRequired",
 			input: &ecproto.GetExperimentGoalCountRequest{
-				EnvironmentNamespace: ns,
-				FeatureId:            fID,
-				GoalId:               gID,
-				StartAt:              correctStartAtUnix,
+				EnvironmentId: ns,
+				FeatureId:     fID,
+				GoalId:        gID,
+				StartAt:       correctStartAtUnix,
 			},
 			expectedErr: createError(statusEndAtRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "end_at")),
 		},
 		{
 			desc: "error: ErrStartAtIsAfterEndAt",
 			input: &ecproto.GetExperimentGoalCountRequest{
-				EnvironmentNamespace: ns,
-				FeatureId:            fID,
-				GoalId:               gID,
-				StartAt:              now.Unix(),
-				EndAt:                now.Add(-30 * 24 * time.Hour).Unix(),
+				EnvironmentId: ns,
+				FeatureId:     fID,
+				GoalId:        gID,
+				StartAt:       now.Unix(),
+				EndAt:         now.Add(-30 * 24 * time.Hour).Unix(),
 			},
 			expectedErr: createError(statusStartAtIsAfterEndAt, localizer.MustLocalizeWithTemplate(locale.StartAtIsAfterEndAt)),
 		},
 		{
 			desc: "error: ErrFeatureIDRequired",
 			input: &ecproto.GetExperimentGoalCountRequest{
-				EnvironmentNamespace: ns,
-				GoalId:               gID,
-				StartAt:              correctStartAtUnix,
-				EndAt:                correctEndAtUnix,
+				EnvironmentId: ns,
+				GoalId:        gID,
+				StartAt:       correctStartAtUnix,
+				EndAt:         correctEndAtUnix,
 			},
 			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
 		},
 		{
 			desc: "error: ErrGoalIDRequired",
 			input: &ecproto.GetExperimentGoalCountRequest{
-				EnvironmentNamespace: ns,
-				FeatureId:            fID,
-				StartAt:              correctStartAtUnix,
-				EndAt:                correctEndAtUnix,
+				EnvironmentId: ns,
+				FeatureId:     fID,
+				StartAt:       correctStartAtUnix,
+				EndAt:         correctEndAtUnix,
 			},
 			expectedErr: createError(statusGoalIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "goal_id")),
 		},
@@ -656,10 +656,10 @@ func TestGetExperimentGoalCount(t *testing.T) {
 			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			input: &ecproto.GetExperimentGoalCountRequest{
-				EnvironmentNamespace: ns,
-				FeatureId:            fID,
-				StartAt:              correctStartAtUnix,
-				EndAt:                correctEndAtUnix,
+				EnvironmentId: ns,
+				FeatureId:     fID,
+				StartAt:       correctStartAtUnix,
+				EndAt:         correctEndAtUnix,
 			},
 			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
@@ -683,13 +683,13 @@ func TestGetExperimentGoalCount(t *testing.T) {
 				)
 			},
 			input: &ecproto.GetExperimentGoalCountRequest{
-				EnvironmentNamespace: ns,
-				GoalId:               gID,
-				FeatureId:            fID,
-				FeatureVersion:       fVersion,
-				VariationIds:         []string{vID1},
-				StartAt:              correctStartAtUnix,
-				EndAt:                correctEndAtUnix,
+				EnvironmentId:  ns,
+				GoalId:         gID,
+				FeatureId:      fID,
+				FeatureVersion: fVersion,
+				VariationIds:   []string{vID1},
+				StartAt:        correctStartAtUnix,
+				EndAt:          correctEndAtUnix,
 			},
 			expected: &ecproto.GetExperimentGoalCountResponse{
 				GoalId: gID,
@@ -732,13 +732,13 @@ func TestGetExperimentGoalCount(t *testing.T) {
 				)
 			},
 			input: &ecproto.GetExperimentGoalCountRequest{
-				EnvironmentNamespace: ns,
-				GoalId:               gID,
-				FeatureId:            fID,
-				FeatureVersion:       fVersion,
-				VariationIds:         []string{vID1, vID2},
-				StartAt:              correctStartAtUnix,
-				EndAt:                correctEndAtUnix,
+				EnvironmentId:  ns,
+				GoalId:         gID,
+				FeatureId:      fID,
+				FeatureVersion: fVersion,
+				VariationIds:   []string{vID1, vID2},
+				StartAt:        correctStartAtUnix,
+				EndAt:          correctEndAtUnix,
 			},
 			expected: &ecproto.GetExperimentGoalCountResponse{
 				GoalId: gID,
@@ -795,8 +795,8 @@ func TestGetMAUCount(t *testing.T) {
 		return st.Err()
 	}
 	input := &ecproto.GetMAUCountRequest{
-		EnvironmentNamespace: "ns0",
-		YearMonth:            "201212",
+		EnvironmentId: "ns0",
+		YearMonth:     "201212",
 	}
 	patterns := []struct {
 		desc        string
@@ -809,7 +809,7 @@ func TestGetMAUCount(t *testing.T) {
 	}{
 		{
 			desc:     "error: mau year month is required",
-			input:    &ecproto.GetMAUCountRequest{EnvironmentNamespace: "ns0"},
+			input:    &ecproto.GetMAUCountRequest{EnvironmentId: "ns0"},
 			expected: nil,
 			expectedErr: createError(
 				statusMAUYearMonthRequired,
@@ -820,7 +820,7 @@ func TestGetMAUCount(t *testing.T) {
 			desc: "err: internal",
 			setup: func(s *eventCounterService) {
 				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCount(
-					ctx, input.EnvironmentNamespace, input.YearMonth,
+					ctx, input.EnvironmentId, input.YearMonth,
 				).Return(int64(0), int64(0), errors.New("internal"))
 			},
 			input:       input,
@@ -841,7 +841,7 @@ func TestGetMAUCount(t *testing.T) {
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_VIEWER),
 			setup: func(s *eventCounterService) {
 				s.userCountStorage.(*v2ecsmock.MockUserCountStorage).EXPECT().GetMAUCount(
-					ctx, input.EnvironmentNamespace, input.YearMonth,
+					ctx, input.EnvironmentId, input.YearMonth,
 				).Return(int64(2), int64(4), nil)
 			},
 			input: input,
@@ -1207,7 +1207,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	ctx := createContextWithToken(t, false)
-	environmentNamespace := "ns0"
+	environmentId := "ns0"
 	fID := "fid"
 	vID0 := "vid0"
 	vID1 := "vid1"
@@ -1237,15 +1237,15 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 		{
 			desc: "error: ErrFeatureIDRequired",
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
 		},
 		{
 			desc: "error: ErrUnknownTimeRange",
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
-				EnvironmentNamespace: "ns0",
-				FeatureId:            fID,
+				EnvironmentId: "ns0",
+				FeatureId:     fID,
 			},
 			expectedErr: createError(statusUnknownTimeRange, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "time_range")),
 		},
@@ -1253,8 +1253,8 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 			desc: "error: get feature failed",
 			setup: func(ctx context.Context, s *eventCounterService) {
 				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
-					EnvironmentNamespace: environmentNamespace,
-					Id:                   fID,
+					EnvironmentId: environmentId,
+					Id:            fID,
 				}).Return(
 					&featureproto.GetFeatureResponse{
 						Feature: &featureproto.Feature{
@@ -1264,9 +1264,9 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 					}, errors.New("error"))
 			},
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				FeatureId:            fID,
-				TimeRange:            ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
+				EnvironmentId: environmentId,
+				FeatureId:     fID,
+				TimeRange:     ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
@@ -1274,8 +1274,8 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 			desc: "error: get event counts failed",
 			setup: func(ctx context.Context, s *eventCounterService) {
 				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
-					EnvironmentNamespace: environmentNamespace,
-					Id:                   fID,
+					EnvironmentId: environmentId,
+					Id:            fID,
 				}).Return(
 					&featureproto.GetFeatureResponse{
 						Feature: &featureproto.Feature{
@@ -1287,9 +1287,9 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 					nil, errors.New("error"))
 			},
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				FeatureId:            fID,
-				TimeRange:            ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
+				EnvironmentId: environmentId,
+				FeatureId:     fID,
+				TimeRange:     ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
@@ -1297,8 +1297,8 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 			desc: "error: MergeMultiKeys failed",
 			setup: func(ctx context.Context, s *eventCounterService) {
 				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
-					EnvironmentNamespace: environmentNamespace,
-					Id:                   fID,
+					EnvironmentId: environmentId,
+					Id:            fID,
 				}).Return(
 					&featureproto.GetFeatureResponse{
 						Feature: &featureproto.Feature{
@@ -1313,9 +1313,9 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(gomock.Any(), gomock.Any()).Return(errors.New("error1"))
 			},
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				FeatureId:            fID,
-				TimeRange:            ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
+				EnvironmentId: environmentId,
+				FeatureId:     fID,
+				TimeRange:     ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
@@ -1323,8 +1323,8 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 			desc: "error: GetUserCountsV2 failed",
 			setup: func(ctx context.Context, s *eventCounterService) {
 				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
-					EnvironmentNamespace: environmentNamespace,
-					Id:                   fID,
+					EnvironmentId: environmentId,
+					Id:            fID,
 				}).Return(
 					&featureproto.GetFeatureResponse{
 						Feature: &featureproto.Feature{
@@ -1341,9 +1341,9 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteKey(gomock.Any()).Return(nil)
 			},
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				FeatureId:            fID,
-				TimeRange:            ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
+				EnvironmentId: environmentId,
+				FeatureId:     fID,
+				TimeRange:     ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
@@ -1351,8 +1351,8 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 			desc: "error: DeleteKey failed",
 			setup: func(ctx context.Context, s *eventCounterService) {
 				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
-					EnvironmentNamespace: environmentNamespace,
-					Id:                   fID,
+					EnvironmentId: environmentId,
+					Id:            fID,
 				}).Return(
 					&featureproto.GetFeatureResponse{
 						Feature: &featureproto.Feature{
@@ -1369,9 +1369,9 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteKey(gomock.Any()).Return(errors.New("error1"))
 			},
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				FeatureId:            fID,
-				TimeRange:            ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
+				EnvironmentId: environmentId,
+				FeatureId:     fID,
+				TimeRange:     ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
 			},
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
@@ -1380,9 +1380,9 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				FeatureId:            fID,
-				TimeRange:            ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
+				EnvironmentId: environmentId,
+				FeatureId:     fID,
+				TimeRange:     ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
 			},
 			expected:    nil,
 			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
@@ -1393,8 +1393,8 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_EDITOR),
 			setup: func(ctx context.Context, s *eventCounterService) {
 				s.featureClient.(*featureclientmock.MockClient).EXPECT().GetFeature(ctx, &featureproto.GetFeatureRequest{
-					EnvironmentNamespace: environmentNamespace,
-					Id:                   fID,
+					EnvironmentId: environmentId,
+					Id:            fID,
 				}).Return(
 					&featureproto.GetFeatureResponse{
 						Feature: &featureproto.Feature{
@@ -1405,15 +1405,15 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 				vIDs := []string{vID0, vID1, defaultVariationID}
 				hourlyTimeStamps := getFourteenDaysTimestamps()
 				for idx, vID := range vIDs {
-					ec := getEventCountKeysV2(vID, fID, environmentNamespace, hourlyTimeStamps)
+					ec := getEventCountKeysV2(vID, fID, environmentId, hourlyTimeStamps)
 					val := randomNumberGroup[idx]
 					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetEventCountsV2(ec).Return(
 						val, nil)
-					uc := getUserCountKeysV2(vID, fID, environmentNamespace, hourlyTimeStamps)
+					uc := getUserCountKeysV2(vID, fID, environmentId, hourlyTimeStamps)
 					pfMergeKey := newPFMergeKey(
 						UserCountPrefix,
 						fID,
-						environmentNamespace,
+						environmentId,
 					)
 					for idx := range hourlyTimeStamps {
 						s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(pfMergeKey, uc[idx]).Return(nil)
@@ -1426,9 +1426,9 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 				}
 			},
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				FeatureId:            fID,
-				TimeRange:            ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
+				EnvironmentId: environmentId,
+				FeatureId:     fID,
+				TimeRange:     ecproto.GetEvaluationTimeseriesCountRequest_FOURTEEN_DAYS,
 			},
 			expected: &ecproto.GetEvaluationTimeseriesCountResponse{
 				EventCounts: []*ecproto.VariationTimeseries{
@@ -1488,7 +1488,7 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	ctx := createContextWithToken(t, false)
-	environmentNamespace := "ns0"
+	environmentId := "ns0"
 	opsRuleID := "rule0"
 	clauseID := "clause0"
 	fID := "fid0"
@@ -1521,55 +1521,55 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 		{
 			desc: "error: ErrOpsRuleIDRequired",
 			input: &ecproto.GetOpsEvaluationUserCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				ClauseId:             clauseID,
-				FeatureId:            fID,
-				FeatureVersion:       int32(fVersion),
-				VariationId:          vID0,
+				EnvironmentId:  environmentId,
+				ClauseId:       clauseID,
+				FeatureId:      fID,
+				FeatureVersion: int32(fVersion),
+				VariationId:    vID0,
 			},
 			expectedErr: createError(statusAutoOpsRuleIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_rule_id")),
 		},
 		{
 			desc: "error: ErrClauseIDRequired",
 			input: &ecproto.GetOpsEvaluationUserCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				OpsRuleId:            opsRuleID,
-				FeatureId:            fID,
-				FeatureVersion:       int32(fVersion),
-				VariationId:          vID0,
+				EnvironmentId:  environmentId,
+				OpsRuleId:      opsRuleID,
+				FeatureId:      fID,
+				FeatureVersion: int32(fVersion),
+				VariationId:    vID0,
 			},
 			expectedErr: createError(statusClauseIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id")),
 		},
 		{
 			desc: "error: ErrFeatureIDRequired",
 			input: &ecproto.GetOpsEvaluationUserCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				OpsRuleId:            opsRuleID,
-				ClauseId:             clauseID,
-				FeatureVersion:       int32(fVersion),
-				VariationId:          vID0,
+				EnvironmentId:  environmentId,
+				OpsRuleId:      opsRuleID,
+				ClauseId:       clauseID,
+				FeatureVersion: int32(fVersion),
+				VariationId:    vID0,
 			},
 			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
 		},
 		{
 			desc: "error: ErrFeatureVersionRequired",
 			input: &ecproto.GetOpsEvaluationUserCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				OpsRuleId:            opsRuleID,
-				ClauseId:             clauseID,
-				FeatureId:            fID,
-				VariationId:          vID0,
+				EnvironmentId: environmentId,
+				OpsRuleId:     opsRuleID,
+				ClauseId:      clauseID,
+				FeatureId:     fID,
+				VariationId:   vID0,
 			},
 			expectedErr: createError(statusFeatureVersionRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_version")),
 		},
 		{
 			desc: "error: ErrVariationIDRequired",
 			input: &ecproto.GetOpsEvaluationUserCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				OpsRuleId:            opsRuleID,
-				ClauseId:             clauseID,
-				FeatureId:            fID,
-				FeatureVersion:       int32(fVersion),
+				EnvironmentId:  environmentId,
+				OpsRuleId:      opsRuleID,
+				ClauseId:       clauseID,
+				FeatureId:      fID,
+				FeatureVersion: int32(fVersion),
 			},
 			expectedErr: createError(statusVariationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
 		},
@@ -1578,11 +1578,11 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			input: &ecproto.GetOpsEvaluationUserCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				OpsRuleId:            opsRuleID,
-				ClauseId:             clauseID,
-				FeatureId:            fID,
-				FeatureVersion:       int32(fVersion),
+				EnvironmentId:  environmentId,
+				OpsRuleId:      opsRuleID,
+				ClauseId:       clauseID,
+				FeatureId:      fID,
+				FeatureVersion: int32(fVersion),
 			},
 			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
@@ -1595,12 +1595,12 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 					GetUserCount(cacheKey).Return(int64(1234), nil)
 			},
 			input: &ecproto.GetOpsEvaluationUserCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				OpsRuleId:            opsRuleID,
-				ClauseId:             clauseID,
-				FeatureId:            fID,
-				FeatureVersion:       int32(fVersion),
-				VariationId:          vID0,
+				EnvironmentId:  environmentId,
+				OpsRuleId:      opsRuleID,
+				ClauseId:       clauseID,
+				FeatureId:      fID,
+				FeatureVersion: int32(fVersion),
+				VariationId:    vID0,
 			},
 			expected: &ecproto.GetOpsEvaluationUserCountResponse{
 				OpsRuleId: opsRuleID,
@@ -1610,7 +1610,7 @@ func TestGetOpsEvaluationUserCount(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:  "success: without environment_namespace",
+			desc:  "success: without environment_id",
 			envId: toPtr(""),
 			setup: func(s *eventCounterService) {
 				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
@@ -1649,7 +1649,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	ctx := createContextWithToken(t, false)
-	environmentNamespace := "ns0"
+	environmentId := "ns0"
 	opsRuleID := "rule0"
 	clauseID := "clause0"
 	fID := "fid0"
@@ -1682,55 +1682,55 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 		{
 			desc: "error: ErrOpsRuleIDRequired",
 			input: &ecproto.GetOpsGoalUserCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				ClauseId:             clauseID,
-				FeatureId:            fID,
-				FeatureVersion:       int32(fVersion),
-				VariationId:          vID0,
+				EnvironmentId:  environmentId,
+				ClauseId:       clauseID,
+				FeatureId:      fID,
+				FeatureVersion: int32(fVersion),
+				VariationId:    vID0,
 			},
 			expectedErr: createError(statusAutoOpsRuleIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "ops_rule_id")),
 		},
 		{
 			desc: "error: ErrClauseIDRequired",
 			input: &ecproto.GetOpsGoalUserCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				OpsRuleId:            opsRuleID,
-				FeatureId:            fID,
-				FeatureVersion:       int32(fVersion),
-				VariationId:          vID0,
+				EnvironmentId:  environmentId,
+				OpsRuleId:      opsRuleID,
+				FeatureId:      fID,
+				FeatureVersion: int32(fVersion),
+				VariationId:    vID0,
 			},
 			expectedErr: createError(statusClauseIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "clause_id")),
 		},
 		{
 			desc: "error: ErrFeatureIDRequired",
 			input: &ecproto.GetOpsGoalUserCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				OpsRuleId:            opsRuleID,
-				ClauseId:             clauseID,
-				FeatureVersion:       int32(fVersion),
-				VariationId:          vID0,
+				EnvironmentId:  environmentId,
+				OpsRuleId:      opsRuleID,
+				ClauseId:       clauseID,
+				FeatureVersion: int32(fVersion),
+				VariationId:    vID0,
 			},
 			expectedErr: createError(statusFeatureIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id")),
 		},
 		{
 			desc: "error: ErrFeatureVersionRequired",
 			input: &ecproto.GetOpsGoalUserCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				OpsRuleId:            opsRuleID,
-				ClauseId:             clauseID,
-				FeatureId:            fID,
-				VariationId:          vID0,
+				EnvironmentId: environmentId,
+				OpsRuleId:     opsRuleID,
+				ClauseId:      clauseID,
+				FeatureId:     fID,
+				VariationId:   vID0,
 			},
 			expectedErr: createError(statusFeatureVersionRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_version")),
 		},
 		{
 			desc: "error: ErrVariationIDRequired",
 			input: &ecproto.GetOpsGoalUserCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				OpsRuleId:            opsRuleID,
-				ClauseId:             clauseID,
-				FeatureId:            fID,
-				FeatureVersion:       int32(fVersion),
+				EnvironmentId:  environmentId,
+				OpsRuleId:      opsRuleID,
+				ClauseId:       clauseID,
+				FeatureId:      fID,
+				FeatureVersion: int32(fVersion),
 			},
 			expectedErr: createError(statusVariationIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "variation_id")),
 		},
@@ -1739,11 +1739,11 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			orgRole: toPtr(accountproto.AccountV2_Role_Organization_MEMBER),
 			envRole: toPtr(accountproto.AccountV2_Role_Environment_UNASSIGNED),
 			input: &ecproto.GetOpsGoalUserCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				OpsRuleId:            opsRuleID,
-				ClauseId:             clauseID,
-				FeatureId:            fID,
-				FeatureVersion:       int32(fVersion),
+				EnvironmentId:  environmentId,
+				OpsRuleId:      opsRuleID,
+				ClauseId:       clauseID,
+				FeatureId:      fID,
+				FeatureVersion: int32(fVersion),
 			},
 			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
 		},
@@ -1756,12 +1756,12 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 					GetUserCount(cacheKey).Return(int64(1234), nil)
 			},
 			input: &ecproto.GetOpsGoalUserCountRequest{
-				EnvironmentNamespace: environmentNamespace,
-				OpsRuleId:            opsRuleID,
-				ClauseId:             clauseID,
-				FeatureId:            fID,
-				FeatureVersion:       int32(fVersion),
-				VariationId:          vID0,
+				EnvironmentId:  environmentId,
+				OpsRuleId:      opsRuleID,
+				ClauseId:       clauseID,
+				FeatureId:      fID,
+				FeatureVersion: int32(fVersion),
+				VariationId:    vID0,
 			},
 			expected: &ecproto.GetOpsGoalUserCountResponse{
 				OpsRuleId: opsRuleID,
@@ -1771,7 +1771,7 @@ func TestGetOpsGoalUserCount(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc:  "success: without environment_namespace",
+			desc:  "success: without environment_id",
 			envId: toPtr(""),
 			setup: func(s *eventCounterService) {
 				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
@@ -1822,30 +1822,30 @@ func getRandomNumbers() []float64 {
 	return nums
 }
 
-func getEventCountKeys(vID, fID, environmentNamespace string, timeStamps []int64) []string {
+func getEventCountKeys(vID, fID, environmentId string, timeStamps []int64) []string {
 	eventCountKeys := []string{}
 	for _, ts := range timeStamps {
-		ec := newEvaluationCountkey(EventCountPrefix, fID, vID, environmentNamespace, ts)
+		ec := newEvaluationCountkey(EventCountPrefix, fID, vID, environmentId, ts)
 		eventCountKeys = append(eventCountKeys, ec)
 	}
 	return eventCountKeys
 }
 
-func getUserCountKeys(vID, fid, environmentNamespace string, timeStamps []int64) []string {
+func getUserCountKeys(vID, fid, environmentId string, timeStamps []int64) []string {
 	userCountKeys := []string{}
 	for _, ts := range timeStamps {
-		uc := newEvaluationCountkey(UserCountPrefix, fid, vID, environmentNamespace, ts)
+		uc := newEvaluationCountkey(UserCountPrefix, fid, vID, environmentId, ts)
 		userCountKeys = append(userCountKeys, uc)
 	}
 	return userCountKeys
 }
 
-func getEventCountKeysV2(vID, fID, environmentNamespace string, timeStamps [][]int64) [][]string {
+func getEventCountKeysV2(vID, fID, environmentId string, timeStamps [][]int64) [][]string {
 	eventCountKeys := [][]string{}
 	for _, day := range timeStamps {
 		hourly := []string{}
 		for _, hour := range day {
-			ec := newEvaluationCountkey(EventCountPrefix, fID, vID, environmentNamespace, hour)
+			ec := newEvaluationCountkey(EventCountPrefix, fID, vID, environmentId, hour)
 			hourly = append(hourly, ec)
 		}
 		eventCountKeys = append(eventCountKeys, hourly)
@@ -1853,12 +1853,12 @@ func getEventCountKeysV2(vID, fID, environmentNamespace string, timeStamps [][]i
 	return eventCountKeys
 }
 
-func getUserCountKeysV2(vID, fID, environmentNamespace string, timeStamps [][]int64) [][]string {
+func getUserCountKeysV2(vID, fID, environmentId string, timeStamps [][]int64) [][]string {
 	userCountKeys := [][]string{}
 	for _, day := range timeStamps {
 		hourly := []string{}
 		for _, hour := range day {
-			ec := newEvaluationCountkey(UserCountPrefix, fID, vID, environmentNamespace, hour)
+			ec := newEvaluationCountkey(UserCountPrefix, fID, vID, environmentId, hour)
 			hourly = append(hourly, ec)
 		}
 		userCountKeys = append(userCountKeys, hourly)
@@ -1994,10 +1994,10 @@ func TestGetUserCounts(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	featureID := "fID"
-	environmentNamespace := "en"
+	environmentId := "en"
 	vID := "vID"
-	fourteenDaysKeys := getUserCountKeysV2(vID, featureID, environmentNamespace, getFourteenDaysTimestamps())
-	twentyFourHoursKeys := getUserCountKeysV2(vID, featureID, environmentNamespace, [][]int64{getTwentyFourHoursTimestamps()})
+	fourteenDaysKeys := getUserCountKeysV2(vID, featureID, environmentId, getFourteenDaysTimestamps())
+	twentyFourHoursKeys := getUserCountKeysV2(vID, featureID, environmentId, [][]int64{getTwentyFourHoursTimestamps()})
 	patterns := []struct {
 		desc        string
 		unit        ecproto.Timeseries_Unit
@@ -2038,7 +2038,7 @@ func TestGetUserCounts(t *testing.T) {
 			if p.setup != nil {
 				p.setup(gs)
 			}
-			actual, _ := gs.getUserCounts(p.keys, featureID, environmentNamespace, p.unit)
+			actual, _ := gs.getUserCounts(p.keys, featureID, environmentId, p.unit)
 			assert.Len(t, actual, p.expectedLen)
 		})
 	}

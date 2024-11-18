@@ -1048,7 +1048,7 @@ func validateCloneFeatureRequest(req *featureproto.CloneFeatureRequest, localize
 		}
 		return dt.Err()
 	}
-	if req.Command.EnvironmentNamespace == req.EnvironmentNamespace {
+	if req.Command.EnvironmentId == req.EnvironmentId {
 		dt, err := statusIncorrectDestinationEnvironment.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "environment"),
@@ -1455,10 +1455,10 @@ func validateVariationID(fs []*featureproto.Feature, p *featureproto.Prerequisit
 
 func (s *FeatureService) validateFeatureStatus(
 	ctx context.Context,
-	id, environmentNameSpace string,
+	id, environmentId string,
 	localizer locale.Localizer,
 ) error {
-	runningExperimentExists, err := s.existsRunningExperiment(ctx, id, environmentNameSpace)
+	runningExperimentExists, err := s.existsRunningExperiment(ctx, id, environmentId)
 	if err != nil {
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -1484,11 +1484,11 @@ func (s *FeatureService) validateFeatureStatus(
 
 func (s *FeatureService) validateEnvironmentSettings(
 	ctx context.Context,
-	environmentNamespace, updateComment string,
+	environmentId, updateComment string,
 	localizer locale.Localizer,
 ) error {
 	req := &envproto.GetEnvironmentV2Request{
-		Id: environmentNamespace,
+		Id: environmentId,
 	}
 	resp, err := s.environmentClient.GetEnvironmentV2(ctx, req)
 	if err != nil {

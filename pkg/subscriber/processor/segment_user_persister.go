@@ -159,14 +159,14 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 			msg.Ack()
 			p.logger.Error(
 				"invalid state",
-				zap.String("environmentNamespace", event.EnvironmentNamespace),
+				zap.String("environmentId", event.EnvironmentId),
 				zap.Int32("state", int32(event.State)),
 			)
 			subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.BadMessage.String()).Inc()
 			if err := p.updateSegmentStatus(
 				ctx,
 				event.Editor,
-				event.EnvironmentNamespace,
+				event.EnvironmentId,
 				event.SegmentId,
 				0,
 				event.State,
@@ -175,7 +175,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 				p.logger.Error(
 					"failed to update segment status",
 					zap.Error(err),
-					zap.String("environmentNamespace", event.EnvironmentNamespace),
+					zap.String("environmentId", event.EnvironmentId),
 				)
 			}
 			continue
@@ -187,7 +187,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 				p.logger.Warn(
 					"segment not found",
 					zap.Error(err),
-					zap.String("environmentNamespace", event.EnvironmentNamespace),
+					zap.String("environmentId", event.EnvironmentId),
 				)
 				subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.NonRepeatableError.String()).Inc()
 			case errors.Is(err, ErrSegmentInUse):
@@ -195,7 +195,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 				p.logger.Warn(
 					"segment is in use",
 					zap.Error(err),
-					zap.String("environmentNamespace", event.EnvironmentNamespace),
+					zap.String("environmentId", event.EnvironmentId),
 				)
 				subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.NonRepeatableError.String()).Inc()
 			case errors.Is(err, ErrSegmentExceededMaxUserIDLength):
@@ -203,13 +203,13 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 				p.logger.Warn(
 					"exceeded max user id length",
 					zap.Error(err),
-					zap.String("environmentNamespace", event.EnvironmentNamespace),
+					zap.String("environmentId", event.EnvironmentId),
 				)
 				subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.NonRepeatableError.String()).Inc()
 				if err := p.updateSegmentStatus(
 					ctx,
 					event.Editor,
-					event.EnvironmentNamespace,
+					event.EnvironmentId,
 					event.SegmentId,
 					0,
 					event.State,
@@ -218,7 +218,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 					p.logger.Error(
 						"failed to update segment status",
 						zap.Error(err),
-						zap.String("environmentNamespace", event.EnvironmentNamespace),
+						zap.String("environmentId", event.EnvironmentId),
 					)
 				}
 			default:
@@ -227,7 +227,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 				p.logger.Error(
 					"failed to handle event",
 					zap.Error(err),
-					zap.String("environmentNamespace", event.EnvironmentNamespace),
+					zap.String("environmentId", event.EnvironmentId),
 				)
 				subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.RepeatableError.String()).Inc()
 			}
@@ -237,7 +237,7 @@ func (p *segmentUserPersister) handleChunk(ctx context.Context, chunk map[string
 		p.logger.Debug(
 			"suceeded to persist segment users",
 			zap.String("msgID", msg.ID),
-			zap.String("environmentNamespace", event.EnvironmentNamespace),
+			zap.String("environmentId", event.EnvironmentId),
 			zap.String("segmentId", event.SegmentId),
 		)
 		subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.OK.String()).Inc()
@@ -266,19 +266,19 @@ func validateSegmentUserState(state featureproto.SegmentUser_State) bool {
 func (p *segmentUserPersister) handleEvent(
 	ctx context.Context, event *serviceevent.BulkSegmentUsersReceivedEvent) error {
 	segmentStorage := v2fs.NewSegmentStorage(p.mysqlClient)
-	segment, _, err := segmentStorage.GetSegment(ctx, event.SegmentId, event.EnvironmentNamespace)
+	segment, _, err := segmentStorage.GetSegment(ctx, event.SegmentId, event.EnvironmentId)
 	if err != nil {
 		return err
 	}
 	if segment.IsInUseStatus {
 		return ErrSegmentInUse
 	}
-	cnt, err := p.persistSegmentUsers(ctx, event.EnvironmentNamespace, event.SegmentId, event.Data, event.State)
+	cnt, err := p.persistSegmentUsers(ctx, event.EnvironmentId, event.SegmentId, event.Data, event.State)
 	if err != nil {
 		if err := p.updateSegmentStatus(
 			ctx,
 			event.Editor,
-			event.EnvironmentNamespace,
+			event.EnvironmentId,
 			event.SegmentId,
 			cnt,
 			event.State,
@@ -289,7 +289,7 @@ func (p *segmentUserPersister) handleEvent(
 				zap.Error(err),
 				zap.String("segmentId", event.SegmentId),
 				zap.Int64("userCount", cnt),
-				zap.String("environmentNamespace", event.EnvironmentNamespace),
+				zap.String("environmentId", event.EnvironmentId),
 			)
 			return err
 		}
@@ -298,7 +298,7 @@ func (p *segmentUserPersister) handleEvent(
 	return p.updateSegmentStatus(
 		ctx,
 		event.Editor,
-		event.EnvironmentNamespace,
+		event.EnvironmentId,
 		event.SegmentId,
 		cnt,
 		event.State,
@@ -308,7 +308,7 @@ func (p *segmentUserPersister) handleEvent(
 
 func (p *segmentUserPersister) persistSegmentUsers(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 	segmentID string,
 	data []byte,
 	state featureproto.SegmentUser_State,
@@ -345,7 +345,7 @@ func (p *segmentUserPersister) persistSegmentUsers(
 	}
 	err = p.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		segmentUserStorage := v2fs.NewSegmentUserStorage(tx)
-		if err := segmentUserStorage.UpsertSegmentUsers(ctx, allSegmentUsers, environmentNamespace); err != nil {
+		if err := segmentUserStorage.UpsertSegmentUsers(ctx, allSegmentUsers, environmentId); err != nil {
 			return err
 		}
 		return nil
@@ -360,7 +360,7 @@ func (p *segmentUserPersister) persistSegmentUsers(
 func (p *segmentUserPersister) updateSegmentStatus(
 	ctx context.Context,
 	editor *domainproto.Editor,
-	environmentNamespace string,
+	environmentId string,
 	segmentID string,
 	cnt int64,
 	state featureproto.SegmentUser_State,
@@ -373,7 +373,7 @@ func (p *segmentUserPersister) updateSegmentStatus(
 	}
 	return p.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		segmentStorage := v2fs.NewSegmentStorage(tx)
-		segment, _, err := segmentStorage.GetSegment(ctx, segmentID, environmentNamespace)
+		segment, _, err := segmentStorage.GetSegment(ctx, segmentID, environmentId)
 		if err != nil {
 			return err
 		}
@@ -382,14 +382,14 @@ func (p *segmentUserPersister) updateSegmentStatus(
 			State:  state,
 			Count:  cnt,
 		}
-		handler, err := command.NewSegmentCommandHandler(editor, segment, p.domainPublisher, environmentNamespace)
+		handler, err := command.NewSegmentCommandHandler(editor, segment, p.domainPublisher, environmentId)
 		if err != nil {
 			return err
 		}
 		if err := handler.Handle(ctx, changeCmd); err != nil {
 			return err
 		}
-		return segmentStorage.UpdateSegment(ctx, segment, environmentNamespace)
+		return segmentStorage.UpdateSegment(ctx, segment, environmentId)
 	})
 }
 

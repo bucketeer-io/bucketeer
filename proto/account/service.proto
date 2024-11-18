@@ -185,7 +185,8 @@ message ListAccountsV2Response {
 
 message CreateAPIKeyRequest {
   CreateAPIKeyCommand command = 1;
-  string environment_namespace = 2;
+  reserved 2;
+  string environment_id = 3;
 }
 
 message CreateAPIKeyResponse {
@@ -195,7 +196,8 @@ message CreateAPIKeyResponse {
 message ChangeAPIKeyNameRequest {
   string id = 1;
   ChangeAPIKeyNameCommand command = 2;
-  string environment_namespace = 3;
+  reserved 3;
+  string environment_id = 4;
 }
 
 message ChangeAPIKeyNameResponse {}
@@ -203,7 +205,8 @@ message ChangeAPIKeyNameResponse {}
 message EnableAPIKeyRequest {
   string id = 1;
   EnableAPIKeyCommand command = 2;
-  string environment_namespace = 3;
+  reserved 3;
+  string environment_id = 4;
 }
 
 message EnableAPIKeyResponse {}
@@ -211,14 +214,16 @@ message EnableAPIKeyResponse {}
 message DisableAPIKeyRequest {
   string id = 1;
   DisableAPIKeyCommand command = 2;
-  string environment_namespace = 3;
+  reserved 3;
+  string environment_id = 4;
 }
 
 message DisableAPIKeyResponse {}
 
 message GetAPIKeyRequest {
   string id = 1;
-  string environment_namespace = 2;
+  reserved 2;
+  string environment_id = 3;
 }
 
 message GetAPIKeyResponse {
@@ -238,11 +243,12 @@ message ListAPIKeysRequest {
   }
   int64 page_size = 1;
   string cursor = 2;
-  string environment_namespace = 3;
+  reserved 3;
   OrderBy order_by = 4;
   OrderDirection order_direction = 5;
   string search_keyword = 6;
   google.protobuf.BoolValue disabled = 7;
+  string environment_id = 8;
 }
 
 message ListAPIKeysResponse {

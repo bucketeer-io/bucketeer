@@ -64,9 +64,6 @@ export namespace APIKey {
 }
 
 export class EnvironmentAPIKey extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   hasApiKey(): boolean;
   clearApiKey(): void;
   getApiKey(): APIKey | undefined;
@@ -109,7 +106,6 @@ export class EnvironmentAPIKey extends jspb.Message {
 
 export namespace EnvironmentAPIKey {
   export type AsObject = {
-    environmentNamespace: string;
     apiKey?: APIKey.AsObject;
     environmentDisabled: boolean;
     projectId: string;

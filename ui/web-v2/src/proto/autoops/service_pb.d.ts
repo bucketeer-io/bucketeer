@@ -8,11 +8,11 @@ import * as proto_autoops_ops_count_pb from '../../proto/autoops/ops_count_pb';
 import * as proto_autoops_progressive_rollout_pb from '../../proto/autoops/progressive_rollout_pb';
 
 export class GetAutoOpsRuleRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetAutoOpsRuleRequest.AsObject;
@@ -37,8 +37,8 @@ export class GetAutoOpsRuleRequest extends jspb.Message {
 
 export namespace GetAutoOpsRuleRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
+    environmentId: string;
   };
 }
 
@@ -76,13 +76,13 @@ export namespace GetAutoOpsRuleResponse {
 }
 
 export class CreateAutoOpsRuleRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   hasCommand(): boolean;
   clearCommand(): void;
   getCommand(): proto_autoops_command_pb.CreateAutoOpsRuleCommand | undefined;
   setCommand(value?: proto_autoops_command_pb.CreateAutoOpsRuleCommand): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateAutoOpsRuleRequest.AsObject;
@@ -107,8 +107,8 @@ export class CreateAutoOpsRuleRequest extends jspb.Message {
 
 export namespace CreateAutoOpsRuleRequest {
   export type AsObject = {
-    environmentNamespace: string;
     command?: proto_autoops_command_pb.CreateAutoOpsRuleCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -139,9 +139,6 @@ export namespace CreateAutoOpsRuleResponse {
 }
 
 export class ListAutoOpsRulesRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getPageSize(): number;
   setPageSize(value: number): void;
 
@@ -152,6 +149,9 @@ export class ListAutoOpsRulesRequest extends jspb.Message {
   getFeatureIdsList(): Array<string>;
   setFeatureIdsList(value: Array<string>): void;
   addFeatureIds(value: string, index?: number): string;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListAutoOpsRulesRequest.AsObject;
@@ -176,10 +176,10 @@ export class ListAutoOpsRulesRequest extends jspb.Message {
 
 export namespace ListAutoOpsRulesRequest {
   export type AsObject = {
-    environmentNamespace: string;
     pageSize: number;
     cursor: string;
     featureIdsList: Array<string>;
+    environmentId: string;
   };
 }
 
@@ -226,9 +226,6 @@ export namespace ListAutoOpsRulesResponse {
 }
 
 export class StopAutoOpsRuleRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -236,6 +233,9 @@ export class StopAutoOpsRuleRequest extends jspb.Message {
   clearCommand(): void;
   getCommand(): proto_autoops_command_pb.StopAutoOpsRuleCommand | undefined;
   setCommand(value?: proto_autoops_command_pb.StopAutoOpsRuleCommand): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): StopAutoOpsRuleRequest.AsObject;
@@ -260,9 +260,9 @@ export class StopAutoOpsRuleRequest extends jspb.Message {
 
 export namespace StopAutoOpsRuleRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     command?: proto_autoops_command_pb.StopAutoOpsRuleCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -293,9 +293,6 @@ export namespace StopAutoOpsRuleResponse {
 }
 
 export class DeleteAutoOpsRuleRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -303,6 +300,9 @@ export class DeleteAutoOpsRuleRequest extends jspb.Message {
   clearCommand(): void;
   getCommand(): proto_autoops_command_pb.DeleteAutoOpsRuleCommand | undefined;
   setCommand(value?: proto_autoops_command_pb.DeleteAutoOpsRuleCommand): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeleteAutoOpsRuleRequest.AsObject;
@@ -327,9 +327,9 @@ export class DeleteAutoOpsRuleRequest extends jspb.Message {
 
 export namespace DeleteAutoOpsRuleRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     command?: proto_autoops_command_pb.DeleteAutoOpsRuleCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -360,9 +360,6 @@ export namespace DeleteAutoOpsRuleResponse {
 }
 
 export class UpdateAutoOpsRuleRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -416,6 +413,9 @@ export class UpdateAutoOpsRuleRequest extends jspb.Message {
     index?: number
   ): proto_autoops_command_pb.ChangeDatetimeClauseCommand;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateAutoOpsRuleRequest.AsObject;
   static toObject(
@@ -439,13 +439,13 @@ export class UpdateAutoOpsRuleRequest extends jspb.Message {
 
 export namespace UpdateAutoOpsRuleRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     addOpsEventRateClauseCommandsList: Array<proto_autoops_command_pb.AddOpsEventRateClauseCommand.AsObject>;
     changeOpsEventRateClauseCommandsList: Array<proto_autoops_command_pb.ChangeOpsEventRateClauseCommand.AsObject>;
     deleteClauseCommandsList: Array<proto_autoops_command_pb.DeleteClauseCommand.AsObject>;
     addDatetimeClauseCommandsList: Array<proto_autoops_command_pb.AddDatetimeClauseCommand.AsObject>;
     changeDatetimeClauseCommandsList: Array<proto_autoops_command_pb.ChangeDatetimeClauseCommand.AsObject>;
+    environmentId: string;
   };
 }
 
@@ -476,9 +476,6 @@ export namespace UpdateAutoOpsRuleResponse {
 }
 
 export class ExecuteAutoOpsRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -490,6 +487,9 @@ export class ExecuteAutoOpsRequest extends jspb.Message {
   setExecuteAutoOpsRuleCommand(
     value?: proto_autoops_command_pb.ExecuteAutoOpsRuleCommand
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ExecuteAutoOpsRequest.AsObject;
@@ -514,9 +514,9 @@ export class ExecuteAutoOpsRequest extends jspb.Message {
 
 export namespace ExecuteAutoOpsRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     executeAutoOpsRuleCommand?: proto_autoops_command_pb.ExecuteAutoOpsRuleCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -552,9 +552,6 @@ export namespace ExecuteAutoOpsResponse {
 }
 
 export class ListOpsCountsRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getPageSize(): number;
   setPageSize(value: number): void;
 
@@ -570,6 +567,9 @@ export class ListOpsCountsRequest extends jspb.Message {
   getFeatureIdsList(): Array<string>;
   setFeatureIdsList(value: Array<string>): void;
   addFeatureIds(value: string, index?: number): string;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListOpsCountsRequest.AsObject;
@@ -594,11 +594,11 @@ export class ListOpsCountsRequest extends jspb.Message {
 
 export namespace ListOpsCountsRequest {
   export type AsObject = {
-    environmentNamespace: string;
     pageSize: number;
     cursor: string;
     autoOpsRuleIdsList: Array<string>;
     featureIdsList: Array<string>;
+    environmentId: string;
   };
 }
 
@@ -643,9 +643,6 @@ export namespace ListOpsCountsResponse {
 }
 
 export class CreateProgressiveRolloutRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   hasCommand(): boolean;
   clearCommand(): void;
   getCommand():
@@ -654,6 +651,9 @@ export class CreateProgressiveRolloutRequest extends jspb.Message {
   setCommand(
     value?: proto_autoops_command_pb.CreateProgressiveRolloutCommand
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateProgressiveRolloutRequest.AsObject;
@@ -678,8 +678,8 @@ export class CreateProgressiveRolloutRequest extends jspb.Message {
 
 export namespace CreateProgressiveRolloutRequest {
   export type AsObject = {
-    environmentNamespace: string;
     command?: proto_autoops_command_pb.CreateProgressiveRolloutCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -712,11 +712,11 @@ export namespace CreateProgressiveRolloutResponse {
 }
 
 export class GetProgressiveRolloutRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetProgressiveRolloutRequest.AsObject;
@@ -741,8 +741,8 @@ export class GetProgressiveRolloutRequest extends jspb.Message {
 
 export namespace GetProgressiveRolloutRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
+    environmentId: string;
   };
 }
 
@@ -784,9 +784,6 @@ export namespace GetProgressiveRolloutResponse {
 }
 
 export class StopProgressiveRolloutRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -798,6 +795,9 @@ export class StopProgressiveRolloutRequest extends jspb.Message {
   setCommand(
     value?: proto_autoops_command_pb.StopProgressiveRolloutCommand
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): StopProgressiveRolloutRequest.AsObject;
@@ -822,9 +822,9 @@ export class StopProgressiveRolloutRequest extends jspb.Message {
 
 export namespace StopProgressiveRolloutRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     command?: proto_autoops_command_pb.StopProgressiveRolloutCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -855,9 +855,6 @@ export namespace StopProgressiveRolloutResponse {
 }
 
 export class DeleteProgressiveRolloutRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -869,6 +866,9 @@ export class DeleteProgressiveRolloutRequest extends jspb.Message {
   setCommand(
     value?: proto_autoops_command_pb.DeleteProgressiveRolloutCommand
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeleteProgressiveRolloutRequest.AsObject;
@@ -893,9 +893,9 @@ export class DeleteProgressiveRolloutRequest extends jspb.Message {
 
 export namespace DeleteProgressiveRolloutRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     command?: proto_autoops_command_pb.DeleteProgressiveRolloutCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -928,9 +928,6 @@ export namespace DeleteProgressiveRolloutResponse {
 }
 
 export class ListProgressiveRolloutsRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getPageSize(): number;
   setPageSize(value: number): void;
 
@@ -966,6 +963,9 @@ export class ListProgressiveRolloutsRequest extends jspb.Message {
     value: proto_autoops_progressive_rollout_pb.ProgressiveRollout.TypeMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.TypeMap]
   ): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListProgressiveRolloutsRequest.AsObject;
   static toObject(
@@ -989,7 +989,6 @@ export class ListProgressiveRolloutsRequest extends jspb.Message {
 
 export namespace ListProgressiveRolloutsRequest {
   export type AsObject = {
-    environmentNamespace: string;
     pageSize: number;
     cursor: string;
     featureIdsList: Array<string>;
@@ -997,6 +996,7 @@ export namespace ListProgressiveRolloutsRequest {
     orderDirection: ListProgressiveRolloutsRequest.OrderDirectionMap[keyof ListProgressiveRolloutsRequest.OrderDirectionMap];
     status: proto_autoops_progressive_rollout_pb.ProgressiveRollout.StatusMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.StatusMap];
     type: proto_autoops_progressive_rollout_pb.ProgressiveRollout.TypeMap[keyof proto_autoops_progressive_rollout_pb.ProgressiveRollout.TypeMap];
+    environmentId: string;
   };
 
   export interface OrderByMap {
@@ -1062,9 +1062,6 @@ export namespace ListProgressiveRolloutsResponse {
 }
 
 export class ExecuteProgressiveRolloutRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -1076,6 +1073,9 @@ export class ExecuteProgressiveRolloutRequest extends jspb.Message {
   setChangeProgressiveRolloutTriggeredAtCommand(
     value?: proto_autoops_command_pb.ChangeProgressiveRolloutScheduleTriggeredAtCommand
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(
@@ -1102,9 +1102,9 @@ export class ExecuteProgressiveRolloutRequest extends jspb.Message {
 
 export namespace ExecuteProgressiveRolloutRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     changeProgressiveRolloutTriggeredAtCommand?: proto_autoops_command_pb.ChangeProgressiveRolloutScheduleTriggeredAtCommand.AsObject;
+    environmentId: string;
   };
 }
 

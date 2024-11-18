@@ -61,15 +61,15 @@ func (mr *MockTagStorageMockRecorder) ListTags(ctx, whereParts, orders, limit, o
 }
 
 // UpsertTag mocks base method.
-func (m *MockTagStorage) UpsertTag(ctx context.Context, tag *domain.Tag, environmentNamespace string) error {
+func (m *MockTagStorage) UpsertTag(ctx context.Context, tag *domain.Tag, environmentId string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpsertTag", ctx, tag, environmentNamespace)
+	ret := m.ctrl.Call(m, "UpsertTag", ctx, tag, environmentId)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // UpsertTag indicates an expected call of UpsertTag.
-func (mr *MockTagStorageMockRecorder) UpsertTag(ctx, tag, environmentNamespace any) *gomock.Call {
+func (mr *MockTagStorageMockRecorder) UpsertTag(ctx, tag, environmentId any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertTag", reflect.TypeOf((*MockTagStorage)(nil).UpsertTag), ctx, tag, environmentNamespace)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertTag", reflect.TypeOf((*MockTagStorage)(nil).UpsertTag), ctx, tag, environmentId)
 }

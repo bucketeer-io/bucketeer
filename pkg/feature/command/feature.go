@@ -35,7 +35,7 @@ type FeatureCommandHandler struct {
 func NewFeatureCommandHandler(
 	editor *eventproto.Editor,
 	feature *domain.Feature,
-	environmentNamespace string,
+	environmentId string,
 	comment string,
 ) (*FeatureCommandHandler, error) {
 	prev := &domain.Feature{}
@@ -45,11 +45,11 @@ func NewFeatureCommandHandler(
 	return &FeatureCommandHandler{
 		feature: feature,
 		eventFactory: &FeatureEventFactory{
-			editor:               editor,
-			feature:              feature,
-			previousFeature:      prev,
-			environmentNamespace: environmentNamespace,
-			comment:              comment,
+			editor:          editor,
+			feature:         feature,
+			previousFeature: prev,
+			environmentId:   environmentId,
+			comment:         comment,
 		},
 		Events: []*eventproto.Event{},
 	}, nil

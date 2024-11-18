@@ -32,9 +32,9 @@ var (
 )
 
 type FeatureStorage interface {
-	CreateFeature(ctx context.Context, feature *domain.Feature, environmentNamespace string) error
-	UpdateFeature(ctx context.Context, feature *domain.Feature, environmentNamespace string) error
-	GetFeature(ctx context.Context, key, environmentNamespace string) (*domain.Feature, error)
+	CreateFeature(ctx context.Context, feature *domain.Feature, environmentId string) error
+	UpdateFeature(ctx context.Context, feature *domain.Feature, environmentId string) error
+	GetFeature(ctx context.Context, key, environmentId string) (*domain.Feature, error)
 	ListFeatures(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
@@ -60,7 +60,7 @@ func NewFeatureStorage(qe mysql.QueryExecer) FeatureStorage {
 func (s *featureStorage) CreateFeature(
 	ctx context.Context,
 	feature *domain.Feature,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	query := `
 		INSERT INTO feature (
@@ -85,7 +85,7 @@ func (s *featureStorage) CreateFeature(
 			maintainer,
 			sampling_seed,
 			prerequisites,
-			environment_namespace
+			environment_id
 		) VALUES (
 			?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
 			?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
@@ -116,7 +116,7 @@ func (s *featureStorage) CreateFeature(
 		feature.Maintainer,
 		feature.SamplingSeed,
 		mysql.JSONObject{Val: feature.Prerequisites},
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		if err == mysql.ErrDuplicateEntry {
@@ -130,7 +130,7 @@ func (s *featureStorage) CreateFeature(
 func (s *featureStorage) UpdateFeature(
 	ctx context.Context,
 	feature *domain.Feature,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	query := `
 		UPDATE
@@ -158,7 +158,7 @@ func (s *featureStorage) UpdateFeature(
 			prerequisites = ?
 		WHERE
 			id = ? AND
-			environment_namespace = ?
+			environment_id = ?
 	`
 	result, err := s.qe.ExecContext(
 		ctx,
@@ -184,7 +184,7 @@ func (s *featureStorage) UpdateFeature(
 		feature.SamplingSeed,
 		mysql.JSONObject{Val: feature.Prerequisites},
 		feature.Id,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		return err
@@ -201,7 +201,7 @@ func (s *featureStorage) UpdateFeature(
 
 func (s *featureStorage) GetFeature(
 	ctx context.Context,
-	key, environmentNamespace string,
+	key, environmentId string,
 ) (*domain.Feature, error) {
 	feature := proto.Feature{}
 	query := `
@@ -231,13 +231,13 @@ func (s *featureStorage) GetFeature(
 			feature
 		WHERE
 			id = ? AND
-			environment_namespace = ?
+			environment_id = ?
 	`
 	err := s.qe.QueryRowContext(
 		ctx,
 		query,
 		key,
-		environmentNamespace,
+		environmentId,
 	).Scan(
 		&feature.Id,
 		&feature.Name,
@@ -401,7 +401,7 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 			experiment
 		ON
 			feature.id = experiment.feature_id AND
-			feature.environment_namespace = experiment.environment_namespace
+			feature.environment_id = experiment.environment_id
 		%s %s %s
 		`, whereSQL, orderBySQL, limitOffsetSQL,
 	)
@@ -455,8 +455,8 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 			experiment
 		ON
 			feature.id = experiment.feature_id AND
-			feature.environment_namespace = experiment.environment_namespace
-		%s
+			feature.environment_id = experiment.environment_id
+		%s 
 		`, whereSQL,
 	)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)

@@ -135,28 +135,28 @@ func (p *userEventPersister) handleChunk(chunk map[string]*puller.Message) {
 			continue
 		}
 		// Append events per environment
-		listEvents, ok := events[event.EnvironmentNamespace]
+		listEvents, ok := events[event.EnvironmentId]
 		if ok {
-			events[event.EnvironmentNamespace] = append(listEvents, event)
+			events[event.EnvironmentId] = append(listEvents, event)
 		} else {
-			events[event.EnvironmentNamespace] = []*eventproto.UserEvent{event}
+			events[event.EnvironmentId] = []*eventproto.UserEvent{event}
 		}
 		// Append PubSub messages per environment
-		listMessages, ok := messages[event.EnvironmentNamespace]
+		listMessages, ok := messages[event.EnvironmentId]
 		if ok {
-			messages[event.EnvironmentNamespace] = append(listMessages, msg)
+			messages[event.EnvironmentId] = append(listMessages, msg)
 		} else {
-			messages[event.EnvironmentNamespace] = []*puller.Message{msg}
+			messages[event.EnvironmentId] = []*puller.Message{msg}
 		}
 	}
 	// Upsert events
-	for environmentNamespace, events := range events {
+	for environmentId, events := range events {
 		// Upsert events per environment
-		err := p.upsertMAUs(ctx, events, environmentNamespace)
+		err := p.upsertMAUs(ctx, events, environmentId)
 		if err != nil {
-			p.nackMessages(messages[environmentNamespace])
+			p.nackMessages(messages[environmentId])
 		} else {
-			p.ackMessages(messages[environmentNamespace])
+			p.ackMessages(messages[environmentId])
 		}
 	}
 }
@@ -219,13 +219,13 @@ func (p *userEventPersister) ackMessages(messages []*puller.Message) {
 func (p *userEventPersister) upsertMAUs(
 	ctx context.Context,
 	events []*eventproto.UserEvent,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	s := ustorage.NewMysqlMAUStorage(p.mysqlClient)
-	if err := s.UpsertMAUs(ctx, events, environmentNamespace); err != nil {
+	if err := s.UpsertMAUs(ctx, events, environmentId); err != nil {
 		p.logger.Error("Failed to upsert user events",
 			zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 			zap.Int("size", len(events)),
 		)
 		return err

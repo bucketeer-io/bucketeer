@@ -43,10 +43,10 @@ func TestCreateGoal(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		setup                func(*goalStorage)
-		input                *domain.Goal
-		environmentNamespace string
-		expectedErr          error
+		setup         func(*goalStorage)
+		input         *domain.Goal
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			setup: func(s *goalStorage) {
@@ -57,8 +57,8 @@ func TestCreateGoal(t *testing.T) {
 			input: &domain.Goal{
 				Goal: &proto.Goal{Id: "id-0"},
 			},
-			environmentNamespace: "ns0",
-			expectedErr:          ErrGoalAlreadyExists,
+			environmentId: "ns0",
+			expectedErr:   ErrGoalAlreadyExists,
 		},
 		{
 			setup: func(s *goalStorage) {
@@ -69,8 +69,8 @@ func TestCreateGoal(t *testing.T) {
 			input: &domain.Goal{
 				Goal: &proto.Goal{Id: "id-1"},
 			},
-			environmentNamespace: "ns0",
-			expectedErr:          nil,
+			environmentId: "ns0",
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -80,7 +80,7 @@ func TestCreateGoal(t *testing.T) {
 		if p.setup != nil {
 			p.setup(db)
 		}
-		err := db.CreateGoal(ctx, p.input, p.environmentNamespace)
+		err := db.CreateGoal(ctx, p.input, p.environmentId)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
@@ -91,10 +91,10 @@ func TestUpdateGoal(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		setup                func(*goalStorage)
-		input                *domain.Goal
-		environmentNamespace string
-		expectedErr          error
+		setup         func(*goalStorage)
+		input         *domain.Goal
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			setup: func(s *goalStorage) {
@@ -107,8 +107,8 @@ func TestUpdateGoal(t *testing.T) {
 			input: &domain.Goal{
 				Goal: &proto.Goal{Id: "id-0"},
 			},
-			environmentNamespace: "ns",
-			expectedErr:          ErrGoalUnexpectedAffectedRows,
+			environmentId: "ns",
+			expectedErr:   ErrGoalUnexpectedAffectedRows,
 		},
 		{
 			setup: func(s *goalStorage) {
@@ -121,8 +121,8 @@ func TestUpdateGoal(t *testing.T) {
 			input: &domain.Goal{
 				Goal: &proto.Goal{Id: "id-0"},
 			},
-			environmentNamespace: "ns",
-			expectedErr:          nil,
+			environmentId: "ns",
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -130,7 +130,7 @@ func TestUpdateGoal(t *testing.T) {
 		if p.setup != nil {
 			p.setup(storage)
 		}
-		err := storage.UpdateGoal(context.Background(), p.input, p.environmentNamespace)
+		err := storage.UpdateGoal(context.Background(), p.input, p.environmentId)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
@@ -141,11 +141,11 @@ func TestGetGoal(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		setup                func(*goalStorage)
-		input                string
-		environmentNamespace string
-		expected             *domain.Goal
-		expectedErr          error
+		setup         func(*goalStorage)
+		input         string
+		environmentId string
+		expected      *domain.Goal
+		expectedErr   error
 	}{
 		{
 			setup: func(s *goalStorage) {
@@ -155,10 +155,10 @@ func TestGetGoal(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			input:                "",
-			environmentNamespace: "ns0",
-			expected:             nil,
-			expectedErr:          ErrGoalNotFound,
+			input:         "",
+			environmentId: "ns0",
+			expected:      nil,
+			expectedErr:   ErrGoalNotFound,
 		},
 		{
 			setup: func(s *goalStorage) {
@@ -168,8 +168,8 @@ func TestGetGoal(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			input:                "id-0",
-			environmentNamespace: "ns0",
+			input:         "id-0",
+			environmentId: "ns0",
 			expected: &domain.Goal{
 				Goal: &proto.Goal{Id: "id-0"},
 			},
@@ -181,7 +181,7 @@ func TestGetGoal(t *testing.T) {
 		if p.setup != nil {
 			p.setup(storage)
 		}
-		_, err := storage.GetGoal(context.Background(), p.input, p.environmentNamespace)
+		_, err := storage.GetGoal(context.Background(), p.input, p.environmentId)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
@@ -191,16 +191,16 @@ func TestListGoals(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 	patterns := []struct {
-		setup                func(*goalStorage)
-		whereParts           []mysql.WherePart
-		orders               []*mysql.Order
-		limit                int
-		offset               int
-		isInUseStatus        *bool
-		environmentNamespace string
-		expected             []*proto.Goal
-		expectedCursor       int
-		expectedErr          error
+		setup          func(*goalStorage)
+		whereParts     []mysql.WherePart
+		orders         []*mysql.Order
+		limit          int
+		offset         int
+		isInUseStatus  *bool
+		environmentId  string
+		expected       []*proto.Goal
+		expectedCursor int
+		expectedErr    error
 	}{
 		{
 			setup: func(s *goalStorage) {
@@ -208,15 +208,15 @@ func TestListGoals(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
-			whereParts:           nil,
-			orders:               nil,
-			limit:                0,
-			offset:               0,
-			isInUseStatus:        nil,
-			environmentNamespace: "",
-			expected:             nil,
-			expectedCursor:       0,
-			expectedErr:          errors.New("error"),
+			whereParts:     nil,
+			orders:         nil,
+			limit:          0,
+			offset:         0,
+			isInUseStatus:  nil,
+			environmentId:  "",
+			expected:       nil,
+			expectedCursor: 0,
+			expectedErr:    errors.New("error"),
 		},
 		{
 			setup: func(s *goalStorage) {
@@ -239,13 +239,13 @@ func TestListGoals(t *testing.T) {
 			orders: []*mysql.Order{
 				mysql.NewOrder("id", mysql.OrderDirectionAsc),
 			},
-			limit:                10,
-			offset:               5,
-			isInUseStatus:        nil,
-			environmentNamespace: "ns0",
-			expected:             []*proto.Goal{},
-			expectedCursor:       5,
-			expectedErr:          nil,
+			limit:          10,
+			offset:         5,
+			isInUseStatus:  nil,
+			environmentId:  "ns0",
+			expected:       []*proto.Goal{},
+			expectedCursor: 5,
+			expectedErr:    nil,
 		},
 	}
 	for _, p := range patterns {
@@ -260,7 +260,7 @@ func TestListGoals(t *testing.T) {
 			p.limit,
 			p.offset,
 			p.isInUseStatus,
-			p.environmentNamespace,
+			p.environmentId,
 		)
 		assert.Equal(t, p.expected, goals)
 		assert.Equal(t, p.expectedCursor, cursor)

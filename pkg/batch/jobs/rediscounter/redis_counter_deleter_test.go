@@ -454,12 +454,12 @@ func TestDeleteKeys(t *testing.T) {
 	}
 }
 
-func makeDummyKeys(t *testing.T, environmentNamespace, kind string, days, size int) []string {
+func makeDummyKeys(t *testing.T, environmentId, kind string, days, size int) []string {
 	t.Helper()
 	now := time.Now()
 	keys := make([]string, 0, size)
 	for i := 0; i < size; i++ {
-		key := fmt.Sprintf("%s:%s:%d:feature_id_%d:variation_id_%d", environmentNamespace, kind, now.Unix()-(int64(days)*day), i, i)
+		key := fmt.Sprintf("%s:%s:%d:feature_id_%d:variation_id_%d", environmentId, kind, now.Unix()-(int64(days)*day), i, i)
 		keys = append(keys, key)
 	}
 	return keys

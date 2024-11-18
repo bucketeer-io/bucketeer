@@ -92,8 +92,8 @@ func TestCreateAuditLogs(t *testing.T) {
 				).Return(nil, nil)
 			},
 			input: []*domain.AuditLog{
-				{AuditLog: &proto.AuditLog{Id: id0, Timestamp: 1, EntityType: 2, EntityId: "e0", Type: 3}, EnvironmentNamespace: "ns0"},
-				{AuditLog: &proto.AuditLog{Id: id1, Timestamp: 10, EntityType: 3, EntityId: "e2", Type: 4}, EnvironmentNamespace: "ns1"},
+				{AuditLog: &proto.AuditLog{Id: id0, Timestamp: 1, EntityType: 2, EntityId: "e0", Type: 3}, EnvironmentId: "ns0"},
+				{AuditLog: &proto.AuditLog{Id: id1, Timestamp: 10, EntityType: 3, EntityId: "e2", Type: 4}, EnvironmentId: "ns1"},
 			},
 			expectedErr: nil,
 		},
@@ -163,7 +163,7 @@ func TestCreateAuditLog(t *testing.T) {
 					EntityId:   "e0",
 					Type:       3,
 				},
-				EnvironmentNamespace: "ns0",
+				EnvironmentId: "ns0",
 			},
 			expectedErr: nil,
 		},

@@ -76,8 +76,8 @@ func TestUpdateFlagTrigger(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	// Update flag trigger
 	updateFlagTriggerReq := &featureproto.UpdateFlagTriggerRequest{
-		Id:                   createResp.FlagTrigger.Id,
-		EnvironmentNamespace: *environmentNamespace,
+		Id:            createResp.FlagTrigger.Id,
+		EnvironmentId: *environmentNamespace,
 		ChangeFlagTriggerDescriptionCommand: &featureproto.ChangeFlagTriggerDescriptionCommand{
 			Description: newTriggerDescription(t),
 		},
@@ -88,8 +88,8 @@ func TestUpdateFlagTrigger(t *testing.T) {
 	}
 	// Get flag trigger
 	getFlagTriggerReq := &featureproto.GetFlagTriggerRequest{
-		Id:                   createResp.FlagTrigger.Id,
-		EnvironmentNamespace: *environmentNamespace,
+		Id:            createResp.FlagTrigger.Id,
+		EnvironmentId: *environmentNamespace,
 	}
 	resp := getFeatureFlagTrigger(t, client, getFlagTriggerReq)
 	if resp.FlagTrigger.Description != updateFlagTriggerReq.ChangeFlagTriggerDescriptionCommand.Description {
@@ -113,7 +113,7 @@ func TestDisableEnableFlagTrigger(t *testing.T) {
 	// Disable flag trigger
 	disableFlagTriggerReq := &featureproto.DisableFlagTriggerRequest{
 		Id:                        createResp.FlagTrigger.Id,
-		EnvironmentNamespace:      *environmentNamespace,
+		EnvironmentId:             *environmentNamespace,
 		DisableFlagTriggerCommand: &featureproto.DisableFlagTriggerCommand{},
 	}
 	_, err := client.DisableFlagTrigger(context.Background(), disableFlagTriggerReq)
@@ -121,8 +121,8 @@ func TestDisableEnableFlagTrigger(t *testing.T) {
 		t.Fatal(err)
 	}
 	getFlagTriggerReq := &featureproto.GetFlagTriggerRequest{
-		Id:                   createResp.FlagTrigger.Id,
-		EnvironmentNamespace: *environmentNamespace,
+		Id:            createResp.FlagTrigger.Id,
+		EnvironmentId: *environmentNamespace,
 	}
 	// Get flag trigger
 	resp := getFeatureFlagTrigger(t, client, getFlagTriggerReq)
@@ -132,7 +132,7 @@ func TestDisableEnableFlagTrigger(t *testing.T) {
 	// Enable flag trigger
 	enableFlagTriggerReq := &featureproto.EnableFlagTriggerRequest{
 		Id:                       createResp.FlagTrigger.Id,
-		EnvironmentNamespace:     *environmentNamespace,
+		EnvironmentId:            *environmentNamespace,
 		EnableFlagTriggerCommand: &featureproto.EnableFlagTriggerCommand{},
 	}
 	_, err = client.EnableFlagTrigger(context.Background(), enableFlagTriggerReq)
@@ -162,7 +162,7 @@ func TestResetFlagTrigger(t *testing.T) {
 	// Reset flag trigger
 	resetFlagTriggerReq := &featureproto.ResetFlagTriggerRequest{
 		Id:                      createResp.FlagTrigger.Id,
-		EnvironmentNamespace:    *environmentNamespace,
+		EnvironmentId:           *environmentNamespace,
 		ResetFlagTriggerCommand: &featureproto.ResetFlagTriggerCommand{},
 	}
 	resetResp, err := client.ResetFlagTrigger(context.Background(), resetFlagTriggerReq)
@@ -190,7 +190,7 @@ func TestDeleteFlagTrigger(t *testing.T) {
 	// Delete flag trigger
 	deleteFlagTriggerReq := &featureproto.DeleteFlagTriggerRequest{
 		Id:                       createResp.FlagTrigger.Id,
-		EnvironmentNamespace:     *environmentNamespace,
+		EnvironmentId:            *environmentNamespace,
 		DeleteFlagTriggerCommand: &featureproto.DeleteFlagTriggerCommand{},
 	}
 	_, err := client.DeleteFlagTrigger(context.Background(), deleteFlagTriggerReq)
@@ -199,8 +199,8 @@ func TestDeleteFlagTrigger(t *testing.T) {
 	}
 	// Get flag trigger
 	getFlagTriggerReq := &featureproto.GetFlagTriggerRequest{
-		Id:                   createResp.FlagTrigger.Id,
-		EnvironmentNamespace: *environmentNamespace,
+		Id:            createResp.FlagTrigger.Id,
+		EnvironmentId: *environmentNamespace,
 	}
 	_, err = client.GetFlagTrigger(context.Background(), getFlagTriggerReq)
 	if err == nil {
@@ -216,7 +216,7 @@ func TestListFlagTriggers(t *testing.T) {
 	createFeature(t, client, command)
 	// Create flag triggers
 	trigger1, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
-		EnvironmentNamespace: *environmentNamespace,
+		EnvironmentId: *environmentNamespace,
 		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
 			command.Id,
 			newTriggerDescription(t),
@@ -228,7 +228,7 @@ func TestListFlagTriggers(t *testing.T) {
 	}
 	time.Sleep(1 * time.Second)
 	trigger2, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
-		EnvironmentNamespace: *environmentNamespace,
+		EnvironmentId: *environmentNamespace,
 		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
 			command.Id,
 			newTriggerDescription(t),
@@ -240,12 +240,12 @@ func TestListFlagTriggers(t *testing.T) {
 	}
 	// List flag triggers
 	listFlagTriggersReq := &featureproto.ListFlagTriggersRequest{
-		FeatureId:            command.Id,
-		EnvironmentNamespace: *environmentNamespace,
-		Cursor:               "0",
-		PageSize:             10,
-		OrderBy:              featureproto.ListFlagTriggersRequest_CREATED_AT,
-		OrderDirection:       featureproto.ListFlagTriggersRequest_ASC,
+		FeatureId:      command.Id,
+		EnvironmentId:  *environmentNamespace,
+		Cursor:         "0",
+		PageSize:       10,
+		OrderBy:        featureproto.ListFlagTriggersRequest_CREATED_AT,
+		OrderDirection: featureproto.ListFlagTriggersRequest_ASC,
 	}
 	triggers, err := client.ListFlagTriggers(context.Background(), listFlagTriggersReq)
 	if err != nil {
@@ -284,7 +284,7 @@ func TestFeatureFlagWebhook(t *testing.T) {
 	createFeature(t, client, command)
 	// Create Enable flag triggers
 	enableTrigger, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
-		EnvironmentNamespace: *environmentNamespace,
+		EnvironmentId: *environmentNamespace,
 		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
 			command.Id,
 			newTriggerDescription(t),
@@ -308,8 +308,8 @@ func TestFeatureFlagWebhook(t *testing.T) {
 		t.Fatalf("unexpected enabled: %v", enabledFeature.Enabled)
 	}
 	enabledTrigger := getFeatureFlagTrigger(t, client, &featureproto.GetFlagTriggerRequest{
-		Id:                   enableTrigger.FlagTrigger.Id,
-		EnvironmentNamespace: *environmentNamespace,
+		Id:            enableTrigger.FlagTrigger.Id,
+		EnvironmentId: *environmentNamespace,
 	})
 	if enabledTrigger.FlagTrigger.TriggerCount != 1 {
 		t.Fatalf("unexpected trigger times: %d", enabledTrigger.FlagTrigger.TriggerCount)
@@ -319,7 +319,7 @@ func TestFeatureFlagWebhook(t *testing.T) {
 	}
 	// Create Disable flag triggers
 	disableTrigger, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
-		EnvironmentNamespace: *environmentNamespace,
+		EnvironmentId: *environmentNamespace,
 		CreateFlagTriggerCommand: newCreateFlagTriggerCmd(
 			command.Id,
 			newTriggerDescription(t),
@@ -343,8 +343,8 @@ func TestFeatureFlagWebhook(t *testing.T) {
 		t.Fatalf("unexpected enabled: %v", disabledFeature.Enabled)
 	}
 	disabledTrigger := getFeatureFlagTrigger(t, client, &featureproto.GetFlagTriggerRequest{
-		Id:                   disableTrigger.FlagTrigger.Id,
-		EnvironmentNamespace: *environmentNamespace,
+		Id:            disableTrigger.FlagTrigger.Id,
+		EnvironmentId: *environmentNamespace,
 	})
 	if disabledTrigger.FlagTrigger.TriggerCount != 1 {
 		t.Fatalf("unexpected trigger times: %d", disabledTrigger.FlagTrigger.TriggerCount)
@@ -407,7 +407,7 @@ func createFeatureFlagTrigger(
 ) *featureproto.CreateFlagTriggerResponse {
 	t.Helper()
 	resp, err := client.CreateFlagTrigger(context.Background(), &featureproto.CreateFlagTriggerRequest{
-		EnvironmentNamespace:     *environmentNamespace,
+		EnvironmentId:            *environmentNamespace,
 		CreateFlagTriggerCommand: cmd,
 	})
 	if err != nil {

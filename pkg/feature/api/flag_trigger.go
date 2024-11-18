@@ -55,7 +55,7 @@ func (s *FeatureService) CreateFlagTrigger(
 	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
-		request.EnvironmentNamespace,
+		request.EnvironmentId,
 		localizer,
 	)
 	if err != nil {
@@ -66,13 +66,13 @@ func (s *FeatureService) CreateFlagTrigger(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", request.EnvironmentNamespace),
+				zap.String("environmentId", request.EnvironmentId),
 			)...,
 		)
 		return nil, err
 	}
 	flagTrigger, err := domain.NewFlagTrigger(
-		request.EnvironmentNamespace,
+		request.EnvironmentId,
 		request.CreateFlagTriggerCommand,
 	)
 	if err != nil {
@@ -88,7 +88,7 @@ func (s *FeatureService) CreateFlagTrigger(
 			"Failed to begin transaction",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", request.EnvironmentNamespace),
+				zap.String("environmentId", request.EnvironmentId),
 			)...,
 		)
 	}
@@ -98,7 +98,7 @@ func (s *FeatureService) CreateFlagTrigger(
 			editor,
 			flagTrigger,
 			s.domainPublisher,
-			request.EnvironmentNamespace,
+			request.EnvironmentId,
 		)
 		if err != nil {
 			return err
@@ -115,7 +115,7 @@ func (s *FeatureService) CreateFlagTrigger(
 				"Failed to create flag trigger",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", request.EnvironmentNamespace),
+					zap.String("environmentId", request.EnvironmentId),
 				)...,
 			)
 			return err
@@ -158,7 +158,7 @@ func (s *FeatureService) UpdateFlagTrigger(
 	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
-		request.EnvironmentNamespace,
+		request.EnvironmentId,
 		localizer,
 	)
 	if err != nil {
@@ -169,7 +169,7 @@ func (s *FeatureService) UpdateFlagTrigger(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", request.EnvironmentNamespace),
+				zap.String("environmentId", request.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -180,7 +180,7 @@ func (s *FeatureService) UpdateFlagTrigger(
 			"Failed to begin transaction",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", request.EnvironmentNamespace),
+				zap.String("environmentId", request.EnvironmentId),
 			)...,
 		)
 	}
@@ -189,14 +189,14 @@ func (s *FeatureService) UpdateFlagTrigger(
 		flagTrigger, err := storage.GetFlagTrigger(
 			ctx,
 			request.Id,
-			request.EnvironmentNamespace,
+			request.EnvironmentId,
 		)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get flag trigger",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", request.EnvironmentNamespace),
+					zap.String("environmentId", request.EnvironmentId),
 				)...,
 			)
 			return err
@@ -205,7 +205,7 @@ func (s *FeatureService) UpdateFlagTrigger(
 			editor,
 			flagTrigger,
 			s.domainPublisher,
-			request.EnvironmentNamespace,
+			request.EnvironmentId,
 		)
 		if err != nil {
 			return err
@@ -225,7 +225,7 @@ func (s *FeatureService) UpdateFlagTrigger(
 				"Failed to update flag trigger",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", request.EnvironmentNamespace),
+					zap.String("environmentId", request.EnvironmentId),
 				)...,
 			)
 			return err
@@ -263,7 +263,7 @@ func (s *FeatureService) EnableFlagTrigger(
 	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
-		request.EnvironmentNamespace,
+		request.EnvironmentId,
 		localizer,
 	)
 	if err != nil {
@@ -274,7 +274,7 @@ func (s *FeatureService) EnableFlagTrigger(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", request.EnvironmentNamespace),
+				zap.String("environmentId", request.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -285,7 +285,7 @@ func (s *FeatureService) EnableFlagTrigger(
 			"Failed to begin transaction",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", request.EnvironmentNamespace),
+				zap.String("environmentId", request.EnvironmentId),
 			)...,
 		)
 	}
@@ -294,14 +294,14 @@ func (s *FeatureService) EnableFlagTrigger(
 		flagTrigger, err := storage.GetFlagTrigger(
 			ctx,
 			request.Id,
-			request.EnvironmentNamespace,
+			request.EnvironmentId,
 		)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get flag trigger",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", request.EnvironmentNamespace),
+					zap.String("environmentId", request.EnvironmentId),
 				)...,
 			)
 			return err
@@ -310,7 +310,7 @@ func (s *FeatureService) EnableFlagTrigger(
 			editor,
 			flagTrigger,
 			s.domainPublisher,
-			request.EnvironmentNamespace,
+			request.EnvironmentId,
 		)
 		if err != nil {
 			return err
@@ -330,7 +330,7 @@ func (s *FeatureService) EnableFlagTrigger(
 				"Failed to enable flag trigger",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", request.EnvironmentNamespace),
+					zap.String("environmentId", request.EnvironmentId),
 				)...,
 			)
 			return err
@@ -368,7 +368,7 @@ func (s *FeatureService) DisableFlagTrigger(
 	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
-		request.EnvironmentNamespace,
+		request.EnvironmentId,
 		localizer,
 	)
 	if err != nil {
@@ -379,7 +379,7 @@ func (s *FeatureService) DisableFlagTrigger(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", request.EnvironmentNamespace),
+				zap.String("environmentId", request.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -390,7 +390,7 @@ func (s *FeatureService) DisableFlagTrigger(
 			"Failed to begin transaction",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", request.EnvironmentNamespace),
+				zap.String("environmentId", request.EnvironmentId),
 			)...,
 		)
 	}
@@ -399,14 +399,14 @@ func (s *FeatureService) DisableFlagTrigger(
 		flagTrigger, err := storage.GetFlagTrigger(
 			ctx,
 			request.Id,
-			request.EnvironmentNamespace,
+			request.EnvironmentId,
 		)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get flag trigger",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", request.EnvironmentNamespace),
+					zap.String("environmentId", request.EnvironmentId),
 				)...,
 			)
 			return err
@@ -415,7 +415,7 @@ func (s *FeatureService) DisableFlagTrigger(
 			editor,
 			flagTrigger,
 			s.domainPublisher,
-			request.EnvironmentNamespace,
+			request.EnvironmentId,
 		)
 		if err != nil {
 			return err
@@ -432,7 +432,7 @@ func (s *FeatureService) DisableFlagTrigger(
 				"Failed to disable flag trigger",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", request.EnvironmentNamespace),
+					zap.String("environmentId", request.EnvironmentId),
 				)...,
 			)
 			return err
@@ -470,7 +470,7 @@ func (s *FeatureService) ResetFlagTrigger(
 	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
-		request.EnvironmentNamespace,
+		request.EnvironmentId,
 		localizer,
 	)
 	if err != nil {
@@ -481,13 +481,13 @@ func (s *FeatureService) ResetFlagTrigger(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", request.EnvironmentNamespace),
+				zap.String("environmentId", request.EnvironmentId),
 			)...,
 		)
 		return nil, err
 	}
 	trigger, err := v2fs.NewFlagTriggerStorage(s.mysqlClient).
-		GetFlagTrigger(ctx, request.Id, request.EnvironmentNamespace)
+		GetFlagTrigger(ctx, request.Id, request.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFlagTriggerNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -514,7 +514,7 @@ func (s *FeatureService) ResetFlagTrigger(
 			editor,
 			trigger,
 			s.domainPublisher,
-			request.EnvironmentNamespace,
+			request.EnvironmentId,
 		)
 		if err != nil {
 			return err
@@ -572,7 +572,7 @@ func (s *FeatureService) DeleteFlagTrigger(
 	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
-		request.EnvironmentNamespace,
+		request.EnvironmentId,
 		localizer,
 	)
 	if err != nil {
@@ -583,7 +583,7 @@ func (s *FeatureService) DeleteFlagTrigger(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", request.EnvironmentNamespace),
+				zap.String("environmentId", request.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -601,14 +601,14 @@ func (s *FeatureService) DeleteFlagTrigger(
 		flagTrigger, err := storage.GetFlagTrigger(
 			ctx,
 			request.Id,
-			request.EnvironmentNamespace,
+			request.EnvironmentId,
 		)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get flag trigger",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", request.EnvironmentNamespace),
+					zap.String("environmentId", request.EnvironmentId),
 				)...,
 			)
 			return err
@@ -617,7 +617,7 @@ func (s *FeatureService) DeleteFlagTrigger(
 			editor,
 			flagTrigger,
 			s.domainPublisher,
-			request.EnvironmentNamespace,
+			request.EnvironmentId,
 		)
 		if err != nil {
 			return err
@@ -632,7 +632,7 @@ func (s *FeatureService) DeleteFlagTrigger(
 		if err := storage.DeleteFlagTrigger(
 			ctx,
 			request.Id,
-			request.EnvironmentNamespace,
+			request.EnvironmentId,
 		); err != nil {
 			s.logger.Error(
 				"Failed to delete flag trigger",
@@ -672,7 +672,7 @@ func (s *FeatureService) GetFlagTrigger(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		request.EnvironmentNamespace,
+		request.EnvironmentId,
 		localizer)
 	if err != nil {
 		return nil, err
@@ -682,7 +682,7 @@ func (s *FeatureService) GetFlagTrigger(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", request.EnvironmentNamespace),
+				zap.String("environmentId", request.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -690,7 +690,7 @@ func (s *FeatureService) GetFlagTrigger(
 	trigger, err := s.flagTriggerStorage.GetFlagTrigger(
 		ctx,
 		request.Id,
-		request.EnvironmentNamespace,
+		request.EnvironmentId,
 	)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFlagTriggerNotFound) {
@@ -720,7 +720,7 @@ func (s *FeatureService) ListFlagTriggers(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		request.EnvironmentNamespace,
+		request.EnvironmentId,
 		localizer)
 	if err != nil {
 		return nil, err
@@ -734,7 +734,7 @@ func (s *FeatureService) ListFlagTriggers(
 	}
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("feature_id", "=", request.FeatureId),
-		mysql.NewFilter("environment_namespace", "=", request.EnvironmentNamespace),
+		mysql.NewFilter("environment_id", "=", request.EnvironmentId),
 	}
 	orders, err := s.newListFlagTriggerOrders(request.OrderBy, request.OrderDirection, localizer)
 	if err != nil {
@@ -866,7 +866,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 	if err != nil {
 		return nil, err
 	}
-	feature, err := s.featureStorage.GetFeature(ctx, trigger.FeatureId, trigger.EnvironmentNamespace)
+	feature, err := s.featureStorage.GetFeature(ctx, trigger.FeatureId, trigger.EnvironmentId)
 	if err != nil {
 		if errors.Is(err, v2fs.ErrFeatureNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -883,7 +883,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 				zap.String("id", trigger.FeatureId),
-				zap.String("environmentNamespace", trigger.EnvironmentNamespace),
+				zap.String("environmentId", trigger.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -898,7 +898,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 	if trigger.GetAction() == featureproto.FlagTrigger_Action_ON {
 		// check if feature is already enabled
 		if !feature.GetEnabled() {
-			err := s.enableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentNamespace(), localizer)
+			err := s.enableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentId(), localizer)
 			if err != nil {
 				dt, err := statusTriggerEnableFailed.WithDetails(&errdetails.LocalizedMessage{
 					Locale:  localizer.GetLocale(),
@@ -913,7 +913,7 @@ func (s *FeatureService) FlagTriggerWebhook(
 	} else if trigger.GetAction() == featureproto.FlagTrigger_Action_OFF {
 		// check if feature is already disabled
 		if feature.GetEnabled() {
-			err := s.disableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentNamespace(), localizer)
+			err := s.disableFeature(ctx, trigger.GetFeatureId(), trigger.GetEnvironmentId(), localizer)
 			if err != nil {
 				dt, err := statusTriggerDisableFailed.WithDetails(&errdetails.LocalizedMessage{
 					Locale:  localizer.GetLocale(),
@@ -973,7 +973,7 @@ func (s *FeatureService) updateTriggerUsageInfo(
 			editor,
 			flagTrigger,
 			s.domainPublisher,
-			flagTrigger.EnvironmentNamespace,
+			flagTrigger.EnvironmentId,
 		)
 		if err != nil {
 			return err
@@ -1011,14 +1011,14 @@ func (s *FeatureService) updateTriggerUsageInfo(
 
 func (s *FeatureService) enableFeature(
 	ctx context.Context,
-	featureId, environmentNamespace string,
+	featureId, environmentId string,
 	localizer locale.Localizer,
 ) error {
 	if err := s.updateFeature(
 		ctx,
 		&featureproto.EnableFeatureCommand{},
 		featureId,
-		environmentNamespace,
+		environmentId,
 		"",
 		localizer,
 		webhookEditor,
@@ -1028,7 +1028,7 @@ func (s *FeatureService) enableFeature(
 				"Failed to enable feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 		}
@@ -1039,14 +1039,14 @@ func (s *FeatureService) enableFeature(
 
 func (s *FeatureService) disableFeature(
 	ctx context.Context,
-	featureId, environmentNamespace string,
+	featureId, environmentId string,
 	localizer locale.Localizer,
 ) error {
 	if err := s.updateFeature(
 		ctx,
 		&featureproto.DisableFeatureCommand{},
 		featureId,
-		environmentNamespace,
+		environmentId,
 		"",
 		localizer,
 		webhookEditor,
@@ -1056,7 +1056,7 @@ func (s *FeatureService) disableFeature(
 				"Failed to disable feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 		}

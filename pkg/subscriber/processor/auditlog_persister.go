@@ -140,10 +140,13 @@ func (a auditLogPersister) extractAuditLogs(
 			continue
 		}
 		if event.IsAdminEvent {
-			adminAuditLogs = append(adminAuditLogs, domain.NewAuditLog(event, storage.AdminEnvironmentNamespace))
+			adminAuditLogs = append(adminAuditLogs, domain.NewAuditLog(
+				event,
+				storage.AdminEnvironmentID,
+			))
 			adminMessages = append(adminMessages, msg)
 		} else {
-			auditlogs = append(auditlogs, domain.NewAuditLog(event, event.EnvironmentNamespace))
+			auditlogs = append(auditlogs, domain.NewAuditLog(event, event.EnvironmentId))
 			messages = append(messages, msg)
 		}
 	}

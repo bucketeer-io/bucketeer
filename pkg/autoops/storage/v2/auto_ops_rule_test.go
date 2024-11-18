@@ -42,10 +42,10 @@ func TestCreateAutoOpsRule(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		setup                func(*autoOpsRuleStorage)
-		input                *domain.AutoOpsRule
-		environmentNamespace string
-		expectedErr          error
+		setup         func(*autoOpsRuleStorage)
+		input         *domain.AutoOpsRule
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			setup: func(s *autoOpsRuleStorage) {
@@ -56,8 +56,8 @@ func TestCreateAutoOpsRule(t *testing.T) {
 			input: &domain.AutoOpsRule{
 				AutoOpsRule: &proto.AutoOpsRule{Id: "id-0"},
 			},
-			environmentNamespace: "ns0",
-			expectedErr:          ErrAutoOpsRuleAlreadyExists,
+			environmentId: "ns0",
+			expectedErr:   ErrAutoOpsRuleAlreadyExists,
 		},
 		{
 			setup: func(s *autoOpsRuleStorage) {
@@ -68,8 +68,8 @@ func TestCreateAutoOpsRule(t *testing.T) {
 			input: &domain.AutoOpsRule{
 				AutoOpsRule: &proto.AutoOpsRule{Id: "id-1"},
 			},
-			environmentNamespace: "ns0",
-			expectedErr:          nil,
+			environmentId: "ns0",
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -77,7 +77,7 @@ func TestCreateAutoOpsRule(t *testing.T) {
 		if p.setup != nil {
 			p.setup(storage)
 		}
-		err := storage.CreateAutoOpsRule(context.Background(), p.input, p.environmentNamespace)
+		err := storage.CreateAutoOpsRule(context.Background(), p.input, p.environmentId)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
@@ -88,10 +88,10 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		setup                func(*autoOpsRuleStorage)
-		input                *domain.AutoOpsRule
-		environmentNamespace string
-		expectedErr          error
+		setup         func(*autoOpsRuleStorage)
+		input         *domain.AutoOpsRule
+		environmentId string
+		expectedErr   error
 	}{
 		{
 			setup: func(s *autoOpsRuleStorage) {
@@ -104,8 +104,8 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 			input: &domain.AutoOpsRule{
 				AutoOpsRule: &proto.AutoOpsRule{Id: "id-0"},
 			},
-			environmentNamespace: "ns",
-			expectedErr:          ErrAutoOpsRuleUnexpectedAffectedRows,
+			environmentId: "ns",
+			expectedErr:   ErrAutoOpsRuleUnexpectedAffectedRows,
 		},
 		{
 			setup: func(s *autoOpsRuleStorage) {
@@ -118,8 +118,8 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 			input: &domain.AutoOpsRule{
 				AutoOpsRule: &proto.AutoOpsRule{Id: "id-0"},
 			},
-			environmentNamespace: "ns",
-			expectedErr:          nil,
+			environmentId: "ns",
+			expectedErr:   nil,
 		},
 	}
 	for _, p := range patterns {
@@ -127,7 +127,7 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 		if p.setup != nil {
 			p.setup(storage)
 		}
-		err := storage.UpdateAutoOpsRule(context.Background(), p.input, p.environmentNamespace)
+		err := storage.UpdateAutoOpsRule(context.Background(), p.input, p.environmentId)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }
@@ -138,11 +138,11 @@ func TestGetAutoOpsRule(t *testing.T) {
 	defer mockController.Finish()
 
 	patterns := []struct {
-		setup                func(*autoOpsRuleStorage)
-		input                string
-		environmentNamespace string
-		expected             *domain.AutoOpsRule
-		expectedErr          error
+		setup         func(*autoOpsRuleStorage)
+		input         string
+		environmentId string
+		expected      *domain.AutoOpsRule
+		expectedErr   error
 	}{
 		{
 			setup: func(s *autoOpsRuleStorage) {
@@ -152,10 +152,10 @@ func TestGetAutoOpsRule(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			input:                "",
-			environmentNamespace: "ns0",
-			expected:             nil,
-			expectedErr:          ErrAutoOpsRuleNotFound,
+			input:         "",
+			environmentId: "ns0",
+			expected:      nil,
+			expectedErr:   ErrAutoOpsRuleNotFound,
 		},
 		{
 			setup: func(s *autoOpsRuleStorage) {
@@ -165,8 +165,8 @@ func TestGetAutoOpsRule(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			input:                "id-0",
-			environmentNamespace: "ns0",
+			input:         "id-0",
+			environmentId: "ns0",
 			expected: &domain.AutoOpsRule{
 				AutoOpsRule: &proto.AutoOpsRule{Id: "id-0"},
 			},
@@ -178,7 +178,7 @@ func TestGetAutoOpsRule(t *testing.T) {
 		if p.setup != nil {
 			p.setup(storage)
 		}
-		_, err := storage.GetAutoOpsRule(context.Background(), p.input, p.environmentNamespace)
+		_, err := storage.GetAutoOpsRule(context.Background(), p.input, p.environmentId)
 		assert.Equal(t, p.expectedErr, err)
 	}
 }

@@ -176,8 +176,8 @@ func TestCreateMAUNotification(t *testing.T) {
 				w.eventCounterClient.(*ecclientmock.MockClient).EXPECT().GetMAUCount(
 					gomock.Any(),
 					&ecproto.GetMAUCountRequest{
-						EnvironmentNamespace: "eID",
-						YearMonth:            w.newYearMonth(year, month),
+						EnvironmentId: "eID",
+						YearMonth:     w.newYearMonth(year, month),
 					},
 				).Return(
 					&ecproto.GetMAUCountResponse{

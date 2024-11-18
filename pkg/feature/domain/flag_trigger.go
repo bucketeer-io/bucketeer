@@ -29,7 +29,7 @@ type FlagTrigger struct {
 }
 
 func NewFlagTrigger(
-	environmentNamespace string,
+	environmentId string,
 	cmd *proto.CreateFlagTriggerCommand,
 ) (*FlagTrigger, error) {
 	now := time.Now().Unix()
@@ -38,15 +38,15 @@ func NewFlagTrigger(
 		return nil, err
 	}
 	return &FlagTrigger{&proto.FlagTrigger{
-		Id:                   triggerID.String(),
-		FeatureId:            cmd.FeatureId,
-		EnvironmentNamespace: environmentNamespace,
-		Type:                 cmd.Type,
-		Action:               cmd.Action,
-		Description:          cmd.Description,
-		Disabled:             false,
-		CreatedAt:            now,
-		UpdatedAt:            now,
+		Id:            triggerID.String(),
+		FeatureId:     cmd.FeatureId,
+		EnvironmentId: environmentId,
+		Type:          cmd.Type,
+		Action:        cmd.Action,
+		Description:   cmd.Description,
+		Disabled:      false,
+		CreatedAt:     now,
+		UpdatedAt:     now,
 	}}, nil
 }
 

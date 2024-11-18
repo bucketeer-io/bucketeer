@@ -8,9 +8,6 @@ export class UserEvent extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getTag(): string;
   setTag(value: string): void;
 
@@ -26,6 +23,9 @@ export class UserEvent extends jspb.Message {
   setSourceId(
     value: proto_event_client_event_pb.SourceIdMap[keyof proto_event_client_event_pb.SourceIdMap]
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UserEvent.AsObject;
@@ -48,11 +48,11 @@ export class UserEvent extends jspb.Message {
 export namespace UserEvent {
   export type AsObject = {
     id: string;
-    environmentNamespace: string;
     tag: string;
     userId: string;
     lastSeen: number;
     dataMap: Array<[string, string]>;
     sourceId: proto_event_client_event_pb.SourceIdMap[keyof proto_event_client_event_pb.SourceIdMap];
+    environmentId: string;
   };
 }

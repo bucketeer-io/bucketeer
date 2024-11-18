@@ -55,10 +55,10 @@ type ProgressiveRolloutStorage interface {
 	CreateProgressiveRollout(
 		ctx context.Context,
 		progressiveRollout *domain.ProgressiveRollout,
-		environmentNamespace string,
+		environmentId string,
 	) error
-	GetProgressiveRollout(ctx context.Context, id, environmentNamespace string) (*domain.ProgressiveRollout, error)
-	DeleteProgressiveRollout(ctx context.Context, id, environmentNamespace string) error
+	GetProgressiveRollout(ctx context.Context, id, environmentId string) (*domain.ProgressiveRollout, error)
+	DeleteProgressiveRollout(ctx context.Context, id, environmentId string) error
 	ListProgressiveRollouts(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
@@ -67,7 +67,7 @@ type ProgressiveRolloutStorage interface {
 	) ([]*autoopsproto.ProgressiveRollout, int64, int, error)
 	UpdateProgressiveRollout(ctx context.Context,
 		progressiveRollout *domain.ProgressiveRollout,
-		environmentNamespace string,
+		environmentId string,
 	) error
 }
 
@@ -78,7 +78,7 @@ func NewProgressiveRolloutStorage(qe mysql.QueryExecer) ProgressiveRolloutStorag
 func (s *progressiveRolloutStorage) CreateProgressiveRollout(
 	ctx context.Context,
 	progressiveRollout *domain.ProgressiveRollout,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	_, err := s.qe.ExecContext(
 		ctx,
@@ -92,7 +92,7 @@ func (s *progressiveRolloutStorage) CreateProgressiveRollout(
 		progressiveRollout.StoppedAt,
 		progressiveRollout.CreatedAt,
 		progressiveRollout.UpdatedAt,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		if err == mysql.ErrDuplicateEntry {
@@ -105,14 +105,14 @@ func (s *progressiveRolloutStorage) CreateProgressiveRollout(
 
 func (s *progressiveRolloutStorage) GetProgressiveRollout(
 	ctx context.Context,
-	id, environmentNamespace string,
+	id, environmentId string,
 ) (*domain.ProgressiveRollout, error) {
 	progressiveRollout := autoopsproto.ProgressiveRollout{}
 	err := s.qe.QueryRowContext(
 		ctx,
 		selectOpsProgressiveRolloutSQL,
 		id,
-		environmentNamespace,
+		environmentId,
 	).Scan(
 		&progressiveRollout.Id,
 		&progressiveRollout.FeatureId,
@@ -135,13 +135,13 @@ func (s *progressiveRolloutStorage) GetProgressiveRollout(
 
 func (s *progressiveRolloutStorage) DeleteProgressiveRollout(
 	ctx context.Context,
-	id, environmentNamespace string,
+	id, environmentId string,
 ) error {
 	result, err := s.qe.ExecContext(
 		ctx,
 		deleteOpsProgressiveRolloutSQL,
 		id,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		return err
@@ -206,7 +206,7 @@ func (s *progressiveRolloutStorage) ListProgressiveRollouts(
 func (s *progressiveRolloutStorage) UpdateProgressiveRollout(
 	ctx context.Context,
 	progressiveRollout *domain.ProgressiveRollout,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	result, err := s.qe.ExecContext(
 		ctx,
@@ -220,7 +220,7 @@ func (s *progressiveRolloutStorage) UpdateProgressiveRollout(
 		&progressiveRollout.CreatedAt,
 		&progressiveRollout.UpdatedAt,
 		&progressiveRollout.Id,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		return err

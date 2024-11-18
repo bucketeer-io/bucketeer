@@ -25,7 +25,8 @@ import "proto/experiment/experiment.proto";
 
 message GetGoalRequest {
   string id = 1;
-  string environment_namespace = 2;
+  reserved 2;
+  string environment_id = 3;
 }
 
 message GetGoalResponse {
@@ -45,12 +46,13 @@ message ListGoalsRequest {
   }
   int64 page_size = 1;
   string cursor = 2;
-  string environment_namespace = 3;
+  reserved 3;
   OrderBy order_by = 4;
   OrderDirection order_direction = 5;
   string search_keyword = 6;
   google.protobuf.BoolValue is_in_use_status = 7;
   google.protobuf.BoolValue archived = 8;
+  string environment_id = 9;
 }
 
 message ListGoalsResponse {
@@ -61,7 +63,8 @@ message ListGoalsResponse {
 
 message CreateGoalRequest {
   CreateGoalCommand command = 1;
-  string environment_namespace = 2;
+  reserved 2;
+  string environment_id = 3;
 }
 
 message CreateGoalResponse {}
@@ -69,7 +72,8 @@ message CreateGoalResponse {}
 message ArchiveGoalRequest {
   string id = 1;
   ArchiveGoalCommand command = 2;
-  string environment_namespace = 3;
+  reserved 3;
+  string environment_id = 4;
 }
 
 message ArchiveGoalResponse {}
@@ -77,7 +81,8 @@ message ArchiveGoalResponse {}
 message DeleteGoalRequest {
   string id = 1;
   DeleteGoalCommand command = 2;
-  string environment_namespace = 3;
+  reserved 3;
+  string environment_id = 4;
 }
 
 message DeleteGoalResponse {}
@@ -86,14 +91,16 @@ message UpdateGoalRequest {
   string id = 1;
   RenameGoalCommand rename_command = 2;
   ChangeDescriptionGoalCommand change_description_command = 3;
-  string environment_namespace = 4;
+  reserved 4;
+  string environment_id = 5;
 }
 
 message UpdateGoalResponse {}
 
 message GetExperimentRequest {
   string id = 1;
-  string environment_namespace = 2;
+  reserved 2;
+  string environment_id = 3;
 }
 
 message GetExperimentResponse {
@@ -117,7 +124,7 @@ message ListExperimentsRequest {
   int64 to = 4;
   int64 page_size = 5;
   string cursor = 6;
-  string environment_namespace = 7;
+  reserved 7;
   google.protobuf.Int32Value status = 8;  // [deprecated = true];
   string maintainer = 9;
   OrderBy order_by = 10;
@@ -125,6 +132,7 @@ message ListExperimentsRequest {
   string search_keyword = 12;
   google.protobuf.BoolValue archived = 13;
   repeated Experiment.Status statuses = 14;
+  string environment_id = 15;
 }
 
 message ListExperimentsResponse {
@@ -135,7 +143,8 @@ message ListExperimentsResponse {
 
 message CreateExperimentRequest {
   CreateExperimentCommand command = 1;
-  string environment_namespace = 2;
+  reserved 2;
+  string environment_id = 3;
 }
 
 message CreateExperimentResponse {
@@ -148,26 +157,29 @@ message UpdateExperimentRequest {
                // [deprecated = true];
   reserved 3;  // ChangeStopAtExperimentCommand change_stop_at_command = 3
                // [deprecated = true];
-  string environment_namespace = 4;
+  reserved 4;
   ChangeExperimentPeriodCommand change_experiment_period_command = 5;
   ChangeExperimentNameCommand change_name_command = 6;
   ChangeExperimentDescriptionCommand change_description_command = 7;
+  string environment_id = 8;
 }
 
 message UpdateExperimentResponse {}
 
 message StartExperimentRequest {
-  string environment_namespace = 1;
+  reserved 1;
   string id = 2;
   StartExperimentCommand command = 3;
+  string environment_id = 4;
 }
 
 message StartExperimentResponse {}
 
 message FinishExperimentRequest {
-  string environment_namespace = 1;
+  reserved 1;
   string id = 2;
   FinishExperimentCommand command = 3;
+  string environment_id = 4;
 }
 
 message FinishExperimentResponse {}
@@ -175,7 +187,8 @@ message FinishExperimentResponse {}
 message StopExperimentRequest {
   string id = 1;
   StopExperimentCommand command = 2;
-  string environment_namespace = 3;
+  reserved 3;
+  string environment_id = 4;
 }
 
 message StopExperimentResponse {}
@@ -183,7 +196,8 @@ message StopExperimentResponse {}
 message ArchiveExperimentRequest {
   string id = 1;
   ArchiveExperimentCommand command = 2;
-  string environment_namespace = 3;
+  reserved 3;
+  string environment_id = 4;
 }
 
 message ArchiveExperimentResponse {}
@@ -191,7 +205,8 @@ message ArchiveExperimentResponse {}
 message DeleteExperimentRequest {
   string id = 1;
   DeleteExperimentCommand command = 2;
-  string environment_namespace = 3;
+  reserved 3;
+  string environment_id = 4;
 }
 
 message DeleteExperimentResponse {}
