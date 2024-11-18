@@ -48,7 +48,6 @@ export const formSchema = yup.object().shape({
   environmentRoles: yup
     .array()
     .required()
-    .min(1)
     .of(
       yup.object().shape({
         environmentId: yup.string().required(),
@@ -77,7 +76,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
 
   const {
     watch,
-    formState: { isDirty, isSubmitting }
+    formState: { isDirty, isSubmitting, isValid }
   } = form;
   const memberEnvironments = watch('environmentRoles');
 
@@ -92,7 +91,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
         role: values.role as OrganizationRole
       },
       changeEnvironmentRolesCommand: {
-        roles: memberEnvironments.length > 0 ? memberEnvironments : []
+        roles: values.environmentRoles
       },
       changeFirstNameCommand: {
         firstName: values.firstName
@@ -279,7 +278,7 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!isDirty}
+                    disabled={!isDirty || !isValid}
                     loading={isSubmitting}
                   >
                     {t(`save`)}

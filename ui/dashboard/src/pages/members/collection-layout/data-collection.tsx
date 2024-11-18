@@ -5,6 +5,7 @@ import {
 import type { ColumnDef } from '@tanstack/react-table';
 import primaryAvatar from 'assets/avatars/primary.svg';
 import { useTranslation } from 'i18n';
+import compact from 'lodash/compact';
 import { Account } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { joinName } from 'utils/name';
@@ -23,7 +24,7 @@ export const useColumns = ({
 
   return [
     {
-      accessorKey: 'name',
+      accessorKey: 'email',
       header: `${t('name')}`,
       size: 350,
       cell: ({ row }) => {
@@ -112,8 +113,8 @@ export const useColumns = ({
 
         return (
           <Popover
-            options={[
-              {
+            options={compact([
+              Number(account.lastSeen) > 0 && {
                 label: `${t('table:popover.edit-member')}`,
                 icon: IconEditOutlined,
                 value: 'EDIT'
@@ -128,7 +129,7 @@ export const useColumns = ({
                 icon: IconTrash,
                 value: 'DELETE'
               }
-            ]}
+            ])}
             icon={IconMoreHorizOutlined}
             onClick={value => onActions(account, value as MemberActionsType)}
             align="end"

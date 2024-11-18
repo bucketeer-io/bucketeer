@@ -25,7 +25,7 @@ import {
 import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
-import EnvironmentRoles, { defaultEnvironmentRole } from './environment-roles';
+import EnvironmentRoles from './environment-roles';
 
 interface AddMemberModalProps {
   isOpen: boolean;
@@ -36,6 +36,11 @@ interface organizationRoleOption {
   value: OrganizationRole;
   label: string;
 }
+
+export const defaultEnvironmentRole: EnvironmentRoleItem = {
+  environmentId: '',
+  role: 'Environment_UNASSIGNED'
+};
 
 export const organizationRoles: organizationRoleOption[] = [
   {
@@ -70,7 +75,6 @@ export const formSchema = yup.object().shape({
   environmentRoles: yup
     .array()
     .required()
-    .min(1)
     .of(
       yup.object().shape({
         environmentId: yup.string().required(),

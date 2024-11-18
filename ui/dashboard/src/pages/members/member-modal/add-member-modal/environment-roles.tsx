@@ -19,11 +19,6 @@ interface environmentRoleOption {
   label: string;
 }
 
-export const defaultEnvironmentRole: EnvironmentRoleItem = {
-  environmentId: '',
-  role: 'Environment_UNASSIGNED'
-};
-
 const environmentRoles: environmentRoleOption[] = [
   {
     value: 'Environment_EDITOR',
@@ -55,7 +50,10 @@ const EnvironmentRoles = ({
   );
 
   const onAddEnvironment = () => {
-    memberEnvironments.push(defaultEnvironmentRole);
+    memberEnvironments.push({
+      environmentId: '',
+      role: 'Environment_UNASSIGNED'
+    });
     onChangeEnvironments([...memberEnvironments]);
   };
 
@@ -112,6 +110,7 @@ const EnvironmentRoles = ({
                             value={item.id}
                             label={item.name}
                             onSelectOption={value => {
+                              console.log('envIndex', envIndex);
                               field.onChange(value);
                             }}
                           />
@@ -168,16 +167,17 @@ const EnvironmentRoles = ({
               )}
             />
           </div>
-
-          <Button
-            variant="text"
-            size="icon"
-            type="button"
-            className="p-0 size-5 mt-5 self-center"
-            onClick={() => onDeleteEnvironment(envIndex)}
-          >
-            <Icon icon={IconTrash} size="sm" color="gray-600" />
-          </Button>
+          {memberEnvironments.length > 1 && (
+            <Button
+              variant="text"
+              size="icon"
+              type="button"
+              className="p-0 size-5 mt-5 self-center"
+              onClick={() => onDeleteEnvironment(envIndex)}
+            >
+              <Icon icon={IconTrash} size="sm" color="gray-600" />
+            </Button>
+          )}
         </div>
       ))}
     </>
