@@ -231,21 +231,6 @@ message UpdatePushResponse {
   push.Push push = 1;
 }
 
-message CreateAccountV2Request {
-  string email = 1;
-  string name = 2;
-  string avatar_image_url = 3;
-  account.AccountV2.Role.Organization organization_role = 4;
-  repeated account.AccountV2.EnvironmentRole environment_roles = 5;
-  string first_name = 6;
-  string last_name = 7;
-  string language = 8;
-}
-
-message CreateAccountV2Response {
-  account.AccountV2 account = 1;
-}
-
 message GetAccountV2Request {
   string email = 1;
   string organization_id = 2;
@@ -270,31 +255,6 @@ message GetMeRequest {
 
 message GetMeResponse {
   account.ConsoleAccount account = 1;
-}
-
-message UpdateAccountV2Request {
-  message OrganizationRoleValue {
-    account.AccountV2.Role.Organization role = 1;
-  }
-  string id = 1;
-  google.protobuf.StringValue name = 2;
-  google.protobuf.StringValue first_name = 3;
-  google.protobuf.StringValue last_name = 4;
-  google.protobuf.StringValue language = 5;
-  google.protobuf.StringValue avatar_image_url = 6;
-  google.protobuf.Int64Value last_seen = 7;
-  OrganizationRoleValue organization_role = 8;
-  repeated account.AccountV2.EnvironmentRole environment_roles = 9;
-  google.protobuf.BoolValue disabled = 10;
-  google.protobuf.BoolValue deleted = 11 [(grpc.gateway.protoc_gen_openapiv2
-                                               .options.openapiv2_field) = {
-    title: "deleted"
-    description: "if true, the account will be deleted and other fields will be ignored."
-  }];
-}
-
-message UpdateAccountV2Response {
-  account.AccountV2 account = 1;
 }
 
 message ListAccountsV2Request {
@@ -664,27 +624,6 @@ service Gateway {
       }
     };
   }
-  rpc CreateAccountV2(CreateAccountV2Request)
-      returns (CreateAccountV2Response) {
-    option (google.api.http) = {
-      post: "/v1/account"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Create",
-      description: "Create a new Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
-      tags: "Account",
-      operation_id: "api.gateway.v1.account.create",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
-    };
-  }
   rpc GetAccountV2(GetAccountV2Request) returns (GetAccountV2Response) {
     option (google.api.http) = {
       get: "/v1/account"
@@ -733,27 +672,6 @@ service Gateway {
       description: "Get the current Account. To call this API, you need a `READ` API Key role.",
       tags: "Account",
       operation_id: "api.gateway.v1.account.get_me",
-      parameters: {
-        headers: {
-          name: "authorization"
-          description: "The API Key generated on the Admin Console."
-          type: STRING,
-          required: true
-        }
-      }
-    };
-  }
-  rpc UpdateAccountV2(UpdateAccountV2Request)
-      returns (UpdateAccountV2Response) {
-    option (google.api.http) = {
-      patch: "/v1/account/{id}"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Update",
-      description: "Update an Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
-      tags: "Account",
-      operation_id: "api.gateway.v1.account.update",
       parameters: {
         headers: {
           name: "authorization"

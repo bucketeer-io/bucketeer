@@ -4,21 +4,11 @@ import (
 	"context"
 
 	"go.uber.org/zap"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
 )
-
-func (s *grpcGatewayService) CreateAccountV2(
-	ctx context.Context,
-	request *gwproto.CreateAccountV2Request,
-) (*gwproto.CreateAccountV2Response, error) {
-	//TODO implement me
-	return nil, status.Errorf(codes.Unimplemented, "unsupported method")
-}
 
 func (s *grpcGatewayService) GetAccountV2(
 	ctx context.Context,
@@ -149,14 +139,6 @@ func (s *grpcGatewayService) GetMe(
 	return &gwproto.GetMeResponse{
 		Account: res.Account,
 	}, nil
-}
-
-func (s *grpcGatewayService) UpdateAccountV2(
-	ctx context.Context,
-	request *gwproto.UpdateAccountV2Request,
-) (*gwproto.UpdateAccountV2Response, error) {
-	//TODO implement me
-	return nil, status.Errorf(codes.Unimplemented, "unsupported method")
 }
 
 func (s *grpcGatewayService) ListAccountsV2(

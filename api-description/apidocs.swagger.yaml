@@ -457,59 +457,6 @@ paths:
           type: string
       tags:
         - Account
-    post:
-      summary: Create
-      description: Create a new Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.
-      operationId: api.gateway.v1.account.create
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/bucketeergatewayCreateAccountV2Response'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/bucketeergatewayCreateAccountV2Request'
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
-      tags:
-        - Account
   /v1/account/me:
     get:
       summary: Get
@@ -556,64 +503,6 @@ paths:
           in: query
           required: false
           type: string
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
-      tags:
-        - Account
-  /v1/account/{id}:
-    patch:
-      summary: Update
-      description: Update an Account. To call this API, you need a `WRITE` or `ADMIN` API Key role.
-      operationId: api.gateway.v1.account.update
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/bucketeergatewayUpdateAccountV2Response'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: id
-          in: path
-          required: true
-          type: string
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/GatewayUpdateAccountV2Body'
         - name: authorization
           description: The API Key generated on the Admin Console.
           in: header
@@ -1302,35 +1191,6 @@ definitions:
       - NUMBER
       - JSON
     default: STRING
-  GatewayUpdateAccountV2Body:
-    type: object
-    properties:
-      name:
-        type: string
-      firstName:
-        type: string
-      lastName:
-        type: string
-      language:
-        type: string
-      avatarImageUrl:
-        type: string
-      lastSeen:
-        type: string
-        format: int64
-      organizationRole:
-        $ref: '#/definitions/bucketeergatewayUpdateAccountV2RequestOrganizationRoleValue'
-      environmentRoles:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/accountAccountV2EnvironmentRole'
-      disabled:
-        type: boolean
-      deleted:
-        type: boolean
-        description: if true, the account will be deleted and other fields will be ignored.
-        title: deleted
   GatewayUpdateFeatureBody:
     type: object
     properties:
@@ -1601,33 +1461,6 @@ definitions:
         title: number or even json object
       description:
         type: string
-  bucketeergatewayCreateAccountV2Request:
-    type: object
-    properties:
-      email:
-        type: string
-      name:
-        type: string
-      avatarImageUrl:
-        type: string
-      organizationRole:
-        $ref: '#/definitions/AccountV2RoleOrganization'
-      environmentRoles:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/accountAccountV2EnvironmentRole'
-      firstName:
-        type: string
-      lastName:
-        type: string
-      language:
-        type: string
-  bucketeergatewayCreateAccountV2Response:
-    type: object
-    properties:
-      account:
-        $ref: '#/definitions/accountAccountV2'
   bucketeergatewayCreateFeatureRequest:
     type: object
     properties:
@@ -1735,16 +1568,6 @@ definitions:
       totalCount:
         type: string
         format: int64
-  bucketeergatewayUpdateAccountV2RequestOrganizationRoleValue:
-    type: object
-    properties:
-      role:
-        $ref: '#/definitions/AccountV2RoleOrganization'
-  bucketeergatewayUpdateAccountV2Response:
-    type: object
-    properties:
-      account:
-        $ref: '#/definitions/accountAccountV2'
   bucketeergatewayUpdateFeatureResponse:
     type: object
     properties:
