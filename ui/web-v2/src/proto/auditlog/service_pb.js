@@ -286,7 +286,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         pageSize: jspb.Message.getFieldWithDefault(msg, 1, 0),
         cursor: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 3, ''),
         orderBy: jspb.Message.getFieldWithDefault(msg, 4, 0),
         orderDirection: jspb.Message.getFieldWithDefault(msg, 5, 0),
         searchKeyword: jspb.Message.getFieldWithDefault(msg, 6, ''),
@@ -294,7 +293,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         to: jspb.Message.getFieldWithDefault(msg, 8, 0),
         entityType:
           (f = msg.getEntityType()) &&
-          google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f)
+          google_protobuf_wrappers_pb.Int32Value.toObject(includeInstance, f),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 10, '')
       };
 
     if (includeInstance) {
@@ -343,10 +343,6 @@ proto.bucketeer.auditlog.ListAuditLogsRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setCursor(value);
           break;
-        case 3:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 4:
           var value =
             /** @type {!proto.bucketeer.auditlog.ListAuditLogsRequest.OrderBy} */ (
@@ -380,6 +376,10 @@ proto.bucketeer.auditlog.ListAuditLogsRequest.deserializeBinaryFromReader =
             google_protobuf_wrappers_pb.Int32Value.deserializeBinaryFromReader
           );
           msg.setEntityType(value);
+          break;
+        case 10:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -421,10 +421,6 @@ proto.bucketeer.auditlog.ListAuditLogsRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(2, f);
     }
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(3, f);
-    }
     f = message.getOrderBy();
     if (f !== 0.0) {
       writer.writeEnum(4, f);
@@ -452,6 +448,10 @@ proto.bucketeer.auditlog.ListAuditLogsRequest.serializeBinaryToWriter =
         f,
         google_protobuf_wrappers_pb.Int32Value.serializeBinaryToWriter
       );
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(10, f);
     }
   };
 
@@ -510,26 +510,6 @@ proto.bucketeer.auditlog.ListAuditLogsRequest.prototype.setCursor = function (
 ) {
   return jspb.Message.setProto3StringField(this, 2, value);
 };
-
-/**
- * optional string environment_namespace = 3;
- * @return {string}
- */
-proto.bucketeer.auditlog.ListAuditLogsRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 3, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.auditlog.ListAuditLogsRequest} returns this
- */
-proto.bucketeer.auditlog.ListAuditLogsRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 3, value);
-  };
 
 /**
  * optional OrderBy order_by = 4;
@@ -668,6 +648,26 @@ proto.bucketeer.auditlog.ListAuditLogsRequest.prototype.clearEntityType =
 proto.bucketeer.auditlog.ListAuditLogsRequest.prototype.hasEntityType =
   function () {
     return jspb.Message.getField(this, 9) != null;
+  };
+
+/**
+ * optional string environment_id = 10;
+ * @return {string}
+ */
+proto.bucketeer.auditlog.ListAuditLogsRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 10, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.auditlog.ListAuditLogsRequest} returns this
+ */
+proto.bucketeer.auditlog.ListAuditLogsRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 10, value);
   };
 
 /**
@@ -1586,12 +1586,12 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         featureId: jspb.Message.getFieldWithDefault(msg, 1, ''),
         pageSize: jspb.Message.getFieldWithDefault(msg, 2, 0),
         cursor: jspb.Message.getFieldWithDefault(msg, 3, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 4, ''),
         orderBy: jspb.Message.getFieldWithDefault(msg, 5, 0),
         orderDirection: jspb.Message.getFieldWithDefault(msg, 6, 0),
         searchKeyword: jspb.Message.getFieldWithDefault(msg, 7, ''),
         from: jspb.Message.getFieldWithDefault(msg, 8, 0),
-        to: jspb.Message.getFieldWithDefault(msg, 9, 0)
+        to: jspb.Message.getFieldWithDefault(msg, 9, 0),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 10, '')
       };
 
     if (includeInstance) {
@@ -1643,10 +1643,6 @@ proto.bucketeer.auditlog.ListFeatureHistoryRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setCursor(value);
           break;
-        case 4:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 5:
           var value =
             /** @type {!proto.bucketeer.auditlog.ListFeatureHistoryRequest.OrderBy} */ (
@@ -1672,6 +1668,10 @@ proto.bucketeer.auditlog.ListFeatureHistoryRequest.deserializeBinaryFromReader =
         case 9:
           var value = /** @type {number} */ (reader.readInt64());
           msg.setTo(value);
+          break;
+        case 10:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -1717,10 +1717,6 @@ proto.bucketeer.auditlog.ListFeatureHistoryRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(3, f);
     }
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(4, f);
-    }
     f = message.getOrderBy();
     if (f !== 0.0) {
       writer.writeEnum(5, f);
@@ -1740,6 +1736,10 @@ proto.bucketeer.auditlog.ListFeatureHistoryRequest.serializeBinaryToWriter =
     f = message.getTo();
     if (f !== 0) {
       writer.writeInt64(9, f);
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(10, f);
     }
   };
 
@@ -1815,26 +1815,6 @@ proto.bucketeer.auditlog.ListFeatureHistoryRequest.prototype.getCursor =
 proto.bucketeer.auditlog.ListFeatureHistoryRequest.prototype.setCursor =
   function (value) {
     return jspb.Message.setProto3StringField(this, 3, value);
-  };
-
-/**
- * optional string environment_namespace = 4;
- * @return {string}
- */
-proto.bucketeer.auditlog.ListFeatureHistoryRequest.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 4, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.auditlog.ListFeatureHistoryRequest} returns this
- */
-proto.bucketeer.auditlog.ListFeatureHistoryRequest.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 4, value);
   };
 
 /**
@@ -1933,6 +1913,26 @@ proto.bucketeer.auditlog.ListFeatureHistoryRequest.prototype.setTo = function (
 ) {
   return jspb.Message.setProto3IntField(this, 9, value);
 };
+
+/**
+ * optional string environment_id = 10;
+ * @return {string}
+ */
+proto.bucketeer.auditlog.ListFeatureHistoryRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 10, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.auditlog.ListFeatureHistoryRequest} returns this
+ */
+proto.bucketeer.auditlog.ListFeatureHistoryRequest.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 10, value);
+  };
 
 /**
  * List of repeated fields within this message type.

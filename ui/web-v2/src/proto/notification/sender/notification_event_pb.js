@@ -95,7 +95,6 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     var f,
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        environmentNamespace: jspb.Message.getFieldWithDefault(msg, 2, ''),
         sourceType: jspb.Message.getFieldWithDefault(msg, 3, 0),
         notification:
           (f = msg.getNotification()) &&
@@ -103,7 +102,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        isAdminEvent: jspb.Message.getBooleanFieldWithDefault(msg, 5, false)
+        isAdminEvent: jspb.Message.getBooleanFieldWithDefault(msg, 5, false),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 6, '')
       };
 
     if (includeInstance) {
@@ -147,10 +147,6 @@ proto.bucketeer.notification.sender.NotificationEvent.deserializeBinaryFromReade
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
           break;
-        case 2:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setEnvironmentNamespace(value);
-          break;
         case 3:
           var value =
             /** @type {!proto.bucketeer.notification.Subscription.SourceType} */ (
@@ -171,6 +167,10 @@ proto.bucketeer.notification.sender.NotificationEvent.deserializeBinaryFromReade
         case 5:
           var value = /** @type {boolean} */ (reader.readBool());
           msg.setIsAdminEvent(value);
+          break;
+        case 6:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -208,10 +208,6 @@ proto.bucketeer.notification.sender.NotificationEvent.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(1, f);
     }
-    f = message.getEnvironmentNamespace();
-    if (f.length > 0) {
-      writer.writeString(2, f);
-    }
     f = message.getSourceType();
     if (f !== 0.0) {
       writer.writeEnum(3, f);
@@ -228,6 +224,10 @@ proto.bucketeer.notification.sender.NotificationEvent.serializeBinaryToWriter =
     f = message.getIsAdminEvent();
     if (f) {
       writer.writeBool(5, f);
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(6, f);
     }
   };
 
@@ -249,26 +249,6 @@ proto.bucketeer.notification.sender.NotificationEvent.prototype.getId =
 proto.bucketeer.notification.sender.NotificationEvent.prototype.setId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 1, value);
-  };
-
-/**
- * optional string environment_namespace = 2;
- * @return {string}
- */
-proto.bucketeer.notification.sender.NotificationEvent.prototype.getEnvironmentNamespace =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 2, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.notification.sender.NotificationEvent} returns this
- */
-proto.bucketeer.notification.sender.NotificationEvent.prototype.setEnvironmentNamespace =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 2, value);
   };
 
 /**
@@ -351,6 +331,26 @@ proto.bucketeer.notification.sender.NotificationEvent.prototype.getIsAdminEvent 
 proto.bucketeer.notification.sender.NotificationEvent.prototype.setIsAdminEvent =
   function (value) {
     return jspb.Message.setProto3BooleanField(this, 5, value);
+  };
+
+/**
+ * optional string environment_id = 6;
+ * @return {string}
+ */
+proto.bucketeer.notification.sender.NotificationEvent.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 6, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.notification.sender.NotificationEvent} returns this
+ */
+proto.bucketeer.notification.sender.NotificationEvent.prototype.setEnvironmentId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 6, value);
   };
 
 goog.object.extend(exports, proto.bucketeer.notification.sender);

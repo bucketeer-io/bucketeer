@@ -38,7 +38,7 @@ func TestGetSegmentUser(t *testing.T) {
 
 	segmentUsers := createSegmentUsersCache(t)
 	dataSegmentUsers := marshalMessage(t, segmentUsers)
-	key := cache.MakeKey(segmentUsersKind, segmentID, environmentNamespace)
+	key := cache.MakeKey(segmentUsersKind, segmentID, environmentId)
 
 	patterns := []struct {
 		desc        string
@@ -71,7 +71,7 @@ func TestGetSegmentUser(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			sc := newSegmentUsersCache(t, mockController)
 			p.setup(sc)
-			cache, err := sc.Get(segmentID, environmentNamespace)
+			cache, err := sc.Get(segmentID, environmentId)
 			if err == nil {
 				assert.Equal(t, segmentUsers.SegmentId, cache.SegmentId)
 				assert.Equal(t, segmentUsers.Users[0].Id, cache.Users[0].Id)
@@ -93,11 +93,11 @@ func TestGetAllSegmentUser(t *testing.T) {
 	segmentUsers := createSegmentUsersCache(t)
 	dataSegmentUsers := marshalMessage(t, segmentUsers)
 	keys := []string{
-		fmt.Sprintf("%s:%s:segment-id-1", environmentNamespace, segmentUsersKind),
-		fmt.Sprintf("%s:%s:segment-id-2", environmentNamespace, segmentUsersKind),
+		fmt.Sprintf("%s:%s:segment-id-1", environmentId, segmentUsersKind),
+		fmt.Sprintf("%s:%s:segment-id-2", environmentId, segmentUsersKind),
 	}
 
-	keyPrefix := cache.MakeKeyPrefix(segmentUsersKind, environmentNamespace)
+	keyPrefix := cache.MakeKeyPrefix(segmentUsersKind, environmentId)
 	key := keyPrefix + "*"
 	var cursor uint64
 
@@ -146,7 +146,7 @@ func TestGetAllSegmentUser(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			sc := newSegmentUsersCache(t, mockController)
 			p.setup(sc)
-			allUsers, err := sc.GetAll(environmentNamespace)
+			allUsers, err := sc.GetAll(environmentId)
 			if err == nil {
 				users := allUsers[0]
 				assert.Equal(t, segmentUsers.SegmentId, users.SegmentId)
@@ -170,7 +170,7 @@ func TestPutSegmentUser(t *testing.T) {
 
 	segmentUsers := createSegmentUsersCache(t)
 	dataSegmentUsers := marshalMessage(t, segmentUsers)
-	key := cache.MakeKey(segmentUsersKind, segmentID, environmentNamespace)
+	key := cache.MakeKey(segmentUsersKind, segmentID, environmentId)
 
 	patterns := []struct {
 		desc        string
@@ -199,7 +199,7 @@ func TestPutSegmentUser(t *testing.T) {
 			if p.setup != nil {
 				p.setup(sc)
 			}
-			err := sc.Put(p.input, environmentNamespace)
+			err := sc.Put(p.input, environmentId)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}

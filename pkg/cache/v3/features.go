@@ -31,8 +31,8 @@ const (
 )
 
 type FeaturesCache interface {
-	Get(environmentNamespace string) (*featureproto.Features, error)
-	Put(features *featureproto.Features, environmentNamespace string) error
+	Get(environmentId string) (*featureproto.Features, error)
+	Put(features *featureproto.Features, environmentId string) error
 }
 
 type featuresCache struct {
@@ -43,8 +43,8 @@ func NewFeaturesCache(c cache.MultiGetCache) FeaturesCache {
 	return &featuresCache{cache: c}
 }
 
-func (c *featuresCache) Get(environmentNamespace string) (*featureproto.Features, error) {
-	key := c.key(environmentNamespace)
+func (c *featuresCache) Get(environmentId string) (*featureproto.Features, error) {
+	key := c.key(environmentId)
 	value, err := c.cache.Get(key)
 	if err != nil {
 		return nil, err
@@ -61,15 +61,15 @@ func (c *featuresCache) Get(environmentNamespace string) (*featureproto.Features
 	return features, nil
 }
 
-func (c *featuresCache) Put(features *featureproto.Features, environmentNamespace string) error {
+func (c *featuresCache) Put(features *featureproto.Features, environmentId string) error {
 	buffer, err := proto.Marshal(features)
 	if err != nil {
 		return err
 	}
-	key := c.key(environmentNamespace)
+	key := c.key(environmentId)
 	return c.cache.Put(key, buffer, featuresTTL)
 }
 
-func (c *featuresCache) key(environmentNamespace string) string {
-	return fmt.Sprintf("%s:%s", environmentNamespace, featuresKind)
+func (c *featuresCache) key(environmentId string) string {
+	return fmt.Sprintf("%s:%s", environmentId, featuresKind)
 }

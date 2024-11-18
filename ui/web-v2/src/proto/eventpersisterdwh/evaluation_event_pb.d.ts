@@ -31,11 +31,11 @@ export class EvaluationEvent extends jspb.Message {
   getSourceId(): string;
   setSourceId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getTimestamp(): number;
   setTimestamp(value: number): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EvaluationEvent.AsObject;
@@ -69,7 +69,7 @@ export namespace EvaluationEvent {
     reason: string;
     tag: string;
     sourceId: string;
-    environmentNamespace: string;
     timestamp: number;
+    environmentId: string;
   };
 }

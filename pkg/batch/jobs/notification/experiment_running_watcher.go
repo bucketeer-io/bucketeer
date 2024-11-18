@@ -102,9 +102,9 @@ func (w *experimentRunningWatcher) createNotificationEvent(
 		return nil, err
 	}
 	ne := &senderproto.NotificationEvent{
-		Id:                   id.String(),
-		EnvironmentNamespace: environment.Id,
-		SourceType:           notificationproto.Subscription_EXPERIMENT_RUNNING,
+		Id:            id.String(),
+		EnvironmentId: environment.Id,
+		SourceType:    notificationproto.Subscription_EXPERIMENT_RUNNING,
 		Notification: &senderproto.Notification{
 			Type: senderproto.Notification_ExperimentRunning,
 			ExperimentRunningNotification: &senderproto.ExperimentRunningNotification{
@@ -141,16 +141,16 @@ func (w *experimentRunningWatcher) listEnvironments(ctx context.Context) ([]*env
 
 func (w *experimentRunningWatcher) listExperiments(
 	ctx context.Context,
-	environmentNamespace string,
+	environmentId string,
 ) ([]*experimentproto.Experiment, error) {
 	var experiments []*experimentproto.Experiment
 	cursor := ""
 	for {
 		resp, err := w.experimentClient.ListExperiments(ctx, &experimentproto.ListExperimentsRequest{
-			PageSize:             listRequestSize,
-			Cursor:               cursor,
-			EnvironmentNamespace: environmentNamespace,
-			Status:               &wrappersproto.Int32Value{Value: int32(experimentproto.Experiment_RUNNING)},
+			PageSize:      listRequestSize,
+			Cursor:        cursor,
+			EnvironmentId: environmentId,
+			Status:        &wrappersproto.Int32Value{Value: int32(experimentproto.Experiment_RUNNING)},
 		})
 		if err != nil {
 			return nil, err

@@ -166,8 +166,8 @@ func (s *inMemoryStorage) Close() {
 }
 
 func (s *inMemoryStorage) key(key *storage.Key) string {
-	if key.EnvironmentNamespace == storage.AdminEnvironmentNamespace {
+	if key.EnvironmentId == storage.AdminEnvironmentID {
 		return fmt.Sprintf("%s:%s", key.Kind, key.ID)
 	}
-	return fmt.Sprintf("%s:%s:%s", key.EnvironmentNamespace, key.Kind, key.ID)
+	return fmt.Sprintf("%s:%s:%s", key.EnvironmentId, key.Kind, key.ID)
 }

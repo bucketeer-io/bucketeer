@@ -42,8 +42,8 @@ func TestCreateSegment(t *testing.T) {
 		Description: fmt.Sprintf("%s-description", prefixSegment),
 	}
 	req := &featureproto.CreateSegmentRequest{
-		Command:              cmd,
-		EnvironmentNamespace: *environmentNamespace,
+		Command:       cmd,
+		EnvironmentId: *environmentNamespace,
 	}
 	res, err := client.CreateSegment(ctx, req)
 	assert.NoError(t, err)
@@ -107,7 +107,7 @@ func TestChangeSegmentName(t *testing.T) {
 			Commands: []*featureproto.Command{
 				{Command: cmdChange},
 			},
-			EnvironmentNamespace: *environmentNamespace,
+			EnvironmentId: *environmentNamespace,
 		},
 	)
 	assert.NotNil(t, res)
@@ -130,7 +130,7 @@ func TestChangeSegmentName(t *testing.T) {
 			Commands: []*featureproto.Command{
 				{Command: cmdChange},
 			},
-			EnvironmentNamespace: *environmentNamespace,
+			EnvironmentId: *environmentNamespace,
 		},
 	)
 	assert.NotNil(t, res)
@@ -154,7 +154,7 @@ func TestChangeSegmentDescription(t *testing.T) {
 			Commands: []*featureproto.Command{
 				{Command: cmdChange},
 			},
-			EnvironmentNamespace: *environmentNamespace,
+			EnvironmentId: *environmentNamespace,
 		},
 	)
 	assert.NotNil(t, res)
@@ -171,9 +171,9 @@ func TestDeleteSegment(t *testing.T) {
 	res, err := client.DeleteSegment(
 		ctx,
 		&featureproto.DeleteSegmentRequest{
-			Id:                   id,
-			Command:              &featureproto.DeleteSegmentCommand{},
-			EnvironmentNamespace: *environmentNamespace,
+			Id:            id,
+			Command:       &featureproto.DeleteSegmentCommand{},
+			EnvironmentId: *environmentNamespace,
 		},
 	)
 	assert.NotNil(t, res)
@@ -191,8 +191,8 @@ func TestListSegmentsPageSize(t *testing.T) {
 	}
 	pageSize := int64(1)
 	res, err := client.ListSegments(ctx, &featureproto.ListSegmentsRequest{
-		PageSize:             pageSize,
-		EnvironmentNamespace: *environmentNamespace,
+		PageSize:      pageSize,
+		EnvironmentId: *environmentNamespace,
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, pageSize, int64(len(res.Segments)))
@@ -207,17 +207,17 @@ func TestListSegmentsCursor(t *testing.T) {
 	}
 	pageSize := int64(2)
 	res, err := client.ListSegments(ctx, &featureproto.ListSegmentsRequest{
-		PageSize:             pageSize,
-		EnvironmentNamespace: *environmentNamespace,
+		PageSize:      pageSize,
+		EnvironmentId: *environmentNamespace,
 	})
 	assert.NoError(t, err)
 	assert.NotEmpty(t, res.Cursor)
 	resCursor, err := client.ListSegments(
 		ctx,
 		&featureproto.ListSegmentsRequest{
-			PageSize:             pageSize,
-			Cursor:               res.Cursor,
-			EnvironmentNamespace: *environmentNamespace,
+			PageSize:      pageSize,
+			Cursor:        res.Cursor,
+			EnvironmentId: *environmentNamespace,
 		},
 	)
 	assert.NoError(t, err)
@@ -233,8 +233,8 @@ func TestListSegmentsCursor(t *testing.T) {
 func getSegment(ctx context.Context, t *testing.T, client featureclient.Client, id string) *featureproto.Segment {
 	t.Helper()
 	req := &featureproto.GetSegmentRequest{
-		Id:                   id,
-		EnvironmentNamespace: *environmentNamespace,
+		Id:            id,
+		EnvironmentId: *environmentNamespace,
 	}
 	res, err := client.GetSegment(ctx, req)
 	assert.NoError(t, err)
@@ -248,8 +248,8 @@ func createSegment(ctx context.Context, t *testing.T, client featureclient.Clien
 		Description: fmt.Sprintf("%s-%s", "description", prefixSegment),
 	}
 	req := &featureproto.CreateSegmentRequest{
-		Command:              cmd,
-		EnvironmentNamespace: *environmentNamespace,
+		Command:       cmd,
+		EnvironmentId: *environmentNamespace,
 	}
 	res, err := client.CreateSegment(ctx, req)
 	assert.NoError(t, err)

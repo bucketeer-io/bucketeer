@@ -117,7 +117,7 @@ export const GoalIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         createGoal({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           id: data.id,
           name: data.name,
           description: data.description
@@ -157,7 +157,7 @@ export const GoalIndexPage: FC = memo(() => {
       }
       dispatch(
         updateGoal({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           id: goalId,
           name: name,
           description: description
@@ -165,7 +165,7 @@ export const GoalIndexPage: FC = memo(() => {
       ).then(() => {
         dispatch(
           getGoal({
-            environmentNamespace: currentEnvironment.id,
+            environmentId: currentEnvironment.id,
             id: goalId
           })
         );
@@ -200,7 +200,7 @@ export const GoalIndexPage: FC = memo(() => {
           : false;
       dispatch(
         listGoals({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           pageSize: GOAL_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),
@@ -278,7 +278,7 @@ export const GoalIndexPage: FC = memo(() => {
     async (data) => {
       dispatch(
         archiveGoal({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           id: data.goal.id
         })
       ).then(() => {
@@ -304,7 +304,7 @@ export const GoalIndexPage: FC = memo(() => {
     if (isUpdate) {
       dispatch(
         getGoal({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           id: goalId
         })
       ).then((e) => {

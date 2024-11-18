@@ -56,7 +56,7 @@ export const DebuggerIndexPage: FC = memo(() => {
       const evaluateFeaturesPromises = flag.map((f) =>
         dispatch(
           evaluateFeatures({
-            environmentNamespace: currentEnvironment.id,
+            environmentId: currentEnvironment.id,
             flag: f,
             userId: userId,
             userAttributes: userAttributes.map((ua) => [ua.key, ua.value])
@@ -72,7 +72,7 @@ export const DebuggerIndexPage: FC = memo(() => {
         const featureDetailsPromises = allEvaluations.map((evaluation) =>
           dispatch(
             getFeature({
-              environmentNamespace: currentEnvironment.id,
+              environmentId: currentEnvironment.id,
               id: evaluation.featureId
             })
           ).then((e) => {

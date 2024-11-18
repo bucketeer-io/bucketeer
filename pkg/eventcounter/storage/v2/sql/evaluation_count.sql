@@ -6,7 +6,7 @@ FROM
     `%s`
 WHERE
     timestamp BETWEEN TIMESTAMP(@startAt) AND TIMESTAMP(@endAt)
-    AND environment_namespace = @environmentNamespace
+    AND environment_id = @environmentId
     AND feature_id = @featureID
     AND feature_version = @featureVersion
 GROUP BY

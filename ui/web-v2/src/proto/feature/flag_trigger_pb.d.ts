@@ -10,9 +10,6 @@ export class FlagTrigger extends jspb.Message {
   getFeatureId(): string;
   setFeatureId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getType(): FlagTrigger.TypeMap[keyof FlagTrigger.TypeMap];
   setType(value: FlagTrigger.TypeMap[keyof FlagTrigger.TypeMap]): void;
 
@@ -40,6 +37,9 @@ export class FlagTrigger extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTrigger.AsObject;
   static toObject(
@@ -65,7 +65,6 @@ export namespace FlagTrigger {
   export type AsObject = {
     id: string;
     featureId: string;
-    environmentNamespace: string;
     type: FlagTrigger.TypeMap[keyof FlagTrigger.TypeMap];
     action: FlagTrigger.ActionMap[keyof FlagTrigger.ActionMap];
     description: string;
@@ -75,6 +74,7 @@ export namespace FlagTrigger {
     disabled: boolean;
     createdAt: number;
     updatedAt: number;
+    environmentId: string;
   };
 
   export interface TypeMap {

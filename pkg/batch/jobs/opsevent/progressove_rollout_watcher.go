@@ -101,8 +101,8 @@ func (s *progressiveRolloutWatcher) listProgressiveRollouts(
 	resp, err := s.aoClient.ListProgressiveRollouts(
 		ctx,
 		&aoproto.ListProgressiveRolloutsRequest{
-			EnvironmentNamespace: environmentID,
-			PageSize:             0,
+			EnvironmentId: environmentID,
+			PageSize:      0,
 		},
 	)
 	if err != nil {
@@ -114,13 +114,13 @@ func (s *progressiveRolloutWatcher) listProgressiveRollouts(
 func (w *progressiveRolloutWatcher) executeProgressiveRollout(
 	ctx context.Context,
 	progressiveRollout *aoproto.ProgressiveRollout,
-	environmentNamespace string,
+	environmentId string,
 ) error {
 	pr := &autoopsdomain.ProgressiveRollout{ProgressiveRollout: progressiveRollout}
 	schedules, err := pr.ExtractSchedules()
 	if err != nil {
 		w.logger.Error("Failed to extract schedules", zap.Error(err),
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 			zap.String("featureId", progressiveRollout.FeatureId),
 			zap.String("progressiveRolloutId", progressiveRollout.Id),
 		)
@@ -130,14 +130,14 @@ func (w *progressiveRolloutWatcher) executeProgressiveRollout(
 	for _, s := range schedules {
 		if s.TriggeredAt == 0 && s.ExecuteAt <= now {
 			w.logger.Info("scheduled time is passed",
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 				zap.String("featureId", progressiveRollout.FeatureId),
 				zap.String("progressiveRolloutId", progressiveRollout.Id),
 				zap.Any("datetimeClause", s),
 			)
 			if err := w.progressiveRolloutExecutor.ExecuteProgressiveRollout(
 				ctx,
-				environmentNamespace,
+				environmentId,
 				progressiveRollout.Id,
 				s.ScheduleId,
 			); err != nil {

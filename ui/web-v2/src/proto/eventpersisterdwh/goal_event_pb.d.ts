@@ -25,9 +25,6 @@ export class GoalEvent extends jspb.Message {
   getSourceId(): string;
   setSourceId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getTimestamp(): number;
   setTimestamp(value: number): void;
 
@@ -42,6 +39,9 @@ export class GoalEvent extends jspb.Message {
 
   getReason(): string;
   setReason(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GoalEvent.AsObject;
@@ -70,11 +70,11 @@ export namespace GoalEvent {
     userId: string;
     tag: string;
     sourceId: string;
-    environmentNamespace: string;
     timestamp: number;
     featureId: string;
     featureVersion: number;
     variationId: string;
     reason: string;
+    environmentId: string;
   };
 }

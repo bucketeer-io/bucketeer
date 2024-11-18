@@ -52,7 +52,7 @@ const initialState = experimentsAdapter.getInitialState<{
 export type ExperimentsState = typeof initialState;
 
 export interface GetExperimentParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -62,7 +62,7 @@ export const getExperiment = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/getExperiment`, async (params) => {
   const request = new GetExperimentRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   const result = await grpc.getExperiment(request);
   return result.response.getExperiment().toObject();
@@ -74,7 +74,7 @@ export type OrderDirection =
   ListExperimentsRequest.OrderDirectionMap[keyof ListExperimentsRequest.OrderDirectionMap];
 
 export interface ListExperimentsParams {
-  environmentNamespace: string;
+  environmentId: string;
   pageSize: number;
   cursor: string;
   featureId?: string;
@@ -95,7 +95,7 @@ export const listExperiments = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/list`, async (params) => {
   const request = new ListExperimentsRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setPageSize(params.pageSize);
   request.setSearchKeyword(params.searchKeyword);
   request.setCursor(params.cursor);
@@ -132,7 +132,7 @@ export const listExperiments = createAsyncThunk<
 export interface CreateExperimentParams {
   name: string;
   description?: string;
-  environmentNamespace: string;
+  environmentId: string;
   featureId: string;
   baseVariationId: string;
   goalIdsList: string[];
@@ -157,14 +157,14 @@ export const createExperiment = createAsyncThunk<
   command.setStartAt(Math.floor(params.startAt));
   command.setStopAt(Math.floor(params.stopAt));
   request.setCommand(command);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
 
   const result = await grpc.createExperiment(request);
   return result.response.toObject().experiment;
 });
 
 export interface UpdateExperimentParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
   changeNameCommand?: ChangeExperimentNameCommand;
   changeDescriptionCommand?: ChangeExperimentDescriptionCommand;
@@ -177,7 +177,7 @@ export const updateExperiment = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/update`, async (params) => {
   const request = new UpdateExperimentRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   if (params.changeNameCommand) {
     request.setChangeNameCommand(params.changeNameCommand);
@@ -192,7 +192,7 @@ export const updateExperiment = createAsyncThunk<
 });
 
 export interface ArchiveExperimentParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -202,14 +202,14 @@ export const archiveExperiment = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/archive`, async (params) => {
   const request = new ArchiveExperimentRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   request.setCommand(new ArchiveExperimentCommand());
   await grpc.archiveExperiment(request);
 });
 
 export interface StopExperimentParams {
-  environmentNamespace: string;
+  environmentId: string;
   experimentId: string;
 }
 
@@ -219,7 +219,7 @@ export const stopExperiment = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/stop`, async (params) => {
   const request = new StopExperimentRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.experimentId);
   request.setCommand(new StopExperimentCommand());
   await grpc.stopExperiment(request);

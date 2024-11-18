@@ -7,9 +7,6 @@ import * as proto_push_push_pb from '../../proto/push/push_pb';
 import * as proto_push_command_pb from '../../proto/push/command_pb';
 
 export class CreatePushRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   hasCommand(): boolean;
   clearCommand(): void;
   getCommand(): proto_push_command_pb.CreatePushCommand | undefined;
@@ -27,6 +24,9 @@ export class CreatePushRequest extends jspb.Message {
   getFcmServiceAccount_asU8(): Uint8Array;
   getFcmServiceAccount_asB64(): string;
   setFcmServiceAccount(value: Uint8Array | string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreatePushRequest.AsObject;
@@ -51,11 +51,11 @@ export class CreatePushRequest extends jspb.Message {
 
 export namespace CreatePushRequest {
   export type AsObject = {
-    environmentNamespace: string;
     command?: proto_push_command_pb.CreatePushCommand.AsObject;
     tagsList: Array<string>;
     name: string;
     fcmServiceAccount: Uint8Array | string;
+    environmentId: string;
   };
 }
 
@@ -93,9 +93,6 @@ export namespace CreatePushResponse {
 }
 
 export class ListPushesRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getPageSize(): number;
   setPageSize(value: number): void;
 
@@ -114,6 +111,9 @@ export class ListPushesRequest extends jspb.Message {
 
   getSearchKeyword(): string;
   setSearchKeyword(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListPushesRequest.AsObject;
@@ -138,12 +138,12 @@ export class ListPushesRequest extends jspb.Message {
 
 export namespace ListPushesRequest {
   export type AsObject = {
-    environmentNamespace: string;
     pageSize: number;
     cursor: string;
     orderBy: ListPushesRequest.OrderByMap[keyof ListPushesRequest.OrderByMap];
     orderDirection: ListPushesRequest.OrderDirectionMap[keyof ListPushesRequest.OrderDirectionMap];
     searchKeyword: string;
+    environmentId: string;
   };
 
   export interface OrderByMap {
@@ -208,9 +208,6 @@ export namespace ListPushesResponse {
 }
 
 export class DeletePushRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -218,6 +215,9 @@ export class DeletePushRequest extends jspb.Message {
   clearCommand(): void;
   getCommand(): proto_push_command_pb.DeletePushCommand | undefined;
   setCommand(value?: proto_push_command_pb.DeletePushCommand): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeletePushRequest.AsObject;
@@ -242,9 +242,9 @@ export class DeletePushRequest extends jspb.Message {
 
 export namespace DeletePushRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     command?: proto_push_command_pb.DeletePushCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -275,9 +275,6 @@ export namespace DeletePushResponse {
 }
 
 export class UpdatePushRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getId(): string;
   setId(value: string): void;
 
@@ -310,6 +307,9 @@ export class UpdatePushRequest extends jspb.Message {
   getName(): google_protobuf_wrappers_pb.StringValue | undefined;
   setName(value?: google_protobuf_wrappers_pb.StringValue): void;
 
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdatePushRequest.AsObject;
   static toObject(
@@ -333,13 +333,13 @@ export class UpdatePushRequest extends jspb.Message {
 
 export namespace UpdatePushRequest {
   export type AsObject = {
-    environmentNamespace: string;
     id: string;
     addPushTagsCommand?: proto_push_command_pb.AddPushTagsCommand.AsObject;
     deletePushTagsCommand?: proto_push_command_pb.DeletePushTagsCommand.AsObject;
     renamePushCommand?: proto_push_command_pb.RenamePushCommand.AsObject;
     tagsList: Array<string>;
     name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    environmentId: string;
   };
 }
 
@@ -377,8 +377,8 @@ export namespace UpdatePushResponse {
 }
 
 export class GetPushRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   getId(): string;
   setId(value: string): void;
@@ -406,7 +406,7 @@ export class GetPushRequest extends jspb.Message {
 
 export namespace GetPushRequest {
   export type AsObject = {
-    environmentNamespace: string;
+    environmentId: string;
     id: string;
   };
 }

@@ -98,8 +98,8 @@ func (c *experimentCacher) listExperiments(
 	environmentID string,
 ) ([]*expproto.Experiment, error) {
 	req := &expproto.ListExperimentsRequest{
-		PageSize:             0,
-		EnvironmentNamespace: environmentID,
+		PageSize:      0,
+		EnvironmentId: environmentID,
 		Statuses: []expproto.Experiment_Status{
 			expproto.Experiment_RUNNING,
 			expproto.Experiment_STOPPED,

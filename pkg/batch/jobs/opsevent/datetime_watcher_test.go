@@ -86,8 +86,8 @@ func TestRunDatetimeWatcher(t *testing.T) {
 				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListAutoOpsRules(
 					gomock.Any(),
 					&autoopsproto.ListAutoOpsRulesRequest{
-						PageSize:             0,
-						EnvironmentNamespace: "ns0",
+						PageSize:      0,
+						EnvironmentId: "ns0",
 					},
 				).Return(
 					&autoopsproto.ListAutoOpsRulesResponse{
@@ -134,8 +134,8 @@ func TestRunDatetimeWatcher(t *testing.T) {
 				w.aoClient.(*aoclientemock.MockClient).EXPECT().ListAutoOpsRules(
 					gomock.Any(),
 					&autoopsproto.ListAutoOpsRulesRequest{
-						PageSize:             0,
-						EnvironmentNamespace: "ns0",
+						PageSize:      0,
+						EnvironmentId: "ns0",
 					},
 				).Return(
 					&autoopsproto.ListAutoOpsRulesResponse{

@@ -85,14 +85,14 @@ func TestUpsert(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	patterns := []struct {
-		desc, environmentNamespace string
-		setup                      func(persister *userEventPersister)
-		input                      []*eventproto.UserEvent
-		expected                   error
+		desc, environmentId string
+		setup               func(persister *userEventPersister)
+		input               []*eventproto.UserEvent
+		expected            error
 	}{
 		{
-			desc:                 "upsert mau error",
-			environmentNamespace: "env1",
+			desc:          "upsert mau error",
+			environmentId: "env1",
 			setup: func(p *userEventPersister) {
 				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -100,16 +100,16 @@ func TestUpsert(t *testing.T) {
 			},
 			input: []*eventproto.UserEvent{
 				{
-					EnvironmentNamespace: "env1",
-					UserId:               "id-1",
-					LastSeen:             3,
+					EnvironmentId: "env1",
+					UserId:        "id-1",
+					LastSeen:      3,
 				},
 			},
 			expected: errors.New("internal"),
 		},
 		{
-			desc:                 "upsert success",
-			environmentNamespace: "env1",
+			desc:          "upsert success",
+			environmentId: "env1",
 			setup: func(p *userEventPersister) {
 				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -117,9 +117,9 @@ func TestUpsert(t *testing.T) {
 			},
 			input: []*eventproto.UserEvent{
 				{
-					EnvironmentNamespace: "env1",
-					UserId:               "id-1",
-					LastSeen:             3,
+					EnvironmentId: "env1",
+					UserId:        "id-1",
+					LastSeen:      3,
 				},
 			},
 			expected: nil,
@@ -131,7 +131,7 @@ func TestUpsert(t *testing.T) {
 			if p.setup != nil {
 				p.setup(pst)
 			}
-			err := pst.upsertMAUs(ctx, p.input, p.environmentNamespace)
+			err := pst.upsertMAUs(ctx, p.input, p.environmentId)
 			assert.Equal(t, p.expected, err)
 		})
 	}
@@ -164,14 +164,14 @@ func TestHandleChunk(t *testing.T) {
 	bMap := generatePullerMessages(t, 3, "env-2")
 
 	patterns := []struct {
-		desc, environmentNamespace string
-		setup                      func(persister *userEventPersister)
-		input                      map[string]*puller.Message
-		expected                   error
+		desc, environmentId string
+		setup               func(persister *userEventPersister)
+		input               map[string]*puller.Message
+		expected            error
 	}{
 		{
-			desc:                 "upsert mau error",
-			environmentNamespace: "env1",
+			desc:          "upsert mau error",
+			environmentId: "env1",
 			setup: func(p *userEventPersister) {
 				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -181,8 +181,8 @@ func TestHandleChunk(t *testing.T) {
 			expected: errors.New("internal"),
 		},
 		{
-			desc:                 "upsert success",
-			environmentNamespace: "env1",
+			desc:          "upsert success",
+			environmentId: "env1",
 			setup: func(p *userEventPersister) {
 				p.mysqlClient.(*mysqlmock.MockClient).EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
@@ -206,12 +206,12 @@ func TestHandleChunk(t *testing.T) {
 func generatePullerMessages(
 	t *testing.T,
 	size int,
-	environmentNamespace string,
+	environmentId string,
 ) map[string]*puller.Message {
 	t.Helper()
 	messages := make(map[string]*puller.Message)
 	for i := 0; i < size; i++ {
-		userEvent := generateUserEvent(t, environmentNamespace)
+		userEvent := generateUserEvent(t, environmentId)
 		msg := generatePullerMessage(t, userEvent)
 		messages[msg.ID] = msg
 	}
@@ -229,9 +229,9 @@ func generatePullerMessage(t *testing.T, userEvent *eventproto.UserEvent) *pulle
 		t.Fatalf("Failed to generate UUID: %v", err)
 	}
 	ev := &ecproto.Event{
-		Id:                   id.String(),
-		Event:                ue,
-		EnvironmentNamespace: userEvent.EnvironmentNamespace,
+		Id:            id.String(),
+		Event:         ue,
+		EnvironmentId: userEvent.EnvironmentId,
 	}
 	data, err := proto.Marshal(ev)
 	if err != nil {
@@ -246,16 +246,16 @@ func generatePullerMessage(t *testing.T, userEvent *eventproto.UserEvent) *pulle
 	return msg
 }
 
-func generateUserEvent(t *testing.T, environmentNamespace string) *eventproto.UserEvent {
+func generateUserEvent(t *testing.T, environmentId string) *eventproto.UserEvent {
 	t.Helper()
 	id, err := uuid.NewUUID()
 	if err != nil {
 		t.Fatalf("Failed to generate UUID: %v", err)
 	}
 	return &eventproto.UserEvent{
-		EnvironmentNamespace: environmentNamespace,
-		UserId:               fmt.Sprintf("user-id-%s", id),
-		LastSeen:             time.Now().Unix(),
+		EnvironmentId: environmentId,
+		UserId:        fmt.Sprintf("user-id-%s", id),
+		LastSeen:      time.Now().Unix(),
 	}
 }
 

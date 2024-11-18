@@ -22,7 +22,7 @@ export const opsCountsAdapter = createEntityAdapter({
 export const { selectAll, selectById } = opsCountsAdapter.getSelectors();
 
 export interface ListOpsCountsParams {
-  environmentNamespace: string;
+  environmentId: string;
   ids: Array<string>;
 }
 
@@ -33,7 +33,7 @@ export const listOpsCounts = createAsyncThunk<
 >(`${MODULE_NAME}/listOpsCounts`, async (params) => {
   const request = new ListOpsCountsRequest();
   request.setAutoOpsRuleIdsList(params.ids);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   const result = await autoOpsGrpc.listOpsCounts(request);
   return result.response.toObject();
 });

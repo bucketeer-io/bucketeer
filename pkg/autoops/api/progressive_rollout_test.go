@@ -906,7 +906,7 @@ func TestGetProgressiveRolloutMySQL(t *testing.T) {
 	}{
 		{
 			desc:        "err: ErrIDRequired",
-			req:         &autoopsproto.GetProgressiveRolloutRequest{EnvironmentNamespace: "ns0"},
+			req:         &autoopsproto.GetProgressiveRolloutRequest{EnvironmentId: "ns0"},
 			expectedErr: createError(statusProgressiveRolloutIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
@@ -918,7 +918,7 @@ func TestGetProgressiveRolloutMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			req:         &autoopsproto.GetProgressiveRolloutRequest{Id: "wrongid", EnvironmentNamespace: "ns0"},
+			req:         &autoopsproto.GetProgressiveRolloutRequest{Id: "wrongid", EnvironmentId: "ns0"},
 			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout)),
 		},
 		{
@@ -930,7 +930,7 @@ func TestGetProgressiveRolloutMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			req:         &autoopsproto.GetProgressiveRolloutRequest{Id: "aid1", EnvironmentNamespace: "ns0"},
+			req:         &autoopsproto.GetProgressiveRolloutRequest{Id: "aid1", EnvironmentId: "ns0"},
 			expectedErr: nil,
 		},
 	}
@@ -978,7 +978,7 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 		},
 		{
 			desc:        "err: command is reuired",
-			req:         &autoopsproto.StopProgressiveRolloutRequest{Id: "id", EnvironmentNamespace: "ns"},
+			req:         &autoopsproto.StopProgressiveRolloutRequest{Id: "id", EnvironmentId: "ns"},
 			expectedErr: createError(statusProgressiveRolloutNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
 		},
 		{
@@ -987,8 +987,8 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, errors.New("error"))
 			},
 			req: &autoopsproto.StopProgressiveRolloutRequest{
-				Id:                   "id",
-				EnvironmentNamespace: "ns",
+				Id:            "id",
+				EnvironmentId: "ns",
 				Command: &autoopsproto.StopProgressiveRolloutCommand{
 					StoppedBy: autoopsproto.ProgressiveRollout_USER,
 				},
@@ -1004,8 +1004,8 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 				).Return(errors.New("error"))
 			},
 			req: &autoopsproto.StopProgressiveRolloutRequest{
-				Id:                   "id",
-				EnvironmentNamespace: "ns",
+				Id:            "id",
+				EnvironmentId: "ns",
 				Command: &autoopsproto.StopProgressiveRolloutCommand{
 					StoppedBy: autoopsproto.ProgressiveRollout_USER,
 				},
@@ -1021,8 +1021,8 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 				).Return(v2as.ErrProgressiveRolloutNotFound)
 			},
 			req: &autoopsproto.StopProgressiveRolloutRequest{
-				Id:                   "id",
-				EnvironmentNamespace: "ns",
+				Id:            "id",
+				EnvironmentId: "ns",
 				Command: &autoopsproto.StopProgressiveRolloutCommand{
 					StoppedBy: autoopsproto.ProgressiveRollout_USER,
 				},
@@ -1038,8 +1038,8 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 				).Return(v2as.ErrProgressiveRolloutUnexpectedAffectedRows)
 			},
 			req: &autoopsproto.StopProgressiveRolloutRequest{
-				Id:                   "id",
-				EnvironmentNamespace: "ns",
+				Id:            "id",
+				EnvironmentId: "ns",
 				Command: &autoopsproto.StopProgressiveRolloutCommand{
 					StoppedBy: autoopsproto.ProgressiveRollout_USER,
 				},
@@ -1055,8 +1055,8 @@ func TestStopProgressiveRolloutMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &autoopsproto.StopProgressiveRolloutRequest{
-				Id:                   "id",
-				EnvironmentNamespace: "ns",
+				Id:            "id",
+				EnvironmentId: "ns",
 				Command: &autoopsproto.StopProgressiveRolloutCommand{
 					StoppedBy: autoopsproto.ProgressiveRollout_USER,
 				},
@@ -1111,7 +1111,7 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 			setup: func(s *AutoOpsService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, errors.New("error"))
 			},
-			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "wrongid", EnvironmentNamespace: "ns0"},
+			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "wrongid", EnvironmentId: "ns0"},
 			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
@@ -1122,7 +1122,7 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
-			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "wrongid", EnvironmentNamespace: "ns0"},
+			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "wrongid", EnvironmentId: "ns0"},
 			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
@@ -1133,7 +1133,7 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(errors.New("error"))
 			},
-			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "wrongid", EnvironmentNamespace: "ns0"},
+			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "wrongid", EnvironmentId: "ns0"},
 			expectedErr: createError(statusProgressiveRolloutInternal, localizer.MustLocalize(locale.InternalServerError)),
 		},
 		{
@@ -1144,7 +1144,7 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrProgressiveRolloutNotFound)
 			},
-			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "wrongid", EnvironmentNamespace: "ns0"},
+			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "wrongid", EnvironmentId: "ns0"},
 			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout)),
 		},
 		{
@@ -1155,7 +1155,7 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(v2as.ErrProgressiveRolloutUnexpectedAffectedRows)
 			},
-			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "wrongid", EnvironmentNamespace: "ns0"},
+			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "wrongid", EnvironmentId: "ns0"},
 			expectedErr: createError(statusProgressiveRolloutNotFound, localizer.MustLocalizeWithTemplate(locale.NotFoundError, locale.ProgressiveRollout)),
 		},
 		{
@@ -1166,7 +1166,7 @@ func TestDeleteProgressiveRolloutMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
-			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "aid1", EnvironmentNamespace: "ns0"},
+			req:         &autoopsproto.DeleteProgressiveRolloutRequest{Id: "aid1", EnvironmentId: "ns0"},
 			expectedErr: nil,
 		},
 	}
@@ -1202,18 +1202,18 @@ func TestListProgressiveRolloutsMySQL(t *testing.T) {
 	}
 
 	patterns := []struct {
-		desc                 string
-		setup                func(*AutoOpsService)
-		orderBy              autoopsproto.ListProgressiveRolloutsRequest_OrderBy
-		environmentNamespace string
-		expected             error
+		desc          string
+		setup         func(*AutoOpsService)
+		orderBy       autoopsproto.ListProgressiveRolloutsRequest_OrderBy
+		environmentId string
+		expected      error
 	}{
 		{
-			desc:                 "err: InvalidOrderBy",
-			setup:                nil,
-			orderBy:              autoopsproto.ListProgressiveRolloutsRequest_OrderBy(999),
-			environmentNamespace: "ns0",
-			expected:             createError(statusProgressiveRolloutInvalidOrderBy, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by")),
+			desc:          "err: InvalidOrderBy",
+			setup:         nil,
+			orderBy:       autoopsproto.ListProgressiveRolloutsRequest_OrderBy(999),
+			environmentId: "ns0",
+			expected:      createError(statusProgressiveRolloutInvalidOrderBy, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "order_by")),
 		},
 		{
 			desc: "err: interal error",
@@ -1231,9 +1231,9 @@ func TestListProgressiveRolloutsMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			orderBy:              autoopsproto.ListProgressiveRolloutsRequest_DEFAULT,
-			environmentNamespace: "ns0",
-			expected:             createError(statusProgressiveRolloutInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
+			orderBy:       autoopsproto.ListProgressiveRolloutsRequest_DEFAULT,
+			environmentId: "ns0",
+			expected:      createError(statusProgressiveRolloutInternal, localizer.MustLocalizeWithTemplate(locale.InternalServerError)),
 		},
 		{
 			desc: "success",
@@ -1251,9 +1251,9 @@ func TestListProgressiveRolloutsMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
-			orderBy:              autoopsproto.ListProgressiveRolloutsRequest_DEFAULT,
-			environmentNamespace: "ns0",
-			expected:             nil,
+			orderBy:       autoopsproto.ListProgressiveRolloutsRequest_DEFAULT,
+			environmentId: "ns0",
+			expected:      nil,
 		},
 	}
 	for _, p := range patterns {
@@ -1263,8 +1263,8 @@ func TestListProgressiveRolloutsMySQL(t *testing.T) {
 				p.setup(service)
 			}
 			req := &autoopsproto.ListProgressiveRolloutsRequest{
-				OrderBy:              p.orderBy,
-				EnvironmentNamespace: "ns0",
+				OrderBy:       p.orderBy,
+				EnvironmentId: "ns0",
 			}
 			_, err := service.ListProgressiveRollouts(ctx, req)
 			assert.Equal(t, p.expected, err)
@@ -1323,8 +1323,8 @@ func TestExecuteProgressiveRolloutMySQL(t *testing.T) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, errors.New("error"))
 			},
 			req: &autoopsproto.ExecuteProgressiveRolloutRequest{
-				Id:                   "aid1",
-				EnvironmentNamespace: "ns0",
+				Id:            "aid1",
+				EnvironmentId: "ns0",
 				ChangeProgressiveRolloutTriggeredAtCommand: &autoopsproto.ChangeProgressiveRolloutScheduleTriggeredAtCommand{
 					ScheduleId: "sid1",
 				},
@@ -1340,8 +1340,8 @@ func TestExecuteProgressiveRolloutMySQL(t *testing.T) {
 				).Return(nil)
 			},
 			req: &autoopsproto.ExecuteProgressiveRolloutRequest{
-				Id:                   "aid1",
-				EnvironmentNamespace: "ns0",
+				Id:            "aid1",
+				EnvironmentId: "ns0",
 				ChangeProgressiveRolloutTriggeredAtCommand: &autoopsproto.ChangeProgressiveRolloutScheduleTriggeredAtCommand{
 					ScheduleId: "sid1",
 				},

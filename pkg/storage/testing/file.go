@@ -34,7 +34,7 @@ func (f *inMemoryStorageBucket) Delete(ctx context.Context, key *storage.Key) er
 
 func (f *inMemoryStorageBucket) Writer(
 	ctx context.Context,
-	environmentNamespace,
+	environmentId,
 	filename string,
 	CRC32C uint32,
 ) (storage.Writer, error) {
@@ -44,7 +44,7 @@ func (f *inMemoryStorageBucket) Writer(
 
 func (f *inMemoryStorageBucket) Reader(
 	ctx context.Context,
-	environmentNamespace,
+	environmentId,
 	filename string,
 ) (storage.Reader, error) {
 	// TODO

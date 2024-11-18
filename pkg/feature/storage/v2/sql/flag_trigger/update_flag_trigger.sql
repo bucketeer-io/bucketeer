@@ -10,4 +10,4 @@ SET feature_id        = ?,
     created_at        = ?,
     updated_at        = ?
 WHERE id = ?
-  AND environment_namespace = ?
+  AND environment_id = ?

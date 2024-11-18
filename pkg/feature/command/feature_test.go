@@ -618,8 +618,8 @@ func makeEventFactory(t *testing.T, feature *domain.Feature) *FeatureEventFactor
 		editor: &eventproto.Editor{
 			Email: "email",
 		},
-		feature:              feature,
-		previousFeature:      prev,
-		environmentNamespace: "ns0",
+		feature:         feature,
+		previousFeature: prev,
+		environmentId:   "ns0",
 	}
 }

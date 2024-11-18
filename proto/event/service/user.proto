@@ -24,10 +24,11 @@ message UserEvent {
   reserved 2;  // bucketeer.user.User user = 2 [deprecated = true];
   reserved 3;  // repeated bucketeer.feature.Feature features = 3 [deprecated =
                // true];
-  string environment_namespace = 4;
+  reserved 4;
   string tag = 5;
   string user_id = 6;
   int64 last_seen = 7;
   map<string, string> data = 8;
   bucketeer.event.client.SourceId source_id = 9;
+  string environment_id = 10;
 }

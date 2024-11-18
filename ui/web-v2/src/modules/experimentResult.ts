@@ -34,7 +34,7 @@ const initialState = experimentResultsAdapter.getInitialState<{
 });
 
 export interface GetExperimentResultParams {
-  environmentNamespace: string;
+  environmentId: string;
   experimentId: string;
 }
 
@@ -44,7 +44,7 @@ export const getExperimentResult = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/getExperimentResult`, async (params) => {
   const request = new GetExperimentResultRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setExperimentId(params.experimentId);
   const result = await grpc.getExperimentResult(request);
   return result.response.toObject();

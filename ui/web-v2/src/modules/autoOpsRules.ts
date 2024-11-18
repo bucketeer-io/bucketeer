@@ -36,7 +36,7 @@ export const autoOpsRulesAdapter = createEntityAdapter({
 export const { selectAll, selectById } = autoOpsRulesAdapter.getSelectors();
 
 interface CreateAutoOpsRuleParams {
-  environmentNamespace: string;
+  environmentId: string;
   command: CreateAutoOpsRuleCommand;
 }
 
@@ -46,13 +46,13 @@ export const createAutoOpsRule = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/create`, async (params) => {
   const request = new CreateAutoOpsRuleRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setCommand(params.command);
   await autoOpsGrpc.createAutoOpsRule(request);
 });
 
 export interface ListAutoOpsRulesParams {
-  environmentNamespace: string;
+  environmentId: string;
   featureId: string;
 }
 
@@ -63,13 +63,13 @@ export const listAutoOpsRules = createAsyncThunk<
 >(`${MODULE_NAME}/list`, async (params) => {
   const request = new ListAutoOpsRulesRequest();
   request.setFeatureIdsList([params.featureId]);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   const result = await autoOpsGrpc.listAutoOpsRules(request);
   return result.response.toObject();
 });
 
 export interface UpdateAutoOpsRuleParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
   addOpsEventRateClauseCommands?: Array<AddOpsEventRateClauseCommand>;
   changeOpsEventRateClauseCommands?: Array<ChangeOpsEventRateClauseCommand>;
@@ -84,7 +84,7 @@ export const updateAutoOpsRule = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/update`, async (params) => {
   const request = new UpdateAutoOpsRuleRequest();
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   request.setId(params.id);
   params.addOpsEventRateClauseCommands?.length > 0 &&
     request.setAddOpsEventRateClauseCommandsList(
@@ -106,7 +106,7 @@ export const updateAutoOpsRule = createAsyncThunk<
 });
 
 export interface DeleteAutoOpsRuleParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -117,14 +117,14 @@ export const deleteAutoOpsRule = createAsyncThunk<
 >(`${MODULE_NAME}/delete`, async (params) => {
   const request = new DeleteAutoOpsRuleRequest();
   request.setId(params.id);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   const command = new DeleteAutoOpsRuleCommand();
   request.setCommand(command);
   await autoOpsGrpc.deleteAutoOpsRule(request);
 });
 
 export interface StopAutoOpsRuleParams {
-  environmentNamespace: string;
+  environmentId: string;
   id: string;
 }
 
@@ -135,7 +135,7 @@ export const stopAutoOpsRule = createAsyncThunk<
 >(`${MODULE_NAME}/stop`, async (params) => {
   const request = new StopAutoOpsRuleRequest();
   request.setId(params.id);
-  request.setEnvironmentNamespace(params.environmentNamespace);
+  request.setEnvironmentId(params.environmentId);
   const command = new StopAutoOpsRuleCommand();
   request.setCommand(command);
   await autoOpsGrpc.stopAutoOpsRule(request);

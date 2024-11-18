@@ -48,9 +48,6 @@ export class Event extends jspb.Message {
   getData(): google_protobuf_any_pb.Any | undefined;
   setData(value?: google_protobuf_any_pb.Any): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getIsAdminEvent(): boolean;
   setIsAdminEvent(value: boolean): void;
 
@@ -64,6 +61,9 @@ export class Event extends jspb.Message {
 
   getPreviousEntityData(): string;
   setPreviousEntityData(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Event.AsObject;
@@ -92,11 +92,11 @@ export namespace Event {
     type: Event.TypeMap[keyof Event.TypeMap];
     editor?: Editor.AsObject;
     data?: google_protobuf_any_pb.Any.AsObject;
-    environmentNamespace: string;
     isAdminEvent: boolean;
     options?: Options.AsObject;
     entityData: string;
     previousEntityData: string;
+    environmentId: string;
   };
 
   export interface EntityTypeMap {
@@ -6345,9 +6345,6 @@ export class FlagTriggerCreatedEvent extends jspb.Message {
   getFeatureId(): string;
   setFeatureId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getType(): proto_feature_flag_trigger_pb.FlagTrigger.TypeMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.TypeMap];
   setType(
     value: proto_feature_flag_trigger_pb.FlagTrigger.TypeMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.TypeMap]
@@ -6369,6 +6366,9 @@ export class FlagTriggerCreatedEvent extends jspb.Message {
 
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTriggerCreatedEvent.AsObject;
@@ -6395,13 +6395,13 @@ export namespace FlagTriggerCreatedEvent {
   export type AsObject = {
     id: string;
     featureId: string;
-    environmentNamespace: string;
     type: proto_feature_flag_trigger_pb.FlagTrigger.TypeMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.TypeMap];
     action: proto_feature_flag_trigger_pb.FlagTrigger.ActionMap[keyof proto_feature_flag_trigger_pb.FlagTrigger.ActionMap];
     description: string;
     token: string;
     createdAt: number;
     updatedAt: number;
+    environmentId: string;
   };
 }
 
@@ -6412,11 +6412,11 @@ export class FlagTriggerResetEvent extends jspb.Message {
   getFeatureId(): string;
   setFeatureId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getToken(): string;
   setToken(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTriggerResetEvent.AsObject;
@@ -6443,8 +6443,8 @@ export namespace FlagTriggerResetEvent {
   export type AsObject = {
     id: string;
     featureId: string;
-    environmentNamespace: string;
     token: string;
+    environmentId: string;
   };
 }
 
@@ -6455,11 +6455,11 @@ export class FlagTriggerDescriptionChangedEvent extends jspb.Message {
   getFeatureId(): string;
   setFeatureId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getDescription(): string;
   setDescription(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(
@@ -6490,8 +6490,8 @@ export namespace FlagTriggerDescriptionChangedEvent {
   export type AsObject = {
     id: string;
     featureId: string;
-    environmentNamespace: string;
     description: string;
+    environmentId: string;
   };
 }
 
@@ -6502,8 +6502,8 @@ export class FlagTriggerDisabledEvent extends jspb.Message {
   getFeatureId(): string;
   setFeatureId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTriggerDisabledEvent.AsObject;
@@ -6530,7 +6530,7 @@ export namespace FlagTriggerDisabledEvent {
   export type AsObject = {
     id: string;
     featureId: string;
-    environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -6541,8 +6541,8 @@ export class FlagTriggerEnabledEvent extends jspb.Message {
   getFeatureId(): string;
   setFeatureId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTriggerEnabledEvent.AsObject;
@@ -6569,7 +6569,7 @@ export namespace FlagTriggerEnabledEvent {
   export type AsObject = {
     id: string;
     featureId: string;
-    environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -6580,8 +6580,8 @@ export class FlagTriggerDeletedEvent extends jspb.Message {
   getFeatureId(): string;
   setFeatureId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTriggerDeletedEvent.AsObject;
@@ -6608,7 +6608,7 @@ export namespace FlagTriggerDeletedEvent {
   export type AsObject = {
     id: string;
     featureId: string;
-    environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -6619,14 +6619,14 @@ export class FlagTriggerUsageUpdatedEvent extends jspb.Message {
   getFeatureId(): string;
   setFeatureId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getLastTriggeredAt(): number;
   setLastTriggeredAt(value: number): void;
 
   getTriggerTimes(): number;
   setTriggerTimes(value: number): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): FlagTriggerUsageUpdatedEvent.AsObject;
@@ -6653,9 +6653,9 @@ export namespace FlagTriggerUsageUpdatedEvent {
   export type AsObject = {
     id: string;
     featureId: string;
-    environmentNamespace: string;
     lastTriggeredAt: number;
     triggerTimes: number;
+    environmentId: string;
   };
 }
 

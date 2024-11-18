@@ -35,20 +35,20 @@ func TestNewFeatureLastUsedStorage(t *testing.T) {
 func TestGetFeatureLastUsedInfos(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
-		input                []string
-		environmentNamespace string
-		expected             []*domain.FeatureLastUsedInfo
-		expectedErr          error
+		input         []string
+		environmentId string
+		expected      []*domain.FeatureLastUsedInfo
+		expectedErr   error
 	}{
 		{
-			input:                []string{},
-			environmentNamespace: "ns0",
-			expected:             []*domain.FeatureLastUsedInfo{},
-			expectedErr:          nil,
+			input:         []string{},
+			environmentId: "ns0",
+			expected:      []*domain.FeatureLastUsedInfo{},
+			expectedErr:   nil,
 		},
 		{
-			input:                []string{"feature-id-1:1"},
-			environmentNamespace: "ns0",
+			input:         []string{"feature-id-1:1"},
+			environmentId: "ns0",
 			expected: []*domain.FeatureLastUsedInfo{
 				{
 					FeatureLastUsedInfo: &proto.FeatureLastUsedInfo{
@@ -66,7 +66,7 @@ func TestGetFeatureLastUsedInfos(t *testing.T) {
 				"feature-id-1:1",
 				"feature-id-2:1",
 			},
-			environmentNamespace: "ns0",
+			environmentId: "ns0",
 			expected: []*domain.FeatureLastUsedInfo{
 				{
 					FeatureLastUsedInfo: &proto.FeatureLastUsedInfo{
@@ -113,7 +113,7 @@ func TestGetFeatureLastUsedInfos(t *testing.T) {
 	for _, p := range patterns {
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()
-		actual, err := db.GetFeatureLastUsedInfos(ctx, p.input, p.environmentNamespace)
+		actual, err := db.GetFeatureLastUsedInfos(ctx, p.input, p.environmentId)
 		assert.Equal(t, p.expectedErr, err)
 		if err == nil && len(p.input) > 0 {
 			for i, e := range p.expected {
@@ -130,9 +130,9 @@ func TestGetFeatureLastUsedInfos(t *testing.T) {
 func TestUpsertFeatureLastUsedInfo(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
-		data                 []*domain.FeatureLastUsedInfo
-		environmentNamespace string
-		expectedErr          error
+		data          []*domain.FeatureLastUsedInfo
+		environmentId string
+		expectedErr   error
 	}{
 		// insert
 		{
@@ -146,8 +146,8 @@ func TestUpsertFeatureLastUsedInfo(t *testing.T) {
 					},
 				},
 			},
-			environmentNamespace: "ns0",
-			expectedErr:          nil,
+			environmentId: "ns0",
+			expectedErr:   nil,
 		},
 		// multi insert
 		{
@@ -169,8 +169,8 @@ func TestUpsertFeatureLastUsedInfo(t *testing.T) {
 					},
 				},
 			},
-			environmentNamespace: "ns0",
-			expectedErr:          nil,
+			environmentId: "ns0",
+			expectedErr:   nil,
 		},
 		// update
 		{
@@ -184,8 +184,8 @@ func TestUpsertFeatureLastUsedInfo(t *testing.T) {
 					},
 				},
 			},
-			environmentNamespace: "ns0",
-			expectedErr:          nil,
+			environmentId: "ns0",
+			expectedErr:   nil,
 		},
 		// insert & update
 		{
@@ -207,8 +207,8 @@ func TestUpsertFeatureLastUsedInfo(t *testing.T) {
 					},
 				},
 			},
-			environmentNamespace: "ns0",
-			expectedErr:          nil,
+			environmentId: "ns0",
+			expectedErr:   nil,
 		},
 	}
 	client := storagetesting.NewInMemoryStorage()
@@ -236,7 +236,7 @@ func TestUpsertFeatureLastUsedInfo(t *testing.T) {
 	for _, p := range patterns {
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()
-		err := db.UpsertFeatureLastUsedInfos(ctx, p.data, p.environmentNamespace)
+		err := db.UpsertFeatureLastUsedInfos(ctx, p.data, p.environmentId)
 		assert.NoError(t, err)
 		actual := make([]*proto.FeatureLastUsedInfo, len(p.data))
 		for i := range actual {
@@ -244,7 +244,7 @@ func TestUpsertFeatureLastUsedInfo(t *testing.T) {
 		}
 		keys := make([]*storage.Key, 0, len(p.data))
 		for _, d := range p.data {
-			keys = append(keys, storage.NewKey(d.ID(), featureLastUsedInfoKind, p.environmentNamespace))
+			keys = append(keys, storage.NewKey(d.ID(), featureLastUsedInfoKind, p.environmentId))
 		}
 		err = client.GetMulti(ctx, keys, actual)
 		assert.NoError(t, err)

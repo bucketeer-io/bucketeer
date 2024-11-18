@@ -25,7 +25,7 @@ import (
 )
 
 type OpsCountStorage interface {
-	UpsertOpsCount(ctx context.Context, environmentNamespace string, oc *domain.OpsCount) error
+	UpsertOpsCount(ctx context.Context, environmentId string, oc *domain.OpsCount) error
 	ListOpsCounts(
 		ctx context.Context,
 		whereParts []mysql.WherePart,
@@ -42,7 +42,7 @@ func NewOpsCountStorage(qe mysql.QueryExecer) OpsCountStorage {
 	return &opsCountStorage{qe: qe}
 }
 
-func (s *opsCountStorage) UpsertOpsCount(ctx context.Context, environmentNamespace string, oc *domain.OpsCount) error {
+func (s *opsCountStorage) UpsertOpsCount(ctx context.Context, environmentId string, oc *domain.OpsCount) error {
 	query := `
 		INSERT INTO ops_count (
 			id,
@@ -52,7 +52,7 @@ func (s *opsCountStorage) UpsertOpsCount(ctx context.Context, environmentNamespa
 			ops_event_count,
 			evaluation_count,
 			feature_id,
-			environment_namespace
+			environment_id
 		) VALUES (
 			?, ?, ?, ?, ?, ?, ?, ?
 		) ON DUPLICATE KEY UPDATE
@@ -73,7 +73,7 @@ func (s *opsCountStorage) UpsertOpsCount(ctx context.Context, environmentNamespa
 		oc.OpsEventCount,
 		oc.EvaluationCount,
 		oc.FeatureId,
-		environmentNamespace,
+		environmentId,
 	)
 	if err != nil {
 		return err

@@ -184,10 +184,10 @@ type getEvaluationResponse struct {
 }
 
 type event struct {
-	ID                   string          `json:"id,omitempty"`
-	Event                json.RawMessage `json:"event,omitempty"`
-	EnvironmentNamespace string          `json:"environment_namespace,omitempty"`
-	Type                 EventType       `json:"type,omitempty"`
+	ID            string          `json:"id,omitempty"`
+	Event         json.RawMessage `json:"event,omitempty"`
+	EnvironmentId string          `json:"environment_id,omitempty"`
+	Type          EventType       `json:"type,omitempty"`
 }
 
 type metricsEvent struct {
@@ -541,22 +541,22 @@ func (s *gatewayService) publishUserEvent(
 		return err
 	}
 	userEvent := &serviceeventproto.UserEvent{
-		Id:                   id.String(),
-		SourceId:             sourceID,
-		Tag:                  tag,
-		UserId:               user.Id,
-		LastSeen:             time.Now().Unix(),
-		Data:                 nil, // We set nil until we decide again what to do with the user metadata.
-		EnvironmentNamespace: environmentId,
+		Id:            id.String(),
+		SourceId:      sourceID,
+		Tag:           tag,
+		UserId:        user.Id,
+		LastSeen:      time.Now().Unix(),
+		Data:          nil, // We set nil until we decide again what to do with the user metadata.
+		EnvironmentId: environmentId,
 	}
 	ue, err := ptypes.MarshalAny(userEvent)
 	if err != nil {
 		return err
 	}
 	event := &eventproto.Event{
-		Id:                   id.String(),
-		Event:                ue,
-		EnvironmentNamespace: environmentId,
+		Id:            id.String(),
+		Event:         ue,
+		EnvironmentId: environmentId,
 	}
 	return s.userPublisher.Publish(ctx, event)
 }
@@ -750,8 +750,8 @@ func (s *gatewayService) getSegmentUsers(
 		)...,
 	)
 	req := &featureproto.ListSegmentUsersRequest{
-		SegmentId:            segmentID,
-		EnvironmentNamespace: environmentId,
+		SegmentId:     segmentID,
+		EnvironmentId: environmentId,
 	}
 	res, err := s.featureClient.ListSegmentUsers(ctx, req)
 	if err != nil {
@@ -828,9 +828,9 @@ func (s *gatewayService) listFeatures(
 	cursor := ""
 	for {
 		resp, err := s.featureClient.ListFeatures(ctx, &featureproto.ListFeaturesRequest{
-			PageSize:             listRequestSize,
-			Cursor:               cursor,
-			EnvironmentNamespace: environmentId,
+			PageSize:      listRequestSize,
+			Cursor:        cursor,
+			EnvironmentId: environmentId,
 		})
 		if err != nil {
 			return nil, err
@@ -895,7 +895,7 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 		restEventCounter.WithLabelValues(callerGatewayService, typ, codeOK).Add(float64(len(messages) - len(errors)))
 	}
 	for _, event := range reqBody.Events {
-		event.EnvironmentNamespace = envAPIKey.Environment.Id
+		event.EnvironmentId = envAPIKey.Environment.Id
 		if event.ID == "" {
 			rest.ReturnFailureResponse(w, errMissingEventID)
 			return
@@ -921,9 +921,9 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				continue
 			}
 			goalMessages = append(goalMessages, &eventproto.Event{
-				Id:                   event.ID,
-				Event:                goalAny,
-				EnvironmentNamespace: event.EnvironmentNamespace,
+				Id:            event.ID,
+				Event:         goalAny,
+				EnvironmentId: event.EnvironmentId,
 			})
 		case EvaluationEventType:
 			eval, errCode, err := s.getEvaluationEvent(req.Context(), event)
@@ -945,9 +945,9 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				continue
 			}
 			evaluationMessages = append(evaluationMessages, &eventproto.Event{
-				Id:                   event.ID,
-				Event:                evalAny,
-				EnvironmentNamespace: event.EnvironmentNamespace,
+				Id:            event.ID,
+				Event:         evalAny,
+				EnvironmentId: event.EnvironmentId,
 			})
 		case MetricsEventType:
 			metrics, errCode, err := s.getMetricsEvent(req.Context(), event)
@@ -969,9 +969,9 @@ func (s *gatewayService) registerEvents(w http.ResponseWriter, req *http.Request
 				continue
 			}
 			metricsMessages = append(metricsMessages, &eventproto.Event{
-				Id:                   event.ID,
-				Event:                metricsAny,
-				EnvironmentNamespace: event.EnvironmentNamespace,
+				Id:            event.ID,
+				Event:         metricsAny,
+				EnvironmentId: event.EnvironmentId,
 			})
 		default:
 			errs[event.ID] = &registerEventsResponseError{

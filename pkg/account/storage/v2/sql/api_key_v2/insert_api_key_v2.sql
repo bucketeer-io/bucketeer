@@ -5,5 +5,5 @@ INSERT INTO api_key (
     disabled,
     created_at,
     updated_at,
-    environment_namespace
+    environment_id
 ) VALUES (?, ?, ?, ?, ?, ?, ?)

@@ -96,8 +96,8 @@ func (c *autoOpsRulesCacher) listAutoOpsRules(
 	environmentID string,
 ) ([]*aoproto.AutoOpsRule, error) {
 	req := &aoproto.ListAutoOpsRulesRequest{
-		PageSize:             0,
-		EnvironmentNamespace: environmentID,
+		PageSize:      0,
+		EnvironmentId: environmentID,
 	}
 	resp, err := c.autoOpsClient.ListAutoOpsRules(ctx, req)
 	if err != nil {

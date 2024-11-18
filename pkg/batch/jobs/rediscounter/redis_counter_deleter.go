@@ -114,12 +114,12 @@ func (r *redisCounterDeleter) listEnvironments(ctx context.Context) ([]*envproto
 	return resp.Environments, nil
 }
 
-func (r *redisCounterDeleter) deleteKeysByKind(environmentNamespace, kind string) (int, error) {
-	keyPrefix := r.newKeyPrefix(environmentNamespace, kind)
-	keys, err := r.scan(environmentNamespace, kind, keyPrefix)
+func (r *redisCounterDeleter) deleteKeysByKind(environmentId, kind string) (int, error) {
+	keyPrefix := r.newKeyPrefix(environmentId, kind)
+	keys, err := r.scan(environmentId, kind, keyPrefix)
 	if err != nil {
 		r.logger.Error("Failed to scan keys from redis",
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 			zap.String("kind", kind),
 			zap.String("keyPrefix", keyPrefix),
 		)
@@ -127,17 +127,17 @@ func (r *redisCounterDeleter) deleteKeysByKind(environmentNamespace, kind string
 	}
 	if len(keys) == 0 {
 		r.logger.Info("No keys was found",
-			zap.String("environmentNamespace", environmentNamespace),
+			zap.String("environmentId", environmentId),
 			zap.String("kind", kind),
 		)
 		return 0, nil
 	}
-	filteredKeys, err := r.filterKeysOlderThanThirtyOneDays(environmentNamespace, kind, keys)
+	filteredKeys, err := r.filterKeysOlderThanThirtyOneDays(environmentId, kind, keys)
 	if err != nil {
 		return 0, err
 	}
 	r.logger.Info("Filtered keys older than 31 days",
-		zap.String("environmentNamespace", environmentNamespace),
+		zap.String("environmentId", environmentId),
 		zap.String("kind", kind),
 		zap.Int("filteredKeysSize", len(filteredKeys)),
 	)
@@ -149,7 +149,7 @@ func (r *redisCounterDeleter) deleteKeysByKind(environmentNamespace, kind string
 	for _, chunk := range chunks {
 		if err := r.deleteKeys(chunk); err != nil {
 			r.logger.Error("Failed to delete chunk from redis",
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 				zap.String("kind", kind),
 				zap.Strings("keys", chunk),
 				zap.Int("deletedKeysSizeUntilTheError", deletedKeys),
@@ -163,14 +163,14 @@ func (r *redisCounterDeleter) deleteKeysByKind(environmentNamespace, kind string
 	return deletedKeys, nil
 }
 
-func (r *redisCounterDeleter) newKeyPrefix(environmentNamespace, kind string) string {
-	keyPrefix := cache.MakeKeyPrefix(kind, environmentNamespace)
+func (r *redisCounterDeleter) newKeyPrefix(environmentId, kind string) string {
+	keyPrefix := cache.MakeKeyPrefix(kind, environmentId)
 	return keyPrefix + "*"
 }
 
-func (r *redisCounterDeleter) scan(environmentNamespace, kind, key string) ([]string, error) {
+func (r *redisCounterDeleter) scan(environmentId, kind, key string) ([]string, error) {
 	r.logger.Info("Starting scan keys from Redis",
-		zap.String("environmentNamespace", environmentNamespace),
+		zap.String("environmentId", environmentId),
 		zap.String("kind", kind),
 	)
 	startTime := time.Now()
@@ -192,7 +192,7 @@ func (r *redisCounterDeleter) scan(environmentNamespace, kind, key string) ([]st
 		return nil, err
 	}
 	r.logger.Info("Finished scanning keys from Redis",
-		zap.String("environmentNamespace", environmentNamespace),
+		zap.String("environmentId", environmentId),
 		zap.String("kind", kind),
 		zap.Duration("elapsedTime", time.Since(startTime)),
 		zap.Int("keysSize", len(keys)),
@@ -201,23 +201,23 @@ func (r *redisCounterDeleter) scan(environmentNamespace, kind, key string) ([]st
 }
 
 func (r *redisCounterDeleter) filterKeysOlderThanThirtyOneDays(
-	environmentNamespace, kind string,
+	environmentId, kind string,
 	keys []string,
 ) ([]string, error) {
 	filteredKeys := make([]string, 0, len(keys))
 	for _, key := range keys {
-		// E.g. environment_namespace:uc:1689835532:feature_id:variation_id
+		// E.g. environment_id:uc:1689835532:feature_id:variation_id
 		var regex string
-		if environmentNamespace == "" {
+		if environmentId == "" {
 			regex = fmt.Sprintf("%s:(.*?):", kind)
 		} else {
-			regex = fmt.Sprintf("%s:%s:(.*?):", environmentNamespace, kind)
+			regex = fmt.Sprintf("%s:%s:(.*?):", environmentId, kind)
 		}
 		re := regexp.MustCompile(regex)
 		match := re.FindStringSubmatch(key)
 		if len(match) == 0 {
 			r.logger.Error("Failed to find submatch string",
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 				zap.String("kind", kind),
 				zap.String("key", key),
 				zap.String("regex", regex),
@@ -228,7 +228,7 @@ func (r *redisCounterDeleter) filterKeysOlderThanThirtyOneDays(
 		if err != nil {
 			r.logger.Error("Failed to convert string to int",
 				zap.String("created_at", match[1]),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 				zap.String("kind", kind),
 			)
 			return nil, errParseInt

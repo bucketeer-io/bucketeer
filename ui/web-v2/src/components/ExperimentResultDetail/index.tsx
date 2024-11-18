@@ -71,7 +71,7 @@ export const ExperimentResultDetail: FC<ExperimentResultDetailProps> = ({
     if (experimentId && experiment.startAt < Number(Date.now() / 1000)) {
       dispatch(
         getExperimentResult({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           experimentId: experimentId
         })
       );

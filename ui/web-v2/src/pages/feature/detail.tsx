@@ -105,26 +105,26 @@ export const FeatureDetailPage: FC = memo(() => {
     if (featureId) {
       dispatch(
         getFeature({
-          environmentNamespace: currentEnvironment.id,
+          environmentId: currentEnvironment.id,
           id: featureId
         })
       );
       dispatch(
         listAutoOpsRules({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.id
+          environmentId: currentEnvironment.id
         })
       );
       dispatch(
         listFlagTriggers({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.id
+          environmentId: currentEnvironment.id
         })
       );
       dispatch(
         listProgressiveRollout({
           featureId: featureId,
-          environmentNamespace: currentEnvironment.id
+          environmentId: currentEnvironment.id
         })
       );
     }

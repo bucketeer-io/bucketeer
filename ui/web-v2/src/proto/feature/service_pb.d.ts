@@ -20,8 +20,8 @@ export class GetFeatureRequest extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetFeatureRequest.AsObject;
@@ -47,7 +47,7 @@ export class GetFeatureRequest extends jspb.Message {
 export namespace GetFeatureRequest {
   export type AsObject = {
     id: string;
-    environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -85,13 +85,13 @@ export namespace GetFeatureResponse {
 }
 
 export class GetFeaturesRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   clearIdsList(): void;
   getIdsList(): Array<string>;
   setIdsList(value: Array<string>): void;
   addIds(value: string, index?: number): string;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetFeaturesRequest.AsObject;
@@ -116,8 +116,8 @@ export class GetFeaturesRequest extends jspb.Message {
 
 export namespace GetFeaturesRequest {
   export type AsObject = {
-    environmentNamespace: string;
     idsList: Array<string>;
+    environmentId: string;
   };
 }
 
@@ -179,9 +179,6 @@ export class ListFeaturesRequest extends jspb.Message {
     value: ListFeaturesRequest.OrderDirectionMap[keyof ListFeaturesRequest.OrderDirectionMap]
   ): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getMaintainer(): string;
   setMaintainer(value: string): void;
 
@@ -207,6 +204,9 @@ export class ListFeaturesRequest extends jspb.Message {
   clearHasPrerequisites(): void;
   getHasPrerequisites(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setHasPrerequisites(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListFeaturesRequest.AsObject;
@@ -236,13 +236,13 @@ export namespace ListFeaturesRequest {
     tagsList: Array<string>;
     orderBy: ListFeaturesRequest.OrderByMap[keyof ListFeaturesRequest.OrderByMap];
     orderDirection: ListFeaturesRequest.OrderDirectionMap[keyof ListFeaturesRequest.OrderDirectionMap];
-    environmentNamespace: string;
     maintainer: string;
     enabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     hasExperiment?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     searchKeyword: string;
     archived?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     hasPrerequisites?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    environmentId: string;
   };
 
   export interface OrderByMap {
@@ -320,8 +320,8 @@ export class ListEnabledFeaturesRequest extends jspb.Message {
   setTagsList(value: Array<string>): void;
   addTags(value: string, index?: number): string;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListEnabledFeaturesRequest.AsObject;
@@ -349,7 +349,7 @@ export namespace ListEnabledFeaturesRequest {
     pageSize: number;
     cursor: string;
     tagsList: Array<string>;
-    environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -399,8 +399,8 @@ export class CreateFeatureRequest extends jspb.Message {
   getCommand(): proto_feature_command_pb.CreateFeatureCommand | undefined;
   setCommand(value?: proto_feature_command_pb.CreateFeatureCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateFeatureRequest.AsObject;
@@ -426,7 +426,7 @@ export class CreateFeatureRequest extends jspb.Message {
 export namespace CreateFeatureRequest {
   export type AsObject = {
     command?: proto_feature_command_pb.CreateFeatureCommand.AsObject;
-    environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -624,11 +624,11 @@ export class EnableFeatureRequest extends jspb.Message {
   getCommand(): proto_feature_command_pb.EnableFeatureCommand | undefined;
   setCommand(value?: proto_feature_command_pb.EnableFeatureCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getComment(): string;
   setComment(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EnableFeatureRequest.AsObject;
@@ -655,8 +655,8 @@ export namespace EnableFeatureRequest {
   export type AsObject = {
     id: string;
     command?: proto_feature_command_pb.EnableFeatureCommand.AsObject;
-    environmentNamespace: string;
     comment: string;
+    environmentId: string;
   };
 }
 
@@ -695,11 +695,11 @@ export class DisableFeatureRequest extends jspb.Message {
   getCommand(): proto_feature_command_pb.DisableFeatureCommand | undefined;
   setCommand(value?: proto_feature_command_pb.DisableFeatureCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getComment(): string;
   setComment(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DisableFeatureRequest.AsObject;
@@ -726,8 +726,8 @@ export namespace DisableFeatureRequest {
   export type AsObject = {
     id: string;
     command?: proto_feature_command_pb.DisableFeatureCommand.AsObject;
-    environmentNamespace: string;
     comment: string;
+    environmentId: string;
   };
 }
 
@@ -766,11 +766,11 @@ export class ArchiveFeatureRequest extends jspb.Message {
   getCommand(): proto_feature_command_pb.ArchiveFeatureCommand | undefined;
   setCommand(value?: proto_feature_command_pb.ArchiveFeatureCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getComment(): string;
   setComment(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ArchiveFeatureRequest.AsObject;
@@ -797,8 +797,8 @@ export namespace ArchiveFeatureRequest {
   export type AsObject = {
     id: string;
     command?: proto_feature_command_pb.ArchiveFeatureCommand.AsObject;
-    environmentNamespace: string;
     comment: string;
+    environmentId: string;
   };
 }
 
@@ -837,11 +837,11 @@ export class UnarchiveFeatureRequest extends jspb.Message {
   getCommand(): proto_feature_command_pb.UnarchiveFeatureCommand | undefined;
   setCommand(value?: proto_feature_command_pb.UnarchiveFeatureCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getComment(): string;
   setComment(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UnarchiveFeatureRequest.AsObject;
@@ -868,8 +868,8 @@ export namespace UnarchiveFeatureRequest {
   export type AsObject = {
     id: string;
     command?: proto_feature_command_pb.UnarchiveFeatureCommand.AsObject;
-    environmentNamespace: string;
     comment: string;
+    environmentId: string;
   };
 }
 
@@ -908,11 +908,11 @@ export class DeleteFeatureRequest extends jspb.Message {
   getCommand(): proto_feature_command_pb.DeleteFeatureCommand | undefined;
   setCommand(value?: proto_feature_command_pb.DeleteFeatureCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getComment(): string;
   setComment(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeleteFeatureRequest.AsObject;
@@ -939,8 +939,8 @@ export namespace DeleteFeatureRequest {
   export type AsObject = {
     id: string;
     command?: proto_feature_command_pb.DeleteFeatureCommand.AsObject;
-    environmentNamespace: string;
     comment: string;
+    environmentId: string;
   };
 }
 
@@ -1012,11 +1012,11 @@ export class UpdateFeatureDetailsRequest extends jspb.Message {
     index?: number
   ): proto_feature_command_pb.RemoveTagCommand;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getComment(): string;
   setComment(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateFeatureDetailsRequest.AsObject;
@@ -1046,8 +1046,8 @@ export namespace UpdateFeatureDetailsRequest {
     changeDescriptionCommand?: proto_feature_command_pb.ChangeDescriptionCommand.AsObject;
     addTagCommandsList: Array<proto_feature_command_pb.AddTagCommand.AsObject>;
     removeTagCommandsList: Array<proto_feature_command_pb.RemoveTagCommand.AsObject>;
-    environmentNamespace: string;
     comment: string;
+    environmentId: string;
   };
 }
 
@@ -1089,11 +1089,11 @@ export class UpdateFeatureVariationsRequest extends jspb.Message {
     index?: number
   ): proto_feature_command_pb.Command;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getComment(): string;
   setComment(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateFeatureVariationsRequest.AsObject;
@@ -1120,8 +1120,8 @@ export namespace UpdateFeatureVariationsRequest {
   export type AsObject = {
     id: string;
     commandsList: Array<proto_feature_command_pb.Command.AsObject>;
-    environmentNamespace: string;
     comment: string;
+    environmentId: string;
   };
 }
 
@@ -1163,9 +1163,6 @@ export class UpdateFeatureTargetingRequest extends jspb.Message {
     index?: number
   ): proto_feature_command_pb.Command;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getComment(): string;
   setComment(value: string): void;
 
@@ -1173,6 +1170,9 @@ export class UpdateFeatureTargetingRequest extends jspb.Message {
   setFrom(
     value: UpdateFeatureTargetingRequest.FromMap[keyof UpdateFeatureTargetingRequest.FromMap]
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateFeatureTargetingRequest.AsObject;
@@ -1199,9 +1199,9 @@ export namespace UpdateFeatureTargetingRequest {
   export type AsObject = {
     id: string;
     commandsList: Array<proto_feature_command_pb.Command.AsObject>;
-    environmentNamespace: string;
     comment: string;
     from: UpdateFeatureTargetingRequest.FromMap[keyof UpdateFeatureTargetingRequest.FromMap];
+    environmentId: string;
   };
 
   export interface FromMap {
@@ -1248,8 +1248,8 @@ export class CloneFeatureRequest extends jspb.Message {
   getCommand(): proto_feature_command_pb.CloneFeatureCommand | undefined;
   setCommand(value?: proto_feature_command_pb.CloneFeatureCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CloneFeatureRequest.AsObject;
@@ -1276,7 +1276,7 @@ export namespace CloneFeatureRequest {
   export type AsObject = {
     id: string;
     command?: proto_feature_command_pb.CloneFeatureCommand.AsObject;
-    environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1312,8 +1312,8 @@ export class CreateSegmentRequest extends jspb.Message {
   getCommand(): proto_feature_command_pb.CreateSegmentCommand | undefined;
   setCommand(value?: proto_feature_command_pb.CreateSegmentCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateSegmentRequest.AsObject;
@@ -1339,7 +1339,7 @@ export class CreateSegmentRequest extends jspb.Message {
 export namespace CreateSegmentRequest {
   export type AsObject = {
     command?: proto_feature_command_pb.CreateSegmentCommand.AsObject;
-    environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1380,8 +1380,8 @@ export class GetSegmentRequest extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetSegmentRequest.AsObject;
@@ -1407,7 +1407,7 @@ export class GetSegmentRequest extends jspb.Message {
 export namespace GetSegmentRequest {
   export type AsObject = {
     id: string;
-    environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1451,9 +1451,6 @@ export class ListSegmentsRequest extends jspb.Message {
   getCursor(): string;
   setCursor(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getOrderBy(): ListSegmentsRequest.OrderByMap[keyof ListSegmentsRequest.OrderByMap];
   setOrderBy(
     value: ListSegmentsRequest.OrderByMap[keyof ListSegmentsRequest.OrderByMap]
@@ -1476,6 +1473,9 @@ export class ListSegmentsRequest extends jspb.Message {
   clearIsInUseStatus(): void;
   getIsInUseStatus(): google_protobuf_wrappers_pb.BoolValue | undefined;
   setIsInUseStatus(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListSegmentsRequest.AsObject;
@@ -1502,12 +1502,12 @@ export namespace ListSegmentsRequest {
   export type AsObject = {
     pageSize: number;
     cursor: string;
-    environmentNamespace: string;
     orderBy: ListSegmentsRequest.OrderByMap[keyof ListSegmentsRequest.OrderByMap];
     orderDirection: ListSegmentsRequest.OrderDirectionMap[keyof ListSegmentsRequest.OrderDirectionMap];
     searchKeyword: string;
     status?: google_protobuf_wrappers_pb.Int32Value.AsObject;
     isInUseStatus?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    environmentId: string;
   };
 
   export interface OrderByMap {
@@ -1580,8 +1580,8 @@ export class DeleteSegmentRequest extends jspb.Message {
   getCommand(): proto_feature_command_pb.DeleteSegmentCommand | undefined;
   setCommand(value?: proto_feature_command_pb.DeleteSegmentCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeleteSegmentRequest.AsObject;
@@ -1608,7 +1608,7 @@ export namespace DeleteSegmentRequest {
   export type AsObject = {
     id: string;
     command?: proto_feature_command_pb.DeleteSegmentCommand.AsObject;
-    environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1650,8 +1650,8 @@ export class UpdateSegmentRequest extends jspb.Message {
     index?: number
   ): proto_feature_command_pb.Command;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateSegmentRequest.AsObject;
@@ -1678,7 +1678,7 @@ export namespace UpdateSegmentRequest {
   export type AsObject = {
     id: string;
     commandsList: Array<proto_feature_command_pb.Command.AsObject>;
-    environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1717,8 +1717,8 @@ export class AddSegmentUserRequest extends jspb.Message {
   getCommand(): proto_feature_command_pb.AddSegmentUserCommand | undefined;
   setCommand(value?: proto_feature_command_pb.AddSegmentUserCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AddSegmentUserRequest.AsObject;
@@ -1745,7 +1745,7 @@ export namespace AddSegmentUserRequest {
   export type AsObject = {
     id: string;
     command?: proto_feature_command_pb.AddSegmentUserCommand.AsObject;
-    environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1784,8 +1784,8 @@ export class DeleteSegmentUserRequest extends jspb.Message {
   getCommand(): proto_feature_command_pb.DeleteSegmentUserCommand | undefined;
   setCommand(value?: proto_feature_command_pb.DeleteSegmentUserCommand): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeleteSegmentUserRequest.AsObject;
@@ -1812,7 +1812,7 @@ export namespace DeleteSegmentUserRequest {
   export type AsObject = {
     id: string;
     command?: proto_feature_command_pb.DeleteSegmentUserCommand.AsObject;
-    environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1854,8 +1854,8 @@ export class GetSegmentUserRequest extends jspb.Message {
     value: proto_feature_segment_pb.SegmentUser.StateMap[keyof proto_feature_segment_pb.SegmentUser.StateMap]
   ): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetSegmentUserRequest.AsObject;
@@ -1883,7 +1883,7 @@ export namespace GetSegmentUserRequest {
     segmentId: string;
     userId: string;
     state: proto_feature_segment_pb.SegmentUser.StateMap[keyof proto_feature_segment_pb.SegmentUser.StateMap];
-    environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -1938,8 +1938,8 @@ export class ListSegmentUsersRequest extends jspb.Message {
   getUserId(): string;
   setUserId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListSegmentUsersRequest.AsObject;
@@ -1969,7 +1969,7 @@ export namespace ListSegmentUsersRequest {
     segmentId: string;
     state?: google_protobuf_wrappers_pb.Int32Value.AsObject;
     userId: string;
-    environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -2014,9 +2014,6 @@ export namespace ListSegmentUsersResponse {
 }
 
 export class BulkUploadSegmentUsersRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getSegmentId(): string;
   setSegmentId(value: string): void;
 
@@ -2028,6 +2025,9 @@ export class BulkUploadSegmentUsersRequest extends jspb.Message {
   setCommand(
     value?: proto_feature_command_pb.BulkUploadSegmentUsersCommand
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): BulkUploadSegmentUsersRequest.AsObject;
@@ -2052,9 +2052,9 @@ export class BulkUploadSegmentUsersRequest extends jspb.Message {
 
 export namespace BulkUploadSegmentUsersRequest {
   export type AsObject = {
-    environmentNamespace: string;
     segmentId: string;
     command?: proto_feature_command_pb.BulkUploadSegmentUsersCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -2085,9 +2085,6 @@ export namespace BulkUploadSegmentUsersResponse {
 }
 
 export class BulkDownloadSegmentUsersRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getSegmentId(): string;
   setSegmentId(value: string): void;
 
@@ -2095,6 +2092,9 @@ export class BulkDownloadSegmentUsersRequest extends jspb.Message {
   setState(
     value: proto_feature_segment_pb.SegmentUser.StateMap[keyof proto_feature_segment_pb.SegmentUser.StateMap]
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): BulkDownloadSegmentUsersRequest.AsObject;
@@ -2119,9 +2119,9 @@ export class BulkDownloadSegmentUsersRequest extends jspb.Message {
 
 export namespace BulkDownloadSegmentUsersRequest {
   export type AsObject = {
-    environmentNamespace: string;
     segmentId: string;
     state: proto_feature_segment_pb.SegmentUser.StateMap[keyof proto_feature_segment_pb.SegmentUser.StateMap];
+    environmentId: string;
   };
 }
 
@@ -2166,14 +2166,14 @@ export class EvaluateFeaturesRequest extends jspb.Message {
   getUser(): proto_user_user_pb.User | undefined;
   setUser(value?: proto_user_user_pb.User): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getTag(): string;
   setTag(value: string): void;
 
   getFeatureId(): string;
   setFeatureId(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EvaluateFeaturesRequest.AsObject;
@@ -2199,9 +2199,9 @@ export class EvaluateFeaturesRequest extends jspb.Message {
 export namespace EvaluateFeaturesRequest {
   export type AsObject = {
     user?: proto_user_user_pb.User.AsObject;
-    environmentNamespace: string;
     tag: string;
     featureId: string;
+    environmentId: string;
   };
 }
 
@@ -2239,9 +2239,6 @@ export namespace EvaluateFeaturesResponse {
 }
 
 export class ListTagsRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getPageSize(): number;
   setPageSize(value: number): void;
 
@@ -2260,6 +2257,9 @@ export class ListTagsRequest extends jspb.Message {
 
   getSearchKeyword(): string;
   setSearchKeyword(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListTagsRequest.AsObject;
@@ -2284,12 +2284,12 @@ export class ListTagsRequest extends jspb.Message {
 
 export namespace ListTagsRequest {
   export type AsObject = {
-    environmentNamespace: string;
     pageSize: number;
     cursor: string;
     orderBy: ListTagsRequest.OrderByMap[keyof ListTagsRequest.OrderByMap];
     orderDirection: ListTagsRequest.OrderDirectionMap[keyof ListTagsRequest.OrderDirectionMap];
     searchKeyword: string;
+    environmentId: string;
   };
 
   export interface OrderByMap {
@@ -2354,9 +2354,6 @@ export namespace ListTagsResponse {
 }
 
 export class CreateFlagTriggerRequest extends jspb.Message {
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   hasCreateFlagTriggerCommand(): boolean;
   clearCreateFlagTriggerCommand(): void;
   getCreateFlagTriggerCommand():
@@ -2365,6 +2362,9 @@ export class CreateFlagTriggerRequest extends jspb.Message {
   setCreateFlagTriggerCommand(
     value?: proto_feature_command_pb.CreateFlagTriggerCommand
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateFlagTriggerRequest.AsObject;
@@ -2389,8 +2389,8 @@ export class CreateFlagTriggerRequest extends jspb.Message {
 
 export namespace CreateFlagTriggerRequest {
   export type AsObject = {
-    environmentNamespace: string;
     createFlagTriggerCommand?: proto_feature_command_pb.CreateFlagTriggerCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -2435,9 +2435,6 @@ export class DeleteFlagTriggerRequest extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   hasDeleteFlagTriggerCommand(): boolean;
   clearDeleteFlagTriggerCommand(): void;
   getDeleteFlagTriggerCommand():
@@ -2446,6 +2443,9 @@ export class DeleteFlagTriggerRequest extends jspb.Message {
   setDeleteFlagTriggerCommand(
     value?: proto_feature_command_pb.DeleteFlagTriggerCommand
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeleteFlagTriggerRequest.AsObject;
@@ -2471,8 +2471,8 @@ export class DeleteFlagTriggerRequest extends jspb.Message {
 export namespace DeleteFlagTriggerRequest {
   export type AsObject = {
     id: string;
-    environmentNamespace: string;
     deleteFlagTriggerCommand?: proto_feature_command_pb.DeleteFlagTriggerCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -2506,9 +2506,6 @@ export class UpdateFlagTriggerRequest extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   hasChangeFlagTriggerDescriptionCommand(): boolean;
   clearChangeFlagTriggerDescriptionCommand(): void;
   getChangeFlagTriggerDescriptionCommand():
@@ -2517,6 +2514,9 @@ export class UpdateFlagTriggerRequest extends jspb.Message {
   setChangeFlagTriggerDescriptionCommand(
     value?: proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateFlagTriggerRequest.AsObject;
@@ -2542,8 +2542,8 @@ export class UpdateFlagTriggerRequest extends jspb.Message {
 export namespace UpdateFlagTriggerRequest {
   export type AsObject = {
     id: string;
-    environmentNamespace: string;
     changeFlagTriggerDescriptionCommand?: proto_feature_command_pb.ChangeFlagTriggerDescriptionCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -2577,9 +2577,6 @@ export class EnableFlagTriggerRequest extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   hasEnableFlagTriggerCommand(): boolean;
   clearEnableFlagTriggerCommand(): void;
   getEnableFlagTriggerCommand():
@@ -2588,6 +2585,9 @@ export class EnableFlagTriggerRequest extends jspb.Message {
   setEnableFlagTriggerCommand(
     value?: proto_feature_command_pb.EnableFlagTriggerCommand
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): EnableFlagTriggerRequest.AsObject;
@@ -2613,8 +2613,8 @@ export class EnableFlagTriggerRequest extends jspb.Message {
 export namespace EnableFlagTriggerRequest {
   export type AsObject = {
     id: string;
-    environmentNamespace: string;
     enableFlagTriggerCommand?: proto_feature_command_pb.EnableFlagTriggerCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -2648,9 +2648,6 @@ export class DisableFlagTriggerRequest extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   hasDisableFlagTriggerCommand(): boolean;
   clearDisableFlagTriggerCommand(): void;
   getDisableFlagTriggerCommand():
@@ -2659,6 +2656,9 @@ export class DisableFlagTriggerRequest extends jspb.Message {
   setDisableFlagTriggerCommand(
     value?: proto_feature_command_pb.DisableFlagTriggerCommand
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DisableFlagTriggerRequest.AsObject;
@@ -2684,8 +2684,8 @@ export class DisableFlagTriggerRequest extends jspb.Message {
 export namespace DisableFlagTriggerRequest {
   export type AsObject = {
     id: string;
-    environmentNamespace: string;
     disableFlagTriggerCommand?: proto_feature_command_pb.DisableFlagTriggerCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -2719,9 +2719,6 @@ export class ResetFlagTriggerRequest extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   hasResetFlagTriggerCommand(): boolean;
   clearResetFlagTriggerCommand(): void;
   getResetFlagTriggerCommand():
@@ -2730,6 +2727,9 @@ export class ResetFlagTriggerRequest extends jspb.Message {
   setResetFlagTriggerCommand(
     value?: proto_feature_command_pb.ResetFlagTriggerCommand
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ResetFlagTriggerRequest.AsObject;
@@ -2755,8 +2755,8 @@ export class ResetFlagTriggerRequest extends jspb.Message {
 export namespace ResetFlagTriggerRequest {
   export type AsObject = {
     id: string;
-    environmentNamespace: string;
     resetFlagTriggerCommand?: proto_feature_command_pb.ResetFlagTriggerCommand.AsObject;
+    environmentId: string;
   };
 }
 
@@ -2801,8 +2801,8 @@ export class GetFlagTriggerRequest extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetFlagTriggerRequest.AsObject;
@@ -2828,7 +2828,7 @@ export class GetFlagTriggerRequest extends jspb.Message {
 export namespace GetFlagTriggerRequest {
   export type AsObject = {
     id: string;
-    environmentNamespace: string;
+    environmentId: string;
   };
 }
 
@@ -2873,9 +2873,6 @@ export class ListFlagTriggersRequest extends jspb.Message {
   getFeatureId(): string;
   setFeatureId(value: string): void;
 
-  getEnvironmentNamespace(): string;
-  setEnvironmentNamespace(value: string): void;
-
   getCursor(): string;
   setCursor(value: string): void;
 
@@ -2891,6 +2888,9 @@ export class ListFlagTriggersRequest extends jspb.Message {
   setOrderDirection(
     value: ListFlagTriggersRequest.OrderDirectionMap[keyof ListFlagTriggersRequest.OrderDirectionMap]
   ): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListFlagTriggersRequest.AsObject;
@@ -2916,11 +2916,11 @@ export class ListFlagTriggersRequest extends jspb.Message {
 export namespace ListFlagTriggersRequest {
   export type AsObject = {
     featureId: string;
-    environmentNamespace: string;
     cursor: string;
     pageSize: number;
     orderBy: ListFlagTriggersRequest.OrderByMap[keyof ListFlagTriggersRequest.OrderByMap];
     orderDirection: ListFlagTriggersRequest.OrderDirectionMap[keyof ListFlagTriggersRequest.OrderDirectionMap];
+    environmentId: string;
   };
 
   export interface OrderByMap {

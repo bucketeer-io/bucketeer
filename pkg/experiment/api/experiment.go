@@ -47,7 +47,7 @@ func (s *experimentService) GetExperiment(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (s *experimentService) GetExperiment(
 		return nil, err
 	}
 	experimentStorage := v2es.NewExperimentStorage(s.mysqlClient)
-	experiment, err := experimentStorage.GetExperiment(ctx, req.Id, req.EnvironmentNamespace)
+	experiment, err := experimentStorage.GetExperiment(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
 		if err == v2es.ErrExperimentNotFound {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -102,13 +102,13 @@ func (s *experimentService) ListExperiments(
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_namespace", "=", req.EnvironmentNamespace),
+		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
 	}
 	if req.Archived != nil {
 		whereParts = append(whereParts, mysql.NewFilter("archived", "=", req.Archived.Value))
@@ -177,7 +177,7 @@ func (s *experimentService) ListExperiments(
 			"Failed to list experiments",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -234,7 +234,7 @@ func (s *experimentService) CreateExperiment(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -242,8 +242,8 @@ func (s *experimentService) CreateExperiment(
 		return nil, err
 	}
 	resp, err := s.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
-		Id:                   req.Command.FeatureId,
-		EnvironmentNamespace: req.EnvironmentNamespace,
+		Id:            req.Command.FeatureId,
+		EnvironmentId: req.EnvironmentId,
 	})
 	if err != nil {
 		if code := status.Code(err); code == codes.NotFound {
@@ -260,7 +260,7 @@ func (s *experimentService) CreateExperiment(
 			"Failed to get feature",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -273,7 +273,7 @@ func (s *experimentService) CreateExperiment(
 		return nil, dt.Err()
 	}
 	for _, gid := range req.Command.GoalIds {
-		_, err := s.getGoalMySQL(ctx, gid, req.EnvironmentNamespace)
+		_, err := s.getGoalMySQL(ctx, gid, req.EnvironmentId)
 		if err != nil {
 			if err == v2es.ErrGoalNotFound {
 				dt, err := statusGoalNotFound.WithDetails(&errdetails.LocalizedMessage{
@@ -312,7 +312,7 @@ func (s *experimentService) CreateExperiment(
 			"Failed to create a new experiment",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -347,7 +347,7 @@ func (s *experimentService) CreateExperiment(
 			editor,
 			experiment,
 			s.publisher,
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 		)
 		if err != nil {
 			return err
@@ -355,7 +355,7 @@ func (s *experimentService) CreateExperiment(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return experimentStorage.CreateExperiment(ctx, experiment, req.EnvironmentNamespace)
+		return experimentStorage.CreateExperiment(ctx, experiment, req.EnvironmentId)
 	})
 	if err != nil {
 		if err == v2es.ErrExperimentAlreadyExists {
@@ -372,7 +372,7 @@ func (s *experimentService) CreateExperiment(
 			"Failed to create experiment",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -461,7 +461,7 @@ func (s *experimentService) UpdateExperiment(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -487,7 +487,7 @@ func (s *experimentService) UpdateExperiment(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		experimentStorage := v2es.NewExperimentStorage(tx)
-		experiment, err := experimentStorage.GetExperiment(ctx, req.Id, req.EnvironmentNamespace)
+		experiment, err := experimentStorage.GetExperiment(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -495,7 +495,7 @@ func (s *experimentService) UpdateExperiment(
 			editor,
 			experiment,
 			s.publisher,
-			req.EnvironmentNamespace,
+			req.EnvironmentId,
 		)
 		if err != nil {
 			return err
@@ -506,12 +506,12 @@ func (s *experimentService) UpdateExperiment(
 					"Failed to change period",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.Error(err),
-						zap.String("environmentNamespace", req.EnvironmentNamespace),
+						zap.String("environmentId", req.EnvironmentId),
 					)...,
 				)
 				return err
 			}
-			return experimentStorage.UpdateExperiment(ctx, experiment, req.EnvironmentNamespace)
+			return experimentStorage.UpdateExperiment(ctx, experiment, req.EnvironmentId)
 		}
 		if req.ChangeNameCommand != nil {
 			if err = handler.Handle(ctx, req.ChangeNameCommand); err != nil {
@@ -519,7 +519,7 @@ func (s *experimentService) UpdateExperiment(
 					"Failed to change Name",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.Error(err),
-						zap.String("environmentNamespace", req.EnvironmentNamespace),
+						zap.String("environmentId", req.EnvironmentId),
 					)...,
 				)
 				return err
@@ -531,13 +531,13 @@ func (s *experimentService) UpdateExperiment(
 					"Failed to change Description",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.Error(err),
-						zap.String("environmentNamespace", req.EnvironmentNamespace),
+						zap.String("environmentId", req.EnvironmentId),
 					)...,
 				)
 				return err
 			}
 		}
-		return experimentStorage.UpdateExperiment(ctx, experiment, req.EnvironmentNamespace)
+		return experimentStorage.UpdateExperiment(ctx, experiment, req.EnvironmentId)
 	})
 	if err != nil {
 		if err == v2es.ErrExperimentNotFound || err == v2es.ErrExperimentUnexpectedAffectedRows {
@@ -554,7 +554,7 @@ func (s *experimentService) UpdateExperiment(
 			"Failed to update experiment",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -599,14 +599,14 @@ func (s *experimentService) StartExperiment(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
 	if err := validateStartExperimentRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentNamespace, localizer); err != nil {
+	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentId, localizer); err != nil {
 		return nil, err
 	}
 	return &proto.StartExperimentResponse{}, nil
@@ -643,14 +643,14 @@ func (s *experimentService) FinishExperiment(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
 	if err := validateFinishExperimentRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentNamespace, localizer); err != nil {
+	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentId, localizer); err != nil {
 		return nil, err
 	}
 	return &proto.FinishExperimentResponse{}, nil
@@ -687,14 +687,14 @@ func (s *experimentService) StopExperiment(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
 	if err := validateStopExperimentRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentNamespace, localizer); err != nil {
+	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentId, localizer); err != nil {
 		return nil, err
 	}
 	return &proto.StopExperimentResponse{}, nil
@@ -731,7 +731,7 @@ func (s *experimentService) ArchiveExperiment(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
@@ -760,7 +760,7 @@ func (s *experimentService) ArchiveExperiment(
 		editor,
 		req.Command,
 		req.Id,
-		req.EnvironmentNamespace,
+		req.EnvironmentId,
 		localizer,
 	)
 	if err != nil {
@@ -768,7 +768,7 @@ func (s *experimentService) ArchiveExperiment(
 			"Failed to archive experiment",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", req.EnvironmentNamespace),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		return nil, err
@@ -783,14 +783,14 @@ func (s *experimentService) DeleteExperiment(
 	localizer := locale.NewLocalizer(ctx)
 	editor, err := s.checkEnvironmentRole(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
-		req.EnvironmentNamespace, localizer)
+		req.EnvironmentId, localizer)
 	if err != nil {
 		return nil, err
 	}
 	if err := validateDeleteExperimentRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentNamespace, localizer); err != nil {
+	if err := s.updateExperiment(ctx, editor, req.Command, req.Id, req.EnvironmentId, localizer); err != nil {
 		return nil, err
 	}
 	return &proto.DeleteExperimentResponse{}, nil
@@ -824,7 +824,7 @@ func (s *experimentService) updateExperiment(
 	ctx context.Context,
 	editor *eventproto.Editor,
 	cmd command.Command,
-	id, environmentNamespace string,
+	id, environmentId string,
 	localizer locale.Localizer,
 ) error {
 	tx, err := s.mysqlClient.BeginTx(ctx)
@@ -846,18 +846,18 @@ func (s *experimentService) updateExperiment(
 	}
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		experimentStorage := v2es.NewExperimentStorage(tx)
-		experiment, err := experimentStorage.GetExperiment(ctx, id, environmentNamespace)
+		experiment, err := experimentStorage.GetExperiment(ctx, id, environmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get experiment",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			return err
 		}
-		handler, err := command.NewExperimentCommandHandler(editor, experiment, s.publisher, environmentNamespace)
+		handler, err := command.NewExperimentCommandHandler(editor, experiment, s.publisher, environmentId)
 		if err != nil {
 			return err
 		}
@@ -866,12 +866,12 @@ func (s *experimentService) updateExperiment(
 				"Failed to handle command",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
-					zap.String("environmentNamespace", environmentNamespace),
+					zap.String("environmentId", environmentId),
 				)...,
 			)
 			return err
 		}
-		return experimentStorage.UpdateExperiment(ctx, experiment, environmentNamespace)
+		return experimentStorage.UpdateExperiment(ctx, experiment, environmentId)
 	})
 	if err != nil {
 		if err == v2es.ErrExperimentNotFound || err == v2es.ErrExperimentUnexpectedAffectedRows {
@@ -888,7 +888,7 @@ func (s *experimentService) updateExperiment(
 			"Failed to update experiment",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("environmentNamespace", environmentNamespace),
+				zap.String("environmentId", environmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{

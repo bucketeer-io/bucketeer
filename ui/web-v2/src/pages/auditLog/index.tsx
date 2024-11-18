@@ -138,7 +138,7 @@ export const AuditLogIndexPage: FC = memo(() => {
 
     dispatch(
       listAuditLogs({
-        environmentNamespace: currentEnvironment.id,
+        environmentId: currentEnvironment.id,
         pageSize: AUDITLOG_LIST_PAGE_SIZE,
         cursor: String(cursor),
         searchKeyword: searchOptions.q as string,

@@ -32,14 +32,14 @@ type progressiveRolloutCommandHandler struct {
 	progressiveRollout         *domain.ProgressiveRollout
 	previousProgressiveRollout *domain.ProgressiveRollout
 	publisher                  publisher.Publisher
-	environmentNamespace       string
+	environmentId              string
 }
 
 func NewProgressiveRolloutCommandHandler(
 	editor *eventproto.Editor,
 	progressiveRollout *domain.ProgressiveRollout,
 	publisher publisher.Publisher,
-	environmentNamespace string,
+	environmentId string,
 ) (Handler, error) {
 	prev := &domain.ProgressiveRollout{}
 	if err := copier.Copy(prev, progressiveRollout); err != nil {
@@ -50,7 +50,7 @@ func NewProgressiveRolloutCommandHandler(
 		progressiveRollout:         progressiveRollout,
 		previousProgressiveRollout: prev,
 		publisher:                  publisher,
-		environmentNamespace:       environmentNamespace,
+		environmentId:              environmentId,
 	}, nil
 }
 
@@ -152,7 +152,7 @@ func (h *progressiveRolloutCommandHandler) send(
 		h.progressiveRollout.Id,
 		eventType,
 		event,
-		h.environmentNamespace,
+		h.environmentId,
 		h.progressiveRollout.ProgressiveRollout,
 		prev,
 	)

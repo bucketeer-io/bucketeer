@@ -124,7 +124,7 @@ func (e *experimentCalculate) Run(ctx context.Context) error {
 				e.logger.Error("Failed to calculate experiment",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.Error(calculateErr),
-						zap.String("environmentNamespace", env.Id),
+						zap.String("environmentId", env.Id),
 						zap.String("experimentId", ex.Id),
 					)...,
 				)
@@ -132,7 +132,7 @@ func (e *experimentCalculate) Run(ctx context.Context) error {
 			}
 			e.logger.Debug("Experiment calculated successfully",
 				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.String("environmentNamespace", env.Id),
+					zap.String("environmentId", env.Id),
 					zap.String("experimentId", ex.Id),
 				)...,
 			)
@@ -151,7 +151,7 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 	}
 	if !locked {
 		e.logger.Info("Experiment is being calculated by another instance",
-			zap.String("environmentNamespace", env.Id),
+			zap.String("environmentId", env.Id),
 			zap.String("experimentId", experiment.Id),
 		)
 		return nil
@@ -163,13 +163,13 @@ func (e *experimentCalculate) calculateExperimentWithLock(ctx context.Context,
 		if unlockErr != nil {
 			e.logger.Error("Failed to release lock",
 				zap.Error(unlockErr),
-				zap.String("environmentNamespace", env.Id),
+				zap.String("environmentId", env.Id),
 				zap.String("experimentId", experiment.Id),
 			)
 		}
 		if !unlocked {
 			e.logger.Warn("Lock was not released, possibly expired",
-				zap.String("environmentNamespace", env.Id),
+				zap.String("environmentId", env.Id),
 				zap.String("experimentId", experiment.Id),
 			)
 		}
@@ -214,13 +214,13 @@ func (e *experimentCalculate) listEnvironments(
 
 func (e *experimentCalculate) listExperiments(
 	ctx context.Context,
-	namespace string,
+	environmentId string,
 ) ([]*experiment.Experiment, error) {
 	req := &experiment.ListExperimentsRequest{
-		From:                 time.Now().In(e.location).Add(-2 * 24 * time.Hour).Unix(),
-		PageSize:             0,
-		Cursor:               "",
-		EnvironmentNamespace: namespace,
+		From:          time.Now().In(e.location).Add(-2 * 24 * time.Hour).Unix(),
+		PageSize:      0,
+		Cursor:        "",
+		EnvironmentId: environmentId,
 		Statuses: []experiment.Experiment_Status{
 			experiment.Experiment_RUNNING,
 			experiment.Experiment_STOPPED,
