@@ -41,10 +41,8 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
 	"github.com/bucketeer-io/bucketeer/pkg/rest"
-	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/client"
-	serviceeventproto "github.com/bucketeer-io/bucketeer/proto/event/service"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 )
@@ -247,7 +245,7 @@ func (s *gatewayService) getEvaluations(w http.ResponseWriter, req *http.Request
 	requestTotal.WithLabelValues(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetEvaluations, reqBody.SourceID.String()).Inc()
-	s.publishUser(req.Context(), envAPIKey.Environment.Id, reqBody.Tag, reqBody.User, reqBody.SourceID)
+
 	f, err, _ := s.flightgroup.Do(
 		envAPIKey.Environment.Id,
 		func() (interface{}, error) {
@@ -317,7 +315,7 @@ func (s *gatewayService) getEvaluation(w http.ResponseWriter, req *http.Request)
 	requestTotal.WithLabelValues(
 		envAPIKey.Environment.OrganizationId, envAPIKey.ProjectId, envAPIKey.ProjectUrlCode,
 		envAPIKey.Environment.Id, envAPIKey.Environment.UrlCode, methodGetEvaluation, reqBody.SourceId.String()).Inc()
-	s.publishUser(req.Context(), envAPIKey.Environment.Id, reqBody.Tag, reqBody.User, reqBody.SourceId)
+
 	f, err, _ := s.flightgroup.Do(
 		envAPIKey.Environment.Id,
 		func() (interface{}, error) {
@@ -506,59 +504,6 @@ func (*gatewayService) validateGetEvaluationRequest(body *getEvaluationRequest) 
 		return errFeatureIDRequired
 	}
 	return nil
-}
-
-func (s *gatewayService) publishUser(
-	ctx context.Context,
-	environmentId, tag string,
-	user *userproto.User,
-	sourceID eventproto.SourceId,
-) {
-	// TODO: using buffered channel to reduce the number of go routines
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), s.opts.pubsubTimeout)
-		defer cancel()
-		if err := s.publishUserEvent(ctx, user, tag, environmentId, sourceID); err != nil {
-			s.logger.Error(
-				"Failed to publish UserEvent",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentID", environmentId),
-				)...,
-			)
-		}
-	}()
-}
-
-func (s *gatewayService) publishUserEvent(
-	ctx context.Context,
-	user *userproto.User,
-	tag, environmentId string,
-	sourceID eventproto.SourceId,
-) error {
-	id, err := uuid.NewUUID()
-	if err != nil {
-		return err
-	}
-	userEvent := &serviceeventproto.UserEvent{
-		Id:            id.String(),
-		SourceId:      sourceID,
-		Tag:           tag,
-		UserId:        user.Id,
-		LastSeen:      time.Now().Unix(),
-		Data:          nil, // We set nil until we decide again what to do with the user metadata.
-		EnvironmentId: environmentId,
-	}
-	ue, err := ptypes.MarshalAny(userEvent)
-	if err != nil {
-		return err
-	}
-	event := &eventproto.Event{
-		Id:            id.String(),
-		Event:         ue,
-		EnvironmentId: environmentId,
-	}
-	return s.userPublisher.Publish(ctx, event)
 }
 
 func (s *gatewayService) checkRequest(
