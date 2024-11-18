@@ -113,6 +113,7 @@ message ListProjectsRequest {
     URL_CODE = 5;
     ENVIRONMENT_COUNT = 6;
     FEATURE_COUNT = 7;
+    CREATOR_EMAIL = 8;
   }
   enum OrderDirection {
     ASC = 0;
@@ -282,6 +283,7 @@ message ListProjectsV2Request {
     URL_CODE = 5;
     ENVIRONMENT_COUNT = 6;
     FEATURE_COUNT = 7;
+    CREATOR_EMAIL = 8;
   }
   enum OrderDirection {
     ASC = 0;

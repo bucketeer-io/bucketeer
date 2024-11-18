@@ -220,8 +220,6 @@ func (s *authService) ExchangeToken(
 		return nil, err
 	}
 
-	s.updateLastSeen(ctx, userInfo, organizations)
-
 	return &authproto.ExchangeTokenResponse{Token: token}, nil
 }
 
@@ -427,31 +425,6 @@ func (s *authService) downloadAvatar(ctx context.Context, url string) ([]byte, e
 	}
 
 	return buf.Bytes(), nil
-}
-
-func (s *authService) updateLastSeen(
-	ctx context.Context,
-	userInfo *auth.UserInfo,
-	organizations []*envproto.Organization,
-) {
-	for _, org := range organizations {
-		updateReq := &acproto.UpdateAccountV2Request{
-			Email:          userInfo.Email,
-			OrganizationId: org.Id,
-			ChangeLastSeenCommand: &acproto.ChangeAccountV2LastSeenCommand{
-				LastSeen: time.Now().Unix(),
-			},
-		}
-		_, err := s.accountClient.UpdateAccountV2(ctx, updateReq)
-		if err != nil {
-			s.logger.Error(
-				"Failed to update account last seen",
-				zap.Error(err),
-				zap.String("email", userInfo.Email),
-				zap.String("organizationId", org.Id),
-			)
-		}
-	}
 }
 
 func (s *authService) generateToken(

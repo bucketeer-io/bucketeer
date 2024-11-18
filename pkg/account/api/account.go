@@ -1019,7 +1019,7 @@ func (s *AccountService) ListAccountsV2(
 		whereParts = append(whereParts, mysql.NewJSONFilter("environment_roles", mysql.JSONContainsJSON, values))
 	}
 	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"email"}, req.SearchKeyword))
+		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"email", "first_name", "last_name"}, req.SearchKeyword))
 	}
 	orders, err := s.newAccountV2ListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {

@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -132,6 +133,10 @@ func (s *AccountService) GetMe(
 	}
 	if sysAdminAccount != nil && !sysAdminAccount.Disabled {
 		adminEnvRoles := s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
+
+		// update system admin user last seen
+		s.updateLastSeen(ctx, sysAdminAccount.Email, req.OrganizationId)
+
 		return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
 			Email:            sysAdminAccount.Email,
 			Name:             sysAdminAccount.Name,
@@ -154,6 +159,10 @@ func (s *AccountService) GetMe(
 		return nil, err
 	}
 	envRoles := s.getConsoleAccountEnvironmentRoles(account.EnvironmentRoles, environments, projects)
+
+	// update user last seen
+	s.updateLastSeen(ctx, account.Email, req.OrganizationId)
+
 	return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
 		Email:            account.Email,
 		Name:             account.Name,
@@ -447,4 +456,19 @@ func (s *AccountService) getSystemAdminAccountV2(
 		return nil, dt.Err()
 	}
 	return account, nil
+}
+
+func (s *AccountService) updateLastSeen(ctx context.Context, email, organizationID string) error {
+	// First get the existing account
+	account, err := s.accountStorage.GetAccountV2(ctx, email, organizationID)
+	if err != nil {
+		return err
+	}
+
+	now := time.Now().Unix()
+	// Update only the LastSeen field
+	account.LastSeen = now
+	account.UpdatedAt = now
+
+	return s.accountStorage.UpdateAccountV2(ctx, account)
 }

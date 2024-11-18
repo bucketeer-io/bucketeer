@@ -8167,6 +8167,10 @@
               {
                 "name": "FEATURE_COUNT",
                 "integer": 7
+              },
+              {
+                "name": "CREATOR_EMAIL",
+                "integer": 8
               }
             ]
           },
@@ -8267,6 +8271,10 @@
               {
                 "name": "FEATURE_COUNT",
                 "integer": 7
+              },
+              {
+                "name": "CREATOR_EMAIL",
+                "integer": 8
               }
             ]
           },
