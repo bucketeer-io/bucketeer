@@ -416,7 +416,7 @@ data:
       `created_at` bigint NOT NULL,
       `updated_at` bigint NOT NULL,
       `environment_id` varchar(255) COLLATE utf8mb4_bin NOT NULL,
-      PRIMARY KEY (`environment_id`,`yearmonth`,`source_id`,`is_all`)
+      PRIMARY KEY (`yearmonth`, `source_id`, `is_all`, `environment_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
     --
