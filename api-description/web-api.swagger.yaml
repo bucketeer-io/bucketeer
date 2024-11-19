@@ -3963,6 +3963,7 @@ definitions:
       - URL_CODE
       - ENVIRONMENT_COUNT
       - FEATURE_COUNT
+      - CREATOR_EMAIL
     default: DEFAULT
   environmentListProjectsRequestOrderDirection:
     type: string
@@ -4014,6 +4015,7 @@ definitions:
       - URL_CODE
       - ENVIRONMENT_COUNT
       - FEATURE_COUNT
+      - CREATOR_EMAIL
     default: DEFAULT
   environmentListProjectsV2RequestOrderDirection:
     type: string

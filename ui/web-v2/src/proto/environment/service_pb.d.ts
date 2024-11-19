@@ -630,6 +630,7 @@ export namespace ListProjectsRequest {
     URL_CODE: 5;
     ENVIRONMENT_COUNT: 6;
     FEATURE_COUNT: 7;
+    CREATOR_EMAIL: 8;
   }
 
   export const OrderBy: OrderByMap;
@@ -1868,6 +1869,7 @@ export namespace ListProjectsV2Request {
     URL_CODE: 5;
     ENVIRONMENT_COUNT: 6;
     FEATURE_COUNT: 7;
+    CREATOR_EMAIL: 8;
   }
 
   export const OrderBy: OrderByMap;
