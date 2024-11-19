@@ -11,7 +11,8 @@
     "archive-org": "Archive Organization",
     "unarchive-org": "Unarchive Organization",
     "edit-user": "Edit User",
-    "archive-user": "Archive User"
+    "archive-user": "Archive User",
+    "edit-api-key": "Edit API Key"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -22,7 +23,9 @@
     "env-title": "No registered environments",
     "env-desc": "There are no registered environments for this project.",
     "user-title": "No registered users",
-    "user-desc": "There are no registered users for this organization."
+    "user-desc": "There are no registered users for this organization.",
+    "api-key-title": "No registered API keys",
+    "api-key-desc": "There are no registered API keys. Add a new one to start managing."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
