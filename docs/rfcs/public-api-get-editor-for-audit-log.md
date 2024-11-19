@@ -38,7 +38,7 @@ and the old `id` column would be the UUID of the API key.
   <img width="35%" src="/docs/rfcs/images/audit-log-snapshot.png" alt="audit log snapshot example">
 </div>
 
-**We also need to add API key maintainer in the UI and in the CreatorAPIkey web API request message:**
+**The message request of CreateAPIKey Web api should be:**
 
 ```protobuf
 message CreateAPIKeyRequest {
@@ -66,6 +66,10 @@ message EnvironmentAPIKey {
 ```
 
 ## Problem 2: Get the correct editor in API layer when making call to Web service
+As we have saved API Key unique id, we can show it in the audit log like this (or just embed it in the api key name):
+```
+<key_name>-<id>-<creator_email> Feature flag has been created
+```
 I suggest 2 options:
   - Let the maintainer be the creator of the API key.
   - We let the client decide the editor of the action by adding editor email in the request body of public API.
@@ -82,9 +86,13 @@ The `maintainer` value will be added into context before forward to Web gRPC ser
 
 ```go
 const APIKeyMaintainerMDKey string = "apikey-maintainer"
+const APIKeyNameMDKey string = "apikey-name"
+const APIKeyIDMDKey string = "apikey-id"
 
 headerMetadata := metadata.New(map[string]string{
 	APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
+	APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
+	APIKeyIDMDKey:         envAPIKey.ApiKey.Id,
 })
 ctx = metadata.NewOutgoingContext(ctx, headerMetadata)
 ```
@@ -96,6 +104,8 @@ When receive request, we can get it from context metadata again
 md, ok := metadata.FromIncomingContext(ctx)
 if ok {
     apiKeyMaintainer := md.Get(APIKeyMaintainerMDKey)
+	apiKeyName := md.Get(APIKeyNameMDKey)
+	apiKeyID := md.Get(APIKeyIDMDKey)
     // verify maintainer email then form *eventproto.Editor ...
 }
 ```
@@ -156,11 +166,13 @@ The code should change like this:
 // get editor and pass to context
 const (
     APIKeyMaintainerMDKey = "apikey-creator"
+	// ... other keys to identify apikey
     APIEditorMDKey        = "api-editor"
 )
 
 headerMetadata := metadata.New(map[string]string{
     APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
+	// ... other keys to identify apikey
     APIEditorMDKey:     req.UpdaterEmail.value,
 })
 ctx = metadata.NewOutgoingContext(ctx, headerMetadata)
