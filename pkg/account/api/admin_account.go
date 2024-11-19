@@ -135,7 +135,17 @@ func (s *AccountService) GetMe(
 		adminEnvRoles := s.getAdminConsoleAccountEnvironmentRoles(environments, projects)
 
 		// update system admin user last seen
-		s.updateLastSeen(ctx, sysAdminAccount.Email, req.OrganizationId)
+		err := s.updateLastSeen(ctx, sysAdminAccount.Email, req.OrganizationId)
+		if err != nil {
+			s.logger.Error(
+				"Failed to update system admin user last seen",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("email", sysAdminAccount.Email),
+					zap.String("organizationId", req.OrganizationId),
+				)...,
+			)
+		}
 
 		return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
 			Email:            sysAdminAccount.Email,
@@ -161,7 +171,17 @@ func (s *AccountService) GetMe(
 	envRoles := s.getConsoleAccountEnvironmentRoles(account.EnvironmentRoles, environments, projects)
 
 	// update user last seen
-	s.updateLastSeen(ctx, account.Email, req.OrganizationId)
+	err = s.updateLastSeen(ctx, account.Email, req.OrganizationId)
+	if err != nil {
+		s.logger.Error(
+			"Failed to update user last seen",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("email", account.Email),
+				zap.String("organizationId", req.OrganizationId),
+			)...,
+		)
+	}
 
 	return &accountproto.GetMeResponse{Account: &accountproto.ConsoleAccount{
 		Email:            account.Email,

@@ -223,7 +223,8 @@ func (s *EnvironmentService) newProjectListOrders(
 		column = "environment_count"
 	case environmentproto.ListProjectsRequest_FEATURE_COUNT:
 		column = "feature_count"
-
+	case environmentproto.ListProjectsRequest_CREATOR_EMAIL:
+		column = "project.creator_email"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -1025,7 +1026,8 @@ func (s *EnvironmentService) newProjectListV2Orders(
 		column = "environment_count"
 	case environmentproto.ListProjectsV2Request_FEATURE_COUNT:
 		column = "feature_count"
-
+	case environmentproto.ListProjectsV2Request_CREATOR_EMAIL:
+		column = "project.creator_email"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

@@ -266,7 +266,10 @@ func TestGetMeMySQL(t *testing.T) {
 						LastName:  "test",
 						Language:  "en",
 					},
-				}, nil)
+				}, nil).Times(2)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
 			},
 			input: &accountproto.GetMeRequest{
 				OrganizationId: "org0",
