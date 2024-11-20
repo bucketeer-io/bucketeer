@@ -4,6 +4,7 @@ import {
 } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
 import primaryAvatar from 'assets/avatars/primary.svg';
+import { useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { Account } from '@types';
@@ -21,6 +22,10 @@ export const useColumns = ({
 }): ColumnDef<Account>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
+
+  const { consoleAccount } = useAuth();
+  const isOrganizationAdmin =
+    consoleAccount?.organizationRole === 'Organization_ADMIN';
 
   return [
     {
@@ -40,7 +45,9 @@ export const useColumns = ({
             <div className="flex flex-col gap-0.5">
               {!isPendingInvite && (
                 <button
-                  onClick={() => onActions(account, 'EDIT')}
+                  onClick={() =>
+                    onActions(account, isOrganizationAdmin ? 'EDIT' : 'DETAILS')
+                  }
                   className="underline text-primary-500 typo-para-medium text-left"
                 >
                   {joinName(account.firstName, account.lastName) ||
@@ -111,7 +118,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const account = row.original;
 
-        return (
+        return isOrganizationAdmin ? (
           <Popover
             options={compact([
               Number(account.lastSeen) > 0 && {
@@ -119,11 +126,6 @@ export const useColumns = ({
                 icon: IconEditOutlined,
                 value: 'EDIT'
               },
-              // {
-              //   label: `${t('table:popover.add-to-env')}`,
-              //   icon: IconAddOutlined,
-              //   value: 'ADD_ENV'
-              // },
               {
                 label: `${t('table:popover.delete-member')}`,
                 icon: IconTrash,
@@ -134,7 +136,7 @@ export const useColumns = ({
             onClick={value => onActions(account, value as MemberActionsType)}
             align="end"
           />
-        );
+        ) : null;
       }
     }
   ];

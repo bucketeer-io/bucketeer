@@ -20,7 +20,7 @@ const CollectionLoader = ({
 }: {
   filters: MembersFilters;
   setFilters: (values: Partial<MembersFilters>) => void;
-  onAdd: () => void;
+  onAdd?: () => void;
   onActions: (item: Account, type: MemberActionsType) => void;
 }) => {
   const columns = useColumns({ onActions });

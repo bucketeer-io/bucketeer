@@ -1,5 +1,5 @@
 import { Environment } from './environment';
-import { Organization } from './organization';
+import { Organization, OrganizationRole } from './organization';
 import { Project } from './project';
 
 export interface ServerError {
@@ -55,6 +55,7 @@ export interface ConsoleAccount {
   isSystemAdmin: boolean;
   organization?: Organization;
   environmentRoles: EnvironmentRole[];
+  organizationRole: OrganizationRole;
 }
 
 export interface ConsoleAccountResponse {

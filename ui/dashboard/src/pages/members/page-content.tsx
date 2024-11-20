@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
+import { useAuth } from 'auth';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
@@ -22,6 +23,9 @@ const PageContent = ({
   onHandleActions: (item: Account, type: MemberActionsType) => void;
 }) => {
   const { t } = useTranslation(['common']);
+  const { consoleAccount } = useAuth();
+  const isOrganizationAdmin =
+    consoleAccount?.organizationRole === 'Organization_ADMIN';
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<MembersFilters> = searchOptions;
@@ -56,10 +60,12 @@ const PageContent = ({
       <Filter
         onOpenFilter={onOpenFilterModal}
         action={
-          <Button className="flex-1 lg:flex-none" onClick={onAdd}>
-            <Icon icon={IconAddOutlined} size="sm" />
-            {t(`invite-member`)}
-          </Button>
+          isOrganizationAdmin && (
+            <Button className="flex-1 lg:flex-none" onClick={onAdd}>
+              <Icon icon={IconAddOutlined} size="sm" />
+              {t(`invite-member`)}
+            </Button>
+          )
         }
         searchValue={filters.searchQuery}
         filterCount={isNotEmpty(filters.disabled) ? 1 : undefined}
@@ -82,7 +88,9 @@ const PageContent = ({
       )}
       <div className="mt-5 flex flex-col flex-1">
         <CollectionLoader
-          onAdd={onAdd}
+          onAdd={() => {
+            if (isOrganizationAdmin) onAdd();
+          }}
           filters={filters}
           setFilters={onChangeFilters}
           onActions={onHandleActions}

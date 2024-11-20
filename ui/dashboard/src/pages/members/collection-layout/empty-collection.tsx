@@ -2,7 +2,7 @@ import { IconAddOutlined } from 'react-icons-material-design';
 import { useTranslation } from 'i18n';
 import EmptyState from 'elements/empty-state';
 
-export const EmptyCollection = ({ onAdd }: { onAdd: () => void }) => {
+export const EmptyCollection = ({ onAdd }: { onAdd?: () => void }) => {
   const { t } = useTranslation(['common', 'table']);
 
   return (
@@ -15,10 +15,12 @@ export const EmptyCollection = ({ onAdd }: { onAdd: () => void }) => {
         </EmptyState.Description>
       </EmptyState.Body>
       <EmptyState.Actions>
-        <EmptyState.ActionButton variant="primary" onClick={onAdd}>
-          <IconAddOutlined />
-          {t(`invite-member`)}
-        </EmptyState.ActionButton>
+        {onAdd && (
+          <EmptyState.ActionButton variant="primary" onClick={onAdd}>
+            <IconAddOutlined />
+            {t(`invite-member`)}
+          </EmptyState.ActionButton>
+        )}
       </EmptyState.Actions>
     </EmptyState.Root>
   );

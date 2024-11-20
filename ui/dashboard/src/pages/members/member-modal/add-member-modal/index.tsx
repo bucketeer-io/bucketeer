@@ -105,7 +105,9 @@ const AddMemberModal = ({ isOpen, onClose }: AddMemberModalProps) => {
   } = form;
   const memberEnvironments = watch('environmentRoles');
 
-  const { data: collection } = useFetchEnvironments();
+  const { data: collection } = useFetchEnvironments({
+    organizationId: currentEnvironment.organizationId
+  });
   const environments = collection?.environments || [];
 
   const checkSubmitBtnDisabled = useCallback(() => {
