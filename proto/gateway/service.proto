@@ -626,7 +626,7 @@ service Gateway {
   }
   rpc GetAccountV2(GetAccountV2Request) returns (GetAccountV2Response) {
     option (google.api.http) = {
-      get: "/v1/account"
+      get: "/v1/account/{organization_id}/{email}"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get",
@@ -646,7 +646,7 @@ service Gateway {
   rpc GetAccountV2ByEnvironmentID(GetAccountV2ByEnvironmentIDRequest)
       returns (GetAccountV2ByEnvironmentIDResponse) {
     option (google.api.http) = {
-      get: "/v1/get-account-by-environment"
+      get: "/v1/account/get-account-by-environment/{environment_id}/{email}"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get",
@@ -665,7 +665,7 @@ service Gateway {
   }
   rpc GetMe(GetMeRequest) returns (GetMeResponse) {
     option (google.api.http) = {
-      get: "/v1/account/me"
+      get: "/v1/account/me/{organization_id}"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get",

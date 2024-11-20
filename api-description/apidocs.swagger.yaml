@@ -400,16 +400,16 @@ paths:
           format: double
       tags:
         - Client and Server SDKs
-  /v1/account:
+  /v1/account/get-account-by-environment/{environmentId}/{email}:
     get:
       summary: Get
-      description: Get an Account. To call this API, you need a `READ` API Key role.
-      operationId: api.gateway.v1.account.get
+      description: Get an Account by Environment ID. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.account.get_by_environment_id
       responses:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/bucketeergatewayGetAccountV2Response'
+            $ref: '#/definitions/bucketeergatewayGetAccountV2ByEnvironmentIDResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -442,13 +442,13 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
-        - name: email
-          in: query
-          required: false
+        - name: environmentId
+          in: path
+          required: true
           type: string
-        - name: organizationId
-          in: query
-          required: false
+        - name: email
+          in: path
+          required: true
           type: string
         - name: authorization
           description: The API Key generated on the Admin Console.
@@ -457,7 +457,7 @@ paths:
           type: string
       tags:
         - Account
-  /v1/account/me:
+  /v1/account/me/{organizationId}:
     get:
       summary: Get
       description: Get the current Account. To call this API, you need a `READ` API Key role.
@@ -500,8 +500,65 @@ paths:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: organizationId
-          in: query
-          required: false
+          in: path
+          required: true
+          type: string
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Account
+  /v1/account/{organizationId}/{email}:
+    get:
+      summary: Get
+      description: Get an Account. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.account.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetAccountV2Response'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          type: string
+        - name: email
+          in: path
+          required: true
           type: string
         - name: authorization
           description: The API Key generated on the Admin Console.
@@ -855,63 +912,6 @@ paths:
           type: string
       tags:
         - Feature Flags
-  /v1/get-account-by-environment:
-    get:
-      summary: Get
-      description: Get an Account by Environment ID. To call this API, you need a `READ` API Key role.
-      operationId: api.gateway.v1.account.get_by_environment_id
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/bucketeergatewayGetAccountV2ByEnvironmentIDResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "403":
-          description: Request does not have permission to access the resource.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 7
-              details: []
-              message: not authorized
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: email
-          in: query
-          required: false
-          type: string
-        - name: environmentId
-          in: query
-          required: false
-          type: string
-        - name: authorization
-          description: The API Key generated on the Admin Console.
-          in: header
-          required: true
-          type: string
-      tags:
-        - Account
   /v1/push:
     post:
       summary: Create

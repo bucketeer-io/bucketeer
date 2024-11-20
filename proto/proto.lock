@@ -26080,7 +26080,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/account"
+                        "value": "/v1/account/{organization_id}/{email}"
                       }
                     ]
                   },
@@ -26143,7 +26143,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/get-account-by-environment"
+                        "value": "/v1/account/get-account-by-environment/{environment_id}/{email}"
                       }
                     ]
                   },
@@ -26206,7 +26206,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/account/me"
+                        "value": "/v1/account/me/{organization_id}"
                       }
                     ]
                   },
