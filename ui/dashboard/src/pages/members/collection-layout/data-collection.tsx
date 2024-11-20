@@ -115,9 +115,12 @@ export const useColumns = ({
       size: 120,
       cell: ({ row }) => {
         const account = row.original;
+        const isPendingInvite = Number(account.lastSeen) < 1;
+
         return (
           <Switch
-            checked={!account.disabled}
+            checked={isPendingInvite ? false : !account.disabled}
+            disabled={isPendingInvite}
             onCheckedChange={value =>
               onActions(account, value ? 'ENABLE' : 'DISABLE')
             }
