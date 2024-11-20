@@ -14,6 +14,7 @@
     "edit-member": "Edit Member",
     "delete-member": "Delete Member",
     "disable-member": "Disable Member",
+    "enable-member": "Enable Member",
     "add-to-env": "Add to Environment"
   },
   "empty": {
@@ -38,6 +39,8 @@
     "confirm-unarchive-desc": "The environment \"<bold>{{name}}</bold>\" will be unarchived. Are you sure you want to proceed?"
   },
   "members": {
-    "delete-member-desc": "The member \"<bold>{{email}}</bold>\" will be deleted permanently. Are you sure you want to proceed?"
+    "delete-member-desc": "The member \"<bold>{{email}}</bold>\" will be deleted permanently. Are you sure you want to proceed?",
+    "confirm-enable-desc": "The member \"<bold>{{email}}</bold>\" will be enabled. Are you sure you want to proceed?",
+    "confirm-disable-desc": "The member \"<bold>{{email}}</bold>\" will be disabled. Are you sure you want to proceed?"
   }
 }

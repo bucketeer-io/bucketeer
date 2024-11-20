@@ -16,4 +16,9 @@ export interface CollectionProps {
   projects: Account[];
 }
 
-export type MemberActionsType = 'EDIT' | 'DETAILS' | 'DELETE';
+export type MemberActionsType =
+  | 'EDIT'
+  | 'DETAILS'
+  | 'DELETE'
+  | 'DISABLE'
+  | 'ENABLE';

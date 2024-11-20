@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
+import { accountDisable, accountEnable } from '@api/account';
 import { accountDeleter } from '@api/account/account-deleter';
 import { invalidateAccounts } from '@queries/accounts';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -6,6 +8,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { Account } from '@types';
+import ConfirmModal from 'elements/confirm-modal';
 import PageLayout from 'elements/page-layout';
 import { EmptyCollection } from './collection-layout/empty-collection';
 import { useFetchMembers } from './collection-loader/use-fetch-members';
@@ -18,6 +21,7 @@ import { MemberActionsType } from './types';
 
 const PageLoader = () => {
   const { notify } = useToast();
+  const { t } = useTranslation(['table']);
   const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currenEnvironment = getCurrentEnvironment(consoleAccount!);
@@ -33,6 +37,7 @@ const PageLoader = () => {
   });
 
   const [selectedMember, setSelectedMember] = useState<Account>();
+  const [isDisabling, setIsDisabling] = useState<boolean>(false);
 
   const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
     useToggleOpen(false);
@@ -44,6 +49,9 @@ const PageLoader = () => {
     useToggleOpen(false);
 
   const [isOpenEditModal, onOpenEditModal, onCloseEditModal] =
+    useToggleOpen(false);
+
+  const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
     useToggleOpen(false);
 
   const mutation = useMutation({
@@ -77,6 +85,29 @@ const PageLoader = () => {
     }
   };
 
+  const mutationState = useMutation({
+    mutationFn: async (email: string) => {
+      const archiveMutation = isDisabling ? accountDisable : accountEnable;
+
+      return archiveMutation({
+        email,
+        organizationId: currenEnvironment.organizationId,
+        command: {}
+      });
+    },
+    onSuccess: () => {
+      onCloseConfirmModal();
+      invalidateAccounts(queryClient);
+      mutation.reset();
+    }
+  });
+
+  const onHandleDisable = () => {
+    if (selectedMember?.email) {
+      mutationState.mutate(selectedMember.email);
+    }
+  };
+
   const onHandleActions = (member: Account, type: MemberActionsType) => {
     if (type === 'EDIT') {
       onOpenEditModal();
@@ -84,6 +115,12 @@ const PageLoader = () => {
       onOpenDeleteModal();
     } else if (type === 'DETAILS') {
       onOpenDetailsModal();
+    } else if (type === 'ENABLE') {
+      setIsDisabling(false);
+      onOpenConfirmModal();
+    } else if (type === 'DISABLE') {
+      setIsDisabling(true);
+      onOpenConfirmModal();
     }
     setSelectedMember(member);
   };
@@ -127,6 +164,30 @@ const PageLoader = () => {
           isOpen={isOpenDetailsModal}
           onClose={onCloseDetailsModal}
           member={selectedMember!}
+        />
+      )}
+      {openConfirmModal && (
+        <ConfirmModal
+          isOpen={openConfirmModal}
+          onClose={onCloseConfirmModal}
+          onSubmit={onHandleDisable}
+          title={
+            isDisabling
+              ? t(`table:popover.disable-member`)
+              : t(`table:popover.enable-member`)
+          }
+          description={
+            <Trans
+              i18nKey={
+                isDisabling
+                  ? 'table:members.confirm-disable-desc'
+                  : 'table:members.confirm-enable-desc'
+              }
+              values={{ email: selectedMember?.email }}
+              components={{ bold: <strong /> }}
+            />
+          }
+          loading={mutationState.isPending}
         />
       )}
     </>

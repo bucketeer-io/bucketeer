@@ -13,6 +13,7 @@ import { joinName } from 'utils/name';
 import { IconTrash } from '@icons';
 import { AvatarImage } from 'components/avatar';
 import { Popover } from 'components/popover';
+import Switch from 'components/switch';
 import { MemberActionsType } from '../types';
 
 export const useColumns = ({
@@ -105,6 +106,22 @@ export const useColumns = ({
               ? t('never')
               : formatDateTime(account.lastSeen)}
           </div>
+        );
+      }
+    },
+    isOrganizationAdmin && {
+      accessorKey: 'state',
+      header: `${t('state')}`,
+      size: 120,
+      cell: ({ row }) => {
+        const account = row.original;
+        return (
+          <Switch
+            checked={!account.disabled}
+            onCheckedChange={value =>
+              onActions(account, value ? 'ENABLE' : 'DISABLE')
+            }
+          />
         );
       }
     },
