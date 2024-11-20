@@ -80,7 +80,9 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
   } = form;
   const memberEnvironments = watch('environmentRoles');
 
-  const { data: collection } = useFetchEnvironments();
+  const { data: collection } = useFetchEnvironments({
+    organizationId: currentEnvironment.organizationId
+  });
   const environments = collection?.environments || [];
 
   const onSubmit: SubmitHandler<EditMemberForm> = values => {
@@ -91,7 +93,8 @@ const EditMemberModal = ({ isOpen, onClose, member }: EditMemberModalProps) => {
         role: values.role as OrganizationRole
       },
       changeEnvironmentRolesCommand: {
-        roles: values.environmentRoles
+        roles: values.environmentRoles,
+        writeType: 'WriteType_OVERRIDE'
       },
       changeFirstNameCommand: {
         firstName: values.firstName

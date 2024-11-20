@@ -2,7 +2,10 @@ import axiosClient from '@api/axios-client';
 import { OrganizationRole } from '@types';
 import { EnvironmentRoleItem } from './account-creator';
 
-type WriteType = 'WriteType_UNSPECIFIED';
+type WriteType =
+  | 'WriteType_UNSPECIFIED'
+  | 'WriteType_OVERRIDE'
+  | 'WriteType_PATCH';
 
 export interface AccountUpdaterParams {
   email: string;

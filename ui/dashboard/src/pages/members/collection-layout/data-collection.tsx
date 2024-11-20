@@ -27,7 +27,7 @@ export const useColumns = ({
   const isOrganizationAdmin =
     consoleAccount?.organizationRole === 'Organization_ADMIN';
 
-  return [
+  return compact([
     {
       accessorKey: 'email',
       header: `${t('name')}`,
@@ -106,7 +106,7 @@ export const useColumns = ({
         );
       }
     },
-    {
+    isOrganizationAdmin && {
       accessorKey: 'action',
       size: 60,
       header: '',
@@ -118,7 +118,7 @@ export const useColumns = ({
       cell: ({ row }) => {
         const account = row.original;
 
-        return isOrganizationAdmin ? (
+        return (
           <Popover
             options={compact([
               Number(account.lastSeen) > 0 && {
@@ -136,8 +136,8 @@ export const useColumns = ({
             onClick={value => onActions(account, value as MemberActionsType)}
             align="end"
           />
-        ) : null;
+        );
       }
     }
-  ];
+  ]);
 };

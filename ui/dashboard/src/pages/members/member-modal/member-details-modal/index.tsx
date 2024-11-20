@@ -1,3 +1,4 @@
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import { Account } from '@types';
 import { joinName } from 'utils/name';
@@ -17,9 +18,13 @@ const MemberDetailsModal = ({
   member,
   onClose
 }: MemberDetailsModalProps) => {
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const { t } = useTranslation(['common', 'form']);
 
-  const { data: collection, isLoading } = useFetchEnvironments();
+  const { data: collection, isLoading } = useFetchEnvironments({
+    organizationId: currentEnvironment.organizationId
+  });
   const environments = collection?.environments || [];
 
   return (
@@ -37,7 +42,7 @@ const MemberDetailsModal = ({
           <h3 className="typo-head-bold-small text-gray-800">
             {t(`form:general-info`)}
           </h3>
-          <div className="flex items-center w-full gap-x-4">
+          <div className="flex items-start w-full gap-x-4">
             <div className="flex-1">
               <p className="typo-para-small text-gray-600">{t('name')}</p>
               <p className="text-gray-700 mt-1 typo-para-medium">
@@ -46,7 +51,7 @@ const MemberDetailsModal = ({
             </div>
             <div className="flex-1">
               <p className="typo-para-small text-gray-600">{t('email')}</p>
-              <p className="text-gray-700 mt-1 typo-para-medium">
+              <p className="text-gray-700 mt-1 typo-para-medium break-all">
                 {member.email}
               </p>
             </div>
@@ -56,7 +61,7 @@ const MemberDetailsModal = ({
             {t(`form:env-access`)}
           </h3>
           {(member.environmentRoles || []).map((env, index) => (
-            <div className="flex items-center w-full gap-x-4" key={index}>
+            <div className="flex items-start w-full gap-x-4" key={index}>
               <div className="flex-1">
                 <p className="typo-para-small text-gray-600">
                   {t('environment')}
@@ -70,8 +75,8 @@ const MemberDetailsModal = ({
               </div>
               <div className="flex-1">
                 <p className="typo-para-small text-gray-600">{t('role')}</p>
-                <p className="text-gray-700 mt-1 typo-para-medium">
-                  {env?.role}
+                <p className="text-gray-700 mt-1 capitalize typo-para-medium">
+                  {env?.role.split('_')[1]}
                 </p>
               </div>
             </div>
