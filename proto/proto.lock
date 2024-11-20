@@ -24960,6 +24960,152 @@
                 "type": "push.Push"
               }
             ]
+          },
+          {
+            "name": "GetAccountV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetAccountV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "account",
+                "type": "account.AccountV2"
+              }
+            ]
+          },
+          {
+            "name": "GetAccountV2ByEnvironmentIDRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetAccountV2ByEnvironmentIDResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "account",
+                "type": "account.AccountV2"
+              }
+            ]
+          },
+          {
+            "name": "GetMeRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "organization_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetMeResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "account",
+                "type": "account.ConsoleAccount"
+              }
+            ]
+          },
+          {
+            "name": "ListAccountsV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "order_by",
+                "type": "account.ListAccountsV2Request.OrderBy"
+              },
+              {
+                "id": 5,
+                "name": "order_direction",
+                "type": "account.ListAccountsV2Request.OrderDirection"
+              },
+              {
+                "id": 6,
+                "name": "search_keyword",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 8,
+                "name": "organization_role",
+                "type": "google.protobuf.Int32Value"
+              },
+              {
+                "id": 9,
+                "name": "environment_id",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 10,
+                "name": "environment_role",
+                "type": "google.protobuf.Int32Value"
+              }
+            ]
+          },
+          {
+            "name": "ListAccountsV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "accounts",
+                "type": "account.AccountV2",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
           }
         ],
         "services": [
@@ -25923,6 +26069,258 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "GetAccountV2",
+                "in_type": "GetAccountV2Request",
+                "out_type": "GetAccountV2Response",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/account/{organization_id}/{email}"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get an Account. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Account"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.account.get"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetAccountV2ByEnvironmentID",
+                "in_type": "GetAccountV2ByEnvironmentIDRequest",
+                "out_type": "GetAccountV2ByEnvironmentIDResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/account/get-account-by-environment/{environment_id}/{email}"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get an Account by Environment ID. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Account"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.account.get_by_environment_id"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetMe",
+                "in_type": "GetMeRequest",
+                "out_type": "GetMeResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/account/me/{organization_id}"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get the current Account. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Account"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.account.get_me"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "ListAccountsV2",
+                "in_type": "ListAccountsV2Request",
+                "out_type": "ListAccountsV2Response",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/accounts"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get list Accounts. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Account"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.account.list"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -25972,6 +26370,12 @@
           },
           {
             "path": "proto/push/service.proto"
+          },
+          {
+            "path": "proto/account/service.proto"
+          },
+          {
+            "path": "proto/account/account.proto"
           },
           {
             "path": "proto/event/client/event.proto"

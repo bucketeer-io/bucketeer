@@ -68,6 +68,7 @@ var (
 	ErrFeatureNotFound    = status.Error(codes.NotFound, "gateway: feature not found")
 	ErrEvaluationNotFound = status.Error(codes.NotFound, "gateway: evaluation not found")
 	ErrPushNotFound       = status.Error(codes.NotFound, "gateway: push not found")
+	ErrAccountNotFound    = status.Error(codes.NotFound, "gateway: account not found")
 	ErrMissingAPIKey      = status.Error(codes.Unauthenticated, "gateway: missing APIKey")
 	ErrInvalidAPIKey      = status.Error(codes.PermissionDenied, "gateway: invalid APIKey")
 	ErrDisabledAPIKey     = status.Error(codes.PermissionDenied, "gateway: disabled APIKey")

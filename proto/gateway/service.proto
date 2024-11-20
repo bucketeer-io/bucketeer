@@ -33,6 +33,8 @@ import "proto/feature/target.proto";
 import "proto/feature/segment.proto";
 import "proto/push/push.proto";
 import "proto/push/service.proto";
+import "proto/account/service.proto";
+import "proto/account/account.proto";
 import "proto/event/client/event.proto";
 
 message PingRequest {}
@@ -227,6 +229,51 @@ message UpdatePushRequest {
 
 message UpdatePushResponse {
   push.Push push = 1;
+}
+
+message GetAccountV2Request {
+  string email = 1;
+  string organization_id = 2;
+}
+
+message GetAccountV2Response {
+  account.AccountV2 account = 1;
+}
+
+message GetAccountV2ByEnvironmentIDRequest {
+  string email = 1;
+  string environment_id = 2;
+}
+
+message GetAccountV2ByEnvironmentIDResponse {
+  account.AccountV2 account = 1;
+}
+
+message GetMeRequest {
+  string organization_id = 1;
+}
+
+message GetMeResponse {
+  account.ConsoleAccount account = 1;
+}
+
+message ListAccountsV2Request {
+  int64 page_size = 1;
+  string cursor = 2;
+  string organization_id = 3;
+  account.ListAccountsV2Request.OrderBy order_by = 4;
+  account.ListAccountsV2Request.OrderDirection order_direction = 5;
+  string search_keyword = 6;
+  google.protobuf.BoolValue disabled = 7;
+  google.protobuf.Int32Value organization_role = 8;
+  google.protobuf.StringValue environment_id = 9;
+  google.protobuf.Int32Value environment_role = 10;
+}
+
+message ListAccountsV2Response {
+  repeated account.AccountV2 accounts = 1;
+  string cursor = 2;
+  int64 total_count = 3;
 }
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
@@ -567,6 +614,83 @@ service Gateway {
       description: "Update a Push notification. To call this API, you a `WRITE` or `ADMIN` API Key role.",
       tags: "Pushes",
       operation_id: "api.gateway.v1.pushes.update",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc GetAccountV2(GetAccountV2Request) returns (GetAccountV2Response) {
+    option (google.api.http) = {
+      get: "/v1/account/{organization_id}/{email}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get an Account. To call this API, you need a `READ` API Key role.",
+      tags: "Account",
+      operation_id: "api.gateway.v1.account.get",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc GetAccountV2ByEnvironmentID(GetAccountV2ByEnvironmentIDRequest)
+      returns (GetAccountV2ByEnvironmentIDResponse) {
+    option (google.api.http) = {
+      get: "/v1/account/get-account-by-environment/{environment_id}/{email}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get an Account by Environment ID. To call this API, you need a `READ` API Key role.",
+      tags: "Account",
+      operation_id: "api.gateway.v1.account.get_by_environment_id",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc GetMe(GetMeRequest) returns (GetMeResponse) {
+    option (google.api.http) = {
+      get: "/v1/account/me/{organization_id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get the current Account. To call this API, you need a `READ` API Key role.",
+      tags: "Account",
+      operation_id: "api.gateway.v1.account.get_me",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc ListAccountsV2(ListAccountsV2Request) returns (ListAccountsV2Response) {
+    option (google.api.http) = {
+      get: "/v1/accounts"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List",
+      description: "Get list Accounts. To call this API, you need a `READ` API Key role.",
+      tags: "Account",
+      operation_id: "api.gateway.v1.account.list",
       parameters: {
         headers: {
           name: "authorization"
