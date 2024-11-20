@@ -2966,6 +2966,9 @@ definitions:
       avatarImage:
         type: string
         format: byte
+      lastSeen:
+        type: string
+        format: int64
   accountConsoleAccountEnvironmentRole:
     type: object
     properties:
