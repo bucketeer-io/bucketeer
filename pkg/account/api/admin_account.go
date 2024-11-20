@@ -161,6 +161,7 @@ func (s *AccountService) GetMe(
 			FirstName:        sysAdminAccount.FirstName,
 			LastName:         sysAdminAccount.LastName,
 			Language:         sysAdminAccount.Language,
+			LastSeen:         sysAdminAccount.LastSeen,
 		}}, nil
 	}
 	// non admin account response
@@ -197,6 +198,7 @@ func (s *AccountService) GetMe(
 		FirstName:        account.FirstName,
 		LastName:         account.LastName,
 		Language:         account.Language,
+		LastSeen:         account.LastSeen,
 	}}, nil
 }
 

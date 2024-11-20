@@ -294,6 +294,11 @@
                 "id": 13,
                 "name": "avatar_image",
                 "type": "bytes"
+              },
+              {
+                "id": 14,
+                "name": "last_seen",
+                "type": "int64"
               }
             ],
             "messages": [

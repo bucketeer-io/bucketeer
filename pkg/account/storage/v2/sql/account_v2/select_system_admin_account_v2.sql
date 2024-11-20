@@ -13,6 +13,7 @@ SELECT
     a.disabled,
     a.created_at,
     a.updated_at,
+    a.last_seen,
     a.search_filters
 FROM
     account_v2 AS a
