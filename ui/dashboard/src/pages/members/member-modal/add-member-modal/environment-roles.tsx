@@ -46,7 +46,7 @@ const EnvironmentRoles = ({
 
   const selectedEnvs = memberEnvironments.map(item => item.environmentId);
   const environmentsOptions = environments.filter(
-    item => !selectedEnvs.includes(item.id)
+    item => item.id && !selectedEnvs.includes(item.id)
   );
 
   const onAddEnvironment = () => {
@@ -91,8 +91,10 @@ const EnvironmentRoles = ({
                       <DropdownMenuTrigger
                         placeholder={t(`form:select-environment`)}
                         label={
+                          // TODO: remove empty id when the backend is fixed
                           environments.find(
-                            item => item.id === environment.environmentId
+                            item =>
+                              item.id && item.id === environment.environmentId
                           )?.name
                         }
                         variant="secondary"
@@ -110,7 +112,6 @@ const EnvironmentRoles = ({
                             value={item.id}
                             label={item.name}
                             onSelectOption={value => {
-                              console.log('envIndex', envIndex);
                               field.onChange(value);
                             }}
                           />

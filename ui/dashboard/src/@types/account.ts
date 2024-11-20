@@ -7,7 +7,7 @@ export interface Account {
   firstName: string;
   lastName: string;
   language: string;
-  lastSeen: number;
+  lastSeen: string;
   avatarImageUrl: string;
   organizationId: string;
   organizationRole: OrganizationRole;

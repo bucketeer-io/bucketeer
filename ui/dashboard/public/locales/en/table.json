@@ -1,6 +1,7 @@
 {
   "flags": "Flags",
   "created-at": "Created At",
+  "last-seen": "Last Seen",
   "popover": {
     "edit-project": "Edit Project",
     "edit-env": "Edit Environment",
