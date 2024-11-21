@@ -886,6 +886,10 @@
               {
                 "name": "ENVIRONMENT_COUNT",
                 "integer": 5
+              },
+              {
+                "name": "LAST_SEEN",
+                "integer": 6
               }
             ]
           },
@@ -8474,6 +8478,11 @@
                 "id": 1,
                 "name": "id",
                 "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
               }
             ]
           },
@@ -8951,7 +8960,18 @@
                 "id": 7,
                 "name": "organization_ids",
                 "type": "string",
-                "is_repeated": true
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 8,
+                "name": "organization_id",
+                "type": "string"
               }
             ]
           },

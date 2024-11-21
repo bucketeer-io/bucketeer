@@ -35,6 +35,7 @@ var (
 	statusInvalidLastName                        = gstatus.New(codes.InvalidArgument, "account: invalid last name format")
 	statusLanguageIsEmpty                        = gstatus.New(codes.InvalidArgument, "account: language is empty")
 	statusInvalidOrganizationRole                = gstatus.New(codes.InvalidArgument, "account: invalid organization role")
+	statusInvalidEnvironmentRole                 = gstatus.New(codes.InvalidArgument, "account: environment roles must be specified")
 	statusInvalidUpdateEnvironmentRolesWriteType = gstatus.New(
 		codes.InvalidArgument,
 		"account: invalid update environment roles write type",

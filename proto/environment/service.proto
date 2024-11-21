@@ -97,6 +97,7 @@ message UnarchiveEnvironmentV2Response {}
 
 message GetProjectRequest {
   string id = 1;
+  string organization_id = 2;
 }
 
 message GetProjectResponse {
@@ -295,7 +296,8 @@ message ListProjectsV2Request {
   OrderDirection order_direction = 4;
   string search_keyword = 5;
   google.protobuf.BoolValue disabled = 6;
-  repeated string organization_ids = 7;
+  repeated string organization_ids = 7 [deprecated = true];
+  string organization_id = 8;
 }
 
 message ListProjectsV2Response {
