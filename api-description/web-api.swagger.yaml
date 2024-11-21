@@ -3342,6 +3342,7 @@ definitions:
       - ORGANIZATION_ROLE
       - ENVIRONMENT_COUNT
       - LAST_SEEN
+      - STATE
     default: DEFAULT
   accountListAccountsV2RequestOrderDirection:
     type: string

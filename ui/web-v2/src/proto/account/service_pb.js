@@ -6550,7 +6550,8 @@ proto.bucketeer.account.ListAccountsV2Request.OrderBy = {
   UPDATED_AT: 3,
   ORGANIZATION_ROLE: 4,
   ENVIRONMENT_COUNT: 5,
-  LAST_SEEN: 6
+  LAST_SEEN: 6,
+  STATE: 7
 };
 
 /**
