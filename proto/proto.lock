@@ -890,6 +890,10 @@
               {
                 "name": "LAST_SEEN",
                 "integer": 6
+              },
+              {
+                "name": "STATE",
+                "integer": 7
               }
             ]
           },

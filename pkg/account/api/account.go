@@ -1096,6 +1096,8 @@ func (s *AccountService) newAccountV2ListOrders(
 		column = "environment_count"
 	case accountproto.ListAccountsV2Request_LAST_SEEN:
 		column = "last_seen"
+	case accountproto.ListAccountsV2Request_STATE:
+		column = "disabled"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
