@@ -34,7 +34,6 @@ const PageContent = ({
     page: 1,
     orderBy: 'CREATED_AT',
     orderDirection: 'DESC',
-    status: 'ACTIVE',
     ...searchFilters
   } as MembersFilters;
 

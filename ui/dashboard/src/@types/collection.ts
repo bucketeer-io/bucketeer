@@ -16,6 +16,7 @@ export type OrderBy =
   | 'ROLE'
   | 'ORGANIZATION_ROLE'
   | 'EMAIL'
+  | 'LAST_SEEN'
   | 'CREATOR_EMAIL';
 
 export type OrderDirection = 'ASC' | 'DESC';
