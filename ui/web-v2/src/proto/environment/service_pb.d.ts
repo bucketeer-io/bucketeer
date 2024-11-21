@@ -499,6 +499,9 @@ export class GetProjectRequest extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetProjectRequest.AsObject;
   static toObject(
@@ -523,6 +526,7 @@ export class GetProjectRequest extends jspb.Message {
 export namespace GetProjectRequest {
   export type AsObject = {
     id: string;
+    organizationId: string;
   };
 }
 
@@ -1828,6 +1832,9 @@ export class ListProjectsV2Request extends jspb.Message {
   setOrganizationIdsList(value: Array<string>): void;
   addOrganizationIds(value: string, index?: number): string;
 
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListProjectsV2Request.AsObject;
   static toObject(
@@ -1858,6 +1865,7 @@ export namespace ListProjectsV2Request {
     searchKeyword: string;
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     organizationIdsList: Array<string>;
+    organizationId: string;
   };
 
   export interface OrderByMap {

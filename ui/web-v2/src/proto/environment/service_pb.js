@@ -3935,7 +3935,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        id: jspb.Message.getFieldWithDefault(msg, 1, '')
+        id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        organizationId: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -3980,6 +3981,10 @@ proto.bucketeer.environment.GetProjectRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
           break;
+        case 2:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOrganizationId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -4016,6 +4021,10 @@ proto.bucketeer.environment.GetProjectRequest.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(1, f);
     }
+    f = message.getOrganizationId();
+    if (f.length > 0) {
+      writer.writeString(2, f);
+    }
   };
 
 /**
@@ -4035,6 +4044,26 @@ proto.bucketeer.environment.GetProjectRequest.prototype.setId = function (
 ) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
+
+/**
+ * optional string organization_id = 2;
+ * @return {string}
+ */
+proto.bucketeer.environment.GetProjectRequest.prototype.getOrganizationId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 2, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.environment.GetProjectRequest} returns this
+ */
+proto.bucketeer.environment.GetProjectRequest.prototype.setOrganizationId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 2, value);
+  };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
@@ -10343,7 +10372,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           (f = msg.getDisabled()) &&
           google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
         organizationIdsList:
-          (f = jspb.Message.getRepeatedField(msg, 7)) == null ? undefined : f
+          (f = jspb.Message.getRepeatedField(msg, 7)) == null ? undefined : f,
+        organizationId: jspb.Message.getFieldWithDefault(msg, 8, '')
       };
 
     if (includeInstance) {
@@ -10422,6 +10452,10 @@ proto.bucketeer.environment.ListProjectsV2Request.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.addOrganizationIds(value);
           break;
+        case 8:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOrganizationId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -10485,6 +10519,10 @@ proto.bucketeer.environment.ListProjectsV2Request.serializeBinaryToWriter =
     f = message.getOrganizationIdsList();
     if (f.length > 0) {
       writer.writeRepeatedString(7, f);
+    }
+    f = message.getOrganizationId();
+    if (f.length > 0) {
+      writer.writeString(8, f);
     }
   };
 
@@ -10688,6 +10726,26 @@ proto.bucketeer.environment.ListProjectsV2Request.prototype.addOrganizationIds =
 proto.bucketeer.environment.ListProjectsV2Request.prototype.clearOrganizationIdsList =
   function () {
     return this.setOrganizationIdsList([]);
+  };
+
+/**
+ * optional string organization_id = 8;
+ * @return {string}
+ */
+proto.bucketeer.environment.ListProjectsV2Request.prototype.getOrganizationId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 8, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.environment.ListProjectsV2Request} returns this
+ */
+proto.bucketeer.environment.ListProjectsV2Request.prototype.setOrganizationId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 8, value);
   };
 
 /**

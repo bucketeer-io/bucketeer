@@ -3341,6 +3341,7 @@ definitions:
       - UPDATED_AT
       - ORGANIZATION_ROLE
       - ENVIRONMENT_COUNT
+      - LAST_SEEN
     default: DEFAULT
   accountListAccountsV2RequestOrderDirection:
     type: string
@@ -3830,6 +3831,8 @@ definitions:
     properties:
       id:
         type: string
+      organizationId:
+        type: string
   environmentGetProjectResponse:
     type: object
     properties:
@@ -4007,6 +4010,8 @@ definitions:
         type: array
         items:
           type: string
+      organizationId:
+        type: string
   environmentListProjectsV2RequestOrderBy:
     type: string
     enum:
