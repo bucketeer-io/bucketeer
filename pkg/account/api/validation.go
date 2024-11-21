@@ -37,20 +37,34 @@ func verifyEmailFormat(email string) bool {
 }
 
 func validateCreateAPIKeyRequest(req *accountproto.CreateAPIKeyRequest, localizer locale.Localizer) error {
-	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+	if req.Command.Name == "" {
+		dt, err := statusMissingAPIKeyName.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_name"),
 		})
 		if err != nil {
 			return statusInternal.Err()
 		}
 		return dt.Err()
 	}
-	if req.Command.Name == "" {
+	return nil
+}
+
+func validateCreateAPIKeyRequestNoCommand(req *accountproto.CreateAPIKeyRequest, localizer locale.Localizer) error {
+	if req.Name == "" {
 		dt, err := statusMissingAPIKeyName.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_name"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if req.Maintainer != "" && !verifyEmailFormat(req.Maintainer) {
+		dt, err := statusInvalidEmail.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "maintainer"),
 		})
 		if err != nil {
 			return statusInternal.Err()

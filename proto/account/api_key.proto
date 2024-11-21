@@ -34,6 +34,8 @@ message APIKey {
   bool disabled = 4;
   int64 created_at = 5;
   int64 updated_at = 6;
+  string maintainer = 7;
+  string api_key = 8;
 }
 
 message EnvironmentAPIKey {

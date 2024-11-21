@@ -16,14 +16,17 @@ package api
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/command"
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
@@ -45,10 +48,19 @@ func (s *AccountService) CreateAPIKey(
 	if err != nil {
 		return nil, err
 	}
+
+	if req.Command == nil {
+		return s.createAPIKeyNoCommand(ctx, req, localizer, editor)
+	}
+
 	if err := validateCreateAPIKeyRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	key, err := domain.NewAPIKey(req.Command.Name, req.Command.Role)
+	if req.Maintainer != "" {
+		req.Maintainer = editor.Email
+	}
+
+	key, err := domain.NewAPIKey(req.Command.Name, req.Command.Role, req.Maintainer)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new api key",
@@ -82,7 +94,7 @@ func (s *AccountService) CreateAPIKey(
 		return s.accountStorage.CreateAPIKey(ctx, key, req.EnvironmentId)
 	})
 	if err != nil {
-		if err == v2as.ErrAPIKeyAlreadyExists {
+		if errors.Is(err, v2as.ErrAPIKeyAlreadyExists) {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
@@ -108,6 +120,120 @@ func (s *AccountService) CreateAPIKey(
 		}
 		return nil, dt.Err()
 	}
+	return &proto.CreateAPIKeyResponse{
+		ApiKey: key.APIKey,
+	}, nil
+}
+
+func (s *AccountService) createAPIKeyNoCommand(
+	ctx context.Context,
+	req *proto.CreateAPIKeyRequest,
+	localizer locale.Localizer,
+	editor *eventproto.Editor,
+) (*proto.CreateAPIKeyResponse, error) {
+	if err := validateCreateAPIKeyRequestNoCommand(req, localizer); err != nil {
+		return nil, err
+	}
+	if req.Maintainer != "" {
+		req.Maintainer = editor.Email
+	}
+
+	key, err := domain.NewAPIKey(req.Name, req.Role, req.Maintainer)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create a new api key",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("name", req.Name),
+				zap.String("role", req.Role.String()),
+				zap.String("maintainer", req.Maintainer),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	err = s.accountStorage.RunInTransaction(ctx, func() error {
+		return s.accountStorage.CreateAPIKey(ctx, key, req.EnvironmentId)
+	})
+	if err != nil {
+		if errors.Is(err, v2as.ErrAPIKeyAlreadyExists) {
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to create api key",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("name", req.Name),
+				zap.String("role", req.Role.String()),
+				zap.String("maintainer", req.Maintainer),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	prev := &domain.APIKey{}
+	if err := copier.Copy(prev, key); err != nil {
+		return nil, err
+	}
+	e, err := domainevent.NewEvent(
+		editor,
+		eventproto.Event_APIKEY,
+		key.Id,
+		eventproto.Event_APIKEY_CREATED,
+		&eventproto.APIKeyCreatedEvent{
+			Id:         key.Id,
+			Name:       key.Name,
+			Role:       key.Role,
+			Disabled:   key.Disabled,
+			CreatedAt:  key.CreatedAt,
+			UpdatedAt:  key.UpdatedAt,
+			Maintainer: key.Maintainer,
+			ApiKey:     key.ApiKey,
+		},
+		req.EnvironmentId,
+		key.APIKey,
+		prev,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.publisher.Publish(ctx, e); err != nil {
+		s.logger.Error(
+			"Failed to publish create account event",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("name", req.Name),
+				zap.String("role", req.Role.String()),
+				zap.String("maintainer", req.Maintainer),
+			)...,
+		)
+		return nil, err
+	}
+
 	return &proto.CreateAPIKeyResponse{
 		ApiKey: key.APIKey,
 	}, nil

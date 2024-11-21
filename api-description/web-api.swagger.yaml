@@ -2773,6 +2773,10 @@ definitions:
       updatedAt:
         type: string
         format: int64
+      maintainer:
+        type: string
+      apiKey:
+        type: string
   accountAPIKeyRole:
     type: string
     enum:
@@ -2988,6 +2992,12 @@ definitions:
       command:
         $ref: '#/definitions/accountCreateAPIKeyCommand'
       environmentId:
+        type: string
+      name:
+        type: string
+      role:
+        $ref: '#/definitions/accountAPIKeyRole'
+      maintainer:
         type: string
   accountCreateAPIKeyResponse:
     type: object

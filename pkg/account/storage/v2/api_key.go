@@ -55,6 +55,8 @@ func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, env
 		k.CreatedAt,
 		k.UpdatedAt,
 		environmentID,
+		k.ApiKey,
+		k.Maintainer,
 	)
 	if err != nil {
 		if err == mysql.ErrDuplicateEntry {

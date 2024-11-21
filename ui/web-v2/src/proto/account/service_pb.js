@@ -7138,7 +7138,10 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        name: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        role: jspb.Message.getFieldWithDefault(msg, 5, 0),
+        maintainer: jspb.Message.getFieldWithDefault(msg, 6, '')
       };
 
     if (includeInstance) {
@@ -7192,6 +7195,20 @@ proto.bucketeer.account.CreateAPIKeyRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setName(value);
+          break;
+        case 5:
+          var value = /** @type {!proto.bucketeer.account.APIKey.Role} */ (
+            reader.readEnum()
+          );
+          msg.setRole(value);
+          break;
+        case 6:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setMaintainer(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -7237,6 +7254,18 @@ proto.bucketeer.account.CreateAPIKeyRequest.serializeBinaryToWriter = function (
   f = message.getEnvironmentId();
   if (f.length > 0) {
     writer.writeString(3, f);
+  }
+  f = message.getName();
+  if (f.length > 0) {
+    writer.writeString(4, f);
+  }
+  f = message.getRole();
+  if (f !== 0.0) {
+    writer.writeEnum(5, f);
+  }
+  f = message.getMaintainer();
+  if (f.length > 0) {
+    writer.writeString(6, f);
   }
 };
 
@@ -7300,6 +7329,65 @@ proto.bucketeer.account.CreateAPIKeyRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 3, value);
   };
+
+/**
+ * optional string name = 4;
+ * @return {string}
+ */
+proto.bucketeer.account.CreateAPIKeyRequest.prototype.getName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.CreateAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.CreateAPIKeyRequest.prototype.setName = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 4, value);
+};
+
+/**
+ * optional APIKey.Role role = 5;
+ * @return {!proto.bucketeer.account.APIKey.Role}
+ */
+proto.bucketeer.account.CreateAPIKeyRequest.prototype.getRole = function () {
+  return /** @type {!proto.bucketeer.account.APIKey.Role} */ (
+    jspb.Message.getFieldWithDefault(this, 5, 0)
+  );
+};
+
+/**
+ * @param {!proto.bucketeer.account.APIKey.Role} value
+ * @return {!proto.bucketeer.account.CreateAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.CreateAPIKeyRequest.prototype.setRole = function (
+  value
+) {
+  return jspb.Message.setProto3EnumField(this, 5, value);
+};
+
+/**
+ * optional string maintainer = 6;
+ * @return {string}
+ */
+proto.bucketeer.account.CreateAPIKeyRequest.prototype.getMaintainer =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 6, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.CreateAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.CreateAPIKeyRequest.prototype.setMaintainer = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 6, value);
+};
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**

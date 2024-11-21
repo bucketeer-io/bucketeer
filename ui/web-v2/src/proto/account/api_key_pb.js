@@ -108,7 +108,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         role: jspb.Message.getFieldWithDefault(msg, 3, 0),
         disabled: jspb.Message.getBooleanFieldWithDefault(msg, 4, false),
         createdAt: jspb.Message.getFieldWithDefault(msg, 5, 0),
-        updatedAt: jspb.Message.getFieldWithDefault(msg, 6, 0)
+        updatedAt: jspb.Message.getFieldWithDefault(msg, 6, 0),
+        maintainer: jspb.Message.getFieldWithDefault(msg, 7, ''),
+        apiKey: jspb.Message.getFieldWithDefault(msg, 8, '')
       };
 
     if (includeInstance) {
@@ -175,6 +177,14 @@ proto.bucketeer.account.APIKey.deserializeBinaryFromReader = function (
         var value = /** @type {number} */ (reader.readInt64());
         msg.setUpdatedAt(value);
         break;
+      case 7:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setMaintainer(value);
+        break;
+      case 8:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setApiKey(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -228,6 +238,14 @@ proto.bucketeer.account.APIKey.serializeBinaryToWriter = function (
   f = message.getUpdatedAt();
   if (f !== 0) {
     writer.writeInt64(6, f);
+  }
+  f = message.getMaintainer();
+  if (f.length > 0) {
+    writer.writeString(7, f);
+  }
+  f = message.getApiKey();
+  if (f.length > 0) {
+    writer.writeString(8, f);
   }
 };
 
@@ -341,6 +359,38 @@ proto.bucketeer.account.APIKey.prototype.getUpdatedAt = function () {
  */
 proto.bucketeer.account.APIKey.prototype.setUpdatedAt = function (value) {
   return jspb.Message.setProto3IntField(this, 6, value);
+};
+
+/**
+ * optional string maintainer = 7;
+ * @return {string}
+ */
+proto.bucketeer.account.APIKey.prototype.getMaintainer = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 7, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.APIKey} returns this
+ */
+proto.bucketeer.account.APIKey.prototype.setMaintainer = function (value) {
+  return jspb.Message.setProto3StringField(this, 7, value);
+};
+
+/**
+ * optional string api_key = 8;
+ * @return {string}
+ */
+proto.bucketeer.account.APIKey.prototype.getApiKey = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 8, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.APIKey} returns this
+ */
+proto.bucketeer.account.APIKey.prototype.setApiKey = function (value) {
+  return jspb.Message.setProto3StringField(this, 8, value);
 };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

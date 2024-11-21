@@ -1082,6 +1082,17 @@ export class CreateAPIKeyRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getName(): string;
+  setName(value: string): void;
+
+  getRole(): proto_account_api_key_pb.APIKey.RoleMap[keyof proto_account_api_key_pb.APIKey.RoleMap];
+  setRole(
+    value: proto_account_api_key_pb.APIKey.RoleMap[keyof proto_account_api_key_pb.APIKey.RoleMap]
+  ): void;
+
+  getMaintainer(): string;
+  setMaintainer(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateAPIKeyRequest.AsObject;
   static toObject(
@@ -1107,6 +1118,9 @@ export namespace CreateAPIKeyRequest {
   export type AsObject = {
     command?: proto_account_command_pb.CreateAPIKeyCommand.AsObject;
     environmentId: string;
+    name: string;
+    role: proto_account_api_key_pb.APIKey.RoleMap[keyof proto_account_api_key_pb.APIKey.RoleMap];
+    maintainer: string;
   };
 }
 
