@@ -130,6 +130,12 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				Command: &accountproto.CreateAccountV2Command{
 					Email:            "bucketeer_environment@example.com",
 					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+						{
+							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+							EnvironmentId: "test",
+						},
+					},
 				},
 				OrganizationId: "org0",
 			},
@@ -158,6 +164,12 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				Command: &accountproto.CreateAccountV2Command{
 					Email:            "bucketeer@example.com",
 					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+						{
+							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+							EnvironmentId: "test",
+						},
+					},
 				},
 				OrganizationId: "org0",
 			},
@@ -186,6 +198,12 @@ func TestCreateAccountV2MySQL(t *testing.T) {
 				Command: &accountproto.CreateAccountV2Command{
 					Email:            "bucketeer@example.com",
 					OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+						{
+							Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+							EnvironmentId: "test",
+						},
+					},
 				},
 				OrganizationId: "org0",
 			},
@@ -281,6 +299,12 @@ func TestCreateAccountV2NoCommandMySQL(t *testing.T) {
 				Language:         "en",
 				OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 				OrganizationId:   "org0",
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						EnvironmentId: "test",
+					},
+				},
 			},
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
@@ -309,6 +333,12 @@ func TestCreateAccountV2NoCommandMySQL(t *testing.T) {
 				Language:         "en",
 				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 				OrganizationId:   "org0",
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						EnvironmentId: "test",
+					},
+				},
 			},
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
@@ -338,6 +368,12 @@ func TestCreateAccountV2NoCommandMySQL(t *testing.T) {
 				Language:         "en",
 				OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 				OrganizationId:   "org0",
+				EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+					{
+						Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+						EnvironmentId: "test",
+					},
+				},
 			},
 			setup: func(s *AccountService) {
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
