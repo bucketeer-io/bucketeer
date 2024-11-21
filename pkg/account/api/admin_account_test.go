@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -266,7 +267,10 @@ func TestGetMeMySQL(t *testing.T) {
 						LastName:  "test",
 						Language:  "en",
 					},
-				}, nil)
+				}, nil).Times(2)
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().UpdateAccountV2(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
 			},
 			input: &accountproto.GetMeRequest{
 				OrganizationId: "org0",
@@ -316,7 +320,14 @@ func TestGetMeMySQL(t *testing.T) {
 			actual, err := service.GetMe(p.ctx, p.input)
 			assert.Equal(t, p.expectedErr, err, p.desc)
 			if actual != nil {
-				assert.Equal(t, p.expected.Account, actual.Account, p.desc)
+				assert.Greater(t, actual.Account.LastSeen, int64(0), "LastSeen should be set")
+				assert.Less(t, actual.Account.LastSeen, time.Now().Unix()+1, "LastSeen should not be in the future")
+
+				actualAccount := actual.Account
+				actualAccount.LastSeen = 0
+				expectedAccount := p.expected.Account
+				expectedAccount.LastSeen = 0
+				assert.Equal(t, expectedAccount, actualAccount, p.desc)
 			}
 		})
 	}

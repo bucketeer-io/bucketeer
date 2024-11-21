@@ -55,6 +55,7 @@ func (s *accountStorage) GetSystemAdminAccountV2(ctx context.Context, email stri
 		&account.Disabled,
 		&account.CreatedAt,
 		&account.UpdatedAt,
+		&account.LastSeen,
 		&mysql.JSONObject{Val: &account.SearchFilters},
 	)
 	if err != nil {

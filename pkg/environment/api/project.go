@@ -50,7 +50,12 @@ func (s *EnvironmentService) GetProject(
 	req *environmentproto.GetProjectRequest,
 ) (*environmentproto.GetProjectResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkSystemAdminRole(ctx, localizer)
+	_, err := s.checkOrganizationRole(
+		ctx,
+		req.OrganizationId,
+		accountproto.AccountV2_Role_Organization_MEMBER,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +228,8 @@ func (s *EnvironmentService) newProjectListOrders(
 		column = "environment_count"
 	case environmentproto.ListProjectsRequest_FEATURE_COUNT:
 		column = "feature_count"
-
+	case environmentproto.ListProjectsRequest_CREATOR_EMAIL:
+		column = "project.creator_email"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -911,30 +917,27 @@ func (s *EnvironmentService) ListProjectsV2(
 	req *environmentproto.ListProjectsV2Request,
 ) (*environmentproto.ListProjectsV2Response, error) {
 	localizer := locale.NewLocalizer(ctx)
-	// Check if the user has at least Member role in each requested organization
-	for _, orgID := range req.OrganizationIds {
-		_, err := s.checkOrganizationRole(
-			ctx,
-			orgID,
-			accountproto.AccountV2_Role_Organization_MEMBER,
-			localizer,
+	// Check if the user has at least Member role in the requested organization
+	_, err := s.checkOrganizationRole(
+		ctx,
+		req.OrganizationId,
+		accountproto.AccountV2_Role_Organization_MEMBER,
+		localizer,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to check organization role",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("organizationID", req.OrganizationId),
+			)...,
 		)
-		if err != nil {
-			s.logger.Error(
-				"Failed to check organization role",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("organizationID", orgID),
-					zap.String("requiredRole", accountproto.AccountV2_Role_Organization_MEMBER.String()),
-				)...,
-			)
-			return nil, err
-		}
+		return nil, err
 	}
 	var whereParts []mysql.WherePart
-	if len(req.OrganizationIds) > 0 {
-		oIDs := convToInterfaceSlice(req.OrganizationIds)
-		whereParts = append(whereParts, mysql.NewInFilter("project.organization_id", oIDs))
+	if req.OrganizationId != "" {
+		whereParts = append(whereParts,
+			mysql.NewFilter("project.organization_id", "=", req.OrganizationId))
 	}
 	if req.Disabled != nil {
 		whereParts = append(whereParts, mysql.NewFilter("project.disabled", "=", req.Disabled.Value))
@@ -1025,7 +1028,8 @@ func (s *EnvironmentService) newProjectListV2Orders(
 		column = "environment_count"
 	case environmentproto.ListProjectsV2Request_FEATURE_COUNT:
 		column = "feature_count"
-
+	case environmentproto.ListProjectsV2Request_CREATOR_EMAIL:
+		column = "project.creator_email"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

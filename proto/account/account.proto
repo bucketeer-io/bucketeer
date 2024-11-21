@@ -96,4 +96,5 @@ message ConsoleAccount {
   string language = 11;
   string avatar_file_type = 12;
   bytes avatar_image = 13;
+  int64 last_seen = 14;
 }

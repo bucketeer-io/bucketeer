@@ -315,6 +315,9 @@ export class ConsoleAccount extends jspb.Message {
   getAvatarImage_asB64(): string;
   setAvatarImage(value: Uint8Array | string): void;
 
+  getLastSeen(): number;
+  setLastSeen(value: number): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ConsoleAccount.AsObject;
   static toObject(
@@ -351,6 +354,7 @@ export namespace ConsoleAccount {
     language: string;
     avatarFileType: string;
     avatarImage: Uint8Array | string;
+    lastSeen: number;
   };
 
   export class EnvironmentRole extends jspb.Message {
