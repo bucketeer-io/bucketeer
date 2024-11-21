@@ -12,7 +12,6 @@
   "management": "Management",
   "analysis": "Analysis",
   "usage": "Usage",
-  "API-keys": "API keys",
   "general": "General",
   "settings": "Settings",
   "integrations": "Integrations",
@@ -62,5 +61,13 @@
     "logout": "Logout",
     "back-to-main": "Back to Main",
     "no-projects": "No projects found"
-  }
+  },
+  "submit": "Submit",
+  "type": "Type",
+  "key-role": "Key Role",
+  "new-api-key": "New API Key",
+  "update-api-key": "Update API Key",
+  "api-keys": "API Keys",
+  "create-api-key": "Create API Key",
+  "api-keys-subtitle": "Manage all API keys for this environment."
 }

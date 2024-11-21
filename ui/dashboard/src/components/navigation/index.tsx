@@ -57,7 +57,7 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
           href: `/${envUrlCode}${ROUTING.PAGE_PATH_MEMBERS}`
         },
         {
-          label: t(`API-keys`),
+          label: t(`api-keys`),
           icon: IconSystem.IconKey,
           href: `/${envUrlCode}${ROUTING.PAGE_PATH_APIKEYS}`
         }
