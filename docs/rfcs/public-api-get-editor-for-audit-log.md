@@ -131,7 +131,7 @@ Cons:
 - The editor is not fully specific, we only know the one that responsible for creating and maintaining the API, 
 not the one that actually do the action.
 
-### Option 2: let the client decide the editor of the action
+### Option 2: let the client decide the editor of the action <span style="color:green">(preferred)</span>
 
 In this option, we still save the API key maintainer in the audit log but also, we change the request body 
 of update and create APIs by adding `creator_email` or `updater_email`:
