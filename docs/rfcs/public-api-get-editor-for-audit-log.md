@@ -74,7 +74,7 @@ I suggest 2 options:
   - Let the maintainer be the creator of the API key.
   - We let the client decide the editor of the action by adding editor email in the request body of public API.
 
-### Option 1: Let the editor be the creator of the API key <span style="color:green">(preferred)</span>
+### Option 1: Let the editor be the creator of the API key
 
 We can extract the APIKey maintainer in function `getEnvironmentAPIKey` as we will update the response of 
 `GetAPIKeyBySearchingAllEnvironments` (https://github.com/bucketeer-io/bucketeer/blob/main/pkg/account/api/api_key.go#L455)
