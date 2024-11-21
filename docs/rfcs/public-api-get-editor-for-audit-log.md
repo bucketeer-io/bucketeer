@@ -87,12 +87,12 @@ The `maintainer` value will be added into context before forward to Web gRPC ser
 ```go
 const APIKeyMaintainerMDKey string = "apikey-maintainer"
 const APIKeyNameMDKey string = "apikey-name"
-const APIKeyIDMDKey string = "apikey-id"
+const APIKeyTokenMDKey string = "apikey-token"
 
 headerMetadata := metadata.New(map[string]string{
 	APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
 	APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
-	APIKeyIDMDKey:         envAPIKey.ApiKey.Id,
+    APIKeyTokenMDKey:        envAPIKey.ApiKey.APIKey,
 })
 ctx = metadata.NewOutgoingContext(ctx, headerMetadata)
 ```
@@ -105,7 +105,8 @@ md, ok := metadata.FromIncomingContext(ctx)
 if ok {
     apiKeyMaintainer := md.Get(APIKeyMaintainerMDKey)
 	apiKeyName := md.Get(APIKeyNameMDKey)
-	apiKeyID := md.Get(APIKeyIDMDKey)
+	apiKeyToken := md.Get(APIKeyTokenMDKey)
+    apiKeyTokenShadowed := apiKeyToken[len(apiKeyToken)-8:] // shadowed token example
     // verify maintainer email then form *eventproto.Editor ...
 }
 ```
