@@ -74,7 +74,7 @@ I suggest 2 options:
   - Let the maintainer be the creator of the API key.
   - We let the client decide the editor of the action by adding editor email in the request body of public API.
 
-### Option 1: Let the editor be the creator of the API key
+### Option 1: Let the editor be the creator of the API key <span style="color:green">(preferred)</span>
 
 We can extract the APIKey maintainer in function `getEnvironmentAPIKey` as we will update the response of 
 `GetAPIKeyBySearchingAllEnvironments` (https://github.com/bucketeer-io/bucketeer/blob/main/pkg/account/api/api_key.go#L455)
@@ -90,9 +90,9 @@ const APIKeyNameMDKey string = "apikey-name"
 const APIKeyTokenMDKey string = "apikey-token"
 
 headerMetadata := metadata.New(map[string]string{
-	APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
-	APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
-    APIKeyTokenMDKey:        envAPIKey.ApiKey.APIKey,
+    APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
+    APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
+    APIKeyTokenMDKey:      envAPIKey.ApiKey.APIKey,
 })
 ctx = metadata.NewOutgoingContext(ctx, headerMetadata)
 ```
@@ -132,7 +132,7 @@ Cons:
 - The editor is not fully specific, we only know the one that responsible for creating and maintaining the API, 
 not the one that actually do the action.
 
-### Option 2: let the client decide the editor of the action <span style="color:green">(preferred)</span>
+### Option 2: let the client decide the editor of the action
 
 In this option, we still save the API key maintainer in the audit log but also, we change the request body 
 of update and create APIs by adding `creator_email` or `updater_email`:
