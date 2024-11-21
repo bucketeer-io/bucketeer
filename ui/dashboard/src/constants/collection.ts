@@ -9,6 +9,7 @@ export const sortingListFields: SortingListFields = {
   id: 'ID',
   name: 'NAME',
   email: 'EMAIL',
+  state: 'STATE',
   role: 'ROLE',
   urlCode: 'URL_CODE',
   createdAt: 'CREATED_AT',
