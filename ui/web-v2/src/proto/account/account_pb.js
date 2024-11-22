@@ -1571,7 +1571,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         lastName: jspb.Message.getFieldWithDefault(msg, 10, ''),
         language: jspb.Message.getFieldWithDefault(msg, 11, ''),
         avatarFileType: jspb.Message.getFieldWithDefault(msg, 12, ''),
-        avatarImage: msg.getAvatarImage_asB64()
+        avatarImage: msg.getAvatarImage_asB64(),
+        lastSeen: jspb.Message.getFieldWithDefault(msg, 14, 0)
       };
 
     if (includeInstance) {
@@ -1683,6 +1684,10 @@ proto.bucketeer.account.ConsoleAccount.deserializeBinaryFromReader = function (
         var value = /** @type {!Uint8Array} */ (reader.readBytes());
         msg.setAvatarImage(value);
         break;
+      case 14:
+        var value = /** @type {number} */ (reader.readInt64());
+        msg.setLastSeen(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -1777,6 +1782,10 @@ proto.bucketeer.account.ConsoleAccount.serializeBinaryToWriter = function (
   f = message.getAvatarImage_asU8();
   if (f.length > 0) {
     writer.writeBytes(13, f);
+  }
+  f = message.getLastSeen();
+  if (f !== 0) {
+    writer.writeInt64(14, f);
   }
 };
 
@@ -2398,6 +2407,24 @@ proto.bucketeer.account.ConsoleAccount.prototype.setAvatarImage = function (
   value
 ) {
   return jspb.Message.setProto3BytesField(this, 13, value);
+};
+
+/**
+ * optional int64 last_seen = 14;
+ * @return {number}
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.getLastSeen = function () {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 14, 0));
+};
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.account.ConsoleAccount} returns this
+ */
+proto.bucketeer.account.ConsoleAccount.prototype.setLastSeen = function (
+  value
+) {
+  return jspb.Message.setProto3IntField(this, 14, value);
 };
 
 goog.object.extend(exports, proto.bucketeer.account);

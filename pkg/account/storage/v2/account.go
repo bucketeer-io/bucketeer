@@ -236,6 +236,7 @@ func (s *accountStorage) GetAccountsWithOrganization(
 			&account.Disabled,
 			&account.CreatedAt,
 			&account.UpdatedAt,
+			&account.LastSeen,
 			&mysql.JSONObject{Val: &account.SearchFilters},
 			&organization.Id,
 			&organization.Name,
@@ -302,6 +303,7 @@ func (s *accountStorage) ListAccountsV2(
 			&account.Disabled,
 			&account.CreatedAt,
 			&account.UpdatedAt,
+			&account.LastSeen,
 			&mysql.JSONObject{Val: &account.SearchFilters},
 			&account.EnvironmentCount,
 		)

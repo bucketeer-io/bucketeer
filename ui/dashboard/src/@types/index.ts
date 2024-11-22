@@ -5,3 +5,4 @@ export * from './project';
 export * from './environment';
 export * from './collection';
 export * from './account';
+export * from './api-key';

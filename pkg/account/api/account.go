@@ -300,6 +300,7 @@ func (s *AccountService) UpdateAccountV2(
 	req *accountproto.UpdateAccountV2Request,
 ) (*accountproto.UpdateAccountV2Response, error) {
 	localizer := locale.NewLocalizer(ctx)
+	isAdmin := false
 	editor, err := s.checkOrganizationRole(
 		ctx,
 		accountproto.AccountV2_Role_Organization_ADMIN,
@@ -307,8 +308,44 @@ func (s *AccountService) UpdateAccountV2(
 		localizer,
 	)
 	if err != nil {
-		return nil, err
+		// If not admin, check if user is updating their own account
+		if editor.Email != req.Email {
+			dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.PermissionDenied),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		editor, err = s.checkOrganizationRole(
+			ctx,
+			accountproto.AccountV2_Role_Organization_MEMBER,
+			req.OrganizationId,
+			localizer,
+		)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		isAdmin = true
 	}
+
+	if !isAdmin {
+		if err := s.checkRestrictedCommands(req, localizer); err != nil {
+			s.logger.Error(
+				"Member user is not allowed to update organization role or environment roles",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("organizationID", req.OrganizationId),
+					zap.String("email", req.Email),
+				)...,
+			)
+			return nil, err
+		}
+	}
+
 	if isNoUpdateAccountV2Command(req) {
 		return s.updateAccountV2NoCommand(ctx, req, localizer, editor)
 	}
@@ -356,6 +393,28 @@ func (s *AccountService) UpdateAccountV2(
 	return &accountproto.UpdateAccountV2Response{
 		Account: updatedAccountPb,
 	}, nil
+}
+
+// checkRestrictedCommands checks if the request contains any restricted values changed
+// and returns a permission denied error if it does
+func (s *AccountService) checkRestrictedCommands(
+	req *accountproto.UpdateAccountV2Request,
+	localizer locale.Localizer,
+) error {
+	if req.ChangeOrganizationRoleCommand != nil ||
+		req.ChangeEnvironmentRolesCommand != nil ||
+		req.OrganizationRole != nil ||
+		req.EnvironmentRoles != nil {
+		dt, err := statusPermissionDenied.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.PermissionDenied),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
 }
 
 func (s *AccountService) updateAccountV2NoCommand(
@@ -960,7 +1019,7 @@ func (s *AccountService) ListAccountsV2(
 		whereParts = append(whereParts, mysql.NewJSONFilter("environment_roles", mysql.JSONContainsJSON, values))
 	}
 	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"email"}, req.SearchKeyword))
+		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"email", "first_name", "last_name"}, req.SearchKeyword))
 	}
 	orders, err := s.newAccountV2ListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -1035,6 +1094,10 @@ func (s *AccountService) newAccountV2ListOrders(
 		column = "organization_role"
 	case accountproto.ListAccountsV2Request_ENVIRONMENT_COUNT:
 		column = "environment_count"
+	case accountproto.ListAccountsV2Request_LAST_SEEN:
+		column = "last_seen"
+	case accountproto.ListAccountsV2Request_STATE:
+		column = "disabled"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

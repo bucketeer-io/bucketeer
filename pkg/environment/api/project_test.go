@@ -1009,7 +1009,7 @@ func TestListProjectsV2(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "success: list projects across multiple organizations",
+			desc: "success: list projects",
 			setup: func(s *EnvironmentService) {
 				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(),
@@ -1017,7 +1017,7 @@ func TestListProjectsV2(t *testing.T) {
 					Account: &accountproto.AccountV2{
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 					},
-				}, nil).Times(2)
+				}, nil)
 				rows := mysqlmock.NewMockRows(mockController)
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(true)
@@ -1038,9 +1038,9 @@ func TestListProjectsV2(t *testing.T) {
 				).Return(row)
 			},
 			input: &environmentproto.ListProjectsV2Request{
-				PageSize:        10,
-				Cursor:          "",
-				OrganizationIds: []string{"org-1", "org-2"},
+				PageSize:       10,
+				Cursor:         "",
+				OrganizationId: "org-1",
 			},
 			expected: &environmentproto.ListProjectsV2Response{
 				Projects:   []*environmentproto.Project{{}}, // Expect one project
@@ -1050,7 +1050,7 @@ func TestListProjectsV2(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "failure: permission denied for one organization",
+			desc: "failure: permission denied",
 			setup: func(s *EnvironmentService) {
 				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
 					gomock.Any(), &accountproto.GetAccountV2Request{
@@ -1059,24 +1059,14 @@ func TestListProjectsV2(t *testing.T) {
 					},
 				).Return(&accountproto.GetAccountV2Response{
 					Account: &accountproto.AccountV2{
-						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
-					},
-				}, nil).Times(1)
-				s.accountClient.(*acmock.MockClient).EXPECT().GetAccountV2(
-					gomock.Any(), &accountproto.GetAccountV2Request{
-						Email:          "email",
-						OrganizationId: "org-2",
-					},
-				).Return(&accountproto.GetAccountV2Response{
-					Account: &accountproto.AccountV2{
 						OrganizationRole: accountproto.AccountV2_Role_Organization_UNASSIGNED,
 					},
-				}, nil).Times(1)
+				}, nil)
 			},
 			input: &environmentproto.ListProjectsV2Request{
-				PageSize:        10,
-				Cursor:          "",
-				OrganizationIds: []string{"org-1", "org-2"},
+				PageSize:       10,
+				Cursor:         "",
+				OrganizationId: "org-1",
 			},
 			expected:    nil,
 			expectedErr: createError(statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied)),
@@ -1090,12 +1080,12 @@ func TestListProjectsV2(t *testing.T) {
 					Account: &accountproto.AccountV2{
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 					},
-				}, nil).Times(2)
+				}, nil)
 			},
 			input: &environmentproto.ListProjectsV2Request{
-				PageSize:        10,
-				Cursor:          "invalid",
-				OrganizationIds: []string{"org-1", "org-2"},
+				PageSize:       10,
+				Cursor:         "invalid",
+				OrganizationId: "org-1",
 			},
 			expected:    nil,
 			expectedErr: createError(statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor")),
@@ -1109,15 +1099,15 @@ func TestListProjectsV2(t *testing.T) {
 					Account: &accountproto.AccountV2{
 						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 					},
-				}, nil).Times(2)
+				}, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("internal error"))
 			},
 			input: &environmentproto.ListProjectsV2Request{
-				PageSize:        10,
-				Cursor:          "",
-				OrganizationIds: []string{"org-1", "org-2"},
+				PageSize:       10,
+				Cursor:         "",
+				OrganizationId: "org-1",
 			},
 			expected:    nil,
 			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),

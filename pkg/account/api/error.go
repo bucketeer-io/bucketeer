@@ -27,14 +27,18 @@ var (
 		codes.InvalidArgument,
 		"account: organization id must be specified",
 	)
-	statusEmailIsEmpty                           = gstatus.New(codes.InvalidArgument, "account: email is empty")
-	statusInvalidEmail                           = gstatus.New(codes.InvalidArgument, "account: invalid email format")
-	statusFirstNameIsEmpty                       = gstatus.New(codes.InvalidArgument, "account: first name is empty")
-	statusInvalidFirstName                       = gstatus.New(codes.InvalidArgument, "account: invalid first name format")
-	statusLastNameIsEmpty                        = gstatus.New(codes.InvalidArgument, "account: last name is empty")
-	statusInvalidLastName                        = gstatus.New(codes.InvalidArgument, "account: invalid last name format")
-	statusLanguageIsEmpty                        = gstatus.New(codes.InvalidArgument, "account: language is empty")
-	statusInvalidOrganizationRole                = gstatus.New(codes.InvalidArgument, "account: invalid organization role")
+	statusEmailIsEmpty            = gstatus.New(codes.InvalidArgument, "account: email is empty")
+	statusInvalidEmail            = gstatus.New(codes.InvalidArgument, "account: invalid email format")
+	statusFirstNameIsEmpty        = gstatus.New(codes.InvalidArgument, "account: first name is empty")
+	statusInvalidFirstName        = gstatus.New(codes.InvalidArgument, "account: invalid first name format")
+	statusLastNameIsEmpty         = gstatus.New(codes.InvalidArgument, "account: last name is empty")
+	statusInvalidLastName         = gstatus.New(codes.InvalidArgument, "account: invalid last name format")
+	statusLanguageIsEmpty         = gstatus.New(codes.InvalidArgument, "account: language is empty")
+	statusInvalidOrganizationRole = gstatus.New(codes.InvalidArgument, "account: invalid organization role")
+	statusInvalidEnvironmentRole  = gstatus.New(
+		codes.InvalidArgument,
+		"account: environment roles must be specified",
+	)
 	statusInvalidUpdateEnvironmentRolesWriteType = gstatus.New(
 		codes.InvalidArgument,
 		"account: invalid update environment roles write type",

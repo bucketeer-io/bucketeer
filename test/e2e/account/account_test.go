@@ -72,6 +72,12 @@ func TestGetAccount(t *testing.T) {
 			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
 			Language:         language,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+					EnvironmentId: "test",
+				},
+			},
 		},
 	})
 	if err != nil {
@@ -109,6 +115,12 @@ func TestListAccounts(t *testing.T) {
 			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
 			Language:         language,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+					EnvironmentId: "test",
+				},
+			},
 		},
 	})
 	if err != nil {
@@ -145,6 +157,12 @@ func TestUpdateAccount(t *testing.T) {
 			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
 			Language:         language,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+					EnvironmentId: "test",
+				},
+			},
 		},
 	})
 	if err != nil {
@@ -216,6 +234,12 @@ func TestUpdateAccountThenDeleteAccountNoCommand(t *testing.T) {
 		LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
 		Language:         language,
 		OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+			{
+				EnvironmentId: "test",
+				Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+			},
+		},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -231,6 +255,12 @@ func TestUpdateAccountThenDeleteAccountNoCommand(t *testing.T) {
 		FirstName:      wrapperspb.String(newFirstName),
 		LastName:       wrapperspb.String(newLastName),
 		AvatarImageUrl: wrapperspb.String(newAvatarURL),
+		EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+			{
+				EnvironmentId: "test",
+				Role:          accountproto.AccountV2_Role_Environment_EDITOR,
+			},
+		},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -333,6 +363,12 @@ func TestEnableAndDisableAccount(t *testing.T) {
 			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
 			Language:         language,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+					EnvironmentId: "test",
+				},
+			},
 		},
 	})
 	if err != nil {
@@ -394,6 +430,12 @@ func TestDeleteAccount(t *testing.T) {
 			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
 			Language:         language,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+					EnvironmentId: "test",
+				},
+			},
 		},
 	})
 	if err != nil {
@@ -440,6 +482,12 @@ func TestCreateSearchFilter(t *testing.T) {
 			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
 			Language:         language,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+					EnvironmentId: "test",
+				},
+			},
 		},
 	})
 	if err != nil {
@@ -519,6 +567,12 @@ func TestUpdateSearchFilter(t *testing.T) {
 			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
 			Language:         language,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+					EnvironmentId: "test",
+				},
+			},
 		},
 	})
 	if err != nil {
@@ -649,6 +703,12 @@ func TestDeleteSearchFilter(t *testing.T) {
 			LastName:         fmt.Sprintf("%s-%v", lastName, time.Now().Unix()),
 			Language:         language,
 			OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+			EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+				{
+					Role:          accountproto.AccountV2_Role_Environment_VIEWER,
+					EnvironmentId: "test",
+				},
+			},
 		},
 	})
 	if err != nil {

@@ -16,6 +16,7 @@ import {
   hasEditable
 } from 'auth';
 import {
+  PAGE_PATH_APIKEYS,
   PAGE_PATH_AUTH_CALLBACK,
   PAGE_PATH_AUTH_SIGNIN,
   PAGE_PATH_FEATURES,
@@ -29,6 +30,7 @@ import { i18n } from 'i18n';
 import { getTokenStorage } from 'storage/token';
 import { v4 as uuid } from 'uuid';
 import { ConsoleAccount } from '@types';
+import APIKeysPage from 'pages/api-keys';
 import FeatureFlagsPage from 'pages/feature-flags';
 import NotFoundPage from 'pages/not-found';
 import SettingsPage from 'pages/settings';
@@ -149,6 +151,7 @@ export const EnvironmentRoot = memo(
         <Route path={`${PAGE_PATH_FEATURES}`} element={<FeatureFlagsPage />} />
         <Route path={`${PAGE_PATH_SETTINGS}`} element={<SettingsPage />} />
         <Route path={`${PAGE_PATH_PROJECTS}/*`} element={<ProjectsRoot />} />
+        <Route path={`${PAGE_PATH_APIKEYS}`} element={<APIKeysPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     );
