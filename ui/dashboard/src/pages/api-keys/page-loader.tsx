@@ -1,7 +1,14 @@
 import { useState } from 'react';
+import { Trans } from 'react-i18next';
+import { apiKeyDisable } from '@api/api-key/api-key-disable';
+import { apiKeyEnable } from '@api/api-key/api-key-enable';
+import { invalidateAPIKeys } from '@queries/api-keys';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToggleOpen } from 'hooks/use-toggle-open';
+import { useTranslation } from 'i18n';
 import { APIKey } from '@types';
+import ConfirmModal from 'elements/confirm-modal';
 import PageLayout from 'elements/page-layout';
 import AddAPIKeyModal from './api-key-modal/add-api-key-modal';
 import EditAPIKeyModal from './api-key-modal/edit-api-key-modal';
@@ -11,6 +18,8 @@ import PageContent from './page-content';
 import { APIKeyActionsType } from './types';
 
 const PageLoader = () => {
+  const { t } = useTranslation(['table']);
+  const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currenEnvironment = getCurrentEnvironment(consoleAccount!);
 
@@ -25,6 +34,7 @@ const PageLoader = () => {
   });
 
   const [selectedAPIKey, setSelectedAPIKey] = useState<APIKey>();
+  const [isDisabling, setIsDisabling] = useState<boolean>(false);
 
   const [isOpenAddModal, onOpenAddModal, onCloseAddModal] =
     useToggleOpen(false);
@@ -32,11 +42,43 @@ const PageLoader = () => {
   const [isOpenEditModal, onOpenEditModal, onCloseEditModal] =
     useToggleOpen(false);
 
+  const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
+    useToggleOpen(false);
+
   const onHandleActions = (apiKey: APIKey, type: APIKeyActionsType) => {
     if (type === 'EDIT') {
       onOpenEditModal();
+    } else if (type === 'ENABLE') {
+      setIsDisabling(false);
+      onOpenConfirmModal();
+    } else if (type === 'DISABLE') {
+      setIsDisabling(true);
+      onOpenConfirmModal();
     }
     setSelectedAPIKey(apiKey);
+  };
+
+  const mutationState = useMutation({
+    mutationFn: async (id: string) => {
+      const disableMutation = isDisabling ? apiKeyDisable : apiKeyEnable;
+
+      return disableMutation({
+        id,
+        environmentId: currenEnvironment.id,
+        command: {}
+      });
+    },
+    onSuccess: () => {
+      onCloseConfirmModal();
+      invalidateAPIKeys(queryClient);
+      mutationState.reset();
+    }
+  });
+
+  const onHandleDisable = () => {
+    if (selectedAPIKey?.id) {
+      mutationState.mutate(selectedAPIKey.id);
+    }
   };
 
   const isEmpty = collection?.apiKeys.length === 0;
@@ -63,6 +105,30 @@ const PageLoader = () => {
           isOpen={isOpenEditModal}
           onClose={onCloseEditModal}
           apiKey={selectedAPIKey}
+        />
+      )}
+      {openConfirmModal && (
+        <ConfirmModal
+          isOpen={openConfirmModal}
+          onClose={onCloseConfirmModal}
+          onSubmit={onHandleDisable}
+          title={
+            isDisabling
+              ? t(`table:popover.disable-api-key`)
+              : t(`table:popover.enable-api-key`)
+          }
+          description={
+            <Trans
+              i18nKey={
+                isDisabling
+                  ? 'table:api-key.confirm-disable-desc'
+                  : 'table:api-key.confirm-enable-desc'
+              }
+              values={{ name: selectedAPIKey?.name }}
+              components={{ bold: <strong /> }}
+            />
+          }
+          loading={mutationState.isPending}
         />
       )}
     </>

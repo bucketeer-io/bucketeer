@@ -9,6 +9,7 @@ import { APIKey, APIKeyRole } from '@types';
 import { truncateTextCenter } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
 import { Popover } from 'components/popover';
+import Switch from 'components/switch';
 import { APIKeyActionsType } from '../types';
 
 export const useColumns = ({
@@ -78,6 +79,23 @@ export const useColumns = ({
           <div className="text-gray-700 typo-para-medium">
             {formatDateTime(apiKey.createdAt)}
           </div>
+        );
+      }
+    },
+    {
+      accessorKey: 'state',
+      header: `${t('state')}`,
+      size: 120,
+      cell: ({ row }) => {
+        const apiKey = row.original;
+
+        return (
+          <Switch
+            checked={!apiKey.disabled}
+            onCheckedChange={value =>
+              onActions(apiKey, value ? 'ENABLE' : 'DISABLE')
+            }
+          />
         );
       }
     },

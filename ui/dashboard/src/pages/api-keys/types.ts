@@ -8,4 +8,4 @@ export interface APIKeysFilters {
   searchQuery: string;
 }
 
-export type APIKeyActionsType = 'EDIT';
+export type APIKeyActionsType = 'EDIT' | 'ENABLE' | 'DISABLE';
