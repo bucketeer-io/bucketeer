@@ -426,6 +426,11 @@
                 "id": 8,
                 "name": "api_key",
                 "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "description",
+                "type": "string"
               }
             ]
           },
@@ -1525,6 +1530,11 @@
               {
                 "id": 6,
                 "name": "maintainer",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "description",
                 "type": "string"
               }
             ],

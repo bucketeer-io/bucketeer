@@ -1095,6 +1095,9 @@ export class CreateAPIKeyRequest extends jspb.Message {
   getMaintainer(): string;
   setMaintainer(value: string): void;
 
+  getDescription(): string;
+  setDescription(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateAPIKeyRequest.AsObject;
   static toObject(
@@ -1123,6 +1126,7 @@ export namespace CreateAPIKeyRequest {
     name: string;
     role: proto_account_api_key_pb.APIKey.RoleMap[keyof proto_account_api_key_pb.APIKey.RoleMap];
     maintainer: string;
+    description: string;
   };
 }
 

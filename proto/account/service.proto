@@ -192,6 +192,7 @@ message CreateAPIKeyRequest {
   string name = 4;
   account.APIKey.Role role = 5;
   string maintainer = 6;
+  string description = 7;
 }
 
 message CreateAPIKeyResponse {

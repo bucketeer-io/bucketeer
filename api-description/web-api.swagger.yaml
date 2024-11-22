@@ -2777,6 +2777,8 @@ definitions:
         type: string
       apiKey:
         type: string
+      description:
+        type: string
   accountAPIKeyRole:
     type: string
     enum:
@@ -3001,6 +3003,8 @@ definitions:
       role:
         $ref: '#/definitions/accountAPIKeyRole'
       maintainer:
+        type: string
+      description:
         type: string
   accountCreateAPIKeyResponse:
     type: object

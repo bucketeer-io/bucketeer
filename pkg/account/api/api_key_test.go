@@ -184,9 +184,10 @@ func TestCreateAPIKeyMySQLNoCommand(t *testing.T) {
 			},
 			isSystemAdmin: true,
 			req: &accountproto.CreateAPIKeyRequest{
-				Name:       "name",
-				Maintainer: "bucketeer@bucketeer.io",
-				Role:       accountproto.APIKey_SDK_CLIENT,
+				Name:        "name",
+				Maintainer:  "bucketeer@bucketeer.io",
+				Role:        accountproto.APIKey_SDK_CLIENT,
+				Description: "test key",
 			},
 			expectedErr: nil,
 		},

@@ -60,7 +60,7 @@ func (s *AccountService) CreateAPIKey(
 		req.Maintainer = editor.Email
 	}
 
-	key, err := domain.NewAPIKey(req.Command.Name, req.Command.Role, req.Maintainer)
+	key, err := domain.NewAPIKey(req.Command.Name, req.Command.Role, req.Maintainer, req.Description)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new api key",
@@ -138,7 +138,7 @@ func (s *AccountService) createAPIKeyNoCommand(
 		req.Maintainer = editor.Email
 	}
 
-	key, err := domain.NewAPIKey(req.Name, req.Role, req.Maintainer)
+	key, err := domain.NewAPIKey(req.Name, req.Role, req.Maintainer, req.Description)
 	if err != nil {
 		s.logger.Error(
 			"Failed to create a new api key",

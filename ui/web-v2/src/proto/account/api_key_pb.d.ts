@@ -29,6 +29,9 @@ export class APIKey extends jspb.Message {
   getApiKey(): string;
   setApiKey(value: string): void;
 
+  getDescription(): string;
+  setDescription(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): APIKey.AsObject;
   static toObject(includeInstance: boolean, msg: APIKey): APIKey.AsObject;
@@ -57,6 +60,7 @@ export namespace APIKey {
     updatedAt: number;
     maintainer: string;
     apiKey: string;
+    description: string;
   };
 
   export interface RoleMap {
