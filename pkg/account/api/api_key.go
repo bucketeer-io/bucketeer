@@ -56,7 +56,7 @@ func (s *AccountService) CreateAPIKey(
 	if err := validateCreateAPIKeyRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	if req.Maintainer != "" {
+	if req.Maintainer == "" {
 		req.Maintainer = editor.Email
 	}
 
@@ -134,7 +134,7 @@ func (s *AccountService) createAPIKeyNoCommand(
 	if err := validateCreateAPIKeyRequestNoCommand(req, localizer); err != nil {
 		return nil, err
 	}
-	if req.Maintainer != "" {
+	if req.Maintainer == "" {
 		req.Maintainer = editor.Email
 	}
 
