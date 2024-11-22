@@ -20,6 +20,7 @@ import {
   PAGE_PATH_AUTH_CALLBACK,
   PAGE_PATH_AUTH_SIGNIN,
   PAGE_PATH_FEATURES,
+  PAGE_PATH_MEMBERS,
   PAGE_PATH_NEW,
   PAGE_PATH_ORGANIZATIONS,
   PAGE_PATH_PROJECTS,
@@ -32,6 +33,7 @@ import { v4 as uuid } from 'uuid';
 import { ConsoleAccount } from '@types';
 import APIKeysPage from 'pages/api-keys';
 import FeatureFlagsPage from 'pages/feature-flags';
+import MembersPage from 'pages/members';
 import NotFoundPage from 'pages/not-found';
 import SettingsPage from 'pages/settings';
 import SignInPage from 'pages/signin';
@@ -152,6 +154,7 @@ export const EnvironmentRoot = memo(
         <Route path={`${PAGE_PATH_SETTINGS}`} element={<SettingsPage />} />
         <Route path={`${PAGE_PATH_PROJECTS}/*`} element={<ProjectsRoot />} />
         <Route path={`${PAGE_PATH_APIKEYS}`} element={<APIKeysPage />} />
+        <Route path={`${PAGE_PATH_MEMBERS}`} element={<MembersPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     );

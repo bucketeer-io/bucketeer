@@ -9,7 +9,8 @@ export const useFetchEnvironments = ({
   searchQuery,
   orderDirection,
   projectId,
-  status
+  status,
+  organizationId
 }: {
   pageSize?: number;
   page?: number;
@@ -18,6 +19,7 @@ export const useFetchEnvironments = ({
   orderDirection?: OrderDirection;
   projectId?: string;
   status?: CollectionStatusType;
+  organizationId?: string;
 } = {}) => {
   const cursor = (page - 1) * LIST_PAGE_SIZE;
 
@@ -29,7 +31,8 @@ export const useFetchEnvironments = ({
       orderDirection,
       searchKeyword: searchQuery,
       projectId,
-      archived: status ? status === 'ARCHIVED' : undefined
+      archived: status ? status === 'ARCHIVED' : undefined,
+      organizationId
     }
   });
 };

@@ -1,17 +1,24 @@
 import { SortingState } from '@tanstack/react-table';
-import { OrderBy, OrderDirection, Project } from '@types';
+import { OrderBy, OrderDirection, Account } from '@types';
 
-export interface ProjectsFilters {
+export interface MembersFilters {
   page: number;
   orderBy: OrderBy;
   orderDirection: OrderDirection;
-  searchQuery: string;
   disabled?: boolean;
-  organizationIds?: string[];
+  searchQuery: string;
+  organizationId?: string;
 }
 
 export interface CollectionProps {
   isLoading?: boolean;
   onSortingChange: (v: SortingState) => void;
-  projects: Project[];
+  projects: Account[];
 }
+
+export type MemberActionsType =
+  | 'EDIT'
+  | 'DETAILS'
+  | 'DELETE'
+  | 'DISABLE'
+  | 'ENABLE';

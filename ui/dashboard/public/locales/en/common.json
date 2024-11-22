@@ -20,7 +20,11 @@
   "save": "Save",
   "cancel": "Cancel",
   "delete": "Delete",
+  "delete-member": "Delete member",
   "filter": "Filter",
+  "language": "Language",
+  "first-name": "First name",
+  "last-name": "Last name",
   "filters": "Filters",
   "add-filter": "Add Filter",
   "maintainer": "Maintainer",
@@ -45,9 +49,13 @@
   "new-env": "New Environment",
   "update-env": "Update Environment",
   "create-env": "Create Environment",
+  "invite-member": "Invite Member",
+  "update-member": "Update Member",
+  "add-environment": "Add Environment",
   "organization-subtitle": "You can see all your clients data",
   "setting-subtitle": "Manage settings about the current organization",
   "project-subtitle": "Manage all projects for this environment.",
+  "member-subtitle": "Manage all members for this environment.",
   "organization-settings": "Organization settings",
   "navigation": {
     "my-projects": "My projects",
@@ -69,5 +77,7 @@
   "update-api-key": "Update API Key",
   "api-keys": "API Keys",
   "create-api-key": "Create API Key",
-  "api-keys-subtitle": "Manage all API keys for this environment."
+  "api-keys-subtitle": "Manage all API keys for this environment.",
+  "never": "Never",
+  "state": "State"
 }

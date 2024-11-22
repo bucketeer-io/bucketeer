@@ -1,9 +1,8 @@
-export interface OrganizationRole {
-  ORGANIZATION_UNASSIGNED: 0;
-  ORGANIZATION_MEMBER: 1;
-  ORGANIZATION_ADMIN: 2;
-  ORGANIZATION_OWNER: 3;
-}
+export type OrganizationRole =
+  | 'Organization_UNASSIGNED'
+  | 'Organization_MEMBER'
+  | 'Organization_ADMIN'
+  | 'Organization_OWNER';
 
 export interface Organization {
   id: string;

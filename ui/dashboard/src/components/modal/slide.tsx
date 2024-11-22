@@ -57,7 +57,7 @@ const SlideModal = ({
               </div>
             </div>
             <Divider />
-            <div className="flex-1 overflow-hidden">{children}</div>
+            <div className="flex-1 overflow-auto">{children}</div>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

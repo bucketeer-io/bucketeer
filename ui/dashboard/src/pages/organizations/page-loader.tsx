@@ -90,49 +90,44 @@ const PageLoader = () => {
           <EmptyCollection onAdd={onOpenAddModal} />
         </PageLayout.EmptyState>
       ) : (
-        <>
-          <PageContent
-            onAdd={onOpenAddModal}
-            onHandleActions={onHandleActions}
-          />
-          {isOpenAddModal && (
-            <AddOrganizationModal
-              isOpen={isOpenAddModal}
-              onClose={onCloseAddModal}
-            />
-          )}
-          {isOpenEditModal && (
-            <EditOrganizationModal
-              isOpen={isOpenEditModal}
-              onClose={onCloseEditModal}
-              organization={selectedOrganization!}
-            />
-          )}
-          {openConfirmModal && (
-            <ConfirmModal
-              isOpen={openConfirmModal}
-              onClose={onCloseConfirmModal}
-              onSubmit={onHandleArchive}
-              title={
+        <PageContent onAdd={onOpenAddModal} onHandleActions={onHandleActions} />
+      )}
+      {isOpenAddModal && (
+        <AddOrganizationModal
+          isOpen={isOpenAddModal}
+          onClose={onCloseAddModal}
+        />
+      )}
+      {isOpenEditModal && (
+        <EditOrganizationModal
+          isOpen={isOpenEditModal}
+          onClose={onCloseEditModal}
+          organization={selectedOrganization!}
+        />
+      )}
+      {openConfirmModal && (
+        <ConfirmModal
+          isOpen={openConfirmModal}
+          onClose={onCloseConfirmModal}
+          onSubmit={onHandleArchive}
+          title={
+            isArchiving
+              ? t(`table:popover.archive-org`)
+              : t(`table:popover.unarchive-org`)
+          }
+          description={
+            <Trans
+              i18nKey={
                 isArchiving
-                  ? t(`table:popover.archive-org`)
-                  : t(`table:popover.unarchive-org`)
+                  ? 'table:organization.confirm-archive-desc'
+                  : 'table:organization.confirm-unarchive-desc'
               }
-              description={
-                <Trans
-                  i18nKey={
-                    isArchiving
-                      ? 'table:organization.confirm-archive-desc'
-                      : 'table:organization.confirm-unarchive-desc'
-                  }
-                  values={{ name: selectedOrganization?.name }}
-                  components={{ bold: <strong /> }}
-                />
-              }
-              loading={mutation.isPending}
+              values={{ name: selectedOrganization?.name }}
+              components={{ bold: <strong /> }}
             />
-          )}
-        </>
+          }
+          loading={mutation.isPending}
+        />
       )}
     </>
   );
