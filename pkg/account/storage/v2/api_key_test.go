@@ -71,11 +71,20 @@ func TestCreateAPIKey(t *testing.T) {
 				s.client.(*mock.MockClient).EXPECT().ExecContext(
 					gomock.Any(),
 					gomock.Any(),
-					"aid-0", "name", int32(0), false, int64(2), int64(3), "ns0",
+					"aid-0", "name", int32(0), false, int64(2), int64(3), "ns0", "aid-0", "demo@bucketeer.io",
 				).Return(nil, nil)
 			},
 			input: &domain.APIKey{
-				APIKey: &proto.APIKey{Id: "aid-0", Name: "name", Role: 0, Disabled: false, CreatedAt: 2, UpdatedAt: 3},
+				APIKey: &proto.APIKey{
+					Id:         "aid-0",
+					Name:       "name",
+					Role:       0,
+					Disabled:   false,
+					Maintainer: "demo@bucketeer.io",
+					ApiKey:     "aid-0",
+					CreatedAt:  2,
+					UpdatedAt:  3,
+				},
 			},
 			environmentId: "ns0",
 			expectedErr:   nil,
