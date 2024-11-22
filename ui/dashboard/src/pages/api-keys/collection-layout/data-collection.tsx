@@ -5,7 +5,7 @@ import {
 import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
-import { APIKey } from '@types';
+import { APIKey, APIKeyRole } from '@types';
 import { truncateTextCenter } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
 import { Popover } from 'components/popover';
@@ -18,6 +18,19 @@ export const useColumns = ({
 }): ColumnDef<APIKey>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
+
+  const getAPIkeyRole = (role: APIKeyRole) => {
+    switch (role) {
+      case 'SDK_CLIENT':
+        return t('client');
+
+      case 'SDK_SERVER':
+        return t('server');
+
+      default:
+        return t('public-api');
+    }
+  };
 
   return [
     {
@@ -43,13 +56,14 @@ export const useColumns = ({
       }
     },
     {
-      accessorKey: 'type',
-      header: `${t('type')}`,
+      accessorKey: 'role',
+      header: `${t('role')}`,
       size: 150,
-      cell: () => {
+      cell: ({ row }) => {
+        const apiKey = row.original;
         return (
           <div className="typo-para-small text-accent-blue-500 bg-accent-blue-50 px-2 py-[3px] w-fit rounded">
-            {`API Key`}
+            {getAPIkeyRole(apiKey.role)}
           </div>
         );
       }
