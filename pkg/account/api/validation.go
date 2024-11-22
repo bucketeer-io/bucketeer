@@ -173,6 +173,16 @@ func validateCreateAccountV2Request(req *accountproto.CreateAccountV2Request, lo
 		}
 		return dt.Err()
 	}
+	if len(req.Command.EnvironmentRoles) == 0 {
+		dt, err := statusInvalidEnvironmentRole.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_roles"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
 	return nil
 }
 
@@ -214,6 +224,16 @@ func validateCreateAccountV2NoCommandRequest(
 		dt, err := statusInvalidOrganizationRole.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "organization_role"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if len(req.EnvironmentRoles) == 0 {
+		dt, err := statusInvalidEnvironmentRole.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_roles"),
 		})
 		if err != nil {
 			return statusInternal.Err()
@@ -353,6 +373,16 @@ func validateUpdateAccountV2Request(
 				}
 				return dt.Err()
 			}
+			if len(c.Roles) == 0 {
+				dt, err := statusInvalidEnvironmentRole.WithDetails(&errdetails.LocalizedMessage{
+					Locale:  localizer.GetLocale(),
+					Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_roles"),
+				})
+				if err != nil {
+					return statusInternal.Err()
+				}
+				return dt.Err()
+			}
 		}
 	}
 	return nil
@@ -454,6 +484,16 @@ func validateUpdateAccountV2NoCommandRequest(
 		dt, err := statusInvalidOrganizationRole.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "organization_role"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if len(req.EnvironmentRoles) == 0 {
+		dt, err := statusInvalidEnvironmentRole.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_roles"),
 		})
 		if err != nil {
 			return statusInternal.Err()

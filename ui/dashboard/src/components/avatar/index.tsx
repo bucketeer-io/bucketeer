@@ -1,4 +1,4 @@
-import type { FunctionComponent } from 'react';
+import type { FunctionComponent, ImgHTMLAttributes } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { BG_COLOR_MAPPING, COLOR_MAPPING } from 'constants/styles';
 import type { Color } from '@types';
@@ -71,8 +71,8 @@ const AvatarImageVariants = cva(['rounded-full object-cover'], {
 });
 
 export interface AvatarImageProps
-  extends VariantProps<typeof AvatarImageVariants> {
-  className?: string;
+  extends ImgHTMLAttributes<HTMLImageElement>,
+    VariantProps<typeof AvatarImageVariants> {
   image: string;
 }
 

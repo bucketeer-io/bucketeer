@@ -13,6 +13,7 @@ SELECT
     disabled,
     created_at,
     updated_at,
+    last_seen,
     search_filters,
     JSON_LENGTH(environment_roles) as environment_count
 FROM account_v2

@@ -29,6 +29,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	environmentproto "github.com/bucketeer-io/bucketeer/proto/environment"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
@@ -90,7 +91,12 @@ func (s *EnvironmentService) ListEnvironmentsV2(
 	req *environmentproto.ListEnvironmentsV2Request,
 ) (*environmentproto.ListEnvironmentsV2Response, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkSystemAdminRole(ctx, localizer)
+	_, err := s.checkOrganizationRole(
+		ctx,
+		req.OrganizationId,
+		accountproto.AccountV2_Role_Organization_MEMBER,
+		localizer,
+	)
 	if err != nil {
 		return nil, err
 	}

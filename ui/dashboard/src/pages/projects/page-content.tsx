@@ -25,7 +25,6 @@ const PageContent = ({
   const { t } = useTranslation(['common']);
   const { consoleAccount } = useAuth();
   const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-  const isSystemAdmin = consoleAccount?.isSystemAdmin;
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<ProjectFilters> = searchOptions;
@@ -93,7 +92,7 @@ const PageContent = ({
           filters={filters}
           setFilters={onChangeFilters}
           onActionHandler={onActionHandler}
-          organizationIds={!isSystemAdmin ? [currentEnvironment.id] : []}
+          organizationIds={[currentEnvironment.organizationId]}
         />
       </div>
     </PageLayout.Content>

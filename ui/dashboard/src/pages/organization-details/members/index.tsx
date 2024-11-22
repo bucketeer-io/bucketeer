@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { usePartialState } from 'hooks';
+import { usePartialState, useToggleOpen } from 'hooks';
 import pickBy from 'lodash/pickBy';
+import { Account } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
+import MemberDetailsModal from 'pages/members/member-modal/member-details-modal';
 import Filter from 'elements/filter';
 import { OrganizationMembersFilters } from '../types';
 import CollectionLoader from './collection-loader';
@@ -12,6 +15,11 @@ const OrganizationMembers = () => {
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
   const searchFilters: Partial<OrganizationMembersFilters> = searchOptions;
+
+  const [selectedMember, setSelectedMember] = useState<Account>();
+
+  const [isOpenDetailsModal, onOpenDetailsModal, onCloseDetailsModal] =
+    useToggleOpen(false);
 
   const defaultFilters = {
     page: 1,
@@ -37,7 +45,22 @@ const OrganizationMembers = () => {
         searchValue={filters.searchQuery}
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
-      <CollectionLoader filters={filterParams} setFilters={onChangeFilters} />
+      <CollectionLoader
+        filters={filterParams}
+        setFilters={onChangeFilters}
+        onActions={member => {
+          setSelectedMember(member);
+          onOpenDetailsModal();
+        }}
+      />
+
+      {isOpenDetailsModal && (
+        <MemberDetailsModal
+          isOpen={isOpenDetailsModal}
+          onClose={onCloseDetailsModal}
+          member={selectedMember!}
+        />
+      )}
     </>
   );
 };
