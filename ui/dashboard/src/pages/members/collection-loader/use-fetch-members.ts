@@ -1,32 +1,38 @@
-import { useQueryProjects } from '@queries/projects';
+import { useQueryAccounts } from '@queries/accounts';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { OrderBy, OrderDirection } from '@types';
 
-export const useFetchProjects = ({
+export const useFetchMembers = ({
   page = 1,
   pageSize,
   orderBy,
   searchQuery,
   orderDirection,
-  organizationIds
+  organizationId,
+  environmentId,
+  disabled
 }: {
   pageSize?: number;
   page?: number;
   searchQuery?: string;
   orderBy?: OrderBy;
   orderDirection?: OrderDirection;
-  organizationIds?: string[];
+  organizationId?: string;
+  environmentId?: string;
+  disabled?: boolean;
 } = {}) => {
   const cursor = (page - 1) * LIST_PAGE_SIZE;
 
-  return useQueryProjects({
+  return useQueryAccounts({
     params: {
       pageSize: pageSize || LIST_PAGE_SIZE,
       cursor: String(cursor),
       orderBy,
       orderDirection,
       searchKeyword: searchQuery,
-      organizationIds
+      organizationId,
+      environmentId,
+      disabled
     }
   });
 };

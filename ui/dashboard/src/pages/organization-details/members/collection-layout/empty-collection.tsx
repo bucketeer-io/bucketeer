@@ -8,9 +8,9 @@ export const EmptyCollection = () => {
     <EmptyState.Root variant="no-data" size="lg">
       <EmptyState.Illustration />
       <EmptyState.Body>
-        <EmptyState.Title>{t(`table:empty.user-title`)}</EmptyState.Title>
+        <EmptyState.Title>{t(`table:empty.member-title`)}</EmptyState.Title>
         <EmptyState.Description>
-          {t(`table:empty.user-desc`)}
+          {t(`table:empty.member-desc`)}
         </EmptyState.Description>
       </EmptyState.Body>
     </EmptyState.Root>

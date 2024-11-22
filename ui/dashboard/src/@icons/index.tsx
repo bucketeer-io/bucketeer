@@ -2,6 +2,7 @@ import IconBackspace from './customized-icons/backspace.svg?react';
 import IconChecked from './customized-icons/checked.svg?react';
 import IconChevronRight from './customized-icons/chevron-right.svg?react';
 import IconClose from './customized-icons/close.svg?react';
+import IconDisable from './customized-icons/disable.svg?react';
 import IconEmail from './customized-icons/email.svg?react';
 import IconInfo from './customized-icons/info.svg?react';
 import IconSearch from './customized-icons/search.svg?react';
@@ -28,6 +29,7 @@ import IconSetting from './sidebar-icons/setting.svg?react';
 import IconSwitch from './sidebar-icons/switch.svg?react';
 import IconUsage from './sidebar-icons/usage.svg?react';
 import IconUser from './sidebar-icons/user.svg?react';
+import IconDelete from './special-icons/delete.svg?react';
 import IconFCM from './special-icons/fcm.svg?react';
 import IconGithub from './special-icons/github.svg?react';
 import IconGoal from './special-icons/goal.svg?react';
@@ -69,6 +71,7 @@ export {
   IconSortingUp,
   IconSortingDown,
   IconTrash,
+  IconDisable,
   // Special icons
   IconGoal,
   IconGoogle,
@@ -76,5 +79,6 @@ export {
   IconSlack,
   IconFCM,
   IconNoData,
-  IconLogoutConfirm
+  IconLogoutConfirm,
+  IconDelete
 };

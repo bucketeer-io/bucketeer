@@ -36,29 +36,23 @@ const PageLoader = () => {
           <EmptyCollection onAdd={onOpenAddModal} />
         </PageLayout.EmptyState>
       ) : (
-        <>
-          <PageContent
-            onAdd={onOpenAddModal}
-            onEdit={value => {
-              setSelectedProject(value);
-              onOpenEditModal();
-            }}
-          />
-
-          {isOpenAddModal && (
-            <AddProjectModal
-              isOpen={isOpenAddModal}
-              onClose={onCloseAddModal}
-            />
-          )}
-          {isOpenEditModal && (
-            <EditProjectModal
-              isOpen={isOpenEditModal}
-              onClose={onCloseEditModal}
-              project={selectedProject!}
-            />
-          )}
-        </>
+        <PageContent
+          onAdd={onOpenAddModal}
+          onEdit={value => {
+            setSelectedProject(value);
+            onOpenEditModal();
+          }}
+        />
+      )}
+      {isOpenAddModal && (
+        <AddProjectModal isOpen={isOpenAddModal} onClose={onCloseAddModal} />
+      )}
+      {isOpenEditModal && (
+        <EditProjectModal
+          isOpen={isOpenEditModal}
+          onClose={onCloseEditModal}
+          project={selectedProject!}
+        />
       )}
     </>
   );
