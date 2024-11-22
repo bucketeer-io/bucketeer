@@ -27,10 +27,10 @@ import (
 	gstatus "google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
-
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 )
 
@@ -167,14 +167,26 @@ func TestCreateAPIKeyMySQLNoCommand(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().CreateAPIKey(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+
 				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func() error) {
+					err := fn()
+					require.NoError(t, err)
+				}).Return(nil)
+
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			isSystemAdmin: true,
 			req: &accountproto.CreateAPIKeyRequest{
-				Name: "name",
-				Role: accountproto.APIKey_SDK_CLIENT,
+				Name:       "name",
+				Maintainer: "bucketeer@bucketeer.io",
+				Role:       accountproto.APIKey_SDK_CLIENT,
 			},
 			expectedErr: nil,
 		},
