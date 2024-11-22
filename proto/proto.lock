@@ -416,6 +416,21 @@
                 "id": 6,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "maintainer",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "api_key",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "description",
+                "type": "string"
               }
             ]
           },
@@ -1489,11 +1504,37 @@
               {
                 "id": 1,
                 "name": "command",
-                "type": "CreateAPIKeyCommand"
+                "type": "CreateAPIKeyCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "role",
+                "type": "account.APIKey.Role"
+              },
+              {
+                "id": 6,
+                "name": "maintainer",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "description",
                 "type": "string"
               }
             ],
@@ -16276,6 +16317,16 @@
                 "id": 6,
                 "name": "updated_at",
                 "type": "int64"
+              },
+              {
+                "id": 7,
+                "name": "maintainer",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "api_key",
+                "type": "string"
               }
             ]
           },

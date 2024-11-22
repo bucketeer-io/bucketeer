@@ -55,7 +55,7 @@ func TestAPIKeyHandle(t *testing.T) {
 		{
 			desc: "CreateAPIKeyCommand: success",
 			setup: func(h *apiKeyCommandHandler) {
-				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK_CLIENT)
+				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK_CLIENT, "test@bucketeer.io", "")
 				require.NoError(t, err)
 				h.apiKey = a
 				prev := &domain.APIKey{}
@@ -70,7 +70,7 @@ func TestAPIKeyHandle(t *testing.T) {
 		{
 			desc: "ChangeAPIKeyNameCommand: success",
 			setup: func(h *apiKeyCommandHandler) {
-				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK_CLIENT)
+				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK_CLIENT, "test@bucketeer.io", "")
 				require.NoError(t, err)
 				h.apiKey = a
 				prev := &domain.APIKey{}
@@ -85,7 +85,7 @@ func TestAPIKeyHandle(t *testing.T) {
 		{
 			desc: "EnableAPIKeyCommand: success",
 			setup: func(h *apiKeyCommandHandler) {
-				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK_CLIENT)
+				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK_CLIENT, "test@bucketeer.io", "")
 				require.NoError(t, err)
 				h.apiKey = a
 				prev := &domain.APIKey{}
@@ -100,7 +100,7 @@ func TestAPIKeyHandle(t *testing.T) {
 		{
 			desc: "DisableAPIKeyCommand: success",
 			setup: func(h *apiKeyCommandHandler) {
-				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK_CLIENT)
+				a, err := domain.NewAPIKey("email", accountproto.APIKey_SDK_CLIENT, "test@bucketeer.io", "")
 				require.NoError(t, err)
 				h.apiKey = a
 				prev := &domain.APIKey{}

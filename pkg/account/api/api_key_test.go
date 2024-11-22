@@ -27,10 +27,10 @@ import (
 	gstatus "google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
-	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
-
 	v2as "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2"
+	accstoragemock "github.com/bucketeer-io/bucketeer/pkg/account/storage/v2/mock"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
+	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 )
 
@@ -61,14 +61,6 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 		req           *accountproto.CreateAPIKeyRequest
 		expectedErr   error
 	}{
-		{
-			desc:          "errNoCommand",
-			isSystemAdmin: true,
-			req: &accountproto.CreateAPIKeyRequest{
-				Command: nil,
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
 		{
 			desc:          "errMissingAPIKeyName",
 			isSystemAdmin: true,
@@ -106,6 +98,96 @@ func TestCreateAPIKeyMySQL(t *testing.T) {
 					Name: "name",
 					Role: accountproto.APIKey_SDK_CLIENT,
 				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			ctx = setToken(ctx, p.isSystemAdmin)
+			service := createAccountService(t, mockController, nil)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			_, err := service.CreateAPIKey(ctx, p.req)
+			assert.Equal(t, p.expectedErr, err, p.desc)
+		})
+	}
+}
+
+func TestCreateAPIKeyMySQLNoCommand(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc          string
+		setup         func(*AccountService)
+		isSystemAdmin bool
+		req           *accountproto.CreateAPIKeyRequest
+		expectedErr   error
+	}{
+		{
+			desc:          "errMissingAPIKeyName",
+			isSystemAdmin: true,
+			req: &accountproto.CreateAPIKeyRequest{
+				Name: "",
+			},
+			expectedErr: createError(statusMissingAPIKeyName, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_name")),
+		},
+		{
+			desc: "errInternal",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
+				).Return(errors.New("error"))
+			},
+			isSystemAdmin: true,
+			req: &accountproto.CreateAPIKeyRequest{
+				Name: "name",
+				Role: accountproto.APIKey_SDK_CLIENT,
+			},
+			expectedErr: createError(statusInternal, localizer.MustLocalize(locale.InternalServerError)),
+		},
+		{
+			desc: "success",
+			setup: func(s *AccountService) {
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().CreateAPIKey(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(),
+				).Do(func(ctx context.Context, fn func() error) {
+					err := fn()
+					require.NoError(t, err)
+				}).Return(nil)
+
+				s.publisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			isSystemAdmin: true,
+			req: &accountproto.CreateAPIKeyRequest{
+				Name:        "name",
+				Maintainer:  "bucketeer@bucketeer.io",
+				Role:        accountproto.APIKey_SDK_CLIENT,
+				Description: "test key",
 			},
 			expectedErr: nil,
 		},

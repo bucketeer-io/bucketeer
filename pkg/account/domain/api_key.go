@@ -28,18 +28,27 @@ type APIKey struct {
 	*proto.APIKey
 }
 
-func NewAPIKey(name string, role proto.APIKey_Role) (*APIKey, error) {
+func NewAPIKey(
+	name string,
+	role proto.APIKey_Role,
+	maintainer string,
+	description string,
+) (*APIKey, error) {
 	key, err := generateKey()
 	if err != nil {
 		return nil, err
 	}
 	now := time.Now().Unix()
+	// TODO: generate UUID as id for APIKey after migrate all old ids to keys
 	return &APIKey{&proto.APIKey{
-		Id:        key,
-		Name:      name,
-		Role:      role,
-		CreatedAt: now,
-		UpdatedAt: now,
+		Id:          key,
+		Name:        name,
+		Role:        role,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+		Maintainer:  maintainer,
+		ApiKey:      key,
+		Description: description,
 	}}, nil
 }
 

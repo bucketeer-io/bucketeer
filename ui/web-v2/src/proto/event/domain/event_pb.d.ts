@@ -3061,6 +3061,12 @@ export class APIKeyCreatedEvent extends jspb.Message {
   getUpdatedAt(): number;
   setUpdatedAt(value: number): void;
 
+  getMaintainer(): string;
+  setMaintainer(value: string): void;
+
+  getApiKey(): string;
+  setApiKey(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): APIKeyCreatedEvent.AsObject;
   static toObject(
@@ -3090,6 +3096,8 @@ export namespace APIKeyCreatedEvent {
     disabled: boolean;
     createdAt: number;
     updatedAt: number;
+    maintainer: string;
+    apiKey: string;
   };
 }
 

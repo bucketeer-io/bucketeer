@@ -186,9 +186,13 @@ message ListAccountsV2Response {
 }
 
 message CreateAPIKeyRequest {
-  CreateAPIKeyCommand command = 1;
+  CreateAPIKeyCommand command = 1 [deprecated = true];
   reserved 2;
   string environment_id = 3;
+  string name = 4;
+  account.APIKey.Role role = 5;
+  string maintainer = 6;
+  string description = 7;
 }
 
 message CreateAPIKeyResponse {
