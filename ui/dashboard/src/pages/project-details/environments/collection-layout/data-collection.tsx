@@ -28,9 +28,12 @@ export const useColumns = ({
       cell: ({ row }) => {
         const environment = row.original;
         return (
-          <div className="underline text-primary-500 typo-para-medium">
+          <button
+            onClick={() => onActions(environment, 'EDIT')}
+            className="underline text-primary-500 break-all typo-para-medium text-left"
+          >
             {environment.name}
-          </div>
+          </button>
         );
       }
     },
