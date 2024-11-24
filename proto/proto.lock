@@ -431,6 +431,11 @@
                 "id": 9,
                 "name": "description",
                 "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "environment_name",
+                "type": "string"
               }
             ]
           },

@@ -37,6 +37,7 @@ message APIKey {
   string maintainer = 7;
   string api_key = 8;
   string description = 9;
+  string environment_name = 10;
 }
 
 message EnvironmentAPIKey {

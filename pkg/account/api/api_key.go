@@ -393,7 +393,7 @@ func (s *AccountService) DisableAPIKey(
 		req.EnvironmentId,
 		req.Command,
 	); err != nil {
-		if err == v2as.ErrAPIKeyNotFound || err == v2as.ErrAPIKeyUnexpectedAffectedRows {
+		if errors.Is(err, v2as.ErrAPIKeyNotFound) || errors.Is(err, v2as.ErrAPIKeyUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -465,7 +465,7 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 	}
 	apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
-		if err == v2as.ErrAPIKeyNotFound {
+		if errors.Is(err, v2as.ErrAPIKeyNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
