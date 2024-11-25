@@ -691,7 +691,7 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 		}
 		apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, e.Id)
 		if err != nil {
-			if err == v2as.ErrAPIKeyNotFound {
+			if errors.Is(err, v2as.ErrAPIKeyNotFound) {
 				continue
 			}
 			s.logger.Error(

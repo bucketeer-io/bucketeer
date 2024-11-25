@@ -107,12 +107,15 @@ func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentID string
 		&apiKey.Name,
 		&role,
 		&apiKey.Disabled,
+		&apiKey.ApiKey,
+		&apiKey.Maintainer,
+		&apiKey.Description,
 		&apiKey.CreatedAt,
 		&apiKey.UpdatedAt,
 		&apiKey.Description,
 	)
 	if err != nil {
-		if err == mysql.ErrNoRows {
+		if errors.Is(err, mysql.ErrNoRows) {
 			return nil, ErrAPIKeyNotFound
 		}
 		return nil, err
@@ -145,6 +148,9 @@ func (s *accountStorage) ListAPIKeys(
 			&apiKey.Name,
 			&role,
 			&apiKey.Disabled,
+			&apiKey.ApiKey,
+			&apiKey.Maintainer,
+			&apiKey.Description,
 			&apiKey.CreatedAt,
 			&apiKey.UpdatedAt,
 			&apiKey.Description,
