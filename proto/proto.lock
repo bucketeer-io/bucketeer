@@ -26177,7 +26177,7 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Get"
+                        "value": "Get by organization ID"
                       },
                       {
                         "name": "description",
@@ -26240,7 +26240,7 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Get"
+                        "value": "Get by environment ID"
                       },
                       {
                         "name": "description",
@@ -26303,7 +26303,7 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Get"
+                        "value": "Get service account"
                       },
                       {
                         "name": "description",
