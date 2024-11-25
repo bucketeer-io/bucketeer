@@ -39,6 +39,7 @@ var (
 		codes.InvalidArgument,
 		"account: environment roles must be specified",
 	)
+	statusInvalidAPIKeyRole                      = gstatus.New(codes.InvalidArgument, "account: invalid api key role")
 	statusInvalidUpdateEnvironmentRolesWriteType = gstatus.New(
 		codes.InvalidArgument,
 		"account: invalid update environment roles write type",

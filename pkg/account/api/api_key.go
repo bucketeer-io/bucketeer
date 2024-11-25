@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"time"
 
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
@@ -506,14 +507,18 @@ func (s *AccountService) ListAPIKeys(
 	if err != nil {
 		return nil, err
 	}
+	environmentIds := make([]interface{}, 0, len(req.EnvironmentIds))
+	for _, id := range req.EnvironmentIds {
+		environmentIds = append(environmentIds, id)
+	}
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
+		mysql.NewInFilter("api_key.environment_id", environmentIds),
 	}
 	if req.Disabled != nil {
-		whereParts = append(whereParts, mysql.NewFilter("disabled", "=", req.Disabled.Value))
+		whereParts = append(whereParts, mysql.NewFilter("api_key.disabled", "=", req.Disabled.Value))
 	}
 	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"name"}, req.SearchKeyword))
+		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"api_key.name"}, req.SearchKeyword))
 	}
 	orders, err := s.newAPIKeyListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -579,11 +584,11 @@ func (s *AccountService) newAPIKeyListOrders(
 	switch orderBy {
 	case proto.ListAPIKeysRequest_DEFAULT,
 		proto.ListAPIKeysRequest_NAME:
-		column = "name"
+		column = "api_key.name"
 	case proto.ListAPIKeysRequest_CREATED_AT:
-		column = "created_at"
+		column = "api_key.created_at"
 	case proto.ListAPIKeysRequest_UPDATED_AT:
-		column = "updated_at"
+		column = "api_key.updated_at"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -723,4 +728,108 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 		return nil, statusInternal.Err()
 	}
 	return nil, dt.Err()
+}
+
+func (s *AccountService) UpdateAPIKey(
+	ctx context.Context,
+	req *proto.UpdateAPIKeyRequest,
+) (*proto.UpdateAPIKeyResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	editor, err := s.checkOrganizationRoleByEnvironmentID(
+		ctx,
+		proto.AccountV2_Role_Organization_ADMIN,
+		req.EnvironmentId,
+		localizer,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := validateUpdateAPIKeyRequestNoCommand(req, localizer); err != nil {
+		return nil, err
+	}
+
+	var prev, current *proto.APIKey
+	err = s.accountStorage.RunInTransaction(ctx, func() error {
+		apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, req.EnvironmentId)
+		if err != nil {
+			return err
+		}
+		prev = apiKey.APIKey
+
+		// Update fields
+		apiKey.APIKey.Name = req.Name
+		apiKey.APIKey.Description = req.Description
+		apiKey.APIKey.Role = req.Role
+		apiKey.APIKey.UpdatedAt = time.Now().Unix()
+
+		current = apiKey.APIKey
+
+		return s.accountStorage.UpdateAPIKey(ctx, apiKey, req.EnvironmentId)
+	})
+	if err != nil {
+		if errors.Is(err, v2as.ErrAPIKeyNotFound) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to update api key",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("id", req.Id),
+				zap.String("name", req.Name),
+				zap.String("role", req.Role.String()),
+				zap.String("description", req.Description),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	e, err := domainevent.NewEvent(
+		editor,
+		eventproto.Event_APIKEY,
+		req.Id,
+		eventproto.Event_APIKEY_CHANGED,
+		&eventproto.APIKeyChangedEvent{
+			Id:          req.Id,
+			Name:        req.Name,
+			Role:        req.Role,
+			Description: req.Description,
+		},
+		req.EnvironmentId,
+		current,
+		prev,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.publisher.Publish(ctx, e); err != nil {
+		s.logger.Error(
+			"Failed to publish update api key event",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("id", req.Id),
+				zap.String("name", req.Name),
+				zap.String("role", req.Role.String()),
+				zap.String("description", req.Description),
+			)...,
+		)
+		return nil, err
+	}
+
+	return &proto.UpdateAPIKeyResponse{}, nil
 }

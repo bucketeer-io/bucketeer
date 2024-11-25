@@ -254,7 +254,8 @@ message ListAPIKeysRequest {
   OrderDirection order_direction = 5;
   string search_keyword = 6;
   google.protobuf.BoolValue disabled = 7;
-  string environment_id = 8;
+  string environment_id = 8 [deprecated = true];
+  repeated string environment_ids = 9;
 }
 
 message ListAPIKeysResponse {
@@ -299,6 +300,16 @@ message DeleteSearchFilterRequest {
 }
 
 message DeleteSearchFilterResponse {}
+
+message UpdateAPIKeyRequest {
+  string id = 1;
+  string environment_id = 2;
+  string name = 3;
+  string description = 4;
+  APIKey.Role role = 5;
+}
+
+message UpdateAPIKeyResponse {}
 
 service AccountService {
   rpc GetMe(GetMeRequest) returns (GetMeResponse) {
@@ -1105,6 +1116,51 @@ service AccountService {
       description: "Delete a search filter. To call this API, you need an `VIEWER` role.",
       tags: "Account",
       operation_id: "web.v1.account.delete_search_filter",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "403"
+        value: {
+          description: "Request does not have permission to access the resource."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 7, "message": "not authorized", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc UpdateAPIKey(UpdateAPIKeyRequest) returns (UpdateAPIKeyResponse) {
+    option (google.api.http) = {
+      post: "/v1/account/update_api_key"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update API Key",
+      description: "Update an API Key. To call this API, you need an `ADMIN` role.",
+      tags: "API Key",
+      operation_id: "web.v1.account.update_api_key",
       responses: {
         key: "400"
         value: {
