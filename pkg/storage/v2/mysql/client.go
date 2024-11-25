@@ -28,6 +28,7 @@ import (
 )
 
 const dsnParams = "collation=utf8mb4_bin"
+const transactionKey = "transaction"
 
 type options struct {
 	connMaxLifetime time.Duration
@@ -105,6 +106,7 @@ type Client interface {
 	Close() error
 	BeginTx(ctx context.Context) (Transaction, error)
 	RunInTransaction(ctx context.Context, tx Transaction, f func() error) error
+	RunInTransaction2(ctx context.Context, f func(ctx context.Context) error) error
 }
 
 type client struct {
@@ -159,7 +161,14 @@ func (c *client) Close() error {
 func (c *client) ExecContext(ctx context.Context, query string, args ...interface{}) (Result, error) {
 	var err error
 	defer record()(operationExec, &err)
-	sret, err := c.db.ExecContext(ctx, query, args...)
+
+	var sret Result
+	tx, ok := ctx.Value(transactionKey).(Transaction)
+	if ok {
+		sret, err = tx.ExecContext(ctx, query, args...)
+	} else {
+		sret, err = c.db.ExecContext(ctx, query, args...)
+	}
 	err = convertMySQLError(err)
 	return &result{sret}, err
 }
@@ -167,14 +176,33 @@ func (c *client) ExecContext(ctx context.Context, query string, args ...interfac
 func (c *client) QueryContext(ctx context.Context, query string, args ...interface{}) (Rows, error) {
 	var err error
 	defer record()(operationQuery, &err)
-	srows, err := c.db.QueryContext(ctx, query, args...)
-	return &rows{srows}, err
+
+	tx, ok := ctx.Value(transactionKey).(Transaction)
+	var srows Rows
+	if ok {
+		srows1, err1 := tx.QueryContext(ctx, query, args...)
+		err = err1
+		srows = &rows{srows1}
+	} else {
+		srows2, err2 := c.db.QueryContext(ctx, query, args...)
+		err = err2
+		srows = &rows{srows2}
+	}
+	return srows, err
 }
 
 func (c *client) QueryRowContext(ctx context.Context, query string, args ...interface{}) Row {
 	var err error
 	defer record()(operationQueryRow, &err)
-	r := &row{c.db.QueryRowContext(ctx, query, args...)}
+
+	var r *row
+	tx, ok := ctx.Value(transactionKey).(Transaction)
+	if ok {
+		r = &row{tx.QueryRowContext(ctx, query, args...)}
+	} else {
+		r = &row{c.db.QueryRowContext(ctx, query, args...)}
+	}
+
 	err = r.Err()
 	return r
 }
@@ -184,6 +212,25 @@ func (c *client) BeginTx(ctx context.Context) (Transaction, error) {
 	defer record()(operationBeginTx, &err)
 	stx, err := c.db.BeginTx(ctx, nil)
 	return &transaction{stx}, err
+}
+
+func (c *client) RunInTransaction2(ctx context.Context, f func(ctx context.Context) error) error {
+	var err error
+	defer record()(operationRunInTransaction, &err)
+	tx, err := c.BeginTx(ctx)
+	if err != nil {
+		return fmt.Errorf(" begin tx: %w", err)
+	}
+	ctx = context.WithValue(ctx, transactionKey, tx)
+	defer func() {
+		if err != nil {
+			tx.Rollback() // nolint:errcheck
+		}
+	}()
+	if err = f(ctx); err == nil {
+		err = tx.Commit()
+	}
+	return err
 }
 
 func (c *client) RunInTransaction(ctx context.Context, tx Transaction, f func() error) error {

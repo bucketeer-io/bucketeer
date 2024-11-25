@@ -32,7 +32,7 @@ type Row interface {
 }
 
 type row struct {
-	srow *sql.Row
+	srow Row
 }
 
 func (r *row) Err() error {
@@ -59,5 +59,5 @@ type Rows interface {
 }
 
 type rows struct {
-	*sql.Rows
+	Rows
 }

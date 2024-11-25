@@ -59,6 +59,7 @@ func WithLogger(logger *zap.Logger) Option {
 
 type AccountService struct {
 	environmentClient environmentclient.Client
+	client            mysql.Client
 	accountStorage    v2.AccountStorage
 	publisher         publisher.Publisher
 	opts              *options
@@ -78,6 +79,7 @@ func NewAccountService(
 	return &AccountService{
 		environmentClient: e,
 		accountStorage:    v2.NewAccountStorage(mysqlClient),
+		client:            mysqlClient,
 		publisher:         publisher,
 		opts:              &options,
 		logger:            options.logger.Named("api"),
