@@ -220,8 +220,7 @@ message UpdatePushRequest {
   string id = 1;
   repeated string tags = 2;
   google.protobuf.StringValue name = 3;
-  google.protobuf.BoolValue deleted = 4 [(grpc.gateway.protoc_gen_openapiv2
-                                              .options.openapiv2_field) = {
+  google.protobuf.BoolValue deleted = 4 [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
     title: "deleted"
     description: "if true, the push notification will be deleted and other fields will be ignored."
   }];
