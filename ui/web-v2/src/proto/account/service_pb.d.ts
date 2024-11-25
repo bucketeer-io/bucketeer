@@ -1460,6 +1460,11 @@ export class ListAPIKeysRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  clearEnvironmentIdsList(): void;
+  getEnvironmentIdsList(): Array<string>;
+  setEnvironmentIdsList(value: Array<string>): void;
+  addEnvironmentIds(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListAPIKeysRequest.AsObject;
   static toObject(
@@ -1490,6 +1495,7 @@ export namespace ListAPIKeysRequest {
     searchKeyword: string;
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     environmentId: string;
+    environmentIdsList: Array<string>;
   };
 
   export interface OrderByMap {
@@ -1863,5 +1869,80 @@ export class DeleteSearchFilterResponse extends jspb.Message {
 }
 
 export namespace DeleteSearchFilterResponse {
+  export type AsObject = {};
+}
+
+export class UpdateAPIKeyRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  getName(): string;
+  setName(value: string): void;
+
+  getDescription(): string;
+  setDescription(value: string): void;
+
+  getRole(): proto_account_api_key_pb.APIKey.RoleMap[keyof proto_account_api_key_pb.APIKey.RoleMap];
+  setRole(
+    value: proto_account_api_key_pb.APIKey.RoleMap[keyof proto_account_api_key_pb.APIKey.RoleMap]
+  ): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateAPIKeyRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: UpdateAPIKeyRequest
+  ): UpdateAPIKeyRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: UpdateAPIKeyRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateAPIKeyRequest;
+  static deserializeBinaryFromReader(
+    message: UpdateAPIKeyRequest,
+    reader: jspb.BinaryReader
+  ): UpdateAPIKeyRequest;
+}
+
+export namespace UpdateAPIKeyRequest {
+  export type AsObject = {
+    id: string;
+    environmentId: string;
+    name: string;
+    description: string;
+    role: proto_account_api_key_pb.APIKey.RoleMap[keyof proto_account_api_key_pb.APIKey.RoleMap];
+  };
+}
+
+export class UpdateAPIKeyResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateAPIKeyResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: UpdateAPIKeyResponse
+  ): UpdateAPIKeyResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: UpdateAPIKeyResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateAPIKeyResponse;
+  static deserializeBinaryFromReader(
+    message: UpdateAPIKeyResponse,
+    reader: jspb.BinaryReader
+  ): UpdateAPIKeyResponse;
+}
+
+export namespace UpdateAPIKeyResponse {
   export type AsObject = {};
 }
