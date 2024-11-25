@@ -402,7 +402,7 @@ paths:
         - Client and Server SDKs
   /v1/account/get-account-by-environment/{environmentId}/{email}:
     get:
-      summary: Get
+      summary: Get by Environment ID
       description: Get an Account by Environment ID. To call this API, you need a `READ` API Key role.
       operationId: api.gateway.v1.account.get_by_environment_id
       responses:
@@ -459,7 +459,7 @@ paths:
         - Account
   /v1/account/me/{organizationId}:
     get:
-      summary: Get
+      summary: Get Service Account
       description: Get the current Account. To call this API, you need a `READ` API Key role.
       operationId: api.gateway.v1.account.get_me
       responses:
@@ -512,7 +512,7 @@ paths:
         - Account
   /v1/account/{organizationId}/{email}:
     get:
-      summary: Get
+      summary: Get by Organization ID
       description: Get an Account. To call this API, you need a `READ` API Key role.
       operationId: api.gateway.v1.account.get
       responses:

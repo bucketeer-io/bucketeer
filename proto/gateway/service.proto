@@ -629,7 +629,7 @@ service Gateway {
       get: "/v1/account/{organization_id}/{email}"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Get",
+      summary: "Get by Organization ID",
       description: "Get an Account. To call this API, you need a `READ` API Key role.",
       tags: "Account",
       operation_id: "api.gateway.v1.account.get",
@@ -649,7 +649,7 @@ service Gateway {
       get: "/v1/account/get-account-by-environment/{environment_id}/{email}"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Get",
+      summary: "Get by Environment ID",
       description: "Get an Account by Environment ID. To call this API, you need a `READ` API Key role.",
       tags: "Account",
       operation_id: "api.gateway.v1.account.get_by_environment_id",
@@ -668,7 +668,7 @@ service Gateway {
       get: "/v1/account/me/{organization_id}"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
-      summary: "Get",
+      summary: "Get Service Account",
       description: "Get the current Account. To call this API, you need a `READ` API Key role.",
       tags: "Account",
       operation_id: "api.gateway.v1.account.get_me",
