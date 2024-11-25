@@ -17,6 +17,7 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/jinzhu/copier"
@@ -32,6 +33,10 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+)
+
+const (
+	apiKeyShadowPercentage = 0.75 // hide a part of the api key
 )
 
 func (s *AccountService) CreateAPIKey(
@@ -492,6 +497,24 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 		}
 		return nil, dt.Err()
 	}
+	if apiKey == nil {
+		s.logger.Error(
+			"Failed to get api key",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("id", req.Id),
+			)...,
+		)
+		return nil, statusNotFound.Err()
+	}
+
+	// for security, obfuscate the returned key
+	shadowLen := int(float64(len(apiKey.ApiKey)) * apiKeyShadowPercentage)
+	apiKey.ApiKey = fmt.Sprintf(
+		"...%s",
+		apiKey.ApiKey[shadowLen:],
+	)
+
 	return &proto.GetAPIKeyResponse{ApiKey: apiKey.APIKey}, nil
 }
 
@@ -568,6 +591,16 @@ func (s *AccountService) ListAPIKeys(
 		}
 		return nil, dt.Err()
 	}
+
+	// for security, obfuscate the returned key
+	for i := 0; i < len(apiKeys); i++ {
+		shadowLen := int(float64(len(apiKeys[i].ApiKey)) * apiKeyShadowPercentage)
+		apiKeys[i].ApiKey = fmt.Sprintf(
+			"...%s",
+			apiKeys[i].ApiKey[shadowLen:],
+		)
+	}
+
 	return &proto.ListAPIKeysResponse{
 		ApiKeys:    apiKeys,
 		Cursor:     strconv.Itoa(nextCursor),
@@ -711,6 +744,14 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 			}
 			return nil, dt.Err()
 		}
+
+		// for security, obfuscate the returned key
+		shadowLen := int(float64(len(apiKey.ApiKey)) * apiKeyShadowPercentage)
+		apiKey.ApiKey = fmt.Sprintf(
+			"...%s",
+			apiKey.ApiKey[shadowLen:],
+		)
+
 		return &proto.GetAPIKeyBySearchingAllEnvironmentsResponse{
 			EnvironmentApiKey: &proto.EnvironmentAPIKey{
 				ApiKey:         apiKey.APIKey,
