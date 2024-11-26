@@ -19,8 +19,9 @@ import (
 	"encoding/hex"
 	"time"
 
-	proto "github.com/bucketeer-io/bucketeer/proto/account"
 	"github.com/jinzhu/copier"
+
+	proto "github.com/bucketeer-io/bucketeer/proto/account"
 )
 
 const keyBytes = 32
