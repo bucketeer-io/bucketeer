@@ -18,7 +18,6 @@ import (
 	"context"
 	"errors"
 	"strconv"
-	"time"
 
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
@@ -758,12 +757,15 @@ func (s *AccountService) UpdateAPIKey(
 		prev = apiKey.APIKey
 
 		// Update fields
-		apiKey.APIKey.Name = req.Name
-		apiKey.APIKey.Description = req.Description
-		apiKey.APIKey.Role = req.Role
-		apiKey.APIKey.UpdatedAt = time.Now().Unix()
-
-		current = apiKey.APIKey
+		updated, err := apiKey.Update(
+			req.Name,
+			req.Description,
+			req.Role,
+		)
+		if err != nil {
+			return err
+		}
+		current = updated.APIKey
 
 		return s.accountStorage.UpdateAPIKey(ctx, apiKey, req.EnvironmentId)
 	})

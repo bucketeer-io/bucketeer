@@ -20,6 +20,7 @@ import (
 	"time"
 
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
+	"github.com/jinzhu/copier"
 )
 
 const keyBytes = 32
@@ -69,6 +70,7 @@ func (a *APIKey) Disable() error {
 	a.UpdatedAt = time.Now().Unix()
 	return nil
 }
+
 func generateKey() (string, error) {
 	b := make([]byte, keyBytes)
 	_, err := rand.Read(b)
@@ -76,4 +78,26 @@ func generateKey() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(b), nil
+}
+
+func (a *APIKey) Update(
+	name string,
+	description string,
+	role proto.APIKey_Role,
+) (*APIKey, error) {
+	updated := &APIKey{}
+	if err := copier.Copy(updated, a); err != nil {
+		return nil, err
+	}
+	if name != "" {
+		updated.Name = name
+	}
+	if description != "" {
+		updated.Description = description
+	}
+	if role != proto.APIKey_UNKNOWN {
+		updated.Role = role
+	}
+	updated.UpdatedAt = time.Now().Unix()
+	return updated, nil
 }

@@ -895,25 +895,5 @@ func validateUpdateAPIKeyRequestNoCommand(req *accountproto.UpdateAPIKeyRequest,
 		}
 		return dt.Err()
 	}
-	if req.Name == "" {
-		dt, err := statusMissingAPIKeyName.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Role == accountproto.APIKey_UNKNOWN {
-		dt, err := statusInvalidAPIKeyRole.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "role"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	return nil
 }
