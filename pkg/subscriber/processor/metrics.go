@@ -52,6 +52,7 @@ const (
 	codeFailedToAppendEvaluationEvents      = "FailedToAppendEvaluationEvents"
 	codeFailedToAppendGoalEvents            = "FailedToAppendGoalEvents"
 	codeLinked                              = "Linked"
+	appVersion                              = "app_version"
 )
 
 var (
@@ -79,6 +80,14 @@ var (
 			Help:      "Histogram of message handling duration (seconds)",
 			Buckets:   prometheus.DefBuckets,
 		}, []string{"subscriber", "code"})
+
+	evaluationEventCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "bucketeer",
+			Subsystem: "subscriber",
+			Name:      "evaluation_event_total",
+			Help:      "Total number of evaluation events",
+		}, []string{"tag", "feature_id", "app_version"})
 )
 
 func registerMetrics(r metrics.Registerer) {
