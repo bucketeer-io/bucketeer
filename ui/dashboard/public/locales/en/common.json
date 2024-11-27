@@ -79,5 +79,7 @@
   "create-api-key": "Create API Key",
   "api-keys-subtitle": "Manage all API keys for this environment.",
   "never": "Never",
-  "state": "State"
+  "state": "State",
+  "slack": "Slack",
+  "slack-subtitle": "Manage all notifications within the platform"
 }
