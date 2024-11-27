@@ -506,12 +506,13 @@ func (s *AccountService) ListAPIKeys(
 	if err != nil {
 		return nil, err
 	}
-	environmentIds := make([]interface{}, 0, len(req.EnvironmentIds))
-	for _, id := range req.EnvironmentIds {
-		environmentIds = append(environmentIds, id)
-	}
-	whereParts := []mysql.WherePart{
-		mysql.NewInFilter("api_key.environment_id", environmentIds),
+	whereParts := []mysql.WherePart{}
+	if len(req.EnvironmentIds) > 0 {
+		environmentIds := make([]interface{}, 0, len(req.EnvironmentIds))
+		for _, id := range req.EnvironmentIds {
+			environmentIds = append(environmentIds, id)
+		}
+		whereParts = append(whereParts, mysql.NewInFilter("api_key.environment_id", environmentIds))
 	}
 	if req.Disabled != nil {
 		whereParts = append(whereParts, mysql.NewFilter("api_key.disabled", "=", req.Disabled.Value))
