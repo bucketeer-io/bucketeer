@@ -304,9 +304,11 @@ message DeleteSearchFilterResponse {}
 message UpdateAPIKeyRequest {
   string id = 1;
   string environment_id = 2;
-  string name = 3;
-  string description = 4;
+  google.protobuf.StringValue name = 3;
+  google.protobuf.StringValue description = 4;
   APIKey.Role role = 5;
+  google.protobuf.BoolValue disabled = 6;
+  google.protobuf.StringValue maintainer = 7;
 }
 
 message UpdateAPIKeyResponse {}

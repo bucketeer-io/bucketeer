@@ -19,6 +19,7 @@ import (
 	"encoding/hex"
 	"time"
 
+	wrapperspb "github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/jinzhu/copier"
 
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
@@ -82,22 +83,30 @@ func generateKey() (string, error) {
 }
 
 func (a *APIKey) Update(
-	name string,
-	description string,
+	name *wrapperspb.StringValue,
+	description *wrapperspb.StringValue,
 	role proto.APIKey_Role,
+	maintainer *wrapperspb.StringValue,
+	disabled *wrapperspb.BoolValue,
 ) (*APIKey, error) {
 	updated := &APIKey{}
 	if err := copier.Copy(updated, a); err != nil {
 		return nil, err
 	}
-	if name != "" {
-		updated.Name = name
+	if name != nil {
+		updated.Name = name.Value
 	}
-	if description != "" {
-		updated.Description = description
+	if description != nil {
+		updated.Description = description.Value
 	}
 	if role != proto.APIKey_UNKNOWN {
 		updated.Role = role
+	}
+	if maintainer != nil {
+		updated.Maintainer = maintainer.Value
+	}
+	if disabled != nil {
+		updated.Disabled = disabled.Value
 	}
 	updated.UpdatedAt = time.Now().Unix()
 	return updated, nil

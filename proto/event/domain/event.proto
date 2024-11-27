@@ -658,9 +658,6 @@ message APIKeyCreatedEvent {
 
 message APIKeyChangedEvent {
   string id = 1;
-  string name = 2;
-  bucketeer.account.APIKey.Role role = 3;
-  string description = 4;
 }
 
 message APIKeyNameChangedEvent {

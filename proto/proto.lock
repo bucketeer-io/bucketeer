@@ -1869,17 +1869,27 @@
               {
                 "id": 3,
                 "name": "name",
-                "type": "string"
+                "type": "google.protobuf.StringValue"
               },
               {
                 "id": 4,
                 "name": "description",
-                "type": "string"
+                "type": "google.protobuf.StringValue"
               },
               {
                 "id": 5,
                 "name": "role",
                 "type": "APIKey.Role"
+              },
+              {
+                "id": 6,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 7,
+                "name": "maintainer",
+                "type": "google.protobuf.StringValue"
               }
             ]
           },
@@ -16566,21 +16576,6 @@
               {
                 "id": 1,
                 "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "name",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "role",
-                "type": "bucketeer.account.APIKey.Role"
-              },
-              {
-                "id": 4,
-                "name": "description",
                 "type": "string"
               }
             ]

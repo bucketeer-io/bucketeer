@@ -761,6 +761,8 @@ func (s *AccountService) UpdateAPIKey(
 			req.Name,
 			req.Description,
 			req.Role,
+			req.Maintainer,
+			req.Disabled,
 		)
 		if err != nil {
 			return err
@@ -786,9 +788,6 @@ func (s *AccountService) UpdateAPIKey(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
-				zap.String("name", req.Name),
-				zap.String("role", req.Role.String()),
-				zap.String("description", req.Description),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -806,10 +805,7 @@ func (s *AccountService) UpdateAPIKey(
 		req.Id,
 		eventproto.Event_APIKEY_CHANGED,
 		&eventproto.APIKeyChangedEvent{
-			Id:          req.Id,
-			Name:        req.Name,
-			Role:        req.Role,
-			Description: req.Description,
+			Id: req.Id,
 		},
 		req.EnvironmentId,
 		current,
@@ -825,9 +821,6 @@ func (s *AccountService) UpdateAPIKey(
 				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
 				zap.String("id", req.Id),
-				zap.String("name", req.Name),
-				zap.String("role", req.Role.String()),
-				zap.String("description", req.Description),
 			)...,
 		)
 		return nil, err
