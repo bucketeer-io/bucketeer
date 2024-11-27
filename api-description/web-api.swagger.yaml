@@ -1080,7 +1080,7 @@ paths:
       tags:
         - Account
   /v1/account/update_api_key:
-    post:
+    patch:
       summary: Update API Key
       description: Update an API Key. To call this API, you need an `ADMIN` role.
       operationId: web.v1.account.update_api_key

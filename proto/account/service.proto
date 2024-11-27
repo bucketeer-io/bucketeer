@@ -1155,7 +1155,7 @@ service AccountService {
   }
   rpc UpdateAPIKey(UpdateAPIKeyRequest) returns (UpdateAPIKeyResponse) {
     option (google.api.http) = {
-      post: "/v1/account/update_api_key"
+      patch: "/v1/account/update_api_key"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {

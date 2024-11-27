@@ -5111,7 +5111,7 @@
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "patch",
                         "value": "/v1/account/update_api_key"
                       },
                       {
