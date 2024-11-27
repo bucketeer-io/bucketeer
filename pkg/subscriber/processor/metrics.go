@@ -87,7 +87,7 @@ var (
 			Subsystem: "subscriber",
 			Name:      "evaluation_event_total",
 			Help:      "Total number of evaluation events",
-		}, []string{"tag", "feature_id", "app_version"})
+		}, []string{"sdk_version", "tag", "feature_id", "app_version"})
 )
 
 func registerMetrics(r metrics.Registerer) {
