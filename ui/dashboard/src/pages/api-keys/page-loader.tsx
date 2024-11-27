@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Trans } from 'react-i18next';
-import { apiKeyDisable } from '@api/api-key/api-key-disable';
-import { apiKeyEnable } from '@api/api-key/api-key-enable';
+import { apiKeyUpdater } from '@api/api-key';
 import { invalidateAPIKeys } from '@queries/api-keys';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
@@ -30,7 +29,7 @@ const PageLoader = () => {
     isError
   } = useFetchAPIKeys({
     pageSize: 1,
-    environmentNamespace: currenEnvironment.id
+    environmentIds: [currenEnvironment.id]
   });
 
   const [selectedAPIKey, setSelectedAPIKey] = useState<APIKey>();
@@ -60,12 +59,10 @@ const PageLoader = () => {
 
   const mutationState = useMutation({
     mutationFn: async (id: string) => {
-      const disableMutation = isDisabling ? apiKeyDisable : apiKeyEnable;
-
-      return disableMutation({
+      return apiKeyUpdater({
         id,
         environmentId: currenEnvironment.id,
-        command: {}
+        disabled: isDisabling
       });
     },
     onSuccess: () => {

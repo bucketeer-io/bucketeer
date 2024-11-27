@@ -11,6 +11,9 @@ export interface APIKey {
   name: string;
   role: APIKeyRole;
   disabled: true;
+  description: string;
+  environmentName: string;
+  maintainer: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,14 +1,11 @@
 import axiosClient from '@api/axios-client';
 import { APIKey, APIKeyRole } from '@types';
 
-export interface APIKeyCreatorCommand {
-  name: string;
-  role: APIKeyRole;
-}
-
 export interface APIKeyCreatorParams {
   environmentId: string;
-  command: APIKeyCreatorCommand;
+  name: string;
+  role: APIKeyRole;
+  description?: string;
 }
 
 export interface APIKeyCreatorResponse {

@@ -67,7 +67,7 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
     defaultValues: {
       name: apiKey.name,
       environmentId: currentEnvironment.id,
-      description: ''
+      description: apiKey.description
     }
   });
 
@@ -113,9 +113,8 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
     return apiKeyUpdater({
       id: apiKey.id,
       environmentId: values.environmentId,
-      command: {
-        name: values.name
-      }
+      description: values.description,
+      name: values.name
     }).then(() => {
       notify({
         toastType: 'toast',

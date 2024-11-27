@@ -4,7 +4,7 @@ import { APIKeyCollection, CollectionParams } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 
 export interface APIKeyFetcherParams extends CollectionParams {
-  environmentNamespace?: string;
+  environmentIds?: string[];
 }
 
 export const apiKeysFetcher = async (
