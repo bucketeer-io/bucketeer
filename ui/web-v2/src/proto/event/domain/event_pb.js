@@ -20077,10 +20077,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        id: jspb.Message.getFieldWithDefault(msg, 1, ''),
-        name: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        role: jspb.Message.getFieldWithDefault(msg, 3, 0),
-        description: jspb.Message.getFieldWithDefault(msg, 4, '')
+        id: jspb.Message.getFieldWithDefault(msg, 1, '')
       };
 
     if (includeInstance) {
@@ -20125,20 +20122,6 @@ proto.bucketeer.event.domain.APIKeyChangedEvent.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
           break;
-        case 2:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setName(value);
-          break;
-        case 3:
-          var value = /** @type {!proto.bucketeer.account.APIKey.Role} */ (
-            reader.readEnum()
-          );
-          msg.setRole(value);
-          break;
-        case 4:
-          var value = /** @type {string} */ (reader.readString());
-          msg.setDescription(value);
-          break;
         default:
           reader.skipField();
           break;
@@ -20175,18 +20158,6 @@ proto.bucketeer.event.domain.APIKeyChangedEvent.serializeBinaryToWriter =
     if (f.length > 0) {
       writer.writeString(1, f);
     }
-    f = message.getName();
-    if (f.length > 0) {
-      writer.writeString(2, f);
-    }
-    f = message.getRole();
-    if (f !== 0.0) {
-      writer.writeEnum(3, f);
-    }
-    f = message.getDescription();
-    if (f.length > 0) {
-      writer.writeString(4, f);
-    }
   };
 
 /**
@@ -20206,68 +20177,6 @@ proto.bucketeer.event.domain.APIKeyChangedEvent.prototype.setId = function (
 ) {
   return jspb.Message.setProto3StringField(this, 1, value);
 };
-
-/**
- * optional string name = 2;
- * @return {string}
- */
-proto.bucketeer.event.domain.APIKeyChangedEvent.prototype.getName =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 2, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.event.domain.APIKeyChangedEvent} returns this
- */
-proto.bucketeer.event.domain.APIKeyChangedEvent.prototype.setName = function (
-  value
-) {
-  return jspb.Message.setProto3StringField(this, 2, value);
-};
-
-/**
- * optional bucketeer.account.APIKey.Role role = 3;
- * @return {!proto.bucketeer.account.APIKey.Role}
- */
-proto.bucketeer.event.domain.APIKeyChangedEvent.prototype.getRole =
-  function () {
-    return /** @type {!proto.bucketeer.account.APIKey.Role} */ (
-      jspb.Message.getFieldWithDefault(this, 3, 0)
-    );
-  };
-
-/**
- * @param {!proto.bucketeer.account.APIKey.Role} value
- * @return {!proto.bucketeer.event.domain.APIKeyChangedEvent} returns this
- */
-proto.bucketeer.event.domain.APIKeyChangedEvent.prototype.setRole = function (
-  value
-) {
-  return jspb.Message.setProto3EnumField(this, 3, value);
-};
-
-/**
- * optional string description = 4;
- * @return {string}
- */
-proto.bucketeer.event.domain.APIKeyChangedEvent.prototype.getDescription =
-  function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 4, '')
-    );
-  };
-
-/**
- * @param {string} value
- * @return {!proto.bucketeer.event.domain.APIKeyChangedEvent} returns this
- */
-proto.bucketeer.event.domain.APIKeyChangedEvent.prototype.setDescription =
-  function (value) {
-    return jspb.Message.setProto3StringField(this, 4, value);
-  };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**

@@ -3106,17 +3106,6 @@ export class APIKeyChangedEvent extends jspb.Message {
   getId(): string;
   setId(value: string): void;
 
-  getName(): string;
-  setName(value: string): void;
-
-  getRole(): proto_account_api_key_pb.APIKey.RoleMap[keyof proto_account_api_key_pb.APIKey.RoleMap];
-  setRole(
-    value: proto_account_api_key_pb.APIKey.RoleMap[keyof proto_account_api_key_pb.APIKey.RoleMap]
-  ): void;
-
-  getDescription(): string;
-  setDescription(value: string): void;
-
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): APIKeyChangedEvent.AsObject;
   static toObject(
@@ -3141,9 +3130,6 @@ export class APIKeyChangedEvent extends jspb.Message {
 export namespace APIKeyChangedEvent {
   export type AsObject = {
     id: string;
-    name: string;
-    role: proto_account_api_key_pb.APIKey.RoleMap[keyof proto_account_api_key_pb.APIKey.RoleMap];
-    description: string;
   };
 }
 

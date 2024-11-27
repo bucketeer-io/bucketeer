@@ -3469,6 +3469,10 @@ definitions:
         type: string
       role:
         $ref: '#/definitions/accountAPIKeyRole'
+      disabled:
+        type: boolean
+      maintainer:
+        type: string
   accountUpdateAPIKeyResponse:
     type: object
   accountUpdateAccountV2Request:

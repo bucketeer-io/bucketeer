@@ -11259,9 +11259,19 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
       obj = {
         id: jspb.Message.getFieldWithDefault(msg, 1, ''),
         environmentId: jspb.Message.getFieldWithDefault(msg, 2, ''),
-        name: jspb.Message.getFieldWithDefault(msg, 3, ''),
-        description: jspb.Message.getFieldWithDefault(msg, 4, ''),
-        role: jspb.Message.getFieldWithDefault(msg, 5, 0)
+        name:
+          (f = msg.getName()) &&
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
+        description:
+          (f = msg.getDescription()) &&
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
+        role: jspb.Message.getFieldWithDefault(msg, 5, 0),
+        disabled:
+          (f = msg.getDisabled()) &&
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
+        maintainer:
+          (f = msg.getMaintainer()) &&
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -11311,11 +11321,19 @@ proto.bucketeer.account.UpdateAPIKeyRequest.deserializeBinaryFromReader =
           msg.setEnvironmentId(value);
           break;
         case 3:
-          var value = /** @type {string} */ (reader.readString());
+          var value = new google_protobuf_wrappers_pb.StringValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
+          );
           msg.setName(value);
           break;
         case 4:
-          var value = /** @type {string} */ (reader.readString());
+          var value = new google_protobuf_wrappers_pb.StringValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
+          );
           msg.setDescription(value);
           break;
         case 5:
@@ -11323,6 +11341,22 @@ proto.bucketeer.account.UpdateAPIKeyRequest.deserializeBinaryFromReader =
             reader.readEnum()
           );
           msg.setRole(value);
+          break;
+        case 6:
+          var value = new google_protobuf_wrappers_pb.BoolValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader
+          );
+          msg.setDisabled(value);
+          break;
+        case 7:
+          var value = new google_protobuf_wrappers_pb.StringValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
+          );
+          msg.setMaintainer(value);
           break;
         default:
           reader.skipField();
@@ -11367,16 +11401,40 @@ proto.bucketeer.account.UpdateAPIKeyRequest.serializeBinaryToWriter = function (
     writer.writeString(2, f);
   }
   f = message.getName();
-  if (f.length > 0) {
-    writer.writeString(3, f);
+  if (f != null) {
+    writer.writeMessage(
+      3,
+      f,
+      google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
+    );
   }
   f = message.getDescription();
-  if (f.length > 0) {
-    writer.writeString(4, f);
+  if (f != null) {
+    writer.writeMessage(
+      4,
+      f,
+      google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
+    );
   }
   f = message.getRole();
   if (f !== 0.0) {
     writer.writeEnum(5, f);
+  }
+  f = message.getDisabled();
+  if (f != null) {
+    writer.writeMessage(
+      6,
+      f,
+      google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
+    );
+  }
+  f = message.getMaintainer();
+  if (f != null) {
+    writer.writeMessage(
+      7,
+      f,
+      google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
+    );
   }
 };
 
@@ -11417,41 +11475,85 @@ proto.bucketeer.account.UpdateAPIKeyRequest.prototype.setEnvironmentId =
   };
 
 /**
- * optional string name = 3;
- * @return {string}
+ * optional google.protobuf.StringValue name = 3;
+ * @return {?proto.google.protobuf.StringValue}
  */
 proto.bucketeer.account.UpdateAPIKeyRequest.prototype.getName = function () {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ''));
+  return /** @type{?proto.google.protobuf.StringValue} */ (
+    jspb.Message.getWrapperField(
+      this,
+      google_protobuf_wrappers_pb.StringValue,
+      3
+    )
+  );
 };
 
 /**
- * @param {string} value
+ * @param {?proto.google.protobuf.StringValue|undefined} value
  * @return {!proto.bucketeer.account.UpdateAPIKeyRequest} returns this
  */
 proto.bucketeer.account.UpdateAPIKeyRequest.prototype.setName = function (
   value
 ) {
-  return jspb.Message.setProto3StringField(this, 3, value);
+  return jspb.Message.setWrapperField(this, 3, value);
 };
 
 /**
- * optional string description = 4;
- * @return {string}
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.UpdateAPIKeyRequest.prototype.clearName = function () {
+  return this.setName(undefined);
+};
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateAPIKeyRequest.prototype.hasName = function () {
+  return jspb.Message.getField(this, 3) != null;
+};
+
+/**
+ * optional google.protobuf.StringValue description = 4;
+ * @return {?proto.google.protobuf.StringValue}
  */
 proto.bucketeer.account.UpdateAPIKeyRequest.prototype.getDescription =
   function () {
-    return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 4, '')
+    return /** @type{?proto.google.protobuf.StringValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.StringValue,
+        4
+      )
     );
   };
 
 /**
- * @param {string} value
+ * @param {?proto.google.protobuf.StringValue|undefined} value
  * @return {!proto.bucketeer.account.UpdateAPIKeyRequest} returns this
  */
 proto.bucketeer.account.UpdateAPIKeyRequest.prototype.setDescription =
   function (value) {
-    return jspb.Message.setProto3StringField(this, 4, value);
+    return jspb.Message.setWrapperField(this, 4, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.UpdateAPIKeyRequest.prototype.clearDescription =
+  function () {
+    return this.setDescription(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateAPIKeyRequest.prototype.hasDescription =
+  function () {
+    return jspb.Message.getField(this, 4) != null;
   };
 
 /**
@@ -11473,6 +11575,92 @@ proto.bucketeer.account.UpdateAPIKeyRequest.prototype.setRole = function (
 ) {
   return jspb.Message.setProto3EnumField(this, 5, value);
 };
+
+/**
+ * optional google.protobuf.BoolValue disabled = 6;
+ * @return {?proto.google.protobuf.BoolValue}
+ */
+proto.bucketeer.account.UpdateAPIKeyRequest.prototype.getDisabled =
+  function () {
+    return /** @type{?proto.google.protobuf.BoolValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.BoolValue,
+        6
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.BoolValue|undefined} value
+ * @return {!proto.bucketeer.account.UpdateAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.UpdateAPIKeyRequest.prototype.setDisabled = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 6, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.UpdateAPIKeyRequest.prototype.clearDisabled =
+  function () {
+    return this.setDisabled(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateAPIKeyRequest.prototype.hasDisabled =
+  function () {
+    return jspb.Message.getField(this, 6) != null;
+  };
+
+/**
+ * optional google.protobuf.StringValue maintainer = 7;
+ * @return {?proto.google.protobuf.StringValue}
+ */
+proto.bucketeer.account.UpdateAPIKeyRequest.prototype.getMaintainer =
+  function () {
+    return /** @type{?proto.google.protobuf.StringValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.StringValue,
+        7
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.StringValue|undefined} value
+ * @return {!proto.bucketeer.account.UpdateAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.UpdateAPIKeyRequest.prototype.setMaintainer = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 7, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateAPIKeyRequest} returns this
+ */
+proto.bucketeer.account.UpdateAPIKeyRequest.prototype.clearMaintainer =
+  function () {
+    return this.setMaintainer(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateAPIKeyRequest.prototype.hasMaintainer =
+  function () {
+    return jspb.Message.getField(this, 7) != null;
+  };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**

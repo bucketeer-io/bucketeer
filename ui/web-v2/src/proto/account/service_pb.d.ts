@@ -1879,16 +1879,30 @@ export class UpdateAPIKeyRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
-  getName(): string;
-  setName(value: string): void;
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
 
-  getDescription(): string;
-  setDescription(value: string): void;
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
 
   getRole(): proto_account_api_key_pb.APIKey.RoleMap[keyof proto_account_api_key_pb.APIKey.RoleMap];
   setRole(
     value: proto_account_api_key_pb.APIKey.RoleMap[keyof proto_account_api_key_pb.APIKey.RoleMap]
   ): void;
+
+  hasDisabled(): boolean;
+  clearDisabled(): void;
+  getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  hasMaintainer(): boolean;
+  clearMaintainer(): void;
+  getMaintainer(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setMaintainer(value?: google_protobuf_wrappers_pb.StringValue): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateAPIKeyRequest.AsObject;
@@ -1915,9 +1929,11 @@ export namespace UpdateAPIKeyRequest {
   export type AsObject = {
     id: string;
     environmentId: string;
-    name: string;
-    description: string;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
     role: proto_account_api_key_pb.APIKey.RoleMap[keyof proto_account_api_key_pb.APIKey.RoleMap];
+    disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    maintainer?: google_protobuf_wrappers_pb.StringValue.AsObject;
   };
 }
 
