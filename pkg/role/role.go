@@ -62,17 +62,17 @@ func CheckEnvironmentRole(
 	if !ok {
 		return nil, ErrUnauthenticated
 	}
-	apikey := getAPIKeyEditor(ctx)
-	if apikey != nil && apikey.Token != "" && token.IsSystemAdmin {
+	publicAPIEditor := getAPIKeyEditor(ctx)
+	if publicAPIEditor != nil && publicAPIEditor.Token != "" && token.IsSystemAdmin {
 		var accountName string
-		account, err := getAccountFunc(apikey.Maintainer)
+		account, err := getAccountFunc(publicAPIEditor.Maintainer)
 		if err == nil {
 			accountName = account.Name
 		}
 		return &eventproto.Editor{
-			Email:  apikey.Maintainer,
+			Email:  publicAPIEditor.Maintainer,
 			Name:   accountName,
-			ApiKey: apikey,
+			ApiKey: publicAPIEditor,
 		}, nil
 	}
 
@@ -131,17 +131,17 @@ func CheckOrganizationRole(
 	if !ok {
 		return nil, ErrUnauthenticated
 	}
-	apikey := getAPIKeyEditor(ctx)
-	if apikey != nil && apikey.Token != "" && token.IsSystemAdmin {
+	publicAPIEditor := getAPIKeyEditor(ctx)
+	if publicAPIEditor != nil && publicAPIEditor.Token != "" && token.IsSystemAdmin {
 		var accountName string
-		resp, err := getAccountFunc(apikey.Maintainer)
+		resp, err := getAccountFunc(publicAPIEditor.Maintainer)
 		if err == nil && resp != nil && resp.Account != nil {
 			accountName = resp.Account.Name
 		}
 		return &eventproto.Editor{
-			Email:  apikey.Maintainer,
+			Email:  publicAPIEditor.Maintainer,
 			Name:   accountName,
-			ApiKey: apikey,
+			ApiKey: publicAPIEditor,
 		}, nil
 	}
 
@@ -182,15 +182,15 @@ func getAPIKeyEditor(ctx context.Context) *eventproto.Editor_APIKey {
 		return nil
 	}
 
-	apikey := &eventproto.Editor_APIKey{}
-	apikey.Token = apikeyToken[0]
+	publicAPIEditor := &eventproto.Editor_APIKey{}
+	publicAPIEditor.Token = apikeyToken[0]
 
 	if len(md.Get(APIKeyMaintainerMDKey)) > 0 {
-		apikey.Maintainer = md.Get(APIKeyMaintainerMDKey)[0]
+		publicAPIEditor.Maintainer = md.Get(APIKeyMaintainerMDKey)[0]
 	}
 
 	if len(md.Get(APIKeyNameMDKey)) > 0 {
-		apikey.Name = md.Get(APIKeyNameMDKey)[0]
+		publicAPIEditor.Name = md.Get(APIKeyNameMDKey)[0]
 	}
-	return apikey
+	return publicAPIEditor
 }

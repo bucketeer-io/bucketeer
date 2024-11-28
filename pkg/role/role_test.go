@@ -332,7 +332,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			desc: "success get API key editor",
 			ctx: getContextWithTokenAndAPIKey(
 				t,
-				&token.AccessToken{Email: "localenv@bucketeer.io"},
+				&token.AccessToken{Email: "localenv@bucketeer.io", IsSystemAdmin: true},
 				"apikey_token",
 				"apikey_maintainer@example.com",
 				"apikey_name",
