@@ -251,7 +251,7 @@ message Event {
 }
 
 message Editor {
-  message APIKey {
+  message PublicAPIEditor {
     string token = 1;
     string maintainer = 2;
     string name = 3;
@@ -260,7 +260,7 @@ message Editor {
   reserved 2;  // bucketeer.account.Account.Role role = 2 [deprecated = true];
   bool is_admin = 3;
   string name = 4;
-  APIKey api_key = 5;
+  PublicAPIEditor api_key = 5;
 }
 
 message Options {

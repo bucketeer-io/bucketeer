@@ -14989,7 +14989,7 @@
               {
                 "id": 5,
                 "name": "api_key",
-                "type": "APIKey"
+                "type": "PublicAPIEditor"
               }
             ],
             "reserved_ids": [
@@ -14997,7 +14997,7 @@
             ],
             "messages": [
               {
-                "name": "APIKey",
+                "name": "PublicAPIEditor",
                 "fields": [
                   {
                     "id": 1,

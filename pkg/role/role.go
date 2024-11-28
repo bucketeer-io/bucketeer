@@ -171,7 +171,7 @@ func CheckOrganizationRole(
 	}, nil
 }
 
-func getAPIKeyEditor(ctx context.Context) *eventproto.Editor_APIKey {
+func getAPIKeyEditor(ctx context.Context) *eventproto.Editor_PublicAPIEditor {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return nil
@@ -182,7 +182,7 @@ func getAPIKeyEditor(ctx context.Context) *eventproto.Editor_APIKey {
 		return nil
 	}
 
-	publicAPIEditor := &eventproto.Editor_APIKey{}
+	publicAPIEditor := &eventproto.Editor_PublicAPIEditor{}
 	publicAPIEditor.Token = apikeyToken[0]
 
 	if len(md.Get(APIKeyMaintainerMDKey)) > 0 {
