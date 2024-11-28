@@ -58,13 +58,26 @@ export const useColumns = ({
     },
     {
       accessorKey: 'role',
-      header: `${t('role')}`,
+      header: `${t('type')}`,
       size: 150,
       cell: ({ row }) => {
         const apiKey = row.original;
         return (
           <div className="typo-para-small text-accent-blue-500 bg-accent-blue-50 px-2 py-[3px] w-fit rounded">
             {getAPIkeyRole(apiKey.role)}
+          </div>
+        );
+      }
+    },
+    {
+      accessorKey: 'environmentName',
+      header: `${t('environment')}`,
+      size: 250,
+      cell: ({ row }) => {
+        const apiKey = row.original;
+        return (
+          <div className="text-gray-700 typo-para-medium">
+            {apiKey.environmentName}
           </div>
         );
       }
@@ -82,6 +95,7 @@ export const useColumns = ({
         );
       }
     },
+
     {
       accessorKey: 'state',
       header: `${t('state')}`,

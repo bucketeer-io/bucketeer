@@ -17,6 +17,6 @@ export const apiKeyUpdater = async (
   params?: APIKeyUpdaterParams
 ): Promise<APIKeyUpdaterResponse> => {
   return axiosClient
-    .post<APIKeyUpdaterResponse>('/v1/account/update_api_key', params)
+    .patch<APIKeyUpdaterResponse>('/v1/account/update_api_key', params)
     .then(response => response.data);
 };
