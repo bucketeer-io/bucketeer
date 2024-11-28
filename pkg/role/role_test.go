@@ -352,7 +352,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 			expected: &eventproto.Editor{
 				Email: "apikey_maintainer@example.com",
 				Name:  "apikey maintainer",
-				ApiKey: &eventproto.Editor_PublicAPIEditor{
+				PublicApiEditor: &eventproto.Editor_PublicAPIEditor{
 					Token:      "apikey_token",
 					Maintainer: "apikey_maintainer@example.com",
 					Name:       "apikey_name",
