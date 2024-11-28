@@ -16,13 +16,19 @@ package role
 
 import (
 	"context"
-
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
+)
+
+const (
+	APIKeyTokenMDKey      = "apikey-token"
+	APIKeyMaintainerMDKey = "apikey-maintainer"
+	APIKeyNameMDKey       = "apikey-name"
 )
 
 var (
@@ -55,6 +61,20 @@ func CheckEnvironmentRole(
 	if !ok {
 		return nil, ErrUnauthenticated
 	}
+	apikey := getAPIKeyEditor(ctx)
+	if apikey != nil && apikey.Token != "" {
+		var accountName string
+		account, err := getAccountFunc(apikey.Maintainer)
+		if err == nil {
+			accountName = account.Name
+		}
+		return &eventproto.Editor{
+			Email:  apikey.Maintainer,
+			Name:   accountName,
+			ApiKey: apikey,
+		}, nil
+	}
+
 	if token.IsSystemAdmin {
 		return checkRole(token.Email, accountproto.AccountV2_Role_Environment_EDITOR, requiredRole, true)
 	}
@@ -70,7 +90,12 @@ func CheckEnvironmentRole(
 		return nil, ErrUnauthenticated
 	}
 	accountEnvRole := getRole(account.EnvironmentRoles, environmentID)
-	return checkRole(account.Email, accountEnvRole, requiredRole, false)
+	editor, err := checkRole(account.Email, accountEnvRole, requiredRole, false)
+	if err != nil {
+		return nil, err
+	}
+	editor.Name = account.Name
+	return editor, nil
 }
 
 func getRole(roles []*accountproto.AccountV2_EnvironmentRole, envID string) accountproto.AccountV2_Role_Environment {
@@ -105,6 +130,20 @@ func CheckOrganizationRole(
 	if !ok {
 		return nil, ErrUnauthenticated
 	}
+	apikey := getAPIKeyEditor(ctx)
+	if apikey != nil && apikey.Token != "" {
+		var accountName string
+		resp, err := getAccountFunc(apikey.Maintainer)
+		if err == nil && resp != nil && resp.Account != nil {
+			accountName = resp.Account.Name
+		}
+		return &eventproto.Editor{
+			Email:  apikey.Maintainer,
+			Name:   accountName,
+			ApiKey: apikey,
+		}, nil
+	}
+
 	if token.IsSystemAdmin {
 		return &eventproto.Editor{
 			Email:   token.Email,
@@ -126,6 +165,31 @@ func CheckOrganizationRole(
 	}
 	return &eventproto.Editor{
 		Email:   token.Email,
+		Name:    resp.Account.Name,
 		IsAdmin: token.IsSystemAdmin,
 	}, nil
+}
+
+func getAPIKeyEditor(ctx context.Context) *eventproto.Editor_APIKey {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return nil
+	}
+
+	apikeyToken := md.Get(APIKeyTokenMDKey)
+	if len(apikeyToken) == 0 {
+		return nil
+	}
+
+	apikey := &eventproto.Editor_APIKey{}
+	apikey.Token = apikeyToken[0]
+
+	if len(md.Get(APIKeyMaintainerMDKey)) > 0 {
+		apikey.Maintainer = md.Get(APIKeyMaintainerMDKey)[0]
+	}
+
+	if len(md.Get(APIKeyNameMDKey)) > 0 {
+		apikey.Name = md.Get(APIKeyNameMDKey)[0]
+	}
+	return apikey
 }

@@ -14980,10 +14980,42 @@
                 "id": 3,
                 "name": "is_admin",
                 "type": "bool"
+              },
+              {
+                "id": 4,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "api_key",
+                "type": "APIKey"
               }
             ],
             "reserved_ids": [
               2
+            ],
+            "messages": [
+              {
+                "name": "APIKey",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "token",
+                    "type": "string"
+                  },
+                  {
+                    "id": 2,
+                    "name": "maintainer",
+                    "type": "string"
+                  },
+                  {
+                    "id": 3,
+                    "name": "name",
+                    "type": "string"
+                  }
+                ]
+              }
             ]
           },
           {

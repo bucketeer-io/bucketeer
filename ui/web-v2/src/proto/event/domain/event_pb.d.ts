@@ -301,6 +301,14 @@ export class Editor extends jspb.Message {
   getIsAdmin(): boolean;
   setIsAdmin(value: boolean): void;
 
+  getName(): string;
+  setName(value: string): void;
+
+  hasApiKey(): boolean;
+  clearApiKey(): void;
+  getApiKey(): Editor.APIKey | undefined;
+  setApiKey(value?: Editor.APIKey): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Editor.AsObject;
   static toObject(includeInstance: boolean, msg: Editor): Editor.AsObject;
@@ -323,7 +331,45 @@ export namespace Editor {
   export type AsObject = {
     email: string;
     isAdmin: boolean;
+    name: string;
+    apiKey?: Editor.APIKey.AsObject;
   };
+
+  export class APIKey extends jspb.Message {
+    getToken(): string;
+    setToken(value: string): void;
+
+    getMaintainer(): string;
+    setMaintainer(value: string): void;
+
+    getName(): string;
+    setName(value: string): void;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): APIKey.AsObject;
+    static toObject(includeInstance: boolean, msg: APIKey): APIKey.AsObject;
+    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+    static extensionsBinary: {
+      [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+    };
+    static serializeBinaryToWriter(
+      message: APIKey,
+      writer: jspb.BinaryWriter
+    ): void;
+    static deserializeBinary(bytes: Uint8Array): APIKey;
+    static deserializeBinaryFromReader(
+      message: APIKey,
+      reader: jspb.BinaryReader
+    ): APIKey;
+  }
+
+  export namespace APIKey {
+    export type AsObject = {
+      token: string;
+      maintainer: string;
+      name: string;
+    };
+  }
 }
 
 export class Options extends jspb.Message {
