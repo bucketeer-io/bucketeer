@@ -14988,7 +14988,7 @@
               },
               {
                 "id": 5,
-                "name": "api_key",
+                "name": "public_api_editor",
                 "type": "PublicAPIEditor"
               }
             ],

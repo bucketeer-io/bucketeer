@@ -5927,8 +5927,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         email: jspb.Message.getFieldWithDefault(msg, 1, ''),
         isAdmin: jspb.Message.getBooleanFieldWithDefault(msg, 3, false),
         name: jspb.Message.getFieldWithDefault(msg, 4, ''),
-        apiKey:
-          (f = msg.getApiKey()) &&
+        publicApiEditor:
+          (f = msg.getPublicApiEditor()) &&
           proto.bucketeer.event.domain.Editor.PublicAPIEditor.toObject(
             includeInstance,
             f
@@ -5992,7 +5992,7 @@ proto.bucketeer.event.domain.Editor.deserializeBinaryFromReader = function (
           proto.bucketeer.event.domain.Editor.PublicAPIEditor
             .deserializeBinaryFromReader
         );
-        msg.setApiKey(value);
+        msg.setPublicApiEditor(value);
         break;
       default:
         reader.skipField();
@@ -6036,7 +6036,7 @@ proto.bucketeer.event.domain.Editor.serializeBinaryToWriter = function (
   if (f.length > 0) {
     writer.writeString(4, f);
   }
-  f = message.getApiKey();
+  f = message.getPublicApiEditor();
   if (f != null) {
     writer.writeMessage(
       5,
@@ -6294,10 +6294,10 @@ proto.bucketeer.event.domain.Editor.prototype.setName = function (value) {
 };
 
 /**
- * optional PublicAPIEditor api_key = 5;
+ * optional PublicAPIEditor public_api_editor = 5;
  * @return {?proto.bucketeer.event.domain.Editor.PublicAPIEditor}
  */
-proto.bucketeer.event.domain.Editor.prototype.getApiKey = function () {
+proto.bucketeer.event.domain.Editor.prototype.getPublicApiEditor = function () {
   return /** @type{?proto.bucketeer.event.domain.Editor.PublicAPIEditor} */ (
     jspb.Message.getWrapperField(
       this,
@@ -6311,7 +6311,9 @@ proto.bucketeer.event.domain.Editor.prototype.getApiKey = function () {
  * @param {?proto.bucketeer.event.domain.Editor.PublicAPIEditor|undefined} value
  * @return {!proto.bucketeer.event.domain.Editor} returns this
  */
-proto.bucketeer.event.domain.Editor.prototype.setApiKey = function (value) {
+proto.bucketeer.event.domain.Editor.prototype.setPublicApiEditor = function (
+  value
+) {
   return jspb.Message.setWrapperField(this, 5, value);
 };
 
@@ -6319,15 +6321,16 @@ proto.bucketeer.event.domain.Editor.prototype.setApiKey = function (value) {
  * Clears the message field making it undefined.
  * @return {!proto.bucketeer.event.domain.Editor} returns this
  */
-proto.bucketeer.event.domain.Editor.prototype.clearApiKey = function () {
-  return this.setApiKey(undefined);
-};
+proto.bucketeer.event.domain.Editor.prototype.clearPublicApiEditor =
+  function () {
+    return this.setPublicApiEditor(undefined);
+  };
 
 /**
  * Returns whether this field is set.
  * @return {boolean}
  */
-proto.bucketeer.event.domain.Editor.prototype.hasApiKey = function () {
+proto.bucketeer.event.domain.Editor.prototype.hasPublicApiEditor = function () {
   return jspb.Message.getField(this, 5) != null;
 };
 

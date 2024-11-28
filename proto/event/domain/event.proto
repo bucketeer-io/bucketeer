@@ -260,7 +260,7 @@ message Editor {
   reserved 2;  // bucketeer.account.Account.Role role = 2 [deprecated = true];
   bool is_admin = 3;
   string name = 4;
-  PublicAPIEditor api_key = 5;
+  PublicAPIEditor public_api_editor = 5;
 }
 
 message Options {

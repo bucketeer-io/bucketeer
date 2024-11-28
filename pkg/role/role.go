@@ -70,9 +70,9 @@ func CheckEnvironmentRole(
 			accountName = account.Name
 		}
 		return &eventproto.Editor{
-			Email:  publicAPIEditor.Maintainer,
-			Name:   accountName,
-			ApiKey: publicAPIEditor,
+			Email:           publicAPIEditor.Maintainer,
+			Name:            accountName,
+			PublicApiEditor: publicAPIEditor,
 		}, nil
 	}
 
@@ -139,9 +139,9 @@ func CheckOrganizationRole(
 			accountName = resp.Account.Name
 		}
 		return &eventproto.Editor{
-			Email:  publicAPIEditor.Maintainer,
-			Name:   accountName,
-			ApiKey: publicAPIEditor,
+			Email:           publicAPIEditor.Maintainer,
+			Name:            accountName,
+			PublicApiEditor: publicAPIEditor,
 		}, nil
 	}
 

@@ -304,10 +304,10 @@ export class Editor extends jspb.Message {
   getName(): string;
   setName(value: string): void;
 
-  hasApiKey(): boolean;
-  clearApiKey(): void;
-  getApiKey(): Editor.PublicAPIEditor | undefined;
-  setApiKey(value?: Editor.PublicAPIEditor): void;
+  hasPublicApiEditor(): boolean;
+  clearPublicApiEditor(): void;
+  getPublicApiEditor(): Editor.PublicAPIEditor | undefined;
+  setPublicApiEditor(value?: Editor.PublicAPIEditor): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Editor.AsObject;
@@ -332,7 +332,7 @@ export namespace Editor {
     email: string;
     isAdmin: boolean;
     name: string;
-    apiKey?: Editor.PublicAPIEditor.AsObject;
+    publicApiEditor?: Editor.PublicAPIEditor.AsObject;
   };
 
   export class PublicAPIEditor extends jspb.Message {
