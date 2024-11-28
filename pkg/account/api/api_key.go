@@ -770,7 +770,7 @@ func (s *AccountService) UpdateAPIKey(
 		}
 		current = updated.APIKey
 
-		return s.accountStorage.UpdateAPIKey(ctx, apiKey, req.EnvironmentId)
+		return s.accountStorage.UpdateAPIKey(ctx, updated, req.EnvironmentId)
 	})
 	if err != nil {
 		if errors.Is(err, v2as.ErrAPIKeyNotFound) {
