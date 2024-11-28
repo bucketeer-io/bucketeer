@@ -913,8 +913,7 @@ service AccountService {
   }
   rpc GetAPIKey(GetAPIKeyRequest) returns (GetAPIKeyResponse) {
     option (google.api.http) = {
-      post: "/v1/account/get_api_key"
-      body: "*"
+      get: "/v1/account/get_api_key"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get",
@@ -947,8 +946,7 @@ service AccountService {
   }
   rpc ListAPIKeys(ListAPIKeysRequest) returns (ListAPIKeysResponse) {
     option (google.api.http) = {
-      post: "/v1/account/list_api_keys"
-      body: "*"
+      get: "/v1/account/list_api_keys"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List",

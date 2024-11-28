@@ -4190,12 +4190,8 @@
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/account/get_api_key"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },
@@ -4321,12 +4317,8 @@
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/account/list_api_keys"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },

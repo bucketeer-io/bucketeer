@@ -673,7 +673,7 @@ paths:
       tags:
         - Account
   /v1/account/get_api_key:
-    post:
+    get:
       summary: Get
       description: Get an API Key.
       operationId: web.v1.account.get_api_key
@@ -714,11 +714,14 @@ paths:
           schema:
             $ref: '#/definitions/rpcStatus'
       parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountGetAPIKeyRequest'
+        - name: id
+          in: query
+          required: false
+          type: string
+        - name: environmentId
+          in: query
+          required: false
+          type: string
       tags:
         - API Key
   /v1/account/get_environment_api_key:
@@ -872,7 +875,7 @@ paths:
       tags:
         - Account
   /v1/account/list_api_keys:
-    post:
+    get:
       summary: List
       description: List API Keys.
       operationId: web.v1.account.list_api_keys
@@ -913,11 +916,52 @@ paths:
           schema:
             $ref: '#/definitions/rpcStatus'
       parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountListAPIKeysRequest'
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: disabled
+          in: query
+          required: false
+          type: boolean
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+        - name: environmentIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
       tags:
         - API Key
   /v1/account/my_organizations:
@@ -3268,13 +3312,6 @@ definitions:
     properties:
       environmentApiKey:
         $ref: '#/definitions/accountEnvironmentAPIKey'
-  accountGetAPIKeyRequest:
-    type: object
-    properties:
-      id:
-        type: string
-      environmentId:
-        type: string
   accountGetAPIKeyResponse:
     type: object
     properties:
@@ -3335,28 +3372,6 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/bucketeerenvironmentOrganization'
-  accountListAPIKeysRequest:
-    type: object
-    properties:
-      pageSize:
-        type: string
-        format: int64
-      cursor:
-        type: string
-      orderBy:
-        $ref: '#/definitions/accountListAPIKeysRequestOrderBy'
-      orderDirection:
-        $ref: '#/definitions/accountListAPIKeysRequestOrderDirection'
-      searchKeyword:
-        type: string
-      disabled:
-        type: boolean
-      environmentId:
-        type: string
-      environmentIds:
-        type: array
-        items:
-          type: string
   accountListAPIKeysRequestOrderBy:
     type: string
     enum:
