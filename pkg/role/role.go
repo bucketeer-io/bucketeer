@@ -62,7 +62,7 @@ func CheckEnvironmentRole(
 		return nil, ErrUnauthenticated
 	}
 	apikey := getAPIKeyEditor(ctx)
-	if apikey != nil && apikey.Token != "" {
+	if apikey != nil && apikey.Token != "" && token.IsSystemAdmin {
 		var accountName string
 		account, err := getAccountFunc(apikey.Maintainer)
 		if err == nil {
@@ -131,7 +131,7 @@ func CheckOrganizationRole(
 		return nil, ErrUnauthenticated
 	}
 	apikey := getAPIKeyEditor(ctx)
-	if apikey != nil && apikey.Token != "" {
+	if apikey != nil && apikey.Token != "" && token.IsSystemAdmin {
 		var accountName string
 		resp, err := getAccountFunc(apikey.Maintainer)
 		if err == nil && resp != nil && resp.Account != nil {
