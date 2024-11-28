@@ -186,7 +186,7 @@ data:
                             allow_origin_string_match:
                               - prefix: "*"
                             allow_headers: "content-type, x-grpc-web, authorization"
-                            allow_methods: "GET,POST"
+                            allow_methods: "GET,POST,PATCH,DELETE"
                             allow_credentials: true
                             max_age: "86400"
                         routes:
