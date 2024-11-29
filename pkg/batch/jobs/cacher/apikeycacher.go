@@ -106,8 +106,8 @@ func (c *apiKeyCacher) listEnvAPIKeys(
 	environment *envproto.EnvironmentV2,
 ) ([]*acproto.EnvironmentAPIKey, error) {
 	req := &acproto.ListAPIKeysRequest{
-		PageSize:      0,
-		EnvironmentId: environment.Id,
+		PageSize:       0,
+		EnvironmentIds: []string{environment.Id},
 	}
 	resp, err := c.accountClient.ListAPIKeys(ctx, req)
 	if err != nil {
