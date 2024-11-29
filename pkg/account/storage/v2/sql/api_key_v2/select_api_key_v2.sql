@@ -8,7 +8,7 @@ SELECT
     api_key.description,
     environment_v2.name as environment_name,
     api_key.api_key,
-    api_key.maintainer,
+    api_key.maintainer
 FROM
     api_key
 LEFT JOIN environment_v2 ON api_key.environment_id = environment_v2.id
