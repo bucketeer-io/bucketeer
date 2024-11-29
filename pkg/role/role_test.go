@@ -225,7 +225,7 @@ func TestCheckOrganizationRole(t *testing.T) {
 		},
 		{
 			desc:              "success",
-			inputCtx:          getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
+			inputCtx:          getContextWithToken(t, &token.AccessToken{Email: "test@example.com", Name: "test"}),
 			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
 			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
 				return &accountproto.GetAccountV2Response{
@@ -312,7 +312,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 		},
 		{
 			desc:          "success",
-			ctx:           getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
+			ctx:           getContextWithToken(t, &token.AccessToken{Email: "test@example.com", Name: "test"}),
 			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
 			environmentID: "ns0",
 			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
@@ -345,8 +345,9 @@ func TestCheckEnvironmentRole(t *testing.T) {
 					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 						{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
 					},
-					Name:     "apikey maintainer",
-					Disabled: false,
+					FirstName: "apikey",
+					LastName:  "maintainer",
+					Disabled:  false,
 				}, nil
 			},
 			expected: &eventproto.Editor{

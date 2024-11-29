@@ -441,7 +441,8 @@ func (s *authService) generateToken(
 		return nil, err
 	}
 	// Check if the user has at least one account enabled in any Organization
-	if err := s.checkAccountStatus(ctx, userEmail, organizations, localizer); err != nil {
+	account, err := s.checkAccountStatus(ctx, userEmail, organizations, localizer)
+	if err != nil {
 		s.logger.Error("Failed to check account",
 			zap.Error(err),
 			zap.String("email", userEmail),
@@ -458,6 +459,7 @@ func (s *authService) generateToken(
 		Expiry:        accessTokenTTL,
 		IssuedAt:      timeNow,
 		Email:         userEmail,
+		Name:          domain.GetAccountFullName(account.Account),
 		IsSystemAdmin: s.hasSystemAdminOrganization(organizations),
 	}
 	signedAccessToken, err := s.signer.SignAccessToken(accessToken)
@@ -531,7 +533,7 @@ func (s *authService) checkAccountStatus(
 	email string,
 	organizations []*envproto.Organization,
 	localizer locale.Localizer,
-) error {
+) (*acproto.GetAccountV2Response, error) {
 	for _, org := range organizations {
 		resp, err := s.accountClient.GetAccountV2(ctx, &acproto.GetAccountV2Request{
 			Email:          email,
@@ -549,13 +551,13 @@ func (s *authService) checkAccountStatus(
 				Message: localizer.MustLocalize(locale.InternalServerError),
 			})
 			if err != nil {
-				return auth.StatusInternal.Err()
+				return nil, auth.StatusInternal.Err()
 			}
-			return dt.Err()
+			return nil, dt.Err()
 		}
 		if !resp.Account.Disabled {
 			// The account must have at least one account enabled
-			return nil
+			return resp, nil
 		}
 	}
 	// The account wasn't found or doesn't belong to any organization
@@ -564,9 +566,9 @@ func (s *authService) checkAccountStatus(
 		Message: localizer.MustLocalize(locale.UnauthenticatedError),
 	})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return dt.Err()
+	return nil, dt.Err()
 }
 
 func (s *authService) hasSystemAdminOrganization(orgs []*envproto.Organization) bool {

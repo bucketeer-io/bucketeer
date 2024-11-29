@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
+	accdomain "github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
@@ -66,8 +67,8 @@ func CheckEnvironmentRole(
 	if publicAPIEditor != nil && publicAPIEditor.Token != "" && token.IsSystemAdmin {
 		var accountName string
 		account, err := getAccountFunc(publicAPIEditor.Maintainer)
-		if err == nil {
-			accountName = account.Name
+		if err == nil && account != nil {
+			accountName = accdomain.GetAccountFullName(account)
 		}
 		return &eventproto.Editor{
 			Email:           publicAPIEditor.Maintainer,
@@ -77,7 +78,7 @@ func CheckEnvironmentRole(
 	}
 
 	if token.IsSystemAdmin {
-		return checkRole(token.Email, accountproto.AccountV2_Role_Environment_EDITOR, requiredRole, true)
+		return checkRole(token.Email, token.Name, accountproto.AccountV2_Role_Environment_EDITOR, requiredRole, true)
 	}
 	// get account for the environment namespace
 	account, err := getAccountFunc(token.Email)
@@ -91,12 +92,7 @@ func CheckEnvironmentRole(
 		return nil, ErrUnauthenticated
 	}
 	accountEnvRole := getRole(account.EnvironmentRoles, environmentID)
-	editor, err := checkRole(account.Email, accountEnvRole, requiredRole, false)
-	if err != nil {
-		return nil, err
-	}
-	editor.Name = account.Name
-	return editor, nil
+	return checkRole(account.Email, token.Name, accountEnvRole, requiredRole, false)
 }
 
 func getRole(roles []*accountproto.AccountV2_EnvironmentRole, envID string) accountproto.AccountV2_Role_Environment {
@@ -110,6 +106,7 @@ func getRole(roles []*accountproto.AccountV2_EnvironmentRole, envID string) acco
 
 func checkRole(
 	email string,
+	name string,
 	role, requiredRole accountproto.AccountV2_Role_Environment,
 	isAdmin bool,
 ) (*eventproto.Editor, error) {
@@ -118,6 +115,7 @@ func checkRole(
 	}
 	return &eventproto.Editor{
 		Email:   email,
+		Name:    name,
 		IsAdmin: isAdmin,
 	}, nil
 }
@@ -136,7 +134,7 @@ func CheckOrganizationRole(
 		var accountName string
 		resp, err := getAccountFunc(publicAPIEditor.Maintainer)
 		if err == nil && resp != nil && resp.Account != nil {
-			accountName = resp.Account.Name
+			accountName = accdomain.GetAccountFullName(resp.Account)
 		}
 		return &eventproto.Editor{
 			Email:           publicAPIEditor.Maintainer,
@@ -148,6 +146,7 @@ func CheckOrganizationRole(
 	if token.IsSystemAdmin {
 		return &eventproto.Editor{
 			Email:   token.Email,
+			Name:    token.Name,
 			IsAdmin: true,
 		}, nil
 	}
@@ -166,7 +165,7 @@ func CheckOrganizationRole(
 	}
 	return &eventproto.Editor{
 		Email:   token.Email,
-		Name:    resp.Account.Name,
+		Name:    token.Name,
 		IsAdmin: token.IsSystemAdmin,
 	}, nil
 }
