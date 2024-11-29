@@ -75,6 +75,8 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 		k.Name,
 		int32(k.Role),
 		k.Disabled,
+		k.Maintainer,
+		k.Description,
 		k.UpdatedAt,
 		k.Id,
 		environmentID,
@@ -107,6 +109,7 @@ func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentID string
 		&apiKey.Disabled,
 		&apiKey.CreatedAt,
 		&apiKey.UpdatedAt,
+		&apiKey.Description,
 	)
 	if err != nil {
 		if err == mysql.ErrNoRows {
@@ -144,6 +147,8 @@ func (s *accountStorage) ListAPIKeys(
 			&apiKey.Disabled,
 			&apiKey.CreatedAt,
 			&apiKey.UpdatedAt,
+			&apiKey.Description,
+			&apiKey.EnvironmentName,
 		)
 		if err != nil {
 			return nil, 0, 0, err

@@ -140,6 +140,7 @@ message Event {
     APIKEY_NAME_CHANGED = 401;
     APIKEY_ENABLED = 402;
     APIKEY_DISABLED = 403;
+    APIKEY_CHANGED = 404;
     SEGMENT_CREATED = 500;
     SEGMENT_DELETED = 501;
     SEGMENT_NAME_CHANGED = 502;
@@ -653,6 +654,10 @@ message APIKeyCreatedEvent {
   int64 updated_at = 6;
   string maintainer = 7;
   string api_key = 8;
+}
+
+message APIKeyChangedEvent {
+  string id = 1;
 }
 
 message APIKeyNameChangedEvent {

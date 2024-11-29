@@ -4,7 +4,8 @@ SELECT
     role,
     disabled,
     created_at,
-    updated_at
+    updated_at,
+    description
 FROM
     api_key
 WHERE

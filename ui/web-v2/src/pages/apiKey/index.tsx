@@ -134,7 +134,7 @@ export const APIKeyIndexPage: FC = memo(() => {
         options && options.enabled ? options.enabled === 'false' : null;
       dispatch(
         listAPIKeys({
-          environmentId: currentEnvironment.id,
+          environmentIds: [currentEnvironment.id],
           pageSize: APIKEY_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),

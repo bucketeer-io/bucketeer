@@ -434,6 +434,26 @@ func (mr *MockClientMockRecorder) ListAccountsV2(ctx, in any, opts ...any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAccountsV2", reflect.TypeOf((*MockClient)(nil).ListAccountsV2), varargs...)
 }
 
+// UpdateAPIKey mocks base method.
+func (m *MockClient) UpdateAPIKey(ctx context.Context, in *account.UpdateAPIKeyRequest, opts ...grpc.CallOption) (*account.UpdateAPIKeyResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateAPIKey", varargs...)
+	ret0, _ := ret[0].(*account.UpdateAPIKeyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateAPIKey indicates an expected call of UpdateAPIKey.
+func (mr *MockClientMockRecorder) UpdateAPIKey(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAPIKey", reflect.TypeOf((*MockClient)(nil).UpdateAPIKey), varargs...)
+}
+
 // UpdateAccountV2 mocks base method.
 func (m *MockClient) UpdateAccountV2(ctx context.Context, in *account.UpdateAccountV2Request, opts ...grpc.CallOption) (*account.UpdateAccountV2Response, error) {
 	m.ctrl.T.Helper()
