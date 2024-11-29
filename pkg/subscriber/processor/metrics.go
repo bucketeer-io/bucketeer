@@ -95,5 +95,6 @@ func registerMetrics(r metrics.Registerer) {
 		subscriberReceivedCounter,
 		subscriberHandledCounter,
 		subscriberHandledHistogram,
+		evaluationEventCounter,
 	)
 }
