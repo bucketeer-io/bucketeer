@@ -56,7 +56,7 @@ func UserEvaluationsID(userID string, userMetadata map[string]string, features [
 		fmt.Fprintf(h, "%s:%s", key, userMetadata[key])
 	}
 	for _, feature := range features {
-		fmt.Fprintf(h, "%s:%d", feature.Id, feature.Version)
+		fmt.Fprintf(h, "%s:%d", feature.Id, feature.UpdatedAt)
 	}
 	return strconv.FormatUint(h.Sum64(), 10)
 }
