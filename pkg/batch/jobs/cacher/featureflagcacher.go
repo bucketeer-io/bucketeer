@@ -76,6 +76,14 @@ func (c *featureFlagCacher) Run(ctx context.Context) error {
 			Id:       evaluation.GenerateFeaturesID(features),
 			Features: features,
 		}
+		fids := make([]string, 0, len(fts.Features))
+		for _, f := range fts.Features {
+			fids = append(fids, f.Id)
+		}
+		c.logger.Info("Caching features",
+			zap.String("environmentId", env.Id),
+			zap.Strings("featureIds", fids),
+		)
 		if err := c.cache.Put(fts, env.Id); err != nil {
 			c.logger.Error("Failed to cache features", zap.String("environmentId", env.Id))
 			continue
