@@ -40,8 +40,8 @@ var (
 	selectAPIKeyV2SQLQuery string
 	//go:embed sql/api_key_v2/select_api_key_v2_count.sql
 	selectAPIKeyV2CountSQLQuery string
-	//go:embed sql/api_key_v2/select_api_key_v2_by_id.sql
-	selectAPIKeyV2ByIDSQLQuery string
+	//go:embed sql/api_key_v2/select_api_key_v2_by_token.sql
+	selectAPIKeyV2ByTokenSQLQuery string
 )
 
 func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentID string) error {
@@ -94,13 +94,13 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 	return nil
 }
 
-func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentID string) (*domain.APIKey, error) {
+func (s *accountStorage) GetAPIKey(ctx context.Context, token, environmentID string) (*domain.APIKey, error) {
 	apiKey := proto.APIKey{}
 	var role int32
 	err := s.qe(ctx).QueryRowContext(
 		ctx,
-		selectAPIKeyV2ByIDSQLQuery,
-		id,
+		selectAPIKeyV2ByTokenSQLQuery,
+		token,
 		environmentID,
 	).Scan(
 		&apiKey.Id,

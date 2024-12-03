@@ -641,6 +641,12 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 	if err != nil {
 		return nil, err
 	}
+
+	// TODO: support both fields, when migration finished, remove this block
+	if req.ApiKey == "" {
+		req.ApiKey = req.Id
+	}
+
 	if req.ApiKey == "" {
 		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

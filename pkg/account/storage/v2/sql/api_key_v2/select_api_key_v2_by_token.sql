@@ -11,5 +11,5 @@ SELECT
 FROM
     api_key
 WHERE
-    id = ? AND
+    api_key = ? AND
     environment_id = ?
