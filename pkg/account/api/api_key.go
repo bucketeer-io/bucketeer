@@ -17,7 +17,6 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/jinzhu/copier"
@@ -510,10 +509,7 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 
 	// for security, obfuscate the returned key
 	shadowLen := int(float64(len(apiKey.ApiKey)) * apiKeyShadowPercentage)
-	apiKey.ApiKey = fmt.Sprintf(
-		"...%s",
-		apiKey.ApiKey[shadowLen:],
-	)
+	apiKey.ApiKey = apiKey.ApiKey[shadowLen:]
 
 	return &proto.GetAPIKeyResponse{ApiKey: apiKey.APIKey}, nil
 }
@@ -595,10 +591,7 @@ func (s *AccountService) ListAPIKeys(
 	// for security, obfuscate the returned key
 	for i := 0; i < len(apiKeys); i++ {
 		shadowLen := int(float64(len(apiKeys[i].ApiKey)) * apiKeyShadowPercentage)
-		apiKeys[i].ApiKey = fmt.Sprintf(
-			"...%s",
-			apiKeys[i].ApiKey[shadowLen:],
-		)
+		apiKeys[i].ApiKey = apiKeys[i].ApiKey[shadowLen:]
 	}
 
 	return &proto.ListAPIKeysResponse{
@@ -747,10 +740,7 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 
 		// for security, obfuscate the returned key
 		shadowLen := int(float64(len(apiKey.ApiKey)) * apiKeyShadowPercentage)
-		apiKey.ApiKey = fmt.Sprintf(
-			"...%s",
-			apiKey.ApiKey[shadowLen:],
-		)
+		apiKey.ApiKey = apiKey.ApiKey[shadowLen:]
 
 		return &proto.GetAPIKeyBySearchingAllEnvironmentsResponse{
 			EnvironmentApiKey: &proto.EnvironmentAPIKey{
