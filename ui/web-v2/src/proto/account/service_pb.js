@@ -9696,7 +9696,7 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     function (includeInstance, msg) {
       var f,
         obj = {
-          id: jspb.Message.getFieldWithDefault(msg, 1, '')
+          apiKey: jspb.Message.getFieldWithDefault(msg, 2, '')
         };
 
       if (includeInstance) {
@@ -9737,9 +9737,9 @@ proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.deserializeBi
       }
       var field = reader.getFieldNumber();
       switch (field) {
-        case 1:
+        case 2:
           var value = /** @type {string} */ (reader.readString());
-          msg.setId(value);
+          msg.setApiKey(value);
           break;
         default:
           reader.skipField();
@@ -9773,20 +9773,20 @@ proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.prototype.ser
 proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getId();
+    f = message.getApiKey();
     if (f.length > 0) {
-      writer.writeString(1, f);
+      writer.writeString(2, f);
     }
   };
 
 /**
- * optional string id = 1;
+ * optional string api_key = 2;
  * @return {string}
  */
-proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.prototype.getId =
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.prototype.getApiKey =
   function () {
     return /** @type {string} */ (
-      jspb.Message.getFieldWithDefault(this, 1, '')
+      jspb.Message.getFieldWithDefault(this, 2, '')
     );
   };
 
@@ -9794,9 +9794,9 @@ proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.prototype.get
  * @param {string} value
  * @return {!proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest} returns this
  */
-proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.prototype.setId =
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.prototype.setApiKey =
   function (value) {
-    return jspb.Message.setProto3StringField(this, 1, value);
+    return jspb.Message.setProto3StringField(this, 2, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

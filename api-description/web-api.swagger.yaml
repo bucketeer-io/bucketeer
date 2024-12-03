@@ -3305,7 +3305,7 @@ definitions:
   accountGetAPIKeyBySearchingAllEnvironmentsRequest:
     type: object
     properties:
-      id:
+      apiKey:
         type: string
   accountGetAPIKeyBySearchingAllEnvironmentsResponse:
     type: object

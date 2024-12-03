@@ -641,7 +641,7 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 	if err != nil {
 		return nil, err
 	}
-	if req.Id == "" {
+	if req.ApiKey == "" {
 		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"),
@@ -715,7 +715,7 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 		if !ok || p.Disabled {
 			continue
 		}
-		apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, e.Id)
+		apiKey, err := s.accountStorage.GetAPIKey(ctx, req.ApiKey, e.Id)
 		if err != nil {
 			if errors.Is(err, v2as.ErrAPIKeyNotFound) {
 				continue
@@ -725,7 +725,7 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", e.Id),
-					zap.String("id", req.Id),
+					zap.String("id", req.ApiKey),
 				)...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{

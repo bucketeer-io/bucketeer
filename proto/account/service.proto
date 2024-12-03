@@ -265,7 +265,10 @@ message ListAPIKeysResponse {
 }
 
 message GetAPIKeyBySearchingAllEnvironmentsRequest {
-  string id = 1;
+  reserved 1;
+  reserved "id";
+
+  string api_key = 2;
 }
 
 message GetAPIKeyBySearchingAllEnvironmentsResponse {

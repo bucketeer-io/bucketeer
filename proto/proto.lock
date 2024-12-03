@@ -1743,10 +1743,16 @@
             "name": "GetAPIKeyBySearchingAllEnvironmentsRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "id",
+                "id": 2,
+                "name": "api_key",
                 "type": "string"
               }
+            ],
+            "reserved_ids": [
+              1
+            ],
+            "reserved_names": [
+              "id"
             ]
           },
           {

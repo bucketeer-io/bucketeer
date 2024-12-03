@@ -1560,8 +1560,8 @@ export namespace ListAPIKeysResponse {
 }
 
 export class GetAPIKeyBySearchingAllEnvironmentsRequest extends jspb.Message {
-  getId(): string;
-  setId(value: string): void;
+  getApiKey(): string;
+  setApiKey(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(
@@ -1590,7 +1590,7 @@ export class GetAPIKeyBySearchingAllEnvironmentsRequest extends jspb.Message {
 
 export namespace GetAPIKeyBySearchingAllEnvironmentsRequest {
   export type AsObject = {
-    id: string;
+    apiKey: string;
   };
 }
 
