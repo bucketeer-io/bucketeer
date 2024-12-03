@@ -725,7 +725,6 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", e.Id),
-					zap.String("id", req.ApiKey),
 				)...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
