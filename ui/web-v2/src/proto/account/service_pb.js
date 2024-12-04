@@ -9696,7 +9696,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     function (includeInstance, msg) {
       var f,
         obj = {
-          id: jspb.Message.getFieldWithDefault(msg, 1, '')
+          id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+          apiKey: jspb.Message.getFieldWithDefault(msg, 2, '')
         };
 
       if (includeInstance) {
@@ -9741,6 +9742,10 @@ proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.deserializeBi
           var value = /** @type {string} */ (reader.readString());
           msg.setId(value);
           break;
+        case 2:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setApiKey(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -9777,6 +9782,10 @@ proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.serializeBina
     if (f.length > 0) {
       writer.writeString(1, f);
     }
+    f = message.getApiKey();
+    if (f.length > 0) {
+      writer.writeString(2, f);
+    }
   };
 
 /**
@@ -9797,6 +9806,26 @@ proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.prototype.get
 proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.prototype.setId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 1, value);
+  };
+
+/**
+ * optional string api_key = 2;
+ * @return {string}
+ */
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.prototype.getApiKey =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 2, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest} returns this
+ */
+proto.bucketeer.account.GetAPIKeyBySearchingAllEnvironmentsRequest.prototype.setApiKey =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 2, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

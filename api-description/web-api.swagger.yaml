@@ -3307,6 +3307,8 @@ definitions:
     properties:
       id:
         type: string
+      apiKey:
+        type: string
   accountGetAPIKeyBySearchingAllEnvironmentsResponse:
     type: object
     properties:

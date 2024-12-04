@@ -34,6 +34,10 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 
+const (
+	apiKeyShadowPercentage = 0.75 // hide a part of the api key
+)
+
 func (s *AccountService) CreateAPIKey(
 	ctx context.Context,
 	req *proto.CreateAPIKeyRequest,
@@ -492,6 +496,21 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 		}
 		return nil, dt.Err()
 	}
+	if apiKey == nil {
+		s.logger.Error(
+			"Failed to get api key",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("id", req.Id),
+			)...,
+		)
+		return nil, statusNotFound.Err()
+	}
+
+	// for security, obfuscate the returned key
+	shadowLen := int(float64(len(apiKey.ApiKey)) * apiKeyShadowPercentage)
+	apiKey.ApiKey = apiKey.ApiKey[shadowLen:]
+
 	return &proto.GetAPIKeyResponse{ApiKey: apiKey.APIKey}, nil
 }
 
@@ -568,6 +587,13 @@ func (s *AccountService) ListAPIKeys(
 		}
 		return nil, dt.Err()
 	}
+
+	// for security, obfuscate the returned key
+	for i := 0; i < len(apiKeys); i++ {
+		shadowLen := int(float64(len(apiKeys[i].ApiKey)) * apiKeyShadowPercentage)
+		apiKeys[i].ApiKey = apiKeys[i].ApiKey[shadowLen:]
+	}
+
 	return &proto.ListAPIKeysResponse{
 		ApiKeys:    apiKeys,
 		Cursor:     strconv.Itoa(nextCursor),
@@ -615,7 +641,13 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 	if err != nil {
 		return nil, err
 	}
-	if req.Id == "" {
+
+	// TODO: support both fields, when migration finished, remove this block
+	if req.ApiKey == "" {
+		req.ApiKey = req.Id
+	}
+
+	if req.ApiKey == "" {
 		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"),
@@ -689,9 +721,9 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 		if !ok || p.Disabled {
 			continue
 		}
-		apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, e.Id)
+		apiKey, err := s.accountStorage.GetAPIKeyByAPIKey(ctx, req.ApiKey, e.Id)
 		if err != nil {
-			if err == v2as.ErrAPIKeyNotFound {
+			if errors.Is(err, v2as.ErrAPIKeyNotFound) {
 				continue
 			}
 			s.logger.Error(
@@ -699,7 +731,6 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", e.Id),
-					zap.String("id", req.Id),
 				)...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -711,6 +742,11 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 			}
 			return nil, dt.Err()
 		}
+
+		// for security, obfuscate the returned key
+		shadowLen := int(float64(len(apiKey.ApiKey)) * apiKeyShadowPercentage)
+		apiKey.ApiKey = apiKey.ApiKey[shadowLen:]
+
 		return &proto.GetAPIKeyBySearchingAllEnvironmentsResponse{
 			EnvironmentApiKey: &proto.EnvironmentAPIKey{
 				ApiKey:         apiKey.APIKey,

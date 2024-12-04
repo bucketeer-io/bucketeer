@@ -266,6 +266,7 @@ message ListAPIKeysResponse {
 
 message GetAPIKeyBySearchingAllEnvironmentsRequest {
   string id = 1;
+  string api_key = 2;
 }
 
 message GetAPIKeyBySearchingAllEnvironmentsResponse {

@@ -1746,6 +1746,11 @@
                 "id": 1,
                 "name": "id",
                 "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "api_key",
+                "type": "string"
               }
             ]
           },
