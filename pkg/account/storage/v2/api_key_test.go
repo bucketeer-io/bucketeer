@@ -258,6 +258,72 @@ func TestGetAPIKey(t *testing.T) {
 	}
 }
 
+func TestGetAPIKeyByAPIKey(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	patterns := []struct {
+		desc          string
+		setup         func(*accountStorage)
+		apiKey        string
+		environmentId string
+		expectedErr   error
+	}{
+		{
+			desc: "ErrAPIKeyNotFound",
+			setup: func(s *accountStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
+				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+			},
+			apiKey:        "id-0",
+			environmentId: "ns0",
+			expectedErr:   ErrAPIKeyNotFound,
+		},
+		{
+			desc: "Error",
+			setup: func(s *accountStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(errors.New("error"))
+				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(row)
+
+			},
+			apiKey:        "id-0",
+			environmentId: "ns0",
+			expectedErr:   errors.New("error"),
+		},
+		{
+			desc: "Success",
+			setup: func(s *accountStorage) {
+				row := mock.NewMockRow(mockController)
+				row.EXPECT().Scan(gomock.Any()).Return(nil)
+				s.client.(*mock.MockClient).EXPECT().QueryRowContext(
+					gomock.Any(),
+					gomock.Any(),
+					"id-0", "ns0",
+				).Return(row)
+			},
+			apiKey:        "id-0",
+			environmentId: "ns0",
+			expectedErr:   nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			storage := newAccountStorageWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(storage)
+			}
+			_, err := storage.GetAPIKeyByAPIKey(context.Background(), p.apiKey, p.environmentId)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func TestListAPIKeys(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)

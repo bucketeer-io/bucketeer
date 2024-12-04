@@ -100,6 +100,21 @@ func (mr *MockAccountStorageMockRecorder) GetAPIKey(ctx, id, environmentID any) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAPIKey", reflect.TypeOf((*MockAccountStorage)(nil).GetAPIKey), ctx, id, environmentID)
 }
 
+// GetAPIKeyByAPIKey mocks base method.
+func (m *MockAccountStorage) GetAPIKeyByAPIKey(ctx context.Context, apiKey, environmentID string) (*domain.APIKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAPIKeyByAPIKey", ctx, apiKey, environmentID)
+	ret0, _ := ret[0].(*domain.APIKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAPIKeyByAPIKey indicates an expected call of GetAPIKeyByAPIKey.
+func (mr *MockAccountStorageMockRecorder) GetAPIKeyByAPIKey(ctx, apiKey, environmentID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAPIKeyByAPIKey", reflect.TypeOf((*MockAccountStorage)(nil).GetAPIKeyByAPIKey), ctx, apiKey, environmentID)
+}
+
 // GetAccountV2 mocks base method.
 func (m *MockAccountStorage) GetAccountV2(ctx context.Context, email, organizationID string) (*domain.AccountV2, error) {
 	m.ctrl.T.Helper()

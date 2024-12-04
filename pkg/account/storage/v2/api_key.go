@@ -40,8 +40,10 @@ var (
 	selectAPIKeyV2SQLQuery string
 	//go:embed sql/api_key_v2/select_api_key_v2_count.sql
 	selectAPIKeyV2CountSQLQuery string
-	//go:embed sql/api_key_v2/select_api_key_v2_by_token.sql
-	selectAPIKeyV2ByTokenSQLQuery string
+	//go:embed sql/api_key_v2/select_api_key_v2_by_api_key.sql
+	selectAPIKeyV2ByAPIKeySQLQuery string
+	//go:embed sql/api_key_v2/select_api_key_v2_by_id.sql
+	selectAPIKeyV2ByIDSQLQuery string
 )
 
 func (s *accountStorage) CreateAPIKey(ctx context.Context, k *domain.APIKey, environmentID string) error {
@@ -94,12 +96,45 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 	return nil
 }
 
-func (s *accountStorage) GetAPIKey(ctx context.Context, apiKey, environmentID string) (*domain.APIKey, error) {
+func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentID string) (*domain.APIKey, error) {
+	apiKey := proto.APIKey{}
+	var role int32
+	err := s.qe(ctx).QueryRowContext(
+		ctx,
+		selectAPIKeyV2ByIDSQLQuery,
+		id,
+		environmentID,
+	).Scan(
+		&apiKey.Id,
+		&apiKey.Name,
+		&role,
+		&apiKey.Disabled,
+		&apiKey.CreatedAt,
+		&apiKey.UpdatedAt,
+		&apiKey.Description,
+		&apiKey.ApiKey,
+		&apiKey.Maintainer,
+	)
+	if err != nil {
+		if errors.Is(err, mysql.ErrNoRows) {
+			return nil, ErrAPIKeyNotFound
+		}
+		return nil, err
+	}
+	apiKey.Role = proto.APIKey_Role(role)
+	return &domain.APIKey{APIKey: &apiKey}, nil
+}
+
+func (s *accountStorage) GetAPIKeyByAPIKey(
+	ctx context.Context,
+	apiKey string,
+	environmentID string,
+) (*domain.APIKey, error) {
 	apiKeyDB := proto.APIKey{}
 	var role int32
 	err := s.qe(ctx).QueryRowContext(
 		ctx,
-		selectAPIKeyV2ByTokenSQLQuery,
+		selectAPIKeyV2ByAPIKeySQLQuery,
 		apiKey,
 		environmentID,
 	).Scan(
