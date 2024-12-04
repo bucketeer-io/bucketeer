@@ -94,24 +94,24 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 	return nil
 }
 
-func (s *accountStorage) GetAPIKey(ctx context.Context, token, environmentID string) (*domain.APIKey, error) {
-	apiKey := proto.APIKey{}
+func (s *accountStorage) GetAPIKey(ctx context.Context, apiKey, environmentID string) (*domain.APIKey, error) {
+	apiKeyDB := proto.APIKey{}
 	var role int32
 	err := s.qe(ctx).QueryRowContext(
 		ctx,
 		selectAPIKeyV2ByTokenSQLQuery,
-		token,
+		apiKey,
 		environmentID,
 	).Scan(
-		&apiKey.Id,
-		&apiKey.Name,
+		&apiKeyDB.Id,
+		&apiKeyDB.Name,
 		&role,
-		&apiKey.Disabled,
-		&apiKey.CreatedAt,
-		&apiKey.UpdatedAt,
-		&apiKey.Description,
-		&apiKey.ApiKey,
-		&apiKey.Maintainer,
+		&apiKeyDB.Disabled,
+		&apiKeyDB.CreatedAt,
+		&apiKeyDB.UpdatedAt,
+		&apiKeyDB.Description,
+		&apiKeyDB.ApiKey,
+		&apiKeyDB.Maintainer,
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {
@@ -119,8 +119,8 @@ func (s *accountStorage) GetAPIKey(ctx context.Context, token, environmentID str
 		}
 		return nil, err
 	}
-	apiKey.Role = proto.APIKey_Role(role)
-	return &domain.APIKey{APIKey: &apiKey}, nil
+	apiKeyDB.Role = proto.APIKey_Role(role)
+	return &domain.APIKey{APIKey: &apiKeyDB}, nil
 }
 
 func (s *accountStorage) ListAPIKeys(
