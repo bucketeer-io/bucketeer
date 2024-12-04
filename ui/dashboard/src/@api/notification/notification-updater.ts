@@ -1,6 +1,6 @@
 import axiosClient from '@api/axios-client';
 import { OrganizationRole } from '@types';
-import { EnvironmentRoleItem } from './account-creator';
+import { EnvironmentRoleItem } from './notification-creator';
 
 type WriteType =
   | 'WriteType_UNSPECIFIED'

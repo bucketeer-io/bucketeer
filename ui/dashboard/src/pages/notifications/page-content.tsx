@@ -10,7 +10,7 @@ import Button from 'components/button';
 import Icon from 'components/icon';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
-import FilterAPIKeyModal from './slack-modal/filter-api-key-modal';
+import FilterAPIKeyModal from './slack-modal/filter-notification-modal';
 import CollectionLoader from './collection-loader';
 import { APIKeyActionsType, APIKeysFilters } from './types';
 
@@ -57,7 +57,7 @@ const PageContent = ({
         action={
           <Button className="flex-1 lg:flex-none" onClick={onAdd}>
             <Icon icon={IconAddOutlined} size="sm" />
-            {t(`new-api-key`)}
+            {t(`new-notification`)}
           </Button>
         }
         searchValue={filters.searchQuery}

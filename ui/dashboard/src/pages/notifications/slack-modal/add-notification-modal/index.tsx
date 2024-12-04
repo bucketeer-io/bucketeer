@@ -25,7 +25,7 @@ import SlideModal from 'components/modal/slide';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
 
-interface AddAPIKeyModalProps {
+interface AddNotificationModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
@@ -37,7 +37,7 @@ type APIKeyOption = {
   value: APIKeyRole;
 };
 
-export interface AddAPIKeyForm {
+export interface AddNotificationForm {
   name: string;
   description?: string;
   environmentId: string;
@@ -51,7 +51,7 @@ export const formSchema = yup.object().shape({
   role: yup.mixed<APIKeyRole>().required()
 });
 
-const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
+const AddNotificationModal = ({ isOpen, onClose }: AddNotificationModalProps) => {
   const { consoleAccount } = useAuth();
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
@@ -111,7 +111,7 @@ const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
     formState: { isValid, isSubmitting }
   } = form;
 
-  const onSubmit: SubmitHandler<AddAPIKeyForm> = values => {
+  const onSubmit: SubmitHandler<AddNotificationForm> = values => {
     return apiKeyCreator({
       environmentId: values.environmentId,
       command: {
@@ -134,8 +134,11 @@ const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
   };
 
   return (
-    <SlideModal title={t('new-api-key')} isOpen={isOpen} onClose={onClose}>
+    <SlideModal title={t('new-notification')} isOpen={isOpen} onClose={onClose}>
       <div className="w-full p-5 pb-28">
+        <div className="typo-para-small text-gray-600 mb-1">
+          {t('new-notification-subtitle')}
+        </div>
         <p className="text-gray-800 typo-head-bold-small">
           {t('form:general-info')}
         </p>
@@ -289,4 +292,4 @@ const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
   );
 };
 
-export default AddAPIKeyModal;
+export default AddNotificationModal;

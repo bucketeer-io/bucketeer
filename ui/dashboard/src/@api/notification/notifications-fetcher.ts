@@ -12,7 +12,7 @@ export const notificationsFetcher = async (
 ): Promise<AccountCollection> => {
   return axiosClient
     .post<AccountCollection>(
-      '/v1/environment/list_notifications',
+      '/v1/account/list_accounts',
       pickBy(params, v => isNotEmpty(v))
     )
     .then(response => response.data);
