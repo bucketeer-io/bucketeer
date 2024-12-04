@@ -255,6 +255,7 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 		if err := p.countEvent(eckv2); err != nil {
 			return err
 		}
+		evaluationEventCounter.WithLabelValues(e.SdkVersion, e.FeatureId, e.Metadata[appVersion], e.VariationId).Inc()
 	}
 	return nil
 }

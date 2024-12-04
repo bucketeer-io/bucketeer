@@ -1,5 +1,49 @@
 # Changelog
 
+## [1.1.0](https://github.com/bucketeer-io/bucketeer/compare/v1.0.0...v1.1.0) (2024-12-02)
+
+
+### Features
+
+* implement CreateAccountV2 and Update/Disable/Enable/Delete AccountV2 with no command support ([#1321](https://github.com/bucketeer-io/bucketeer/issues/1321)) ([9f1e6ca](https://github.com/bucketeer-io/bucketeer/commit/9f1e6cab49e676b00d1654ef70cde85b25a792bf))
+* implement CreateAPIKey support no command, save extra api key and maintainer column ([#1344](https://github.com/bucketeer-io/bucketeer/issues/1344)) ([a785ed9](https://github.com/bucketeer-io/bucketeer/commit/a785ed97f2533a55ef6a93c22ed2aed840eea154))
+* implement logic and api description for read public AccountV2 APIs ([#1333](https://github.com/bucketeer-io/bucketeer/issues/1333)) ([bf429a3](https://github.com/bucketeer-io/bucketeer/commit/bf429a367bb9e94cea9c235c0a1e0a671843fd11))
+* implement public Push APIs and generate swagger definition document for push ([#1292](https://github.com/bucketeer-io/bucketeer/issues/1292)) ([2298421](https://github.com/bucketeer-io/bucketeer/commit/22984212d9d66096c95ffc516dbcab34b1a43d70))
+* migrate environment_namespace to environment_id ([#1226](https://github.com/bucketeer-io/bucketeer/issues/1226)) ([d2251a5](https://github.com/bucketeer-io/bucketeer/commit/d2251a5072b9f282f43db0b00204457d6d1c0298))
+* new update api-key API ([#1350](https://github.com/bucketeer-io/bucketeer/issues/1350)) ([f49e70f](https://github.com/bucketeer-io/bucketeer/commit/f49e70f3726eef51df48f2a918560d111a4b1248))
+* **ui/dashboard:** implement api keys ui ([#1338](https://github.com/bucketeer-io/bucketeer/issues/1338)) ([3d4f5a2](https://github.com/bucketeer-io/bucketeer/commit/3d4f5a2c470a474ef50610c3870e97d1269216db))
+* **ui/dashboard:** implement members ui ([#1326](https://github.com/bucketeer-io/bucketeer/issues/1326)) ([d6ed679](https://github.com/bucketeer-io/bucketeer/commit/d6ed6798051d1a5a4fe54c70f49f240ff92eafda))
+* **ui:** implement confirm dialog ([#1318](https://github.com/bucketeer-io/bucketeer/issues/1318)) ([4de62d9](https://github.com/bucketeer-io/bucketeer/commit/4de62d9acaed64c644ad93cdcb4028bfeecda195))
+
+
+### Bug Fixes
+
+* batch svc not caching the api keys correctly ([#1354](https://github.com/bucketeer-io/bucketeer/issues/1354)) ([0acbb03](https://github.com/bucketeer-io/bucketeer/commit/0acbb0333fc667cce219843c78bd4d9338c82ed1))
+* cannot create an account ([#1324](https://github.com/bucketeer-io/bucketeer/issues/1324)) ([c1b8d14](https://github.com/bucketeer-io/bucketeer/commit/c1b8d14bd02e20fc4c75eb3374e5c3fdc3be1e9e))
+* evaluation event counter metrics is not registered ([#1353](https://github.com/bucketeer-io/bucketeer/issues/1353)) ([104ce58](https://github.com/bucketeer-io/bucketeer/commit/104ce58a6d8402f4137e5ab3915f3136c61300a7))
+* feature not found error on evaluation ([#1360](https://github.com/bucketeer-io/bucketeer/issues/1360)) ([5113449](https://github.com/bucketeer-io/bucketeer/commit/5113449891b5205f502828b8b890db05c688ba44))
+* use file io encoded_descriptor when replace encoded descriptor ([#1329](https://github.com/bucketeer-io/bucketeer/issues/1329)) ([10b9ab8](https://github.com/bucketeer-io/bucketeer/commit/10b9ab80332a1b4ce47cbb87c9bafca02ff777d6))
+
+
+### Miscellaneous
+
+* add api key token and maintainer ([#1342](https://github.com/bucketeer-io/bucketeer/issues/1342)) ([a3292c8](https://github.com/bucketeer-io/bucketeer/commit/a3292c8c21787c892730a97fad62c15c498816ce))
+* add doc for manual atlas migration and populate api_key with values from id ([#1345](https://github.com/bucketeer-io/bucketeer/issues/1345)) ([b7dfb66](https://github.com/bucketeer-io/bucketeer/commit/b7dfb66f478335ef091e04a4f582f9c827a473f5))
+* add enable option for batch and subscriber service charts ([#1327](https://github.com/bucketeer-io/bucketeer/issues/1327)) ([dd09cad](https://github.com/bucketeer-io/bucketeer/commit/dd09cada032c08c5fabbace7b746736d2093a1e3))
+* add evaluation event count metrics to subscriber ([#1351](https://github.com/bucketeer-io/bucketeer/issues/1351)) ([6da6bd6](https://github.com/bucketeer-io/bucketeer/commit/6da6bd6eab290ccbaadfa4de69ee7b1683ae03f7))
+* add logging features to batch flag cacher for debugging ([#1359](https://github.com/bucketeer-io/bucketeer/issues/1359)) ([36aadb9](https://github.com/bucketeer-io/bucketeer/commit/36aadb92e0434cfea25720c9c7610fee5a686d50))
+* change user evaluations id to use feature updated at ([#1361](https://github.com/bucketeer-io/bucketeer/issues/1361)) ([3733b71](https://github.com/bucketeer-io/bucketeer/commit/3733b713bd268f5770f855ac9f2ed681954627e0))
+* fix dev container mysql schema ([#1337](https://github.com/bucketeer-io/bucketeer/issues/1337)) ([d64e06f](https://github.com/bucketeer-io/bucketeer/commit/d64e06fe2d3299121009513aae96f29a31979f69))
+* remove publish user event from api svc ([#1336](https://github.com/bucketeer-io/bucketeer/issues/1336)) ([5c4ff75](https://github.com/bucketeer-io/bucketeer/commit/5c4ff75588607346f6dec05ec6907f6b29a6c566))
+* set default value for environment_namespace column ([#1330](https://github.com/bucketeer-io/bucketeer/issues/1330)) ([a200202](https://github.com/bucketeer-io/bucketeer/commit/a2002026a49fc209acd44158de294f715a18ef16))
+* **ui:** show search filter only once ([#1323](https://github.com/bucketeer-io/bucketeer/issues/1323)) ([382a56c](https://github.com/bucketeer-io/bucketeer/commit/382a56cebde60c1ccb0d3ccc2b29897849741db8))
+* update account api permission check ([#1335](https://github.com/bucketeer-io/bucketeer/issues/1335)) ([29c8256](https://github.com/bucketeer-io/bucketeer/commit/29c82561b728de235c8e8b1eb6b6cf4a957c0411))
+
+
+### Build System
+
+* **deps:** bump the dependencies group with 2 updates ([#1314](https://github.com/bucketeer-io/bucketeer/issues/1314)) ([a812032](https://github.com/bucketeer-io/bucketeer/commit/a812032d061fd31498b454f8323fc27ce015b5bc))
+
 ## [1.0.0](https://github.com/bucketeer-io/bucketeer/compare/v0.4.9...v1.0.0) (2024-11-01)
 
 

@@ -2309,9 +2309,10 @@ func (s *FeatureService) getTargetFeatures(
 	if err != nil {
 		return nil, err
 	}
-	if len(feature.Prerequisites) > 0 {
-		// If we select only the prerequisite feature flags, we have to get them recursively.
-		// Thus, we evaluate all features here to avoid complex logic.
+	// Check if the flag depends on other flags.
+	// Thus, we evaluate all features here to avoid complex logic.
+	df := &domain.Feature{Feature: feature}
+	if len(df.FeatureIDsDependsOn()) > 0 {
 		return fs, nil
 	}
 	return []*featureproto.Feature{feature}, nil

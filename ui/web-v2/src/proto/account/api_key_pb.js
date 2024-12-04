@@ -111,7 +111,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         updatedAt: jspb.Message.getFieldWithDefault(msg, 6, 0),
         maintainer: jspb.Message.getFieldWithDefault(msg, 7, ''),
         apiKey: jspb.Message.getFieldWithDefault(msg, 8, ''),
-        description: jspb.Message.getFieldWithDefault(msg, 9, '')
+        description: jspb.Message.getFieldWithDefault(msg, 9, ''),
+        environmentName: jspb.Message.getFieldWithDefault(msg, 10, '')
       };
 
     if (includeInstance) {
@@ -190,6 +191,10 @@ proto.bucketeer.account.APIKey.deserializeBinaryFromReader = function (
         var value = /** @type {string} */ (reader.readString());
         msg.setDescription(value);
         break;
+      case 10:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setEnvironmentName(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -255,6 +260,10 @@ proto.bucketeer.account.APIKey.serializeBinaryToWriter = function (
   f = message.getDescription();
   if (f.length > 0) {
     writer.writeString(9, f);
+  }
+  f = message.getEnvironmentName();
+  if (f.length > 0) {
+    writer.writeString(10, f);
   }
 };
 
@@ -416,6 +425,22 @@ proto.bucketeer.account.APIKey.prototype.getDescription = function () {
  */
 proto.bucketeer.account.APIKey.prototype.setDescription = function (value) {
   return jspb.Message.setProto3StringField(this, 9, value);
+};
+
+/**
+ * optional string environment_name = 10;
+ * @return {string}
+ */
+proto.bucketeer.account.APIKey.prototype.getEnvironmentName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 10, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.account.APIKey} returns this
+ */
+proto.bucketeer.account.APIKey.prototype.setEnvironmentName = function (value) {
+  return jspb.Message.setProto3StringField(this, 10, value);
 };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

@@ -202,6 +202,7 @@ export namespace Event {
     APIKEY_NAME_CHANGED: 401;
     APIKEY_ENABLED: 402;
     APIKEY_DISABLED: 403;
+    APIKEY_CHANGED: 404;
     SEGMENT_CREATED: 500;
     SEGMENT_DELETED: 501;
     SEGMENT_NAME_CHANGED: 502;
@@ -3147,6 +3148,37 @@ export namespace APIKeyCreatedEvent {
     updatedAt: number;
     maintainer: string;
     apiKey: string;
+  };
+}
+
+export class APIKeyChangedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): APIKeyChangedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: APIKeyChangedEvent
+  ): APIKeyChangedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: APIKeyChangedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): APIKeyChangedEvent;
+  static deserializeBinaryFromReader(
+    message: APIKeyChangedEvent,
+    reader: jspb.BinaryReader
+  ): APIKeyChangedEvent;
+}
+
+export namespace APIKeyChangedEvent {
+  export type AsObject = {
+    id: string;
   };
 }
 

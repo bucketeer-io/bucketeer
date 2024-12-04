@@ -673,7 +673,7 @@ paths:
       tags:
         - Account
   /v1/account/get_api_key:
-    post:
+    get:
       summary: Get
       description: Get an API Key.
       operationId: web.v1.account.get_api_key
@@ -714,11 +714,14 @@ paths:
           schema:
             $ref: '#/definitions/rpcStatus'
       parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountGetAPIKeyRequest'
+        - name: id
+          in: query
+          required: false
+          type: string
+        - name: environmentId
+          in: query
+          required: false
+          type: string
       tags:
         - API Key
   /v1/account/get_environment_api_key:
@@ -872,7 +875,7 @@ paths:
       tags:
         - Account
   /v1/account/list_api_keys:
-    post:
+    get:
       summary: List
       description: List API Keys.
       operationId: web.v1.account.list_api_keys
@@ -913,11 +916,52 @@ paths:
           schema:
             $ref: '#/definitions/rpcStatus'
       parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountListAPIKeysRequest'
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: disabled
+          in: query
+          required: false
+          type: boolean
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+        - name: environmentIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
       tags:
         - API Key
   /v1/account/my_organizations:
@@ -1079,6 +1123,64 @@ paths:
             $ref: '#/definitions/accountUpdateAccountV2Request'
       tags:
         - Account
+  /v1/account/update_api_key:
+    patch:
+      summary: Update API Key
+      description: Update an API Key. To call this API, you need an `ADMIN` role.
+      operationId: web.v1.account.update_api_key
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountUpdateAPIKeyResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountUpdateAPIKeyRequest'
+      tags:
+        - API Key
   /v1/account/update_search_filter:
     post:
       summary: Update Search Filter
@@ -2779,6 +2881,8 @@ definitions:
         type: string
       description:
         type: string
+      environmentName:
+        type: string
   accountAPIKeyRole:
     type: string
     enum:
@@ -3203,18 +3307,13 @@ definitions:
     properties:
       id:
         type: string
+      apiKey:
+        type: string
   accountGetAPIKeyBySearchingAllEnvironmentsResponse:
     type: object
     properties:
       environmentApiKey:
         $ref: '#/definitions/accountEnvironmentAPIKey'
-  accountGetAPIKeyRequest:
-    type: object
-    properties:
-      id:
-        type: string
-      environmentId:
-        type: string
   accountGetAPIKeyResponse:
     type: object
     properties:
@@ -3275,24 +3374,6 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/bucketeerenvironmentOrganization'
-  accountListAPIKeysRequest:
-    type: object
-    properties:
-      pageSize:
-        type: string
-        format: int64
-      cursor:
-        type: string
-      orderBy:
-        $ref: '#/definitions/accountListAPIKeysRequestOrderBy'
-      orderDirection:
-        $ref: '#/definitions/accountListAPIKeysRequestOrderDirection'
-      searchKeyword:
-        type: string
-      disabled:
-        type: boolean
-      environmentId:
-        type: string
   accountListAPIKeysRequestOrderBy:
     type: string
     enum:
@@ -3392,6 +3473,25 @@ definitions:
         type: string
       defaultFilter:
         type: boolean
+  accountUpdateAPIKeyRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      environmentId:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      role:
+        $ref: '#/definitions/accountAPIKeyRole'
+      disabled:
+        type: boolean
+      maintainer:
+        type: string
+  accountUpdateAPIKeyResponse:
+    type: object
   accountUpdateAccountV2Request:
     type: object
     properties:

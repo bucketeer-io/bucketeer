@@ -582,14 +582,14 @@ func (s *gatewayService) findEnvironmentAPIKey(
 
 func (s *gatewayService) getEnvironmentAPIKey(
 	ctx context.Context,
-	id string,
+	apiKey string,
 	accountClient accountclient.Client,
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache,
 	logger *zap.Logger,
 ) (*accountproto.EnvironmentAPIKey, error) {
 	resp, err := accountClient.GetAPIKeyBySearchingAllEnvironments(
 		ctx,
-		&accountproto.GetAPIKeyBySearchingAllEnvironmentsRequest{Id: id},
+		&accountproto.GetAPIKeyBySearchingAllEnvironmentsRequest{ApiKey: apiKey},
 	)
 	if err != nil {
 		if code := status.Code(err); code == codes.NotFound {

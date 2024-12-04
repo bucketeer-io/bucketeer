@@ -1,10 +1,15 @@
 SELECT
-    id,
-    name,
-    role,
-    disabled,
-    created_at,
-    updated_at
+    api_key.id,
+    api_key.name,
+    api_key.role,
+    api_key.disabled,
+    api_key.created_at,
+    api_key.updated_at,
+    api_key.description,
+    environment_v2.name as environment_name,
+    api_key.api_key,
+    api_key.maintainer
 FROM
     api_key
-    %s %s %s
+LEFT JOIN environment_v2 ON api_key.environment_id = environment_v2.id
+%s %s %s

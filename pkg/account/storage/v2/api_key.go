@@ -40,6 +40,8 @@ var (
 	selectAPIKeyV2SQLQuery string
 	//go:embed sql/api_key_v2/select_api_key_v2_count.sql
 	selectAPIKeyV2CountSQLQuery string
+	//go:embed sql/api_key_v2/select_api_key_v2_by_api_key.sql
+	selectAPIKeyV2ByAPIKeySQLQuery string
 	//go:embed sql/api_key_v2/select_api_key_v2_by_id.sql
 	selectAPIKeyV2ByIDSQLQuery string
 )
@@ -75,6 +77,8 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 		k.Name,
 		int32(k.Role),
 		k.Disabled,
+		k.Maintainer,
+		k.Description,
 		k.UpdatedAt,
 		k.Id,
 		environmentID,
@@ -107,15 +111,51 @@ func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentID string
 		&apiKey.Disabled,
 		&apiKey.CreatedAt,
 		&apiKey.UpdatedAt,
+		&apiKey.Description,
+		&apiKey.ApiKey,
+		&apiKey.Maintainer,
 	)
 	if err != nil {
-		if err == mysql.ErrNoRows {
+		if errors.Is(err, mysql.ErrNoRows) {
 			return nil, ErrAPIKeyNotFound
 		}
 		return nil, err
 	}
 	apiKey.Role = proto.APIKey_Role(role)
 	return &domain.APIKey{APIKey: &apiKey}, nil
+}
+
+func (s *accountStorage) GetAPIKeyByAPIKey(
+	ctx context.Context,
+	apiKey string,
+	environmentID string,
+) (*domain.APIKey, error) {
+	apiKeyDB := proto.APIKey{}
+	var role int32
+	err := s.qe(ctx).QueryRowContext(
+		ctx,
+		selectAPIKeyV2ByAPIKeySQLQuery,
+		apiKey,
+		environmentID,
+	).Scan(
+		&apiKeyDB.Id,
+		&apiKeyDB.Name,
+		&role,
+		&apiKeyDB.Disabled,
+		&apiKeyDB.CreatedAt,
+		&apiKeyDB.UpdatedAt,
+		&apiKeyDB.Description,
+		&apiKeyDB.ApiKey,
+		&apiKeyDB.Maintainer,
+	)
+	if err != nil {
+		if errors.Is(err, mysql.ErrNoRows) {
+			return nil, ErrAPIKeyNotFound
+		}
+		return nil, err
+	}
+	apiKeyDB.Role = proto.APIKey_Role(role)
+	return &domain.APIKey{APIKey: &apiKeyDB}, nil
 }
 
 func (s *accountStorage) ListAPIKeys(
@@ -144,6 +184,10 @@ func (s *accountStorage) ListAPIKeys(
 			&apiKey.Disabled,
 			&apiKey.CreatedAt,
 			&apiKey.UpdatedAt,
+			&apiKey.Description,
+			&apiKey.EnvironmentName,
+			&apiKey.ApiKey,
+			&apiKey.Maintainer,
 		)
 		if err != nil {
 			return nil, 0, 0, err

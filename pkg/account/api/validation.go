@@ -883,3 +883,17 @@ func validateDeleteSearchFilterRequest(
 	}
 	return nil
 }
+
+func validateUpdateAPIKeyRequestNoCommand(req *accountproto.UpdateAPIKeyRequest, localizer locale.Localizer) error {
+	if req.Id == "" {
+		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return nil
+}
