@@ -182,25 +182,9 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 			return nil, dt.Err()
 		}
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
+
+	err = s.mysqlClient.RunInTransactionV2(&ctx, func(_ mysql.Transaction) error {
+		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
 		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -473,26 +457,9 @@ func (s *AutoOpsService) StopAutoOpsRule(
 	if err := validateStopAutoOpsRuleRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
 
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
+	err = s.mysqlClient.RunInTransactionV2(&ctx, func(_ mysql.Transaction) error {
+		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
 		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -561,25 +528,9 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 	if err := validateDeleteAutoOpsRuleRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
+
+	err = s.mysqlClient.RunInTransactionV2(&ctx, func(_ mysql.Transaction) error {
+		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
 		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -696,25 +647,9 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 		}
 	}
 	commands := s.createUpdateAutoOpsRuleCommands(req)
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
+
+	err = s.mysqlClient.RunInTransactionV2(&ctx, func(_ mysql.Transaction) error {
+		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
 		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -1187,25 +1122,9 @@ func (s *AutoOpsService) ExecuteAutoOps(
 	if triggered {
 		return &autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: true}, nil
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
+
+	err = s.mysqlClient.RunInTransactionV2(&ctx, func(tx mysql.Transaction) error {
+		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
 		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
