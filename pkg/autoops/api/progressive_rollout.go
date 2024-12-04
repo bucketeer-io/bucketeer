@@ -57,24 +57,8 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 	if err := s.validateCreateProgressiveRolloutRequest(ctx, req, localizer); err != nil {
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusProgressiveRolloutInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+
+	err = s.mysqlClient.RunInTransactionV2(&ctx, func(tx mysql.Transaction) error {
 		progressiveRollout, err := domain.NewProgressiveRollout(
 			req.Command.FeatureId,
 			req.Command.ProgressiveRolloutManualScheduleClause,
@@ -83,7 +67,7 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 		if err != nil {
 			return err
 		}
-		storage := v2as.NewProgressiveRolloutStorage(tx)
+		storage := v2as.NewProgressiveRolloutStorage(s.mysqlClient)
 		handler, err := command.NewProgressiveRolloutCommandHandler(
 			editor,
 			progressiveRollout,
@@ -213,25 +197,8 @@ func (s *AutoOpsService) updateProgressiveRollout(
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
 ) error {
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusProgressiveRolloutInternal.Err()
-		}
-		return dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		storage := v2as.NewProgressiveRolloutStorage(tx)
+	err := s.mysqlClient.RunInTransactionV2(&ctx, func(tx mysql.Transaction) error {
+		storage := v2as.NewProgressiveRolloutStorage(s.mysqlClient)
 		progressiveRollout, err := storage.GetProgressiveRollout(ctx, progressiveRolloutID, environmentId)
 		if err != nil {
 			return err
@@ -295,25 +262,9 @@ func (s *AutoOpsService) DeleteProgressiveRollout(
 	if err := s.validateDeleteProgressiveRolloutRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusProgressiveRolloutInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		storage := v2as.NewProgressiveRolloutStorage(tx)
+
+	err = s.mysqlClient.RunInTransactionV2(&ctx, func(tx mysql.Transaction) error {
+		storage := v2as.NewProgressiveRolloutStorage(s.mysqlClient)
 		progressiveRollout, err := storage.GetProgressiveRollout(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -402,26 +353,10 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 	if err := s.validateExecuteProgressiveRolloutRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusProgressiveRolloutInternal.Err()
-		}
-		return nil, dt.Err()
-	}
+
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		storage := v2as.NewProgressiveRolloutStorage(tx)
+	err = s.mysqlClient.RunInTransactionV2(&ctx, func(tx mysql.Transaction) error {
+		storage := v2as.NewProgressiveRolloutStorage(s.mysqlClient)
 		progressiveRollout, err := storage.GetProgressiveRollout(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err

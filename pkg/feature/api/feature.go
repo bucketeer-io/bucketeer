@@ -1921,7 +1921,7 @@ func (s *FeatureService) stopProgressiveRollout(
 	ctx context.Context,
 	tx mysql.Transaction,
 	EnvironmentId, featureID string) error {
-	storage := v2ao.NewProgressiveRolloutStorage(tx)
+	storage := v2ao.NewProgressiveRolloutStorage(s.mysqlClient)
 	ids := convToInterfaceSlice([]string{featureID})
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("environment_id", "=", EnvironmentId),

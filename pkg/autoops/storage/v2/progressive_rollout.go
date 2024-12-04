@@ -48,7 +48,7 @@ var (
 )
 
 type progressiveRolloutStorage struct {
-	qe mysql.QueryExecer
+	client mysql.Client
 }
 
 type ProgressiveRolloutStorage interface {
@@ -71,8 +71,8 @@ type ProgressiveRolloutStorage interface {
 	) error
 }
 
-func NewProgressiveRolloutStorage(qe mysql.QueryExecer) ProgressiveRolloutStorage {
-	return &progressiveRolloutStorage{qe: qe}
+func NewProgressiveRolloutStorage(client mysql.Client) ProgressiveRolloutStorage {
+	return &progressiveRolloutStorage{client: client}
 }
 
 func (s *progressiveRolloutStorage) CreateProgressiveRollout(
@@ -80,7 +80,7 @@ func (s *progressiveRolloutStorage) CreateProgressiveRollout(
 	progressiveRollout *domain.ProgressiveRollout,
 	environmentId string,
 ) error {
-	_, err := s.qe.ExecContext(
+	_, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		insertOpsProgressiveRolloutSQL,
 		progressiveRollout.Id,
@@ -108,7 +108,7 @@ func (s *progressiveRolloutStorage) GetProgressiveRollout(
 	id, environmentId string,
 ) (*domain.ProgressiveRollout, error) {
 	progressiveRollout := autoopsproto.ProgressiveRollout{}
-	err := s.qe.QueryRowContext(
+	err := s.client.Qe(ctx).QueryRowContext(
 		ctx,
 		selectOpsProgressiveRolloutSQL,
 		id,
@@ -137,7 +137,7 @@ func (s *progressiveRolloutStorage) DeleteProgressiveRollout(
 	ctx context.Context,
 	id, environmentId string,
 ) error {
-	result, err := s.qe.ExecContext(
+	result, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		deleteOpsProgressiveRolloutSQL,
 		id,
@@ -166,7 +166,7 @@ func (s *progressiveRolloutStorage) ListProgressiveRollouts(
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	query := fmt.Sprintf(selectOpsProgressiveRolloutsSQL, whereSQL, orderBySQL, limitOffsetSQL)
-	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	rows, err := s.client.Qe(ctx).QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -196,7 +196,7 @@ func (s *progressiveRolloutStorage) ListProgressiveRollouts(
 	nextOffset := offset + len(progressiveRollouts)
 	var totalCount int64
 	countQuery := fmt.Sprintf(countOpsProgressiveRolloutsSQL, whereSQL)
-	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -208,7 +208,7 @@ func (s *progressiveRolloutStorage) UpdateProgressiveRollout(
 	progressiveRollout *domain.ProgressiveRollout,
 	environmentId string,
 ) error {
-	result, err := s.qe.ExecContext(
+	result, err := s.client.Qe(ctx).ExecContext(
 		ctx,
 		updateOpsProgressiveRolloutSQL,
 		&progressiveRollout.FeatureId,
