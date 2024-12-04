@@ -79,5 +79,8 @@
   "create-api-key": "Create API Key",
   "api-keys-subtitle": "Manage all API keys for this environment.",
   "never": "Never",
-  "state": "State"
+  "state": "State",
+  "client": "Client",
+  "server": "Server",
+  "public-api": "Public API"
 }
