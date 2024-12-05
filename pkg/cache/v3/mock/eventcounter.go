@@ -11,6 +11,7 @@ package mock
 
 import (
 	reflect "reflect"
+	time "time"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -50,6 +51,21 @@ func (m *MockEventCounterCache) DeleteKey(key string) error {
 func (mr *MockEventCounterCacheMockRecorder) DeleteKey(key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteKey", reflect.TypeOf((*MockEventCounterCache)(nil).DeleteKey), key)
+}
+
+// ExpireKey mocks base method.
+func (m *MockEventCounterCache) ExpireKey(key string, expiration time.Duration) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ExpireKey", key, expiration)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ExpireKey indicates an expected call of ExpireKey.
+func (mr *MockEventCounterCacheMockRecorder) ExpireKey(key, expiration any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExpireKey", reflect.TypeOf((*MockEventCounterCache)(nil).ExpireKey), key, expiration)
 }
 
 // GetEventCounts mocks base method.
