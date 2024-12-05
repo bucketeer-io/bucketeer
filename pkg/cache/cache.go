@@ -76,7 +76,7 @@ type Counter interface {
 }
 
 type PipeLiner interface {
-	Pipeline() redis.PipeClient
+	Pipeline(tx bool) redis.PipeClient
 }
 
 type Expirer interface {

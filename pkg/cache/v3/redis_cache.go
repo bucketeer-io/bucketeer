@@ -92,8 +92,8 @@ func (r *redisCache) PFAdd(key string, els ...string) (int64, error) {
 	return r.client.PFAdd(key, els...)
 }
 
-func (r *redisCache) Pipeline() redis.PipeClient {
-	return r.client.Pipeline()
+func (r *redisCache) Pipeline(tx bool) redis.PipeClient {
+	return r.client.Pipeline(tx)
 }
 
 func (r *redisCache) Expire(key string, expiration time.Duration) (bool, error) {

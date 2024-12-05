@@ -100,7 +100,7 @@ func (c *inMemoryCache) Expire(key string, expiration time.Duration) (bool, erro
 	return true, nil
 }
 
-func (c *inMemoryCache) Pipeline() redis.PipeClient {
+func (c *inMemoryCache) Pipeline(tx bool) redis.PipeClient {
 	// TODO: implement
 	return nil
 }
