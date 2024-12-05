@@ -668,7 +668,7 @@ func (c *client) Pipeline(tx bool) PipeClient {
 		// All commands in the transaction will either all succeed or none will be applied if an error occurs.
 		pipeliner = c.rc.TxPipeline()
 	} else {
-		c.rc.Pipeline()
+		pipeliner = c.rc.Pipeline()
 	}
 	return &pipeClient{
 		ctx:    context.TODO(),
