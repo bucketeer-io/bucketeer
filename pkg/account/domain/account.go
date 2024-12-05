@@ -306,9 +306,6 @@ func (a *AccountV2) resetDefaultFilter(targetFilter proto.FilterTargetType, envi
 }
 
 func (a *AccountV2) GetAccountFullName() string {
-	if a == nil {
-		return ""
-	}
 	if a.FirstName == "" {
 		return a.LastName
 	}
