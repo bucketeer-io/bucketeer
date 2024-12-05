@@ -107,7 +107,8 @@ type Client interface {
 	// Deprecated
 	BeginTx(ctx context.Context) (Transaction, error)
 	RunInTransaction(ctx context.Context, tx Transaction, f func() error) error
-	// ToDo: Transaction is passed because it is required for storage that does not support storage architecture refactoring,
+	// ToDo:
+	// Transaction is passed because it is required for storage that does not support storage architecture refactoring,
 	// but we plan to remove it once the refactoring is complete.
 	RunInTransactionV2(ctx *context.Context, f func(tx Transaction) error) error
 	Qe(ctx context.Context) QueryExecer
@@ -185,6 +186,7 @@ func (c *client) QueryRowContext(ctx context.Context, query string, args ...inte
 	return r
 }
 
+// Deprecated
 func (c *client) BeginTx(ctx context.Context) (Transaction, error) {
 	var err error
 	defer record()(operationBeginTx, &err)
