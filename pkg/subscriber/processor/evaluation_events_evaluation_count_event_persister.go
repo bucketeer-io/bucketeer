@@ -240,7 +240,7 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 		if err != nil {
 			return err
 		}
-		pipe := p.evaluationCountCacher.Pipeline(true)
+		pipe := p.evaluationCountCacher.Pipeline(false)
 		// User count (Unique count)
 		ucKey := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
 		pipe.PFAdd(ucKey, e.UserId)
