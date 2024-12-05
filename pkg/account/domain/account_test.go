@@ -1075,3 +1075,51 @@ func TestAccountV2_Update(t *testing.T) {
 		},
 	}, updated.EnvironmentRoles)
 }
+
+func TestAccountV2_GetAccountFullName(t *testing.T) {
+	patterns := []struct {
+		desc         string
+		account      *proto.AccountV2
+		expectedName string
+	}{
+		{
+			desc: "no first name",
+			account: &proto.AccountV2{
+				FirstName: "",
+				LastName:  "newLastName",
+			},
+			expectedName: "newLastName",
+		},
+		{
+			desc: "no last name",
+			account: &proto.AccountV2{
+				FirstName: "newFirstName",
+			},
+			expectedName: "newFirstName",
+		},
+		{
+			desc: "both first name and last name",
+			account: &proto.AccountV2{
+				FirstName: "newFirstName",
+				LastName:  "newLastName",
+			},
+			expectedName: "newFirstName newLastName",
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			account := NewAccountV2(
+				p.account.Email,
+				p.account.Name,
+				p.account.FirstName,
+				p.account.LastName,
+				p.account.Language,
+				p.account.AvatarImageUrl,
+				p.account.OrganizationId,
+				p.account.OrganizationRole,
+				p.account.EnvironmentRoles,
+			)
+			assert.Equal(t, p.expectedName, account.GetAccountFullName())
+		})
+	}
+}

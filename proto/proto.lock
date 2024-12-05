@@ -15217,10 +15217,42 @@
                 "id": 3,
                 "name": "is_admin",
                 "type": "bool"
+              },
+              {
+                "id": 4,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "public_api_editor",
+                "type": "PublicAPIEditor"
               }
             ],
             "reserved_ids": [
               2
+            ],
+            "messages": [
+              {
+                "name": "PublicAPIEditor",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "token",
+                    "type": "string"
+                  },
+                  {
+                    "id": 2,
+                    "name": "maintainer",
+                    "type": "string"
+                  },
+                  {
+                    "id": 3,
+                    "name": "name",
+                    "type": "string"
+                  }
+                ]
+              }
             ]
           },
           {

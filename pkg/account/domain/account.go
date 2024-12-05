@@ -305,6 +305,16 @@ func (a *AccountV2) resetDefaultFilter(targetFilter proto.FilterTargetType, envi
 	}
 }
 
+func (a *AccountV2) GetAccountFullName() string {
+	if a.FirstName == "" {
+		return a.LastName
+	}
+	if a.LastName == "" {
+		return a.FirstName
+	}
+	return a.FirstName + " " + a.LastName
+}
+
 func validate(a *AccountV2) error {
 	if a.OrganizationId == "" {
 		return statusMissingOrganizationID.Err()
