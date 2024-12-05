@@ -90,7 +90,7 @@ func (c *inMemoryCache) PFCount(keys ...string) (int64, error) {
 	return 0, nil
 }
 
-func (c *inMemoryCache) PFMerge(dest string, keys ...string) error {
+func (c *inMemoryCache) PFMerge(dest string, expiration time.Duration, keys ...string) error {
 	// TODO: implement
 	return nil
 }

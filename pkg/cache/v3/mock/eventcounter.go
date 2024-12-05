@@ -53,21 +53,6 @@ func (mr *MockEventCounterCacheMockRecorder) DeleteKey(key any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteKey", reflect.TypeOf((*MockEventCounterCache)(nil).DeleteKey), key)
 }
 
-// ExpireKey mocks base method.
-func (m *MockEventCounterCache) ExpireKey(key string, expiration time.Duration) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ExpireKey", key, expiration)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ExpireKey indicates an expected call of ExpireKey.
-func (mr *MockEventCounterCacheMockRecorder) ExpireKey(key, expiration any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExpireKey", reflect.TypeOf((*MockEventCounterCache)(nil).ExpireKey), key, expiration)
-}
-
 // GetEventCounts mocks base method.
 func (m *MockEventCounterCache) GetEventCounts(keys []string) ([]float64, error) {
 	m.ctrl.T.Helper()
@@ -144,17 +129,17 @@ func (mr *MockEventCounterCacheMockRecorder) GetUserCountsV2(keys any) *gomock.C
 }
 
 // MergeMultiKeys mocks base method.
-func (m *MockEventCounterCache) MergeMultiKeys(dest string, keys []string) error {
+func (m *MockEventCounterCache) MergeMultiKeys(dest string, keys []string, expiration time.Duration) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MergeMultiKeys", dest, keys)
+	ret := m.ctrl.Call(m, "MergeMultiKeys", dest, keys, expiration)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // MergeMultiKeys indicates an expected call of MergeMultiKeys.
-func (mr *MockEventCounterCacheMockRecorder) MergeMultiKeys(dest, keys any) *gomock.Call {
+func (mr *MockEventCounterCacheMockRecorder) MergeMultiKeys(dest, keys, expiration any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MergeMultiKeys", reflect.TypeOf((*MockEventCounterCache)(nil).MergeMultiKeys), dest, keys)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MergeMultiKeys", reflect.TypeOf((*MockEventCounterCache)(nil).MergeMultiKeys), dest, keys, expiration)
 }
 
 // UpdateUserCount mocks base method.

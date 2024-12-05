@@ -81,7 +81,7 @@ type Client interface {
 	Set(key string, val interface{}, expiration time.Duration) error
 	PFAdd(key string, els ...string) (int64, error)
 	PFCount(keys ...string) (int64, error)
-	PFMerge(dest string, keys ...string) error
+	PFMerge(dest string, expiration time.Duration, keys ...string) error
 	IncrByFloat(key string, value float64) (float64, error)
 	Del(key string) error
 	Incr(key string) (int64, error)
@@ -438,7 +438,7 @@ func (c *client) PFAdd(key string, els ...string) (int64, error) {
 	return result, err
 }
 
-func (c *client) PFMerge(dest string, keys ...string) error {
+func (c *client) PFMerge(dest string, expiration time.Duration, keys ...string) error {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName).Inc()
 
@@ -498,7 +498,7 @@ func (c *client) PFMerge(dest string, keys ...string) error {
 		if err != nil {
 			return err
 		}
-		err = c.rc.Set(context.TODO(), dest, parsedDest, 0).Err()
+		err = c.rc.Set(context.TODO(), dest, parsedDest, expiration).Err()
 		if err != nil {
 			return err
 		}
@@ -518,6 +518,7 @@ func (c *client) PFMerge(dest string, keys ...string) error {
 	} else {
 		// Standard non-cluster approach
 		_, err = c.rc.PFMerge(context.TODO(), dest, keys...).Result()
+		c.rc.Expire(context.TODO(), dest, expiration)
 	}
 
 	code := redis.CodeFail

@@ -84,7 +84,7 @@ type Expirer interface {
 }
 
 type PFMerger interface {
-	PFMerge(dest string, keys ...string) error
+	PFMerge(dest string, expiration time.Duration, keys ...string) error
 }
 
 // FIXME: remove after persistent-redis migration

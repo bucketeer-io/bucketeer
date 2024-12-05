@@ -60,6 +60,7 @@ const (
 	twentyFourHours              = 24
 	pfMergeKey                   = "pfmerge-key"
 	pfMergeKind                  = "pfmerge"
+	pfMergeExpiration            = 10 * time.Minute
 )
 
 var (
@@ -532,14 +533,11 @@ func (s *eventCounterService) countUniqueUser(
 		environmentId,
 	)
 	// We need to count the number of unique users in the target term.
-	if e := s.evaluationCountCacher.MergeMultiKeys(key, userCountKeys); e != nil {
+	if e := s.evaluationCountCacher.MergeMultiKeys(key, userCountKeys, pfMergeExpiration); e != nil {
 		err = append(err, e)
 		return
 	}
 	// Set expiration time for pfmerge key in case delete fails
-	if _, e := s.evaluationCountCacher.ExpireKey(key, 10*time.Minute); e != nil {
-		s.logger.Error("Failed to set expiration for pfmerge key", zap.Error(e))
-	}
 	defer func() {
 		if e := s.evaluationCountCacher.DeleteKey(key); e != nil {
 			err = append(err, e)
