@@ -164,13 +164,7 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 	for environmentId, events := range envEvents {
 		for id, event := range events {
 			// Increment the evaluation event count in the Redis
-			if err := p.incrementEvaluationCount(event, environmentId); err != nil {
-				p.logger.Error(
-					"Failed to increment the evaluation event in the Redis",
-					zap.Error(err),
-					zap.String("id", id),
-					zap.String("environmentId", environmentId),
-				)
+			if err := p.incrementEvaluationCount(id, event, environmentId); err != nil {
 				if errors.Is(err, ErrReasonNil) {
 					fails[id] = false
 				} else {
@@ -237,6 +231,7 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 }
 
 func (p *evaluationCountEventPersister) incrementEvaluationCount(
+	eventID string,
 	event proto.Message,
 	environmentId string,
 ) error {
@@ -245,15 +240,24 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 		if err != nil {
 			return err
 		}
-		// To avoid duplication when the request fails, we increment the event count in the end
-		// because the user count is an unique count, and there is no problem adding the same event more than once
-		uckv2 := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
-		if err := p.countUser(uckv2, e.UserId); err != nil {
-			return err
-		}
-		eckv2 := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
-		if err := p.countEvent(eckv2); err != nil {
-			return err
+		pipe := p.evaluationCountCacher.Pipeline(true)
+		// User count (Unique count)
+		ucKey := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
+		pipe.PFAdd(ucKey, e.UserId)
+		// Event count
+		ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
+		pipe.Incr(ecKey)
+		// Execute the transaction
+		_, err = pipe.Exec()
+		if err != nil {
+			p.logger.Error("Failed to increment the evaluation event in the Redis",
+				zap.Error(err),
+				zap.String("environmentId", environmentId),
+				zap.String("eventId", eventID),
+				zap.String("userId", e.UserId),
+				zap.String("userCountKey", ucKey),
+				zap.String("eventCountKey", ecKey),
+			)
 		}
 		evaluationEventCounter.WithLabelValues(e.SdkVersion, e.FeatureId, e.Metadata[appVersion], e.VariationId).Inc()
 	}
@@ -271,22 +275,6 @@ func (p *evaluationCountEventPersister) newEvaluationCountkeyV2(
 		fmt.Sprintf("%d:%s:%s", date.Unix(), featureID, variationID),
 		environmentId,
 	)
-}
-
-func (p *evaluationCountEventPersister) countEvent(key string) error {
-	_, err := p.evaluationCountCacher.Increment(key)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (p *evaluationCountEventPersister) countUser(key, userID string) error {
-	_, err := p.evaluationCountCacher.PFAdd(key, userID)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (p *evaluationCountEventPersister) cacheLastUsedInfoPerEnv(envEvents environmentEventMap) {
