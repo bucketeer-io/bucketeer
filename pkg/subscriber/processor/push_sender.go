@@ -43,6 +43,7 @@ import (
 
 const (
 	topicPrefix = "bucketeer-"
+	timeout     = time.Minute
 )
 
 type pushSender struct {
@@ -130,7 +131,7 @@ func (p pushSender) handle(msg *puller.Message) {
 }
 
 func (p pushSender) send(featureID, environmentId string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	resp, err := p.featureClient.GetFeature(ctx, &featureproto.GetFeatureRequest{
 		Id:            featureID,
