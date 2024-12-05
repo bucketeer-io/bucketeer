@@ -66,9 +66,10 @@ func CheckEnvironmentRole(
 	publicAPIEditor := getAPIKeyEditor(ctx)
 	if publicAPIEditor != nil && publicAPIEditor.Token != "" && token.IsSystemAdmin {
 		var accountName string
-		account, err := getAccountFunc(publicAPIEditor.Maintainer)
-		if err == nil && account != nil {
-			accountName = accdomain.GetAccountFullName(account)
+		resp, err := getAccountFunc(publicAPIEditor.Maintainer)
+		if err == nil && resp != nil {
+			account := accdomain.AccountV2{AccountV2: resp}
+			accountName = account.GetAccountFullName()
 		}
 		return &eventproto.Editor{
 			Email:           publicAPIEditor.Maintainer,
@@ -131,14 +132,14 @@ func CheckOrganizationRole(
 	}
 	publicAPIEditor := getAPIKeyEditor(ctx)
 	if publicAPIEditor != nil && publicAPIEditor.Token != "" && token.IsSystemAdmin {
-		var accountName string
 		resp, err := getAccountFunc(publicAPIEditor.Maintainer)
-		if err == nil && resp != nil && resp.Account != nil {
-			accountName = accdomain.GetAccountFullName(resp.Account)
+		if err != nil {
+			return nil, err
 		}
+		account := accdomain.AccountV2{AccountV2: resp.Account}
 		return &eventproto.Editor{
 			Email:           publicAPIEditor.Maintainer,
-			Name:            accountName,
+			Name:            account.GetAccountFullName(),
 			PublicApiEditor: publicAPIEditor,
 		}, nil
 	}

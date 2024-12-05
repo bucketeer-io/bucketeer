@@ -450,6 +450,7 @@ func (s *authService) generateToken(
 		)
 		return nil, err
 	}
+	accountDomain := domain.AccountV2{AccountV2: account.Account}
 
 	timeNow := time.Now()
 	accessTokenTTL := timeNow.Add(day)
@@ -459,7 +460,7 @@ func (s *authService) generateToken(
 		Expiry:        accessTokenTTL,
 		IssuedAt:      timeNow,
 		Email:         userEmail,
-		Name:          domain.GetAccountFullName(account.Account),
+		Name:          accountDomain.GetAccountFullName(),
 		IsSystemAdmin: s.hasSystemAdminOrganization(organizations),
 	}
 	signedAccessToken, err := s.signer.SignAccessToken(accessToken)

@@ -305,7 +305,7 @@ func (a *AccountV2) resetDefaultFilter(targetFilter proto.FilterTargetType, envi
 	}
 }
 
-func GetAccountFullName(a *proto.AccountV2) string {
+func (a *AccountV2) GetAccountFullName() string {
 	if a == nil {
 		return ""
 	}
