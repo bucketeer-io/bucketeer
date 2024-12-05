@@ -59,6 +59,7 @@ const (
 	defaultVariationID           = "default"
 	twentyFourHours              = 24
 	pfMergeKey                   = "pfmerge-key"
+	pfMergeKind                  = "pfmerge"
 )
 
 var (
@@ -535,6 +536,10 @@ func (s *eventCounterService) countUniqueUser(
 		err = append(err, e)
 		return
 	}
+	// Set expiration time for pfmerge key in case delete fails
+	if _, e := s.evaluationCountCacher.ExpireKey(key, 10*time.Minute); e != nil {
+		s.logger.Error("Failed to set expiration for pfmerge key", zap.Error(e))
+	}
 	defer func() {
 		if e := s.evaluationCountCacher.DeleteKey(key); e != nil {
 			err = append(err, e)
@@ -611,7 +616,7 @@ func newPFMergeKey(
 	kind, featureID, environmentId string,
 ) string {
 	return cache.MakeKey(
-		kind,
+		fmt.Sprintf("%s:%s", pfMergeKind, kind),
 		fmt.Sprintf("%s:%s", pfMergeKey, featureID),
 		environmentId,
 	)

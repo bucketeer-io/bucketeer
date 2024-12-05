@@ -18,6 +18,7 @@ package v3
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 )
@@ -31,6 +32,7 @@ type EventCounterCache interface {
 	MergeMultiKeys(dest string, keys []string) error
 	DeleteKey(key string) error
 	UpdateUserCount(key, userID string) error
+	ExpireKey(key string, expiration time.Duration) (bool, error)
 }
 
 type eventCounterCache struct {
@@ -133,4 +135,11 @@ func (c *eventCounterCache) DeleteKey(key string) error {
 		return fmt.Errorf("failed to delete key: %w", err)
 	}
 	return nil
+}
+func (c *eventCounterCache) ExpireKey(key string, expiration time.Duration) (bool, error) {
+	ok, err := c.cache.Expire(key, expiration)
+	if err != nil {
+		return false, fmt.Errorf("failed to set expiration for key: %w", err)
+	}
+	return ok, nil
 }
