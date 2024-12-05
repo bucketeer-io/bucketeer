@@ -85,7 +85,7 @@ type Client interface {
 	IncrByFloat(key string, value float64) (float64, error)
 	Del(key string) error
 	Incr(key string) (int64, error)
-	Pipeline() PipeClient
+	Pipeline(tx bool) PipeClient
 	Expire(key string, expiration time.Duration) (bool, error)
 	SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) (bool, error)
 	Eval(ctx context.Context, script string, keys []string, args ...interface{}) *goredis.Cmd
@@ -112,6 +112,7 @@ type PipeClient interface {
 }
 
 type pipeClient struct {
+	ctx    context.Context
 	pipe   goredis.Pipeliner
 	cmds   []string
 	opts   *options
@@ -661,9 +662,17 @@ func (c *client) Eval(ctx context.Context, script string, keys []string, args ..
 	return c.rc.Eval(context.TODO(), script, keys, args...)
 }
 
-func (c *client) Pipeline() PipeClient {
+func (c *client) Pipeline(tx bool) PipeClient {
+	var pipeliner goredis.Pipeliner
+	if tx {
+		// All commands in the transaction will either all succeed or none will be applied if an error occurs.
+		pipeliner = c.rc.TxPipeline()
+	} else {
+		c.rc.Pipeline()
+	}
 	return &pipeClient{
-		pipe:   c.rc.Pipeline(),
+		ctx:    context.TODO(),
+		pipe:   pipeliner,
 		cmds:   []string{},
 		opts:   c.opts,
 		logger: c.logger,
@@ -672,17 +681,17 @@ func (c *client) Pipeline() PipeClient {
 
 func (c *pipeClient) Incr(key string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, incrCmdName)
-	return c.pipe.Incr(context.TODO(), key)
+	return c.pipe.Incr(c.ctx, key)
 }
 
 func (c *pipeClient) PFAdd(key string, els ...string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, pfAddCmdName)
-	return c.pipe.PFAdd(context.TODO(), key, els)
+	return c.pipe.PFAdd(c.ctx, key, els)
 }
 
 func (c *pipeClient) TTL(key string) *goredis.DurationCmd {
 	c.cmds = append(c.cmds, ttlCmdName)
-	return c.pipe.TTL(context.TODO(), key)
+	return c.pipe.TTL(c.ctx, key)
 }
 
 func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
@@ -692,7 +701,7 @@ func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
 		cmdName += fmt.Sprintf("_%s", cmd)
 	}
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, cmdName).Inc()
-	v, err := c.pipe.Exec(context.TODO())
+	v, err := c.pipe.Exec(c.ctx)
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -708,17 +717,17 @@ func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
 
 func (c *pipeClient) PFCount(keys ...string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, pfCountCmdName)
-	return c.pipe.PFCount(context.TODO(), keys...)
+	return c.pipe.PFCount(c.ctx, keys...)
 }
 
 func (c *pipeClient) Get(key string) *goredis.StringCmd {
 	c.cmds = append(c.cmds, getCmdName)
-	return c.pipe.Get(context.TODO(), key)
+	return c.pipe.Get(c.ctx, key)
 }
 
 func (c *pipeClient) Del(key string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, pfCountCmdName)
-	return c.pipe.Del(context.TODO(), key)
+	return c.pipe.Del(c.ctx, key)
 }
 
 func (c *client) Dump(key string) (string, error) {

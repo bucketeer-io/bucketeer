@@ -270,17 +270,17 @@ func (mr *MockClientMockRecorder) PFMerge(dest any, keys ...any) *gomock.Call {
 }
 
 // Pipeline mocks base method.
-func (m *MockClient) Pipeline() v3.PipeClient {
+func (m *MockClient) Pipeline(tx bool) v3.PipeClient {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Pipeline")
+	ret := m.ctrl.Call(m, "Pipeline", tx)
 	ret0, _ := ret[0].(v3.PipeClient)
 	return ret0
 }
 
 // Pipeline indicates an expected call of Pipeline.
-func (mr *MockClientMockRecorder) Pipeline() *gomock.Call {
+func (mr *MockClientMockRecorder) Pipeline(tx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pipeline", reflect.TypeOf((*MockClient)(nil).Pipeline))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pipeline", reflect.TypeOf((*MockClient)(nil).Pipeline), tx)
 }
 
 // Restore mocks base method.
