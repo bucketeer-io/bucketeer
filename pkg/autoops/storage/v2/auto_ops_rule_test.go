@@ -32,7 +32,8 @@ func TestNewAutoOpsRuleStorage(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	db := NewAutoOpsRuleStorage(mock.NewMockQueryExecer(mockController))
+	client := mock.NewMockClient(mockController)
+	db := NewAutoOpsRuleStorage(client)
 	assert.IsType(t, &autoOpsRuleStorage{}, db)
 }
 
@@ -49,7 +50,11 @@ func TestCreateAutoOpsRule(t *testing.T) {
 	}{
 		{
 			setup: func(s *autoOpsRuleStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, mysql.ErrDuplicateEntry)
 			},
@@ -61,7 +66,11 @@ func TestCreateAutoOpsRule(t *testing.T) {
 		},
 		{
 			setup: func(s *autoOpsRuleStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
 			},
@@ -97,7 +106,11 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 			setup: func(s *autoOpsRuleStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(0), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
@@ -111,7 +124,11 @@ func TestUpdateAutoOpsRule(t *testing.T) {
 			setup: func(s *autoOpsRuleStorage) {
 				result := mock.NewMockResult(mockController)
 				result.EXPECT().RowsAffected().Return(int64(1), nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(result, nil)
 			},
@@ -148,7 +165,11 @@ func TestGetAutoOpsRule(t *testing.T) {
 			setup: func(s *autoOpsRuleStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -161,7 +182,11 @@ func TestGetAutoOpsRule(t *testing.T) {
 			setup: func(s *autoOpsRuleStorage) {
 				row := mock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -199,7 +224,11 @@ func TestListAutoOpsRules(t *testing.T) {
 	}{
 		{
 			setup: func(s *autoOpsRuleStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, errors.New("error"))
 			},
@@ -217,7 +246,11 @@ func TestListAutoOpsRules(t *testing.T) {
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
@@ -254,5 +287,5 @@ func TestListAutoOpsRules(t *testing.T) {
 
 func newAutoOpsRuleStorageWithMock(t *testing.T, mockController *gomock.Controller) *autoOpsRuleStorage {
 	t.Helper()
-	return &autoOpsRuleStorage{mock.NewMockQueryExecer(mockController)}
+	return &autoOpsRuleStorage{mock.NewMockClient(mockController)}
 }

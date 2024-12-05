@@ -1154,7 +1154,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		if err != nil {
 			return err
 		}
-		prStorage := v2as.NewProgressiveRolloutStorage(tx)
+		prStorage := v2as.NewProgressiveRolloutStorage(s.mysqlClient)
 		// Stop the running progressive rollout if the operation type is disable
 		if executeClause.ActionType == autoopsproto.ActionType_DISABLE {
 			if err := s.stopProgressiveRollout(

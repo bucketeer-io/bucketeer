@@ -31,7 +31,7 @@ func TestNewProgressiveRolloutStorage(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
-	db := NewProgressiveRolloutStorage(mock.NewMockQueryExecer(mockController))
+	db := NewProgressiveRolloutStorage(mock.NewMockClient(mockController))
 	assert.IsType(t, &progressiveRolloutStorage{}, db)
 }
 
@@ -48,9 +48,14 @@ func TestCreateProgressiveRollout(t *testing.T) {
 		expectedErr   error
 	}{
 		{
-			desc: "",
+			desc: "error",
 			setup: func(s *progressiveRolloutStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, mysql.ErrDuplicateEntry)
 			},
@@ -61,8 +66,14 @@ func TestCreateProgressiveRollout(t *testing.T) {
 			expectedErr:   ErrProgressiveRolloutAlreadyExists,
 		},
 		{
+			desc: "success",
 			setup: func(s *progressiveRolloutStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().ExecContext(
+				qe := mock.NewMockQueryExecer(mockController)
+				s.client.(*mock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().ExecContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, nil)
 			},
@@ -85,5 +96,5 @@ func TestCreateProgressiveRollout(t *testing.T) {
 
 func newProgressiveRolloutStorageWithMock(t *testing.T, mockController *gomock.Controller) *progressiveRolloutStorage {
 	t.Helper()
-	return &progressiveRolloutStorage{mock.NewMockQueryExecer(mockController)}
+	return &progressiveRolloutStorage{mock.NewMockClient(mockController)}
 }
