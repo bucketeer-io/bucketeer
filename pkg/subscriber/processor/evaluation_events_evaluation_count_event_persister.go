@@ -240,26 +240,52 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 		if err != nil {
 			return err
 		}
-		pipe := p.evaluationCountCacher.Pipeline(false)
-		// User count (Unique count)
+		// To avoid duplication when the request fails, we increment the event count in the end
+		// because the user count is an unique count, and there is no problem adding the same event more than once
+		// We tried to use Pipeline and indeed it improves the response time,
+		// but it also increases the Pod CPU usage. It's a trade-off.
+		// Since this is a background service and it's not latency-sensitive, we split the requests.
 		ucKey := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
-		pipe.PFAdd(ucKey, e.UserId)
-		// Event count
+		if err := p.countUser(ucKey, e.UserId); err != nil {
+			if err != nil {
+				p.logger.Error("Failed to increment the evaluation user event in the Redis",
+					zap.Error(err),
+					zap.String("environmentId", environmentId),
+					zap.String("eventId", eventID),
+					zap.String("userId", e.UserId),
+					zap.String("userCountKey", ucKey),
+				)
+			}
+			return err
+		}
 		ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
-		pipe.Incr(ecKey)
-		// Execute the transaction
-		_, err = pipe.Exec()
-		if err != nil {
+		if err := p.countEvent(ecKey); err != nil {
 			p.logger.Error("Failed to increment the evaluation event in the Redis",
 				zap.Error(err),
 				zap.String("environmentId", environmentId),
 				zap.String("eventId", eventID),
 				zap.String("userId", e.UserId),
-				zap.String("userCountKey", ucKey),
 				zap.String("eventCountKey", ecKey),
 			)
+			return err
 		}
 		evaluationEventCounter.WithLabelValues(e.SdkVersion, e.FeatureId, e.Metadata[appVersion], e.VariationId).Inc()
+	}
+	return nil
+}
+
+func (p *evaluationCountEventPersister) countEvent(key string) error {
+	_, err := p.evaluationCountCacher.Increment(key)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *evaluationCountEventPersister) countUser(key, userID string) error {
+	_, err := p.evaluationCountCacher.PFAdd(key, userID)
+	if err != nil {
+		return err
 	}
 	return nil
 }
