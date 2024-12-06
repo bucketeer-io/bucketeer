@@ -1982,7 +1982,6 @@ func TestGetUserCounts(t *testing.T) {
 				for _, day := range fourteenDaysKeys {
 					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
 						GetUserCount(gomock.Any()).Return(int64(1234), nil)
-					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteKey(gomock.Any()).Return(nil)
 					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(gomock.Any(), day, gomock.Any()).Return(nil)
 				}
 			},
