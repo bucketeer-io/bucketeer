@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.2.0](https://github.com/bucketeer-io/bucketeer/compare/v1.1.0...v1.2.0) (2024-12-06)
+
+
+### Features
+
+* implement save api key as editor mechanism ([#1352](https://github.com/bucketeer-io/bucketeer/issues/1352)) ([fa2e6cf](https://github.com/bucketeer-io/bucketeer/commit/fa2e6cf0e71cf58651e307d60f0a4a54ef872903))
+* return extra info of public API key and obfuscate the returned key ([#1349](https://github.com/bucketeer-io/bucketeer/issues/1349)) ([736d9a0](https://github.com/bucketeer-io/bucketeer/commit/736d9a05767577fc3c44cd14fff9867d7714d832))
+
+
+### Bug Fixes
+
+* cannot delete pfmerge key when deleting counts ([#1366](https://github.com/bucketeer-io/bucketeer/issues/1366)) ([5474107](https://github.com/bucketeer-io/bucketeer/commit/5474107eca9252c939baedfcdd6be3a6679bd36e))
+* update evaluation event counter metrics to include variation ID ([#1363](https://github.com/bucketeer-io/bucketeer/issues/1363)) ([e1488a8](https://github.com/bucketeer-io/bucketeer/commit/e1488a8e926b73d9cd550b3477835b110dfa066d))
+
+
+### Miscellaneous
+
+* add transaction support for redis pipeline ([#1367](https://github.com/bucketeer-io/bucketeer/issues/1367)) ([d387ee6](https://github.com/bucketeer-io/bucketeer/commit/d387ee6af632aa87a98f1c36203c4e457ad5e5a8))
+* create sync api key maintainer migration ([#1374](https://github.com/bucketeer-io/bucketeer/issues/1374)) ([831bbe2](https://github.com/bucketeer-io/bucketeer/commit/831bbe25ab501de364f3a8ad11416d7ba358364b))
+
+
+### Performance Improvements
+
+* change to save user and event counts in one request ([#1369](https://github.com/bucketeer-io/bucketeer/issues/1369)) ([a576212](https://github.com/bucketeer-io/bucketeer/commit/a576212fe58eb045241bf89cc448bda7077e1e10))
+
+
+### Reverts
+
+* change to save user and event counts in one request ([#1371](https://github.com/bucketeer-io/bucketeer/issues/1371)) ([2a84762](https://github.com/bucketeer-io/bucketeer/commit/2a847621cfe2ffdcc0bb346ebb0b6b7381293f72))
+
 ## [1.1.0](https://github.com/bucketeer-io/bucketeer/compare/v1.0.0...v1.1.0) (2024-12-02)
 
 
