@@ -443,6 +443,19 @@ func (c *client) PFMerge(dest string, expiration time.Duration, keys ...string) 
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName).Inc()
 
 	var err error
+	ctx := context.TODO()
+
+	// Metrics reporting deferred at the end of the function
+	defer func() {
+		code := redis.CodeFail
+		if err == nil {
+			code = redis.CodeSuccess
+		}
+		// Reporting metrics
+		redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName, code).Inc()
+		redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName, code).Observe(
+			time.Since(startTime).Seconds())
+	}()
 
 	if c.clientType == ClientTypeCluster {
 		// Cluster-aware approach
@@ -464,7 +477,7 @@ func (c *client) PFMerge(dest string, expiration time.Duration, keys ...string) 
 		randomHashSlot := c.randomID()
 
 		// Special handling of dest variable if it already exists
-		destData, err := c.rc.Get(context.TODO(), dest).Result()
+		destData, err := c.rc.Get(ctx, dest).Result()
 		if err != nil && !errors.Is(err, goredis.Nil) {
 			return err
 		}
@@ -480,7 +493,7 @@ func (c *client) PFMerge(dest string, expiration time.Duration, keys ...string) 
 			pairs = append(pairs, k, hllObject)
 		}
 		if len(pairs) > 0 {
-			err = c.rc.MSet(context.TODO(), pairs...).Err()
+			err = c.rc.MSet(ctx, pairs...).Err()
 			if err != nil {
 				return err
 			}
@@ -488,48 +501,47 @@ func (c *client) PFMerge(dest string, expiration time.Duration, keys ...string) 
 
 		// Do regular PFMERGE operation and store value in random key in {RandomHash}
 		tmpDest := c.randomHashSlotKey(randomHashSlot)
-		_, err = c.rc.PFMerge(context.TODO(), tmpDest, allK...).Result()
+		_, err = c.rc.PFMerge(ctx, tmpDest, allK...).Result()
 		if err != nil {
 			return err
 		}
 
 		// Do GET and SET so that result will be stored in the destination object anywhere in the cluster
-		parsedDest, err := c.rc.Get(context.TODO(), tmpDest).Result()
+		parsedDest, err := c.rc.Get(ctx, tmpDest).Result()
 		if err != nil {
 			return err
 		}
-		err = c.rc.Set(context.TODO(), dest, parsedDest, expiration).Err()
-		if err != nil {
-			return err
-		}
-
-		// Cleanup tmp variables
-		err = c.rc.Del(context.TODO(), tmpDest).Err()
+		err = c.rc.Set(ctx, dest, parsedDest, expiration).Err()
 		if err != nil {
 			return err
 		}
 
+		// Cleanup temporary keys
+		pipe := c.rc.Pipeline()
 		for _, k := range allK {
-			err = c.rc.Del(context.TODO(), k).Err()
-			if err != nil {
-				return err
-			}
+			pipe.Del(ctx, k)
+		}
+		pipe.Del(ctx, tmpDest)
+
+		// Execute the pipeline
+		_, err = pipe.Exec(ctx)
+		if err != nil {
+			return err
 		}
 	} else {
 		// Standard non-cluster approach
-		_, err = c.rc.PFMerge(context.TODO(), dest, keys...).Result()
-		c.rc.Expire(context.TODO(), dest, expiration)
-	}
+		// We use transaction here to ensure the expiration will be set when merging the key
+		pipe := c.rc.TxPipeline()
+		pipe.PFMerge(ctx, dest, keys...)
+		pipe.Expire(ctx, dest, expiration)
 
-	code := redis.CodeFail
-	if err == nil {
-		code = redis.CodeSuccess
+		// Execute the pipeline
+		_, err = pipe.Exec(ctx)
+		if err != nil {
+			return err
+		}
 	}
-
-	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName, code).Inc()
-	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName, code).Observe(
-		time.Since(startTime).Seconds())
-	return err
+	return nil
 }
 
 func (c *client) randomID() string {
