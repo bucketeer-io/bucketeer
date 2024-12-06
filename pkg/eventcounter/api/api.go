@@ -59,6 +59,8 @@ const (
 	defaultVariationID           = "default"
 	twentyFourHours              = 24
 	pfMergeKey                   = "pfmerge-key"
+	pfMergeKind                  = "pfmerge"
+	pfMergeExpiration            = 10 * time.Minute
 )
 
 var (
@@ -531,15 +533,10 @@ func (s *eventCounterService) countUniqueUser(
 		environmentId,
 	)
 	// We need to count the number of unique users in the target term.
-	if e := s.evaluationCountCacher.MergeMultiKeys(key, userCountKeys); e != nil {
+	if e := s.evaluationCountCacher.MergeMultiKeys(key, userCountKeys, pfMergeExpiration); e != nil {
 		err = append(err, e)
 		return
 	}
-	defer func() {
-		if e := s.evaluationCountCacher.DeleteKey(key); e != nil {
-			err = append(err, e)
-		}
-	}()
 	c, e := s.evaluationCountCacher.GetUserCount(key)
 	count = float64(c)
 	if e != nil {
@@ -611,7 +608,7 @@ func newPFMergeKey(
 	kind, featureID, environmentId string,
 ) string {
 	return cache.MakeKey(
-		kind,
+		fmt.Sprintf("%s:%s", pfMergeKind, kind),
 		fmt.Sprintf("%s:%s", pfMergeKey, featureID),
 		environmentId,
 	)

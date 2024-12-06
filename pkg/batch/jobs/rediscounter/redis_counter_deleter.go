@@ -209,9 +209,9 @@ func (r *redisCounterDeleter) filterKeysOlderThanThirtyOneDays(
 		// E.g. environment_id:uc:1689835532:feature_id:variation_id
 		var regex string
 		if environmentId == "" {
-			regex = fmt.Sprintf("%s:(.*?):", kind)
+			regex = fmt.Sprintf("%s:([0-9]+):", kind)
 		} else {
-			regex = fmt.Sprintf("%s:%s:(.*?):", environmentId, kind)
+			regex = fmt.Sprintf("%s:%s:([0-9]+):", environmentId, kind)
 		}
 		re := regexp.MustCompile(regex)
 		match := re.FindStringSubmatch(key)

@@ -308,18 +308,10 @@ func TestFilterKeysOlderThanThirtyOneDays(t *testing.T) {
 		expectedError     error
 	}{
 		{
-			desc:              "errParseInt",
-			inputEnvNamespace: "dev",
-			inputKind:         "uc",
-			inputKeys:         []string{"dev:uc:timestamp:feature_id:variation_id"},
-			expected:          nil,
-			expectedError:     errParseInt,
-		},
-		{
 			desc:              "errSubmatchStringNotFound",
 			inputEnvNamespace: "dev",
 			inputKind:         "uc",
-			inputKeys:         []string{"dev:uc:timestamp"},
+			inputKeys:         []string{fmt.Sprintf("dev:uc:%d", now.Unix())},
 			expected:          nil,
 			expectedError:     errSubmatchStringNotFound,
 		},

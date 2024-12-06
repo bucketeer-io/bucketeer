@@ -18,6 +18,7 @@ package v3
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 )
@@ -28,7 +29,7 @@ type EventCounterCache interface {
 	GetUserCount(key string) (int64, error)
 	GetUserCounts(keys []string) ([]float64, error)
 	GetUserCountsV2(keys []string) ([]float64, error)
-	MergeMultiKeys(dest string, keys []string) error
+	MergeMultiKeys(dest string, keys []string, expiration time.Duration) error
 	DeleteKey(key string) error
 	UpdateUserCount(key, userID string) error
 }
@@ -121,8 +122,8 @@ func (c *eventCounterCache) UpdateUserCount(key, userID string) error {
 	return nil
 }
 
-func (c *eventCounterCache) MergeMultiKeys(dest string, keys []string) error {
-	if err := c.cache.PFMerge(dest, keys...); err != nil {
+func (c *eventCounterCache) MergeMultiKeys(dest string, keys []string, expiration time.Duration) error {
+	if err := c.cache.PFMerge(dest, expiration, keys...); err != nil {
 		return fmt.Errorf("failed to merge keys: %w", err)
 	}
 	return nil

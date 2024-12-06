@@ -11,6 +11,7 @@ package mock
 
 import (
 	reflect "reflect"
+	time "time"
 
 	gomock "go.uber.org/mock/gomock"
 )
@@ -128,17 +129,17 @@ func (mr *MockEventCounterCacheMockRecorder) GetUserCountsV2(keys any) *gomock.C
 }
 
 // MergeMultiKeys mocks base method.
-func (m *MockEventCounterCache) MergeMultiKeys(dest string, keys []string) error {
+func (m *MockEventCounterCache) MergeMultiKeys(dest string, keys []string, expiration time.Duration) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MergeMultiKeys", dest, keys)
+	ret := m.ctrl.Call(m, "MergeMultiKeys", dest, keys, expiration)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // MergeMultiKeys indicates an expected call of MergeMultiKeys.
-func (mr *MockEventCounterCacheMockRecorder) MergeMultiKeys(dest, keys any) *gomock.Call {
+func (mr *MockEventCounterCacheMockRecorder) MergeMultiKeys(dest, keys, expiration any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MergeMultiKeys", reflect.TypeOf((*MockEventCounterCache)(nil).MergeMultiKeys), dest, keys)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MergeMultiKeys", reflect.TypeOf((*MockEventCounterCache)(nil).MergeMultiKeys), dest, keys, expiration)
 }
 
 // UpdateUserCount mocks base method.
