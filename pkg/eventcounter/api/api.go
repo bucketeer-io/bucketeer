@@ -537,12 +537,6 @@ func (s *eventCounterService) countUniqueUser(
 		err = append(err, e)
 		return
 	}
-	// Set expiration time for pfmerge key in case delete fails
-	defer func() {
-		if e := s.evaluationCountCacher.DeleteKey(key); e != nil {
-			err = append(err, e)
-		}
-	}()
 	c, e := s.evaluationCountCacher.GetUserCount(key)
 	count = float64(c)
 	if e != nil {
