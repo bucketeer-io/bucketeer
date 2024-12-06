@@ -1465,6 +1465,9 @@ export class ListAPIKeysRequest extends jspb.Message {
   setEnvironmentIdsList(value: Array<string>): void;
   addEnvironmentIds(value: string, index?: number): string;
 
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListAPIKeysRequest.AsObject;
   static toObject(
@@ -1496,6 +1499,7 @@ export namespace ListAPIKeysRequest {
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     environmentId: string;
     environmentIdsList: Array<string>;
+    organizationId: string;
   };
 
   export interface OrderByMap {
@@ -1503,6 +1507,8 @@ export namespace ListAPIKeysRequest {
     NAME: 1;
     CREATED_AT: 2;
     UPDATED_AT: 3;
+    ROLE: 4;
+    ENVIRONMENT: 5;
   }
 
   export const OrderBy: OrderByMap;
