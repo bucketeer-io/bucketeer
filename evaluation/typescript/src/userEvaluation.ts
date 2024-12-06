@@ -63,7 +63,7 @@ function UserEvaluationsID(
 
   // Append feature details to the hash input
   features.forEach((feature) => {
-    hashInput += `${feature.getId()}:${feature.getVersion()}`;
+    hashInput += `${feature.getId()}:${feature.getUpdatedAt()}`;
   });
 
   // Generate the FNV-1a 64-bit hash
