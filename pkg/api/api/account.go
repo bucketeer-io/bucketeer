@@ -10,6 +10,22 @@ import (
 	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
 )
 
+func (s *grpcGatewayService) CreateAccountV2(
+	ctx context.Context,
+	request *gwproto.CreateAccountV2Request,
+) (*gwproto.CreateAccountV2Response, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *grpcGatewayService) UpdateAccountV2(
+	ctx context.Context,
+	request *gwproto.UpdateAccountV2Request,
+) (*gwproto.UpdateAccountV2Response, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (s *grpcGatewayService) GetAccountV2(
 	ctx context.Context,
 	request *gwproto.GetAccountV2Request,

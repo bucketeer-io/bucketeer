@@ -25329,6 +25329,165 @@
             ]
           },
           {
+            "name": "CreateAccountV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "avatar_image_url",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "organization_role",
+                "type": "account.AccountV2.Role.Organization"
+              },
+              {
+                "id": 6,
+                "name": "environment_roles",
+                "type": "account.AccountV2.EnvironmentRole",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "first_name",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "last_name",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "language",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "CreateAccountV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "account",
+                "type": "account.AccountV2"
+              }
+            ]
+          },
+          {
+            "name": "UpdateAccountV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 4,
+                "name": "avatar_image_url",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 5,
+                "name": "organization_role",
+                "type": "OrganizationRoleValue"
+              },
+              {
+                "id": 6,
+                "name": "environment_roles",
+                "type": "account.AccountV2.EnvironmentRole",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "first_name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 8,
+                "name": "last_name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 9,
+                "name": "language",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 10,
+                "name": "last_seen",
+                "type": "google.protobuf.Int64Value"
+              },
+              {
+                "id": 11,
+                "name": "avatar",
+                "type": "AccountV2Avatar"
+              }
+            ],
+            "messages": [
+              {
+                "name": "AccountV2Avatar",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "avatar_image",
+                    "type": "bytes"
+                  },
+                  {
+                    "id": 2,
+                    "name": "avatar_file_type",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "name": "OrganizationRoleValue",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "role",
+                    "type": "account.AccountV2.Role.Organization"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "UpdateAccountV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "account",
+                "type": "account.AccountV2"
+              }
+            ]
+          },
+          {
             "name": "GetAccountV2Request",
             "fields": [
               {
@@ -26406,6 +26565,140 @@
                       {
                         "name": "operation_id",
                         "value": "api.gateway.v1.pushes.update"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "CreateAccountV2",
+                "in_type": "CreateAccountV2Request",
+                "out_type": "CreateAccountV2Response",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/account"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a new Account. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Account"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.account.create"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "UpdateAccountV2",
+                "in_type": "UpdateAccountV2Request",
+                "out_type": "UpdateAccountV2Response",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/account/{organizationId}/{email}"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update an Account. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Account"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.account.update"
                       },
                       {
                         "name": "parameters",
