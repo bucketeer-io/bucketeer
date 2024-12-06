@@ -1396,24 +1396,8 @@ func (s *FeatureService) updateFeature(
 		return dt.Err()
 	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+
+	err := s.mysqlClient.RunInTransactionV2(&ctx, func(tx mysql.Transaction) error {
 		featureStorage := v2fs.NewFeatureStorage(tx)
 		feature, err := featureStorage.GetFeature(ctx, id, environmentId)
 		if err != nil {
@@ -1444,7 +1428,7 @@ func (s *FeatureService) updateFeature(
 		// We must stop the progressive rollout if it contains a `DisableFeatureCommand`
 		switch cmd.(type) {
 		case *featureproto.DisableFeatureCommand:
-			if err := s.stopProgressiveRollout(ctx, tx, environmentId, feature.Id); err != nil {
+			if err := s.stopProgressiveRollout(ctx, environmentId, feature.Id); err != nil {
 				return err
 			}
 		}
@@ -1863,7 +1847,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 			// We must stop the progressive rollout if it contains a `DisableFeatureCommand`
 			switch cmd.(type) {
 			case *featureproto.DisableFeatureCommand:
-				if err := s.stopProgressiveRollout(ctx, tx, req.EnvironmentId, feature.Id); err != nil {
+				if err := s.stopProgressiveRollout(ctx, req.EnvironmentId, feature.Id); err != nil {
 					return err
 				}
 			}
@@ -1919,7 +1903,6 @@ func (s *FeatureService) UpdateFeatureTargeting(
 
 func (s *FeatureService) stopProgressiveRollout(
 	ctx context.Context,
-	tx mysql.Transaction,
 	EnvironmentId, featureID string) error {
 	storage := v2ao.NewProgressiveRolloutStorage(s.mysqlClient)
 	ids := convToInterfaceSlice([]string{featureID})
