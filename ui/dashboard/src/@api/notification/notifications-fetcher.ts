@@ -4,7 +4,7 @@ import { AccountCollection, CollectionParams } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 
 export interface NotificationsFetcherParams extends CollectionParams {
-  environmentId?: string;
+  organizationId?: string;
 }
 
 export const notificationsFetcher = async (

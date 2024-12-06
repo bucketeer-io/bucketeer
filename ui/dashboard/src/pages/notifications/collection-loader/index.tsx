@@ -2,14 +2,14 @@ import { SortingState } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { sortingListFields } from 'constants/collection';
-import { APIKey } from '@types';
+import { Notification } from '@types';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
-import { APIKeyActionsType, APIKeysFilters } from '../types';
+import { NotificationActionsType, NotificationFilters } from '../types';
 import { useFetchNotifications } from './use-fetch-notifications';
 
 const CollectionLoader = ({
@@ -18,10 +18,10 @@ const CollectionLoader = ({
   onAdd,
   onActions
 }: {
-  filters: APIKeysFilters;
-  setFilters: (values: Partial<APIKeysFilters>) => void;
+  filters: NotificationFilters;
+  setFilters: (values: Partial<NotificationFilters>) => void;
   onAdd: () => void;
-  onActions: (item: APIKey, type: APIKeyActionsType) => void;
+  onActions: (item: Notification, type: NotificationActionsType) => void;
 }) => {
   const columns = useColumns({ onActions });
   const { consoleAccount } = useAuth();
@@ -34,7 +34,8 @@ const CollectionLoader = ({
     isError
   } = useFetchNotifications({
     ...filters,
-    environmentNamespace: currenEnvironment.id
+    disabled: true,
+    organizationId: currenEnvironment.organizationId
   });
 
   const onSortingChangeHandler = (sorting: SortingState) => {
@@ -49,7 +50,7 @@ const CollectionLoader = ({
     });
   };
  
-  const apiKeys = collection?.apiKeys || [];
+  const apiKeys = collection?.accounts || [];
   const totalCount = Number(collection?.totalCount) || 0;
 
   const emptyState = (

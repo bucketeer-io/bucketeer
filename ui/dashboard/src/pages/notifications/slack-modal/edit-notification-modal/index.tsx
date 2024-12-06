@@ -155,6 +155,22 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
                 </Form.Item>
               )}
             />
+                       <Form.Field
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <Form.Item>
+                  <Form.Label required>{t('name')}</Form.Label>
+                  <Form.Control>
+                    <Input
+                      placeholder={`${t('form:placeholder-name')}`}
+                      {...field}
+                    />
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
             <Form.Field
               control={form.control}
               name="description"
@@ -171,7 +187,7 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
                   <Form.Message />
                 </Form.Item>
               )}
-            />
+            /> 
 
             <p className="text-gray-800 typo-head-bold-small">
               {t('environment')}
@@ -224,8 +240,8 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
                 {t('key-role')}
               </p>
               <Icon
-                icon={IconInfo}
                 size="xs"
+                icon={IconInfo}
                 color="gray-500"
                 className="mt-0.5"
               />

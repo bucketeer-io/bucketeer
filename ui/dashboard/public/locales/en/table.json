@@ -15,7 +15,8 @@
     "delete-member": "Delete Member",
     "disable-member": "Disable Member",
     "enable-member": "Enable Member",
-    "add-to-env": "Add to Environment"
+    "add-to-env": "Add to Environment",
+    "edit-notification": "Edit Notification"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -28,7 +29,9 @@
     "api-key-title": "No registered API keys",
     "api-key-desc": "There are no registered API keys. Add a new one to start managing.",
     "member-title": "No registered members",
-    "member-desc": "There are no registered members. Invite a new one to start managing."
+    "member-desc": "There are no registered members. Invite a new one to start managing.",
+    "notification-title": "No registered notifications",
+    "notification-desc": "There are no registered notifications. Add a new one to start managing."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",

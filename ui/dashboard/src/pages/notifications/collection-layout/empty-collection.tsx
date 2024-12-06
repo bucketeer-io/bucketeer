@@ -9,15 +9,15 @@ export const EmptyCollection = ({ onAdd }: { onAdd: () => void }) => {
     <EmptyState.Root variant="no-data" size="lg">
       <EmptyState.Illustration />
       <EmptyState.Body>
-        <EmptyState.Title>{t(`table:empty.api-key-title`)}</EmptyState.Title>
+        <EmptyState.Title>{t(`table:empty.notification-title`)}</EmptyState.Title>
         <EmptyState.Description>
-          {t(`table:empty.api-key-desc`)}
+          {t(`table:empty.notification-desc`)}
         </EmptyState.Description>
       </EmptyState.Body>
       <EmptyState.Actions>
         <EmptyState.ActionButton variant="primary" onClick={onAdd}>
           <IconAddOutlined />
-          {t(`new-api-key`)}
+          {t(`new-notification`)}
         </EmptyState.ActionButton>
       </EmptyState.Actions>
     </EmptyState.Root>

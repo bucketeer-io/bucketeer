@@ -55,7 +55,7 @@ const EditOrganizationModal = ({
       name: organization.name,
       description: organization.description,
       ownerEmail: organization.ownerEmail
-    }
+    } 
   });
 
   const { data: accounts } = useQueryAccounts({

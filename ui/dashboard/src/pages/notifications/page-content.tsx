@@ -3,7 +3,7 @@ import { IconAddOutlined } from 'react-icons-material-design';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
-import { APIKey } from '@types';
+import { Notification } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
@@ -12,33 +12,33 @@ import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import FilterAPIKeyModal from './slack-modal/filter-notification-modal';
 import CollectionLoader from './collection-loader';
-import { APIKeyActionsType, APIKeysFilters } from './types';
+import { NotificationActionsType, NotificationFilters } from './types';
 
 const PageContent = ({
   onAdd,
   onHandleActions
 }: {
   onAdd: () => void;
-  onHandleActions: (item: APIKey, type: APIKeyActionsType) => void;
+  onHandleActions: (item: Notification, type: NotificationActionsType) => void;
 }) => {
   const { t } = useTranslation(['common']);
 
   const { searchOptions, onChangSearchParams } = useSearchParams();
-  const searchFilters: Partial<APIKeysFilters> = searchOptions;
+  const searchFilters: Partial<NotificationFilters> = searchOptions;
 
   const defaultFilters = {
     page: 1,
     orderBy: 'CREATED_AT',
     orderDirection: 'DESC',
     ...searchFilters
-  } as APIKeysFilters;
+  } as NotificationFilters;
 
-  const [filters, setFilters] = usePartialState<APIKeysFilters>(defaultFilters);
+  const [filters, setFilters] = usePartialState<NotificationFilters>(defaultFilters);
 
   const [openFilterModal, onOpenFilterModal, onCloseFilterModal] =
     useToggleOpen(false);
 
-  const onChangeFilters = (values: Partial<APIKeysFilters>) => {
+  const onChangeFilters = (values: Partial<NotificationFilters>) => {
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
     setFilters({ ...values });

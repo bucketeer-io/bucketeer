@@ -137,7 +137,7 @@ const AddNotificationModal = ({ isOpen, onClose }: AddNotificationModalProps) =>
     <SlideModal title={t('new-notification')} isOpen={isOpen} onClose={onClose}>
       <div className="w-full p-5 pb-28">
         <div className="typo-para-small text-gray-600 mb-1">
-          {t('new-notification-subtitle')}
+          {t('new-notification-subtitle')} 
         </div>
         <p className="text-gray-800 typo-head-bold-small">
           {t('form:general-info')}
@@ -243,7 +243,7 @@ const AddNotificationModal = ({ isOpen, onClose }: AddNotificationModalProps) =>
                   className="flex items-center last:border-b-0 border-b py-4 gap-x-5"
                 >
                   <label htmlFor={id} className="flex-1 cursor-pointer">
-                    <p className="typo-para-medium text-gray-700">{label}</p>
+                    <p className="typo-para-medium text-gr ay-700">{label}</p>
                     <p className="typo-para-small text-gray-600">
                       {description}
                     </p>
