@@ -242,6 +242,8 @@ message ListAPIKeysRequest {
     NAME = 1;
     CREATED_AT = 2;
     UPDATED_AT = 3;
+    ROLE = 4;
+    ENVIRONMENT = 5;
   }
   enum OrderDirection {
     ASC = 0;
@@ -256,6 +258,7 @@ message ListAPIKeysRequest {
   google.protobuf.BoolValue disabled = 7;
   string environment_id = 8 [deprecated = true];
   repeated string environment_ids = 9;
+  string organization_id = 10;
 }
 
 message ListAPIKeysResponse {
