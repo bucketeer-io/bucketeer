@@ -1338,6 +1338,7 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 					}, nil)
 				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
 				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCount(gomock.Any()).Return(int64(0), errors.New("error"))
+				s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteKey(gomock.Any()).Return(nil)
 			},
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
 				EnvironmentId: environmentId,
@@ -1389,9 +1390,11 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 					for idx := range hourlyTimeStamps {
 						s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(pfMergeKey, uc[idx], gomock.Any()).Return(nil)
 						s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCount(pfMergeKey).Return(int64(0), nil)
+						s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteKey(pfMergeKey).Return(nil)
 					}
 					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(pfMergeKey, s.flattenAry(uc), gomock.Any()).Return(nil)
 					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().GetUserCount(pfMergeKey).Return(int64(0), nil)
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteKey(pfMergeKey).Return(nil)
 				}
 			},
 			input: &ecproto.GetEvaluationTimeseriesCountRequest{
@@ -1983,6 +1986,7 @@ func TestGetUserCounts(t *testing.T) {
 					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().
 						GetUserCount(gomock.Any()).Return(int64(1234), nil)
 					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().MergeMultiKeys(gomock.Any(), day, gomock.Any()).Return(nil)
+					s.evaluationCountCacher.(*eccachemock.MockEventCounterCache).EXPECT().DeleteKey(gomock.Any()).Return(nil)
 				}
 			},
 			expectedLen: 14,
