@@ -1495,11 +1495,6 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
 	}
 
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
-
 	// Register variation
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, nil)
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[1], f.Variations[0].Id, tag, nil)
