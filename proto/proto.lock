@@ -25415,7 +25415,7 @@
               {
                 "id": 5,
                 "name": "organization_role",
-                "type": "OrganizationRoleValue"
+                "type": "account.UpdateAccountV2Request.OrganizationRoleValue"
               },
               {
                 "id": 6,
@@ -25446,32 +25446,45 @@
               {
                 "id": 11,
                 "name": "avatar",
-                "type": "AccountV2Avatar"
-              }
-            ],
-            "messages": [
+                "type": "account.UpdateAccountV2Request.AccountV2Avatar"
+              },
               {
-                "name": "AccountV2Avatar",
-                "fields": [
+                "id": 12,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue",
+                "options": [
                   {
-                    "id": 1,
-                    "name": "avatar_image",
-                    "type": "bytes"
-                  },
-                  {
-                    "id": 2,
-                    "name": "avatar_file_type",
-                    "type": "string"
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "title",
+                        "value": "disabled"
+                      },
+                      {
+                        "name": "description",
+                        "value": "if disabled is true, the account will be disabled. If false, the account will be enabled."
+                      }
+                    ]
                   }
                 ]
               },
               {
-                "name": "OrganizationRoleValue",
-                "fields": [
+                "id": 13,
+                "name": "deleted",
+                "type": "google.protobuf.BoolValue",
+                "options": [
                   {
-                    "id": 1,
-                    "name": "role",
-                    "type": "account.AccountV2.Role.Organization"
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "title",
+                        "value": "deleted"
+                      },
+                      {
+                        "name": "description",
+                        "value": "if true, the account will be deleted and other fields will be ignored."
+                      }
+                    ]
                   }
                 ]
               }
@@ -26673,7 +26686,7 @@
                     "aggregated": [
                       {
                         "name": "patch",
-                        "value": "/v1/account/{organizationId}/{email}"
+                        "value": "/v1/account/{organization_id}/{email}"
                       },
                       {
                         "name": "body",

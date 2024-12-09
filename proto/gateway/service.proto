@@ -248,24 +248,27 @@ message CreateAccountV2Response {
 }
 
 message UpdateAccountV2Request {
-  message AccountV2Avatar {
-    bytes avatar_image = 1;
-    string avatar_file_type = 2;
-  }
-  message OrganizationRoleValue {
-    account.AccountV2.Role.Organization role = 1;
-  }
   string email = 1;
   string organization_id = 2;
   google.protobuf.StringValue name = 3;
   google.protobuf.StringValue avatar_image_url = 4;
-  OrganizationRoleValue organization_role = 5;
+  account.UpdateAccountV2Request.OrganizationRoleValue organization_role = 5;
   repeated account.AccountV2.EnvironmentRole environment_roles = 6;
   google.protobuf.StringValue first_name = 7;
   google.protobuf.StringValue last_name = 8;
   google.protobuf.StringValue language = 9;
   google.protobuf.Int64Value last_seen = 10;
-  AccountV2Avatar avatar = 11;
+  account.UpdateAccountV2Request.AccountV2Avatar avatar = 11;
+  google.protobuf.BoolValue disabled = 12 [(grpc.gateway.protoc_gen_openapiv2
+                                                .options.openapiv2_field) = {
+    title: "disabled"
+    description: "if disabled is true, the account will be disabled. If false, the account will be enabled."
+  }];
+  google.protobuf.BoolValue deleted = 13 [(grpc.gateway.protoc_gen_openapiv2
+                                               .options.openapiv2_field) = {
+    title: "deleted"
+    description: "if true, the account will be deleted and other fields will be ignored."
+  }];
 }
 
 message UpdateAccountV2Response {
@@ -689,7 +692,7 @@ service Gateway {
   rpc UpdateAccountV2(UpdateAccountV2Request)
       returns (UpdateAccountV2Response) {
     option (google.api.http) = {
-      patch: "/v1/account/{organizationId}/{email}"
+      patch: "/v1/account/{organization_id}/{email}"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
