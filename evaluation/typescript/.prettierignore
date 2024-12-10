@@ -1,0 +1,4 @@
+**/*.d.ts
+src/google/
+src/protoc-gen-openapiv2/
+src/proto/
