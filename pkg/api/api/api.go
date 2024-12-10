@@ -608,17 +608,7 @@ func (s *gatewayService) getEnvironmentAPIKey(
 		)
 		return nil, errInternal
 	}
-	envAPIKey := resp.EnvironmentApiKey
-	if err := environmentAPIKeyCache.Put(envAPIKey); err != nil {
-		logger.Error(
-			"Failed to cache environment APIKey",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentID", envAPIKey.Environment.Id),
-			)...,
-		)
-	}
-	return envAPIKey, nil
+	return resp.EnvironmentApiKey, nil
 }
 
 func (s *gatewayService) evaluateFeatures(
