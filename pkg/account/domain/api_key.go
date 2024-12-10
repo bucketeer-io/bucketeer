@@ -31,6 +31,10 @@ type APIKey struct {
 	*proto.APIKey
 }
 
+type EnvironmentAPIKey struct {
+	*proto.EnvironmentAPIKey
+}
+
 func NewAPIKey(
 	name string,
 	role proto.APIKey_Role,

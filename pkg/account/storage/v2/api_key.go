@@ -42,6 +42,8 @@ var (
 	selectAPIKeyV2CountSQLQuery string
 	//go:embed sql/api_key_v2/select_api_key_v2_by_api_key.sql
 	selectAPIKeyV2ByAPIKeySQLQuery string
+	//go:embed sql/api_key_v2/select_environment_api_key_v2.sql
+	selectEnvironmentAPIKeySQLQuery string
 	//go:embed sql/api_key_v2/select_api_key_v2_by_id.sql
 	selectAPIKeyV2ByIDSQLQuery string
 )
@@ -156,6 +158,54 @@ func (s *accountStorage) GetAPIKeyByAPIKey(
 	}
 	apiKeyDB.Role = proto.APIKey_Role(role)
 	return &domain.APIKey{APIKey: &apiKeyDB}, nil
+}
+
+func (s *accountStorage) GetEnvironmentAPIKey(
+	ctx context.Context,
+	apiKey string,
+) (*domain.EnvironmentAPIKey, error) {
+	apiKeyDB := proto.EnvironmentAPIKey{}
+	var role int32
+	err := s.qe(ctx).QueryRowContext(
+		ctx,
+		selectEnvironmentAPIKeySQLQuery,
+		apiKey,
+	).Scan(
+		// API Key columns
+		&apiKeyDB.ApiKey.Id,
+		&apiKeyDB.ApiKey.Name,
+		&apiKeyDB.ApiKey.Role,
+		&apiKeyDB.ApiKey.Disabled,
+		&apiKeyDB.ApiKey.CreatedAt,
+		&apiKeyDB.ApiKey.UpdatedAt,
+		&apiKeyDB.ApiKey.Description,
+		&apiKeyDB.ApiKey.ApiKey,
+		&apiKeyDB.ApiKey.Maintainer,
+
+		// Environment columns
+		&apiKeyDB.Environment.Id,
+		&apiKeyDB.Environment.Name,
+		&apiKeyDB.Environment.UrlCode,
+		&apiKeyDB.Environment.Description,
+		&apiKeyDB.Environment.ProjectId,
+		&apiKeyDB.Environment.OrganizationId,
+		&apiKeyDB.Environment.Archived,
+		&apiKeyDB.Environment.RequireComment,
+		&apiKeyDB.Environment.CreatedAt,
+		&apiKeyDB.Environment.UpdatedAt,
+
+		// Project columns
+		&apiKeyDB.ProjectId,
+		&apiKeyDB.Environment.UrlCode,
+	)
+	if err != nil {
+		if errors.Is(err, mysql.ErrNoRows) {
+			return nil, ErrAPIKeyNotFound
+		}
+		return nil, err
+	}
+	apiKeyDB.ApiKey.Role = proto.APIKey_Role(role)
+	return &domain.EnvironmentAPIKey{EnvironmentAPIKey: &apiKeyDB}, nil
 }
 
 func (s *accountStorage) ListAPIKeys(
