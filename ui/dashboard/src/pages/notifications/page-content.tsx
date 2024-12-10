@@ -10,8 +10,8 @@ import Button from 'components/button';
 import Icon from 'components/icon';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
-import FilterAPIKeyModal from './slack-modal/filter-notification-modal';
 import CollectionLoader from './collection-loader';
+import FilterAPIKeyModal from './slack-modal/filter-notification-modal';
 import { NotificationActionsType, NotificationFilters } from './types';
 
 const PageContent = ({
@@ -33,7 +33,8 @@ const PageContent = ({
     ...searchFilters
   } as NotificationFilters;
 
-  const [filters, setFilters] = usePartialState<NotificationFilters>(defaultFilters);
+  const [filters, setFilters] =
+    usePartialState<NotificationFilters>(defaultFilters);
 
   const [openFilterModal, onOpenFilterModal, onCloseFilterModal] =
     useToggleOpen(false);

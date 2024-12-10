@@ -46,7 +46,7 @@ const PageContent = ({
     const options = pickBy({ ...filters, ...values }, v => isNotEmpty(v));
     onChangSearchParams(options);
     setFilters({ ...values });
-  }; 
+  };
 
   useEffect(() => {
     if (isEmptyObject(searchOptions)) {

@@ -1,4 +1,7 @@
-import { notificationsFetcher, NotificationsFetcherParams } from '@api/notification';
+import {
+  notificationsFetcher,
+  NotificationsFetcherParams
+} from '@api/notification';
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { NotificationsCollection, QueryOptionsRespond } from '@types';
 

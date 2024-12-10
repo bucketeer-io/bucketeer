@@ -1,17 +1,12 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { apiKeyUpdater } from '@api/api-key';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateAPIKeys } from '@queries/api-keys';
-import { useQueryClient } from '@tanstack/react-query';
-import { getCurrentEnvironment, useAuth } from 'auth';
-import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
-import { APIKey, APIKeyRole } from '@types';
-import { IconInfo } from '@icons';
-import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
+import { Notification } from '@types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
+import Checkbox from 'components/checkbox';
+import Divider from 'components/divider';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,121 +14,99 @@ import {
   DropdownMenuTrigger
 } from 'components/dropdown';
 import Form from 'components/form';
-import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
-import { RadioGroup, RadioGroupItem } from 'components/radio';
-import TextArea from 'components/textarea';
+import SearchInput from 'components/search-input';
 
-interface EditAPIKeyModalProps {
+interface EditNotificationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  apiKey: APIKey;
+  notification: Notification;
 }
 
-type APIKeyOption = {
+type NotificationOption = {
   id: string;
   label: string;
   description: string;
-  value: APIKeyRole;
 };
 
-export interface EditAPIKeyForm {
+export interface EditNotificationForm {
   name: string;
-  environmentId: string;
-  description?: string;
+  url: string;
+  language: string;
+  role: string;
 }
 
 export const formSchema = yup.object().shape({
   name: yup.string().required(),
-  environmentId: yup.string().required(),
-  description: yup.string()
+  url: yup.string().required(),
+  language: yup.string().required(),
+  role: yup.string().required()
 });
 
-const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
-  const { consoleAccount } = useAuth();
-  const queryClient = useQueryClient();
+const EditNotificationModal = ({
+  isOpen,
+  onClose,
+  notification
+}: EditNotificationModalProps) => {
   const { t } = useTranslation(['common', 'form']);
-  const { notify } = useToast();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-
-  const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
-    organizationId: currentEnvironment.organizationId
-  });
-  const environments = (collection?.environments || []).filter(item => item.id);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
-      name: apiKey.name,
-      environmentId: currentEnvironment.id,
-      description: ''
+      name: notification.name,
+      url: '',
+      language: '',
+      role: ''
     }
   });
 
-  const options: APIKeyOption[] = [
+  const languages = [
     {
-      id: 'client-sdk',
-      label: t('form:api-key.client-sdk'),
-      description: t('form:api-key.client-sdk-desc'),
-      value: 'SDK_CLIENT'
+      label: 'English',
+      value: 'en'
+    }
+  ];
+
+  const options: NotificationOption[] = [
+    {
+      id: 'project',
+      label: t('project'),
+      description: t('form:notification-type.project')
     },
     {
-      id: 'server-sdk',
-      label: t('form:api-key.server-sdk'),
-      description: t('form:api-key.server-sdk-desc'),
-      value: 'SDK_SERVER'
+      id: 'environment',
+      label: t('environment'),
+      description: t('form:notification-type.environment')
     },
     {
-      id: 'public-api-read-only',
-      label: t('form:api-key.public-api-read-only'),
-      description: t('form:api-key.public-api-read-only-desc'),
-      value: 'PUBLIC_API_READ_ONLY'
+      id: 'account',
+      label: t('account'),
+      description: t('form:notification-type.account')
     },
     {
-      id: 'public-api-write',
-      label: t('form:api-key.public-api-write'),
-      description: t('form:api-key.public-api-write-desc'),
-      value: 'PUBLIC_API_WRITE'
-    },
-    {
-      id: 'public-api-admin',
-      label: t('form:api-key.public-api-admin'),
-      description: t('form:api-key.public-api-admin-desc'),
-      value: 'PUBLIC_API_ADMIN'
+      id: 'notification',
+      label: t('notification'),
+      description: t('form:notification-type.notification')
     }
   ];
 
   const {
-    getValues,
-    formState: { isValid, isSubmitting, isDirty }
+    formState: { isValid, isSubmitting }
   } = form;
 
-  const onSubmit: SubmitHandler<EditAPIKeyForm> = values => {
-    return apiKeyUpdater({
-      id: apiKey.id,
-      environmentId: values.environmentId,
-      command: {
-        name: values.name
-      }
-    }).then(() => {
-      notify({
-        toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {` has been successfully updated!`}
-          </span>
-        )
-      });
-      invalidateAPIKeys(queryClient);
-      onClose();
-    });
-  };
+  const onSubmit: SubmitHandler<EditNotificationForm> = () => {};
 
   return (
-    <SlideModal title={t('update-api-key')} isOpen={isOpen} onClose={onClose}>
+    <SlideModal
+      title={t('edit-notification')}
+      isOpen={isOpen}
+      onClose={onClose}
+    >
       <div className="w-full p-5 pb-28">
+        <div className="typo-para-small text-gray-600 mb-3">
+          {t('new-notification-subtitle')}
+        </div>
         <p className="text-gray-800 typo-head-bold-small">
           {t('form:general-info')}
         </p>
@@ -155,15 +128,17 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
                 </Form.Item>
               )}
             />
-                       <Form.Field
+            <Form.Field
               control={form.control}
-              name="name"
+              name="url"
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label required>{t('name')}</Form.Label>
+                  <Form.Label required>
+                    {t('slack-incoming-webhook')}
+                  </Form.Label>
                   <Form.Control>
                     <Input
-                      placeholder={`${t('form:placeholder-name')}`}
+                      placeholder={`${t('form:placeholder-url')}`}
                       {...field}
                     />
                   </Form.Control>
@@ -171,43 +146,18 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
                 </Form.Item>
               )}
             />
-            <Form.Field
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <Form.Item>
-                  <Form.Label optional>{t('form:description')}</Form.Label>
-                  <Form.Control>
-                    <TextArea
-                      placeholder={t('form:placeholder-desc')}
-                      rows={4}
-                      {...field}
-                    />
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            /> 
 
-            <p className="text-gray-800 typo-head-bold-small">
-              {t('environment')}
-            </p>
             <Form.Field
               control={form.control}
-              name={`environmentId`}
+              name={`language`}
               render={({ field }) => (
                 <Form.Item className="py-2">
-                  <Form.Label required>{t('environment')}</Form.Label>
+                  <Form.Label required>{t('language')}</Form.Label>
                   <Form.Control>
                     <DropdownMenu>
                       <DropdownMenuTrigger
-                        placeholder={t(`form:select-environment`)}
-                        label={
-                          environments.find(
-                            item => item.id === getValues('environmentId')
-                          )?.name
-                        }
-                        disabled={isLoadingEnvs}
+                        placeholder={t(`form:select-language`)}
+                        label=""
                         variant="secondary"
                         className="w-full"
                       />
@@ -216,12 +166,12 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
                         align="start"
                         {...field}
                       >
-                        {environments.map((item, index) => (
+                        {languages.map((item, index) => (
                           <DropdownMenuItem
                             {...field}
                             key={index}
-                            value={item.id}
-                            label={item.name}
+                            value={item.value}
+                            label={item.label}
                             onSelectOption={value => {
                               field.onChange(value);
                             }}
@@ -235,34 +185,44 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
               )}
             />
 
-            <div className="flex items-center gap-2 mt-4">
-              <p className="text-gray-800 typo-head-bold-small">
-                {t('key-role')}
-              </p>
-              <Icon
-                size="xs"
-                icon={IconInfo}
-                color="gray-500"
-                className="mt-0.5"
-              />
-            </div>
+            <Divider className="my-3" />
+            <p className="text-gray-800 typo-head-bold-small mb-4">
+              {t('types')}
+            </p>
 
-            <RadioGroup defaultValue={apiKey.role}>
-              {options.map(({ id, label, description, value }) => (
-                <div
-                  key={id}
-                  className="flex items-center last:border-b-0 border-b py-4 gap-x-5"
-                >
-                  <label htmlFor={id} className="flex-1 opacity-50">
-                    <p className="typo-para-medium text-gray-700">{label}</p>
-                    <p className="typo-para-small text-gray-600">
-                      {description}
-                    </p>
-                  </label>
-                  <RadioGroupItem disabled value={value} id={id} />
-                </div>
-              ))}
-            </RadioGroup>
+            <SearchInput
+              value=""
+              onChange={() => {}}
+              placeholder={t(`form:search-notification-type`)}
+            />
+
+            <div className="mt-4 flex items-center justify-between">
+              <div className="typo-para-tiny text-gray-500 uppercase">
+                {t('all-types-selected', { count: 2 })}
+              </div>
+              <Checkbox />
+            </div>
+            <Divider className="mt-3" />
+
+            {options.map(({ id, label, description }) => (
+              <div key={id} className="flex items-center py-3 gap-x-5">
+                <label htmlFor={id} className="flex-1 cursor-pointer">
+                  <p className="typo-para-medium text-gr ay-700">{label}</p>
+                  <p className="typo-para-small text-gray-600">{description}</p>
+                </label>
+                <Form.Field
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <Form.Item>
+                      <Form.Control>
+                        <Checkbox {...field} />
+                      </Form.Control>
+                    </Form.Item>
+                  )}
+                />
+              </div>
+            ))}
 
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar
@@ -274,7 +234,7 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!isValid || !isDirty}
+                    disabled={!isValid}
                     loading={isSubmitting}
                   >
                     {t(`submit`)}
@@ -289,4 +249,4 @@ const EditAPIKeyModal = ({ isOpen, onClose, apiKey }: EditAPIKeyModalProps) => {
   );
 };
 
-export default EditAPIKeyModal;
+export default EditNotificationModal;

@@ -47,7 +47,7 @@ const triggerVariants = cva(
       variant: 'secondary'
     }
   }
-); 
+);
 
 const DropdownMenuTrigger = forwardRef<
   ElementRef<typeof DropdownMenuPrimitive.Trigger>,

@@ -49,7 +49,7 @@ const CollectionLoader = ({
       orderDirection: sorting[0]?.desc ? 'DESC' : 'ASC'
     });
   };
- 
+
   const apiKeys = collection?.accounts || [];
   const totalCount = Number(collection?.totalCount) || 0;
 

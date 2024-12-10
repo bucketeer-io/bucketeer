@@ -9,7 +9,9 @@ export const EmptyCollection = ({ onAdd }: { onAdd: () => void }) => {
     <EmptyState.Root variant="no-data" size="lg">
       <EmptyState.Illustration />
       <EmptyState.Body>
-        <EmptyState.Title>{t(`table:empty.notification-title`)}</EmptyState.Title>
+        <EmptyState.Title>
+          {t(`table:empty.notification-title`)}
+        </EmptyState.Title>
         <EmptyState.Description>
           {t(`table:empty.notification-desc`)}
         </EmptyState.Description>

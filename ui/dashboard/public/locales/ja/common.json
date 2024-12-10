@@ -83,7 +83,7 @@
   "slack": "Slack",
   "slack-subtitle": "Manage all notifications within the platform",
   "new-notification": "New Notification",
-  "new-notification-subtile": "A notification lets you know when someone adds or updates something on the admin console and operational tasks status.",
+  "new-notification-subtitle": "A notification lets you know when someone adds or updates something on the admin console and operational tasks status.",
   "slack-incoming-webhook": "Slack Incoming Webhook URL",
   "notification-language": "Notification Language",
   "all-types-selected": "All Types ({{count}} selected)"
