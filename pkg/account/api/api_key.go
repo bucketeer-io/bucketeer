@@ -525,6 +525,16 @@ func (s *AccountService) ListAPIKeys(
 	if err != nil {
 		return nil, err
 	}
+	if len(req.EnvironmentIds) == 0 && req.OrganizationId == "" {
+		dt, err := statusInvalidListAPIKeyRequest.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_ids or organization_id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
 	whereParts := []mysql.WherePart{}
 	if len(req.EnvironmentIds) > 0 {
 		environmentIds := make([]interface{}, 0, len(req.EnvironmentIds))

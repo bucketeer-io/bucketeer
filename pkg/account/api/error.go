@@ -58,4 +58,5 @@ var (
 	)
 	statusSearchFilterIDIsEmpty  = gstatus.New(codes.InvalidArgument, "account: search filter ID is empty")
 	statusSearchFilterIDNotFound = gstatus.New(codes.InvalidArgument, "account: search filter ID not found")
+	statusInvalidListAPIKeyRequest = gstatus.New(codes.InvalidArgument, "account: invalid list api key request")
 )
