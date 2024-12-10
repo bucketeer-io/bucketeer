@@ -131,7 +131,7 @@ func (s *grpcGatewayService) UpdateAccountV2(
 	}
 
 	// enable account
-	if request.Deleted != nil && !request.Deleted.Value {
+	if request.Disabled != nil && !request.Disabled.Value {
 		_, err := s.accountClient.EnableAccountV2(
 			ctx,
 			&accountproto.EnableAccountV2Request{

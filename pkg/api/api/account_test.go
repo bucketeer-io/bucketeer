@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	accountclientmock "github.com/bucketeer-io/bucketeer/pkg/account/client/mock"
 	cachev3mock "github.com/bucketeer-io/bucketeer/pkg/cache/v3/mock"
@@ -117,6 +118,7 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 	patterns := []struct {
 		desc        string
 		ctx         context.Context
+		req         *gwproto.UpdateAccountV2Request
 		setup       func(*grpcGatewayService)
 		expected    *gwproto.UpdateAccountV2Response
 		expectedErr error
@@ -134,6 +136,7 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 						},
 					}, nil)
 			},
+			req:         &gwproto.UpdateAccountV2Request{},
 			expected:    nil,
 			expectedErr: ErrBadRole,
 		},
@@ -152,6 +155,7 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 				gs.accountClient.(*accountclientmock.MockClient).EXPECT().UpdateAccountV2(gomock.Any(), gomock.Any()).Return(
 					nil, ErrInternal)
 			},
+			req:         &gwproto.UpdateAccountV2Request{},
 			expected:    nil,
 			expectedErr: ErrInternal,
 		},
@@ -170,11 +174,81 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 				gs.accountClient.(*accountclientmock.MockClient).EXPECT().UpdateAccountV2(gomock.Any(), gomock.Any()).Return(
 					nil, ErrAccountNotFound)
 			},
+			req:         &gwproto.UpdateAccountV2Request{},
 			expected:    nil,
 			expectedErr: ErrAccountNotFound,
 		},
 		{
-			desc: "Success",
+			desc: "Success: delete account",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
+							Disabled: false,
+						},
+					}, nil)
+				gs.accountClient.(*accountclientmock.MockClient).EXPECT().DeleteAccountV2(gomock.Any(), gomock.Any()).Return(
+					nil, nil)
+			},
+			req: &gwproto.UpdateAccountV2Request{
+				Deleted:        wrapperspb.Bool(true),
+				Email:          "test@bucketeer.io",
+				OrganizationId: "org-0",
+			},
+			expected:    &gwproto.UpdateAccountV2Response{},
+			expectedErr: nil,
+		},
+		{
+			desc: "Success: disable account",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
+							Disabled: false,
+						},
+					}, nil)
+				gs.accountClient.(*accountclientmock.MockClient).EXPECT().DisableAccountV2(gomock.Any(), gomock.Any()).Return(
+					nil, nil)
+			},
+			req: &gwproto.UpdateAccountV2Request{
+				Disabled:       wrapperspb.Bool(true),
+				Email:          "test@bucketeer.io",
+				OrganizationId: "org-0",
+			},
+			expected:    &gwproto.UpdateAccountV2Response{},
+			expectedErr: nil,
+		},
+		{
+			desc: "Success: enable account",
+			setup: func(gs *grpcGatewayService) {
+				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
+					&accountproto.EnvironmentAPIKey{
+						Environment: &environmentproto.EnvironmentV2{Id: "ns0"},
+						ApiKey: &accountproto.APIKey{
+							Id:       "id-0",
+							Role:     accountproto.APIKey_PUBLIC_API_WRITE,
+							Disabled: false,
+						},
+					}, nil)
+				gs.accountClient.(*accountclientmock.MockClient).EXPECT().EnableAccountV2(gomock.Any(), gomock.Any()).Return(
+					nil, nil)
+			},
+			req: &gwproto.UpdateAccountV2Request{
+				Disabled:       wrapperspb.Bool(false),
+				Email:          "test@bucketeer.io",
+				OrganizationId: "org-0",
+			},
+			expected:    &gwproto.UpdateAccountV2Response{},
+			expectedErr: nil,
+		},
+		{
+			desc: "Success: update account",
 			setup: func(gs *grpcGatewayService) {
 				gs.environmentAPIKeyCache.(*cachev3mock.MockEnvironmentAPIKeyCache).EXPECT().Get(gomock.Any()).Return(
 					&accountproto.EnvironmentAPIKey{
@@ -189,17 +263,22 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 					&accountproto.UpdateAccountV2Response{
 						Account: &accountproto.AccountV2{
 							Email:            "demo@bucketeer.io",
-							FirstName:        "firstName",
+							FirstName:        "newFirstName",
 							LastName:         "lastName",
 							OrganizationId:   "org-0",
 							OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
 						},
 					}, nil)
 			},
+			req: &gwproto.UpdateAccountV2Request{
+				Email:          "demo@bucketeer.io",
+				OrganizationId: "org-0",
+				FirstName:      wrapperspb.String("newFirstName"),
+			},
 			expected: &gwproto.UpdateAccountV2Response{
 				Account: &accountproto.AccountV2{
 					Email:            "demo@bucketeer.io",
-					FirstName:        "firstName",
+					FirstName:        "newFirstName",
 					LastName:         "lastName",
 					OrganizationId:   "org-0",
 					OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
@@ -214,7 +293,7 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 			ctx := metadata.NewIncomingContext(context.TODO(), metadata.MD{
 				"authorization": []string{"test-key"},
 			})
-			actual, err := gs.UpdateAccountV2(ctx, &gwproto.UpdateAccountV2Request{})
+			actual, err := gs.UpdateAccountV2(ctx, p.req)
 			assert.Equal(t, p.expected, actual, "%s", p.desc)
 			assert.Equal(t, p.expectedErr, err, "%s", p.desc)
 		})
