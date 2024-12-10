@@ -1,0 +1,14 @@
+.DS_Store
+
+node_modules
+yarn-error.log
+lib
+__dist
+__lib
+__test
+__e2e
+dist
+.vscode/launch.json
+src/google/
+src/protoc-gen-openapiv2/ 
+src/proto/

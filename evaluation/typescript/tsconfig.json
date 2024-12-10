@@ -1,0 +1,43 @@
+{
+  "compilerOptions": {
+		"module": "node16",
+		"moduleResolution": "node16",
+		"moduleDetection": "force",
+		"target": "ES2022", // Node.js 18
+		"lib": [
+			"DOM",
+			"DOM.Iterable",
+			"ES2022"
+		],
+		"resolveJsonModule": false, // ESM doesn't yet support JSON modules.
+		"jsx": "react",
+		"declaration": true,
+		"newLine": "lf",
+		"stripInternal": true,
+		"strict": true,
+		"noImplicitReturns": true,
+		"noImplicitOverride": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": true,
+		"noPropertyAccessFromIndexSignature": true,
+		"noEmitOnError": true,
+		"useDefineForClassFields": true,
+		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
+    "outDir": "./__lib/",
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "./src/**/*",
+  ],
+  "exclude": [
+    "./src/**/__tests__/*",
+  ],
+  /* Module Resolution Options */
+  /* Advanced Options */
+  "pretty": true,
+}

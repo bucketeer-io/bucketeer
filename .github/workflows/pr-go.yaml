@@ -8,6 +8,7 @@ on:
     paths-ignore:
       - "ui/**"
       - "**/**.md"
+      - "evaluation/typescript/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
