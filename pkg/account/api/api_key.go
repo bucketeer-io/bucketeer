@@ -519,16 +519,16 @@ func (s *AccountService) ListAPIKeys(
 	req *proto.ListAPIKeysRequest,
 ) (*proto.ListAPIKeysResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(
-		ctx, proto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+	_, err := s.checkOrganizationRole(
+		ctx, proto.AccountV2_Role_Organization_MEMBER,
+		req.OrganizationId, localizer)
 	if err != nil {
 		return nil, err
 	}
-	if len(req.EnvironmentIds) == 0 && req.OrganizationId == "" {
+	if req.OrganizationId == "" {
 		dt, err := statusInvalidListAPIKeyRequest.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_ids or organization_id"),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id"),
 		})
 		if err != nil {
 			return nil, statusInternal.Err()
@@ -536,15 +536,13 @@ func (s *AccountService) ListAPIKeys(
 		return nil, dt.Err()
 	}
 	whereParts := []mysql.WherePart{}
+	whereParts = append(whereParts, mysql.NewFilter("environment_v2.organization_id", "=", req.OrganizationId))
 	if len(req.EnvironmentIds) > 0 {
 		environmentIds := make([]interface{}, 0, len(req.EnvironmentIds))
 		for _, id := range req.EnvironmentIds {
 			environmentIds = append(environmentIds, id)
 		}
 		whereParts = append(whereParts, mysql.NewInFilter("api_key.environment_id", environmentIds))
-	}
-	if req.OrganizationId != "" {
-		whereParts = append(whereParts, mysql.NewFilter("environment_v2.organization_id", "=", req.OrganizationId))
 	}
 	if req.Disabled != nil {
 		whereParts = append(whereParts, mysql.NewFilter("api_key.disabled", "=", req.Disabled.Value))
