@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"strconv"
+	"time"
 
 	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
@@ -686,6 +687,10 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 		}
 		return nil, dt.Err()
 	}
+	s.logger.Debug(
+		"Project list",
+		zap.Any("projectList", projects),
+	)
 	environments, err := s.listEnvironments(ctx)
 	if err != nil {
 		s.logger.Error(
@@ -715,15 +720,26 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 		}
 		return nil, dt.Err()
 	}
+	s.logger.Debug(
+		"Environment list",
+		zap.Any("environmentList", environments),
+	)
 	projectSet := s.makeProjectSet(projects)
 	for _, e := range environments {
 		p, ok := projectSet[e.ProjectId]
 		if !ok || p.Disabled {
 			continue
 		}
-		apiKey, err := s.accountStorage.GetAPIKeyByAPIKey(ctx, req.ApiKey, e.Id)
+		start := time.Now()
+		apiKey, err := s.accountStorage.GetAPIKeyByAPIKey(context.TODO(), req.ApiKey, e.Id)
 		if err != nil {
 			if errors.Is(err, v2as.ErrAPIKeyNotFound) {
+				s.logger.Debug(
+					"API Key not found",
+					zap.String("environmentId", e.Id),
+					zap.String("apiKey", req.ApiKey),
+					zap.Duration("elapsed", time.Since(start)),
+				)
 				continue
 			}
 			s.logger.Error(
@@ -731,6 +747,8 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", e.Id),
+					zap.String("apiKey", req.ApiKey),
+					zap.Duration("elapsed", time.Since(start)),
 				)...,
 			)
 			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
