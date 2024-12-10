@@ -49,9 +49,7 @@ type AutoOpsRuleStorage interface {
 	GetAutoOpsRule(ctx context.Context, id, environmentId string) (*domain.AutoOpsRule, error)
 	ListAutoOpsRules(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
+		options *mysql.ListOptions,
 	) ([]*proto.AutoOpsRule, int, error)
 }
 
@@ -154,13 +152,22 @@ func (s *autoOpsRuleStorage) GetAutoOpsRule(
 
 func (s *autoOpsRuleStorage) ListAutoOpsRules(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 ) ([]*proto.AutoOpsRule, int, error) {
+	var whereParts []mysql.WherePart = []mysql.WherePart{}
+	var orderBySQL string = ""
+	var limitOffsetSQL string = ""
+	var limit int = 0
+	var offset int = 0
+	if options != nil {
+		whereParts = options.CreateWhereParts()
+		orderBySQL = mysql.ConstructOrderBySQLString(options.Orders)
+		limitOffsetSQL = mysql.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
+		limit = options.Limit
+		offset = options.Offset
+	}
+
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	query := fmt.Sprintf(selectAutoOpsRulesSQL, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
