@@ -561,6 +561,13 @@ func (s *gatewayService) findEnvironmentAPIKey(
 	if err == nil {
 		return envAPIKey, nil
 	}
+	s.logger.Info(
+		"API key not found in the cache",
+		log.FieldsFromImcomingContext(ctx).AddFields(
+			zap.Error(err),
+			zap.String("apiKey", obfuscateString(id, obfuscateAPIKeyLength)),
+		)...,
+	)
 	k, err, _ := s.flightgroup.Do(
 		id,
 		func() (interface{}, error) {

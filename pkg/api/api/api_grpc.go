@@ -51,6 +51,7 @@ const (
 	listRequestSize         = 500
 	secondsToReturnAllFlags = 30 * 24 * 60 * 60 // 30 days
 	secondsForAdjustment    = 10                // 10 seconds
+	obfuscateAPIKeyLength   = 4
 )
 
 var (
@@ -1462,6 +1463,13 @@ func (s *grpcGatewayService) getEnvironmentAPIKey(
 			if err == nil {
 				return envAPIKey, nil
 			}
+			s.logger.Info(
+				"API key not found in the cache",
+				log.FieldsFromImcomingContext(ctx).AddFields(
+					zap.Error(err),
+					zap.String("apiKey", obfuscateString(apiKey, obfuscateAPIKeyLength)),
+				)...,
+			)
 			// No cache
 			envAPIKey, err = getEnvironmentAPIKey(
 				ctx,
@@ -1562,6 +1570,16 @@ func contains[T comparable](s []T, e T) bool {
 		}
 	}
 	return false
+}
+
+// obfuscateString obfuscates the input string by showing the first n characters,
+// replacing the middle with dots, and showing the last n characters.
+func obfuscateString(input string, showLength int) string {
+	// If the string length is exactly 2 * showLength, obfuscate with dots in the middle
+	if len(input) > showLength*2 {
+		return input[:showLength] + "...." + input[len(input)-showLength:]
+	}
+	return input
 }
 
 func isContextCanceled(ctx context.Context) bool {
