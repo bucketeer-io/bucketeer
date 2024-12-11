@@ -14,7 +14,7 @@ export function useSearchParams() {
 
   const onChangSearchParams = useCallback(
     (options: Record<string, string | number | boolean>) => {
-      navigate(`${location.pathname}?${stringifySearchParams(options)}`, {
+      navigate(`${location.pathname}?${stringifyParams(options)}`, {
         replace: true
       });
     },
@@ -24,4 +24,4 @@ export function useSearchParams() {
   return { searchOptions, onChangSearchParams };
 }
 
-export const stringifySearchParams = queryString.stringify;
+export const stringifyParams = queryString.stringify;

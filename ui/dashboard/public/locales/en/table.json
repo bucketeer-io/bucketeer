@@ -15,7 +15,9 @@
     "delete-member": "Delete Member",
     "disable-member": "Disable Member",
     "enable-member": "Enable Member",
-    "add-to-env": "Add to Environment"
+    "add-to-env": "Add to Environment",
+    "disable-api-key": "Disable API Key",
+    "enable-api-key": "Enable API Key"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -42,5 +44,9 @@
     "delete-member-desc": "The member \"<bold>{{email}}</bold>\" will be deleted permanently. Are you sure you want to proceed?",
     "confirm-enable-desc": "The member \"<bold>{{email}}</bold>\" will be enabled. Are you sure you want to proceed?",
     "confirm-disable-desc": "The member \"<bold>{{email}}</bold>\" will be disabled. Are you sure you want to proceed?"
+  },
+  "api-key": {
+    "confirm-enable-desc": "The API key \"<bold>{{name}}</bold>\" will be enabled. Are you sure you want to proceed?",
+    "confirm-disable-desc": "The API key \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?"
   }
 }
