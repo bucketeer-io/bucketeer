@@ -966,7 +966,7 @@ paths:
           collectionFormat: multi
         - name: organizationId
           in: query
-          required: false
+          required: true
           type: string
       tags:
         - API Key
