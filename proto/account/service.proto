@@ -19,6 +19,7 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/account";
 
 import "google/protobuf/wrappers.proto";
 import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 import "proto/account/account.proto";
@@ -258,7 +259,7 @@ message ListAPIKeysRequest {
   google.protobuf.BoolValue disabled = 7;
   string environment_id = 8 [deprecated = true];
   repeated string environment_ids = 9;
-  string organization_id = 10;
+  string organization_id = 10 [(google.api.field_behavior) = REQUIRED];
 }
 
 message ListAPIKeysResponse {
