@@ -28,15 +28,6 @@ PushService.CreatePush = {
   responseType: proto_push_service_pb.CreatePushResponse
 };
 
-PushService.DeletePush = {
-  methodName: 'DeletePush',
-  service: PushService,
-  requestStream: false,
-  responseStream: false,
-  requestType: proto_push_service_pb.DeletePushRequest,
-  responseType: proto_push_service_pb.DeletePushResponse
-};
-
 PushService.UpdatePush = {
   methodName: 'UpdatePush',
   service: PushService,
@@ -53,6 +44,15 @@ PushService.GetPush = {
   responseStream: false,
   requestType: proto_push_service_pb.GetPushRequest,
   responseType: proto_push_service_pb.GetPushResponse
+};
+
+PushService.DeletePush = {
+  methodName: 'DeletePush',
+  service: PushService,
+  requestStream: false,
+  responseStream: false,
+  requestType: proto_push_service_pb.DeletePushRequest,
+  responseType: proto_push_service_pb.DeletePushResponse
 };
 
 exports.PushService = PushService;
@@ -132,41 +132,6 @@ PushServiceClient.prototype.createPush = function createPush(
   };
 };
 
-PushServiceClient.prototype.deletePush = function deletePush(
-  requestMessage,
-  metadata,
-  callback
-) {
-  if (arguments.length === 2) {
-    callback = arguments[1];
-  }
-  var client = grpc.unary(PushService.DeletePush, {
-    request: requestMessage,
-    host: this.serviceHost,
-    metadata: metadata,
-    transport: this.options.transport,
-    debug: this.options.debug,
-    onEnd: function (response) {
-      if (callback) {
-        if (response.status !== grpc.Code.OK) {
-          var err = new Error(response.statusMessage);
-          err.code = response.status;
-          err.metadata = response.trailers;
-          callback(err, null);
-        } else {
-          callback(null, response.message);
-        }
-      }
-    }
-  });
-  return {
-    cancel: function () {
-      callback = null;
-      client.close();
-    }
-  };
-};
-
 PushServiceClient.prototype.updatePush = function updatePush(
   requestMessage,
   metadata,
@@ -211,6 +176,41 @@ PushServiceClient.prototype.getPush = function getPush(
     callback = arguments[1];
   }
   var client = grpc.unary(PushService.GetPush, {
+    request: requestMessage,
+    host: this.serviceHost,
+    metadata: metadata,
+    transport: this.options.transport,
+    debug: this.options.debug,
+    onEnd: function (response) {
+      if (callback) {
+        if (response.status !== grpc.Code.OK) {
+          var err = new Error(response.statusMessage);
+          err.code = response.status;
+          err.metadata = response.trailers;
+          callback(err, null);
+        } else {
+          callback(null, response.message);
+        }
+      }
+    }
+  });
+  return {
+    cancel: function () {
+      callback = null;
+      client.close();
+    }
+  };
+};
+
+PushServiceClient.prototype.deletePush = function deletePush(
+  requestMessage,
+  metadata,
+  callback
+) {
+  if (arguments.length === 2) {
+    callback = arguments[1];
+  }
+  var client = grpc.unary(PushService.DeletePush, {
     request: requestMessage,
     host: this.serviceHost,
     metadata: metadata,
