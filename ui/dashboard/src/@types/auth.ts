@@ -1,3 +1,4 @@
+import { SearchFilter } from './account';
 import { Environment } from './environment';
 import { Organization, OrganizationRole } from './organization';
 import { Project } from './project';
@@ -53,9 +54,17 @@ export interface ConsoleAccount {
   name: string;
   avatarUrl: string;
   isSystemAdmin: boolean;
-  organization?: Organization;
+  organization: Organization;
   environmentRoles: EnvironmentRole[];
   organizationRole: OrganizationRole;
+  firstName: string;
+  lastName: string;
+  language: string;
+  lastSeen: string;
+  avatarImageUrl: string;
+  avatarImage: string;
+  avatarFileType: string;
+  searchFilters: SearchFilter[];
 }
 
 export interface ConsoleAccountResponse {

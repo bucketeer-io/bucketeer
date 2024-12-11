@@ -8,12 +8,16 @@ import { IconBuilding, IconChevronRight, IconLogout, IconUser } from '@icons';
 import { AvatarImage } from 'components/avatar';
 import LogoutConfirmModal from './logout-confirm';
 import MenuItemComponent from './menu-item';
+import UserProfileModal from './user-profile';
 
 const UserMenu = () => {
   const { t } = useTranslation(['common']);
   const { logout, myOrganizations, consoleAccount } = useAuth();
 
   const [openConfirmModal, onOpenConfirmModal, onCloseConfirmModal] =
+    useToggleOpen(false);
+
+  const [openProfileModal, onOpenProfileModal, onCloseProfileModal] =
     useToggleOpen(false);
 
   const avatar = consoleAccount?.avatarUrl
@@ -29,7 +33,7 @@ const UserMenu = () => {
     {
       label: t(`navigation.user-profile`),
       icon: IconUser,
-      onClick: () => {}
+      onClick: onOpenProfileModal
     },
     myOrganizations.length > 1 && {
       label: consoleAccount?.organization?.name || '',
@@ -62,6 +66,13 @@ const UserMenu = () => {
           isOpen={openConfirmModal}
           onClose={onCloseConfirmModal}
           onSubmit={onHandleLogout}
+        />
+      )}
+
+      {openProfileModal && (
+        <UserProfileModal
+          isOpen={openProfileModal}
+          onClose={onCloseProfileModal}
         />
       )}
     </Popover.Root>

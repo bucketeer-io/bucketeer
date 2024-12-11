@@ -147,5 +147,6 @@
   "status": "Status",
   "flags-connected": "Flags Connected",
   "flags-connected-desc": "This user segment is currently connected to the following feature flags:",
-  "close": "Close"
+  "close": "Close",
+  "edit-profile": "Edit Profile"
 }
