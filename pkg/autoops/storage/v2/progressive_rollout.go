@@ -65,6 +65,10 @@ type ProgressiveRolloutStorage interface {
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*autoopsproto.ProgressiveRollout, int64, int, error)
+	ListProgressiveRolloutsV2(
+		ctx context.Context,
+		options *mysql.ListOptions,
+	) ([]*autoopsproto.ProgressiveRollout, int64, int, error)
 	UpdateProgressiveRollout(ctx context.Context,
 		progressiveRollout *domain.ProgressiveRollout,
 		environmentId string,
@@ -197,6 +201,63 @@ func (s *progressiveRolloutStorage) ListProgressiveRollouts(
 	var totalCount int64
 	countQuery := fmt.Sprintf(countOpsProgressiveRolloutsSQL, whereSQL)
 	err = s.client.Qe(ctx).QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	return progressiveRollouts, totalCount, nextOffset, nil
+}
+
+func (s *progressiveRolloutStorage) ListProgressiveRolloutsV2(
+	ctx context.Context,
+	options *mysql.ListOptions,
+) ([]*autoopsproto.ProgressiveRollout, int64, int, error) {
+	println("kaki ListProgressiveRolloutsV2")
+	var whereParts []mysql.WherePart = []mysql.WherePart{}
+	var orderBySQL string = ""
+	var limitOffsetSQL string = ""
+	var limit int = 0
+	var offset int = 0
+	if options != nil {
+		whereParts = options.CreateWhereParts()
+		orderBySQL = mysql.ConstructOrderBySQLString(options.Orders)
+		limitOffsetSQL = mysql.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
+		limit = options.Limit
+		offset = options.Offset
+	}
+
+	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
+	query := fmt.Sprintf(selectOpsProgressiveRolloutsSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	defer rows.Close()
+	progressiveRollouts := make([]*autoopsproto.ProgressiveRollout, 0, limit)
+	for rows.Next() {
+		progressiveRollout := autoopsproto.ProgressiveRollout{}
+		err := rows.Scan(
+			&progressiveRollout.Id,
+			&progressiveRollout.FeatureId,
+			&mysql.JSONObject{Val: &progressiveRollout.Clause},
+			&progressiveRollout.Status,
+			&progressiveRollout.StoppedBy,
+			&progressiveRollout.Type,
+			&progressiveRollout.StoppedAt,
+			&progressiveRollout.CreatedAt,
+			&progressiveRollout.UpdatedAt,
+		)
+		if err != nil {
+			return nil, 0, 0, err
+		}
+		progressiveRollouts = append(progressiveRollouts, &progressiveRollout)
+	}
+	if rows.Err() != nil {
+		return nil, 0, 0, err
+	}
+	nextOffset := offset + len(progressiveRollouts)
+	var totalCount int64
+	countQuery := fmt.Sprintf(countOpsProgressiveRolloutsSQL, whereSQL)
+	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err
 	}
