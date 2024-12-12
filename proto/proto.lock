@@ -1788,6 +1788,26 @@
             ]
           },
           {
+            "name": "GetEnvironmentAPIKeyRequest",
+            "fields": [
+              {
+                "id": 2,
+                "name": "api_key",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetEnvironmentAPIKeyResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_api_key",
+                "type": "EnvironmentAPIKey"
+              }
+            ]
+          },
+          {
             "name": "CreateSearchFilterRequest",
             "fields": [
               {
@@ -4478,6 +4498,133 @@
                       {
                         "name": "body",
                         "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get Environment API Key"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get an environment API Key."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "API Key"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.account.get_environment_api_key"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetEnvironmentAPIKey",
+                "in_type": "GetEnvironmentAPIKeyRequest",
+                "out_type": "GetEnvironmentAPIKeyResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/account/get_environment_api_key"
                       }
                     ]
                   },

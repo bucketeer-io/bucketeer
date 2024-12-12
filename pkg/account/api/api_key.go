@@ -783,6 +783,62 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 	return nil, dt.Err()
 }
 
+func (s *AccountService) GetEnvironmentAPIKey(
+	ctx context.Context,
+	req *proto.GetEnvironmentAPIKeyRequest,
+) (*proto.GetEnvironmentAPIKeyResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	_, err := s.checkSystemAdminRole(ctx, localizer)
+	if err != nil {
+		return nil, err
+	}
+	if req.ApiKey == "" {
+		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	envAPIKey, err := s.accountStorage.GetEnvironmentAPIKey(ctx, req.ApiKey)
+	if err != nil {
+		if errors.Is(err, v2as.ErrAPIKeyNotFound) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to get environment api key",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("apiKey", req.ApiKey),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	// for security, obfuscate the returned key
+	shadowLen := int(float64(len(envAPIKey.ApiKey.ApiKey)) * apiKeyShadowPercentage)
+	envAPIKey.ApiKey.ApiKey = envAPIKey.ApiKey.ApiKey[shadowLen:]
+
+	return &proto.GetEnvironmentAPIKeyResponse{
+		EnvironmentApiKey: envAPIKey.EnvironmentAPIKey,
+	}, nil
+}
+
 func (s *AccountService) UpdateAPIKey(
 	ctx context.Context,
 	req *proto.UpdateAPIKeyRequest,

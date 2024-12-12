@@ -166,6 +166,15 @@ type AccountServiceGetAPIKeyBySearchingAllEnvironments = {
   readonly responseType: typeof proto_account_service_pb.GetAPIKeyBySearchingAllEnvironmentsResponse;
 };
 
+type AccountServiceGetEnvironmentAPIKey = {
+  readonly methodName: string;
+  readonly service: typeof AccountService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_account_service_pb.GetEnvironmentAPIKeyRequest;
+  readonly responseType: typeof proto_account_service_pb.GetEnvironmentAPIKeyResponse;
+};
+
 type AccountServiceCreateSearchFilter = {
   readonly methodName: string;
   readonly service: typeof AccountService;
@@ -222,6 +231,7 @@ export class AccountService {
   static readonly GetAPIKey: AccountServiceGetAPIKey;
   static readonly ListAPIKeys: AccountServiceListAPIKeys;
   static readonly GetAPIKeyBySearchingAllEnvironments: AccountServiceGetAPIKeyBySearchingAllEnvironments;
+  static readonly GetEnvironmentAPIKey: AccountServiceGetEnvironmentAPIKey;
   static readonly CreateSearchFilter: AccountServiceCreateSearchFilter;
   static readonly UpdateSearchFilter: AccountServiceUpdateSearchFilter;
   static readonly DeleteSearchFilter: AccountServiceDeleteSearchFilter;
@@ -541,6 +551,21 @@ export class AccountServiceClient {
     callback: (
       error: ServiceError | null,
       responseMessage: proto_account_service_pb.GetAPIKeyBySearchingAllEnvironmentsResponse | null
+    ) => void
+  ): UnaryResponse;
+  getEnvironmentAPIKey(
+    requestMessage: proto_account_service_pb.GetEnvironmentAPIKeyRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_account_service_pb.GetEnvironmentAPIKeyResponse | null
+    ) => void
+  ): UnaryResponse;
+  getEnvironmentAPIKey(
+    requestMessage: proto_account_service_pb.GetEnvironmentAPIKeyRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_account_service_pb.GetEnvironmentAPIKeyResponse | null
     ) => void
   ): UnaryResponse;
   createSearchFilter(

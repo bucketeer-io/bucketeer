@@ -43,6 +43,8 @@ type AccountStorage interface {
 	UpdateAPIKey(ctx context.Context, k *domain.APIKey, environmentID string) error
 	GetAPIKey(ctx context.Context, id, environmentID string) (*domain.APIKey, error)
 	GetAPIKeyByAPIKey(ctx context.Context, apiKey string, environmentID string) (*domain.APIKey, error)
+	GetEnvironmentAPIKey(ctx context.Context, apiKey string) (*domain.EnvironmentAPIKey, error)
+	ListAllEnvironmentAPIKeys(ctx context.Context) ([]*domain.EnvironmentAPIKey, error)
 	ListAPIKeys(
 		ctx context.Context,
 		whereParts []mysql.WherePart,

@@ -278,6 +278,14 @@ message GetAPIKeyBySearchingAllEnvironmentsResponse {
   EnvironmentAPIKey environment_api_key = 1;
 }
 
+message GetEnvironmentAPIKeyRequest {
+  string api_key = 2;
+}
+
+message GetEnvironmentAPIKeyResponse {
+  EnvironmentAPIKey environment_api_key = 1;
+}
+
 message CreateSearchFilterRequest {
   string email = 1;
   string organization_id = 2;
@@ -989,6 +997,40 @@ service AccountService {
     option (google.api.http) = {
       post: "/v1/account/get_environment_api_key"
       body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get Environment API Key",
+      description: "Get an environment API Key.",
+      tags: "API Key",
+      operation_id: "web.v1.account.get_environment_api_key",
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc GetEnvironmentAPIKey(GetEnvironmentAPIKeyRequest)
+      returns (GetEnvironmentAPIKeyResponse) {
+    option (google.api.http) = {
+      get: "/v1/account/get_environment_api_key"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Environment API Key",

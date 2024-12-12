@@ -334,6 +334,26 @@ func (mr *MockClientMockRecorder) GetAccountV2ByEnvironmentID(ctx, in any, opts 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountV2ByEnvironmentID", reflect.TypeOf((*MockClient)(nil).GetAccountV2ByEnvironmentID), varargs...)
 }
 
+// GetEnvironmentAPIKey mocks base method.
+func (m *MockClient) GetEnvironmentAPIKey(ctx context.Context, in *account.GetEnvironmentAPIKeyRequest, opts ...grpc.CallOption) (*account.GetEnvironmentAPIKeyResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetEnvironmentAPIKey", varargs...)
+	ret0, _ := ret[0].(*account.GetEnvironmentAPIKeyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEnvironmentAPIKey indicates an expected call of GetEnvironmentAPIKey.
+func (mr *MockClientMockRecorder) GetEnvironmentAPIKey(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnvironmentAPIKey", reflect.TypeOf((*MockClient)(nil).GetEnvironmentAPIKey), varargs...)
+}
+
 // GetMe mocks base method.
 func (m *MockClient) GetMe(ctx context.Context, in *account.GetMeRequest, opts ...grpc.CallOption) (*account.GetMeResponse, error) {
 	m.ctrl.T.Helper()

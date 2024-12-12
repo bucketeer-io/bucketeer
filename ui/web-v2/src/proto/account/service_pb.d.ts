@@ -1647,6 +1647,74 @@ export namespace GetAPIKeyBySearchingAllEnvironmentsResponse {
   };
 }
 
+export class GetEnvironmentAPIKeyRequest extends jspb.Message {
+  getApiKey(): string;
+  setApiKey(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetEnvironmentAPIKeyRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: GetEnvironmentAPIKeyRequest
+  ): GetEnvironmentAPIKeyRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: GetEnvironmentAPIKeyRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): GetEnvironmentAPIKeyRequest;
+  static deserializeBinaryFromReader(
+    message: GetEnvironmentAPIKeyRequest,
+    reader: jspb.BinaryReader
+  ): GetEnvironmentAPIKeyRequest;
+}
+
+export namespace GetEnvironmentAPIKeyRequest {
+  export type AsObject = {
+    apiKey: string;
+  };
+}
+
+export class GetEnvironmentAPIKeyResponse extends jspb.Message {
+  hasEnvironmentApiKey(): boolean;
+  clearEnvironmentApiKey(): void;
+  getEnvironmentApiKey():
+    | proto_account_api_key_pb.EnvironmentAPIKey
+    | undefined;
+  setEnvironmentApiKey(
+    value?: proto_account_api_key_pb.EnvironmentAPIKey
+  ): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): GetEnvironmentAPIKeyResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: GetEnvironmentAPIKeyResponse
+  ): GetEnvironmentAPIKeyResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: GetEnvironmentAPIKeyResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): GetEnvironmentAPIKeyResponse;
+  static deserializeBinaryFromReader(
+    message: GetEnvironmentAPIKeyResponse,
+    reader: jspb.BinaryReader
+  ): GetEnvironmentAPIKeyResponse;
+}
+
+export namespace GetEnvironmentAPIKeyResponse {
+  export type AsObject = {
+    environmentApiKey?: proto_account_api_key_pb.EnvironmentAPIKey.AsObject;
+  };
+}
+
 export class CreateSearchFilterRequest extends jspb.Message {
   getEmail(): string;
   setEmail(value: string): void;
