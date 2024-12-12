@@ -157,15 +157,6 @@ type AccountServiceListAPIKeys = {
   readonly responseType: typeof proto_account_service_pb.ListAPIKeysResponse;
 };
 
-type AccountServiceGetAPIKeyBySearchingAllEnvironments = {
-  readonly methodName: string;
-  readonly service: typeof AccountService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_account_service_pb.GetAPIKeyBySearchingAllEnvironmentsRequest;
-  readonly responseType: typeof proto_account_service_pb.GetAPIKeyBySearchingAllEnvironmentsResponse;
-};
-
 type AccountServiceGetEnvironmentAPIKey = {
   readonly methodName: string;
   readonly service: typeof AccountService;
@@ -230,7 +221,6 @@ export class AccountService {
   static readonly DisableAPIKey: AccountServiceDisableAPIKey;
   static readonly GetAPIKey: AccountServiceGetAPIKey;
   static readonly ListAPIKeys: AccountServiceListAPIKeys;
-  static readonly GetAPIKeyBySearchingAllEnvironments: AccountServiceGetAPIKeyBySearchingAllEnvironments;
   static readonly GetEnvironmentAPIKey: AccountServiceGetEnvironmentAPIKey;
   static readonly CreateSearchFilter: AccountServiceCreateSearchFilter;
   static readonly UpdateSearchFilter: AccountServiceUpdateSearchFilter;
@@ -536,21 +526,6 @@ export class AccountServiceClient {
     callback: (
       error: ServiceError | null,
       responseMessage: proto_account_service_pb.ListAPIKeysResponse | null
-    ) => void
-  ): UnaryResponse;
-  getAPIKeyBySearchingAllEnvironments(
-    requestMessage: proto_account_service_pb.GetAPIKeyBySearchingAllEnvironmentsRequest,
-    metadata: grpc.Metadata,
-    callback: (
-      error: ServiceError | null,
-      responseMessage: proto_account_service_pb.GetAPIKeyBySearchingAllEnvironmentsResponse | null
-    ) => void
-  ): UnaryResponse;
-  getAPIKeyBySearchingAllEnvironments(
-    requestMessage: proto_account_service_pb.GetAPIKeyBySearchingAllEnvironmentsRequest,
-    callback: (
-      error: ServiceError | null,
-      responseMessage: proto_account_service_pb.GetAPIKeyBySearchingAllEnvironmentsResponse | null
     ) => void
   ): UnaryResponse;
   getEnvironmentAPIKey(
