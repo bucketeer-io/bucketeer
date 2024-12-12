@@ -1513,16 +1513,28 @@ func (s *AutoOpsService) listAutoOpsRules(
 	environmentId string,
 	localizer locale.Localizer,
 ) ([]*autoopsproto.AutoOpsRule, string, error) {
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("aor.deleted", "=", false),
-		mysql.NewFilter("aor.environment_id", "=", environmentId),
+	filters := []*mysql.FilterV2{
+		{
+			Column:   "aor.deleted",
+			Operator: mysql.OperatorEqual,
+			Value:    false,
+		},
+		{
+			Column:   "aor.environment_id",
+			Operator: mysql.OperatorEqual,
+			Value:    environmentId,
+		},
 	}
 	fIDs := make([]interface{}, 0, len(featureIds))
 	for _, fID := range featureIds {
 		fIDs = append(fIDs, fID)
 	}
+	var infilter *mysql.InFilter
 	if len(fIDs) > 0 {
-		whereParts = append(whereParts, mysql.NewInFilter("aor.feature_id", fIDs))
+		infilter = &mysql.InFilter{
+			Column: "aor.feature_id",
+			Values: fIDs,
+		}
 	}
 	limit := int(pageSize)
 	if cursor == "" {
@@ -1540,13 +1552,17 @@ func (s *AutoOpsService) listAutoOpsRules(
 		return nil, "", dt.Err()
 
 	}
-	autoOpsRules, nextCursor, err := s.autoOpsStorage.ListAutoOpsRules(
-		ctx,
-		whereParts,
-		nil,
-		limit,
-		offset,
-	)
+	listOptions := &mysql.ListOptions{
+		Limit:       limit,
+		Offset:      offset,
+		Filters:     filters,
+		InFilter:    infilter,
+		NullFilters: nil,
+		JSONFilters: nil,
+		SearchQuery: nil,
+		Orders:      nil,
+	}
+	autoOpsRules, nextCursor, err := s.storage.ListAutoOpsRulesV2(ctx, listOptions)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list autoOpsRules",

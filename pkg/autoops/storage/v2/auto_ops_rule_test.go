@@ -285,6 +285,79 @@ func TestListAutoOpsRules(t *testing.T) {
 	}
 }
 
+func TestListAutoOpsRulesV2(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+	patterns := []struct {
+		setup          func(*autoOpsRuleStorage)
+		listOpts       *mysql.ListOptions
+		expected       []*proto.AutoOpsRule
+		expectedCursor int
+		expectedErr    error
+	}{
+		{
+			setup: func(s *autoOpsRuleStorage) {
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil, errors.New("error"))
+			},
+			listOpts:       nil,
+			expected:       nil,
+			expectedCursor: 0,
+			expectedErr:    errors.New("error"),
+		},
+		{
+			setup: func(s *autoOpsRuleStorage) {
+				rows := mock.NewMockRows(mockController)
+				rows.EXPECT().Close().Return(nil)
+				rows.EXPECT().Next().Return(false)
+				rows.EXPECT().Err().Return(nil)
+				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
+					gomock.Any(), gomock.Regex(`^SELECT\s+id,\s+feature_id,\s+ops_type,\s+clauses,\s+created_at,\s+updated_at,\s+deleted,\s+status\s+FROM\s+auto_ops_rule\s+WHERE\s+num\s+>=\s+\?\s+ORDER\s+BY\s+id\s+ASC\s+LIMIT\s+10\s+OFFSET\s+5`), gomock.Any(),
+				).Return(rows, nil)
+			},
+			listOpts: &mysql.ListOptions{
+				Limit:  10,
+				Offset: 5,
+				Filters: []*mysql.FilterV2{
+					{
+						Column:   "num",
+						Operator: mysql.OperatorGreaterThanOrEqual,
+						Value:    5,
+					},
+				},
+				InFilter:    nil,
+				NullFilters: nil,
+				JSONFilters: nil,
+				SearchQuery: nil,
+				Orders: []*mysql.Order{
+					{
+						Column:    "id",
+						Direction: mysql.OrderDirectionAsc,
+					},
+				},
+			},
+			expected:       []*proto.AutoOpsRule{},
+			expectedCursor: 5,
+			expectedErr:    nil,
+		},
+	}
+	for _, p := range patterns {
+		storage := newAutoOpsRuleStorageWithMock(t, mockController)
+		if p.setup != nil {
+			p.setup(storage)
+		}
+		autoOpsRules, cursor, err := storage.ListAutoOpsRulesV2(
+			context.Background(),
+			p.listOpts,
+		)
+		assert.Equal(t, p.expected, autoOpsRules)
+		assert.Equal(t, p.expectedCursor, cursor)
+		assert.Equal(t, p.expectedErr, err)
+	}
+}
+
 func newAutoOpsRuleStorageWithMock(t *testing.T, mockController *gomock.Controller) *autoOpsRuleStorage {
 	t.Helper()
 	return &autoOpsRuleStorage{mock.NewMockClient(mockController)}

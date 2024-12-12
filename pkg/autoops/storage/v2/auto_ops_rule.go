@@ -53,6 +53,10 @@ type AutoOpsRuleStorage interface {
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*proto.AutoOpsRule, int, error)
+	ListAutoOpsRulesV2(
+		ctx context.Context,
+		options *mysql.ListOptions,
+	) ([]*proto.AutoOpsRule, int, error)
 }
 
 type autoOpsRuleStorage struct {
@@ -182,6 +186,58 @@ func (s *autoOpsRuleStorage) ListAutoOpsRules(
 			&autoOpsRule.Deleted,
 			&autoOpsRule.AutoOpsStatus,
 			&autoOpsRule.FeatureName,
+		)
+		if err != nil {
+			return nil, 0, err
+		}
+		autoOpsRule.OpsType = proto.OpsType(opsType)
+		autoOpsRules = append(autoOpsRules, &autoOpsRule)
+	}
+	if rows.Err() != nil {
+		return nil, 0, err
+	}
+	nextOffset := offset + len(autoOpsRules)
+	return autoOpsRules, nextOffset, nil
+}
+
+func (s *autoOpsRuleStorage) ListAutoOpsRulesV2(
+	ctx context.Context,
+	options *mysql.ListOptions,
+) ([]*proto.AutoOpsRule, int, error) {
+	println("kaki ListAutoOpsRulesV2")
+	var whereParts []mysql.WherePart = []mysql.WherePart{}
+	var orderBySQL string = ""
+	var limitOffsetSQL string = ""
+	var limit int = 0
+	var offset int = 0
+	if options != nil {
+		whereParts = options.CreateWhereParts()
+		orderBySQL = mysql.ConstructOrderBySQLString(options.Orders)
+		limitOffsetSQL = mysql.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
+		limit = options.Limit
+		offset = options.Offset
+	}
+
+	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
+	query := fmt.Sprintf(selectAutoOpsRulesSQL, whereSQL, orderBySQL, limitOffsetSQL)
+	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+	autoOpsRules := make([]*proto.AutoOpsRule, 0, limit)
+	for rows.Next() {
+		autoOpsRule := proto.AutoOpsRule{}
+		var opsType int32
+		err := rows.Scan(
+			&autoOpsRule.Id,
+			&autoOpsRule.FeatureId,
+			&opsType,
+			&mysql.JSONObject{Val: &autoOpsRule.Clauses},
+			&autoOpsRule.CreatedAt,
+			&autoOpsRule.UpdatedAt,
+			&autoOpsRule.Deleted,
+			&autoOpsRule.AutoOpsStatus,
 		)
 		if err != nil {
 			return nil, 0, err
