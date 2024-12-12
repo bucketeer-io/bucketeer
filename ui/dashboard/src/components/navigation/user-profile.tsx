@@ -1,8 +1,10 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { IconEditOutlined } from 'react-icons-material-design';
+import { accountUpdater } from '@api/account/account-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
 import primaryAvatar from 'assets/avatars/primary.svg';
-import { useAuth } from 'auth';
+import { getCurrentEnvironment, useAuth } from 'auth';
+import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { UserInfoForm } from '@types';
@@ -22,11 +24,11 @@ import Input from 'components/input';
 import DialogModal from 'components/modal/dialog';
 
 const formSchema = yup.object().shape({
-  first_name: yup
+  firstName: yup
     .string()
     .required()
     .min(2, 'The first name you have provided must have at least 2 characters'),
-  last_name: yup
+  lastName: yup
     .string()
     .required()
     .min(2, 'The last name you have provided must have at least 2 characters'),
@@ -40,13 +42,15 @@ export type FilterProps = {
 
 const UserProfileModal = ({ isOpen, onClose }: FilterProps) => {
   const { t } = useTranslation(['common', 'form']);
-  const { consoleAccount } = useAuth();
+  const { consoleAccount, onMeFetcher } = useAuth();
+  const { notify } = useToast();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
-      first_name: consoleAccount?.firstName || '',
-      last_name: consoleAccount?.lastName || '',
+      firstName: consoleAccount?.firstName || '',
+      lastName: consoleAccount?.lastName || '',
       language: consoleAccount?.language || ''
     }
   });
@@ -56,7 +60,27 @@ const UserProfileModal = ({ isOpen, onClose }: FilterProps) => {
     : primaryAvatar;
 
   const onSubmit: SubmitHandler<UserInfoForm> = values => {
-    console.log(values);
+    return accountUpdater({
+      organizationId: currentEnvironment.organizationId,
+      email: consoleAccount!.email,
+      changeFirstNameCommand: {
+        firstName: values.firstName
+      },
+      changeLastNameCommand: {
+        lastName: values.lastName
+      },
+      changeLanguageCommand: {
+        language: values.language
+      }
+    }).then(() => {
+      notify({
+        toastType: 'toast',
+        messageType: 'success',
+        message: `Edit profile has been successfully updated!`
+      });
+      onMeFetcher({ organizationId: currentEnvironment.organizationId });
+      onClose();
+    });
   };
 
   return (
@@ -66,9 +90,9 @@ const UserProfileModal = ({ isOpen, onClose }: FilterProps) => {
       isOpen={isOpen}
       onClose={onClose}
     >
-      <div className="p-5">
-        <FormProvider {...form}>
-          <Form onSubmit={form.handleSubmit(onSubmit)}>
+      <FormProvider {...form}>
+        <Form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="p-5">
             <div className="flex items-center justify-center mb-2">
               <div className="relative">
                 <AvatarImage image={avatar} size="xl" alt="user-avatar" />
@@ -83,7 +107,7 @@ const UserProfileModal = ({ isOpen, onClose }: FilterProps) => {
 
             <Form.Field
               control={form.control}
-              name="first_name"
+              name="firstName"
               render={({ field }) => (
                 <Form.Item>
                   <Form.Label required>{t(`first-name`)}</Form.Label>
@@ -99,7 +123,7 @@ const UserProfileModal = ({ isOpen, onClose }: FilterProps) => {
             />
             <Form.Field
               control={form.control}
-              name="last_name"
+              name="lastName"
               render={({ field }) => (
                 <Form.Item>
                   <Form.Label required>{t(`last-name`)}</Form.Label>
@@ -150,18 +174,24 @@ const UserProfileModal = ({ isOpen, onClose }: FilterProps) => {
                 </Form.Item>
               )}
             />
-          </Form>
-        </FormProvider>
-      </div>
-
-      <ButtonBar
-        secondaryButton={<Button>{t(`save`)}</Button>}
-        primaryButton={
-          <Button onClick={onClose} variant="secondary">
-            {t(`cancel`)}
-          </Button>
-        }
-      />
+          </div>
+          <ButtonBar
+            secondaryButton={
+              <Button
+                disabled={!form.formState.isDirty || !form.formState.isValid}
+                loading={form.formState.isSubmitting}
+              >
+                {t(`save`)}
+              </Button>
+            }
+            primaryButton={
+              <Button onClick={onClose} variant="secondary">
+                {t(`cancel`)}
+              </Button>
+            }
+          />
+        </Form>
+      </FormProvider>
     </DialogModal>
   );
 };

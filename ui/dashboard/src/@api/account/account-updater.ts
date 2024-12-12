@@ -16,20 +16,20 @@ export interface AccountUpdaterParams {
   changeAvatarUrlCommand?: {
     avatarImageUrl: string;
   };
-  changeOrganizationRoleCommand: {
+  changeOrganizationRoleCommand?: {
     role: OrganizationRole;
   };
-  changeEnvironmentRolesCommand: {
+  changeEnvironmentRolesCommand?: {
     roles: EnvironmentRoleItem[];
     writeType?: WriteType;
   };
-  changeFirstNameCommand: {
+  changeFirstNameCommand?: {
     firstName: string;
   };
-  changeLastNameCommand: {
+  changeLastNameCommand?: {
     lastName: string;
   };
-  changeLanguageCommand: {
+  changeLanguageCommand?: {
     language: string;
   };
   changeLastSeenCommand?: {
