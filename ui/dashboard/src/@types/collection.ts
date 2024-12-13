@@ -19,7 +19,7 @@ export type OrderBy =
   | 'STATE'
   | 'LAST_SEEN'
   | 'CREATOR_EMAIL'
-  | 'ENVIRONMENT_NAME';
+  | 'ENVIRONMENT';
 
 export type OrderDirection = 'ASC' | 'DESC';
 
