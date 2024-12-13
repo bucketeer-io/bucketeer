@@ -20,5 +20,6 @@ export const sortingListFields: SortingListFields = {
   organizationRole: 'ORGANIZATION_ROLE',
   featureFlagCount: 'FEATURE_COUNT',
   creatorEmail: 'CREATOR_EMAIL',
-  lastSeen: 'LAST_SEEN'
+  lastSeen: 'LAST_SEEN',
+  environment: 'ENVIRONMENT'
 };

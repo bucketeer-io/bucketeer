@@ -4,6 +4,7 @@
 import * as jspb from 'google-protobuf';
 import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
 import * as google_api_annotations_pb from '../../google/api/annotations_pb';
+import * as google_api_field_behavior_pb from '../../google/api/field_behavior_pb';
 import * as protoc_gen_openapiv2_options_annotations_pb from '../../protoc-gen-openapiv2/options/annotations_pb';
 import * as proto_account_account_pb from '../../proto/account/account_pb';
 import * as proto_account_api_key_pb from '../../proto/account/api_key_pb';
@@ -1471,6 +1472,9 @@ export class ListAPIKeysRequest extends jspb.Message {
   setEnvironmentIdsList(value: Array<string>): void;
   addEnvironmentIds(value: string, index?: number): string;
 
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListAPIKeysRequest.AsObject;
   static toObject(
@@ -1502,6 +1506,7 @@ export namespace ListAPIKeysRequest {
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     environmentId: string;
     environmentIdsList: Array<string>;
+    organizationId: string;
   };
 
   export interface OrderByMap {
@@ -1509,6 +1514,9 @@ export namespace ListAPIKeysRequest {
     NAME: 1;
     CREATED_AT: 2;
     UPDATED_AT: 3;
+    ROLE: 4;
+    ENVIRONMENT: 5;
+    STATE: 6;
   }
 
   export const OrderBy: OrderByMap;

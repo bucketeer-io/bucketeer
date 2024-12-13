@@ -4408,3 +4408,75 @@ func TestGrpcListFeatures(t *testing.T) {
 		})
 	}
 }
+
+func TestObfuscateString(t *testing.T) {
+	tests := []struct {
+		desc       string // Description comes first
+		input      string
+		showLength int
+		expected   string
+	}{
+		{
+			desc:       "String of 32 characters, showing the first 4 and last 4 characters.",
+			input:      "12345678901234567890123456789012",
+			showLength: 4,
+			expected:   "1234....9012",
+		},
+		{
+			desc:       "String of 10 characters, showing the first 3 and last 3 characters.",
+			input:      "abcdefghij",
+			showLength: 3,
+			expected:   "abc....hij",
+		},
+		{
+			desc:       "String shorter than showLength*2. Should not obfuscate.",
+			input:      "abcd",
+			showLength: 4,
+			expected:   "abcd", // No obfuscation needed
+		},
+		{
+			desc:       "String of exactly twice the showLength (8 characters), showing the first 3 and last 3 characters.",
+			input:      "abcdefgh",
+			showLength: 3,
+			expected:   "abc....fgh",
+		},
+		{
+			desc:       "String of 5 characters, showing 2 characters from both the start and end.",
+			input:      "abcde",
+			showLength: 2,
+			expected:   "ab....de",
+		},
+		{
+			desc:       "String with special characters, ensuring the function works with non-alphanumeric characters.",
+			input:      "@bcde!@#f",
+			showLength: 3,
+			expected:   "@bc....@#f",
+		},
+		{
+			desc:       "String longer than showLength*2, showing the first 2 and last 2 characters.",
+			input:      "1234567890abcdef1234567890",
+			showLength: 2,
+			expected:   "12....90",
+		},
+		{
+			desc:       "String exactly equal to 2*showLength, obfuscate with the middle part replaced by dots.",
+			input:      "12345678",
+			showLength: 4,
+			expected:   "12345678",
+		},
+		{
+			desc:       "Single character string. Should not obfuscate as it's too short.",
+			input:      "a",
+			showLength: 1,
+			expected:   "a",
+		},
+	}
+
+	// Loop through each test case
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			actual := obfuscateString(tt.input, tt.showLength)
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}

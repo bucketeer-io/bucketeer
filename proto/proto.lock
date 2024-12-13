@@ -946,6 +946,18 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 3
+              },
+              {
+                "name": "ROLE",
+                "integer": 4
+              },
+              {
+                "name": "ENVIRONMENT",
+                "integer": 5
+              },
+              {
+                "name": "STATE",
+                "integer": 6
               }
             ]
           },
@@ -1717,6 +1729,17 @@
                 "name": "environment_ids",
                 "type": "string",
                 "is_repeated": true
+              },
+              {
+                "id": 10,
+                "name": "organization_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -5289,6 +5312,9 @@
           },
           {
             "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "google/api/field_behavior.proto"
           },
           {
             "path": "protoc-gen-openapiv2/options/annotations.proto"

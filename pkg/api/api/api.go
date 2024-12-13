@@ -561,6 +561,13 @@ func (s *gatewayService) findEnvironmentAPIKey(
 	if err == nil {
 		return envAPIKey, nil
 	}
+	s.logger.Info(
+		"API key not found in the cache",
+		log.FieldsFromImcomingContext(ctx).AddFields(
+			zap.Error(err),
+			zap.String("apiKey", obfuscateString(id, obfuscateAPIKeyLength)),
+		)...,
+	)
 	k, err, _ := s.flightgroup.Do(
 		id,
 		func() (interface{}, error) {
@@ -601,17 +608,7 @@ func (s *gatewayService) getEnvironmentAPIKey(
 		)
 		return nil, errInternal
 	}
-	envAPIKey := resp.EnvironmentApiKey
-	if err := environmentAPIKeyCache.Put(envAPIKey); err != nil {
-		logger.Error(
-			"Failed to cache environment APIKey",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentID", envAPIKey.Environment.Id),
-			)...,
-		)
-	}
-	return envAPIKey, nil
+	return resp.EnvironmentApiKey, nil
 }
 
 func (s *gatewayService) evaluateFeatures(
