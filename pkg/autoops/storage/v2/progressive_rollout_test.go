@@ -102,79 +102,6 @@ func TestListProgressiveRollouts(t *testing.T) {
 
 	patterns := []struct {
 		setup              func(*progressiveRolloutStorage)
-		whereParts         []mysql.WherePart
-		orders             []*mysql.Order
-		limit              int
-		offset             int
-		expected           []*proto.ProgressiveRollout
-		expectedCursor     int
-		expectedTotalCount int64
-		expectedErr        error
-	}{
-		{
-			setup: func(s *progressiveRolloutStorage) {
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(nil, errors.New("error"))
-			},
-			whereParts:         nil,
-			orders:             nil,
-			limit:              0,
-			offset:             0,
-			expected:           nil,
-			expectedCursor:     0,
-			expectedTotalCount: 0,
-			expectedErr:        errors.New("error"),
-		},
-		{
-			setup: func(s *progressiveRolloutStorage) {
-				rows := mock.NewMockRows(mockController)
-				rows.EXPECT().Close().Return(nil)
-				rows.EXPECT().Next().Return(false)
-				rows.EXPECT().Err().Return(nil)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
-					gomock.Any(), gomock.Any(), gomock.Any(),
-				).Return(rows, nil)
-				row := mock.NewMockRow(mockController)
-				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Regex(`^SELECT\s+COUNT\(1\)\s+FROM\s+ops_progressive_rollout\s+WHERE\s+num\s+>=\s+\?`), gomock.Any(),
-				).Return(row)
-				row.EXPECT().Scan(gomock.Any()).Return(nil)
-			},
-			whereParts: []mysql.WherePart{
-				mysql.NewFilter("num", ">=", 5),
-			},
-			orders: []*mysql.Order{
-				mysql.NewOrder("id", mysql.OrderDirectionAsc),
-			},
-			limit:              10,
-			offset:             5,
-			expected:           []*proto.ProgressiveRollout{},
-			expectedCursor:     5,
-			expectedTotalCount: 0,
-			expectedErr:        nil,
-		},
-	}
-	for _, p := range patterns {
-		storage := newProgressiveRolloutStorageWithMock(t, mockController)
-		if p.setup != nil {
-			p.setup(storage)
-		}
-		pr, totalCount, cursor, err := storage.ListProgressiveRollouts(context.Background(), p.whereParts, p.orders, p.limit, p.offset)
-		assert.Equal(t, p.expected, pr)
-		assert.Equal(t, p.expectedCursor, cursor)
-		assert.Equal(t, p.expectedTotalCount, totalCount)
-		assert.Equal(t, p.expectedErr, err)
-	}
-}
-
-func TestListProgressiveRolloutsV2(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	patterns := []struct {
-		setup              func(*progressiveRolloutStorage)
 		listOpts           *mysql.ListOptions
 		expected           []*proto.ProgressiveRollout
 		expectedCursor     int
@@ -240,7 +167,7 @@ func TestListProgressiveRolloutsV2(t *testing.T) {
 		if p.setup != nil {
 			p.setup(storage)
 		}
-		pr, totalCount, cursor, err := storage.ListProgressiveRolloutsV2(context.Background(), p.listOpts)
+		pr, totalCount, cursor, err := storage.ListProgressiveRollouts(context.Background(), p.listOpts)
 		assert.Equal(t, p.expected, pr)
 		assert.Equal(t, p.expectedCursor, cursor)
 		assert.Equal(t, p.expectedTotalCount, totalCount)

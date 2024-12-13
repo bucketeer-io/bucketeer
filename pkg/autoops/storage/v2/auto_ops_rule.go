@@ -204,7 +204,6 @@ func (s *autoOpsRuleStorage) ListAutoOpsRulesV2(
 	ctx context.Context,
 	options *mysql.ListOptions,
 ) ([]*proto.AutoOpsRule, int, error) {
-	println("kaki ListAutoOpsRulesV2")
 	var whereParts []mysql.WherePart = []mysql.WherePart{}
 	var orderBySQL string = ""
 	var limitOffsetSQL string = ""
