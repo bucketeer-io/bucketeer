@@ -324,7 +324,7 @@ func (s *AutoOpsService) ListProgressiveRollouts(
 	if err != nil {
 		return nil, err
 	}
-	progressiveRollout, totalCount, nextOffset, err := s.listProgressiveRolloutsV2(
+	progressiveRollout, totalCount, nextOffset, err := s.listProgressiveRollouts(
 		ctx,
 		req,
 		localizer,
@@ -548,83 +548,6 @@ func (s *AutoOpsService) listProgressiveRollouts(
 	req *autoopsproto.ListProgressiveRolloutsRequest,
 	localizer locale.Localizer,
 ) ([]*autoopsproto.ProgressiveRollout, int64, int, error) {
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
-	}
-	limit := int(req.PageSize)
-	cursor := req.Cursor
-	if cursor == "" {
-		cursor = "0"
-	}
-	offset, err := strconv.Atoi(cursor)
-	if err != nil {
-		dt, err := statusProgressiveRolloutInvalidCursor.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"),
-		})
-		if err != nil {
-			return nil, 0, 0, statusProgressiveRolloutInternal.Err()
-		}
-		return nil, 0, 0, dt.Err()
-	}
-	if len(req.FeatureIds) > 0 {
-		fIDs := s.convToInterfaceSlice(req.FeatureIds)
-		whereParts = append(whereParts, mysql.NewInFilter("feature_id", fIDs))
-	}
-	orders, err := s.newListProgressiveRolloutsOrdersMySQL(
-		req.OrderBy,
-		req.OrderDirection,
-		localizer,
-	)
-	if err != nil {
-		s.logger.Error(
-			"Invalid argument",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		return nil, 0, 0, err
-	}
-	if req.Type != nil {
-		whereParts = append(whereParts, mysql.NewFilter("type", "=", req.Type))
-	}
-	if req.Status != nil {
-		whereParts = append(whereParts, mysql.NewFilter("status", "=", req.Status))
-	}
-	storage := v2as.NewProgressiveRolloutStorage(s.mysqlClient)
-	progressiveRollouts, totalCount, nextOffset, err := storage.ListProgressiveRollouts(
-		ctx,
-		whereParts,
-		orders,
-		limit,
-		offset,
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to list progressive rollouts",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", req.EnvironmentId),
-			)...,
-		)
-		dt, err := statusProgressiveRolloutInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, 0, 0, statusProgressiveRolloutInternal.Err()
-		}
-		return nil, 0, 0, dt.Err()
-	}
-	return progressiveRollouts, totalCount, nextOffset, nil
-}
-
-func (s *AutoOpsService) listProgressiveRolloutsV2(
-	ctx context.Context,
-	req *autoopsproto.ListProgressiveRolloutsRequest,
-	localizer locale.Localizer,
-) ([]*autoopsproto.ProgressiveRollout, int64, int, error) {
 	filters := []*mysql.FilterV2{
 		{
 			Column:   "environment_id",
@@ -689,7 +612,7 @@ func (s *AutoOpsService) listProgressiveRolloutsV2(
 	}
 
 	storage := v2as.NewProgressiveRolloutStorage(s.mysqlClient)
-	progressiveRollouts, totalCount, nextOffset, err := storage.ListProgressiveRolloutsV2(ctx, listOptions)
+	progressiveRollouts, totalCount, nextOffset, err := storage.ListProgressiveRollouts(ctx, listOptions)
 	if err != nil {
 		s.logger.Error(
 			"Failed to list progressive rollouts",

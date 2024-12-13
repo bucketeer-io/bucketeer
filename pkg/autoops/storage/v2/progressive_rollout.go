@@ -61,12 +61,6 @@ type ProgressiveRolloutStorage interface {
 	DeleteProgressiveRollout(ctx context.Context, id, environmentId string) error
 	ListProgressiveRollouts(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
-	) ([]*autoopsproto.ProgressiveRollout, int64, int, error)
-	ListProgressiveRolloutsV2(
-		ctx context.Context,
 		options *mysql.ListOptions,
 	) ([]*autoopsproto.ProgressiveRollout, int64, int, error)
 	UpdateProgressiveRollout(ctx context.Context,
@@ -211,7 +205,6 @@ func (s *progressiveRolloutStorage) ListProgressiveRolloutsV2(
 	ctx context.Context,
 	options *mysql.ListOptions,
 ) ([]*autoopsproto.ProgressiveRollout, int64, int, error) {
-	println("kaki ListProgressiveRolloutsV2")
 	var whereParts []mysql.WherePart = []mysql.WherePart{}
 	var orderBySQL string = ""
 	var limitOffsetSQL string = ""

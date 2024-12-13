@@ -348,7 +348,7 @@ func TestListAutoOpsRulesV2(t *testing.T) {
 		if p.setup != nil {
 			p.setup(storage)
 		}
-		autoOpsRules, cursor, err := storage.ListAutoOpsRulesV2(
+		autoOpsRules, cursor, err := storage.ListAutoOpsRules(
 			context.Background(),
 			p.listOpts,
 		)
