@@ -114,38 +114,6 @@ func (s *grpcGatewayService) UpdateAccountV2(
 		return &gwproto.UpdateAccountV2Response{}, nil
 	}
 
-	// disable account
-	if request.Disabled != nil && request.Disabled.Value {
-		_, err := s.accountClient.DisableAccountV2(
-			ctx,
-			&accountproto.DisableAccountV2Request{
-				Email:          request.Email,
-				OrganizationId: request.OrganizationId,
-			},
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		return &gwproto.UpdateAccountV2Response{}, nil
-	}
-
-	// enable account
-	if request.Disabled != nil && !request.Disabled.Value {
-		_, err := s.accountClient.EnableAccountV2(
-			ctx,
-			&accountproto.EnableAccountV2Request{
-				Email:          request.Email,
-				OrganizationId: request.OrganizationId,
-			},
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		return &gwproto.UpdateAccountV2Response{}, nil
-	}
-
 	res, err := s.accountClient.UpdateAccountV2(
 		ctx,
 		&accountproto.UpdateAccountV2Request{
@@ -160,6 +128,7 @@ func (s *grpcGatewayService) UpdateAccountV2(
 			Language:         request.Language,
 			LastSeen:         request.LastSeen,
 			Avatar:           request.Avatar,
+			Disabled:         request.Disabled,
 		},
 	)
 	if err != nil {

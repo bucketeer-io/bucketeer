@@ -3539,6 +3539,8 @@ definitions:
         format: int64
       avatar:
         $ref: '#/definitions/UpdateAccountV2RequestAccountV2Avatar'
+      disabled:
+        type: boolean
   accountUpdateAccountV2Response:
     type: object
     properties:

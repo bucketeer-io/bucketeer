@@ -639,6 +639,11 @@ export class UpdateAccountV2Request extends jspb.Message {
   getAvatar(): UpdateAccountV2Request.AccountV2Avatar | undefined;
   setAvatar(value?: UpdateAccountV2Request.AccountV2Avatar): void;
 
+  hasDisabled(): boolean;
+  clearDisabled(): void;
+  getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateAccountV2Request.AsObject;
   static toObject(
@@ -682,6 +687,7 @@ export namespace UpdateAccountV2Request {
     language?: google_protobuf_wrappers_pb.StringValue.AsObject;
     lastSeen?: google_protobuf_wrappers_pb.Int64Value.AsObject;
     avatar?: UpdateAccountV2Request.AccountV2Avatar.AsObject;
+    disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 
   export class AccountV2Avatar extends jspb.Message {

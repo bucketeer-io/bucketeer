@@ -213,15 +213,27 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 							Disabled: false,
 						},
 					}, nil)
-				gs.accountClient.(*accountclientmock.MockClient).EXPECT().DisableAccountV2(gomock.Any(), gomock.Any()).Return(
-					nil, nil)
+				gs.accountClient.(*accountclientmock.MockClient).EXPECT().UpdateAccountV2(gomock.Any(), gomock.Any()).Return(
+					&accountproto.UpdateAccountV2Response{
+						Account: &accountproto.AccountV2{
+							Disabled:       true,
+							Email:          "test@bucketeer.io",
+							OrganizationId: "org-0",
+						},
+					}, nil)
 			},
 			req: &gwproto.UpdateAccountV2Request{
 				Disabled:       wrapperspb.Bool(true),
 				Email:          "test@bucketeer.io",
 				OrganizationId: "org-0",
 			},
-			expected:    &gwproto.UpdateAccountV2Response{},
+			expected: &gwproto.UpdateAccountV2Response{
+				Account: &accountproto.AccountV2{
+					Disabled:       true,
+					Email:          "test@bucketeer.io",
+					OrganizationId: "org-0",
+				},
+			},
 			expectedErr: nil,
 		},
 		{
@@ -236,15 +248,27 @@ func TestGrpcUpdateAccountV2(t *testing.T) {
 							Disabled: false,
 						},
 					}, nil)
-				gs.accountClient.(*accountclientmock.MockClient).EXPECT().EnableAccountV2(gomock.Any(), gomock.Any()).Return(
-					nil, nil)
+				gs.accountClient.(*accountclientmock.MockClient).EXPECT().UpdateAccountV2(gomock.Any(), gomock.Any()).Return(
+					&accountproto.UpdateAccountV2Response{
+						Account: &accountproto.AccountV2{
+							Disabled:       false,
+							Email:          "test@bucketeer.io",
+							OrganizationId: "org-0",
+						},
+					}, nil)
 			},
 			req: &gwproto.UpdateAccountV2Request{
 				Disabled:       wrapperspb.Bool(false),
 				Email:          "test@bucketeer.io",
 				OrganizationId: "org-0",
 			},
-			expected:    &gwproto.UpdateAccountV2Response{},
+			expected: &gwproto.UpdateAccountV2Response{
+				Account: &accountproto.AccountV2{
+					Disabled:       false,
+					Email:          "test@bucketeer.io",
+					OrganizationId: "org-0",
+				},
+			},
 			expectedErr: nil,
 		},
 		{

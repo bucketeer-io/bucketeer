@@ -1337,6 +1337,11 @@
                 "id": 20,
                 "name": "avatar",
                 "type": "AccountV2Avatar"
+              },
+              {
+                "id": 21,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue"
               }
             ],
             "messages": [
