@@ -58,7 +58,7 @@ export const useColumns = ({
     },
     {
       accessorKey: 'role',
-      header: `${t('type')}`,
+      header: `${t('role')}`,
       size: 150,
       cell: ({ row }) => {
         const apiKey = row.original;
@@ -70,7 +70,7 @@ export const useColumns = ({
       }
     },
     {
-      accessorKey: 'environmentName',
+      accessorKey: 'environment',
       header: `${t('environment')}`,
       size: 250,
       cell: ({ row }) => {
