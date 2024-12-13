@@ -269,12 +269,11 @@ message ListAPIKeysResponse {
   int64 total_count = 3;
 }
 
-message GetAPIKeyBySearchingAllEnvironmentsRequest {
-  string id = 1;
+message GetEnvironmentAPIKeyRequest {
   string api_key = 2;
 }
 
-message GetAPIKeyBySearchingAllEnvironmentsResponse {
+message GetEnvironmentAPIKeyResponse {
   EnvironmentAPIKey environment_api_key = 1;
 }
 
@@ -983,12 +982,10 @@ service AccountService {
       }
     };
   }
-  rpc GetAPIKeyBySearchingAllEnvironments(
-      GetAPIKeyBySearchingAllEnvironmentsRequest)
-      returns (GetAPIKeyBySearchingAllEnvironmentsResponse) {
+  rpc GetEnvironmentAPIKey(GetEnvironmentAPIKeyRequest)
+      returns (GetEnvironmentAPIKeyResponse) {
     option (google.api.http) = {
-      post: "/v1/account/get_environment_api_key"
-      body: "*"
+      get: "/v1/account/get_environment_api_key"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Environment API Key",
