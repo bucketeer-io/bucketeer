@@ -934,6 +934,9 @@ paths:
             - NAME
             - CREATED_AT
             - UPDATED_AT
+            - ROLE
+            - ENVIRONMENT
+            - STATE
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -962,6 +965,10 @@ paths:
           items:
             type: string
           collectionFormat: multi
+        - name: organizationId
+          in: query
+          required: true
+          type: string
       tags:
         - API Key
   /v1/account/my_organizations:
@@ -3381,6 +3388,9 @@ definitions:
       - NAME
       - CREATED_AT
       - UPDATED_AT
+      - ROLE
+      - ENVIRONMENT
+      - STATE
     default: DEFAULT
   accountListAPIKeysRequestOrderDirection:
     type: string

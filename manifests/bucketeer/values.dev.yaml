@@ -220,6 +220,21 @@ batch-server:
       - name: mau-partition-creator
         jobId: MauPartitionCreator
         schedule: "0 2 2 * *"
+      - name: feature-flag-cacher
+        jobId: FeatureFlagCacher
+        schedule: "* * * * *"
+      - name: segment-user-cacher
+        jobId: SegmentUserCacher
+        schedule: "* * * * *"
+      - name: api-key-cacher
+        jobId: ApiKeyCacher
+        schedule: "* * * * *"
+      - name: experiment-cacher
+        jobId: ExperimentCacher
+        schedule: "* * * * *"
+      - name: auto-ops-rules-cacher
+        jobId: AutoOpsRulesCacher
+        schedule: "* * * * *"
 
 
 subscriber:

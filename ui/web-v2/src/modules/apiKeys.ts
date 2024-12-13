@@ -40,6 +40,7 @@ export const listAPIKeys = createAsyncThunk<
   { state: AppState }
 >(`${MODULE_NAME}/list`, async (params) => {
   const request = new ListAPIKeysRequest();
+  request.setOrganizationId(params.organizationId);
   request.setEnvironmentIdsList(params.environmentIds);
   request.setPageSize(params.pageSize);
   request.setCursor(params.cursor);
@@ -59,6 +60,7 @@ export type OrderDirection =
   ListAPIKeysRequest.OrderDirectionMap[keyof ListAPIKeysRequest.OrderDirectionMap];
 
 interface APIKeyParams {
+  organizationId: string;
   environmentIds: string[];
   pageSize: number;
   cursor: string;
