@@ -114,17 +114,16 @@ const AddAPIKeyModal = ({ isOpen, onClose }: AddAPIKeyModalProps) => {
   const onSubmit: SubmitHandler<AddAPIKeyForm> = values => {
     return apiKeyCreator({
       environmentId: values.environmentId,
-      command: {
-        name: values.name,
-        role: values.role
-      }
+      name: values.name,
+      role: values.role,
+      description: values.description
     }).then(() => {
       notify({
         toastType: 'toast',
         messageType: 'success',
         message: (
           <span>
-            <b>{values.name}</b> {` has been successfully created!`}{' '}
+            <b>{values.name}</b> {` has been successfully created!`}
           </span>
         )
       });

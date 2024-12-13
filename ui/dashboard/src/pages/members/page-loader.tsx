@@ -98,7 +98,7 @@ const PageLoader = () => {
     onSuccess: () => {
       onCloseConfirmModal();
       invalidateAccounts(queryClient);
-      mutation.reset();
+      mutationState.reset();
     }
   });
 

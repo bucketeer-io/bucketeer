@@ -519,13 +519,24 @@ func (s *AccountService) ListAPIKeys(
 	req *proto.ListAPIKeysRequest,
 ) (*proto.ListAPIKeysResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(
-		ctx, proto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+	_, err := s.checkOrganizationRole(
+		ctx, proto.AccountV2_Role_Organization_MEMBER,
+		req.OrganizationId, localizer)
 	if err != nil {
 		return nil, err
 	}
+	if req.OrganizationId == "" {
+		dt, err := statusInvalidListAPIKeyRequest.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
 	whereParts := []mysql.WherePart{}
+	whereParts = append(whereParts, mysql.NewFilter("environment_v2.organization_id", "=", req.OrganizationId))
 	if len(req.EnvironmentIds) > 0 {
 		environmentIds := make([]interface{}, 0, len(req.EnvironmentIds))
 		for _, id := range req.EnvironmentIds {
@@ -615,6 +626,12 @@ func (s *AccountService) newAPIKeyListOrders(
 		column = "api_key.created_at"
 	case proto.ListAPIKeysRequest_UPDATED_AT:
 		column = "api_key.updated_at"
+	case proto.ListAPIKeysRequest_ROLE:
+		column = "api_key.role"
+	case proto.ListAPIKeysRequest_ENVIRONMENT:
+		column = "environment_v2.name"
+	case proto.ListAPIKeysRequest_STATE:
+		column = "api_key.disabled"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
