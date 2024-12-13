@@ -630,6 +630,8 @@ func (s *AccountService) newAPIKeyListOrders(
 		column = "api_key.role"
 	case proto.ListAPIKeysRequest_ENVIRONMENT:
 		column = "environment_v2.name"
+	case proto.ListAPIKeysRequest_STATE:
+		column = "api_key.disabled"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
