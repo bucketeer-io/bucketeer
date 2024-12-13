@@ -9225,7 +9225,8 @@ proto.bucketeer.account.ListAPIKeysRequest.OrderBy = {
   CREATED_AT: 2,
   UPDATED_AT: 3,
   ROLE: 4,
-  ENVIRONMENT: 5
+  ENVIRONMENT: 5,
+  STATE: 6
 };
 
 /**

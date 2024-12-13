@@ -954,6 +954,10 @@
               {
                 "name": "ENVIRONMENT",
                 "integer": 5
+              },
+              {
+                "name": "STATE",
+                "integer": 6
               }
             ]
           },

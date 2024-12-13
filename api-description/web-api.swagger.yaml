@@ -936,6 +936,7 @@ paths:
             - UPDATED_AT
             - ROLE
             - ENVIRONMENT
+            - STATE
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -3389,6 +3390,7 @@ definitions:
       - UPDATED_AT
       - ROLE
       - ENVIRONMENT
+      - STATE
     default: DEFAULT
   accountListAPIKeysRequestOrderDirection:
     type: string

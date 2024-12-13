@@ -245,6 +245,7 @@ message ListAPIKeysRequest {
     UPDATED_AT = 3;
     ROLE = 4;
     ENVIRONMENT = 5;
+    STATE = 6;
   }
   enum OrderDirection {
     ASC = 0;

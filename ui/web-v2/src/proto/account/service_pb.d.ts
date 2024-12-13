@@ -1510,6 +1510,7 @@ export namespace ListAPIKeysRequest {
     UPDATED_AT: 3;
     ROLE: 4;
     ENVIRONMENT: 5;
+    STATE: 6;
   }
 
   export const OrderBy: OrderByMap;
