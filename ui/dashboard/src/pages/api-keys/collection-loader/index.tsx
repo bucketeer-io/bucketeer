@@ -34,7 +34,7 @@ const CollectionLoader = ({
     isError
   } = useFetchAPIKeys({
     ...filters,
-    environmentNamespace: currenEnvironment.id
+    organizationId: currenEnvironment.organizationId
   });
 
   const onSortingChangeHandler = (sorting: SortingState) => {
