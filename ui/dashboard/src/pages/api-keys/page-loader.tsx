@@ -29,7 +29,7 @@ const PageLoader = () => {
     isError
   } = useFetchAPIKeys({
     pageSize: 1,
-    environmentIds: [currenEnvironment.id]
+    organizationId: currenEnvironment.organizationId
   });
 
   const [selectedAPIKey, setSelectedAPIKey] = useState<APIKey>();

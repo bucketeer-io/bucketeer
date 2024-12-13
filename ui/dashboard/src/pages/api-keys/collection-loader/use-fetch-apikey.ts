@@ -9,7 +9,7 @@ export const useFetchAPIKeys = ({
   searchQuery,
   orderDirection,
   disabled,
-  environmentIds
+  organizationId
 }: {
   pageSize?: number;
   page?: number;
@@ -17,7 +17,7 @@ export const useFetchAPIKeys = ({
   orderBy?: OrderBy;
   orderDirection?: OrderDirection;
   disabled?: boolean;
-  environmentIds?: string[];
+  organizationId?: string;
 } = {}) => {
   const cursor = (page - 1) * LIST_PAGE_SIZE;
 
@@ -29,7 +29,7 @@ export const useFetchAPIKeys = ({
       orderDirection,
       searchKeyword: searchQuery,
       disabled,
-      environmentIds
+      organizationId
     }
   });
 };

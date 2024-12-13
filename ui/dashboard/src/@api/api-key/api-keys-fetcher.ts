@@ -7,6 +7,7 @@ import { stringifyParams } from 'utils/search-params';
 export interface APIKeysFetcherParams extends CollectionParams {
   environmentId?: string;
   environmentIds?: string[];
+  organizationId?: string;
 }
 
 export const apiKeysFetcher = async (
