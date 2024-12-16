@@ -1,4 +1,4 @@
-h1:qk5P2qc06/P2lRFTVKyM1amYM7+Xc9PjvgXm23ZLgo4=
+h1:nFTxr7cgSZJ8CXTv8pxNXY7CIIEqm0EMrQ462bHxAwI=
 20240626022133_initialization.sql h1:u9qmPkwWX7PN92qEcDDfR92lrMpwadQSMxUJgv6LjQ0=
 20240708065726_update_audit_log_table.sql h1:k7gK8Njv1yHMsYXAQtSgMaSbXy4lxyZ9MPzbJyMyyoM=
 20240815043128_update_auto_ops_rule_table.sql h1:6ib+XfS1uu9AUO3qESvkpUfOu3qUsLwHm9KHcrGEz0E=
@@ -15,4 +15,5 @@ h1:qk5P2qc06/P2lRFTVKyM1amYM7+Xc9PjvgXm23ZLgo4=
 20241122042909_add_api_key_maintainer_table.sql h1:srtthACDj2dyr8oFKRcPPIYsEsI/Ivzj3VClwY2x0Cs=
 20241122095236_sync_api_key_table.sql h1:nl53c3tgJTOEqxP34ayddS/iYyk03rwerDC7ABuJmmA=
 20241206094413_sync_maintainer_api_key_table.sql h1:M1Ui8fGVyg7E+w/21cFnBXdP7Qgwr+x0PGEKA7u6jeg=
-20241213070134_update_collate.sql h1:T+r9Hd2dvPTaAegcoQ7tEKITyqb8KP5pwRlwN4PFHxk=
+20241216133335_drop_old_tables.sql h1:E6oFBPoR7E8843ifn5iTK6aJu5CbgnlQOHQQThxvFHI=
+20241216133465_update_collate.sql h1:vbXjZWHwLQu4xq0l+aj8s8vuJK1fwG1qmzegTyG85Ns=
