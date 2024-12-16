@@ -319,7 +319,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer batchClient.Close()
 
-	processors, err := s.registerProcessorMap(
+	pubSubProcessors, err := s.registerPubSubProcessorMap(
 		ctx,
 		environmentClient,
 		mysqlClient,
@@ -337,7 +337,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		return err
 	}
 
-	multiPubSub, err := s.startMultiPubSub(ctx, processors, logger)
+	multiPubSub, err := s.startMultiPubSub(ctx, pubSubProcessors, logger)
 	if err != nil {
 		return err
 	}
@@ -394,7 +394,7 @@ func (s *server) createMySQLClient(
 
 func (s *server) startMultiPubSub(
 	ctx context.Context,
-	processors *processor.Processors,
+	processors *processor.PubSubProcessors,
 	logger *zap.Logger,
 ) (*subscriber.MultiSubscriber, error) {
 	multiSubscriber := subscriber.NewMultiSubscriber(
@@ -422,7 +422,7 @@ func (s *server) startMultiPubSub(
 				// we should skip the error, just log it here
 				continue
 			}
-			multiSubscriber.AddSubscriber(subscriber.NewSubscriber(
+			multiSubscriber.AddSubscriber(subscriber.NewPubSubSubscriber(
 				name, config, p,
 				subscriber.WithLogger(logger),
 			))
@@ -461,7 +461,7 @@ func (s *server) startMultiPubSub(
 	return multiSubscriber, nil
 }
 
-func (s *server) registerProcessorMap(
+func (s *server) registerPubSubProcessorMap(
 	ctx context.Context,
 	environmentClient environmentclient.Client,
 	mysqlClient mysql.Client,
@@ -474,8 +474,8 @@ func (s *server) registerProcessorMap(
 	sender notificationsender.Sender,
 	registerer metrics.Registerer,
 	logger *zap.Logger,
-) (*processor.Processors, error) {
-	processors := processor.NewProcessors(registerer)
+) (*processor.PubSubProcessors, error) {
+	processors := processor.NewPubSubProcessors(registerer)
 	writer.RegisterMetrics(registerer)
 
 	processorsConfigBytes, err := os.ReadFile(*s.processorsConfig)

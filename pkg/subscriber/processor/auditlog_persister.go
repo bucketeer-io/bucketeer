@@ -50,7 +50,7 @@ func NewAuditLogPersister(
 	config interface{},
 	mysqlClient mysql.Client,
 	logger *zap.Logger,
-) (subscriber.Processor, error) {
+) (subscriber.PubSubProcessor, error) {
 	auditLogPersisterJsonConfig, ok := config.(map[string]interface{})
 	if !ok {
 		logger.Error("AuditLogPersister: invalid config")
