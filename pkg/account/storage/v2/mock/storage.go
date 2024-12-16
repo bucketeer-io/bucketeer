@@ -160,6 +160,21 @@ func (mr *MockAccountStorageMockRecorder) GetAccountsWithOrganization(ctx, email
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountsWithOrganization", reflect.TypeOf((*MockAccountStorage)(nil).GetAccountsWithOrganization), ctx, email)
 }
 
+// GetEnvironmentAPIKey mocks base method.
+func (m *MockAccountStorage) GetEnvironmentAPIKey(ctx context.Context, apiKey string) (*domain.EnvironmentAPIKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEnvironmentAPIKey", ctx, apiKey)
+	ret0, _ := ret[0].(*domain.EnvironmentAPIKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEnvironmentAPIKey indicates an expected call of GetEnvironmentAPIKey.
+func (mr *MockAccountStorageMockRecorder) GetEnvironmentAPIKey(ctx, apiKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnvironmentAPIKey", reflect.TypeOf((*MockAccountStorage)(nil).GetEnvironmentAPIKey), ctx, apiKey)
+}
+
 // GetSystemAdminAccountV2 mocks base method.
 func (m *MockAccountStorage) GetSystemAdminAccountV2(ctx context.Context, email string) (*domain.AccountV2, error) {
 	m.ctrl.T.Helper()
@@ -207,6 +222,21 @@ func (m *MockAccountStorage) ListAccountsV2(ctx context.Context, whereParts []my
 func (mr *MockAccountStorageMockRecorder) ListAccountsV2(ctx, whereParts, orders, limit, offset any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAccountsV2", reflect.TypeOf((*MockAccountStorage)(nil).ListAccountsV2), ctx, whereParts, orders, limit, offset)
+}
+
+// ListAllEnvironmentAPIKeys mocks base method.
+func (m *MockAccountStorage) ListAllEnvironmentAPIKeys(ctx context.Context) ([]*domain.EnvironmentAPIKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAllEnvironmentAPIKeys", ctx)
+	ret0, _ := ret[0].([]*domain.EnvironmentAPIKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAllEnvironmentAPIKeys indicates an expected call of ListAllEnvironmentAPIKeys.
+func (mr *MockAccountStorageMockRecorder) ListAllEnvironmentAPIKeys(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllEnvironmentAPIKeys", reflect.TypeOf((*MockAccountStorage)(nil).ListAllEnvironmentAPIKeys), ctx)
 }
 
 // RunInTransaction mocks base method.

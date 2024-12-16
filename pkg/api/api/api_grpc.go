@@ -1514,9 +1514,9 @@ func getEnvironmentAPIKey(
 	environmentAPIKeyCache cachev3.EnvironmentAPIKeyCache,
 	logger *zap.Logger,
 ) (*accountproto.EnvironmentAPIKey, error) {
-	resp, err := accountClient.GetAPIKeyBySearchingAllEnvironments(
+	resp, err := accountClient.GetEnvironmentAPIKey(
 		ctx,
-		&accountproto.GetAPIKeyBySearchingAllEnvironmentsRequest{ApiKey: apiKey},
+		&accountproto.GetEnvironmentAPIKeyRequest{ApiKey: apiKey},
 	)
 	if err != nil {
 		if code := status.Code(err); code == codes.NotFound {

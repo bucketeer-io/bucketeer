@@ -1763,13 +1763,8 @@
             ]
           },
           {
-            "name": "GetAPIKeyBySearchingAllEnvironmentsRequest",
+            "name": "GetEnvironmentAPIKeyRequest",
             "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
               {
                 "id": 2,
                 "name": "api_key",
@@ -1778,7 +1773,7 @@
             ]
           },
           {
-            "name": "GetAPIKeyBySearchingAllEnvironmentsResponse",
+            "name": "GetEnvironmentAPIKeyResponse",
             "fields": [
               {
                 "id": 1,
@@ -4464,20 +4459,16 @@
                 ]
               },
               {
-                "name": "GetAPIKeyBySearchingAllEnvironments",
-                "in_type": "GetAPIKeyBySearchingAllEnvironmentsRequest",
-                "out_type": "GetAPIKeyBySearchingAllEnvironmentsResponse",
+                "name": "GetEnvironmentAPIKey",
+                "in_type": "GetEnvironmentAPIKeyRequest",
+                "out_type": "GetEnvironmentAPIKeyResponse",
                 "options": [
                   {
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/account/get_environment_api_key"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },
