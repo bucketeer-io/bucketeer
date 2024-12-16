@@ -18,6 +18,8 @@ package bucketeer.notification;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/notification";
 
 import "google/protobuf/wrappers.proto";
+import "google/api/annotations.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 import "proto/notification/subscription.proto";
 import "proto/notification/command.proto";
@@ -133,6 +135,7 @@ message ListSubscriptionsRequest {
   string search_keyword = 7;
   google.protobuf.BoolValue disabled = 8;
   string environment_id = 9;
+  string organization_id = 10;
 }
 
 message ListSubscriptionsResponse {
@@ -220,7 +223,39 @@ service NotificationService {
   rpc GetSubscription(GetSubscriptionRequest)
       returns (GetSubscriptionResponse) {}
   rpc ListSubscriptions(ListSubscriptionsRequest)
-      returns (ListSubscriptionsResponse) {}
+      returns (ListSubscriptionsResponse) {
+    option (google.api.http) = {
+      get: "/v1/subscriptions"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List",
+      description: "List subscriptions."
+      tags: "subscription"
+      operation_id: "web.v1.subscription.list"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc ListEnabledSubscriptions(ListEnabledSubscriptionsRequest)
       returns (ListEnabledSubscriptionsResponse) {}
   rpc CreateSubscription(CreateSubscriptionRequest)

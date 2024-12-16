@@ -164,7 +164,7 @@ func (s *subscriptionStorage) GetSubscription(
 		&subscription.Name,
 	)
 	if err != nil {
-		if err == mysql.ErrNoRows {
+		if errors.Is(err, mysql.ErrNoRows) {
 			return nil, ErrSubscriptionNotFound
 		}
 		return nil, err

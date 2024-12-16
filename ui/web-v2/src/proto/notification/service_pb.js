@@ -25,6 +25,10 @@ var global =
 
 var google_protobuf_wrappers_pb = require('google-protobuf/google/protobuf/wrappers_pb.js');
 goog.object.extend(proto, google_protobuf_wrappers_pb);
+var google_api_annotations_pb = require('../../google/api/annotations_pb.js');
+goog.object.extend(proto, google_api_annotations_pb);
+var protoc$gen$openapiv2_options_annotations_pb = require('../../protoc-gen-openapiv2/options/annotations_pb.js');
+goog.object.extend(proto, protoc$gen$openapiv2_options_annotations_pb);
 var proto_notification_subscription_pb = require('../../proto/notification/subscription_pb.js');
 goog.object.extend(proto, proto_notification_subscription_pb);
 var proto_notification_command_pb = require('../../proto/notification/command_pb.js');
@@ -4553,7 +4557,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         disabled:
           (f = msg.getDisabled()) &&
           google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 9, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 9, ''),
+        organizationId: jspb.Message.getFieldWithDefault(msg, 10, '')
       };
 
     if (includeInstance) {
@@ -4642,6 +4647,10 @@ proto.bucketeer.notification.ListSubscriptionsRequest.deserializeBinaryFromReade
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 10:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOrganizationId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -4709,6 +4718,10 @@ proto.bucketeer.notification.ListSubscriptionsRequest.serializeBinaryToWriter =
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(9, f);
+    }
+    f = message.getOrganizationId();
+    if (f.length > 0) {
+      writer.writeString(10, f);
     }
   };
 
@@ -4927,6 +4940,26 @@ proto.bucketeer.notification.ListSubscriptionsRequest.prototype.getEnvironmentId
 proto.bucketeer.notification.ListSubscriptionsRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 9, value);
+  };
+
+/**
+ * optional string organization_id = 10;
+ * @return {string}
+ */
+proto.bucketeer.notification.ListSubscriptionsRequest.prototype.getOrganizationId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 10, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.notification.ListSubscriptionsRequest} returns this
+ */
+proto.bucketeer.notification.ListSubscriptionsRequest.prototype.setOrganizationId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 10, value);
   };
 
 /**
