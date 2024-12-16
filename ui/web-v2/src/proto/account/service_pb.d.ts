@@ -1567,46 +1567,38 @@ export namespace ListAPIKeysResponse {
   };
 }
 
-export class GetAPIKeyBySearchingAllEnvironmentsRequest extends jspb.Message {
-  getId(): string;
-  setId(value: string): void;
-
+export class GetEnvironmentAPIKeyRequest extends jspb.Message {
   getApiKey(): string;
   setApiKey(value: string): void;
 
   serializeBinary(): Uint8Array;
-  toObject(
-    includeInstance?: boolean
-  ): GetAPIKeyBySearchingAllEnvironmentsRequest.AsObject;
+  toObject(includeInstance?: boolean): GetEnvironmentAPIKeyRequest.AsObject;
   static toObject(
     includeInstance: boolean,
-    msg: GetAPIKeyBySearchingAllEnvironmentsRequest
-  ): GetAPIKeyBySearchingAllEnvironmentsRequest.AsObject;
+    msg: GetEnvironmentAPIKeyRequest
+  ): GetEnvironmentAPIKeyRequest.AsObject;
   static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
   static extensionsBinary: {
     [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
   };
   static serializeBinaryToWriter(
-    message: GetAPIKeyBySearchingAllEnvironmentsRequest,
+    message: GetEnvironmentAPIKeyRequest,
     writer: jspb.BinaryWriter
   ): void;
-  static deserializeBinary(
-    bytes: Uint8Array
-  ): GetAPIKeyBySearchingAllEnvironmentsRequest;
+  static deserializeBinary(bytes: Uint8Array): GetEnvironmentAPIKeyRequest;
   static deserializeBinaryFromReader(
-    message: GetAPIKeyBySearchingAllEnvironmentsRequest,
+    message: GetEnvironmentAPIKeyRequest,
     reader: jspb.BinaryReader
-  ): GetAPIKeyBySearchingAllEnvironmentsRequest;
+  ): GetEnvironmentAPIKeyRequest;
 }
 
-export namespace GetAPIKeyBySearchingAllEnvironmentsRequest {
+export namespace GetEnvironmentAPIKeyRequest {
   export type AsObject = {
-    id: string;
     apiKey: string;
   };
 }
 
-export class GetAPIKeyBySearchingAllEnvironmentsResponse extends jspb.Message {
+export class GetEnvironmentAPIKeyResponse extends jspb.Message {
   hasEnvironmentApiKey(): boolean;
   clearEnvironmentApiKey(): void;
   getEnvironmentApiKey():
@@ -1617,31 +1609,27 @@ export class GetAPIKeyBySearchingAllEnvironmentsResponse extends jspb.Message {
   ): void;
 
   serializeBinary(): Uint8Array;
-  toObject(
-    includeInstance?: boolean
-  ): GetAPIKeyBySearchingAllEnvironmentsResponse.AsObject;
+  toObject(includeInstance?: boolean): GetEnvironmentAPIKeyResponse.AsObject;
   static toObject(
     includeInstance: boolean,
-    msg: GetAPIKeyBySearchingAllEnvironmentsResponse
-  ): GetAPIKeyBySearchingAllEnvironmentsResponse.AsObject;
+    msg: GetEnvironmentAPIKeyResponse
+  ): GetEnvironmentAPIKeyResponse.AsObject;
   static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
   static extensionsBinary: {
     [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
   };
   static serializeBinaryToWriter(
-    message: GetAPIKeyBySearchingAllEnvironmentsResponse,
+    message: GetEnvironmentAPIKeyResponse,
     writer: jspb.BinaryWriter
   ): void;
-  static deserializeBinary(
-    bytes: Uint8Array
-  ): GetAPIKeyBySearchingAllEnvironmentsResponse;
+  static deserializeBinary(bytes: Uint8Array): GetEnvironmentAPIKeyResponse;
   static deserializeBinaryFromReader(
-    message: GetAPIKeyBySearchingAllEnvironmentsResponse,
+    message: GetEnvironmentAPIKeyResponse,
     reader: jspb.BinaryReader
-  ): GetAPIKeyBySearchingAllEnvironmentsResponse;
+  ): GetEnvironmentAPIKeyResponse;
 }
 
-export namespace GetAPIKeyBySearchingAllEnvironmentsResponse {
+export namespace GetEnvironmentAPIKeyResponse {
   export type AsObject = {
     environmentApiKey?: proto_account_api_key_pb.EnvironmentAPIKey.AsObject;
   };
