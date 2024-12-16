@@ -3,7 +3,6 @@ ALTER TABLE account_v2 DROP FOREIGN KEY account_v2_foreign_organization_id;
 ALTER TABLE environment_v2 DROP FOREIGN KEY environment_v2_foreign_project_id;
 
 -- Convert all tables to utf8mb4_general_ci
-ALTER TABLE account CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 ALTER TABLE account_v2 CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 ALTER TABLE admin_account CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 ALTER TABLE admin_audit_log CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
