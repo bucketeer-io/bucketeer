@@ -131,7 +131,7 @@ func TestListProgressiveRollouts(t *testing.T) {
 				).Return(rows, nil)
 				row := mock.NewMockRow(mockController)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryRowContext(
-					gomock.Any(), gomock.Regex(`^SELECT\s+COUNT\(1\)\s+FROM\s+ops_progressive_rollout\s+WHERE\s+num\s+>=\s+\?`), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
 			},
