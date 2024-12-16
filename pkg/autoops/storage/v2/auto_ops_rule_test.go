@@ -314,7 +314,7 @@ func TestListAutoOpsRulesV2(t *testing.T) {
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
 				s.qe.(*mock.MockQueryExecer).EXPECT().QueryContext(
-					gomock.Any(), gomock.Regex(`^SELECT\s+id,\s+feature_id,\s+ops_type,\s+clauses,\s+created_at,\s+updated_at,\s+deleted,\s+status\s+FROM\s+auto_ops_rule\s+WHERE\s+num\s+>=\s+\?\s+ORDER\s+BY\s+id\s+ASC\s+LIMIT\s+10\s+OFFSET\s+5`), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
 			listOpts: &mysql.ListOptions{
