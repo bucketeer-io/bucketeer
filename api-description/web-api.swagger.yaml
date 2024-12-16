@@ -725,7 +725,7 @@ paths:
       tags:
         - API Key
   /v1/account/get_environment_api_key:
-    post:
+    get:
       summary: Get Environment API Key
       description: Get an environment API Key.
       operationId: web.v1.account.get_environment_api_key
@@ -733,7 +733,7 @@ paths:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/accountGetAPIKeyBySearchingAllEnvironmentsResponse'
+            $ref: '#/definitions/accountGetEnvironmentAPIKeyResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -766,11 +766,10 @@ paths:
           schema:
             $ref: '#/definitions/rpcStatus'
       parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountGetAPIKeyBySearchingAllEnvironmentsRequest'
+        - name: apiKey
+          in: query
+          required: false
+          type: string
       tags:
         - API Key
   /v1/account/get_me:
@@ -3309,18 +3308,6 @@ definitions:
       - UNKNOWN
       - FEATURE_FLAG
     default: UNKNOWN
-  accountGetAPIKeyBySearchingAllEnvironmentsRequest:
-    type: object
-    properties:
-      id:
-        type: string
-      apiKey:
-        type: string
-  accountGetAPIKeyBySearchingAllEnvironmentsResponse:
-    type: object
-    properties:
-      environmentApiKey:
-        $ref: '#/definitions/accountEnvironmentAPIKey'
   accountGetAPIKeyResponse:
     type: object
     properties:
@@ -3350,6 +3337,11 @@ definitions:
     properties:
       account:
         $ref: '#/definitions/accountAccountV2'
+  accountGetEnvironmentAPIKeyResponse:
+    type: object
+    properties:
+      environmentApiKey:
+        $ref: '#/definitions/accountEnvironmentAPIKey'
   accountGetMeRequest:
     type: object
     properties:
