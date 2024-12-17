@@ -39,22 +39,22 @@ var (
 	unsupportedProcessorErr = errors.New("subscriber: unsupported processor")
 )
 
-type Processors struct {
-	processorMap map[string]subscriber.Processor
+type PubSubProcessors struct {
+	processorMap map[string]subscriber.PubSubProcessor
 }
 
-func NewProcessors(r metrics.Registerer) *Processors {
+func NewPubSubProcessors(r metrics.Registerer) *PubSubProcessors {
 	registerMetrics(r)
-	return &Processors{
-		processorMap: make(map[string]subscriber.Processor),
+	return &PubSubProcessors{
+		processorMap: make(map[string]subscriber.PubSubProcessor),
 	}
 }
 
-func (p *Processors) RegisterProcessor(name string, processor subscriber.Processor) {
+func (p *PubSubProcessors) RegisterProcessor(name string, processor subscriber.PubSubProcessor) {
 	p.processorMap[name] = processor
 }
 
-func (p *Processors) GetProcessorByName(name string) (subscriber.Processor, error) {
+func (p *PubSubProcessors) GetProcessorByName(name string) (subscriber.PubSubProcessor, error) {
 	if p, ok := p.processorMap[name]; ok {
 		return p, nil
 	}

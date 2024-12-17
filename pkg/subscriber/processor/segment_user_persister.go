@@ -65,7 +65,7 @@ func NewSegmentUserPersister(
 	batchClient btclient.Client,
 	mysqlClient mysql.Client,
 	logger *zap.Logger,
-) (subscriber.Processor, error) {
+) (subscriber.PubSubProcessor, error) {
 	segmentPersisterJsonConfig, ok := config.(map[string]interface{})
 	if !ok {
 		logger.Error("SegmentUserPersister: invalid config")
