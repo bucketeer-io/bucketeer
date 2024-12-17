@@ -5,7 +5,8 @@ SELECT
     sub.disabled,
     sub.source_types,
     sub.recipient,
-    sub.name
+    sub.name,
+    env.name as environment_name
 FROM
     subscription sub
 JOIN environment_v2 env

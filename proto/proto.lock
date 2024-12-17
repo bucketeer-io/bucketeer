@@ -27830,7 +27830,13 @@
               {
                 "id": 10,
                 "name": "organization_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -28256,6 +28262,9 @@
             "path": "google/api/annotations.proto"
           },
           {
+            "path": "google/api/field_behavior.proto"
+          },
+          {
             "path": "protoc-gen-openapiv2/options/annotations.proto"
           },
           {
@@ -28403,6 +28412,11 @@
               {
                 "id": 7,
                 "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "environment_name",
                 "type": "string"
               }
             ]

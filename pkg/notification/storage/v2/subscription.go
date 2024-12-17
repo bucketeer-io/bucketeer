@@ -198,6 +198,7 @@ func (s *subscriptionStorage) ListSubscriptions(
 			&mysql.JSONObject{Val: &subscription.SourceTypes},
 			&mysql.JSONObject{Val: &subscription.Recipient},
 			&subscription.Name,
+			&subscription.EnvironmentName,
 		)
 		if err != nil {
 			return nil, 0, 0, err

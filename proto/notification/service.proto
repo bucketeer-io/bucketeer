@@ -19,6 +19,7 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/notification";
 
 import "google/protobuf/wrappers.proto";
 import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 import "proto/notification/subscription.proto";
@@ -135,7 +136,7 @@ message ListSubscriptionsRequest {
   string search_keyword = 7;
   google.protobuf.BoolValue disabled = 8;
   string environment_id = 9;
-  string organization_id = 10;
+  string organization_id = 10 [(google.api.field_behavior) = REQUIRED];
 }
 
 message ListSubscriptionsResponse {
