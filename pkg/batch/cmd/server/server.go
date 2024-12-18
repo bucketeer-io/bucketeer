@@ -543,7 +543,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		cacher.NewExperimentCacher(
 			environmentClient,
 			experimentClient,
-			cachev3.NewRedisCache(nonPersistentRedisClient),
+			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),
 		cacher.NewAutoOpsRulesCacher(
