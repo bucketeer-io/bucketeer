@@ -29,14 +29,14 @@ import (
 
 type apiKeyCacher struct {
 	accStorage accstorage.AccountStorage
-	cache      cachev3.EnvironmentAPIKeyCache
+	caches     []cachev3.EnvironmentAPIKeyCache
 	opts       *jobs.Options
 	logger     *zap.Logger
 }
 
 func NewAPIKeyCacher(
 	mysqlClient mysql.Client,
-	cache cache.MultiGetCache,
+	multiCaches []cache.MultiGetCache,
 	opts ...jobs.Option,
 ) jobs.Job {
 	dopts := &jobs.Options{
@@ -45,9 +45,13 @@ func NewAPIKeyCacher(
 	for _, opt := range opts {
 		opt(dopts)
 	}
+	caches := make([]cachev3.EnvironmentAPIKeyCache, 0, len(multiCaches))
+	for _, cache := range multiCaches {
+		caches = append(caches, cachev3.NewEnvironmentAPIKeyCache(cache))
+	}
 	return &apiKeyCacher{
 		accStorage: accstorage.NewAccountStorage(mysqlClient),
-		cache:      cachev3.NewEnvironmentAPIKeyCache(cache),
+		caches:     caches,
 		opts:       dopts,
 		logger:     dopts.Logger.Named("api-key-cacher"),
 	}
@@ -62,11 +66,13 @@ func (c *apiKeyCacher) Run(ctx context.Context) error {
 		zap.Any("environmentApiKeys", envAPIKeys),
 	)
 	for _, envAPIKey := range envAPIKeys {
-		if err := c.cache.Put(envAPIKey.EnvironmentAPIKey); err != nil {
-			c.logger.Error("Failed to cache environment api key",
-				zap.Error(err),
-				zap.Any("envAPIKey", envAPIKey),
-			)
+		for _, cache := range c.caches {
+			if err := cache.Put(envAPIKey.EnvironmentAPIKey); err != nil {
+				c.logger.Error("Failed to cache environment api key",
+					zap.Error(err),
+					zap.Any("envAPIKey", envAPIKey),
+				)
+			}
 			continue
 		}
 	}

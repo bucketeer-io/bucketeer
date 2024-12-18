@@ -537,7 +537,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		),
 		cacher.NewAPIKeyCacher(
 			mysqlClient,
-			cachev3.NewRedisCache(nonPersistentRedisClient),
+			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),
 		cacher.NewExperimentCacher(
