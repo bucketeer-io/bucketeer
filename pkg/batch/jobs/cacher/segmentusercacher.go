@@ -33,7 +33,7 @@ import (
 type segmentUserCacher struct {
 	environmentClient envclient.Client
 	featureClient     ftclient.Client
-	cache             cachev3.SegmentUsersCache
+	caches            []cachev3.SegmentUsersCache
 	opts              *jobs.Options
 	logger            *zap.Logger
 }
@@ -41,7 +41,7 @@ type segmentUserCacher struct {
 func NewSegmentUserCacher(
 	environmentClient envclient.Client,
 	featureClient ftclient.Client,
-	cache cache.MultiGetCache,
+	multiCaches []cache.MultiGetCache,
 	opts ...jobs.Option,
 ) jobs.Job {
 	dopts := &jobs.Options{
@@ -50,10 +50,14 @@ func NewSegmentUserCacher(
 	for _, opt := range opts {
 		opt(dopts)
 	}
+	caches := make([]cachev3.SegmentUsersCache, 0, len(multiCaches))
+	for _, cache := range multiCaches {
+		caches = append(caches, cachev3.NewSegmentUsersCache(cache))
+	}
 	return &segmentUserCacher{
 		environmentClient: environmentClient,
 		featureClient:     featureClient,
-		cache:             cachev3.NewSegmentUsersCache(cache),
+		caches:            caches,
 		opts:              dopts,
 		logger:            dopts.Logger.Named("segment-user-cacher"),
 	}
@@ -88,13 +92,7 @@ func (c *segmentUserCacher) Run(ctx context.Context) error {
 				UpdatedAt: seg.UpdatedAt,
 			}
 			// Update the cache by segment ID
-			if err := c.cache.Put(su, env.Id); err != nil {
-				c.logger.Error("Failed to cache segment users",
-					zap.String("environmentId", env.Id),
-					zap.String("segmentId", seg.Id),
-				)
-				continue
-			}
+			c.putCache(su, env.Id)
 		}
 	}
 	return nil
@@ -144,4 +142,15 @@ func (c *segmentUserCacher) listSegmentUsers(
 		return nil, err
 	}
 	return resp.Users, nil
+}
+
+// Save the segment users by environment in all redis instances
+// Since the batch runs every minute, we don't handle erros when putting the cache
+func (c *segmentUserCacher) putCache(segmentUsers *ftproto.SegmentUsers, environmentID string) {
+	for _, cache := range c.caches {
+		if err := cache.Put(segmentUsers, environmentID); err != nil {
+			c.logger.Error("Failed to cache segment users", zap.String("environmentId", environmentID))
+			continue
+		}
+	}
 }
