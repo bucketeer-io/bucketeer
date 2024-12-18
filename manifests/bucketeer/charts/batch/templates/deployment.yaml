@@ -143,6 +143,8 @@ spec:
               value: "{{ .Values.env.nonPersistentRedis.poolMaxIdle }}"
             - name: BUCKETEER_BATCH_NON_PERSISTENT_REDIS_POOL_MAX_ACTIVE
               value: "{{ .Values.env.nonPersistentRedis.poolMaxActive }}"
+            - name: BUCKETEER_BATCH_NON_PERSISTENT_CHILD_REDIS_ADDRESSES
+              value: "{{ .Values.env.nonPersistentChildRedis.addresses }}"
             - name: BUCKETEER_BATCH_EXPERIMENT_LOCK_TTL
               value: "{{ .Values.env.experimentLockTTL }}"
             - name: BUCKETEER_BATCH_STAN_MODEL_ID

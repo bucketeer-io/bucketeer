@@ -16,6 +16,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"time"
 
@@ -391,6 +392,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer nonPersistentRedisClient.Close()
 
+	fmt.Printf("------------------- REDIS %v -------------------- \n", *s.nonPersistentChildRedisAddresses)
+
 	// This slice contains all Redis instance caches
 	nonPersistentRedisCaches := make(
 		[]cache.MultiGetCache,
@@ -403,6 +406,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		cachev3.NewRedisCache(nonPersistentRedisClient),
 	)
 	// Initialize all the child Redis clients
+	childRedisClients := make([]redisv3.Client, 0, len(*s.nonPersistentChildRedisAddresses))
 	for _, address := range *s.nonPersistentChildRedisAddresses {
 		// We use the same options used for the main non-persistent Redis, besides the name
 		client, err := redisv3.NewClient(
@@ -416,8 +420,8 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		if err != nil {
 			return err
 		}
+		childRedisClients = append(childRedisClients, client)
 		nonPersistentRedisCaches = append(nonPersistentRedisCaches, cachev3.NewRedisCache(client))
-		defer client.Close()
 	}
 
 	// batchClient
@@ -586,6 +590,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		featureClient.Close()
 		autoOpsClient.Close()
 		mysqlClient.Close()
+		for _, client := range childRedisClients {
+			client.Close()
+		}
 	}()
 
 	<-ctx.Done()
