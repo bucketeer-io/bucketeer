@@ -45,7 +45,8 @@ env:
     poolMaxIdle: 25
     poolMaxActive: 25
   nonPersistentChildRedis:
-    addresses: "localenv-redis-headless.default.svc.cluster.local:6379,localenv-redis-headless.default.svc.cluster.local:6379"
+    addresses:
+      - localenv-redis-headless.default.svc.cluster.local:6379
 
 tls:
   service:
