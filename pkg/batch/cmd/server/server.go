@@ -34,6 +34,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/rediscounter"
+	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
@@ -105,10 +106,11 @@ type server struct {
 	persistentRedisPoolMaxIdle   *int
 	persistentRedisPoolMaxActive *int
 	// Non Persistent Redis
-	nonPersistentRedisServerName    *string
-	nonPersistentRedisAddr          *string
-	nonPersistentRedisPoolMaxIdle   *int
-	nonPersistentRedisPoolMaxActive *int
+	nonPersistentRedisServerName     *string
+	nonPersistentRedisAddr           *string
+	nonPersistentChildRedisAddresses *[]string
+	nonPersistentRedisPoolMaxIdle    *int
+	nonPersistentRedisPoolMaxActive  *int
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -216,6 +218,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"non-persistent-redis-pool-max-active",
 			"Maximum number of connections allocated by the non-persistent redis connections pool at a given time.",
 		).Default("10").Int(),
+		nonPersistentChildRedisAddresses: cmd.Flag(
+			"non-persistent-child-redis-addresses",
+			"A list of non-persistent child Redis addresses.",
+		).Strings(),
 		experimentLockTTL: cmd.Flag("experiment-lock-ttl",
 			"The ttl for experiment calculator lock").
 			Default("10m").Duration(),
@@ -385,6 +391,35 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer nonPersistentRedisClient.Close()
 
+	// This slice contains all Redis instance caches
+	nonPersistentRedisCaches := make(
+		[]cache.MultiGetCache,
+		0,
+		len(*s.nonPersistentChildRedisAddresses),
+	)
+	// Append the main Redis instance
+	nonPersistentRedisCaches = append(
+		nonPersistentRedisCaches,
+		cachev3.NewRedisCache(nonPersistentRedisClient),
+	)
+	// Initialize all the child Redis clients
+	for _, address := range *s.nonPersistentChildRedisAddresses {
+		// We use the same options used for the main non-persistent Redis, besides the name
+		client, err := redisv3.NewClient(
+			address,
+			redisv3.WithPoolSize(*s.nonPersistentRedisPoolMaxActive),
+			redisv3.WithMinIdleConns(*s.nonPersistentRedisPoolMaxIdle),
+			redisv3.WithServerName(*s.nonPersistentRedisServerName), // TODO: change to address name
+			redisv3.WithMetrics(registerer),
+			redisv3.WithLogger(logger),
+		)
+		if err != nil {
+			return err
+		}
+		nonPersistentRedisCaches = append(nonPersistentRedisCaches, cachev3.NewRedisCache(client))
+		defer client.Close()
+	}
+
 	// batchClient
 	batchClient, err := btclient.NewClient(*s.batchService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -491,7 +526,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		cacher.NewFeatureFlagCacher(
 			environmentClient,
 			featureClient,
-			cachev3.NewRedisCache(nonPersistentRedisClient),
+			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),
 		cacher.NewSegmentUserCacher(
