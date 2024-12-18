@@ -16,8 +16,8 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -392,8 +392,6 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer nonPersistentRedisClient.Close()
 
-	fmt.Printf("------------------- REDIS %v -------------------- \n", *s.nonPersistentChildRedisAddresses)
-
 	// This slice contains all Redis instance caches
 	nonPersistentRedisCaches := make(
 		[]cache.MultiGetCache,
@@ -413,7 +411,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			address,
 			redisv3.WithPoolSize(*s.nonPersistentRedisPoolMaxActive),
 			redisv3.WithMinIdleConns(*s.nonPersistentRedisPoolMaxIdle),
-			redisv3.WithServerName(*s.nonPersistentRedisServerName), // TODO: change to address name
+			redisv3.WithServerName(s.getRedisHostname(address)),
 			redisv3.WithMetrics(registerer),
 			redisv3.WithLogger(logger),
 		)
@@ -623,4 +621,12 @@ func (s *server) insertTelepresenceMountRoot(path string) string {
 		return path
 	}
 	return volumeRoot + path
+}
+
+func (s *server) getRedisHostname(redisAddress string) string {
+	address := strings.Split(redisAddress, ":")
+	if len(address) == 0 {
+		return redisAddress
+	}
+	return address[0]
 }
