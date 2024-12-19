@@ -121,7 +121,6 @@ api:
   ingress:
     host: api-gateway.bucketeer.io
 
-
 batch-server:
   env:
     project: bucketeer-test
@@ -163,6 +162,9 @@ batch-server:
       addr: localenv-redis-headless.default.svc.cluster.local:6379
       poolMaxIdle: 25
       poolMaxActive: 25
+    nonPersistentChildRedis:
+      addresses:
+        - localenv-redis-headless.default.svc.cluster.local:6379
     experimentLockTTL: 1m
 
   tls:
@@ -235,7 +237,6 @@ batch-server:
       - name: auto-ops-rules-cacher
         jobId: AutoOpsRulesCacher
         schedule: "* * * * *"
-
 
 subscriber:
   env:

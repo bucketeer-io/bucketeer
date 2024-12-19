@@ -33,7 +33,7 @@ import (
 type experimentCacher struct {
 	environmentClient envclient.Client
 	experimentClient  expclient.Client
-	cache             cachev3.ExperimentsCache
+	caches            []cachev3.ExperimentsCache
 	opts              *jobs.Options
 	logger            *zap.Logger
 }
@@ -41,7 +41,7 @@ type experimentCacher struct {
 func NewExperimentCacher(
 	environmentClient envclient.Client,
 	experimentClient expclient.Client,
-	cache cache.MultiGetCache,
+	multiCaches []cache.MultiGetCache,
 	opts ...jobs.Option,
 ) jobs.Job {
 	dopts := &jobs.Options{
@@ -50,10 +50,14 @@ func NewExperimentCacher(
 	for _, opt := range opts {
 		opt(dopts)
 	}
+	caches := make([]cachev3.ExperimentsCache, 0, len(multiCaches))
+	for _, cache := range multiCaches {
+		caches = append(caches, cachev3.NewExperimentsCache(cache))
+	}
 	return &experimentCacher{
 		environmentClient: environmentClient,
 		experimentClient:  experimentClient,
-		cache:             cachev3.NewExperimentsCache(cache),
+		caches:            caches,
 		opts:              dopts,
 		logger:            dopts.Logger.Named("experiment-cacher"),
 	}
@@ -71,10 +75,7 @@ func (c *experimentCacher) Run(ctx context.Context) error {
 			c.logger.Error("Failed to list experiments", zap.String("environmentId", env.Id))
 			return err
 		}
-		if err := c.cache.Put(&expproto.Experiments{Experiments: experiments}, env.Id); err != nil {
-			c.logger.Error("Failed to cache experiments", zap.String("environmentId", env.Id))
-			continue
-		}
+		c.putCache(&expproto.Experiments{Experiments: experiments}, env.Id)
 	}
 	return nil
 }
@@ -111,4 +112,15 @@ func (c *experimentCacher) listExperiments(
 		return nil, err
 	}
 	return resp.Experiments, nil
+}
+
+// Save the experiments by environment in all redis instances
+// Since the batch runs every minute, we don't handle erros when putting the cache
+func (c *experimentCacher) putCache(experiments *expproto.Experiments, environmentID string) {
+	for _, cache := range c.caches {
+		if err := cache.Put(experiments, environmentID); err != nil {
+			c.logger.Error("Failed to cache experiments", zap.String("environmentId", environmentID))
+			continue
+		}
+	}
 }
