@@ -269,7 +269,13 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 			)
 			return err
 		}
-		evaluationEventCounter.WithLabelValues(e.SdkVersion, e.FeatureId, e.Metadata[appVersion], e.VariationId).Inc()
+		evaluationEventCounter.WithLabelValues(
+			environmentId,
+			e.SdkVersion,
+			e.FeatureId,
+			e.Metadata[appVersion],
+			e.VariationId,
+		).Inc()
 	}
 	return nil
 }
