@@ -2829,6 +2829,57 @@ paths:
       tags:
         - Project
   /v1/push:
+    get:
+      summary: Get
+      description: Get a push.
+      operationId: web.v1.push.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/pushGetPushResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+        - name: id
+          in: query
+          required: true
+          type: string
+      tags:
+        - push
     post:
       summary: Create
       description: Create a push.
@@ -2877,58 +2928,6 @@ paths:
             $ref: '#/definitions/pushCreatePushRequest'
       tags:
         - push
-  /v1/push/{environmentId}/{id}:
-    get:
-      summary: Get
-      description: Get a push.
-      operationId: web.v1.push.get
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/pushGetPushResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/rpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/rpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/rpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/rpcStatus'
-      parameters:
-        - name: environmentId
-          in: path
-          required: true
-          type: string
-        - name: id
-          in: path
-          required: true
-          type: string
-      tags:
-        - push
     patch:
       summary: Update
       description: Update a push.
@@ -2970,19 +2969,11 @@ paths:
           schema:
             $ref: '#/definitions/rpcStatus'
       parameters:
-        - name: environmentId
-          in: path
-          required: true
-          type: string
-        - name: id
-          in: path
-          required: true
-          type: string
         - name: body
           in: body
           required: true
           schema:
-            $ref: '#/definitions/PushServiceUpdatePushBody'
+            $ref: '#/definitions/pushUpdatePushRequest'
       tags:
         - push
   /v1/pushes:
@@ -3064,6 +3055,121 @@ paths:
           type: string
       tags:
         - push
+  /v1/subscriptions:
+    get:
+      summary: List
+      description: List subscriptions.
+      operationId: web.v1.subscription.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationListSubscriptionsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: sourceTypes
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - DOMAIN_EVENT_FEATURE
+              - DOMAIN_EVENT_GOAL
+              - DOMAIN_EVENT_EXPERIMENT
+              - DOMAIN_EVENT_ACCOUNT
+              - DOMAIN_EVENT_APIKEY
+              - DOMAIN_EVENT_SEGMENT
+              - DOMAIN_EVENT_ENVIRONMENT
+              - DOMAIN_EVENT_ADMIN_ACCOUNT
+              - DOMAIN_EVENT_AUTOOPS_RULE
+              - DOMAIN_EVENT_PUSH
+              - DOMAIN_EVENT_SUBSCRIPTION
+              - DOMAIN_EVENT_ADMIN_SUBSCRIPTION
+              - DOMAIN_EVENT_PROJECT
+              - DOMAIN_EVENT_WEBHOOK
+              - DOMAIN_EVENT_PROGRESSIVE_ROLLOUT
+              - DOMAIN_EVENT_ORGANIZATION
+              - DOMAIN_EVENT_FLAG_TRIGGER
+              - FEATURE_STALE
+              - EXPERIMENT_RUNNING
+              - MAU_COUNT
+          collectionFormat: multi
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: disabled
+          in: query
+          required: false
+          type: boolean
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+        - name: organizationId
+          in: query
+          required: true
+          type: string
+      tags:
+        - subscription
 definitions:
   AccountV2RoleOrganization:
     type: string
@@ -3080,21 +3186,12 @@ definitions:
       - WriteType_OVERRIDE
       - WriteType_PATCH
     default: WriteType_UNSPECIFIED
-  PushServiceUpdatePushBody:
-    type: object
-    properties:
-      addPushTagsCommand:
-        $ref: '#/definitions/pushAddPushTagsCommand'
-      deletePushTagsCommand:
-        $ref: '#/definitions/pushDeletePushTagsCommand'
-      renamePushCommand:
-        $ref: '#/definitions/pushRenamePushCommand'
-      tags:
-        type: array
-        items:
-          type: string
-      name:
-        type: string
+  RecipientLanguage:
+    type: string
+    enum:
+      - ENGLISH
+      - JAPANESE
+    default: ENGLISH
   RoleEnvironment:
     type: string
     enum:
@@ -3102,6 +3199,30 @@ definitions:
       - Environment_VIEWER
       - Environment_EDITOR
     default: Environment_UNASSIGNED
+  SubscriptionSourceType:
+    type: string
+    enum:
+      - DOMAIN_EVENT_FEATURE
+      - DOMAIN_EVENT_GOAL
+      - DOMAIN_EVENT_EXPERIMENT
+      - DOMAIN_EVENT_ACCOUNT
+      - DOMAIN_EVENT_APIKEY
+      - DOMAIN_EVENT_SEGMENT
+      - DOMAIN_EVENT_ENVIRONMENT
+      - DOMAIN_EVENT_ADMIN_ACCOUNT
+      - DOMAIN_EVENT_AUTOOPS_RULE
+      - DOMAIN_EVENT_PUSH
+      - DOMAIN_EVENT_SUBSCRIPTION
+      - DOMAIN_EVENT_ADMIN_SUBSCRIPTION
+      - DOMAIN_EVENT_PROJECT
+      - DOMAIN_EVENT_WEBHOOK
+      - DOMAIN_EVENT_PROGRESSIVE_ROLLOUT
+      - DOMAIN_EVENT_ORGANIZATION
+      - DOMAIN_EVENT_FLAG_TRIGGER
+      - FEATURE_STALE
+      - EXPERIMENT_RUNNING
+      - MAU_COUNT
+    default: DOMAIN_EVENT_FEATURE
   UpdateAccountV2RequestAccountV2Avatar:
     type: object
     properties:
@@ -3792,6 +3913,8 @@ definitions:
         format: int64
       avatar:
         $ref: '#/definitions/UpdateAccountV2RequestAccountV2Avatar'
+      disabled:
+        type: boolean
   accountUpdateAccountV2Response:
     type: object
     properties:
@@ -4513,6 +4636,224 @@ definitions:
         $ref: '#/definitions/environmentRenameProjectCommand'
   environmentUpdateProjectResponse:
     type: object
+  notificationAddAdminSubscriptionSourceTypesCommand:
+    type: object
+    properties:
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+  notificationAddSourceTypesCommand:
+    type: object
+    properties:
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+  notificationCreateAdminSubscriptionCommand:
+    type: object
+    properties:
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+      recipient:
+        $ref: '#/definitions/notificationRecipient'
+      name:
+        type: string
+  notificationCreateAdminSubscriptionResponse:
+    type: object
+  notificationCreateSubscriptionCommand:
+    type: object
+    properties:
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+      recipient:
+        $ref: '#/definitions/notificationRecipient'
+      name:
+        type: string
+  notificationCreateSubscriptionResponse:
+    type: object
+  notificationDeleteAdminSubscriptionCommand:
+    type: object
+  notificationDeleteAdminSubscriptionResponse:
+    type: object
+  notificationDeleteAdminSubscriptionSourceTypesCommand:
+    type: object
+    properties:
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+  notificationDeleteSourceTypesCommand:
+    type: object
+    properties:
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+  notificationDeleteSubscriptionCommand:
+    type: object
+  notificationDeleteSubscriptionResponse:
+    type: object
+  notificationDisableAdminSubscriptionCommand:
+    type: object
+  notificationDisableAdminSubscriptionResponse:
+    type: object
+  notificationDisableSubscriptionCommand:
+    type: object
+  notificationDisableSubscriptionResponse:
+    type: object
+  notificationEnableAdminSubscriptionCommand:
+    type: object
+  notificationEnableAdminSubscriptionResponse:
+    type: object
+  notificationEnableSubscriptionCommand:
+    type: object
+  notificationEnableSubscriptionResponse:
+    type: object
+  notificationGetAdminSubscriptionResponse:
+    type: object
+    properties:
+      subscription:
+        $ref: '#/definitions/notificationSubscription'
+  notificationGetSubscriptionResponse:
+    type: object
+    properties:
+      subscription:
+        $ref: '#/definitions/notificationSubscription'
+  notificationListAdminSubscriptionsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  notificationListAdminSubscriptionsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  notificationListAdminSubscriptionsResponse:
+    type: object
+    properties:
+      subscriptions:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationSubscription'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  notificationListEnabledAdminSubscriptionsResponse:
+    type: object
+    properties:
+      subscriptions:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationSubscription'
+      cursor:
+        type: string
+  notificationListEnabledSubscriptionsResponse:
+    type: object
+    properties:
+      subscriptions:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationSubscription'
+      cursor:
+        type: string
+  notificationListSubscriptionsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  notificationListSubscriptionsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  notificationListSubscriptionsResponse:
+    type: object
+    properties:
+      subscriptions:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationSubscription'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  notificationRecipient:
+    type: object
+    properties:
+      type:
+        $ref: '#/definitions/notificationRecipientType'
+      slackChannelRecipient:
+        $ref: '#/definitions/notificationSlackChannelRecipient'
+      language:
+        $ref: '#/definitions/RecipientLanguage'
+  notificationRecipientType:
+    type: string
+    enum:
+      - SlackChannel
+    default: SlackChannel
+  notificationRenameAdminSubscriptionCommand:
+    type: object
+    properties:
+      name:
+        type: string
+  notificationRenameSubscriptionCommand:
+    type: object
+    properties:
+      name:
+        type: string
+  notificationSlackChannelRecipient:
+    type: object
+    properties:
+      webhookUrl:
+        type: string
+  notificationSubscription:
+    type: object
+    properties:
+      id:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      disabled:
+        type: boolean
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+      recipient:
+        $ref: '#/definitions/notificationRecipient'
+      name:
+        type: string
+      environmentName:
+        type: string
+  notificationUpdateAdminSubscriptionResponse:
+    type: object
+  notificationUpdateSubscriptionResponse:
+    type: object
   protobufAny:
     type: object
     properties:
@@ -4628,6 +4969,28 @@ definitions:
     properties:
       name:
         type: string
+  pushUpdatePushRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      addPushTagsCommand:
+        $ref: '#/definitions/pushAddPushTagsCommand'
+      deletePushTagsCommand:
+        $ref: '#/definitions/pushDeletePushTagsCommand'
+      renamePushCommand:
+        $ref: '#/definitions/pushRenamePushCommand'
+      tags:
+        type: array
+        items:
+          type: string
+      name:
+        type: string
+      environmentId:
+        type: string
+    required:
+      - id
+      - environmentId
   pushUpdatePushResponse:
     type: object
     properties:

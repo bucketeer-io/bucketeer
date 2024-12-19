@@ -774,7 +774,7 @@ func (s *NotificationService) ListSubscriptions(
 		return nil, err
 	}
 	var whereParts []mysql.WherePart
-	whereParts = append(whereParts, mysql.NewFilter("environment_id", "=", req.EnvironmentId))
+	whereParts = append(whereParts, mysql.NewFilter("sub.environment_id", "=", req.EnvironmentId))
 	sourceTypesValues := make([]interface{}, len(req.SourceTypes))
 	for i, st := range req.SourceTypes {
 		sourceTypesValues[i] = int32(st)
@@ -782,14 +782,17 @@ func (s *NotificationService) ListSubscriptions(
 	if len(sourceTypesValues) > 0 {
 		whereParts = append(
 			whereParts,
-			mysql.NewJSONFilter("source_types", mysql.JSONContainsNumber, sourceTypesValues),
+			mysql.NewJSONFilter("sub.source_types", mysql.JSONContainsNumber, sourceTypesValues),
 		)
 	}
 	if req.Disabled != nil {
-		whereParts = append(whereParts, mysql.NewFilter("disabled", "=", req.Disabled.Value))
+		whereParts = append(whereParts, mysql.NewFilter("sub.disabled", "=", req.Disabled.Value))
 	}
 	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"name"}, req.SearchKeyword))
+		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"sub.name"}, req.SearchKeyword))
+	}
+	if req.OrganizationId != "" {
+		whereParts = append(whereParts, mysql.NewFilter("env.organization_id", "=", req.OrganizationId))
 	}
 	orders, err := s.newSubscriptionListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -826,11 +829,11 @@ func (s *NotificationService) newSubscriptionListOrders(
 	switch orderBy {
 	case notificationproto.ListSubscriptionsRequest_DEFAULT,
 		notificationproto.ListSubscriptionsRequest_NAME:
-		column = "name"
+		column = "sub.name"
 	case notificationproto.ListSubscriptionsRequest_CREATED_AT:
-		column = "created_at"
+		column = "sub.created_at"
 	case notificationproto.ListSubscriptionsRequest_UPDATED_AT:
-		column = "updated_at"
+		column = "sub.updated_at"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

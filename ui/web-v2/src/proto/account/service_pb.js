@@ -3961,7 +3961,10 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto.bucketeer.account.UpdateAccountV2Request.AccountV2Avatar.toObject(
             includeInstance,
             f
-          )
+          ),
+        disabled:
+          (f = msg.getDisabled()) &&
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -4176,6 +4179,14 @@ proto.bucketeer.account.UpdateAccountV2Request.deserializeBinaryFromReader =
           );
           msg.setAvatar(value);
           break;
+        case 21:
+          var value = new google_protobuf_wrappers_pb.BoolValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader
+          );
+          msg.setDisabled(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -4370,6 +4381,14 @@ proto.bucketeer.account.UpdateAccountV2Request.serializeBinaryToWriter =
         f,
         proto.bucketeer.account.UpdateAccountV2Request.AccountV2Avatar
           .serializeBinaryToWriter
+      );
+    }
+    f = message.getDisabled();
+    if (f != null) {
+      writer.writeMessage(
+        21,
+        f,
+        google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
       );
     }
   };
@@ -5508,6 +5527,48 @@ proto.bucketeer.account.UpdateAccountV2Request.prototype.clearAvatar =
 proto.bucketeer.account.UpdateAccountV2Request.prototype.hasAvatar =
   function () {
     return jspb.Message.getField(this, 20) != null;
+  };
+
+/**
+ * optional google.protobuf.BoolValue disabled = 21;
+ * @return {?proto.google.protobuf.BoolValue}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.getDisabled =
+  function () {
+    return /** @type{?proto.google.protobuf.BoolValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.BoolValue,
+        21
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.BoolValue|undefined} value
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.setDisabled =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 21, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.account.UpdateAccountV2Request} returns this
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.clearDisabled =
+  function () {
+    return this.setDisabled(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.account.UpdateAccountV2Request.prototype.hasDisabled =
+  function () {
+    return jspb.Message.getField(this, 21) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
