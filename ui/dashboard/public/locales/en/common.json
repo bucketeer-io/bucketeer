@@ -80,5 +80,9 @@
   "api-keys-subtitle": "Manage all API keys for this environment.",
   "never": "Never",
   "state": "State",
-  "edit-profile": "Edit Profile"
+  "edit-profile": "Edit Profile",
+  "avatars": "Avatars",
+  "upload-title": "Choose a avatar or upload a photo",
+  "upload-photo": "Upload photo",
+  "edit-photo-profile": "Edit Photo Profile"
 }

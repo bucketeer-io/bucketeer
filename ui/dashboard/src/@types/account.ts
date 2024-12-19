@@ -1,7 +1,7 @@
 import { EnvironmentRoleType } from './auth';
 import { OrganizationRole } from './organization';
 
-export interface EnvironmentRole {
+export interface AccountEnvironmentRole {
   environmentId: string;
   role: EnvironmentRoleType;
 }
@@ -28,7 +28,7 @@ export interface Account {
   organizationId: string;
   organizationRole: OrganizationRole;
   environmentCount: boolean;
-  environmentRoles: EnvironmentRole[];
+  environmentRoles: AccountEnvironmentRole[];
   disabled: boolean;
   createdAt: string;
   updatedAt: string;

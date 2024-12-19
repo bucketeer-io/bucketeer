@@ -38,9 +38,10 @@ const formSchema = yup.object().shape({
 export type FilterProps = {
   isOpen: boolean;
   onClose: () => void;
+  onEditAvatar: () => void;
 };
 
-const UserProfileModal = ({ isOpen, onClose }: FilterProps) => {
+const UserProfileModal = ({ isOpen, onClose, onEditAvatar }: FilterProps) => {
   const { t } = useTranslation(['common', 'form']);
   const { consoleAccount, onMeFetcher } = useAuth();
   const { notify } = useToast();
@@ -76,7 +77,7 @@ const UserProfileModal = ({ isOpen, onClose }: FilterProps) => {
       notify({
         toastType: 'toast',
         messageType: 'success',
-        message: `Edit profile has been successfully updated!`
+        message: `Profile has been successfully updated!`
       });
       onMeFetcher({ organizationId: currentEnvironment.organizationId });
       onClose();
@@ -99,6 +100,7 @@ const UserProfileModal = ({ isOpen, onClose }: FilterProps) => {
                 <Button
                   type="button"
                   className="absolute bottom-0 right-0 size-8 px-1"
+                  onClick={onEditAvatar}
                 >
                   <Icon icon={IconEditOutlined} size="sm" />
                 </Button>
@@ -149,7 +151,7 @@ const UserProfileModal = ({ isOpen, onClose }: FilterProps) => {
                             ?.label
                         }
                         variant="secondary"
-                        className="w-full"
+                        className="w-full" 
                       />
                       <DropdownMenuContent
                         className="w-[426px]"
@@ -163,6 +165,7 @@ const UserProfileModal = ({ isOpen, onClose }: FilterProps) => {
                             value={item.value}
                             label={item.label}
                             onSelectOption={value => {
+                              field.onBlur();
                               field.onChange(value);
                             }}
                           />
