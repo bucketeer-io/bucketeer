@@ -129,6 +129,7 @@ message UpdateAccountV2Request {
   google.protobuf.StringValue language = 18;
   google.protobuf.Int64Value last_seen = 19;
   AccountV2Avatar avatar = 20;
+  google.protobuf.BoolValue disabled = 21;
 }
 
 message UpdateAccountV2Response {
