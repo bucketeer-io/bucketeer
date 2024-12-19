@@ -51,6 +51,7 @@ import {
 } from '../../utils/search-params';
 
 import { addFormSchema, updateFormSchema } from './formSchema';
+import { getOrganizationId } from '../../storage/organizationId';
 
 interface Sort {
   orderBy: OrderBy;
@@ -125,7 +126,8 @@ export const NotificationIndexPage: FC = memo(() => {
           searchKeyword: options && (options.q as string),
           orderBy: sort.orderBy,
           orderDirection: sort.orderDirection,
-          disabled: disabled
+          disabled: disabled,
+          organizationId: getOrganizationId()
         })
       );
     },
