@@ -83,7 +83,7 @@ const MyProjects = () => {
       onClearSearch();
     },
     [setSelectedEnvironment]
-  );
+  ); 
 
   return (
     <Popover.Root onOpenChange={onOpenChange} open={isShowProjectsList}>

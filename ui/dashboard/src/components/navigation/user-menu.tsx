@@ -6,8 +6,10 @@ import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { IconBuilding, IconChevronRight, IconLogout, IconUser } from '@icons';
 import { AvatarImage } from 'components/avatar';
+import EditPhottoProfileModal from './edit-photo';
 import LogoutConfirmModal from './logout-confirm';
 import MenuItemComponent from './menu-item';
+import UploadUploadAvatarModal from './upload-avatar';
 import UserProfileModal from './user-profile';
 
 const UserMenu = () => {
@@ -19,6 +21,18 @@ const UserMenu = () => {
 
   const [openProfileModal, onOpenProfileModal, onCloseProfileModal] =
     useToggleOpen(false);
+
+  const [
+    openUploadAvatarModal,
+    onOpenUploadAvatarModal,
+    onCloseUploadAvatarModal
+  ] = useToggleOpen(false);
+
+  const [
+    openUploadPhotoModal,
+    onOpenUploadPhotoModal,
+    onCloseUploadPhotoModal
+  ] = useToggleOpen(false);
 
   const avatar = consoleAccount?.avatarUrl
     ? consoleAccount.avatarUrl
@@ -73,6 +87,26 @@ const UserMenu = () => {
         <UserProfileModal
           isOpen={openProfileModal}
           onClose={onCloseProfileModal}
+          onEditAvatar={() => {
+            onCloseProfileModal();
+            onOpenUploadAvatarModal();
+          }}
+        />
+      )}
+      {openUploadAvatarModal && (
+        <UploadUploadAvatarModal
+          isOpen={openUploadAvatarModal}
+          onClose={onCloseUploadAvatarModal}
+          onUploadPhoto={() => {
+            onCloseUploadAvatarModal();
+            onOpenUploadPhotoModal();
+          }}
+        />
+      )}
+      {openUploadPhotoModal && (
+        <EditPhottoProfileModal
+          isOpen={openUploadPhotoModal}
+          onClose={onCloseUploadPhotoModal}
         />
       )}
     </Popover.Root>

@@ -148,5 +148,9 @@
   "flags-connected": "Flags Connected",
   "flags-connected-desc": "This user segment is currently connected to the following feature flags:",
   "close": "Close",
-  "edit-profile": "Edit Profile"
+  "edit-profile": "Edit Profile",
+  "avatars": "Avatars",
+  "upload-title": "Choose a avatar or upload a photo",
+  "upload-photo": "Upload photo",
+  "edit-photo-profile": "Edit Photo Profile"
 }
