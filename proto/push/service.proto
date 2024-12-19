@@ -18,6 +18,9 @@ package bucketeer.push;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/push";
 
 import "google/protobuf/wrappers.proto";
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 import "proto/push/push.proto";
 import "proto/push/command.proto";
@@ -72,13 +75,13 @@ message DeletePushResponse {}
 
 message UpdatePushRequest {
   reserved 1;
-  string id = 2;
+  string id = 2 [(google.api.field_behavior) = REQUIRED];
   AddPushTagsCommand add_push_tags_command = 3 [deprecated = true];
   DeletePushTagsCommand delete_push_tags_command = 4 [deprecated = true];
   RenamePushCommand rename_push_command = 5 [deprecated = true];
   repeated string tags = 6;
   google.protobuf.StringValue name = 7;
-  string environment_id = 8;
+  string environment_id = 8 [(google.api.field_behavior) = REQUIRED];
 }
 
 message UpdatePushResponse {
@@ -86,8 +89,9 @@ message UpdatePushResponse {
 }
 
 message GetPushRequest {
-  string environment_id = 1;
-  string id = 2;
+  string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
+  ;
+  string id = 2 [(google.api.field_behavior) = REQUIRED];
 }
 
 message GetPushResponse {
@@ -95,9 +99,139 @@ message GetPushResponse {
 }
 
 service PushService {
-  rpc ListPushes(ListPushesRequest) returns (ListPushesResponse) {}
-  rpc CreatePush(CreatePushRequest) returns (CreatePushResponse) {}
+  rpc ListPushes(ListPushesRequest) returns (ListPushesResponse) {
+    option (google.api.http) = {
+      get: "/v1/pushes"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List",
+      description: "List pushes."
+      tags: "push"
+      operation_id: "web.v1.push.list"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc CreatePush(CreatePushRequest) returns (CreatePushResponse) {
+    option (google.api.http) = {
+      post: "/v1/push"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create",
+      description: "Create a push."
+      tags: "push"
+      operation_id: "web.v1.push.create"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc UpdatePush(UpdatePushRequest) returns (UpdatePushResponse) {
+    option (google.api.http) = {
+      patch: "/v1/push"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update",
+      description: "Update a push."
+      tags: "push"
+      operation_id: "web.v1.push.update"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc GetPush(GetPushRequest) returns (GetPushResponse) {
+    option (google.api.http) = {
+      get: "/v1/push"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get a push."
+      tags: "push"
+      operation_id: "web.v1.push.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc DeletePush(DeletePushRequest) returns (DeletePushResponse) {}
-  rpc UpdatePush(UpdatePushRequest) returns (UpdatePushResponse) {}
-  rpc GetPush(GetPushRequest) returns (GetPushResponse) {}
 }
