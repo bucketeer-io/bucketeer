@@ -2828,6 +2828,233 @@ paths:
             $ref: '#/definitions/environmentUpdateProjectRequest'
       tags:
         - Project
+  /v1/push:
+    get:
+      summary: Get
+      description: Get a push.
+      operationId: web.v1.push.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/pushGetPushResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+        - name: id
+          in: query
+          required: true
+          type: string
+      tags:
+        - push
+    post:
+      summary: Create
+      description: Create a push.
+      operationId: web.v1.push.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/pushCreatePushResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/pushCreatePushRequest'
+      tags:
+        - push
+    patch:
+      summary: Update
+      description: Update a push.
+      operationId: web.v1.push.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/pushUpdatePushResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/pushUpdatePushRequest'
+      tags:
+        - push
+  /v1/pushes:
+    get:
+      summary: List
+      description: List pushes.
+      operationId: web.v1.push.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/pushListPushesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+      tags:
+        - push
   /v1/subscriptions:
     get:
       summary: List
@@ -4633,6 +4860,142 @@ definitions:
       '@type':
         type: string
     additionalProperties: {}
+  pushAddPushTagsCommand:
+    type: object
+    properties:
+      tags:
+        type: array
+        items:
+          type: string
+  pushCreatePushCommand:
+    type: object
+    properties:
+      tags:
+        type: array
+        items:
+          type: string
+      name:
+        type: string
+      fcmServiceAccount:
+        type: string
+        format: byte
+  pushCreatePushRequest:
+    type: object
+    properties:
+      command:
+        $ref: '#/definitions/pushCreatePushCommand'
+      tags:
+        type: array
+        items:
+          type: string
+      name:
+        type: string
+      fcmServiceAccount:
+        type: string
+        format: byte
+      environmentId:
+        type: string
+  pushCreatePushResponse:
+    type: object
+    properties:
+      push:
+        $ref: '#/definitions/pushPush'
+  pushDeletePushCommand:
+    type: object
+  pushDeletePushResponse:
+    type: object
+  pushDeletePushTagsCommand:
+    type: object
+    properties:
+      tags:
+        type: array
+        items:
+          type: string
+  pushGetPushResponse:
+    type: object
+    properties:
+      push:
+        $ref: '#/definitions/pushPush'
+  pushListPushesRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  pushListPushesRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  pushListPushesResponse:
+    type: object
+    properties:
+      pushes:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/pushPush'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  pushPush:
+    type: object
+    properties:
+      id:
+        type: string
+      tags:
+        type: array
+        items:
+          type: string
+      deleted:
+        type: boolean
+      name:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      fcmServiceAccount:
+        type: string
+  pushRenamePushCommand:
+    type: object
+    properties:
+      name:
+        type: string
+  pushUpdatePushRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      addPushTagsCommand:
+        $ref: '#/definitions/pushAddPushTagsCommand'
+      deletePushTagsCommand:
+        $ref: '#/definitions/pushDeletePushTagsCommand'
+      renamePushCommand:
+        $ref: '#/definitions/pushRenamePushCommand'
+      tags:
+        type: array
+        items:
+          type: string
+      name:
+        type: string
+      environmentId:
+        type: string
+    required:
+      - id
+      - environmentId
+  pushUpdatePushResponse:
+    type: object
+    properties:
+      push:
+        $ref: '#/definitions/pushPush'
   rpcStatus:
     type: object
     properties:
