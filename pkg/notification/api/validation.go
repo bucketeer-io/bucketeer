@@ -61,16 +61,6 @@ func (s *NotificationService) validateCreateSubscriptionNoCommandRequest(
 		}
 		return dt.Err()
 	}
-	if req.OrganizationId == "" {
-		dt, err := statusOrganizationIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	if err := s.validateRecipient(req.Recipient, localizer); err != nil {
 		return err
 	}

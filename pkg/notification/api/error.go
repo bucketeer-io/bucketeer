@@ -20,11 +20,10 @@ import (
 )
 
 var (
-	statusInternal               = gstatus.New(codes.Internal, "notification: internal")
-	statusIDRequired             = gstatus.New(codes.InvalidArgument, "notification: id must be specified")
-	statusNameRequired           = gstatus.New(codes.InvalidArgument, "notification: name must be specified")
-	statusOrganizationIDRequired = gstatus.New(codes.InvalidArgument, "notification: organization_id must be specified")
-	statusSourceTypesRequired    = gstatus.New(
+	statusInternal            = gstatus.New(codes.Internal, "notification: internal")
+	statusIDRequired          = gstatus.New(codes.InvalidArgument, "notification: id must be specified")
+	statusNameRequired        = gstatus.New(codes.InvalidArgument, "notification: name must be specified")
+	statusSourceTypesRequired = gstatus.New(
 		codes.InvalidArgument,
 		"notification: notification types must be specified",
 	)

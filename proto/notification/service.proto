@@ -166,7 +166,7 @@ message CreateSubscriptionRequest {
   string name = 4 [(google.api.field_behavior) = REQUIRED];
   repeated Subscription.SourceType source_types = 5
       [(google.api.field_behavior) = REQUIRED];
-  Recipient recipient = 6;
+  Recipient recipient = 6 [(google.api.field_behavior) = REQUIRED];
 }
 
 message CreateSubscriptionResponse {

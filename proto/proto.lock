@@ -28271,7 +28271,13 @@
               {
                 "id": 6,
                 "name": "recipient",
-                "type": "Recipient"
+                "type": "Recipient",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -28716,7 +28722,7 @@
                     "aggregated": [
                       {
                         "name": "post",
-                        "value": "/v1/subscriptions"
+                        "value": "/v1/subscription"
                       },
                       {
                         "name": "body",
