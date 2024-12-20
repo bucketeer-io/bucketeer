@@ -367,9 +367,8 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 				s.experimentClient.(*experimentclientmock.MockClient).EXPECT().GetGoal(
 					gomock.Any(), gomock.Any(),
 				).Return(&experimentproto.GetGoalResponse{}, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
@@ -393,9 +392,8 @@ func TestCreateAutoOpsRuleMySQL(t *testing.T) {
 		{
 			desc: "success schedule",
 			setup: func(s *AutoOpsService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req: &autoopsproto.CreateAutoOpsRuleRequest{
@@ -590,9 +588,8 @@ func TestUpdateAutoOpsRuleMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AutoOpsService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req: &autoopsproto.UpdateAutoOpsRuleRequest{
@@ -673,9 +670,8 @@ func TestStopAutoOpsRuleMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AutoOpsService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req: &autoopsproto.StopAutoOpsRuleRequest{
@@ -738,9 +734,8 @@ func TestDeleteAutoOpsRuleMySQL(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(s *AutoOpsService) {
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req: &autoopsproto.DeleteAutoOpsRuleRequest{
@@ -801,7 +796,11 @@ func TestGetAutoOpsRuleMySQL(t *testing.T) {
 			setup: func(s *AutoOpsService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				qe := mysqlmock.NewMockQueryExecer(mockController)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -821,7 +820,11 @@ func TestGetAutoOpsRuleMySQL(t *testing.T) {
 			setup: func(s *AutoOpsService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				qe := mysqlmock.NewMockQueryExecer(mockController)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -834,7 +837,11 @@ func TestGetAutoOpsRuleMySQL(t *testing.T) {
 			setup: func(s *AutoOpsService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				qe := mysqlmock.NewMockQueryExecer(mockController)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -888,7 +895,11 @@ func TestListAutoOpsRulesMySQL(t *testing.T) {
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+				qe := mysqlmock.NewMockQueryExecer(mockController)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
@@ -910,7 +921,12 @@ func TestListAutoOpsRulesMySQL(t *testing.T) {
 				rows.EXPECT().Close().Return(nil)
 				rows.EXPECT().Next().Return(false)
 				rows.EXPECT().Err().Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryContext(
+				qe := mysqlmock.NewMockQueryExecer(mockController)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+
+				qe.EXPECT().QueryContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(rows, nil)
 			},
@@ -1058,7 +1074,11 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 			setup: func(s *AutoOpsService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(mysql.ErrNoRows)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				qe := mysqlmock.NewMockQueryExecer(mockController)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
 			},
@@ -1076,12 +1096,15 @@ func TestExecuteAutoOpsRuleMySQL(t *testing.T) {
 			setup: func(s *AutoOpsService) {
 				row := mysqlmock.NewMockRow(mockController)
 				row.EXPECT().Scan(gomock.Any()).Return(nil)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().QueryRowContext(
+				qe := mysqlmock.NewMockQueryExecer(mockController)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().Qe(
+					gomock.Any(),
+				).Return(qe)
+				qe.EXPECT().QueryRowContext(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(row)
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil).AnyTimes()
-				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
-					gomock.Any(), gomock.Any(), gomock.Any(),
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
+					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			req: &autoopsproto.ExecuteAutoOpsRequest{
