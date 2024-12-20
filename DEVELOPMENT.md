@@ -106,6 +106,7 @@ SERVICE_TOKEN_PATH=/workspaces/bucketeer/tools/dev/cert/service-token \
 API_KEY_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_client \
 API_KEY_SERVER_PATH=/workspaces/bucketeer/tools/dev/cert/api_key_server \
 ENVIRONMENT_NAMESPACE=e2e \
+ORGANIZATION_ID=default \
 make e2e
 ```
 

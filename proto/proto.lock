@@ -28238,7 +28238,13 @@
               {
                 "id": 2,
                 "name": "command",
-                "type": "CreateSubscriptionCommand"
+                "type": "CreateSubscriptionCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 3,

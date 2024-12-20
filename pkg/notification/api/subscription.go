@@ -656,7 +656,9 @@ func (s *NotificationService) ListSubscriptions(
 		return nil, err
 	}
 	var whereParts []mysql.WherePart
-	whereParts = append(whereParts, mysql.NewFilter("sub.environment_id", "=", req.EnvironmentId))
+	if req.EnvironmentId != "" {
+		whereParts = append(whereParts, mysql.NewFilter("sub.environment_id", "=", req.EnvironmentId))
+	}
 	sourceTypesValues := make([]interface{}, len(req.SourceTypes))
 	for i, st := range req.SourceTypes {
 		sourceTypesValues[i] = int32(st)
