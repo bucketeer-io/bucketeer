@@ -93,17 +93,6 @@ func (c *featureFlagCacher) Run(ctx context.Context) error {
 	return nil
 }
 
-// Save the flags by environment in all redis instances
-// Since the batch runs every minute, we don't handle erros when putting the cache
-func (c *featureFlagCacher) putCache(features *ftproto.Features, environmentID string) {
-	for _, cache := range c.caches {
-		if err := cache.Put(features, environmentID); err != nil {
-			c.logger.Error("Failed to cache features", zap.String("environmentId", environmentID))
-			continue
-		}
-	}
-}
-
 func (c *featureFlagCacher) listAllEnvironments(
 	ctx context.Context,
 ) ([]*envproto.EnvironmentV2, error) {
@@ -142,4 +131,21 @@ func (c *featureFlagCacher) listFeatures(
 		filtered = append(filtered, f)
 	}
 	return filtered, nil
+}
+
+// Save the flags by environment in all redis instances
+// Since the batch runs every minute, we don't handle erros when putting the cache
+func (c *featureFlagCacher) putCache(features *ftproto.Features, environmentID string) {
+	var updatedInstances int
+	for _, cache := range c.caches {
+		if err := cache.Put(features, environmentID); err != nil {
+			c.logger.Error("Failed to cache features",
+				zap.Error(err),
+				zap.String("environmentId", environmentID),
+			)
+			continue
+		}
+		updatedInstances++
+	}
+	c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
 }

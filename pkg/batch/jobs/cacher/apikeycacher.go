@@ -25,6 +25,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	accproto "github.com/bucketeer-io/bucketeer/proto/account"
 )
 
 type apiKeyCacher struct {
@@ -66,15 +67,24 @@ func (c *apiKeyCacher) Run(ctx context.Context) error {
 		zap.Any("environmentApiKeys", envAPIKeys),
 	)
 	for _, envAPIKey := range envAPIKeys {
-		for _, cache := range c.caches {
-			if err := cache.Put(envAPIKey.EnvironmentAPIKey); err != nil {
-				c.logger.Error("Failed to cache environment api key",
-					zap.Error(err),
-					zap.Any("envAPIKey", envAPIKey),
-				)
-			}
-			continue
-		}
+		c.putCache(envAPIKey.EnvironmentAPIKey)
 	}
 	return nil
+}
+
+// Save the environment API key in all redis instances
+// Since the batch runs every minute, we don't handle erros when putting the cache
+func (c *apiKeyCacher) putCache(envAPIKey *accproto.EnvironmentAPIKey) {
+	var updatedInstances int
+	for _, cache := range c.caches {
+		if err := cache.Put(envAPIKey); err != nil {
+			c.logger.Error("Failed to cache environment api key",
+				zap.Error(err),
+				zap.Any("envAPIKey", envAPIKey),
+			)
+			continue
+		}
+		updatedInstances++
+	}
+	c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
 }
