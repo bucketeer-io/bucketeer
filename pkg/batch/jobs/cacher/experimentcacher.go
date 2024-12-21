@@ -117,10 +117,16 @@ func (c *experimentCacher) listExperiments(
 // Save the experiments by environment in all redis instances
 // Since the batch runs every minute, we don't handle erros when putting the cache
 func (c *experimentCacher) putCache(experiments *expproto.Experiments, environmentID string) {
+	var updatedInstances int
 	for _, cache := range c.caches {
 		if err := cache.Put(experiments, environmentID); err != nil {
-			c.logger.Error("Failed to cache experiments", zap.String("environmentId", environmentID))
+			c.logger.Error("Failed to cache experiments",
+				zap.Error(err),
+				zap.String("environmentId", environmentID),
+			)
 			continue
 		}
+		updatedInstances++
 	}
+	c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
 }

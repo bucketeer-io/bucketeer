@@ -147,10 +147,16 @@ func (c *segmentUserCacher) listSegmentUsers(
 // Save the segment users by environment in all redis instances
 // Since the batch runs every minute, we don't handle erros when putting the cache
 func (c *segmentUserCacher) putCache(segmentUsers *ftproto.SegmentUsers, environmentID string) {
+	var updatedInstances int
 	for _, cache := range c.caches {
 		if err := cache.Put(segmentUsers, environmentID); err != nil {
-			c.logger.Error("Failed to cache segment users", zap.String("environmentId", environmentID))
+			c.logger.Error("Failed to cache segment users",
+				zap.Error(err),
+				zap.String("environmentId", environmentID),
+			)
 			continue
 		}
+		updatedInstances++
 	}
+	c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
 }
