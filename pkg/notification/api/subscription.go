@@ -19,13 +19,13 @@ import (
 	"errors"
 	"strconv"
 
-	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
-
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/command"
@@ -496,7 +496,6 @@ func (s *NotificationService) DeleteSubscription(
 	if err := validateDeleteSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	var handler command.Handler = command.NewEmptySubscriptionCommandHandler()
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
 		s.logger.Error(
@@ -514,26 +513,36 @@ func (s *NotificationService) DeleteSubscription(
 		}
 		return nil, dt.Err()
 	}
+
+	var subscription *domain.Subscription
+	var event *eventproto.Event
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		subscriptionStorage := v2ss.NewSubscriptionStorage(tx)
-		subscription, err := subscriptionStorage.GetSubscription(ctx, req.Id, req.EnvironmentId)
+		subscription, err = subscriptionStorage.GetSubscription(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
-		handler, err = command.NewSubscriptionCommandHandler(editor, subscription, req.EnvironmentId)
-		if err != nil {
+		prev := &domain.Subscription{}
+		if err = copier.Copy(prev, subscription); err != nil {
 			return err
 		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
-			return err
-		}
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_SUBSCRIPTION,
+			subscription.Id,
+			eventproto.Event_SUBSCRIPTION_DELETED,
+			&eventproto.SubscriptionDeletedEvent{},
+			req.EnvironmentId,
+			subscription.Subscription,
+			prev,
+		)
 		if err = subscriptionStorage.DeleteSubscription(ctx, req.Id, req.EnvironmentId); err != nil {
 			return err
 		}
 		return nil
 	})
 	if err != nil {
-		if err == v2ss.ErrSubscriptionNotFound || err == v2ss.ErrSubscriptionUnexpectedAffectedRows {
+		if errors.Is(err, v2ss.ErrSubscriptionNotFound) || errors.Is(err, v2ss.ErrSubscriptionUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -559,23 +568,18 @@ func (s *NotificationService) DeleteSubscription(
 		}
 		return nil, dt.Err()
 	}
-	if errs := s.publishDomainEvents(ctx, handler.Events()); len(errs) > 0 {
+
+	err = s.domainEventPublisher.Publish(ctx, event)
+	if err != nil {
 		s.logger.Error(
-			"Failed to publish events",
+			"Failed to publish event",
 			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Any("errors", errs),
+				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
-				zap.String("id", req.Id),
+				zap.String("subscriptionId", subscription.Id),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, err
 	}
 	return &notificationproto.DeleteSubscriptionResponse{}, nil
 }

@@ -247,16 +247,6 @@ func validateDeleteSubscriptionRequest(
 		}
 		return dt.Err()
 	}
-	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
 	return nil
 }
 

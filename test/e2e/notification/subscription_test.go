@@ -106,11 +106,9 @@ func TestCreateListSubscriptionNoCommand(t *testing.T) {
 	if subscription.Disabled != false {
 		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
 	}
-	// TODO: Remove command when delete subscription is updated
 	_, err = notificationClient.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{
 		EnvironmentId: *environmentNamespace,
 		Id:            id,
-		Command:       &proto.DeleteSubscriptionCommand{},
 	})
 	if err != nil {
 		t.Fatal(err)

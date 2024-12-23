@@ -628,26 +628,18 @@ func TestDeleteSubscriptionMySQL(t *testing.T) {
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			desc: "err: ErrNoCommand",
-			input: &proto.DeleteSubscriptionRequest{
-				Id: "key-0",
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
-		{
 			desc: "success",
 			setup: func(s *NotificationService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
-				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
+				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			input: &proto.DeleteSubscriptionRequest{
-				Id:      "key-0",
-				Command: &proto.DeleteSubscriptionCommand{},
+				Id: "key-0",
 			},
 			expectedErr: nil,
 		},

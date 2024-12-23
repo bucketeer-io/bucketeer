@@ -28311,7 +28311,13 @@
               {
                 "id": 3,
                 "name": "command",
-                "type": "DeleteSubscriptionCommand"
+                "type": "DeleteSubscriptionCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 4,

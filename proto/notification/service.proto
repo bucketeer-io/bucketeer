@@ -176,7 +176,7 @@ message CreateSubscriptionResponse {
 message DeleteSubscriptionRequest {
   reserved 1;
   string id = 2;
-  DeleteSubscriptionCommand command = 3;
+  DeleteSubscriptionCommand command = 3 [deprecated = true];
   string environment_id = 4;
 }
 
