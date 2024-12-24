@@ -3155,6 +3155,54 @@ paths:
             $ref: '#/definitions/notificationCreateSubscriptionRequest'
       tags:
         - subscription
+    patch:
+      summary: Update
+      description: Update subscription.
+      operationId: web.v1.subscription.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationUpdateSubscriptionResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/notificationUpdateSubscriptionRequest'
+      tags:
+        - subscription
   /v1/subscriptions:
     get:
       summary: List
@@ -4974,8 +5022,39 @@ definitions:
         type: string
   notificationUpdateAdminSubscriptionResponse:
     type: object
+  notificationUpdateSubscriptionRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      addSourceTypesCommand:
+        $ref: '#/definitions/notificationAddSourceTypesCommand'
+        description: deprecated. use source_types instead.
+      deleteSourceTypesCommand:
+        $ref: '#/definitions/notificationDeleteSourceTypesCommand'
+        description: deprecated. use source_types instead.
+      renameSubscriptionCommand:
+        $ref: '#/definitions/notificationRenameSubscriptionCommand'
+        description: deprecated. use name instead.
+      environmentId:
+        type: string
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+      name:
+        type: string
+      disabled:
+        type: boolean
+        description: if true, the subscription is disabled, otherwise enabled.
+        title: disabled
+    required:
+      - id
   notificationUpdateSubscriptionResponse:
     type: object
+    properties:
+      subscription:
+        $ref: '#/definitions/notificationSubscription'
   protobufAny:
     type: object
     properties:

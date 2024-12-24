@@ -1337,6 +1337,30 @@ export class UpdateSubscriptionRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  clearSourceTypesList(): void;
+  getSourceTypesList(): Array<
+    proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap]
+  >;
+  setSourceTypesList(
+    value: Array<
+      proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap]
+    >
+  ): void;
+  addSourceTypes(
+    value: proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap],
+    index?: number
+  ): proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap];
+
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasDisabled(): boolean;
+  clearDisabled(): void;
+  getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateSubscriptionRequest.AsObject;
   static toObject(
@@ -1365,10 +1389,24 @@ export namespace UpdateSubscriptionRequest {
     deleteSourceTypesCommand?: proto_notification_command_pb.DeleteSourceTypesCommand.AsObject;
     renameSubscriptionCommand?: proto_notification_command_pb.RenameSubscriptionCommand.AsObject;
     environmentId: string;
+    sourceTypesList: Array<
+      proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap]
+    >;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 }
 
 export class UpdateSubscriptionResponse extends jspb.Message {
+  hasSubscription(): boolean;
+  clearSubscription(): void;
+  getSubscription():
+    | proto_notification_subscription_pb.Subscription
+    | undefined;
+  setSubscription(
+    value?: proto_notification_subscription_pb.Subscription
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateSubscriptionResponse.AsObject;
   static toObject(
@@ -1391,5 +1429,7 @@ export class UpdateSubscriptionResponse extends jspb.Message {
 }
 
 export namespace UpdateSubscriptionResponse {
-  export type AsObject = {};
+  export type AsObject = {
+    subscription?: proto_notification_subscription_pb.Subscription.AsObject;
+  };
 }
