@@ -58,7 +58,7 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 		return nil, err
 	}
 
-	err = s.mysqlClient.RunInTransactionV2(&ctx, func(tx mysql.Transaction) error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
 		progressiveRollout, err := domain.NewProgressiveRollout(
 			req.Command.FeatureId,
 			req.Command.ProgressiveRolloutManualScheduleClause,
@@ -80,7 +80,7 @@ func (s *AutoOpsService) CreateProgressiveRollout(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return storage.CreateProgressiveRollout(ctx, progressiveRollout, req.EnvironmentId)
+		return storage.CreateProgressiveRollout(contextWithTx, progressiveRollout, req.EnvironmentId)
 	})
 	if err != nil {
 		switch err {
@@ -197,9 +197,9 @@ func (s *AutoOpsService) updateProgressiveRollout(
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
 ) error {
-	err := s.mysqlClient.RunInTransactionV2(&ctx, func(tx mysql.Transaction) error {
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
 		storage := v2as.NewProgressiveRolloutStorage(s.mysqlClient)
-		progressiveRollout, err := storage.GetProgressiveRollout(ctx, progressiveRolloutID, environmentId)
+		progressiveRollout, err := storage.GetProgressiveRollout(contextWithTx, progressiveRolloutID, environmentId)
 		if err != nil {
 			return err
 		}
@@ -215,7 +215,7 @@ func (s *AutoOpsService) updateProgressiveRollout(
 		if err := handler.Handle(ctx, cmd); err != nil {
 			return err
 		}
-		return storage.UpdateProgressiveRollout(ctx, progressiveRollout, environmentId)
+		return storage.UpdateProgressiveRollout(contextWithTx, progressiveRollout, environmentId)
 	})
 	if err != nil {
 		s.logger.Error(
@@ -263,9 +263,9 @@ func (s *AutoOpsService) DeleteProgressiveRollout(
 		return nil, err
 	}
 
-	err = s.mysqlClient.RunInTransactionV2(&ctx, func(tx mysql.Transaction) error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
 		storage := v2as.NewProgressiveRolloutStorage(s.mysqlClient)
-		progressiveRollout, err := storage.GetProgressiveRollout(ctx, req.Id, req.EnvironmentId)
+		progressiveRollout, err := storage.GetProgressiveRollout(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -281,7 +281,7 @@ func (s *AutoOpsService) DeleteProgressiveRollout(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return storage.DeleteProgressiveRollout(ctx, req.Id, req.EnvironmentId)
+		return storage.DeleteProgressiveRollout(contextWithTx, req.Id, req.EnvironmentId)
 	})
 	if err != nil {
 		s.logger.Error(
@@ -355,7 +355,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 	}
 
 	var event *eventproto.Event
-	err = s.mysqlClient.RunInTransactionV2(&ctx, func(tx mysql.Transaction) error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
 		storage := v2as.NewProgressiveRolloutStorage(s.mysqlClient)
 		progressiveRollout, err := storage.GetProgressiveRollout(ctx, req.Id, req.EnvironmentId)
 		if err != nil {

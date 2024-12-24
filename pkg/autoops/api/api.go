@@ -183,7 +183,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 		}
 	}
 
-	err = s.mysqlClient.RunInTransactionV2(&ctx, func(_ mysql.Transaction) error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
 		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentId)
 		if err != nil {
@@ -192,7 +192,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return autoOpsRuleStorage.CreateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentId)
+		return autoOpsRuleStorage.CreateAutoOpsRule(contextWithTx, autoOpsRule, req.EnvironmentId)
 	})
 	if err != nil {
 		if err == v2as.ErrAutoOpsRuleAlreadyExists {
@@ -458,9 +458,9 @@ func (s *AutoOpsService) StopAutoOpsRule(
 		return nil, err
 	}
 
-	err = s.mysqlClient.RunInTransactionV2(&ctx, func(_ mysql.Transaction) error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
-		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
+		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -481,7 +481,7 @@ func (s *AutoOpsService) StopAutoOpsRule(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentId)
+		return autoOpsRuleStorage.UpdateAutoOpsRule(contextWithTx, autoOpsRule, req.EnvironmentId)
 	})
 
 	if err != nil {
@@ -529,9 +529,9 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 		return nil, err
 	}
 
-	err = s.mysqlClient.RunInTransactionV2(&ctx, func(_ mysql.Transaction) error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
-		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
+		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -542,7 +542,7 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentId)
+		return autoOpsRuleStorage.UpdateAutoOpsRule(contextWithTx, autoOpsRule, req.EnvironmentId)
 	})
 	if err != nil {
 		if err == v2as.ErrAutoOpsRuleNotFound || err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
@@ -648,9 +648,9 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 	}
 	commands := s.createUpdateAutoOpsRuleCommands(req)
 
-	err = s.mysqlClient.RunInTransactionV2(&ctx, func(_ mysql.Transaction) error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
 		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
-		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
+		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -752,7 +752,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 				return err
 			}
 		}
-		return autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentId)
+		return autoOpsRuleStorage.UpdateAutoOpsRule(contextWithTx, autoOpsRule, req.EnvironmentId)
 	})
 	if err != nil {
 		if err == v2as.ErrAutoOpsRuleNotFound || err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
@@ -1123,9 +1123,9 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		return &autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: true}, nil
 	}
 
-	err = s.mysqlClient.RunInTransactionV2(&ctx, func(tx mysql.Transaction) error {
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
 		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
-		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
+		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -1150,7 +1150,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		}
 
 		ftStorage := ftstorage.NewFeatureStorage(tx)
-		feature, err := ftStorage.GetFeature(ctx, autoOpsRule.FeatureId, req.EnvironmentId)
+		feature, err := ftStorage.GetFeature(contextWithTx, autoOpsRule.FeatureId, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -1158,7 +1158,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		// Stop the running progressive rollout if the operation type is disable
 		if executeClause.ActionType == autoopsproto.ActionType_DISABLE {
 			if err := s.stopProgressiveRollout(
-				ctx,
+				contextWithTx,
 				req.EnvironmentId,
 				autoOpsRule,
 				prStorage,
@@ -1168,7 +1168,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			}
 		}
 		if err := executeAutoOpsRuleOperation(
-			ctx,
+			contextWithTx,
 			ftStorage,
 			req.EnvironmentId,
 			executeClause.ActionType,
@@ -1199,7 +1199,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			return err
 		}
 
-		if err = autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentId); err != nil {
+		if err = autoOpsRuleStorage.UpdateAutoOpsRule(contextWithTx, autoOpsRule, req.EnvironmentId); err != nil {
 			if err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
 				s.logger.Warn(
 					"No rows were affected",

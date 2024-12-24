@@ -1761,7 +1761,7 @@ func TestEnableFeatureMySQL(t *testing.T) {
 			desc: "error: statusNotFound",
 			setup: func(s *FeatureService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransactionV2(
-					gomock.Any(), gomock.Any(),
+					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(v2fs.ErrFeatureNotFound)
 				s.environmentClient.(*envclientmock.MockClient).EXPECT().GetEnvironmentV2(gomock.Any(), gomock.Any()).Return(
 					&envproto.GetEnvironmentV2Response{

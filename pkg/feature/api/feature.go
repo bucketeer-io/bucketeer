@@ -1397,9 +1397,9 @@ func (s *FeatureService) updateFeature(
 	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
 
-	err := s.mysqlClient.RunInTransactionV2(&ctx, func(tx mysql.Transaction) error {
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
 		featureStorage := v2fs.NewFeatureStorage(tx)
-		feature, err := featureStorage.GetFeature(ctx, id, environmentId)
+		feature, err := featureStorage.GetFeature(contextWithTx, id, environmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get feature",
@@ -1428,7 +1428,7 @@ func (s *FeatureService) updateFeature(
 		// We must stop the progressive rollout if it contains a `DisableFeatureCommand`
 		switch cmd.(type) {
 		case *featureproto.DisableFeatureCommand:
-			if err := s.stopProgressiveRollout(ctx, environmentId, feature.Id); err != nil {
+			if err := s.stopProgressiveRollout(contextWithTx, environmentId, feature.Id); err != nil {
 				return err
 			}
 		}
@@ -1442,7 +1442,7 @@ func (s *FeatureService) updateFeature(
 			)
 			return err
 		}
-		if err := featureStorage.UpdateFeature(ctx, feature, environmentId); err != nil {
+		if err := featureStorage.UpdateFeature(contextWithTx, feature, environmentId); err != nil {
 			s.logger.Error(
 				"Failed to update feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(

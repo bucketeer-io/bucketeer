@@ -345,7 +345,7 @@ func (mr *MockClientMockRecorder) RunInTransaction(ctx, tx, f any) *gomock.Call 
 }
 
 // RunInTransactionV2 mocks base method.
-func (m *MockClient) RunInTransactionV2(ctx *context.Context, f func(mysql.Transaction) error) error {
+func (m *MockClient) RunInTransactionV2(ctx context.Context, f func(context.Context, mysql.Transaction) error) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RunInTransactionV2", ctx, f)
 	ret0, _ := ret[0].(error)

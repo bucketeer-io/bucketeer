@@ -110,7 +110,7 @@ type Client interface {
 	// ToDo:
 	// Transaction is passed because it is required for storage that does not support storage architecture refactoring,
 	// but we plan to remove it once the refactoring is complete.
-	RunInTransactionV2(ctx *context.Context, f func(tx Transaction) error) error
+	RunInTransactionV2(ctx context.Context, f func(ctx context.Context, tx Transaction) error) error
 	Qe(ctx context.Context) QueryExecer
 }
 
@@ -208,19 +208,21 @@ func (c *client) RunInTransaction(ctx context.Context, tx Transaction, f func() 
 	return err
 }
 
-func (c *client) RunInTransactionV2(ctx *context.Context, f func(tx Transaction) error) error {
-	tx, err := c.BeginTx(*ctx)
+func (c *client) RunInTransactionV2(
+	ctx context.Context,
+	f func(ctx context.Context, ctxWithTx Transaction) error) error {
+	tx, err := c.BeginTx(ctx)
 	if err != nil {
-		return fmt.Errorf("account: begin tx: %w", err)
+		return fmt.Errorf("client: begin tx: %w", err)
 	}
-	*ctx = context.WithValue(*ctx, transactionKey, tx)
+	ctx = context.WithValue(ctx, transactionKey, tx)
 	defer record()(operationRunInTransaction, &err)
 	defer func() {
 		if err != nil {
 			tx.Rollback() // nolint:errcheck
 		}
 	}()
-	if err = f(tx); err == nil {
+	if err = f(ctx, tx); err == nil {
 		err = tx.Commit()
 	}
 	return err
