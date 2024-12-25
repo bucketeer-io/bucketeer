@@ -25,18 +25,19 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
+	accproto "github.com/bucketeer-io/bucketeer/proto/account"
 )
 
 type apiKeyCacher struct {
 	accStorage accstorage.AccountStorage
-	cache      cachev3.EnvironmentAPIKeyCache
+	caches     []cachev3.EnvironmentAPIKeyCache
 	opts       *jobs.Options
 	logger     *zap.Logger
 }
 
 func NewAPIKeyCacher(
 	mysqlClient mysql.Client,
-	cache cache.MultiGetCache,
+	multiCaches []cache.MultiGetCache,
 	opts ...jobs.Option,
 ) jobs.Job {
 	dopts := &jobs.Options{
@@ -45,9 +46,13 @@ func NewAPIKeyCacher(
 	for _, opt := range opts {
 		opt(dopts)
 	}
+	caches := make([]cachev3.EnvironmentAPIKeyCache, 0, len(multiCaches))
+	for _, cache := range multiCaches {
+		caches = append(caches, cachev3.NewEnvironmentAPIKeyCache(cache))
+	}
 	return &apiKeyCacher{
 		accStorage: accstorage.NewAccountStorage(mysqlClient),
-		cache:      cachev3.NewEnvironmentAPIKeyCache(cache),
+		caches:     caches,
 		opts:       dopts,
 		logger:     dopts.Logger.Named("api-key-cacher"),
 	}
@@ -62,13 +67,25 @@ func (c *apiKeyCacher) Run(ctx context.Context) error {
 		zap.Any("environmentApiKeys", envAPIKeys),
 	)
 	for _, envAPIKey := range envAPIKeys {
-		if err := c.cache.Put(envAPIKey.EnvironmentAPIKey); err != nil {
+		updatedInstances := c.putCache(envAPIKey.EnvironmentAPIKey)
+		c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
+	}
+	return nil
+}
+
+// Save the environment API key in all redis instances
+// Since the batch runs every minute, we don't handle erros when putting the cache
+func (c *apiKeyCacher) putCache(envAPIKey *accproto.EnvironmentAPIKey) int {
+	var updatedInstances int
+	for _, cache := range c.caches {
+		if err := cache.Put(envAPIKey); err != nil {
 			c.logger.Error("Failed to cache environment api key",
 				zap.Error(err),
 				zap.Any("envAPIKey", envAPIKey),
 			)
 			continue
 		}
+		updatedInstances++
 	}
-	return nil
+	return updatedInstances
 }
