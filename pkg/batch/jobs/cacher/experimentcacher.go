@@ -75,7 +75,8 @@ func (c *experimentCacher) Run(ctx context.Context) error {
 			c.logger.Error("Failed to list experiments", zap.String("environmentId", env.Id))
 			return err
 		}
-		c.putCache(&expproto.Experiments{Experiments: experiments}, env.Id)
+		updatedInstances := c.putCache(&expproto.Experiments{Experiments: experiments}, env.Id)
+		c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
 	}
 	return nil
 }
@@ -116,7 +117,7 @@ func (c *experimentCacher) listExperiments(
 
 // Save the experiments by environment in all redis instances
 // Since the batch runs every minute, we don't handle erros when putting the cache
-func (c *experimentCacher) putCache(experiments *expproto.Experiments, environmentID string) {
+func (c *experimentCacher) putCache(experiments *expproto.Experiments, environmentID string) int {
 	var updatedInstances int
 	for _, cache := range c.caches {
 		if err := cache.Put(experiments, environmentID); err != nil {
@@ -128,5 +129,5 @@ func (c *experimentCacher) putCache(experiments *expproto.Experiments, environme
 		}
 		updatedInstances++
 	}
-	c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
+	return updatedInstances
 }

@@ -84,7 +84,8 @@ func (c *featureFlagCacher) Run(ctx context.Context) error {
 		for _, f := range fts.Features {
 			fids = append(fids, f.Id)
 		}
-		c.putCache(fts, env.Id)
+		updatedInstances := c.putCache(fts, env.Id)
+		c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
 		c.logger.Debug("Caching features",
 			zap.String("environmentId", env.Id),
 			zap.Strings("featureIds", fids),
@@ -135,7 +136,7 @@ func (c *featureFlagCacher) listFeatures(
 
 // Save the flags by environment in all redis instances
 // Since the batch runs every minute, we don't handle erros when putting the cache
-func (c *featureFlagCacher) putCache(features *ftproto.Features, environmentID string) {
+func (c *featureFlagCacher) putCache(features *ftproto.Features, environmentID string) int {
 	var updatedInstances int
 	for _, cache := range c.caches {
 		if err := cache.Put(features, environmentID); err != nil {
@@ -147,5 +148,5 @@ func (c *featureFlagCacher) putCache(features *ftproto.Features, environmentID s
 		}
 		updatedInstances++
 	}
-	c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
+	return updatedInstances
 }

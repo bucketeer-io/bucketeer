@@ -67,14 +67,15 @@ func (c *apiKeyCacher) Run(ctx context.Context) error {
 		zap.Any("environmentApiKeys", envAPIKeys),
 	)
 	for _, envAPIKey := range envAPIKeys {
-		c.putCache(envAPIKey.EnvironmentAPIKey)
+		updatedInstances := c.putCache(envAPIKey.EnvironmentAPIKey)
+		c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
 	}
 	return nil
 }
 
 // Save the environment API key in all redis instances
 // Since the batch runs every minute, we don't handle erros when putting the cache
-func (c *apiKeyCacher) putCache(envAPIKey *accproto.EnvironmentAPIKey) {
+func (c *apiKeyCacher) putCache(envAPIKey *accproto.EnvironmentAPIKey) int {
 	var updatedInstances int
 	for _, cache := range c.caches {
 		if err := cache.Put(envAPIKey); err != nil {
@@ -86,5 +87,5 @@ func (c *apiKeyCacher) putCache(envAPIKey *accproto.EnvironmentAPIKey) {
 		}
 		updatedInstances++
 	}
-	c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
+	return updatedInstances
 }

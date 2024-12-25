@@ -92,7 +92,8 @@ func (c *segmentUserCacher) Run(ctx context.Context) error {
 				UpdatedAt: seg.UpdatedAt,
 			}
 			// Update the cache by segment ID
-			c.putCache(su, env.Id)
+			updatedInstances := c.putCache(su, env.Id)
+			c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
 		}
 	}
 	return nil
@@ -146,7 +147,7 @@ func (c *segmentUserCacher) listSegmentUsers(
 
 // Save the segment users by environment in all redis instances
 // Since the batch runs every minute, we don't handle erros when putting the cache
-func (c *segmentUserCacher) putCache(segmentUsers *ftproto.SegmentUsers, environmentID string) {
+func (c *segmentUserCacher) putCache(segmentUsers *ftproto.SegmentUsers, environmentID string) int {
 	var updatedInstances int
 	for _, cache := range c.caches {
 		if err := cache.Put(segmentUsers, environmentID); err != nil {
@@ -158,5 +159,5 @@ func (c *segmentUserCacher) putCache(segmentUsers *ftproto.SegmentUsers, environ
 		}
 		updatedInstances++
 	}
-	c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
+	return updatedInstances
 }
