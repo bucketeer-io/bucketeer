@@ -5050,6 +5050,7 @@ definitions:
         title: disabled
     required:
       - id
+      - environmentId
   notificationUpdateSubscriptionResponse:
     type: object
     properties:

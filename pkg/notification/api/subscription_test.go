@@ -24,6 +24,7 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	v2ss "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2"
@@ -335,13 +336,6 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			desc: "err: ErrNoCommand",
-			input: &proto.UpdateSubscriptionRequest{
-				Id: "key-0",
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
-		{
 			desc: "err: add notification types: ErrSourceTypesRequired",
 			input: &proto.UpdateSubscriptionRequest{
 				Id:                    "key-0",
@@ -444,6 +438,126 @@ func TestUpdateSubscriptionMySQL(t *testing.T) {
 				RenameSubscriptionCommand: &proto.RenameSubscriptionCommand{
 					Name: "rename",
 				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			ctx = setToken(t, ctx, true)
+			service := newNotificationServiceWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			_, err := service.UpdateSubscription(ctx, p.input)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestUpdateSubscriptionMySQLNoCommand(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*NotificationService)
+		input       *proto.UpdateSubscriptionRequest
+		expectedErr error
+	}{
+		{
+			desc:        "err: ErrIDRequired",
+			input:       &proto.UpdateSubscriptionRequest{},
+			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
+		},
+		{
+			desc: "err: ErrNotFound",
+			setup: func(s *NotificationService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(v2ss.ErrSubscriptionNotFound)
+			},
+			input: &proto.UpdateSubscriptionRequest{
+				Id: "key-1",
+				SourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+					proto.Subscription_DOMAIN_EVENT_FEATURE,
+				},
+			},
+			expectedErr: createError(statusNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+		{
+			desc: "success: update SourceTypes",
+			setup: func(s *NotificationService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			input: &proto.UpdateSubscriptionRequest{
+				Id: "key-0",
+				SourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+					proto.Subscription_DOMAIN_EVENT_FEATURE,
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: rename",
+			setup: func(s *NotificationService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			input: &proto.UpdateSubscriptionRequest{
+				Id: "key-0",
+				SourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+					proto.Subscription_DOMAIN_EVENT_FEATURE,
+				},
+				Name: wrapperspb.String("rename"),
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: disable",
+			setup: func(s *NotificationService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			input: &proto.UpdateSubscriptionRequest{
+				Id:       "key-0",
+				Disabled: wrapperspb.Bool(true),
 			},
 			expectedErr: nil,
 		},

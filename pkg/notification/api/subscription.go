@@ -338,7 +338,7 @@ func (s *NotificationService) updateSubscriptionNoCommand(
 	}
 
 	return &notificationproto.UpdateSubscriptionResponse{
-		Subscription: updatedSubscription.Subscription,
+		Subscription: updatedSubscription,
 	}, nil
 }
 
@@ -517,7 +517,7 @@ func (s *NotificationService) updateSubscriptionMySQLNoCommand(
 	disabled *wrapperspb.BoolValue,
 	editor *eventproto.Editor,
 	localizer locale.Localizer,
-) (*domain.Subscription, error) {
+) (*notificationproto.Subscription, error) {
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
 		s.logger.Error(
@@ -537,18 +537,38 @@ func (s *NotificationService) updateSubscriptionMySQLNoCommand(
 	}
 
 	var subscription *domain.Subscription
-	var updatedSubscription *domain.Subscription
+	var updatedSubscription *notificationproto.Subscription
+	var event *eventproto.Event
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		subscriptionStorage := v2ss.NewSubscriptionStorage(tx)
 		subscription, err = subscriptionStorage.GetSubscription(ctx, ID, environmentID)
 		if err != nil {
 			return err
 		}
-		updatedSubscription, err = subscription.UpdateSubscription(name, sourceTypes, disabled)
+		updated, err := subscription.UpdateSubscription(name, sourceTypes, disabled)
 		if err != nil {
 			return err
 		}
-		return subscriptionStorage.UpdateSubscription(ctx, updatedSubscription, environmentID)
+		updatedSubscription = updated.Subscription
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_SUBSCRIPTION,
+			subscription.Id,
+			eventproto.Event_SUBSCRIPTION_UPDATED,
+			&eventproto.SubscriptionUpdatedEvent{
+				Id:          ID,
+				SourceTypes: sourceTypes,
+				Name:        name,
+				Disabled:    disabled,
+			},
+			ID,
+			updatedSubscription,
+			subscription,
+		)
+		if err != nil {
+			return err
+		}
+		return subscriptionStorage.UpdateSubscription(ctx, updated, environmentID)
 	})
 	if err != nil {
 		if errors.Is(err, v2ss.ErrSubscriptionNotFound) || errors.Is(err, v2ss.ErrSubscriptionUnexpectedAffectedRows) {
@@ -579,32 +599,6 @@ func (s *NotificationService) updateSubscriptionMySQLNoCommand(
 		return nil, dt.Err()
 	}
 
-	event, err := domainevent.NewEvent(
-		editor,
-		eventproto.Event_SUBSCRIPTION,
-		subscription.Id,
-		eventproto.Event_SUBSCRIPTION_UPDATED,
-		&eventproto.SubscriptionUpdatedEvent{
-			Id:          ID,
-			SourceTypes: sourceTypes,
-			Name:        name,
-			Disabled:    disabled,
-		},
-		ID,
-		updatedSubscription,
-		subscription,
-	)
-	if err != nil {
-		s.logger.Error(
-			"Failed to create event",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-				zap.String("environmentId", environmentID),
-				zap.String("ID", ID),
-			)...,
-		)
-		return nil, err
-	}
 	err = s.domainEventPublisher.Publish(ctx, event)
 	if err != nil {
 		s.logger.Error(

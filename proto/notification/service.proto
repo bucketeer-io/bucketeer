@@ -221,7 +221,7 @@ message UpdateSubscriptionRequest {
       description: "deprecated. use name instead."
     }
   ];
-  string environment_id = 6;
+  string environment_id = 6 [(google.api.field_behavior) = REQUIRED];
   repeated Subscription.SourceType source_types = 7;
   google.protobuf.StringValue name = 8;
   google.protobuf.BoolValue disabled = 9
