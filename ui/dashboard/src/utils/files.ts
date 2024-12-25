@@ -1,4 +1,4 @@
-import { i18n } from 'i18n';
+// import { i18n } from 'i18n';
 // import * as pdfjs from 'pdfjs-dist';
 // import type { PDFDocumentProxy } from 'pdfjs-dist';
 
