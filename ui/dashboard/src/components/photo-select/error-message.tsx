@@ -1,18 +1,18 @@
 import { IconErrorOutlineRound } from 'react-icons-material-design';
-import { useTranslation } from 'i18n';
+// import { useTranslation } from 'i18n';
 import type { ServerError } from '@types';
 // import type { ValidationError } from 'components/file-upload';
 // import TextButton from 'components/text-button';
 import UploadZone from './upload-zone';
 
 const ErrorMessage = ({
-  error,
-  onClearError
+  error
+  // onClearError
 }: {
   error: ServerError | ValidationError;
-  onClearError: () => void;
+  // onClearError: () => void;
 }) => {
-  const { t } = useTranslation('common');
+  // const { t } = useTranslation('common');
 
   return (
     <UploadZone color="negative" icon={IconErrorOutlineRound}>

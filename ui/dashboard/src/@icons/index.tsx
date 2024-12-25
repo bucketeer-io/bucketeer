@@ -15,6 +15,7 @@ import IconToastSuccess from './customized-icons/toast-success.svg?react';
 import IconToastWarning from './customized-icons/toast-warning.svg?react';
 import IconTrash from './customized-icons/trash.svg?react';
 import IconUnion from './customized-icons/union.svg?react';
+import IconUpload from './customized-icons/upload.svg?react';
 import IconBuilding from './sidebar-icons/building.svg?react';
 import IconDebugger from './sidebar-icons/debugger.svg?react';
 import IconFolder from './sidebar-icons/folder.svg?react';
@@ -72,6 +73,7 @@ export {
   IconSortingDown,
   IconTrash,
   IconDisable,
+  IconUpload,
   // Special icons
   IconGoal,
   IconGoogle,

@@ -9,6 +9,7 @@ export const useFetchProjects = ({
   searchQuery,
   orderDirection,
   organizationIds,
+  organizationId,
   disabled
 }: {
   pageSize?: number;
@@ -17,6 +18,7 @@ export const useFetchProjects = ({
   orderBy?: OrderBy;
   orderDirection?: OrderDirection;
   organizationIds?: string[];
+  organizationId?: string;
   disabled?: boolean;
 } = {}) => {
   const cursor = (page - 1) * LIST_PAGE_SIZE;
@@ -29,7 +31,8 @@ export const useFetchProjects = ({
       disabled,
       orderDirection,
       searchKeyword: searchQuery,
-      organizationIds
+      organizationIds,
+      organizationId
     }
   });
 };

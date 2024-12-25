@@ -32,7 +32,7 @@ const UserMenu = () => {
     openUploadPhotoModal,
     onOpenUploadPhotoModal,
     onCloseUploadPhotoModal
-  ] = useToggleOpen(false);
+  ] = useToggleOpen(true);
 
   const avatar = consoleAccount?.avatarUrl
     ? consoleAccount.avatarUrl

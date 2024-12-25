@@ -30,7 +30,7 @@ const CollectionLoader = ({
     isLoading,
     refetch,
     isError
-  } = useFetchProjects({ ...filters, organizationIds });
+  } = useFetchProjects({ ...filters, organizationId: organizationIds?.[0] });
 
   const onSortingChangeHandler = (sorting: SortingState) => {
     const updateOrderBy =

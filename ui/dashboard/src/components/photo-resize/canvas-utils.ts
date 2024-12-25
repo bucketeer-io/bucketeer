@@ -1,22 +1,24 @@
-// @ts-nocheck
-
-export const createImage = url =>
+export const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image();
     image.addEventListener('load', () => resolve(image));
     image.addEventListener('error', error => reject(error));
-    image.setAttribute('crossOrigin', 'anonymous'); // needed to avoid cross-origin issues on CodeSandbox
+    image.setAttribute('crossOrigin', 'anonymous'); // needed to avoid cross-origin issues
     image.src = url;
   });
 
-export function getRadianAngle(degreeValue) {
+export function getRadianAngle(degreeValue: number): number {
   return (degreeValue * Math.PI) / 180;
 }
 
 /**
  * Returns the new bounding area of a rotated rectangle.
  */
-export function rotateSize(width, height, rotation) {
+export function rotateSize(
+  width: number,
+  height: number,
+  rotation: number
+): { width: number; height: number } {
   const rotRad = getRadianAngle(rotation);
 
   return {
@@ -31,11 +33,14 @@ export function rotateSize(width, height, rotation) {
  * This function was adapted from the one in the ReadMe of https://github.com/DominicTobias/react-image-crop
  */
 export async function getCroppedImg(
-  imageSrc,
-  pixelCrop,
-  rotation = 0,
-  flip = { horizontal: false, vertical: false }
-): Promise<string> {
+  imageSrc: string,
+  pixelCrop: { x: number; y: number; width: number; height: number },
+  rotation: number = 0,
+  flip: { horizontal: boolean; vertical: boolean } = {
+    horizontal: false,
+    vertical: false
+  }
+): Promise<string | null> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -79,22 +84,17 @@ export async function getCroppedImg(
   canvas.width = pixelCrop.width;
   canvas.height = pixelCrop.height;
 
-  // paste generated rotate image at the top left corner
+  // paste generated rotated image at the top left corner
   ctx.putImageData(data, 0, 0);
 
   // As Base64 string
   return canvas.toDataURL('image/jpeg');
-
-  // As a blob
-  // eslint-disable-next-line unused-imports/no-unused-vars
-  // return new Promise((resolve, reject) => {
-  //   canvas.toBlob(file => {
-  //     resolve(URL.createObjectURL(file));
-  //   }, 'image/jpeg');
-  // });
 }
 
-export async function getRotatedImage(imageSrc, rotation = 0) {
+export async function getRotatedImage(
+  imageSrc: string,
+  rotation: number = 0
+): Promise<string> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -104,6 +104,7 @@ export async function getRotatedImage(imageSrc, rotation = 0) {
     rotation === -90 ||
     rotation === 270 ||
     rotation === -270;
+
   if (orientationChanged) {
     canvas.width = image.height;
     canvas.height = image.width;
@@ -112,13 +113,21 @@ export async function getRotatedImage(imageSrc, rotation = 0) {
     canvas.height = image.height;
   }
 
+  if (!ctx) {
+    throw new Error('Failed to get 2D context from canvas.');
+  }
+
   ctx.translate(canvas.width / 2, canvas.height / 2);
   ctx.rotate((rotation * Math.PI) / 180);
   ctx.drawImage(image, -image.width / 2, -image.height / 2);
 
   return new Promise(resolve => {
     canvas.toBlob(file => {
-      resolve(URL.createObjectURL(file));
+      if (file) {
+        resolve(URL.createObjectURL(file));
+      } else {
+        throw new Error('Failed to create Blob from canvas.');
+      }
     }, 'image/png');
   });
 }

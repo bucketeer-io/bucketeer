@@ -3,6 +3,7 @@ import { IconEditOutlined } from 'react-icons-material-design';
 import { accountUpdater } from '@api/account/account-updater';
 import { yupResolver } from '@hookform/resolvers/yup';
 import primaryAvatar from 'assets/avatars/primary.svg';
+// import defaultAvatar from 'assets/avatars/default.svg';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
@@ -97,6 +98,7 @@ const UserProfileModal = ({ isOpen, onClose, onEditAvatar }: FilterProps) => {
             <div className="flex items-center justify-center mb-2">
               <div className="relative">
                 <AvatarImage image={avatar} size="xl" alt="user-avatar" />
+                {/* <AvatarImage image={defaultAvatar} size="xl" alt="user-avatar" /> */}
                 <Button
                   type="button"
                   className="absolute bottom-0 right-0 size-8 px-1"
@@ -151,7 +153,7 @@ const UserProfileModal = ({ isOpen, onClose, onEditAvatar }: FilterProps) => {
                             ?.label
                         }
                         variant="secondary"
-                        className="w-full" 
+                        className="w-full"
                       />
                       <DropdownMenuContent
                         className="w-[426px]"

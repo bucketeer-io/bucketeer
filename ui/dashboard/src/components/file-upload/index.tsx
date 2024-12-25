@@ -3,7 +3,7 @@ import type { InputHTMLAttributes, ChangeEvent } from 'react';
 import { useTranslation } from 'i18n';
 import { v4 as uuid } from 'uuid';
 import type { ServerError } from '@types';
-import { formatBytes } from "utils/files";
+import { formatBytes } from 'utils/files';
 import DraggingOverlay from './dragging-overlay';
 
 export type FileUploadFormat = 'pdf' | 'image';

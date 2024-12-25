@@ -27,7 +27,7 @@ const validates: Record<PhotoSelectFormat, (file: File) => boolean> = {
   image: (file: File) => file.type.startsWith('image/')
 };
 const accepts: Record<PhotoSelectFormat, string | string[]> = {
-  image: 'image/jpeg, image/jpg'
+  image: 'image/jpeg, image/jpg, image/png'
 };
 
 const PhotoSelect = forwardRef<PhotoSelectRef, PhotoSelectProps>(
