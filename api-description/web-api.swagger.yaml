@@ -4790,6 +4790,7 @@ definitions:
       recipient:
         $ref: '#/definitions/notificationRecipient'
     required:
+      - environmentId
       - name
       - sourceTypes
       - recipient
