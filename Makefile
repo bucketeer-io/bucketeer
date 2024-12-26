@@ -266,6 +266,7 @@ e2e:
 		-gateway-cert=${GATEWAY_CERT_PATH} \
 		-service-token=${SERVICE_TOKEN_PATH} \
 		-environment-namespace=${ENVIRONMENT_NAMESPACE} \
+		-organization-id=${ORGANIZATION_ID} \
 		-test-id=${TEST_ID}	
 
 .PHONY: delete-dev-container-mysql-data

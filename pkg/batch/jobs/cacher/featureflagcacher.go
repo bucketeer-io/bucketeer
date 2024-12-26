@@ -34,7 +34,7 @@ import (
 type featureFlagCacher struct {
 	environmentClient envclient.Client
 	featureClient     ftclient.Client
-	cache             cachev3.FeaturesCache
+	caches            []cachev3.FeaturesCache
 	opts              *jobs.Options
 	logger            *zap.Logger
 }
@@ -42,7 +42,7 @@ type featureFlagCacher struct {
 func NewFeatureFlagCacher(
 	environmentClient envclient.Client,
 	featureClient ftclient.Client,
-	cache cache.MultiGetCache,
+	multiCaches []cache.MultiGetCache,
 	opts ...jobs.Option,
 ) jobs.Job {
 	dopts := &jobs.Options{
@@ -51,10 +51,14 @@ func NewFeatureFlagCacher(
 	for _, opt := range opts {
 		opt(dopts)
 	}
+	caches := make([]cachev3.FeaturesCache, 0, len(multiCaches))
+	for _, cache := range multiCaches {
+		caches = append(caches, cachev3.NewFeaturesCache(cache))
+	}
 	return &featureFlagCacher{
 		environmentClient: environmentClient,
 		featureClient:     featureClient,
-		cache:             cachev3.NewFeaturesCache(cache),
+		caches:            caches,
 		opts:              dopts,
 		logger:            dopts.Logger.Named("feature-flag-cacher"),
 	}
@@ -80,14 +84,12 @@ func (c *featureFlagCacher) Run(ctx context.Context) error {
 		for _, f := range fts.Features {
 			fids = append(fids, f.Id)
 		}
-		c.logger.Info("Caching features",
+		updatedInstances := c.putCache(fts, env.Id)
+		c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
+		c.logger.Debug("Caching features",
 			zap.String("environmentId", env.Id),
 			zap.Strings("featureIds", fids),
 		)
-		if err := c.cache.Put(fts, env.Id); err != nil {
-			c.logger.Error("Failed to cache features", zap.String("environmentId", env.Id))
-			continue
-		}
 	}
 	return nil
 }
@@ -130,4 +132,21 @@ func (c *featureFlagCacher) listFeatures(
 		filtered = append(filtered, f)
 	}
 	return filtered, nil
+}
+
+// Save the flags by environment in all redis instances
+// Since the batch runs every minute, we don't handle erros when putting the cache
+func (c *featureFlagCacher) putCache(features *ftproto.Features, environmentID string) int {
+	var updatedInstances int
+	for _, cache := range c.caches {
+		if err := cache.Put(features, environmentID); err != nil {
+			c.logger.Error("Failed to cache features",
+				zap.Error(err),
+				zap.String("environmentId", environmentID),
+			)
+			continue
+		}
+		updatedInstances++
+	}
+	return updatedInstances
 }

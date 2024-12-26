@@ -35,6 +35,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/rediscounter"
+	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachemock "github.com/bucketeer-io/bucketeer/pkg/cache/mock"
 	redismock "github.com/bucketeer-io/bucketeer/pkg/cache/mock"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client/mock"
@@ -839,21 +840,21 @@ func newBatchService(t *testing.T,
 		cacher.NewFeatureFlagCacher(
 			environmentMockClient,
 			featureMockClient,
-			redisMockClient,
+			[]cache.MultiGetCache{redisMockClient},
 		),
 		cacher.NewSegmentUserCacher(
 			environmentMockClient,
 			featureMockClient,
-			redisMockClient,
+			[]cache.MultiGetCache{redisMockClient},
 		),
 		cacher.NewAPIKeyCacher(
 			mysqlMockClient,
-			redisMockClient,
+			[]cache.MultiGetCache{redisMockClient},
 		),
 		cacher.NewExperimentCacher(
 			environmentMockClient,
 			experimentMockClient,
-			redisMockClient,
+			[]cache.MultiGetCache{redisMockClient},
 		),
 		cacher.NewAutoOpsRulesCacher(
 			environmentMockClient,

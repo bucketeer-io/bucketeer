@@ -17,6 +17,7 @@ package server
 import (
 	"context"
 	"os"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -34,6 +35,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/notification"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/opsevent"
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs/rediscounter"
+	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
 	"github.com/bucketeer-io/bucketeer/pkg/cli"
 	environmentclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
@@ -105,10 +107,11 @@ type server struct {
 	persistentRedisPoolMaxIdle   *int
 	persistentRedisPoolMaxActive *int
 	// Non Persistent Redis
-	nonPersistentRedisServerName    *string
-	nonPersistentRedisAddr          *string
-	nonPersistentRedisPoolMaxIdle   *int
-	nonPersistentRedisPoolMaxActive *int
+	nonPersistentRedisServerName     *string
+	nonPersistentRedisAddr           *string
+	nonPersistentChildRedisAddresses *[]string
+	nonPersistentRedisPoolMaxIdle    *int
+	nonPersistentRedisPoolMaxActive  *int
 }
 
 func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
@@ -216,6 +219,10 @@ func RegisterCommand(r cli.CommandRegistry, p cli.ParentCommand) cli.Command {
 			"non-persistent-redis-pool-max-active",
 			"Maximum number of connections allocated by the non-persistent redis connections pool at a given time.",
 		).Default("10").Int(),
+		nonPersistentChildRedisAddresses: cmd.Flag(
+			"non-persistent-child-redis-addresses",
+			"A list of non-persistent child Redis addresses.",
+		).Strings(),
 		experimentLockTTL: cmd.Flag("experiment-lock-ttl",
 			"The ttl for experiment calculator lock").
 			Default("10m").Duration(),
@@ -385,6 +392,40 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 	}
 	defer nonPersistentRedisClient.Close()
 
+	// This slice contains all Redis instance caches
+	nonPersistentRedisCaches := make(
+		[]cache.MultiGetCache,
+		0,
+		len(*s.nonPersistentChildRedisAddresses),
+	)
+	// Append the main Redis instance
+	nonPersistentRedisCaches = append(
+		nonPersistentRedisCaches,
+		cachev3.NewRedisCache(nonPersistentRedisClient),
+	)
+	// Initialize all the child Redis clients
+	childRedisClients := make([]redisv3.Client, 0, len(*s.nonPersistentChildRedisAddresses))
+	for _, address := range *s.nonPersistentChildRedisAddresses {
+		// We use the same options used for the main non-persistent Redis, besides the name
+		client, err := redisv3.NewClient(
+			address,
+			redisv3.WithPoolSize(*s.nonPersistentRedisPoolMaxActive),
+			redisv3.WithMinIdleConns(*s.nonPersistentRedisPoolMaxIdle),
+			redisv3.WithServerName(s.getRedisHostname(address)),
+			redisv3.WithMetrics(registerer),
+			redisv3.WithLogger(logger),
+		)
+		if err != nil {
+			return err
+		}
+		childRedisClients = append(childRedisClients, client)
+		nonPersistentRedisCaches = append(nonPersistentRedisCaches, cachev3.NewRedisCache(client))
+	}
+	// TODO: To be removed after checked it works
+	logger.Debug("Redis main address", zap.String("address", *s.nonPersistentRedisAddr))
+	logger.Debug("Redis child addresses", zap.Strings("addresses", *s.nonPersistentChildRedisAddresses))
+	logger.Debug("Redis non persistent cache size", zap.Int("size", len(nonPersistentRedisCaches)))
+
 	// batchClient
 	batchClient, err := btclient.NewClient(*s.batchService, *s.certPath,
 		client.WithPerRPCCredentials(creds),
@@ -491,24 +532,24 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		cacher.NewFeatureFlagCacher(
 			environmentClient,
 			featureClient,
-			cachev3.NewRedisCache(nonPersistentRedisClient),
+			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),
 		cacher.NewSegmentUserCacher(
 			environmentClient,
 			featureClient,
-			cachev3.NewRedisCache(nonPersistentRedisClient),
+			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),
 		cacher.NewAPIKeyCacher(
 			mysqlClient,
-			cachev3.NewRedisCache(nonPersistentRedisClient),
+			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),
 		cacher.NewExperimentCacher(
 			environmentClient,
 			experimentClient,
-			cachev3.NewRedisCache(nonPersistentRedisClient),
+			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),
 		cacher.NewAutoOpsRulesCacher(
@@ -551,6 +592,9 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 		featureClient.Close()
 		autoOpsClient.Close()
 		mysqlClient.Close()
+		for _, client := range childRedisClients {
+			client.Close()
+		}
 	}()
 
 	<-ctx.Done()
@@ -581,4 +625,12 @@ func (s *server) insertTelepresenceMountRoot(path string) string {
 		return path
 	}
 	return volumeRoot + path
+}
+
+func (s *server) getRedisHostname(redisAddress string) string {
+	address := strings.Split(redisAddress, ":")
+	if len(address) == 0 {
+		return redisAddress
+	}
+	return address[0]
 }
