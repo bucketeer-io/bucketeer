@@ -39,7 +39,7 @@ const LineChart = ({ chartData, formatLabel }: Props) => {
   const options: ChartOptions<'line'> = useMemo(
     () => ({
       responsive: true,
-      maintainAspectRatio: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: {
           display: false
@@ -85,10 +85,14 @@ const LineChart = ({ chartData, formatLabel }: Props) => {
   );
 
   return (
-    <div className="flex flex-1 w-full min-w-[700px] h-fit p-5 pt-0">
-      <Line style={{
-        width: '100%'
-      }} data={chartData} options={options} />
+    <div className="flex flex-1 w-full xl:w-[60%] min-w-[650px] h-fit pr-5 border-r border-gray-600/15">
+      <Line
+        style={{
+          width: '100%'
+        }}
+        data={chartData}
+        options={options}
+      />
     </div>
   );
 };

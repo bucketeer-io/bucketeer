@@ -14,12 +14,12 @@ export const useColumns = ({
 }: {
   renderName: (name: TempTableDataType) => ReactNode;
 }): ColumnDef<TempTableDataType>[] => {
-  const { t } = useTranslation(['common', 'table']);
+  const { t } = useTranslation(['table', 'common']);
 
   return [
     {
       accessorKey: 'name',
-      header: `${t('name')}`,
+      header: `${t('common:name')}`,
       size: 250,
       cell: ({ row }) => {
         const temp = row.original;
@@ -29,17 +29,38 @@ export const useColumns = ({
     {
       accessorKey: 'min',
       header: `${t('min')}`,
-      size: 200
+      size: 200,
+      cell: ({ row }) => {
+        return (
+          <div className="text-gray-700 typo-para-medium">
+            {row.original?.min}
+          </div>
+        );
+      }
     },
     {
       accessorKey: 'max',
       header: `${t('max')}`,
-      size: 200
+      size: 200,
+      cell: ({ row }) => {
+        return (
+          <div className="text-gray-700 typo-para-medium">
+            {row.original?.max}
+          </div>
+        );
+      }
     },
     {
       accessorKey: 'current',
       header: `${t('current')}`,
-      size: 200
+      size: 200,
+      cell: ({ row }) => {
+        return (
+          <div className="text-gray-700 typo-para-medium">
+            {row.original?.current}
+          </div>
+        );
+      }
     }
   ];
 };

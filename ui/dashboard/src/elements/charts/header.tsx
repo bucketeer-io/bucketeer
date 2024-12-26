@@ -1,4 +1,3 @@
-import { useTranslation } from 'i18n';
 import { Tabs, TabsList, TabsTrigger } from 'components/tabs';
 import ViewActions, { ViewActionsProps } from './view-actions';
 
@@ -7,22 +6,20 @@ export type Options = {
   value: string;
 };
 
-export type ChartHeaderProps = ViewActionsProps & {
+export type HeaderProps = ViewActionsProps & {
   title?: string;
   tabValue?: string;
   tabs?: Options[];
   onChangeTabs?: (value: string) => void;
 };
 
-const ChartHeader = ({
+const Header = ({
   title,
   tabValue,
   tabs,
   onChangeTabs,
   ...props
-}: ChartHeaderProps) => {
-  const { t } = useTranslation(['common']);
-
+}: HeaderProps) => {
   return (
     <div className="flex items-center justify-between w-full p-5 gap-x-20">
       {title ? (
@@ -33,8 +30,8 @@ const ChartHeader = ({
         <Tabs value={tabValue} onValueChange={onChangeTabs}>
           <TabsList>
             {tabs?.map((item, index) => (
-              <TabsTrigger key={index} value={item.value}>
-                {t(item.label)}
+              <TabsTrigger key={index} value={item.value} className="pb-4">
+                {item.label}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -45,4 +42,4 @@ const ChartHeader = ({
   );
 };
 
-export default ChartHeader;
+export default Header;

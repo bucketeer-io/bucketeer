@@ -6,12 +6,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from 'components/dropdown';
-import { Options } from './chart-header';
+import { Options } from './header';
 
 type TimeSwitchProps = {
-  timeOptions: Options[];
-  timeValue: string;
-  onSelectTimeOption: (value: string) => void;
+  timeOptions?: Options[];
+  timeValue?: string;
+  onSelectTimeOption?: (value: string) => void;
 };
 
 export type ViewActionsProps = TimeSwitchProps & {
@@ -38,7 +38,7 @@ const TimeSwitches = ({
               'text-primary-500': timeValue === option.value
             }
           )}
-          onClick={() => onSelectTimeOption(option.value)}
+          onClick={() => onSelectTimeOption && onSelectTimeOption(option.value)}
         >
           {option.label}
         </Button>
@@ -56,13 +56,15 @@ const ViewActions = ({
   onSelectTimeOption,
   onSelectDropdownOption
 }: ViewActionsProps) => {
-  return (
+  return dropdownOptions || timeOptions ? (
     <div className="flex items-center w-fit gap-x-4">
-      <TimeSwitches
-        timeOptions={timeOptions}
-        timeValue={timeValue}
-        onSelectTimeOption={onSelectTimeOption}
-      />
+      {timeOptions && (
+        <TimeSwitches
+          timeOptions={timeOptions}
+          timeValue={timeValue}
+          onSelectTimeOption={onSelectTimeOption}
+        />
+      )}
       {dropdownOptions && (
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -92,6 +94,8 @@ const ViewActions = ({
         </DropdownMenu>
       )}
     </div>
+  ) : (
+    <></>
   );
 };
 

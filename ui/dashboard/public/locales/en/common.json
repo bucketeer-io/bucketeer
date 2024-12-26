@@ -86,6 +86,13 @@
   "client": "Client",
   "server": "Server",
   "public-api": "Public API",
+  "client-request-count": "Client Request Count",
+  "response-time": "Response Time Between Client/Server",
   "mau-count": "MAU Count",
-  "request-count": "Request Count"
+  "request-count": "Request Count",
+  "top-members": "Top Members",
+  "new-flags": "New Flag",
+  "active-members": "Active members",
+  "flags-ready-remove": "Flags ready for code removal",
+  "flags-ready-archive": "Flags ready to archive"
 }

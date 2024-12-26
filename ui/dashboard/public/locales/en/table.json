@@ -30,7 +30,9 @@
     "api-key-title": "No registered API keys",
     "api-key-desc": "There are no registered API keys. Add a new one to start managing.",
     "member-title": "No registered members",
-    "member-desc": "There are no registered members. Invite a new one to start managing."
+    "member-desc": "There are no registered members. Invite a new one to start managing.",
+    "feature-flags-title": "No registered feature flags",
+    "feature-flags-desc": "There are no registered feature flags. Add a new one to start managing."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
@@ -51,5 +53,6 @@
   },
   "min": "Min",
   "max": "Max",
-  "current": "Current"
+  "current": "Current",
+  "total_flags_created": "Total Flags Created"
 }

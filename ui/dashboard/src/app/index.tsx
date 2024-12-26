@@ -141,7 +141,9 @@ export const EnvironmentRoot = memo(
 
     useEffect(() => {
       if (!envUrlCode) {
-        navigate(`${PAGE_PATH_ROOT}${currentEnv.urlCode}${PAGE_PATH_FEATURES}`);
+        navigate(
+          `${PAGE_PATH_ROOT}${currentEnv.urlCode}${PAGE_PATH_DASHBOARD}`
+        );
       }
     }, [account, envUrlCode]);
 

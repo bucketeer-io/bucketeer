@@ -20,6 +20,7 @@ export interface DataTableProps<TData, TValue> {
   state?: Partial<TableState>;
   emptyCollection?: ReactElement;
   isLoading?: boolean;
+  rowClassName?: string;
   onRowClick?: (data: TData) => void;
   onSortingChange?: (v: SortingState) => void;
 }
@@ -30,6 +31,7 @@ export const DataTable = <TData, TValue>({
   state,
   emptyCollection,
   isLoading,
+  rowClassName,
   onRowClick,
   onSortingChange
 }: DataTableProps<TData, TValue>) => {
@@ -104,7 +106,7 @@ export const DataTable = <TData, TValue>({
               data-state={row.getIsSelected() && 'selected'}
               data-hoverable={!!onRowClick}
               onClick={() => onRowClick?.(row.original)}
-              className="shadow-card rounded-lg bg-white"
+              className={cn('shadow-card rounded-lg bg-white', rowClassName)}
             >
               {row.getVisibleCells().map(cell => (
                 <Table.Cell
