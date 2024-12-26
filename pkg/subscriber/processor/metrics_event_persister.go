@@ -51,7 +51,7 @@ type metricsEventPersister struct {
 func NewMetricsEventPersister(
 	registerer metrics.Registerer,
 	logger *zap.Logger,
-) subscriber.Processor {
+) subscriber.PubSubProcessor {
 	return &metricsEventPersister{
 		storage: storage.NewStorage(logger, registerer),
 		logger:  logger,

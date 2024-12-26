@@ -70,7 +70,7 @@ func NewEvaluationCountEventPersister(
 	mysqlClient mysql.Client,
 	evaluationCountCacher cache.MultiGetDeleteCountCache,
 	logger *zap.Logger,
-) (subscriber.Processor, error) {
+) (subscriber.PubSubProcessor, error) {
 	evaluationCountEventPersisterJsonConfig, ok := config.(map[string]interface{})
 	if !ok {
 		logger.Error("EvaluationCountEventPersister: invalid config")

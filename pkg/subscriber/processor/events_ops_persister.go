@@ -58,7 +58,7 @@ func NewEventsOPSPersister(
 	ftClient featureclient.Client,
 	persisterName string,
 	logger *zap.Logger,
-) (subscriber.Processor, error) {
+) (subscriber.PubSubProcessor, error) {
 	jsonConfig, ok := config.(map[string]interface{})
 	if !ok {
 		logger.Error("eventsOPSPersister: invalid config")
