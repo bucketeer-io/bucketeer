@@ -4,6 +4,7 @@ import IconChevronRight from './customized-icons/chevron-right.svg?react';
 import IconClose from './customized-icons/close.svg?react';
 import IconDisable from './customized-icons/disable.svg?react';
 import IconEmail from './customized-icons/email.svg?react';
+import IconFeatureSwitch from './customized-icons/feature-flags-switch.svg?react';
 import IconInfo from './customized-icons/info.svg?react';
 import IconSearch from './customized-icons/search.svg?react';
 import IconSortingDown from './customized-icons/sorting-down.svg?react';
@@ -15,7 +16,10 @@ import IconToastSuccess from './customized-icons/toast-success.svg?react';
 import IconToastWarning from './customized-icons/toast-warning.svg?react';
 import IconTrash from './customized-icons/trash.svg?react';
 import IconUnion from './customized-icons/union.svg?react';
+import IconUserCheckmark from './customized-icons/user-profile-checkmark.svg?react';
+import IconUsersGroup from './customized-icons/users-group.svg?react';
 import IconBuilding from './sidebar-icons/building.svg?react';
+import IconDashboard from './sidebar-icons/dashboard.svg?react';
 import IconDebugger from './sidebar-icons/debugger.svg?react';
 import IconFolder from './sidebar-icons/folder.svg?react';
 import IconIntegration from './sidebar-icons/integration.svg?react';
@@ -54,6 +58,7 @@ export {
   IconSetting,
   IconLogout,
   IconBuilding,
+  IconDashboard,
   // Customized icons
   IconBackspace,
   IconSearch,
@@ -72,6 +77,9 @@ export {
   IconSortingDown,
   IconTrash,
   IconDisable,
+  IconUsersGroup,
+  IconUserCheckmark,
+  IconFeatureSwitch,
   // Special icons
   IconGoal,
   IconGoogle,

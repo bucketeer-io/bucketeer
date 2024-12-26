@@ -7,6 +7,7 @@
   "environment": "Environment",
   "environments": "Environments",
   "organizations": "Organizations",
+  "dashboard": "Dashboard",
   "members": "Members",
   "search": "Search",
   "management": "Management",
@@ -56,6 +57,7 @@
   "setting-subtitle": "Manage settings about the current organization",
   "project-subtitle": "Manage all projects for this environment.",
   "member-subtitle": "Manage all members for this environment.",
+  "dashboard-subtitle": "You can set goals and use them to start experiments within your feature flags.",
   "organization-settings": "Organization settings",
   "navigation": {
     "my-projects": "My projects",
@@ -68,7 +70,8 @@
     "user-profile": "User profile",
     "logout": "Logout",
     "back-to-main": "Back to Main",
-    "no-projects": "No projects found"
+    "no-projects": "No projects found",
+    "dashboard": "Dashboard"
   },
   "submit": "Submit",
   "type": "Type",
@@ -82,5 +85,7 @@
   "state": "State",
   "client": "Client",
   "server": "Server",
-  "public-api": "Public API"
+  "public-api": "Public API",
+  "mau-count": "MAU Count",
+  "request-count": "Request Count"
 }

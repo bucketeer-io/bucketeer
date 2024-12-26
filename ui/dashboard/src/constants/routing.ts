@@ -21,6 +21,7 @@ export const PAGE_PATH_NOTIFICATIONS = '/notifications';
 export const PAGE_PATH_PROJECTS = '/projects';
 export const PAGE_PATH_ORGANIZATIONS = '/organizations';
 export const PAGE_PATH_ENVIRONMENTS = '/environments';
+export const PAGE_PATH_DASHBOARD = '/dashboard';
 
 export const PAGE_PATH_FEATURE_CLONE = '/clone';
 export const PAGE_PATH_FEATURE_TARGETING = '/targeting';

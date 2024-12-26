@@ -85,6 +85,11 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
       title: t('management'),
       menus: [
         {
+          label: t(`navigation.dashboard`),
+          icon: IconSystem.IconDashboard,
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_DASHBOARD}`
+        },
+        {
           label: t(`navigation.audit-logs`),
           icon: IconSystem.IconLogs,
           href: `/${envUrlCode}${ROUTING.PAGE_PATH_AUDIT_LOGS}`

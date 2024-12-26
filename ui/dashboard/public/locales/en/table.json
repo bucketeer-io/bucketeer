@@ -48,5 +48,8 @@
   "api-key": {
     "confirm-enable-desc": "The API key \"<bold>{{name}}</bold>\" will be enabled. Are you sure you want to proceed?",
     "confirm-disable-desc": "The API key \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?"
-  }
+  },
+  "min": "Min",
+  "max": "Max",
+  "current": "Current"
 }
