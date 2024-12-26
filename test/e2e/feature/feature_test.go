@@ -58,6 +58,7 @@ var (
 	serviceTokenPath     = flag.String("service-token", "", "Service token path")
 	environmentNamespace = flag.String("environment-namespace", "", "Environment namespace")
 	testID               = flag.String("test-id", "", "test ID")
+	organizationID       = flag.String("organization-id", "", "Organization ID")
 
 	tags = []string{"e2e-test-tag-1", "e2e-test-tag-2", "e2e-test-tag-3"}
 )

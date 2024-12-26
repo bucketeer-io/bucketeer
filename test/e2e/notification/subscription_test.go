@@ -47,8 +47,73 @@ var (
 	gatewayCert          = flag.String("gateway-cert", "", "Gateway crt file")
 	serviceTokenPath     = flag.String("service-token", "", "Service token path")
 	environmentNamespace = flag.String("environment-namespace", "", "Environment namespace")
+	organizationID       = flag.String("organization-id", "", "Organization ID")
 	testID               = flag.String("test-id", "", "test ID")
 )
+
+func TestCreateListSubscriptionNoCommand(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	notificationClient := newNotificationClient(t)
+	defer notificationClient.Close()
+
+	name := fmt.Sprintf("%s-name-%s", prefixTestName, newUUID(t))
+	sourceTypes := []proto.Subscription_SourceType{
+		proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+	}
+	webhookURL := fmt.Sprintf("%s-webhook-url-%s", prefixTestName, newUUID(t))
+	recipient := &proto.Recipient{
+		Type:                  proto.Recipient_SlackChannel,
+		SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: webhookURL},
+	}
+	id, err := domain.ID(recipient)
+	if err != nil {
+		t.Fatal(err)
+	}
+	createSubscriptionNoCommand(ctx, t, notificationClient, name, sourceTypes, recipient)
+	var subscription *proto.Subscription
+	subscriptions := listSubscriptionsByOrganizationID(
+		t,
+		notificationClient,
+		[]proto.Subscription_SourceType{proto.Subscription_DOMAIN_EVENT_ACCOUNT},
+		*organizationID,
+	)
+	for _, s := range subscriptions {
+		if s.Id == id {
+			subscription = s
+			break
+		}
+	}
+	if subscription == nil {
+		t.Fatalf("Subscription not found")
+	}
+	if subscription.Name != name {
+		t.Fatalf("Incorrect name. Expected: %s actual: %s", name, subscription.Name)
+	}
+	if len(subscription.SourceTypes) != 1 {
+		t.Fatalf("The number of notification types is incorrect. Expected: %d actual: %d", 1, len(subscription.SourceTypes))
+	}
+	if subscription.SourceTypes[0] != sourceTypes[0] {
+		t.Fatalf("Incorrect notification type. Expected: %s actual: %s", sourceTypes[0], subscription.SourceTypes[0])
+	}
+	if subscription.Recipient.Type != proto.Recipient_SlackChannel {
+		t.Fatalf("Incorrect recipient type. Expected: %s actual: %s", proto.Recipient_SlackChannel, subscription.Recipient.Type)
+	}
+	if subscription.Recipient.SlackChannelRecipient.WebhookUrl != webhookURL {
+		t.Fatalf("Incorrect webhook URL. Expected: %s actual: %s", webhookURL, subscription.Recipient.SlackChannelRecipient.WebhookUrl)
+	}
+	if subscription.Disabled != false {
+		t.Fatalf("Incorrect deleted. Expected: %t actual: %t", false, subscription.Disabled)
+	}
+	_, err = notificationClient.DeleteSubscription(ctx, &proto.DeleteSubscriptionRequest{
+		EnvironmentId: *environmentNamespace,
+		Id:            id,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
 
 func TestCreateGetDeleteSubscription(t *testing.T) {
 	t.Parallel()
@@ -422,6 +487,46 @@ func listEnabledSubscriptions(
 	})
 	if err != nil {
 		t.Fatal("failed to list enabled subscriptions", err)
+	}
+	return resp.Subscriptions
+}
+
+func createSubscriptionNoCommand(
+	ctx context.Context,
+	t *testing.T,
+	client notificationclient.Client,
+	name string,
+	sourceTypes []proto.Subscription_SourceType,
+	recipient *proto.Recipient) {
+
+	t.Helper()
+	createReq := &proto.CreateSubscriptionRequest{
+		EnvironmentId: *environmentNamespace,
+		Name:          name,
+		SourceTypes:   sourceTypes,
+		Recipient:     recipient,
+	}
+	if _, err := client.CreateSubscription(ctx, createReq); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func listSubscriptionsByOrganizationID(
+	t *testing.T,
+	client notificationclient.Client,
+	sourceTypes []proto.Subscription_SourceType,
+	organizationID string,
+) []*proto.Subscription {
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	resp, err := client.ListSubscriptions(ctx, &proto.ListSubscriptionsRequest{
+		OrganizationId: organizationID,
+		PageSize:       int64(500),
+		SourceTypes:    sourceTypes,
+	})
+	if err != nil {
+		t.Fatal("failed to list subscriptions", err)
 	}
 	return resp.Subscriptions
 }

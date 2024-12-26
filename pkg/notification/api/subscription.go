@@ -16,13 +16,16 @@ package api
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/notification/command"
@@ -46,6 +49,11 @@ func (s *NotificationService) CreateSubscription(
 	if err != nil {
 		return nil, err
 	}
+
+	if req.Command == nil {
+		return s.createSubscriptionNoCommand(ctx, req, localizer, editor)
+	}
+
 	if err := s.validateCreateSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
@@ -102,7 +110,7 @@ func (s *NotificationService) CreateSubscription(
 		return nil
 	})
 	if err != nil {
-		if err == v2ss.ErrSubscriptionAlreadyExists {
+		if errors.Is(err, v2ss.ErrSubscriptionAlreadyExists) {
 			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.AlreadyExistsError),
@@ -147,99 +155,125 @@ func (s *NotificationService) CreateSubscription(
 	return &notificationproto.CreateSubscriptionResponse{}, nil
 }
 
-func (s *NotificationService) validateCreateSubscriptionRequest(
+func (s *NotificationService) createSubscriptionNoCommand(
+	ctx context.Context,
 	req *notificationproto.CreateSubscriptionRequest,
 	localizer locale.Localizer,
-) error {
-	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
+	editor *eventproto.Editor,
+) (*notificationproto.CreateSubscriptionResponse, error) {
+	if err := s.validateCreateSubscriptionNoCommandRequest(req, localizer); err != nil {
+		return nil, err
+	}
+	subscription, err := domain.NewSubscription(req.Name, req.SourceTypes, req.Recipient)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create a new subscription",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.Any("sourceType", req.SourceTypes),
+				zap.Any("recipient", req.Recipient),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
+			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
 		if err != nil {
-			return statusInternal.Err()
+			return nil, statusInternal.Err()
 		}
-		return dt.Err()
+		return nil, dt.Err()
 	}
-	if req.Command.Name == "" {
-		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if len(req.Command.SourceTypes) == 0 {
-		dt, err := statusSourceTypesRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if err := s.validateRecipient(req.Command.Recipient, localizer); err != nil {
-		return err
-	}
-	return nil
-}
 
-func (s *NotificationService) validateRecipient(
-	recipient *notificationproto.Recipient,
-	localizer locale.Localizer,
-) error {
-	if recipient == nil {
-		dt, err := statusRecipientRequired.WithDetails(&errdetails.LocalizedMessage{
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "recipant"),
+			Message: localizer.MustLocalize(locale.InternalServerError),
 		})
 		if err != nil {
-			return statusInternal.Err()
+			return nil, statusInternal.Err()
 		}
-		return dt.Err()
+		return nil, dt.Err()
 	}
-	if recipient.Type == notificationproto.Recipient_SlackChannel {
-		return s.validateSlackRecipient(recipient.SlackChannelRecipient, localizer)
-	}
-	dt, err := statusUnknownRecipient.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "recipant"),
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		subscriptionStorage := v2ss.NewSubscriptionStorage(tx)
+		return subscriptionStorage.CreateSubscription(ctx, subscription, req.EnvironmentId)
 	})
 	if err != nil {
-		return statusInternal.Err()
+		if errors.Is(err, v2ss.ErrSubscriptionAlreadyExists) {
+			dt, err := statusAlreadyExists.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.AlreadyExistsError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to create subscription",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
-	return dt.Err()
-}
 
-func (s *NotificationService) validateSlackRecipient(
-	sr *notificationproto.SlackChannelRecipient,
-	localizer locale.Localizer,
-) error {
-	// TODO: Check ping to the webhook URL?
-	if sr == nil {
-		dt, err := statusSlackRecipientRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "slack_recipant"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+	prev := &domain.Subscription{}
+	event, err := domainevent.NewEvent(
+		editor,
+		eventproto.Event_SUBSCRIPTION,
+		subscription.Id,
+		eventproto.Event_SUBSCRIPTION_CREATED,
+		&eventproto.SubscriptionCreatedEvent{
+			SourceTypes: subscription.SourceTypes,
+			Recipient:   subscription.Recipient,
+			Name:        subscription.Name,
+		},
+		req.EnvironmentId,
+		subscription.Subscription,
+		prev,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create event",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("subscriptionId", subscription.Id),
+			)...,
+		)
+		return nil, err
 	}
-	if sr.WebhookUrl == "" {
-		dt, err := statusSlackRecipientWebhookURLRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook_url"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
+	err = s.domainEventPublisher.Publish(ctx, event)
+	if err != nil {
+		s.logger.Error(
+			"Failed to publish event",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("subscriptionId", subscription.Id),
+			)...,
+		)
+		return nil, err
 	}
-	return nil
+	return &notificationproto.CreateSubscriptionResponse{
+		Subscription: subscription.Subscription,
+	}, nil
 }
 
 func (s *NotificationService) UpdateSubscription(
@@ -311,33 +345,6 @@ func (s *NotificationService) EnableSubscription(
 	return &notificationproto.EnableSubscriptionResponse{}, nil
 }
 
-func (s *NotificationService) validateEnableSubscriptionRequest(
-	req *notificationproto.EnableSubscriptionRequest,
-	localizer locale.Localizer,
-) error {
-	if req.Id == "" {
-		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	return nil
-}
-
 func (s *NotificationService) DisableSubscription(
 	ctx context.Context,
 	req *notificationproto.DisableSubscriptionRequest,
@@ -373,33 +380,6 @@ func (s *NotificationService) DisableSubscription(
 		return nil, err
 	}
 	return &notificationproto.DisableSubscriptionResponse{}, nil
-}
-
-func (s *NotificationService) validateDisableSubscriptionRequest(
-	req *notificationproto.DisableSubscriptionRequest,
-	localizer locale.Localizer,
-) error {
-	if req.Id == "" {
-		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	return nil
 }
 
 func (s *NotificationService) updateSubscription(
@@ -495,63 +475,6 @@ func (s *NotificationService) updateSubscription(
 	return nil
 }
 
-func (s *NotificationService) validateUpdateSubscriptionRequest(
-	req *notificationproto.UpdateSubscriptionRequest,
-	localizer locale.Localizer,
-) error {
-	if req.Id == "" {
-		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if s.isNoUpdateSubscriptionCommand(req) {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.AddSourceTypesCommand != nil && len(req.AddSourceTypesCommand.SourceTypes) == 0 {
-		dt, err := statusSourceTypesRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.DeleteSourceTypesCommand != nil && len(req.DeleteSourceTypesCommand.SourceTypes) == 0 {
-		dt, err := statusSourceTypesRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.RenameSubscriptionCommand != nil && req.RenameSubscriptionCommand.Name == "" {
-		dt, err := statusNameRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	return nil
-}
-
 func (s *NotificationService) isNoUpdateSubscriptionCommand(req *notificationproto.UpdateSubscriptionRequest) bool {
 	return req.AddSourceTypesCommand == nil &&
 		req.DeleteSourceTypesCommand == nil &&
@@ -573,7 +496,6 @@ func (s *NotificationService) DeleteSubscription(
 	if err := validateDeleteSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	var handler command.Handler = command.NewEmptySubscriptionCommandHandler()
 	tx, err := s.mysqlClient.BeginTx(ctx)
 	if err != nil {
 		s.logger.Error(
@@ -591,26 +513,36 @@ func (s *NotificationService) DeleteSubscription(
 		}
 		return nil, dt.Err()
 	}
+
+	var subscription *domain.Subscription
+	var event *eventproto.Event
 	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
 		subscriptionStorage := v2ss.NewSubscriptionStorage(tx)
-		subscription, err := subscriptionStorage.GetSubscription(ctx, req.Id, req.EnvironmentId)
+		subscription, err = subscriptionStorage.GetSubscription(ctx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
-		handler, err = command.NewSubscriptionCommandHandler(editor, subscription, req.EnvironmentId)
-		if err != nil {
+		prev := &domain.Subscription{}
+		if err = copier.Copy(prev, subscription); err != nil {
 			return err
 		}
-		if err := handler.Handle(ctx, req.Command); err != nil {
-			return err
-		}
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_SUBSCRIPTION,
+			subscription.Id,
+			eventproto.Event_SUBSCRIPTION_DELETED,
+			&eventproto.SubscriptionDeletedEvent{},
+			req.EnvironmentId,
+			subscription.Subscription,
+			prev,
+		)
 		if err = subscriptionStorage.DeleteSubscription(ctx, req.Id, req.EnvironmentId); err != nil {
 			return err
 		}
 		return nil
 	})
 	if err != nil {
-		if err == v2ss.ErrSubscriptionNotFound || err == v2ss.ErrSubscriptionUnexpectedAffectedRows {
+		if errors.Is(err, v2ss.ErrSubscriptionNotFound) || errors.Is(err, v2ss.ErrSubscriptionUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -636,52 +568,20 @@ func (s *NotificationService) DeleteSubscription(
 		}
 		return nil, dt.Err()
 	}
-	if errs := s.publishDomainEvents(ctx, handler.Events()); len(errs) > 0 {
+
+	err = s.domainEventPublisher.Publish(ctx, event)
+	if err != nil {
 		s.logger.Error(
-			"Failed to publish events",
+			"Failed to publish event",
 			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Any("errors", errs),
+				zap.Error(err),
 				zap.String("environmentId", req.EnvironmentId),
-				zap.String("id", req.Id),
+				zap.String("subscriptionId", subscription.Id),
 			)...,
 		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
+		return nil, err
 	}
 	return &notificationproto.DeleteSubscriptionResponse{}, nil
-}
-
-func validateDeleteSubscriptionRequest(
-	req *notificationproto.DeleteSubscriptionRequest,
-	localizer locale.Localizer,
-) error {
-	if req.Id == "" {
-		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Command == nil {
-		dt, err := statusNoCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	return nil
 }
 
 func (s *NotificationService) createUpdateSubscriptionCommands(
@@ -718,7 +618,7 @@ func (s *NotificationService) GetSubscription(
 	subscriptionStorage := v2ss.NewSubscriptionStorage(s.mysqlClient)
 	subscription, err := subscriptionStorage.GetSubscription(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
-		if err == v2ss.ErrSubscriptionNotFound {
+		if errors.Is(err, v2ss.ErrSubscriptionNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -747,20 +647,6 @@ func (s *NotificationService) GetSubscription(
 	return &notificationproto.GetSubscriptionResponse{Subscription: subscription.Subscription}, nil
 }
 
-func validateGetSubscriptionRequest(req *notificationproto.GetSubscriptionRequest, localizer locale.Localizer) error {
-	if req.Id == "" {
-		dt, err := statusIDRequired.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	return nil
-}
-
 func (s *NotificationService) ListSubscriptions(
 	ctx context.Context,
 	req *notificationproto.ListSubscriptionsRequest,
@@ -774,7 +660,9 @@ func (s *NotificationService) ListSubscriptions(
 		return nil, err
 	}
 	var whereParts []mysql.WherePart
-	whereParts = append(whereParts, mysql.NewFilter("sub.environment_id", "=", req.EnvironmentId))
+	if req.EnvironmentId != "" {
+		whereParts = append(whereParts, mysql.NewFilter("sub.environment_id", "=", req.EnvironmentId))
+	}
 	sourceTypesValues := make([]interface{}, len(req.SourceTypes))
 	for i, st := range req.SourceTypes {
 		sourceTypesValues[i] = int32(st)

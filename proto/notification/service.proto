@@ -23,6 +23,7 @@ import "google/api/field_behavior.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
 import "proto/notification/subscription.proto";
+import "proto/notification/recipient.proto";
 import "proto/notification/command.proto";
 
 message GetAdminSubscriptionRequest {
@@ -108,8 +109,8 @@ message UpdateAdminSubscriptionResponse {}
 
 message GetSubscriptionRequest {
   reserved 1;
-  string id = 2;
-  string environment_id = 3;
+  string id = 2 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
 }
 
 message GetSubscriptionResponse {
@@ -160,16 +161,22 @@ message ListEnabledSubscriptionsResponse {
 
 message CreateSubscriptionRequest {
   reserved 1;
-  CreateSubscriptionCommand command = 2;
-  string environment_id = 3;
+  CreateSubscriptionCommand command = 2 [deprecated = true];
+  string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
+  string name = 4 [(google.api.field_behavior) = REQUIRED];
+  repeated Subscription.SourceType source_types = 5
+      [(google.api.field_behavior) = REQUIRED];
+  Recipient recipient = 6 [(google.api.field_behavior) = REQUIRED];
 }
 
-message CreateSubscriptionResponse {}
+message CreateSubscriptionResponse {
+  Subscription subscription = 1;
+}
 
 message DeleteSubscriptionRequest {
   reserved 1;
   string id = 2;
-  DeleteSubscriptionCommand command = 3;
+  DeleteSubscriptionCommand command = 3 [deprecated = true];
   string environment_id = 4;
 }
 
@@ -222,7 +229,39 @@ service NotificationService {
   rpc UpdateAdminSubscription(UpdateAdminSubscriptionRequest)
       returns (UpdateAdminSubscriptionResponse) {}
   rpc GetSubscription(GetSubscriptionRequest)
-      returns (GetSubscriptionResponse) {}
+      returns (GetSubscriptionResponse) {
+    option (google.api.http) = {
+      get: "/v1/subscription"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get subscription."
+      tags: "subscription"
+      operation_id: "web.v1.subscription.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc ListSubscriptions(ListSubscriptionsRequest)
       returns (ListSubscriptionsResponse) {
     option (google.api.http) = {
@@ -260,7 +299,40 @@ service NotificationService {
   rpc ListEnabledSubscriptions(ListEnabledSubscriptionsRequest)
       returns (ListEnabledSubscriptionsResponse) {}
   rpc CreateSubscription(CreateSubscriptionRequest)
-      returns (CreateSubscriptionResponse) {}
+      returns (CreateSubscriptionResponse) {
+    option (google.api.http) = {
+      post: "/v1/subscription"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create",
+      description: "Create subscription."
+      tags: "subscription"
+      operation_id: "web.v1.subscription.create"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc DeleteSubscription(DeleteSubscriptionRequest)
       returns (DeleteSubscriptionResponse) {}
   rpc EnableSubscription(EnableSubscriptionRequest)

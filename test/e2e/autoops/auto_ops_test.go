@@ -74,6 +74,7 @@ var (
 	gatewayCert          = flag.String("gateway-cert", "", "Gateway crt file")
 	serviceTokenPath     = flag.String("service-token", "", "Service token path")
 	environmentNamespace = flag.String("environment-namespace", "", "Environment namespace")
+	organizationID       = flag.String("organization-id", "", "Organization ID")
 	testID               = flag.String("test-id", "", "test ID")
 )
 

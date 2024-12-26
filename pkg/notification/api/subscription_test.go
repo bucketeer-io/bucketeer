@@ -25,12 +25,11 @@ import (
 	"google.golang.org/grpc/metadata"
 	gstatus "google.golang.org/grpc/status"
 
-	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
-
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	v2ss "github.com/bucketeer-io/bucketeer/pkg/notification/storage/v2"
 	publishermock "github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher/mock"
 	mysqlmock "github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql/mock"
+	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/proto/notification"
 )
 
@@ -60,14 +59,6 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 		input       *proto.CreateSubscriptionRequest
 		expectedErr error
 	}{
-		{
-			desc:  "err: ErrNoCommand",
-			setup: nil,
-			input: &proto.CreateSubscriptionRequest{
-				Command: nil,
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
 		{
 			desc: "err: ErrSourceTypesRequired",
 			input: &proto.CreateSubscriptionRequest{
@@ -165,6 +156,135 @@ func TestCreateSubscriptionMySQL(t *testing.T) {
 						Type:                  proto.Recipient_SlackChannel,
 						SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "url"},
 					},
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			ctx = setToken(t, ctx, true)
+			service := newNotificationServiceWithMock(t, mockController)
+			if p.setup != nil {
+				p.setup(service)
+			}
+			_, err := service.CreateSubscription(ctx, p.input)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestCreateSubscriptionNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	patterns := []struct {
+		desc        string
+		setup       func(*NotificationService)
+		input       *proto.CreateSubscriptionRequest
+		expectedErr error
+	}{
+		{
+			desc: "err: ErrSourceTypesRequired",
+			input: &proto.CreateSubscriptionRequest{
+				Name: "sname",
+				Recipient: &proto.Recipient{
+					Type:                  proto.Recipient_SlackChannel,
+					SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "url"},
+				},
+			},
+			expectedErr: createError(statusSourceTypesRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "SourceTypes")),
+		},
+		{
+			desc: "err: ErrRecipientRequired",
+			input: &proto.CreateSubscriptionRequest{
+				Name: "sname",
+				SourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+					proto.Subscription_DOMAIN_EVENT_FEATURE,
+				},
+			},
+			expectedErr: createError(statusRecipientRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "recipant")),
+		},
+		{
+			desc: "err: ErrSlackRecipientRequired",
+			input: &proto.CreateSubscriptionRequest{
+				Name: "sname",
+				SourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+					proto.Subscription_DOMAIN_EVENT_FEATURE,
+				},
+				Recipient: &proto.Recipient{
+					Type: proto.Recipient_SlackChannel,
+				},
+			},
+			expectedErr: createError(statusSlackRecipientRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "slack_recipant")),
+		},
+		{
+			desc: "err: ErrSlackRecipientWebhookURLRequired",
+			input: &proto.CreateSubscriptionRequest{
+				Name: "sname",
+				SourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+					proto.Subscription_DOMAIN_EVENT_FEATURE,
+				},
+				Recipient: &proto.Recipient{
+					Type:                  proto.Recipient_SlackChannel,
+					SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: ""},
+				},
+			},
+			expectedErr: createError(statusSlackRecipientWebhookURLRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "webhook_url")),
+		},
+		{
+			desc: "err: ErrNameRequired",
+			input: &proto.CreateSubscriptionRequest{
+				SourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+					proto.Subscription_DOMAIN_EVENT_FEATURE,
+				},
+				Recipient: &proto.Recipient{
+					Type:                  proto.Recipient_SlackChannel,
+					SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "url"},
+				},
+			},
+			expectedErr: createError(statusNameRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+		},
+		{
+			desc: "success",
+			setup: func(s *NotificationService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
+					gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			input: &proto.CreateSubscriptionRequest{
+				Name: "sname",
+				SourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+					proto.Subscription_DOMAIN_EVENT_FEATURE,
+				},
+				Recipient: &proto.Recipient{
+					Type:                  proto.Recipient_SlackChannel,
+					SlackChannelRecipient: &proto.SlackChannelRecipient{WebhookUrl: "url"},
 				},
 			},
 			expectedErr: nil,
@@ -508,26 +628,18 @@ func TestDeleteSubscriptionMySQL(t *testing.T) {
 			expectedErr: createError(statusIDRequired, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id")),
 		},
 		{
-			desc: "err: ErrNoCommand",
-			input: &proto.DeleteSubscriptionRequest{
-				Id: "key-0",
-			},
-			expectedErr: createError(statusNoCommand, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command")),
-		},
-		{
 			desc: "success",
 			setup: func(s *NotificationService) {
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
 				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil)
-				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().PublishMulti(
+				s.domainEventPublisher.(*publishermock.MockPublisher).EXPECT().Publish(
 					gomock.Any(), gomock.Any(),
 				).Return(nil)
 			},
 			input: &proto.DeleteSubscriptionRequest{
-				Id:      "key-0",
-				Command: &proto.DeleteSubscriptionCommand{},
+				Id: "key-0",
 			},
 			expectedErr: nil,
 		},
