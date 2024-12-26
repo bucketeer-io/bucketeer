@@ -162,7 +162,7 @@ message ListEnabledSubscriptionsResponse {
 message CreateSubscriptionRequest {
   reserved 1;
   CreateSubscriptionCommand command = 2 [deprecated = true];
-  string environment_id = 3;
+  string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
   string name = 4 [(google.api.field_behavior) = REQUIRED];
   repeated Subscription.SourceType source_types = 5
       [(google.api.field_behavior) = REQUIRED];
