@@ -91,7 +91,7 @@ func (s *Subscription) UpdateSubscription(
 	if disabled != nil {
 		updated.Disabled = disabled.Value
 	}
-	s.UpdatedAt = time.Now().Unix()
+	updated.UpdatedAt = time.Now().Unix()
 	return updated, nil
 }
 
