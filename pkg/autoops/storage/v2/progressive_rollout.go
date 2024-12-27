@@ -61,9 +61,7 @@ type ProgressiveRolloutStorage interface {
 	DeleteProgressiveRollout(ctx context.Context, id, environmentId string) error
 	ListProgressiveRollouts(
 		ctx context.Context,
-		whereParts []mysql.WherePart,
-		orders []*mysql.Order,
-		limit, offset int,
+		options *mysql.ListOptions,
 	) ([]*autoopsproto.ProgressiveRollout, int64, int, error)
 	UpdateProgressiveRollout(ctx context.Context,
 		progressiveRollout *domain.ProgressiveRollout,
@@ -158,13 +156,22 @@ func (s *progressiveRolloutStorage) DeleteProgressiveRollout(
 
 func (s *progressiveRolloutStorage) ListProgressiveRollouts(
 	ctx context.Context,
-	whereParts []mysql.WherePart,
-	orders []*mysql.Order,
-	limit, offset int,
+	options *mysql.ListOptions,
 ) ([]*autoopsproto.ProgressiveRollout, int64, int, error) {
+	var whereParts []mysql.WherePart = []mysql.WherePart{}
+	var orderBySQL string = ""
+	var limitOffsetSQL string = ""
+	var limit int = 0
+	var offset int = 0
+	if options != nil {
+		whereParts = options.CreateWhereParts()
+		orderBySQL = mysql.ConstructOrderBySQLString(options.Orders)
+		limitOffsetSQL = mysql.ConstructLimitOffsetSQLString(options.Limit, options.Offset)
+		limit = options.Limit
+		offset = options.Offset
+	}
+
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
-	orderBySQL := mysql.ConstructOrderBySQLString(orders)
-	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
 	query := fmt.Sprintf(selectOpsProgressiveRolloutsSQL, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
