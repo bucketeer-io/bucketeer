@@ -198,6 +198,43 @@ export namespace Features {
   };
 }
 
+export class EnvironmentFeature extends jspb.Message {
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  clearFeaturesList(): void;
+  getFeaturesList(): Array<Feature>;
+  setFeaturesList(value: Array<Feature>): void;
+  addFeatures(value?: Feature, index?: number): Feature;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnvironmentFeature.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: EnvironmentFeature
+  ): EnvironmentFeature.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: EnvironmentFeature,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): EnvironmentFeature;
+  static deserializeBinaryFromReader(
+    message: EnvironmentFeature,
+    reader: jspb.BinaryReader
+  ): EnvironmentFeature;
+}
+
+export namespace EnvironmentFeature {
+  export type AsObject = {
+    environmentId: string;
+    featuresList: Array<Feature.AsObject>;
+  };
+}
+
 export class Tag extends jspb.Message {
   getId(): string;
   setId(value: string): void;

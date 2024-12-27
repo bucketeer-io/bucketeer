@@ -502,30 +502,13 @@ func TestFeatureFlagCacher(t *testing.T) {
 		mysqlMockRows *mysqlmock.MockRows,
 		redisMockClient *redismock.MockMultiGetCache,
 	) {
-		environmentMockClient.EXPECT().
-			ListEnvironmentsV2(gomock.Any(), gomock.Any()).
-			Return(
-				&environmentproto.ListEnvironmentsV2Response{
-					Environments: []*environmentproto.EnvironmentV2{
-						{Id: "env0", ProjectId: "pj0"},
-						{Id: "env1", ProjectId: "pj1"},
-					},
-				},
-				nil,
-			)
-		featureMockClient.EXPECT().
-			ListFeatures(gomock.Any(), gomock.Any()).
-			Times(2).
-			Return(
-				&featureproto.ListFeaturesResponse{
-					Features: getFeatures(t),
-				},
-				nil,
-			)
-		redisMockClient.EXPECT().
-			Put(gomock.Any(), gomock.Any(), gomock.Any()).
-			Times(2).
-			Return(nil)
+		mysqlMockRows.EXPECT().Close().Return(nil)
+		mysqlMockRows.EXPECT().Next().Return(false)
+		mysqlMockRows.EXPECT().Err().Return(nil)
+
+		mysqlMockClient.EXPECT().QueryContext(
+			gomock.Any(), gomock.Any(), gomock.Any(),
+		).Return(mysqlMockRows, nil)
 	}
 	executeMockBatchJob(t, &batchproto.BatchJobRequest{
 		Job: batchproto.BatchJob_FeatureFlagCacher,
@@ -838,8 +821,7 @@ func newBatchService(t *testing.T,
 			jobs.WithLogger(logger),
 		),
 		cacher.NewFeatureFlagCacher(
-			environmentMockClient,
-			featureMockClient,
+			mysqlMockClient,
 			[]cache.MultiGetCache{redisMockClient},
 		),
 		cacher.NewSegmentUserCacher(
