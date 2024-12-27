@@ -25,24 +25,20 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
-	envclient "github.com/bucketeer-io/bucketeer/pkg/environment/client"
-	ftclient "github.com/bucketeer-io/bucketeer/pkg/feature/client"
-	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	envproto "github.com/bucketeer-io/bucketeer/proto/environment"
+	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
+	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 )
 
 type featureFlagCacher struct {
-	environmentClient envclient.Client
-	featureClient     ftclient.Client
-	caches            []cachev3.FeaturesCache
-	opts              *jobs.Options
-	logger            *zap.Logger
+	ftStorage ftstorage.FeatureStorage
+	caches    []cachev3.FeaturesCache
+	opts      *jobs.Options
+	logger    *zap.Logger
 }
 
 func NewFeatureFlagCacher(
-	environmentClient envclient.Client,
-	featureClient ftclient.Client,
+	mysqlClient mysql.Client,
 	multiCaches []cache.MultiGetCache,
 	opts ...jobs.Option,
 ) jobs.Job {
@@ -57,82 +53,32 @@ func NewFeatureFlagCacher(
 		caches = append(caches, cachev3.NewFeaturesCache(cache))
 	}
 	return &featureFlagCacher{
-		environmentClient: environmentClient,
-		featureClient:     featureClient,
-		caches:            caches,
-		opts:              dopts,
-		logger:            dopts.Logger.Named("feature-flag-cacher"),
+		ftStorage: ftstorage.NewFeatureStorage(mysqlClient),
+		caches:    caches,
+		opts:      dopts,
+		logger:    dopts.Logger.Named("feature-flag-cacher"),
 	}
 }
 
 func (c *featureFlagCacher) Run(ctx context.Context) error {
-	envs, err := c.listAllEnvironments(ctx)
+	envFts, err := c.ftStorage.ListAllEnvironmentFeatures(ctx)
 	if err != nil {
-		c.logger.Error("Failed to list all environments")
+		c.logger.Error("Failed to all environment features")
 		return err
 	}
-	for _, env := range envs {
-		features, err := c.listFeatures(ctx, env.Id)
-		if err != nil {
-			c.logger.Error("Failed to list features", zap.String("environmentId", env.Id))
-			return err
-		}
+	for _, envFt := range envFts {
 		fts := &ftproto.Features{
-			Id:       evaluation.GenerateFeaturesID(features),
-			Features: features,
+			Id:       evaluation.GenerateFeaturesID(envFt.Features),
+			Features: envFt.Features,
 		}
-		fids := make([]string, 0, len(fts.Features))
-		for _, f := range fts.Features {
-			fids = append(fids, f.Id)
-		}
-		updatedInstances := c.putCache(fts, env.Id)
+		updatedInstances := c.putCache(fts, envFt.EnvironmentId)
 		c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
 		c.logger.Debug("Caching features",
-			zap.String("environmentId", env.Id),
-			zap.Strings("featureIds", fids),
+			zap.String("environmentId", envFt.EnvironmentId),
+			zap.Int("featureCount", len(envFt.Features)),
 		)
 	}
 	return nil
-}
-
-func (c *featureFlagCacher) listAllEnvironments(
-	ctx context.Context,
-) ([]*envproto.EnvironmentV2, error) {
-	req := &envproto.ListEnvironmentsV2Request{
-		PageSize: 0,
-	}
-	resp, err := c.environmentClient.ListEnvironmentsV2(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	return resp.Environments, nil
-}
-
-func (c *featureFlagCacher) listFeatures(
-	ctx context.Context,
-	environmentID string,
-) ([]*ftproto.Feature, error) {
-	req := &ftproto.ListFeaturesRequest{
-		PageSize:      0,
-		EnvironmentId: environmentID,
-	}
-	resp, err := c.featureClient.ListFeatures(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-	filtered := make([]*ftproto.Feature, 0, len(resp.Features))
-	for _, f := range resp.Features {
-		ff := domain.Feature{Feature: f}
-		if ff.IsDisabledAndOffVariationEmpty() {
-			continue
-		}
-		// We exclude archived feature flags over thirty days ago to keep the cache size small.
-		if ff.IsArchivedBeforeLastThirtyDays() {
-			continue
-		}
-		filtered = append(filtered, f)
-	}
-	return filtered, nil
 }
 
 // Save the flags by environment in all redis instances

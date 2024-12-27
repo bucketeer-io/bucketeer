@@ -17,6 +17,7 @@ package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 
@@ -29,6 +30,11 @@ var (
 	ErrFeatureAlreadyExists          = errors.New("feature: already exists")
 	ErrFeatureNotFound               = errors.New("feature: not found")
 	ErrFeatureUnexpectedAffectedRows = errors.New("feature: unexpected affected rows")
+)
+
+var (
+	//go:embed sql/feature/select_all_environment_features.sql
+	selectAllEnvironmentFeaturesSQLQuery string
 )
 
 type FeatureStorage interface {
@@ -47,6 +53,9 @@ type FeatureStorage interface {
 		orders []*mysql.Order,
 		limit, offset int,
 	) ([]*proto.Feature, int, int64, error)
+	ListAllEnvironmentFeatures(
+		ctx context.Context,
+	) ([]*proto.EnvironmentFeature, error)
 }
 
 type featureStorage struct {
@@ -464,4 +473,58 @@ func (s *featureStorage) ListFeaturesFilteredByExperiment(
 		return nil, 0, 0, err
 	}
 	return features, nextOffset, totalCount, nil
+}
+
+func (s *featureStorage) ListAllEnvironmentFeatures(
+	ctx context.Context,
+) ([]*proto.EnvironmentFeature, error) {
+	rows, err := s.qe.QueryContext(ctx, selectAllEnvironmentFeaturesSQLQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	envFeatures := map[string][]*proto.Feature{}
+	for rows.Next() {
+		feature := proto.Feature{}
+		var envID string
+		err := rows.Scan(
+			&envID,
+			// Feature columns
+			&feature.Id,
+			&feature.Name,
+			&feature.Description,
+			&feature.Enabled,
+			&feature.Archived,
+			&feature.Deleted,
+			&feature.Version,
+			&feature.CreatedAt,
+			&feature.UpdatedAt,
+			&feature.VariationType,
+			&mysql.JSONObject{Val: &feature.Variations},
+			&mysql.JSONObject{Val: &feature.Targets},
+			&mysql.JSONObject{Val: &feature.Rules},
+			&mysql.JSONObject{Val: &feature.DefaultStrategy},
+			&feature.OffVariation,
+			&mysql.JSONObject{Val: &feature.Tags},
+			&feature.Maintainer,
+			&feature.SamplingSeed,
+			&mysql.JSONObject{Val: &feature.Prerequisites},
+		)
+		if err != nil {
+			return nil, err
+		}
+		envFeatures[envID] = append(envFeatures[envID], &feature)
+	}
+	if rows.Err() != nil {
+		return nil, err
+	}
+	envFts := make([]*proto.EnvironmentFeature, 0, len(envFeatures))
+	for key, fts := range envFeatures {
+		envFeature := &proto.EnvironmentFeature{
+			EnvironmentId: key,
+			Features:      fts,
+		}
+		envFts = append(envFts, envFeature)
+	}
+	return envFts, nil
 }
