@@ -17,6 +17,7 @@ package cacher
 
 import (
 	"context"
+	"sync"
 
 	"go.uber.org/zap"
 
@@ -138,15 +139,25 @@ func (c *featureFlagCacher) listFeatures(
 // Since the batch runs every minute, we don't handle erros when putting the cache
 func (c *featureFlagCacher) putCache(features *ftproto.Features, environmentID string) int {
 	var updatedInstances int
+	var mu sync.Mutex     // Mutex to safely update `updatedInstances` across goroutines
+	var wg sync.WaitGroup // Use a WaitGroup to wait for all goroutines to finish
 	for _, cache := range c.caches {
-		if err := cache.Put(features, environmentID); err != nil {
-			c.logger.Error("Failed to cache features",
-				zap.Error(err),
-				zap.String("environmentId", environmentID),
-			)
-			continue
-		}
-		updatedInstances++
+		wg.Add(1) // Increment the WaitGroup counter
+		go func(cache cachev3.FeaturesCache) {
+			defer wg.Done()
+			if err := cache.Put(features, environmentID); err != nil {
+				// Log the error, but do not stop the other goroutines
+				c.logger.Error("Failed to cache features",
+					zap.Error(err),
+					zap.String("environmentId", environmentID),
+				)
+				return
+			}
+			mu.Lock()
+			updatedInstances++
+			mu.Unlock()
+		}(cache)
 	}
+	wg.Wait()
 	return updatedInstances
 }

@@ -17,6 +17,7 @@ package cacher
 
 import (
 	"context"
+	"sync"
 
 	"go.uber.org/zap"
 
@@ -77,15 +78,25 @@ func (c *apiKeyCacher) Run(ctx context.Context) error {
 // Since the batch runs every minute, we don't handle erros when putting the cache
 func (c *apiKeyCacher) putCache(envAPIKey *accproto.EnvironmentAPIKey) int {
 	var updatedInstances int
+	var mu sync.Mutex     // Mutex to safely update `updatedInstances` across goroutines
+	var wg sync.WaitGroup // Use a WaitGroup to wait for all goroutines to finish
 	for _, cache := range c.caches {
-		if err := cache.Put(envAPIKey); err != nil {
-			c.logger.Error("Failed to cache environment api key",
-				zap.Error(err),
-				zap.Any("envAPIKey", envAPIKey),
-			)
-			continue
-		}
-		updatedInstances++
+		wg.Add(1) // Increment the WaitGroup counter
+		go func(cache cachev3.EnvironmentAPIKeyCache) {
+			defer wg.Done()
+			if err := cache.Put(envAPIKey); err != nil {
+				// Log the error, but do not stop the other goroutines
+				c.logger.Error("Failed to cache environment api key",
+					zap.Error(err),
+					zap.Any("envAPIKey", envAPIKey),
+				)
+				return
+			}
+			mu.Lock()
+			updatedInstances++
+			mu.Unlock()
+		}(cache)
 	}
+	wg.Wait()
 	return updatedInstances
 }
