@@ -57,8 +57,8 @@ const UserProfileModal = ({ isOpen, onClose, onEditAvatar }: FilterProps) => {
     }
   });
 
-  const avatar = consoleAccount?.avatarUrl
-    ? consoleAccount.avatarUrl
+  const avatar = consoleAccount?.avatarImage
+    ? consoleAccount.avatarImage
     : primaryAvatar;
 
   const onSubmit: SubmitHandler<UserInfoForm> = values => {
@@ -97,7 +97,11 @@ const UserProfileModal = ({ isOpen, onClose, onEditAvatar }: FilterProps) => {
           <div className="p-5">
             <div className="flex items-center justify-center mb-2">
               <div className="relative">
-                <AvatarImage image={avatar} size="xl" alt="user-avatar" />
+                <AvatarImage
+                  image={`data:image/jpeg;base64,${avatar}`}
+                  size="xl"
+                  alt="user-avatar"
+                />
                 {/* <AvatarImage image={defaultAvatar} size="xl" alt="user-avatar" /> */}
                 <Button
                   type="button"

@@ -61,7 +61,6 @@ export interface ConsoleAccount {
   lastName: string;
   language: string;
   lastSeen: string;
-  avatarImageUrl: string;
   avatarImage: string;
   avatarFileType: string;
   searchFilters: SearchFilter[];
