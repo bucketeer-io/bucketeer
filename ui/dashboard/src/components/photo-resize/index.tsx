@@ -28,8 +28,8 @@ const PhotoResize = forwardRef<PhotoResizeHandle, PhotoResizeProps>(
 
     const onConfirmCrop = useCallback(async () => {
       try {
-        const croppedImage = await getCroppedImg(value, croppedAreaPixels, 0);
-        onChange(croppedImage);
+        const croppedImage = await getCroppedImg(value, croppedAreaPixels!, 0);
+        onChange(croppedImage!);
       } catch (e) {
         console.error(e);
       }
