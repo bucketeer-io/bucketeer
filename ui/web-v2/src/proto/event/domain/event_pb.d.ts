@@ -256,6 +256,7 @@ export namespace Event {
     SUBSCRIPTION_SOURCE_TYPE_ADDED: 1004;
     SUBSCRIPTION_SOURCE_TYPE_DELETED: 1005;
     SUBSCRIPTION_RENAMED: 1006;
+    SUBSCRIPTION_UPDATED: 1007;
     ADMIN_SUBSCRIPTION_CREATED: 1100;
     ADMIN_SUBSCRIPTION_DELETED: 1101;
     ADMIN_SUBSCRIPTION_ENABLED: 1102;
@@ -5272,6 +5273,66 @@ export class SubscriptionRenamedEvent extends jspb.Message {
 export namespace SubscriptionRenamedEvent {
   export type AsObject = {
     name: string;
+  };
+}
+
+export class SubscriptionUpdatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  clearSourceTypesList(): void;
+  getSourceTypesList(): Array<
+    proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap]
+  >;
+  setSourceTypesList(
+    value: Array<
+      proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap]
+    >
+  ): void;
+  addSourceTypes(
+    value: proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap],
+    index?: number
+  ): proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap];
+
+  hasDisabled(): boolean;
+  clearDisabled(): void;
+  getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SubscriptionUpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: SubscriptionUpdatedEvent
+  ): SubscriptionUpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: SubscriptionUpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): SubscriptionUpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: SubscriptionUpdatedEvent,
+    reader: jspb.BinaryReader
+  ): SubscriptionUpdatedEvent;
+}
+
+export namespace SubscriptionUpdatedEvent {
+  export type AsObject = {
+    id: string;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    sourceTypesList: Array<
+      proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap]
+    >;
+    disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 }
 

@@ -202,14 +202,38 @@ message DisableSubscriptionResponse {}
 
 message UpdateSubscriptionRequest {
   reserved 1;
-  string id = 2;
-  AddSourceTypesCommand add_source_types_command = 3;
-  DeleteSourceTypesCommand delete_source_types_command = 4;
-  RenameSubscriptionCommand rename_subscription_command = 5;
-  string environment_id = 6;
+  string id = 2 [(google.api.field_behavior) = REQUIRED];
+  AddSourceTypesCommand add_source_types_command = 3 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated. use source_types instead."
+    }
+  ];
+  DeleteSourceTypesCommand delete_source_types_command = 4 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated. use source_types instead."
+    }
+  ];
+  RenameSubscriptionCommand rename_subscription_command = 5 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated. use name instead."
+    }
+  ];
+  string environment_id = 6 [(google.api.field_behavior) = REQUIRED];
+  repeated Subscription.SourceType source_types = 7;
+  google.protobuf.StringValue name = 8;
+  google.protobuf.BoolValue disabled = 9
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        title: "disabled"
+        description: "if true, the subscription is disabled, otherwise enabled."
+      }];
 }
 
-message UpdateSubscriptionResponse {}
+message UpdateSubscriptionResponse {
+  Subscription subscription = 1;
+}
 
 service NotificationService {
   rpc GetAdminSubscription(GetAdminSubscriptionRequest)
@@ -340,5 +364,38 @@ service NotificationService {
   rpc DisableSubscription(DisableSubscriptionRequest)
       returns (DisableSubscriptionResponse) {}
   rpc UpdateSubscription(UpdateSubscriptionRequest)
-      returns (UpdateSubscriptionResponse) {}
+      returns (UpdateSubscriptionResponse) {
+    option (google.api.http) = {
+      patch: "/v1/subscription"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update",
+      description: "Update subscription."
+      tags: "subscription"
+      operation_id: "web.v1.subscription.update"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
 }

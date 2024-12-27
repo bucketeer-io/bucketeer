@@ -15012,6 +15012,10 @@
                 "integer": 1006
               },
               {
+                "name": "SUBSCRIPTION_UPDATED",
+                "integer": 1007
+              },
+              {
                 "name": "ADMIN_SUBSCRIPTION_CREATED",
                 "integer": 1100
               },
@@ -17526,6 +17530,32 @@
                 "id": 1,
                 "name": "name",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "SubscriptionUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 3,
+                "name": "source_types",
+                "type": "bucketeer.notification.Subscription.SourceType",
+                "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue"
               }
             ]
           },
@@ -28396,27 +28426,115 @@
               {
                 "id": 2,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "add_source_types_command",
-                "type": "AddSourceTypesCommand"
+                "type": "AddSourceTypesCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated. use source_types instead."
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 4,
                 "name": "delete_source_types_command",
-                "type": "DeleteSourceTypesCommand"
+                "type": "DeleteSourceTypesCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated. use source_types instead."
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 5,
                 "name": "rename_subscription_command",
-                "type": "RenameSubscriptionCommand"
+                "type": "RenameSubscriptionCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated. use name instead."
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 6,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 7,
+                "name": "source_types",
+                "type": "Subscription.SourceType",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 9,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "title",
+                        "value": "disabled"
+                      },
+                      {
+                        "name": "description",
+                        "value": "if true, the subscription is disabled, otherwise enabled."
+                      }
+                    ]
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -28424,7 +28542,14 @@
             ]
           },
           {
-            "name": "UpdateSubscriptionResponse"
+            "name": "UpdateSubscriptionResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "subscription",
+                "type": "Subscription"
+              }
+            ]
           }
         ],
         "services": [
@@ -28879,7 +29004,133 @@
               {
                 "name": "UpdateSubscription",
                 "in_type": "UpdateSubscriptionRequest",
-                "out_type": "UpdateSubscriptionResponse"
+                "out_type": "UpdateSubscriptionResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/subscription"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update subscription."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "subscription"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.subscription.update"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }

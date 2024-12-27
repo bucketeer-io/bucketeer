@@ -24,6 +24,7 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
@@ -288,6 +289,10 @@ func (s *NotificationService) UpdateSubscription(
 	if err != nil {
 		return nil, err
 	}
+	if s.isNoUpdateSubscriptionCommand(req) {
+		return s.updateSubscriptionNoCommand(ctx, req, localizer, editor)
+	}
+
 	if err := s.validateUpdateSubscriptionRequest(req, localizer); err != nil {
 		return nil, err
 	}
@@ -306,6 +311,35 @@ func (s *NotificationService) UpdateSubscription(
 		return nil, err
 	}
 	return &notificationproto.UpdateSubscriptionResponse{}, nil
+}
+
+func (s *NotificationService) updateSubscriptionNoCommand(
+	ctx context.Context,
+	req *notificationproto.UpdateSubscriptionRequest,
+	localizer locale.Localizer,
+	editor *eventproto.Editor,
+) (*notificationproto.UpdateSubscriptionResponse, error) {
+	if err := s.validateUpdateSubscriptionNoCommandRequest(req, localizer); err != nil {
+		return nil, err
+	}
+
+	updatedSubscription, err := s.updateSubscriptionMySQLNoCommand(
+		ctx,
+		req.Id,
+		req.EnvironmentId,
+		req.Name,
+		req.SourceTypes,
+		req.Disabled,
+		editor,
+		localizer,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &notificationproto.UpdateSubscriptionResponse{
+		Subscription: updatedSubscription,
+	}, nil
 }
 
 func (s *NotificationService) EnableSubscription(
@@ -428,7 +462,7 @@ func (s *NotificationService) updateSubscription(
 		return nil
 	})
 	if err != nil {
-		if err == v2ss.ErrSubscriptionNotFound || err == v2ss.ErrSubscriptionUnexpectedAffectedRows {
+		if errors.Is(err, v2ss.ErrSubscriptionNotFound) || errors.Is(err, v2ss.ErrSubscriptionUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -473,6 +507,111 @@ func (s *NotificationService) updateSubscription(
 		return dt.Err()
 	}
 	return nil
+}
+
+func (s *NotificationService) updateSubscriptionMySQLNoCommand(
+	ctx context.Context,
+	ID, environmentID string,
+	name *wrapperspb.StringValue,
+	sourceTypes []notificationproto.Subscription_SourceType,
+	disabled *wrapperspb.BoolValue,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) (*notificationproto.Subscription, error) {
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	var subscription *domain.Subscription
+	var updatedSubscription *notificationproto.Subscription
+	var event *eventproto.Event
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		subscriptionStorage := v2ss.NewSubscriptionStorage(tx)
+		subscription, err = subscriptionStorage.GetSubscription(ctx, ID, environmentID)
+		if err != nil {
+			return err
+		}
+		updated, err := subscription.UpdateSubscription(name, sourceTypes, disabled)
+		if err != nil {
+			return err
+		}
+		updatedSubscription = updated.Subscription
+		event, err = domainevent.NewEvent(
+			editor,
+			eventproto.Event_SUBSCRIPTION,
+			subscription.Id,
+			eventproto.Event_SUBSCRIPTION_UPDATED,
+			&eventproto.SubscriptionUpdatedEvent{
+				Id:          ID,
+				SourceTypes: sourceTypes,
+				Name:        name,
+				Disabled:    disabled,
+			},
+			ID,
+			updatedSubscription,
+			subscription,
+		)
+		if err != nil {
+			return err
+		}
+		return subscriptionStorage.UpdateSubscription(ctx, updated, environmentID)
+	})
+	if err != nil {
+		if errors.Is(err, v2ss.ErrSubscriptionNotFound) || errors.Is(err, v2ss.ErrSubscriptionUnexpectedAffectedRows) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to update subscription",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("ID", ID),
+				zap.String("environmentID", environmentID),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+
+	err = s.domainEventPublisher.Publish(ctx, event)
+	if err != nil {
+		s.logger.Error(
+			"Failed to publish event",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", environmentID),
+				zap.String("ID", ID),
+			)...,
+		)
+		return nil, err
+	}
+	return updatedSubscription, nil
 }
 
 func (s *NotificationService) isNoUpdateSubscriptionCommand(req *notificationproto.UpdateSubscriptionRequest) bool {
