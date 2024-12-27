@@ -17,6 +17,7 @@ package cacher
 
 import (
 	"context"
+	"sync"
 
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/wrapperspb"
@@ -149,15 +150,25 @@ func (c *segmentUserCacher) listSegmentUsers(
 // Since the batch runs every minute, we don't handle erros when putting the cache
 func (c *segmentUserCacher) putCache(segmentUsers *ftproto.SegmentUsers, environmentID string) int {
 	var updatedInstances int
+	var mu sync.Mutex     // Mutex to safely update `updatedInstances` across goroutines
+	var wg sync.WaitGroup // Use a WaitGroup to wait for all goroutines to finish
 	for _, cache := range c.caches {
-		if err := cache.Put(segmentUsers, environmentID); err != nil {
-			c.logger.Error("Failed to cache segment users",
-				zap.Error(err),
-				zap.String("environmentId", environmentID),
-			)
-			continue
-		}
-		updatedInstances++
+		wg.Add(1) // Increment the WaitGroup counter
+		go func(cache cachev3.SegmentUsersCache) {
+			defer wg.Done()
+			if err := cache.Put(segmentUsers, environmentID); err != nil {
+				// Log the error, but do not stop the other goroutines
+				c.logger.Error("Failed to cache segment users",
+					zap.Error(err),
+					zap.String("environmentId", environmentID),
+				)
+				return
+			}
+			mu.Lock()
+			updatedInstances++
+			mu.Unlock()
+		}(cache)
 	}
+	wg.Wait()
 	return updatedInstances
 }
