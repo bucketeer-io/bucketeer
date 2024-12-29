@@ -24,6 +24,7 @@ import {
   PAGE_PATH_NEW,
   PAGE_PATH_ORGANIZATIONS,
   PAGE_PATH_PROJECTS,
+  PAGE_PATH_PUSHES,
   PAGE_PATH_ROOT,
   PAGE_PATH_SETTINGS
 } from 'constants/routing';
@@ -42,6 +43,7 @@ import SelectOrganizationPage from 'pages/signin/organization';
 import Navigation from 'components/navigation';
 import Spinner from 'components/spinner';
 import { OrganizationsRoot, ProjectsRoot } from './routers';
+import PushesPage from 'pages/push';
 
 export const AppLoading = () => (
   <div className="flex items-center justify-center h-screen w-full">
@@ -155,6 +157,7 @@ export const EnvironmentRoot = memo(
         <Route path={`${PAGE_PATH_PROJECTS}/*`} element={<ProjectsRoot />} />
         <Route path={`${PAGE_PATH_APIKEYS}`} element={<APIKeysPage />} />
         <Route path={`${PAGE_PATH_MEMBERS}`} element={<MembersPage />} />
+        <Route path={`${PAGE_PATH_PUSHES}`} element={<PushesPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     );
