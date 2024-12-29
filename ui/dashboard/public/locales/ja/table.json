@@ -17,7 +17,10 @@
     "enable-member": "Enable Member",
     "add-to-env": "Add to Environment",
     "disable-api-key": "Disable API Key",
-    "enable-api-key": "Enable API Key"
+    "enable-api-key": "Enable API Key",
+    "edit-push": "Edit Push",
+    "disable-push": "Disable Push",
+    "enable-push": "Enable Push"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -30,7 +33,9 @@
     "api-key-title": "No registered API keys",
     "api-key-desc": "There are no registered API keys. Add a new one to start managing.",
     "member-title": "No registered members",
-    "member-desc": "There are no registered members. Invite a new one to start managing."
+    "member-desc": "There are no registered members. Invite a new one to start managing.",
+    "push-title": "No registered pushes",
+    "push-desc": "There are no registered pushes. Add a new one to start managing."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
@@ -48,5 +53,9 @@
   "api-key": {
     "confirm-enable-desc": "The API key \"<bold>{{name}}</bold>\" will be enabled. Are you sure you want to proceed?",
     "confirm-disable-desc": "The API key \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?"
+  },
+  "push": {
+    "confirm-enable-desc": "The Push \"<bold>{{name}}</bold>\" will be enabled. Are you sure you want to proceed?",
+    "confirm-disable-desc": "The Push \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?"
   }
 }
