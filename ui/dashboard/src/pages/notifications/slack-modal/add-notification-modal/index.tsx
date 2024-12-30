@@ -1,5 +1,7 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import { notificationCreator } from '@api/notification';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import Button from 'components/button';
@@ -47,6 +49,8 @@ const AddNotificationModal = ({
   onClose
 }: AddNotificationModalProps) => {
   const { t } = useTranslation(['common', 'form']);
+  const { consoleAccount } = useAuth();
+  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -61,7 +65,7 @@ const AddNotificationModal = ({
   const languages = [
     {
       label: 'English',
-      value: 'en'
+      value: 'English'
     }
   ];
 
@@ -92,7 +96,21 @@ const AddNotificationModal = ({
     formState: { isValid, isSubmitting }
   } = form;
 
-  const onSubmit: SubmitHandler<AddNotificationForm> = () => {};
+  const onSubmit: SubmitHandler<AddNotificationForm> = () => {
+    return notificationCreator({
+      environmentId: currenEnvironment.id,
+      name: 'Test 1',
+      sourceTypes: ['DOMAIN_EVENT_FEATURE'],
+      recipient: {
+        type: 'SlackChannel',
+        slackChannelRecipient: {
+          webhookUrl:
+            'https://dev.bucketeer.jp/hookauth=CiQAQFReLhnIle3NdlT3KBlNsZInL46XvTqeFrEf_yYlZdbJoIISgwEAemffGZYq1vkzNUV4CPfYEgIJt1y9enp1B36b_XGNds58ELMAOWXP5q84peCShNIXjareVnaThwO73_RJP5STk-gbdhxF_TWDDejo_6y1zI9iOqlqLetAxM7GTnfBGd9DnpsLaLucKnKvGyGkgwVX06l6Mw2ovP30ZaMU6HIQbFLl9A'
+        },
+        language: 'ENGLISH'
+      }
+    }).then(() => {});
+  };
 
   return (
     <SlideModal title={t('new-notification')} isOpen={isOpen} onClose={onClose}>

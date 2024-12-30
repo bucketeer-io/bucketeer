@@ -9,6 +9,7 @@ export const useFetchNotifications = ({
   searchQuery,
   orderDirection,
   disabled,
+  environmentId,
   organizationId
 }: {
   pageSize?: number;
@@ -17,8 +18,9 @@ export const useFetchNotifications = ({
   orderBy?: OrderBy;
   orderDirection?: OrderDirection;
   disabled?: boolean;
-  organizationId?: string;
-} = {}) => {
+  environmentId?: string;
+  organizationId: string;
+}) => {
   const cursor = (page - 1) * LIST_PAGE_SIZE;
 
   return useQueryNotifications({
@@ -29,6 +31,7 @@ export const useFetchNotifications = ({
       orderDirection,
       searchKeyword: searchQuery,
       disabled,
+      environmentId,
       organizationId
     }
   });

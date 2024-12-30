@@ -6,7 +6,6 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { Notification } from '@types';
-import { truncateTextCenter } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
@@ -36,9 +35,6 @@ export const useColumns = ({
             >
               {notification.name}
             </button>
-            <div className="typo-para-tiny text-gray-500">
-              {truncateTextCenter(notification.name)}
-            </div>
           </div>
         );
       }

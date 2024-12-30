@@ -43,7 +43,7 @@ const PageLoader = () => {
     setSelectedNotification(apiKey);
   };
 
-  const isEmpty = collection?.accounts.length === 0;
+  const isEmpty = collection?.subscriptions.length === 0;
 
   return (
     <>

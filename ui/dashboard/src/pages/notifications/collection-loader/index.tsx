@@ -34,7 +34,6 @@ const CollectionLoader = ({
     isError
   } = useFetchNotifications({
     ...filters,
-    disabled: true,
     organizationId: currenEnvironment.organizationId
   });
 
@@ -50,7 +49,7 @@ const CollectionLoader = ({
     });
   };
 
-  const apiKeys = collection?.accounts || [];
+  const apiKeys = collection?.subscriptions || [];
   const totalCount = Number(collection?.totalCount) || 0;
 
   const emptyState = (

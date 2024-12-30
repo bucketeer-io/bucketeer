@@ -1,19 +1,22 @@
 import axiosClient from '@api/axios-client';
 import pickBy from 'lodash/pickBy';
-import { AccountCollection, CollectionParams } from '@types';
+import { NotificationsCollection, CollectionParams } from '@types';
 import { isNotEmpty } from 'utils/data-type';
+import { stringifySearchParams } from 'utils/search-params';
 
 export interface NotificationsFetcherParams extends CollectionParams {
-  organizationId?: string;
+  environmentId?: string;
+  organizationId: string;
 }
 
 export const notificationsFetcher = async (
   params?: NotificationsFetcherParams
-): Promise<AccountCollection> => {
+): Promise<NotificationsCollection> => {
+  const requestParams = stringifySearchParams(
+    pickBy(params, v => isNotEmpty(v))
+  );
+
   return axiosClient
-    .post<AccountCollection>(
-      '/v1/account/list_accounts',
-      pickBy(params, v => isNotEmpty(v))
-    )
+    .get<NotificationsCollection>(`/v1/subscriptions?${requestParams}`)
     .then(response => response.data);
 };

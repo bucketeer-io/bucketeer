@@ -1,30 +1,21 @@
 import axiosClient from '@api/axios-client';
-import { Account, EnvironmentRoleType, OrganizationRole } from '@types';
+import { Notification, NotificationRecipient, SourceType } from '@types';
 
-export interface EnvironmentRoleItem {
+export interface NotificationCreatorPayload {
   environmentId: string;
-  role: EnvironmentRoleType;
+  name: string;
+  sourceTypes: SourceType[];
+  recipient: NotificationRecipient;
 }
 
-export interface AccountCreatorCommand {
-  email: string;
-  organizationRole: OrganizationRole;
-  environmentRoles: EnvironmentRoleItem[];
+export interface NotificationCreatorResponse {
+  account: Array<Notification>;
 }
 
-export interface AccountCreatorParams {
-  organizationId: string;
-  command: AccountCreatorCommand;
-}
-
-export interface AccountCreatorResponse {
-  account: Array<Account>;
-}
-
-export const accountCreator = async (
-  params?: AccountCreatorParams
-): Promise<AccountCreatorResponse> => {
+export const notificationCreator = async (
+  payload: NotificationCreatorPayload
+): Promise<NotificationCreatorResponse> => {
   return axiosClient
-    .post<AccountCreatorResponse>('/v1/account/create_account', params)
+    .post<NotificationCreatorResponse>('/v1/subscription', payload)
     .then(response => response.data);
 };

@@ -1,5 +1,7 @@
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import { notificationUpdater } from '@api/notification';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { Notification } from '@types';
@@ -50,6 +52,8 @@ const EditNotificationModal = ({
   notification
 }: EditNotificationModalProps) => {
   const { t } = useTranslation(['common', 'form']);
+  const { consoleAccount } = useAuth();
+  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -95,7 +99,15 @@ const EditNotificationModal = ({
     formState: { isValid, isSubmitting }
   } = form;
 
-  const onSubmit: SubmitHandler<EditNotificationForm> = () => {};
+  const onSubmit: SubmitHandler<EditNotificationForm> = () => {
+    return notificationUpdater({
+      environmentId: currenEnvironment.id,
+      id: '5b7c3896b306fe3fcef273e68c78f2b417906269b9f0c154dc4c6621a18e7668',
+      sourceTypes: ['DOMAIN_EVENT_ACCOUNT'],
+      name: 'Test',
+      disabled: false
+    }).then(() => {});
+  };
 
   return (
     <SlideModal
