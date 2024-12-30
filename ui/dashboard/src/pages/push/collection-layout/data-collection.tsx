@@ -10,6 +10,7 @@ import { truncateTextCenter } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
+import DateTooltip from 'elements/date-tooltip';
 import { PushActionsType } from '../types';
 
 export const tagOptions = [
@@ -106,9 +107,14 @@ export const useColumns = ({
       cell: ({ row }) => {
         const push = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
-            {formatDateTime(push.createdAt)}
-          </div>
+          <DateTooltip
+            trigger={
+              <div className="text-gray-700 typo-para-medium">
+                {formatDateTime(push.createdAt)}
+              </div>
+            }
+            date={push.createdAt}
+          />
         );
       }
     },

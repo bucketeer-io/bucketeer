@@ -7,6 +7,7 @@ import { useFormatDateTime } from 'utils/date-time';
 import { joinName } from 'utils/name';
 import { AvatarImage } from 'components/avatar';
 import Icon from 'components/icon';
+import DateTooltip from 'elements/date-tooltip';
 
 export const useColumns = ({
   onActions
@@ -87,9 +88,14 @@ export const useColumns = ({
       cell: ({ row }) => {
         const account = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
-            {formatDateTime(account.createdAt)}
-          </div>
+          <DateTooltip
+            trigger={
+              <div className="text-gray-700 typo-para-medium">
+                {formatDateTime(account.createdAt)}
+              </div>
+            }
+            date={account.createdAt}
+          />
         );
       }
     },

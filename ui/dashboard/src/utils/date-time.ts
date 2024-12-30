@@ -49,3 +49,21 @@ export const useFormatDateTime = () => {
 export const getDateTimeLocale = (language: Language) => {
   return locales[language];
 };
+
+export const formatLongDateTime = (
+  date: Date,
+  overrideOptions?: Intl.DateTimeFormatOptions
+) => {
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'short',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+    ...overrideOptions
+  };
+
+  return new Intl.DateTimeFormat('en-US', options).format(date);
+};

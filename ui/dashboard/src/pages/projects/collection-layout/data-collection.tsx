@@ -10,6 +10,7 @@ import { useTranslation } from 'i18n';
 import { Project } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { Popover } from 'components/popover';
+import DateTooltip from 'elements/date-tooltip';
 
 export const useColumns = ({
   onActionHandler
@@ -85,9 +86,14 @@ export const useColumns = ({
       cell: ({ row }) => {
         const project = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
-            {formatDateTime(project.createdAt)}
-          </div>
+          <DateTooltip
+            trigger={
+              <div className="text-gray-700 typo-para-medium">
+                {formatDateTime(project.createdAt)}
+              </div>
+            }
+            date={project.createdAt}
+          />
         );
       }
     },

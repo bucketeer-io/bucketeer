@@ -10,6 +10,7 @@ import { Organization } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { useSearchParams } from 'utils/search-params';
 import { Popover } from 'components/popover';
+import DateTooltip from 'elements/date-tooltip';
 import { OrganizationActionsType } from '../types';
 
 export const useColumns = ({
@@ -84,9 +85,14 @@ export const useColumns = ({
       cell: ({ row }) => {
         const organization = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
-            {formatDateTime(organization.createdAt)}
-          </div>
+          <DateTooltip
+            trigger={
+              <div className="text-gray-700 typo-para-medium">
+                {formatDateTime(organization.createdAt)}
+              </div>
+            }
+            date={organization.createdAt}
+          />
         );
       }
     },

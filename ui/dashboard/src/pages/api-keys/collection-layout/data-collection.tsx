@@ -3,13 +3,18 @@ import {
   IconMoreHorizOutlined
 } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
+import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
 import { APIKey, APIKeyRole } from '@types';
 import { truncateTextCenter } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
+import { copyToClipBoard } from 'utils/function';
+import { IconCopy } from '@icons';
+import Icon from 'components/icon';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
+import DateTooltip from 'elements/date-tooltip';
 import { APIKeyActionsType } from '../types';
 
 export const useColumns = ({
@@ -19,6 +24,7 @@ export const useColumns = ({
 }): ColumnDef<APIKey>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
+  const { notify } = useToast();
 
   const getAPIkeyRole = (role: APIKeyRole) => {
     switch (role) {
@@ -31,6 +37,19 @@ export const useColumns = ({
       default:
         return t('public-api');
     }
+  };
+
+  const handleCopyId = (id: string) => {
+    copyToClipBoard(id);
+    notify({
+      toastType: 'toast',
+      messageType: 'success',
+      message: (
+        <span>
+          <b>ID</b> {` has been successfully copied!`}
+        </span>
+      )
+    });
   };
 
   return [
@@ -49,8 +68,15 @@ export const useColumns = ({
             >
               {apiKey.name}
             </button>
-            <div className="typo-para-tiny text-gray-500">
+            <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
               {truncateTextCenter(apiKey.id)}
+              <div onClick={() => handleCopyId(apiKey.id)}>
+                <Icon
+                  icon={IconCopy}
+                  size={'sm'}
+                  className="opacity-0 group-hover:opacity-100 cursor-pointer"
+                />
+              </div>
             </div>
           </div>
         );
@@ -89,9 +115,14 @@ export const useColumns = ({
       cell: ({ row }) => {
         const apiKey = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
-            {formatDateTime(apiKey.createdAt)}
-          </div>
+          <DateTooltip
+            trigger={
+              <div className="text-gray-700 typo-para-medium">
+                {formatDateTime(apiKey.createdAt)}
+              </div>
+            }
+            date={apiKey.createdAt}
+          />
         );
       }
     },
