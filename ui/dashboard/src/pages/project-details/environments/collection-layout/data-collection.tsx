@@ -10,6 +10,7 @@ import { useFormatDateTime } from 'utils/date-time';
 import { useSearchParams } from 'utils/search-params';
 import { Popover } from 'components/popover';
 import { EnvironmentActionsType } from '../types';
+import DateTooltip from 'elements/date-tooltip';
 
 export const useColumns = ({
   onActions
@@ -57,9 +58,14 @@ export const useColumns = ({
       cell: ({ row }) => {
         const environment = row.original;
         return (
-          <div className="text-gray-700 typo-para-medium">
-            {formatDateTime(environment.createdAt)}
-          </div>
+          <DateTooltip
+            trigger={
+              <div className="text-gray-700 typo-para-medium">
+                {formatDateTime(environment.createdAt)}
+              </div>
+            }
+            date={environment.createdAt}
+          />
         );
       }
     },
