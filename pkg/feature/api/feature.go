@@ -1396,26 +1396,10 @@ func (s *FeatureService) updateFeature(
 		return dt.Err()
 	}
 	var handler *command.FeatureCommandHandler = command.NewEmptyFeatureCommandHandler()
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+
+	err := s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
 		featureStorage := v2fs.NewFeatureStorage(tx)
-		feature, err := featureStorage.GetFeature(ctx, id, environmentId)
+		feature, err := featureStorage.GetFeature(contextWithTx, id, environmentId)
 		if err != nil {
 			s.logger.Error(
 				"Failed to get feature",
@@ -1444,7 +1428,7 @@ func (s *FeatureService) updateFeature(
 		// We must stop the progressive rollout if it contains a `DisableFeatureCommand`
 		switch cmd.(type) {
 		case *featureproto.DisableFeatureCommand:
-			if err := s.stopProgressiveRollout(ctx, tx, environmentId, feature.Id); err != nil {
+			if err := s.stopProgressiveRollout(contextWithTx, environmentId, feature.Id); err != nil {
 				return err
 			}
 		}
@@ -1458,7 +1442,7 @@ func (s *FeatureService) updateFeature(
 			)
 			return err
 		}
-		if err := featureStorage.UpdateFeature(ctx, feature, environmentId); err != nil {
+		if err := featureStorage.UpdateFeature(contextWithTx, feature, environmentId); err != nil {
 			s.logger.Error(
 				"Failed to update feature",
 				log.FieldsFromImcomingContext(ctx).AddFields(
@@ -1863,7 +1847,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 			// We must stop the progressive rollout if it contains a `DisableFeatureCommand`
 			switch cmd.(type) {
 			case *featureproto.DisableFeatureCommand:
-				if err := s.stopProgressiveRollout(ctx, tx, req.EnvironmentId, feature.Id); err != nil {
+				if err := s.stopProgressiveRollout(ctx, req.EnvironmentId, feature.Id); err != nil {
 					return err
 				}
 			}
@@ -1919,9 +1903,8 @@ func (s *FeatureService) UpdateFeatureTargeting(
 
 func (s *FeatureService) stopProgressiveRollout(
 	ctx context.Context,
-	tx mysql.Transaction,
 	EnvironmentId, featureID string) error {
-	storage := v2ao.NewProgressiveRolloutStorage(tx)
+	storage := v2ao.NewProgressiveRolloutStorage(s.mysqlClient)
 	ids := convToInterfaceSlice([]string{featureID})
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("environment_id", "=", EnvironmentId),

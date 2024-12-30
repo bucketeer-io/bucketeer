@@ -182,25 +182,9 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 			return nil, dt.Err()
 		}
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
+
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
 		handler, err := command.NewAutoOpsCommandHandler(editor, autoOpsRule, s.publisher, req.EnvironmentId)
 		if err != nil {
 			return err
@@ -208,7 +192,7 @@ func (s *AutoOpsService) CreateAutoOpsRule(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return autoOpsRuleStorage.CreateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentId)
+		return autoOpsRuleStorage.CreateAutoOpsRule(contextWithTx, autoOpsRule, req.EnvironmentId)
 	})
 	if err != nil {
 		if err == v2as.ErrAutoOpsRuleAlreadyExists {
@@ -473,27 +457,10 @@ func (s *AutoOpsService) StopAutoOpsRule(
 	if err := validateStopAutoOpsRuleRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
 
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
-		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
+		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -514,7 +481,7 @@ func (s *AutoOpsService) StopAutoOpsRule(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentId)
+		return autoOpsRuleStorage.UpdateAutoOpsRule(contextWithTx, autoOpsRule, req.EnvironmentId)
 	})
 
 	if err != nil {
@@ -561,26 +528,10 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 	if err := validateDeleteAutoOpsRuleRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
-		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
+
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
+		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -591,7 +542,7 @@ func (s *AutoOpsService) DeleteAutoOpsRule(
 		if err := handler.Handle(ctx, req.Command); err != nil {
 			return err
 		}
-		return autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentId)
+		return autoOpsRuleStorage.UpdateAutoOpsRule(contextWithTx, autoOpsRule, req.EnvironmentId)
 	})
 	if err != nil {
 		if err == v2as.ErrAutoOpsRuleNotFound || err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
@@ -696,26 +647,10 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 		}
 	}
 	commands := s.createUpdateAutoOpsRuleCommands(req)
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
-		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
+
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, _ mysql.Transaction) error {
+		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
+		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -817,7 +752,7 @@ func (s *AutoOpsService) UpdateAutoOpsRule(
 				return err
 			}
 		}
-		return autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentId)
+		return autoOpsRuleStorage.UpdateAutoOpsRule(contextWithTx, autoOpsRule, req.EnvironmentId)
 	})
 	if err != nil {
 		if err == v2as.ErrAutoOpsRuleNotFound || err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
@@ -1187,26 +1122,10 @@ func (s *AutoOpsService) ExecuteAutoOps(
 	if triggered {
 		return &autoopsproto.ExecuteAutoOpsResponse{AlreadyTriggered: true}, nil
 	}
-	tx, err := s.mysqlClient.BeginTx(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to begin transaction",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
-		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(tx)
-		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(ctx, req.Id, req.EnvironmentId)
+
+	err = s.mysqlClient.RunInTransactionV2(ctx, func(contextWithTx context.Context, tx mysql.Transaction) error {
+		autoOpsRuleStorage := v2as.NewAutoOpsRuleStorage(s.mysqlClient)
+		autoOpsRule, err := autoOpsRuleStorage.GetAutoOpsRule(contextWithTx, req.Id, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
@@ -1231,15 +1150,15 @@ func (s *AutoOpsService) ExecuteAutoOps(
 		}
 
 		ftStorage := ftstorage.NewFeatureStorage(tx)
-		feature, err := ftStorage.GetFeature(ctx, autoOpsRule.FeatureId, req.EnvironmentId)
+		feature, err := ftStorage.GetFeature(contextWithTx, autoOpsRule.FeatureId, req.EnvironmentId)
 		if err != nil {
 			return err
 		}
-		prStorage := v2as.NewProgressiveRolloutStorage(tx)
+		prStorage := v2as.NewProgressiveRolloutStorage(s.mysqlClient)
 		// Stop the running progressive rollout if the operation type is disable
 		if executeClause.ActionType == autoopsproto.ActionType_DISABLE {
 			if err := s.stopProgressiveRollout(
-				ctx,
+				contextWithTx,
 				req.EnvironmentId,
 				autoOpsRule,
 				prStorage,
@@ -1249,7 +1168,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			}
 		}
 		if err := executeAutoOpsRuleOperation(
-			ctx,
+			contextWithTx,
 			ftStorage,
 			req.EnvironmentId,
 			executeClause.ActionType,
@@ -1280,7 +1199,7 @@ func (s *AutoOpsService) ExecuteAutoOps(
 			return err
 		}
 
-		if err = autoOpsRuleStorage.UpdateAutoOpsRule(ctx, autoOpsRule, req.EnvironmentId); err != nil {
+		if err = autoOpsRuleStorage.UpdateAutoOpsRule(contextWithTx, autoOpsRule, req.EnvironmentId); err != nil {
 			if err == v2as.ErrAutoOpsRuleUnexpectedAffectedRows {
 				s.logger.Warn(
 					"No rows were affected",

@@ -28,6 +28,7 @@ import (
 )
 
 const dsnParams = "collation=utf8mb4_bin"
+const transactionKey = "transaction"
 
 type options struct {
 	connMaxLifetime time.Duration
@@ -103,8 +104,14 @@ type QueryExecer interface {
 type Client interface {
 	QueryExecer
 	Close() error
+	// Deprecated
 	BeginTx(ctx context.Context) (Transaction, error)
 	RunInTransaction(ctx context.Context, tx Transaction, f func() error) error
+	// ToDo:
+	// Transaction is passed because it is required for storage that does not support storage architecture refactoring,
+	// but we plan to remove it once the refactoring is complete.
+	RunInTransactionV2(ctx context.Context, f func(ctx context.Context, tx Transaction) error) error
+	Qe(ctx context.Context) QueryExecer
 }
 
 type client struct {
@@ -179,6 +186,7 @@ func (c *client) QueryRowContext(ctx context.Context, query string, args ...inte
 	return r
 }
 
+// Deprecated
 func (c *client) BeginTx(ctx context.Context) (Transaction, error) {
 	var err error
 	defer record()(operationBeginTx, &err)
@@ -198,4 +206,32 @@ func (c *client) RunInTransaction(ctx context.Context, tx Transaction, f func() 
 		err = tx.Commit()
 	}
 	return err
+}
+
+func (c *client) RunInTransactionV2(
+	ctx context.Context,
+	f func(ctx context.Context, ctxWithTx Transaction) error) error {
+	tx, err := c.BeginTx(ctx)
+	if err != nil {
+		return fmt.Errorf("client: begin tx: %w", err)
+	}
+	ctx = context.WithValue(ctx, transactionKey, tx)
+	defer record()(operationRunInTransaction, &err)
+	defer func() {
+		if err != nil {
+			tx.Rollback() // nolint:errcheck
+		}
+	}()
+	if err = f(ctx, tx); err == nil {
+		err = tx.Commit()
+	}
+	return err
+}
+
+func (c *client) Qe(ctx context.Context) QueryExecer {
+	tx, ok := ctx.Value(transactionKey).(Transaction)
+	if ok {
+		return tx
+	}
+	return c
 }
