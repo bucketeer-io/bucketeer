@@ -1,15 +1,11 @@
 import axiosClient from '@api/axios-client';
 import { Push } from '@types';
 
-export type CreatorParams = {
+export type PushCreatorParams = {
   tags: string[];
   name: string;
   fcmServiceAccount: string;
   environmentId: string;
-};
-
-export type PushCreatorParams = CreatorParams & {
-  command: Omit<CreatorParams, 'environmentId'>;
 };
 
 export interface PushCreatorResponse {

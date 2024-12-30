@@ -1,24 +1,14 @@
 import axiosClient from '@api/axios-client';
 import { Push } from '@types';
 
-type Tags = {
+export type PushUpdaterParams = {
+  id: string;
+  environmentId?: string;
+  description?: string;
+  disabled?: boolean;
+  name?: string;
   tags?: string[];
 };
-
-type Name = {
-  name?: string;
-};
-
-export type PushUpdaterParams = Tags &
-  Name & {
-    id: string;
-    environmentId?: string;
-    description?: string;
-    disabled?: boolean;
-    addPushTagsCommand?: Tags;
-    deletePushTagsCommand?: Tags;
-    renamePushCommand?: Name;
-  };
 
 export interface PushUpdaterResponse {
   push: Array<Push>;
