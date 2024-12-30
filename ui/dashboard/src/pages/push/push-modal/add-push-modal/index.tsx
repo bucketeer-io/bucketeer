@@ -8,6 +8,7 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { IconInfo } from '@icons';
+import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import {
   renderTag,
   tagOptions
@@ -35,43 +36,46 @@ export interface AddPushForm {
   name: string;
   fcmServiceAccount: string;
   tags: string[];
+  environmentId: string;
 }
 
 export const formSchema = yup.object().shape({
   name: yup.string().required(),
   fcmServiceAccount: yup.string().required(),
-  tags: yup.array().required()
+  tags: yup.array().required(),
+  environmentId: yup.string().required()
 });
 
 const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
   const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
+
+  const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
+    organizationId: currentEnvironment.organizationId
+  });
+  const environments = (collection?.environments || []).filter(item => item.id);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
       name: '',
       fcmServiceAccount: '',
-      tags: []
+      tags: [],
+      environmentId: ''
     }
   });
 
   const {
+    getValues,
     formState: { isValid, isSubmitting }
   } = form;
 
   const onSubmit: SubmitHandler<AddPushForm> = async values => {
     try {
-      const resp = await pushCreator({
-        ...values,
-        command: {
-          ...values
-        },
-        environmentId: currenEnvironment.id
-      });
+      const resp = await pushCreator(values);
       if (resp) {
         notify({
           toastType: 'toast',
@@ -122,10 +126,14 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
               name="fcmServiceAccount"
               render={({ field }) => (
                 <Form.Item>
-                  <Form.Label required className='relative w-fit'>
+                  <Form.Label required className="relative w-fit">
                     <>
                       {t('fcm-api-key')}
-                      <Icon icon={IconInfo} className='absolute -right-8' size={'sm'} />
+                      <Icon
+                        icon={IconInfo}
+                        className="absolute -right-8"
+                        size={'sm'}
+                      />
                     </>
                   </Form.Label>
                   <Form.Control>
@@ -174,6 +182,48 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                                 ? field.value.filter(tag => tag !== value)
                                 : [...field.value, value];
                               field.onChange(_tags);
+                            }}
+                          />
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
+            <Form.Field
+              control={form.control}
+              name={`environmentId`}
+              render={({ field }) => (
+                <Form.Item className="py-2">
+                  <Form.Label required>{t('environment')}</Form.Label>
+                  <Form.Control>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        placeholder={t(`form:select-environment`)}
+                        label={
+                          environments.find(
+                            item => item.id === getValues('environmentId')
+                          )?.name
+                        }
+                        disabled={isLoadingEnvs}
+                        variant="secondary"
+                        className="w-full"
+                      />
+                      <DropdownMenuContent
+                        className="w-[502px]"
+                        align="start"
+                        {...field}
+                      >
+                        {environments.map((item, index) => (
+                          <DropdownMenuItem
+                            {...field}
+                            key={index}
+                            value={item.id}
+                            label={item.name}
+                            onSelectOption={value => {
+                              field.onChange(value);
                             }}
                           />
                         ))}

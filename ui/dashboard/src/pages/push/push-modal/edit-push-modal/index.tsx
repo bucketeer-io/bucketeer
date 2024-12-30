@@ -7,6 +7,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import { Push } from '@types';
+import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import {
   renderTag,
   tagOptions
@@ -39,41 +40,37 @@ export interface EditPushForm {
 
 const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
   const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
+
+  const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
+    organizationId: currentEnvironment.organizationId
+  });
+  const environments = (collection?.environments || []).filter(item => item.id);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
       name: push.name,
       fcmServiceAccount: push.fcmServiceAccount,
-      tags: push.tags
+      tags: push.tags,
+      environmentId:
+        environments?.find(env => env?.name === push?.environmentName)?.id || ''
     }
   });
 
   const {
+    getValues,
     formState: { isValid, isSubmitting }
   } = form;
 
   const onSubmit: SubmitHandler<EditPushForm> = async values => {
     try {
-      const { name, tags } = values;
       const resp = await pushUpdater({
-        name,
-        tags,
-        id: push.id,
-        renamePushCommand: {
-          name
-        },
-        addPushTagsCommand: {
-          tags
-        },
-        deletePushTagsCommand: {
-          tags: push.tags
-        },
-        environmentId: currenEnvironment.id
+        ...values,
+        id: push.id
       });
 
       if (resp) {
@@ -172,6 +169,48 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                                 ? field.value.filter(tag => tag !== value)
                                 : [...field.value, value];
                               field.onChange(_tags);
+                            }}
+                          />
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
+            <Form.Field
+              control={form.control}
+              name={`environmentId`}
+              render={({ field }) => (
+                <Form.Item className="py-2">
+                  <Form.Label required>{t('environment')}</Form.Label>
+                  <Form.Control>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        placeholder={t(`form:select-environment`)}
+                        label={
+                          environments.find(
+                            item => item.id === getValues('environmentId')
+                          )?.name
+                        }
+                        disabled={isLoadingEnvs}
+                        variant="secondary"
+                        className="w-full"
+                      />
+                      <DropdownMenuContent
+                        className="w-[502px]"
+                        align="start"
+                        {...field}
+                      >
+                        {environments.map((item, index) => (
+                          <DropdownMenuItem
+                            {...field}
+                            key={index}
+                            value={item.id}
+                            label={item.name}
+                            onSelectOption={value => {
+                              field.onChange(value);
                             }}
                           />
                         ))}
