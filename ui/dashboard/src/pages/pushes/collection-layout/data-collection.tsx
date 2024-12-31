@@ -71,7 +71,7 @@ export const useColumns = ({
     {
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 500,
+      size: 400,
       cell: ({ row }) => {
         const push = row.original;
 
@@ -93,7 +93,7 @@ export const useColumns = ({
     {
       accessorKey: 'tags',
       header: `${t('tags')}`,
-      size: 500,
+      size: 350,
       cell: ({ row }) => {
         const push = row.original;
 
@@ -101,9 +101,22 @@ export const useColumns = ({
       }
     },
     {
+      accessorKey: 'environment',
+      header: `${t('environment')}`,
+      size: 250,
+      cell: ({ row }) => {
+        const push = row.original;
+        return (
+          <div className="text-gray-700 typo-para-medium">
+            {push.environmentName}
+          </div>
+        );
+      }
+    },
+    {
       accessorKey: 'createdAt',
       header: `${t('table:created-at')}`,
-      size: 150,
+      size: 200,
       cell: ({ row }) => {
         const push = row.original;
         return (

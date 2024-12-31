@@ -10,9 +10,9 @@ import * as yup from 'yup';
 import { IconInfo } from '@icons';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import {
-  renderTag,
+  Tag,
   tagOptions
-} from 'pages/push/collection-layout/data-collection';
+} from 'pages/pushes/collection-layout/data-collection';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import {
@@ -150,50 +150,6 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
 
             <Form.Field
               control={form.control}
-              name={`tags`}
-              render={({ field }) => (
-                <Form.Item className="py-2">
-                  <Form.Label required>{t('tags')}</Form.Label>
-                  <Form.Control>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        placeholder={t(`form:placeholder-tags`)}
-                        variant="secondary"
-                        className="w-full"
-                        trigger={
-                          field.value?.length > 0 && renderTag(field.value)
-                        }
-                      />
-                      <DropdownMenuContent
-                        className="w-[502px]"
-                        align="start"
-                        {...field}
-                      >
-                        {tagOptions.map((item, index) => (
-                          <DropdownMenuItem
-                            {...field}
-                            key={index}
-                            value={item.value}
-                            label={item.label}
-                            isMultiselect={true}
-                            isSelected={field.value.includes(item.value)}
-                            onSelectOption={value => {
-                              const _tags = field.value.includes(value)
-                                ? field.value.filter(tag => tag !== value)
-                                : [...field.value, value];
-                              field.onChange(_tags);
-                            }}
-                          />
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </Form.Control>
-                  <Form.Message />
-                </Form.Item>
-              )}
-            />
-            <Form.Field
-              control={form.control}
               name={`environmentId`}
               render={({ field }) => (
                 <Form.Item className="py-2">
@@ -234,6 +190,56 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                 </Form.Item>
               )}
             />
+
+            <Form.Field
+              control={form.control}
+              name={`tags`}
+              render={({ field }) => (
+                <Form.Item className="py-2">
+                  <Form.Label required>{t('tags')}</Form.Label>
+                  <Form.Control>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        placeholder={t(`form:placeholder-tags`)}
+                        variant="secondary"
+                        className="w-full"
+                        trigger={
+                          <div className="flex items-center flex-wrap gap-2 max-w-fit">
+                            {(field.value || []).map((tag, index) => (
+                              <Tag tag={tag} key={index} />
+                            ))}
+                          </div>
+                        }
+                      />
+                      <DropdownMenuContent
+                        className="w-[502px]"
+                        align="start"
+                        {...field}
+                      >
+                        {tagOptions.map((item, index) => (
+                          <DropdownMenuItem
+                            {...field}
+                            key={index}
+                            value={item.value}
+                            label={item.label}
+                            isMultiselect={true}
+                            isSelected={field.value.includes(item.value)}
+                            onSelectOption={value => {
+                              const _tags = field.value.includes(value)
+                                ? field.value.filter(tag => tag !== value)
+                                : [...field.value, value];
+                              field.onChange(_tags);
+                            }}
+                          />
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
+
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar
                 primaryButton={

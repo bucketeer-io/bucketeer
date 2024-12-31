@@ -9,9 +9,7 @@ export const EmptyCollection = ({ onAdd }: { onAdd: () => void }) => {
     <EmptyState.Root variant="no-data" size="lg">
       <EmptyState.Illustration />
       <EmptyState.Body>
-        <EmptyState.Title>
-          {t(`table:empty.push-title`)}
-        </EmptyState.Title>
+        <EmptyState.Title>{t(`table:empty.push-title`)}</EmptyState.Title>
         <EmptyState.Description>
           {t(`table:empty.push-desc`)}
         </EmptyState.Description>

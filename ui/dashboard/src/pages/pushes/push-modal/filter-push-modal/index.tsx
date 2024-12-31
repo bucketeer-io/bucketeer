@@ -48,7 +48,7 @@ export const enabledOptions: Option[] = [
   }
 ];
 
-const FilterAPIKeyModal = ({
+const FilterPushModal = ({
   onSubmit,
   isOpen,
   onClose,
@@ -149,4 +149,4 @@ const FilterAPIKeyModal = ({
   );
 };
 
-export default FilterAPIKeyModal;
+export default FilterPushModal;

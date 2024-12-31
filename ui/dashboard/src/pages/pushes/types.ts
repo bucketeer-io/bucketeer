@@ -8,4 +8,4 @@ export interface PushFilters {
   searchQuery: string;
 }
 
-export type PushActionsType = 'EDIT' | "ENABLE" | "DISABLE"
+export type PushActionsType = 'EDIT' | 'ENABLE' | 'DISABLE';

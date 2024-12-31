@@ -36,6 +36,7 @@ import APIKeysPage from 'pages/api-keys';
 import FeatureFlagsPage from 'pages/feature-flags';
 import MembersPage from 'pages/members';
 import NotFoundPage from 'pages/not-found';
+import PushesPage from 'pages/pushes';
 import SettingsPage from 'pages/settings';
 import SignInPage from 'pages/signin';
 import SignInEmailPage from 'pages/signin/email';
@@ -43,7 +44,6 @@ import SelectOrganizationPage from 'pages/signin/organization';
 import Navigation from 'components/navigation';
 import Spinner from 'components/spinner';
 import { OrganizationsRoot, ProjectsRoot } from './routers';
-import PushesPage from 'pages/push';
 
 export const AppLoading = () => (
   <div className="flex items-center justify-center h-screen w-full">
