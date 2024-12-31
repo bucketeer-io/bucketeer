@@ -189,11 +189,13 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                         variant="secondary"
                         className="w-full"
                         trigger={
-                          <div className="flex items-center flex-wrap gap-2 max-w-fit">
-                            {(field.value || []).map((tag, index) => (
-                              <Tag tag={tag} key={index} />
-                            ))}
-                          </div>
+                          field.value.length > 0 && (
+                            <div className="flex items-center flex-wrap gap-2 max-w-fit">
+                              {field.value.map((tag, index) => (
+                                <Tag tag={tag} key={index} />
+                              ))}
+                            </div>
+                          )
                         }
                       />
                       <DropdownMenuContent
