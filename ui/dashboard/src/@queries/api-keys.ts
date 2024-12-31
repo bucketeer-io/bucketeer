@@ -1,9 +1,9 @@
-import { apiKeysFetcher, APIKeyFetcherParams } from '@api/api-key';
+import { apiKeysFetcher, APIKeysFetcherParams } from '@api/api-key';
 import { QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { APIKeyCollection, QueryOptionsRespond } from '@types';
 
 type QueryOptions = QueryOptionsRespond<APIKeyCollection> & {
-  params?: APIKeyFetcherParams;
+  params?: APIKeysFetcherParams;
 };
 
 export const API_KEYS_QUERY_KEY = 'api-keys';

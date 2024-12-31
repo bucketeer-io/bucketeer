@@ -121,7 +121,6 @@ api:
   ingress:
     host: api-gateway.bucketeer.io
 
-
 batch-server:
   env:
     project: bucketeer-test
@@ -163,6 +162,9 @@ batch-server:
       addr: localenv-redis-headless.default.svc.cluster.local:6379
       poolMaxIdle: 25
       poolMaxActive: 25
+    nonPersistentChildRedis:
+      addresses:
+        - localenv-redis-headless.default.svc.cluster.local:6379
     experimentLockTTL: 1m
 
   tls:
@@ -220,7 +222,21 @@ batch-server:
       - name: mau-partition-creator
         jobId: MauPartitionCreator
         schedule: "0 2 2 * *"
-
+      - name: feature-flag-cacher
+        jobId: FeatureFlagCacher
+        schedule: "* * * * *"
+      - name: segment-user-cacher
+        jobId: SegmentUserCacher
+        schedule: "* * * * *"
+      - name: api-key-cacher
+        jobId: ApiKeyCacher
+        schedule: "* * * * *"
+      - name: experiment-cacher
+        jobId: ExperimentCacher
+        schedule: "* * * * *"
+      - name: auto-ops-rules-cacher
+        jobId: AutoOpsRulesCacher
+        schedule: "* * * * *"
 
 subscriber:
   env:

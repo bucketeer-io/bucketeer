@@ -76,7 +76,7 @@ type Counter interface {
 }
 
 type PipeLiner interface {
-	Pipeline() redis.PipeClient
+	Pipeline(tx bool) redis.PipeClient
 }
 
 type Expirer interface {
@@ -84,7 +84,7 @@ type Expirer interface {
 }
 
 type PFMerger interface {
-	PFMerge(dest string, keys ...string) error
+	PFMerge(dest string, expiration time.Duration, keys ...string) error
 }
 
 // FIXME: remove after persistent-redis migration

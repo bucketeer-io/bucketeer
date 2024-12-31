@@ -34,6 +34,10 @@ import (
 	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 
+const (
+	apiKeyShadowPercentage = 0.75 // hide a part of the api key
+)
+
 func (s *AccountService) CreateAPIKey(
 	ctx context.Context,
 	req *proto.CreateAPIKeyRequest,
@@ -393,7 +397,7 @@ func (s *AccountService) DisableAPIKey(
 		req.EnvironmentId,
 		req.Command,
 	); err != nil {
-		if err == v2as.ErrAPIKeyNotFound || err == v2as.ErrAPIKeyUnexpectedAffectedRows {
+		if errors.Is(err, v2as.ErrAPIKeyNotFound) || errors.Is(err, v2as.ErrAPIKeyUnexpectedAffectedRows) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -465,7 +469,7 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 	}
 	apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
-		if err == v2as.ErrAPIKeyNotFound {
+		if errors.Is(err, v2as.ErrAPIKeyNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -492,6 +496,21 @@ func (s *AccountService) GetAPIKey(ctx context.Context, req *proto.GetAPIKeyRequ
 		}
 		return nil, dt.Err()
 	}
+	if apiKey == nil {
+		s.logger.Error(
+			"Failed to get api key",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("id", req.Id),
+			)...,
+		)
+		return nil, statusNotFound.Err()
+	}
+
+	// for security, obfuscate the returned key
+	shadowLen := int(float64(len(apiKey.ApiKey)) * apiKeyShadowPercentage)
+	apiKey.ApiKey = apiKey.ApiKey[shadowLen:]
+
 	return &proto.GetAPIKeyResponse{ApiKey: apiKey.APIKey}, nil
 }
 
@@ -500,20 +519,36 @@ func (s *AccountService) ListAPIKeys(
 	req *proto.ListAPIKeysRequest,
 ) (*proto.ListAPIKeysResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
-	_, err := s.checkEnvironmentRole(
-		ctx, proto.AccountV2_Role_Environment_VIEWER,
-		req.EnvironmentId, localizer)
+	_, err := s.checkOrganizationRole(
+		ctx, proto.AccountV2_Role_Organization_MEMBER,
+		req.OrganizationId, localizer)
 	if err != nil {
 		return nil, err
 	}
-	whereParts := []mysql.WherePart{
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
+	if req.OrganizationId == "" {
+		dt, err := statusInvalidListAPIKeyRequest.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "organization_id"),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	whereParts := []mysql.WherePart{}
+	whereParts = append(whereParts, mysql.NewFilter("environment_v2.organization_id", "=", req.OrganizationId))
+	if len(req.EnvironmentIds) > 0 {
+		environmentIds := make([]interface{}, 0, len(req.EnvironmentIds))
+		for _, id := range req.EnvironmentIds {
+			environmentIds = append(environmentIds, id)
+		}
+		whereParts = append(whereParts, mysql.NewInFilter("api_key.environment_id", environmentIds))
 	}
 	if req.Disabled != nil {
-		whereParts = append(whereParts, mysql.NewFilter("disabled", "=", req.Disabled.Value))
+		whereParts = append(whereParts, mysql.NewFilter("api_key.disabled", "=", req.Disabled.Value))
 	}
 	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"name"}, req.SearchKeyword))
+		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"api_key.name"}, req.SearchKeyword))
 	}
 	orders, err := s.newAPIKeyListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -563,6 +598,13 @@ func (s *AccountService) ListAPIKeys(
 		}
 		return nil, dt.Err()
 	}
+
+	// for security, obfuscate the returned key
+	for i := 0; i < len(apiKeys); i++ {
+		shadowLen := int(float64(len(apiKeys[i].ApiKey)) * apiKeyShadowPercentage)
+		apiKeys[i].ApiKey = apiKeys[i].ApiKey[shadowLen:]
+	}
+
 	return &proto.ListAPIKeysResponse{
 		ApiKeys:    apiKeys,
 		Cursor:     strconv.Itoa(nextCursor),
@@ -579,11 +621,17 @@ func (s *AccountService) newAPIKeyListOrders(
 	switch orderBy {
 	case proto.ListAPIKeysRequest_DEFAULT,
 		proto.ListAPIKeysRequest_NAME:
-		column = "name"
+		column = "api_key.name"
 	case proto.ListAPIKeysRequest_CREATED_AT:
-		column = "created_at"
+		column = "api_key.created_at"
 	case proto.ListAPIKeysRequest_UPDATED_AT:
-		column = "updated_at"
+		column = "api_key.updated_at"
+	case proto.ListAPIKeysRequest_ROLE:
+		column = "api_key.role"
+	case proto.ListAPIKeysRequest_ENVIRONMENT:
+		column = "environment_v2.name"
+	case proto.ListAPIKeysRequest_STATE:
+		column = "api_key.disabled"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
@@ -601,16 +649,16 @@ func (s *AccountService) newAPIKeyListOrders(
 	return []*mysql.Order{mysql.NewOrder(column, direction)}, nil
 }
 
-func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
+func (s *AccountService) GetEnvironmentAPIKey(
 	ctx context.Context,
-	req *proto.GetAPIKeyBySearchingAllEnvironmentsRequest,
-) (*proto.GetAPIKeyBySearchingAllEnvironmentsResponse, error) {
+	req *proto.GetEnvironmentAPIKeyRequest,
+) (*proto.GetEnvironmentAPIKeyResponse, error) {
 	localizer := locale.NewLocalizer(ctx)
 	_, err := s.checkSystemAdminRole(ctx, localizer)
 	if err != nil {
 		return nil, err
 	}
-	if req.Id == "" {
+	if req.ApiKey == "" {
 		dt, err := statusMissingAPIKeyID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "api_key_id"),
@@ -620,107 +668,139 @@ func (s *AccountService) GetAPIKeyBySearchingAllEnvironments(
 		}
 		return nil, dt.Err()
 	}
-	projects, err := s.listProjects(ctx)
+	envAPIKey, err := s.accountStorage.GetEnvironmentAPIKey(ctx, req.ApiKey)
 	if err != nil {
-		s.logger.Error(
-			"Failed to get project list",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	if len(projects) == 0 {
-		s.logger.Error(
-			"Could not find any projects",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	environments, err := s.listEnvironments(ctx)
-	if err != nil {
-		s.logger.Error(
-			"Failed to get environment list",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	if len(environments) == 0 {
-		s.logger.Error(
-			"Could not find any environments",
-			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	projectSet := s.makeProjectSet(projects)
-	for _, e := range environments {
-		p, ok := projectSet[e.ProjectId]
-		if !ok || p.Disabled {
-			continue
-		}
-		apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, e.Id)
-		if err != nil {
-			if err == v2as.ErrAPIKeyNotFound {
-				continue
-			}
-			s.logger.Error(
-				"Failed to get api key",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", e.Id),
-					zap.String("id", req.Id),
-				)...,
-			)
-			dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+		if errors.Is(err, v2as.ErrAPIKeyNotFound) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
-				Message: localizer.MustLocalize(locale.InternalServerError),
+				Message: localizer.MustLocalize(locale.NotFoundError),
 			})
 			if err != nil {
 				return nil, statusInternal.Err()
 			}
 			return nil, dt.Err()
 		}
-		return &proto.GetAPIKeyBySearchingAllEnvironmentsResponse{
-			EnvironmentApiKey: &proto.EnvironmentAPIKey{
-				ApiKey:         apiKey.APIKey,
-				ProjectId:      p.Id,
-				ProjectUrlCode: p.UrlCode,
-				Environment:    e,
-			},
-		}, nil
+		s.logger.Error(
+			"Failed to get environment api key",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("apiKey", req.ApiKey),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
-	dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
-		Locale:  localizer.GetLocale(),
-		Message: localizer.MustLocalize(locale.NotFoundError),
+	// for security, obfuscate the returned key
+	shadowLen := int(float64(len(envAPIKey.ApiKey.ApiKey)) * apiKeyShadowPercentage)
+	envAPIKey.ApiKey.ApiKey = envAPIKey.ApiKey.ApiKey[shadowLen:]
+
+	return &proto.GetEnvironmentAPIKeyResponse{
+		EnvironmentApiKey: envAPIKey.EnvironmentAPIKey,
+	}, nil
+}
+
+func (s *AccountService) UpdateAPIKey(
+	ctx context.Context,
+	req *proto.UpdateAPIKeyRequest,
+) (*proto.UpdateAPIKeyResponse, error) {
+	localizer := locale.NewLocalizer(ctx)
+	editor, err := s.checkOrganizationRoleByEnvironmentID(
+		ctx,
+		proto.AccountV2_Role_Organization_ADMIN,
+		req.EnvironmentId,
+		localizer,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := validateUpdateAPIKeyRequestNoCommand(req, localizer); err != nil {
+		return nil, err
+	}
+
+	var prev, current *proto.APIKey
+	err = s.accountStorage.RunInTransaction(ctx, func() error {
+		apiKey, err := s.accountStorage.GetAPIKey(ctx, req.Id, req.EnvironmentId)
+		if err != nil {
+			return err
+		}
+		prev = apiKey.APIKey
+
+		// Update fields
+		updated, err := apiKey.Update(
+			req.Name,
+			req.Description,
+			req.Role,
+			req.Maintainer,
+			req.Disabled,
+		)
+		if err != nil {
+			return err
+		}
+		current = updated.APIKey
+
+		return s.accountStorage.UpdateAPIKey(ctx, updated, req.EnvironmentId)
 	})
 	if err != nil {
-		return nil, statusInternal.Err()
+		if errors.Is(err, v2as.ErrAPIKeyNotFound) {
+			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		s.logger.Error(
+			"Failed to update api key",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("id", req.Id),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
 	}
-	return nil, dt.Err()
+	e, err := domainevent.NewEvent(
+		editor,
+		eventproto.Event_APIKEY,
+		req.Id,
+		eventproto.Event_APIKEY_CHANGED,
+		&eventproto.APIKeyChangedEvent{
+			Id: req.Id,
+		},
+		req.EnvironmentId,
+		current,
+		prev,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.publisher.Publish(ctx, e); err != nil {
+		s.logger.Error(
+			"Failed to publish update api key event",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+				zap.String("id", req.Id),
+			)...,
+		)
+		return nil, err
+	}
+
+	return &proto.UpdateAPIKeyResponse{}, nil
 }

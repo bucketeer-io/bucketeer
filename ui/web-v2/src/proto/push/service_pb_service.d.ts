@@ -22,15 +22,6 @@ type PushServiceCreatePush = {
   readonly responseType: typeof proto_push_service_pb.CreatePushResponse;
 };
 
-type PushServiceDeletePush = {
-  readonly methodName: string;
-  readonly service: typeof PushService;
-  readonly requestStream: false;
-  readonly responseStream: false;
-  readonly requestType: typeof proto_push_service_pb.DeletePushRequest;
-  readonly responseType: typeof proto_push_service_pb.DeletePushResponse;
-};
-
 type PushServiceUpdatePush = {
   readonly methodName: string;
   readonly service: typeof PushService;
@@ -49,13 +40,22 @@ type PushServiceGetPush = {
   readonly responseType: typeof proto_push_service_pb.GetPushResponse;
 };
 
+type PushServiceDeletePush = {
+  readonly methodName: string;
+  readonly service: typeof PushService;
+  readonly requestStream: false;
+  readonly responseStream: false;
+  readonly requestType: typeof proto_push_service_pb.DeletePushRequest;
+  readonly responseType: typeof proto_push_service_pb.DeletePushResponse;
+};
+
 export class PushService {
   static readonly serviceName: string;
   static readonly ListPushes: PushServiceListPushes;
   static readonly CreatePush: PushServiceCreatePush;
-  static readonly DeletePush: PushServiceDeletePush;
   static readonly UpdatePush: PushServiceUpdatePush;
   static readonly GetPush: PushServiceGetPush;
+  static readonly DeletePush: PushServiceDeletePush;
 }
 
 export type ServiceError = {
@@ -133,21 +133,6 @@ export class PushServiceClient {
       responseMessage: proto_push_service_pb.CreatePushResponse | null
     ) => void
   ): UnaryResponse;
-  deletePush(
-    requestMessage: proto_push_service_pb.DeletePushRequest,
-    metadata: grpc.Metadata,
-    callback: (
-      error: ServiceError | null,
-      responseMessage: proto_push_service_pb.DeletePushResponse | null
-    ) => void
-  ): UnaryResponse;
-  deletePush(
-    requestMessage: proto_push_service_pb.DeletePushRequest,
-    callback: (
-      error: ServiceError | null,
-      responseMessage: proto_push_service_pb.DeletePushResponse | null
-    ) => void
-  ): UnaryResponse;
   updatePush(
     requestMessage: proto_push_service_pb.UpdatePushRequest,
     metadata: grpc.Metadata,
@@ -176,6 +161,21 @@ export class PushServiceClient {
     callback: (
       error: ServiceError | null,
       responseMessage: proto_push_service_pb.GetPushResponse | null
+    ) => void
+  ): UnaryResponse;
+  deletePush(
+    requestMessage: proto_push_service_pb.DeletePushRequest,
+    metadata: grpc.Metadata,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_push_service_pb.DeletePushResponse | null
+    ) => void
+  ): UnaryResponse;
+  deletePush(
+    requestMessage: proto_push_service_pb.DeletePushRequest,
+    callback: (
+      error: ServiceError | null,
+      responseMessage: proto_push_service_pb.DeletePushResponse | null
     ) => void
   ): UnaryResponse;
 }

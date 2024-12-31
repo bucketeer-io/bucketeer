@@ -90,5 +90,8 @@
   "all-types-selected": "All Types ({{count}} selected)",
   "types": "Types",
   "account": "Account",
-  "notification": "Notification"
+  "notification": "Notification",
+  "client": "Client", 
+  "server": "Server",
+  "public-api": "Public API"
 }

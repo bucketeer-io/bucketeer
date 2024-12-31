@@ -25,8 +25,16 @@ var global =
 
 var google_protobuf_wrappers_pb = require('google-protobuf/google/protobuf/wrappers_pb.js');
 goog.object.extend(proto, google_protobuf_wrappers_pb);
+var google_api_annotations_pb = require('../../google/api/annotations_pb.js');
+goog.object.extend(proto, google_api_annotations_pb);
+var google_api_field_behavior_pb = require('../../google/api/field_behavior_pb.js');
+goog.object.extend(proto, google_api_field_behavior_pb);
+var protoc$gen$openapiv2_options_annotations_pb = require('../../protoc-gen-openapiv2/options/annotations_pb.js');
+goog.object.extend(proto, protoc$gen$openapiv2_options_annotations_pb);
 var proto_notification_subscription_pb = require('../../proto/notification/subscription_pb.js');
 goog.object.extend(proto, proto_notification_subscription_pb);
+var proto_notification_recipient_pb = require('../../proto/notification/recipient_pb.js');
+goog.object.extend(proto, proto_notification_recipient_pb);
 var proto_notification_command_pb = require('../../proto/notification/command_pb.js');
 goog.object.extend(proto, proto_notification_command_pb);
 goog.exportSymbol(
@@ -864,7 +872,14 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.bucketeer.notification.CreateSubscriptionRequest = function (opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(
+    this,
+    opt_data,
+    0,
+    -1,
+    proto.bucketeer.notification.CreateSubscriptionRequest.repeatedFields_,
+    null
+  );
 };
 goog.inherits(
   proto.bucketeer.notification.CreateSubscriptionRequest,
@@ -1064,7 +1079,14 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.bucketeer.notification.UpdateSubscriptionRequest = function (opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(
+    this,
+    opt_data,
+    0,
+    -1,
+    proto.bucketeer.notification.UpdateSubscriptionRequest.repeatedFields_,
+    null
+  );
 };
 goog.inherits(
   proto.bucketeer.notification.UpdateSubscriptionRequest,
@@ -4553,7 +4575,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         disabled:
           (f = msg.getDisabled()) &&
           google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 9, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 9, ''),
+        organizationId: jspb.Message.getFieldWithDefault(msg, 10, '')
       };
 
     if (includeInstance) {
@@ -4642,6 +4665,10 @@ proto.bucketeer.notification.ListSubscriptionsRequest.deserializeBinaryFromReade
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 10:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setOrganizationId(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -4709,6 +4736,10 @@ proto.bucketeer.notification.ListSubscriptionsRequest.serializeBinaryToWriter =
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(9, f);
+    }
+    f = message.getOrganizationId();
+    if (f.length > 0) {
+      writer.writeString(10, f);
     }
   };
 
@@ -4927,6 +4958,26 @@ proto.bucketeer.notification.ListSubscriptionsRequest.prototype.getEnvironmentId
 proto.bucketeer.notification.ListSubscriptionsRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 9, value);
+  };
+
+/**
+ * optional string organization_id = 10;
+ * @return {string}
+ */
+proto.bucketeer.notification.ListSubscriptionsRequest.prototype.getOrganizationId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 10, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.notification.ListSubscriptionsRequest} returns this
+ */
+proto.bucketeer.notification.ListSubscriptionsRequest.prototype.setOrganizationId =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 10, value);
   };
 
 /**
@@ -5646,6 +5697,13 @@ proto.bucketeer.notification.ListEnabledSubscriptionsResponse.prototype.setCurso
     return jspb.Message.setProto3StringField(this, 2, value);
   };
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.notification.CreateSubscriptionRequest.repeatedFields_ = [5];
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -5688,7 +5746,13 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 3, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        name: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        sourceTypesList:
+          (f = jspb.Message.getRepeatedField(msg, 5)) == null ? undefined : f,
+        recipient:
+          (f = msg.getRecipient()) &&
+          proto_notification_recipient_pb.Recipient.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -5742,6 +5806,30 @@ proto.bucketeer.notification.CreateSubscriptionRequest.deserializeBinaryFromRead
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 4:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setName(value);
+          break;
+        case 5:
+          var values =
+            /** @type {!Array<!proto.bucketeer.notification.Subscription.SourceType>} */ (
+              reader.isDelimited()
+                ? reader.readPackedEnum()
+                : [reader.readEnum()]
+            );
+          for (var i = 0; i < values.length; i++) {
+            msg.addSourceTypes(values[i]);
+          }
+          break;
+        case 6:
+          var value = new proto_notification_recipient_pb.Recipient();
+          reader.readMessage(
+            value,
+            proto_notification_recipient_pb.Recipient
+              .deserializeBinaryFromReader
+          );
+          msg.setRecipient(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -5786,6 +5874,22 @@ proto.bucketeer.notification.CreateSubscriptionRequest.serializeBinaryToWriter =
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(3, f);
+    }
+    f = message.getName();
+    if (f.length > 0) {
+      writer.writeString(4, f);
+    }
+    f = message.getSourceTypesList();
+    if (f.length > 0) {
+      writer.writePackedEnum(5, f);
+    }
+    f = message.getRecipient();
+    if (f != null) {
+      writer.writeMessage(
+        6,
+        f,
+        proto_notification_recipient_pb.Recipient.serializeBinaryToWriter
+      );
     }
   };
 
@@ -5851,6 +5955,107 @@ proto.bucketeer.notification.CreateSubscriptionRequest.prototype.setEnvironmentI
     return jspb.Message.setProto3StringField(this, 3, value);
   };
 
+/**
+ * optional string name = 4;
+ * @return {string}
+ */
+proto.bucketeer.notification.CreateSubscriptionRequest.prototype.getName =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 4, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.notification.CreateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.CreateSubscriptionRequest.prototype.setName =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 4, value);
+  };
+
+/**
+ * repeated Subscription.SourceType source_types = 5;
+ * @return {!Array<!proto.bucketeer.notification.Subscription.SourceType>}
+ */
+proto.bucketeer.notification.CreateSubscriptionRequest.prototype.getSourceTypesList =
+  function () {
+    return /** @type {!Array<!proto.bucketeer.notification.Subscription.SourceType>} */ (
+      jspb.Message.getRepeatedField(this, 5)
+    );
+  };
+
+/**
+ * @param {!Array<!proto.bucketeer.notification.Subscription.SourceType>} value
+ * @return {!proto.bucketeer.notification.CreateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.CreateSubscriptionRequest.prototype.setSourceTypesList =
+  function (value) {
+    return jspb.Message.setField(this, 5, value || []);
+  };
+
+/**
+ * @param {!proto.bucketeer.notification.Subscription.SourceType} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.notification.CreateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.CreateSubscriptionRequest.prototype.addSourceTypes =
+  function (value, opt_index) {
+    return jspb.Message.addToRepeatedField(this, 5, value, opt_index);
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.notification.CreateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.CreateSubscriptionRequest.prototype.clearSourceTypesList =
+  function () {
+    return this.setSourceTypesList([]);
+  };
+
+/**
+ * optional Recipient recipient = 6;
+ * @return {?proto.bucketeer.notification.Recipient}
+ */
+proto.bucketeer.notification.CreateSubscriptionRequest.prototype.getRecipient =
+  function () {
+    return /** @type{?proto.bucketeer.notification.Recipient} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_notification_recipient_pb.Recipient,
+        6
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.notification.Recipient|undefined} value
+ * @return {!proto.bucketeer.notification.CreateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.CreateSubscriptionRequest.prototype.setRecipient =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 6, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.notification.CreateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.CreateSubscriptionRequest.prototype.clearRecipient =
+  function () {
+    return this.setRecipient(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.notification.CreateSubscriptionRequest.prototype.hasRecipient =
+  function () {
+    return jspb.Message.getField(this, 6) != null;
+  };
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -5886,7 +6091,14 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {};
+      obj = {
+        subscription:
+          (f = msg.getSubscription()) &&
+          proto_notification_subscription_pb.Subscription.toObject(
+            includeInstance,
+            f
+          )
+      };
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -5925,6 +6137,15 @@ proto.bucketeer.notification.CreateSubscriptionResponse.deserializeBinaryFromRea
       }
       var field = reader.getFieldNumber();
       switch (field) {
+        case 1:
+          var value = new proto_notification_subscription_pb.Subscription();
+          reader.readMessage(
+            value,
+            proto_notification_subscription_pb.Subscription
+              .deserializeBinaryFromReader
+          );
+          msg.setSubscription(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -5957,6 +6178,56 @@ proto.bucketeer.notification.CreateSubscriptionResponse.prototype.serializeBinar
 proto.bucketeer.notification.CreateSubscriptionResponse.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
+    f = message.getSubscription();
+    if (f != null) {
+      writer.writeMessage(
+        1,
+        f,
+        proto_notification_subscription_pb.Subscription.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional Subscription subscription = 1;
+ * @return {?proto.bucketeer.notification.Subscription}
+ */
+proto.bucketeer.notification.CreateSubscriptionResponse.prototype.getSubscription =
+  function () {
+    return /** @type{?proto.bucketeer.notification.Subscription} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_notification_subscription_pb.Subscription,
+        1
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.notification.Subscription|undefined} value
+ * @return {!proto.bucketeer.notification.CreateSubscriptionResponse} returns this
+ */
+proto.bucketeer.notification.CreateSubscriptionResponse.prototype.setSubscription =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 1, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.notification.CreateSubscriptionResponse} returns this
+ */
+proto.bucketeer.notification.CreateSubscriptionResponse.prototype.clearSubscription =
+  function () {
+    return this.setSubscription(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.notification.CreateSubscriptionResponse.prototype.hasSubscription =
+  function () {
+    return jspb.Message.getField(this, 1) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -6985,6 +7256,13 @@ proto.bucketeer.notification.DisableSubscriptionResponse.serializeBinaryToWriter
     var f = undefined;
   };
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.repeatedFields_ = [7];
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -7040,7 +7318,15 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 6, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 6, ''),
+        sourceTypesList:
+          (f = jspb.Message.getRepeatedField(msg, 7)) == null ? undefined : f,
+        name:
+          (f = msg.getName()) &&
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
+        disabled:
+          (f = msg.getDisabled()) &&
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -7117,6 +7403,33 @@ proto.bucketeer.notification.UpdateSubscriptionRequest.deserializeBinaryFromRead
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 7:
+          var values =
+            /** @type {!Array<!proto.bucketeer.notification.Subscription.SourceType>} */ (
+              reader.isDelimited()
+                ? reader.readPackedEnum()
+                : [reader.readEnum()]
+            );
+          for (var i = 0; i < values.length; i++) {
+            msg.addSourceTypes(values[i]);
+          }
+          break;
+        case 8:
+          var value = new google_protobuf_wrappers_pb.StringValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
+          );
+          msg.setName(value);
+          break;
+        case 9:
+          var value = new google_protobuf_wrappers_pb.BoolValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader
+          );
+          msg.setDisabled(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -7183,6 +7496,26 @@ proto.bucketeer.notification.UpdateSubscriptionRequest.serializeBinaryToWriter =
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(6, f);
+    }
+    f = message.getSourceTypesList();
+    if (f.length > 0) {
+      writer.writePackedEnum(7, f);
+    }
+    f = message.getName();
+    if (f != null) {
+      writer.writeMessage(
+        8,
+        f,
+        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
+      );
+    }
+    f = message.getDisabled();
+    if (f != null) {
+      writer.writeMessage(
+        9,
+        f,
+        google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
+      );
     }
   };
 
@@ -7352,6 +7685,129 @@ proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.setEnvironmentI
     return jspb.Message.setProto3StringField(this, 6, value);
   };
 
+/**
+ * repeated Subscription.SourceType source_types = 7;
+ * @return {!Array<!proto.bucketeer.notification.Subscription.SourceType>}
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.getSourceTypesList =
+  function () {
+    return /** @type {!Array<!proto.bucketeer.notification.Subscription.SourceType>} */ (
+      jspb.Message.getRepeatedField(this, 7)
+    );
+  };
+
+/**
+ * @param {!Array<!proto.bucketeer.notification.Subscription.SourceType>} value
+ * @return {!proto.bucketeer.notification.UpdateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.setSourceTypesList =
+  function (value) {
+    return jspb.Message.setField(this, 7, value || []);
+  };
+
+/**
+ * @param {!proto.bucketeer.notification.Subscription.SourceType} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.notification.UpdateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.addSourceTypes =
+  function (value, opt_index) {
+    return jspb.Message.addToRepeatedField(this, 7, value, opt_index);
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.notification.UpdateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.clearSourceTypesList =
+  function () {
+    return this.setSourceTypesList([]);
+  };
+
+/**
+ * optional google.protobuf.StringValue name = 8;
+ * @return {?proto.google.protobuf.StringValue}
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.getName =
+  function () {
+    return /** @type{?proto.google.protobuf.StringValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.StringValue,
+        8
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.StringValue|undefined} value
+ * @return {!proto.bucketeer.notification.UpdateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.setName =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 8, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.notification.UpdateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.clearName =
+  function () {
+    return this.setName(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.hasName =
+  function () {
+    return jspb.Message.getField(this, 8) != null;
+  };
+
+/**
+ * optional google.protobuf.BoolValue disabled = 9;
+ * @return {?proto.google.protobuf.BoolValue}
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.getDisabled =
+  function () {
+    return /** @type{?proto.google.protobuf.BoolValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.BoolValue,
+        9
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.BoolValue|undefined} value
+ * @return {!proto.bucketeer.notification.UpdateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.setDisabled =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 9, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.notification.UpdateSubscriptionRequest} returns this
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.clearDisabled =
+  function () {
+    return this.setDisabled(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.notification.UpdateSubscriptionRequest.prototype.hasDisabled =
+  function () {
+    return jspb.Message.getField(this, 9) != null;
+  };
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -7387,7 +7843,14 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {};
+      obj = {
+        subscription:
+          (f = msg.getSubscription()) &&
+          proto_notification_subscription_pb.Subscription.toObject(
+            includeInstance,
+            f
+          )
+      };
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -7426,6 +7889,15 @@ proto.bucketeer.notification.UpdateSubscriptionResponse.deserializeBinaryFromRea
       }
       var field = reader.getFieldNumber();
       switch (field) {
+        case 1:
+          var value = new proto_notification_subscription_pb.Subscription();
+          reader.readMessage(
+            value,
+            proto_notification_subscription_pb.Subscription
+              .deserializeBinaryFromReader
+          );
+          msg.setSubscription(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -7458,6 +7930,56 @@ proto.bucketeer.notification.UpdateSubscriptionResponse.prototype.serializeBinar
 proto.bucketeer.notification.UpdateSubscriptionResponse.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
+    f = message.getSubscription();
+    if (f != null) {
+      writer.writeMessage(
+        1,
+        f,
+        proto_notification_subscription_pb.Subscription.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional Subscription subscription = 1;
+ * @return {?proto.bucketeer.notification.Subscription}
+ */
+proto.bucketeer.notification.UpdateSubscriptionResponse.prototype.getSubscription =
+  function () {
+    return /** @type{?proto.bucketeer.notification.Subscription} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_notification_subscription_pb.Subscription,
+        1
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.notification.Subscription|undefined} value
+ * @return {!proto.bucketeer.notification.UpdateSubscriptionResponse} returns this
+ */
+proto.bucketeer.notification.UpdateSubscriptionResponse.prototype.setSubscription =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 1, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.notification.UpdateSubscriptionResponse} returns this
+ */
+proto.bucketeer.notification.UpdateSubscriptionResponse.prototype.clearSubscription =
+  function () {
+    return this.setSubscription(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.notification.UpdateSubscriptionResponse.prototype.hasSubscription =
+  function () {
+    return jspb.Message.getField(this, 1) != null;
   };
 
 goog.object.extend(exports, proto.bucketeer.notification);

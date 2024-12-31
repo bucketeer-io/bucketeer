@@ -164,13 +164,7 @@ func (p *evaluationCountEventPersister) incrementEnvEvents(envEvents environment
 	for environmentId, events := range envEvents {
 		for id, event := range events {
 			// Increment the evaluation event count in the Redis
-			if err := p.incrementEvaluationCount(event, environmentId); err != nil {
-				p.logger.Error(
-					"Failed to increment the evaluation event in the Redis",
-					zap.Error(err),
-					zap.String("id", id),
-					zap.String("environmentId", environmentId),
-				)
+			if err := p.incrementEvaluationCount(id, event, environmentId); err != nil {
 				if errors.Is(err, ErrReasonNil) {
 					fails[id] = false
 				} else {
@@ -237,6 +231,7 @@ func getVariationID(reason *featureproto.Reason, vID string) (string, error) {
 }
 
 func (p *evaluationCountEventPersister) incrementEvaluationCount(
+	eventID string,
 	event proto.Message,
 	environmentId string,
 ) error {
@@ -247,29 +242,42 @@ func (p *evaluationCountEventPersister) incrementEvaluationCount(
 		}
 		// To avoid duplication when the request fails, we increment the event count in the end
 		// because the user count is an unique count, and there is no problem adding the same event more than once
-		uckv2 := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
-		if err := p.countUser(uckv2, e.UserId); err != nil {
+		// We tried to use Pipeline and indeed it improves the response time,
+		// but it also increases the Pod CPU usage. It's a trade-off.
+		// Since this is a background service and it's not latency-sensitive, we split the requests.
+		ucKey := p.newEvaluationCountkeyV2(userCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
+		if err := p.countUser(ucKey, e.UserId); err != nil {
+			if err != nil {
+				p.logger.Error("Failed to increment the evaluation user event in the Redis",
+					zap.Error(err),
+					zap.String("environmentId", environmentId),
+					zap.String("eventId", eventID),
+					zap.String("userId", e.UserId),
+					zap.String("userCountKey", ucKey),
+				)
+			}
 			return err
 		}
-		eckv2 := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
-		if err := p.countEvent(eckv2); err != nil {
+		ecKey := p.newEvaluationCountkeyV2(eventCountKey, e.FeatureId, vID, environmentId, e.Timestamp)
+		if err := p.countEvent(ecKey); err != nil {
+			p.logger.Error("Failed to increment the evaluation event in the Redis",
+				zap.Error(err),
+				zap.String("environmentId", environmentId),
+				zap.String("eventId", eventID),
+				zap.String("userId", e.UserId),
+				zap.String("eventCountKey", ecKey),
+			)
 			return err
 		}
+		evaluationEventCounter.WithLabelValues(
+			environmentId,
+			e.SdkVersion,
+			e.FeatureId,
+			e.Metadata[appVersion],
+			e.VariationId,
+		).Inc()
 	}
 	return nil
-}
-
-func (p *evaluationCountEventPersister) newEvaluationCountkeyV2(
-	kind, featureID, variationID, environmentId string,
-	timestamp int64,
-) string {
-	t := time.Unix(timestamp, 0)
-	date := time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), 0, 0, 0, time.UTC)
-	return cache.MakeKey(
-		kind,
-		fmt.Sprintf("%d:%s:%s", date.Unix(), featureID, variationID),
-		environmentId,
-	)
 }
 
 func (p *evaluationCountEventPersister) countEvent(key string) error {
@@ -286,6 +294,19 @@ func (p *evaluationCountEventPersister) countUser(key, userID string) error {
 		return err
 	}
 	return nil
+}
+
+func (p *evaluationCountEventPersister) newEvaluationCountkeyV2(
+	kind, featureID, variationID, environmentId string,
+	timestamp int64,
+) string {
+	t := time.Unix(timestamp, 0)
+	date := time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), 0, 0, 0, time.UTC)
+	return cache.MakeKey(
+		kind,
+		fmt.Sprintf("%d:%s:%s", date.Unix(), featureID, variationID),
+		environmentId,
+	)
 }
 
 func (p *evaluationCountEventPersister) cacheLastUsedInfoPerEnv(envEvents environmentEventMap) {

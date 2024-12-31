@@ -84,7 +84,7 @@ func (s *subscriptionStorage) CreateSubscription(
 		environmentId,
 	)
 	if err != nil {
-		if err == mysql.ErrDuplicateEntry {
+		if errors.Is(err, mysql.ErrDuplicateEntry) {
 			return ErrSubscriptionAlreadyExists
 		}
 		return err
@@ -162,9 +162,10 @@ func (s *subscriptionStorage) GetSubscription(
 		&mysql.JSONObject{Val: &subscription.SourceTypes},
 		&mysql.JSONObject{Val: &subscription.Recipient},
 		&subscription.Name,
+		&subscription.EnvironmentName,
 	)
 	if err != nil {
-		if err == mysql.ErrNoRows {
+		if errors.Is(err, mysql.ErrNoRows) {
 			return nil, ErrSubscriptionNotFound
 		}
 		return nil, err
@@ -198,6 +199,7 @@ func (s *subscriptionStorage) ListSubscriptions(
 			&mysql.JSONObject{Val: &subscription.SourceTypes},
 			&mysql.JSONObject{Val: &subscription.Recipient},
 			&subscription.Name,
+			&subscription.EnvironmentName,
 		)
 		if err != nil {
 			return nil, 0, 0, err

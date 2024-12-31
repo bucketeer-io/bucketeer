@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
@@ -224,14 +225,18 @@ func TestCheckOrganizationRole(t *testing.T) {
 		},
 		{
 			desc:              "success",
-			inputCtx:          getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
+			inputCtx:          getContextWithToken(t, &token.AccessToken{Email: "test@example.com", Name: "test"}),
 			inputRequiredRole: accountproto.AccountV2_Role_Organization_ADMIN,
 			inputGetAccountFunc: func(email string) (*accountproto.GetAccountV2Response, error) {
 				return &accountproto.GetAccountV2Response{
-					Account: &accountproto.AccountV2{Email: "test@example.com", OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN},
+					Account: &accountproto.AccountV2{
+						Email:            "test@example.com",
+						Name:             "test",
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
+					},
 				}, nil
 			},
-			expected:    &eventproto.Editor{Email: "test@example.com", IsAdmin: false},
+			expected:    &eventproto.Editor{Email: "test@example.com", IsAdmin: false, Name: "test"},
 			expectedErr: nil,
 		},
 	}
@@ -247,6 +252,24 @@ func TestCheckOrganizationRole(t *testing.T) {
 func getContextWithToken(t *testing.T, token *token.AccessToken) context.Context {
 	t.Helper()
 	return context.WithValue(context.Background(), rpc.Key, token)
+}
+
+func getContextWithTokenAndAPIKey(
+	t *testing.T,
+	token *token.AccessToken,
+	apiKeyToken string,
+	apiKeyMaintainer string,
+	apiKeyName string,
+) context.Context {
+	t.Helper()
+	ctx := context.WithValue(context.Background(), rpc.Key, token)
+	headerMetaData := metadata.New(map[string]string{
+		APIKeyTokenMDKey:      apiKeyToken,
+		APIKeyMaintainerMDKey: apiKeyMaintainer,
+		APIKeyNameMDKey:       apiKeyName,
+	})
+
+	return metadata.NewIncomingContext(ctx, headerMetaData)
 }
 
 func TestCheckEnvironmentRole(t *testing.T) {
@@ -289,7 +312,7 @@ func TestCheckEnvironmentRole(t *testing.T) {
 		},
 		{
 			desc:          "success",
-			ctx:           getContextWithToken(t, &token.AccessToken{Email: "test@example.com"}),
+			ctx:           getContextWithToken(t, &token.AccessToken{Email: "test@example.com", Name: "test"}),
 			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
 			environmentID: "ns0",
 			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
@@ -298,10 +321,44 @@ func TestCheckEnvironmentRole(t *testing.T) {
 					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 						{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
 					},
+					Name:     "test",
 					Disabled: false,
 				}, nil
 			},
-			expected:    &eventproto.Editor{Email: "test@example.com"},
+			expected:    &eventproto.Editor{Email: "test@example.com", Name: "test"},
+			expectedErr: nil,
+		},
+		{
+			desc: "success get API key editor",
+			ctx: getContextWithTokenAndAPIKey(
+				t,
+				&token.AccessToken{Email: "localenv@bucketeer.io", IsSystemAdmin: true},
+				"apikey_token",
+				"apikey_maintainer@example.com",
+				"apikey_name",
+			),
+			requiredRole:  accountproto.AccountV2_Role_Environment_EDITOR,
+			environmentID: "ns0",
+			getAccountFunc: func(email string) (*accountproto.AccountV2, error) {
+				return &accountproto.AccountV2{
+					Email: "apikey_maintainer@example.com",
+					EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
+						{EnvironmentId: "ns0", Role: accountproto.AccountV2_Role_Environment_EDITOR},
+					},
+					FirstName: "apikey",
+					LastName:  "maintainer",
+					Disabled:  false,
+				}, nil
+			},
+			expected: &eventproto.Editor{
+				Email: "apikey_maintainer@example.com",
+				Name:  "apikey maintainer",
+				PublicApiEditor: &eventproto.Editor_PublicAPIEditor{
+					Token:      "apikey_token",
+					Maintainer: "apikey_maintainer@example.com",
+					Name:       "apikey_name",
+				},
+			},
 			expectedErr: nil,
 		},
 	}

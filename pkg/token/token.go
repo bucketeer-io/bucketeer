@@ -24,6 +24,7 @@ type AccessToken struct {
 	Expiry        time.Time `json:"exp"`
 	IssuedAt      time.Time `json:"iat"`
 	Email         string    `json:"email"`
+	Name          string    `json:"name"`
 	IsSystemAdmin bool      `json:"is_system_admin"`
 }
 

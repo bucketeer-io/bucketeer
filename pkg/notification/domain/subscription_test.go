@@ -16,8 +16,10 @@ package domain
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	proto "github.com/bucketeer-io/bucketeer/proto/notification"
 )
@@ -43,6 +45,115 @@ func TestNewNotification(t *testing.T) {
 	assert.NotEqual(t, 0, actual.CreatedAt)
 	assert.NotEqual(t, 0, actual.UpdatedAt)
 	assert.Equal(t, name, actual.Name)
+}
+
+func TestUpdateNotification(t *testing.T) {
+	t.Parallel()
+
+	type input struct {
+		name        *wrapperspb.StringValue
+		sourceTypes []proto.Subscription_SourceType
+		disabled    *wrapperspb.BoolValue
+	}
+
+	patterns := []struct {
+		desc        string
+		origin      *Subscription
+		inputData   *input
+		expected    *Subscription
+		expectedErr error
+	}{
+		{
+			desc: "Update name & sourceTypes",
+			origin: &Subscription{
+				&proto.Subscription{
+					Id:   "id",
+					Name: "origin",
+					SourceTypes: []proto.Subscription_SourceType{
+						proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+					},
+					Recipient: &proto.Recipient{
+						Type: proto.Recipient_SlackChannel,
+						SlackChannelRecipient: &proto.SlackChannelRecipient{
+							WebhookUrl: "https://slack-hooks.exp",
+						},
+					},
+				},
+			},
+			inputData: &input{
+				name: wrapperspb.String("new-name"),
+				sourceTypes: []proto.Subscription_SourceType{
+					proto.Subscription_DOMAIN_EVENT_PUSH,
+					proto.Subscription_DOMAIN_EVENT_SUBSCRIPTION,
+				},
+			},
+			expected: &Subscription{
+				&proto.Subscription{
+					Id:   "id",
+					Name: "new-name",
+					SourceTypes: []proto.Subscription_SourceType{
+						proto.Subscription_DOMAIN_EVENT_PUSH,
+						proto.Subscription_DOMAIN_EVENT_SUBSCRIPTION,
+					},
+					Recipient: &proto.Recipient{
+						Type: proto.Recipient_SlackChannel,
+						SlackChannelRecipient: &proto.SlackChannelRecipient{
+							WebhookUrl: "https://slack-hooks.exp",
+						},
+					},
+					UpdatedAt: time.Now().Unix(),
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "disabled subscription",
+			origin: &Subscription{
+				&proto.Subscription{
+					Id:   "id",
+					Name: "origin",
+					SourceTypes: []proto.Subscription_SourceType{
+						proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+					},
+					Recipient: &proto.Recipient{
+						Type: proto.Recipient_SlackChannel,
+						SlackChannelRecipient: &proto.SlackChannelRecipient{
+							WebhookUrl: "https://slack-hooks.exp",
+						},
+					},
+					Disabled: false,
+				},
+			},
+			inputData: &input{
+				disabled: wrapperspb.Bool(true),
+			},
+			expected: &Subscription{
+				&proto.Subscription{
+					Id:   "id",
+					Name: "origin",
+					SourceTypes: []proto.Subscription_SourceType{
+						proto.Subscription_DOMAIN_EVENT_ACCOUNT,
+					},
+					Recipient: &proto.Recipient{
+						Type: proto.Recipient_SlackChannel,
+						SlackChannelRecipient: &proto.SlackChannelRecipient{
+							WebhookUrl: "https://slack-hooks.exp",
+						},
+					},
+					Disabled:  true,
+					UpdatedAt: time.Now().Unix(),
+				},
+			},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			actual, err := p.origin.UpdateSubscription(p.inputData.name, p.inputData.sourceTypes, p.inputData.disabled)
+			assert.Equal(t, p.expectedErr, err)
+			assert.Equal(t, p.expected, actual)
+		})
+	}
 }
 
 func TestDisable(t *testing.T) {

@@ -100,6 +100,21 @@ func (mr *MockAccountStorageMockRecorder) GetAPIKey(ctx, id, environmentID any) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAPIKey", reflect.TypeOf((*MockAccountStorage)(nil).GetAPIKey), ctx, id, environmentID)
 }
 
+// GetAPIKeyByAPIKey mocks base method.
+func (m *MockAccountStorage) GetAPIKeyByAPIKey(ctx context.Context, apiKey, environmentID string) (*domain.APIKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAPIKeyByAPIKey", ctx, apiKey, environmentID)
+	ret0, _ := ret[0].(*domain.APIKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAPIKeyByAPIKey indicates an expected call of GetAPIKeyByAPIKey.
+func (mr *MockAccountStorageMockRecorder) GetAPIKeyByAPIKey(ctx, apiKey, environmentID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAPIKeyByAPIKey", reflect.TypeOf((*MockAccountStorage)(nil).GetAPIKeyByAPIKey), ctx, apiKey, environmentID)
+}
+
 // GetAccountV2 mocks base method.
 func (m *MockAccountStorage) GetAccountV2(ctx context.Context, email, organizationID string) (*domain.AccountV2, error) {
 	m.ctrl.T.Helper()
@@ -143,6 +158,21 @@ func (m *MockAccountStorage) GetAccountsWithOrganization(ctx context.Context, em
 func (mr *MockAccountStorageMockRecorder) GetAccountsWithOrganization(ctx, email any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountsWithOrganization", reflect.TypeOf((*MockAccountStorage)(nil).GetAccountsWithOrganization), ctx, email)
+}
+
+// GetEnvironmentAPIKey mocks base method.
+func (m *MockAccountStorage) GetEnvironmentAPIKey(ctx context.Context, apiKey string) (*domain.EnvironmentAPIKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEnvironmentAPIKey", ctx, apiKey)
+	ret0, _ := ret[0].(*domain.EnvironmentAPIKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEnvironmentAPIKey indicates an expected call of GetEnvironmentAPIKey.
+func (mr *MockAccountStorageMockRecorder) GetEnvironmentAPIKey(ctx, apiKey any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnvironmentAPIKey", reflect.TypeOf((*MockAccountStorage)(nil).GetEnvironmentAPIKey), ctx, apiKey)
 }
 
 // GetSystemAdminAccountV2 mocks base method.
@@ -192,6 +222,21 @@ func (m *MockAccountStorage) ListAccountsV2(ctx context.Context, whereParts []my
 func (mr *MockAccountStorageMockRecorder) ListAccountsV2(ctx, whereParts, orders, limit, offset any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAccountsV2", reflect.TypeOf((*MockAccountStorage)(nil).ListAccountsV2), ctx, whereParts, orders, limit, offset)
+}
+
+// ListAllEnvironmentAPIKeys mocks base method.
+func (m *MockAccountStorage) ListAllEnvironmentAPIKeys(ctx context.Context) ([]*domain.EnvironmentAPIKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAllEnvironmentAPIKeys", ctx)
+	ret0, _ := ret[0].([]*domain.EnvironmentAPIKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListAllEnvironmentAPIKeys indicates an expected call of ListAllEnvironmentAPIKeys.
+func (mr *MockAccountStorageMockRecorder) ListAllEnvironmentAPIKeys(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllEnvironmentAPIKeys", reflect.TypeOf((*MockAccountStorage)(nil).ListAllEnvironmentAPIKeys), ctx)
 }
 
 // RunInTransaction mocks base method.

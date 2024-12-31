@@ -37,6 +37,9 @@ export class Subscription extends jspb.Message {
   getName(): string;
   setName(value: string): void;
 
+  getEnvironmentName(): string;
+  setEnvironmentName(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Subscription.AsObject;
   static toObject(
@@ -69,6 +72,7 @@ export namespace Subscription {
     >;
     recipient?: proto_notification_recipient_pb.Recipient.AsObject;
     name: string;
+    environmentName: string;
   };
 
   export interface SourceTypeMap {

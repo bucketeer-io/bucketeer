@@ -251,9 +251,9 @@ func (mr *MockClientMockRecorder) PFCount(keys ...any) *gomock.Call {
 }
 
 // PFMerge mocks base method.
-func (m *MockClient) PFMerge(dest string, keys ...string) error {
+func (m *MockClient) PFMerge(dest string, expiration time.Duration, keys ...string) error {
 	m.ctrl.T.Helper()
-	varargs := []any{dest}
+	varargs := []any{dest, expiration}
 	for _, a := range keys {
 		varargs = append(varargs, a)
 	}
@@ -263,24 +263,24 @@ func (m *MockClient) PFMerge(dest string, keys ...string) error {
 }
 
 // PFMerge indicates an expected call of PFMerge.
-func (mr *MockClientMockRecorder) PFMerge(dest any, keys ...any) *gomock.Call {
+func (mr *MockClientMockRecorder) PFMerge(dest, expiration any, keys ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{dest}, keys...)
+	varargs := append([]any{dest, expiration}, keys...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PFMerge", reflect.TypeOf((*MockClient)(nil).PFMerge), varargs...)
 }
 
 // Pipeline mocks base method.
-func (m *MockClient) Pipeline() v3.PipeClient {
+func (m *MockClient) Pipeline(tx bool) v3.PipeClient {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Pipeline")
+	ret := m.ctrl.Call(m, "Pipeline", tx)
 	ret0, _ := ret[0].(v3.PipeClient)
 	return ret0
 }
 
 // Pipeline indicates an expected call of Pipeline.
-func (mr *MockClientMockRecorder) Pipeline() *gomock.Call {
+func (mr *MockClientMockRecorder) Pipeline(tx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pipeline", reflect.TypeOf((*MockClient)(nil).Pipeline))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Pipeline", reflect.TypeOf((*MockClient)(nil).Pipeline), tx)
 }
 
 // Restore mocks base method.

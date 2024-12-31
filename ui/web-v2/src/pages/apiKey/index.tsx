@@ -42,6 +42,7 @@ import { APIKey } from '../../proto/account/api_key_pb';
 import { ListAPIKeysRequest } from '../../proto/account/service_pb';
 import { AppDispatch } from '../../store';
 import { APIKeySortOption, isAPIKeySortOption } from '../../types/apiKey';
+import { getOrganizationId } from '../../storage/organizationId';
 import {
   SORT_OPTIONS_CREATED_AT_ASC,
   SORT_OPTIONS_CREATED_AT_DESC,
@@ -134,7 +135,8 @@ export const APIKeyIndexPage: FC = memo(() => {
         options && options.enabled ? options.enabled === 'false' : null;
       dispatch(
         listAPIKeys({
-          environmentId: currentEnvironment.id,
+          organizationId: getOrganizationId(),
+          environmentIds: [currentEnvironment.id],
           pageSize: APIKEY_LIST_PAGE_SIZE,
           cursor: String(cursor),
           searchKeyword: options && (options.q as string),

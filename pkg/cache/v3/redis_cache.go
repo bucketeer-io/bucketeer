@@ -84,16 +84,16 @@ func (r *redisCache) PFCount(keys ...string) (int64, error) {
 	return r.client.PFCount(keys...)
 }
 
-func (r *redisCache) PFMerge(dest string, keys ...string) error {
-	return r.client.PFMerge(dest, keys...)
+func (r *redisCache) PFMerge(dest string, expiration time.Duration, keys ...string) error {
+	return r.client.PFMerge(dest, expiration, keys...)
 }
 
 func (r *redisCache) PFAdd(key string, els ...string) (int64, error) {
 	return r.client.PFAdd(key, els...)
 }
 
-func (r *redisCache) Pipeline() redis.PipeClient {
-	return r.client.Pipeline()
+func (r *redisCache) Pipeline(tx bool) redis.PipeClient {
+	return r.client.Pipeline(tx)
 }
 
 func (r *redisCache) Expire(key string, expiration time.Duration) (bool, error) {

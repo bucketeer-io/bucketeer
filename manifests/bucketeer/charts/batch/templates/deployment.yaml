@@ -49,7 +49,11 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.global.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          args: ["server"]
+          args:
+            - server
+          {{- range .Values.env.nonPersistentChildRedis.addresses }}
+            - --non-persistent-child-redis-addresses={{ . }}
+          {{- end }}
           env:
             - name: BIGQUERY_EMULATOR_HOST
               value: "{{.Values.env.bigqueryEmulatorHost}}"

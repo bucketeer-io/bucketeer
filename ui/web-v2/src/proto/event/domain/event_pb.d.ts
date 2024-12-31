@@ -202,6 +202,7 @@ export namespace Event {
     APIKEY_NAME_CHANGED: 401;
     APIKEY_ENABLED: 402;
     APIKEY_DISABLED: 403;
+    APIKEY_CHANGED: 404;
     SEGMENT_CREATED: 500;
     SEGMENT_DELETED: 501;
     SEGMENT_NAME_CHANGED: 502;
@@ -255,6 +256,7 @@ export namespace Event {
     SUBSCRIPTION_SOURCE_TYPE_ADDED: 1004;
     SUBSCRIPTION_SOURCE_TYPE_DELETED: 1005;
     SUBSCRIPTION_RENAMED: 1006;
+    SUBSCRIPTION_UPDATED: 1007;
     ADMIN_SUBSCRIPTION_CREATED: 1100;
     ADMIN_SUBSCRIPTION_DELETED: 1101;
     ADMIN_SUBSCRIPTION_ENABLED: 1102;
@@ -301,6 +303,14 @@ export class Editor extends jspb.Message {
   getIsAdmin(): boolean;
   setIsAdmin(value: boolean): void;
 
+  getName(): string;
+  setName(value: string): void;
+
+  hasPublicApiEditor(): boolean;
+  clearPublicApiEditor(): void;
+  getPublicApiEditor(): Editor.PublicAPIEditor | undefined;
+  setPublicApiEditor(value?: Editor.PublicAPIEditor): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Editor.AsObject;
   static toObject(includeInstance: boolean, msg: Editor): Editor.AsObject;
@@ -323,7 +333,48 @@ export namespace Editor {
   export type AsObject = {
     email: string;
     isAdmin: boolean;
+    name: string;
+    publicApiEditor?: Editor.PublicAPIEditor.AsObject;
   };
+
+  export class PublicAPIEditor extends jspb.Message {
+    getToken(): string;
+    setToken(value: string): void;
+
+    getMaintainer(): string;
+    setMaintainer(value: string): void;
+
+    getName(): string;
+    setName(value: string): void;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): PublicAPIEditor.AsObject;
+    static toObject(
+      includeInstance: boolean,
+      msg: PublicAPIEditor
+    ): PublicAPIEditor.AsObject;
+    static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+    static extensionsBinary: {
+      [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+    };
+    static serializeBinaryToWriter(
+      message: PublicAPIEditor,
+      writer: jspb.BinaryWriter
+    ): void;
+    static deserializeBinary(bytes: Uint8Array): PublicAPIEditor;
+    static deserializeBinaryFromReader(
+      message: PublicAPIEditor,
+      reader: jspb.BinaryReader
+    ): PublicAPIEditor;
+  }
+
+  export namespace PublicAPIEditor {
+    export type AsObject = {
+      token: string;
+      maintainer: string;
+      name: string;
+    };
+  }
 }
 
 export class Options extends jspb.Message {
@@ -3101,6 +3152,37 @@ export namespace APIKeyCreatedEvent {
   };
 }
 
+export class APIKeyChangedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): APIKeyChangedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: APIKeyChangedEvent
+  ): APIKeyChangedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: APIKeyChangedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): APIKeyChangedEvent;
+  static deserializeBinaryFromReader(
+    message: APIKeyChangedEvent,
+    reader: jspb.BinaryReader
+  ): APIKeyChangedEvent;
+}
+
+export namespace APIKeyChangedEvent {
+  export type AsObject = {
+    id: string;
+  };
+}
+
 export class APIKeyNameChangedEvent extends jspb.Message {
   getId(): string;
   setId(value: string): void;
@@ -5191,6 +5273,66 @@ export class SubscriptionRenamedEvent extends jspb.Message {
 export namespace SubscriptionRenamedEvent {
   export type AsObject = {
     name: string;
+  };
+}
+
+export class SubscriptionUpdatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  clearSourceTypesList(): void;
+  getSourceTypesList(): Array<
+    proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap]
+  >;
+  setSourceTypesList(
+    value: Array<
+      proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap]
+    >
+  ): void;
+  addSourceTypes(
+    value: proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap],
+    index?: number
+  ): proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap];
+
+  hasDisabled(): boolean;
+  clearDisabled(): void;
+  getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SubscriptionUpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: SubscriptionUpdatedEvent
+  ): SubscriptionUpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: SubscriptionUpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): SubscriptionUpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: SubscriptionUpdatedEvent,
+    reader: jspb.BinaryReader
+  ): SubscriptionUpdatedEvent;
+}
+
+export namespace SubscriptionUpdatedEvent {
+  export type AsObject = {
+    id: string;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    sourceTypesList: Array<
+      proto_notification_subscription_pb.Subscription.SourceTypeMap[keyof proto_notification_subscription_pb.Subscription.SourceTypeMap]
+    >;
+    disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 }
 

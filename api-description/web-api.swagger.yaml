@@ -673,7 +673,7 @@ paths:
       tags:
         - Account
   /v1/account/get_api_key:
-    post:
+    get:
       summary: Get
       description: Get an API Key.
       operationId: web.v1.account.get_api_key
@@ -714,15 +714,18 @@ paths:
           schema:
             $ref: '#/definitions/rpcStatus'
       parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountGetAPIKeyRequest'
+        - name: id
+          in: query
+          required: false
+          type: string
+        - name: environmentId
+          in: query
+          required: false
+          type: string
       tags:
         - API Key
   /v1/account/get_environment_api_key:
-    post:
+    get:
       summary: Get Environment API Key
       description: Get an environment API Key.
       operationId: web.v1.account.get_environment_api_key
@@ -730,7 +733,7 @@ paths:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/accountGetAPIKeyBySearchingAllEnvironmentsResponse'
+            $ref: '#/definitions/accountGetEnvironmentAPIKeyResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -763,11 +766,10 @@ paths:
           schema:
             $ref: '#/definitions/rpcStatus'
       parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountGetAPIKeyBySearchingAllEnvironmentsRequest'
+        - name: apiKey
+          in: query
+          required: false
+          type: string
       tags:
         - API Key
   /v1/account/get_me:
@@ -872,7 +874,7 @@ paths:
       tags:
         - Account
   /v1/account/list_api_keys:
-    post:
+    get:
       summary: List
       description: List API Keys.
       operationId: web.v1.account.list_api_keys
@@ -913,11 +915,59 @@ paths:
           schema:
             $ref: '#/definitions/rpcStatus'
       parameters:
-        - name: body
-          in: body
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+            - ROLE
+            - ENVIRONMENT
+            - STATE
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: disabled
+          in: query
+          required: false
+          type: boolean
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+        - name: environmentIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: organizationId
+          in: query
           required: true
-          schema:
-            $ref: '#/definitions/accountListAPIKeysRequest'
+          type: string
       tags:
         - API Key
   /v1/account/my_organizations:
@@ -1079,6 +1129,64 @@ paths:
             $ref: '#/definitions/accountUpdateAccountV2Request'
       tags:
         - Account
+  /v1/account/update_api_key:
+    patch:
+      summary: Update API Key
+      description: Update an API Key. To call this API, you need an `ADMIN` role.
+      operationId: web.v1.account.update_api_key
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/accountUpdateAPIKeyResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/accountUpdateAPIKeyRequest'
+      tags:
+        - API Key
   /v1/account/update_search_filter:
     post:
       summary: Update Search Filter
@@ -2720,6 +2828,496 @@ paths:
             $ref: '#/definitions/environmentUpdateProjectRequest'
       tags:
         - Project
+  /v1/push:
+    get:
+      summary: Get
+      description: Get a push.
+      operationId: web.v1.push.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/pushGetPushResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+        - name: id
+          in: query
+          required: true
+          type: string
+      tags:
+        - push
+    post:
+      summary: Create
+      description: Create a push.
+      operationId: web.v1.push.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/pushCreatePushResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/pushCreatePushRequest'
+      tags:
+        - push
+    patch:
+      summary: Update
+      description: Update a push.
+      operationId: web.v1.push.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/pushUpdatePushResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/pushUpdatePushRequest'
+      tags:
+        - push
+  /v1/pushes:
+    get:
+      summary: List
+      description: List pushes.
+      operationId: web.v1.push.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/pushListPushesResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+      tags:
+        - push
+  /v1/subscription:
+    get:
+      summary: Get
+      description: Get subscription.
+      operationId: web.v1.subscription.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationGetSubscriptionResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - subscription
+    post:
+      summary: Create
+      description: Create subscription.
+      operationId: web.v1.subscription.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationCreateSubscriptionResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/notificationCreateSubscriptionRequest'
+      tags:
+        - subscription
+    patch:
+      summary: Update
+      description: Update subscription.
+      operationId: web.v1.subscription.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationUpdateSubscriptionResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/notificationUpdateSubscriptionRequest'
+      tags:
+        - subscription
+  /v1/subscriptions:
+    get:
+      summary: List
+      description: List subscriptions.
+      operationId: web.v1.subscription.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/notificationListSubscriptionsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/rpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: sourceTypes
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - DOMAIN_EVENT_FEATURE
+              - DOMAIN_EVENT_GOAL
+              - DOMAIN_EVENT_EXPERIMENT
+              - DOMAIN_EVENT_ACCOUNT
+              - DOMAIN_EVENT_APIKEY
+              - DOMAIN_EVENT_SEGMENT
+              - DOMAIN_EVENT_ENVIRONMENT
+              - DOMAIN_EVENT_ADMIN_ACCOUNT
+              - DOMAIN_EVENT_AUTOOPS_RULE
+              - DOMAIN_EVENT_PUSH
+              - DOMAIN_EVENT_SUBSCRIPTION
+              - DOMAIN_EVENT_ADMIN_SUBSCRIPTION
+              - DOMAIN_EVENT_PROJECT
+              - DOMAIN_EVENT_WEBHOOK
+              - DOMAIN_EVENT_PROGRESSIVE_ROLLOUT
+              - DOMAIN_EVENT_ORGANIZATION
+              - DOMAIN_EVENT_FLAG_TRIGGER
+              - FEATURE_STALE
+              - EXPERIMENT_RUNNING
+              - MAU_COUNT
+          collectionFormat: multi
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: disabled
+          in: query
+          required: false
+          type: boolean
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+        - name: organizationId
+          in: query
+          required: true
+          type: string
+      tags:
+        - subscription
 definitions:
   AccountV2RoleOrganization:
     type: string
@@ -2736,6 +3334,12 @@ definitions:
       - WriteType_OVERRIDE
       - WriteType_PATCH
     default: WriteType_UNSPECIFIED
+  RecipientLanguage:
+    type: string
+    enum:
+      - ENGLISH
+      - JAPANESE
+    default: ENGLISH
   RoleEnvironment:
     type: string
     enum:
@@ -2743,6 +3347,30 @@ definitions:
       - Environment_VIEWER
       - Environment_EDITOR
     default: Environment_UNASSIGNED
+  SubscriptionSourceType:
+    type: string
+    enum:
+      - DOMAIN_EVENT_FEATURE
+      - DOMAIN_EVENT_GOAL
+      - DOMAIN_EVENT_EXPERIMENT
+      - DOMAIN_EVENT_ACCOUNT
+      - DOMAIN_EVENT_APIKEY
+      - DOMAIN_EVENT_SEGMENT
+      - DOMAIN_EVENT_ENVIRONMENT
+      - DOMAIN_EVENT_ADMIN_ACCOUNT
+      - DOMAIN_EVENT_AUTOOPS_RULE
+      - DOMAIN_EVENT_PUSH
+      - DOMAIN_EVENT_SUBSCRIPTION
+      - DOMAIN_EVENT_ADMIN_SUBSCRIPTION
+      - DOMAIN_EVENT_PROJECT
+      - DOMAIN_EVENT_WEBHOOK
+      - DOMAIN_EVENT_PROGRESSIVE_ROLLOUT
+      - DOMAIN_EVENT_ORGANIZATION
+      - DOMAIN_EVENT_FLAG_TRIGGER
+      - FEATURE_STALE
+      - EXPERIMENT_RUNNING
+      - MAU_COUNT
+    default: DOMAIN_EVENT_FEATURE
   UpdateAccountV2RequestAccountV2Avatar:
     type: object
     properties:
@@ -2778,6 +3406,8 @@ definitions:
       apiKey:
         type: string
       description:
+        type: string
+      environmentName:
         type: string
   accountAPIKeyRole:
     type: string
@@ -3198,23 +3828,6 @@ definitions:
       - UNKNOWN
       - FEATURE_FLAG
     default: UNKNOWN
-  accountGetAPIKeyBySearchingAllEnvironmentsRequest:
-    type: object
-    properties:
-      id:
-        type: string
-  accountGetAPIKeyBySearchingAllEnvironmentsResponse:
-    type: object
-    properties:
-      environmentApiKey:
-        $ref: '#/definitions/accountEnvironmentAPIKey'
-  accountGetAPIKeyRequest:
-    type: object
-    properties:
-      id:
-        type: string
-      environmentId:
-        type: string
   accountGetAPIKeyResponse:
     type: object
     properties:
@@ -3244,6 +3857,11 @@ definitions:
     properties:
       account:
         $ref: '#/definitions/accountAccountV2'
+  accountGetEnvironmentAPIKeyResponse:
+    type: object
+    properties:
+      environmentApiKey:
+        $ref: '#/definitions/accountEnvironmentAPIKey'
   accountGetMeRequest:
     type: object
     properties:
@@ -3275,24 +3893,6 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/bucketeerenvironmentOrganization'
-  accountListAPIKeysRequest:
-    type: object
-    properties:
-      pageSize:
-        type: string
-        format: int64
-      cursor:
-        type: string
-      orderBy:
-        $ref: '#/definitions/accountListAPIKeysRequestOrderBy'
-      orderDirection:
-        $ref: '#/definitions/accountListAPIKeysRequestOrderDirection'
-      searchKeyword:
-        type: string
-      disabled:
-        type: boolean
-      environmentId:
-        type: string
   accountListAPIKeysRequestOrderBy:
     type: string
     enum:
@@ -3300,6 +3900,9 @@ definitions:
       - NAME
       - CREATED_AT
       - UPDATED_AT
+      - ROLE
+      - ENVIRONMENT
+      - STATE
     default: DEFAULT
   accountListAPIKeysRequestOrderDirection:
     type: string
@@ -3392,6 +3995,25 @@ definitions:
         type: string
       defaultFilter:
         type: boolean
+  accountUpdateAPIKeyRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      environmentId:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      role:
+        $ref: '#/definitions/accountAPIKeyRole'
+      disabled:
+        type: boolean
+      maintainer:
+        type: string
+  accountUpdateAPIKeyResponse:
+    type: object
   accountUpdateAccountV2Request:
     type: object
     properties:
@@ -3439,6 +4061,8 @@ definitions:
         format: int64
       avatar:
         $ref: '#/definitions/UpdateAccountV2RequestAccountV2Avatar'
+      disabled:
+        type: boolean
   accountUpdateAccountV2Response:
     type: object
     properties:
@@ -4160,12 +4784,421 @@ definitions:
         $ref: '#/definitions/environmentRenameProjectCommand'
   environmentUpdateProjectResponse:
     type: object
+  notificationAddAdminSubscriptionSourceTypesCommand:
+    type: object
+    properties:
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+  notificationAddSourceTypesCommand:
+    type: object
+    properties:
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+  notificationCreateAdminSubscriptionCommand:
+    type: object
+    properties:
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+      recipient:
+        $ref: '#/definitions/notificationRecipient'
+      name:
+        type: string
+  notificationCreateAdminSubscriptionResponse:
+    type: object
+  notificationCreateSubscriptionCommand:
+    type: object
+    properties:
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+      recipient:
+        $ref: '#/definitions/notificationRecipient'
+      name:
+        type: string
+  notificationCreateSubscriptionRequest:
+    type: object
+    properties:
+      command:
+        $ref: '#/definitions/notificationCreateSubscriptionCommand'
+      environmentId:
+        type: string
+      name:
+        type: string
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+      recipient:
+        $ref: '#/definitions/notificationRecipient'
+    required:
+      - environmentId
+      - name
+      - sourceTypes
+      - recipient
+  notificationCreateSubscriptionResponse:
+    type: object
+    properties:
+      subscription:
+        $ref: '#/definitions/notificationSubscription'
+  notificationDeleteAdminSubscriptionCommand:
+    type: object
+  notificationDeleteAdminSubscriptionResponse:
+    type: object
+  notificationDeleteAdminSubscriptionSourceTypesCommand:
+    type: object
+    properties:
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+  notificationDeleteSourceTypesCommand:
+    type: object
+    properties:
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+  notificationDeleteSubscriptionCommand:
+    type: object
+  notificationDeleteSubscriptionResponse:
+    type: object
+  notificationDisableAdminSubscriptionCommand:
+    type: object
+  notificationDisableAdminSubscriptionResponse:
+    type: object
+  notificationDisableSubscriptionCommand:
+    type: object
+  notificationDisableSubscriptionResponse:
+    type: object
+  notificationEnableAdminSubscriptionCommand:
+    type: object
+  notificationEnableAdminSubscriptionResponse:
+    type: object
+  notificationEnableSubscriptionCommand:
+    type: object
+  notificationEnableSubscriptionResponse:
+    type: object
+  notificationGetAdminSubscriptionResponse:
+    type: object
+    properties:
+      subscription:
+        $ref: '#/definitions/notificationSubscription'
+  notificationGetSubscriptionResponse:
+    type: object
+    properties:
+      subscription:
+        $ref: '#/definitions/notificationSubscription'
+  notificationListAdminSubscriptionsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  notificationListAdminSubscriptionsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  notificationListAdminSubscriptionsResponse:
+    type: object
+    properties:
+      subscriptions:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationSubscription'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  notificationListEnabledAdminSubscriptionsResponse:
+    type: object
+    properties:
+      subscriptions:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationSubscription'
+      cursor:
+        type: string
+  notificationListEnabledSubscriptionsResponse:
+    type: object
+    properties:
+      subscriptions:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationSubscription'
+      cursor:
+        type: string
+  notificationListSubscriptionsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  notificationListSubscriptionsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  notificationListSubscriptionsResponse:
+    type: object
+    properties:
+      subscriptions:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationSubscription'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  notificationRecipient:
+    type: object
+    properties:
+      type:
+        $ref: '#/definitions/notificationRecipientType'
+      slackChannelRecipient:
+        $ref: '#/definitions/notificationSlackChannelRecipient'
+      language:
+        $ref: '#/definitions/RecipientLanguage'
+  notificationRecipientType:
+    type: string
+    enum:
+      - SlackChannel
+    default: SlackChannel
+  notificationRenameAdminSubscriptionCommand:
+    type: object
+    properties:
+      name:
+        type: string
+  notificationRenameSubscriptionCommand:
+    type: object
+    properties:
+      name:
+        type: string
+  notificationSlackChannelRecipient:
+    type: object
+    properties:
+      webhookUrl:
+        type: string
+  notificationSubscription:
+    type: object
+    properties:
+      id:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      disabled:
+        type: boolean
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+      recipient:
+        $ref: '#/definitions/notificationRecipient'
+      name:
+        type: string
+      environmentName:
+        type: string
+  notificationUpdateAdminSubscriptionResponse:
+    type: object
+  notificationUpdateSubscriptionRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      addSourceTypesCommand:
+        $ref: '#/definitions/notificationAddSourceTypesCommand'
+        description: deprecated. use source_types instead.
+      deleteSourceTypesCommand:
+        $ref: '#/definitions/notificationDeleteSourceTypesCommand'
+        description: deprecated. use source_types instead.
+      renameSubscriptionCommand:
+        $ref: '#/definitions/notificationRenameSubscriptionCommand'
+        description: deprecated. use name instead.
+      environmentId:
+        type: string
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+      name:
+        type: string
+      disabled:
+        type: boolean
+        description: if true, the subscription is disabled, otherwise enabled.
+        title: disabled
+    required:
+      - id
+      - environmentId
+  notificationUpdateSubscriptionResponse:
+    type: object
+    properties:
+      subscription:
+        $ref: '#/definitions/notificationSubscription'
   protobufAny:
     type: object
     properties:
       '@type':
         type: string
     additionalProperties: {}
+  pushAddPushTagsCommand:
+    type: object
+    properties:
+      tags:
+        type: array
+        items:
+          type: string
+  pushCreatePushCommand:
+    type: object
+    properties:
+      tags:
+        type: array
+        items:
+          type: string
+      name:
+        type: string
+      fcmServiceAccount:
+        type: string
+        format: byte
+  pushCreatePushRequest:
+    type: object
+    properties:
+      command:
+        $ref: '#/definitions/pushCreatePushCommand'
+      tags:
+        type: array
+        items:
+          type: string
+      name:
+        type: string
+      fcmServiceAccount:
+        type: string
+        format: byte
+      environmentId:
+        type: string
+  pushCreatePushResponse:
+    type: object
+    properties:
+      push:
+        $ref: '#/definitions/pushPush'
+  pushDeletePushCommand:
+    type: object
+  pushDeletePushResponse:
+    type: object
+  pushDeletePushTagsCommand:
+    type: object
+    properties:
+      tags:
+        type: array
+        items:
+          type: string
+  pushGetPushResponse:
+    type: object
+    properties:
+      push:
+        $ref: '#/definitions/pushPush'
+  pushListPushesRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  pushListPushesRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  pushListPushesResponse:
+    type: object
+    properties:
+      pushes:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/pushPush'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  pushPush:
+    type: object
+    properties:
+      id:
+        type: string
+      tags:
+        type: array
+        items:
+          type: string
+      deleted:
+        type: boolean
+      name:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      fcmServiceAccount:
+        type: string
+  pushRenamePushCommand:
+    type: object
+    properties:
+      name:
+        type: string
+  pushUpdatePushRequest:
+    type: object
+    properties:
+      id:
+        type: string
+      addPushTagsCommand:
+        $ref: '#/definitions/pushAddPushTagsCommand'
+      deletePushTagsCommand:
+        $ref: '#/definitions/pushDeletePushTagsCommand'
+      renamePushCommand:
+        $ref: '#/definitions/pushRenamePushCommand'
+      tags:
+        type: array
+        items:
+          type: string
+      name:
+        type: string
+      environmentId:
+        type: string
+    required:
+      - id
+      - environmentId
+  pushUpdatePushResponse:
+    type: object
+    properties:
+      push:
+        $ref: '#/definitions/pushPush'
   rpcStatus:
     type: object
     properties:

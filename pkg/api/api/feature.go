@@ -18,9 +18,11 @@ import (
 	"context"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
 	"github.com/bucketeer-io/bucketeer/pkg/log"
+	"github.com/bucketeer-io/bucketeer/pkg/role"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	featureproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
@@ -43,6 +45,14 @@ func (s *grpcGatewayService) CreateFeature(
 		)
 		return nil, err
 	}
+
+	headerMetaData := metadata.New(map[string]string{
+		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
+		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
+		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
+
 	res, err := s.featureClient.CreateFeature(ctx, &featureproto.CreateFeatureRequest{
 		EnvironmentId: envAPIKey.Environment.Id,
 		Command: &featureproto.CreateFeatureCommand{
@@ -141,6 +151,14 @@ func (s *grpcGatewayService) UpdateFeature(
 		)
 		return nil, err
 	}
+
+	headerMetaData := metadata.New(map[string]string{
+		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
+		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
+		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
+
 	res, err := s.featureClient.UpdateFeature(ctx, &featureproto.UpdateFeatureRequest{
 		Comment:         req.Comment,
 		EnvironmentId:   envAPIKey.Environment.Id,

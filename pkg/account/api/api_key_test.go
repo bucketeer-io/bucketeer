@@ -670,9 +670,13 @@ func TestListAPIKeysMySQL(t *testing.T) {
 		getExpectedErr func(localizer locale.Localizer) error
 	}{
 		{
-			desc:     "errInvalidCursor",
-			context:  createContextWithDefaultToken(t, true),
-			input:    &accountproto.ListAPIKeysRequest{Cursor: "XXX"},
+			desc:    "errInvalidCursor",
+			context: createContextWithDefaultToken(t, true),
+			input: &accountproto.ListAPIKeysRequest{
+				EnvironmentIds: []string{"ns0"},
+				OrganizationId: "org0",
+				Cursor:         "XXX",
+			},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(localizer, statusInvalidCursor, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "cursor"))
@@ -686,7 +690,10 @@ func TestListAPIKeysMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(nil, 0, int64(0), errors.New("error"))
 			},
-			input:    &accountproto.ListAPIKeysRequest{},
+			input: &accountproto.ListAPIKeysRequest{
+				EnvironmentIds: []string{"ns0"},
+				OrganizationId: "org0",
+			},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(localizer, statusInternal, localizer.MustLocalize(locale.InternalServerError))
@@ -696,7 +703,7 @@ func TestListAPIKeysMySQL(t *testing.T) {
 			desc:    "errPermissionDenied",
 			context: createContextWithDefaultToken(t, false),
 			setup: func(s *AccountService) {
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
@@ -711,7 +718,10 @@ func TestListAPIKeysMySQL(t *testing.T) {
 					},
 				}, nil).AnyTimes()
 			},
-			input:    &accountproto.ListAPIKeysRequest{EnvironmentId: "ns0"},
+			input: &accountproto.ListAPIKeysRequest{
+				EnvironmentIds: []string{"ns0"},
+				OrganizationId: "org0",
+			},
 			expected: nil,
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return createError(localizer, statusPermissionDenied, localizer.MustLocalize(locale.PermissionDenied))
@@ -725,22 +735,26 @@ func TestListAPIKeysMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return([]*accountproto.APIKey{}, 0, int64(0), nil)
 			},
-			input:    &accountproto.ListAPIKeysRequest{PageSize: 2, Cursor: ""},
+			input: &accountproto.ListAPIKeysRequest{
+				OrganizationId: "org0",
+				PageSize:       2,
+				Cursor:         "",
+			},
 			expected: &accountproto.ListAPIKeysResponse{ApiKeys: []*accountproto.APIKey{}, Cursor: "0"},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil
 			},
 		},
 		{
-			desc:    "success with viewer account",
+			desc:    "success with admin account",
 			context: createContextWithDefaultToken(t, false),
 			setup: func(s *AccountService) {
-				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2ByEnvironmentID(
+				s.accountStorage.(*accstoragemock.MockAccountStorage).EXPECT().GetAccountV2(
 					gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return(&domain.AccountV2{
 					AccountV2: &accountproto.AccountV2{
 						Email:            "email",
-						OrganizationRole: accountproto.AccountV2_Role_Organization_MEMBER,
+						OrganizationRole: accountproto.AccountV2_Role_Organization_ADMIN,
 						EnvironmentRoles: []*accountproto.AccountV2_EnvironmentRole{
 							{
 								EnvironmentId: "ns0",
@@ -753,7 +767,10 @@ func TestListAPIKeysMySQL(t *testing.T) {
 					gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(),
 				).Return([]*accountproto.APIKey{}, 0, int64(0), nil)
 			},
-			input:    &accountproto.ListAPIKeysRequest{EnvironmentId: "ns0"},
+			input: &accountproto.ListAPIKeysRequest{
+				EnvironmentIds: []string{"ns0"},
+				OrganizationId: "org0",
+			},
 			expected: &accountproto.ListAPIKeysResponse{ApiKeys: []*accountproto.APIKey{}, Cursor: "0"},
 			getExpectedErr: func(localizer locale.Localizer) error {
 				return nil

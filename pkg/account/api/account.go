@@ -440,7 +440,7 @@ func (s *AccountService) updateAccountV2NoCommand(
 		req.Avatar,
 		req.OrganizationRole,
 		req.EnvironmentRoles,
-		nil,
+		req.Disabled,
 	)
 	if err != nil {
 		if errors.Is(err, v2as.ErrAccountNotFound) || errors.Is(err, v2as.ErrAccountUnexpectedAffectedRows) {

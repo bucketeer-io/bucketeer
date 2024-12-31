@@ -143,8 +143,7 @@ func (w *evalEvtWriter) Write(
 	fs, err := w.writer.AppendRows(ctx, evalEvents)
 	if err != nil {
 		subscriberHandledCounter.WithLabelValues(subscriberEvaluationEventDWH, codeFailedToAppendEvaluationEvents).Inc()
-		w.logger.Error(
-			"failed to append rows to evaluation event",
+		w.logger.Error("Failed to append rows to evaluation_event table",
 			zap.Error(err),
 		)
 	}
@@ -160,9 +159,8 @@ func (w *evalEvtWriter) Write(
 		fails[id] = f
 	}
 	if len(failedToAppendMap) > 0 {
-		w.logger.Error(
-			"failed to append rows in the bigquery",
-			zap.Any("goalEvents", failedToAppendMap),
+		w.logger.Error("Failed to append evaluation events",
+			zap.Any("evaluationEvents", failedToAppendMap),
 		)
 	}
 	return fails

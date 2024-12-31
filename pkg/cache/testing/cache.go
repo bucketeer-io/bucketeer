@@ -90,7 +90,7 @@ func (c *inMemoryCache) PFCount(keys ...string) (int64, error) {
 	return 0, nil
 }
 
-func (c *inMemoryCache) PFMerge(dest string, keys ...string) error {
+func (c *inMemoryCache) PFMerge(dest string, expiration time.Duration, keys ...string) error {
 	// TODO: implement
 	return nil
 }
@@ -100,7 +100,7 @@ func (c *inMemoryCache) Expire(key string, expiration time.Duration) (bool, erro
 	return true, nil
 }
 
-func (c *inMemoryCache) Pipeline() redis.PipeClient {
+func (c *inMemoryCache) Pipeline(tx bool) redis.PipeClient {
 	// TODO: implement
 	return nil
 }

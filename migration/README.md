@@ -24,6 +24,7 @@ Once you are logged in, you can make your changes in the Database.
 
 ## 2- Creating Migration File
 
+### 2.1 - Generate Migration File
 To create the migration file, you must port-forward the `localenv-mysql` service before creating it.
 
 ```shell
@@ -43,6 +44,20 @@ For the migration file name, please use one of the following prefixes.
 - **drop:** Used when you drop a table. E.g. `drop_xxx_table`
 
 After creating it, ensure you see the new file in the `migration/mysql` directory.
+
+### 2.2 - Create Migration File manually
+In case no structure changes are executed, you can create the migration file manually.
+
+Create a new migration file
+```shell
+atlas migrate new <file_name> --dir "file://migration/mysql"
+```
+
+Edit the migration file then update atlas migration files hash
+```shell
+atlas migrate hash --dir "file://migration/mysql"
+```
+If the migration sql statement changed again, rerun the above command to update the hash.
 
 ## 3- Pushing Migration File
 

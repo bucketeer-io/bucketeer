@@ -21,6 +21,9 @@ import (
 	"sort"
 	"time"
 
+	"github.com/jinzhu/copier"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	proto "github.com/bucketeer-io/bucketeer/proto/notification"
 )
 
@@ -67,6 +70,29 @@ func ID(recipient *proto.Recipient) (string, error) {
 func SlackChannelRecipientID(webhookURL string) string {
 	hashed := sha256.Sum256([]byte(webhookURL))
 	return hex.EncodeToString(hashed[:])
+}
+
+func (s *Subscription) UpdateSubscription(
+	name *wrapperspb.StringValue,
+	sourceTypes []proto.Subscription_SourceType,
+	disabled *wrapperspb.BoolValue,
+) (*Subscription, error) {
+	updated := &Subscription{}
+	if err := copier.Copy(updated, s); err != nil {
+		return nil, err
+	}
+
+	if name != nil {
+		updated.Name = name.Value
+	}
+	if len(sourceTypes) > 0 {
+		updated.SourceTypes = sourceTypes
+	}
+	if disabled != nil {
+		updated.Disabled = disabled.Value
+	}
+	updated.UpdatedAt = time.Now().Unix()
+	return updated, nil
 }
 
 func (s *Subscription) Enable() error {

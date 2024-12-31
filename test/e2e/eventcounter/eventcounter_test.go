@@ -71,6 +71,7 @@ var (
 	gatewayCert          = flag.String("gateway-cert", "", "Gateway crt file")
 	serviceTokenPath     = flag.String("service-token", "", "Service token path")
 	environmentNamespace = flag.String("environment-namespace", "", "Environment namespace")
+	organizationID       = flag.String("organization-id", "", "Organization ID")
 	testID               = flag.String("test-id", "", "test ID")
 	compareFloatOpt      = cmpopts.EquateApprox(0, 0.0001)
 )
@@ -1494,11 +1495,6 @@ func TestGetEvaluationTimeseriesCount(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to get feature. ID: %s. Error: %v", featureID, err)
 	}
-
-	// Wait for the event-persister-dwh subscribe to the pubsub
-	// The batch runs every minute, so we give a extra 10 seconds
-	// to ensure that it will subscribe correctly.
-	time.Sleep(70 * time.Second)
 
 	// Register variation
 	registerEvaluationEvent(t, featureID, f.Version, userIDs[0], f.Variations[0].Id, tag, nil)

@@ -106,47 +106,6 @@ func (s *AccountService) makeProjectSet(projects []*environmentproto.Project) ma
 	return projectSet
 }
 
-func (s *AccountService) listProjects(ctx context.Context) ([]*environmentproto.Project, error) {
-	projects := []*environmentproto.Project{}
-	cursor := ""
-	for {
-		resp, err := s.environmentClient.ListProjects(ctx, &environmentproto.ListProjectsRequest{
-			PageSize: listRequestPageSize,
-			Cursor:   cursor,
-		})
-		if err != nil {
-			return nil, err
-		}
-		projects = append(projects, resp.Projects...)
-		projectSize := len(resp.Projects)
-		if projectSize == 0 || projectSize < listRequestPageSize {
-			return projects, nil
-		}
-		cursor = resp.Cursor
-	}
-}
-
-func (s *AccountService) listEnvironments(ctx context.Context) ([]*environmentproto.EnvironmentV2, error) {
-	var environments []*environmentproto.EnvironmentV2
-	cursor := ""
-	for {
-		resp, err := s.environmentClient.ListEnvironmentsV2(ctx, &environmentproto.ListEnvironmentsV2Request{
-			PageSize: listRequestPageSize,
-			Cursor:   cursor,
-			Archived: wrapperspb.Bool(false),
-		})
-		if err != nil {
-			return nil, err
-		}
-		environments = append(environments, resp.Environments...)
-		environmentSize := len(resp.Environments)
-		if environmentSize == 0 || environmentSize < listRequestPageSize {
-			return environments, nil
-		}
-		cursor = resp.Cursor
-	}
-}
-
 func (s *AccountService) listProjectsByOrganizationID(
 	ctx context.Context,
 	organizationID string,

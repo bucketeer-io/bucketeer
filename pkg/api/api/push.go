@@ -18,8 +18,10 @@ import (
 	"context"
 
 	"go.uber.org/zap"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/bucketeer-io/bucketeer/pkg/log"
+	"github.com/bucketeer-io/bucketeer/pkg/role"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
 	pushproto "github.com/bucketeer-io/bucketeer/proto/push"
@@ -90,6 +92,13 @@ func (s *grpcGatewayService) CreatePush(
 		)
 		return nil, err
 	}
+
+	headerMetaData := metadata.New(map[string]string{
+		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
+		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
+		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 	res, err := s.pushClient.CreatePush(
 		ctx,
 		&pushproto.CreatePushRequest{
@@ -176,6 +185,13 @@ func (s *grpcGatewayService) UpdatePush(
 		)
 		return nil, err
 	}
+
+	headerMetaData := metadata.New(map[string]string{
+		role.APIKeyTokenMDKey:      envAPIKey.ApiKey.ApiKey,
+		role.APIKeyMaintainerMDKey: envAPIKey.ApiKey.Maintainer,
+		role.APIKeyNameMDKey:       envAPIKey.ApiKey.Name,
+	})
+	ctx = metadata.NewOutgoingContext(ctx, headerMetaData)
 
 	if req.Deleted != nil && req.Deleted.Value {
 		_, err := s.pushClient.DeletePush(

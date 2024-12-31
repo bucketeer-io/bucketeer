@@ -274,26 +274,6 @@ func (mr *MockClientMockRecorder) GetAPIKey(ctx, in any, opts ...any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAPIKey", reflect.TypeOf((*MockClient)(nil).GetAPIKey), varargs...)
 }
 
-// GetAPIKeyBySearchingAllEnvironments mocks base method.
-func (m *MockClient) GetAPIKeyBySearchingAllEnvironments(ctx context.Context, in *account.GetAPIKeyBySearchingAllEnvironmentsRequest, opts ...grpc.CallOption) (*account.GetAPIKeyBySearchingAllEnvironmentsResponse, error) {
-	m.ctrl.T.Helper()
-	varargs := []any{ctx, in}
-	for _, a := range opts {
-		varargs = append(varargs, a)
-	}
-	ret := m.ctrl.Call(m, "GetAPIKeyBySearchingAllEnvironments", varargs...)
-	ret0, _ := ret[0].(*account.GetAPIKeyBySearchingAllEnvironmentsResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAPIKeyBySearchingAllEnvironments indicates an expected call of GetAPIKeyBySearchingAllEnvironments.
-func (mr *MockClientMockRecorder) GetAPIKeyBySearchingAllEnvironments(ctx, in any, opts ...any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAPIKeyBySearchingAllEnvironments", reflect.TypeOf((*MockClient)(nil).GetAPIKeyBySearchingAllEnvironments), varargs...)
-}
-
 // GetAccountV2 mocks base method.
 func (m *MockClient) GetAccountV2(ctx context.Context, in *account.GetAccountV2Request, opts ...grpc.CallOption) (*account.GetAccountV2Response, error) {
 	m.ctrl.T.Helper()
@@ -332,6 +312,26 @@ func (mr *MockClientMockRecorder) GetAccountV2ByEnvironmentID(ctx, in any, opts 
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccountV2ByEnvironmentID", reflect.TypeOf((*MockClient)(nil).GetAccountV2ByEnvironmentID), varargs...)
+}
+
+// GetEnvironmentAPIKey mocks base method.
+func (m *MockClient) GetEnvironmentAPIKey(ctx context.Context, in *account.GetEnvironmentAPIKeyRequest, opts ...grpc.CallOption) (*account.GetEnvironmentAPIKeyResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetEnvironmentAPIKey", varargs...)
+	ret0, _ := ret[0].(*account.GetEnvironmentAPIKeyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEnvironmentAPIKey indicates an expected call of GetEnvironmentAPIKey.
+func (mr *MockClientMockRecorder) GetEnvironmentAPIKey(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEnvironmentAPIKey", reflect.TypeOf((*MockClient)(nil).GetEnvironmentAPIKey), varargs...)
 }
 
 // GetMe mocks base method.
@@ -432,6 +432,26 @@ func (mr *MockClientMockRecorder) ListAccountsV2(ctx, in any, opts ...any) *gomo
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAccountsV2", reflect.TypeOf((*MockClient)(nil).ListAccountsV2), varargs...)
+}
+
+// UpdateAPIKey mocks base method.
+func (m *MockClient) UpdateAPIKey(ctx context.Context, in *account.UpdateAPIKeyRequest, opts ...grpc.CallOption) (*account.UpdateAPIKeyResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UpdateAPIKey", varargs...)
+	ret0, _ := ret[0].(*account.UpdateAPIKeyResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateAPIKey indicates an expected call of UpdateAPIKey.
+func (mr *MockClientMockRecorder) UpdateAPIKey(ctx, in any, opts ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAPIKey", reflect.TypeOf((*MockClient)(nil).UpdateAPIKey), varargs...)
 }
 
 // UpdateAccountV2 mocks base method.

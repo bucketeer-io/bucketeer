@@ -140,6 +140,7 @@ message Event {
     APIKEY_NAME_CHANGED = 401;
     APIKEY_ENABLED = 402;
     APIKEY_DISABLED = 403;
+    APIKEY_CHANGED = 404;
     SEGMENT_CREATED = 500;
     SEGMENT_DELETED = 501;
     SEGMENT_NAME_CHANGED = 502;
@@ -193,6 +194,7 @@ message Event {
     SUBSCRIPTION_SOURCE_TYPE_ADDED = 1004;
     SUBSCRIPTION_SOURCE_TYPE_DELETED = 1005;
     SUBSCRIPTION_RENAMED = 1006;
+    SUBSCRIPTION_UPDATED = 1007;
     ADMIN_SUBSCRIPTION_CREATED = 1100;
     ADMIN_SUBSCRIPTION_DELETED = 1101;
     ADMIN_SUBSCRIPTION_ENABLED = 1102;
@@ -251,9 +253,16 @@ message Event {
 }
 
 message Editor {
+  message PublicAPIEditor {
+    string token = 1;
+    string maintainer = 2;
+    string name = 3;
+  }
   string email = 1;
   reserved 2;  // bucketeer.account.Account.Role role = 2 [deprecated = true];
   bool is_admin = 3;
+  string name = 4;
+  PublicAPIEditor public_api_editor = 5;
 }
 
 message Options {
@@ -655,6 +664,10 @@ message APIKeyCreatedEvent {
   string api_key = 8;
 }
 
+message APIKeyChangedEvent {
+  string id = 1;
+}
+
 message APIKeyNameChangedEvent {
   string id = 1;
   string name = 2;
@@ -937,6 +950,13 @@ message SubscriptionSourceTypesDeletedEvent {
 
 message SubscriptionRenamedEvent {
   string name = 1;
+}
+
+message SubscriptionUpdatedEvent {
+  string id = 1;
+  google.protobuf.StringValue name = 2;
+  repeated bucketeer.notification.Subscription.SourceType source_types = 3;
+  google.protobuf.BoolValue disabled = 4;
 }
 
 message AdminSubscriptionCreatedEvent {

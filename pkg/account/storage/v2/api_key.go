@@ -23,6 +23,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/account/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	proto "github.com/bucketeer-io/bucketeer/proto/account"
+	envproto "github.com/bucketeer-io/bucketeer/proto/environment"
 )
 
 var (
@@ -40,6 +41,12 @@ var (
 	selectAPIKeyV2SQLQuery string
 	//go:embed sql/api_key_v2/select_api_key_v2_count.sql
 	selectAPIKeyV2CountSQLQuery string
+	//go:embed sql/api_key_v2/select_api_key_v2_by_api_key.sql
+	selectAPIKeyV2ByAPIKeySQLQuery string
+	//go:embed sql/api_key_v2/select_environment_api_key_v2.sql
+	selectEnvironmentAPIKeySQLQuery string
+	//go:embed sql/api_key_v2/select_all_environment_api_keys_v2.sql
+	selectAllEnvironmentAPIKeysSQLQuery string
 	//go:embed sql/api_key_v2/select_api_key_v2_by_id.sql
 	selectAPIKeyV2ByIDSQLQuery string
 )
@@ -75,6 +82,8 @@ func (s *accountStorage) UpdateAPIKey(ctx context.Context, k *domain.APIKey, env
 		k.Name,
 		int32(k.Role),
 		k.Disabled,
+		k.Maintainer,
+		k.Description,
 		k.UpdatedAt,
 		k.Id,
 		environmentID,
@@ -107,15 +116,161 @@ func (s *accountStorage) GetAPIKey(ctx context.Context, id, environmentID string
 		&apiKey.Disabled,
 		&apiKey.CreatedAt,
 		&apiKey.UpdatedAt,
+		&apiKey.Description,
+		&apiKey.ApiKey,
+		&apiKey.Maintainer,
 	)
 	if err != nil {
-		if err == mysql.ErrNoRows {
+		if errors.Is(err, mysql.ErrNoRows) {
 			return nil, ErrAPIKeyNotFound
 		}
 		return nil, err
 	}
 	apiKey.Role = proto.APIKey_Role(role)
 	return &domain.APIKey{APIKey: &apiKey}, nil
+}
+
+func (s *accountStorage) GetAPIKeyByAPIKey(
+	ctx context.Context,
+	apiKey string,
+	environmentID string,
+) (*domain.APIKey, error) {
+	apiKeyDB := proto.APIKey{}
+	var role int32
+	err := s.qe(ctx).QueryRowContext(
+		ctx,
+		selectAPIKeyV2ByAPIKeySQLQuery,
+		apiKey,
+		environmentID,
+	).Scan(
+		&apiKeyDB.Id,
+		&apiKeyDB.Name,
+		&role,
+		&apiKeyDB.Disabled,
+		&apiKeyDB.CreatedAt,
+		&apiKeyDB.UpdatedAt,
+		&apiKeyDB.Description,
+		&apiKeyDB.ApiKey,
+		&apiKeyDB.Maintainer,
+	)
+	if err != nil {
+		if errors.Is(err, mysql.ErrNoRows) {
+			return nil, ErrAPIKeyNotFound
+		}
+		return nil, err
+	}
+	apiKeyDB.Role = proto.APIKey_Role(role)
+	return &domain.APIKey{APIKey: &apiKeyDB}, nil
+}
+
+func (s *accountStorage) ListAllEnvironmentAPIKeys(
+	ctx context.Context,
+) ([]*domain.EnvironmentAPIKey, error) {
+	rows, err := s.qe(ctx).QueryContext(ctx, selectAllEnvironmentAPIKeysSQLQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	envApiKeys := []*domain.EnvironmentAPIKey{}
+	for rows.Next() {
+		apiKeyDB := proto.APIKey{}
+		envDB := envproto.EnvironmentV2{}
+		envApiKeyDB := proto.EnvironmentAPIKey{}
+		var role int32
+		err := rows.Scan(
+			// API Key columns
+			&apiKeyDB.Id,
+			&apiKeyDB.Name,
+			&role,
+			&apiKeyDB.Disabled,
+			&apiKeyDB.CreatedAt,
+			&apiKeyDB.UpdatedAt,
+			&apiKeyDB.Description,
+			&apiKeyDB.ApiKey,
+			&apiKeyDB.Maintainer,
+
+			// Environment columns
+			&envDB.Id,
+			&envDB.Name,
+			&envDB.UrlCode,
+			&envDB.Description,
+			&envDB.ProjectId,
+			&envDB.OrganizationId,
+			&envDB.Archived,
+			&envDB.RequireComment,
+			&envDB.CreatedAt,
+			&envDB.UpdatedAt,
+
+			// Project columns
+			&envApiKeyDB.ProjectId,
+			&envApiKeyDB.ProjectUrlCode,
+			&envApiKeyDB.EnvironmentDisabled,
+		)
+		if err != nil {
+			return nil, err
+		}
+		envApiKeyDB.ApiKey = &apiKeyDB
+		envApiKeyDB.ApiKey.Role = proto.APIKey_Role(role)
+		envApiKeyDB.Environment = &envDB
+		envApiKeys = append(envApiKeys, &domain.EnvironmentAPIKey{EnvironmentAPIKey: &envApiKeyDB})
+	}
+	if rows.Err() != nil {
+		return nil, err
+	}
+	return envApiKeys, nil
+}
+
+func (s *accountStorage) GetEnvironmentAPIKey(
+	ctx context.Context,
+	apiKey string,
+) (*domain.EnvironmentAPIKey, error) {
+	apiKeyDB := proto.APIKey{}
+	envDB := envproto.EnvironmentV2{}
+	envApiKeyDB := proto.EnvironmentAPIKey{}
+	var role int32
+	err := s.qe(ctx).QueryRowContext(
+		ctx,
+		selectEnvironmentAPIKeySQLQuery,
+		apiKey,
+	).Scan(
+		// API Key columns
+		&apiKeyDB.Id,
+		&apiKeyDB.Name,
+		&role,
+		&apiKeyDB.Disabled,
+		&apiKeyDB.CreatedAt,
+		&apiKeyDB.UpdatedAt,
+		&apiKeyDB.Description,
+		&apiKeyDB.ApiKey,
+		&apiKeyDB.Maintainer,
+
+		// Environment columns
+		&envDB.Id,
+		&envDB.Name,
+		&envDB.UrlCode,
+		&envDB.Description,
+		&envDB.ProjectId,
+		&envDB.OrganizationId,
+		&envDB.Archived,
+		&envDB.RequireComment,
+		&envDB.CreatedAt,
+		&envDB.UpdatedAt,
+
+		// Project columns
+		&envApiKeyDB.ProjectId,
+		&envApiKeyDB.ProjectUrlCode,
+		&envApiKeyDB.EnvironmentDisabled,
+	)
+	if err != nil {
+		if errors.Is(err, mysql.ErrNoRows) {
+			return nil, ErrAPIKeyNotFound
+		}
+		return nil, err
+	}
+	envApiKeyDB.ApiKey = &apiKeyDB
+	envApiKeyDB.ApiKey.Role = proto.APIKey_Role(role)
+	envApiKeyDB.Environment = &envDB
+	return &domain.EnvironmentAPIKey{EnvironmentAPIKey: &envApiKeyDB}, nil
 }
 
 func (s *accountStorage) ListAPIKeys(
@@ -144,6 +299,10 @@ func (s *accountStorage) ListAPIKeys(
 			&apiKey.Disabled,
 			&apiKey.CreatedAt,
 			&apiKey.UpdatedAt,
+			&apiKey.Description,
+			&apiKey.EnvironmentName,
+			&apiKey.ApiKey,
+			&apiKey.Maintainer,
 		)
 		if err != nil {
 			return nil, 0, 0, err

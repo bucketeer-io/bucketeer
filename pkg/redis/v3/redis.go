@@ -81,11 +81,11 @@ type Client interface {
 	Set(key string, val interface{}, expiration time.Duration) error
 	PFAdd(key string, els ...string) (int64, error)
 	PFCount(keys ...string) (int64, error)
-	PFMerge(dest string, keys ...string) error
+	PFMerge(dest string, expiration time.Duration, keys ...string) error
 	IncrByFloat(key string, value float64) (float64, error)
 	Del(key string) error
 	Incr(key string) (int64, error)
-	Pipeline() PipeClient
+	Pipeline(tx bool) PipeClient
 	Expire(key string, expiration time.Duration) (bool, error)
 	SetNX(ctx context.Context, key string, value interface{}, expiration time.Duration) (bool, error)
 	Eval(ctx context.Context, script string, keys []string, args ...interface{}) *goredis.Cmd
@@ -112,6 +112,7 @@ type PipeClient interface {
 }
 
 type pipeClient struct {
+	ctx    context.Context
 	pipe   goredis.Pipeliner
 	cmds   []string
 	opts   *options
@@ -437,11 +438,24 @@ func (c *client) PFAdd(key string, els ...string) (int64, error) {
 	return result, err
 }
 
-func (c *client) PFMerge(dest string, keys ...string) error {
+func (c *client) PFMerge(dest string, expiration time.Duration, keys ...string) error {
 	startTime := time.Now()
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName).Inc()
 
 	var err error
+	ctx := context.TODO()
+
+	// Metrics reporting deferred at the end of the function
+	defer func() {
+		code := redis.CodeFail
+		if err == nil {
+			code = redis.CodeSuccess
+		}
+		// Reporting metrics
+		redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName, code).Inc()
+		redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName, code).Observe(
+			time.Since(startTime).Seconds())
+	}()
 
 	if c.clientType == ClientTypeCluster {
 		// Cluster-aware approach
@@ -463,7 +477,7 @@ func (c *client) PFMerge(dest string, keys ...string) error {
 		randomHashSlot := c.randomID()
 
 		// Special handling of dest variable if it already exists
-		destData, err := c.rc.Get(context.TODO(), dest).Result()
+		destData, err := c.rc.Get(ctx, dest).Result()
 		if err != nil && !errors.Is(err, goredis.Nil) {
 			return err
 		}
@@ -479,7 +493,7 @@ func (c *client) PFMerge(dest string, keys ...string) error {
 			pairs = append(pairs, k, hllObject)
 		}
 		if len(pairs) > 0 {
-			err = c.rc.MSet(context.TODO(), pairs...).Err()
+			err = c.rc.MSet(ctx, pairs...).Err()
 			if err != nil {
 				return err
 			}
@@ -487,47 +501,47 @@ func (c *client) PFMerge(dest string, keys ...string) error {
 
 		// Do regular PFMERGE operation and store value in random key in {RandomHash}
 		tmpDest := c.randomHashSlotKey(randomHashSlot)
-		_, err = c.rc.PFMerge(context.TODO(), tmpDest, allK...).Result()
+		_, err = c.rc.PFMerge(ctx, tmpDest, allK...).Result()
 		if err != nil {
 			return err
 		}
 
 		// Do GET and SET so that result will be stored in the destination object anywhere in the cluster
-		parsedDest, err := c.rc.Get(context.TODO(), tmpDest).Result()
+		parsedDest, err := c.rc.Get(ctx, tmpDest).Result()
 		if err != nil {
 			return err
 		}
-		err = c.rc.Set(context.TODO(), dest, parsedDest, 0).Err()
-		if err != nil {
-			return err
-		}
-
-		// Cleanup tmp variables
-		err = c.rc.Del(context.TODO(), tmpDest).Err()
+		err = c.rc.Set(ctx, dest, parsedDest, expiration).Err()
 		if err != nil {
 			return err
 		}
 
+		// Cleanup temporary keys
+		pipe := c.rc.Pipeline()
 		for _, k := range allK {
-			err = c.rc.Del(context.TODO(), k).Err()
-			if err != nil {
-				return err
-			}
+			pipe.Del(ctx, k)
+		}
+		pipe.Del(ctx, tmpDest)
+
+		// Execute the pipeline
+		_, err = pipe.Exec(ctx)
+		if err != nil {
+			return err
 		}
 	} else {
 		// Standard non-cluster approach
-		_, err = c.rc.PFMerge(context.TODO(), dest, keys...).Result()
-	}
+		// We use transaction here to ensure the expiration will be set when merging the key
+		pipe := c.rc.TxPipeline()
+		pipe.PFMerge(ctx, dest, keys...)
+		pipe.Expire(ctx, dest, expiration)
 
-	code := redis.CodeFail
-	if err == nil {
-		code = redis.CodeSuccess
+		// Execute the pipeline
+		_, err = pipe.Exec(ctx)
+		if err != nil {
+			return err
+		}
 	}
-
-	redis.HandledCounter.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName, code).Inc()
-	redis.HandledHistogram.WithLabelValues(clientVersion, c.opts.serverName, pfMergeCmdName, code).Observe(
-		time.Since(startTime).Seconds())
-	return err
+	return nil
 }
 
 func (c *client) randomID() string {
@@ -661,9 +675,17 @@ func (c *client) Eval(ctx context.Context, script string, keys []string, args ..
 	return c.rc.Eval(context.TODO(), script, keys, args...)
 }
 
-func (c *client) Pipeline() PipeClient {
+func (c *client) Pipeline(tx bool) PipeClient {
+	var pipeliner goredis.Pipeliner
+	if tx {
+		// All commands in the transaction will either all succeed or none will be applied if an error occurs.
+		pipeliner = c.rc.TxPipeline()
+	} else {
+		pipeliner = c.rc.Pipeline()
+	}
 	return &pipeClient{
-		pipe:   c.rc.Pipeline(),
+		ctx:    context.TODO(),
+		pipe:   pipeliner,
 		cmds:   []string{},
 		opts:   c.opts,
 		logger: c.logger,
@@ -672,17 +694,17 @@ func (c *client) Pipeline() PipeClient {
 
 func (c *pipeClient) Incr(key string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, incrCmdName)
-	return c.pipe.Incr(context.TODO(), key)
+	return c.pipe.Incr(c.ctx, key)
 }
 
 func (c *pipeClient) PFAdd(key string, els ...string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, pfAddCmdName)
-	return c.pipe.PFAdd(context.TODO(), key, els)
+	return c.pipe.PFAdd(c.ctx, key, els)
 }
 
 func (c *pipeClient) TTL(key string) *goredis.DurationCmd {
 	c.cmds = append(c.cmds, ttlCmdName)
-	return c.pipe.TTL(context.TODO(), key)
+	return c.pipe.TTL(c.ctx, key)
 }
 
 func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
@@ -692,7 +714,7 @@ func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
 		cmdName += fmt.Sprintf("_%s", cmd)
 	}
 	redis.ReceivedCounter.WithLabelValues(clientVersion, c.opts.serverName, cmdName).Inc()
-	v, err := c.pipe.Exec(context.TODO())
+	v, err := c.pipe.Exec(c.ctx)
 	code := redis.CodeFail
 	switch err {
 	case nil:
@@ -708,17 +730,17 @@ func (c *pipeClient) Exec() ([]goredis.Cmder, error) {
 
 func (c *pipeClient) PFCount(keys ...string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, pfCountCmdName)
-	return c.pipe.PFCount(context.TODO(), keys...)
+	return c.pipe.PFCount(c.ctx, keys...)
 }
 
 func (c *pipeClient) Get(key string) *goredis.StringCmd {
 	c.cmds = append(c.cmds, getCmdName)
-	return c.pipe.Get(context.TODO(), key)
+	return c.pipe.Get(c.ctx, key)
 }
 
 func (c *pipeClient) Del(key string) *goredis.IntCmd {
 	c.cmds = append(c.cmds, pfCountCmdName)
-	return c.pipe.Del(context.TODO(), key)
+	return c.pipe.Del(c.ctx, key)
 }
 
 func (c *client) Dump(key string) (string, error) {

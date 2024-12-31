@@ -431,6 +431,11 @@
                 "id": 9,
                 "name": "description",
                 "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "environment_name",
+                "type": "string"
               }
             ]
           },
@@ -941,6 +946,18 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 3
+              },
+              {
+                "name": "ROLE",
+                "integer": 4
+              },
+              {
+                "name": "ENVIRONMENT",
+                "integer": 5
+              },
+              {
+                "name": "STATE",
+                "integer": 6
               }
             ]
           },
@@ -1332,6 +1349,11 @@
                 "id": 20,
                 "name": "avatar",
                 "type": "AccountV2Avatar"
+              },
+              {
+                "id": 21,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue"
               }
             ],
             "messages": [
@@ -1694,7 +1716,30 @@
               {
                 "id": 8,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
+              },
+              {
+                "id": 9,
+                "name": "environment_ids",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 10,
+                "name": "organization_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -1723,17 +1768,17 @@
             ]
           },
           {
-            "name": "GetAPIKeyBySearchingAllEnvironmentsRequest",
+            "name": "GetEnvironmentAPIKeyRequest",
             "fields": [
               {
-                "id": 1,
-                "name": "id",
+                "id": 2,
+                "name": "api_key",
                 "type": "string"
               }
             ]
           },
           {
-            "name": "GetAPIKeyBySearchingAllEnvironmentsResponse",
+            "name": "GetEnvironmentAPIKeyResponse",
             "fields": [
               {
                 "id": 1,
@@ -1835,6 +1880,49 @@
           },
           {
             "name": "DeleteSearchFilterResponse"
+          },
+          {
+            "name": "UpdateAPIKeyRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 4,
+                "name": "description",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 5,
+                "name": "role",
+                "type": "APIKey.Role"
+              },
+              {
+                "id": 6,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 7,
+                "name": "maintainer",
+                "type": "google.protobuf.StringValue"
+              }
+            ]
+          },
+          {
+            "name": "UpdateAPIKeyResponse"
           }
         ],
         "services": [
@@ -4130,12 +4218,8 @@
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/account/get_api_key"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },
@@ -4261,12 +4345,8 @@
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/account/list_api_keys"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },
@@ -4384,20 +4464,16 @@
                 ]
               },
               {
-                "name": "GetAPIKeyBySearchingAllEnvironments",
-                "in_type": "GetAPIKeyBySearchingAllEnvironmentsRequest",
-                "out_type": "GetAPIKeyBySearchingAllEnvironmentsResponse",
+                "name": "GetEnvironmentAPIKey",
+                "in_type": "GetEnvironmentAPIKeyRequest",
+                "out_type": "GetEnvironmentAPIKeyResponse",
                 "options": [
                   {
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/account/get_environment_api_key"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },
@@ -5041,6 +5117,182 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "UpdateAPIKey",
+                "in_type": "UpdateAPIKeyRequest",
+                "out_type": "UpdateAPIKeyResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/account/update_api_key"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update API Key"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update an API Key. To call this API, you need an `ADMIN` role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "API Key"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.account.update_api_key"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "403"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request does not have permission to access the resource."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":7,\"message\":\"not authorized\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -5051,6 +5303,9 @@
           },
           {
             "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "google/api/field_behavior.proto"
           },
           {
             "path": "protoc-gen-openapiv2/options/annotations.proto"
@@ -14517,6 +14772,10 @@
                 "integer": 403
               },
               {
+                "name": "APIKEY_CHANGED",
+                "integer": 404
+              },
+              {
                 "name": "SEGMENT_CREATED",
                 "integer": 500
               },
@@ -14753,6 +15012,10 @@
                 "integer": 1006
               },
               {
+                "name": "SUBSCRIPTION_UPDATED",
+                "integer": 1007
+              },
+              {
                 "name": "ADMIN_SUBSCRIPTION_CREATED",
                 "integer": 1100
               },
@@ -14980,10 +15243,42 @@
                 "id": 3,
                 "name": "is_admin",
                 "type": "bool"
+              },
+              {
+                "id": 4,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "public_api_editor",
+                "type": "PublicAPIEditor"
               }
             ],
             "reserved_ids": [
               2
+            ],
+            "messages": [
+              {
+                "name": "PublicAPIEditor",
+                "fields": [
+                  {
+                    "id": 1,
+                    "name": "token",
+                    "type": "string"
+                  },
+                  {
+                    "id": 2,
+                    "name": "maintainer",
+                    "type": "string"
+                  },
+                  {
+                    "id": 3,
+                    "name": "name",
+                    "type": "string"
+                  }
+                ]
+              }
             ]
           },
           {
@@ -16331,6 +16626,16 @@
             ]
           },
           {
+            "name": "APIKeyChangedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              }
+            ]
+          },
+          {
             "name": "APIKeyNameChangedEvent",
             "fields": [
               {
@@ -17225,6 +17530,32 @@
                 "id": 1,
                 "name": "name",
                 "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "SubscriptionUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 3,
+                "name": "source_types",
+                "type": "bucketeer.notification.Subscription.SourceType",
+                "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue"
               }
             ]
           },
@@ -25050,6 +25381,178 @@
             ]
           },
           {
+            "name": "CreateAccountV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "avatar_image_url",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "organization_role",
+                "type": "account.AccountV2.Role.Organization"
+              },
+              {
+                "id": 6,
+                "name": "environment_roles",
+                "type": "account.AccountV2.EnvironmentRole",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "first_name",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "last_name",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "language",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "CreateAccountV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "account",
+                "type": "account.AccountV2"
+              }
+            ]
+          },
+          {
+            "name": "UpdateAccountV2Request",
+            "fields": [
+              {
+                "id": 1,
+                "name": "email",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "organization_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 4,
+                "name": "avatar_image_url",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 5,
+                "name": "organization_role",
+                "type": "account.UpdateAccountV2Request.OrganizationRoleValue"
+              },
+              {
+                "id": 6,
+                "name": "environment_roles",
+                "type": "account.AccountV2.EnvironmentRole",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "first_name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 8,
+                "name": "last_name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 9,
+                "name": "language",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 10,
+                "name": "last_seen",
+                "type": "google.protobuf.Int64Value"
+              },
+              {
+                "id": 11,
+                "name": "avatar",
+                "type": "account.UpdateAccountV2Request.AccountV2Avatar"
+              },
+              {
+                "id": 12,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "title",
+                        "value": "disabled"
+                      },
+                      {
+                        "name": "description",
+                        "value": "if disabled is true, the account will be disabled. If false, the account will be enabled."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 13,
+                "name": "deleted",
+                "type": "google.protobuf.BoolValue",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "title",
+                        "value": "deleted"
+                      },
+                      {
+                        "name": "description",
+                        "value": "if true, the account will be deleted and other fields will be ignored."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "UpdateAccountV2Response",
+            "fields": [
+              {
+                "id": 1,
+                "name": "account",
+                "type": "account.AccountV2"
+              }
+            ]
+          },
+          {
             "name": "GetAccountV2Request",
             "fields": [
               {
@@ -26159,6 +26662,140 @@
                 ]
               },
               {
+                "name": "CreateAccountV2",
+                "in_type": "CreateAccountV2Request",
+                "out_type": "CreateAccountV2Response",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/account"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a new Account. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Account"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.account.create"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "UpdateAccountV2",
+                "in_type": "UpdateAccountV2Request",
+                "out_type": "UpdateAccountV2Response",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/account/{organization_id}/{email}"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update an Account. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Account"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.account.update"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
                 "name": "GetAccountV2",
                 "in_type": "GetAccountV2Request",
                 "out_type": "GetAccountV2Response",
@@ -26177,7 +26814,7 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Get"
+                        "value": "Get by Organization ID"
                       },
                       {
                         "name": "description",
@@ -26240,7 +26877,7 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Get"
+                        "value": "Get by Environment ID"
                       },
                       {
                         "name": "description",
@@ -26303,7 +26940,7 @@
                     "aggregated": [
                       {
                         "name": "summary",
-                        "value": "Get"
+                        "value": "Get Service Account"
                       },
                       {
                         "name": "description",
@@ -27465,12 +28102,24 @@
               {
                 "id": 2,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -27530,6 +28179,17 @@
                 "id": 9,
                 "name": "environment_id",
                 "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "organization_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -27608,12 +28268,58 @@
               {
                 "id": 2,
                 "name": "command",
-                "type": "CreateSubscriptionCommand"
+                "type": "CreateSubscriptionCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "name",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 5,
+                "name": "source_types",
+                "type": "Subscription.SourceType",
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 6,
+                "name": "recipient",
+                "type": "Recipient",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -27621,7 +28327,14 @@
             ]
           },
           {
-            "name": "CreateSubscriptionResponse"
+            "name": "CreateSubscriptionResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "subscription",
+                "type": "Subscription"
+              }
+            ]
           },
           {
             "name": "DeleteSubscriptionRequest",
@@ -27634,7 +28347,13 @@
               {
                 "id": 3,
                 "name": "command",
-                "type": "DeleteSubscriptionCommand"
+                "type": "DeleteSubscriptionCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  }
+                ]
               },
               {
                 "id": 4,
@@ -27707,27 +28426,115 @@
               {
                 "id": 2,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 3,
                 "name": "add_source_types_command",
-                "type": "AddSourceTypesCommand"
+                "type": "AddSourceTypesCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated. use source_types instead."
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 4,
                 "name": "delete_source_types_command",
-                "type": "DeleteSourceTypesCommand"
+                "type": "DeleteSourceTypesCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated. use source_types instead."
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 5,
                 "name": "rename_subscription_command",
-                "type": "RenameSubscriptionCommand"
+                "type": "RenameSubscriptionCommand",
+                "options": [
+                  {
+                    "name": "deprecated",
+                    "value": "true"
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "description",
+                        "value": "deprecated. use name instead."
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "id": 6,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 7,
+                "name": "source_types",
+                "type": "Subscription.SourceType",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 9,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "title",
+                        "value": "disabled"
+                      },
+                      {
+                        "name": "description",
+                        "value": "if true, the subscription is disabled, otherwise enabled."
+                      }
+                    ]
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -27735,7 +28542,14 @@
             ]
           },
           {
-            "name": "UpdateSubscriptionResponse"
+            "name": "UpdateSubscriptionResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "subscription",
+                "type": "Subscription"
+              }
+            ]
           }
         ],
         "services": [
@@ -27785,12 +28599,256 @@
               {
                 "name": "GetSubscription",
                 "in_type": "GetSubscriptionRequest",
-                "out_type": "GetSubscriptionResponse"
+                "out_type": "GetSubscriptionResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/subscription"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get subscription."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "subscription"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.subscription.get"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "ListSubscriptions",
                 "in_type": "ListSubscriptionsRequest",
-                "out_type": "ListSubscriptionsResponse"
+                "out_type": "ListSubscriptionsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/subscriptions"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List subscriptions."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "subscription"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.subscription.list"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "ListEnabledSubscriptions",
@@ -27800,7 +28858,133 @@
               {
                 "name": "CreateSubscription",
                 "in_type": "CreateSubscriptionRequest",
-                "out_type": "CreateSubscriptionResponse"
+                "out_type": "CreateSubscriptionResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/subscription"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create subscription."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "subscription"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.subscription.create"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "DeleteSubscription",
@@ -27820,7 +29004,133 @@
               {
                 "name": "UpdateSubscription",
                 "in_type": "UpdateSubscriptionRequest",
-                "out_type": "UpdateSubscriptionResponse"
+                "out_type": "UpdateSubscriptionResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/subscription"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update subscription."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "subscription"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.subscription.update"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -27830,7 +29140,19 @@
             "path": "google/protobuf/wrappers.proto"
           },
           {
+            "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "google/api/field_behavior.proto"
+          },
+          {
+            "path": "protoc-gen-openapiv2/options/annotations.proto"
+          },
+          {
             "path": "proto/notification/subscription.proto"
+          },
+          {
+            "path": "proto/notification/recipient.proto"
           },
           {
             "path": "proto/notification/command.proto"
@@ -27974,6 +29296,11 @@
               {
                 "id": 7,
                 "name": "name",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "environment_name",
                 "type": "string"
               }
             ]
@@ -28420,7 +29747,13 @@
               {
                 "id": 2,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 3,
@@ -28469,7 +29802,13 @@
               {
                 "id": 8,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ],
             "reserved_ids": [
@@ -28492,12 +29831,24 @@
               {
                 "id": 1,
                 "name": "environment_id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               },
               {
                 "id": 2,
                 "name": "id",
-                "type": "string"
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
               }
             ]
           },
@@ -28519,27 +29870,523 @@
               {
                 "name": "ListPushes",
                 "in_type": "ListPushesRequest",
-                "out_type": "ListPushesResponse"
+                "out_type": "ListPushesResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/pushes"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List"
+                      },
+                      {
+                        "name": "description",
+                        "value": "List pushes."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "push"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.push.list"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "CreatePush",
                 "in_type": "CreatePushRequest",
-                "out_type": "CreatePushResponse"
+                "out_type": "CreatePushResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/push"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a push."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "push"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.push.create"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "UpdatePush",
+                "in_type": "UpdatePushRequest",
+                "out_type": "UpdatePushResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/push"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update a push."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "push"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.push.update"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetPush",
+                "in_type": "GetPushRequest",
+                "out_type": "GetPushResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/push"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get a push."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "push"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "web.v1.push.get"
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "400"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Returned for bad requests that may have failed validation."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":3,\"message\":\"invalid arguments error\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "name": "responses",
+                        "aggregated": [
+                          {
+                            "name": "key",
+                            "value": "401"
+                          },
+                          {
+                            "name": "value",
+                            "aggregated": [
+                              {
+                                "name": "description",
+                                "value": "Request could not be authenticated (authentication required)."
+                              },
+                              {
+                                "name": "schema",
+                                "aggregated": [
+                                  {
+                                    "name": "json_schema",
+                                    "aggregated": [
+                                      {
+                                        "name": "ref",
+                                        "value": ".google.rpc.Status"
+                                      }
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "name": "examples",
+                                "aggregated": [
+                                  {
+                                    "name": "key",
+                                    "value": "application/json"
+                                  },
+                                  {
+                                    "name": "value",
+                                    "value": "{\"code\":16,\"message\":\"not authenticated\",\"details\":[]}"
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               },
               {
                 "name": "DeletePush",
                 "in_type": "DeletePushRequest",
                 "out_type": "DeletePushResponse"
-              },
-              {
-                "name": "UpdatePush",
-                "in_type": "UpdatePushRequest",
-                "out_type": "UpdatePushResponse"
-              },
-              {
-                "name": "GetPush",
-                "in_type": "GetPushRequest",
-                "out_type": "GetPushResponse"
               }
             ]
           }
@@ -28547,6 +30394,15 @@
         "imports": [
           {
             "path": "google/protobuf/wrappers.proto"
+          },
+          {
+            "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "google/api/field_behavior.proto"
+          },
+          {
+            "path": "protoc-gen-openapiv2/options/annotations.proto"
           },
           {
             "path": "proto/push/push.proto"

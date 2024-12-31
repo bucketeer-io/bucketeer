@@ -4,6 +4,7 @@
 import * as jspb from 'google-protobuf';
 import * as google_protobuf_wrappers_pb from 'google-protobuf/google/protobuf/wrappers_pb';
 import * as google_api_annotations_pb from '../../google/api/annotations_pb';
+import * as google_api_field_behavior_pb from '../../google/api/field_behavior_pb';
 import * as protoc_gen_openapiv2_options_annotations_pb from '../../protoc-gen-openapiv2/options/annotations_pb';
 import * as proto_account_account_pb from '../../proto/account/account_pb';
 import * as proto_account_api_key_pb from '../../proto/account/api_key_pb';
@@ -639,6 +640,11 @@ export class UpdateAccountV2Request extends jspb.Message {
   getAvatar(): UpdateAccountV2Request.AccountV2Avatar | undefined;
   setAvatar(value?: UpdateAccountV2Request.AccountV2Avatar): void;
 
+  hasDisabled(): boolean;
+  clearDisabled(): void;
+  getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateAccountV2Request.AsObject;
   static toObject(
@@ -682,6 +688,7 @@ export namespace UpdateAccountV2Request {
     language?: google_protobuf_wrappers_pb.StringValue.AsObject;
     lastSeen?: google_protobuf_wrappers_pb.Int64Value.AsObject;
     avatar?: UpdateAccountV2Request.AccountV2Avatar.AsObject;
+    disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 
   export class AccountV2Avatar extends jspb.Message {
@@ -1460,6 +1467,14 @@ export class ListAPIKeysRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  clearEnvironmentIdsList(): void;
+  getEnvironmentIdsList(): Array<string>;
+  setEnvironmentIdsList(value: Array<string>): void;
+  addEnvironmentIds(value: string, index?: number): string;
+
+  getOrganizationId(): string;
+  setOrganizationId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): ListAPIKeysRequest.AsObject;
   static toObject(
@@ -1490,6 +1505,8 @@ export namespace ListAPIKeysRequest {
     searchKeyword: string;
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
     environmentId: string;
+    environmentIdsList: Array<string>;
+    organizationId: string;
   };
 
   export interface OrderByMap {
@@ -1497,6 +1514,9 @@ export namespace ListAPIKeysRequest {
     NAME: 1;
     CREATED_AT: 2;
     UPDATED_AT: 3;
+    ROLE: 4;
+    ENVIRONMENT: 5;
+    STATE: 6;
   }
 
   export const OrderBy: OrderByMap;
@@ -1553,42 +1573,38 @@ export namespace ListAPIKeysResponse {
   };
 }
 
-export class GetAPIKeyBySearchingAllEnvironmentsRequest extends jspb.Message {
-  getId(): string;
-  setId(value: string): void;
+export class GetEnvironmentAPIKeyRequest extends jspb.Message {
+  getApiKey(): string;
+  setApiKey(value: string): void;
 
   serializeBinary(): Uint8Array;
-  toObject(
-    includeInstance?: boolean
-  ): GetAPIKeyBySearchingAllEnvironmentsRequest.AsObject;
+  toObject(includeInstance?: boolean): GetEnvironmentAPIKeyRequest.AsObject;
   static toObject(
     includeInstance: boolean,
-    msg: GetAPIKeyBySearchingAllEnvironmentsRequest
-  ): GetAPIKeyBySearchingAllEnvironmentsRequest.AsObject;
+    msg: GetEnvironmentAPIKeyRequest
+  ): GetEnvironmentAPIKeyRequest.AsObject;
   static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
   static extensionsBinary: {
     [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
   };
   static serializeBinaryToWriter(
-    message: GetAPIKeyBySearchingAllEnvironmentsRequest,
+    message: GetEnvironmentAPIKeyRequest,
     writer: jspb.BinaryWriter
   ): void;
-  static deserializeBinary(
-    bytes: Uint8Array
-  ): GetAPIKeyBySearchingAllEnvironmentsRequest;
+  static deserializeBinary(bytes: Uint8Array): GetEnvironmentAPIKeyRequest;
   static deserializeBinaryFromReader(
-    message: GetAPIKeyBySearchingAllEnvironmentsRequest,
+    message: GetEnvironmentAPIKeyRequest,
     reader: jspb.BinaryReader
-  ): GetAPIKeyBySearchingAllEnvironmentsRequest;
+  ): GetEnvironmentAPIKeyRequest;
 }
 
-export namespace GetAPIKeyBySearchingAllEnvironmentsRequest {
+export namespace GetEnvironmentAPIKeyRequest {
   export type AsObject = {
-    id: string;
+    apiKey: string;
   };
 }
 
-export class GetAPIKeyBySearchingAllEnvironmentsResponse extends jspb.Message {
+export class GetEnvironmentAPIKeyResponse extends jspb.Message {
   hasEnvironmentApiKey(): boolean;
   clearEnvironmentApiKey(): void;
   getEnvironmentApiKey():
@@ -1599,31 +1615,27 @@ export class GetAPIKeyBySearchingAllEnvironmentsResponse extends jspb.Message {
   ): void;
 
   serializeBinary(): Uint8Array;
-  toObject(
-    includeInstance?: boolean
-  ): GetAPIKeyBySearchingAllEnvironmentsResponse.AsObject;
+  toObject(includeInstance?: boolean): GetEnvironmentAPIKeyResponse.AsObject;
   static toObject(
     includeInstance: boolean,
-    msg: GetAPIKeyBySearchingAllEnvironmentsResponse
-  ): GetAPIKeyBySearchingAllEnvironmentsResponse.AsObject;
+    msg: GetEnvironmentAPIKeyResponse
+  ): GetEnvironmentAPIKeyResponse.AsObject;
   static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
   static extensionsBinary: {
     [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
   };
   static serializeBinaryToWriter(
-    message: GetAPIKeyBySearchingAllEnvironmentsResponse,
+    message: GetEnvironmentAPIKeyResponse,
     writer: jspb.BinaryWriter
   ): void;
-  static deserializeBinary(
-    bytes: Uint8Array
-  ): GetAPIKeyBySearchingAllEnvironmentsResponse;
+  static deserializeBinary(bytes: Uint8Array): GetEnvironmentAPIKeyResponse;
   static deserializeBinaryFromReader(
-    message: GetAPIKeyBySearchingAllEnvironmentsResponse,
+    message: GetEnvironmentAPIKeyResponse,
     reader: jspb.BinaryReader
-  ): GetAPIKeyBySearchingAllEnvironmentsResponse;
+  ): GetEnvironmentAPIKeyResponse;
 }
 
-export namespace GetAPIKeyBySearchingAllEnvironmentsResponse {
+export namespace GetEnvironmentAPIKeyResponse {
   export type AsObject = {
     environmentApiKey?: proto_account_api_key_pb.EnvironmentAPIKey.AsObject;
   };
@@ -1863,5 +1875,96 @@ export class DeleteSearchFilterResponse extends jspb.Message {
 }
 
 export namespace DeleteSearchFilterResponse {
+  export type AsObject = {};
+}
+
+export class UpdateAPIKeyRequest extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  getRole(): proto_account_api_key_pb.APIKey.RoleMap[keyof proto_account_api_key_pb.APIKey.RoleMap];
+  setRole(
+    value: proto_account_api_key_pb.APIKey.RoleMap[keyof proto_account_api_key_pb.APIKey.RoleMap]
+  ): void;
+
+  hasDisabled(): boolean;
+  clearDisabled(): void;
+  getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
+  hasMaintainer(): boolean;
+  clearMaintainer(): void;
+  getMaintainer(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setMaintainer(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateAPIKeyRequest.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: UpdateAPIKeyRequest
+  ): UpdateAPIKeyRequest.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: UpdateAPIKeyRequest,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateAPIKeyRequest;
+  static deserializeBinaryFromReader(
+    message: UpdateAPIKeyRequest,
+    reader: jspb.BinaryReader
+  ): UpdateAPIKeyRequest;
+}
+
+export namespace UpdateAPIKeyRequest {
+  export type AsObject = {
+    id: string;
+    environmentId: string;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    role: proto_account_api_key_pb.APIKey.RoleMap[keyof proto_account_api_key_pb.APIKey.RoleMap];
+    disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
+    maintainer?: google_protobuf_wrappers_pb.StringValue.AsObject;
+  };
+}
+
+export class UpdateAPIKeyResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UpdateAPIKeyResponse.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: UpdateAPIKeyResponse
+  ): UpdateAPIKeyResponse.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: UpdateAPIKeyResponse,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): UpdateAPIKeyResponse;
+  static deserializeBinaryFromReader(
+    message: UpdateAPIKeyResponse,
+    reader: jspb.BinaryReader
+  ): UpdateAPIKeyResponse;
+}
+
+export namespace UpdateAPIKeyResponse {
   export type AsObject = {};
 }

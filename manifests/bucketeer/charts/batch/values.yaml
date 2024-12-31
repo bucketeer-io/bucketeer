@@ -44,6 +44,8 @@ env:
     addr:
     poolMaxIdle: 25
     poolMaxActive: 25
+  nonPersistentChildRedis:
+    addresses:
   experimentLockTTL: 10m
 
 affinity: {}
@@ -88,7 +90,6 @@ oauth:
     public:
   issuer:
   audience:
-
 
 httpstan:
   image:
@@ -184,4 +185,3 @@ cronjob:
     - name: auto-ops-rules-cacher
       jobId: AutoOpsRulesCacher
       schedule: "* * * * *"
-

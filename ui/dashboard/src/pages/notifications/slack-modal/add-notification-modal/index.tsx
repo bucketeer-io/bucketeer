@@ -4,6 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
+import { languageList } from 'pages/members/member-modal/add-member-modal';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
@@ -34,14 +35,14 @@ export interface AddNotificationForm {
   name: string;
   url: string;
   language: string;
-  role: string;
+  type: string;
 }
 
 export const formSchema = yup.object().shape({
   name: yup.string().required(),
   url: yup.string().required(),
   language: yup.string().required(),
-  role: yup.string().required()
+  type: yup.string().required()
 });
 
 const AddNotificationModal = ({
@@ -58,16 +59,9 @@ const AddNotificationModal = ({
       name: '',
       url: '',
       language: '',
-      role: ''
+      type: ''
     }
   });
-
-  const languages = [
-    {
-      label: 'English',
-      value: 'English'
-    }
-  ];
 
   const options: NotificationOption[] = [
     {
@@ -177,7 +171,7 @@ const AddNotificationModal = ({
                         align="start"
                         {...field}
                       >
-                        {languages.map((item, index) => (
+                        {languageList.map((item, index) => (
                           <DropdownMenuItem
                             {...field}
                             key={index}
@@ -223,7 +217,7 @@ const AddNotificationModal = ({
                 </label>
                 <Form.Field
                   control={form.control}
-                  name="role"
+                  name="type"
                   render={({ field }) => (
                     <Form.Item>
                       <Form.Control>
