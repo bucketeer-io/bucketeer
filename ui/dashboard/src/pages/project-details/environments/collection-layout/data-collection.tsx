@@ -9,8 +9,8 @@ import { Environment } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { useSearchParams } from 'utils/search-params';
 import { Popover } from 'components/popover';
-import { EnvironmentActionsType } from '../types';
 import DateTooltip from 'elements/date-tooltip';
+import { EnvironmentActionsType } from '../types';
 
 export const useColumns = ({
   onActions
