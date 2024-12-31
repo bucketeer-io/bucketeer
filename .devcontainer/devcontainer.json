@@ -42,5 +42,5 @@
     "memory": "8gb",
     "storage": "32gb"
   },
-  "postAttachCommand": "docker system prune -f && make local-deps && make update-repos && (cd ui/web-v2 && yarn)"
+  "postAttachCommand": "docker system prune -f --filter 'label!=created_by.minikube.sigs.k8s.io=true' && make local-deps && make update-repos && (cd ui/web-v2 && yarn)"
 }
