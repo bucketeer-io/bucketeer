@@ -168,3 +168,55 @@ export namespace RenamePushCommand {
     name: string;
   };
 }
+
+export class EnablePushCommand extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EnablePushCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: EnablePushCommand
+  ): EnablePushCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: EnablePushCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): EnablePushCommand;
+  static deserializeBinaryFromReader(
+    message: EnablePushCommand,
+    reader: jspb.BinaryReader
+  ): EnablePushCommand;
+}
+
+export namespace EnablePushCommand {
+  export type AsObject = {};
+}
+
+export class DisablePushCommand extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): DisablePushCommand.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: DisablePushCommand
+  ): DisablePushCommand.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: DisablePushCommand,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): DisablePushCommand;
+  static deserializeBinaryFromReader(
+    message: DisablePushCommand,
+    reader: jspb.BinaryReader
+  ): DisablePushCommand;
+}
+
+export namespace DisablePushCommand {
+  export type AsObject = {};
+}

@@ -1727,7 +1727,16 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         name:
           (f = msg.getName()) &&
           google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 8, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 8, ''),
+        enablePushCommand:
+          (f = msg.getEnablePushCommand()) &&
+          proto_push_command_pb.EnablePushCommand.toObject(includeInstance, f),
+        disablePushCommand:
+          (f = msg.getDisablePushCommand()) &&
+          proto_push_command_pb.DisablePushCommand.toObject(includeInstance, f),
+        disabled:
+          (f = msg.getDisabled()) &&
+          google_protobuf_wrappers_pb.BoolValue.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -1813,6 +1822,30 @@ proto.bucketeer.push.UpdatePushRequest.deserializeBinaryFromReader = function (
         var value = /** @type {string} */ (reader.readString());
         msg.setEnvironmentId(value);
         break;
+      case 9:
+        var value = new proto_push_command_pb.EnablePushCommand();
+        reader.readMessage(
+          value,
+          proto_push_command_pb.EnablePushCommand.deserializeBinaryFromReader
+        );
+        msg.setEnablePushCommand(value);
+        break;
+      case 10:
+        var value = new proto_push_command_pb.DisablePushCommand();
+        reader.readMessage(
+          value,
+          proto_push_command_pb.DisablePushCommand.deserializeBinaryFromReader
+        );
+        msg.setDisablePushCommand(value);
+        break;
+      case 11:
+        var value = new google_protobuf_wrappers_pb.BoolValue();
+        reader.readMessage(
+          value,
+          google_protobuf_wrappers_pb.BoolValue.deserializeBinaryFromReader
+        );
+        msg.setDisabled(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -1886,6 +1919,30 @@ proto.bucketeer.push.UpdatePushRequest.serializeBinaryToWriter = function (
   f = message.getEnvironmentId();
   if (f.length > 0) {
     writer.writeString(8, f);
+  }
+  f = message.getEnablePushCommand();
+  if (f != null) {
+    writer.writeMessage(
+      9,
+      f,
+      proto_push_command_pb.EnablePushCommand.serializeBinaryToWriter
+    );
+  }
+  f = message.getDisablePushCommand();
+  if (f != null) {
+    writer.writeMessage(
+      10,
+      f,
+      proto_push_command_pb.DisablePushCommand.serializeBinaryToWriter
+    );
+  }
+  f = message.getDisabled();
+  if (f != null) {
+    writer.writeMessage(
+      11,
+      f,
+      google_protobuf_wrappers_pb.BoolValue.serializeBinaryToWriter
+    );
   }
 };
 
@@ -2126,6 +2183,130 @@ proto.bucketeer.push.UpdatePushRequest.prototype.setEnvironmentId = function (
   value
 ) {
   return jspb.Message.setProto3StringField(this, 8, value);
+};
+
+/**
+ * optional EnablePushCommand enable_push_command = 9;
+ * @return {?proto.bucketeer.push.EnablePushCommand}
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.getEnablePushCommand =
+  function () {
+    return /** @type{?proto.bucketeer.push.EnablePushCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_push_command_pb.EnablePushCommand,
+        9
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.push.EnablePushCommand|undefined} value
+ * @return {!proto.bucketeer.push.UpdatePushRequest} returns this
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.setEnablePushCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 9, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.push.UpdatePushRequest} returns this
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.clearEnablePushCommand =
+  function () {
+    return this.setEnablePushCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.hasEnablePushCommand =
+  function () {
+    return jspb.Message.getField(this, 9) != null;
+  };
+
+/**
+ * optional DisablePushCommand disable_push_command = 10;
+ * @return {?proto.bucketeer.push.DisablePushCommand}
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.getDisablePushCommand =
+  function () {
+    return /** @type{?proto.bucketeer.push.DisablePushCommand} */ (
+      jspb.Message.getWrapperField(
+        this,
+        proto_push_command_pb.DisablePushCommand,
+        10
+      )
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.push.DisablePushCommand|undefined} value
+ * @return {!proto.bucketeer.push.UpdatePushRequest} returns this
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.setDisablePushCommand =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 10, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.push.UpdatePushRequest} returns this
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.clearDisablePushCommand =
+  function () {
+    return this.setDisablePushCommand(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.hasDisablePushCommand =
+  function () {
+    return jspb.Message.getField(this, 10) != null;
+  };
+
+/**
+ * optional google.protobuf.BoolValue disabled = 11;
+ * @return {?proto.google.protobuf.BoolValue}
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.getDisabled = function () {
+  return /** @type{?proto.google.protobuf.BoolValue} */ (
+    jspb.Message.getWrapperField(
+      this,
+      google_protobuf_wrappers_pb.BoolValue,
+      11
+    )
+  );
+};
+
+/**
+ * @param {?proto.google.protobuf.BoolValue|undefined} value
+ * @return {!proto.bucketeer.push.UpdatePushRequest} returns this
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.setDisabled = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 11, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.push.UpdatePushRequest} returns this
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.clearDisabled = function () {
+  return this.setDisabled(undefined);
+};
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.push.UpdatePushRequest.prototype.hasDisabled = function () {
+  return jspb.Message.getField(this, 11) != null;
 };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
