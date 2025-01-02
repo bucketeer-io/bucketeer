@@ -224,7 +224,7 @@ func TestUpdatePush(t *testing.T) {
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			updatedPush, err := p.origin.Update(p.inputName, p.inputTags)
+			updatedPush, err := p.origin.Update(p.inputName, p.inputTags, nil)
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected.Name, updatedPush.Name)
 			assert.Equal(t, p.expected.Tags, updatedPush.Tags)
