@@ -17,6 +17,7 @@ package v2
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"fmt"
 
@@ -29,6 +30,17 @@ var (
 	ErrPushAlreadyExists          = errors.New("push: push already exists")
 	ErrPushNotFound               = errors.New("push: push not found")
 	ErrPushUnexpectedAffectedRows = errors.New("push: push unexpected affected rows")
+
+	//go:embed sql/push/insert_push.sql
+	insertPushSQL string
+	//go:embed sql/push/update_push.sql
+	updatePushSQL string
+	//go:embed sql/push/select_push.sql
+	selectPushSQL string
+	//go:embed sql/push/list_pushes.sql
+	listPushesSQL string
+	//go:embed sql/push/count_pushes.sql
+	countPushesSQL string
 )
 
 type PushStorage interface {
@@ -52,23 +64,9 @@ func NewPushStorage(qe mysql.QueryExecer) PushStorage {
 }
 
 func (s *pushStorage) CreatePush(ctx context.Context, e *domain.Push, environmentId string) error {
-	query := `
-		INSERT INTO push (
-			id,
-			fcm_service_account,
-			tags,
-			deleted,
-			name,
-			created_at,
-			updated_at,
-			environment_id 
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?
-		)
-	`
 	_, err := s.qe.ExecContext(
 		ctx,
-		query,
+		insertPushSQL,
 		e.Id,
 		e.FcmServiceAccount,
 		mysql.JSONObject{Val: e.Tags},
@@ -77,9 +75,10 @@ func (s *pushStorage) CreatePush(ctx context.Context, e *domain.Push, environmen
 		e.CreatedAt,
 		e.UpdatedAt,
 		environmentId,
+		e.Disabled,
 	)
 	if err != nil {
-		if err == mysql.ErrDuplicateEntry {
+		if errors.Is(err, mysql.ErrDuplicateEntry) {
 			return ErrPushAlreadyExists
 		}
 		return err
@@ -88,29 +87,16 @@ func (s *pushStorage) CreatePush(ctx context.Context, e *domain.Push, environmen
 }
 
 func (s *pushStorage) UpdatePush(ctx context.Context, e *domain.Push, environmentId string) error {
-	query := `
-		UPDATE 
-			push
-		SET
-			fcm_service_account = ?,
-			tags = ?,
-			deleted = ?,
-			name = ?,
-			created_at = ?,
-			updated_at = ?
-		WHERE
-			id = ? AND
-			environment_id = ?
-	`
 	result, err := s.qe.ExecContext(
 		ctx,
-		query,
+		updatePushSQL,
 		e.FcmServiceAccount,
 		mysql.JSONObject{Val: e.Tags},
 		e.Deleted,
 		e.Name,
 		e.CreatedAt,
 		e.UpdatedAt,
+		e.Disabled,
 		e.Id,
 		environmentId,
 	)
@@ -129,24 +115,9 @@ func (s *pushStorage) UpdatePush(ctx context.Context, e *domain.Push, environmen
 
 func (s *pushStorage) GetPush(ctx context.Context, id, environmentId string) (*domain.Push, error) {
 	push := proto.Push{}
-	query := `
-		SELECT
-			id,
-			fcm_service_account,
-			tags,
-			deleted,
-			name,
-			created_at,
-			updated_at
-		FROM
-			push
-		WHERE
-			id = ? AND
-			environment_id = ?
-	`
 	err := s.qe.QueryRowContext(
 		ctx,
-		query,
+		selectPushSQL,
 		id,
 		environmentId,
 	).Scan(
@@ -157,9 +128,10 @@ func (s *pushStorage) GetPush(ctx context.Context, id, environmentId string) (*d
 		&push.Name,
 		&push.CreatedAt,
 		&push.UpdatedAt,
+		&push.Disabled,
 	)
 	if err != nil {
-		if err == mysql.ErrNoRows {
+		if errors.Is(err, mysql.ErrNoRows) {
 			return nil, ErrPushNotFound
 		}
 		return nil, err
@@ -176,20 +148,7 @@ func (s *pushStorage) ListPushes(
 	whereSQL, whereArgs := mysql.ConstructWhereSQLString(whereParts)
 	orderBySQL := mysql.ConstructOrderBySQLString(orders)
 	limitOffsetSQL := mysql.ConstructLimitOffsetSQLString(limit, offset)
-	query := fmt.Sprintf(`
-		SELECT
-			id,
-			fcm_service_account,
-			tags,
-			deleted,
-			name,
-			created_at,
-			updated_at
-		FROM
-			push
-		%s %s %s
-		`, whereSQL, orderBySQL, limitOffsetSQL,
-	)
+	query := fmt.Sprintf(listPushesSQL, whereSQL, orderBySQL, limitOffsetSQL)
 	rows, err := s.qe.QueryContext(ctx, query, whereArgs...)
 	if err != nil {
 		return nil, 0, 0, err
@@ -206,6 +165,7 @@ func (s *pushStorage) ListPushes(
 			&push.Name,
 			&push.CreatedAt,
 			&push.UpdatedAt,
+			&push.Disabled,
 		)
 		if err != nil {
 			return nil, 0, 0, err
@@ -217,14 +177,7 @@ func (s *pushStorage) ListPushes(
 	}
 	nextOffset := offset + len(pushes)
 	var totalCount int64
-	countQuery := fmt.Sprintf(`
-		SELECT
-			COUNT(1)
-		FROM
-			push
-		%s
-		`, whereSQL,
-	)
+	countQuery := fmt.Sprintf(countPushesSQL, whereSQL)
 	err = s.qe.QueryRowContext(ctx, countQuery, whereArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, 0, 0, err

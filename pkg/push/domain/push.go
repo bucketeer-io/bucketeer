@@ -52,6 +52,7 @@ func NewPush(name, fcmServiceAccount string, tags []string) (*Push, error) {
 		Id:                id.String(),
 		FcmServiceAccount: fcmServiceAccount,
 		Tags:              tags,
+		Disabled:          false,
 		CreatedAt:         now,
 		UpdatedAt:         now,
 	}}
@@ -61,6 +62,7 @@ func NewPush(name, fcmServiceAccount string, tags []string) (*Push, error) {
 func (p *Push) Update(
 	name *wrapperspb.StringValue,
 	tags []string,
+	disabled *wrapperspb.BoolValue,
 ) (*Push, error) {
 	updated := &Push{}
 	if err := copier.Copy(updated, p); err != nil {
@@ -71,6 +73,10 @@ func (p *Push) Update(
 	}
 	if len(tags) > 0 {
 		updated.Tags = tags
+	}
+
+	if disabled != nil {
+		updated.Disabled = disabled.Value
 	}
 
 	updated.UpdatedAt = time.Now().Unix()
@@ -149,6 +155,16 @@ func (p *Push) ExistTag(findTag string) bool {
 		}
 	}
 	return false
+}
+
+func (p *Push) Enable() {
+	p.Disabled = false
+	p.UpdatedAt = time.Now().Unix()
+}
+
+func (p *Push) Disable() {
+	p.Disabled = true
+	p.UpdatedAt = time.Now().Unix()
 }
 
 func validate(p *proto.Push) error {

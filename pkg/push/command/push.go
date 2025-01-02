@@ -66,6 +66,10 @@ func (h *pushCommandHandler) Handle(ctx context.Context, cmd Command) error {
 		return h.deleteTags(ctx, c)
 	case *proto.RenamePushCommand:
 		return h.rename(ctx, c)
+	case *proto.EnablePushCommand:
+		return h.enable(ctx, c)
+	case *proto.DisablePushCommand:
+		return h.disable(ctx, c)
 	}
 	return errUnknownCommand
 }
@@ -110,6 +114,16 @@ func (h pushCommandHandler) rename(ctx context.Context, cmd *proto.RenamePushCom
 	return h.send(ctx, eventproto.Event_PUSH_RENAMED, &eventproto.PushRenamedEvent{
 		Name: cmd.Name,
 	})
+}
+
+func (h *pushCommandHandler) enable(ctx context.Context, _ *proto.EnablePushCommand) error {
+	h.push.Enable()
+	return h.send(ctx, eventproto.Event_PUSH_ENABLED, &eventproto.PushEnabledEvent{})
+}
+
+func (h *pushCommandHandler) disable(ctx context.Context, _ *proto.DisablePushCommand) error {
+	h.push.Disable()
+	return h.send(ctx, eventproto.Event_PUSH_DISABLED, &eventproto.PushDisabledEvent{})
 }
 
 func (h *pushCommandHandler) send(ctx context.Context, eventType eventproto.Event_Type, event pb.Message) error {

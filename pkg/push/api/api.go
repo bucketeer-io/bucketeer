@@ -623,7 +623,7 @@ func (s *PushService) updatePushNoCommand(
 			return err
 		}
 
-		updated, err := push.Update(req.Name, req.Tags)
+		updated, err := push.Update(req.Name, req.Tags, req.Disabled)
 		if err != nil {
 			return err
 		}
@@ -823,7 +823,9 @@ func (s *PushService) validateAddPushTagsCommand(
 func (s *PushService) isNoUpdatePushCommand(req *pushproto.UpdatePushRequest) bool {
 	return req.AddPushTagsCommand == nil &&
 		req.DeletePushTagsCommand == nil &&
-		req.RenamePushCommand == nil
+		req.RenamePushCommand == nil &&
+		req.EnablePushCommand == nil &&
+		req.DisablePushCommand == nil
 }
 
 func (s *PushService) DeletePush(

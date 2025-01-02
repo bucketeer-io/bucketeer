@@ -276,6 +276,82 @@ func (x *RenamePushCommand) GetName() string {
 	return ""
 }
 
+type EnablePushCommand struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *EnablePushCommand) Reset() {
+	*x = EnablePushCommand{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_push_command_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *EnablePushCommand) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EnablePushCommand) ProtoMessage() {}
+
+func (x *EnablePushCommand) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_push_command_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EnablePushCommand.ProtoReflect.Descriptor instead.
+func (*EnablePushCommand) Descriptor() ([]byte, []int) {
+	return file_proto_push_command_proto_rawDescGZIP(), []int{5}
+}
+
+type DisablePushCommand struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *DisablePushCommand) Reset() {
+	*x = DisablePushCommand{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_proto_push_command_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *DisablePushCommand) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DisablePushCommand) ProtoMessage() {}
+
+func (x *DisablePushCommand) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_push_command_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DisablePushCommand.ProtoReflect.Descriptor instead.
+func (*DisablePushCommand) Descriptor() ([]byte, []int) {
+	return file_proto_push_command_proto_rawDescGZIP(), []int{6}
+}
+
 var File_proto_push_command_proto protoreflect.FileDescriptor
 
 var file_proto_push_command_proto_rawDesc = []byte{
@@ -298,10 +374,13 @@ var file_proto_push_command_proto_rawDesc = []byte{
 	0x73, 0x68, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x27, 0x0a, 0x11, 0x52, 0x65, 0x6e,
 	0x61, 0x6d, 0x65, 0x50, 0x75, 0x73, 0x68, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x12,
 	0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61,
-	0x6d, 0x65, 0x42, 0x2e, 0x5a, 0x2c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
-	0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f, 0x2f, 0x62, 0x75,
-	0x63, 0x6b, 0x65, 0x74, 0x65, 0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x75,
-	0x73, 0x68, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x6d, 0x65, 0x22, 0x13, 0x0a, 0x11, 0x45, 0x6e, 0x61, 0x62, 0x6c, 0x65, 0x50, 0x75, 0x73, 0x68,
+	0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x22, 0x14, 0x0a, 0x12, 0x44, 0x69, 0x73, 0x61, 0x62,
+	0x6c, 0x65, 0x50, 0x75, 0x73, 0x68, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x42, 0x2e, 0x5a,
+	0x2c, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x62, 0x75, 0x63, 0x6b,
+	0x65, 0x74, 0x65, 0x65, 0x72, 0x2d, 0x69, 0x6f, 0x2f, 0x62, 0x75, 0x63, 0x6b, 0x65, 0x74, 0x65,
+	0x65, 0x72, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x75, 0x73, 0x68, 0x62, 0x06, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -316,13 +395,15 @@ func file_proto_push_command_proto_rawDescGZIP() []byte {
 	return file_proto_push_command_proto_rawDescData
 }
 
-var file_proto_push_command_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_proto_push_command_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_proto_push_command_proto_goTypes = []interface{}{
 	(*CreatePushCommand)(nil),     // 0: bucketeer.push.CreatePushCommand
 	(*AddPushTagsCommand)(nil),    // 1: bucketeer.push.AddPushTagsCommand
 	(*DeletePushTagsCommand)(nil), // 2: bucketeer.push.DeletePushTagsCommand
 	(*DeletePushCommand)(nil),     // 3: bucketeer.push.DeletePushCommand
 	(*RenamePushCommand)(nil),     // 4: bucketeer.push.RenamePushCommand
+	(*EnablePushCommand)(nil),     // 5: bucketeer.push.EnablePushCommand
+	(*DisablePushCommand)(nil),    // 6: bucketeer.push.DisablePushCommand
 }
 var file_proto_push_command_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -398,6 +479,30 @@ func file_proto_push_command_proto_init() {
 				return nil
 			}
 		}
+		file_proto_push_command_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*EnablePushCommand); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_proto_push_command_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DisablePushCommand); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -405,7 +510,7 @@ func file_proto_push_command_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_proto_push_command_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
