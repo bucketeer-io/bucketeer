@@ -7896,6 +7896,527 @@
       }
     },
     {
+      "protopath": "coderef:/:code_reference.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "CodeReference.RepositoryType",
+            "enum_fields": [
+              {
+                "name": "REPOSITORY_TYPE_UNSPECIFIED"
+              },
+              {
+                "name": "GITHUB",
+                "integer": 1
+              },
+              {
+                "name": "GITLAB",
+                "integer": 2
+              },
+              {
+                "name": "BITBUCKET",
+                "integer": 3
+              },
+              {
+                "name": "CUSTOM",
+                "integer": 4
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "CodeReference",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "file_path",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "line_number",
+                "type": "int32"
+              },
+              {
+                "id": 5,
+                "name": "code_snippet",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "content_hash",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "aliases",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "repository_name",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "repository_owner",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "repository_type",
+                "type": "RepositoryType"
+              },
+              {
+                "id": 11,
+                "name": "repository_branch",
+                "type": "string"
+              },
+              {
+                "id": 12,
+                "name": "commit_hash",
+                "type": "string"
+              },
+              {
+                "id": 13,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 14,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 15,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ]
+          }
+        ],
+        "package": {
+          "name": "bucketeer.coderef"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/coderef"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "coderef:/:command.proto",
+      "def": {
+        "messages": [
+          {
+            "name": "CreateCodeReferenceCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "file_path",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "line_number",
+                "type": "int32"
+              },
+              {
+                "id": 4,
+                "name": "code_snippet",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "content_hash",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "aliases",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "repository_name",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "repository_owner",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "repository_type",
+                "type": "CodeReference.RepositoryType"
+              },
+              {
+                "id": 10,
+                "name": "repository_branch",
+                "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "commit_hash",
+                "type": "string"
+              },
+              {
+                "id": 12,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "UpdateCodeReferenceCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "file_path",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "line_number",
+                "type": "int32"
+              },
+              {
+                "id": 4,
+                "name": "code_snippet",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "content_hash",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "aliases",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "repository_branch",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "commit_hash",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "DeleteCodeReferenceCommand",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "proto/coderef/code_reference.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.coderef"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/coderef"
+          }
+        ]
+      }
+    },
+    {
+      "protopath": "coderef:/:service.proto",
+      "def": {
+        "enums": [
+          {
+            "name": "ListCodeReferencesRequest.OrderBy",
+            "enum_fields": [
+              {
+                "name": "DEFAULT"
+              },
+              {
+                "name": "CREATED_AT",
+                "integer": 1
+              },
+              {
+                "name": "UPDATED_AT",
+                "integer": 2
+              }
+            ]
+          },
+          {
+            "name": "ListCodeReferencesRequest.OrderDirection",
+            "enum_fields": [
+              {
+                "name": "ASC"
+              },
+              {
+                "name": "DESC",
+                "integer": 1
+              }
+            ]
+          }
+        ],
+        "messages": [
+          {
+            "name": "GetCodeReferenceRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "GetCodeReferenceResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code_reference",
+                "type": "CodeReference"
+              }
+            ]
+          },
+          {
+            "name": "ListCodeReferencesRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "repository_name",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "repository_owner",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "repository_type",
+                "type": "CodeReference.RepositoryType"
+              },
+              {
+                "id": 6,
+                "name": "repository_branch",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 9,
+                "name": "order_by",
+                "type": "OrderBy"
+              },
+              {
+                "id": 10,
+                "name": "order_direction",
+                "type": "OrderDirection"
+              }
+            ]
+          },
+          {
+            "name": "ListCodeReferencesResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code_references",
+                "type": "CodeReference",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "CreateCodeReferenceRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "command",
+                "type": "CreateCodeReferenceCommand"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "CreateCodeReferenceResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code_reference",
+                "type": "CodeReference"
+              }
+            ]
+          },
+          {
+            "name": "UpdateCodeReferenceRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "command",
+                "type": "UpdateCodeReferenceCommand"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "UpdateCodeReferenceResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "code_reference",
+                "type": "CodeReference"
+              }
+            ]
+          },
+          {
+            "name": "DeleteCodeReferenceRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "command",
+                "type": "DeleteCodeReferenceCommand"
+              }
+            ]
+          },
+          {
+            "name": "DeleteCodeReferenceResponse"
+          }
+        ],
+        "services": [
+          {
+            "name": "CodeReferenceService",
+            "rpcs": [
+              {
+                "name": "GetCodeReference",
+                "in_type": "GetCodeReferenceRequest",
+                "out_type": "GetCodeReferenceResponse"
+              },
+              {
+                "name": "ListCodeReferences",
+                "in_type": "ListCodeReferencesRequest",
+                "out_type": "ListCodeReferencesResponse"
+              },
+              {
+                "name": "CreateCodeReference",
+                "in_type": "CreateCodeReferenceRequest",
+                "out_type": "CreateCodeReferenceResponse"
+              },
+              {
+                "name": "UpdateCodeReference",
+                "in_type": "UpdateCodeReferenceRequest",
+                "out_type": "UpdateCodeReferenceResponse"
+              },
+              {
+                "name": "DeleteCodeReference",
+                "in_type": "DeleteCodeReferenceRequest",
+                "out_type": "DeleteCodeReferenceResponse"
+              }
+            ]
+          }
+        ],
+        "imports": [
+          {
+            "path": "proto/coderef/code_reference.proto"
+          },
+          {
+            "path": "proto/coderef/command.proto"
+          }
+        ],
+        "package": {
+          "name": "bucketeer.coderef"
+        },
+        "options": [
+          {
+            "name": "go_package",
+            "value": "github.com/bucketeer-io/bucketeer/proto/coderef"
+          }
+        ]
+      }
+    },
+    {
       "protopath": "environment:/:command.proto",
       "def": {
         "messages": [
@@ -14409,6 +14930,10 @@
               {
                 "name": "FLAG_TRIGGER",
                 "integer": 16
+              },
+              {
+                "name": "CODEREF",
+                "integer": 17
               }
             ],
             "reserved_ids": [
@@ -15150,6 +15675,18 @@
               {
                 "name": "FLAG_TRIGGER_USAGE_UPDATED",
                 "integer": 1607
+              },
+              {
+                "name": "CODE_REFERENCE_CREATED",
+                "integer": 1700
+              },
+              {
+                "name": "CODE_REFERENCE_UPDATED",
+                "integer": 1701
+              },
+              {
+                "name": "CODE_REFERENCE_DELETED",
+                "integer": 1702
               }
             ],
             "reserved_ids": [
@@ -18296,6 +18833,158 @@
                 "type": "string"
               }
             ]
+          },
+          {
+            "name": "CodeReferenceCreatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "feature_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "file_path",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "line_number",
+                "type": "int32"
+              },
+              {
+                "id": 5,
+                "name": "code_snippet",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "content_hash",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "aliases",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "repository_name",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "repository_owner",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "repository_type",
+                "type": "bucketeer.coderef.CodeReference.RepositoryType"
+              },
+              {
+                "id": 11,
+                "name": "repository_branch",
+                "type": "string"
+              },
+              {
+                "id": 12,
+                "name": "commit_hash",
+                "type": "string"
+              },
+              {
+                "id": 13,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 14,
+                "name": "created_at",
+                "type": "int64"
+              },
+              {
+                "id": 15,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "CodeReferenceUpdatedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "file_path",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "line_number",
+                "type": "int32"
+              },
+              {
+                "id": 4,
+                "name": "code_snippet",
+                "type": "string"
+              },
+              {
+                "id": 5,
+                "name": "content_hash",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "aliases",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 7,
+                "name": "repository_branch",
+                "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "commit_hash",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "updated_at",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "CodeReferenceDeletedEvent",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
+              }
+            ]
           }
         ],
         "imports": [
@@ -18355,6 +19044,9 @@
           },
           {
             "path": "proto/account/search_filter.proto"
+          },
+          {
+            "path": "proto/coderef/code_reference.proto"
           }
         ],
         "package": {
