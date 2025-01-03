@@ -5114,10 +5114,6 @@ definitions:
         type: array
         items:
           type: string
-  pushDisablePushCommand:
-    type: object
-  pushEnablePushCommand:
-    type: object
   pushGetPushResponse:
     type: object
     properties:
@@ -5197,10 +5193,6 @@ definitions:
         type: string
       environmentId:
         type: string
-      enablePushCommand:
-        $ref: '#/definitions/pushEnablePushCommand'
-      disablePushCommand:
-        $ref: '#/definitions/pushDisablePushCommand'
       disabled:
         type: boolean
     required:

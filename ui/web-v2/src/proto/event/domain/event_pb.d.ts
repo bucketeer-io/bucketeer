@@ -249,8 +249,6 @@ export namespace Event {
     PUSH_TAGS_DELETED: 903;
     PUSH_RENAMED: 904;
     PUSH_UPDATED: 905;
-    PUSH_ENABLED: 906;
-    PUSH_DISABLED: 907;
     SUBSCRIPTION_CREATED: 1000;
     SUBSCRIPTION_DELETED: 1001;
     SUBSCRIPTION_ENABLED: 1002;
@@ -5017,58 +5015,6 @@ export namespace PushUpdatedEvent {
     name?: google_protobuf_wrappers_pb.StringValue.AsObject;
     tagsList: Array<string>;
   };
-}
-
-export class PushEnabledEvent extends jspb.Message {
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): PushEnabledEvent.AsObject;
-  static toObject(
-    includeInstance: boolean,
-    msg: PushEnabledEvent
-  ): PushEnabledEvent.AsObject;
-  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
-  static extensionsBinary: {
-    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
-  };
-  static serializeBinaryToWriter(
-    message: PushEnabledEvent,
-    writer: jspb.BinaryWriter
-  ): void;
-  static deserializeBinary(bytes: Uint8Array): PushEnabledEvent;
-  static deserializeBinaryFromReader(
-    message: PushEnabledEvent,
-    reader: jspb.BinaryReader
-  ): PushEnabledEvent;
-}
-
-export namespace PushEnabledEvent {
-  export type AsObject = {};
-}
-
-export class PushDisabledEvent extends jspb.Message {
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): PushDisabledEvent.AsObject;
-  static toObject(
-    includeInstance: boolean,
-    msg: PushDisabledEvent
-  ): PushDisabledEvent.AsObject;
-  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
-  static extensionsBinary: {
-    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
-  };
-  static serializeBinaryToWriter(
-    message: PushDisabledEvent,
-    writer: jspb.BinaryWriter
-  ): void;
-  static deserializeBinary(bytes: Uint8Array): PushDisabledEvent;
-  static deserializeBinaryFromReader(
-    message: PushDisabledEvent,
-    reader: jspb.BinaryReader
-  ): PushDisabledEvent;
-}
-
-export namespace PushDisabledEvent {
-  export type AsObject = {};
 }
 
 export class SubscriptionCreatedEvent extends jspb.Message {

@@ -313,16 +313,6 @@ export class UpdatePushRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
-  hasEnablePushCommand(): boolean;
-  clearEnablePushCommand(): void;
-  getEnablePushCommand(): proto_push_command_pb.EnablePushCommand | undefined;
-  setEnablePushCommand(value?: proto_push_command_pb.EnablePushCommand): void;
-
-  hasDisablePushCommand(): boolean;
-  clearDisablePushCommand(): void;
-  getDisablePushCommand(): proto_push_command_pb.DisablePushCommand | undefined;
-  setDisablePushCommand(value?: proto_push_command_pb.DisablePushCommand): void;
-
   hasDisabled(): boolean;
   clearDisabled(): void;
   getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
@@ -358,8 +348,6 @@ export namespace UpdatePushRequest {
     tagsList: Array<string>;
     name?: google_protobuf_wrappers_pb.StringValue.AsObject;
     environmentId: string;
-    enablePushCommand?: proto_push_command_pb.EnablePushCommand.AsObject;
-    disablePushCommand?: proto_push_command_pb.DisablePushCommand.AsObject;
     disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 }
