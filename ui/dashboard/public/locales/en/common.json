@@ -94,7 +94,7 @@
   "client": "Client",
   "server": "Server",
   "public-api": "Public API",
-  "sourceType": {
+  "source-type": {
     "account": "Account",
     "account-description": "Get notified when someone adds or updates an account",
     "admin-notification": "Notification",
@@ -126,7 +126,7 @@
     "running-experiments-description": "Get notified daily of the list of running experiments",
     "segment": "User Segment",
     "segment-description": "Get notified when someone adds or updates a user segment",
-    "stale-feature-flag": "Stale feature flag",
+    "stale-feature-flag": "Stale Feature Flag",
     "stale-feature-flag-description": "Get notified when a feature flag becomes stale",
     "subscription": "Subscription"
   }
