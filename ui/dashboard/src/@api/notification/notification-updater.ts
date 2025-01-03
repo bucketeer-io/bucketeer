@@ -1,7 +1,7 @@
 import axiosClient from '@api/axios-client';
 import { Notification, SourceType } from '@types';
 
-export interface NotificationCreatorPayload {
+export interface NotificationUpdterPayload {
   id: string;
   environmentId: string;
   sourceTypes: SourceType[];
@@ -9,14 +9,14 @@ export interface NotificationCreatorPayload {
   disabled?: boolean;
 }
 
-export interface NotificationCreatorResponse {
+export interface NotificationUpdterResponse {
   account: Array<Notification>;
 }
 
 export const notificationUpdater = async (
-  payload: NotificationCreatorPayload
-): Promise<NotificationCreatorResponse> => {
+  payload: NotificationUpdterPayload
+): Promise<NotificationUpdterResponse> => {
   return axiosClient
-    .patch<NotificationCreatorResponse>('/v1/subscription', payload)
+    .patch<NotificationUpdterResponse>('/v1/subscription', payload)
     .then(response => response.data);
 };

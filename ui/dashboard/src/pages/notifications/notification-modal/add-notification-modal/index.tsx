@@ -2,9 +2,11 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { notificationCreator } from '@api/notification';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { languageList } from 'constants/notification';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
-import { languageList } from 'pages/members/member-modal/add-member-modal';
+import { NotificationLanguage } from '@types';
+import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Checkbox from 'components/checkbox';
@@ -34,14 +36,16 @@ type NotificationOption = {
 export interface AddNotificationForm {
   name: string;
   url: string;
-  language: string;
+  environment: string;
+  language: NotificationLanguage;
   type: string;
 }
 
 export const formSchema = yup.object().shape({
   name: yup.string().required(),
   url: yup.string().required(),
-  language: yup.string().required(),
+  environment: yup.string().required(),
+  language: yup.mixed<NotificationLanguage>().required(),
   type: yup.string().required()
 });
 
@@ -51,14 +55,20 @@ const AddNotificationModal = ({
 }: AddNotificationModalProps) => {
   const { t } = useTranslation(['common', 'form']);
   const { consoleAccount } = useAuth();
-  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
+    organizationId: currentEnvironment.organizationId
+  });
+  const environments = (collection?.environments || []).filter(item => item.id);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
     defaultValues: {
       name: '',
       url: '',
-      language: '',
+      environment: '',
+      language: undefined,
       type: ''
     }
   });
@@ -87,21 +97,20 @@ const AddNotificationModal = ({
   ];
 
   const {
+    getValues,
     formState: { isValid, isSubmitting }
   } = form;
+  // 'https://dev.bucketeer.jp/hookauth=CiQAQFReLhnIle3NdlT3KBlNsZInL46XvTqeFrEf_yYlZdbJoIISgwEAemffGZYq1vkzNUV4CPfYEgIJt1y9enp1B36b_XGNds58ELMAOWXP5q84peCShNIXjareVnaThwO73_RJP5STk-gbdhxF_TWDDejo_6y1zI9iOqlqLetAxM7GTnfBGd9DnpsLaLucKnKvGyGkgwVX06l6Mw2ovP30ZaMU6HIQbFLl9A'
 
-  const onSubmit: SubmitHandler<AddNotificationForm> = () => {
+  const onSubmit: SubmitHandler<AddNotificationForm> = values => {
     return notificationCreator({
-      environmentId: currenEnvironment.id,
-      name: 'Test 1',
+      environmentId: values.environment,
+      name: values.name,
       sourceTypes: ['DOMAIN_EVENT_FEATURE'],
       recipient: {
         type: 'SlackChannel',
-        slackChannelRecipient: {
-          webhookUrl:
-            'https://dev.bucketeer.jp/hookauth=CiQAQFReLhnIle3NdlT3KBlNsZInL46XvTqeFrEf_yYlZdbJoIISgwEAemffGZYq1vkzNUV4CPfYEgIJt1y9enp1B36b_XGNds58ELMAOWXP5q84peCShNIXjareVnaThwO73_RJP5STk-gbdhxF_TWDDejo_6y1zI9iOqlqLetAxM7GTnfBGd9DnpsLaLucKnKvGyGkgwVX06l6Mw2ovP30ZaMU6HIQbFLl9A'
-        },
-        language: 'ENGLISH'
+        slackChannelRecipient: { webhookUrl: values.url },
+        language: values.language
       }
     }).then(() => {});
   };
@@ -151,7 +160,48 @@ const AddNotificationModal = ({
                 </Form.Item>
               )}
             />
-
+            <Form.Field
+              control={form.control}
+              name={`environment`}
+              render={({ field }) => (
+                <Form.Item className="py-2">
+                  <Form.Label required>{t('environment')}</Form.Label>
+                  <Form.Control>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        placeholder={t(`form:select-environment`)}
+                        label={
+                          environments.find(
+                            item => item.id === getValues('environment')
+                          )?.name
+                        }
+                        disabled={isLoadingEnvs}
+                        variant="secondary"
+                        className="w-full"
+                      />
+                      <DropdownMenuContent
+                        className="w-[502px]"
+                        align="start"
+                        {...field}
+                      >
+                        {environments.map((item, index) => (
+                          <DropdownMenuItem
+                            {...field}
+                            key={index}
+                            value={item.id}
+                            label={item.name}
+                            onSelectOption={value => {
+                              field.onChange(value);
+                            }}
+                          />
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </Form.Control>
+                  <Form.Message />
+                </Form.Item>
+              )}
+            />
             <Form.Field
               control={form.control}
               name={`language`}
@@ -162,7 +212,11 @@ const AddNotificationModal = ({
                     <DropdownMenu>
                       <DropdownMenuTrigger
                         placeholder={t(`form:select-language`)}
-                        label=""
+                        label={
+                          languageList.find(
+                            item => item.value === getValues('language')
+                          )?.label
+                        }
                         variant="secondary"
                         className="w-full"
                       />

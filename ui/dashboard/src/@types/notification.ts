@@ -1,6 +1,5 @@
-import { Language } from 'i18n';
-
 export type RecipientType = 'SlackChannel';
+export type NotificationLanguage = 'ENGLISH' | 'JAPANESE';
 
 export type SourceType =
   | 'DOMAIN_EVENT_FEATURE'
@@ -29,7 +28,7 @@ export interface NotificationRecipient {
   slackChannelRecipient: {
     webhookUrl: string;
   };
-  language: Language;
+  language: NotificationLanguage;
 }
 
 export interface Notification {

@@ -11,7 +11,7 @@ import Icon from 'components/icon';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
-import FilterAPIKeyModal from './slack-modal/filter-notification-modal';
+import FilterAPIKeyModal from './notification-modal/filter-notification-modal';
 import { NotificationActionsType, NotificationFilters } from './types';
 
 const PageContent = ({

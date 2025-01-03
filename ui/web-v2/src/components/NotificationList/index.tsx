@@ -43,7 +43,6 @@ export const NotificationList: FC<NotificationListProps> = memo(
       (state) => selectAll(state.notification),
       shallowEqual
     );
-    console.log("notificationList", notificationList);
     
     const isLoading = useSelector<AppState, boolean>(
       (state) => state.notification.loading,

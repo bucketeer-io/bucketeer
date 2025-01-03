@@ -5,9 +5,9 @@ import { Notification } from '@types';
 import PageLayout from 'elements/page-layout';
 import { EmptyCollection } from './collection-layout/empty-collection';
 import { useFetchNotifications } from './collection-loader/use-fetch-notifications';
+import AddNotificationModal from './notification-modal/add-notification-modal';
+import EditNotificationModal from './notification-modal/edit-notification-modal';
 import PageContent from './page-content';
-import AddNotificationModal from './slack-modal/add-notification-modal';
-import EditNotificationModal from './slack-modal/edit-notification-modal';
 import { NotificationActionsType } from './types';
 
 const PageLoader = () => {
