@@ -37,7 +37,3 @@ message DeletePushCommand {}
 message RenamePushCommand {
   string name = 1;
 }
-
-message EnablePushCommand {}
-
-message DisablePushCommand {}

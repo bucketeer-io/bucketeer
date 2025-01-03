@@ -157,16 +157,6 @@ func (p *Push) ExistTag(findTag string) bool {
 	return false
 }
 
-func (p *Push) Enable() {
-	p.Disabled = false
-	p.UpdatedAt = time.Now().Unix()
-}
-
-func (p *Push) Disable() {
-	p.Disabled = true
-	p.UpdatedAt = time.Now().Unix()
-}
-
 func validate(p *proto.Push) error {
 	if p.Name == "" {
 		return ErrNameRequired

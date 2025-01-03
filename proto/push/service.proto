@@ -82,8 +82,6 @@ message UpdatePushRequest {
   repeated string tags = 6;
   google.protobuf.StringValue name = 7;
   string environment_id = 8 [(google.api.field_behavior) = REQUIRED];
-  EnablePushCommand enable_push_command = 9;
-  DisablePushCommand disable_push_command = 10;
   google.protobuf.BoolValue disabled = 11;
 }
 

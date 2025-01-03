@@ -823,9 +823,7 @@ func (s *PushService) validateAddPushTagsCommand(
 func (s *PushService) isNoUpdatePushCommand(req *pushproto.UpdatePushRequest) bool {
 	return req.AddPushTagsCommand == nil &&
 		req.DeletePushTagsCommand == nil &&
-		req.RenamePushCommand == nil &&
-		req.EnablePushCommand == nil &&
-		req.DisablePushCommand == nil
+		req.RenamePushCommand == nil
 }
 
 func (s *PushService) DeletePush(

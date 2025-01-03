@@ -187,8 +187,6 @@ message Event {
     PUSH_TAGS_DELETED = 903;
     PUSH_RENAMED = 904;
     PUSH_UPDATED = 905;
-    PUSH_ENABLED = 906;
-    PUSH_DISABLED = 907;
     SUBSCRIPTION_CREATED = 1000;
     SUBSCRIPTION_DELETED = 1001;
     SUBSCRIPTION_ENABLED = 1002;
@@ -929,10 +927,6 @@ message PushUpdatedEvent {
   google.protobuf.StringValue name = 1;
   repeated string tags = 2;
 }
-
-message PushEnabledEvent {}
-
-message PushDisabledEvent {}
 
 message SubscriptionCreatedEvent {
   repeated bucketeer.notification.Subscription.SourceType source_types = 1;

@@ -14984,14 +14984,6 @@
                 "integer": 905
               },
               {
-                "name": "PUSH_ENABLED",
-                "integer": 906
-              },
-              {
-                "name": "PUSH_DISABLED",
-                "integer": 907
-              },
-              {
                 "name": "SUBSCRIPTION_CREATED",
                 "integer": 1000
               },
@@ -17478,12 +17470,6 @@
                 "is_repeated": true
               }
             ]
-          },
-          {
-            "name": "PushEnabledEvent"
-          },
-          {
-            "name": "PushDisabledEvent"
           },
           {
             "name": "SubscriptionCreatedEvent",
@@ -29509,12 +29495,6 @@
                 "type": "string"
               }
             ]
-          },
-          {
-            "name": "EnablePushCommand"
-          },
-          {
-            "name": "DisablePushCommand"
           }
         ],
         "package": {
@@ -29834,16 +29814,6 @@
                     "value": "REQUIRED"
                   }
                 ]
-              },
-              {
-                "id": 9,
-                "name": "enable_push_command",
-                "type": "EnablePushCommand"
-              },
-              {
-                "id": 10,
-                "name": "disable_push_command",
-                "type": "DisablePushCommand"
               },
               {
                 "id": 11,
