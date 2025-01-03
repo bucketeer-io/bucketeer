@@ -140,7 +140,7 @@ export const useColumns = ({
 
         return (
           <Switch
-            checked={push.deleted}
+            checked={!push.disabled}
             onCheckedChange={value =>
               onActions(push, value ? 'ENABLE' : 'DISABLE')
             }

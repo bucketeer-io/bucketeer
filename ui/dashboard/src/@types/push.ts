@@ -2,6 +2,7 @@ export type Push = {
   id: string;
   tags: string[];
   deleted: boolean;
+  disabled: boolean;
   name: string;
   createdAt: string;
   updatedAt: string;

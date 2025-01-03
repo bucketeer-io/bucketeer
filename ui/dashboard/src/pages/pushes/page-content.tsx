@@ -11,8 +11,7 @@ import Icon from 'components/icon';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
-import FilterAPIKeyModal from './push-modal/filter-push-modal';
-// import FilterAPIKeyModal from './push-modal/filter-push-modal';
+import FilterPushKeyModal from './push-modal/filter-push-modal';
 import { PushActionsType, PushFilters } from './types';
 
 const PageContent = ({
@@ -66,7 +65,7 @@ const PageContent = ({
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
       {openFilterModal && (
-        <FilterAPIKeyModal
+        <FilterPushKeyModal
           isOpen={openFilterModal}
           filters={filters}
           onClose={onCloseFilterModal}
