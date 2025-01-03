@@ -1,5 +1,60 @@
 # Changelog
 
+## [1.2.0](https://github.com/bucketeer-io/bucketeer/compare/v1.1.0...v1.2.0) (2025-01-03)
+
+
+### Features
+
+* add disabled field for push ([#1406](https://github.com/bucketeer-io/bucketeer/issues/1406)) ([c93b443](https://github.com/bucketeer-io/bucketeer/commit/c93b4436322f6bf9735262e46b218673cc196e8b))
+* add organization_id condition for list api key ([#1373](https://github.com/bucketeer-io/bucketeer/issues/1373)) ([e803651](https://github.com/bucketeer-io/bucketeer/commit/e803651c666df643b690c4f6a0fe9f620ee7ddab))
+* expose http protocol for push APIs ([#1379](https://github.com/bucketeer-io/bucketeer/issues/1379)) ([e5b077a](https://github.com/bucketeer-io/bucketeer/commit/e5b077a9a8a17b64c00bcb25f027f4b0a8d7c44d))
+* implement http get and create notification apis, remove command patterns from create and delete apis ([#1394](https://github.com/bucketeer-io/bucketeer/issues/1394)) ([d330622](https://github.com/bucketeer-io/bucketeer/commit/d33062225e43d6e238286ae80ca0e0088a0cb8b3))
+* implement public API create and update account ([#1376](https://github.com/bucketeer-io/bucketeer/issues/1376)) ([1764266](https://github.com/bucketeer-io/bucketeer/commit/1764266130665985da50e6c2181caa508c328eb9))
+* implement save api key as editor mechanism ([#1352](https://github.com/bucketeer-io/bucketeer/issues/1352)) ([fa2e6cf](https://github.com/bucketeer-io/bucketeer/commit/fa2e6cf0e71cf58651e307d60f0a4a54ef872903))
+* init http route and remove command pattern for update notification ([#1396](https://github.com/bucketeer-io/bucketeer/issues/1396)) ([7e31980](https://github.com/bucketeer-io/bucketeer/commit/7e3198001a0c993226c8e89baee8199d3ec29f8d))
+* return extra info of public API key and obfuscate the returned key ([#1349](https://github.com/bucketeer-io/bucketeer/issues/1349)) ([736d9a0](https://github.com/bucketeer-io/bucketeer/commit/736d9a05767577fc3c44cd14fff9867d7714d832))
+* save cache in child redis instances ([#1392](https://github.com/bucketeer-io/bucketeer/issues/1392)) ([b0b1bb4](https://github.com/bucketeer-io/bucketeer/commit/b0b1bb48a5f13039e1d3ccdb6689f14f637c671b))
+* support filter by organization_id in list subscription v2 and expose http ([#1387](https://github.com/bucketeer-io/bucketeer/issues/1387)) ([151bd30](https://github.com/bucketeer-io/bucketeer/commit/151bd302add4341c261b08a16fc97212136e8c0c))
+* **ui/dashboard:** update api keys list ([#1346](https://github.com/bucketeer-io/bucketeer/issues/1346)) ([f05e58c](https://github.com/bucketeer-io/bucketeer/commit/f05e58c872add8f9c49c91b7cd89fcbc3303ec56))
+
+
+### Bug Fixes
+
+* cannot delete pfmerge key when deleting counts ([#1366](https://github.com/bucketeer-io/bucketeer/issues/1366)) ([5474107](https://github.com/bucketeer-io/bucketeer/commit/5474107eca9252c939baedfcdd6be3a6679bd36e))
+* cannot write against a read-only redis replica ([#1378](https://github.com/bucketeer-io/bucketeer/issues/1378)) ([3a29bbd](https://github.com/bucketeer-io/bucketeer/commit/3a29bbdc17c58555670971cd1ab4765589bc613d))
+* change dev container start docker system prune to images prune ([#1400](https://github.com/bucketeer-io/bucketeer/issues/1400)) ([89b4af1](https://github.com/bucketeer-io/bucketeer/commit/89b4af1659ad337ff48856669db5c48f21858620))
+* delete pfmerge key after count users ([#1375](https://github.com/bucketeer-io/bucketeer/issues/1375)) ([d4c6eec](https://github.com/bucketeer-io/bucketeer/commit/d4c6eecab185eaac20ad4ae76516c7249c53aecc))
+* subscriber logs when reporting bigquery errors ([#1397](https://github.com/bucketeer-io/bucketeer/issues/1397)) ([8f3ded4](https://github.com/bucketeer-io/bucketeer/commit/8f3ded43b0eaa9378c9f8a9ad36d759261d9d057))
+* update evaluation event counter metrics to include variation ID ([#1363](https://github.com/bucketeer-io/bucketeer/issues/1363)) ([e1488a8](https://github.com/bucketeer-io/bucketeer/commit/e1488a8e926b73d9cd550b3477835b110dfa066d))
+
+
+### Miscellaneous
+
+* add environment_id label to evaluation event metrics ([#1391](https://github.com/bucketeer-io/bucketeer/issues/1391)) ([ffe8c83](https://github.com/bucketeer-io/bucketeer/commit/ffe8c8306ce8aa4a41c1703ed91ef6c858c56682))
+* add linter to ensure lisence header ([#1393](https://github.com/bucketeer-io/bucketeer/issues/1393)) ([53bb294](https://github.com/bucketeer-io/bucketeer/commit/53bb2945bb56907c6ba875ae97d6b851a63acd06))
+* add log for missing api key in the cache ([#1377](https://github.com/bucketeer-io/bucketeer/issues/1377)) ([ff14e70](https://github.com/bucketeer-io/bucketeer/commit/ff14e7001f06c56deab8722885edad2b3bdac464))
+* add transaction support for redis pipeline ([#1367](https://github.com/bucketeer-io/bucketeer/issues/1367)) ([d387ee6](https://github.com/bucketeer-io/bucketeer/commit/d387ee6af632aa87a98f1c36203c4e457ad5e5a8))
+* change MySQL collate to utf8mb4_general_ci ([#1382](https://github.com/bucketeer-io/bucketeer/issues/1382)) ([01b31d0](https://github.com/bucketeer-io/bucketeer/commit/01b31d0f1a0e9c4483308de4dc6a7d9b445c02ff))
+* change MySQL collate to utf8mb4_general_ci ([#1385](https://github.com/bucketeer-io/bucketeer/issues/1385)) ([4874621](https://github.com/bucketeer-io/bucketeer/commit/48746218a2e01f998b9b18c158fd96c7dd507aa4))
+* change update segment cache timeout to 1 minute ([#1370](https://github.com/bucketeer-io/bucketeer/issues/1370)) ([4c87ff6](https://github.com/bucketeer-io/bucketeer/commit/4c87ff6cfc82fe0e1e7098cbf9081ce10dab1d0a))
+* create sync api key maintainer migration ([#1374](https://github.com/bucketeer-io/bucketeer/issues/1374)) ([831bbe2](https://github.com/bucketeer-io/bucketeer/commit/831bbe25ab501de364f3a8ad11416d7ba358364b))
+* remove old account table ([#1390](https://github.com/bucketeer-io/bucketeer/issues/1390)) ([bab9b93](https://github.com/bucketeer-io/bucketeer/commit/bab9b9357770d41c1cbfced556bd892273ab365b))
+* update copyright 2025 ([#1407](https://github.com/bucketeer-io/bucketeer/issues/1407)) ([595b906](https://github.com/bucketeer-io/bucketeer/commit/595b90695196d0f3778e29cfb649fc517776ca66))
+
+
+### Performance Improvements
+
+* change to save user and event counts in one request ([#1369](https://github.com/bucketeer-io/bucketeer/issues/1369)) ([a576212](https://github.com/bucketeer-io/bucketeer/commit/a576212fe58eb045241bf89cc448bda7077e1e10))
+* improve get environment api key latency ([#1380](https://github.com/bucketeer-io/bucketeer/issues/1380)) ([d9d5895](https://github.com/bucketeer-io/bucketeer/commit/d9d589587cd6133389311b40b4a99e0dea6d1b4b))
+* improve redis pfmerge when using redis cluster ([#1372](https://github.com/bucketeer-io/bucketeer/issues/1372)) ([ac36f93](https://github.com/bucketeer-io/bucketeer/commit/ac36f937a897b521e2bd2da2dfcf361753e9198f))
+* update cache across goroutines to speed up caching ([#1398](https://github.com/bucketeer-io/bucketeer/issues/1398)) ([0905244](https://github.com/bucketeer-io/bucketeer/commit/09052449c319bf7d7affc92bbc6740d9f4eda223))
+
+
+### Reverts
+
+* change MySQL collate to utf8mb4_general_ci ([#1383](https://github.com/bucketeer-io/bucketeer/issues/1383)) ([9788305](https://github.com/bucketeer-io/bucketeer/commit/97883050020332bf6af083ce31f949e1c02e2e0f))
+* change to save user and event counts in one request ([#1371](https://github.com/bucketeer-io/bucketeer/issues/1371)) ([2a84762](https://github.com/bucketeer-io/bucketeer/commit/2a847621cfe2ffdcc0bb346ebb0b6b7381293f72))
+
 ## [1.1.0](https://github.com/bucketeer-io/bucketeer/compare/v1.0.0...v1.1.0) (2024-12-02)
 
 
