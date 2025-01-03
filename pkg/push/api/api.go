@@ -623,7 +623,7 @@ func (s *PushService) updatePushNoCommand(
 			return err
 		}
 
-		updated, err := push.Update(req.Name, req.Tags)
+		updated, err := push.Update(req.Name, req.Tags, req.Disabled)
 		if err != nil {
 			return err
 		}

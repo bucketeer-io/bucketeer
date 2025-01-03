@@ -82,6 +82,7 @@ message UpdatePushRequest {
   repeated string tags = 6;
   google.protobuf.StringValue name = 7;
   string environment_id = 8 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.BoolValue disabled = 11;
 }
 
 message UpdatePushResponse {

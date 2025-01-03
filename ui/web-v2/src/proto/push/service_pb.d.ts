@@ -313,6 +313,11 @@ export class UpdatePushRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  hasDisabled(): boolean;
+  clearDisabled(): void;
+  getDisabled(): google_protobuf_wrappers_pb.BoolValue | undefined;
+  setDisabled(value?: google_protobuf_wrappers_pb.BoolValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdatePushRequest.AsObject;
   static toObject(
@@ -343,6 +348,7 @@ export namespace UpdatePushRequest {
     tagsList: Array<string>;
     name?: google_protobuf_wrappers_pb.StringValue.AsObject;
     environmentId: string;
+    disabled?: google_protobuf_wrappers_pb.BoolValue.AsObject;
   };
 }
 

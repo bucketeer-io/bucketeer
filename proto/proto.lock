@@ -29550,6 +29550,11 @@
                 "id": 8,
                 "name": "fcm_service_account",
                 "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "disabled",
+                "type": "bool"
               }
             ],
             "reserved_ids": [
@@ -29809,6 +29814,11 @@
                     "value": "REQUIRED"
                   }
                 ]
+              },
+              {
+                "id": 11,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue"
               }
             ],
             "reserved_ids": [
