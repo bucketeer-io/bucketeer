@@ -69,12 +69,12 @@ const Navigation = ({ onClickNavLink }: { onClickNavLink: () => void }) => {
         {
           label: `Slack`,
           icon: IconSystem.IconSlack,
-          href: `/${envUrlCode}${ROUTING.PAGE_PATH_INTEGRATION_SLACK}`
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_NOTIFICATIONS}`
         },
         {
           label: `FCM`,
           icon: IconSystem.IconFCM,
-          href: `/${envUrlCode}${ROUTING.PAGE_PATH_INTEGRATION_FCM}`
+          href: `/${envUrlCode}${ROUTING.PAGE_PATH_PUSHES}`
         }
       ]
     }
