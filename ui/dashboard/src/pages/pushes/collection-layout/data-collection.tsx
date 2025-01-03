@@ -3,96 +3,101 @@ import {
   IconMoreHorizOutlined
 } from 'react-icons-material-design';
 import type { ColumnDef } from '@tanstack/react-table';
-import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import compact from 'lodash/compact';
-import { APIKey, APIKeyRole } from '@types';
+import { Push } from '@types';
 import { truncateTextCenter } from 'utils/converts';
 import { useFormatDateTime } from 'utils/date-time';
-import { copyToClipBoard } from 'utils/function';
-import { IconCopy } from '@icons';
-import Icon from 'components/icon';
 import { Popover } from 'components/popover';
 import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
-import { APIKeyActionsType } from '../types';
+import { PushActionsType } from '../types';
+
+export const tagOptions = [
+  {
+    label: 'Android',
+    value: 'android'
+  },
+  {
+    label: 'IOS',
+    value: 'ios'
+  },
+  {
+    label: 'Web',
+    value: 'web'
+  },
+  {
+    label: 'JSON',
+    value: 'json'
+  },
+  {
+    label: 'JSON New',
+    value: 'json-new'
+  },
+  {
+    label: 'Number',
+    value: 'number'
+  },
+  {
+    label: 'String',
+    value: 'string'
+  }
+];
+
+export const Tag = ({ tag }: { tag: string }) => (
+  <div className="flex-center px-2 py-1.5 bg-primary-100/70 text-primary-500 typo-para-small leading-[14px] rounded whitespace-nowrap">
+    {tagOptions.find(item => item.value === tag)?.label || tag}
+  </div>
+);
+
+export const renderTag = (tags: string[]) => {
+  return (
+    <div className="flex items-center gap-2 max-w-fit">
+      {tags.slice(0, 3)?.map((tag, index) => <Tag tag={tag} key={index} />)}
+      {tags.length > 3 && <Tag tag={`+${tags.length - 3}`} />}
+    </div>
+  );
+};
 
 export const useColumns = ({
   onActions
 }: {
-  onActions: (item: APIKey, type: APIKeyActionsType) => void;
-}): ColumnDef<APIKey>[] => {
+  onActions: (item: Push, type: PushActionsType) => void;
+}): ColumnDef<Push>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
-  const { notify } = useToast();
-
-  const getAPIkeyRole = (role: APIKeyRole) => {
-    switch (role) {
-      case 'SDK_CLIENT':
-        return t('client');
-
-      case 'SDK_SERVER':
-        return t('server');
-
-      default:
-        return t('public-api');
-    }
-  };
-
-  const handleCopyId = (id: string) => {
-    copyToClipBoard(id);
-    notify({
-      toastType: 'toast',
-      messageType: 'success',
-      message: (
-        <span>
-          <b>ID</b> {` has been successfully copied!`}
-        </span>
-      )
-    });
-  };
 
   return [
     {
       accessorKey: 'name',
       header: `${t('name')}`,
-      size: 500,
+      size: 400,
       cell: ({ row }) => {
-        const apiKey = row.original;
+        const push = row.original;
 
         return (
           <div className="flex flex-col gap-0.5 max-w-fit">
             <button
-              onClick={() => onActions(apiKey, 'EDIT')}
+              onClick={() => onActions(push, 'EDIT')}
               className="underline text-primary-500 break-all typo-para-medium text-left"
             >
-              {apiKey.name}
+              {push.name}
             </button>
-            <div className="flex items-center h-5 gap-x-2 typo-para-tiny text-gray-500 group select-none">
-              {truncateTextCenter(apiKey.id)}
-              <div onClick={() => handleCopyId(apiKey.id)}>
-                <Icon
-                  icon={IconCopy}
-                  size={'sm'}
-                  className="opacity-0 group-hover:opacity-100 cursor-pointer"
-                />
-              </div>
+            <div className="typo-para-tiny text-gray-500">
+              {truncateTextCenter(push.name)}
             </div>
           </div>
         );
       }
     },
     {
-      accessorKey: 'role',
-      header: `${t('role')}`,
-      size: 150,
+      accessorKey: 'tags',
+      header: `${t('tags')}`,
+      size: 350,
       cell: ({ row }) => {
-        const apiKey = row.original;
-        return (
-          <div className="typo-para-small text-accent-blue-500 bg-accent-blue-50 px-2 py-[3px] w-fit rounded">
-            {getAPIkeyRole(apiKey.role)}
-          </div>
-        );
+        const push = row.original;
+
+        return renderTag(push.tags);
       }
     },
     {
@@ -100,10 +105,10 @@ export const useColumns = ({
       header: `${t('environment')}`,
       size: 250,
       cell: ({ row }) => {
-        const apiKey = row.original;
+        const push = row.original;
         return (
           <div className="text-gray-700 typo-para-medium">
-            {apiKey.environmentName}
+            {push.environmentName}
           </div>
         );
       }
@@ -111,34 +116,33 @@ export const useColumns = ({
     {
       accessorKey: 'createdAt',
       header: `${t('table:created-at')}`,
-      size: 150,
+      size: 200,
       cell: ({ row }) => {
-        const apiKey = row.original;
+        const push = row.original;
         return (
           <DateTooltip
             trigger={
               <div className="text-gray-700 typo-para-medium">
-                {formatDateTime(apiKey.createdAt)}
+                {formatDateTime(push.createdAt)}
               </div>
             }
-            date={apiKey.createdAt}
+            date={push.createdAt}
           />
         );
       }
     },
-
     {
       accessorKey: 'state',
       header: `${t('state')}`,
       size: 120,
       cell: ({ row }) => {
-        const apiKey = row.original;
+        const push = row.original;
 
         return (
           <Switch
-            checked={!apiKey.disabled}
+            checked={!push.disabled}
             onCheckedChange={value =>
-              onActions(apiKey, value ? 'ENABLE' : 'DISABLE')
+              onActions(push, value ? 'ENABLE' : 'DISABLE')
             }
           />
         );
@@ -154,19 +158,19 @@ export const useColumns = ({
       },
       enableSorting: false,
       cell: ({ row }) => {
-        const apiKey = row.original;
+        const push = row.original;
 
         return (
           <Popover
             options={compact([
               {
-                label: `${t('table:popover.edit-api-key')}`,
+                label: `${t('table:popover.edit-push')}`,
                 icon: IconEditOutlined,
                 value: 'EDIT'
               }
             ])}
             icon={IconMoreHorizOutlined}
-            onClick={value => onActions(apiKey, value as APIKeyActionsType)}
+            onClick={value => onActions(push, value as PushActionsType)}
             align="end"
           />
         );
