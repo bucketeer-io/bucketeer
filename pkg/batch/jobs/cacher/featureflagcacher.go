@@ -74,10 +74,10 @@ func (c *featureFlagCacher) Run(ctx context.Context) error {
 			Features: filtered,
 		}
 		updatedInstances := c.putCache(fts, envFt.EnvironmentId)
-		c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
 		c.logger.Debug("Caching features",
 			zap.String("environmentId", envFt.EnvironmentId),
 			zap.Int("featureCount", len(envFt.Features)),
+			zap.Int("updatedInstances", updatedInstances),
 		)
 	}
 	return nil
