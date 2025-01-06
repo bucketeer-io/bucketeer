@@ -18,6 +18,7 @@ package bucketeer.gateway;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/gateway";
 
 import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
 import "google/protobuf/wrappers.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
@@ -35,6 +36,9 @@ import "proto/push/push.proto";
 import "proto/push/service.proto";
 import "proto/account/service.proto";
 import "proto/account/account.proto";
+import "proto/notification/service.proto";
+import "proto/notification/subscription.proto";
+import "proto/notification/recipient.proto";
 import "proto/event/client/event.proto";
 
 message PingRequest {}
@@ -318,6 +322,66 @@ message ListAccountsV2Response {
   repeated account.AccountV2 accounts = 1;
   string cursor = 2;
   int64 total_count = 3;
+}
+
+message ListSubscriptionsRequest {
+  int64 page_size = 1;
+  string cursor = 2;
+  repeated notification.Subscription.SourceType source_types = 3;
+  notification.ListSubscriptionsRequest.OrderBy order_by = 4;
+  notification.ListSubscriptionsRequest.OrderDirection order_direction = 5;
+  string search_keyword = 6;
+  google.protobuf.BoolValue disabled = 7;
+  string environment_id = 8;
+  string organization_id = 9 [(google.api.field_behavior) = REQUIRED];
+}
+
+message ListSubscriptionsResponse {
+  repeated notification.Subscription subscriptions = 1;
+  string cursor = 2;
+  int64 total_count = 3;
+}
+
+message CreateSubscriptionRequest {
+  string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
+  string name = 2 [(google.api.field_behavior) = REQUIRED];
+  repeated notification.Subscription.SourceType source_types = 3
+      [(google.api.field_behavior) = REQUIRED];
+  notification.Recipient recipient = 4 [(google.api.field_behavior) = REQUIRED];
+}
+
+message CreateSubscriptionResponse {
+  notification.Subscription subscription = 1;
+}
+
+message GetSubscriptionRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+}
+
+message GetSubscriptionResponse {
+  notification.Subscription subscription = 1;
+}
+
+message UpdateSubscriptionRequest {
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 2 [(google.api.field_behavior) = REQUIRED];
+  google.protobuf.StringValue name = 3;
+  repeated notification.Subscription.SourceType source_types = 4;
+  google.protobuf.BoolValue disabled = 5 [(grpc.gateway.protoc_gen_openapiv2
+                                               .options.openapiv2_field) = {
+    title: "disabled"
+    description: "if disabled is true, the subscription will be disabled. If false, the subscription will be enabled."
+  }];
+  google.protobuf.BoolValue deleted = 6 [(grpc.gateway.protoc_gen_openapiv2
+                                              .options.openapiv2_field) = {
+    title: "deleted"
+    description: "if true, the subscription will be deleted and other fields will be ignored."
+  }];
+}
+
+message UpdateSubscriptionResponse {
+  notification.Subscription subscription = 1;
 }
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
@@ -777,6 +841,88 @@ service Gateway {
       description: "Get list Accounts. To call this API, you need a `READ` API Key role.",
       tags: "Account",
       operation_id: "api.gateway.v1.account.list",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc ListSubscriptions(ListSubscriptionsRequest)
+      returns (ListSubscriptionsResponse) {
+    option (google.api.http) = {
+      get: "/v1/subscriptions"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List",
+      description: "Get list Subscriptions. To call this API, you need a `READ` API Key role.",
+      tags: "Subscription",
+      operation_id: "api.gateway.v1.subscription.list",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc CreateSubscription(CreateSubscriptionRequest)
+      returns (CreateSubscriptionResponse) {
+    option (google.api.http) = {
+      post: "/v1/subscription"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create",
+      description: "Create a new Subscription. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Subscription",
+      operation_id: "api.gateway.v1.subscription.create",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc GetSubscription(GetSubscriptionRequest)
+      returns (GetSubscriptionResponse) {
+    option (google.api.http) = {
+      get: "/v1/subscription/{id}"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get a Subscription. To call this API, you need a `READ` API Key role.",
+      tags: "Subscription",
+      operation_id: "api.gateway.v1.subscription.get",
+      parameters: {
+        headers: {
+          name: "authorization"
+          description: "The API Key generated on the Admin Console."
+          type: STRING,
+          required: true
+        }
+      }
+    };
+  }
+  rpc UpdateSubscription(UpdateSubscriptionRequest)
+      returns (UpdateSubscriptionResponse) {
+    option (google.api.http) = {
+      patch: "/v1/subscription/{id}"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Update",
+      description: "Update a Subscription. To call this API, you need a `WRITE` or `ADMIN` API Key role.",
+      tags: "Subscription",
+      operation_id: "api.gateway.v1.subscription.update",
       parameters: {
         headers: {
           name: "authorization"

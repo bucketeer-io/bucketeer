@@ -36,6 +36,7 @@ import (
 	featuredomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/metrics"
+	notificationclient "github.com/bucketeer-io/bucketeer/pkg/notification/client"
 	"github.com/bucketeer-io/bucketeer/pkg/pubsub/publisher"
 	pushclient "github.com/bucketeer-io/bucketeer/pkg/push/client"
 	"github.com/bucketeer-io/bucketeer/pkg/rpc"
@@ -55,26 +56,27 @@ const (
 )
 
 var (
-	ErrSDKVersionRequired = status.Error(codes.InvalidArgument, "gateway: sdk version is required")
-	ErrSourceIDRequired   = status.Error(codes.InvalidArgument, "gateway: source id is required")
-	ErrUserRequired       = status.Error(codes.InvalidArgument, "gateway: user is required")
-	ErrUserIDRequired     = status.Error(codes.InvalidArgument, "gateway: user id is required")
-	ErrGoalIDRequired     = status.Error(codes.InvalidArgument, "gateway: goal id is required")
-	ErrFeatureIDRequired  = status.Error(codes.InvalidArgument, "gateway: feature id is required")
-	ErrTagRequired        = status.Error(codes.InvalidArgument, "gateway: tag is required")
-	ErrMissingEvents      = status.Error(codes.InvalidArgument, "gateway: missing events")
-	ErrMissingEventID     = status.Error(codes.InvalidArgument, "gateway: missing event id")
-	ErrInvalidTimestamp   = status.Error(codes.InvalidArgument, "gateway: invalid timestamp")
-	ErrContextCanceled    = status.Error(codes.Canceled, "gateway: context canceled")
-	ErrFeatureNotFound    = status.Error(codes.NotFound, "gateway: feature not found")
-	ErrEvaluationNotFound = status.Error(codes.NotFound, "gateway: evaluation not found")
-	ErrPushNotFound       = status.Error(codes.NotFound, "gateway: push not found")
-	ErrAccountNotFound    = status.Error(codes.NotFound, "gateway: account not found")
-	ErrMissingAPIKey      = status.Error(codes.Unauthenticated, "gateway: missing APIKey")
-	ErrInvalidAPIKey      = status.Error(codes.PermissionDenied, "gateway: invalid APIKey")
-	ErrDisabledAPIKey     = status.Error(codes.PermissionDenied, "gateway: disabled APIKey")
-	ErrBadRole            = status.Error(codes.PermissionDenied, "gateway: bad role")
-	ErrInternal           = status.Error(codes.Internal, "gateway: internal")
+	ErrSDKVersionRequired   = status.Error(codes.InvalidArgument, "gateway: sdk version is required")
+	ErrSourceIDRequired     = status.Error(codes.InvalidArgument, "gateway: source id is required")
+	ErrUserRequired         = status.Error(codes.InvalidArgument, "gateway: user is required")
+	ErrUserIDRequired       = status.Error(codes.InvalidArgument, "gateway: user id is required")
+	ErrGoalIDRequired       = status.Error(codes.InvalidArgument, "gateway: goal id is required")
+	ErrFeatureIDRequired    = status.Error(codes.InvalidArgument, "gateway: feature id is required")
+	ErrTagRequired          = status.Error(codes.InvalidArgument, "gateway: tag is required")
+	ErrMissingEvents        = status.Error(codes.InvalidArgument, "gateway: missing events")
+	ErrMissingEventID       = status.Error(codes.InvalidArgument, "gateway: missing event id")
+	ErrInvalidTimestamp     = status.Error(codes.InvalidArgument, "gateway: invalid timestamp")
+	ErrContextCanceled      = status.Error(codes.Canceled, "gateway: context canceled")
+	ErrFeatureNotFound      = status.Error(codes.NotFound, "gateway: feature not found")
+	ErrEvaluationNotFound   = status.Error(codes.NotFound, "gateway: evaluation not found")
+	ErrPushNotFound         = status.Error(codes.NotFound, "gateway: push not found")
+	ErrAccountNotFound      = status.Error(codes.NotFound, "gateway: account not found")
+	ErrSubscriptionNotFound = status.Error(codes.NotFound, "gateway: subscription not found")
+	ErrMissingAPIKey        = status.Error(codes.Unauthenticated, "gateway: missing APIKey")
+	ErrInvalidAPIKey        = status.Error(codes.PermissionDenied, "gateway: invalid APIKey")
+	ErrDisabledAPIKey       = status.Error(codes.PermissionDenied, "gateway: disabled APIKey")
+	ErrBadRole              = status.Error(codes.PermissionDenied, "gateway: bad role")
+	ErrInternal             = status.Error(codes.Internal, "gateway: internal")
 
 	grpcGoalEvent       = &eventproto.GoalEvent{}
 	grpcEvaluationEvent = &eventproto.EvaluationEvent{}
@@ -142,6 +144,7 @@ type grpcGatewayService struct {
 	featureClient          featureclient.Client
 	accountClient          accountclient.Client
 	pushClient             pushclient.Client
+	notificationClient     notificationclient.Client
 	goalPublisher          publisher.Publisher
 	evaluationPublisher    publisher.Publisher
 	userPublisher          publisher.Publisher
@@ -157,6 +160,7 @@ func NewGrpcGatewayService(
 	featureClient featureclient.Client,
 	accountClient accountclient.Client,
 	pushClient pushclient.Client,
+	notificationClient notificationclient.Client,
 	gp publisher.Publisher,
 	ep publisher.Publisher,
 	up publisher.Publisher,
@@ -174,6 +178,7 @@ func NewGrpcGatewayService(
 		featureClient:          featureClient,
 		accountClient:          accountClient,
 		pushClient:             pushClient,
+		notificationClient:     notificationClient,
 		goalPublisher:          gp,
 		evaluationPublisher:    ep,
 		userPublisher:          up,

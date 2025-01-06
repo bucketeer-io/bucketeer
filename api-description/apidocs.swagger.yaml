@@ -1273,6 +1273,294 @@ paths:
           type: string
       tags:
         - Pushes
+  /v1/subscription:
+    post:
+      summary: Create
+      description: Create a new Subscription. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.subscription.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateSubscriptionResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/bucketeergatewayCreateSubscriptionRequest'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Subscription
+  /v1/subscription/{id}:
+    get:
+      summary: Get
+      description: Get a Subscription. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.subscription.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayGetSubscriptionResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Subscription
+    patch:
+      summary: Update
+      description: Update a Subscription. To call this API, you need a `WRITE` or `ADMIN` API Key role.
+      operationId: api.gateway.v1.subscription.update
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayUpdateSubscriptionResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/GatewayUpdateSubscriptionBody'
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Subscription
+  /v1/subscriptions:
+    get:
+      summary: List
+      description: Get list Subscriptions. To call this API, you need a `READ` API Key role.
+      operationId: api.gateway.v1.subscription.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/bucketeergatewayListSubscriptionsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "403":
+          description: Request does not have permission to access the resource.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 7
+              details: []
+              message: not authorized
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: sourceTypes
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+            enum:
+              - DOMAIN_EVENT_FEATURE
+              - DOMAIN_EVENT_GOAL
+              - DOMAIN_EVENT_EXPERIMENT
+              - DOMAIN_EVENT_ACCOUNT
+              - DOMAIN_EVENT_APIKEY
+              - DOMAIN_EVENT_SEGMENT
+              - DOMAIN_EVENT_ENVIRONMENT
+              - DOMAIN_EVENT_ADMIN_ACCOUNT
+              - DOMAIN_EVENT_AUTOOPS_RULE
+              - DOMAIN_EVENT_PUSH
+              - DOMAIN_EVENT_SUBSCRIPTION
+              - DOMAIN_EVENT_ADMIN_SUBSCRIPTION
+              - DOMAIN_EVENT_PROJECT
+              - DOMAIN_EVENT_WEBHOOK
+              - DOMAIN_EVENT_PROGRESSIVE_ROLLOUT
+              - DOMAIN_EVENT_ORGANIZATION
+              - DOMAIN_EVENT_FLAG_TRIGGER
+              - FEATURE_STALE
+              - EXPERIMENT_RUNNING
+              - MAU_COUNT
+          collectionFormat: multi
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: disabled
+          in: query
+          required: false
+          type: boolean
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+        - name: organizationId
+          in: query
+          required: true
+          type: string
+        - name: authorization
+          description: The API Key generated on the Admin Console.
+          in: header
+          required: true
+          type: string
+      tags:
+        - Subscription
 definitions:
   AccountV2RoleOrganization:
     type: string
@@ -1395,6 +1683,27 @@ definitions:
         type: boolean
         description: if true, the push notification will be deleted and other fields will be ignored.
         title: deleted
+  GatewayUpdateSubscriptionBody:
+    type: object
+    properties:
+      environmentId:
+        type: string
+      name:
+        type: string
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+      disabled:
+        type: boolean
+        description: if disabled is true, the subscription will be disabled. If false, the subscription will be enabled.
+        title: disabled
+      deleted:
+        type: boolean
+        description: if true, the subscription will be deleted and other fields will be ignored.
+        title: deleted
+    required:
+      - environmentId
   GetEvaluationsRequestUserEvaluationCondition:
     type: object
     properties:
@@ -1403,6 +1712,12 @@ definitions:
         format: int64
       userAttributesUpdated:
         type: boolean
+  RecipientLanguage:
+    type: string
+    enum:
+      - ENGLISH
+      - JAPANESE
+    default: ENGLISH
   RegisterEventsResponseError:
     type: object
     properties:
@@ -1417,6 +1732,30 @@ definitions:
       - Environment_VIEWER
       - Environment_EDITOR
     default: Environment_UNASSIGNED
+  SubscriptionSourceType:
+    type: string
+    enum:
+      - DOMAIN_EVENT_FEATURE
+      - DOMAIN_EVENT_GOAL
+      - DOMAIN_EVENT_EXPERIMENT
+      - DOMAIN_EVENT_ACCOUNT
+      - DOMAIN_EVENT_APIKEY
+      - DOMAIN_EVENT_SEGMENT
+      - DOMAIN_EVENT_ENVIRONMENT
+      - DOMAIN_EVENT_ADMIN_ACCOUNT
+      - DOMAIN_EVENT_AUTOOPS_RULE
+      - DOMAIN_EVENT_PUSH
+      - DOMAIN_EVENT_SUBSCRIPTION
+      - DOMAIN_EVENT_ADMIN_SUBSCRIPTION
+      - DOMAIN_EVENT_PROJECT
+      - DOMAIN_EVENT_WEBHOOK
+      - DOMAIN_EVENT_PROGRESSIVE_ROLLOUT
+      - DOMAIN_EVENT_ORGANIZATION
+      - DOMAIN_EVENT_FLAG_TRIGGER
+      - FEATURE_STALE
+      - EXPERIMENT_RUNNING
+      - MAU_COUNT
+    default: DOMAIN_EVENT_FEATURE
   UpdateAccountV2RequestAccountV2Avatar:
     type: object
     properties:
@@ -1706,6 +2045,29 @@ definitions:
     properties:
       push:
         $ref: '#/definitions/pushPush'
+  bucketeergatewayCreateSubscriptionRequest:
+    type: object
+    properties:
+      environmentId:
+        type: string
+      name:
+        type: string
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+      recipient:
+        $ref: '#/definitions/notificationRecipient'
+    required:
+      - environmentId
+      - name
+      - sourceTypes
+      - recipient
+  bucketeergatewayCreateSubscriptionResponse:
+    type: object
+    properties:
+      subscription:
+        $ref: '#/definitions/notificationSubscription'
   bucketeergatewayGetAccountV2ByEnvironmentIDResponse:
     type: object
     properties:
@@ -1731,6 +2093,11 @@ definitions:
     properties:
       push:
         $ref: '#/definitions/pushPush'
+  bucketeergatewayGetSubscriptionResponse:
+    type: object
+    properties:
+      subscription:
+        $ref: '#/definitions/notificationSubscription'
   bucketeergatewayListAccountsV2Response:
     type: object
     properties:
@@ -1765,6 +2132,19 @@ definitions:
       totalCount:
         type: string
         format: int64
+  bucketeergatewayListSubscriptionsResponse:
+    type: object
+    properties:
+      subscriptions:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/notificationSubscription'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
   bucketeergatewayUpdateAccountV2Response:
     type: object
     properties:
@@ -1780,6 +2160,11 @@ definitions:
     properties:
       push:
         $ref: '#/definitions/pushPush'
+  bucketeergatewayUpdateSubscriptionResponse:
+    type: object
+    properties:
+      subscription:
+        $ref: '#/definitions/notificationSubscription'
   clientEvent:
     type: object
     properties:
@@ -2284,6 +2669,62 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/protobufAny'
+  notificationListSubscriptionsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  notificationListSubscriptionsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  notificationRecipient:
+    type: object
+    properties:
+      type:
+        $ref: '#/definitions/notificationRecipientType'
+      slackChannelRecipient:
+        $ref: '#/definitions/notificationSlackChannelRecipient'
+      language:
+        $ref: '#/definitions/RecipientLanguage'
+  notificationRecipientType:
+    type: string
+    enum:
+      - SlackChannel
+    default: SlackChannel
+  notificationSlackChannelRecipient:
+    type: object
+    properties:
+      webhookUrl:
+        type: string
+  notificationSubscription:
+    type: object
+    properties:
+      id:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      disabled:
+        type: boolean
+      sourceTypes:
+        type: array
+        items:
+          $ref: '#/definitions/SubscriptionSourceType'
+      recipient:
+        $ref: '#/definitions/notificationRecipient'
+      name:
+        type: string
+      environmentName:
+        type: string
   protobufAny:
     type: object
     properties:

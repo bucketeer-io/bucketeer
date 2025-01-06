@@ -93,7 +93,7 @@ func TestWithLogger(t *testing.T) {
 
 func TestNewGrpcGatewayService(t *testing.T) {
 	t.Parallel()
-	g := NewGrpcGatewayService(nil, nil, nil, nil, nil, nil, nil)
+	g := NewGrpcGatewayService(nil, nil, nil, nil, nil, nil, nil, nil)
 	assert.IsType(t, &grpcGatewayService{}, g)
 }
 

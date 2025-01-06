@@ -25697,6 +25697,269 @@
                 "type": "int64"
               }
             ]
+          },
+          {
+            "name": "ListSubscriptionsRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "page_size",
+                "type": "int64"
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "source_types",
+                "type": "notification.Subscription.SourceType",
+                "is_repeated": true
+              },
+              {
+                "id": 4,
+                "name": "order_by",
+                "type": "notification.ListSubscriptionsRequest.OrderBy"
+              },
+              {
+                "id": 5,
+                "name": "order_direction",
+                "type": "notification.ListSubscriptionsRequest.OrderDirection"
+              },
+              {
+                "id": 6,
+                "name": "search_keyword",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue"
+              },
+              {
+                "id": 8,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "organization_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "ListSubscriptionsResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "subscriptions",
+                "type": "notification.Subscription",
+                "is_repeated": true
+              },
+              {
+                "id": 2,
+                "name": "cursor",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "total_count",
+                "type": "int64"
+              }
+            ]
+          },
+          {
+            "name": "CreateSubscriptionRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "name",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "source_types",
+                "type": "notification.Subscription.SourceType",
+                "is_repeated": true,
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 4,
+                "name": "recipient",
+                "type": "notification.Recipient",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "CreateSubscriptionResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "subscription",
+                "type": "notification.Subscription"
+              }
+            ]
+          },
+          {
+            "name": "GetSubscriptionRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "GetSubscriptionResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "subscription",
+                "type": "notification.Subscription"
+              }
+            ]
+          },
+          {
+            "name": "UpdateSubscriptionRequest",
+            "fields": [
+              {
+                "id": 1,
+                "name": "id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string",
+                "options": [
+                  {
+                    "name": "(google.api.field_behavior)",
+                    "value": "REQUIRED"
+                  }
+                ]
+              },
+              {
+                "id": 3,
+                "name": "name",
+                "type": "google.protobuf.StringValue"
+              },
+              {
+                "id": 4,
+                "name": "source_types",
+                "type": "notification.Subscription.SourceType",
+                "is_repeated": true
+              },
+              {
+                "id": 5,
+                "name": "disabled",
+                "type": "google.protobuf.BoolValue",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "title",
+                        "value": "disabled"
+                      },
+                      {
+                        "name": "description",
+                        "value": "if disabled is true, the subscription will be disabled. If false, the subscription will be enabled."
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": 6,
+                "name": "deleted",
+                "type": "google.protobuf.BoolValue",
+                "options": [
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field)",
+                    "aggregated": [
+                      {
+                        "name": "title",
+                        "value": "deleted"
+                      },
+                      {
+                        "name": "description",
+                        "value": "if true, the subscription will be deleted and other fields will be ignored."
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "UpdateSubscriptionResponse",
+            "fields": [
+              {
+                "id": 1,
+                "name": "subscription",
+                "type": "notification.Subscription"
+              }
+            ]
           }
         ],
         "services": [
@@ -27046,6 +27309,266 @@
                     ]
                   }
                 ]
+              },
+              {
+                "name": "ListSubscriptions",
+                "in_type": "ListSubscriptionsRequest",
+                "out_type": "ListSubscriptionsResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/subscriptions"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "List"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get list Subscriptions. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Subscription"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.subscription.list"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "CreateSubscription",
+                "in_type": "CreateSubscriptionRequest",
+                "out_type": "CreateSubscriptionResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "post",
+                        "value": "/v1/subscription"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Create"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Create a new Subscription. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Subscription"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.subscription.create"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "GetSubscription",
+                "in_type": "GetSubscriptionRequest",
+                "out_type": "GetSubscriptionResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "get",
+                        "value": "/v1/subscription/{id}"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Get"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Get a Subscription. To call this API, you need a `READ` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Subscription"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.subscription.get"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "name": "UpdateSubscription",
+                "in_type": "UpdateSubscriptionRequest",
+                "out_type": "UpdateSubscriptionResponse",
+                "options": [
+                  {
+                    "name": "(google.api.http)",
+                    "aggregated": [
+                      {
+                        "name": "patch",
+                        "value": "/v1/subscription/{id}"
+                      },
+                      {
+                        "name": "body",
+                        "value": "*"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation)",
+                    "aggregated": [
+                      {
+                        "name": "summary",
+                        "value": "Update"
+                      },
+                      {
+                        "name": "description",
+                        "value": "Update a Subscription. To call this API, you need a `WRITE` or `ADMIN` API Key role."
+                      },
+                      {
+                        "name": "tags",
+                        "value": "Subscription"
+                      },
+                      {
+                        "name": "operation_id",
+                        "value": "api.gateway.v1.subscription.update"
+                      },
+                      {
+                        "name": "parameters",
+                        "aggregated": [
+                          {
+                            "name": "headers",
+                            "aggregated": [
+                              {
+                                "name": "name",
+                                "value": "authorization"
+                              },
+                              {
+                                "name": "description",
+                                "value": "The API Key generated on the Admin Console."
+                              },
+                              {
+                                "name": "type",
+                                "value": "STRING"
+                              },
+                              {
+                                "name": "required",
+                                "value": "true"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -27053,6 +27576,9 @@
         "imports": [
           {
             "path": "google/api/annotations.proto"
+          },
+          {
+            "path": "google/api/field_behavior.proto"
           },
           {
             "path": "google/protobuf/wrappers.proto"
@@ -27101,6 +27627,15 @@
           },
           {
             "path": "proto/account/account.proto"
+          },
+          {
+            "path": "proto/notification/service.proto"
+          },
+          {
+            "path": "proto/notification/subscription.proto"
+          },
+          {
+            "path": "proto/notification/recipient.proto"
           },
           {
             "path": "proto/event/client/event.proto"
