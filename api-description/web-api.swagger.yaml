@@ -25,7 +25,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -34,7 +34,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -43,7 +43,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -52,7 +52,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -61,7 +61,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -83,7 +83,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -92,7 +92,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -101,7 +101,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -110,7 +110,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -119,7 +119,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -141,7 +141,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -150,7 +150,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -159,7 +159,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -168,7 +168,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -177,7 +177,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -199,7 +199,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -208,7 +208,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -217,7 +217,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -226,7 +226,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -235,7 +235,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -257,7 +257,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -266,7 +266,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -275,7 +275,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -284,7 +284,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -293,7 +293,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -315,7 +315,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -324,7 +324,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -333,7 +333,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -342,7 +342,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -351,7 +351,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -373,7 +373,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -382,7 +382,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -391,7 +391,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -400,7 +400,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -409,7 +409,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -431,7 +431,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -440,7 +440,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -449,7 +449,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -458,7 +458,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -467,7 +467,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -489,7 +489,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -498,7 +498,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -507,7 +507,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -529,7 +529,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -538,7 +538,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -547,7 +547,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -556,7 +556,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -565,7 +565,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -587,7 +587,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -596,7 +596,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -605,7 +605,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -614,7 +614,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -636,7 +636,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -645,7 +645,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -654,7 +654,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -663,7 +663,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -685,7 +685,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -694,7 +694,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -703,7 +703,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -712,7 +712,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: id
           in: query
@@ -737,7 +737,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -746,7 +746,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -755,7 +755,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -764,7 +764,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: apiKey
           in: query
@@ -785,7 +785,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -794,7 +794,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -803,7 +803,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -812,7 +812,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           description: |-
@@ -837,7 +837,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -846,7 +846,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -855,7 +855,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -864,7 +864,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -886,7 +886,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -895,7 +895,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -904,7 +904,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -913,7 +913,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: pageSize
           in: query
@@ -983,7 +983,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -992,7 +992,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -1001,7 +1001,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -1010,7 +1010,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -1032,7 +1032,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -1041,7 +1041,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -1050,7 +1050,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -1059,7 +1059,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           description: |-
@@ -1084,7 +1084,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -1093,7 +1093,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -1102,7 +1102,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -1111,7 +1111,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -1120,7 +1120,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -1142,7 +1142,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -1151,7 +1151,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -1160,7 +1160,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -1169,7 +1169,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -1178,7 +1178,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -1200,7 +1200,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -1209,7 +1209,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -1218,7 +1218,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -1227,7 +1227,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -1236,7 +1236,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -1260,7 +1260,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -1269,7 +1269,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -1278,7 +1278,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -1302,7 +1302,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -1311,7 +1311,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -1320,7 +1320,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -1329,7 +1329,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -1351,7 +1351,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -1360,7 +1360,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -1369,7 +1369,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -1378,7 +1378,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -1400,7 +1400,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -1409,7 +1409,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -1418,7 +1418,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -1427,7 +1427,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -1449,7 +1449,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -1458,7 +1458,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -1467,7 +1467,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -1476,7 +1476,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -1485,7 +1485,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -1507,7 +1507,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -1516,7 +1516,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -1525,7 +1525,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -1534,7 +1534,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -1543,7 +1543,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -1565,7 +1565,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -1574,7 +1574,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -1583,7 +1583,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -1592,7 +1592,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -1601,7 +1601,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -1623,7 +1623,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -1632,7 +1632,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -1641,7 +1641,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -1650,7 +1650,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -1659,7 +1659,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -1681,7 +1681,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -1690,7 +1690,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -1699,7 +1699,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -1708,7 +1708,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -1717,7 +1717,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -1739,7 +1739,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -1748,7 +1748,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -1757,7 +1757,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -1766,7 +1766,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -1775,7 +1775,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -1797,7 +1797,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -1806,7 +1806,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -1815,7 +1815,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -1824,7 +1824,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -1833,7 +1833,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -1855,7 +1855,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -1864,7 +1864,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -1873,7 +1873,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -1882,7 +1882,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -1891,7 +1891,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -1913,7 +1913,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -1922,7 +1922,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -1931,7 +1931,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -1940,7 +1940,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -1949,7 +1949,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -1971,7 +1971,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -1980,7 +1980,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -1989,7 +1989,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -1998,7 +1998,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -2007,7 +2007,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -2029,7 +2029,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -2038,7 +2038,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -2047,7 +2047,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -2056,7 +2056,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -2065,7 +2065,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -2087,7 +2087,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -2096,7 +2096,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -2105,7 +2105,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -2114,7 +2114,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -2123,7 +2123,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -2145,7 +2145,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -2154,7 +2154,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -2163,7 +2163,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -2172,7 +2172,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -2181,7 +2181,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -2203,7 +2203,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -2212,7 +2212,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -2221,7 +2221,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -2230,7 +2230,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -2239,7 +2239,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -2261,7 +2261,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -2270,7 +2270,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -2279,7 +2279,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -2288,7 +2288,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -2297,7 +2297,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -2319,7 +2319,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -2328,7 +2328,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -2337,7 +2337,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -2346,7 +2346,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -2355,7 +2355,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -2377,7 +2377,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -2386,7 +2386,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -2395,7 +2395,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -2404,7 +2404,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -2413,7 +2413,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -2435,7 +2435,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -2444,7 +2444,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -2453,7 +2453,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -2462,7 +2462,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -2471,7 +2471,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -2493,7 +2493,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -2502,7 +2502,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -2511,7 +2511,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -2520,7 +2520,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -2529,7 +2529,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -2551,7 +2551,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -2560,7 +2560,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -2569,7 +2569,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -2578,7 +2578,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -2587,7 +2587,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -2609,7 +2609,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -2618,7 +2618,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -2627,7 +2627,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -2636,7 +2636,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -2645,7 +2645,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -2667,7 +2667,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -2676,7 +2676,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -2685,7 +2685,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -2694,7 +2694,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -2703,7 +2703,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -2725,7 +2725,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -2734,7 +2734,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -2743,7 +2743,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -2752,7 +2752,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -2761,7 +2761,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -2783,7 +2783,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -2792,7 +2792,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -2801,7 +2801,7 @@ paths:
         "403":
           description: Request does not have permission to access the resource.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 7
@@ -2810,7 +2810,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -2819,7 +2819,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -2841,7 +2841,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -2850,7 +2850,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -2859,7 +2859,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -2868,7 +2868,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: environmentId
           in: query
@@ -2892,7 +2892,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -2901,7 +2901,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -2910,7 +2910,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -2919,7 +2919,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -2940,7 +2940,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -2949,7 +2949,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -2958,7 +2958,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -2967,7 +2967,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -2989,7 +2989,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -2998,7 +2998,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -3007,7 +3007,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -3016,7 +3016,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: pageSize
           in: query
@@ -3068,7 +3068,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -3077,7 +3077,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -3086,7 +3086,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -3095,7 +3095,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: id
           in: query
@@ -3119,7 +3119,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -3128,7 +3128,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -3137,7 +3137,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -3146,7 +3146,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -3167,7 +3167,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -3176,7 +3176,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -3185,7 +3185,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -3194,7 +3194,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: body
           in: body
@@ -3216,7 +3216,7 @@ paths:
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 3
@@ -3225,7 +3225,7 @@ paths:
         "401":
           description: Request could not be authenticated (authentication required).
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 16
@@ -3234,7 +3234,7 @@ paths:
         "503":
           description: Returned for internal errors.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
           examples:
             application/json:
               code: 13
@@ -3243,7 +3243,7 @@ paths:
         default:
           description: An unexpected error response.
           schema:
-            $ref: '#/definitions/rpcStatus'
+            $ref: '#/definitions/googlerpcStatus'
       parameters:
         - name: pageSize
           in: query
@@ -3318,6 +3318,111 @@ paths:
           type: string
       tags:
         - subscription
+  /v1/tags:
+    get:
+      summary: List
+      description: List tags.
+      operationId: web.v1.tag.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureListTagsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - ID
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+      tags:
+        - tag
+  /webhook/triggers/{token}:
+    post:
+      operationId: FeatureService_FlagTriggerWebhook
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureFlagTriggerWebhookResponse'
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: token
+          in: path
+          required: true
+          type: string
 definitions:
   AccountV2RoleOrganization:
     type: string
@@ -3334,6 +3439,46 @@ definitions:
       - WriteType_OVERRIDE
       - WriteType_PATCH
     default: WriteType_UNSPECIFIED
+  ClauseOperator:
+    type: string
+    enum:
+      - EQUALS
+      - IN
+      - ENDS_WITH
+      - STARTS_WITH
+      - SEGMENT
+      - GREATER
+      - GREATER_OR_EQUAL
+      - LESS
+      - LESS_OR_EQUAL
+      - BEFORE
+      - AFTER
+      - FEATURE_FLAG
+      - PARTIALLY_MATCH
+    default: EQUALS
+    description: ' - FEATURE_FLAG: Attribute is feature ID, and value is variation ID.'
+  FeatureVariationType:
+    type: string
+    enum:
+      - STRING
+      - BOOLEAN
+      - NUMBER
+      - JSON
+    default: STRING
+  FlagTriggerAction:
+    type: string
+    enum:
+      - Action_UNKNOWN
+      - Action_ON
+      - Action_OFF
+    default: Action_UNKNOWN
+  ListFlagTriggersResponseFlagTriggerWithUrl:
+    type: object
+    properties:
+      flagTrigger:
+        $ref: '#/definitions/featureFlagTrigger'
+      url:
+        type: string
   RecipientLanguage:
     type: string
     enum:
@@ -3384,6 +3529,20 @@ definitions:
     properties:
       role:
         $ref: '#/definitions/AccountV2RoleOrganization'
+  UpdateFeatureTargetingRequestFrom:
+    type: string
+    enum:
+      - UNKNOWN
+      - USER
+      - OPS
+    default: UNKNOWN
+  UserData:
+    type: object
+    properties:
+      value:
+        type: object
+        additionalProperties:
+          type: string
   accountAPIKey:
     type: object
     properties:
@@ -4192,6 +4351,30 @@ definitions:
         format: int32
       ownerEmail:
         type: string
+  bucketeerfeatureTag:
+    type: object
+    properties:
+      id:
+        type: string
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+  bucketeerfeatureVariation:
+    type: object
+    properties:
+      id:
+        type: string
+      value:
+        type: string
+        title: this is called value because it could be a string,
+      name:
+        type: string
+        title: number or even json object
+      description:
+        type: string
   environmentArchiveEnvironmentV2Command:
     type: object
   environmentArchiveEnvironmentV2Request:
@@ -4784,6 +4967,707 @@ definitions:
         $ref: '#/definitions/environmentRenameProjectCommand'
   environmentUpdateProjectResponse:
     type: object
+  featureAddSegmentUserCommand:
+    type: object
+    properties:
+      userIds:
+        type: array
+        items:
+          type: string
+      state:
+        $ref: '#/definitions/featureSegmentUserState'
+  featureAddSegmentUserResponse:
+    type: object
+  featureAddTagCommand:
+    type: object
+    properties:
+      tag:
+        type: string
+  featureArchiveFeatureCommand:
+    type: object
+  featureArchiveFeatureResponse:
+    type: object
+  featureBulkDownloadSegmentUsersResponse:
+    type: object
+    properties:
+      data:
+        type: string
+        format: byte
+        title: segment user ids separated by new line
+  featureBulkUploadSegmentUsersCommand:
+    type: object
+    properties:
+      data:
+        type: string
+        format: byte
+        title: segment user ids separated by comma or new line
+      state:
+        $ref: '#/definitions/featureSegmentUserState'
+  featureBulkUploadSegmentUsersResponse:
+    type: object
+  featureChangeDescriptionCommand:
+    type: object
+    properties:
+      description:
+        type: string
+  featureChangeFlagTriggerDescriptionCommand:
+    type: object
+    properties:
+      description:
+        type: string
+  featureClause:
+    type: object
+    properties:
+      id:
+        type: string
+      attribute:
+        type: string
+      operator:
+        $ref: '#/definitions/ClauseOperator'
+      values:
+        type: array
+        items:
+          type: string
+  featureCloneFeatureCommand:
+    type: object
+    properties:
+      environmentId:
+        type: string
+  featureCloneFeatureResponse:
+    type: object
+  featureCommand:
+    type: object
+    properties:
+      command:
+        $ref: '#/definitions/protobufAny'
+  featureCreateFeatureCommand:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+        title: This is an optional field
+      variations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerfeatureVariation'
+      tags:
+        type: array
+        items:
+          type: string
+      defaultOnVariationIndex:
+        type: integer
+        format: int32
+      defaultOffVariationIndex:
+        type: integer
+        format: int32
+      variationType:
+        $ref: '#/definitions/FeatureVariationType'
+  featureCreateFeatureResponse:
+    type: object
+    properties:
+      feature:
+        $ref: '#/definitions/featureFeature'
+  featureCreateFlagTriggerCommand:
+    type: object
+    properties:
+      featureId:
+        type: string
+      type:
+        $ref: '#/definitions/featureFlagTriggerType'
+      action:
+        $ref: '#/definitions/FlagTriggerAction'
+      description:
+        type: string
+  featureCreateFlagTriggerResponse:
+    type: object
+    properties:
+      flagTrigger:
+        $ref: '#/definitions/featureFlagTrigger'
+      url:
+        type: string
+  featureCreateSegmentCommand:
+    type: object
+    properties:
+      name:
+        type: string
+      description:
+        type: string
+  featureCreateSegmentResponse:
+    type: object
+    properties:
+      segment:
+        $ref: '#/definitions/featureSegment'
+  featureDeleteFeatureCommand:
+    type: object
+  featureDeleteFeatureResponse:
+    type: object
+  featureDeleteFlagTriggerCommand:
+    type: object
+  featureDeleteFlagTriggerResponse:
+    type: object
+  featureDeleteSegmentCommand:
+    type: object
+  featureDeleteSegmentResponse:
+    type: object
+  featureDeleteSegmentUserCommand:
+    type: object
+    properties:
+      userIds:
+        type: array
+        items:
+          type: string
+      state:
+        $ref: '#/definitions/featureSegmentUserState'
+  featureDeleteSegmentUserResponse:
+    type: object
+  featureDisableFeatureCommand:
+    type: object
+  featureDisableFeatureResponse:
+    type: object
+  featureDisableFlagTriggerCommand:
+    type: object
+  featureDisableFlagTriggerResponse:
+    type: object
+  featureEnableFeatureCommand:
+    type: object
+  featureEnableFeatureResponse:
+    type: object
+  featureEnableFlagTriggerCommand:
+    type: object
+  featureEnableFlagTriggerResponse:
+    type: object
+  featureEvaluateFeaturesResponse:
+    type: object
+    properties:
+      userEvaluations:
+        $ref: '#/definitions/featureUserEvaluations'
+  featureEvaluation:
+    type: object
+    properties:
+      id:
+        type: string
+      featureId:
+        type: string
+      featureVersion:
+        type: integer
+        format: int32
+      userId:
+        type: string
+      variationId:
+        type: string
+      variation:
+        $ref: '#/definitions/bucketeerfeatureVariation'
+      reason:
+        $ref: '#/definitions/featureReason'
+      variationValue:
+        type: string
+      variationName:
+        type: string
+  featureFeature:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      enabled:
+        type: boolean
+      deleted:
+        type: boolean
+      evaluationUndelayable:
+        type: boolean
+      ttl:
+        type: integer
+        format: int32
+      version:
+        type: integer
+        format: int32
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      variations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerfeatureVariation'
+      targets:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureTarget'
+      rules:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureRule'
+      defaultStrategy:
+        $ref: '#/definitions/featureStrategy'
+      offVariation:
+        type: string
+      tags:
+        type: array
+        items:
+          type: string
+      lastUsedInfo:
+        $ref: '#/definitions/featureFeatureLastUsedInfo'
+      maintainer:
+        type: string
+      variationType:
+        $ref: '#/definitions/FeatureVariationType'
+      archived:
+        type: boolean
+      prerequisites:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featurePrerequisite'
+      samplingSeed:
+        type: string
+  featureFeatureLastUsedInfo:
+    type: object
+    properties:
+      featureId:
+        type: string
+      version:
+        type: integer
+        format: int32
+      lastUsedAt:
+        type: string
+        format: int64
+      createdAt:
+        type: string
+        format: int64
+      clientOldestVersion:
+        type: string
+      clientLatestVersion:
+        type: string
+  featureFixedStrategy:
+    type: object
+    properties:
+      variation:
+        type: string
+  featureFlagTrigger:
+    type: object
+    properties:
+      id:
+        type: string
+      featureId:
+        type: string
+      type:
+        $ref: '#/definitions/featureFlagTriggerType'
+      action:
+        $ref: '#/definitions/FlagTriggerAction'
+      description:
+        type: string
+      triggerCount:
+        type: integer
+        format: int32
+      lastTriggeredAt:
+        type: string
+        format: int64
+      token:
+        type: string
+      disabled:
+        type: boolean
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      environmentId:
+        type: string
+  featureFlagTriggerType:
+    type: string
+    enum:
+      - Type_UNKNOWN
+      - Type_WEBHOOK
+    default: Type_UNKNOWN
+  featureFlagTriggerWebhookResponse:
+    type: object
+  featureGetFeatureResponse:
+    type: object
+    properties:
+      feature:
+        $ref: '#/definitions/featureFeature'
+  featureGetFeaturesResponse:
+    type: object
+    properties:
+      features:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureFeature'
+  featureGetFlagTriggerResponse:
+    type: object
+    properties:
+      flagTrigger:
+        $ref: '#/definitions/featureFlagTrigger'
+      url:
+        type: string
+  featureGetSegmentResponse:
+    type: object
+    properties:
+      segment:
+        $ref: '#/definitions/featureSegment'
+  featureGetSegmentUserResponse:
+    type: object
+    properties:
+      user:
+        $ref: '#/definitions/featureSegmentUser'
+  featureListEnabledFeaturesResponse:
+    type: object
+    properties:
+      features:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureFeature'
+      cursor:
+        type: string
+  featureListFeaturesRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+      - TAGS
+      - ENABLED
+    default: DEFAULT
+  featureListFeaturesRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  featureListFeaturesResponse:
+    type: object
+    properties:
+      features:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureFeature'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  featureListFlagTriggersRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  featureListFlagTriggersRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  featureListFlagTriggersResponse:
+    type: object
+    properties:
+      flagTriggers:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/ListFlagTriggersResponseFlagTriggerWithUrl'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  featureListSegmentUsersResponse:
+    type: object
+    properties:
+      users:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureSegmentUser'
+      cursor:
+        type: string
+  featureListSegmentsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - NAME
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  featureListSegmentsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  featureListSegmentsResponse:
+    type: object
+    properties:
+      segments:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureSegment'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  featureListTagsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - ID
+      - CREATED_AT
+      - UPDATED_AT
+    default: DEFAULT
+  featureListTagsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  featureListTagsResponse:
+    type: object
+    properties:
+      tags:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerfeatureTag'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  featurePrerequisite:
+    type: object
+    properties:
+      featureId:
+        type: string
+      variationId:
+        type: string
+  featureReason:
+    type: object
+    properties:
+      type:
+        $ref: '#/definitions/featureReasonType'
+      ruleId:
+        type: string
+  featureReasonType:
+    type: string
+    enum:
+      - TARGET
+      - RULE
+      - DEFAULT
+      - CLIENT
+      - OFF_VARIATION
+      - PREREQUISITE
+    default: TARGET
+  featureRemoveTagCommand:
+    type: object
+    properties:
+      tag:
+        type: string
+  featureRenameFeatureCommand:
+    type: object
+    properties:
+      name:
+        type: string
+  featureResetFlagTriggerCommand:
+    type: object
+  featureResetFlagTriggerResponse:
+    type: object
+    properties:
+      flagTrigger:
+        $ref: '#/definitions/featureFlagTrigger'
+      url:
+        type: string
+  featureRolloutStrategy:
+    type: object
+    properties:
+      variations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureRolloutStrategyVariation'
+  featureRolloutStrategyVariation:
+    type: object
+    properties:
+      variation:
+        type: string
+      weight:
+        type: integer
+        format: int32
+  featureRule:
+    type: object
+    properties:
+      id:
+        type: string
+      strategy:
+        $ref: '#/definitions/featureStrategy'
+      clauses:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureClause'
+  featureSegment:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      rules:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureRule'
+      createdAt:
+        type: string
+        format: int64
+      updatedAt:
+        type: string
+        format: int64
+      version:
+        type: string
+        format: int64
+      deleted:
+        type: boolean
+      includedUserCount:
+        type: string
+        format: int64
+      excludedUserCount:
+        type: string
+        format: int64
+      status:
+        $ref: '#/definitions/featureSegmentStatus'
+      isInUseStatus:
+        type: boolean
+        description: This field is set only when APIs return.
+      features:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureFeature'
+  featureSegmentStatus:
+    type: string
+    enum:
+      - INITIAL
+      - UPLOADING
+      - SUCEEDED
+      - FAILED
+    default: INITIAL
+  featureSegmentUser:
+    type: object
+    properties:
+      id:
+        type: string
+      segmentId:
+        type: string
+      userId:
+        type: string
+      state:
+        $ref: '#/definitions/featureSegmentUserState'
+      deleted:
+        type: boolean
+  featureSegmentUserState:
+    type: string
+    enum:
+      - INCLUDED
+      - EXCLUDED
+    default: INCLUDED
+  featureStrategy:
+    type: object
+    properties:
+      type:
+        $ref: '#/definitions/featureStrategyType'
+      fixedStrategy:
+        $ref: '#/definitions/featureFixedStrategy'
+      rolloutStrategy:
+        $ref: '#/definitions/featureRolloutStrategy'
+  featureStrategyType:
+    type: string
+    enum:
+      - FIXED
+      - ROLLOUT
+    default: FIXED
+  featureTarget:
+    type: object
+    properties:
+      variation:
+        type: string
+      users:
+        type: array
+        items:
+          type: string
+  featureUnarchiveFeatureCommand:
+    type: object
+  featureUnarchiveFeatureResponse:
+    type: object
+  featureUpdateFeatureDetailsResponse:
+    type: object
+  featureUpdateFeatureResponse:
+    type: object
+    properties:
+      feature:
+        $ref: '#/definitions/featureFeature'
+  featureUpdateFeatureTargetingResponse:
+    type: object
+  featureUpdateFeatureVariationsResponse:
+    type: object
+  featureUpdateFlagTriggerResponse:
+    type: object
+  featureUpdateSegmentResponse:
+    type: object
+  featureUserEvaluations:
+    type: object
+    properties:
+      id:
+        type: string
+      evaluations:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/featureEvaluation'
+      createdAt:
+        type: string
+        format: int64
+      archivedFeatureIds:
+        type: array
+        items:
+          type: string
+      forceUpdate:
+        type: boolean
+  googlerpcStatus:
+    type: object
+    properties:
+      code:
+        type: integer
+        format: int32
+      message:
+        type: string
+      details:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/protobufAny'
   notificationAddAdminSubscriptionSourceTypesCommand:
     type: object
     properties:
@@ -5062,7 +5946,121 @@ definitions:
     properties:
       '@type':
         type: string
+        description: |-
+          A URL/resource name that uniquely identifies the type of the serialized
+          protocol buffer message. This string must contain at least
+          one "/" character. The last segment of the URL's path must represent
+          the fully qualified name of the type (as in
+          `path/google.protobuf.Duration`). The name should be in a canonical form
+          (e.g., leading "." is not accepted).
+
+          In practice, teams usually precompile into the binary all types that they
+          expect it to use in the context of Any. However, for URLs which use the
+          scheme `http`, `https`, or no scheme, one can optionally set up a type
+          server that maps type URLs to message definitions as follows:
+
+          * If no scheme is provided, `https` is assumed.
+          * An HTTP GET on the URL must yield a [google.protobuf.Type][]
+            value in binary format, or produce an error.
+          * Applications are allowed to cache lookup results based on the
+            URL, or have them precompiled into a binary to avoid any
+            lookup. Therefore, binary compatibility needs to be preserved
+            on changes to types. (Use versioned type names to manage
+            breaking changes.)
+
+          Note: this functionality is not currently available in the official
+          protobuf release, and it is not used for type URLs beginning with
+          type.googleapis.com.
+
+          Schemes other than `http`, `https` (or the empty scheme) might be
+          used with implementation specific semantics.
     additionalProperties: {}
+    description: |-
+      `Any` contains an arbitrary serialized protocol buffer message along with a
+      URL that describes the type of the serialized message.
+
+      Protobuf library provides support to pack/unpack Any values in the form
+      of utility functions or additional generated methods of the Any type.
+
+      Example 1: Pack and unpack a message in C++.
+
+          Foo foo = ...;
+          Any any;
+          any.PackFrom(foo);
+          ...
+          if (any.UnpackTo(&foo)) {
+            ...
+          }
+
+      Example 2: Pack and unpack a message in Java.
+
+          Foo foo = ...;
+          Any any = Any.pack(foo);
+          ...
+          if (any.is(Foo.class)) {
+            foo = any.unpack(Foo.class);
+          }
+          // or ...
+          if (any.isSameTypeAs(Foo.getDefaultInstance())) {
+            foo = any.unpack(Foo.getDefaultInstance());
+          }
+
+       Example 3: Pack and unpack a message in Python.
+
+          foo = Foo(...)
+          any = Any()
+          any.Pack(foo)
+          ...
+          if any.Is(Foo.DESCRIPTOR):
+            any.Unpack(foo)
+            ...
+
+       Example 4: Pack and unpack a message in Go
+
+           foo := &pb.Foo{...}
+           any, err := anypb.New(foo)
+           if err != nil {
+             ...
+           }
+           ...
+           foo := &pb.Foo{}
+           if err := any.UnmarshalTo(foo); err != nil {
+             ...
+           }
+
+      The pack methods provided by protobuf library will by default use
+      'type.googleapis.com/full.type.name' as the type URL and the unpack
+      methods only use the fully qualified type name after the last '/'
+      in the type URL, for example "foo.bar.com/x/y.z" will yield type
+      name "y.z".
+
+      JSON
+      ====
+      The JSON representation of an `Any` value uses the regular
+      representation of the deserialized, embedded message, with an
+      additional field `@type` which contains the type URL. Example:
+
+          package google.profile;
+          message Person {
+            string first_name = 1;
+            string last_name = 2;
+          }
+
+          {
+            "@type": "type.googleapis.com/google.profile.Person",
+            "firstName": <string>,
+            "lastName": <string>
+          }
+
+      If the embedded message type is well-known and has a custom JSON
+      representation, that representation will be embedded adding a field
+      `value` which holds the custom JSON in addition to the `@type`
+      field. Example (for message [google.protobuf.Duration][]):
+
+          {
+            "@type": "type.googleapis.com/google.protobuf.Duration",
+            "value": "1.212s"
+          }
   pushAddPushTagsCommand:
     type: object
     properties:
@@ -5203,16 +6201,23 @@ definitions:
     properties:
       push:
         $ref: '#/definitions/pushPush'
-  rpcStatus:
+  userUser:
     type: object
     properties:
-      code:
-        type: integer
-        format: int32
-      message:
+      id:
         type: string
-      details:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/protobufAny'
+      data:
+        type: object
+        additionalProperties:
+          type: string
+        title: used by the sdk client
+      taggedData:
+        type: object
+        additionalProperties:
+          $ref: '#/definitions/UserData'
+      lastSeen:
+        type: string
+        format: int64
+      createdAt:
+        type: string
+        format: int64
