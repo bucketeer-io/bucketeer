@@ -64,12 +64,12 @@ func (c *apiKeyCacher) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	c.logger.Debug("Caching environment api keys",
-		zap.Any("environmentApiKeys", envAPIKeys),
-	)
 	for _, envAPIKey := range envAPIKeys {
 		updatedInstances := c.putCache(envAPIKey.EnvironmentAPIKey)
-		c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
+		c.logger.Debug("Caching environment api key",
+			zap.Any("environmentApiKey", envAPIKey.EnvironmentAPIKey),
+			zap.Int("updatedInstances", updatedInstances),
+		)
 	}
 	return nil
 }

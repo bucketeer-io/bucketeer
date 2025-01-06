@@ -77,7 +77,11 @@ func (c *experimentCacher) Run(ctx context.Context) error {
 			return err
 		}
 		updatedInstances := c.putCache(&expproto.Experiments{Experiments: experiments}, env.Id)
-		c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
+		c.logger.Debug("Caching experiments",
+			zap.String("environmentId", env.Id),
+			zap.Int("experimentSize", len(experiments)),
+			zap.Int("updatedInstances", updatedInstances),
+		)
 	}
 	return nil
 }
