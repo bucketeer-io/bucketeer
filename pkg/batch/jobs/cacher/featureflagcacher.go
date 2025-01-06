@@ -25,6 +25,7 @@ import (
 	"github.com/bucketeer-io/bucketeer/pkg/batch/jobs"
 	"github.com/bucketeer-io/bucketeer/pkg/cache"
 	cachev3 "github.com/bucketeer-io/bucketeer/pkg/cache/v3"
+	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	ftstorage "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -67,9 +68,10 @@ func (c *featureFlagCacher) Run(ctx context.Context) error {
 		return err
 	}
 	for _, envFt := range envFts {
+		filtered := c.removeOldFeatures(envFt.Features)
 		fts := &ftproto.Features{
-			Id:       evaluation.GenerateFeaturesID(envFt.Features),
-			Features: envFt.Features,
+			Id:       evaluation.GenerateFeaturesID(filtered),
+			Features: filtered,
 		}
 		updatedInstances := c.putCache(fts, envFt.EnvironmentId)
 		c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
@@ -79,6 +81,20 @@ func (c *featureFlagCacher) Run(ctx context.Context) error {
 		)
 	}
 	return nil
+}
+
+// We exclude archived feature flags over thirty days ago to keep the cache size small.
+func (c *featureFlagCacher) removeOldFeatures(features []*ftproto.Feature) []*ftproto.Feature {
+	i := 0
+	for i < len(features) {
+		ft := ftdomain.Feature{Feature: features[i]}
+		if ft.IsDisabledAndOffVariationEmpty() || ft.IsArchivedBeforeLastThirtyDays() {
+			features = append(features[:i], features[i+1:]...)
+		} else {
+			i++
+		}
+	}
+	return features
 }
 
 // Save the flags by environment in all redis instances
