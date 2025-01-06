@@ -560,7 +560,9 @@ func (s *CodeReferenceService) DeleteCodeReference(
 	return &proto.DeleteCodeReferenceResponse{}, nil
 }
 
-func (s *CodeReferenceService) toMySQLOrderDirection(d proto.ListCodeReferencesRequest_OrderDirection) mysql.OrderDirection {
+func (s *CodeReferenceService) toMySQLOrderDirection(
+	d proto.ListCodeReferencesRequest_OrderDirection,
+) mysql.OrderDirection {
 	if d == proto.ListCodeReferencesRequest_DESC {
 		return mysql.OrderDirectionDesc
 	}

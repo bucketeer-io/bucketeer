@@ -894,7 +894,6 @@ paths:
             - ENVIRONMENT_COUNT
             - LAST_SEEN
             - STATE
-            - TAGS
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -926,13 +925,6 @@ paths:
           required: false
           type: integer
           format: int32
-        - name: tags
-          in: query
-          required: false
-          type: array
-          items:
-            type: string
-          collectionFormat: multi
       tags:
         - Account
   /v1/account/list_api_keys:
@@ -3257,7 +3249,6 @@ paths:
             - NAME
             - CREATED_AT
             - UPDATED_AT
-            - CONNECTION_TYPE
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -3721,66 +3712,6 @@ paths:
             $ref: '#/definitions/featureUpdateSegmentRequest'
       tags:
         - segment
-  /v1/segment_users/bulk_download:
-    get:
-      summary: Bulk download
-      description: Bulk download segment users.
-      operationId: web.v1.segment_users.bulk_download
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/featureBulkDownloadSegmentUsersResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: segmentId
-          in: query
-          required: true
-          type: string
-        - name: state
-          in: query
-          required: false
-          type: string
-          enum:
-            - INCLUDED
-            - EXCLUDED
-          default: INCLUDED
-        - name: environmentId
-          in: query
-          required: true
-          type: string
-      tags:
-        - segment
   /v1/segment_users/bulk_upload:
     post:
       summary: Bulk upload
@@ -3890,8 +3821,6 @@ paths:
             - NAME
             - CREATED_AT
             - UPDATED_AT
-            - CONNECTIONS
-            - USERS
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -4143,7 +4072,7 @@ paths:
               - DOMAIN_EVENT_PROGRESSIVE_ROLLOUT
               - DOMAIN_EVENT_ORGANIZATION
               - DOMAIN_EVENT_FLAG_TRIGGER
-              - DOMAIN_EVENT_TAG
+              - DOMAIN_EVENT_CODEREF
               - FEATURE_STALE
               - EXPERIMENT_RUNNING
               - MAU_COUNT
@@ -4186,106 +4115,6 @@ paths:
           type: string
       tags:
         - subscription
-  /v1/tag:
-    delete:
-      summary: Delete
-      description: Delete a tag.
-      operationId: web.v1.tag.delete
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/tagDeleteTagResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: id
-          in: query
-          required: true
-          type: string
-        - name: environmentId
-          in: query
-          required: true
-          type: string
-      tags:
-        - tag
-    post:
-      summary: Create
-      description: Create a tag.
-      operationId: web.v1.tag.create
-      responses:
-        "200":
-          description: A successful response.
-          schema:
-            $ref: '#/definitions/tagCreateTagResponse'
-        "400":
-          description: Returned for bad requests that may have failed validation.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 3
-              details: []
-              message: invalid arguments error
-        "401":
-          description: Request could not be authenticated (authentication required).
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 16
-              details: []
-              message: not authenticated
-        "503":
-          description: Returned for internal errors.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-          examples:
-            application/json:
-              code: 13
-              details: []
-              message: internal
-        default:
-          description: An unexpected error response.
-          schema:
-            $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/tagCreateTagRequest'
-      tags:
-        - tag
   /v1/tags:
     get:
       summary: List
@@ -4295,7 +4124,7 @@ paths:
         "200":
           description: A successful response.
           schema:
-            $ref: '#/definitions/bucketeertagListTagsResponse'
+            $ref: '#/definitions/featureListTagsResponse'
         "400":
           description: Returned for bad requests that may have failed validation.
           schema:
@@ -4343,11 +4172,10 @@ paths:
           type: string
           enum:
             - DEFAULT
-            - NAME
+            - ID
             - CREATED_AT
             - UPDATED_AT
-            - ENTITY_TYPE
-            - ENVIRONMENT
+            - NAME
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -4362,10 +4190,6 @@ paths:
           required: false
           type: string
         - name: environmentId
-          in: query
-          required: false
-          type: string
-        - name: organizationId
           in: query
           required: false
           type: string
@@ -4413,6 +4237,24 @@ definitions:
       - WriteType_OVERRIDE
       - WriteType_PATCH
     default: WriteType_UNSPECIFIED
+  ClauseOperator:
+    type: string
+    enum:
+      - EQUALS
+      - IN
+      - ENDS_WITH
+      - STARTS_WITH
+      - SEGMENT
+      - GREATER
+      - GREATER_OR_EQUAL
+      - LESS
+      - LESS_OR_EQUAL
+      - BEFORE
+      - AFTER
+      - FEATURE_FLAG
+      - PARTIALLY_MATCH
+    default: EQUALS
+    description: ' - FEATURE_FLAG: Attribute is feature ID, and value is variation ID.'
   FeatureVariationType:
     type: string
     enum:
@@ -4428,13 +4270,6 @@ definitions:
       - Action_ON
       - Action_OFF
     default: Action_UNKNOWN
-  GoalConnectionType:
-    type: string
-    enum:
-      - UNKNOWN
-      - EXPERIMENT
-      - OPERATION
-    default: UNKNOWN
   ListFlagTriggersResponseFlagTriggerWithUrl:
     type: object
     properties:
@@ -4475,18 +4310,11 @@ definitions:
       - DOMAIN_EVENT_PROGRESSIVE_ROLLOUT
       - DOMAIN_EVENT_ORGANIZATION
       - DOMAIN_EVENT_FLAG_TRIGGER
-      - DOMAIN_EVENT_TAG
+      - DOMAIN_EVENT_CODEREF
       - FEATURE_STALE
       - EXPERIMENT_RUNNING
       - MAU_COUNT
     default: DOMAIN_EVENT_FEATURE
-  TagEntityType:
-    type: string
-    enum:
-      - UNKNOWN
-      - FEATURE_FLAG
-      - ACCOUNT
-    default: UNKNOWN
   UpdateAccountV2RequestAccountV2Avatar:
     type: object
     properties:
@@ -4679,13 +4507,6 @@ definitions:
     properties:
       role:
         $ref: '#/definitions/AccountV2RoleOrganization'
-  accountChangeAccountV2TagsCommand:
-    type: object
-    properties:
-      tags:
-        type: array
-        items:
-          type: string
   accountChangeDefaultSearchFilterCommand:
     type: object
     properties:
@@ -4804,10 +4625,6 @@ definitions:
         type: string
       language:
         type: string
-      tags:
-        type: array
-        items:
-          type: string
   accountCreateAccountV2Request:
     type: object
     properties:
@@ -4834,10 +4651,6 @@ definitions:
         type: string
       language:
         type: string
-      tags:
-        type: array
-        items:
-          type: string
   accountCreateAccountV2Response:
     type: object
     properties:
@@ -5051,7 +4864,6 @@ definitions:
       - ENVIRONMENT_COUNT
       - LAST_SEEN
       - STATE
-      - TAGS
     default: DEFAULT
   accountListAccountsV2RequestOrderDirection:
     type: string
@@ -5155,12 +4967,6 @@ definitions:
         $ref: '#/definitions/UpdateAccountV2RequestAccountV2Avatar'
       disabled:
         type: boolean
-      tags:
-        type: array
-        items:
-          type: string
-      changeTagsCommand:
-        $ref: '#/definitions/accountChangeAccountV2TagsCommand'
   accountUpdateAccountV2Response:
     type: object
     properties:
@@ -5253,61 +5059,6 @@ definitions:
       expiry:
         type: string
         format: int64
-  autoopsActionType:
-    type: string
-    enum:
-      - UNKNOWN
-      - ENABLE
-      - DISABLE
-    default: UNKNOWN
-  autoopsAutoOpsRule:
-    type: object
-    properties:
-      id:
-        type: string
-      featureId:
-        type: string
-      opsType:
-        $ref: '#/definitions/autoopsOpsType'
-      clauses:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/bucketeerautoopsClause'
-      createdAt:
-        type: string
-        format: int64
-      updatedAt:
-        type: string
-        format: int64
-      deleted:
-        type: boolean
-      autoOpsStatus:
-        $ref: '#/definitions/autoopsAutoOpsStatus'
-  autoopsAutoOpsStatus:
-    type: string
-    enum:
-      - WAITING
-      - RUNNING
-      - FINISHED
-      - STOPPED
-    default: WAITING
-  autoopsOpsType:
-    type: string
-    enum:
-      - TYPE_UNKNOWN
-      - SCHEDULE
-      - EVENT_RATE
-    default: TYPE_UNKNOWN
-  bucketeerautoopsClause:
-    type: object
-    properties:
-      id:
-        type: string
-      clause:
-        $ref: '#/definitions/protobufAny'
-      actionType:
-        $ref: '#/definitions/autoopsActionType'
   bucketeerenvironmentOrganization:
     type: object
     properties:
@@ -5345,47 +5096,6 @@ definitions:
         format: int32
       ownerEmail:
         type: string
-  bucketeerfeatureClause:
-    type: object
-    properties:
-      id:
-        type: string
-      attribute:
-        type: string
-      operator:
-        $ref: '#/definitions/featureClauseOperator'
-      values:
-        type: array
-        items:
-          type: string
-  bucketeerfeatureListTagsRequestOrderBy:
-    type: string
-    enum:
-      - DEFAULT
-      - ID
-      - CREATED_AT
-      - UPDATED_AT
-      - NAME
-    default: DEFAULT
-  bucketeerfeatureListTagsRequestOrderDirection:
-    type: string
-    enum:
-      - ASC
-      - DESC
-    default: ASC
-  bucketeerfeatureListTagsResponse:
-    type: object
-    properties:
-      tags:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/bucketeerfeatureTag'
-      cursor:
-        type: string
-      totalCount:
-        type: string
-        format: int64
   bucketeerfeatureTag:
     type: object
     properties:
@@ -5411,52 +5121,6 @@ definitions:
         type: string
         title: number or even json object
       description:
-        type: string
-  bucketeertagListTagsRequestOrderBy:
-    type: string
-    enum:
-      - DEFAULT
-      - NAME
-      - CREATED_AT
-      - UPDATED_AT
-      - ENTITY_TYPE
-      - ENVIRONMENT
-    default: DEFAULT
-  bucketeertagListTagsRequestOrderDirection:
-    type: string
-    enum:
-      - ASC
-      - DESC
-    default: ASC
-  bucketeertagListTagsResponse:
-    type: object
-    properties:
-      tags:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/bucketeertagTag'
-      cursor:
-        type: string
-      totalCount:
-        type: string
-        format: int64
-  bucketeertagTag:
-    type: object
-    properties:
-      id:
-        type: string
-      name:
-        type: string
-      createdAt:
-        type: string
-        format: int64
-      updatedAt:
-        type: string
-        format: int64
-      entityType:
-        $ref: '#/definitions/TagEntityType'
-      environmentId:
         type: string
   environmentArchiveEnvironmentV2Command:
     type: object
@@ -6020,8 +5684,6 @@ definitions:
         type: string
       description:
         type: string
-      connectionType:
-        $ref: '#/definitions/GoalConnectionType'
   experimentCreateGoalRequest:
     type: object
     properties:
@@ -6036,8 +5698,6 @@ definitions:
         type: string
       description:
         type: string
-      connectionType:
-        $ref: '#/definitions/GoalConnectionType'
     required:
       - environmentId
       - id
@@ -6151,18 +5811,6 @@ definitions:
         description: This field is set only when APIs return.
       archived:
         type: boolean
-      connectionType:
-        $ref: '#/definitions/GoalConnectionType'
-      experiments:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/experimentExperiment'
-      autoOpsRules:
-        type: array
-        items:
-          type: object
-          $ref: '#/definitions/autoopsAutoOpsRule'
   experimentListExperimentsRequestOrderBy:
     type: string
     enum:
@@ -6197,7 +5845,6 @@ definitions:
       - NAME
       - CREATED_AT
       - UPDATED_AT
-      - CONNECTION_TYPE
     default: DEFAULT
   experimentListGoalsRequestOrderDirection:
     type: string
@@ -6325,24 +5972,19 @@ definitions:
     properties:
       description:
         type: string
-  featureClauseOperator:
-    type: string
-    enum:
-      - EQUALS
-      - IN
-      - ENDS_WITH
-      - STARTS_WITH
-      - SEGMENT
-      - GREATER
-      - GREATER_OR_EQUAL
-      - LESS
-      - LESS_OR_EQUAL
-      - BEFORE
-      - AFTER
-      - FEATURE_FLAG
-      - PARTIALLY_MATCH
-    default: EQUALS
-    description: ' - FEATURE_FLAG: Attribute is feature ID, and value is variation ID.'
+  featureClause:
+    type: object
+    properties:
+      id:
+        type: string
+      attribute:
+        type: string
+      operator:
+        $ref: '#/definitions/ClauseOperator'
+      values:
+        type: array
+        items:
+          type: string
   featureCloneFeatureCommand:
     type: object
     properties:
@@ -6737,8 +6379,6 @@ definitions:
       - NAME
       - CREATED_AT
       - UPDATED_AT
-      - CONNECTIONS
-      - USERS
     default: DEFAULT
   featureListSegmentsRequestOrderDirection:
     type: string
@@ -6754,6 +6394,34 @@ definitions:
         items:
           type: object
           $ref: '#/definitions/featureSegment'
+      cursor:
+        type: string
+      totalCount:
+        type: string
+        format: int64
+  featureListTagsRequestOrderBy:
+    type: string
+    enum:
+      - DEFAULT
+      - ID
+      - CREATED_AT
+      - UPDATED_AT
+      - NAME
+    default: DEFAULT
+  featureListTagsRequestOrderDirection:
+    type: string
+    enum:
+      - ASC
+      - DESC
+    default: ASC
+  featureListTagsResponse:
+    type: object
+    properties:
+      tags:
+        type: array
+        items:
+          type: object
+          $ref: '#/definitions/bucketeerfeatureTag'
       cursor:
         type: string
       totalCount:
@@ -6829,7 +6497,7 @@ definitions:
         type: array
         items:
           type: object
-          $ref: '#/definitions/bucketeerfeatureClause'
+          $ref: '#/definitions/featureClause'
   featureSegment:
     type: object
     properties:
@@ -7538,26 +7206,6 @@ definitions:
     properties:
       push:
         $ref: '#/definitions/pushPush'
-  tagCreateTagRequest:
-    type: object
-    properties:
-      name:
-        type: string
-      entityType:
-        $ref: '#/definitions/TagEntityType'
-      environmentId:
-        type: string
-    required:
-      - name
-      - entityType
-      - environmentId
-  tagCreateTagResponse:
-    type: object
-    properties:
-      tag:
-        $ref: '#/definitions/bucketeertagTag'
-  tagDeleteTagResponse:
-    type: object
   userUser:
     type: object
     properties:

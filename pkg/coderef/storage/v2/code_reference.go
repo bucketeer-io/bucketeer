@@ -126,7 +126,10 @@ func (s *codeReferenceStorage) UpdateCodeReference(ctx context.Context, cr *doma
 	return nil
 }
 
-func (s *codeReferenceStorage) GetCodeReference(ctx context.Context, id, environmentID string) (*domain.CodeReference, error) {
+func (s *codeReferenceStorage) GetCodeReference(
+	ctx context.Context,
+	id, environmentID string,
+) (*domain.CodeReference, error) {
 	codeRef := &domain.CodeReference{}
 	row := s.qe(ctx).QueryRowContext(
 		ctx,

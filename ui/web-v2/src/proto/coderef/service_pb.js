@@ -25,8 +25,6 @@ var global =
 
 var proto_coderef_code_reference_pb = require('../../proto/coderef/code_reference_pb.js');
 goog.object.extend(proto, proto_coderef_code_reference_pb);
-var proto_coderef_command_pb = require('../../proto/coderef/command_pb.js');
-goog.object.extend(proto, proto_coderef_command_pb);
 goog.exportSymbol(
   'proto.bucketeer.coderef.CreateCodeReferenceRequest',
   null,
@@ -193,7 +191,14 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.bucketeer.coderef.CreateCodeReferenceRequest = function (opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(
+    this,
+    opt_data,
+    0,
+    -1,
+    proto.bucketeer.coderef.CreateCodeReferenceRequest.repeatedFields_,
+    null
+  );
 };
 goog.inherits(proto.bucketeer.coderef.CreateCodeReferenceRequest, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -240,7 +245,14 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.bucketeer.coderef.UpdateCodeReferenceRequest = function (opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(
+    this,
+    opt_data,
+    0,
+    -1,
+    proto.bucketeer.coderef.UpdateCodeReferenceRequest.repeatedFields_,
+    null
+  );
 };
 goog.inherits(proto.bucketeer.coderef.UpdateCodeReferenceRequest, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -1332,6 +1344,13 @@ proto.bucketeer.coderef.ListCodeReferencesResponse.prototype.setTotalCount =
     return jspb.Message.setProto3IntField(this, 3, value);
   };
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.repeatedFields_ = [7];
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -1368,13 +1387,19 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        command:
-          (f = msg.getCommand()) &&
-          proto_coderef_command_pb.CreateCodeReferenceCommand.toObject(
-            includeInstance,
-            f
-          ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 2, '')
+        featureId: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        filePath: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        lineNumber: jspb.Message.getFieldWithDefault(msg, 4, 0),
+        codeSnippet: jspb.Message.getFieldWithDefault(msg, 5, ''),
+        contentHash: jspb.Message.getFieldWithDefault(msg, 6, ''),
+        aliasesList:
+          (f = jspb.Message.getRepeatedField(msg, 7)) == null ? undefined : f,
+        repositoryName: jspb.Message.getFieldWithDefault(msg, 8, ''),
+        repositoryOwner: jspb.Message.getFieldWithDefault(msg, 9, ''),
+        repositoryType: jspb.Message.getFieldWithDefault(msg, 10, 0),
+        repositoryBranch: jspb.Message.getFieldWithDefault(msg, 11, ''),
+        commitHash: jspb.Message.getFieldWithDefault(msg, 12, '')
       };
 
     if (includeInstance) {
@@ -1415,17 +1440,55 @@ proto.bucketeer.coderef.CreateCodeReferenceRequest.deserializeBinaryFromReader =
       var field = reader.getFieldNumber();
       switch (field) {
         case 1:
-          var value = new proto_coderef_command_pb.CreateCodeReferenceCommand();
-          reader.readMessage(
-            value,
-            proto_coderef_command_pb.CreateCodeReferenceCommand
-              .deserializeBinaryFromReader
-          );
-          msg.setCommand(value);
+          var value = /** @type {string} */ (reader.readString());
+          msg.setFeatureId(value);
           break;
         case 2:
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
+          break;
+        case 3:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setFilePath(value);
+          break;
+        case 4:
+          var value = /** @type {number} */ (reader.readInt32());
+          msg.setLineNumber(value);
+          break;
+        case 5:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setCodeSnippet(value);
+          break;
+        case 6:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setContentHash(value);
+          break;
+        case 7:
+          var value = /** @type {string} */ (reader.readString());
+          msg.addAliases(value);
+          break;
+        case 8:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setRepositoryName(value);
+          break;
+        case 9:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setRepositoryOwner(value);
+          break;
+        case 10:
+          var value =
+            /** @type {!proto.bucketeer.coderef.CodeReference.RepositoryType} */ (
+              reader.readEnum()
+            );
+          msg.setRepositoryType(value);
+          break;
+        case 11:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setRepositoryBranch(value);
+          break;
+        case 12:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setCommitHash(value);
           break;
         default:
           reader.skipField();
@@ -1459,61 +1522,74 @@ proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.serializeBinary =
 proto.bucketeer.coderef.CreateCodeReferenceRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getCommand();
-    if (f != null) {
-      writer.writeMessage(
-        1,
-        f,
-        proto_coderef_command_pb.CreateCodeReferenceCommand
-          .serializeBinaryToWriter
-      );
+    f = message.getFeatureId();
+    if (f.length > 0) {
+      writer.writeString(1, f);
     }
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(2, f);
     }
+    f = message.getFilePath();
+    if (f.length > 0) {
+      writer.writeString(3, f);
+    }
+    f = message.getLineNumber();
+    if (f !== 0) {
+      writer.writeInt32(4, f);
+    }
+    f = message.getCodeSnippet();
+    if (f.length > 0) {
+      writer.writeString(5, f);
+    }
+    f = message.getContentHash();
+    if (f.length > 0) {
+      writer.writeString(6, f);
+    }
+    f = message.getAliasesList();
+    if (f.length > 0) {
+      writer.writeRepeatedString(7, f);
+    }
+    f = message.getRepositoryName();
+    if (f.length > 0) {
+      writer.writeString(8, f);
+    }
+    f = message.getRepositoryOwner();
+    if (f.length > 0) {
+      writer.writeString(9, f);
+    }
+    f = message.getRepositoryType();
+    if (f !== 0.0) {
+      writer.writeEnum(10, f);
+    }
+    f = message.getRepositoryBranch();
+    if (f.length > 0) {
+      writer.writeString(11, f);
+    }
+    f = message.getCommitHash();
+    if (f.length > 0) {
+      writer.writeString(12, f);
+    }
   };
 
 /**
- * optional CreateCodeReferenceCommand command = 1;
- * @return {?proto.bucketeer.coderef.CreateCodeReferenceCommand}
+ * optional string feature_id = 1;
+ * @return {string}
  */
-proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.getCommand =
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.getFeatureId =
   function () {
-    return /** @type{?proto.bucketeer.coderef.CreateCodeReferenceCommand} */ (
-      jspb.Message.getWrapperField(
-        this,
-        proto_coderef_command_pb.CreateCodeReferenceCommand,
-        1
-      )
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 1, '')
     );
   };
 
 /**
- * @param {?proto.bucketeer.coderef.CreateCodeReferenceCommand|undefined} value
+ * @param {string} value
  * @return {!proto.bucketeer.coderef.CreateCodeReferenceRequest} returns this
  */
-proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.setCommand =
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.setFeatureId =
   function (value) {
-    return jspb.Message.setWrapperField(this, 1, value);
-  };
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.coderef.CreateCodeReferenceRequest} returns this
- */
-proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.clearCommand =
-  function () {
-    return this.setCommand(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.hasCommand =
-  function () {
-    return jspb.Message.getField(this, 1) != null;
+    return jspb.Message.setProto3StringField(this, 1, value);
   };
 
 /**
@@ -1534,6 +1610,223 @@ proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.getEnvironmentId =
 proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 2, value);
+  };
+
+/**
+ * optional string file_path = 3;
+ * @return {string}
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.getFilePath =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 3, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.CreateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.setFilePath =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 3, value);
+  };
+
+/**
+ * optional int32 line_number = 4;
+ * @return {number}
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.getLineNumber =
+  function () {
+    return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 4, 0));
+  };
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.coderef.CreateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.setLineNumber =
+  function (value) {
+    return jspb.Message.setProto3IntField(this, 4, value);
+  };
+
+/**
+ * optional string code_snippet = 5;
+ * @return {string}
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.getCodeSnippet =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 5, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.CreateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.setCodeSnippet =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 5, value);
+  };
+
+/**
+ * optional string content_hash = 6;
+ * @return {string}
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.getContentHash =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 6, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.CreateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.setContentHash =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 6, value);
+  };
+
+/**
+ * repeated string aliases = 7;
+ * @return {!Array<string>}
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.getAliasesList =
+  function () {
+    return /** @type {!Array<string>} */ (
+      jspb.Message.getRepeatedField(this, 7)
+    );
+  };
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.bucketeer.coderef.CreateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.setAliasesList =
+  function (value) {
+    return jspb.Message.setField(this, 7, value || []);
+  };
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.coderef.CreateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.addAliases =
+  function (value, opt_index) {
+    return jspb.Message.addToRepeatedField(this, 7, value, opt_index);
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.coderef.CreateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.clearAliasesList =
+  function () {
+    return this.setAliasesList([]);
+  };
+
+/**
+ * optional string repository_name = 8;
+ * @return {string}
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.getRepositoryName =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 8, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.CreateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.setRepositoryName =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 8, value);
+  };
+
+/**
+ * optional string repository_owner = 9;
+ * @return {string}
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.getRepositoryOwner =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 9, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.CreateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.setRepositoryOwner =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 9, value);
+  };
+
+/**
+ * optional CodeReference.RepositoryType repository_type = 10;
+ * @return {!proto.bucketeer.coderef.CodeReference.RepositoryType}
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.getRepositoryType =
+  function () {
+    return /** @type {!proto.bucketeer.coderef.CodeReference.RepositoryType} */ (
+      jspb.Message.getFieldWithDefault(this, 10, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.coderef.CodeReference.RepositoryType} value
+ * @return {!proto.bucketeer.coderef.CreateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.setRepositoryType =
+  function (value) {
+    return jspb.Message.setProto3EnumField(this, 10, value);
+  };
+
+/**
+ * optional string repository_branch = 11;
+ * @return {string}
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.getRepositoryBranch =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 11, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.CreateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.setRepositoryBranch =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 11, value);
+  };
+
+/**
+ * optional string commit_hash = 12;
+ * @return {string}
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.getCommitHash =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 12, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.CreateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.CreateCodeReferenceRequest.prototype.setCommitHash =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 12, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -1710,6 +2003,13 @@ proto.bucketeer.coderef.CreateCodeReferenceResponse.prototype.hasCodeReference =
     return jspb.Message.getField(this, 1) != null;
   };
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.repeatedFields_ = [7];
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -1746,13 +2046,19 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        command:
-          (f = msg.getCommand()) &&
-          proto_coderef_command_pb.UpdateCodeReferenceCommand.toObject(
-            includeInstance,
-            f
-          ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 2, '')
+        id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 2, ''),
+        filePath: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        lineNumber: jspb.Message.getFieldWithDefault(msg, 4, 0),
+        codeSnippet: jspb.Message.getFieldWithDefault(msg, 5, ''),
+        contentHash: jspb.Message.getFieldWithDefault(msg, 6, ''),
+        aliasesList:
+          (f = jspb.Message.getRepeatedField(msg, 7)) == null ? undefined : f,
+        repositoryName: jspb.Message.getFieldWithDefault(msg, 8, ''),
+        repositoryOwner: jspb.Message.getFieldWithDefault(msg, 9, ''),
+        repositoryType: jspb.Message.getFieldWithDefault(msg, 10, 0),
+        repositoryBranch: jspb.Message.getFieldWithDefault(msg, 11, ''),
+        commitHash: jspb.Message.getFieldWithDefault(msg, 12, '')
       };
 
     if (includeInstance) {
@@ -1793,17 +2099,55 @@ proto.bucketeer.coderef.UpdateCodeReferenceRequest.deserializeBinaryFromReader =
       var field = reader.getFieldNumber();
       switch (field) {
         case 1:
-          var value = new proto_coderef_command_pb.UpdateCodeReferenceCommand();
-          reader.readMessage(
-            value,
-            proto_coderef_command_pb.UpdateCodeReferenceCommand
-              .deserializeBinaryFromReader
-          );
-          msg.setCommand(value);
+          var value = /** @type {string} */ (reader.readString());
+          msg.setId(value);
           break;
         case 2:
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
+          break;
+        case 3:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setFilePath(value);
+          break;
+        case 4:
+          var value = /** @type {number} */ (reader.readInt32());
+          msg.setLineNumber(value);
+          break;
+        case 5:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setCodeSnippet(value);
+          break;
+        case 6:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setContentHash(value);
+          break;
+        case 7:
+          var value = /** @type {string} */ (reader.readString());
+          msg.addAliases(value);
+          break;
+        case 8:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setRepositoryName(value);
+          break;
+        case 9:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setRepositoryOwner(value);
+          break;
+        case 10:
+          var value =
+            /** @type {!proto.bucketeer.coderef.CodeReference.RepositoryType} */ (
+              reader.readEnum()
+            );
+          msg.setRepositoryType(value);
+          break;
+        case 11:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setRepositoryBranch(value);
+          break;
+        case 12:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setCommitHash(value);
           break;
         default:
           reader.skipField();
@@ -1837,62 +2181,76 @@ proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.serializeBinary =
 proto.bucketeer.coderef.UpdateCodeReferenceRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getCommand();
-    if (f != null) {
-      writer.writeMessage(
-        1,
-        f,
-        proto_coderef_command_pb.UpdateCodeReferenceCommand
-          .serializeBinaryToWriter
-      );
+    f = message.getId();
+    if (f.length > 0) {
+      writer.writeString(1, f);
     }
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(2, f);
     }
+    f = message.getFilePath();
+    if (f.length > 0) {
+      writer.writeString(3, f);
+    }
+    f = message.getLineNumber();
+    if (f !== 0) {
+      writer.writeInt32(4, f);
+    }
+    f = message.getCodeSnippet();
+    if (f.length > 0) {
+      writer.writeString(5, f);
+    }
+    f = message.getContentHash();
+    if (f.length > 0) {
+      writer.writeString(6, f);
+    }
+    f = message.getAliasesList();
+    if (f.length > 0) {
+      writer.writeRepeatedString(7, f);
+    }
+    f = message.getRepositoryName();
+    if (f.length > 0) {
+      writer.writeString(8, f);
+    }
+    f = message.getRepositoryOwner();
+    if (f.length > 0) {
+      writer.writeString(9, f);
+    }
+    f = message.getRepositoryType();
+    if (f !== 0.0) {
+      writer.writeEnum(10, f);
+    }
+    f = message.getRepositoryBranch();
+    if (f.length > 0) {
+      writer.writeString(11, f);
+    }
+    f = message.getCommitHash();
+    if (f.length > 0) {
+      writer.writeString(12, f);
+    }
   };
 
 /**
- * optional UpdateCodeReferenceCommand command = 1;
- * @return {?proto.bucketeer.coderef.UpdateCodeReferenceCommand}
+ * optional string id = 1;
+ * @return {string}
  */
-proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.getCommand =
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.getId =
   function () {
-    return /** @type{?proto.bucketeer.coderef.UpdateCodeReferenceCommand} */ (
-      jspb.Message.getWrapperField(
-        this,
-        proto_coderef_command_pb.UpdateCodeReferenceCommand,
-        1
-      )
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 1, '')
     );
   };
 
 /**
- * @param {?proto.bucketeer.coderef.UpdateCodeReferenceCommand|undefined} value
+ * @param {string} value
  * @return {!proto.bucketeer.coderef.UpdateCodeReferenceRequest} returns this
  */
-proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.setCommand =
-  function (value) {
-    return jspb.Message.setWrapperField(this, 1, value);
-  };
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.coderef.UpdateCodeReferenceRequest} returns this
- */
-proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.clearCommand =
-  function () {
-    return this.setCommand(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.hasCommand =
-  function () {
-    return jspb.Message.getField(this, 1) != null;
-  };
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.setId = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
 
 /**
  * optional string environment_id = 2;
@@ -1912,6 +2270,223 @@ proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.getEnvironmentId =
 proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 2, value);
+  };
+
+/**
+ * optional string file_path = 3;
+ * @return {string}
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.getFilePath =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 3, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.UpdateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.setFilePath =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 3, value);
+  };
+
+/**
+ * optional int32 line_number = 4;
+ * @return {number}
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.getLineNumber =
+  function () {
+    return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 4, 0));
+  };
+
+/**
+ * @param {number} value
+ * @return {!proto.bucketeer.coderef.UpdateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.setLineNumber =
+  function (value) {
+    return jspb.Message.setProto3IntField(this, 4, value);
+  };
+
+/**
+ * optional string code_snippet = 5;
+ * @return {string}
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.getCodeSnippet =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 5, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.UpdateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.setCodeSnippet =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 5, value);
+  };
+
+/**
+ * optional string content_hash = 6;
+ * @return {string}
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.getContentHash =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 6, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.UpdateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.setContentHash =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 6, value);
+  };
+
+/**
+ * repeated string aliases = 7;
+ * @return {!Array<string>}
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.getAliasesList =
+  function () {
+    return /** @type {!Array<string>} */ (
+      jspb.Message.getRepeatedField(this, 7)
+    );
+  };
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.bucketeer.coderef.UpdateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.setAliasesList =
+  function (value) {
+    return jspb.Message.setField(this, 7, value || []);
+  };
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.bucketeer.coderef.UpdateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.addAliases =
+  function (value, opt_index) {
+    return jspb.Message.addToRepeatedField(this, 7, value, opt_index);
+  };
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.bucketeer.coderef.UpdateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.clearAliasesList =
+  function () {
+    return this.setAliasesList([]);
+  };
+
+/**
+ * optional string repository_name = 8;
+ * @return {string}
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.getRepositoryName =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 8, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.UpdateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.setRepositoryName =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 8, value);
+  };
+
+/**
+ * optional string repository_owner = 9;
+ * @return {string}
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.getRepositoryOwner =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 9, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.UpdateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.setRepositoryOwner =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 9, value);
+  };
+
+/**
+ * optional CodeReference.RepositoryType repository_type = 10;
+ * @return {!proto.bucketeer.coderef.CodeReference.RepositoryType}
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.getRepositoryType =
+  function () {
+    return /** @type {!proto.bucketeer.coderef.CodeReference.RepositoryType} */ (
+      jspb.Message.getFieldWithDefault(this, 10, 0)
+    );
+  };
+
+/**
+ * @param {!proto.bucketeer.coderef.CodeReference.RepositoryType} value
+ * @return {!proto.bucketeer.coderef.UpdateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.setRepositoryType =
+  function (value) {
+    return jspb.Message.setProto3EnumField(this, 10, value);
+  };
+
+/**
+ * optional string repository_branch = 11;
+ * @return {string}
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.getRepositoryBranch =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 11, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.UpdateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.setRepositoryBranch =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 11, value);
+  };
+
+/**
+ * optional string commit_hash = 12;
+ * @return {string}
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.getCommitHash =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 12, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.UpdateCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.UpdateCodeReferenceRequest.prototype.setCommitHash =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 12, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -2124,12 +2699,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
   ) {
     var f,
       obj = {
-        command:
-          (f = msg.getCommand()) &&
-          proto_coderef_command_pb.DeleteCodeReferenceCommand.toObject(
-            includeInstance,
-            f
-          )
+        id: jspb.Message.getFieldWithDefault(msg, 1, ''),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 2, '')
       };
 
     if (includeInstance) {
@@ -2170,13 +2741,12 @@ proto.bucketeer.coderef.DeleteCodeReferenceRequest.deserializeBinaryFromReader =
       var field = reader.getFieldNumber();
       switch (field) {
         case 1:
-          var value = new proto_coderef_command_pb.DeleteCodeReferenceCommand();
-          reader.readMessage(
-            value,
-            proto_coderef_command_pb.DeleteCodeReferenceCommand
-              .deserializeBinaryFromReader
-          );
-          msg.setCommand(value);
+          var value = /** @type {string} */ (reader.readString());
+          msg.setId(value);
+          break;
+        case 2:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
           break;
         default:
           reader.skipField();
@@ -2210,57 +2780,55 @@ proto.bucketeer.coderef.DeleteCodeReferenceRequest.prototype.serializeBinary =
 proto.bucketeer.coderef.DeleteCodeReferenceRequest.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
-    f = message.getCommand();
-    if (f != null) {
-      writer.writeMessage(
-        1,
-        f,
-        proto_coderef_command_pb.DeleteCodeReferenceCommand
-          .serializeBinaryToWriter
-      );
+    f = message.getId();
+    if (f.length > 0) {
+      writer.writeString(1, f);
+    }
+    f = message.getEnvironmentId();
+    if (f.length > 0) {
+      writer.writeString(2, f);
     }
   };
 
 /**
- * optional DeleteCodeReferenceCommand command = 1;
- * @return {?proto.bucketeer.coderef.DeleteCodeReferenceCommand}
+ * optional string id = 1;
+ * @return {string}
  */
-proto.bucketeer.coderef.DeleteCodeReferenceRequest.prototype.getCommand =
+proto.bucketeer.coderef.DeleteCodeReferenceRequest.prototype.getId =
   function () {
-    return /** @type{?proto.bucketeer.coderef.DeleteCodeReferenceCommand} */ (
-      jspb.Message.getWrapperField(
-        this,
-        proto_coderef_command_pb.DeleteCodeReferenceCommand,
-        1
-      )
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 1, '')
     );
   };
 
 /**
- * @param {?proto.bucketeer.coderef.DeleteCodeReferenceCommand|undefined} value
+ * @param {string} value
  * @return {!proto.bucketeer.coderef.DeleteCodeReferenceRequest} returns this
  */
-proto.bucketeer.coderef.DeleteCodeReferenceRequest.prototype.setCommand =
+proto.bucketeer.coderef.DeleteCodeReferenceRequest.prototype.setId = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+/**
+ * optional string environment_id = 2;
+ * @return {string}
+ */
+proto.bucketeer.coderef.DeleteCodeReferenceRequest.prototype.getEnvironmentId =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 2, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.coderef.DeleteCodeReferenceRequest} returns this
+ */
+proto.bucketeer.coderef.DeleteCodeReferenceRequest.prototype.setEnvironmentId =
   function (value) {
-    return jspb.Message.setWrapperField(this, 1, value);
-  };
-
-/**
- * Clears the message field making it undefined.
- * @return {!proto.bucketeer.coderef.DeleteCodeReferenceRequest} returns this
- */
-proto.bucketeer.coderef.DeleteCodeReferenceRequest.prototype.clearCommand =
-  function () {
-    return this.setCommand(undefined);
-  };
-
-/**
- * Returns whether this field is set.
- * @return {boolean}
- */
-proto.bucketeer.coderef.DeleteCodeReferenceRequest.prototype.hasCommand =
-  function () {
-    return jspb.Message.getField(this, 1) != null;
+    return jspb.Message.setProto3StringField(this, 2, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

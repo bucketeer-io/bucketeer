@@ -3,7 +3,6 @@
 
 import * as jspb from 'google-protobuf';
 import * as proto_coderef_code_reference_pb from '../../proto/coderef/code_reference_pb';
-import * as proto_coderef_command_pb from '../../proto/coderef/command_pb';
 
 export class GetCodeReferenceRequest extends jspb.Message {
   getId(): string;
@@ -208,13 +207,45 @@ export namespace ListCodeReferencesResponse {
 }
 
 export class CreateCodeReferenceRequest extends jspb.Message {
-  hasCommand(): boolean;
-  clearCommand(): void;
-  getCommand(): proto_coderef_command_pb.CreateCodeReferenceCommand | undefined;
-  setCommand(value?: proto_coderef_command_pb.CreateCodeReferenceCommand): void;
+  getFeatureId(): string;
+  setFeatureId(value: string): void;
 
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
+
+  getFilePath(): string;
+  setFilePath(value: string): void;
+
+  getLineNumber(): number;
+  setLineNumber(value: number): void;
+
+  getCodeSnippet(): string;
+  setCodeSnippet(value: string): void;
+
+  getContentHash(): string;
+  setContentHash(value: string): void;
+
+  clearAliasesList(): void;
+  getAliasesList(): Array<string>;
+  setAliasesList(value: Array<string>): void;
+  addAliases(value: string, index?: number): string;
+
+  getRepositoryName(): string;
+  setRepositoryName(value: string): void;
+
+  getRepositoryOwner(): string;
+  setRepositoryOwner(value: string): void;
+
+  getRepositoryType(): proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap[keyof proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap];
+  setRepositoryType(
+    value: proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap[keyof proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap]
+  ): void;
+
+  getRepositoryBranch(): string;
+  setRepositoryBranch(value: string): void;
+
+  getCommitHash(): string;
+  setCommitHash(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateCodeReferenceRequest.AsObject;
@@ -239,8 +270,18 @@ export class CreateCodeReferenceRequest extends jspb.Message {
 
 export namespace CreateCodeReferenceRequest {
   export type AsObject = {
-    command?: proto_coderef_command_pb.CreateCodeReferenceCommand.AsObject;
+    featureId: string;
     environmentId: string;
+    filePath: string;
+    lineNumber: number;
+    codeSnippet: string;
+    contentHash: string;
+    aliasesList: Array<string>;
+    repositoryName: string;
+    repositoryOwner: string;
+    repositoryType: proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap[keyof proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap];
+    repositoryBranch: string;
+    commitHash: string;
   };
 }
 
@@ -278,13 +319,45 @@ export namespace CreateCodeReferenceResponse {
 }
 
 export class UpdateCodeReferenceRequest extends jspb.Message {
-  hasCommand(): boolean;
-  clearCommand(): void;
-  getCommand(): proto_coderef_command_pb.UpdateCodeReferenceCommand | undefined;
-  setCommand(value?: proto_coderef_command_pb.UpdateCodeReferenceCommand): void;
+  getId(): string;
+  setId(value: string): void;
 
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
+
+  getFilePath(): string;
+  setFilePath(value: string): void;
+
+  getLineNumber(): number;
+  setLineNumber(value: number): void;
+
+  getCodeSnippet(): string;
+  setCodeSnippet(value: string): void;
+
+  getContentHash(): string;
+  setContentHash(value: string): void;
+
+  clearAliasesList(): void;
+  getAliasesList(): Array<string>;
+  setAliasesList(value: Array<string>): void;
+  addAliases(value: string, index?: number): string;
+
+  getRepositoryName(): string;
+  setRepositoryName(value: string): void;
+
+  getRepositoryOwner(): string;
+  setRepositoryOwner(value: string): void;
+
+  getRepositoryType(): proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap[keyof proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap];
+  setRepositoryType(
+    value: proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap[keyof proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap]
+  ): void;
+
+  getRepositoryBranch(): string;
+  setRepositoryBranch(value: string): void;
+
+  getCommitHash(): string;
+  setCommitHash(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateCodeReferenceRequest.AsObject;
@@ -309,8 +382,18 @@ export class UpdateCodeReferenceRequest extends jspb.Message {
 
 export namespace UpdateCodeReferenceRequest {
   export type AsObject = {
-    command?: proto_coderef_command_pb.UpdateCodeReferenceCommand.AsObject;
+    id: string;
     environmentId: string;
+    filePath: string;
+    lineNumber: number;
+    codeSnippet: string;
+    contentHash: string;
+    aliasesList: Array<string>;
+    repositoryName: string;
+    repositoryOwner: string;
+    repositoryType: proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap[keyof proto_coderef_code_reference_pb.CodeReference.RepositoryTypeMap];
+    repositoryBranch: string;
+    commitHash: string;
   };
 }
 
@@ -348,10 +431,11 @@ export namespace UpdateCodeReferenceResponse {
 }
 
 export class DeleteCodeReferenceRequest extends jspb.Message {
-  hasCommand(): boolean;
-  clearCommand(): void;
-  getCommand(): proto_coderef_command_pb.DeleteCodeReferenceCommand | undefined;
-  setCommand(value?: proto_coderef_command_pb.DeleteCodeReferenceCommand): void;
+  getId(): string;
+  setId(value: string): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): DeleteCodeReferenceRequest.AsObject;
@@ -376,7 +460,8 @@ export class DeleteCodeReferenceRequest extends jspb.Message {
 
 export namespace DeleteCodeReferenceRequest {
   export type AsObject = {
-    command?: proto_coderef_command_pb.DeleteCodeReferenceCommand.AsObject;
+    id: string;
+    environmentId: string;
   };
 }
 
