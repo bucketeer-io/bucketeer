@@ -530,8 +530,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithLogger(logger),
 		),
 		cacher.NewFeatureFlagCacher(
-			environmentClient,
-			featureClient,
+			mysqlClient,
 			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),

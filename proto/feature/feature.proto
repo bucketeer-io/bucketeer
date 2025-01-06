@@ -60,6 +60,11 @@ message Features {
   string id = 2;
 }
 
+message EnvironmentFeature {
+  string environment_id = 1;
+  repeated Feature features = 2;
+}
+
 message Tag {
   string id = 1;
   int64 created_at = 2;

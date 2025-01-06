@@ -22148,6 +22148,22 @@
             ]
           },
           {
+            "name": "EnvironmentFeature",
+            "fields": [
+              {
+                "id": 1,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "features",
+                "type": "Feature",
+                "is_repeated": true
+              }
+            ]
+          },
+          {
             "name": "Tag",
             "fields": [
               {
