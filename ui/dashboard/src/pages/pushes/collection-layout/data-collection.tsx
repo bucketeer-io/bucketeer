@@ -13,48 +13,17 @@ import Switch from 'components/switch';
 import DateTooltip from 'elements/date-tooltip';
 import { PushActionsType } from '../types';
 
-export const tagOptions = [
-  {
-    label: 'Android',
-    value: 'android'
-  },
-  {
-    label: 'IOS',
-    value: 'ios'
-  },
-  {
-    label: 'Web',
-    value: 'web'
-  },
-  {
-    label: 'JSON',
-    value: 'json'
-  },
-  {
-    label: 'JSON New',
-    value: 'json-new'
-  },
-  {
-    label: 'Number',
-    value: 'number'
-  },
-  {
-    label: 'String',
-    value: 'string'
-  }
-];
-
-export const Tag = ({ tag }: { tag: string }) => (
+export const Tag = ({ value }: { value: string }) => (
   <div className="flex-center px-2 py-1.5 bg-primary-100/70 text-primary-500 typo-para-small leading-[14px] rounded whitespace-nowrap">
-    {tagOptions.find(item => item.value === tag)?.label || tag}
+    {value}
   </div>
 );
 
 export const renderTag = (tags: string[]) => {
   return (
     <div className="flex items-center gap-2 max-w-fit">
-      {tags.slice(0, 3)?.map((tag, index) => <Tag tag={tag} key={index} />)}
-      {tags.length > 3 && <Tag tag={`+${tags.length - 3}`} />}
+      {tags.slice(0, 3)?.map((tag, index) => <Tag value={tag} key={index} />)}
+      {tags.length > 3 && <Tag value={`+${tags.length - 3}`} />}
     </div>
   );
 };

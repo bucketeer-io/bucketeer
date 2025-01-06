@@ -2,17 +2,16 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { pushCreator } from '@api/push';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { invalidatePushes } from '@queries/pushes';
+import { useQueryTags } from '@queries/tags';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
+import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { IconInfo } from '@icons';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
-import {
-  Tag,
-  tagOptions
-} from 'pages/pushes/collection-layout/data-collection';
+import { Tag } from 'pages/pushes/collection-layout/data-collection';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import {
@@ -56,7 +55,16 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
   const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
   });
+
+  const { data: tagCollection, isLoading: isLoadingTags } = useQueryTags({
+    params: {
+      cursor: String(0),
+      pageSize: LIST_PAGE_SIZE,
+      environmentId: currentEnvironment.id
+    }
+  });
   const environments = (collection?.environments || []).filter(item => item.id);
+  const tagOptions = tagCollection?.tags || [];
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -206,12 +214,13 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                         trigger={
                           field.value.length > 0 && (
                             <div className="flex items-center flex-wrap gap-2 max-w-fit">
-                              {field.value.map((tag, index) => (
-                                <Tag tag={tag} key={index} />
+                              {field.value.map((value, index) => (
+                                <Tag value={value} key={index} />
                               ))}
                             </div>
                           )
                         }
+                        disabled={isLoadingTags}
                       />
                       <DropdownMenuContent
                         className="w-[502px]"
@@ -222,10 +231,10 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                           <DropdownMenuItem
                             {...field}
                             key={index}
-                            value={item.value}
-                            label={item.label}
+                            value={item.id}
+                            label={item.id}
                             isMultiselect={true}
-                            isSelected={field.value.includes(item.value)}
+                            isSelected={field.value.includes(item.id)}
                             onSelectOption={value => {
                               const _tags = field.value.includes(value)
                                 ? field.value.filter(tag => tag !== value)
