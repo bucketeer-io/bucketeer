@@ -17,25 +17,13 @@ package domain
 import (
 	"time"
 
+	"github.com/jinzhu/copier"
+
 	proto "github.com/bucketeer-io/bucketeer/proto/coderef"
 )
 
 type CodeReference struct {
-	Id               string
-	FeatureId        string
-	FilePath         string
-	LineNumber       int32
-	CodeSnippet      string
-	ContentHash      string
-	Aliases          []string
-	RepositoryName   string
-	RepositoryOwner  string
-	RepositoryType   proto.CodeReference_RepositoryType
-	RepositoryBranch string
-	CommitHash       string
-	EnvironmentId    string
-	CreatedAt        int64
-	UpdatedAt        int64
+	proto.CodeReference
 }
 
 func NewCodeReference(
@@ -55,57 +43,23 @@ func NewCodeReference(
 ) *CodeReference {
 	now := time.Now().Unix()
 	return &CodeReference{
-		Id:               id,
-		FeatureId:        featureId,
-		FilePath:         filePath,
-		LineNumber:       lineNumber,
-		CodeSnippet:      codeSnippet,
-		ContentHash:      contentHash,
-		Aliases:          aliases,
-		RepositoryName:   repositoryName,
-		RepositoryOwner:  repositoryOwner,
-		RepositoryType:   repositoryType,
-		RepositoryBranch: repositoryBranch,
-		CommitHash:       commitHash,
-		EnvironmentId:    environmentId,
-		CreatedAt:        now,
-		UpdatedAt:        now,
-	}
-}
-
-func NewCodeReferenceWithTime(
-	id string,
-	featureId string,
-	filePath string,
-	lineNumber int32,
-	codeSnippet string,
-	contentHash string,
-	aliases []string,
-	repositoryName string,
-	repositoryOwner string,
-	repositoryType proto.CodeReference_RepositoryType,
-	repositoryBranch string,
-	commitHash string,
-	environmentId string,
-	now time.Time,
-) *CodeReference {
-	timestamp := now.Unix()
-	return &CodeReference{
-		Id:               id,
-		FeatureId:        featureId,
-		FilePath:         filePath,
-		LineNumber:       lineNumber,
-		CodeSnippet:      codeSnippet,
-		ContentHash:      contentHash,
-		Aliases:          aliases,
-		RepositoryName:   repositoryName,
-		RepositoryOwner:  repositoryOwner,
-		RepositoryType:   repositoryType,
-		RepositoryBranch: repositoryBranch,
-		CommitHash:       commitHash,
-		EnvironmentId:    environmentId,
-		CreatedAt:        timestamp,
-		UpdatedAt:        timestamp,
+		CodeReference: proto.CodeReference{
+			Id:               id,
+			FeatureId:        featureId,
+			FilePath:         filePath,
+			LineNumber:       lineNumber,
+			CodeSnippet:      codeSnippet,
+			ContentHash:      contentHash,
+			Aliases:          aliases,
+			RepositoryName:   repositoryName,
+			RepositoryOwner:  repositoryOwner,
+			RepositoryType:   repositoryType,
+			RepositoryBranch: repositoryBranch,
+			CommitHash:       commitHash,
+			EnvironmentId:    environmentId,
+			CreatedAt:        now,
+			UpdatedAt:        now,
+		},
 	}
 }
 
@@ -117,33 +71,32 @@ func (c *CodeReference) Update(
 	aliases []string,
 	repositoryBranch string,
 	commitHash string,
-) {
-	c.FilePath = filePath
-	c.LineNumber = lineNumber
-	c.CodeSnippet = codeSnippet
-	c.ContentHash = contentHash
-	c.Aliases = aliases
-	c.RepositoryBranch = repositoryBranch
-	c.CommitHash = commitHash
-	c.UpdatedAt = time.Now().Unix()
-}
-
-func (c *CodeReference) ToProto() *proto.CodeReference {
-	return &proto.CodeReference{
-		Id:               c.Id,
-		FeatureId:        c.FeatureId,
-		FilePath:         c.FilePath,
-		LineNumber:       c.LineNumber,
-		CodeSnippet:      c.CodeSnippet,
-		ContentHash:      c.ContentHash,
-		Aliases:          c.Aliases,
-		RepositoryName:   c.RepositoryName,
-		RepositoryOwner:  c.RepositoryOwner,
-		RepositoryType:   c.RepositoryType,
-		RepositoryBranch: c.RepositoryBranch,
-		CommitHash:       c.CommitHash,
-		EnvironmentId:    c.EnvironmentId,
-		CreatedAt:        c.CreatedAt,
-		UpdatedAt:        c.UpdatedAt,
+) (*CodeReference, error) {
+	updated := &CodeReference{}
+	if err := copier.Copy(updated, c); err != nil {
+		return nil, err
 	}
+	if filePath != "" {
+		updated.FilePath = filePath
+	}
+	if lineNumber != 0 {
+		updated.LineNumber = lineNumber
+	}
+	if codeSnippet != "" {
+		updated.CodeSnippet = codeSnippet
+	}
+	if contentHash != "" {
+		updated.ContentHash = contentHash
+	}
+	if len(aliases) > 0 {
+		updated.Aliases = aliases
+	}
+	if repositoryBranch != "" {
+		updated.RepositoryBranch = repositoryBranch
+	}
+	if commitHash != "" {
+		updated.CommitHash = commitHash
+	}
+	updated.UpdatedAt = time.Now().Unix()
+	return updated, nil
 }

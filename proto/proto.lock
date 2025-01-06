@@ -8051,154 +8051,6 @@
       }
     },
     {
-      "protopath": "coderef:/:command.proto",
-      "def": {
-        "messages": [
-          {
-            "name": "CreateCodeReferenceCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "feature_id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "file_path",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "line_number",
-                "type": "int32"
-              },
-              {
-                "id": 4,
-                "name": "code_snippet",
-                "type": "string"
-              },
-              {
-                "id": 5,
-                "name": "content_hash",
-                "type": "string"
-              },
-              {
-                "id": 6,
-                "name": "aliases",
-                "type": "string",
-                "is_repeated": true
-              },
-              {
-                "id": 7,
-                "name": "repository_name",
-                "type": "string"
-              },
-              {
-                "id": 8,
-                "name": "repository_owner",
-                "type": "string"
-              },
-              {
-                "id": 9,
-                "name": "repository_type",
-                "type": "CodeReference.RepositoryType"
-              },
-              {
-                "id": 10,
-                "name": "repository_branch",
-                "type": "string"
-              },
-              {
-                "id": 11,
-                "name": "commit_hash",
-                "type": "string"
-              },
-              {
-                "id": 12,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "UpdateCodeReferenceCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "file_path",
-                "type": "string"
-              },
-              {
-                "id": 3,
-                "name": "line_number",
-                "type": "int32"
-              },
-              {
-                "id": 4,
-                "name": "code_snippet",
-                "type": "string"
-              },
-              {
-                "id": 5,
-                "name": "content_hash",
-                "type": "string"
-              },
-              {
-                "id": 6,
-                "name": "aliases",
-                "type": "string",
-                "is_repeated": true
-              },
-              {
-                "id": 7,
-                "name": "repository_branch",
-                "type": "string"
-              },
-              {
-                "id": 8,
-                "name": "commit_hash",
-                "type": "string"
-              }
-            ]
-          },
-          {
-            "name": "DeleteCodeReferenceCommand",
-            "fields": [
-              {
-                "id": 1,
-                "name": "id",
-                "type": "string"
-              },
-              {
-                "id": 2,
-                "name": "environment_id",
-                "type": "string"
-              }
-            ]
-          }
-        ],
-        "imports": [
-          {
-            "path": "proto/coderef/code_reference.proto"
-          }
-        ],
-        "package": {
-          "name": "bucketeer.coderef"
-        },
-        "options": [
-          {
-            "name": "go_package",
-            "value": "github.com/bucketeer-io/bucketeer/proto/coderef"
-          }
-        ]
-      }
-    },
-    {
       "protopath": "coderef:/:service.proto",
       "def": {
         "enums": [
@@ -8338,12 +8190,63 @@
             "fields": [
               {
                 "id": 1,
-                "name": "command",
-                "type": "CreateCodeReferenceCommand"
+                "name": "feature_id",
+                "type": "string"
               },
               {
                 "id": 2,
                 "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "file_path",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "line_number",
+                "type": "int32"
+              },
+              {
+                "id": 5,
+                "name": "code_snippet",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "content_hash",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "aliases",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "repository_name",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "repository_owner",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "repository_type",
+                "type": "CodeReference.RepositoryType"
+              },
+              {
+                "id": 11,
+                "name": "repository_branch",
+                "type": "string"
+              },
+              {
+                "id": 12,
+                "name": "commit_hash",
                 "type": "string"
               }
             ]
@@ -8363,12 +8266,63 @@
             "fields": [
               {
                 "id": 1,
-                "name": "command",
-                "type": "UpdateCodeReferenceCommand"
+                "name": "id",
+                "type": "string"
               },
               {
                 "id": 2,
                 "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 3,
+                "name": "file_path",
+                "type": "string"
+              },
+              {
+                "id": 4,
+                "name": "line_number",
+                "type": "int32"
+              },
+              {
+                "id": 5,
+                "name": "code_snippet",
+                "type": "string"
+              },
+              {
+                "id": 6,
+                "name": "content_hash",
+                "type": "string"
+              },
+              {
+                "id": 7,
+                "name": "aliases",
+                "type": "string",
+                "is_repeated": true
+              },
+              {
+                "id": 8,
+                "name": "repository_name",
+                "type": "string"
+              },
+              {
+                "id": 9,
+                "name": "repository_owner",
+                "type": "string"
+              },
+              {
+                "id": 10,
+                "name": "repository_type",
+                "type": "CodeReference.RepositoryType"
+              },
+              {
+                "id": 11,
+                "name": "repository_branch",
+                "type": "string"
+              },
+              {
+                "id": 12,
+                "name": "commit_hash",
                 "type": "string"
               }
             ]
@@ -8388,8 +8342,13 @@
             "fields": [
               {
                 "id": 1,
-                "name": "command",
-                "type": "DeleteCodeReferenceCommand"
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "id": 2,
+                "name": "environment_id",
+                "type": "string"
               }
             ]
           },
@@ -8432,9 +8391,6 @@
         "imports": [
           {
             "path": "proto/coderef/code_reference.proto"
-          },
-          {
-            "path": "proto/coderef/command.proto"
           }
         ],
         "package": {
@@ -31714,6 +31670,10 @@
               {
                 "name": "DOMAIN_EVENT_FLAG_TRIGGER",
                 "integer": 16
+              },
+              {
+                "name": "DOMAIN_EVENT_CODEREF",
+                "integer": 17
               },
               {
                 "name": "FEATURE_STALE",

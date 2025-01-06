@@ -18,7 +18,6 @@ package bucketeer.coderef;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/coderef";
 
 import "proto/coderef/code_reference.proto";
-import "proto/coderef/command.proto";
 
 message GetCodeReferenceRequest {
   string id = 1;
@@ -58,8 +57,18 @@ message ListCodeReferencesResponse {
 }
 
 message CreateCodeReferenceRequest {
-  CreateCodeReferenceCommand command = 1;
+  string feature_id = 1;
   string environment_id = 2;
+  string file_path = 3;
+  int32 line_number = 4;
+  string code_snippet = 5;
+  string content_hash = 6;
+  repeated string aliases = 7;
+  string repository_name = 8;
+  string repository_owner = 9;
+  CodeReference.RepositoryType repository_type = 10;
+  string repository_branch = 11;
+  string commit_hash = 12;
 }
 
 message CreateCodeReferenceResponse {
@@ -67,8 +76,18 @@ message CreateCodeReferenceResponse {
 }
 
 message UpdateCodeReferenceRequest {
-  UpdateCodeReferenceCommand command = 1;
+  string id = 1;
   string environment_id = 2;
+  string file_path = 3;
+  int32 line_number = 4;
+  string code_snippet = 5;
+  string content_hash = 6;
+  repeated string aliases = 7;
+  string repository_name = 8;
+  string repository_owner = 9;
+  CodeReference.RepositoryType repository_type = 10;
+  string repository_branch = 11;
+  string commit_hash = 12;
 }
 
 message UpdateCodeReferenceResponse {
@@ -76,7 +95,8 @@ message UpdateCodeReferenceResponse {
 }
 
 message DeleteCodeReferenceRequest {
-  DeleteCodeReferenceCommand command = 1;
+  string id = 1;
+  string environment_id = 2;
 }
 
 message DeleteCodeReferenceResponse {}

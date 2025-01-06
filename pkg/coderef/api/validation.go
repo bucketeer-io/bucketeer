@@ -22,17 +22,7 @@ import (
 )
 
 func validateCreateCodeReferenceRequest(req *proto.CreateCodeReferenceRequest, localizer locale.Localizer) error {
-	if req.Command == nil {
-		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Command.FeatureId == "" {
+	if req.FeatureId == "" {
 		dt, err := statusMissingFeatureID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "feature_id"),
@@ -42,7 +32,7 @@ func validateCreateCodeReferenceRequest(req *proto.CreateCodeReferenceRequest, l
 		}
 		return dt.Err()
 	}
-	if req.Command.FilePath == "" {
+	if req.FilePath == "" {
 		dt, err := statusMissingFilePath.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "file_path"),
@@ -52,7 +42,7 @@ func validateCreateCodeReferenceRequest(req *proto.CreateCodeReferenceRequest, l
 		}
 		return dt.Err()
 	}
-	if req.Command.LineNumber <= 0 {
+	if req.LineNumber <= 0 {
 		dt, err := statusMissingLineNumber.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "line_number"),
@@ -62,7 +52,7 @@ func validateCreateCodeReferenceRequest(req *proto.CreateCodeReferenceRequest, l
 		}
 		return dt.Err()
 	}
-	if req.Command.CodeSnippet == "" {
+	if req.CodeSnippet == "" {
 		dt, err := statusMissingCodeSnippet.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "code_snippet"),
@@ -72,7 +62,7 @@ func validateCreateCodeReferenceRequest(req *proto.CreateCodeReferenceRequest, l
 		}
 		return dt.Err()
 	}
-	if req.Command.ContentHash == "" {
+	if req.ContentHash == "" {
 		dt, err := statusMissingContentHash.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "content_hash"),
@@ -82,7 +72,7 @@ func validateCreateCodeReferenceRequest(req *proto.CreateCodeReferenceRequest, l
 		}
 		return dt.Err()
 	}
-	if req.Command.RepositoryName == "" || req.Command.RepositoryOwner == "" {
+	if req.RepositoryName == "" || req.RepositoryOwner == "" {
 		dt, err := statusMissingRepositoryInfo.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "repository_info"),
@@ -92,7 +82,7 @@ func validateCreateCodeReferenceRequest(req *proto.CreateCodeReferenceRequest, l
 		}
 		return dt.Err()
 	}
-	if req.Command.RepositoryType == proto.CodeReference_REPOSITORY_TYPE_UNSPECIFIED {
+	if req.RepositoryType == proto.CodeReference_REPOSITORY_TYPE_UNSPECIFIED {
 		dt, err := statusInvalidRepositoryType.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "repository_type"),
@@ -116,17 +106,7 @@ func validateCreateCodeReferenceRequest(req *proto.CreateCodeReferenceRequest, l
 }
 
 func validateUpdateCodeReferenceRequest(req *proto.UpdateCodeReferenceRequest, localizer locale.Localizer) error {
-	if req.Command == nil {
-		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Command.Id == "" {
+	if req.Id == "" {
 		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
@@ -136,7 +116,7 @@ func validateUpdateCodeReferenceRequest(req *proto.UpdateCodeReferenceRequest, l
 		}
 		return dt.Err()
 	}
-	if req.Command.FilePath == "" {
+	if req.FilePath == "" {
 		dt, err := statusMissingFilePath.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "file_path"),
@@ -146,7 +126,7 @@ func validateUpdateCodeReferenceRequest(req *proto.UpdateCodeReferenceRequest, l
 		}
 		return dt.Err()
 	}
-	if req.Command.LineNumber <= 0 {
+	if req.LineNumber <= 0 {
 		dt, err := statusMissingLineNumber.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "line_number"),
@@ -156,7 +136,7 @@ func validateUpdateCodeReferenceRequest(req *proto.UpdateCodeReferenceRequest, l
 		}
 		return dt.Err()
 	}
-	if req.Command.CodeSnippet == "" {
+	if req.CodeSnippet == "" {
 		dt, err := statusMissingCodeSnippet.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "code_snippet"),
@@ -166,7 +146,7 @@ func validateUpdateCodeReferenceRequest(req *proto.UpdateCodeReferenceRequest, l
 		}
 		return dt.Err()
 	}
-	if req.Command.ContentHash == "" {
+	if req.ContentHash == "" {
 		dt, err := statusMissingContentHash.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "content_hash"),
@@ -190,17 +170,7 @@ func validateUpdateCodeReferenceRequest(req *proto.UpdateCodeReferenceRequest, l
 }
 
 func validateDeleteCodeReferenceRequest(req *proto.DeleteCodeReferenceRequest, localizer locale.Localizer) error {
-	if req.Command == nil {
-		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "command"),
-		})
-		if err != nil {
-			return statusInternal.Err()
-		}
-		return dt.Err()
-	}
-	if req.Command.Id == "" {
+	if req.Id == "" {
 		dt, err := statusMissingID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "id"),
@@ -210,7 +180,7 @@ func validateDeleteCodeReferenceRequest(req *proto.DeleteCodeReferenceRequest, l
 		}
 		return dt.Err()
 	}
-	if req.Command.EnvironmentId == "" {
+	if req.EnvironmentId == "" {
 		dt, err := statusMissingEnvironmentID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "environment_id"),

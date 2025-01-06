@@ -67,6 +67,7 @@ TrialProject: "Trial project"
 Webhook: "Webhook"
 WebhookRule: "Webhook rule"
 FlagTrigger: "Flag Trigger"
+CodeReference: "Code reference"
 
 # Error sentences
 RequiredField: "{{ .Field_1 }} is required"

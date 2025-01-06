@@ -18,20 +18,20 @@ import (
 	"context"
 	"errors"
 	"strconv"
-	"time"
 
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 
-	"github.com/bucketeer-io/bucketeer/pkg/coderef/command"
 	"github.com/bucketeer-io/bucketeer/pkg/coderef/domain"
 	v2 "github.com/bucketeer-io/bucketeer/pkg/coderef/storage/v2"
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/locale"
 	"github.com/bucketeer-io/bucketeer/pkg/log"
 	"github.com/bucketeer-io/bucketeer/pkg/storage/v2/mysql"
 	"github.com/bucketeer-io/bucketeer/pkg/uuid"
 	accountproto "github.com/bucketeer-io/bucketeer/proto/account"
 	proto "github.com/bucketeer-io/bucketeer/proto/coderef"
+	eventproto "github.com/bucketeer-io/bucketeer/proto/event/domain"
 )
 
 func (s *CodeReferenceService) GetCodeReference(
@@ -80,7 +80,7 @@ func (s *CodeReferenceService) GetCodeReference(
 		}
 		return nil, dt.Err()
 	}
-	return &proto.GetCodeReferenceResponse{CodeReference: codeRef.ToProto()}, nil
+	return &proto.GetCodeReferenceResponse{CodeReference: &codeRef.CodeReference}, nil
 }
 
 func (s *CodeReferenceService) ListCodeReferences(
@@ -167,7 +167,7 @@ func (s *CodeReferenceService) ListCodeReferences(
 	}
 	protoRefs := make([]*proto.CodeReference, 0, len(codeRefs))
 	for _, ref := range codeRefs {
-		protoRefs = append(protoRefs, ref.ToProto())
+		protoRefs = append(protoRefs, &ref.CodeReference)
 	}
 	return &proto.ListCodeReferencesResponse{
 		CodeReferences: protoRefs,
@@ -210,27 +210,50 @@ func (s *CodeReferenceService) CreateCodeReference(
 		}
 		return nil, dt.Err()
 	}
-	now := time.Now()
-	codeRef := domain.NewCodeReferenceWithTime(
+	codeRef := domain.NewCodeReference(
 		id.String(),
-		req.Command.FeatureId,
-		req.Command.FilePath,
-		req.Command.LineNumber,
-		req.Command.CodeSnippet,
-		req.Command.ContentHash,
-		req.Command.Aliases,
-		req.Command.RepositoryName,
-		req.Command.RepositoryOwner,
-		req.Command.RepositoryType,
-		req.Command.RepositoryBranch,
-		req.Command.CommitHash,
+		req.FeatureId,
+		req.FilePath,
+		req.LineNumber,
+		req.CodeSnippet,
+		req.ContentHash,
+		req.Aliases,
+		req.RepositoryName,
+		req.RepositoryOwner,
+		req.RepositoryType,
+		req.RepositoryBranch,
+		req.CommitHash,
 		req.EnvironmentId,
-		now,
 	)
-	handler, err := command.NewCodeReferenceCommandHandler(editor, codeRef, s.publisher, req.EnvironmentId)
+	createEvent, err := domainevent.NewEvent(
+		editor,
+		eventproto.Event_CODEREF,
+		codeRef.Id,
+		eventproto.Event_CODE_REFERENCE_CREATED,
+		&eventproto.CodeReferenceCreatedEvent{
+			Id:               codeRef.Id,
+			FeatureId:        codeRef.FeatureId,
+			FilePath:         codeRef.FilePath,
+			LineNumber:       codeRef.LineNumber,
+			CodeSnippet:      codeRef.CodeSnippet,
+			ContentHash:      codeRef.ContentHash,
+			Aliases:          codeRef.Aliases,
+			RepositoryName:   codeRef.RepositoryName,
+			RepositoryOwner:  codeRef.RepositoryOwner,
+			RepositoryType:   codeRef.RepositoryType,
+			RepositoryBranch: codeRef.RepositoryBranch,
+			CommitHash:       codeRef.CommitHash,
+			EnvironmentId:    codeRef.EnvironmentId,
+			CreatedAt:        codeRef.CreatedAt,
+			UpdatedAt:        codeRef.UpdatedAt,
+		},
+		req.EnvironmentId,
+		codeRef,
+		nil,
+	)
 	if err != nil {
 		s.logger.Error(
-			"Failed to create command handler",
+			"Failed to create event",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
@@ -244,9 +267,9 @@ func (s *CodeReferenceService) CreateCodeReference(
 		}
 		return nil, dt.Err()
 	}
-	if err := handler.Handle(ctx, req.Command); err != nil {
+	if err := s.publisher.Publish(ctx, createEvent); err != nil {
 		s.logger.Error(
-			"Failed to handle command",
+			"Failed to publish event",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
@@ -277,7 +300,7 @@ func (s *CodeReferenceService) CreateCodeReference(
 		}
 		return nil, dt.Err()
 	}
-	return &proto.CreateCodeReferenceResponse{CodeReference: codeRef.ToProto()}, nil
+	return &proto.CreateCodeReferenceResponse{CodeReference: &codeRef.CodeReference}, nil
 }
 
 func (s *CodeReferenceService) UpdateCodeReference(
@@ -297,9 +320,9 @@ func (s *CodeReferenceService) UpdateCodeReference(
 	if err := validateUpdateCodeReferenceRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	codeRef, err := s.codeRefStorage.GetCodeReference(ctx, req.Command.Id, req.EnvironmentId)
+	codeRef, err := s.codeRefStorage.GetCodeReference(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
-		if err == v2.ErrCodeReferenceNotFound {
+		if errors.Is(err, v2.ErrCodeReferenceNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -313,7 +336,7 @@ func (s *CodeReferenceService) UpdateCodeReference(
 			"Failed to get code reference",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("id", req.Command.Id),
+				zap.String("id", req.Id),
 				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
@@ -326,45 +349,21 @@ func (s *CodeReferenceService) UpdateCodeReference(
 		}
 		return nil, dt.Err()
 	}
-	handler, err := command.NewCodeReferenceCommandHandler(editor, codeRef, s.publisher, req.EnvironmentId)
+	updatedCodeRef, err := codeRef.Update(
+		req.FilePath,
+		req.LineNumber,
+		req.CodeSnippet,
+		req.ContentHash,
+		req.Aliases,
+		req.RepositoryBranch,
+		req.CommitHash,
+	)
 	if err != nil {
-		s.logger.Error(
-			"Failed to create command handler",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	if err := handler.Handle(ctx, req.Command); err != nil {
-		s.logger.Error(
-			"Failed to handle command",
-			log.FieldsFromImcomingContext(ctx).AddFields(
-				zap.Error(err),
-			)...,
-		)
-		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
-			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalize(locale.InternalServerError),
-		})
-		if err != nil {
-			return nil, statusInternal.Err()
-		}
-		return nil, dt.Err()
-	}
-	if err := s.codeRefStorage.UpdateCodeReference(ctx, codeRef); err != nil {
 		s.logger.Error(
 			"Failed to update code reference",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("id", req.Command.Id),
+				zap.String("id", req.Id),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -376,7 +375,78 @@ func (s *CodeReferenceService) UpdateCodeReference(
 		}
 		return nil, dt.Err()
 	}
-	return &proto.UpdateCodeReferenceResponse{CodeReference: codeRef.ToProto()}, nil
+
+	updateEvent, err := domainevent.NewEvent(
+		editor,
+		eventproto.Event_CODEREF,
+		updatedCodeRef.Id,
+		eventproto.Event_CODE_REFERENCE_UPDATED,
+		&eventproto.CodeReferenceUpdatedEvent{
+			Id:               updatedCodeRef.Id,
+			FilePath:         updatedCodeRef.FilePath,
+			LineNumber:       updatedCodeRef.LineNumber,
+			CodeSnippet:      updatedCodeRef.CodeSnippet,
+			ContentHash:      updatedCodeRef.ContentHash,
+			Aliases:          updatedCodeRef.Aliases,
+			RepositoryBranch: updatedCodeRef.RepositoryBranch,
+			CommitHash:       updatedCodeRef.CommitHash,
+			EnvironmentId:    updatedCodeRef.EnvironmentId,
+			UpdatedAt:        updatedCodeRef.UpdatedAt,
+		},
+		req.EnvironmentId,
+		updatedCodeRef,
+		&codeRef,
+	)
+	if err != nil {
+		s.logger.Error(
+			"Failed to create event",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	if err := s.publisher.Publish(ctx, updateEvent); err != nil {
+		s.logger.Error(
+			"Failed to publish event",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	if err := s.codeRefStorage.UpdateCodeReference(ctx, updatedCodeRef); err != nil {
+		s.logger.Error(
+			"Failed to update code reference",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("id", req.Id),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &proto.UpdateCodeReferenceResponse{CodeReference: &updatedCodeRef.CodeReference}, nil
 }
 
 func (s *CodeReferenceService) DeleteCodeReference(
@@ -387,7 +457,7 @@ func (s *CodeReferenceService) DeleteCodeReference(
 	editor, err := s.checkEnvironmentRole(
 		ctx,
 		accountproto.AccountV2_Role_Environment_EDITOR,
-		req.Command.EnvironmentId,
+		req.EnvironmentId,
 		localizer,
 	)
 	if err != nil {
@@ -396,9 +466,9 @@ func (s *CodeReferenceService) DeleteCodeReference(
 	if err := validateDeleteCodeReferenceRequest(req, localizer); err != nil {
 		return nil, err
 	}
-	codeRef, err := s.codeRefStorage.GetCodeReference(ctx, req.Command.Id, req.Command.EnvironmentId)
+	codeRef, err := s.codeRefStorage.GetCodeReference(ctx, req.Id, req.EnvironmentId)
 	if err != nil {
-		if err == v2.ErrCodeReferenceNotFound {
+		if errors.Is(err, v2.ErrCodeReferenceNotFound) {
 			dt, err := statusNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),
@@ -412,8 +482,8 @@ func (s *CodeReferenceService) DeleteCodeReference(
 			"Failed to get code reference",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("id", req.Command.Id),
-				zap.String("environmentId", req.Command.EnvironmentId),
+				zap.String("id", req.Id),
+				zap.String("environmentId", req.EnvironmentId),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
@@ -425,10 +495,22 @@ func (s *CodeReferenceService) DeleteCodeReference(
 		}
 		return nil, dt.Err()
 	}
-	handler, err := command.NewCodeReferenceCommandHandler(editor, codeRef, s.publisher, req.Command.EnvironmentId)
+	deleteEvent, err := domainevent.NewEvent(
+		editor,
+		eventproto.Event_CODEREF,
+		codeRef.Id,
+		eventproto.Event_CODE_REFERENCE_DELETED,
+		&eventproto.CodeReferenceDeletedEvent{
+			Id:            codeRef.Id,
+			EnvironmentId: codeRef.EnvironmentId,
+		},
+		req.EnvironmentId,
+		nil,
+		codeRef,
+	)
 	if err != nil {
 		s.logger.Error(
-			"Failed to create command handler",
+			"Failed to create event",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
@@ -442,9 +524,9 @@ func (s *CodeReferenceService) DeleteCodeReference(
 		}
 		return nil, dt.Err()
 	}
-	if err := handler.Handle(ctx, req.Command); err != nil {
+	if err := s.publisher.Publish(ctx, deleteEvent); err != nil {
 		s.logger.Error(
-			"Failed to handle command",
+			"Failed to publish event",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
 			)...,
@@ -463,7 +545,7 @@ func (s *CodeReferenceService) DeleteCodeReference(
 			"Failed to delete code reference",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
-				zap.String("id", req.Command.Id),
+				zap.String("id", req.Id),
 			)...,
 		)
 		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
