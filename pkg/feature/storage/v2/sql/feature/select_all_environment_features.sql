@@ -21,4 +21,5 @@ SELECT
     ft.prerequisites AS feature_prerequisites
 FROM feature ft
 JOIN environment_v2 env ON ft.environment_id = env.id
+WHERE ft.deleted = 0
 ORDER BY env.id, ft.id;
