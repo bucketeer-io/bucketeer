@@ -85,13 +85,12 @@ func (c *featureFlagCacher) Run(ctx context.Context) error {
 
 // We exclude archived feature flags over thirty days ago to keep the cache size small.
 func (c *featureFlagCacher) removeOldFeatures(features []*ftproto.Feature) []*ftproto.Feature {
-	i := 0
-	for i < len(features) {
+	// Iterate backward through the slice
+	for i := len(features) - 1; i >= 0; i-- {
 		ft := ftdomain.Feature{Feature: features[i]}
 		if ft.IsDisabledAndOffVariationEmpty() || ft.IsArchivedBeforeLastThirtyDays() {
+			// Remove the element by appending the rest of the slice
 			features = append(features[:i], features[i+1:]...)
-		} else {
-			i++
 		}
 	}
 	return features

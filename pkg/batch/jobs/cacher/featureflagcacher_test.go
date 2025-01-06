@@ -202,6 +202,36 @@ func TestRemoveOldFeatures(t *testing.T) {
 			input:    ftsValid,
 			expected: ftsValid,
 		},
+		{
+			desc: "remove all",
+			input: []*ftproto.Feature{
+				{
+					Id:           "ft-id-1",
+					Archived:     true,
+					OffVariation: "variation-id-1",
+					UpdatedAt:    time.Now().AddDate(0, 0, -31).Unix(),
+				},
+				{
+					Id:           "ft-id-2",
+					Archived:     true,
+					OffVariation: "variation-id-2",
+					UpdatedAt:    time.Now().AddDate(0, 0, -31).Unix(),
+				},
+				{
+					Id:           "ft-id-3",
+					Archived:     true,
+					OffVariation: "variation-id-3",
+					UpdatedAt:    time.Now().AddDate(0, 0, -31).Unix(),
+				},
+				{
+					Id:           "ft-id-4",
+					Archived:     true,
+					OffVariation: "",
+					UpdatedAt:    time.Now().AddDate(0, 0, -20).Unix(),
+				},
+			},
+			expected: []*ftproto.Feature{},
+		},
 	}
 
 	for _, p := range patterns {
