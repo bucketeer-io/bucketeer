@@ -10,6 +10,7 @@ import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { NotificationLanguage, SourceType } from '@types';
+import { IconNoData } from '@icons';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -50,7 +51,7 @@ export const formSchema = yup.object().shape({
   url: yup.string().required(),
   environment: yup.string().required(),
   language: yup.mixed<NotificationLanguage>().required(),
-  types: yup.array().of(yup.string().required()).min(1, 'Required').required()
+  types: yup.array().min(1, 'Required').required()
 });
 
 const AddNotificationModal = ({
@@ -155,16 +156,6 @@ const AddNotificationModal = ({
 
   const checkedTypes = watch('types');
 
-  const handleOnChange = (value: string, checked: boolean) => {
-    if (checked) {
-      checkedTypes.push(value);
-      form.setValue('types', checkedTypes);
-    } else {
-      const checkedItems = checkedTypes.filter(item => item !== value);
-      form.setValue('types', checkedItems);
-    }
-  };
-
   const onSearchTypes = (value: string) => {
     if (!value) {
       setSearchTypes(SOURCE_TYPE_ITEMS);
@@ -183,7 +174,7 @@ const AddNotificationModal = ({
     return notificationCreator({
       environmentId: values.environment,
       name: values.name,
-      sourceTypes: ['DOMAIN_EVENT_FEATURE'],
+      sourceTypes: values.types,
       recipient: {
         type: 'SlackChannel',
         slackChannelRecipient: { webhookUrl: values.url },
@@ -344,43 +335,79 @@ const AddNotificationModal = ({
               placeholder={t(`form:search-notification-type`)}
             />
 
-            <div className="mt-4 flex items-center justify-between">
-              <div className="typo-para-tiny text-gray-500 uppercase">
-                {t('all-types-selected', { count: checkedTypes.length })}
-              </div>
-              <Checkbox
-                checked={checkedTypes.length === SOURCE_TYPE_ITEMS.length}
-                onCheckedChange={checked => {
-                  if (checked) {
-                    form.setValue(
-                      'types',
-                      SOURCE_TYPE_ITEMS.map(item => item.value)
-                    );
-                  } else {
-                    form.setValue('types', []);
-                  }
-                }}
-              />
-            </div>
-            <Divider className="mt-3" />
+            {filteredTypes.length > 0 ? (
+              <Form.Field
+                control={form.control}
+                name={`types`}
+                render={({ field }) => (
+                  <>
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="typo-para-tiny text-gray-500 uppercase">
+                        {t('all-types-selected', {
+                          count: checkedTypes.length
+                        })}
+                      </div>
+                      <Checkbox
+                        checked={
+                          checkedTypes.length === SOURCE_TYPE_ITEMS.length
+                        }
+                        onCheckedChange={checked => {
+                          if (checked) {
+                            field.onChange(
+                              SOURCE_TYPE_ITEMS.map(item => item.value)
+                            );
+                          } else {
+                            field.onChange([]);
+                          }
+                        }}
+                      />
+                    </div>
+                    <Divider className="mt-3" />
 
-            {filteredTypes.map(item => (
-              <div key={item.value} className="flex items-center py-3 gap-x-5">
-                <label htmlFor={item.value} className="flex-1 cursor-pointer">
-                  <p className="typo-para-medium text-gray-800">{item.label}</p>
-                  <p className="typo-para-small text-gray-600 mt-0.5">
-                    {item.description}
-                  </p>
-                </label>
-                <Checkbox
-                  id={item.value}
-                  checked={checkedTypes.includes(item.value)}
-                  onCheckedChange={checked =>
-                    handleOnChange(item.value, Boolean(checked))
-                  }
-                />
+                    {filteredTypes.map(item => (
+                      <div
+                        key={item.value}
+                        className="flex items-center py-3 gap-x-5"
+                      >
+                        <label
+                          htmlFor={item.value}
+                          className="flex-1 cursor-pointer"
+                        >
+                          <p className="typo-para-medium text-gray-800">
+                            {item.label}
+                          </p>
+                          <p className="typo-para-small text-gray-600 mt-0.5">
+                            {item.description}
+                          </p>
+                        </label>
+                        <Checkbox
+                          id={item.value}
+                          checked={checkedTypes.includes(item.value)}
+                          onCheckedChange={checked => {
+                            if (checked) {
+                              checkedTypes.push(item.value);
+                              field.onChange(checkedTypes);
+                            } else {
+                              const checkedItems = checkedTypes.filter(
+                                v => v !== item.value
+                              );
+                              field.onChange(checkedItems);
+                            }
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </>
+                )}
+              />
+            ) : (
+              <div className="flex flex-col justify-center items-center gap-3 pt-16 pb-4">
+                <IconNoData />
+                <div className="typo-para-medium text-gray-500">
+                  {t(`no-data`)}
+                </div>
               </div>
-            ))}
+            )}
 
             <div className="absolute left-0 bottom-0 bg-gray-50 w-full rounded-b-lg">
               <ButtonBar

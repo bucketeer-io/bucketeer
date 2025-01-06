@@ -40,7 +40,7 @@ const SearchInput = ({
   }, []);
 
   return (
-    <form
+    <fieldset
       className="w-full"
       onSubmit={event => {
         event.preventDefault();
@@ -60,7 +60,7 @@ const SearchInput = ({
           onKeyDown={e => onKeyDown && onKeyDown(e)}
         />
       </InputGroup>
-    </form>
+    </fieldset>
   );
 };
 

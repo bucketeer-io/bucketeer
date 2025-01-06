@@ -129,5 +129,6 @@
     "stale-feature-flag": "Stale Feature Flag",
     "stale-feature-flag-description": "Get notified when a feature flag becomes stale",
     "subscription": "Subscription"
-  }
+  },
+  "no-data": "No data"
 }

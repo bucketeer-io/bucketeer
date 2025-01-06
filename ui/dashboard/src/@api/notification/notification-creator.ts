@@ -9,7 +9,7 @@ export interface NotificationCreatorPayload {
 }
 
 export interface NotificationCreatorResponse {
-  account: Array<Notification>;
+  subscription: Notification;
 }
 
 export const notificationCreator = async (

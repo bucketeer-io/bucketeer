@@ -18,7 +18,9 @@
     "add-to-env": "Add to Environment",
     "edit-notification": "Edit Notification",
     "disable-api-key": "Disable API Key",
-    "enable-api-key": "Enable API Key"
+    "enable-api-key": "Enable API Key",
+    "disable-notification": "Disable Notification",
+    "enable-notification": "Enable Notification"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -51,5 +53,9 @@
   "api-key": {
     "confirm-enable-desc": "The API key \"<bold>{{name}}</bold>\" will be enabled. Are you sure you want to proceed?",
     "confirm-disable-desc": "The API key \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?"
+  },
+  "notification": {
+    "confirm-enable-desc": "The notification \"<bold>{{name}}</bold>\" will be enabled. Are you sure you want to proceed?",
+    "confirm-disable-desc": "The notification \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?"
   }
 }
