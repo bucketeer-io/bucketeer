@@ -64,8 +64,7 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
       name: push.name,
       fcmServiceAccount: push.fcmServiceAccount,
       tags: push.tags,
-      environmentId:
-        environments?.find(env => env?.name === push?.environmentName)?.id || ''
+      environmentId: push.environmentId
     }
   });
 
@@ -75,28 +74,22 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
   } = form;
 
   const onSubmit: SubmitHandler<EditPushForm> = async values => {
-    try {
-      const resp = await pushUpdater({
-        ...values,
-        id: push.id
+    await pushUpdater({
+      ...values,
+      id: push.id
+    }).then(() => {
+      notify({
+        toastType: 'toast',
+        messageType: 'success',
+        message: (
+          <span>
+            <b>{values.name}</b> {` has been successfully updated!`}
+          </span>
+        )
       });
-
-      if (resp) {
-        notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: (
-            <span>
-              <b>{values.name}</b> {` has been successfully updated!`}
-            </span>
-          )
-        });
-        invalidatePushes(queryClient);
-        onClose();
-      }
-    } catch (error) {
-      console.log(error);
-    }
+      invalidatePushes(queryClient);
+      onClose();
+    });
   };
 
   return (

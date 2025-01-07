@@ -82,24 +82,19 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
   } = form;
 
   const onSubmit: SubmitHandler<AddPushForm> = async values => {
-    try {
-      const resp = await pushCreator(values);
-      if (resp) {
-        notify({
-          toastType: 'toast',
-          messageType: 'success',
-          message: (
-            <span>
-              <b>{values.name}</b> {` has been successfully created!`}
-            </span>
-          )
-        });
-        invalidatePushes(queryClient);
-        onClose();
-      }
-    } catch (error) {
-      console.log(error);
-    }
+    await pushCreator(values).then(() => {
+      notify({
+        toastType: 'toast',
+        messageType: 'success',
+        message: (
+          <span>
+            <b>{values.name}</b> {` has been successfully created!`}
+          </span>
+        )
+      });
+      invalidatePushes(queryClient);
+      onClose();
+    });
   };
 
   return (

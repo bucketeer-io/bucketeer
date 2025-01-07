@@ -60,7 +60,7 @@ const PageLoader = () => {
     mutationFn: async (id: string) => {
       return pushUpdater({
         id,
-        environmentId: currenEnvironment.id,
+        environmentId: selectedPush?.environmentId,
         disabled: isDisabling
       });
     },
@@ -73,7 +73,7 @@ const PageLoader = () => {
 
   const onHandleDisable = () => {
     if (selectedPush?.id) {
-      mutationState.mutate(selectedPush.id);
+      mutationState.mutate(selectedPush?.id);
     }
   };
 

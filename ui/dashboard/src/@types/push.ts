@@ -7,7 +7,8 @@ export type Push = {
   createdAt: string;
   updatedAt: string;
   fcmServiceAccount: string;
-  environmentName?: string;
+  environmentName: string;
+  environmentId: string;
 };
 
 export interface PushCollection {
