@@ -195,7 +195,6 @@ func (c *Client) CreatePuller(subscription, topic string, opts ...ReceiveOption)
 		opt(&options)
 	}
 	s.ReceiveSettings = options
-	c.logger.Info("Create a new puller", zap.Any("receiveSettings", options))
 	return puller.NewPuller(
 		s,
 		puller.WithLogger(c.logger),

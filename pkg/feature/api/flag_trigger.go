@@ -62,7 +62,7 @@ func (s *FeatureService) CreateFlagTrigger(
 		return nil, err
 	}
 	if err = validateCreateFlagTriggerCommand(request.CreateFlagTriggerCommand, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -165,7 +165,7 @@ func (s *FeatureService) UpdateFlagTrigger(
 		return nil, err
 	}
 	if err := validateUpdateFlagTriggerCommand(request.ChangeFlagTriggerDescriptionCommand, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -270,7 +270,7 @@ func (s *FeatureService) EnableFlagTrigger(
 		return nil, err
 	}
 	if err := validateEnableFlagTriggerCommand(request.EnableFlagTriggerCommand, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -375,7 +375,7 @@ func (s *FeatureService) DisableFlagTrigger(
 		return nil, err
 	}
 	if err := validateDisableFlagTriggerCommand(request.DisableFlagTriggerCommand, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -477,7 +477,7 @@ func (s *FeatureService) ResetFlagTrigger(
 		return nil, err
 	}
 	if err := validateResetFlagTriggerCommand(request.ResetFlagTriggerCommand, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -579,7 +579,7 @@ func (s *FeatureService) DeleteFlagTrigger(
 		return nil, err
 	}
 	if err := validateDeleteFlagTriggerCommand(request.DeleteFlagTriggerCommand, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -678,7 +678,7 @@ func (s *FeatureService) GetFlagTrigger(
 		return nil, err
 	}
 	if err := validateGetFlagTriggerRequest(request, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -726,7 +726,7 @@ func (s *FeatureService) ListFlagTriggers(
 		return nil, err
 	}
 	if err := validateListFlagTriggersRequest(request, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 		)

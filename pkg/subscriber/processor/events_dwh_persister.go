@@ -167,10 +167,10 @@ func (e *eventsDWHPersister) Process(
 			}
 		case <-ctx.Done():
 			batchSize := len(batch)
-			e.logger.Info("Context is done", zap.Int("batchSize", batchSize))
+			e.logger.Debug("Context is done", zap.Int("batchSize", batchSize))
 			if len(batch) > 0 {
 				e.send(batch)
-				e.logger.Info(
+				e.logger.Debug(
 					"All the left messages are processed successfully",
 					zap.Int("batchSize", batchSize),
 				)

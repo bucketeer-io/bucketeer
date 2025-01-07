@@ -102,7 +102,7 @@ func NewSubscriber(
 }
 
 func (s subscriber) Run(ctx context.Context) {
-	s.logger.Info("subscriber starting",
+	s.logger.Debug("subscriber starting",
 		zap.String("name", s.name),
 		zap.String("project", s.configuration.Project),
 		zap.String("subscription", s.configuration.Subscription),
@@ -130,7 +130,7 @@ func (s subscriber) Run(ctx context.Context) {
 			zap.String("name", s.name),
 			zap.Error(err))
 	}
-	s.logger.Info("subscriber stopped",
+	s.logger.Debug("subscriber stopped",
 		zap.String("name", s.name))
 }
 

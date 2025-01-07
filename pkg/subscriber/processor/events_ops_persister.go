@@ -141,10 +141,10 @@ func (e eventsOPSPersister) Process(ctx context.Context, msgChan <-chan *puller.
 			}
 		case <-ctx.Done():
 			batchSize := len(batch)
-			e.logger.Info("Context is done", zap.Int("batchSize", batchSize))
+			e.logger.Debug("Context is done", zap.Int("batchSize", batchSize))
 			if len(batch) > 0 {
 				e.send(batch)
-				e.logger.Info("All the left messages are processed successfully", zap.Int("batchSize", batchSize))
+				e.logger.Debug("All the left messages are processed successfully", zap.Int("batchSize", batchSize))
 			}
 			return nil
 		}

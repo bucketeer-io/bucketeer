@@ -160,6 +160,5 @@ func (a *App) Run() error {
 		case <-ctx.Done():
 		}
 	}()
-	logger.Info(fmt.Sprintf("Running %s", serviceName))
 	return a.cmds[cmd].Run(ctx, metrics, logger)
 }

@@ -432,15 +432,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 			return err
 		}
 		if err := s.checkStopStatus(progressiveRollout, localizer); err != nil {
-			s.logger.Warn(
-				"Progressive rollout is already stopped",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-					zap.String("id", progressiveRollout.Id),
-					zap.String("featureId", progressiveRollout.FeatureId),
-				)...,
-			)
+			// If skip if it's already stopped
 			return nil
 		}
 		triggered, err := s.checkAlreadyTriggered(
