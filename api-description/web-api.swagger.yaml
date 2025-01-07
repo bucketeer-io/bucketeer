@@ -3249,6 +3249,8 @@ paths:
             - NAME
             - CREATED_AT
             - UPDATED_AT
+            - ENVIRONMENT
+            - STATE
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -3741,6 +3743,8 @@ paths:
             - NAME
             - CREATED_AT
             - UPDATED_AT
+            - ENVIRONMENT
+            - STATE
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -6159,6 +6163,8 @@ definitions:
       - NAME
       - CREATED_AT
       - UPDATED_AT
+      - ENVIRONMENT
+      - STATE
     default: DEFAULT
   notificationListSubscriptionsRequestOrderDirection:
     type: string
@@ -6228,6 +6234,8 @@ definitions:
       recipient:
         $ref: '#/definitions/notificationRecipient'
       name:
+        type: string
+      environmentId:
         type: string
       environmentName:
         type: string
@@ -6450,6 +6458,8 @@ definitions:
       - NAME
       - CREATED_AT
       - UPDATED_AT
+      - ENVIRONMENT
+      - STATE
     default: DEFAULT
   pushListPushesRequestOrderDirection:
     type: string
@@ -6494,6 +6504,8 @@ definitions:
       disabled:
         type: boolean
       environmentId:
+        type: string
+      environmentName:
         type: string
   pushRenamePushCommand:
     type: object

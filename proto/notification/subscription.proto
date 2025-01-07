@@ -49,5 +49,6 @@ message Subscription {
   repeated SourceType source_types = 5;
   Recipient recipient = 6;
   string name = 7;
-  string environment_name = 8;
+  string environment_id = 8;
+  string environment_name = 9;
 }

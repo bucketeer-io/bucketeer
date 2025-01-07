@@ -118,7 +118,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             f
           ),
         name: jspb.Message.getFieldWithDefault(msg, 7, ''),
-        environmentName: jspb.Message.getFieldWithDefault(msg, 8, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 8, ''),
+        environmentName: jspb.Message.getFieldWithDefault(msg, 9, '')
       };
 
     if (includeInstance) {
@@ -199,6 +200,10 @@ proto.bucketeer.notification.Subscription.deserializeBinaryFromReader =
           break;
         case 8:
           var value = /** @type {string} */ (reader.readString());
+          msg.setEnvironmentId(value);
+          break;
+        case 9:
+          var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentName(value);
           break;
         default:
@@ -267,9 +272,13 @@ proto.bucketeer.notification.Subscription.serializeBinaryToWriter = function (
   if (f.length > 0) {
     writer.writeString(7, f);
   }
-  f = message.getEnvironmentName();
+  f = message.getEnvironmentId();
   if (f.length > 0) {
     writer.writeString(8, f);
+  }
+  f = message.getEnvironmentName();
+  if (f.length > 0) {
+    writer.writeString(9, f);
   }
 };
 
@@ -470,10 +479,10 @@ proto.bucketeer.notification.Subscription.prototype.setName = function (value) {
 };
 
 /**
- * optional string environment_name = 8;
+ * optional string environment_id = 8;
  * @return {string}
  */
-proto.bucketeer.notification.Subscription.prototype.getEnvironmentName =
+proto.bucketeer.notification.Subscription.prototype.getEnvironmentId =
   function () {
     return /** @type {string} */ (
       jspb.Message.getFieldWithDefault(this, 8, '')
@@ -484,9 +493,29 @@ proto.bucketeer.notification.Subscription.prototype.getEnvironmentName =
  * @param {string} value
  * @return {!proto.bucketeer.notification.Subscription} returns this
  */
-proto.bucketeer.notification.Subscription.prototype.setEnvironmentName =
+proto.bucketeer.notification.Subscription.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 8, value);
+  };
+
+/**
+ * optional string environment_name = 9;
+ * @return {string}
+ */
+proto.bucketeer.notification.Subscription.prototype.getEnvironmentName =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 9, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.notification.Subscription} returns this
+ */
+proto.bucketeer.notification.Subscription.prototype.setEnvironmentName =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 9, value);
   };
 
 goog.object.extend(exports, proto.bucketeer.notification);

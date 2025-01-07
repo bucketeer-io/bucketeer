@@ -604,6 +604,9 @@ func (s *FeatureService) bulkUploadSegmentUsersNoCommand(
 			segment.Segment,
 			prev,
 		)
+		if err != nil {
+			return err
+		}
 		err = s.domainPublisher.Publish(ctx, e)
 		if err != nil {
 			return err

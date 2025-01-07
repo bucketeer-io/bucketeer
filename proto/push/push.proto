@@ -28,4 +28,5 @@ message Push {
   string fcm_service_account = 8;
   bool disabled = 9;
   string environment_id = 10;
+  string environment_name = 11;
 }
