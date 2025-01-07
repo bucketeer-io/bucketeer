@@ -27,7 +27,8 @@ import {
   PAGE_PATH_PROJECTS,
   PAGE_PATH_PUSHES,
   PAGE_PATH_ROOT,
-  PAGE_PATH_SETTINGS
+  PAGE_PATH_SETTINGS,
+  PAGE_PATH_USER_SEGMENTS
 } from 'constants/routing';
 import { i18n } from 'i18n';
 import { getTokenStorage } from 'storage/token';
@@ -43,6 +44,7 @@ import SettingsPage from 'pages/settings';
 import SignInPage from 'pages/signin';
 import SignInEmailPage from 'pages/signin/email';
 import SelectOrganizationPage from 'pages/signin/organization';
+import UserSegmentsPage from 'pages/user-segments';
 import Navigation from 'components/navigation';
 import Spinner from 'components/spinner';
 import { OrganizationsRoot, ProjectsRoot } from './routers';
@@ -164,6 +166,10 @@ export const EnvironmentRoot = memo(
           element={<NotificationsPage />}
         />
         <Route path={`${PAGE_PATH_PUSHES}`} element={<PushesPage />} />
+        <Route
+          path={`${PAGE_PATH_USER_SEGMENTS}`}
+          element={<UserSegmentsPage />}
+        />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     );

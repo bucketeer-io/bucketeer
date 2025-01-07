@@ -1,6 +1,7 @@
 {
   "flags": "Flags",
   "created-at": "Created At",
+  "updated-at": "Updated At",
   "last-seen": "Last Seen",
   "popover": {
     "edit-project": "Edit Project",
@@ -23,7 +24,8 @@
     "enable-notification": "Enable Notification",
     "edit-push": "Edit Push",
     "disable-push": "Disable Push",
-    "enable-push": "Enable Push"
+    "enable-push": "Enable Push",
+    "edit-segment": "Edit User Segment"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -40,7 +42,9 @@
     "notification-title": "No registered notifications",
     "notification-desc": "There are no registered notifications. Add a new one to start managing.",
     "push-title": "No registered pushes",
-    "push-desc": "There are no registered pushes. Add a new one to start managing."
+    "push-desc": "There are no registered pushes. Add a new one to start managing.",
+    "user-segments-title": "No registered user segments",
+    "user-segments-desc": "There are no registered user segments. Add a new one to start managing."
   },
   "organization": {
     "confirm-archive-desc": "The organization \"<bold>{{name}}</bold>\" will be archived. Are you sure you want to proceed?",
