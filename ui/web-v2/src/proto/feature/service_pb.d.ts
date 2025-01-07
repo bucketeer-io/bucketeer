@@ -2039,6 +2039,16 @@ export class BulkUploadSegmentUsersRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  getData(): Uint8Array | string;
+  getData_asU8(): Uint8Array;
+  getData_asB64(): string;
+  setData(value: Uint8Array | string): void;
+
+  getState(): proto_feature_segment_pb.SegmentUser.StateMap[keyof proto_feature_segment_pb.SegmentUser.StateMap];
+  setState(
+    value: proto_feature_segment_pb.SegmentUser.StateMap[keyof proto_feature_segment_pb.SegmentUser.StateMap]
+  ): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): BulkUploadSegmentUsersRequest.AsObject;
   static toObject(
@@ -2065,6 +2075,8 @@ export namespace BulkUploadSegmentUsersRequest {
     segmentId: string;
     command?: proto_feature_command_pb.BulkUploadSegmentUsersCommand.AsObject;
     environmentId: string;
+    data: Uint8Array | string;
+    state: proto_feature_segment_pb.SegmentUser.StateMap[keyof proto_feature_segment_pb.SegmentUser.StateMap];
   };
 }
 

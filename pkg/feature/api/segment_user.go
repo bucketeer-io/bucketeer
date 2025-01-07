@@ -17,14 +17,17 @@ package api
 import (
 	"bytes"
 	"context"
+	"errors"
 	"strconv"
 	"strings"
 
+	"github.com/jinzhu/copier"
 	"go.uber.org/zap"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	domainevent "github.com/bucketeer-io/bucketeer/pkg/domainevent/domain"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/command"
 	"github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	v2fs "github.com/bucketeer-io/bucketeer/pkg/feature/storage/v2"
@@ -390,6 +393,9 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 	if err != nil {
 		return nil, err
 	}
+	if req.Command == nil {
+		return s.bulkUploadSegmentUsersNoCommand(ctx, req, editor, localizer)
+	}
 	if err := validateBulkUploadSegmentUsersRequest(req, localizer); err != nil {
 		s.logger.Error(
 			"Invalid argument",
@@ -485,7 +491,134 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 		)
 	})
 	if err != nil {
-		if err == v2fs.ErrSegmentNotFound || err == v2fs.ErrFeatureUnexpectedAffectedRows {
+		if errors.Is(err, v2fs.ErrSegmentNotFound) || errors.Is(err, v2fs.ErrFeatureUnexpectedAffectedRows) {
+			dt, err := statusSegmentNotFound.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.NotFoundError),
+			})
+			if err != nil {
+				return nil, statusInternal.Err()
+			}
+			return nil, dt.Err()
+		}
+		if status.Code(err) == codes.FailedPrecondition {
+			return nil, err
+		}
+		s.logger.Error(
+			"Failed to bulk upload segment users",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	return &featureproto.BulkUploadSegmentUsersResponse{}, nil
+}
+
+func (s *FeatureService) bulkUploadSegmentUsersNoCommand(
+	ctx context.Context,
+	req *featureproto.BulkUploadSegmentUsersRequest,
+	editor *eventproto.Editor,
+	localizer locale.Localizer,
+) (*featureproto.BulkUploadSegmentUsersResponse, error) {
+	if err := validateBulkUploadSegmentUsersNoCommandRequest(req, localizer); err != nil {
+		s.logger.Error(
+			"Invalid argument",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("environmentId", req.EnvironmentId),
+			)...,
+		)
+		return nil, err
+	}
+	tx, err := s.mysqlClient.BeginTx(ctx)
+	if err != nil {
+		s.logger.Error(
+			"Failed to begin transaction",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+			)...,
+		)
+		dt, err := statusInternal.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalize(locale.InternalServerError),
+		})
+		if err != nil {
+			return nil, statusInternal.Err()
+		}
+		return nil, dt.Err()
+	}
+	err = s.mysqlClient.RunInTransaction(ctx, tx, func() error {
+		segmentStorage := v2fs.NewSegmentStorage(tx)
+		segment, _, err := segmentStorage.GetSegment(ctx, req.SegmentId, req.EnvironmentId)
+		if err != nil {
+			return err
+		}
+		if segment.IsInUseStatus {
+			dt, err := statusSegmentInUse.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.SegmentInUse),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		if segment.Status == featureproto.Segment_UPLOADING {
+			dt, err := statusSegmentUsersAlreadyUploading.WithDetails(&errdetails.LocalizedMessage{
+				Locale:  localizer.GetLocale(),
+				Message: localizer.MustLocalize(locale.SegmentUsersAlreadyUploading),
+			})
+			if err != nil {
+				return statusInternal.Err()
+			}
+			return dt.Err()
+		}
+		prev := &domain.Segment{}
+		if err := copier.Copy(prev, segment); err != nil {
+			return err
+		}
+		segment.SetStatus(featureproto.Segment_UPLOADING)
+		if err := segmentStorage.UpdateSegment(ctx, segment, req.EnvironmentId); err != nil {
+			return err
+		}
+		e, err := domainevent.NewEvent(
+			editor,
+			eventproto.Event_SEGMENT,
+			segment.Id,
+			eventproto.Event_SEGMENT_BULK_UPLOAD_USERS,
+			&eventproto.SegmentBulkUploadUsersEvent{
+				SegmentId: segment.Id,
+				Status:    featureproto.Segment_UPLOADING,
+				State:     req.State,
+			},
+			req.EnvironmentId,
+			segment.Segment,
+			prev,
+		)
+		err = s.domainPublisher.Publish(ctx, e)
+		if err != nil {
+			return err
+		}
+		return s.publishBulkSegmentUsersReceivedEvent(
+			ctx,
+			editor,
+			req.EnvironmentId,
+			req.SegmentId,
+			req.Data,
+			req.State,
+		)
+	})
+	if err != nil {
+		if errors.Is(err, v2fs.ErrSegmentNotFound) || errors.Is(err, v2fs.ErrFeatureUnexpectedAffectedRows) {
 			dt, err := statusSegmentNotFound.WithDetails(&errdetails.LocalizedMessage{
 				Locale:  localizer.GetLocale(),
 				Message: localizer.MustLocalize(locale.NotFoundError),

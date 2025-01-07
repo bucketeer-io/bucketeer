@@ -351,8 +351,18 @@ message ListSegmentUsersResponse {
 message BulkUploadSegmentUsersRequest {
   reserved 1;
   string segment_id = 2;
-  BulkUploadSegmentUsersCommand command = 3;
+  BulkUploadSegmentUsersCommand command = 3 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
   string environment_id = 4;
+  bytes data = 5
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "segment user ids separated by comma or new line"
+      }];
+  SegmentUser.State state = 6;
 }
 
 message BulkUploadSegmentUsersResponse {}
@@ -654,7 +664,40 @@ service FeatureService {
   rpc ListSegmentUsers(ListSegmentUsersRequest)
       returns (ListSegmentUsersResponse) {}
   rpc BulkUploadSegmentUsers(BulkUploadSegmentUsersRequest)
-      returns (BulkUploadSegmentUsersResponse) {}
+      returns (BulkUploadSegmentUsersResponse) {
+    option (google.api.http) = {
+      post: "/v1/segment_users/bulk_upload"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Bulk upload",
+      description: "Bulk upload segment users."
+      tags: "segment"
+      operation_id: "web.v1.segment_users.bulk_upload"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc BulkDownloadSegmentUsers(BulkDownloadSegmentUsersRequest)
       returns (BulkDownloadSegmentUsersResponse) {}
   rpc EvaluateFeatures(EvaluateFeaturesRequest)
