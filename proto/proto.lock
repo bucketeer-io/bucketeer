@@ -9459,7 +9459,7 @@
                     "aggregated": [
                       {
                         "name": "get",
-                        "value": "/v1/environment_environments"
+                        "value": "/v1/environment/list_environments"
                       }
                     ]
                   },

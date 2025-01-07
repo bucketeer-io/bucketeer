@@ -355,7 +355,7 @@ service EnvironmentService {
   rpc ListEnvironmentsV2(ListEnvironmentsV2Request)
       returns (ListEnvironmentsV2Response) {
     option (google.api.http) = {
-      get: "/v1/environment_environments"
+      get: "/v1/environment/list_environments"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List",
