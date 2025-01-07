@@ -64,6 +64,7 @@ const PageLoader = () => {
     mutationFn: async (notification: Notification) => {
       return notificationUpdater({
         id: notification.id,
+        environmentId: notification.environmentId,
         disabled: isDisabling
       });
     },

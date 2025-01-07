@@ -144,7 +144,7 @@ const EditNotificationModal = ({
     defaultValues: {
       name: notification.name,
       url: notification.recipient.slackChannelRecipient.webhookUrl,
-      environment: '',
+      environment: notification.environmentId,
       language: notification.recipient.language,
       types: notification.sourceTypes
     }

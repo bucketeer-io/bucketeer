@@ -40,6 +40,7 @@ export interface Notification {
   recipient: NotificationRecipient;
   name: string;
   environmentName: string;
+  environmentId: string;
 }
 
 export interface NotificationsCollection {

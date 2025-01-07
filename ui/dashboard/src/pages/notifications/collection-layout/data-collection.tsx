@@ -40,6 +40,19 @@ export const useColumns = ({
       }
     },
     {
+      accessorKey: 'environment',
+      header: `${t('environment')}`,
+      size: 250,
+      cell: ({ row }) => {
+        const notification = row.original;
+        return (
+          <div className="text-gray-700 typo-para-medium">
+            {notification.environmentName}
+          </div>
+        );
+      }
+    },
+    {
       accessorKey: 'createdAt',
       header: `${t('table:created-at')}`,
       size: 150,
