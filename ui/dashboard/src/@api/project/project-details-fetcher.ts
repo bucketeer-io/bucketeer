@@ -1,5 +1,8 @@
 import axiosClient from '@api/axios-client';
+import pickBy from 'lodash/pickBy';
 import { Project } from '@types';
+import { isNotEmpty } from 'utils/data-type';
+import { stringifyParams } from 'utils/search-params';
 
 export interface ProjectDetailsFetcherParams {
   id: string;
@@ -9,9 +12,13 @@ export interface ProjectDetailsResponse {
 }
 
 export const projectDetailsFetcher = async (
-  params?: ProjectDetailsFetcherParams
+  _params?: ProjectDetailsFetcherParams
 ): Promise<ProjectDetailsResponse> => {
+  const params = pickBy(_params, v => isNotEmpty(v));
+
   return axiosClient
-    .post<ProjectDetailsResponse>('/v1/environment/get_project', params)
+    .get<ProjectDetailsResponse>(
+      `/v1/environment/get_project?${stringifyParams(params)}`
+    )
     .then(response => response.data);
 };
