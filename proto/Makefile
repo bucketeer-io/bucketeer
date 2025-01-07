@@ -1,5 +1,5 @@
 PROTO_FOLDERS := $(filter-out ./external%, $(shell find . -name '*.proto' -not -path "./openapi/web_default_settings.proto" -print0 | xargs -0 -n1 dirname | sort --unique))
-PROTO_WITH_DESCRIPTOR_FOLDERS := ./account ./auditlog ./auth ./autoops ./environment ./eventcounter ./experiment ./feature ./gateway ./notification ./push ./batch ./tag
+PROTO_WITH_DESCRIPTOR_FOLDERS := ./account ./auditlog ./auth ./autoops ./environment ./eventcounter ./experiment ./feature ./gateway ./notification ./push ./batch ./tag ./coderef
 PROTO_WITHOUT_DESCRIPTOR_FOLDERS := $(filter-out $(PROTO_WITH_DESCRIPTOR_FOLDERS), $(PROTO_FOLDERS))
 
 GIT_TOP_DIR := $(shell cd .. ; pwd)
