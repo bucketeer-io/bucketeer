@@ -96,7 +96,6 @@ func (a auditLogPersister) Process(
 				continue
 			}
 			if _, ok := chunk[id]; ok {
-				a.logger.Warn("Message with duplicate id", zap.String("id", id))
 				subscriberHandledCounter.WithLabelValues(subscriberAuditLog, codes.DuplicateID.String()).Inc()
 			}
 			chunk[id] = msg

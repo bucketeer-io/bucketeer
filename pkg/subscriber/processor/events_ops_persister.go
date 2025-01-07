@@ -125,7 +125,6 @@ func (e eventsOPSPersister) Process(ctx context.Context, msgChan <-chan *puller.
 			}
 			if previous, ok := batch[id]; ok {
 				previous.Ack()
-				e.logger.Warn("Message with duplicate id", zap.String("id", id))
 				subscriberHandledCounter.WithLabelValues(e.subscriberType, codes.DuplicateID.String()).Inc()
 			}
 			batch[id] = msg

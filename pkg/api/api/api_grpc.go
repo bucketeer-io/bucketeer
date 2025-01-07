@@ -1195,7 +1195,6 @@ func (s *grpcGatewayService) RegisterEvents(
 	defer span.End()
 	allowedRoles := []accountproto.APIKey_Role{accountproto.APIKey_SDK_CLIENT, accountproto.APIKey_SDK_SERVER}
 	envAPIKey, err := s.checkRequest(ctx, allowedRoles)
-	// TODO: Revert this after debugging
 	if err != nil {
 		if !errors.Is(err, ErrInvalidAPIKey) {
 			s.logger.Error("Failed to check RegisterEvents request",
@@ -1424,13 +1423,12 @@ func (s *grpcGatewayService) checkRequest(
 	}
 	envAPIKey, err := s.getEnvironmentAPIKey(ctx, id)
 	if err != nil {
-		// TODO: Revert this after debugging
-		// s.logger.Error("Failed to get environment API key",
-		// 	log.FieldsFromImcomingContext(ctx).AddFields(
-		// 		zap.Error(err),
-		// 		zap.String("apiKey", id),
-		// 	)...,
-		// )
+		s.logger.Error("Failed to get environment API key",
+			log.FieldsFromImcomingContext(ctx).AddFields(
+				zap.Error(err),
+				zap.String("apiKey", id),
+			)...,
+		)
 		return nil, err
 	}
 	if err := checkEnvironmentAPIKey(envAPIKey, roles); err != nil {
