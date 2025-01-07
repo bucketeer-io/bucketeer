@@ -2441,6 +2441,8 @@ definitions:
         type: string
       disabled:
         type: boolean
+      environmentId:
+        type: string
   userUser:
     type: object
     properties:

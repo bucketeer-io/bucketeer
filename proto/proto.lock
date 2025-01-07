@@ -29644,6 +29644,11 @@
                 "id": 9,
                 "name": "disabled",
                 "type": "bool"
+              },
+              {
+                "id": 10,
+                "name": "environment_id",
+                "type": "string"
               }
             ],
             "reserved_ids": [
