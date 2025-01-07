@@ -130,7 +130,6 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 			}
 			if previous, ok := batch[id]; ok {
 				previous.Ack()
-				p.logger.Warn("Message with duplicate id", zap.String("id", id))
 				subscriberHandledCounter.WithLabelValues(subscriberEvaluationCount, codes.DuplicateID.String()).Inc()
 			}
 			batch[id] = msg
