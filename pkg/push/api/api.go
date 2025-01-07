@@ -1207,11 +1207,15 @@ func (s *PushService) newListOrders(
 	switch orderBy {
 	case pushproto.ListPushesRequest_DEFAULT,
 		pushproto.ListPushesRequest_NAME:
-		column = "name"
+		column = "push.name"
 	case pushproto.ListPushesRequest_CREATED_AT:
-		column = "created_at"
+		column = "push.created_at"
 	case pushproto.ListPushesRequest_UPDATED_AT:
-		column = "updated_at"
+		column = "push.updated_at"
+	case pushproto.ListPushesRequest_ENVIRONMENT:
+		column = "env.name"
+	case pushproto.ListPushesRequest_STATE:
+		column = "push.disabled"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

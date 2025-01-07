@@ -3249,6 +3249,8 @@ paths:
             - NAME
             - CREATED_AT
             - UPDATED_AT
+            - ENVIRONMENT
+            - STATE
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -3504,6 +3506,8 @@ paths:
             - NAME
             - CREATED_AT
             - UPDATED_AT
+            - ENVIRONMENT
+            - STATE
           default: DEFAULT
         - name: orderDirection
           in: query
@@ -5891,6 +5895,8 @@ definitions:
       - NAME
       - CREATED_AT
       - UPDATED_AT
+      - ENVIRONMENT
+      - STATE
     default: DEFAULT
   notificationListSubscriptionsRequestOrderDirection:
     type: string
@@ -6184,6 +6190,8 @@ definitions:
       - NAME
       - CREATED_AT
       - UPDATED_AT
+      - ENVIRONMENT
+      - STATE
     default: DEFAULT
   pushListPushesRequestOrderDirection:
     type: string

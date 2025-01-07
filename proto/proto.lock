@@ -27954,6 +27954,14 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 3
+              },
+              {
+                "name": "ENVIRONMENT",
+                "integer": 4
+              },
+              {
+                "name": "STATE",
+                "integer": 5
               }
             ]
           },
@@ -29698,6 +29706,14 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 3
+              },
+              {
+                "name": "ENVIRONMENT",
+                "integer": 4
+              },
+              {
+                "name": "STATE",
+                "integer": 5
               }
             ]
           },

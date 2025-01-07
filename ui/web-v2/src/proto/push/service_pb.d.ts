@@ -154,6 +154,8 @@ export namespace ListPushesRequest {
     NAME: 1;
     CREATED_AT: 2;
     UPDATED_AT: 3;
+    ENVIRONMENT: 4;
+    STATE: 5;
   }
 
   export const OrderBy: OrderByMap;
