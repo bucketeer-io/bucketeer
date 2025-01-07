@@ -310,8 +310,7 @@ service EnvironmentService {
   rpc GetEnvironmentV2(GetEnvironmentV2Request)
       returns (GetEnvironmentV2Response) {
     option (google.api.http) = {
-      post: "/v1/environment/get_environment"
-      body: "*"
+      get: "/v1/environment/get_environment"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get",
@@ -356,8 +355,7 @@ service EnvironmentService {
   rpc ListEnvironmentsV2(ListEnvironmentsV2Request)
       returns (ListEnvironmentsV2Response) {
     option (google.api.http) = {
-      post: "/v1/environment/list_environments"
-      body: "*"
+      get: "/v1/environment/list_environments"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List",
@@ -586,8 +584,7 @@ service EnvironmentService {
 
   rpc GetProject(GetProjectRequest) returns (GetProjectResponse) {
     option (google.api.http) = {
-      post: "/v1/environment/get_project"
-      body: "*"
+      get: "/v1/environment/get_project"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get",
@@ -631,8 +628,7 @@ service EnvironmentService {
   }
   rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse) {
     option (google.api.http) = {
-      post: "/v1/environment/list_projects"
-      body: "*"
+      get: "/v1/environment/list_projects"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List",
@@ -950,8 +946,7 @@ service EnvironmentService {
   rpc GetOrganization(GetOrganizationRequest)
       returns (GetOrganizationResponse) {
     option (google.api.http) = {
-      post: "/v1/environment/get_organization"
-      body: "*"
+      get: "/v1/environment/get_organization"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get",
@@ -996,8 +991,7 @@ service EnvironmentService {
   rpc ListOrganizations(ListOrganizationsRequest)
       returns (ListOrganizationsResponse) {
     option (google.api.http) = {
-      post: "/v1/environment/list_organizations"
-      body: "*"
+      get: "/v1/environment/list_organizations"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List",
@@ -1364,8 +1358,7 @@ service EnvironmentService {
 
   rpc ListProjectsV2(ListProjectsV2Request) returns (ListProjectsV2Response) {
     option (google.api.http) = {
-      post: "/v1/environment/list_projects_v2"
-      body: "*"
+      get: "/v1/environment/list_projects_v2"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List Projects V2",

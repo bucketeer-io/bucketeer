@@ -575,7 +575,7 @@ paths:
       tags:
         - API Key
   /v1/account/get_account:
-    post:
+    get:
       summary: Get
       description: Get an account.
       operationId: web.v1.account.get_account
@@ -616,15 +616,18 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountGetAccountV2Request'
+        - name: email
+          in: query
+          required: false
+          type: string
+        - name: organizationId
+          in: query
+          required: false
+          type: string
       tags:
         - Account
   /v1/account/get_account_by_environment:
-    post:
+    get:
       summary: Get Account By Environment
       description: Get an account by environment.
       operationId: web.v1.account.get_account_by_environment
@@ -665,11 +668,14 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountGetAccountV2ByEnvironmentIDRequest'
+        - name: email
+          in: query
+          required: false
+          type: string
+        - name: environmentId
+          in: query
+          required: false
+          type: string
       tags:
         - Account
   /v1/account/get_api_key:
@@ -773,7 +779,7 @@ paths:
       tags:
         - API Key
   /v1/account/get_me:
-    post:
+    get:
       summary: Get Me
       description: Get the user console account.
       operationId: web.v1.account.get_me
@@ -814,18 +820,14 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
-        - name: body
-          description: |-
-            account is retrieved by IDToken.
-            it's called from WebUI.
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountGetMeRequest'
+        - name: organizationId
+          in: query
+          required: false
+          type: string
       tags:
         - Account
   /v1/account/list_accounts:
-    post:
+    get:
       summary: List
       description: List accounts.
       operationId: web.v1.account.list_accounts
@@ -866,11 +868,63 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountListAccountsV2Request'
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: organizationId
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - EMAIL
+            - CREATED_AT
+            - UPDATED_AT
+            - ORGANIZATION_ROLE
+            - ENVIRONMENT_COUNT
+            - LAST_SEEN
+            - STATE
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: disabled
+          in: query
+          required: false
+          type: boolean
+        - name: organizationRole
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: environmentId
+          in: query
+          required: false
+          type: string
+        - name: environmentRole
+          in: query
+          required: false
+          type: integer
+          format: int32
       tags:
         - Account
   /v1/account/list_api_keys:
@@ -971,7 +1025,7 @@ paths:
       tags:
         - API Key
   /v1/account/my_organizations:
-    post:
+    get:
       summary: Get My Organizations
       description: Get all the organizations for a specific user.
       operationId: web.v1.account.my_organizations
@@ -1011,16 +1065,10 @@ paths:
           description: An unexpected error response.
           schema:
             $ref: '#/definitions/googlerpcStatus'
-      parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountGetMyOrganizationsRequest'
       tags:
         - Account
   /v1/account/my_organizations_by_email:
-    post:
+    get:
       summary: Get My Organizations By Email
       description: Get all the organizations by email.
       operationId: web.v1.account.my_organizations_by_email
@@ -1061,14 +1109,10 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
-        - name: body
-          description: |-
-            Retrieve the organization to which the account belongs by email.
-            it's called from another microservice.
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/accountGetMyOrganizationsByEmailRequest'
+        - name: email
+          in: query
+          required: false
+          type: string
       tags:
         - Account
   /v1/account/update_account:
@@ -2133,7 +2177,7 @@ paths:
       tags:
         - Project
   /v1/environment/get_environment:
-    post:
+    get:
       summary: Get
       description: Get an environment. To call this API, you need an `SYSTEM_ADMIN` role.
       operationId: web.v1.environment.get_environment
@@ -2183,15 +2227,14 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/environmentGetEnvironmentV2Request'
+        - name: id
+          in: query
+          required: false
+          type: string
       tags:
         - Environment
   /v1/environment/get_organization:
-    post:
+    get:
       summary: Get
       description: Get an organization. To call this API, you need at least a MEMBER role.
       operationId: web.v1.environment.get_organization
@@ -2241,15 +2284,14 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/environmentGetOrganizationRequest'
+        - name: id
+          in: query
+          required: false
+          type: string
       tags:
         - Organization
   /v1/environment/get_project:
-    post:
+    get:
       summary: Get
       description: Get a project. To call this API, you need an `SYSTEM_ADMIN` role.
       operationId: web.v1.environment.get_project
@@ -2299,15 +2341,18 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/environmentGetProjectRequest'
+        - name: id
+          in: query
+          required: false
+          type: string
+        - name: organizationId
+          in: query
+          required: false
+          type: string
       tags:
         - Project
   /v1/environment/list_environments:
-    post:
+    get:
       summary: List
       description: List environments. To call this API, you need an `SYSTEM_ADMIN` role.
       operationId: web.v1.environment.list_environments
@@ -2357,15 +2402,56 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/environmentListEnvironmentsV2Request'
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - ID
+            - NAME
+            - URL_CODE
+            - CREATED_AT
+            - UPDATED_AT
+            - FEATURE_COUNT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: projectId
+          in: query
+          required: false
+          type: string
+        - name: archived
+          in: query
+          required: false
+          type: boolean
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: organizationId
+          in: query
+          required: false
+          type: string
       tags:
         - Environment
   /v1/environment/list_organizations:
-    post:
+    get:
       summary: List
       description: List organizations. To call this API, you need an `SYSTEM_ADMIN` role.
       operationId: web.v1.environment.list_organizations
@@ -2415,15 +2501,54 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/environmentListOrganizationsRequest'
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - ID
+            - CREATED_AT
+            - UPDATED_AT
+            - NAME
+            - URL_CODE
+            - PROJECT_COUNT
+            - ENVIRONMENT_COUNT
+            - USER_COUNT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: disabled
+          in: query
+          required: false
+          type: boolean
+        - name: archived
+          in: query
+          required: false
+          type: boolean
       tags:
         - Organization
   /v1/environment/list_projects:
-    post:
+    get:
       summary: List
       description: List projects. To call this API, you need an `SYSTEM_ADMIN` role.
       operationId: web.v1.environment.list_projects
@@ -2473,15 +2598,57 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/environmentListProjectsRequest'
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - ID
+            - CREATED_AT
+            - UPDATED_AT
+            - NAME
+            - URL_CODE
+            - ENVIRONMENT_COUNT
+            - FEATURE_COUNT
+            - CREATOR_EMAIL
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: disabled
+          in: query
+          required: false
+          type: boolean
+        - name: organizationIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
       tags:
         - Project
   /v1/environment/list_projects_v2:
-    post:
+    get:
       summary: List Projects V2
       description: List projects with V2 API. To call this API, you need at least a MEMBER role in the specified organizations.
       operationId: web.v1.environment.list_projects_v2
@@ -2531,11 +2698,57 @@ paths:
           schema:
             $ref: '#/definitions/googlerpcStatus'
       parameters:
-        - name: body
-          in: body
-          required: true
-          schema:
-            $ref: '#/definitions/environmentListProjectsV2Request'
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - ID
+            - CREATED_AT
+            - UPDATED_AT
+            - NAME
+            - URL_CODE
+            - ENVIRONMENT_COUNT
+            - FEATURE_COUNT
+            - CREATOR_EMAIL
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: disabled
+          in: query
+          required: false
+          type: boolean
+        - name: organizationIds
+          in: query
+          required: false
+          type: array
+          items:
+            type: string
+          collectionFormat: multi
+        - name: organizationId
+          in: query
+          required: false
+          type: string
       tags:
         - Project
   /v1/environment/unarchive_environment:
@@ -3992,25 +4205,11 @@ definitions:
     properties:
       apiKey:
         $ref: '#/definitions/accountAPIKey'
-  accountGetAccountV2ByEnvironmentIDRequest:
-    type: object
-    properties:
-      email:
-        type: string
-      environmentId:
-        type: string
   accountGetAccountV2ByEnvironmentIDResponse:
     type: object
     properties:
       account:
         $ref: '#/definitions/accountAccountV2'
-  accountGetAccountV2Request:
-    type: object
-    properties:
-      email:
-        type: string
-      organizationId:
-        type: string
   accountGetAccountV2Response:
     type: object
     properties:
@@ -4021,29 +4220,11 @@ definitions:
     properties:
       environmentApiKey:
         $ref: '#/definitions/accountEnvironmentAPIKey'
-  accountGetMeRequest:
-    type: object
-    properties:
-      organizationId:
-        type: string
-    description: |-
-      account is retrieved by IDToken.
-      it's called from WebUI.
   accountGetMeResponse:
     type: object
     properties:
       account:
         $ref: '#/definitions/accountConsoleAccount'
-  accountGetMyOrganizationsByEmailRequest:
-    type: object
-    properties:
-      email:
-        type: string
-    description: |-
-      Retrieve the organization to which the account belongs by email.
-      it's called from another microservice.
-  accountGetMyOrganizationsRequest:
-    type: object
   accountGetMyOrganizationsResponse:
     type: object
     properties:
@@ -4082,32 +4263,6 @@ definitions:
       totalCount:
         type: string
         format: int64
-  accountListAccountsV2Request:
-    type: object
-    properties:
-      pageSize:
-        type: string
-        format: int64
-      cursor:
-        type: string
-      organizationId:
-        type: string
-      orderBy:
-        $ref: '#/definitions/accountListAccountsV2RequestOrderBy'
-      orderDirection:
-        $ref: '#/definitions/accountListAccountsV2RequestOrderDirection'
-      searchKeyword:
-        type: string
-      disabled:
-        type: boolean
-      organizationRole:
-        type: integer
-        format: int32
-      environmentId:
-        type: string
-      environmentRole:
-        type: integer
-        format: int32
   accountListAccountsV2RequestOrderBy:
     type: string
     enum:
@@ -4628,58 +4783,21 @@ definitions:
       featureFlagCount:
         type: integer
         format: int32
-  environmentGetEnvironmentV2Request:
-    type: object
-    properties:
-      id:
-        type: string
   environmentGetEnvironmentV2Response:
     type: object
     properties:
       environment:
         $ref: '#/definitions/environmentEnvironmentV2'
-  environmentGetOrganizationRequest:
-    type: object
-    properties:
-      id:
-        type: string
   environmentGetOrganizationResponse:
     type: object
     properties:
       organization:
         $ref: '#/definitions/bucketeerenvironmentOrganization'
-  environmentGetProjectRequest:
-    type: object
-    properties:
-      id:
-        type: string
-      organizationId:
-        type: string
   environmentGetProjectResponse:
     type: object
     properties:
       project:
         $ref: '#/definitions/environmentProject'
-  environmentListEnvironmentsV2Request:
-    type: object
-    properties:
-      pageSize:
-        type: string
-        format: int64
-      cursor:
-        type: string
-      orderBy:
-        $ref: '#/definitions/environmentListEnvironmentsV2RequestOrderBy'
-      orderDirection:
-        $ref: '#/definitions/environmentListEnvironmentsV2RequestOrderDirection'
-      projectId:
-        type: string
-      archived:
-        type: boolean
-      searchKeyword:
-        type: string
-      organizationId:
-        type: string
   environmentListEnvironmentsV2RequestOrderBy:
     type: string
     enum:
@@ -4710,24 +4828,6 @@ definitions:
       totalCount:
         type: string
         format: int64
-  environmentListOrganizationsRequest:
-    type: object
-    properties:
-      pageSize:
-        type: string
-        format: int64
-      cursor:
-        type: string
-      orderBy:
-        $ref: '#/definitions/environmentListOrganizationsRequestOrderBy'
-      orderDirection:
-        $ref: '#/definitions/environmentListOrganizationsRequestOrderDirection'
-      searchKeyword:
-        type: string
-      disabled:
-        type: boolean
-      archived:
-        type: boolean
   environmentListOrganizationsRequestOrderBy:
     type: string
     enum:
@@ -4760,26 +4860,6 @@ definitions:
       totalCount:
         type: string
         format: int64
-  environmentListProjectsRequest:
-    type: object
-    properties:
-      pageSize:
-        type: string
-        format: int64
-      cursor:
-        type: string
-      orderBy:
-        $ref: '#/definitions/environmentListProjectsRequestOrderBy'
-      orderDirection:
-        $ref: '#/definitions/environmentListProjectsRequestOrderDirection'
-      searchKeyword:
-        type: string
-      disabled:
-        type: boolean
-      organizationIds:
-        type: array
-        items:
-          type: string
   environmentListProjectsRequestOrderBy:
     type: string
     enum:
@@ -4812,28 +4892,6 @@ definitions:
       totalCount:
         type: string
         format: int64
-  environmentListProjectsV2Request:
-    type: object
-    properties:
-      pageSize:
-        type: string
-        format: int64
-      cursor:
-        type: string
-      orderBy:
-        $ref: '#/definitions/environmentListProjectsV2RequestOrderBy'
-      orderDirection:
-        $ref: '#/definitions/environmentListProjectsV2RequestOrderDirection'
-      searchKeyword:
-        type: string
-      disabled:
-        type: boolean
-      organizationIds:
-        type: array
-        items:
-          type: string
-      organizationId:
-        type: string
   environmentListProjectsV2RequestOrderBy:
     type: string
     enum:
