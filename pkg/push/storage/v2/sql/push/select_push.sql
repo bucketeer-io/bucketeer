@@ -6,7 +6,8 @@ SELECT
     name,
     created_at,
     updated_at,
-    disabled
+    disabled,
+    environment_id
 FROM
     push
 WHERE
