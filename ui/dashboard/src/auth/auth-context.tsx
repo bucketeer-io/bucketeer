@@ -35,7 +35,7 @@ interface AuthContextType {
   myOrganizations: Array<Organization>;
 
   syncSignIn: (authToken: AuthToken) => void;
-  onMeFetcher: (parmas: MeFetcherParams) => Promise<void>;
+  onMeFetcher: (params: MeFetcherParams) => Promise<void>;
 
   isInitialLoading: boolean;
   setIsInitialLoading: (v: boolean) => void;
@@ -64,8 +64,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [myOrganizations, setMyOrganizations] = useState<Organization[]>([]);
   const [isGoogleAuthError, setIsGoogleAuthError] = useState(false);
 
-  const onMeFetcher = (parmas: MeFetcherParams) => {
-    return accountMeFetcher(parmas)
+  const onMeFetcher = (params: MeFetcherParams) => {
+    return accountMeFetcher(params)
       .then(response => {
         const environmentRoles = response.account.environmentRoles;
 
