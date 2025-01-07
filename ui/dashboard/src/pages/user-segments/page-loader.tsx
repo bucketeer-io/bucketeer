@@ -3,25 +3,11 @@ import { useToggleOpen } from 'hooks/use-toggle-open';
 import PageLayout from 'elements/page-layout';
 import { EmptyCollection } from './collection-layout/empty-collection';
 import PageContent from './page-content';
+import { UserSegments } from './types';
 import AddUserSegmentModal from './user-segment-modal/add-segment-modal';
+import DeleteUserSegmentModal from './user-segment-modal/delete-segment-modal';
 import EditUserSegmentModal from './user-segment-modal/edit-segment-modal';
-
-export type UserSegments = {
-  id: string;
-  name: string;
-  description: string;
-  rules: string;
-  createdAt: string;
-  updatedAt: string;
-  version: string;
-  deleted: boolean;
-  includedUserCount: number;
-  excludedUserCount: number;
-  status: string;
-  isInUseStatus: boolean;
-  features: unknown;
-  connections: number;
-};
+import FlagsConnectedModal from './user-segment-modal/flags-connected-modal';
 
 export const mocks = [
   {
@@ -89,6 +75,10 @@ const PageLoader = () => {
     useToggleOpen(false);
   const [isOpenEditModal, onOpenEditModal, onCloseEditModal] =
     useToggleOpen(false);
+  const [isOpenFlagModal, onOpenFlagModal, onCloseFlagModal] =
+    useToggleOpen(false);
+  const [isOpenDeleteModal, onOpenDeleteModal, onCloseDeleteModal] =
+    useToggleOpen(false);
 
   const isEmpty = collection?.userSegments.length === 0;
 
@@ -109,6 +99,14 @@ const PageLoader = () => {
             setSelectedSegment(value);
             onOpenEditModal();
           }}
+          onOpenFlagModal={value => {
+            setSelectedSegment(value);
+            onOpenFlagModal();
+          }}
+          onDelete={value => {
+            setSelectedSegment(value);
+            onOpenDeleteModal();
+          }}
         />
       )}
       {isOpenAddModal && (
@@ -122,6 +120,21 @@ const PageLoader = () => {
           isOpen={isOpenEditModal}
           onClose={onCloseEditModal}
           userSegment={selectedSegment!}
+        />
+      )}
+      {isOpenFlagModal && (
+        <FlagsConnectedModal
+          isOpen={isOpenFlagModal}
+          onClose={onCloseFlagModal}
+        />
+      )}
+      {isOpenDeleteModal && selectedSegment && (
+        <DeleteUserSegmentModal
+          isOpen={isOpenDeleteModal}
+          loading={false}
+          userSegment={selectedSegment}
+          onClose={onCloseDeleteModal}
+          onSubmit={() => {}}
         />
       )}
     </>

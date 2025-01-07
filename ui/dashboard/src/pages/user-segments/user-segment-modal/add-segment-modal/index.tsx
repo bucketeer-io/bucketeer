@@ -150,7 +150,7 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
                       className="border-primary-500 !h-[120px]"
                     />
                     <TextArea
-                      placeholder={'eg. userid1, userid2, userid3...'}
+                      placeholder={t('form:placeholder-enter-user-ids')}
                       rows={4}
                       onChange={e => setValue('userIds', e.target.value)}
                     />

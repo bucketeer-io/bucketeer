@@ -143,8 +143,10 @@
   "create-user-segment": "Create User Segment",
   "new-user-segment": "New User Segment",
   "update-user-segment": "Update User Segment",
+  "delete-user-segment": "Delete User Segment",
   "connections": "Connections",
   "status": "Status",
   "flags-connected": "Flags Connected",
-  "flags-connected-desc": "This user segment is currently connected to the following feature flags:"
+  "flags-connected-desc": "This user segment is currently connected to the following feature flags:",
+  "close": "Close"
 }

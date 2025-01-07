@@ -1,4 +1,5 @@
 import {
+  IconDeleteOutlined,
   IconEditOutlined,
   IconMoreHorizOutlined
 } from 'react-icons-material-design';
@@ -10,12 +11,12 @@ import { useTranslation } from 'i18n';
 import { useFormatDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
 import { Popover } from 'components/popover';
-import { UserSegments } from '../page-loader';
+import { UserSegments, UserSegmentsActionsType } from '../types';
 
 export const useColumns = ({
   onActionHandler
 }: {
-  onActionHandler: (value: UserSegments) => void;
+  onActionHandler: (value: UserSegments, type: UserSegmentsActionsType) => void;
 }): ColumnDef<UserSegments>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
@@ -60,7 +61,10 @@ export const useColumns = ({
       cell: ({ row }) => {
         const segment = row.original;
         return (
-          <div className="flex-center w-fit px-2 py-1.5 rounded bg-primary-50 text-primary-500 typo-para-medium">
+          <div
+            className="flex-center w-fit px-2 py-1.5 rounded bg-primary-50 text-primary-500 typo-para-medium cursor-pointer"
+            onClick={() => onActionHandler(segment, 'FLAG')}
+          >
             {segment.connections}
             {` ${segment.connections === 1 ? 'Flag' : 'Flags'}`}
           </div>
@@ -120,11 +124,18 @@ export const useColumns = ({
               {
                 label: `${t('table:popover.edit-segment')}`,
                 icon: IconEditOutlined,
-                value: 'EDIT_SEGMENT'
+                value: 'EDIT'
+              },
+              {
+                label: `${t('table:popover.delete-segment')}`,
+                icon: IconDeleteOutlined,
+                value: 'DELETE'
               }
             ]}
             icon={IconMoreHorizOutlined}
-            onClick={() => onActionHandler(segment)}
+            onClick={value =>
+              onActionHandler(segment, value as UserSegmentsActionsType)
+            }
             align="end"
           />
         );

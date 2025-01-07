@@ -7,8 +7,8 @@ import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
-import { UserSegmentsFilters } from '../page-content';
-import { collection, UserSegments } from '../page-loader';
+import { collection } from '../page-loader';
+import { UserSegments, UserSegmentsActionsType, UserSegmentsFilters } from '../types';
 
 const CollectionLoader = ({
   onAdd,
@@ -20,7 +20,7 @@ const CollectionLoader = ({
   filters: UserSegmentsFilters;
   setFilters: (values: Partial<UserSegmentsFilters>) => void;
   organizationIds?: string[];
-  onActionHandler: (value: UserSegments) => void;
+  onActionHandler: (value: UserSegments, type: UserSegmentsActionsType) => void;
 }) => {
   const columns = useColumns({ onActionHandler });
   const isLoading = false;

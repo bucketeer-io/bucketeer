@@ -5,7 +5,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { IconToastWarning } from '@icons';
-import { UserSegments } from 'pages/user-segments/page-loader';
+import { UserSegments } from 'pages/user-segments/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
@@ -45,7 +45,7 @@ const EditUserSegmentModal = ({
   onClose
 }: EditUserSegmentModalProps) => {
   const { t } = useTranslation(['common', 'form']);
-  const [userIdsType, setUserIdsType] = useState('upload');
+  const [userIdsType, setUserIdsType] = useState('typing');
   const [files, setFiles] = useState<File[]>([]);
 
   const form = useForm({
@@ -74,7 +74,7 @@ const EditUserSegmentModal = ({
       isOpen={isOpen}
       onClose={onClose}
     >
-      <div className="w-full p-5">
+      <div className="w-full p-5 pb-28">
         <p className="text-gray-600 typo-para-medium mb-4">
           {t('form:update-user-segment')}
         </p>
@@ -119,7 +119,7 @@ const EditUserSegmentModal = ({
             <Divider className="mt-1 mb-5" />
             <p className="text-gray-900 typo-head-bold-small mb-5">{`${t('form:list-of-users-ids')} (${t('form:optional')})`}</p>
             <RadioGroup
-              defaultValue="upload"
+              defaultValue="typing"
               onValueChange={value => setUserIdsType(value)}
               className="flex flex-col w-full gap-y-4"
             >
@@ -159,12 +159,12 @@ const EditUserSegmentModal = ({
                     htmlFor={'typing'}
                     className="cursor-pointer typo-para-small text-gray-700"
                   >
-                    Enter user IDs
+                    {t('form:enter-user-ids')}
                   </label>
                 </div>
                 {userIdsType === 'typing' && (
                   <TextArea
-                    placeholder={'eg. userid1, userid2, userid3...'}
+                    placeholder={t('form:placeholder-enter-user-ids')}
                     rows={4}
                     onChange={e => setValue('userIds', e.target.value)}
                   />
@@ -178,7 +178,7 @@ const EditUserSegmentModal = ({
                   icon={IconToastWarning}
                   size={'xxs'}
                   color="accent-yellow-500"
-                  className='mt-1'
+                  className="mt-1"
                 />
                 <Trans
                   i18nKey="form:update-user-segment-warning"

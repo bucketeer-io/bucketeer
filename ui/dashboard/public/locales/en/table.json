@@ -25,7 +25,8 @@
     "edit-push": "Edit Push",
     "disable-push": "Disable Push",
     "enable-push": "Enable Push",
-    "edit-segment": "Edit User Segment"
+    "edit-segment": "Edit User Segment",
+    "delete-segment": "Delete User Segment"
   },
   "empty": {
     "project-title": "No registered projects",
@@ -70,5 +71,8 @@
   "push": {
     "confirm-enable-desc": "The Push \"<bold>{{name}}</bold>\" will be enabled. Are you sure you want to proceed?",
     "confirm-disable-desc": "The Push \"<bold>{{name}}</bold>\" will be disabled. Are you sure you want to proceed?"
+  },
+  "user-segment": {
+    "delete-user-segment-desc": "The <bold>{{name}}</bold> is going to be deleted permanently. Are you sure you want to proceed?"
   }
 }

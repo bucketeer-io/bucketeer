@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { IconAddOutlined } from 'react-icons-material-design';
 import { getCurrentEnvironment, useAuth } from 'auth';
-import { usePartialState } from 'hooks';
+import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
@@ -11,21 +11,23 @@ import Icon from 'components/icon';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
-import { UserSegments } from './page-loader';
-
-// import FilterProjectModal from './project-modal/filter-project-modal';
-
-export type UserSegmentsFilters = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any;
-};
+import {
+  UserSegments,
+  UserSegmentsActionsType,
+  UserSegmentsFilters
+} from './types';
+import FilterUserSegmentModal from './user-segment-modal/filter-segment-modal';
 
 const PageContent = ({
   onAdd,
-  onEdit
+  onEdit,
+  onOpenFlagModal,
+  onDelete
 }: {
   onAdd: () => void;
   onEdit: (v: UserSegments) => void;
+  onOpenFlagModal: (v: UserSegments) => void;
+  onDelete: (v: UserSegments) => void;
 }) => {
   const { t } = useTranslation(['common']);
   const { consoleAccount } = useAuth();
@@ -41,8 +43,8 @@ const PageContent = ({
     ...searchFilters
   } as UserSegmentsFilters;
 
-  // const [openFilterModal, onOpenFilterModal, onCloseFilterModal] =
-  //   useToggleOpen(false);
+  const [openFilterModal, onOpenFilterModal, onCloseFilterModal] =
+    useToggleOpen(false);
 
   const [filters, setFilters] =
     usePartialState<UserSegmentsFilters>(defaultFilters);
@@ -53,8 +55,13 @@ const PageContent = ({
     setFilters({ ...values });
   };
 
-  const onActionHandler = (segment: UserSegments) => {
-    onEdit(segment);
+  const onActionHandler = (
+    segment: UserSegments,
+    type: UserSegmentsActionsType
+  ) => {
+    if (type === 'EDIT') return onEdit(segment);
+    if (type === 'FLAG') return onOpenFlagModal(segment);
+    return onDelete(segment);
   };
 
   useEffect(() => {
@@ -66,7 +73,7 @@ const PageContent = ({
   return (
     <PageLayout.Content>
       <Filter
-        // onOpenFilter={onOpenFilterModal}
+        onOpenFilter={onOpenFilterModal}
         action={
           <Button className="flex-1 lg:flex-none" onClick={onAdd}>
             <Icon icon={IconAddOutlined} size="sm" />
@@ -77,8 +84,8 @@ const PageContent = ({
         filterCount={isNotEmpty(filters.disabled as boolean) ? 1 : undefined}
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
-      {/* {openFilterModal && (
-        <FilterProjectModal
+      {openFilterModal && (
+        <FilterUserSegmentModal
           isOpen={openFilterModal}
           filters={filters}
           onClose={onCloseFilterModal}
@@ -91,7 +98,7 @@ const PageContent = ({
             onCloseFilterModal();
           }}
         />
-      )} */}
+      )}
       <div className="mt-5 flex flex-col flex-1">
         <CollectionLoader
           onAdd={onAdd}
