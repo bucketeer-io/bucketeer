@@ -1938,12 +1938,8 @@
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/account/get_me"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },
@@ -2069,12 +2065,8 @@
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/account/my_organizations"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },
@@ -2200,12 +2192,8 @@
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/account/my_organizations_by_email"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },
@@ -3121,12 +3109,8 @@
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/account/get_account"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },
@@ -3252,12 +3236,8 @@
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/account/get_account_by_environment"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },
@@ -3383,12 +3363,8 @@
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/account/list_accounts"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },
@@ -9310,12 +9286,8 @@
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/environment/get_environment"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },
@@ -9486,12 +9458,8 @@
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/environment/list_environments"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },
@@ -10366,12 +10334,8 @@
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/environment/get_project"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },
@@ -10542,12 +10506,8 @@
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/environment/list_projects"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },
@@ -11774,12 +11734,8 @@
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/environment/get_organization"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },
@@ -11950,12 +11906,8 @@
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/environment/list_organizations"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },
@@ -13358,12 +13310,8 @@
                     "name": "(google.api.http)",
                     "aggregated": [
                       {
-                        "name": "post",
+                        "name": "get",
                         "value": "/v1/environment/list_projects_v2"
-                      },
-                      {
-                        "name": "body",
-                        "value": "*"
                       }
                     ]
                   },
@@ -30124,6 +30072,11 @@
                 "id": 9,
                 "name": "disabled",
                 "type": "bool"
+              },
+              {
+                "id": 10,
+                "name": "environment_id",
+                "type": "string"
               }
             ],
             "reserved_ids": [

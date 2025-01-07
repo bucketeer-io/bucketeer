@@ -71,7 +71,7 @@ func NewOnDemandSubscriber(
 }
 
 func (s *onDemandSubscriber) Run(ctx context.Context) {
-	s.logger.Info("onDemandSubscriber starting",
+	s.logger.Debug("onDemandSubscriber starting",
 		zap.String("name", s.name),
 		zap.String("project", s.configuration.Project),
 		zap.String("subscription", s.configuration.Subscription),

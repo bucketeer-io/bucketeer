@@ -116,7 +116,6 @@ func (m *metrics) Registerer(path string) Registerer {
 }
 
 func (m *metrics) Run() error {
-	m.logger.Info("Run started")
 	for p, r := range m.registries {
 		m.mux.Handle(p, promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
 	}
@@ -127,16 +126,13 @@ func (m *metrics) Run() error {
 		m.logger.Error("Failed to listen and serve", zap.Error(err))
 		return err
 	}
-	m.logger.Info("Run finished")
 	return nil
 }
 
 func (m *metrics) Stop() {
-	m.logger.Info("Stop started")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	m.server.Shutdown(ctx) // nolint:errcheck
-	m.logger.Info("Stop finished")
 }
 
 func (m *metrics) Check(ctx context.Context) health.Status {

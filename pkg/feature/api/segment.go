@@ -55,7 +55,7 @@ func (s *FeatureService) CreateSegment(
 		return s.createSegmentNoCommand(ctx, req, editor, localizer)
 	}
 	if err = validateCreateSegmentRequest(req.Command, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -294,7 +294,7 @@ func (s *FeatureService) DeleteSegment(
 		return nil, err
 	}
 	if err := validateDeleteSegmentRequest(req, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -399,7 +399,7 @@ func (s *FeatureService) UpdateSegment(
 		ctx, accountproto.AccountV2_Role_Environment_EDITOR,
 		req.EnvironmentId, localizer)
 	if err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Permission denied",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -431,7 +431,7 @@ func (s *FeatureService) UpdateSegment(
 		commands = append(commands, cmd)
 	}
 	if err := validateUpdateSegment(req.Id, commands, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -555,7 +555,7 @@ func (s *FeatureService) GetSegment(
 		return nil, err
 	}
 	if err := validateGetSegmentRequest(req, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -635,7 +635,7 @@ func (s *FeatureService) ListSegments(
 		return nil, err
 	}
 	if err := validateListSegmentsRequest(req, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),

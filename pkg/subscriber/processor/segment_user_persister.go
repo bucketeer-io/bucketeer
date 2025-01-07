@@ -126,7 +126,6 @@ func (p *segmentUserPersister) Process(ctx context.Context, msgChan <-chan *pull
 				continue
 			}
 			if _, ok := chunk[id]; ok {
-				p.logger.Warn("message with duplicate id", zap.String("id", id))
 				subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.DuplicateID.String()).Inc()
 			}
 			chunk[id] = msg

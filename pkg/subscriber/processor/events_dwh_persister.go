@@ -151,7 +151,6 @@ func (e *eventsDWHPersister) Process(
 			}
 			if previous, ok := batch[id]; ok {
 				previous.Ack()
-				e.logger.Warn("Message with duplicate id", zap.String("id", id))
 				subscriberHandledCounter.WithLabelValues(e.subscriberType, codes.DuplicateID.String()).Inc()
 			}
 			batch[id] = msg
@@ -167,10 +166,10 @@ func (e *eventsDWHPersister) Process(
 			}
 		case <-ctx.Done():
 			batchSize := len(batch)
-			e.logger.Info("Context is done", zap.Int("batchSize", batchSize))
+			e.logger.Debug("Context is done", zap.Int("batchSize", batchSize))
 			if len(batch) > 0 {
 				e.send(batch)
-				e.logger.Info(
+				e.logger.Debug(
 					"All the left messages are processed successfully",
 					zap.Int("batchSize", batchSize),
 				)

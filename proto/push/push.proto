@@ -27,4 +27,5 @@ message Push {
   int64 updated_at = 7;
   string fcm_service_account = 8;
   bool disabled = 9;
+  string environment_id = 10;
 }

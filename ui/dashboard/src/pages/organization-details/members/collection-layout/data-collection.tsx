@@ -81,14 +81,16 @@ export const useColumns = ({
       }
     },
     {
-      accessorKey: 'createdAt',
-      header: `${t('table:created-at')}`,
+      accessorKey: 'lastSeen',
+      header: `${t('table:last-seen')}`,
       size: 180,
       cell: ({ row }) => {
         const account = row.original;
         return (
           <div className="text-gray-700 typo-para-medium">
-            {formatDateTime(account.createdAt)}
+            {Number(account.lastSeen) === 0
+              ? t('never')
+              : formatDateTime(account.lastSeen)}
           </div>
         );
       }

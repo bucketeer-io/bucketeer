@@ -129,6 +129,7 @@ func (s *pushStorage) GetPush(ctx context.Context, id, environmentId string) (*d
 		&push.CreatedAt,
 		&push.UpdatedAt,
 		&push.Disabled,
+		&push.EnvironmentId,
 	)
 	if err != nil {
 		if errors.Is(err, mysql.ErrNoRows) {
@@ -166,6 +167,7 @@ func (s *pushStorage) ListPushes(
 			&push.CreatedAt,
 			&push.UpdatedAt,
 			&push.Disabled,
+			&push.EnvironmentId,
 		)
 		if err != nil {
 			return nil, 0, 0, err

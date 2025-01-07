@@ -8,6 +8,6 @@ export interface AccountOrganizationsResponse {
 export const accountOrganizationFetcher =
   async (): Promise<AccountOrganizationsResponse> => {
     return axiosClient
-      .post<AccountOrganizationsResponse>('/v1/account/my_organizations')
+      .get<AccountOrganizationsResponse>('/v1/account/my_organizations')
       .then(response => response.data);
   };
