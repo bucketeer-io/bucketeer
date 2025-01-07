@@ -110,10 +110,10 @@ func (p *userEventPersister) Process(ctx context.Context, msgChan <-chan *puller
 			}
 		case <-ctx.Done():
 			chunkSize := len(chunk)
-			p.logger.Info("Context is done", zap.Int("chunkSize", chunkSize))
+			p.logger.Debug("Context is done", zap.Int("chunkSize", chunkSize))
 			if chunkSize > 0 {
 				p.handleChunk(chunk)
-				p.logger.Info(
+				p.logger.Debug(
 					"All the left messages are processed successfully",
 					zap.Int("chunkSize", chunkSize),
 				)

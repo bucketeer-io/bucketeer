@@ -561,7 +561,7 @@ func (s *gatewayService) findEnvironmentAPIKey(
 	if err == nil {
 		return envAPIKey, nil
 	}
-	s.logger.Info(
+	s.logger.Warn(
 		"API key not found in the cache",
 		log.FieldsFromImcomingContext(ctx).AddFields(
 			zap.Error(err),
@@ -683,7 +683,7 @@ func (s *gatewayService) getSegmentUsers(
 	if err == nil {
 		return segmentUsers, nil
 	}
-	s.logger.Info(
+	s.logger.Warn(
 		"No cached data for SegmentUsers",
 		log.FieldsFromImcomingContext(ctx).AddFields(
 			zap.Error(err),
@@ -728,7 +728,7 @@ func (s *gatewayService) getFeatures(
 	if err == nil {
 		return fs.Features, nil
 	}
-	s.logger.Info(
+	s.logger.Warn(
 		"No cached data for Features",
 		log.FieldsFromImcomingContext(ctx).AddFields(
 			zap.Error(err),

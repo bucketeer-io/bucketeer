@@ -1304,7 +1304,7 @@ func (s *PushService) checkEnvironmentRole(
 	if err != nil {
 		switch status.Code(err) {
 		case codes.Unauthenticated:
-			s.logger.Info(
+			s.logger.Error(
 				"Unauthenticated",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
@@ -1320,7 +1320,7 @@ func (s *PushService) checkEnvironmentRole(
 			}
 			return nil, dt.Err()
 		case codes.PermissionDenied:
-			s.logger.Info(
+			s.logger.Error(
 				"Permission denied",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),

@@ -152,7 +152,7 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 			for _, msg := range batch {
 				msg.Nack()
 			}
-			p.logger.Info("All the left messages were Nack successfully before shutting down",
+			p.logger.Debug("All the left messages were Nack successfully before shutting down",
 				zap.Int("batchSize", len(batch)))
 			return nil
 		}

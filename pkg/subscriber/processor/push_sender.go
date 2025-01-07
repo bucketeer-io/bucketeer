@@ -155,7 +155,7 @@ func (p pushSender) send(featureID, environmentId string) error {
 		return err
 	}
 	if len(pushes) == 0 {
-		p.logger.Info("No pushes",
+		p.logger.Debug("No pushes",
 			zap.String("featureId", featureID),
 			zap.String("environmentId", environmentId),
 		)

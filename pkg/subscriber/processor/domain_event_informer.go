@@ -69,7 +69,7 @@ func (d domainEventInformer) Process(ctx context.Context, msgChan <-chan *puller
 			subscriberReceivedCounter.WithLabelValues(subscriberDomainEvent).Inc()
 			d.handleMessage(msg)
 		case <-ctx.Done():
-			d.logger.Info("subscriber context done, stopped processing messages")
+			d.logger.Debug("subscriber context done, stopped processing messages")
 			return nil
 		}
 	}
