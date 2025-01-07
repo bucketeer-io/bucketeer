@@ -29389,6 +29389,11 @@
               },
               {
                 "id": 8,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 9,
                 "name": "environment_name",
                 "type": "string"
               }

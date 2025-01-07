@@ -162,6 +162,7 @@ func (s *subscriptionStorage) GetSubscription(
 		&mysql.JSONObject{Val: &subscription.SourceTypes},
 		&mysql.JSONObject{Val: &subscription.Recipient},
 		&subscription.Name,
+		&subscription.EnvironmentId,
 		&subscription.EnvironmentName,
 	)
 	if err != nil {
@@ -199,6 +200,7 @@ func (s *subscriptionStorage) ListSubscriptions(
 			&mysql.JSONObject{Val: &subscription.SourceTypes},
 			&mysql.JSONObject{Val: &subscription.Recipient},
 			&subscription.Name,
+			&subscription.EnvironmentId,
 			&subscription.EnvironmentName,
 		)
 		if err != nil {

@@ -5961,6 +5961,8 @@ definitions:
         $ref: '#/definitions/notificationRecipient'
       name:
         type: string
+      environmentId:
+        type: string
       environmentName:
         type: string
   notificationUpdateAdminSubscriptionResponse:
