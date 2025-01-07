@@ -92,7 +92,7 @@ const PageContent = ({
           filters={filters}
           setFilters={onChangeFilters}
           onActionHandler={onActionHandler}
-          organizationIds={[currentEnvironment.organizationId]}
+          organizationId={currentEnvironment.organizationId}
         />
       </div>
     </PageLayout.Content>

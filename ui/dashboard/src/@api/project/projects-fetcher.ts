@@ -4,7 +4,7 @@ import { CollectionParams, ProjectCollection } from '@types';
 import { isNotEmpty } from 'utils/data-type';
 
 export interface ProjectsFetcherParams extends CollectionParams {
-  organizationIds?: string[];
+  organizationId?: string;
 }
 
 export const projectsFetcher = async (
