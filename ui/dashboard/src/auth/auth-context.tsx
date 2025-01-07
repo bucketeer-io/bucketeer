@@ -6,7 +6,7 @@ import React, {
   useState
 } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { accountOrganizationFetcher, MeFetcherPayload } from '@api/account';
+import { accountOrganizationFetcher, MeFetcherParams } from '@api/account';
 import { accountMeFetcher } from '@api/account';
 import { PAGE_PATH_ROOT } from 'constants/routing';
 import { Undefinable } from 'option-t/undefinable';
@@ -35,7 +35,7 @@ interface AuthContextType {
   myOrganizations: Array<Organization>;
 
   syncSignIn: (authToken: AuthToken) => void;
-  onMeFetcher: (payload: MeFetcherPayload) => Promise<void>;
+  onMeFetcher: (parmas: MeFetcherParams) => Promise<void>;
 
   isInitialLoading: boolean;
   setIsInitialLoading: (v: boolean) => void;
@@ -64,8 +64,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const [myOrganizations, setMyOrganizations] = useState<Organization[]>([]);
   const [isGoogleAuthError, setIsGoogleAuthError] = useState(false);
 
-  const onMeFetcher = (payload: MeFetcherPayload) => {
-    return accountMeFetcher(payload)
+  const onMeFetcher = (parmas: MeFetcherParams) => {
+    return accountMeFetcher(parmas)
       .then(response => {
         const environmentRoles = response.account.environmentRoles;
 

@@ -2,6 +2,7 @@ import axiosClient from '@api/axios-client';
 import pickBy from 'lodash/pickBy';
 import { AccountCollection, CollectionParams } from '@types';
 import { isNotEmpty } from 'utils/data-type';
+import { stringifyParams } from 'utils/search-params';
 
 export interface AccountsFetcherParams extends CollectionParams {
   organizationId?: string;
@@ -11,12 +12,13 @@ export interface AccountsFetcherParams extends CollectionParams {
 }
 
 export const accountsFetcher = async (
-  params?: AccountsFetcherParams
+  _params?: AccountsFetcherParams
 ): Promise<AccountCollection> => {
+  const params = pickBy(_params, v => isNotEmpty(v));
+
   return axiosClient
-    .post<AccountCollection>(
-      '/v1/account/list_accounts',
-      pickBy(params, v => isNotEmpty(v))
+    .get<AccountCollection>(
+      `/v1/account/list_accounts?${stringifyParams(params)}`
     )
     .then(response => response.data);
 };
