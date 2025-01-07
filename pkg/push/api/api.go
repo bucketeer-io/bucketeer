@@ -1131,8 +1131,8 @@ func (s *PushService) listAllPushes(
 	localizer locale.Localizer,
 ) ([]*pushproto.Push, error) {
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_id", "=", environmentId),
+		mysql.NewFilter("push.deleted", "=", false),
+		mysql.NewFilter("push.environment_id", "=", environmentId),
 	}
 	pushes, _, _, err := s.listPushes(
 		ctx,
@@ -1161,11 +1161,11 @@ func (s *PushService) ListPushes(
 		return nil, err
 	}
 	whereParts := []mysql.WherePart{
-		mysql.NewFilter("deleted", "=", false),
-		mysql.NewFilter("environment_id", "=", req.EnvironmentId),
+		mysql.NewFilter("push.deleted", "=", false),
+		mysql.NewFilter("push.environment_id", "=", req.EnvironmentId),
 	}
 	if req.SearchKeyword != "" {
-		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"name"}, req.SearchKeyword))
+		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"push.name"}, req.SearchKeyword))
 	}
 	orders, err := s.newListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
@@ -1207,11 +1207,15 @@ func (s *PushService) newListOrders(
 	switch orderBy {
 	case pushproto.ListPushesRequest_DEFAULT,
 		pushproto.ListPushesRequest_NAME:
-		column = "name"
+		column = "push.name"
 	case pushproto.ListPushesRequest_CREATED_AT:
-		column = "created_at"
+		column = "push.created_at"
 	case pushproto.ListPushesRequest_UPDATED_AT:
-		column = "updated_at"
+		column = "push.updated_at"
+	case pushproto.ListPushesRequest_ENVIRONMENT:
+		column = "env.name"
+	case pushproto.ListPushesRequest_STATE:
+		column = "push.disabled"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),

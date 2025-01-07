@@ -6,11 +6,12 @@ SELECT
     sub.source_types,
     sub.recipient,
     sub.name,
+    sub.environment_id,
     env.name as environment_name
 FROM
     subscription sub
-JOIN environment_v2 env
-     ON sub.environment_id = env.id
+JOIN
+    environment_v2 env ON sub.environment_id = env.id
 WHERE
     sub.id = ? AND
     sub.environment_id = ?

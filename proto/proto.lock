@@ -27954,6 +27954,14 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 3
+              },
+              {
+                "name": "ENVIRONMENT",
+                "integer": 4
+              },
+              {
+                "name": "STATE",
+                "integer": 5
               }
             ]
           },
@@ -29389,6 +29397,11 @@
               },
               {
                 "id": 8,
+                "name": "environment_id",
+                "type": "string"
+              },
+              {
+                "id": 9,
                 "name": "environment_name",
                 "type": "string"
               }
@@ -29649,6 +29662,11 @@
                 "id": 10,
                 "name": "environment_id",
                 "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "environment_name",
+                "type": "string"
               }
             ],
             "reserved_ids": [
@@ -29688,6 +29706,14 @@
               {
                 "name": "UPDATED_AT",
                 "integer": 3
+              },
+              {
+                "name": "ENVIRONMENT",
+                "integer": 4
+              },
+              {
+                "name": "STATE",
+                "integer": 5
               }
             ]
           },

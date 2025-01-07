@@ -100,7 +100,8 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         updatedAt: jspb.Message.getFieldWithDefault(msg, 7, 0),
         fcmServiceAccount: jspb.Message.getFieldWithDefault(msg, 8, ''),
         disabled: jspb.Message.getBooleanFieldWithDefault(msg, 9, false),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 10, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 10, ''),
+        environmentName: jspb.Message.getFieldWithDefault(msg, 11, '')
       };
 
     if (includeInstance) {
@@ -171,6 +172,10 @@ proto.bucketeer.push.Push.deserializeBinaryFromReader = function (msg, reader) {
         var value = /** @type {string} */ (reader.readString());
         msg.setEnvironmentId(value);
         break;
+      case 11:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setEnvironmentName(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -233,6 +238,10 @@ proto.bucketeer.push.Push.serializeBinaryToWriter = function (message, writer) {
   f = message.getEnvironmentId();
   if (f.length > 0) {
     writer.writeString(10, f);
+  }
+  f = message.getEnvironmentName();
+  if (f.length > 0) {
+    writer.writeString(11, f);
   }
 };
 
@@ -399,6 +408,22 @@ proto.bucketeer.push.Push.prototype.getEnvironmentId = function () {
  */
 proto.bucketeer.push.Push.prototype.setEnvironmentId = function (value) {
   return jspb.Message.setProto3StringField(this, 10, value);
+};
+
+/**
+ * optional string environment_name = 11;
+ * @return {string}
+ */
+proto.bucketeer.push.Push.prototype.getEnvironmentName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 11, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.push.Push} returns this
+ */
+proto.bucketeer.push.Push.prototype.setEnvironmentName = function (value) {
+  return jspb.Message.setProto3StringField(this, 11, value);
 };
 
 goog.object.extend(exports, proto.bucketeer.push);

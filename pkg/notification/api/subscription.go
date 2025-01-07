@@ -861,6 +861,10 @@ func (s *NotificationService) newSubscriptionListOrders(
 		column = "sub.created_at"
 	case notificationproto.ListSubscriptionsRequest_UPDATED_AT:
 		column = "sub.updated_at"
+	case notificationproto.ListSubscriptionsRequest_ENVIRONMENT:
+		column = "env.name"
+	case notificationproto.ListSubscriptionsRequest_STATE:
+		column = "sub.disabled"
 	default:
 		dt, err := statusInvalidOrderBy.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
