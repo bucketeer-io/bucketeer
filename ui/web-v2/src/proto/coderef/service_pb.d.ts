@@ -3,6 +3,8 @@
 
 import * as jspb from 'google-protobuf';
 import * as proto_coderef_code_reference_pb from '../../proto/coderef/code_reference_pb';
+import * as google_api_annotations_pb from '../../google/api/annotations_pb';
+import * as protoc_gen_openapiv2_options_annotations_pb from '../../protoc-gen-openapiv2/options/annotations_pb';
 
 export class GetCodeReferenceRequest extends jspb.Message {
   getId(): string;
