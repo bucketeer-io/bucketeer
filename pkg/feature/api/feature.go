@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -1828,7 +1828,7 @@ func (s *FeatureService) UpdateFeatureTargeting(
 				cmd,
 				localizer,
 			); err != nil {
-				s.logger.Info(
+				s.logger.Error(
 					"Invalid argument",
 					log.FieldsFromImcomingContext(ctx).AddFields(
 						zap.Error(err),
@@ -2030,7 +2030,7 @@ func (s *FeatureService) getFeatures(
 	if err == nil {
 		return features.Features, nil
 	}
-	s.logger.Info(
+	s.logger.Warn(
 		"No cached data for Features",
 		log.FieldsFromImcomingContext(ctx).AddFields(
 			zap.Error(err),
@@ -2101,7 +2101,7 @@ func (s *FeatureService) getSegmentUsers(
 	if err == nil {
 		return segmentUsers.Users, nil
 	}
-	s.logger.Info(
+	s.logger.Warn(
 		"No cached data for SegmentUsers",
 		log.FieldsFromImcomingContext(ctx).AddFields(
 			zap.Error(err),
@@ -2198,7 +2198,7 @@ func (s *FeatureService) EvaluateFeatures(
 		return nil, err
 	}
 	if err := validateEvaluateFeatures(req, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),

@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ option go_package = "github.com/bucketeer-io/bucketeer/proto/feature";
 
 import "google/api/annotations.proto";
 import "google/protobuf/wrappers.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
 
 import "proto/feature/command.proto";
 import "proto/feature/feature.proto";
@@ -553,7 +554,39 @@ service FeatureService {
       returns (BulkDownloadSegmentUsersResponse) {}
   rpc EvaluateFeatures(EvaluateFeaturesRequest)
       returns (EvaluateFeaturesResponse) {}
-  rpc ListTags(ListTagsRequest) returns (ListTagsResponse) {}
+  rpc ListTags(ListTagsRequest) returns (ListTagsResponse) {
+    option (google.api.http) = {
+      get: "/v1/tags"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List",
+      description: "List tags."
+      tags: "tag"
+      operation_id: "web.v1.tag.list"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc CreateFlagTrigger(CreateFlagTriggerRequest)
       returns (CreateFlagTriggerResponse) {}
   rpc UpdateFlagTrigger(UpdateFlagTriggerRequest)

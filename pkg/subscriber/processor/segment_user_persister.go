@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -126,7 +126,6 @@ func (p *segmentUserPersister) Process(ctx context.Context, msgChan <-chan *pull
 				continue
 			}
 			if _, ok := chunk[id]; ok {
-				p.logger.Warn("message with duplicate id", zap.String("id", id))
 				subscriberHandledCounter.WithLabelValues(subscriberSegmentUser, codes.DuplicateID.String()).Inc()
 			}
 			chunk[id] = msg

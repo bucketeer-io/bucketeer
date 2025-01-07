@@ -1,5 +1,8 @@
 import axiosClient from '@api/axios-client';
+import pickBy from 'lodash/pickBy';
 import { Organization } from '@types';
+import { isNotEmpty } from 'utils/data-type';
+import { stringifyParams } from 'utils/search-params';
 
 export interface OrganizationDetailsFetcherParams {
   id: string;
@@ -9,12 +12,13 @@ export interface OrganizationDetailsResponse {
 }
 
 export const organizationDetailsFetcher = async (
-  params?: OrganizationDetailsFetcherParams
+  _params?: OrganizationDetailsFetcherParams
 ): Promise<OrganizationDetailsResponse> => {
+  const params = pickBy(_params, v => isNotEmpty(v));
+
   return axiosClient
-    .post<OrganizationDetailsResponse>(
-      '/v1/environment/get_organization',
-      params
+    .get<OrganizationDetailsResponse>(
+      `/v1/environment/get_organization?${stringifyParams(params)}`
     )
     .then(response => response.data);
 };

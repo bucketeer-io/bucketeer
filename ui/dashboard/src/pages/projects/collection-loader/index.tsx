@@ -15,13 +15,13 @@ const CollectionLoader = ({
   onAdd,
   filters,
   setFilters,
-  organizationIds,
+  organizationId,
   onActionHandler
 }: {
   onAdd?: () => void;
   filters: ProjectFilters;
   setFilters: (values: Partial<ProjectFilters>) => void;
-  organizationIds?: string[];
+  organizationId?: string;
   onActionHandler: (value: Project) => void;
 }) => {
   const columns = useColumns({ onActionHandler });
@@ -30,7 +30,7 @@ const CollectionLoader = ({
     isLoading,
     refetch,
     isError
-  } = useFetchProjects({ ...filters, organizationIds });
+  } = useFetchProjects({ ...filters, organizationId });
 
   const onSortingChangeHandler = (sorting: SortingState) => {
     const updateOrderBy =

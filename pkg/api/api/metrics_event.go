@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -409,16 +409,19 @@ func (s *grpcGatewayService) saveErrorCount(
 	if labels != nil {
 		tag = labels["tag"]
 	}
-	s.logger.Error("Error metric details",
-		zap.String("projectId", projectID),
-		zap.String("environment", env),
-		zap.String("tag", tag),
-		zap.Any("labels", labels),
-		zap.String("errorType", errorType),
-		zap.String("apiId", apiID.String()),
-		zap.String("sdkVersion", event.SdkVersion),
-		zap.String("sourceId", event.SourceId.String()),
-	)
+	// We only log unknown errors to avoid increasing the log cost unnecessarily
+	if errorType == "Unknown" {
+		s.logger.Error("Error metric details",
+			zap.String("projectId", projectID),
+			zap.String("environment", env),
+			zap.String("tag", tag),
+			zap.Any("labels", labels),
+			zap.String("errorType", errorType),
+			zap.String("apiId", apiID.String()),
+			zap.String("sdkVersion", event.SdkVersion),
+			zap.String("sourceId", event.SourceId.String()),
+		)
+	}
 	sdkErrorCounter.WithLabelValues(
 		projectID,
 		env,

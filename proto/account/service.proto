@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -322,8 +322,7 @@ message UpdateAPIKeyResponse {}
 service AccountService {
   rpc GetMe(GetMeRequest) returns (GetMeResponse) {
     option (google.api.http) = {
-      post: "/v1/account/get_me"
-      body: "*"
+      get: "/v1/account/get_me"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Me",
@@ -357,8 +356,7 @@ service AccountService {
   rpc GetMyOrganizations(GetMyOrganizationsRequest)
       returns (GetMyOrganizationsResponse) {
     option (google.api.http) = {
-      post: "/v1/account/my_organizations"
-      body: "*"
+      get: "/v1/account/my_organizations"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get My Organizations",
@@ -393,8 +391,7 @@ service AccountService {
   rpc GetMyOrganizationsByEmail(GetMyOrganizationsByEmailRequest)
       returns (GetMyOrganizationsResponse) {
     option (google.api.http) = {
-      post: "/v1/account/my_organizations_by_email"
-      body: "*"
+      get: "/v1/account/my_organizations_by_email"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get My Organizations By Email",
@@ -635,8 +632,7 @@ service AccountService {
   }
   rpc GetAccountV2(GetAccountV2Request) returns (GetAccountV2Response) {
     option (google.api.http) = {
-      post: "/v1/account/get_account"
-      body: "*"
+      get: "/v1/account/get_account"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get",
@@ -670,8 +666,7 @@ service AccountService {
   rpc GetAccountV2ByEnvironmentID(GetAccountV2ByEnvironmentIDRequest)
       returns (GetAccountV2ByEnvironmentIDResponse) {
     option (google.api.http) = {
-      post: "/v1/account/get_account_by_environment"
-      body: "*"
+      get: "/v1/account/get_account_by_environment"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "Get Account By Environment",
@@ -704,8 +699,7 @@ service AccountService {
   }
   rpc ListAccountsV2(ListAccountsV2Request) returns (ListAccountsV2Response) {
     option (google.api.http) = {
-      post: "/v1/account/list_accounts"
-      body: "*"
+      get: "/v1/account/list_accounts"
     };
     option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
       summary: "List",

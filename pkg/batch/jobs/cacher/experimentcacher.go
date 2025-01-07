@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -77,7 +77,11 @@ func (c *experimentCacher) Run(ctx context.Context) error {
 			return err
 		}
 		updatedInstances := c.putCache(&expproto.Experiments{Experiments: experiments}, env.Id)
-		c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
+		c.logger.Debug("Caching experiments",
+			zap.String("environmentId", env.Id),
+			zap.Int("experimentSize", len(experiments)),
+			zap.Int("updatedInstances", updatedInstances),
+		)
 	}
 	return nil
 }

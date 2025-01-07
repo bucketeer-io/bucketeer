@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ func NewOnDemandSubscriber(
 }
 
 func (s *onDemandSubscriber) Run(ctx context.Context) {
-	s.logger.Info("onDemandSubscriber starting",
+	s.logger.Debug("onDemandSubscriber starting",
 		zap.String("name", s.name),
 		zap.String("project", s.configuration.Project),
 		zap.String("subscription", s.configuration.Subscription),

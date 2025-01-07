@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -561,7 +561,7 @@ func (s *gatewayService) findEnvironmentAPIKey(
 	if err == nil {
 		return envAPIKey, nil
 	}
-	s.logger.Info(
+	s.logger.Warn(
 		"API key not found in the cache",
 		log.FieldsFromImcomingContext(ctx).AddFields(
 			zap.Error(err),
@@ -683,7 +683,7 @@ func (s *gatewayService) getSegmentUsers(
 	if err == nil {
 		return segmentUsers, nil
 	}
-	s.logger.Info(
+	s.logger.Warn(
 		"No cached data for SegmentUsers",
 		log.FieldsFromImcomingContext(ctx).AddFields(
 			zap.Error(err),
@@ -728,7 +728,7 @@ func (s *gatewayService) getFeatures(
 	if err == nil {
 		return fs.Features, nil
 	}
-	s.logger.Info(
+	s.logger.Warn(
 		"No cached data for Features",
 		log.FieldsFromImcomingContext(ctx).AddFields(
 			zap.Error(err),

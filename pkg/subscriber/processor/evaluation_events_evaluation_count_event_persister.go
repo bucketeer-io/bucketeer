@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -130,7 +130,6 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 			}
 			if previous, ok := batch[id]; ok {
 				previous.Ack()
-				p.logger.Warn("Message with duplicate id", zap.String("id", id))
 				subscriberHandledCounter.WithLabelValues(subscriberEvaluationCount, codes.DuplicateID.String()).Inc()
 			}
 			batch[id] = msg
@@ -152,7 +151,7 @@ func (p *evaluationCountEventPersister) Process(ctx context.Context, msgChan <-c
 			for _, msg := range batch {
 				msg.Nack()
 			}
-			p.logger.Info("All the left messages were Nack successfully before shutting down",
+			p.logger.Debug("All the left messages were Nack successfully before shutting down",
 				zap.Int("batchSize", len(batch)))
 			return nil
 		}

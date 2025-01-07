@@ -27,6 +27,12 @@ export class Push extends jspb.Message {
   getFcmServiceAccount(): string;
   setFcmServiceAccount(value: string): void;
 
+  getDisabled(): boolean;
+  setDisabled(value: boolean): void;
+
+  getEnvironmentId(): string;
+  setEnvironmentId(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): Push.AsObject;
   static toObject(includeInstance: boolean, msg: Push): Push.AsObject;
@@ -54,5 +60,7 @@ export namespace Push {
     createdAt: number;
     updatedAt: number;
     fcmServiceAccount: string;
+    disabled: boolean;
+    environmentId: string;
   };
 }

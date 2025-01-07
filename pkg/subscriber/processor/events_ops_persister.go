@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -125,7 +125,6 @@ func (e eventsOPSPersister) Process(ctx context.Context, msgChan <-chan *puller.
 			}
 			if previous, ok := batch[id]; ok {
 				previous.Ack()
-				e.logger.Warn("Message with duplicate id", zap.String("id", id))
 				subscriberHandledCounter.WithLabelValues(e.subscriberType, codes.DuplicateID.String()).Inc()
 			}
 			batch[id] = msg
@@ -141,10 +140,10 @@ func (e eventsOPSPersister) Process(ctx context.Context, msgChan <-chan *puller.
 			}
 		case <-ctx.Done():
 			batchSize := len(batch)
-			e.logger.Info("Context is done", zap.Int("batchSize", batchSize))
+			e.logger.Debug("Context is done", zap.Int("batchSize", batchSize))
 			if len(batch) > 0 {
 				e.send(batch)
-				e.logger.Info("All the left messages are processed successfully", zap.Int("batchSize", batchSize))
+				e.logger.Debug("All the left messages are processed successfully", zap.Int("batchSize", batchSize))
 			}
 			return nil
 		}

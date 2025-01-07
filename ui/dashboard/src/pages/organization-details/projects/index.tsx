@@ -71,7 +71,7 @@ const OrganizationProjects = () => {
       )}
       <CollectionLoader
         filters={filters}
-        organizationIds={[organizationId!]}
+        organizationId={organizationId}
         setFilters={onChangeFilters}
         onActionHandler={value => {
           setSelectedProject(value);

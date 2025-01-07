@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -176,7 +176,7 @@ func (s *AccountService) checkSystemAdminRole(
 	if err != nil {
 		switch status.Code(err) {
 		case codes.Unauthenticated:
-			s.logger.Info(
+			s.logger.Error(
 				"Unauthenticated",
 				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 			)
@@ -189,7 +189,7 @@ func (s *AccountService) checkSystemAdminRole(
 			}
 			return nil, dt.Err()
 		case codes.PermissionDenied:
-			s.logger.Info(
+			s.logger.Error(
 				"Permission denied",
 				log.FieldsFromImcomingContext(ctx).AddFields(zap.Error(err))...,
 			)
@@ -240,7 +240,7 @@ func (s *AccountService) checkEnvironmentRole(
 	if err != nil {
 		switch status.Code(err) {
 		case codes.Unauthenticated:
-			s.logger.Info(
+			s.logger.Error(
 				"Unauthenticated",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
@@ -256,7 +256,7 @@ func (s *AccountService) checkEnvironmentRole(
 			}
 			return nil, dt.Err()
 		case codes.PermissionDenied:
-			s.logger.Info(
+			s.logger.Error(
 				"Permission denied",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
@@ -308,7 +308,7 @@ func (s *AccountService) checkOrganizationRole(
 	if err != nil {
 		switch status.Code(err) {
 		case codes.Unauthenticated:
-			s.logger.Info(
+			s.logger.Error(
 				"Unauthenticated",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
@@ -324,7 +324,7 @@ func (s *AccountService) checkOrganizationRole(
 			}
 			return nil, dt.Err()
 		case codes.PermissionDenied:
-			s.logger.Info(
+			s.logger.Error(
 				"Permission denied",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
@@ -376,7 +376,7 @@ func (s *AccountService) checkOrganizationRoleByEnvironmentID(
 	if err != nil {
 		switch status.Code(err) {
 		case codes.Unauthenticated:
-			s.logger.Info(
+			s.logger.Error(
 				"Unauthenticated",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
@@ -392,7 +392,7 @@ func (s *AccountService) checkOrganizationRoleByEnvironmentID(
 			}
 			return nil, dt.Err()
 		case codes.PermissionDenied:
-			s.logger.Info(
+			s.logger.Error(
 				"Permission denied",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),

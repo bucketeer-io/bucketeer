@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -530,8 +530,7 @@ func (s *server) Run(ctx context.Context, metrics metrics.Metrics, logger *zap.L
 			jobs.WithLogger(logger),
 		),
 		cacher.NewFeatureFlagCacher(
-			environmentClient,
-			featureClient,
+			mysqlClient,
 			nonPersistentRedisCaches,
 			jobs.WithLogger(logger),
 		),

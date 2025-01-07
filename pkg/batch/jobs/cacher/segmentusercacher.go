@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -94,7 +94,12 @@ func (c *segmentUserCacher) Run(ctx context.Context) error {
 			}
 			// Update the cache by segment ID
 			updatedInstances := c.putCache(su, env.Id)
-			c.logger.Debug("Updated Redis instances", zap.Int("size", updatedInstances))
+			c.logger.Debug("Caching segments",
+				zap.String("environmentId", env.Id),
+				zap.String("segmentId", seg.Id),
+				zap.Int("userSize", len(users)),
+				zap.Int("updatedInstances", updatedInstances),
+			)
 		}
 	}
 	return nil

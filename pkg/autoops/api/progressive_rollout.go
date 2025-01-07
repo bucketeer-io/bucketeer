@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -432,15 +432,7 @@ func (s *AutoOpsService) ExecuteProgressiveRollout(
 			return err
 		}
 		if err := s.checkStopStatus(progressiveRollout, localizer); err != nil {
-			s.logger.Warn(
-				"Progressive rollout is already stopped",
-				log.FieldsFromImcomingContext(ctx).AddFields(
-					zap.Error(err),
-					zap.String("environmentId", req.EnvironmentId),
-					zap.String("id", progressiveRollout.Id),
-					zap.String("featureId", progressiveRollout.FeatureId),
-				)...,
-			)
+			// If skip if it's already stopped
 			return nil
 		}
 		triggered, err := s.checkAlreadyTriggered(

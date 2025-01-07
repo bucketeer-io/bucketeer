@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -195,7 +195,6 @@ func (c *Client) CreatePuller(subscription, topic string, opts ...ReceiveOption)
 		opt(&options)
 	}
 	s.ReceiveSettings = options
-	c.logger.Info("Create a new puller", zap.Any("receiveSettings", options))
 	return puller.NewPuller(
 		s,
 		puller.WithLogger(c.logger),

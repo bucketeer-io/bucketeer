@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -96,7 +96,6 @@ func (a auditLogPersister) Process(
 				continue
 			}
 			if _, ok := chunk[id]; ok {
-				a.logger.Warn("Message with duplicate id", zap.String("id", id))
 				subscriberHandledCounter.WithLabelValues(subscriberAuditLog, codes.DuplicateID.String()).Inc()
 			}
 			chunk[id] = msg

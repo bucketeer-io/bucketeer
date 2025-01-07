@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -155,7 +155,7 @@ func (p pushSender) send(featureID, environmentId string) error {
 		return err
 	}
 	if len(pushes) == 0 {
-		p.logger.Info("No pushes",
+		p.logger.Debug("No pushes",
 			zap.String("featureId", featureID),
 			zap.String("environmentId", environmentId),
 		)

@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ func NewPush(name, fcmServiceAccount string, tags []string) (*Push, error) {
 		Id:                id.String(),
 		FcmServiceAccount: fcmServiceAccount,
 		Tags:              tags,
+		Disabled:          false,
 		CreatedAt:         now,
 		UpdatedAt:         now,
 	}}
@@ -61,6 +62,7 @@ func NewPush(name, fcmServiceAccount string, tags []string) (*Push, error) {
 func (p *Push) Update(
 	name *wrapperspb.StringValue,
 	tags []string,
+	disabled *wrapperspb.BoolValue,
 ) (*Push, error) {
 	updated := &Push{}
 	if err := copier.Copy(updated, p); err != nil {
@@ -71,6 +73,10 @@ func (p *Push) Update(
 	}
 	if len(tags) > 0 {
 		updated.Tags = tags
+	}
+
+	if disabled != nil {
+		updated.Disabled = disabled.Value
 	}
 
 	updated.UpdatedAt = time.Now().Unix()

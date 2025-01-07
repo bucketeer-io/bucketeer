@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ func (d domainEventInformer) Process(ctx context.Context, msgChan <-chan *puller
 			subscriberReceivedCounter.WithLabelValues(subscriberDomainEvent).Inc()
 			d.handleMessage(msg)
 		case <-ctx.Done():
-			d.logger.Info("subscriber context done, stopped processing messages")
+			d.logger.Debug("subscriber context done, stopped processing messages")
 			return nil
 		}
 	}

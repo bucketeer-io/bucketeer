@@ -98,7 +98,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
         name: jspb.Message.getFieldWithDefault(msg, 5, ''),
         createdAt: jspb.Message.getFieldWithDefault(msg, 6, 0),
         updatedAt: jspb.Message.getFieldWithDefault(msg, 7, 0),
-        fcmServiceAccount: jspb.Message.getFieldWithDefault(msg, 8, '')
+        fcmServiceAccount: jspb.Message.getFieldWithDefault(msg, 8, ''),
+        disabled: jspb.Message.getBooleanFieldWithDefault(msg, 9, false),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 10, '')
       };
 
     if (includeInstance) {
@@ -161,6 +163,14 @@ proto.bucketeer.push.Push.deserializeBinaryFromReader = function (msg, reader) {
         var value = /** @type {string} */ (reader.readString());
         msg.setFcmServiceAccount(value);
         break;
+      case 9:
+        var value = /** @type {boolean} */ (reader.readBool());
+        msg.setDisabled(value);
+        break;
+      case 10:
+        var value = /** @type {string} */ (reader.readString());
+        msg.setEnvironmentId(value);
+        break;
       default:
         reader.skipField();
         break;
@@ -215,6 +225,14 @@ proto.bucketeer.push.Push.serializeBinaryToWriter = function (message, writer) {
   f = message.getFcmServiceAccount();
   if (f.length > 0) {
     writer.writeString(8, f);
+  }
+  f = message.getDisabled();
+  if (f) {
+    writer.writeBool(9, f);
+  }
+  f = message.getEnvironmentId();
+  if (f.length > 0) {
+    writer.writeString(10, f);
   }
 };
 
@@ -347,6 +365,40 @@ proto.bucketeer.push.Push.prototype.getFcmServiceAccount = function () {
  */
 proto.bucketeer.push.Push.prototype.setFcmServiceAccount = function (value) {
   return jspb.Message.setProto3StringField(this, 8, value);
+};
+
+/**
+ * optional bool disabled = 9;
+ * @return {boolean}
+ */
+proto.bucketeer.push.Push.prototype.getDisabled = function () {
+  return /** @type {boolean} */ (
+    jspb.Message.getBooleanFieldWithDefault(this, 9, false)
+  );
+};
+
+/**
+ * @param {boolean} value
+ * @return {!proto.bucketeer.push.Push} returns this
+ */
+proto.bucketeer.push.Push.prototype.setDisabled = function (value) {
+  return jspb.Message.setProto3BooleanField(this, 9, value);
+};
+
+/**
+ * optional string environment_id = 10;
+ * @return {string}
+ */
+proto.bucketeer.push.Push.prototype.getEnvironmentId = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 10, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.push.Push} returns this
+ */
+proto.bucketeer.push.Push.prototype.setEnvironmentId = function (value) {
+  return jspb.Message.setProto3StringField(this, 10, value);
 };
 
 goog.object.extend(exports, proto.bucketeer.push);

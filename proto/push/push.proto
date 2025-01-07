@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,4 +26,6 @@ message Push {
   int64 created_at = 6;
   int64 updated_at = 7;
   string fcm_service_account = 8;
+  bool disabled = 9;
+  string environment_id = 10;
 }

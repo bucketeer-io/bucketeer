@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ func (s *FeatureService) AddSegmentUser(
 		return nil, err
 	}
 	if err := validateAddSegmentUserRequest(req, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -60,7 +60,7 @@ func (s *FeatureService) AddSegmentUser(
 		return nil, err
 	}
 	if err := validateAddSegmentUserCommand(req.Command, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -97,7 +97,7 @@ func (s *FeatureService) DeleteSegmentUser(
 		return nil, err
 	}
 	if err := validateDeleteSegmentUserRequest(req, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -107,7 +107,7 @@ func (s *FeatureService) DeleteSegmentUser(
 		return nil, err
 	}
 	if err := validateDeleteSegmentUserCommand(req.Command, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -256,7 +256,7 @@ func (s *FeatureService) GetSegmentUser(
 		return nil, err
 	}
 	if err := validateGetSegmentUserRequest(req, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -312,7 +312,7 @@ func (s *FeatureService) ListSegmentUsers(
 		return nil, err
 	}
 	if err := validateListSegmentUsersRequest(req, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -391,7 +391,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 		return nil, err
 	}
 	if err := validateBulkUploadSegmentUsersRequest(req, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -401,7 +401,7 @@ func (s *FeatureService) BulkUploadSegmentUsers(
 		return nil, err
 	}
 	if err := validateBulkUploadSegmentUsersCommand(req.Command, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),
@@ -552,7 +552,7 @@ func (s *FeatureService) BulkDownloadSegmentUsers(
 		return nil, err
 	}
 	if err := validateBulkDownloadSegmentUsersRequest(req, localizer); err != nil {
-		s.logger.Info(
+		s.logger.Error(
 			"Invalid argument",
 			log.FieldsFromImcomingContext(ctx).AddFields(
 				zap.Error(err),

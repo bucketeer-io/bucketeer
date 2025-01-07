@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -210,24 +210,27 @@ func TestUpdatePush(t *testing.T) {
 		{
 			desc: "success",
 			origin: &Push{&pushproto.Push{
-				Name: "a",
-				Tags: []string{"tag-0"},
+				Name:     "a",
+				Tags:     []string{"tag-0"},
+				Disabled: false,
 			}},
 			inputName:   &wrapperspb.StringValue{Value: "b"},
 			inputTags:   []string{"tag-0", "tag-1"},
 			expectedErr: nil,
 			expected: &Push{&pushproto.Push{
-				Name: "b",
-				Tags: []string{"tag-0", "tag-1"},
+				Name:     "b",
+				Tags:     []string{"tag-0", "tag-1"},
+				Disabled: true,
 			}},
 		},
 	}
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
-			updatedPush, err := p.origin.Update(p.inputName, p.inputTags)
+			updatedPush, err := p.origin.Update(p.inputName, p.inputTags, wrapperspb.Bool(true))
 			assert.Equal(t, p.expectedErr, err)
 			assert.Equal(t, p.expected.Name, updatedPush.Name)
 			assert.Equal(t, p.expected.Tags, updatedPush.Tags)
+			assert.Equal(t, p.expected.Disabled, updatedPush.Disabled)
 		})
 	}
 }

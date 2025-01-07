@@ -1,4 +1,4 @@
-// Copyright 2024 The Bucketeer Authors.
+// Copyright 2025 The Bucketeer Authors.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -118,22 +118,16 @@ func (s *Server) Run() {
 	}
 	s.setupRPC()
 	s.setupHTTP()
-	s.logger.Info(fmt.Sprintf("Running on %d", s.port))
 	s.runServer()
 }
 
 func (s *Server) Stop(timeout time.Duration) {
-	s.logger.Info("Server is going to shut down")
-	startTime := time.Now()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	err := s.httpServer.Shutdown(ctx)
 	if err != nil {
 		s.logger.Error("Server failed to shut down", zap.Error(err))
 	}
-	s.logger.Info("Server has shut down gracefully",
-		zap.Duration("elapsedTime", time.Since(startTime)),
-	)
 }
 
 func (s *Server) setupRPC() {
