@@ -29649,6 +29649,11 @@
                 "id": 10,
                 "name": "environment_id",
                 "type": "string"
+              },
+              {
+                "id": 11,
+                "name": "environment_name",
+                "type": "string"
               }
             ],
             "reserved_ids": [

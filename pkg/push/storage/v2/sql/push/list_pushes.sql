@@ -1,13 +1,16 @@
 SELECT
-    id,
-    fcm_service_account,
-    tags,
-    deleted,
-    name,
-    created_at,
-    updated_at,
-    disabled,
-    environment_id
+    p.id,
+    p.fcm_service_account,
+    p.tags,
+    p.deleted,
+    p.name,
+    p.created_at,
+    p.updated_at,
+    p.disabled,
+    p.environment_id,
+    env.name AS environment_name
 FROM
-    push
+    push as p
+JOIN
+    environment_v2 env ON p.environment_id = env.id
 %s %s %s 

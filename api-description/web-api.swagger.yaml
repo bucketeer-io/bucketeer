@@ -6227,6 +6227,8 @@ definitions:
         type: boolean
       environmentId:
         type: string
+      environmentName:
+        type: string
   pushRenamePushCommand:
     type: object
     properties:
