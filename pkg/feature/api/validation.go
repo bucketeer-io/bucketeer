@@ -145,17 +145,24 @@ func validateCreateFeatureRequest(cmd *featureproto.CreateFeatureCommand, locali
 }
 
 func validateCreateSegmentRequest(cmd *featureproto.CreateSegmentCommand, localizer locale.Localizer) error {
-	if cmd == nil {
-		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+	if cmd.Name == "" {
+		dt, err := statusMissingName.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
 		})
 		if err != nil {
 			return statusInternal.Err()
 		}
 		return dt.Err()
 	}
-	if cmd.Name == "" {
+	return nil
+}
+
+func validateCreateSegmentNoCommandRequest(
+	req *featureproto.CreateSegmentRequest,
+	localizer locale.Localizer,
+) error {
+	if req.Name == "" {
 		dt, err := statusMissingName.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),

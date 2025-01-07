@@ -25,6 +25,8 @@ var global =
 
 var google_api_annotations_pb = require('../../google/api/annotations_pb.js');
 goog.object.extend(proto, google_api_annotations_pb);
+var google_api_field_behavior_pb = require('../../google/api/field_behavior_pb.js');
+goog.object.extend(proto, google_api_field_behavior_pb);
 var google_protobuf_wrappers_pb = require('google-protobuf/google/protobuf/wrappers_pb.js');
 goog.object.extend(proto, google_protobuf_wrappers_pb);
 var protoc$gen$openapiv2_options_annotations_pb = require('../../protoc-gen-openapiv2/options/annotations_pb.js');
@@ -9331,7 +9333,9 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
             includeInstance,
             f
           ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
+        name: jspb.Message.getFieldWithDefault(msg, 3, ''),
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        description: jspb.Message.getFieldWithDefault(msg, 5, '')
       };
 
     if (includeInstance) {
@@ -9381,9 +9385,17 @@ proto.bucketeer.feature.CreateSegmentRequest.deserializeBinaryFromReader =
           );
           msg.setCommand(value);
           break;
+        case 3:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setName(value);
+          break;
         case 4:
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
+          break;
+        case 5:
+          var value = /** @type {string} */ (reader.readString());
+          msg.setDescription(value);
           break;
         default:
           reader.skipField();
@@ -9425,9 +9437,17 @@ proto.bucketeer.feature.CreateSegmentRequest.serializeBinaryToWriter =
         proto_feature_command_pb.CreateSegmentCommand.serializeBinaryToWriter
       );
     }
+    f = message.getName();
+    if (f.length > 0) {
+      writer.writeString(3, f);
+    }
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(4, f);
+    }
+    f = message.getDescription();
+    if (f.length > 0) {
+      writer.writeString(5, f);
     }
   };
 
@@ -9475,6 +9495,24 @@ proto.bucketeer.feature.CreateSegmentRequest.prototype.hasCommand =
   };
 
 /**
+ * optional string name = 3;
+ * @return {string}
+ */
+proto.bucketeer.feature.CreateSegmentRequest.prototype.getName = function () {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ''));
+};
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.CreateSegmentRequest} returns this
+ */
+proto.bucketeer.feature.CreateSegmentRequest.prototype.setName = function (
+  value
+) {
+  return jspb.Message.setProto3StringField(this, 3, value);
+};
+
+/**
  * optional string environment_id = 4;
  * @return {string}
  */
@@ -9492,6 +9530,26 @@ proto.bucketeer.feature.CreateSegmentRequest.prototype.getEnvironmentId =
 proto.bucketeer.feature.CreateSegmentRequest.prototype.setEnvironmentId =
   function (value) {
     return jspb.Message.setProto3StringField(this, 4, value);
+  };
+
+/**
+ * optional string description = 5;
+ * @return {string}
+ */
+proto.bucketeer.feature.CreateSegmentRequest.prototype.getDescription =
+  function () {
+    return /** @type {string} */ (
+      jspb.Message.getFieldWithDefault(this, 5, '')
+    );
+  };
+
+/**
+ * @param {string} value
+ * @return {!proto.bucketeer.feature.CreateSegmentRequest} returns this
+ */
+proto.bucketeer.feature.CreateSegmentRequest.prototype.setDescription =
+  function (value) {
+    return jspb.Message.setProto3StringField(this, 5, value);
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
