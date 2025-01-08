@@ -146,7 +146,7 @@ const EditNotificationModal = ({
       url: notification.recipient.slackChannelRecipient.webhookUrl,
       environment: notification.environmentId,
       language: notification.recipient.language,
-      types: notification.sourceTypes
+      types: notification.sourceTypes.sort()
     }
   });
 
@@ -196,7 +196,7 @@ const EditNotificationModal = ({
 
   return (
     <SlideModal
-      title={t('edit-notification')}
+      title={t('update-notification')}
       isOpen={isOpen}
       onClose={onClose}
     >
@@ -390,12 +390,12 @@ const EditNotificationModal = ({
                           onCheckedChange={checked => {
                             if (checked) {
                               checkedTypes.push(item.value);
-                              field.onChange(checkedTypes);
+                              field.onChange(checkedTypes.sort());
                             } else {
                               const checkedItems = checkedTypes.filter(
                                 v => v !== item.value
                               );
-                              field.onChange(checkedItems);
+                              field.onChange(checkedItems.sort());
                             }
                           }}
                         />

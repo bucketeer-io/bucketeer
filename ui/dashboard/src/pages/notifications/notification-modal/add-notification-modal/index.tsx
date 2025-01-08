@@ -48,7 +48,7 @@ export interface AddNotificationForm {
 
 export const formSchema = yup.object().shape({
   name: yup.string().required(),
-  url: yup.string().required(),
+  url: yup.string().required().url(),
   environment: yup.string().required(),
   language: yup.mixed<NotificationLanguage>().required(),
   types: yup.array().min(1, 'Required').required()
