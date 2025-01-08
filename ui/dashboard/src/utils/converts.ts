@@ -25,3 +25,24 @@ export const truncateTextCenter = (value: string, maxLen: number = 14) => {
 
   return `${start}...${end}`;
 };
+
+export const formatFileSize = (size: number): string => {
+  if (size === 0) return '0 Bytes';
+
+  const units = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
+  const i = Math.floor(Math.log(size) / Math.log(1024));
+
+  const formattedSize = (size / Math.pow(1024, i)).toFixed(2); // Two decimal places
+  return `${formattedSize} ${units[i]}`;
+};
+
+export const convertFileToUnit8Array = (
+  file: Blob,
+  onLoad: (data: Uint8Array) => void
+) => {
+  const reader = new FileReader();
+  reader.readAsArrayBuffer(file);
+  reader.onload = () => {
+    onLoad(new Uint8Array(reader.result as ArrayBuffer));
+  };
+};

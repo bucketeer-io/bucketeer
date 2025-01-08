@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { pushCreator } from '@api/push';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -9,6 +10,7 @@ import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
+import { convertFileToUnit8Array } from 'utils/converts';
 import { IconInfo } from '@icons';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
 import Button from 'components/button';
@@ -24,7 +26,7 @@ import Form from 'components/form';
 import Icon from 'components/icon';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
-import TextArea from 'components/textarea';
+import UploadFiles from 'components/upload-files';
 
 interface AddPushModalProps {
   isOpen: boolean;
@@ -51,6 +53,8 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
   const queryClient = useQueryClient();
   const { t } = useTranslation(['common', 'form']);
   const { notify } = useToast();
+
+  const [files, setFiles] = useState<File[]>([]);
 
   const { data: collection, isLoading: isLoadingEnvs } = useFetchEnvironments({
     organizationId: currentEnvironment.organizationId
@@ -82,19 +86,28 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
   } = form;
 
   const onSubmit: SubmitHandler<AddPushForm> = async values => {
-    await pushCreator(values).then(() => {
+    try {
+      await pushCreator(values).then(() => {
+        notify({
+          toastType: 'toast',
+          messageType: 'success',
+          message: (
+            <span>
+              <b>{values.name}</b> {` has been successfully created!`}
+            </span>
+          )
+        });
+        invalidatePushes(queryClient);
+        onClose();
+      });
+    } catch (error) {
+      const errorMessage = (error as Error)?.message;
       notify({
         toastType: 'toast',
-        messageType: 'success',
-        message: (
-          <span>
-            <b>{values.name}</b> {` has been successfully created!`}
-          </span>
-        )
+        messageType: 'error',
+        message: errorMessage || 'Something went wrong.'
       });
-      invalidatePushes(queryClient);
-      onClose();
-    });
+    }
   };
 
   return (
@@ -140,10 +153,21 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                     </>
                   </Form.Label>
                   <Form.Control>
-                    <TextArea
-                      placeholder={`${t('form:placeholder-firebase')}`}
-                      rows={3}
-                      {...field}
+                    <UploadFiles
+                      files={files}
+                      accept={['.json']}
+                      acceptTypeText="JSON"
+                      onChange={files => {
+                        if (files?.length) {
+                          setFiles(files);
+                          convertFileToUnit8Array(files[0], data =>
+                            field.onChange(data)
+                          );
+                        } else {
+                          setFiles([]);
+                          field.onChange('');
+                        }
+                      }}
                     />
                   </Form.Control>
                   <Form.Message />
