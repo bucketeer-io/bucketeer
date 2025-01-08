@@ -11,7 +11,7 @@ import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
-import Upload from 'elements/upload';
+import Upload from 'components/upload-files';
 
 interface AddUserSegmentModalProps {
   isOpen: boolean;
@@ -29,7 +29,7 @@ const formSchema = yup.object().shape({
   name: yup.string().required(),
   description: yup.string(),
   id: yup.string(),
-  userIds: yup.string(),
+  userIds: yup.string()
 });
 
 const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
@@ -43,7 +43,7 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
       id: '',
       name: '',
       description: '',
-      userIds: '',
+      userIds: ''
     }
   });
 
@@ -123,6 +123,7 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
                     <Upload
                       files={files}
                       className="border-l border-primary-500 pl-4"
+                      uploadClassName="min-h-[200px] h-[200px]"
                       onChange={files => setFiles(files)}
                     />
                   </div>

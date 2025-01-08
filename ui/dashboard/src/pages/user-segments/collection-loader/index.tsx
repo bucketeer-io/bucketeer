@@ -8,7 +8,11 @@ import PageLayout from 'elements/page-layout';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
 import { collection } from '../page-loader';
-import { UserSegments, UserSegmentsActionsType, UserSegmentsFilters } from '../types';
+import {
+  UserSegments,
+  UserSegmentsActionsType,
+  UserSegmentsFilters
+} from '../types';
 
 const CollectionLoader = ({
   onAdd,
@@ -25,7 +29,7 @@ const CollectionLoader = ({
   const columns = useColumns({ onActionHandler });
   const isLoading = false;
   const isError = false;
-  
+
   const onSortingChangeHandler = (sorting: SortingState) => {
     const updateOrderBy =
       sorting.length > 0

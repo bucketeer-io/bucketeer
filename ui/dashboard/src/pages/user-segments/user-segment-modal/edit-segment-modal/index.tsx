@@ -15,7 +15,7 @@ import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import { RadioGroup, RadioGroupItem } from 'components/radio';
 import TextArea from 'components/textarea';
-import Upload from 'elements/upload';
+import Upload from 'components/upload-files';
 
 interface EditUserSegmentModalProps {
   userSegment: UserSegments;
@@ -139,12 +139,12 @@ const EditUserSegmentModal = ({
                 </div>
                 {userIdsType === 'upload' && (
                   <div className="flex w-full max-w-full h-fit gap-x-4 pl-8">
-                    <Divider
-                      vertical
-                      width={1}
-                      className="border-primary-500 !h-[200px]"
+                    <Upload
+                      files={files}
+                      className="border-l border-primary-500 pl-4"
+                      uploadClassName="min-h-[200px] h-[200px]"
+                      onChange={files => setFiles(files)}
                     />
-                    <Upload files={files} onChange={files => setFiles(files)} />
                   </div>
                 )}
               </div>
@@ -163,11 +163,18 @@ const EditUserSegmentModal = ({
                   </label>
                 </div>
                 {userIdsType === 'typing' && (
-                  <TextArea
-                    placeholder={t('form:placeholder-enter-user-ids')}
-                    rows={4}
-                    onChange={e => setValue('userIds', e.target.value)}
-                  />
+                  <div className="flex w-full max-w-full h-fit gap-x-4 pl-8">
+                    <Divider
+                      vertical
+                      width={1}
+                      className="border-primary-500 !h-[120px]"
+                    />
+                    <TextArea
+                      placeholder={t('form:placeholder-enter-user-ids')}
+                      rows={4}
+                      onChange={e => setValue('userIds', e.target.value)}
+                    />
+                  </div>
                 )}
               </div>
             </RadioGroup>
