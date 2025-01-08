@@ -45,6 +45,17 @@ export const uint8ArrayToBase64 = (uint8Array: Uint8Array): string => {
 
 export const covertFileToByteString = (
   file: Blob,
+  onLoad: (data: Uint8Array) => void
+) => {
+  const reader = new FileReader();
+  reader.readAsArrayBuffer(file);
+  reader.onload = () => {
+    onLoad(new Uint8Array(reader.result as ArrayBuffer));
+  };
+};
+
+export const covertFileToUint8ToBase64 = (
+  file: Blob,
   onLoad: (data: string) => void
 ) => {
   const reader = new FileReader();

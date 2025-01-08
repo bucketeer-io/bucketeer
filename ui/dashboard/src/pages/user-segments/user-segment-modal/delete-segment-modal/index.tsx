@@ -1,7 +1,7 @@
 import { Trans } from 'react-i18next';
 import { useTranslation } from 'i18n';
+import { UserSegment } from '@types';
 import { IconDelete } from '@icons';
-import { UserSegments } from 'pages/user-segments/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import DialogModal from 'components/modal/dialog';
@@ -10,7 +10,7 @@ export type DeleteUserSegmentProps = {
   onSubmit: () => void;
   isOpen: boolean;
   onClose: () => void;
-  userSegment: UserSegments;
+  userSegment: UserSegment;
   loading: boolean;
 };
 

@@ -8,16 +8,17 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { PAGE_PATH_USER_SEGMENTS } from 'constants/routing';
 import { useTranslation } from 'i18n';
+import { UserSegment } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
 import { cn } from 'utils/style';
 import { Popover } from 'components/popover';
-import { UserSegments, UserSegmentsActionsType } from '../types';
+import { UserSegmentsActionsType } from '../types';
 
 export const useColumns = ({
   onActionHandler
 }: {
-  onActionHandler: (value: UserSegments, type: UserSegmentsActionsType) => void;
-}): ColumnDef<UserSegments>[] => {
+  onActionHandler: (value: UserSegment, type: UserSegmentsActionsType) => void;
+}): ColumnDef<UserSegment>[] => {
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
 
@@ -63,10 +64,12 @@ export const useColumns = ({
         return (
           <div
             className="flex-center w-fit px-2 py-1.5 rounded bg-primary-50 text-primary-500 typo-para-medium cursor-pointer"
-            onClick={() => onActionHandler(segment, 'FLAG')}
+            onClick={() =>
+              segment?.features?.length && onActionHandler(segment, 'FLAG')
+            }
           >
-            {segment.connections}
-            {` ${segment.connections === 1 ? 'Flag' : 'Flags'}`}
+            {segment?.features?.length}
+            {` ${segment?.features?.length === 1 ? 'Flag' : 'Flags'}`}
           </div>
         );
       }
@@ -79,7 +82,9 @@ export const useColumns = ({
         const segment = row.original;
         return (
           <div className="text-gray-700 typo-para-medium">
-            {formatDateTime(segment.updatedAt)}
+            {Number(segment.updatedAt) === 0
+              ? t('never')
+              : formatDateTime(segment.updatedAt)}
           </div>
         );
       }
@@ -95,13 +100,11 @@ export const useColumns = ({
             className={cn(
               'typo-para-small text-accent-green-500 bg-accent-green-50 px-2 py-[3px] w-fit rounded',
               {
-                'bg-gray-200 text-gray-600': segment.status === 'not-in-use',
-                'text-accent-blue-500 bg-accent-blue-50':
-                  segment.status === 'new'
+                'bg-gray-200 text-gray-600': !segment.isInUseStatus
               }
             )}
           >
-            {segment.status}
+            {segment.isInUseStatus ? 'In Use' : 'Not In Use'}
           </div>
         );
       }

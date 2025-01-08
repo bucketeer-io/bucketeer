@@ -1,18 +1,16 @@
 import { SortingState } from '@tanstack/react-table';
+import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { sortingListFields } from 'constants/collection';
+import { UserSegment } from '@types';
 import Pagination from 'components/pagination';
 import CollectionEmpty from 'elements/collection/collection-empty';
 import { DataTable } from 'elements/data-table';
 import PageLayout from 'elements/page-layout';
 import { useColumns } from '../collection-layout/data-collection';
 import { EmptyCollection } from '../collection-layout/empty-collection';
-import { collection } from '../page-loader';
-import {
-  UserSegments,
-  UserSegmentsActionsType,
-  UserSegmentsFilters
-} from '../types';
+import { UserSegmentsActionsType, UserSegmentsFilters } from '../types';
+import { useFetchSegments } from './use-fetch-segment';
 
 const CollectionLoader = ({
   onAdd,
@@ -24,11 +22,21 @@ const CollectionLoader = ({
   filters: UserSegmentsFilters;
   setFilters: (values: Partial<UserSegmentsFilters>) => void;
   organizationIds?: string[];
-  onActionHandler: (value: UserSegments, type: UserSegmentsActionsType) => void;
+  onActionHandler: (value: UserSegment, type: UserSegmentsActionsType) => void;
 }) => {
   const columns = useColumns({ onActionHandler });
-  const isLoading = false;
-  const isError = false;
+  const { consoleAccount } = useAuth();
+  const currenEnvironment = getCurrentEnvironment(consoleAccount!);
+
+  const {
+    data: collection,
+    isLoading,
+    refetch,
+    isError
+  } = useFetchSegments({
+    ...filters,
+    environmentId: currenEnvironment.id
+  });
 
   const onSortingChangeHandler = (sorting: SortingState) => {
     const updateOrderBy =
@@ -42,7 +50,7 @@ const CollectionLoader = ({
     });
   };
 
-  const userSegments = collection?.userSegments || [];
+  const userSegments = collection?.segments || [];
   const totalCount = Number(collection?.totalCount) || 0;
 
   const emptyState = (
@@ -55,7 +63,7 @@ const CollectionLoader = ({
   );
 
   return isError ? (
-    <PageLayout.ErrorState onRetry={() => {}} />
+    <PageLayout.ErrorState onRetry={refetch} />
   ) : (
     <>
       <DataTable

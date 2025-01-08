@@ -4,8 +4,8 @@ import { Trans } from 'react-i18next';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
+import { UserSegment } from '@types';
 import { IconToastWarning } from '@icons';
-import { UserSegments } from 'pages/user-segments/types';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
@@ -18,7 +18,7 @@ import TextArea from 'components/textarea';
 import Upload from 'components/upload-files';
 
 interface EditUserSegmentModalProps {
-  userSegment: UserSegments;
+  userSegment: UserSegment;
   isOpen: boolean;
   onClose: () => void;
 }

@@ -4,6 +4,7 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { usePartialState, useToggleOpen } from 'hooks';
 import { useTranslation } from 'i18n';
 import pickBy from 'lodash/pickBy';
+import { UserSegment } from '@types';
 import { isEmptyObject, isNotEmpty } from 'utils/data-type';
 import { useSearchParams } from 'utils/search-params';
 import Button from 'components/button';
@@ -11,11 +12,7 @@ import Icon from 'components/icon';
 import Filter from 'elements/filter';
 import PageLayout from 'elements/page-layout';
 import CollectionLoader from './collection-loader';
-import {
-  UserSegments,
-  UserSegmentsActionsType,
-  UserSegmentsFilters
-} from './types';
+import { UserSegmentsActionsType, UserSegmentsFilters } from './types';
 import FilterUserSegmentModal from './user-segment-modal/filter-segment-modal';
 
 const PageContent = ({
@@ -25,9 +22,9 @@ const PageContent = ({
   onDelete
 }: {
   onAdd: () => void;
-  onEdit: (v: UserSegments) => void;
-  onOpenFlagModal: (v: UserSegments) => void;
-  onDelete: (v: UserSegments) => void;
+  onEdit: (v: UserSegment) => void;
+  onOpenFlagModal: (v: UserSegment) => void;
+  onDelete: (v: UserSegment) => void;
 }) => {
   const { t } = useTranslation(['common']);
   const { consoleAccount } = useAuth();
@@ -56,7 +53,7 @@ const PageContent = ({
   };
 
   const onActionHandler = (
-    segment: UserSegments,
+    segment: UserSegment,
     type: UserSegmentsActionsType
   ) => {
     if (type === 'EDIT') return onEdit(segment);

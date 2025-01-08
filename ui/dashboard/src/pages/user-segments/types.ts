@@ -1,30 +1,16 @@
 import { SortingState } from '@tanstack/react-table';
-import { OrderBy, OrderDirection, Account } from '@types';
-
-export type UserSegments = {
-  id: string;
-  name: string;
-  description: string;
-  rules: string;
-  createdAt: string;
-  updatedAt: string;
-  version: string;
-  deleted: boolean;
-  includedUserCount: number;
-  excludedUserCount: number;
-  status: string;
-  isInUseStatus: boolean;
-  features: unknown;
-  connections: number;
-};
+import { OrderBy, OrderDirection, Account, FeatureSegmentStatus } from '@types';
 
 export interface UserSegmentsFilters {
-  page: number;
-  orderBy: OrderBy;
-  orderDirection: OrderDirection;
+  pageSize?: number;
+  page?: number;
+  searchQuery?: string;
+  orderBy?: OrderBy;
+  orderDirection?: OrderDirection;
   disabled?: boolean;
-  searchQuery: string;
-  organizationId?: string;
+  status?: FeatureSegmentStatus;
+  isInUseStatus?: boolean;
+  environmentId: string;
 }
 
 export interface CollectionProps {

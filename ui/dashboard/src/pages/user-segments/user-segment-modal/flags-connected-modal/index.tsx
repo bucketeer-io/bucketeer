@@ -1,4 +1,5 @@
 import { useTranslation } from 'i18n';
+import { UserSegment } from '@types';
 import { IconFlagConnected } from '@icons';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
@@ -6,11 +7,16 @@ import Icon from 'components/icon';
 import DialogModal from 'components/modal/dialog';
 
 export type DeleteMemberProps = {
+  segment: UserSegment;
   isOpen: boolean;
   onClose: () => void;
 };
 
-const FlagsConnectedModal = ({ isOpen, onClose }: DeleteMemberProps) => {
+const FlagsConnectedModal = ({
+  segment,
+  isOpen,
+  onClose
+}: DeleteMemberProps) => {
   const { t } = useTranslation(['common']);
 
   return (
@@ -28,18 +34,15 @@ const FlagsConnectedModal = ({ isOpen, onClose }: DeleteMemberProps) => {
           </div>
         </div>
         <div className="flex flex-col w-full gap-y-5 p-4 bg-primary-50 rounded">
-          <div className="flex items-center gap-x-2 w-full truncate typo-para-medium text-primary-500">
-            <p>1.</p>
-            <p className="underline">
-              This is a big name for the first feature flag
-            </p>
-          </div>
-          <div className="flex items-center gap-x-2 w-full truncate typo-para-medium text-primary-500">
-            <p>2.</p>
-            <p className="underline">
-              This is a big name for the first feature flag
-            </p>
-          </div>
+          {segment?.features?.map((item, index) => (
+            <div
+              key={index}
+              className="flex items-center gap-x-2 w-full truncate typo-para-medium text-primary-500"
+            >
+              <p>{index + 1}.</p>
+              <p className="underline">{item.name}</p>
+            </div>
+          ))}
         </div>
       </div>
       <ButtonBar

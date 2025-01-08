@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import { userSegmentBulkUpload, userSegmentCreator } from '@api/user-segment';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { invalidateAPIKeys } from '@queries/api-keys';
+import { useQueryClient } from '@tanstack/react-query';
+import { getCurrentEnvironment, useAuth } from 'auth';
+import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
 import * as yup from 'yup';
+import { covertFileToUint8ToBase64 } from 'utils/converts';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
 import Divider from 'components/divider';
@@ -34,6 +40,11 @@ const formSchema = yup.object().shape({
 
 const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
   const { t } = useTranslation(['common', 'form']);
+  const { consoleAccount } = useAuth();
+  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
+  const { notify } = useToast();
+  const queryClient = useQueryClient();
+
   const [userIdsType, setUserIdsType] = useState('upload');
   const [files, setFiles] = useState<File[]>([]);
 
@@ -52,8 +63,57 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
     // formState: { isValid, isSubmitting }
   } = form;
 
-  const onSubmit: SubmitHandler<AddUserSegmentForm> = values => {
-    console.log({ values });
+  const addSuccess = (name: string) => {
+    notify({
+      toastType: 'toast',
+      messageType: 'success',
+      message: (
+        <span>
+          <b>{name}</b> {` has been successfully created!`}
+        </span>
+      )
+    });
+    invalidateAPIKeys(queryClient);
+    onClose();
+  };
+
+  const onSubmit: SubmitHandler<AddUserSegmentForm> = async values => {
+    try {
+      const resp = await userSegmentCreator({
+        environmentId: currentEnvironment.id,
+        name: values.name,
+        description: values.description
+      });
+
+      if (resp) {
+        let file: File | null = null;
+        if (files.length) {
+          file = files[0];
+        } else if (values.userIds?.length) {
+          // Convert string to file object
+          file = new File([values.userIds], 'filename.txt', {
+            type: 'text/plain'
+          });
+        }
+        if (file) {
+          covertFileToUint8ToBase64(file, async base64String => {
+            const uploadResp = await userSegmentBulkUpload({
+              segmentId: resp.segment.id,
+              environmentId: currentEnvironment.id,
+              state: 'INCLUDED',
+              data: base64String
+            });
+            if (uploadResp) addSuccess(values.name);
+          });
+        } else addSuccess(values.name);
+      }
+    } catch (error) {
+      notify({
+        toastType: 'toast',
+        messageType: 'error',
+        message: (error as Error)?.message || 'Something went wrong.'
+      });
+    }
   };
 
   return (
