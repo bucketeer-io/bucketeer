@@ -65,12 +65,6 @@ func TestCreateSegmentMySQL(t *testing.T) {
 		expected      error
 	}{
 		{
-			setup:         nil,
-			cmd:           nil,
-			environmentId: "ns0",
-			expected:      createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
-		},
-		{
 			setup: nil,
 			cmd: &featureproto.CreateSegmentCommand{
 				Name:        "",
@@ -102,6 +96,69 @@ func TestCreateSegmentMySQL(t *testing.T) {
 		ctx = setToken(ctx)
 		req := &featureproto.CreateSegmentRequest{Command: tc.cmd, EnvironmentId: tc.environmentId}
 		_, err := service.CreateSegment(ctx, req)
+		assert.Equal(t, tc.expected, err)
+	}
+}
+
+func TestCreateSegmentNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	testcases := []struct {
+		desc     string
+		setup    func(*FeatureService)
+		req      *featureproto.CreateSegmentRequest
+		expected error
+	}{
+		{
+			desc:  "error: missing name",
+			setup: nil,
+			req: &featureproto.CreateSegmentRequest{
+				Name:          "",
+				Description:   "description",
+				EnvironmentId: "ns0",
+			},
+			expected: createError(statusMissingName, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name")),
+		},
+		{
+			desc: "success",
+			setup: func(s *FeatureService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &featureproto.CreateSegmentRequest{
+				Name:          "name",
+				Description:   "description",
+				EnvironmentId: "ns0",
+			},
+			expected: nil,
+		},
+	}
+	for _, tc := range testcases {
+		service := createFeatureService(mockController)
+		if tc.setup != nil {
+			tc.setup(service)
+		}
+		ctx = setToken(ctx)
+		_, err := service.CreateSegment(ctx, tc.req)
 		assert.Equal(t, tc.expected, err)
 	}
 }

@@ -66,16 +66,8 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			setup:         nil,
 			environmentId: "ns0",
 			segmentID:     "",
-			cmd:           nil,
+			cmd:           &featureproto.BulkUploadSegmentUsersCommand{},
 			expectedErr:   createError(statusMissingSegmentID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "segment_id")),
-		},
-		{
-			desc:          "ErrMissingCommand",
-			setup:         nil,
-			environmentId: "ns0",
-			segmentID:     "id",
-			cmd:           nil,
-			expectedErr:   createError(statusMissingCommand, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command")),
 		},
 		{
 			desc:          "ErrMissingSegmentUsersData",
@@ -169,6 +161,135 @@ func TestBulkUploadSegmentUsersMySQL(t *testing.T) {
 			}
 			ctx = setToken(ctx)
 			_, err := service.BulkUploadSegmentUsers(ctx, req)
+			assert.Equal(t, tc.expectedErr, err)
+		})
+	}
+}
+
+func TestBulkUploadSegmentUsersNoCommandMySQL(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ctx = metadata.NewIncomingContext(ctx, metadata.MD{
+		"accept-language": []string{"ja"},
+	})
+	localizer := locale.NewLocalizer(ctx)
+	createError := func(status *gstatus.Status, msg string) error {
+		st, err := status.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: msg,
+		})
+		require.NoError(t, err)
+		return st.Err()
+	}
+
+	testcases := []struct {
+		desc          string
+		setup         func(*FeatureService)
+		req           *featureproto.BulkUploadSegmentUsersRequest
+		environmentId string
+		expectedErr   error
+	}{
+		{
+			desc:  "ErrMissingSegmentID",
+			setup: nil,
+			req: &featureproto.BulkUploadSegmentUsersRequest{
+				EnvironmentId: "ns0",
+				SegmentId:     "",
+			},
+			expectedErr: createError(statusMissingSegmentID, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "segment_id")),
+		},
+		{
+			desc:  "ErrMissingSegmentUsersData",
+			setup: nil,
+			req: &featureproto.BulkUploadSegmentUsersRequest{
+				EnvironmentId: "ns0",
+				SegmentId:     "id",
+			},
+			expectedErr: createError(statusMissingSegmentUsersData, localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_data")),
+		},
+		{
+			desc:  "ErrExceededMaxSegmentUsersDataSize",
+			setup: nil,
+			req: &featureproto.BulkUploadSegmentUsersRequest{
+				Data:          []byte(strings.Repeat("a", maxSegmentUsersDataSize+1)),
+				EnvironmentId: "ns0",
+				SegmentId:     "id",
+			},
+			expectedErr: createError(statusExceededMaxSegmentUsersDataSize, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "user_data_state")),
+		},
+		{
+			desc:  "ErrUnknownSegmentUserState",
+			setup: nil,
+			req: &featureproto.BulkUploadSegmentUsersRequest{
+				Data:          []byte("data"),
+				State:         featureproto.SegmentUser_State(99),
+				EnvironmentId: "ns0",
+				SegmentId:     "id",
+			},
+			expectedErr: createError(statusUnknownSegmentUserState, localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "user_state")),
+		},
+		{
+			desc: "ErrSegmentNotFound",
+			setup: func(s *FeatureService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(v2fs.ErrSegmentNotFound)
+			},
+			req: &featureproto.BulkUploadSegmentUsersRequest{
+				Data:          []byte("data"),
+				State:         featureproto.SegmentUser_INCLUDED,
+				EnvironmentId: "ns0",
+				SegmentId:     "not_found_id",
+			},
+			expectedErr: createError(statusSegmentNotFound, localizer.MustLocalize(locale.NotFoundError)),
+		},
+		{
+			desc: "ErrSegmentUsersAlreadyUploading",
+			setup: func(s *FeatureService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(createError(statusSegmentUsersAlreadyUploading, localizer.MustLocalize(locale.SegmentUsersAlreadyUploading)))
+			},
+			req: &featureproto.BulkUploadSegmentUsersRequest{
+				Data:          []byte("data"),
+				State:         featureproto.SegmentUser_INCLUDED,
+				EnvironmentId: "ns0",
+				SegmentId:     "id",
+			},
+			expectedErr: createError(statusSegmentUsersAlreadyUploading, localizer.MustLocalize(locale.SegmentUsersAlreadyUploading)),
+		},
+		{
+			desc: "Success",
+			setup: func(s *FeatureService) {
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().BeginTx(gomock.Any()).Return(nil, nil)
+				s.mysqlClient.(*mysqlmock.MockClient).EXPECT().RunInTransaction(
+					gomock.Any(), gomock.Any(), gomock.Any(),
+				).Return(nil)
+			},
+			req: &featureproto.BulkUploadSegmentUsersRequest{
+				Data:          []byte("data"),
+				State:         featureproto.SegmentUser_INCLUDED,
+				EnvironmentId: "ns0",
+				SegmentId:     "id",
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.desc, func(t *testing.T) {
+			service := createFeatureService(mockController)
+			if tc.setup != nil {
+				tc.setup(service)
+			}
+			ctx = setToken(ctx)
+			_, err := service.BulkUploadSegmentUsers(ctx, tc.req)
 			assert.Equal(t, tc.expectedErr, err)
 		})
 	}

@@ -18,6 +18,7 @@ package bucketeer.feature;
 option go_package = "github.com/bucketeer-io/bucketeer/proto/feature";
 
 import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
 import "google/protobuf/wrappers.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
@@ -230,9 +231,16 @@ message CloneFeatureRequest {
 message CloneFeatureResponse {}
 
 message CreateSegmentRequest {
-  CreateSegmentCommand command = 1;
+  CreateSegmentCommand command = 1 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
   reserved 2;
-  string environment_id = 4;
+  string name = 3 [(google.api.field_behavior) = REQUIRED];
+  string environment_id = 4 [(google.api.field_behavior) = REQUIRED];
+  string description = 5;
 }
 
 message CreateSegmentResponse {
@@ -240,9 +248,9 @@ message CreateSegmentResponse {
 }
 
 message GetSegmentRequest {
-  string id = 1;
+  string id = 1 [(google.api.field_behavior) = REQUIRED];
   reserved 2;
-  string environment_id = 3;
+  string environment_id = 3 [(google.api.field_behavior) = REQUIRED];
 }
 
 message GetSegmentResponse {
@@ -268,7 +276,7 @@ message ListSegmentsRequest {
   string search_keyword = 6;
   google.protobuf.Int32Value status = 7;
   google.protobuf.BoolValue is_in_use_status = 8;
-  string environment_id = 9;
+  string environment_id = 9 [(google.api.field_behavior) = REQUIRED];
 }
 
 message ListSegmentsResponse {
@@ -343,8 +351,18 @@ message ListSegmentUsersResponse {
 message BulkUploadSegmentUsersRequest {
   reserved 1;
   string segment_id = 2;
-  BulkUploadSegmentUsersCommand command = 3;
+  BulkUploadSegmentUsersCommand command = 3 [
+    deprecated = true,
+    (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+      description: "deprecated"
+    }
+  ];
   string environment_id = 4;
+  bytes data = 5
+      [(grpc.gateway.protoc_gen_openapiv2.options.openapiv2_field) = {
+        description: "segment user ids separated by comma or new line"
+      }];
+  SegmentUser.State state = 6;
 }
 
 message BulkUploadSegmentUsersResponse {}
@@ -530,9 +548,106 @@ service FeatureService {
       returns (UpdateFeatureTargetingResponse) {}
   rpc CloneFeature(CloneFeatureRequest) returns (CloneFeatureResponse) {}
 
-  rpc CreateSegment(CreateSegmentRequest) returns (CreateSegmentResponse) {}
-  rpc GetSegment(GetSegmentRequest) returns (GetSegmentResponse) {}
-  rpc ListSegments(ListSegmentsRequest) returns (ListSegmentsResponse) {}
+  rpc CreateSegment(CreateSegmentRequest) returns (CreateSegmentResponse) {
+    option (google.api.http) = {
+      post: "/v1/segment"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Create",
+      description: "Create a segment."
+      tags: "segment"
+      operation_id: "web.v1.segment.create"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc GetSegment(GetSegmentRequest) returns (GetSegmentResponse) {
+    option (google.api.http) = {
+      get: "/v1/segment"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Get",
+      description: "Get a segment."
+      tags: "segment"
+      operation_id: "web.v1.segment.get"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
+  rpc ListSegments(ListSegmentsRequest) returns (ListSegmentsResponse) {
+    option (google.api.http) = {
+      get: "/v1/segments"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "List",
+      description: "List segments."
+      tags: "segment"
+      operation_id: "web.v1.segment.list"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc DeleteSegment(DeleteSegmentRequest) returns (DeleteSegmentResponse) {}
   rpc UpdateSegment(UpdateSegmentRequest) returns (UpdateSegmentResponse) {}
 
@@ -549,7 +664,40 @@ service FeatureService {
   rpc ListSegmentUsers(ListSegmentUsersRequest)
       returns (ListSegmentUsersResponse) {}
   rpc BulkUploadSegmentUsers(BulkUploadSegmentUsersRequest)
-      returns (BulkUploadSegmentUsersResponse) {}
+      returns (BulkUploadSegmentUsersResponse) {
+    option (google.api.http) = {
+      post: "/v1/segment_users/bulk_upload"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_operation) = {
+      summary: "Bulk upload",
+      description: "Bulk upload segment users."
+      tags: "segment"
+      operation_id: "web.v1.segment_users.bulk_upload"
+      responses: {
+        key: "400"
+        value: {
+          description: "Returned for bad requests that may have failed validation."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 3, "message": "invalid arguments error", "details": [] }'
+          }
+        }
+      }
+      responses: {
+        key: "401"
+        value: {
+          description: "Request could not be authenticated (authentication required)."
+          schema: { json_schema: { ref: ".google.rpc.Status" } }
+          examples: {
+            key: "application/json"
+            value: '{ "code": 16, "message": "not authenticated", "details": [] }'
+          }
+        }
+      }
+    };
+  }
   rpc BulkDownloadSegmentUsers(BulkDownloadSegmentUsersRequest)
       returns (BulkDownloadSegmentUsersResponse) {}
   rpc EvaluateFeatures(EvaluateFeaturesRequest)

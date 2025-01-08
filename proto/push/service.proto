@@ -93,7 +93,6 @@ message UpdatePushResponse {
 
 message GetPushRequest {
   string environment_id = 1 [(google.api.field_behavior) = REQUIRED];
-  ;
   string id = 2 [(google.api.field_behavior) = REQUIRED];
 }
 

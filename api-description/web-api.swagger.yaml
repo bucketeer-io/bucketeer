@@ -3270,6 +3270,243 @@ paths:
           type: string
       tags:
         - push
+  /v1/segment:
+    get:
+      summary: Get
+      description: Get a segment.
+      operationId: web.v1.segment.get
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureGetSegmentResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: id
+          in: query
+          required: true
+          type: string
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - segment
+    post:
+      summary: Create
+      description: Create a segment.
+      operationId: web.v1.segment.create
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureCreateSegmentResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureCreateSegmentRequest'
+      tags:
+        - segment
+  /v1/segment_users/bulk_upload:
+    post:
+      summary: Bulk upload
+      description: Bulk upload segment users.
+      operationId: web.v1.segment_users.bulk_upload
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureBulkUploadSegmentUsersResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/featureBulkUploadSegmentUsersRequest'
+      tags:
+        - segment
+  /v1/segments:
+    get:
+      summary: List
+      description: List segments.
+      operationId: web.v1.segment.list
+      responses:
+        "200":
+          description: A successful response.
+          schema:
+            $ref: '#/definitions/featureListSegmentsResponse'
+        "400":
+          description: Returned for bad requests that may have failed validation.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 3
+              details: []
+              message: invalid arguments error
+        "401":
+          description: Request could not be authenticated (authentication required).
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 16
+              details: []
+              message: not authenticated
+        "503":
+          description: Returned for internal errors.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+          examples:
+            application/json:
+              code: 13
+              details: []
+              message: internal
+        default:
+          description: An unexpected error response.
+          schema:
+            $ref: '#/definitions/googlerpcStatus'
+      parameters:
+        - name: pageSize
+          in: query
+          required: false
+          type: string
+          format: int64
+        - name: cursor
+          in: query
+          required: false
+          type: string
+        - name: orderBy
+          in: query
+          required: false
+          type: string
+          enum:
+            - DEFAULT
+            - NAME
+            - CREATED_AT
+            - UPDATED_AT
+          default: DEFAULT
+        - name: orderDirection
+          in: query
+          required: false
+          type: string
+          enum:
+            - ASC
+            - DESC
+          default: ASC
+        - name: searchKeyword
+          in: query
+          required: false
+          type: string
+        - name: status
+          in: query
+          required: false
+          type: integer
+          format: int32
+        - name: isInUseStatus
+          in: query
+          required: false
+          type: boolean
+        - name: environmentId
+          in: query
+          required: true
+          type: string
+      tags:
+        - segment
   /v1/subscription:
     get:
       summary: Get
@@ -5065,6 +5302,22 @@ definitions:
         title: segment user ids separated by comma or new line
       state:
         $ref: '#/definitions/featureSegmentUserState'
+  featureBulkUploadSegmentUsersRequest:
+    type: object
+    properties:
+      segmentId:
+        type: string
+      command:
+        $ref: '#/definitions/featureBulkUploadSegmentUsersCommand'
+        description: deprecated
+      environmentId:
+        type: string
+      data:
+        type: string
+        format: byte
+        description: segment user ids separated by comma or new line
+      state:
+        $ref: '#/definitions/featureSegmentUserState'
   featureBulkUploadSegmentUsersResponse:
     type: object
   featureChangeDescriptionCommand:
@@ -5159,6 +5412,21 @@ definitions:
         type: string
       description:
         type: string
+  featureCreateSegmentRequest:
+    type: object
+    properties:
+      command:
+        $ref: '#/definitions/featureCreateSegmentCommand'
+        description: deprecated
+      name:
+        type: string
+      environmentId:
+        type: string
+      description:
+        type: string
+    required:
+      - name
+      - environmentId
   featureCreateSegmentResponse:
     type: object
     properties:

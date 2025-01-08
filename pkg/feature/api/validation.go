@@ -145,17 +145,24 @@ func validateCreateFeatureRequest(cmd *featureproto.CreateFeatureCommand, locali
 }
 
 func validateCreateSegmentRequest(cmd *featureproto.CreateSegmentCommand, localizer locale.Localizer) error {
-	if cmd == nil {
-		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+	if cmd.Name == "" {
+		dt, err := statusMissingName.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
 		})
 		if err != nil {
 			return statusInternal.Err()
 		}
 		return dt.Err()
 	}
-	if cmd.Name == "" {
+	return nil
+}
+
+func validateCreateSegmentNoCommandRequest(
+	req *featureproto.CreateSegmentRequest,
+	localizer locale.Localizer,
+) error {
+	if req.Name == "" {
 		dt, err := statusMissingName.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
 			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "name"),
@@ -713,17 +720,44 @@ func validateBulkUploadSegmentUsersRequest(
 		}
 		return dt.Err()
 	}
-	if req.Command == nil {
-		dt, err := statusMissingCommand.WithDetails(&errdetails.LocalizedMessage{
+	return nil
+}
+
+func validateBulkUploadSegmentUsersNoCommandRequest(
+	req *featureproto.BulkUploadSegmentUsersRequest,
+	localizer locale.Localizer,
+) error {
+	if req.SegmentId == "" {
+		dt, err := statusMissingSegmentID.WithDetails(&errdetails.LocalizedMessage{
 			Locale:  localizer.GetLocale(),
-			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "command"),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "segment_id"),
 		})
 		if err != nil {
 			return statusInternal.Err()
 		}
 		return dt.Err()
 	}
-	return nil
+	if len(req.Data) == 0 {
+		dt, err := statusMissingSegmentUsersData.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.RequiredFieldTemplate, "user_data"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	if len(req.Data) > maxSegmentUsersDataSize {
+		dt, err := statusExceededMaxSegmentUsersDataSize.WithDetails(&errdetails.LocalizedMessage{
+			Locale:  localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(locale.InvalidArgumentError, "user_data_state"),
+		})
+		if err != nil {
+			return statusInternal.Err()
+		}
+		return dt.Err()
+	}
+	return validateSegmentUserState(req.State, localizer)
 }
 
 func validateBulkUploadSegmentUsersCommand(
