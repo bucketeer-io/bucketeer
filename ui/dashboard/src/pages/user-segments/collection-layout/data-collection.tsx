@@ -3,10 +3,7 @@ import {
   IconEditOutlined,
   IconMoreHorizOutlined
 } from 'react-icons-material-design';
-import { Link } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
-import { getCurrentEnvironment, useAuth } from 'auth';
-import { PAGE_PATH_USER_SEGMENTS } from 'constants/routing';
 import { useTranslation } from 'i18n';
 import { UserSegment } from '@types';
 import { useFormatDateTime } from 'utils/date-time';
@@ -22,9 +19,6 @@ export const useColumns = ({
   const { t } = useTranslation(['common', 'table']);
   const formatDateTime = useFormatDateTime();
 
-  const { consoleAccount } = useAuth();
-  const currentEnvironment = getCurrentEnvironment(consoleAccount!);
-
   return [
     {
       accessorKey: 'name',
@@ -33,12 +27,12 @@ export const useColumns = ({
       cell: ({ row }) => {
         const segment = row.original;
         return (
-          <Link
-            to={`/${currentEnvironment.urlCode}${PAGE_PATH_USER_SEGMENTS}/${segment.id}`}
-            className="underline text-primary-500 typo-para-medium"
+          <div
+            onClick={() => onActionHandler(segment, 'EDIT')}
+            className="underline text-primary-500 typo-para-medium cursor-pointer"
           >
             {segment.name}
-          </Link>
+          </div>
         );
       }
     },

@@ -28,15 +28,13 @@ export interface EditUserSegmentForm {
   name: string;
   description?: string;
   userIds?: string;
-  files?: File[];
 }
 
 const formSchema = yup.object().shape({
   name: yup.string().required(),
   description: yup.string(),
   id: yup.string(),
-  userIds: yup.string(),
-  files: yup.array()
+  userIds: yup.string()
 });
 
 const EditUserSegmentModal = ({
@@ -54,8 +52,7 @@ const EditUserSegmentModal = ({
       id: userSegment?.id || '',
       name: userSegment?.name || '',
       description: userSegment?.description || '',
-      userIds: '',
-      files: []
+      userIds: ''
     }
   });
 

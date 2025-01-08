@@ -1,5 +1,4 @@
 import { useState } from 'react';
-// import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToggleOpen } from 'hooks/use-toggle-open';
 import { UserSegment } from '@types';
@@ -24,7 +23,6 @@ const PageLoader = () => {
   const [isOpenDeleteModal, onOpenDeleteModal, onCloseDeleteModal] =
     useToggleOpen(false);
 
-  // const queryClient = useQueryClient();
   const { consoleAccount } = useAuth();
   const currenEnvironment = getCurrentEnvironment(consoleAccount!);
 

@@ -78,7 +78,9 @@ const PageContent = ({
           </Button>
         }
         searchValue={filters.searchQuery as string}
-        filterCount={isNotEmpty(filters.disabled as boolean) ? 1 : undefined}
+        filterCount={
+          isNotEmpty(filters.isInUseStatus as boolean) ? 1 : undefined
+        }
         onSearchChange={searchQuery => onChangeFilters({ searchQuery })}
       />
       {openFilterModal && (
@@ -91,7 +93,7 @@ const PageContent = ({
             onCloseFilterModal();
           }}
           onClearFilters={() => {
-            onChangeFilters({ disabled: undefined });
+            onChangeFilters({ isInUseStatus: undefined });
             onCloseFilterModal();
           }}
         />

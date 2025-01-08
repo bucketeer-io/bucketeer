@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { userSegmentBulkUpload, userSegmentCreator } from '@api/user-segment';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { invalidateAPIKeys } from '@queries/api-keys';
+import { invalidateUserSegments } from '@queries/user-segments';
 import { useQueryClient } from '@tanstack/react-query';
 import { getCurrentEnvironment, useAuth } from 'auth';
 import { useToast } from 'hooks';
@@ -47,6 +47,7 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
 
   const [userIdsType, setUserIdsType] = useState('upload');
   const [files, setFiles] = useState<File[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm({
     resolver: yupResolver(formSchema),
@@ -73,12 +74,21 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
         </span>
       )
     });
-    invalidateAPIKeys(queryClient);
+    invalidateUserSegments(queryClient);
+    setIsLoading(false);
     onClose();
+  };
+
+  const onAddSuccess = (name: string, isUpload = true) => {
+    let timerId: NodeJS.Timeout | null = null;
+    if (timerId) clearTimeout(timerId);
+    if (isUpload) return (timerId = setTimeout(() => addSuccess(name), 6000));
+    return addSuccess(name);
   };
 
   const onSubmit: SubmitHandler<AddUserSegmentForm> = async values => {
     try {
+      setIsLoading(true);
       const resp = await userSegmentCreator({
         environmentId: currentEnvironment.id,
         name: values.name,
@@ -103,9 +113,9 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
               state: 'INCLUDED',
               data: base64String
             });
-            if (uploadResp) addSuccess(values.name);
+            if (uploadResp) onAddSuccess(values.name);
           });
-        } else addSuccess(values.name);
+        } else onAddSuccess(values.name, false);
       }
     } catch (error) {
       notify({
@@ -230,8 +240,8 @@ const AddUserSegmentModal = ({ isOpen, onClose }: AddUserSegmentModalProps) => {
                 secondaryButton={
                   <Button
                     type="submit"
-                    disabled={!form.formState.isDirty}
-                    loading={form.formState.isSubmitting}
+                    disabled={!form.formState.isDirty || isLoading}
+                    loading={isLoading}
                   >
                     {t(`create-user-segment`)}
                   </Button>

@@ -27,24 +27,29 @@ export interface Option {
 }
 
 export enum FilterTypes {
-  ENABLED = 'enabled'
+  STATUS = 'status'
+}
+
+export enum FilterValue {
+  IN_USE = 'in-use',
+  NOT_IN_USE = 'not-in-use'
 }
 
 export const filterOptions: Option[] = [
   {
-    value: FilterTypes.ENABLED,
-    label: 'Enabled'
+    value: FilterTypes.STATUS,
+    label: 'Status'
   }
 ];
 
-export const enabledOptions: Option[] = [
+export const statusOptions: Option[] = [
   {
-    value: 'yes',
-    label: 'Yes'
+    value: FilterValue.IN_USE,
+    label: 'In Use'
   },
   {
-    value: 'no',
-    label: 'No'
+    value: FilterValue.NOT_IN_USE,
+    label: 'Not In Use'
   }
 ];
 
@@ -61,10 +66,10 @@ const FilterUserSegmentModal = ({
 
   const onConfirmHandler = () => {
     switch (selectedFilterType?.value) {
-      case FilterTypes.ENABLED:
+      case FilterTypes.STATUS:
         if (valueOption?.value) {
           onSubmit({
-            disabled: valueOption?.value === 'no'
+            isInUseStatus: valueOption?.value === FilterValue.IN_USE
           });
         }
         return;
@@ -72,9 +77,9 @@ const FilterUserSegmentModal = ({
   };
 
   useEffect(() => {
-    if (isNotEmpty(filters?.disabled)) {
+    if (isNotEmpty(filters?.isInUseStatus)) {
       setSelectedFilterType(filterOptions[0]);
-      setValueOption(enabledOptions[filters?.disabled ? 1 : 0]);
+      setValueOption(statusOptions[filters?.isInUseStatus ? 0 : 1]);
     } else {
       setSelectedFilterType(undefined);
       setValueOption(undefined);
@@ -122,7 +127,7 @@ const FilterUserSegmentModal = ({
               className="w-full"
             />
             <DropdownMenuContent className="w-[235px]" align="start">
-              {enabledOptions.map((item, index) => (
+              {statusOptions.map((item, index) => (
                 <DropdownMenuItem
                   key={index}
                   value={item.value}
