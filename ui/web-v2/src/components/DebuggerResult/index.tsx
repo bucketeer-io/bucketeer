@@ -19,6 +19,9 @@ import { messages } from '../../lang/messages';
 import { Reason } from '../../proto/feature/reason_pb';
 import { HoverPopover } from '../HoverPopover';
 
+const FEATURE_NAME_ID_MAX_LENGTH = 70;
+const VARIATION_NAME_ID_MAX_LENGTH = 35;
+
 interface FlagStatusIconProps {
   flagStatus: FlagStatus;
 }
@@ -28,21 +31,21 @@ export const FlagStatusBadge: FC<FlagStatusIconProps> = ({ flagStatus }) => {
   switch (flagStatus) {
     case FlagStatus.NEW:
       flagStatusBadge = (
-        <div className="px-2 py-1.5 rounded bg-blue-50 text-blue-500">
+        <div className="px-2 py-1 rounded bg-blue-50 text-blue-500">
           {intl.formatMessage(messages.feature.flagStatus.new)}
         </div>
       );
       break;
     case FlagStatus.RECEIVING_REQUESTS:
       flagStatusBadge = (
-        <div className="px-2 py-1.5 rounded bg-green-50 text-green-500">
+        <div className="px-2 py-1 rounded bg-green-50 text-green-500">
           {intl.formatMessage(messages.feature.flagStatus.receivingRequests)}
         </div>
       );
       break;
     case FlagStatus.INACTIVE:
       flagStatusBadge = (
-        <div className="px-2 py-1.5 rounded bg-yellow-50 text-yellow-500">
+        <div className="px-2 py-1 rounded bg-yellow-50 text-yellow-500">
           {intl.formatMessage(messages.feature.flagStatus.inactive)}
         </div>
       );
@@ -94,19 +97,19 @@ export const DebuggerResult: FC<DebuggerResultProps> = memo(
               <tr>
                 <th
                   scope="col"
-                  className="py-3.5 pl-4 pr-3 text-left text-sm font-normal text-gray-400 sm:pl-0"
+                  className="w-[60%] py-3.5 pl-4 pr-3 text-left text-sm font-normal text-gray-400 sm:pl-0"
                 >
                   NAME
                 </th>
                 <th
                   scope="col"
-                  className="px-3 py-3.5 text-left text-sm font-normal text-gray-400"
+                  className="w-[25%] px-3 py-3.5 text-left text-sm font-normal text-gray-400"
                 >
                   VARIATION
                 </th>
                 <th
                   scope="col"
-                  className="px-3 py-3.5 text-left text-sm font-normal text-gray-400"
+                  className="w-[15%] px-3 py-3.5 text-left text-sm font-normal text-gray-400"
                 >
                   REASON
                 </th>
@@ -131,6 +134,7 @@ export const DebuggerResult: FC<DebuggerResultProps> = memo(
                     (key) => Reason.Type[key] === type
                   );
                 };
+
                 return (
                   <tr key={variationId}>
                     <td>
@@ -138,14 +142,34 @@ export const DebuggerResult: FC<DebuggerResultProps> = memo(
                         <div className="bg-purple-50 rounded flex justify-center items-center text-primary w-9 h-9">
                           <FlagIcon variationType={variationType} />
                         </div>
-                        <div>
+                        <div className="space-y-0">
                           <div className="flex items-center space-x-3">
-                            <Link
-                              to={`${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_TARGETING}`}
-                              className="link text-left text-base font-normal w-full max-w-[60ch] truncate"
+                            <HoverPopover
+                              disabled={
+                                featureDetails.name.length <=
+                                FEATURE_NAME_ID_MAX_LENGTH
+                              }
+                              render={() => {
+                                return (
+                                  <div className="bg-gray-900 text-white p-2 text-xs rounded whitespace-pre">
+                                    {featureDetails.name}
+                                  </div>
+                                );
+                              }}
                             >
-                              {featureDetails.name}
-                            </Link>
+                              <Link
+                                to={`${PAGE_PATH_ROOT}${currentEnvironment.urlCode}${PAGE_PATH_FEATURES}/${featureId}${PAGE_PATH_FEATURE_TARGETING}`}
+                                className="block link text-left text-base font-normal w-full"
+                              >
+                                {featureDetails.name.length >
+                                FEATURE_NAME_ID_MAX_LENGTH
+                                  ? featureDetails.name.slice(
+                                      0,
+                                      FEATURE_NAME_ID_MAX_LENGTH
+                                    ) + '...'
+                                  : featureDetails.name}
+                              </Link>
+                            </HoverPopover>
                             <FlagStatusBadge
                               flagStatus={getFlagStatus(
                                 featureDetails,
@@ -153,22 +177,83 @@ export const DebuggerResult: FC<DebuggerResultProps> = memo(
                               )}
                             />
                           </div>
-                          <p className="text-sm text-gray-400 font-light w-full max-w-[60ch] truncate">
-                            {featureId}
-                          </p>
+                          <HoverPopover
+                            disabled={
+                              featureId.length <= FEATURE_NAME_ID_MAX_LENGTH
+                            }
+                            render={() => {
+                              return (
+                                <div className="bg-gray-900 text-white p-2 text-xs rounded whitespace-pre">
+                                  {featureId}
+                                </div>
+                              );
+                            }}
+                          >
+                            <p className="block text-sm text-gray-500 font-light w-full">
+                              {featureId.length > FEATURE_NAME_ID_MAX_LENGTH
+                                ? featureId.slice(
+                                    0,
+                                    FEATURE_NAME_ID_MAX_LENGTH
+                                  ) + '...'
+                                : featureId}
+                            </p>
+                          </HoverPopover>
                         </div>
                       </div>
                     </td>
                     <td>
-                      <div className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 flex space-x-3 items-center">
-                        <span className="max-w-[20ch] w-full truncate">
-                          {variationName}
-                        </span>
+                      <div className="whitespace-nowrap px-3 py-4 space-y-1">
+                        <HoverPopover
+                          disabled={
+                            variationName.length <= VARIATION_NAME_ID_MAX_LENGTH
+                          }
+                          render={() => {
+                            return (
+                              <div className="bg-gray-900 text-white p-2 text-xs rounded whitespace-pre">
+                                {variationName}
+                              </div>
+                            );
+                          }}
+                        >
+                          <p className="text-base text-gray-500">
+                            {variationName.length > VARIATION_NAME_ID_MAX_LENGTH
+                              ? variationName.slice(
+                                  0,
+                                  VARIATION_NAME_ID_MAX_LENGTH
+                                ) + '...'
+                              : variationName}
+                            &nbsp;
+                          </p>
+                        </HoverPopover>
+                        <HoverPopover
+                          disabled={
+                            variationId.length <= VARIATION_NAME_ID_MAX_LENGTH
+                          }
+                          render={() => {
+                            return (
+                              <div className="bg-gray-900 text-white p-2 text-xs rounded whitespace-pre">
+                                {variationId}
+                              </div>
+                            );
+                          }}
+                        >
+                          <p className="text-sm text-gray-500">
+                            {variationId.length > VARIATION_NAME_ID_MAX_LENGTH
+                              ? variationId.slice(
+                                  0,
+                                  VARIATION_NAME_ID_MAX_LENGTH
+                                ) + '...'
+                              : variationId}
+                          </p>
+                        </HoverPopover>
                       </div>
                     </td>
                     <td>
-                      <div className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 uppercase">
-                        {getReasonType(reason.type)}
+                      <div className="whitespace-nowrap px-3 py-5">
+                        <p className="text-gray-500 uppercase text-base">
+                          {getReasonType(reason.type)}
+                        </p>
+                        <p>&nbsp;</p>
                       </div>
                     </td>
                   </tr>
