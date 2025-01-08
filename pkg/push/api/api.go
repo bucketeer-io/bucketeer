@@ -1162,7 +1162,13 @@ func (s *PushService) ListPushes(
 	}
 	whereParts := []mysql.WherePart{
 		mysql.NewFilter("push.deleted", "=", false),
-		mysql.NewFilter("push.environment_id", "=", req.EnvironmentId),
+	}
+	if req.OrganizationId != "" {
+		// New console
+		whereParts = append(whereParts, mysql.NewFilter("env.organization_id", "=", req.OrganizationId))
+	} else {
+		// Current console
+		whereParts = append(whereParts, mysql.NewFilter("push.environment_id", "=", req.EnvironmentId))
 	}
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"push.name"}, req.SearchKeyword))

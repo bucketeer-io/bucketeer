@@ -30403,6 +30403,11 @@
                 "id": 7,
                 "name": "environment_id",
                 "type": "string"
+              },
+              {
+                "id": 8,
+                "name": "organization_id",
+                "type": "string"
               }
             ],
             "reserved_ids": [
