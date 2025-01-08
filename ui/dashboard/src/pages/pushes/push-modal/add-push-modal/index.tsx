@@ -11,9 +11,9 @@ import { useTranslation } from 'i18n';
 import * as yup from 'yup';
 import { IconInfo } from '@icons';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
-import { Tag } from 'pages/pushes/collection-layout/data-collection';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
+import { CreatableSelect } from 'components/creatable-select';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -201,45 +201,17 @@ const AddPushModal = ({ isOpen, onClose }: AddPushModalProps) => {
                 <Form.Item className="py-2">
                   <Form.Label required>{t('tags')}</Form.Label>
                   <Form.Control>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        placeholder={t(`form:placeholder-tags`)}
-                        variant="secondary"
-                        className="w-full"
-                        trigger={
-                          field.value.length > 0 && (
-                            <div className="flex items-center flex-wrap gap-2 max-w-fit">
-                              {field.value.map((value, index) => (
-                                <Tag value={value} key={index} />
-                              ))}
-                            </div>
-                          )
-                        }
-                        disabled={isLoadingTags}
-                      />
-                      <DropdownMenuContent
-                        className="w-[502px]"
-                        align="start"
-                        {...field}
-                      >
-                        {tagOptions.map((item, index) => (
-                          <DropdownMenuItem
-                            {...field}
-                            key={index}
-                            value={item.id}
-                            label={item.id}
-                            isMultiselect={true}
-                            isSelected={field.value.includes(item.id)}
-                            onSelectOption={value => {
-                              const _tags = field.value.includes(value)
-                                ? field.value.filter(tag => tag !== value)
-                                : [...field.value, value];
-                              field.onChange(_tags);
-                            }}
-                          />
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <CreatableSelect
+                      disabled={isLoadingTags}
+                      placeholder={t(`form:placeholder-tags`)}
+                      options={tagOptions?.map(tag => ({
+                        label: tag.id,
+                        value: tag.id
+                      }))}
+                      onChange={value =>
+                        field.onChange(value.map(tag => tag.value))
+                      }
+                    />
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>

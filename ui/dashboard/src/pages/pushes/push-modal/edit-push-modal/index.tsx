@@ -8,11 +8,12 @@ import { getCurrentEnvironment, useAuth } from 'auth';
 import { LIST_PAGE_SIZE } from 'constants/app';
 import { useToast } from 'hooks';
 import { useTranslation } from 'i18n';
+import * as yup from 'yup';
 import { Push } from '@types';
 import { useFetchEnvironments } from 'pages/project-details/environments/collection-loader/use-fetch-environments';
-import { Tag } from 'pages/pushes/collection-layout/data-collection';
 import Button from 'components/button';
 import { ButtonBar } from 'components/button-bar';
+import { CreatableSelect } from 'components/creatable-select';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +24,6 @@ import Form from 'components/form';
 import Input from 'components/input';
 import SlideModal from 'components/modal/slide';
 import TextArea from 'components/textarea';
-import { formSchema } from '../add-push-modal';
 
 interface EditPushModalProps {
   isOpen: boolean;
@@ -33,9 +33,16 @@ interface EditPushModalProps {
 
 export interface EditPushForm {
   name: string;
-  fcmServiceAccount: string;
+  fcmServiceAccount?: string;
   tags: string[];
 }
+
+const formSchema = yup.object().shape({
+  name: yup.string().required(),
+  fcmServiceAccount: yup.string(),
+  tags: yup.array().required(),
+  environmentId: yup.string().required()
+});
 
 const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
   const { consoleAccount } = useAuth();
@@ -122,6 +129,7 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
             <Form.Field
               control={form.control}
               name="fcmServiceAccount"
+              disabled
               render={({ field }) => (
                 <Form.Item>
                   <Form.Label required>{t('fcm-api-key')}</Form.Label>
@@ -184,45 +192,21 @@ const EditPushModal = ({ isOpen, onClose, push }: EditPushModalProps) => {
                 <Form.Item className="py-2">
                   <Form.Label required>{t('tags')}</Form.Label>
                   <Form.Control>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger
-                        placeholder={t(`form:placeholder-tags`)}
-                        variant="secondary"
-                        className="w-full"
-                        trigger={
-                          field.value.length > 0 && (
-                            <div className="flex items-center flex-wrap gap-2 max-w-fit">
-                              {field.value.map((value, index) => (
-                                <Tag value={value} key={index} />
-                              ))}
-                            </div>
-                          )
-                        }
-                        disabled={isLoadingTags}
-                      />
-                      <DropdownMenuContent
-                        className="w-[502px]"
-                        align="start"
-                        {...field}
-                      >
-                        {tagOptions.map((item, index) => (
-                          <DropdownMenuItem
-                            {...field}
-                            key={index}
-                            value={item.id}
-                            label={item.id}
-                            isMultiselect={true}
-                            isSelected={field.value.includes(item.id)}
-                            onSelectOption={value => {
-                              const _tags = field.value.includes(value)
-                                ? field.value.filter(tag => tag !== value)
-                                : [...field.value, value];
-                              field.onChange(_tags);
-                            }}
-                          />
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <CreatableSelect
+                      defaultValues={field.value?.map(tag => ({
+                        label: tag,
+                        value: tag
+                      }))}
+                      disabled={isLoadingTags}
+                      placeholder={t(`form:placeholder-tags`)}
+                      options={tagOptions?.map(tag => ({
+                        label: tag.id,
+                        value: tag.id
+                      }))}
+                      onChange={value =>
+                        field.onChange(value.map(tag => tag.value))
+                      }
+                    />
                   </Form.Control>
                   <Form.Message />
                 </Form.Item>
