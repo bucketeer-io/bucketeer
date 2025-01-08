@@ -799,7 +799,11 @@ func (s *NotificationService) ListSubscriptions(
 		return nil, err
 	}
 	var whereParts []mysql.WherePart
-	if req.EnvironmentId != "" {
+	if req.OrganizationId != "" {
+		// New console
+		whereParts = append(whereParts, mysql.NewFilter("env.organization_id", "=", req.OrganizationId))
+	} else {
+		// Current console
 		whereParts = append(whereParts, mysql.NewFilter("sub.environment_id", "=", req.EnvironmentId))
 	}
 	sourceTypesValues := make([]interface{}, len(req.SourceTypes))
@@ -817,9 +821,6 @@ func (s *NotificationService) ListSubscriptions(
 	}
 	if req.SearchKeyword != "" {
 		whereParts = append(whereParts, mysql.NewSearchQuery([]string{"sub.name"}, req.SearchKeyword))
-	}
-	if req.OrganizationId != "" {
-		whereParts = append(whereParts, mysql.NewFilter("env.organization_id", "=", req.OrganizationId))
 	}
 	orders, err := s.newSubscriptionListOrders(req.OrderBy, req.OrderDirection, localizer)
 	if err != nil {
