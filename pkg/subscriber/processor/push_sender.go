@@ -63,7 +63,7 @@ func NewPushSender(
 	batchClient btclient.Client,
 	mysqlClient mysql.Client,
 	logger *zap.Logger,
-) subscriber.Processor {
+) subscriber.PubSubProcessor {
 	return &pushSender{
 		featureClient: featureClient,
 		batchClient:   batchClient,
