@@ -219,6 +219,7 @@ export namespace Event {
     SEGMENT_USER_DELETED: 513;
     SEGMENT_BULK_UPLOAD_USERS: 514;
     SEGMENT_BULK_UPLOAD_USERS_STATUS_CHANGED: 515;
+    SEGMENT_UPDATED: 516;
     ENVIRONMENT_CREATED: 600;
     ENVIRONMENT_RENAMED: 601;
     ENVIRONMENT_DESCRIPTION_CHANGED: 602;
@@ -3347,6 +3348,49 @@ export class SegmentDeletedEvent extends jspb.Message {
 export namespace SegmentDeletedEvent {
   export type AsObject = {
     id: string;
+  };
+}
+
+export class SegmentUpdatedEvent extends jspb.Message {
+  getId(): string;
+  setId(value: string): void;
+
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): SegmentUpdatedEvent.AsObject;
+  static toObject(
+    includeInstance: boolean,
+    msg: SegmentUpdatedEvent
+  ): SegmentUpdatedEvent.AsObject;
+  static extensions: { [key: number]: jspb.ExtensionFieldInfo<jspb.Message> };
+  static extensionsBinary: {
+    [key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>;
+  };
+  static serializeBinaryToWriter(
+    message: SegmentUpdatedEvent,
+    writer: jspb.BinaryWriter
+  ): void;
+  static deserializeBinary(bytes: Uint8Array): SegmentUpdatedEvent;
+  static deserializeBinaryFromReader(
+    message: SegmentUpdatedEvent,
+    reader: jspb.BinaryReader
+  ): SegmentUpdatedEvent;
+}
+
+export namespace SegmentUpdatedEvent {
+  export type AsObject = {
+    id: string;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
   };
 }
 

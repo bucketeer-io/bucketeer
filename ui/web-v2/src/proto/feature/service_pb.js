@@ -11121,7 +11121,13 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
           proto_feature_command_pb.Command.toObject,
           includeInstance
         ),
-        environmentId: jspb.Message.getFieldWithDefault(msg, 4, '')
+        environmentId: jspb.Message.getFieldWithDefault(msg, 4, ''),
+        name:
+          (f = msg.getName()) &&
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f),
+        description:
+          (f = msg.getDescription()) &&
+          google_protobuf_wrappers_pb.StringValue.toObject(includeInstance, f)
       };
 
     if (includeInstance) {
@@ -11178,6 +11184,22 @@ proto.bucketeer.feature.UpdateSegmentRequest.deserializeBinaryFromReader =
           var value = /** @type {string} */ (reader.readString());
           msg.setEnvironmentId(value);
           break;
+        case 5:
+          var value = new google_protobuf_wrappers_pb.StringValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
+          );
+          msg.setName(value);
+          break;
+        case 6:
+          var value = new google_protobuf_wrappers_pb.StringValue();
+          reader.readMessage(
+            value,
+            google_protobuf_wrappers_pb.StringValue.deserializeBinaryFromReader
+          );
+          msg.setDescription(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -11225,6 +11247,22 @@ proto.bucketeer.feature.UpdateSegmentRequest.serializeBinaryToWriter =
     f = message.getEnvironmentId();
     if (f.length > 0) {
       writer.writeString(4, f);
+    }
+    f = message.getName();
+    if (f != null) {
+      writer.writeMessage(
+        5,
+        f,
+        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
+      );
+    }
+    f = message.getDescription();
+    if (f != null) {
+      writer.writeMessage(
+        6,
+        f,
+        google_protobuf_wrappers_pb.StringValue.serializeBinaryToWriter
+      );
     }
   };
 
@@ -11317,6 +11355,88 @@ proto.bucketeer.feature.UpdateSegmentRequest.prototype.setEnvironmentId =
     return jspb.Message.setProto3StringField(this, 4, value);
   };
 
+/**
+ * optional google.protobuf.StringValue name = 5;
+ * @return {?proto.google.protobuf.StringValue}
+ */
+proto.bucketeer.feature.UpdateSegmentRequest.prototype.getName = function () {
+  return /** @type{?proto.google.protobuf.StringValue} */ (
+    jspb.Message.getWrapperField(
+      this,
+      google_protobuf_wrappers_pb.StringValue,
+      5
+    )
+  );
+};
+
+/**
+ * @param {?proto.google.protobuf.StringValue|undefined} value
+ * @return {!proto.bucketeer.feature.UpdateSegmentRequest} returns this
+ */
+proto.bucketeer.feature.UpdateSegmentRequest.prototype.setName = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 5, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.UpdateSegmentRequest} returns this
+ */
+proto.bucketeer.feature.UpdateSegmentRequest.prototype.clearName = function () {
+  return this.setName(undefined);
+};
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.UpdateSegmentRequest.prototype.hasName = function () {
+  return jspb.Message.getField(this, 5) != null;
+};
+
+/**
+ * optional google.protobuf.StringValue description = 6;
+ * @return {?proto.google.protobuf.StringValue}
+ */
+proto.bucketeer.feature.UpdateSegmentRequest.prototype.getDescription =
+  function () {
+    return /** @type{?proto.google.protobuf.StringValue} */ (
+      jspb.Message.getWrapperField(
+        this,
+        google_protobuf_wrappers_pb.StringValue,
+        6
+      )
+    );
+  };
+
+/**
+ * @param {?proto.google.protobuf.StringValue|undefined} value
+ * @return {!proto.bucketeer.feature.UpdateSegmentRequest} returns this
+ */
+proto.bucketeer.feature.UpdateSegmentRequest.prototype.setDescription =
+  function (value) {
+    return jspb.Message.setWrapperField(this, 6, value);
+  };
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.UpdateSegmentRequest} returns this
+ */
+proto.bucketeer.feature.UpdateSegmentRequest.prototype.clearDescription =
+  function () {
+    return this.setDescription(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.UpdateSegmentRequest.prototype.hasDescription =
+  function () {
+    return jspb.Message.getField(this, 6) != null;
+  };
+
 if (jspb.Message.GENERATE_TO_OBJECT) {
   /**
    * Creates an object representation of this proto.
@@ -11353,7 +11473,11 @@ if (jspb.Message.GENERATE_TO_OBJECT) {
     msg
   ) {
     var f,
-      obj = {};
+      obj = {
+        segment:
+          (f = msg.getSegment()) &&
+          proto_feature_segment_pb.Segment.toObject(includeInstance, f)
+      };
 
     if (includeInstance) {
       obj.$jspbMessageInstance = msg;
@@ -11393,6 +11517,14 @@ proto.bucketeer.feature.UpdateSegmentResponse.deserializeBinaryFromReader =
       }
       var field = reader.getFieldNumber();
       switch (field) {
+        case 1:
+          var value = new proto_feature_segment_pb.Segment();
+          reader.readMessage(
+            value,
+            proto_feature_segment_pb.Segment.deserializeBinaryFromReader
+          );
+          msg.setSegment(value);
+          break;
         default:
           reader.skipField();
           break;
@@ -11425,6 +11557,53 @@ proto.bucketeer.feature.UpdateSegmentResponse.prototype.serializeBinary =
 proto.bucketeer.feature.UpdateSegmentResponse.serializeBinaryToWriter =
   function (message, writer) {
     var f = undefined;
+    f = message.getSegment();
+    if (f != null) {
+      writer.writeMessage(
+        1,
+        f,
+        proto_feature_segment_pb.Segment.serializeBinaryToWriter
+      );
+    }
+  };
+
+/**
+ * optional Segment segment = 1;
+ * @return {?proto.bucketeer.feature.Segment}
+ */
+proto.bucketeer.feature.UpdateSegmentResponse.prototype.getSegment =
+  function () {
+    return /** @type{?proto.bucketeer.feature.Segment} */ (
+      jspb.Message.getWrapperField(this, proto_feature_segment_pb.Segment, 1)
+    );
+  };
+
+/**
+ * @param {?proto.bucketeer.feature.Segment|undefined} value
+ * @return {!proto.bucketeer.feature.UpdateSegmentResponse} returns this
+ */
+proto.bucketeer.feature.UpdateSegmentResponse.prototype.setSegment = function (
+  value
+) {
+  return jspb.Message.setWrapperField(this, 1, value);
+};
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.bucketeer.feature.UpdateSegmentResponse} returns this
+ */
+proto.bucketeer.feature.UpdateSegmentResponse.prototype.clearSegment =
+  function () {
+    return this.setSegment(undefined);
+  };
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.bucketeer.feature.UpdateSegmentResponse.prototype.hasSegment =
+  function () {
+    return jspb.Message.getField(this, 1) != null;
   };
 
 if (jspb.Message.GENERATE_TO_OBJECT) {

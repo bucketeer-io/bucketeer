@@ -1663,6 +1663,16 @@ export class UpdateSegmentRequest extends jspb.Message {
   getEnvironmentId(): string;
   setEnvironmentId(value: string): void;
 
+  hasName(): boolean;
+  clearName(): void;
+  getName(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setName(value?: google_protobuf_wrappers_pb.StringValue): void;
+
+  hasDescription(): boolean;
+  clearDescription(): void;
+  getDescription(): google_protobuf_wrappers_pb.StringValue | undefined;
+  setDescription(value?: google_protobuf_wrappers_pb.StringValue): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateSegmentRequest.AsObject;
   static toObject(
@@ -1689,10 +1699,17 @@ export namespace UpdateSegmentRequest {
     id: string;
     commandsList: Array<proto_feature_command_pb.Command.AsObject>;
     environmentId: string;
+    name?: google_protobuf_wrappers_pb.StringValue.AsObject;
+    description?: google_protobuf_wrappers_pb.StringValue.AsObject;
   };
 }
 
 export class UpdateSegmentResponse extends jspb.Message {
+  hasSegment(): boolean;
+  clearSegment(): void;
+  getSegment(): proto_feature_segment_pb.Segment | undefined;
+  setSegment(value?: proto_feature_segment_pb.Segment): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): UpdateSegmentResponse.AsObject;
   static toObject(
@@ -1715,7 +1732,9 @@ export class UpdateSegmentResponse extends jspb.Message {
 }
 
 export namespace UpdateSegmentResponse {
-  export type AsObject = {};
+  export type AsObject = {
+    segment?: proto_feature_segment_pb.Segment.AsObject;
+  };
 }
 
 export class AddSegmentUserRequest extends jspb.Message {

@@ -685,6 +685,14 @@ func LocalizedMessage(eventType proto.Event_Type, localizer locale.Localizer) *p
 				localizer.MustLocalizeWithTemplate(locale.Segment),
 			),
 		}
+	case proto.Event_SEGMENT_UPDATED:
+		return &proto.LocalizedMessage{
+			Locale: localizer.GetLocale(),
+			Message: localizer.MustLocalizeWithTemplate(
+				locale.UpdatedTemplate,
+				localizer.MustLocalizeWithTemplate(locale.Segment),
+			),
+		}
 	case proto.Event_SEGMENT_NAME_CHANGED:
 		return &proto.LocalizedMessage{
 			Locale: localizer.GetLocale(),
