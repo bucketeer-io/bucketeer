@@ -300,7 +300,7 @@ func (s *NotificationService) UpdateSubscription(
 	if err := s.updateSubscription(ctx, commands, req.Id, req.EnvironmentId, editor, localizer); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
-				"Failed to update feature",
+				"Failed to update subscription",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
@@ -367,7 +367,7 @@ func (s *NotificationService) EnableSubscription(
 	); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
-				"Failed to enable feature",
+				"Failed to enable subscription",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
@@ -404,7 +404,7 @@ func (s *NotificationService) DisableSubscription(
 	); err != nil {
 		if status.Code(err) == codes.Internal {
 			s.logger.Error(
-				"Failed to disable feature",
+				"Failed to disable subscription",
 				log.FieldsFromImcomingContext(ctx).AddFields(
 					zap.Error(err),
 					zap.String("environmentId", req.EnvironmentId),
